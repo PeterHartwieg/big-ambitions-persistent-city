@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <LangVersion>9</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Core/*.cs" />
+    <Compile Include="../../Runtime/RoadRoutes.cs" />
+    <Compile Include="../../Runtime/TrafficRoadNetwork.cs" />
+    <Compile Include="../../Runtime/NativeRoadSpeeds.cs" />
+    <Compile Include="NativeStubs.cs" />
+    <Compile Include="UnityStubs.cs" />
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+</Project>

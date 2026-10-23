@@ -1,0 +1,8 @@
+{
+  "Enabled": false,
+  "GameClockFactor": 0.3333333333333333,
+  "PhysicalEnabled": true,
+  "MaximumPedestrians": 48,
+  "MaximumVehicles": 24,
+  "PhysicalRadiusMetres": 120
+}

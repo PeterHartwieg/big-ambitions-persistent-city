@@ -1,0 +1,564 @@
+using System;
+using System.IO;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
+using BAModAPI;
+using Newtonsoft.Json;
+using PersistentCity.Compatibility;
+using PersistentCity.Core;
+using PersistentCity.Persistence;
+using UnityEngine;
+using Stopwatch = System.Diagnostics.Stopwatch;
+
+[assembly: AssemblyVersion("0.6.2.0")]
+[assembly: AssemblyInformationalVersion("0.6.2-citywide-traffic-prototype")]
+[assembly: RegisterModClass(typeof(PersistentCity.Runtime.PersistentCityMod))]
+
+namespace PersistentCity.Runtime
+{
+    [ModEntryOnCityLoad]
+    public sealed class PersistentCityMod : IModBigAmbitions
+    {
+        private GameObject? host;
+        public string[] RelativeAssetBundlePaths => Array.Empty<string>();
+
+        public Task OnLoadAsync(ModContext context)
+        {
+            const string name = "Persistent City Runtime";
+            if (GameObject.Find(name) != null)
+            {
+                context.Logger.Warn("Persistent City is already loaded. This duplicate stays off.");
+                return Task.CompletedTask;
+            }
+            host = new GameObject(name);
+            host.AddComponent<PopulationRuntime>().Initialize(context);
+            return Task.CompletedTask;
+        }
+
+        public Task OnUnloadAsync()
+        {
+            if (host != null)
+            {
+                host.GetComponent<PopulationRuntime>()?.Shutdown();
+                host.name += " (unloading)";
+                UnityEngine.Object.Destroy(host);
+                host = null;
+            }
+            return Task.CompletedTask;
+        }
+    }
+
+    internal sealed class PrototypeSettings
+    {
+        public bool Enabled { get; set; }
+        public double GameClockFactor { get; set; } = 1;
+        public bool PhysicalEnabled { get; set; } = true;
+        public int MaximumPedestrians { get; set; } = 48;
+        public int MaximumVehicles { get; set; } = 24;
+        public double PhysicalRadiusMetres { get; set; } = 120;
+    }
+
+    public sealed class PopulationRuntime : MonoBehaviour
+    {
+        private const int MaxAdvanceEventsPerFrame = 128;
+        private const int MaxCitizenEventsPerFrame = 16;
+        private const double AdvanceBudgetMilliseconds = 2;
+        private static readonly double MillisecondsPerTimestamp = 1000.0 / Stopwatch.Frequency;
+        private readonly RloIdentityAdapter rlo = new RloIdentityAdapter();
+        private IModLogger? log;
+        private PrototypeSettings settings = new PrototypeSettings();
+        private CitySimulator? simulation;
+        private MultimodalRoutes? routes;
+        private RouteObjectDiscovery? routeObjects;
+        private PhysicalPopulation? physical;
+        private bool physicalFailed;
+        private object? saveIdentity;
+        private object? initializingSave;
+        private sealed class PreparedCity
+        {
+            public CityState State = null!;
+            public SaveSession Saves = null!;
+        }
+        private Task<PreparedCity>? initialization;
+        private SaveSession? saveSession;
+        private NativeFoodMarket? foodMarket;
+        private string? initializingPayload;
+        private bool initializingHadPayload;
+        private Assembly? dependency;
+        private float nextStart, nextDependencyCheck, nextStationScan, nextSummary;
+        private int gateChanges, roadSnapshots, seenRoadSnapshots, waitingFrames;
+        private readonly Dictionary<string, int> roadRebuildReasons = new Dictionary<string, int>(StringComparer.Ordinal);
+        private string lastRoadRebuild = "";
+        private int slowRoutingFrames, routingFrameLogs;
+        private bool clockRetimingRoutes;
+        private double maxRloCheckMilliseconds, maxGateCheckMilliseconds, maxStationSearchMilliseconds, maxPrepareMilliseconds;
+        private bool failed, subscribed;
+        private string status = "";
+        private long advanceFrames, advanceEvents;
+        private double advanceMilliseconds, maxAdvanceMilliseconds;
+        private double closureMilliseconds, maxClosureMilliseconds;
+        private long closureFrames;
+        private int maxAdvanceEvents;
+
+        /// <summary>Explicit activation for a small selected retail slice; scope persists in this city.
+        /// No default configuration or ordinary save is automatically opted in.</summary>
+        public void StartFoodRoutines(IReadOnlyCollection<string> shops)
+        {
+            if (simulation == null || routes == null || !routes.ReadyForPopulation || failed
+                || !ReferenceEquals(saveIdentity, SaveGameManager.Current) || simulation.State.Food != null)
+                throw new InvalidOperationException("A ready city without an existing food scope is required.");
+            var catalogue = FoodBusinessCatalogue.Read(shops, new[] { NativeFoodMarket.Product });
+            if (catalogue.Businesses.Count != shops.Count) throw new InvalidOperationException("Food scope is incomplete.");
+            var state = new FoodCommerceState { Shops = catalogue.Businesses.Select(b => new FoodScope {
+                PlaceId = b.PlaceId, BusinessId = b.Id, ProductId = NativeFoodMarket.Product }).ToList(),
+                Districts = FoodHouseholdCatalogue.Read(simulation.State.Places.Where(p => p.Kind == PlaceKind.Home)
+                    .Select(p => p.District).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct(StringComparer.Ordinal).ToArray()).ToList() };
+            var adapter = new NativeFoodMarket(state);
+            try { simulation.State.Food = state; simulation.AttachFoodMarket(adapter); foodMarket = adapter; }
+            catch { simulation.State.Food = null; adapter.Dispose(); throw; }
+        }
+        public object FoodDiagnostics => new { active = foodMarket != null, hourlyCustomerBatchesSuppressed = foodMarket?.SuppressedBatches ?? 0,
+            nativeDrawsSuppressed = foodMarket?.SuppressedDraws ?? 0, nativePurchasesThisSession = foodMarket?.NativePurchases ?? 0 };
+
+        /// <summary>Explicit read-only diagnostic; the caller must finish/dispose the bounded recorder.</summary>
+        public FoodRoutineRecorder ObserveFoodRoutines()
+        {
+            if (failed || simulation == null || routes == null || !routes.ReadyForPopulation
+                || !ReferenceEquals(saveIdentity, SaveGameManager.Current))
+                throw new InvalidOperationException("A ready current population is required for food observation.");
+            var homeDistricts = simulation.State.Places.Where(p => p.Kind == PlaceKind.Home && !string.IsNullOrWhiteSpace(p.District))
+                .Select(p => p.District).Distinct(StringComparer.Ordinal).ToArray();
+            return new FoodRoutineRecorder(simulation, FoodHouseholdCatalogue.Read(homeDistricts));
+        }
+
+        /// <summary>Explicit main-thread walking quotes. Call batch.Step with a small route-call budget.</summary>
+        public FoodRouteBatch QuoteFoodRoutes(FoodRoutineCapture capture, FoodRoutinePlan plan,
+            IReadOnlyList<FoodBusiness> businesses, int maximumCandidates = 3)
+        {
+            if (failed || simulation == null || routes == null || !routes.ReadyForPopulation
+                || !ReferenceEquals(saveIdentity, SaveGameManager.Current) || capture.CityKey != simulation.State.PopulationKey)
+                throw new InvalidOperationException("The observed city must still be active for route quotes.");
+            var observedRoutes = routes;
+            var observedSave = saveIdentity;
+            var guarded = new FoodObservationRoutes(observedRoutes, () => !failed && ReferenceEquals(saveIdentity, observedSave)
+                && ReferenceEquals(observedSave, SaveGameManager.Current) && ReferenceEquals(routes, observedRoutes) && observedRoutes.ReadyForPopulation);
+            return new FoodRouteBatch(capture, plan, businesses, simulation.State.Places, guarded,
+                "Native complete public walking paths at diagnostic capture time; historical traffic/access is not replayed", maximumCandidates);
+        }
+
+        private sealed class FoodObservationRoutes : IRoutePlanner
+        {
+            private readonly IRoutePlanner source;
+            private readonly Func<bool> current;
+            public FoodObservationRoutes(IRoutePlanner source, Func<bool> current) { this.source = source; this.current = current; }
+            public Route? Plan(Place from, Place to, double at, TravelPreferences preferences)
+            {
+                if (!current()) throw new InvalidOperationException("City/navigation changed during food observation; discard the unfinished quote batch.");
+                return source.Plan(from, to, at, preferences);
+            }
+        }
+
+        public void Initialize(ModContext context)
+        {
+            log = context.Logger;
+            try
+            {
+                string path = Path.Combine(context.ModRootPath, "persistent-city.json");
+                if (File.Exists(path)) settings = JsonConvert.DeserializeObject<PrototypeSettings>(File.ReadAllText(path)) ?? throw new InvalidDataException("Configuration is null.");
+                if (!Position.Finite(settings.GameClockFactor) || settings.GameClockFactor < .1 || settings.GameClockFactor > 1)
+                    throw new InvalidDataException("GameClockFactor must be between 0.1 and 1 (one third gives three times as much travel time per day).");
+                if (settings.MaximumPedestrians < 1 || settings.MaximumPedestrians > 256 || settings.MaximumVehicles < 1 || settings.MaximumVehicles > 64
+                    || !Position.Finite(settings.PhysicalRadiusMetres) || settings.PhysicalRadiusMetres < 30 || settings.PhysicalRadiusMetres > 300)
+                    throw new InvalidDataException("Physical limits must be 1–256 pedestrians, 1–64 vehicles and a 30–300 metre radius.");
+                if (!settings.Enabled)
+                {
+                    Say("Persistent City is off. Set Enabled=true in persistent-city.json and reload the city to test it.");
+                    enabled = false;
+                }
+            }
+            catch (Exception error) { Fail(error.Message); }
+        }
+
+        private void Update()
+        {
+            if (failed) return;
+            try
+            {
+                var save = SaveGameManager.Current;
+                if (save == null) return;
+                if (saveIdentity != null && !ReferenceEquals(saveIdentity, save))
+                {
+                    physical?.Dispose(); physical = null; physicalFailed = false;
+                    Detach();
+                    simulation = null;
+                    saveSession = null;
+                    routes = null; clockRetimingRoutes = false;
+                    saveIdentity = null;
+                }
+                if (simulation == null)
+                {
+                    if (initialization != null) { CompleteInitialization(); return; }
+                    if (Time.unscaledTime < nextStart) return;
+                    nextStart = Time.unscaledTime + 1;
+                    TryStart();
+                    return;
+                }
+                routeObjects?.Step();
+                if (Time.unscaledTime >= nextDependencyCheck)
+                {
+                    long checkStarted = Stopwatch.GetTimestamp();
+                    nextDependencyCheck = Time.unscaledTime + 30;
+                    var source = rlo.Read(dependency);
+                    maxRloCheckMilliseconds = Math.Max(maxRloCheckMilliseconds, (Stopwatch.GetTimestamp() - checkStarted) * MillisecondsPerTimestamp);
+                    if (!source.MatchesPopulation(simulation.State))
+                    {
+                        Fail("RLO donor catalogue is no longer available or differs from this snapshot: " + source.Message + " Existing saved state is preserved.");
+                        return;
+                    }
+                    long gateStarted = Stopwatch.GetTimestamp();
+                    string gateChange = routes?.Refresh() ?? "";
+                    maxGateCheckMilliseconds = Math.Max(maxGateCheckMilliseconds, (Stopwatch.GetTimestamp() - gateStarted) * MillisecondsPerTimestamp);
+                    if (gateChange.Length > 0) { gateChanges++; log?.Info("Public gates changed (" + gateChange + "); road snapshot discarded; a new one follows station preparation and reuses the live road scene."); }
+                    // Phase station geometry checks halfway between gate geometry checks.
+                    nextStationScan = Time.unscaledTime + 15;
+                }
+                else if (Time.unscaledTime >= nextStationScan)
+                {
+                    nextStationScan = float.PositiveInfinity;
+                    routes?.RefreshStations();
+                }
+                double target = Now();
+                if (target < simulation.State.Minute - 0.001)
+                {
+                    Fail("Game clock moved behind the population snapshot. Reload the matching save; no state was overwritten.");
+                    return;
+                }
+                // Build/refresh native road data in bounded slices before advancing any event.
+                // Mode availability must not depend on which citizen happened to request a route
+                // while the graph was half prepared, or on the number of rendered frames.
+                RunPhysical(() => physical?.BeforeAdvance());
+                double clockRate = NativeTravelPace.ClockRate;
+                if (Math.Abs(clockRate - simulation.State.TravelClockRate) > .000001)
+                {
+                    physical?.Dispose(); physical = null;
+                    simulation.State.PrepareForSave();
+                    TravelTiming.Apply(simulation.State, NativeTravelPace.WalkingMetresPerSecond, clockRate);
+                    routes = new MultimodalRoutes(simulation.State.Places, NativeTravelPace.WalkingMetresPerSecond / clockRate, clockRate, dependency, routeObjects);
+                    seenRoadSnapshots = 0; clockRetimingRoutes = true;
+                    simulation = simulation.RebuildRoutes(routes);
+                }
+                long prepareStarted = Stopwatch.GetTimestamp();
+                bool prepared = routes == null || routes.Prepare();
+                if (routes != null && routes.LastDiscoveryGateChange.Length > 0)
+                { gateChanges++; log?.Info("Discovered public gate change: " + routes.LastDiscoveryGateChange + "."); }
+                double prepareElapsed = (Stopwatch.GetTimestamp() - prepareStarted) * MillisecondsPerTimestamp;
+                maxPrepareMilliseconds = Math.Max(maxPrepareMilliseconds, prepareElapsed);
+                maxStationSearchMilliseconds = Math.Max(maxStationSearchMilliseconds, routes?.TakeStationSearchMilliseconds() ?? 0);
+                int snapshots = routes?.RoadSnapshots ?? 0;
+                if (snapshots > seenRoadSnapshots)
+                {
+                    roadSnapshots += snapshots - seenRoadSnapshots;
+                    string reason = clockRetimingRoutes ? "clock-rate" : routes!.LastRoadRebuildReason;
+                    clockRetimingRoutes = false;
+                    roadRebuildReasons.TryGetValue(reason, out int count); roadRebuildReasons[reason] = count + snapshots - seenRoadSnapshots;
+                    lastRoadRebuild = reason + " index=" + routes!.LastRoadInvalidationIndex;
+                    log?.Info("Road snapshot started: frame=" + Time.frameCount + ", reason=" + lastRoadRebuild
+                        + ", scene searches in this planner=" + routes.RoadSceneSearches + ".");
+                }
+                seenRoadSnapshots = snapshots;
+                if (!prepared) { RecordRoutingFrame(prepareElapsed, 0, false); waitingFrames++; RunPhysical(() => physical?.Update()); return; }
+                long closureStarted = Stopwatch.GetTimestamp();
+                simulation.RefreshTrafficClosures();
+                double closureElapsed = (Stopwatch.GetTimestamp() - closureStarted) * MillisecondsPerTimestamp;
+                closureFrames++; closureMilliseconds += closureElapsed;
+                maxClosureMilliseconds = Math.Max(maxClosureMilliseconds, closureElapsed);
+                RecordRoutingFrame(prepareElapsed, closureElapsed, true);
+                AdvancePopulation(Math.Max(target, simulation.State.Minute));
+                if (settings.PhysicalEnabled && !physicalFailed && physical == null && !NativeTravelPace.HiddenTravel)
+                {
+                    try { physical = new PhysicalPopulation(transform, simulation, routes!, dependency!, log!, settings.MaximumPedestrians, settings.MaximumVehicles, settings.PhysicalRadiusMetres); }
+                    catch (Exception error)
+                    {
+                        physicalFailed = true;
+                        log?.Warn("Physical population unavailable; ordinary spawning restored, persistent background simulation remains active: " + error);
+                    }
+                }
+                RunPhysical(() => physical?.Update());
+                if (Time.unscaledTime >= nextSummary)
+                {
+                    nextSummary = Time.unscaledTime + 60;
+                    var state = simulation.State;
+                    log?.Info("Population: " + state.Citizens.Count + " citizens; " + state.Citizens.Count(c => c.Phase == CitizenPhase.Travelling)
+                        + " travelling, " + state.Citizens.Count(c => c.Phase == CitizenPhase.WaitingForRoute) + " awaiting a route, "
+                        + state.Citizens.Count(c => c.Phase == CitizenPhase.WaitingForOpening) + " awaiting opening; clock "
+                        + state.Minute.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + ", lag "
+                        + Math.Max(0, target - state.Minute).ToString("F1", System.Globalization.CultureInfo.InvariantCulture)
+                        + " game minutes. Advancement this observation: " + advanceFrames + " frames, " + advanceEvents + " events, "
+                        + advanceMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms total, "
+                        + maxAdvanceMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms maximum advance, "
+                        + maxAdvanceEvents + " maximum events in one frame; these figures cover advancement calls only. Routes: "
+                        + roadSnapshots + " road snapshots started (" + gateChanges + " for gate changes), "
+                        + waitingFrames + " frames waiting for routes; rebuild reasons ["
+                        + string.Join(", ", roadRebuildReasons.OrderBy(pair => pair.Key, StringComparer.Ordinal).Select(pair => pair.Key + "=" + pair.Value))
+                        + "]; slow routing frames " + slowRoutingFrames + " (first " + routingFrameLogs + " logged); last rebuild " + lastRoadRebuild
+                        + "; this planner scene searches " + (routes?.RoadSceneSearches ?? 0) + ", maximum "
+                        + (routes?.MaximumRoadSceneSearchMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                        + " ms, station captures " + (routes?.StationSearches ?? 0)
+                        + "; discovery sweeps " + (routeObjects?.Sweeps ?? 0) + ", last branch captures " + (routeObjects?.LastSweepBranchCaptures ?? 0)
+                        + ", split hints " + (routeObjects?.SplitBranches ?? 0)
+                        + ", maximum slice " + (routeObjects?.MaximumSliceMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                        + " ms, last sweep " + (routeObjects?.LastSweepSeconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                        + " s / " + (routeObjects?.LastSweepMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                        + " ms work; slowest RLO check "
+                        + maxRloCheckMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, door search "
+                        + maxGateCheckMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, station search "
+                        + maxStationSearchMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, preparation frame "
+                        + maxPrepareMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms. Closure refresh: "
+                        + closureFrames + " calls, " + closureMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                        + " ms total, " + maxClosureMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms maximum. "
+                        + (physical?.Diagnostics ?? "Physical population inactive."));
+                    if (simulation.Traffic != null)
+                        log?.Info("Citywide traffic: " + simulation.Traffic.VehicleCount + " persistent cars, "
+                            + simulation.Traffic.PendingEventCount + " scheduled road events, " + simulation.Traffic.LinkCount + " road sections.");
+                    ResetAdvanceDiagnostics();
+                }
+            }
+            catch (Exception error) { Fail(error.ToString()); }
+        }
+
+        private void AdvancePopulation(double target)
+        {
+            var active = simulation ?? throw new InvalidOperationException("Population is not active.");
+            long started = Stopwatch.GetTimestamp();
+            int events = 0, citizenEvents = 0;
+            double elapsed = 0;
+            // Always allow the first event. A native path/event cannot be preempted, so
+            // the soft time budget can be exceeded by that final event's duration.
+            try
+            {
+                for (int step = 0; step < MaxAdvanceEventsPerFrame; step++)
+                {
+                    // A prior event can discover changed native topology. Stop before the next citizen sees an
+                    // unavailable graph as a failed route; the next Update will finish staged preflight first.
+                    if (routes != null && !routes.ReadyForPopulation) break;
+                    var result = active.AdvanceFrameSlice(target, 1);
+                    events += result.Events;
+                    citizenEvents += result.Events - result.TrafficEvents;
+                    elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
+                    if (result.CaughtUp || citizenEvents >= MaxCitizenEventsPerFrame || elapsed >= AdvanceBudgetMilliseconds) break;
+                }
+            }
+            finally { active.SynchronizeSnapshot(); }
+            elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
+            advanceFrames++;
+            advanceEvents += events;
+            advanceMilliseconds += elapsed;
+            maxAdvanceMilliseconds = Math.Max(maxAdvanceMilliseconds, elapsed);
+            maxAdvanceEvents = Math.Max(maxAdvanceEvents, events);
+        }
+
+        private void RunPhysical(Action action)
+        {
+            try { action(); }
+            catch (Exception error)
+            {
+                // A failed view adapter must not stop the valid background population. If cleanup
+                // itself fails, propagate to the outer stop path so uncertain state is not saved.
+                physicalFailed = true;
+                foodMarket?.Dispose(); foodMarket = null;
+            try { physical?.Dispose(); }
+                finally { physical = null; }
+                log?.Warn("Physical population stopped; ordinary spawning restored and background simulation continues: " + error);
+            }
+        }
+
+        private void RecordRoutingFrame(double preparation, double closure, bool prepared)
+        {
+            if (preparation < 16 && closure < 16) return;
+            slowRoutingFrames++;
+            if (routingFrameLogs >= 4) return; // Bound log overhead during a pathological observation.
+            routingFrameLogs++;
+            log?.Info("Slow routing frame=" + Time.frameCount + ", realtime="
+                + Time.unscaledTime.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                + ", prepared=" + prepared + ", preparation_ms=" + preparation.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                + ", closure_ms=" + closure.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                + ", last_rebuild=" + lastRoadRebuild + ".");
+        }
+
+        private void ResetAdvanceDiagnostics()
+        {
+            advanceFrames = advanceEvents = 0;
+            advanceMilliseconds = maxAdvanceMilliseconds = 0;
+            closureFrames = 0; closureMilliseconds = maxClosureMilliseconds = 0;
+            maxAdvanceEvents = 0;
+            gateChanges = roadSnapshots = waitingFrames = 0;
+            roadRebuildReasons.Clear(); slowRoutingFrames = routingFrameLogs = 0;
+            maxRloCheckMilliseconds = maxGateCheckMilliseconds = maxStationSearchMilliseconds = maxPrepareMilliseconds = 0;
+        }
+
+        private void TryStart()
+        {
+            if (!NativeTravelPace.StartObservation()) { Fail(NativeTravelPace.LastError); return; }
+            dependency = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "RealLifeOverhaul");
+            var source = rlo.Read(dependency);
+            if (source.Status != RloReadStatus.Ready)
+            {
+                Say(source.Message);
+                if (source.Status == RloReadStatus.Incompatible) Fail(source.Message);
+                return;
+            }
+            var save = SaveGameManager.Current;
+            if (save == null || save.modData == null) return;
+            // Snapshot all Unity/RLO input on the main thread. Large population creation and
+            // strict save decoding are pure work; never hold up a frame while creating 25,000 people.
+            initializingHadPayload = save.modData.TryGetValue(SaveStore.StateKey, out initializingPayload);
+            var saved = new Dictionary<string, string>(StringComparer.Ordinal);
+            if (initializingHadPayload) saved.Add(SaveStore.StateKey, initializingPayload!);
+            var places = GamePlaces.Read();
+            log?.Info(OutdoorPlaces.LastDiscoverySummary);
+            double minute = Now();
+            double clockRate = NativeTravelPace.ClockRate;
+            initializingSave = save;
+            initialization = Task.Run(() =>
+            {
+                var session = SaveSession.Open(saved, source.PopulationKey);
+                var stored = session.InitialReadResult;
+                CityState state;
+                if (stored.Status == SaveReadStatus.Missing)
+                    state = Population.CreateFromHousing(source.Identities, places, source.PopulationKey, source.SourceVersion, source.CitySeed, minute);
+                else if (stored.Status == SaveReadStatus.Loaded && stored.State != null)
+                {
+                    state = stored.State;
+                    if (!source.MatchesPopulation(state)) throw new InvalidDataException("Snapshot donor identities differ from current RLO profiles.");
+                    if (stored.Migrated && stored.SourceSchema < 4)
+                    {
+                        CatalogueMigration.Enrich(state, places);
+                        Population.ExpandToHousing(state);
+                    }
+                }
+                else throw new InvalidDataException("Population save refused: " + stored.Error);
+                TravelTiming.Apply(state, NativeTravelPace.WalkingMetresPerSecond, clockRate);
+                SaveCodec.Write(state); // Validate completely before making it active or touching modData.
+                return new PreparedCity { State = state, Saves = session };
+            });
+            Say("Preparing housing-based background population. Existing saved state is retained until initialization succeeds.");
+        }
+
+        private void CompleteInitialization()
+        {
+            var pending = initialization;
+            if (pending == null || !pending.IsCompleted) return;
+            initialization = null;
+            var save = SaveGameManager.Current;
+            var expectedSave = initializingSave;
+            var expectedPayload = initializingPayload;
+            initializingSave = null;
+            initializingPayload = null;
+            // Observe failures even if a different save was loaded during this computation.
+            if (pending.IsFaulted)
+            {
+                string error = pending.Exception?.GetBaseException().Message ?? "Unknown initialization failure.";
+                if (ReferenceEquals(expectedSave, save)) Fail(error + " Original payload retained.");
+                return;
+            }
+            if (pending.IsCanceled || save == null || !ReferenceEquals(expectedSave, save)) return;
+            bool hasPayload = save.modData.TryGetValue(SaveStore.StateKey, out var currentPayload);
+            if (hasPayload != initializingHadPayload || currentPayload != expectedPayload)
+            { Fail("Population payload changed during initialization. Original payload retained."); return; }
+            var prepared = pending.Result;
+            var state = prepared.State;
+            var source = rlo.Read(dependency);
+            if (!source.MatchesPopulation(state)) { Fail("RLO donor catalogue changed during initialization. Original payload retained."); return; }
+            if (state.Minute > Now() + 0.001) { Fail("Population snapshot is ahead of this save's clock; original payload retained."); return; }
+            var binding = prepared.Saves.BindTo(save.modData);
+            if (!binding.Success) { Fail("Population save binding refused: " + binding.Error); return; }
+            saveSession = prepared.Saves;
+            routeObjects = new RouteObjectDiscovery();
+            routes = new MultimodalRoutes(state.Places, NativeTravelPace.WalkingMetresPerSecond / state.TravelClockRate, state.TravelClockRate, dependency, routeObjects);
+            simulation = new CitySimulator(state, routes);
+            if (state.Food != null) { foodMarket = new NativeFoodMarket(state.Food); simulation.AttachFoodMarket(foodMarket); }
+            saveIdentity = save;
+            NativeCityClock.Start(save, settings.GameClockFactor);
+            NativeTravelPace.ResetReading();
+            log?.Info("City clock factor=" + settings.GameClockFactor.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
+                + "; Driven Rides coordinated=" + NativeCityClock.CoordinatesDrivenRides + ". Movement speed unchanged.");
+            ResetAdvanceDiagnostics();
+            GlobalEvents.onSaveGame += Save;
+            GlobalEvents.onGameUnloaded += Shutdown;
+            subscribed = true;
+            nextDependencyCheck = Time.unscaledTime + 30;
+            nextStationScan = float.PositiveInfinity;
+            seenRoadSnapshots = 0; clockRetimingRoutes = false;
+            Say("Persistent population active: " + state.Citizens.Count + " residents, " + state.Places.Count
+                + " places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization.");
+        }
+
+        private static double Now()
+        {
+            var save = SaveGameManager.Current;
+            return save.Day * 1440.0 + save.Hour * 60.0 + save.Minute;
+        }
+
+        private void Save()
+        {
+            if (failed || simulation == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current)) return;
+            try
+            {
+                var source = rlo.Read(dependency);
+                if (!source.MatchesPopulation(simulation.State))
+                { Fail("RLO changed before saving; original population payload retained."); return; }
+                RunPhysical(() => physical?.ObserveForSave());
+                // A partially caught-up snapshot is valid: replay continues from its recorded minute after load.
+                var result = (saveSession ?? throw new InvalidOperationException("Save session is missing."))
+                    .WriteTo(SaveGameManager.Current.modData, simulation.State);
+                if (!result.Success) Fail("Population save refused: " + result.Error);
+            }
+            catch (Exception error) { Fail("Population save failed: " + error.Message); }
+        }
+
+        private void Say(string message)
+        {
+            if (message == status) return;
+            status = message;
+            log?.Info(message);
+        }
+
+        private void Fail(string message)
+        {
+            failed = true;
+            log?.Warn("Persistent City stopped: " + message);
+            Detach();
+            enabled = false;
+        }
+
+        private void Detach()
+        {
+            foodMarket?.Dispose(); foodMarket = null;
+            try { physical?.Dispose(); }
+            finally { physical = null; routeObjects?.Dispose(); routeObjects = null; NativeCityClock.Stop(); NativeTravelPace.StopObservation(); }
+            if (!subscribed) return;
+            GlobalEvents.onSaveGame -= Save;
+            GlobalEvents.onGameUnloaded -= Shutdown;
+            subscribed = false;
+        }
+
+        public void Shutdown()
+        {
+            Detach();
+            // A pure worker may finish after unload; observe faults and release all runtime references.
+            if (initialization != null)
+                _ = initialization.ContinueWith(task => { _ = task.Exception; }, TaskContinuationOptions.OnlyOnFaulted);
+            initialization = null;
+            initializingSave = null;
+            initializingPayload = null;
+            simulation = null;
+            saveSession = null;
+            routes = null;
+            saveIdentity = null;
+            enabled = false;
+        }
+        private void OnDestroy() => Shutdown();
+    }
+}

@@ -1,0 +1,53 @@
+{
+  "assemblyVersion": "0.2.0.0",
+  "date": "2026-10-19",
+  "defaultEnabled": false,
+  "dllSha256": "675f5b1d0a986d60bac062265bbb65c89df6a25426398a49aff770f4aa7d3d33",
+  "nativePlatform": "Isolated headless Mac, game build3682, bridge runtime6, RLO0.40.4",
+  "packageFiles": {
+    "PersistentCity.dll": "675f5b1d0a986d60bac062265bbb65c89df6a25426398a49aff770f4aa7d3d33",
+    "README.md": "cf7e8093c153816049cd638e540f34a591630938f1961909d06536a501856e72",
+    "persistent-city.json": "5f25d1f62002af2f1adc98f23ea4429216aecf361831d8972efe0c333c44cd0e"
+  },
+  "packageSha256": "a4f6f09991257569bf47f0d0d884f0dd1a561848e635ae86e91483b4075887ec",
+  "reviewers": {
+    "Claude Opus 5.5": "APPROVE final source after fix rounds",
+    "GPT 6 Astra": "APPROVE final source",
+    "GPT 6.1 Sol": "APPROVE final source",
+    "Grok 4.7 (grok-4.7-build)": "APPROVE final source after gate fix"
+  },
+  "scope": "Background prototype; no visible actors, economy, Windows or rendered performance approval.",
+  "sourceFiles": {
+    "Compatibility/RloIdentityAdapter.cs": "d6b3e5996b913958e8632d3ab640da96c65ce3a8ad5478cf8d798be15d9fa208",
+    "Core/CatalogueMigration.cs": "1ae9ae168d1cd48898de68b091ceeec4277e70c0e979517800df02da5aa87ad6",
+    "Core/CitySimulator.cs": "8d0aa1a13d12a987e9eb6c6d5d4da004bb17878877e040a3eca2fb05e5beff66",
+    "Core/DailyRoutine.cs": "178a0ea2a0c5df0ad362deb7d1bb77cc8a19a88f1a9fc8cf8f0236584ff459e8",
+    "Core/DestinationChoice.cs": "c1e6b035d5822769d0c83298d2ab51b50b78c14d72a3462702972f715f95887c",
+    "Core/Model.cs": "5efae7100e4fc1658efe9a7c436c14f5b72abdb0b8675667743aa7f68809f41c",
+    "Core/PersistentCity.Core.csproj": "f727fe3f4a47daee3b188f4cb2847676e55ebaec3af9254e44ee2e0edd7cc3e5",
+    "Core/Population.cs": "523cdcb0085a1540f3894ade25fb8d1d5a79ecb17f94b7a0637e4db2943768aa",
+    "Core/ResidentLifecycle.cs": "b9f6fba91b04e2af7c3604a384e1f05bc38dbf9ac55d909a06a0a776ea977f8f",
+    "Core/Routing.cs": "be2078509fdf53f1d7f4849c070be4920817616481eda8712a85e2dd926fa581",
+    "Core/TransportComposition.cs": "75f638454523d86555bf5a03cc52365f3b83df0b62f80b655ccbd45477f2c099",
+    "Persistence/SaveCodec.cs": "908f8e3d8b0342291ad7800f92df3987720530e981b3fb7d5e1b521738aa3061",
+    "Persistence/SaveStore.cs": "dcab7fa6b60c148c4e47dcf3039b7e7cbfef40b284d98dd7876fd5ca467ee8d7",
+    "Runtime/GamePlaces.cs": "99120379045d0990a7409187628a1f9b77ed26e5fc97b96dc06b6c98eedd7975",
+    "Runtime/MultimodalRoutes.cs": "9c88ea09053717ab72f46469e91c2f728292aebabe79317c126ed49329a5c60f",
+    "Runtime/OutdoorPlaces.cs": "392c5a814f56333424ccfab0b886d24574a083bd7763388ecce38ea6f70e55ca",
+    "Runtime/PersistentCityMod.cs": "57971b3921f259a04a84c022360508d773d136416710ddf2c59eae3acd0422da",
+    "Runtime/RoadRoutes.cs": "2952ddfb29d97a66c8ee31f74dbf8c442854e91f6539fec4bf6212736e5a0b36",
+    "Runtime/WalkingRoutes.cs": "8b5191410014703e1e66089a8115ae34dfe93ac111d8f9ea32e2967e4a215700",
+    "config/persistent-city.json": "5f25d1f62002af2f1adc98f23ea4429216aecf361831d8972efe0c333c44cd0e",
+    "tests/ContinuityRegressionTests.cs": "6eb192b3e7c3afdd379a3b8caf47968bbd3963d19dc04a1eccae84f1f7ad7ab4",
+    "tests/ExpansionPersistenceTests.cs": "671f24072c899fb23ddbff6a1ce315c3ce992e406c22223c13dcda8faa0e3b0c",
+    "tests/MultimodalTests.cs": "984239c1e13fbcf209f5046c3b2fee91cdfc08ffd777606d4e8b07e3b67af984",
+    "tests/PersistenceTests.cs": "c8b1bb1ed0afd3011209b6fb8e7674bd7de9079deb02bfa6dcab43d8a0b8abc7",
+    "tests/PersistentCity.Tests.csproj": "49c2468f5f709bed14affe9dae3f6b9049708cb8cc6a6252c3f319d03320c275",
+    "tests/PopulationExpansionTests.cs": "d195c6c49a64dc769331a4d2c67465ef38a20f620d423f1700bf506cd3014b37",
+    "tests/RloCompatibilityTests.cs": "548fbcf7e29fb8acf5f516a8e7688d1fbd7e47bcca704ac2125ef5be97b767d1",
+    "tests/RoutingTests.cs": "fd23eab4a8d9f4c258021f895bf7eba08d106a188233fa63453f0374a72a709d",
+    "tests/SimulationTests.cs": "7997ead492eb112a9b0e9150ddbef4f9960ecc0f6bb71a3bb29e95e7e90cfd5b",
+    "tools/build.py": "23f008ef06c26c5b9db547c13542508fb0bf83786400cf7944e7b469eb2d4461"
+  },
+  "testsPassed": 155
+}

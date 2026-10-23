@@ -1,0 +1,9 @@
+# Road-snapshot invalidation regression
+
+Run `dotnet run --project tools/road-invalidation-regression/RoadInvalidationRegression.csproj -c Release`.
+
+Compiles the actual Core, Compatibility, MultimodalRoutes, RoadRoutes, TrafficRoadNetwork and NativeRoadSpeeds against synthetic Unity/native surfaces. The 240 assertions exercise staged import while lights change, 40 live red/green cycles without replacing the network or changing routes, live closure/reopening within the same frame, structural mutations with first-cause diagnostics, malformed unassociated stops before capture and after capture, and discovery lifecycle for missing/destroyed scenes and a changed CityManager. Twenty geometry changes must still rebuild but perform no additional global road-scene searches.
+
+The broader road-speed harness retains the exact exception contract for unexplained speed changes, along with verified slowdown/restoration and save rebinding. Existing handoff, gate, route-ceiling and closure harnesses cover their separate invariants. A stub check measures behavior and API-call counts, not native scene-search time or FPS. In particular, this does not eliminate periodic gate/station discovery or validate replacement of a scene component while the old component remains alive and the CityManager unchanged.
+
+The 21 October before/after campaign compiled the same signal fixture against installed reviewed source and the candidate: the installed source failed on an ordinary light change; the candidate passed. Its separate 20-change discovery fixture measured 20 additional scene searches before and zero after, with 21 snapshots in both. Full evidence and candidate identity are in `docs/reviews/2026-10-21-road-snapshot-invalidation.md`; private build artifacts stay under ignored `build/road-invalidation-20261021/`.
