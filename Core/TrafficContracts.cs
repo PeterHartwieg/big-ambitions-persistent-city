@@ -42,16 +42,7 @@ namespace PersistentCity.Core
             return double.PositiveInfinity;
         }
 
-        // Schema 1 save validation only. Its input-relative boundaries must be checked
-        // under the original rules before migrating the detached schedule to schema 2.
-        internal double LegacyNextGreen(double time)
-        {
-            if (GreenDurationMinutes == 0) return double.PositiveInfinity;
-            if (GreenDurationMinutes >= CycleMinutes) return time;
-            double phase = (time - PhaseOffsetMinutes - GreenStartMinutes) % CycleMinutes;
-            if (phase < 0) phase += CycleMinutes;
-            return phase < GreenDurationMinutes ? time : time + CycleMinutes - phase;
-        }
+
     }
 
     public sealed class TrafficLinkDefinition

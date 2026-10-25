@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 import subprocess
 import os
+import shutil
 
 source = Path(__file__).resolve().parent
 module = source
@@ -20,7 +21,7 @@ parser.add_argument('--game-managed', type=Path, default=default_managed)
 args = parser.parse_args()
 managed = args.game_managed.resolve()
 names = ['mscorlib', 'System', 'System.Core', 'netstandard', 'BigAmbitions',
-         'BigAmbitions.ModAPI', 'BigAmbitions.AI', 'BigAmbitions.Items', 'BigAmbitions.Characters', 'BigAmbitions.Neighborhoods', 'HGExtensions', 'HGPlugins', 'DayNightCycle', 'ExternalPlugins', 'UnityEngine.CoreModule', 'UnityEngine.AnimationModule', 'UnityEngine.PhysicsModule', 'UnityEngine.AIModule', 'Newtonsoft.Json']
+         'BigAmbitions.ModAPI', 'BigAmbitions.AI', 'BigAmbitions.Items', 'BigAmbitions.Characters', 'BigAmbitions.Neighborhoods', 'HGExtensions', 'HGPlugins', 'DayNightCycle', 'ExternalPlugins', 'UnityEngine.CoreModule', 'UnityEngine.ScreenCaptureModule', 'UnityEngine.AnimationModule', 'UnityEngine.PhysicsModule', 'UnityEngine.AIModule', 'Newtonsoft.Json']
 candidate_source = campaign / os.environ.get('PC_FOOD_SOURCE', 'source')
 references = [managed / (name + '.dll') for name in names] + [candidate_source / 'build/PersistentCity/PersistentCity.dll']
 references.append(candidate_source / 'build/PersistentCity/Dependencies/0Harmony.dll')
@@ -37,8 +38,11 @@ command = ['dotnet', str(csc), '-nologo', '-noconfig', '-nostdlib+', '-target:li
            '-langversion:9', '-nullable:enable', '-optimize+', '-warn:4', '-warnaserror+',
            '-deterministic+', '-pathmap:' + str(root) + '=/Probe', '-out:' + str(output)]
 command += ['-reference:' + str(path) for path in references]
-sources = [module / 'Probe.cs', module / 'Pilot.cs', module / 'ClockAudit.cs']
+sources = [module / 'Probe.cs', module / 'Pilot.cs', module / 'ClockAudit.cs', module / 'Neighborhood.cs', module / 'Frames.cs', module / 'Menus.cs', module / 'Operations.cs', module / 'ReturnQuotes.cs']
 subprocess.run(command + [str(p) for p in sources], check=True)
+(root / 'sources').mkdir(exist_ok=True)
+for path in sources:
+    shutil.copy2(path, root / 'sources' / path.name)
 sha = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
 manifest = {'compilerSdk': match[1], 'output': {'file': output.name, 'sha256': sha(output)},
             'sources': [{'file': source.name, 'sha256': sha(source)} for source in sources],

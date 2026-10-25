@@ -15,11 +15,19 @@ namespace PersistentCity.Runtime
     }
 
     /// <summary>
-    /// Explicit main-thread observation of at most eight selected shops. Not scheduled or
+    /// Explicit main-thread observation of selected shops. Not scheduled or
     /// activated by the mod. Never calls registration creation, customer generation or RLO.
     /// </summary>
     public static class FoodBusinessCatalogue
     {
+        internal static string BusinessIdentity(BuildingRegistration reg)
+        {
+            string address = Uri.EscapeDataString(reg.StreetName) + ":" + reg.StreetNumber.ToString(CultureInfo.InvariantCulture);
+            string owner = reg.RentedByPlayer ? "player" : reg.businessOwnerRivalId ?? "unknown";
+            return "business:" + address + ":" + reg.creationDay.ToString(CultureInfo.InvariantCulture)
+                + ":" + Uri.EscapeDataString(reg.businessTypeName ?? "") + ":" + Uri.EscapeDataString(owner);
+        }
+
         public static FoodCatalogueObservation Read(IReadOnlyCollection<string> shopPlaceIds, IReadOnlyCollection<string> foodProductIds)
         {
             var manager = CityManager.Instance;
@@ -29,12 +37,12 @@ namespace PersistentCity.Runtime
         }
 
         internal static FoodCatalogueObservation ReadSelected(IReadOnlyCollection<string> shopPlaceIds,
-            IReadOnlyCollection<string> foodProductIds, IEnumerable<CityBuildingController> controllers)
+            IReadOnlyCollection<string> foodProductIds, IEnumerable<CityBuildingController> controllers, Func<BuildingRegistration, string>? identity = null)
         {
-            if (shopPlaceIds == null || shopPlaceIds.Count < 1 || shopPlaceIds.Count > 8
+            if (shopPlaceIds == null || shopPlaceIds.Count < 1 || shopPlaceIds.Count > 20000
                 || foodProductIds == null || foodProductIds.Count < 1 || foodProductIds.Count > 16
                 || shopPlaceIds.Any(string.IsNullOrWhiteSpace) || foodProductIds.Any(string.IsNullOrWhiteSpace))
-                throw new ArgumentException("Select one to eight shop places and one to sixteen reviewed food product IDs.");
+                throw new ArgumentException("Select one to twenty thousand shop places and one to sixteen reviewed food product IDs.");
             var save = SaveGameManager.Current;
             if (save == null)
                 throw new InvalidOperationException("No live city catalogue is available.");
@@ -53,11 +61,7 @@ namespace PersistentCity.Runtime
                 if (!selected.Contains(place) || !reg.HasEstablishedBusiness || reg.AvailableForRent
                     || string.IsNullOrWhiteSpace(reg.businessTypeName) || reg.businessTypeName == "ba:businesstype_empty") continue;
                 if (!found.Add(place)) throw new InvalidOperationException("Duplicate live shop address; observation refused.");
-                // Snapshot identity distinguishes location from the recorded business generation.
-                // A future continuous catalogue must also observe same-day replacement lifetimes.
-                string owner = reg.RentedByPlayer ? "player" : reg.businessOwnerRivalId ?? "unknown";
-                var business = new FoodBusiness { Id = "business:" + address + ":" + reg.creationDay.ToString(CultureInfo.InvariantCulture)
-                    + ":" + Uri.EscapeDataString(reg.businessTypeName) + ":" + Uri.EscapeDataString(owner),
+                var business = new FoodBusiness { Id = identity?.Invoke(reg) ?? BusinessIdentity(reg),
                     PlaceId = place, Name = reg.BusinessName, DistrictId = controller.building.Neighbourhood ?? "" };
                 if (reg.satisfaction != null)
                 {

@@ -7,8 +7,15 @@ if not __import__('re').fullmatch(r'[a-z0-9-]+',CAMPAIGN):raise ValueError('Inva
 ROOT=REPO/'build'/CAMPAIGN
 ROOT.mkdir(parents=True,exist_ok=True)
 os.environ['BA_LOCK_OWNER']='persistent-city-'+CAMPAIGN
-p=REPO.parent/'big-ambitions-driven-rides/tools/agent-tests/agent'
+p=REPO.parent/'hart-self-driving/tools/agent-tests/agent'
+if not p.is_file():p=REPO.parent/'big-ambitions-driven-rides/tools/agent-tests/agent'
 l=importlib.machinery.SourceFileLoader('curve_pc_agent',str(p));s=importlib.util.spec_from_loader(l.name,l);a=importlib.util.module_from_spec(s);l.exec_module(a)
+# Windows PowerShell otherwise emits the active OEM code page. Reports contain
+# localized names and currency; keep the transport UTF-8 without changing host settings.
+_agent_remote=a.remote
+def _utf8_remote(script,timeout=40,payload=None):
+ return _agent_remote("[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)\n"+script,timeout=timeout,payload=payload)
+a.remote=_utf8_remote
 REMOTE=r'C:\BigAmbitions-AgentTests-Rollback\FoodDemandAudit-20261022'
 if CAMPAIGN!='food-demand-audit-20261022':REMOTE='C:\\BigAmbitions-AgentTests-Rollback\\'+CAMPAIGN
 PROFILE=r'C:\Users\Peter\AppData\LocalLow\Hovgaard Games\Big Ambitions Agent Tests'

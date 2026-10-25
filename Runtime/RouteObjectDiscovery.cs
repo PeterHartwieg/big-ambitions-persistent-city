@@ -13,6 +13,7 @@ namespace PersistentCity.Runtime
     {
         private const int MaximumSteps = 2048;
         private const double BudgetMilliseconds = 1;
+        private const double PausedInitializationBudgetMilliseconds = 16;
         // Do not fragment branches merely because the last native call crosses the 1 ms
         // scheduling budget. Native testing showed that doing so triples traversal work.
         private const double SplitThresholdMilliseconds = 4;
@@ -76,10 +77,14 @@ namespace PersistentCity.Runtime
         private void SceneLoaded(Scene scene, LoadSceneMode mode) => RequestSweep();
         private void SceneUnloaded(Scene scene) => RequestSweep();
 
-        public void Step()
+        public void Step(bool preparingPausedCity = false)
         {
             if (disposed) throw new ObjectDisposedException(nameof(RouteObjectDiscovery));
             long started = Stopwatch.GetTimestamp();
+            // Before the first complete inventory, population processing is fenced.
+            // A slow rendered load should not stretch this preparation over hundreds
+            // of frames. Keep the same hard work bound and normal recurring budget.
+            double budget = preparingPausedCity && Sweeps == 0 ? PausedInitializationBudgetMilliseconds : BudgetMilliseconds;
             // A removal can be one half of a replacement. Do not expose a temporarily empty
             // gate set: fence readiness and rediscover before publishing either side.
             if (Prune(doors) | Prune(stations)) RequestSweep();
@@ -88,7 +93,7 @@ namespace PersistentCity.Runtime
             bool worked = scanning;
             for (int step = 0; scanning && step < MaximumSteps; step++)
             {
-                if (step > 0 && Elapsed(started) >= BudgetMilliseconds) break;
+                if (step > 0 && Elapsed(started) >= budget) break;
                 if (pending.Count == 0)
                 {
                     if (rootIndex < roots.Count)

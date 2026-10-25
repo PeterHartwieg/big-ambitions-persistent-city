@@ -56,7 +56,6 @@ public sealed class RhythmContinuityTests
     public void MultiDayCommuterAggregateHasBoundedEventsOneFreshQueryPerSteadyShiftAndNoMidnightPulse()
     {
         var city = Commuters();
-        foreach (var person in city.Citizens) person.NextJobChangeMinute = person.NextDepartureMinute = ResidentLifecycle.Never;
         var routes = new Routes(); var engine = new CitySimulator(city, routes);
         var eventTimes = new List<double>(); const double end = 9 * 1440;
         while (true)
@@ -65,7 +64,7 @@ public sealed class RhythmContinuityTests
             if (next > end) break;
             eventTimes.Add(next);
             Assert.Equal(1, engine.AdvanceTo(next, 1).Events);
-            Assert.True(eventTimes.Count <= 336, "A twelve-resident, five-shift run must not create polling storms.");
+            Assert.True(eventTimes.Count <= 336 + 12 * 8, "Routine work plus at most one employment check per resident/day must remain bounded.");
         }
         engine.AdvanceTo(end);
         Assert.Equal(72, routes.Queries.Count(query => query.From == "home")); // Twelve estimates plus sixty departures.

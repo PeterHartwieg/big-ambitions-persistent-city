@@ -8,9 +8,9 @@ internal static class Program
 {
     static int checks;
     static void Check(bool condition,string reason){checks++;if(!condition)throw new Exception(reason);}
-    static void Step(RouteObjectDiscovery source)
+    static void Step(RouteObjectDiscovery source,bool preparingPausedCity=false)
     {
-        int before=GameObject.ComponentReads;source.Step();
+        int before=GameObject.ComponentReads;source.Step(preparingPausedCity);
         Check(GameObject.ComponentReads-before<=4096,"unbounded branch queries in one slice");Time.unscaledTime+=.04f;
     }
     static void Sweep(RouteObjectDiscovery source)
@@ -164,6 +164,29 @@ internal static class Program
             SceneManager.RootsRead=null;Sweep(source);
             Check(source.Ready&&source.Revision==1&&additions.All(source.Doors.Contains),"finite invalidation burst did not recover atomically");
         }
-        Console.WriteLine("PASS "+checks+" discovery assertions, including bounded branch scheduling through wide/deep hierarchies, inactive additions, mutation, persistent/additive scenes and disposal.");
+        // The larger first-pass budget during a paused load cannot change the published
+        // inventory, bypass atomic readiness, or remove the hard branch-query bound.
+        SceneManager.Reset();root=new GameObject();
+        for(int i=0;i<15000;i++)
+        {
+            var go=new GameObject();go.transform.SetParent(root.transform);
+            if(i%1000==0)go.Add<FenceDoor>();
+            if(i%2300==0)go.Add<SubwayStation>();
+        }
+        using(var ordinary=new RouteObjectDiscovery())using(var paused=new RouteObjectDiscovery())
+        {
+            Sweep(ordinary);
+            for(int i=0;i<10000&&!paused.Ready;i++)
+            {
+                Check(paused.Doors.Length==0&&paused.Stations.Length==0,"partial paused inventory published");
+                Step(paused,true);
+            }
+            Check(paused.Ready&&paused.Sweeps==1,"paused preparation failed to finish");
+            Check(ordinary.Doors.OrderBy(d=>d.Id).SequenceEqual(paused.Doors.OrderBy(d=>d.Id)),"paused budget changed doors");
+            Check(ordinary.Stations.OrderBy(s=>s.Id).SequenceEqual(paused.Stations.OrderBy(s=>s.Id)),"paused budget changed stations");
+            var prior=paused.Doors;int revision=paused.Revision;
+            Sweep(paused);Check(ReferenceEquals(prior,paused.Doors)&&paused.Revision==revision,"normal sweep after paused load changed inventory");
+        }
+        Console.WriteLine("PASS "+checks+" discovery assertions, including bounded branch scheduling through wide/deep hierarchies, inactive additions, mutation, persistent/additive scenes, paused initialization and disposal.");
     }
 }

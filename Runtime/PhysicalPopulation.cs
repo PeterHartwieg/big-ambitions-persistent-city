@@ -104,7 +104,8 @@ namespace PersistentCity.Runtime
         public string Diagnostics => "physical=" + active + ", pedestrians=" + bindings.Values.Count(b => b.Person != null)
             + ", cars=" + bindings.Values.Count(b => b.Car != null) + ", acquired=" + acquired + ", released=" + released
             + ", blockedSamples=" + blockedSamples + ", unavailable=" + failedAcquisitions + ", trafficOvershoots=" + trafficOvershoots
-            + ", queueing=" + bindings.Values.Count(b => b.Queue != null) + ", queued=" + queued + ", walkersResumed=" + ambient.Resumed;
+            + ", queueing=" + bindings.Values.Count(b => b.Queue != null) + ", queued=" + queued + ", walkersResumed=" + ambient.Resumed
+            + ", carAdmission=" + vehicles.LastAdmissionResident + ":" + vehicles.LastAdmissionStage + ":" + vehicles.LastAdmissionError;
 
         // Release before an unrendered time jump so catch-up can use the same committed geometry.
         public void BeforeAdvance()

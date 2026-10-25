@@ -1,5 +1,5 @@
 {
-  "Enabled": false,
+  "Enabled": true,
   "GameClockFactor": 0.3333333333333333,
   "PhysicalEnabled": true,
   "MaximumPedestrians": 48,

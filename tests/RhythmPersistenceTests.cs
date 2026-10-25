@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System;
 using System.Linq;
 using Newtonsoft.Json.Linq;
@@ -25,8 +26,6 @@ public sealed class RhythmPersistenceTests
             person.PlaceId = person.HomeId = "home"; person.DayPlaceId = "work";
             person.Phase = CitizenPhase.AtPlace; person.Activity = Activity.Home;
             person.NextEventMinute = 170; person.ActivityUntilMinute = 200;
-            person.NextJobChangeMinute = ResidentLifecycle.Never;
-            person.NextDepartureMinute = 9000;
             person.CommutePreparation = Attempt();
         }
         var travelling = city.Citizens[0];
@@ -61,7 +60,7 @@ public sealed class RhythmPersistenceTests
     {
         var city = City(); foreach (var person in city.Citizens) person.CommutePreparation.TravelMinutes = travel;
         string source = SaveCodec.Write(city); var result = SaveCodec.Read(source);
-        Assert.Equal(SaveReadStatus.Loaded, result.Status); Assert.False(result.Migrated); Assert.Equal(CityState.CurrentSchema, result.SourceSchema);
+        Assert.Equal(SaveReadStatus.Loaded, result.Status); Assert.Equal(CityState.CurrentSchema, result.SourceSchema);
         Assert.Equal(source, SaveCodec.Write(result.State!));
         foreach (var person in result.State!.Citizens)
         {
@@ -149,14 +148,13 @@ public sealed class RhythmPersistenceTests
 
     [Theory]
     [InlineData(1)] [InlineData(2)] [InlineData(3)] [InlineData(4)] [InlineData(5)]
-    public void LegacyMigrationAddsEmptyPreparationAndPreservesOriginalJourneyWaitIdentityAndDates(int schema)
+    public void OldRhythmPayloadsAreRefusedRatherThanInventingPreparation(int schema)
     {
-        var city = City(); var wire = Legacy(city, schema); var read = SaveCodec.Read(wire.ToString());
-        Assert.Equal(SaveReadStatus.Loaded, read.Status); Assert.True(read.Migrated); Assert.Equal(schema, read.SourceSchema);
-        Assert.Equal(CityState.CurrentSchema, read.State!.Schema); Assert.All(read.State.Citizens, person => Empty(person.CommutePreparation));
-        Assert.True(JToken.DeepEquals(wire, Legacy(read.State, schema)));
-        Assert.Equal(schema < 5 ? 0 : city.TravelTimingVersion, read.State.TravelTimingVersion);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(read.State)).Status);
+        var city = City(); string payload = Legacy(city, schema).ToString();
+        var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload };
+        var read = SaveStore.ReadFrom(data, city.PopulationKey);
+        Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
+        Assert.False(SaveStore.WriteTo(data, city).Success); Assert.Equal(payload, data[SaveStore.StateKey]);
     }
 
     [Theory]

@@ -66,16 +66,41 @@ namespace PersistentCity.Runtime
 
         // PedestrianPool's normal, non-animation-override walking speed in the reviewed game build.
         public const double WalkingMetresPerSecond = 2;
+        internal static double InitialClockRate(double configuredFactor)
+        {
+            if (!Position.Finite(configuredFactor) || configuredFactor < .1 || configuredFactor > 1)
+                throw new ArgumentOutOfRangeException(nameof(configuredFactor));
+            return NativeClockRate(configuredFactor);
+        }
+        // Called on detached startup state, before this city's clock policy is active. A loaded
+        // supported city must not be retimed against the temporary unmodified native clock.
+        internal static void PrepareInitialTiming(CityState state, bool newPopulation, double initialRate)
+        {
+            if (newPopulation) TravelTiming.Apply(state, WalkingMetresPerSecond, initialRate);
+            else
+            {
+                // Runtime saves always include household balances, even with no managed shops.
+                // Food-less pure population fixtures remain valid in the diagnostic codec.
+                if (state.Food == null)
+                    throw new InvalidOperationException("Missing saved household economy; original payload retained.");
+                if (state.TravelTimingVersion != 1)
+                    throw new InvalidOperationException("Unsupported saved travel timing; original payload retained.");
+            }
+        }
+        private static double NativeClockRate(double factor)
+        {
+            if (Multiplier == null || Multiplier.FieldType != typeof(float)) throw new MissingFieldException("GameManager.MinutesMultiplier");
+            double rate = (float)Multiplier.GetValue(null)! * factor;
+            if (!Position.Finite(rate) || rate < .01 || rate > 1000) throw new InvalidOperationException("Unsupported native clock rate.");
+            return rate;
+        }
         public static double ClockRate
         {
             get
             {
                 if (LastError.Length != 0) throw new InvalidOperationException(LastError);
                 if (tracker.Rate.HasValue) return tracker.Rate.Value;
-                if (Multiplier == null || Multiplier.FieldType != typeof(float)) throw new MissingFieldException("GameManager.MinutesMultiplier");
-                double rate = (float)Multiplier.GetValue(null)! * (NativeCityClock.Active ? NativeCityClock.Factor : 1);
-                if (!Position.Finite(rate) || rate < .01 || rate > 1000) throw new InvalidOperationException("Unsupported native clock rate.");
-                return rate;
+                return NativeClockRate(NativeCityClock.Active ? NativeCityClock.Factor : 1);
             }
         }
         public static bool HiddenTravel => PhysicalTrafficHooks.CurrentFastForward || Time.timeScale > 1 || LoadScene.isLoading || BuildingManager.IsInsideBuilding || UndergroundParkingManager.IsInsideParking

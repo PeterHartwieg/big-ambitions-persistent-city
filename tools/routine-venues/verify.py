@@ -24,14 +24,33 @@ for label in ['baseline','candidate']:
   'journeys':end['routines']['journeys']-start['routines']['journeys'],'missed':len(missed),
   'missReasons':dict(collections.Counter(d['Reason'] for d in missed)),
   'missActivities':dict(collections.Counter(activities[d['Activity']] for d in missed)),
+  'carriedInLateArrivals':sum(d['Reason']=='arrival-after-deadline' and d['Deadline']<=start['minute'] for d in missed),
+  'newOptionalArrivalMisses':sum(d['Activity'] in [2,3] and d['Reason'] in ['arrival-after-deadline','arrival-no-opening'] and d['Deadline']>start['minute'] for d in missed),
   'diagnostics':dict(collections.Counter(d['Outcome']+':'+d['Reason'] for d in rows)),
   'simulation':end['clock'],'checks':checks}
 a,b=read('baseline-start'),read('candidate-start')
 pa,pb=read('baseline-audit-start-population'),read('candidate-audit-start-population')
 assert a['minute']==b['minute'] and a['nativeItems']==b['nativeItems'] and a['nativeShifts']==b['nativeShifts'] and a['scope']==b['scope']
-assert pa==pb,'The starting population/checkpoint differs'
+# Loading the old normal-clock checkpoint retimes cached commutes using live
+# native navigation. Record that nuisance variation instead of claiming bitwise
+# identical estimates; all other persisted fields must still match exactly.
+assert {k:v for k,v in pa.items() if k!='Citizens'}=={k:v for k,v in pb.items() if k!='Citizens'}
+assert len(pa['Citizens'])==len(pb['Citizens'])
+commute_changes=[]
+for x,y in zip(pa['Citizens'],pb['Citizens']):
+ assert {k:v for k,v in x.items() if k not in ['CommutePreparation','NextEventMinute']}=={k:v for k,v in y.items() if k not in ['CommutePreparation','NextEventMinute']}
+ cx,cy=x['CommutePreparation'],y['CommutePreparation']
+ assert {k:v for k,v in cx.items() if k!='TravelMinutes'}=={k:v for k,v in cy.items() if k!='TravelMinutes'}
+ travel_delta=cy['TravelMinutes']-cx['TravelMinutes'];departure_delta=y['NextEventMinute']-x['NextEventMinute']
+ if departure_delta:assert travel_delta and abs(departure_delta+travel_delta)<.00001
+ if travel_delta or departure_delta:commute_changes.append({'citizen':x['Identity']['Id'],'travelDeltaMinutes':travel_delta,'departureDeltaMinutes':departure_delta})
+results['startingCommuteVariation']={'changedEstimates':len(commute_changes),
+ 'changesAboveOneMillisecond':sum(abs(r['travelDeltaMinutes'])>1/60000 for r in commute_changes),
+ 'maximumAbsoluteGameMinutes':max([abs(r['travelDeltaMinutes']) for r in commute_changes] or [0]),
+ 'changes':commute_changes,'allOtherPopulationFieldsIdentical':True,
+ 'note':'Same saved checkpoint; cached commutes retime from the old clock at load against live native routes. This limits causal precision of the native comparison.'}
 reload=read('settled-reload-checks');assert all(reload.values())
-results['sameCheckpointAndInputs']=True;results['reloadAndDuplicateProtection']=reload
+results['sameCheckpointStockStaffAndResidentAssignments']=True;results['reloadAndDuplicateProtection']=reload
 results['scope']='Two full PC game days from one shared checkpoint at one-third calendar speed. Physical population disabled; diagnostic work included, not a rendered FPS clearance. Optional shopping/leisure visits still do not directly purchase.'
 (root/'comparison.json').write_text(json.dumps(results,indent=2)+'\n')
 print(json.dumps(results,indent=2))

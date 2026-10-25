@@ -12,8 +12,8 @@ using PersistentCity.Persistence;
 using UnityEngine;
 using Stopwatch = System.Diagnostics.Stopwatch;
 
-[assembly: AssemblyVersion("0.6.2.0")]
-[assembly: AssemblyInformationalVersion("0.6.2-citywide-traffic-prototype")]
+[assembly: AssemblyVersion("0.10.0.0")]
+[assembly: AssemblyInformationalVersion("0.10.0-persistent-city-candidate")]
 [assembly: RegisterModClass(typeof(PersistentCity.Runtime.PersistentCityMod))]
 
 namespace PersistentCity.Runtime
@@ -52,19 +52,21 @@ namespace PersistentCity.Runtime
 
     internal sealed class PrototypeSettings
     {
-        public bool Enabled { get; set; }
-        public double GameClockFactor { get; set; } = 1;
+        // Optional developer overrides; normal installation needs no configuration.
+        public bool Enabled { get; set; } = true;
+        public double GameClockFactor { get; set; } = CityBalance.GameClockFactor;
         public bool PhysicalEnabled { get; set; } = true;
         public int MaximumPedestrians { get; set; } = 48;
         public int MaximumVehicles { get; set; } = 24;
         public double PhysicalRadiusMetres { get; set; } = 120;
     }
 
-    public sealed class PopulationRuntime : MonoBehaviour
+    public sealed partial class PopulationRuntime : MonoBehaviour
     {
         private const int MaxAdvanceEventsPerFrame = 128;
         private const int MaxCitizenEventsPerFrame = 16;
         private const double AdvanceBudgetMilliseconds = 2;
+        private const double HiddenSkipBudgetMilliseconds = 16;
         private static readonly double MillisecondsPerTimestamp = 1000.0 / Stopwatch.Frequency;
         private readonly RloIdentityAdapter rlo = new RloIdentityAdapter();
         private IModLogger? log;
@@ -102,22 +104,32 @@ namespace PersistentCity.Runtime
         private long closureFrames;
         private int maxAdvanceEvents;
 
-        /// <summary>Explicit activation for a small selected retail slice; scope persists in this city.
-        /// No default configuration or ordinary save is automatically opted in.</summary>
+        /// <summary>Legacy diagnostic fixture helper for a small selected retail slice.
+        /// Normal initialization creates food demand and discovers eligible shops automatically.</summary>
         public void StartFoodRoutines(IReadOnlyCollection<string> shops)
         {
             if (simulation == null || routes == null || !routes.ReadyForPopulation || failed
                 || !ReferenceEquals(saveIdentity, SaveGameManager.Current) || simulation.State.Food != null)
                 throw new InvalidOperationException("A ready city without an existing food scope is required.");
-            var catalogue = FoodBusinessCatalogue.Read(shops, new[] { NativeFoodMarket.Product });
+            if (shops == null || shops.Count < 1 || shops.Count > 8 || shops.Distinct(StringComparer.Ordinal).Count() != shops.Count
+                || shops.Any(id => !simulation.State.Places.Any(p => p.Id == id && p.Kind == PlaceKind.Shop)))
+                throw new InvalidOperationException("Select one to eight established shops recognized by this city's population.");
+            var catalogue = FoodBusinessCatalogue.Read(shops, FoodProducts.Ids.ToArray());
             if (catalogue.Businesses.Count != shops.Count) throw new InvalidOperationException("Food scope is incomplete.");
-            var state = new FoodCommerceState { Shops = catalogue.Businesses.Select(b => new FoodScope {
-                PlaceId = b.PlaceId, BusinessId = b.Id, ProductId = NativeFoodMarket.Product }).ToList(),
+            var state = new FoodCommerceState { MealRhythmVersion = MealRhythm.PolicyVersion, Shops = catalogue.Businesses.Select(b => new FoodScope {
+                PlaceId = b.PlaceId, BusinessId = b.Id, ProductId = b.Offers.First().ProductId,
+                AdditionalProductIds = b.Offers.Skip(1).Select(o => o.ProductId).ToList() }).ToList(),
                 Districts = FoodHouseholdCatalogue.Read(simulation.State.Places.Where(p => p.Kind == PlaceKind.Home)
                     .Select(p => p.District).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct(StringComparer.Ordinal).ToArray()).ToList() };
-            var adapter = new NativeFoodMarket(state);
+            var adapter = new NativeFoodMarket(state, simulation.State.Places, enrolling: true);
             try { simulation.State.Food = state; simulation.AttachFoodMarket(adapter); foodMarket = adapter; }
             catch { simulation.State.Food = null; adapter.Dispose(); throw; }
+        }
+        public void EnableHouseholdFinances()
+        {
+            if (simulation == null || failed || !ReferenceEquals(saveIdentity, SaveGameManager.Current))
+                throw new InvalidOperationException("A ready current city is required.");
+            simulation.EnableHouseholdFinances();
         }
         public object FoodDiagnostics => new { active = foodMarket != null, hourlyCustomerBatchesSuppressed = foodMarket?.SuppressedBatches ?? 0,
             nativeDrawsSuppressed = foodMarket?.SuppressedDraws ?? 0, nativePurchasesThisSession = foodMarket?.NativePurchases ?? 0 };
@@ -165,6 +177,9 @@ namespace PersistentCity.Runtime
             log = context.Logger;
             try
             {
+                NativeFoodOwnership.Install();
+                NativeFoodOwnership.EnsureSave();
+                if (NativeFoodOwnership.Error.Length > 0) throw new InvalidDataException(NativeFoodOwnership.Error);
                 string path = Path.Combine(context.ModRootPath, "persistent-city.json");
                 if (File.Exists(path)) settings = JsonConvert.DeserializeObject<PrototypeSettings>(File.ReadAllText(path)) ?? throw new InvalidDataException("Configuration is null.");
                 if (!Position.Finite(settings.GameClockFactor) || settings.GameClockFactor < .1 || settings.GameClockFactor > 1)
@@ -174,7 +189,7 @@ namespace PersistentCity.Runtime
                     throw new InvalidDataException("Physical limits must be 1–256 pedestrians, 1–64 vehicles and a 30–300 metre radius.");
                 if (!settings.Enabled)
                 {
-                    Say("Persistent City is off. Set Enabled=true in persistent-city.json and reload the city to test it.");
+                    Say("Persistent City is disabled by a developer configuration override. Remove the override and reload the city to start it.");
                     enabled = false;
                 }
             }
@@ -205,7 +220,8 @@ namespace PersistentCity.Runtime
                     TryStart();
                     return;
                 }
-                routeObjects?.Step();
+                foodMarket?.RefreshDiscovery();
+                routeObjects?.Step(preparingPausedCity: Time.timeScale == 0);
                 if (Time.unscaledTime >= nextDependencyCheck)
                 {
                     long checkStarted = Stopwatch.GetTimestamp();
@@ -235,6 +251,7 @@ namespace PersistentCity.Runtime
                     Fail("Game clock moved behind the population snapshot. Reload the matching save; no state was overwritten.");
                     return;
                 }
+                foodMarket?.RefreshRoutineHours(target);
                 // Build/refresh native road data in bounded slices before advancing any event.
                 // Mode availability must not depend on which citizen happened to request a route
                 // while the graph was half prepared, or on the number of rendered frames.
@@ -245,7 +262,9 @@ namespace PersistentCity.Runtime
                     physical?.Dispose(); physical = null;
                     simulation.State.PrepareForSave();
                     TravelTiming.Apply(simulation.State, NativeTravelPace.WalkingMetresPerSecond, clockRate);
-                    routes = new MultimodalRoutes(simulation.State.Places, NativeTravelPace.WalkingMetresPerSecond / clockRate, clockRate, dependency, routeObjects);
+                    var retimedRoutes = new MultimodalRoutes(simulation.State.Places, NativeTravelPace.WalkingMetresPerSecond / clockRate, clockRate, dependency, routeObjects);
+                    if (routes != null) retimedRoutes.ReuseRoadSceneForRetiming(routes);
+                    routes = retimedRoutes;
                     seenRoadSnapshots = 0; clockRetimingRoutes = true;
                     simulation = simulation.RebuildRoutes(routes);
                 }
@@ -334,6 +353,12 @@ namespace PersistentCity.Runtime
             long started = Stopwatch.GetTimestamp();
             int events = 0, citizenEvents = 0;
             double elapsed = 0;
+            // The time machine already hides physical play and gates native accounting.
+            // Use a larger, still bounded batch there so waiting does not scale with
+            // the normal-play 16-resident limit. Ordinary play keeps its existing budget.
+            bool hiddenSkip = NativeCityClock.ProcessingEconomySkip;
+            int citizenLimit = hiddenSkip ? MaxAdvanceEventsPerFrame : MaxCitizenEventsPerFrame;
+            double timeBudget = hiddenSkip ? HiddenSkipBudgetMilliseconds : AdvanceBudgetMilliseconds;
             // Always allow the first event. A native path/event cannot be preempted, so
             // the soft time budget can be exceeded by that final event's duration.
             try
@@ -347,7 +372,7 @@ namespace PersistentCity.Runtime
                     events += result.Events;
                     citizenEvents += result.Events - result.TrafficEvents;
                     elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
-                    if (result.CaughtUp || citizenEvents >= MaxCitizenEventsPerFrame || elapsed >= AdvanceBudgetMilliseconds) break;
+                    if (result.CaughtUp || citizenEvents >= citizenLimit || elapsed >= timeBudget) break;
                 }
             }
             finally { active.SynchronizeSnapshot(); }
@@ -367,8 +392,9 @@ namespace PersistentCity.Runtime
                 // A failed view adapter must not stop the valid background population. If cleanup
                 // itself fails, propagate to the outer stop path so uncertain state is not saved.
                 physicalFailed = true;
-                foodMarket?.Dispose(); foodMarket = null;
-            try { physical?.Dispose(); }
+                // Commerce remains attached to the background population. Only a full
+                // runtime stop may release its native price and ownership hooks.
+                try { physical?.Dispose(); }
                 finally { physical = null; }
                 log?.Warn("Physical population stopped; ordinary spawning restored and background simulation continues: " + error);
             }
@@ -411,6 +437,8 @@ namespace PersistentCity.Runtime
             }
             var save = SaveGameManager.Current;
             if (save == null || save.modData == null) return;
+            NativeFoodOwnership.EnsureSave();
+            if (NativeFoodOwnership.Error.Length > 0) { Fail(NativeFoodOwnership.Error); return; }
             // Snapshot all Unity/RLO input on the main thread. Large population creation and
             // strict save decoding are pure work; never hold up a frame while creating 25,000 people.
             initializingHadPayload = save.modData.TryGetValue(SaveStore.StateKey, out initializingPayload);
@@ -419,7 +447,7 @@ namespace PersistentCity.Runtime
             var places = GamePlaces.Read();
             log?.Info(OutdoorPlaces.LastDiscoverySummary);
             double minute = Now();
-            double clockRate = NativeTravelPace.ClockRate;
+            double clockRate = NativeTravelPace.InitialClockRate(settings.GameClockFactor);
             initializingSave = save;
             initialization = Task.Run(() =>
             {
@@ -432,14 +460,9 @@ namespace PersistentCity.Runtime
                 {
                     state = stored.State;
                     if (!source.MatchesPopulation(state)) throw new InvalidDataException("Snapshot donor identities differ from current RLO profiles.");
-                    if (stored.Migrated && stored.SourceSchema < 4)
-                    {
-                        CatalogueMigration.Enrich(state, places);
-                        Population.ExpandToHousing(state);
-                    }
                 }
                 else throw new InvalidDataException("Population save refused: " + stored.Error);
-                TravelTiming.Apply(state, NativeTravelPace.WalkingMetresPerSecond, clockRate);
+                NativeTravelPace.PrepareInitialTiming(state, stored.Status == SaveReadStatus.Missing, clockRate);
                 SaveCodec.Write(state); // Validate completely before making it active or touching modData.
                 return new PreparedCity { State = state, Saves = session };
             });
@@ -478,9 +501,17 @@ namespace PersistentCity.Runtime
             routeObjects = new RouteObjectDiscovery();
             routes = new MultimodalRoutes(state.Places, NativeTravelPace.WalkingMetresPerSecond / state.TravelClockRate, state.TravelClockRate, dependency, routeObjects);
             simulation = new CitySimulator(state, routes);
-            if (state.Food != null) { foodMarket = new NativeFoodMarket(state.Food); simulation.AttachFoodMarket(foodMarket); }
+            if (state.Food == null)
+                state.Food = new FoodCommerceState { MealRhythmVersion = MealRhythm.PolicyVersion, HouseholdFinanceVersion = HouseholdFinance.PolicyVersion,
+                    RepresentationFactor = CityBalance.ConsumerRepresentationFactor,
+                    Districts = FoodHouseholdCatalogue.Read(state.Places.Where(p => p.Kind == PlaceKind.Home)
+                        .Select(p => p.District).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct(StringComparer.Ordinal).ToArray()).ToList() };
+            if (state.Food.HouseholdFinanceVersion != HouseholdFinance.PolicyVersion || state.Food.MealRhythmVersion != MealRhythm.PolicyVersion)
+                throw new InvalidDataException("Unsupported experimental food policy; preserve this city and use a fresh development baseline.");
+            foodMarket = new NativeFoodMarket(state.Food, state.Places);
+            simulation.AttachFoodMarket(foodMarket);
             saveIdentity = save;
-            NativeCityClock.Start(save, settings.GameClockFactor);
+            NativeCityClock.Start(save, settings.GameClockFactor, () => simulation?.IsCaughtUpTo(Now()) == true, () => simulation?.State.Food != null, Now);
             NativeTravelPace.ResetReading();
             log?.Info("City clock factor=" + settings.GameClockFactor.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
                 + "; Driven Rides coordinated=" + NativeCityClock.CoordinatesDrivenRides + ". Movement speed unchanged.");
@@ -492,7 +523,7 @@ namespace PersistentCity.Runtime
             nextStationScan = float.PositiveInfinity;
             seenRoadSnapshots = 0; clockRetimingRoutes = false;
             Say("Persistent population active: " + state.Citizens.Count + " residents, " + state.Places.Count
-                + " places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization.");
+                + " places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.");
         }
 
         private static double Now()
@@ -510,6 +541,7 @@ namespace PersistentCity.Runtime
                 if (!source.MatchesPopulation(simulation.State))
                 { Fail("RLO changed before saving; original population payload retained."); return; }
                 RunPhysical(() => physical?.ObserveForSave());
+                foodMarket?.RefreshKnownOwnership();
                 // A partially caught-up snapshot is valid: replay continues from its recorded minute after load.
                 var result = (saveSession ?? throw new InvalidOperationException("Save session is missing."))
                     .WriteTo(SaveGameManager.Current.modData, simulation.State);
@@ -528,9 +560,9 @@ namespace PersistentCity.Runtime
         private void Fail(string message)
         {
             failed = true;
+            status = message;
             log?.Warn("Persistent City stopped: " + message);
             Detach();
-            enabled = false;
         }
 
         private void Detach()

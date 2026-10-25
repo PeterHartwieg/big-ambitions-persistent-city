@@ -7,7 +7,7 @@ namespace PersistentCity.Core
 {
     public enum FoodIntentStatus { Planned, Travelling, Fulfilled, Unmet, Unresolved, WaitingForService, DeclinedPurchase }
     public enum FoodExperimentMode { FixedDailyReference, ObservedRoutines }
-    public enum FoodOutsideOption { None, HomePreparation, PackedMeal }
+    public enum FoodOutsideOption { None, HomePreparation, PackedMeal, FundedHouseholdFood }
 
     /// <summary>A detached input to a counterfactual experiment, never native inventory.</summary>
     public sealed class FoodBusiness
@@ -21,6 +21,7 @@ namespace PersistentCity.Core
         // null is unknown; zero is unavailable. Used only in ObservedRoutines mode.
         public int? MealsPerHour { get; set; }
         public string ServiceEvidence { get; set; } = "Service availability and throughput unknown";
+        public string ServiceUnavailableReason { get; set; } = "";
         public double NextServiceMinute { get; set; }
         public string DistrictId { get; set; } = "";
         public int? CustomerServicePercent { get; set; }
@@ -262,17 +263,29 @@ namespace PersistentCity.Core
         /// Persisted/untrusted experiment inputs still use the validating constructor.</summary>
         public static void ChooseObserved(FoodConsumer person, IReadOnlyList<FoodBusiness> shops,
             IReadOnlyList<FoodTravelQuote> routes, FoodIntent intent, double minute,
-            IReadOnlyDictionary<string, string>? refusals = null)
+            IReadOnlyDictionary<string, string>? refusals = null, MealKind mealKind = MealKind.Legacy)
         {
             if (intent.Status != FoodIntentStatus.Planned || intent.Choices.Count != 0 || shops.Count > 8)
                 throw new ArgumentException("A fresh intention and bounded live market are required.");
             Choose(intent, person, shops, business => routes.FirstOrDefault(q => q.BusinessId == business.Id
-                && q.IntentId == intent.Id && q.ConsumerId == person.Id), minute, true, refusals);
+                && q.IntentId == intent.Id && q.ConsumerId == person.Id), minute, true, refusals, mealKind);
+        }
+
+        // Only reject facts that already prevent choice under this current-supply model.
+        // Unknown supply stays unknown; no route or future staffing is invented.
+        public static string? KnownUnavailable(FoodBusiness business, FoodConsumer consumer, double now, double deadline)
+        {
+            if (!DailyRoutine.NextOpen(Place(business), now, deadline).HasValue) return "Closed or too late";
+            if (business.MealsPerHour == 0) return business.ServiceUnavailableReason.Length == 0
+                ? "Service unavailable" : business.ServiceUnavailableReason;
+            if (business.Offers.Count > 0 && business.Offers.All(o => o.Units == 0)) return "Out of stock";
+            if (business.Offers.Count > 0 && business.Offers.All(o => o.PriceCents > consumer.DailyAllowanceCents)) return "Over allowance";
+            return null;
         }
 
         private static void Choose(FoodIntent intent, FoodConsumer person, IReadOnlyList<FoodBusiness> shops,
             Func<FoodBusiness, FoodTravelQuote?> routeFor, double minute, bool routine,
-            IReadOnlyDictionary<string, string>? refusals = null)
+            IReadOnlyDictionary<string, string>? refusals = null, MealKind mealKind = MealKind.Legacy)
         {
             if (routine && intent.OriginPlaceId.Length == 0)
             { Miss(intent, intent.ContextEvidence, true); return; }
@@ -286,7 +299,9 @@ namespace PersistentCity.Core
                     DistrictAppealAdjustmentCents = offer.DistrictDemandPercent.HasValue
                         ? (50 - offer.DistrictDemandPercent.Value) / 100.0 * person.DistrictAppealValueCents : 0 };
                 var route = routeFor(business);
-                if (refusals != null && refusals.TryGetValue(business.Id, out var refusal)) choice.Reason = refusal;
+                var knownUnavailable = routine ? KnownUnavailable(business, person, minute, intent.Deadline) : null;
+                if (knownUnavailable != null) choice.Reason = knownUnavailable;
+                else if (refusals != null && refusals.TryGetValue(business.Id, out var refusal)) choice.Reason = refusal;
                 else if (route == null) choice.Reason = "Route unknown";
                 else if (!route.Minutes.HasValue) choice.Reason = "Unreachable";
                 else if (routine && !route.ReturnMinutes.HasValue) choice.Reason = "Return route unavailable";
@@ -315,7 +330,8 @@ namespace PersistentCity.Core
                         { choice.Reason = "Service and return do not fit available time"; intent.Choices.Add(choice); continue; }
                         choice.ScoreCents = offer.PriceCents + time * person.ValueOfTimeCentsPerMinute * intent.TimeCostMultiplier
                             - (offer.ProductId == person.PreferredProductId ? person.PreferenceBonusCents : 0)
-                            + choice.ServiceQualityAdjustmentCents + choice.DistrictAppealAdjustmentCents;
+                            + choice.ServiceQualityAdjustmentCents + choice.DistrictAppealAdjustmentCents
+                            + MealRhythm.ProductPenalty(mealKind, offer.ProductId);
                         choice.Reason = "Eligible";
                     }
                 }
@@ -403,8 +419,10 @@ namespace PersistentCity.Core
         private static void Decline(FoodIntent intent)
         {
             intent.Status = FoodIntentStatus.DeclinedPurchase;
-            intent.Outcome = "Prefers " + (intent.OutsideOption == FoodOutsideOption.HomePreparation ? "home preparation" : "a planned packed meal")
-                + " to the observed purchase options; no shop spend or stock consumed; household food/ingredients/cost not verified";
+            intent.Outcome = "Prefers " + (intent.OutsideOption == FoodOutsideOption.HomePreparation ? "home preparation"
+                : intent.OutsideOption == FoodOutsideOption.FundedHouseholdFood ? "the paid household food basket" : "a planned packed meal")
+                + " to the observed purchase options; no shop spend or stock consumed; "
+                + (intent.OutsideOption == FoodOutsideOption.FundedHouseholdFood ? "household food basket is funded" : "household food/ingredients/cost not verified");
         }
 
         private static Place Place(FoodBusiness business) => new Place
@@ -500,7 +518,8 @@ namespace PersistentCity.Core
                         : routine && intent.OriginPlaceId!.Length > 0 && intent.OutsideOptionScoreCents >= 0 && intent.OutsideOptionScoreCents <= 1000000
                             && (intent.OutsideOption == FoodOutsideOption.HomePreparation
                                 ? intent.OriginActivity == Activity.Home && intent.OriginPlaceId == person.OriginPlaceId
-                                : intent.OriginActivity == Activity.Work || intent.OriginActivity == Activity.Study)), "invalid outside option.");
+                                : intent.OutsideOption == FoodOutsideOption.FundedHouseholdFood
+                                    || intent.OriginActivity == Activity.Work || intent.OriginActivity == Activity.Study)), "invalid outside option.");
                 Require(intent.Status != FoodIntentStatus.DeclinedPurchase || intent.OutsideOption != FoodOutsideOption.None
                     && intent.BusinessId == "" && intent.ProductId == "" && !intent.ArrivalMinute.HasValue
                     && !intent.ServiceEndsAt.HasValue && !intent.ReturnBy.HasValue, "declined purchase committed a trip or service.");

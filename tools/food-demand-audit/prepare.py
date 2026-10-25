@@ -2,7 +2,7 @@ from pc import *
 import shutil, zipfile
 assert json.loads((ROOT/'baseline.json').read_text())['copyVerified']
 script=r'''
-$m='C:\BigAmbitions-AgentTests\Big Ambitions Agent Tests_Data\Managed';$names=@('mscorlib','System','System.Core','netstandard','BigAmbitions','BigAmbitions.ModAPI','BigAmbitions.AI','BigAmbitions.Items','BigAmbitions.Characters','BigAmbitions.Neighborhoods','HGExtensions','HGPlugins','DayNightCycle','ExternalPlugins','UnityEngine.CoreModule','UnityEngine.AnimationModule','UnityEngine.PhysicsModule','UnityEngine.AIModule','Newtonsoft.Json');$refs='BACKUP\refs';New-Item -ItemType Directory $refs|Out-Null
+$m='C:\BigAmbitions-AgentTests\Big Ambitions Agent Tests_Data\Managed';$names=@('mscorlib','System','System.Core','netstandard','BigAmbitions','BigAmbitions.ModAPI','BigAmbitions.AI','BigAmbitions.Items','BigAmbitions.Characters','BigAmbitions.Neighborhoods','HGExtensions','HGPlugins','DayNightCycle','ExternalPlugins','UnityEngine.CoreModule','UnityEngine.IMGUIModule','UnityEngine.TextRenderingModule','UnityEngine.ScreenCaptureModule','UnityEngine.AnimationModule','UnityEngine.PhysicsModule','UnityEngine.AIModule','Newtonsoft.Json');$refs='BACKUP\refs';New-Item -ItemType Directory $refs|Out-Null
 foreach($n in $names){Copy-Item -LiteralPath (Join-Path $m ($n+'.dll')) -Destination $refs}
 Compress-Archive -Path (Join-Path $refs '*') -DestinationPath 'BACKUP\refs.zip'
 Get-ChildItem $refs -File|ForEach-Object{@{name=$_.Name;sha256=(Get-FileHash -Algorithm SHA256 $_.FullName).Hash.ToLowerInvariant()}}|ConvertTo-Json

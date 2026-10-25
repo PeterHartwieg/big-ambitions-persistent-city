@@ -104,22 +104,7 @@ namespace PersistentCity.Core
             && a.District == b.District && a.Age == b.Age && a.Female == b.Female
             && a.Persona == b.Persona && a.AppearanceSeed == b.AppearanceSeed;
 
-        // Called only after strict v1 validation. Preserve every physical event, route and
-        // assignment; expansion starts from the recorded simulation clock, not game time.
-        public static void InitializeExpansion(CityState city)
-        {
-            city.SourceIdentities = city.Citizens.OrderBy(c => c.Identity.Id, StringComparer.Ordinal).Select(c => CloneIdentity(c.Identity)).ToList();
-            city.RecentDepartures = new List<DepartureRecord>();
-            city.NextResidentSequence = 1;
-            city.DepartedCount = 0;
-            city.PopulationTarget = city.Citizens.Count;
-            city.InitialImportedResidents = city.Citizens.Count;
-            foreach (var person in city.Citizens) ResidentLifecycle.Initialize(person, city.Seed, city.Minute);
-            city.Schema = CityState.CurrentSchema;
-        }
-
-        internal static CitizenState CreateResident(CityState city, CitizenIdentity identity, double minute, Dictionary<string, int> used,
-            bool established = true)
+        internal static CitizenState CreateResident(CityState city, CitizenIdentity identity, double minute, Dictionary<string, int> used)
         {
             var home = city.Places.Where(p => p.Kind == PlaceKind.Home && Used(used, p.Id) < p.Capacity)
                 .OrderBy(p => p.District == identity.District ? 0 : 1)
@@ -144,7 +129,7 @@ namespace PersistentCity.Core
                         * (0.75 + StableRandom.Hash(identity.Id + ":fare", city.Seed) % 51 / 100.0)
                 }
             };
-            ResidentLifecycle.Initialize(person, city.Seed, minute, established);
+            ResidentLifecycle.Initialize(person, city.Seed, minute);
             return person;
         }
 

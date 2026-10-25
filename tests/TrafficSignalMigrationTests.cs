@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Text.Json;
 using PersistentCity.Core;
 using Xunit;
@@ -34,24 +33,12 @@ public sealed class TrafficSignalMigrationTests
     }
 
     [Theory] [InlineData(false)] [InlineData(true)]
-    public void ValidOldTerminalAndHandoffSchedulesMigrateWithoutChangingOwnedState(bool handoff)
+    public void OldTerminalAndHandoffSchedulesAreRefusedWithoutChangingOwnedState(bool handoff)
     {
         var old = Legacy(handoff); string original = JsonSerializer.Serialize(old);
-        var first = TrafficKernel.Restore(old, false); var second = TrafficKernel.Restore(old, false);
+        Assert.Throws<ArgumentException>(() => TrafficKernel.Restore(old, false));
+        Assert.Throws<ArgumentException>(() => TrafficKernel.ValidateState(old));
         Assert.Equal(original, JsonSerializer.Serialize(old));
-        Assert.Equal(JsonSerializer.Serialize(first.Capture()), JsonSerializer.Serialize(second.Capture()));
-        var migrated = first.Capture(); Assert.Equal(2, migrated.Schema);
-        Assert.Equal(JsonSerializer.Serialize(old.Vehicles), JsonSerializer.Serialize(migrated.Vehicles));
-        Assert.Equal(JsonSerializer.Serialize(old.Links), JsonSerializer.Serialize(migrated.Links));
-        Assert.True(first.NextEventMinute < old.Events.Single().At);
-        TrafficKernel.ValidateState(migrated);
-        double green = first.NextEventMinute;
-        first.AdvanceTo(Math.BitDecrement(green), 100);
-        Assert.Equal(0, first.GetPermission("car").RouteIndex);
-        Assert.False(first.GetPermission("car").IsCompleted);
-        first.AdvanceTo(green + (handoff ? 1 : 0), 100);
-        Assert.True(first.GetPermission("car").IsCompleted);
-        TrafficKernel.ValidateState(first.Capture());
     }
 
     [Theory] [InlineData("missing")] [InlineData("late")] [InlineData("readiness")] [InlineData("future")]
@@ -68,13 +55,13 @@ public sealed class TrafficSignalMigrationTests
     }
 
     [Fact]
-    public void CurrentSchemaDoesNotAcceptAnOldLateEventAndMigrationOverflowIsAtomic()
+    public void CurrentSchemaDoesNotAcceptAnOldLateEventAndOldOverflowStateIsUntouched()
     {
         var state = Legacy(); state.Schema = 2;
         Assert.Throws<ArgumentException>(() => TrafficKernel.Restore(state, false));
         state.Schema = 1; state.NextEventOrder = long.MaxValue;
         string original = JsonSerializer.Serialize(state);
-        Assert.Throws<InvalidOperationException>(() => TrafficKernel.Restore(state, false));
+        Assert.Throws<ArgumentException>(() => TrafficKernel.Restore(state, false));
         Assert.Equal(original, JsonSerializer.Serialize(state));
     }
 }

@@ -133,11 +133,11 @@ public sealed class CommuteTimingTests
         var engine = new CitySimulator(state, planner); Prepare(engine);
         double departure = c.NextEventMinute;
         // Rebuild from a saved resting event to insert a lifecycle event after preparation.
-        c.NextJobChangeMinute = engine.State.Minute + 1;
-        c.NextEventMinute = c.NextJobChangeMinute;
+        c.LastEmploymentCheckDay--;
+        c.NextEventMinute = engine.State.Minute + 1;
         engine = new CitySimulator(state, planner);
-        engine.AdvanceTo(c.NextJobChangeMinute);
-        Assert.True(c.NextJobChangeMinute > state.Minute); Assert.Equal(CitizenPhase.AtPlace, c.Phase);
+        engine.AdvanceTo(c.NextEventMinute);
+        Assert.Equal((int)(state.Minute / 1440), c.LastEmploymentCheckDay); Assert.Equal(CitizenPhase.AtPlace, c.Phase);
         Assert.Equal(departure, c.NextEventMinute);
         Assert.Equal(1, planner.Calls);
     }
@@ -190,7 +190,7 @@ public sealed class CommuteTimingTests
         var engine = new CitySimulator(state, planner); Prepare(engine);
         Assert.Equal(0, c.CommutePreparation.TravelMinutes); Assert.Equal(1, planner.Calls);
         double shift = c.CommutePreparation.WorkStartsAt;
-        c.NextJobChangeMinute = engine.State.Minute + 1; c.NextEventMinute = c.NextJobChangeMinute;
+        c.LastEmploymentCheckDay--; c.NextEventMinute = engine.State.Minute + 1;
         engine = new CitySimulator(state, planner); engine.AdvanceTo(c.NextEventMinute);
         Assert.Equal(1, planner.Calls); Assert.Equal(shift, c.NextEventMinute);
         engine.AdvanceTo(shift);
@@ -255,7 +255,7 @@ public sealed class CommuteTimingTests
     public void RepeatedShiftsReuseMeasuredDurationAndQueryOnlyAtActualDeparture()
     {
         var state = City(); var person = state.Citizens[0];
-        person.NextJobChangeMinute = person.NextDepartureMinute = ResidentLifecycle.Never;
+
         var planner = new NativePacePlanner(); var engine = new CitySimulator(state, planner);
         var shifts = new[] { 1, 2, 3, 4, 8 }.Select(day => DailyRoutine.WorkOnDay(person, state.Seed, day * 1440)!.Value).ToArray();
         foreach (var shift in shifts)
@@ -342,15 +342,13 @@ public sealed class CommuteTimingTests
 
     [Theory]
     [InlineData(false)] [InlineData(true)]
-    public void SchemaFiveHomeFallbackRetainsMissedShiftDeadlineEvenWhenTimingChangeWakesResident(bool timingChange)
+    public void CurrentReloadRetainsMissedShiftDeadlineEvenWhenTimingChangeWakesResident(bool timingChange)
     {
         var state = City(); var person = state.Citizens[0];
         var shift = DailyRoutine.NextWork(person, state.Seed, state.Minute)!.Value;
         person.MissedActivities = 1; person.ActivityUntilMinute = person.NextEventMinute = shift.EndsAt;
-        var wire = JObject.Parse(SaveCodec.Write(state)); wire["Schema"] = 5;
-        wire.Remove("Traffic"); wire.Remove("TrafficTopologyId"); FoodCommerceTests.StripNewFields(wire);
-        ((JObject)wire["Citizens"]![0]!).Remove("CommutePreparation");
-        var read = SaveCodec.Read(wire.ToString()); Assert.Equal(SaveReadStatus.Loaded, read.Status); Assert.True(read.Migrated);
+        var read = SaveCodec.Read(SaveCodec.Write(state));
+        Assert.Equal(SaveReadStatus.Loaded, read.Status);
         state = read.State!; person = state.Citizens[0];
         Assert.Equal(shift.EndsAt, person.ActivityUntilMinute); Assert.Equal(shift.EndsAt, person.NextEventMinute);
         if (timingChange) Assert.True(TravelTiming.Apply(state, 2, 2));

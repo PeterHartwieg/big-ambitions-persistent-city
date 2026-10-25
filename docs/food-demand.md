@@ -1,6 +1,20 @@
 # Food demand: implementation and evidence
 
-The first foundation of the [approved economy roadmap](design.md#agreed-economy-roadmap--21-october-2026) began on 21 October 2026. The full first milestone remains in progress; authoritative sales are not enabled in normal play.
+The first foundation of the [approved economy roadmap](design.md#agreed-economy-roadmap--21-october-2026) began on 21 October 2026. The first neighborhood food slice is implemented; the broader economy remains in progress and authoritative sales are not enabled in normal play.
+
+## Bounded menus — 23 October
+
+The [0.9.0 menu candidate](reviews/2026-10-23-food-menus.md) adds verified croissant/hot-dog/burger menus and reports actual sales by product and meal. **1,110 tests and eight native Mac days reconcile 667 purchases**. Meal roles and price-driven substitution work; overlapping branches compete and staffing absences materially affect outcomes. Per-product reservations share shop service and bags, and unsupported menu edits visibly pause the affected shop. Opus agrees to close the increment. Shared fit priors still produce overly uniform tastes, and rendered stutters prevent performance clearance. Native replenishment and a normal-play staffing/hours loop are next; the candidate remains disabled and the Mac is restored.
+
+## Breakfast, lunch and dinner — 23 October
+
+The [0.8.0 meal-rhythm candidate](reviews/2026-10-23-meal-rhythm.md) replaces the live scope's single midday opportunity with three individually timed meals and distinct preferences. One saved wallet and daily income/basket posting serve all three; old receipts and active trips survive migration. **1,088 tests and six native Mac days pass.** The same all-day small shop averages 15 breakfast, 39 lunch and 26 dinner purchases; restricted hours isolate the corresponding meal demand. Stock, funds, native accounting, receipt replay and reload checks reconcile. The Mac is restored and released. Croissant-only scope and provisional preferences limit realism; broader menus and fresh rendered performance testing remain.
+
+## Feasible shopping and leisure destinations — 23 October
+
+The [PC comparison](reviews/2026-10-23-optional-destinations.md) verifies the next routine increment at one-third clock speed. New optional outings check actual route estimates and usable opening time, with bounded alternative searches and preserved committed trips. Shopping visits increase 228→429, leisure 238→552 and misses fall 948→446. Existing native food sales remain 38, with settlement/reload conservation intact. All 1,048 tests pass; the isolated rig is restored, and normal profiles remain untouched.
+
+Next, connect eligible existing shopping stops to purchases within their remaining visit time and budget. This increment improves routines; it adds no new transaction path or guaranteed customers. Native rendered performance and household income remain unverified.
 
 ## One-third calendar pace — 22 October
 
@@ -91,7 +105,9 @@ Read from the locally installed `BigAmbitions.dll`, with decompilation kept only
 
 The proposed integration is to own selected food demand while retaining native stock movement, completed-order accounting and settlement. It does not require recreating the financial ledger in this milestone. Visible indoor customer processing and RLO redraw interactions still require focused review/testing before choosing the exact hook.
 
-## Remaining work within the first milestone
+## Historical remaining work within the first milestone
+
+Subsequent native sale integration and the [neighborhood food candidate](neighborhood-economy.md) implement the recurring transaction path and persistent resident accounts. The original shadow-stage checklist below is retained as historical context.
 
 1. Observe actual sellable stock, effective staffed throughput and product/serving identity. Keep unknown evidence distinct from stockouts or unavailable service. The routine model supports these inputs; its controlled service rates do not establish native availability.
 2. Give the chosen food outing ownership of an actual activity/journey, including return and missed-opportunity handling. Recorded stops currently feed a separate counterfactual; people do not execute both histories. Keep the current work templates separate from future real employment shifts.

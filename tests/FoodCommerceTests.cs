@@ -8,7 +8,7 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-public sealed class FoodCommerceTests
+public sealed partial class FoodCommerceTests
 {
     private sealed class BoundedWalking : IRoutePlanner, IWalkingTimeBound
     {
@@ -29,26 +29,34 @@ public sealed class FoodCommerceTests
         public Route? Plan(Place from, Place to, double at, TravelPreferences preferences) => !Reachable ? null : new()
         { Legs = new() { new RouteLeg { From = from.Position, To = to.Position, Minutes = Minutes, Mode = TravelMode.Walk } } };
     }
-    private sealed class Market : IFoodMarket
+    private sealed class Market : IFoodMarket, IFoodSaleEvidence
     {
         public double EarliestMinute { get; set; }
-        public int Units = 100, Price = 100, Capacity = 15;
+        public int Units = 100, Price = 100, Capacity = 15, OpenFromMinute;
+        public string BusinessId = "b";
+        public string UnavailableReason = "";
+        public string[] Products = new[] { "pastry" };
         public bool ThrowAfterSale;
+        public string ThrowForResident = "";
+        public bool ConfirmEvidence;
+        public bool ThrowOnEvidence;
         public bool Closed { get; set; }
         public List<string> Orders = new();
         public List<double> Times = new();
-        public IReadOnlyList<FoodBusiness> Read(double minute) => new[] { new FoodBusiness { Id = "b", PlaceId = "shop", Name = "Bakery",
-            MealsPerHour = Capacity, Hours = Closed ? new() : Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = 0, ToMinute = 1440 }).ToList(),
-            Offers = new() { new FoodOffer { ProductId = "pastry", PriceCents = Price, Units = Units } } } };
+        public bool IsConfirmedPaid(ResidentMeal meal) => ThrowOnEvidence
+            ? throw new InvalidOperationException("Evidence unavailable") : ConfirmEvidence && Orders.Contains(meal.IntentId);
+        public IReadOnlyList<FoodBusiness> Read(double minute) => new[] { new FoodBusiness { Id = BusinessId, PlaceId = "shop", Name = "Bakery", ServiceUnavailableReason = UnavailableReason,
+            MealsPerHour = Capacity, Hours = Closed ? new() : Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = OpenFromMinute, ToMinute = 1440 }).ToList(),
+            Offers = Products.Select(p => new FoodOffer { ProductId = p, PriceCents = Price, Units = Units }).ToList() } };
         public FoodSale Buy(ResidentMeal meal, double at)
         {
             if (Units <= 0 || Capacity <= 0 || Closed || Price != meal.PriceCents) return new(false, "Unavailable at checkout");
             Assert.DoesNotContain(meal.IntentId, Orders); Orders.Add(meal.IntentId); Times.Add(at); Units--;
-            if (ThrowAfterSale) throw new Exception("Lost native acknowledgement");
+            if (ThrowAfterSale || ThrowForResident == meal.ResidentId) throw new Exception("Lost native acknowledgement");
             return new(true, "Native fake confirmed");
         }
     }
-    private static (CitySimulator city, Market market, Walking routes) Ready(int count = 1, bool atWork = false)
+    private static (CitySimulator city, Market market, Walking routes) Ready(int count = 1, bool atWork = false, bool threeMeals = false, int representation = 1)
     {
         var state = Population.Create(Enumerable.Range(0, count).Select(n => new CitizenIdentity {
             Id = "r" + n, Name = "Resident " + n, Persona = Persona.Foodie, Age = 30 }).ToArray(), new[] {
@@ -57,12 +65,12 @@ public sealed class FoodCommerceTests
                 new Place { Id = "shop", Name = "Bakery", Kind = PlaceKind.Shop, Position = new(2,0,0) } }, "food-live", "0.40.4", 7, 1440);
         foreach (var c in state.Citizens)
         {
-            c.NextDepartureMinute = c.NextJobChangeMinute = ResidentLifecycle.Never;
+
             c.Phase = CitizenPhase.AtPlace; c.PlaceId = atWork ? "work" : "home";
             c.Activity = atWork ? Activity.Work : Activity.Home;
             c.NextEventMinute = c.ActivityUntilMinute = 2870;
         }
-        state.Food = new FoodCommerceState { Shops = new() { new FoodScope { PlaceId = "shop", BusinessId = "b", ProductId = "pastry" } } };
+        state.Food = new FoodCommerceState { RepresentationFactor = representation, MealRhythmVersion = threeMeals ? MealRhythm.PolicyVersion : 0, Shops = new() { new FoodScope { PlaceId = "shop", BusinessId = "b", ProductId = "pastry" } } };
         var market = new Market(); var routes = new Walking(); var city = new CitySimulator(state, routes); city.AttachFoodMarket(market);
         return (city, market, routes);
     }
@@ -203,11 +211,11 @@ public sealed class FoodCommerceTests
         Assert.Equal(0, city.State.Citizens.Single().CompletedJourneys);
     }
     [Fact]
-    public void SchemaSevenMigrationHasNoAutomaticEconomyAndCorruptOwnershipIsRejected()
+    public void OldPopulationSchemaAndCurrentCorruptFoodOwnershipAreRejected()
     {
         var (city, _, _) = Ready(); var wire = JObject.Parse(SaveCodec.Write(city.State));
         wire["Schema"] = 7; StripNewFields(wire);
-        var read = SaveCodec.Read(wire.ToString()); Assert.Equal("", read.Error); Assert.Null(read.State!.Food);
+        var read = SaveCodec.Read(wire.ToString()); Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
         wire = JObject.Parse(SaveCodec.Write(city.State)); wire["Food"]!["Residents"]![0]!["ResidentId"] = "unknown";
         Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status);
     }
@@ -225,18 +233,268 @@ public sealed class FoodCommerceTests
         Assert.Empty(market.Orders);
     }
     [Fact]
-    public void UncertainNativeReceiptCannotBeRetriedAndOldDaysAreBounded()
+    public void UncertainNativeReceiptCannotExpireIntoASecondPurchase()
     {
         var (_, _, _) = Ready(); var meal = new ResidentMeal { ResidentId="r", Day=1, PriceCents=900, BusinessId="b", ProductId="pastry" };
         var nativeData = new Dictionary<string,string> { ["rlo:data"]="keep" };
         FoodSaleReceipts.Begin(nativeData,meal);
         Assert.Throws<InvalidOperationException>(() => FoodSaleReceipts.AlreadyPaid(nativeData,meal));
         FoodSaleReceipts.Prune(nativeData,2); Assert.Equal(2,nativeData.Count);
-        FoodSaleReceipts.Prune(nativeData,3); Assert.Single(nativeData); Assert.Equal("keep",nativeData["rlo:data"]);
+        FoodSaleReceipts.Prune(nativeData,3); Assert.Equal(2,nativeData.Count); Assert.Equal("keep",nativeData["rlo:data"]);
+        Assert.Throws<InvalidOperationException>(() => FoodSaleReceipts.AlreadyPaid(nativeData,meal));
+        Assert.Throws<InvalidOperationException>(() => FoodSaleReceipts.Begin(nativeData,meal));
     }
 
     internal static void StripNewFields(JObject wire)
     {
         wire.Remove("Food"); foreach (JObject person in wire["Citizens"]!) person.Remove("MealOuting");
     }
+    [Theory]
+    [InlineData(1)] [InlineData(128)]
+    public void ExistingShopStopPaysWithoutAnotherJourneyAndSurvivesReload(int budget)
+    {
+        var (city, market, routes) = Ready();
+        var person = city.State.Citizens.Single();
+        person.PlaceId = "shop"; person.Activity = Activity.Shop;
+        double end = person.NextEventMinute;
+        city = city.RebuildRoutes(routes);
+        double desired = city.State.Food!.Residents.Single().DesiredAt;
+        Advance(city, desired + 2, budget);
+        Assert.Equal(MealStatus.Serving, city.State.Food.Residents.Single().Status);
+        Assert.Null(person.MealOuting); Assert.Equal(0, person.CompletedJourneys);
+        city = Reload(city, market, routes);
+        Advance(city, desired + 30, budget);
+        Assert.Single(market.Orders);
+        var meal = city.State.Food!.Residents.Single();
+        Assert.Equal(1, meal.ExistingStopPurchases); Assert.True(meal.ExistingStop);
+        Assert.Equal(100, meal.SpentCents);
+        Assert.Equal(end, city.State.Citizens.Single().NextEventMinute);
+        Assert.Equal(0, city.State.Citizens.Single().CompletedJourneys);
+        city = Reload(city, market, routes);
+        Advance(city, desired + 100, budget);
+        Assert.Single(market.Orders);
+    }
+
+    [Fact]
+    public void LaterOrdinaryStopCanFulfilPreviouslyUnmetNeedWithoutNewIntention()
+    {
+        var (city, market, routes) = Ready();
+        routes.Reachable = false;
+        var meal = city.State.Food!.Residents.Single();
+        string intention = meal.IntentId;
+        Advance(city, meal.DesiredAt + 1);
+        Assert.Equal(MealStatus.Missed, meal.Status);
+        routes.Reachable = true;
+        var c = city.State.Citizens.Single();
+        var outward = routes.Plan(city.State.Places.Single(p => p.Id == "home"),
+            city.State.Places.Single(p => p.Id == "shop"), city.State.Minute, c.Preferences)!;
+        Assert.True(city.TryBeginOptionalShopVisit(c.Identity.Id, "shop", outward, 5, 30, c.NextEventMinute));
+        Advance(city, city.State.Minute + 15);
+        Assert.Single(market.Orders); Assert.Equal(intention, market.Orders.Single());
+        Assert.Equal(1, meal.ExistingStopPurchases); Assert.Null(c.MealOuting);
+    }
+
+    [Theory]
+    [InlineData(100, 0, 100)]
+    [InlineData(100, 100, 0)]
+    [InlineData(1000000, 100, 15)]
+    public void ExistingStopStillRespectsStockServiceAndAffordability(int price, int units, int capacity)
+    {
+        var (city, market, routes) = Ready();
+        var person = city.State.Citizens.Single(); person.PlaceId = "shop"; person.Activity = Activity.Shop;
+        market.Price = price; market.Units = units; market.Capacity = capacity;
+        city = city.RebuildRoutes(routes);
+        Advance(city, city.State.Food!.Residents.Single().DesiredAt + 30);
+        Assert.Empty(market.Orders); Assert.Null(person.MealOuting);
+        Assert.Equal(0, person.CompletedJourneys);
+    }
+
+    [Fact]
+    public void AttachedPurchaseCannotExtendAnExistingShortVisit()
+    {
+        var (city, market, routes) = Ready();
+        var meal = city.State.Food!.Residents.Single();
+        var c = city.State.Citizens.Single(); c.PlaceId = "shop"; c.Activity = Activity.Shop;
+        c.NextEventMinute = c.ActivityUntilMinute = meal.DesiredAt + 10;
+        city = city.RebuildRoutes(routes);
+        Advance(city, meal.DesiredAt + 9);
+        Assert.Empty(market.Orders); Assert.Equal(meal.DesiredAt + 10, c.NextEventMinute);
+    }
+
+    [Fact]
+    public void SchemaEightFoodHistoryIsPreservedByRefusingUpgrade()
+    {
+        var (city, market, _) = Ready(); Advance(city, city.State.Food!.Residents.Single().DesiredAt + 40);
+        var payload = JObject.Parse(SaveCodec.Write(city.State)); payload["Schema"] = 8;
+        RemoveMealRhythmFields(payload);
+        foreach (var m in payload["Food"]!["Residents"]!.Children<JObject>())
+        { m.Remove("ExistingStop"); m.Remove("ExistingStopPurchases"); m.Remove("Budget"); }
+        ((JObject)payload["Food"]!).Remove("HouseholdFinanceVersion");
+        ((JObject)payload["Food"]!).Remove("DepartedBudgetAssetsCents"); ((JObject)payload["Food"]!).Remove("History");
+        string source = payload.ToString(); var data = new Dictionary<string,string> { [SaveStore.StateKey] = source };
+        var read = SaveStore.ReadFrom(data, city.State.PopulationKey);
+        Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
+        Assert.False(SaveStore.WriteTo(data, city.State).Success); Assert.Equal(source, data[SaveStore.StateKey]); Assert.Single(market.Orders);
+    }
+
+    [Fact]
+    public void PersistentHouseholdPaysEssentialsAndActualPurchaseOnceAcrossReload()
+    {
+        var (city, market, routes) = Ready();
+        var c = city.State.Citizens.Single(); c.PlaceId = "shop"; c.Activity = Activity.Shop;
+        city = city.RebuildRoutes(routes); city.EnableHouseholdFinances();
+        Advance(city, city.State.Minute + 1);
+        var budget = city.State.Food!.Residents.Single().Budget!;
+        long before = budget.BalanceCents;
+        Assert.True(budget.IncomeReceivedCents > 0); Assert.True(budget.HomeFoodPaidCents > 0);
+        Assert.True(budget.EssentialsPaidCents > 0);
+        double desired = city.State.Food.Residents.Single().DesiredAt;
+        Advance(city, desired + 2); city = Reload(city, market, routes);
+        Advance(city, desired + 30);
+        budget = city.State.Food!.Residents.Single().Budget!;
+        Assert.Single(market.Orders); Assert.Equal(before - market.Price, budget.BalanceCents);
+        Assert.Equal(market.Price, budget.PreparedFoodSpentCents); Assert.Equal(0, budget.HeldPurchaseCents);
+        long paid = budget.IncomeReceivedCents;
+        city = Reload(city, market, routes); Advance(city, desired + 60);
+        Assert.Equal(paid, city.State.Food!.Residents.Single().Budget!.IncomeReceivedCents);
+        Assert.Single(market.Orders);
+    }
+
+    [Fact]
+    public void UncertainNativeSaleRetainsFundsWithoutFundingAnotherPurchase()
+    {
+        var (city, market, routes) = Ready();
+        var c = city.State.Citizens.Single(); c.PlaceId = "shop"; c.Activity = Activity.Shop;
+        city = city.RebuildRoutes(routes); city.EnableHouseholdFinances(); market.ThrowAfterSale = true;
+        double desired = city.State.Food!.Residents.Single().DesiredAt;
+        Advance(city, desired + 30);
+        var meal = city.State.Food.Residents.Single();
+        Assert.Equal(MealStatus.Uncertain, meal.Status); Assert.Equal(market.Price, meal.Budget!.HeldPurchaseCents);
+        Assert.Equal(0, meal.Budget.PreparedFoodSpentCents);
+        city = Reload(city, market, routes); Advance(city, desired + 1440 + 60);
+        Assert.Single(market.Orders);
+        Assert.Equal(market.Price, city.State.Food!.Residents.Single().Budget!.HeldPurchaseCents);
+        Assert.Equal(0, HouseholdFinance.SpendingLimit(city.State.Food.Residents.Single().Budget!));
+    }
+
+    [Fact]
+    public void RefusedNativeCheckoutRefundsOnlyItsReservedHouseholdFunds()
+    {
+        var (city, market, routes) = Ready();
+        var c = city.State.Citizens.Single(); c.PlaceId = "shop"; c.Activity = Activity.Shop;
+        city = city.RebuildRoutes(routes); city.EnableHouseholdFinances();
+        double desired = city.State.Food!.Residents.Single().DesiredAt;
+        Advance(city, desired + 2); var budget = city.State.Food.Residents.Single().Budget!;
+        long before = budget.BalanceCents; market.Units = 0;
+        Advance(city, desired + 30);
+        Assert.Empty(market.Orders); Assert.Equal(before, budget.BalanceCents);
+        Assert.Equal(0, budget.HeldPurchaseCents); Assert.Equal(0, budget.PreparedFoodSpentCents);
+    }
+
+    [Fact]
+    public void FinancialPostingIsIndependentOfBatchSizeAndReloadBoundaries()
+    {
+        var (a, ma, ra) = Ready(24); var (b, mb, _) = Ready(24);
+        a.EnableHouseholdFinances(); b.EnableHouseholdFinances();
+        Advance(a, 3 * 1440 + 700, 1);
+        Advance(b, 2 * 1440 + 1, 128); b = Reload(b, mb, ra); Advance(b, 3 * 1440 + 700, 128);
+        Assert.Equal(SaveCodec.Write(a.State), SaveCodec.Write(b.State));
+        Assert.Equal(ma.Orders, mb.Orders);
+    }
+
+    [Fact]
+    public void HouseholdSaveRejectsCreatedCashAndUnknownFinancePolicy()
+    {
+        var (city, _, _) = Ready(); city.EnableHouseholdFinances(); Advance(city, city.State.Minute + 1);
+        var payload = JObject.Parse(SaveCodec.Write(city.State));
+        payload["Food"]!["Residents"]![0]!["Budget"]!["BalanceCents"] = 999999999L;
+        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(payload.ToString()).Status);
+        payload = JObject.Parse(SaveCodec.Write(city.State)); payload["Food"]!["HouseholdFinanceVersion"] = 99;
+        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(payload.ToString()).Status);
+    }
+
+    [Fact]
+    public void SchemaNineCannotSilentlyBecomeACurrentBudgetedCity()
+    {
+        var (city, _, _) = Ready(); var payload = JObject.Parse(SaveCodec.Write(city.State)); payload["Schema"] = 9;
+        RemoveMealRhythmFields(payload);
+        ((JObject)payload["Food"]!).Remove("HouseholdFinanceVersion"); ((JObject)payload["Food"]!).Remove("DepartedBudgetAssetsCents");
+        ((JObject)payload["Food"]!).Remove("History");
+        foreach (var m in payload["Food"]!["Residents"]!.Children<JObject>()) m.Remove("Budget");
+        string source = payload.ToString(); var data = new Dictionary<string,string> { [SaveStore.StateKey] = source };
+        var read = SaveStore.ReadFrom(data, city.State.PopulationKey);
+        Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
+        Assert.False(SaveStore.WriteTo(data, city.State).Success); Assert.Equal(source, data[SaveStore.StateKey]);
+    }
+
+    [Fact]
+    public void ABetterLaterOfferCanReplaceAnEarlierDeclineButCannotBuyTwice()
+    {
+        var (city, market, routes) = Ready();
+        var meal = city.State.Food!.Residents.Single(); market.Price = 100000;
+        Advance(city, meal.DesiredAt + 1); Assert.Equal(MealStatus.Declined, meal.Status);
+        string intention = meal.IntentId; market.Price = 100;
+        var c = city.State.Citizens.Single();
+        var outward = routes.Plan(city.State.Places.Single(p => p.Id == "home"),
+            city.State.Places.Single(p => p.Id == "shop"), city.State.Minute, c.Preferences)!;
+        Assert.True(city.TryBeginOptionalShopVisit(c.Identity.Id, "shop", outward, 5, 30, c.NextEventMinute));
+        Advance(city, city.State.Minute + 20);
+        Assert.Equal(intention, market.Orders.Single()); Assert.Equal(1, meal.Purchases);
+        city = Reload(city, market, routes); Advance(city, city.State.Minute + 30);
+        Assert.Single(market.Orders);
+    }
+
+    [Fact]
+    public void ManagementHistoryKeepsFourteenDaysAndSurvivesReloadWithoutDoubleCounting()
+    {
+        var (city, market, routes) = Ready(4); market.Units = 1000;
+        city.EnableHouseholdFinances();
+        Advance(city, 22 * 1440);
+        var history = city.State.Food!.History;
+        Assert.NotEmpty(history); Assert.True(history.Count <= 14);
+        Assert.True(history.Min(h => h.Day) >= history.Max(h => h.Day) - 13);
+        Assert.All(history, h => {
+            Assert.Equal(h.Purchases, h.PurchaseHours.Sum());
+            Assert.Equal(h.Purchases, h.BuyerDistricts.Sum(d => d.Purchases));
+            Assert.Equal(h.OffersConsidered, h.ChosenOffers + h.PriceRejections + h.AccessRejections + h.ClosedRejections
+                + h.StockRejections + h.ServiceRejections + h.UnknownEvidence + h.PreferredAlternatives);
+        });
+        int orders = market.Orders.Count; string before = SaveCodec.Write(city.State);
+        city = Reload(city, market, routes);
+        Assert.Equal(before, SaveCodec.Write(city.State)); Assert.Equal(orders, market.Orders.Count);
+        Assert.True(history.Sum(h => h.Purchases) > 0);
+    }
+
+    [Fact]
+    public void ManagementHistoryRejectsInventedCustomerCounts()
+    {
+        var (city, _, _) = Ready(); Advance(city, city.State.Food!.Residents.Single().DesiredAt + 40);
+        var payload = JObject.Parse(SaveCodec.Write(city.State));
+        payload["Food"]!["History"]![0]!["PurchaseHours"]![0] = 999;
+        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(payload.ToString()).Status);
+    }
+
+    [Theory]
+    [InlineData(1)] [InlineData(16)] [InlineData(128)]
+    public void HiddenClockWaitsForBudgetedEventsAndPreservesNativePurchasesAcrossHours(int eventBudget)
+    {
+        var (reference, expected, _) = Ready(60);
+        var (city, actual, _) = Ready(60);
+        reference.EnableHouseholdFinances(); city.EnableHouseholdFinances();
+        double target = 4 * 1440.0, clock = city.State.Minute;
+        Advance(reference, target);
+        int frames = 0, held = 0;
+        while (!city.IsCaughtUpTo(target))
+        {
+            Assert.True(++frames < 100000);
+            double step = EconomySkipClock.Limit(city.IsCaughtUpTo(clock), clock, target - clock);
+            if (step == 0) held++;
+            clock += step; actual.EarliestMinute = Math.Floor(clock / 60) * 60;
+            city.AdvanceTo(clock, eventBudget);
+        }
+        Assert.True(held > 0); Assert.NotEmpty(actual.Orders);
+        Assert.Equal(expected.Orders, actual.Orders);
+        Assert.Equal(SaveCodec.Write(reference.State), SaveCodec.Write(city.State));
+    }
+
 }

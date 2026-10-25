@@ -26,7 +26,7 @@ public sealed class HousingPopulationTests
 
     private static void CheckAccounting(CityState city)
     {
-        Assert.Equal((long)city.Citizens.Count + city.DepartedCount,
+        Assert.Equal((long)city.Citizens.Count,
             (long)city.InitialImportedResidents + city.NextResidentSequence - 1);
         Assert.Equal(city.Citizens.Count, city.Citizens.Select(c => c.Identity.Id).Distinct(StringComparer.Ordinal).Count());
     }
@@ -85,7 +85,7 @@ public sealed class HousingPopulationTests
     }
 
     [Fact]
-    public void ExpansionPreservesActiveJourneyAndAssignmentsAndSequencesAcrossTurnover()
+    public void ExpansionPreservesActiveJourneyAssignmentsAndStableIdentities()
     {
         var city = Housing(2, 10);
         var person = city.Citizens[0];
@@ -105,12 +105,8 @@ public sealed class HousingPopulationTests
         Assert.Equal("pc:16", city.Citizens.Last().Identity.Id);
         CheckAccounting(city);
 
-        foreach (var resident in city.Citizens)
-        { resident.NextDepartureMinute = ResidentLifecycle.Never; resident.NextJobChangeMinute = ResidentLifecycle.Never; }
-        city.Citizens[1].NextDepartureMinute = city.Minute;
         new CitySimulator(city, new Direct()).AdvanceTo(city.Minute);
-        Assert.Equal("pc:17", city.Citizens[1].Identity.Id);
-        Assert.Equal(1, city.DepartedCount);
+        Assert.Same(existing[1], city.Citizens[1]);
         CheckAccounting(city);
         Assert.Equal(sources, JsonConvert.SerializeObject(city.SourceIdentities));
 
@@ -123,7 +119,7 @@ public sealed class HousingPopulationTests
     }
 
     [Fact]
-    public void ExactCountFactoryAndTurnoverRespectFullHomeAndWorkplaceCapacities()
+    public void ExactCountFactoryRespectsFullHomeAndWorkplaceCapacities()
     {
         var places = Places(2);
         places[1].Capacity = 1; places[2].Capacity = 1;
@@ -131,7 +127,6 @@ public sealed class HousingPopulationTests
         Assert.Equal(2, city.PopulationTarget);
         Assert.Equal(2, city.InitialImportedResidents);
         Assert.Equal(2, city.Citizens.Select(c => c.DayPlaceId).Distinct().Count());
-        foreach (var person in city.Citizens) person.NextDepartureMinute = city.Minute;
         new CitySimulator(city, new Direct()).AdvanceTo(city.Minute);
         Assert.All(city.Places, p => Assert.True(city.Citizens.Count(c => c.HomeId == p.Id || c.DayPlaceId == p.Id) <= p.Capacity));
         CheckAccounting(city);
@@ -186,62 +181,6 @@ public sealed class HousingPopulationTests
             + 28 * HousingPolicy.Capacity(204) + 20 * HousingPolicy.Capacity(589);
         Assert.Equal(1064, capacity);
         Assert.Equal(957, HousingPolicy.Target(capacity));
-    }
-
-    [Fact]
-    public void EstablishedWorkersHaveStaggeredNineHundredDayWaitsWithoutANinetyDayQuietPeriod()
-    {
-        var workers = Enumerable.Range(0, 5000).Select(i => new CitizenState { Identity = Donors(1)[0] }).ToArray();
-        for (int index = 0; index < workers.Length; index++)
-        { workers[index].Identity.Id = "distribution:" + index; ResidentLifecycle.Initialize(workers[index], 7, 1440); }
-        var days = workers.Select(c => (c.NextJobChangeMinute - 1440) / 1440).ToArray();
-        Assert.All(days, value => Assert.True(value >= 1));
-        Assert.InRange(days.Average(), 850, 950);
-        Assert.InRange(days.Count(d => d <= 11), 25, 90);
-        Assert.True(days.Count(d => d < 90) > 300);
-        Assert.True(days.Distinct().Count() > 4990);
-    }
-
-    [Fact]
-    public void SuccessfulJobChangeAndNewArrivalGetAtLeastNinetyDaysBeforeAnotherChange()
-    {
-        var city = Housing(2, 10);
-        foreach (var person in city.Citizens)
-        { person.NextDepartureMinute = ResidentLifecycle.Never; person.NextJobChangeMinute = city.Minute; }
-        new CitySimulator(city, new Direct()).AdvanceTo(city.Minute);
-        Assert.All(city.Citizens, c => { Assert.Equal(1, c.JobChanges); Assert.True(c.NextJobChangeMinute >= city.Minute + 90 * 1440); });
-        city.Citizens[0].NextDepartureMinute = city.Minute;
-        city.Citizens[0].NextEventMinute = city.Minute;
-        new CitySimulator(city, new Direct()).AdvanceTo(city.Minute);
-        Assert.Equal(0, city.Citizens[0].JobChanges);
-        Assert.StartsWith("pc:", city.Citizens[0].Identity.Id);
-        Assert.True(city.Citizens[0].NextJobChangeMinute >= city.Minute + 90 * 1440);
-    }
-
-    [Fact]
-    public void LegacyRetuneOnlyStretchesFutureWorkerDatesAndPreservesPhysicalState()
-    {
-        var city = Population.Create(Donors(5), Places(5), "source", "0.40.4", 7, 1440);
-        var future = city.Citizens[0];
-        future.NextJobChangeMinute = city.Minute + 50;
-        future.Phase = CitizenPhase.Travelling; future.DestinationId = "work-a"; future.DestinationActivity = Activity.Work;
-        future.DepartureMinute = 1430; future.NextEventMinute = 1500; future.ActivityUntilMinute = 2000;
-        future.Journey = new Route { Legs = new() { new() { From = new(0, 0, 0), To = new(100, 0, 0), Minutes = 70 } } };
-        city.Citizens[1].NextJobChangeMinute = city.Minute;
-        city.Citizens[2].NextJobChangeMinute = ResidentLifecycle.Never;
-        city.Citizens[3].Identity.Persona = Persona.Student;
-        city.Citizens[3].NextJobChangeMinute = city.Minute + 50;
-        city.Citizens[4].NextJobChangeMinute = ResidentLifecycle.Never - 1;
-        string before = JsonConvert.SerializeObject(city);
-        ResidentLifecycle.RetuneLegacyJobs(city);
-        Assert.Equal(city.Minute + 500, future.NextJobChangeMinute);
-        Assert.Equal(city.Minute, city.Citizens[1].NextJobChangeMinute);
-        Assert.Equal(ResidentLifecycle.Never, city.Citizens[2].NextJobChangeMinute);
-        Assert.Equal(city.Minute + 50, city.Citizens[3].NextJobChangeMinute);
-        Assert.Equal(ResidentLifecycle.Never, city.Citizens[4].NextJobChangeMinute);
-        future.NextJobChangeMinute = city.Minute + 50;
-        city.Citizens[4].NextJobChangeMinute = ResidentLifecycle.Never - 1;
-        Assert.Equal(before, JsonConvert.SerializeObject(city));
     }
 
     private sealed class Direct : IRoutePlanner

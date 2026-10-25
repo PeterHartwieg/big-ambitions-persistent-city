@@ -20,7 +20,7 @@ namespace PersistentCity.Runtime
         void RequestSweep();
     }
     /// <summary>Background routes only. Native geometry, explicit simulation timing, no actors or economy writes.</summary>
-    internal sealed class MultimodalRoutes : ICitizenRoutePlanner, ICommuteTimingPlanner, ITrafficRoutePlanner, ITrafficEntryRoutePlanner, ITrafficClosureBatchPlanner, IWalkingTimeBound
+    internal sealed class MultimodalRoutes : ICitizenRoutePlanner, ICommuteTimingPlanner, ITrafficRoutePlanner, ITrafficEntryRoutePlanner, ITrafficClosureBatchPlanner, IWalkingTimeBound, IWalkingQuoteValidity
     {
         private readonly double subwayMetresPerMinute;
         private readonly double clockRate;
@@ -29,6 +29,7 @@ namespace PersistentCity.Runtime
         public string LastDiscoveryGateChange { get; private set; } = "";
         private const double SubwayWaitMinutes = 3;
         private readonly WalkingRoutes walking;
+        public NativeRouteMetrics Metrics => walking.Metrics;
         private readonly double walkingSpeed;
         private readonly Dictionary<string, Place> places = new Dictionary<string, Place>(StringComparer.Ordinal);
         private List<Station>? stations;
@@ -79,6 +80,18 @@ namespace PersistentCity.Runtime
             }
             walking = new WalkingRoutes(walkingMetresPerMinute, (from, to) => access != null && access.ClearSegment(from, to));
             foreach (var place in places) this.places[place.Id] = place;
+        }
+        /// <summary>Retiming changes movement costs, not the native scene container. Reuse only
+        /// that live reference within the same save-scoped discovery owner and CityManager.
+        /// Access, stations, road geometry and timing still undergo fresh preparation.</summary>
+        internal bool ReuseRoadSceneForRetiming(MultimodalRoutes previous)
+        {
+            var city = CityManager.Instance;
+            if (roadSceneSearched || objects == null || !ReferenceEquals(objects, previous.objects)
+                || city == null || !ReferenceEquals(previous.roadCity, city)
+                || !previous.roadSceneSearched || previous.roadScene == null) return false;
+            roadScene = previous.roadScene; roadCity = city; roadSceneSearched = true;
+            return true;
         }
         /// <summary>Periodic refresh. Gate geometry is recaptured and the walking cache dropped every time. Refresh never
         /// discards the road snapshot unless the public gates changed, since the snapshot cannot see them; it starts a
@@ -215,8 +228,12 @@ namespace PersistentCity.Runtime
             return walking.Plan(from, to, departureMinute, preferences);
         }
 
+        public bool IsWalkingQuoteValid(Place from, Place to, Route route, TravelPreferences preferences)
+            => ReadyForPopulation && walking.IsWalkingQuoteValid(from, to, route, preferences);
+
         public Route? Plan(Place from, Place to, double departureMinute, CitizenState person)
         {
+            Metrics.CitizenPlanRequests++;
             if (from == null || to == null || person == null || person.Preferences == null
                 || !from.Position.IsFinite || !to.Position.IsFinite || !Position.Finite(departureMinute) || departureMinute < 0) return null;
             var preferences = person.Preferences;
@@ -245,12 +262,13 @@ namespace PersistentCity.Runtime
                 {
                     var origins = Nearby(from.Position); var destinations = Nearby(to.Position);
                     var originWalks = new Dictionary<string, Route?>(); var destinationWalks = new Dictionary<string, Route?>();
-                    foreach (var a in origins) originWalks[a.Id] = walking.Plan(from, a.Entrance, departureMinute, preferences);
-                    foreach (var b in destinations) destinationWalks[b.Id] = walking.Plan(b.Entrance, to, departureMinute, preferences);
+                    foreach (var a in origins) originWalks[a.Id] = SubwayConnector(from, a.Entrance, departureMinute, preferences);
+                    foreach (var b in destinations) destinationWalks[b.Id] = SubwayConnector(b.Entrance, to, departureMinute, preferences);
                     foreach (var a in origins)
                         foreach (var b in destinations)
                         {
                             if (a.Id == b.Id || originWalks[a.Id] == null || destinationWalks[b.Id] == null) continue;
+                            Metrics.SubwayCandidates++;
                             var train = Train(a, b);
                             if (train != null) Consider(TransportComposition.Join(originWalks[a.Id]!, train, destinationWalks[b.Id]!));
                         }
@@ -299,6 +317,10 @@ namespace PersistentCity.Runtime
                     }
                 }
             }
+            if (best == null) Metrics.NoFeasibleRoute++;
+            else if (best.Legs.Any(leg => leg.Mode == TravelMode.Car)) Metrics.SelectedCar++;
+            else if (best.Legs.Any(leg => leg.Mode == TravelMode.Subway)) Metrics.SelectedSubway++;
+            else Metrics.SelectedWalking++;
             return best;
 
             void Consider(Route? route)
@@ -308,6 +330,16 @@ namespace PersistentCity.Runtime
                 if (!TransportComposition.IsFaster(score, bestScore)) return;
                 best = route; bestScore = score;
             }
+        }
+
+        private Route? SubwayConnector(Place from, Place to, double minute, TravelPreferences preferences)
+        {
+            Metrics.SubwayConnectorRequests++;
+            long hits = Metrics.WalkingCacheHits, misses = Metrics.WalkingCacheMisses;
+            var route = walking.Plan(from, to, minute, preferences);
+            Metrics.SubwayConnectorCacheHits += Metrics.WalkingCacheHits - hits;
+            Metrics.SubwayConnectorCacheMisses += Metrics.WalkingCacheMisses - misses;
+            return route;
         }
 
         private void EnsureAccess()

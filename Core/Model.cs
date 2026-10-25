@@ -153,8 +153,7 @@ namespace PersistentCity.Core
         public MealOuting? MealOuting { get; set; }
         public CarState? Car { get; set; }
         public double JoinedMinute { get; set; }
-        public double NextJobChangeMinute { get; set; } = ResidentLifecycle.Never;
-        public double NextDepartureMinute { get; set; } = ResidentLifecycle.Never;
+        public int LastEmploymentCheckDay { get; set; }
         public int JobChanges { get; set; }
         public CitizenPhase Phase { get; set; }
         public Activity Activity { get; set; }
@@ -179,7 +178,7 @@ namespace PersistentCity.Core
 
     public sealed class CityState
     {
-        public const int CurrentSchema = 8;
+        public const int CurrentSchema = 13;
         public int Schema { get; set; } = CurrentSchema;
         public int TravelTimingVersion { get; set; } = 1;
         public double TravelClockRate { get; set; } = 1;
@@ -197,17 +196,9 @@ namespace PersistentCity.Core
         public List<CitizenState> Citizens { get; set; } = new List<CitizenState>();
         // The RLO import remains immutable even as this mod's own roster changes.
         public List<CitizenIdentity> SourceIdentities { get; set; } = new List<CitizenIdentity>();
-        public List<DepartureRecord> RecentDepartures { get; set; } = new List<DepartureRecord>();
         public int NextResidentSequence { get; set; } = 1;
-        public int DepartedCount { get; set; }
         public int PopulationTarget { get; set; }
         public int InitialImportedResidents { get; set; }
     }
 
-    public sealed class DepartureRecord
-    {
-        public CitizenIdentity Identity { get; set; } = new CitizenIdentity();
-        public double JoinedMinute { get; set; }
-        public double DepartedMinute { get; set; }
-    }
 }

@@ -117,6 +117,9 @@ namespace PersistentCity.Runtime
         { resolve = resolveNode; maximum = Math.Max(1, Math.Min(64, max)); intersections = new PhysicalIntersections(); hooks = new PhysicalTrafficHooks(this); }
         public bool Ready => hooks.Ready && intersections.Ready;
         public bool Active => active && !disposed;
+        public string LastAdmissionStage { get; private set; } = "";
+        public string LastAdmissionResident { get; private set; } = "";
+        public string LastAdmissionError { get; private set; } = "";
         public string LastError => recoveryError.Length != 0 ? recoveryError : hooks.LastError.Length != 0 ? hooks.LastError : intersections.LastError;
         public bool Activate()
         {
@@ -179,9 +182,12 @@ namespace PersistentCity.Runtime
         public bool TryAcquire(CitizenState citizen, PhysicalRoadSample sample, out PhysicalVehicleBody body)
         {
             body = null!;
+            LastAdmissionResident = citizen.Identity.Id; LastAdmissionError = "";
+            LastAdmissionStage = "native availability";
             if (!Active || !NativeReady || citizen.Car == null || bodies.Count >= maximum || !sample.Position.IsFinite
                 || !sample.DirectionTarget.IsFinite || sample.RemainingRoadNodes == null || sample.RemainingRoadNodes.Count == 0 || sample.RemainingRoadNodes.Count > 512) return false;
             if (bodies.Values.Any(b => b.Id == citizen.Car.Id)) return false;
+            LastAdmissionStage = "committed road validation";
             var path = new List<int>(sample.RemainingRoadNodes);
             Waypoint? first = null;
             for (int i = 0; i < path.Count; i++)
@@ -198,18 +204,22 @@ namespace PersistentCity.Runtime
             if (segment.sqrMagnitude < 0.001f) return false;
             float fraction = Vector3.Dot(offset, segment) / segment.sqrMagnitude;
             if (fraction < -0.001f || fraction > 1.001f || (offset - segment * fraction).sqrMagnitude > 0.25f) return false;
+            LastAdmissionStage = "model catalogue";
             var all = Manager.GetVehicleList();
             var models = all.Where(Ordinary).Select(v => v.prefab.name).Distinct().OrderBy(n => n, StringComparer.Ordinal).ToArray();
             if (models.Length == 0) return false;
             if (string.IsNullOrEmpty(citizen.Car.ModelId)) citizen.Car.ModelId = models[Hash(citizen.Car.Id) % (uint)models.Length];
             if (citizen.Car.PaintSeed == 0) citizen.Car.PaintSeed = 1 + (int)(Hash(citizen.Car.Id + ":paint") % 2147483646u);
+            LastAdmissionStage = "inactive model slot";
             var slot = all.FirstOrDefault(v => Ordinary(v) && !v.gameObject.activeInHierarchy && v.prefab.name == citizen.Car.ModelId);
             if (slot == null || bodies.ContainsKey(slot.GetIndex())) return false; // Never invoke LoadVehicle's active-name fallback.
             // LoadVehicle chooses the first inactive exact-prefab slot, including protected slots.
             // Reject that ordering conflict rather than activate a service body and roll it back later.
             var nativeChoice = all.FirstOrDefault(v => v != null && ReferenceEquals(v.prefab, slot.prefab) && !v.gameObject.activeInHierarchy);
             if (!ReferenceEquals(nativeChoice, slot)) return false;
+            LastAdmissionStage = "junction rear clearance";
             if (!PhysicalRoadAdmission.Allows(sample.AdmissionBoundaries, sample.RouteProgress, slot.length)) return false;
+            LastAdmissionStage = "native body geometry";
             var direction = Vector(sample.DirectionTarget) - Vector(sample.Position); direction.y = 0;
             if (direction.sqrMagnitude < 0.001f) return false;
             var rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
@@ -227,8 +237,10 @@ namespace PersistentCity.Runtime
             var clearance = new Vector3(Math.Max(0.5f, slot.colliderWidth + Math.Abs(markerOffset.x)),
                 Math.Max(0.3f, slot.coliderHeight / 2f - 0.15f), Math.Max(1f, slot.length + Math.Abs(markerOffset.z)));
             int mask = LayerMask.GetMask("Vehicles", "AiVehicles", "PlayerVehicles", "Obstacles", "Default");
+            LastAdmissionStage = "spawn obstruction";
             if (mask == 0 || Physics.CheckBox(rootPosition + Vector3.up * (slot.coliderHeight / 2f + 0.2f),
                 clearance, rotation, mask, QueryTriggerInteraction.Ignore)) return false;
+            LastAdmissionStage = "intersection ownership";
             var pinnedRoute = new List<Waypoint> { spawn };
             foreach (int index in path)
             {
@@ -241,6 +253,7 @@ namespace PersistentCity.Runtime
             bool transferredPin = false, rollbackRemovalFailed = false;
             try
             {
+                LastAdmissionStage = "native activation";
                 loaded = TrafficManager.Instance.LoadVehicle(slot.prefab, spawn, true);
                 if (loaded == null) return false;
                 pin.NativeIndex = loaded.GetIndex();
@@ -270,10 +283,12 @@ namespace PersistentCity.Runtime
                 TrafficManager.Instance.SetVehicleTargetWaypoint(loaded, first!);
                 // VehicleActivated already defaults to Forward; resetting it here clears native stop/give-way actions.
                 if (!body.Valid) throw new InvalidOperationException("Native vehicle ownership changed during activation.");
+                LastAdmissionStage = "admitted";
                 return true;
             }
-            catch
+            catch (Exception error)
             {
+                LastAdmissionError = error.GetType().Name + ": " + error.Message;
                 // LoadVehicle can activate a slot and then throw from a synchronous native/mod callback.
                 if (loaded == null && slot.gameObject.activeInHierarchy) { loaded = slot; pin.NativeIndex = slot.GetIndex(); }
                 if (body != null) Release(body);

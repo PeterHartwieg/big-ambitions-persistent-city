@@ -15,8 +15,8 @@ namespace PersistentCity.Core
     {
         private sealed class Due
         {
-            // ResidentLifecycle replaces residents in this same list slot; never rebind a lease
-            // after external removal, replacement or reordering of the public snapshot list.
+            // Never rebind a lease after external removal, replacement or reordering
+            // of the public snapshot list. Residents retain their identities.
             public readonly int ListIndex;
             public Due(int listIndex) { ListIndex = listIndex; }
             public CitizenState Citizen = null!;
@@ -124,6 +124,15 @@ namespace PersistentCity.Core
         public AdvanceResult AdvanceFrameSlice(double targetMinute, int eventBudget = 1)
             => AdvanceCore(targetMinute, eventBudget, false);
 
+        // Several events may share the published minute, especially daily budget postings.
+        // Minute equality alone does not establish that the simulation has drained its work.
+        public bool IsCaughtUpTo(double targetMinute) => Position.Finite(targetMinute)
+            && State.Minute >= targetMinute && NoEventsThrough(targetMinute);
+
+        private bool NoEventsThrough(double targetMinute) => (due.Count == 0 || due.Min!.Minute > targetMinute)
+            && (traffic == null || traffic.NextEventMinute > targetMinute)
+            && (State.Food == null || (food != null && food.NextMinute > targetMinute));
+
         private AdvanceResult AdvanceCore(double targetMinute, int eventBudget, bool publishSnapshot)
         {
             if (!Position.Finite(targetMinute) || targetMinute < State.Minute || targetMinute > 1e9)
@@ -159,8 +168,6 @@ namespace PersistentCity.Core
                 string oldId = item.Citizen.Identity.Id;
                 bool enteredTraffic = TryStartTraffic(item.Citizen);
                 if (!enteredTraffic) item.Citizen = Step(item.Citizen, item.Minute);
-                citizenEvents.Remove(oldId);
-                citizenEvents[item.Citizen.Identity.Id] = item;
                 if (!enteredTraffic && (!Position.Finite(item.Citizen.NextEventMinute) || item.Citizen.NextEventMinute <= State.Minute))
                     throw new InvalidOperationException("Each citizen event must schedule a later event.");
                 if (!enteredTraffic)
@@ -169,12 +176,10 @@ namespace PersistentCity.Core
                     due.Add(item);
                 }
                 count++;
-                food?.Replace(oldId, item.Citizen);
+                food?.ObserveStop(item.Citizen);
                 activityObservers.Handlers?.Invoke(oldId, item.Citizen, State.Minute);
             }
-            bool caughtUp = (due.Count == 0 || due.Min!.Minute > targetMinute)
-                && (traffic == null || traffic.NextEventMinute > targetMinute)
-                && (food == null || food.NextMinute > targetMinute);
+            bool caughtUp = NoEventsThrough(targetMinute);
             if (caughtUp) { traffic?.AdvanceTo(targetMinute, 0); State.Minute = targetMinute; }
             if (publishSnapshot) SynchronizeSnapshot();
             return new AdvanceResult(count, caughtUp, trafficCount);
@@ -232,6 +237,7 @@ namespace PersistentCity.Core
         {
             if (StepMealOuting(person, now)) return person;
             RoutineSlot? missedArrival = null;
+            bool checkedEmployment = false;
             if ((person.Phase == CitizenPhase.WaitingForRoute || person.Phase == CitizenPhase.WaitingForOpening)
                 && person.DestinationActivity != Activity.Home && now >= person.ActivityUntilMinute)
                 MissRoutine(person, new RoutineSlot(person.DestinationId, person.DestinationActivity, person.ActivityUntilMinute),
@@ -270,7 +276,8 @@ namespace PersistentCity.Core
                 person.Journey = null;
                 person.DestinationId = "";
                 person.DepartureMinute = 0;
-                person = ResidentLifecycle.ApplyAtHome(State, person, now);
+                ResidentLifecycle.ApplyAtHome(State, person, now, ReachableWorkplace);
+                checkedEmployment = true;
                 // Retain a home fallback until its original window ends. This also survives reload
                 // and prevents counting the same closed activity again after the journey home.
                 if (person.Activity == Activity.Home && now < person.ActivityUntilMinute)
@@ -279,7 +286,7 @@ namespace PersistentCity.Core
                     return person;
                 }
             }
-            person = ResidentLifecycle.ApplyAtHome(State, person, now);
+            if (!checkedEmployment) ResidentLifecycle.ApplyAtHome(State, person, now, ReachableWorkplace);
             if (person.CommutePreparation.PlaceId != person.DayPlaceId)
                 person.CommutePreparation = new CommutePreparation();
             // An admitted activity retains its saved deadline, including an old
@@ -372,6 +379,31 @@ namespace PersistentCity.Core
             person.DepartureMinute = now;
             person.NextEventMinute = now + route.Minutes;
             return person;
+        }
+
+        private bool ReachableWorkplace(CitizenState person, Place destination)
+        {
+            var home = places[person.HomeId];
+            // Native planners may allocate a home car. Feasibility checks use a detached
+            // resident, preserving live car identity, parking and committed travel state.
+            var probe = new CitizenState
+            {
+                Identity = Population.CloneIdentity(person.Identity), HomeId = person.HomeId,
+                PlaceId = person.HomeId, DayPlaceId = destination.Id, Activity = Activity.Home,
+                Phase = CitizenPhase.AtPlace,
+                Preferences = new TravelPreferences { OwnsCar = person.Preferences.OwnsCar,
+                    AllowTransit = person.Preferences.AllowTransit, WalkingToleranceMetres = person.Preferences.WalkingToleranceMetres,
+                    FareWeightMinutes = person.Preferences.FareWeightMinutes },
+                Car = person.Car == null ? null : new CarState { Id = person.Car.Id, ModelId = person.Car.ModelId,
+                    PaintSeed = person.Car.PaintSeed, ParkedPosition = person.Car.ParkedPosition }
+            };
+            var route = routes is ICitizenRoutePlanner citizenRoutes
+                ? citizenRoutes.Plan(home, destination, State.Minute, probe)
+                : routes.Plan(home, destination, State.Minute, probe.Preferences);
+            if (route == null) return false;
+            try { ValidateRoute(route, home.Position, destination.Position); ValidateCarRoute(route, probe); }
+            catch (InvalidOperationException) { return false; }
+            return true;
         }
 
         private double AdmissionFrom(CitizenState person)

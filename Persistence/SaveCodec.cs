@@ -15,12 +15,11 @@ namespace PersistentCity.Persistence
 
     public sealed class SaveReadResult
     {
-        internal SaveReadResult(SaveReadStatus status, CityState? state, string error, bool migrated = false, int sourceSchema = 0)
-        { Status = status; State = state; Error = error; Migrated = migrated; SourceSchema = sourceSchema; }
+        internal SaveReadResult(SaveReadStatus status, CityState? state, string error, int sourceSchema = 0)
+        { Status = status; State = state; Error = error; SourceSchema = sourceSchema; }
         public SaveReadStatus Status { get; }
         public CityState? State { get; }
         public string Error { get; }
-        public bool Migrated { get; }
         /// <summary>Original loaded or future wire schema; zero for missing or invalid state.</summary>
         public int SourceSchema { get; }
     }
@@ -30,16 +29,13 @@ namespace PersistentCity.Persistence
         public SaveValidationException(string message) : base(message) { }
     }
 
-    /// <summary>Strict schema 8 codec with explicit schema 1 through 7 migration. Failed reads never replace a city.</summary>
+    /// <summary>Strict current-development codec. Unsupported and failed reads never replace a city.</summary>
     public static class SaveCodec
     {
         public const string StateKey = "persistentcity:state_v1";
-        public const int LegacyMaxInputCharacters = 4 * 1024 * 1024;
-        // The historical 25,495-resident migration stress fixture includes 32 visits per resident
-        // and 20% travelling on 150-leg car routes. Storage remains separately bounded
-        // from the 50,000 identity ceiling; not every maximum can be combined.
+        // Storage and nested-record limits are separate from the identity ceiling;
+        // not every individual maximum can be combined into one valid payload.
         public const int MaxInputCharacters = 256 * 1024 * 1024;
-        public const int LegacyMaxCitizens = 5000;
         public const int MaxCitizens = 50000;
         public const int MaxEmbeddedRecords = 4000000;
         public const int MaxPlaces = 20000;
@@ -69,86 +65,20 @@ namespace PersistentCity.Persistence
             {
                 int schema = ReadSchema(source);
                 if (schema > CityState.CurrentSchema) return new SaveReadResult(SaveReadStatus.Future, null, "State uses a newer schema; preserve the original payload.", sourceSchema: schema);
-                Require(schema >= 1 && schema <= CityState.CurrentSchema, "Unsupported state schema.");
-                Require(schema >= 3 || source.Length <= LegacyMaxInputCharacters, "Legacy state exceeds the input size limit.");
-                var serializer = JsonSerializer.Create(Settings(schema));
+                Require(schema == CityState.CurrentSchema, "Unsupported experimental state schema; preserve the original payload and use a new development city.");
+                var serializer = JsonSerializer.Create(Settings());
                 using (var shape = Reader(source))
                 {
                     Require(shape.Read(), "Missing state.");
                     int records = 0;
-                    CheckShape(shape, typeof(CityState), serializer.ContractResolver, schema, ref records);
+                    CheckShape(shape, typeof(CityState), serializer.ContractResolver, ref records);
                     Require(!shape.Read(), "State contains trailing JSON content.");
                 }
                 using var reader = Reader(source);
                 var state = serializer.Deserialize<CityState>(reader);
                 Require(state != null, "State is null.");
-                if (schema == 1)
-                {
-                    // Validate the exact old wire contract and all old invariants before migration.
-                    Validate(state!, 1);
-                    Population.InitializeExpansion(state!);
-                    state!.Schema = CityState.CurrentSchema;
-                }
-                else if (schema == 2)
-                {
-                    Validate(state!, 2);
-                    state!.InitialImportedResidents = state.SourceIdentities.Count;
-                    state.PopulationTarget = state.Citizens.Count;
-                    ResidentLifecycle.RetuneLegacyJobs(state);
-                    state.Schema = CityState.CurrentSchema;
-                }
-                else if (schema == 3)
-                {
-                    // Schema 3 used whole-property housing estimates. Its wire shape and
-                    // accounting stay valid; catalogue enrichment applies the new interior
-                    // policy later without evicting residents or retuning their jobs again.
-                    Validate(state!, 3);
-                    state!.Schema = CityState.CurrentSchema;
-                }
-                else if (schema == 4)
-                {
-                    Validate(state!, 4);
-                    state!.Schema = CityState.CurrentSchema;
-                }
-                else if (schema == 5)
-                {
-                    Validate(state!, 5);
-                    state!.Schema = CityState.CurrentSchema;
-                }
-                else if (schema == 6)
-                {
-                    Validate(state!, 6);
-                    state!.Schema = CityState.CurrentSchema;
-                }
-                if (schema == 7) { Validate(state!, 7); state!.Schema = CityState.CurrentSchema; }
-                if (schema < 7)
-                {
-                    state!.Traffic = null;
-                    state.TrafficTopologyId = "";
-                }
-                if (schema < 6)
-                {
-                    // Old payloads have no measured commute attempt. Preserve their pending
-                    // travel and activity events until the simulator can prepare a future shift.
-                    foreach (var citizen in state!.Citizens) citizen.CommutePreparation = new CommutePreparation();
-                }
-                if (schema < 5)
-                {
-                    // Runtime owns native pace conversion. Preserve all recorded routes
-                    // and event dates until it has measured the active game clock.
-                    state!.TravelTimingVersion = 0;
-                    state.TravelClockRate = 1;
-                }
                 Validate(state!);
-                bool migratedTraffic = state!.Traffic?.Schema == 1;
-                if (migratedTraffic)
-                {
-                    // The complete legacy city has passed validation. Only then upgrade
-                    // its detached traffic schedule; never rewrite the source payload here.
-                    state.Traffic = TrafficKernel.Restore(state.Traffic!, false).Capture();
-                    Validate(state);
-                }
-                return new SaveReadResult(SaveReadStatus.Loaded, state, "", schema < CityState.CurrentSchema || migratedTraffic, schema);
+                return new SaveReadResult(SaveReadStatus.Loaded, state, "", sourceSchema: schema);
             }
             catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)
             { return Invalid("Invalid state: " + exception.Message); }
@@ -157,7 +87,7 @@ namespace PersistentCity.Persistence
         private static SaveReadResult Invalid(string error) => new SaveReadResult(SaveReadStatus.Invalid, null, error);
 
         // Json.NET otherwise coerces strings to numbers and rounds floating-point integers.
-        // A v1 payload has one exact wire shape; corruption must not silently change meaning.
+        // A supported payload has one exact wire shape; corruption must not silently change meaning.
         private static JsonTextReader Reader(string source) => new JsonTextReader(new StringReader(source))
         { MaxDepth = 48, DateParseHandling = DateParseHandling.None, FloatParseHandling = FloatParseHandling.Double };
 
@@ -188,7 +118,7 @@ namespace PersistentCity.Persistence
 
         // Validate directly from tokens before deserialization: no full payload DOM, no coercion,
         // and bounded collection allocation even for hostile arrays of otherwise valid records.
-        private static void CheckShape(JsonReader reader, Type type, IContractResolver resolver, int schema, ref int records)
+        private static void CheckShape(JsonReader reader, Type type, IContractResolver resolver, ref int records)
         {
             var token = reader.TokenType;
             Type? nullable = Nullable.GetUnderlyingType(type);
@@ -218,14 +148,15 @@ namespace PersistentCity.Persistence
             {
                 Require(token == JsonToken.StartArray, "Expected an array.");
                 var item = array.CollectionItemType!;
-                int limit = item == typeof(ResidentMeal) ? MaxCitizens : item == typeof(FoodScope) ? 8
-                    : item == typeof(FoodDistrictBudgetMix) ? 100 : item == typeof(CitizenState) ? (schema >= 3 ? MaxCitizens : LegacyMaxCitizens)
+                int limit = item == typeof(FoodProductSales) ? 4 : item == typeof(FoodBuyerDistrict) ? 100 : item == typeof(long) ? 24 : item == typeof(FoodShopDay) ? 14 * MaxPlaces : item == typeof(ResidentMeal) ? MaxCitizens * 3 : item == typeof(FoodScope) ? 1024
+                    : item == typeof(FoodRoutineStop) ? MaxCitizens
+                    : item == typeof(FoodDistrictBudgetMix) ? 100 : item == typeof(CitizenState) ? MaxCitizens
                     : item == typeof(Place) ? MaxPlaces : item == typeof(CitizenIdentity) ? 5000
                     : item == typeof(RouteLeg) ? MaxRouteLegs : item == typeof(VisitRecord) ? MaxRecentVisits
                     : item == typeof(TrafficRouteLeg) ? MaxRouteLegs : item == typeof(TrafficVehicleState) ? MaxCitizens
                     : item == typeof(TrafficLinkDefinition) || item == typeof(TrafficLinkState) || item == typeof(TrafficEventState) || item == typeof(int) ? MaxTrafficLinks
                     : item == typeof(string) ? MaxCitizens
-                    : item == typeof(OpeningWindow) ? MaxOpeningWindows : ResidentLifecycle.MaxRecentDepartures;
+                    : item == typeof(OpeningWindow) ? MaxOpeningWindows : MaxEmbeddedRecords;
                 int count = 0;
                 while (reader.Read() && reader.TokenType != JsonToken.EndArray)
                 {
@@ -233,8 +164,8 @@ namespace PersistentCity.Persistence
                     if (item == typeof(RouteLeg) || item == typeof(VisitRecord) || item == typeof(OpeningWindow)
                         || item == typeof(TrafficRouteLeg) || item == typeof(TrafficVehicleState) || item == typeof(TrafficLinkDefinition)
                         || item == typeof(TrafficLinkState) || item == typeof(TrafficEventState) || item == typeof(int) || item == typeof(string))
-                        Require(++records <= (schema >= 3 ? MaxEmbeddedRecords : 100000), "Too many opening, route and visit records.");
-                    CheckShape(reader, item, resolver, schema, ref records);
+                        Require(++records <= MaxEmbeddedRecords, "Too many opening, route and visit records.");
+                    CheckShape(reader, item, resolver, ref records);
                 }
                 Require(reader.TokenType == JsonToken.EndArray, "Incomplete array."); return;
             }
@@ -249,16 +180,16 @@ namespace PersistentCity.Persistence
                 var property = properties.GetProperty(name, StringComparison.Ordinal);
                 Require(property != null, "Unknown field: " + name);
                 Require(reader.Read(), "Missing field value.");
-                CheckShape(reader, property.PropertyType!, resolver, schema, ref records);
+                CheckShape(reader, property.PropertyType!, resolver, ref records);
             }
             Require(reader.TokenType == JsonToken.EndObject && names.Count == properties.Count, "Missing object fields.");
         }
         private static bool NullableRecord(Type type) => type == typeof(Route) || type == typeof(CarState)
             || type == typeof(TrafficKernelState) || type == typeof(TrafficSignalSchedule)
-            || type == typeof(FoodCommerceState) || type == typeof(MealOuting);
-        private static JsonSerializerSettings Settings(int schema = CityState.CurrentSchema) => new JsonSerializerSettings
+            || type == typeof(FoodCommerceState) || type == typeof(MealOuting) || type == typeof(MealExcursion) || type == typeof(ResidentBudget);
+        private static JsonSerializerSettings Settings() => new JsonSerializerSettings
         {
-            ContractResolver = new StateContractResolver(schema),
+            ContractResolver = new StateContractResolver(),
             Converters = { new PositionConverter() },
             Culture = CultureInfo.InvariantCulture,
             MissingMemberHandling = MissingMemberHandling.Error,
@@ -267,22 +198,18 @@ namespace PersistentCity.Persistence
             FloatParseHandling = FloatParseHandling.Double
         };
 
-        private static void Validate(CityState state, int schema = CityState.CurrentSchema)
+        private static void Validate(CityState state)
         {
-            if (schema >= 8) ValidateFood(state);
-            bool expansion = schema >= 2;
             Require(state != null, "State is null.");
-            Require(state.Schema == schema, "Unsupported state schema.");
-            if (schema >= 5)
-            {
-                Require(state.TravelTimingVersion == 0 || state.TravelTimingVersion == 1, "Invalid travel timing version.");
-                Bounded(state.TravelClockRate, 0.01, 1000, "Travel clock rate");
-            }
+            Require(state.Schema == CityState.CurrentSchema, "Unsupported state schema.");
+            ValidateFood(state);
+            Require(state.TravelTimingVersion == 0 || state.TravelTimingVersion == 1, "Invalid travel timing version.");
+            Bounded(state.TravelClockRate, 0.01, 1000, "Travel clock rate");
             Text(state.PopulationKey, "Population key", 256);
             Text(state.RloVersion, "RLO version", 128);
             Minute(state.Minute, "City minute");
             Require(state.Places != null && state.Places.Count > 0 && state.Places.Count <= MaxPlaces, "Invalid place count.");
-            Require(state.Citizens != null && state.Citizens.Count > 0 && state.Citizens.Count <= (schema >= 3 ? MaxCitizens : LegacyMaxCitizens), "Invalid citizen count.");
+            Require(state.Citizens != null && state.Citizens.Count > 0 && state.Citizens.Count <= MaxCitizens, "Invalid citizen count.");
             var places = new Dictionary<string, Place>(StringComparer.Ordinal);
             int embeddedRecords = 0;
             foreach (var place in state.Places!)
@@ -291,18 +218,15 @@ namespace PersistentCity.Persistence
                 Text(place.Id, "Place ID", 256); Text(place.Name, "Place name", 512); Text(place.District, "Place district", 256, true);
                 Require(!places.ContainsKey(place.Id), "Duplicate place ID: " + place.Id);
                 places.Add(place.Id, place); Known(place.Kind, "Place kind"); Point(place.Position);
-                if (expansion)
-                {
-                    Bounded(place.AttractionWeight, 0.01, 100, "Attraction weight");
-                    Require(place.NativeTrafficIndex >= -1 && place.NativeTrafficIndex <= 1000000, "Invalid native traffic index.");
-                    Text(place.EvidenceSource, "Place evidence source", 256);
-                }
-                if (schema >= 3) Bounded(place.ResidentialAreaSquareMetres, 0, 1000000000, "Residential area");
+                Bounded(place.AttractionWeight, 0.01, 100, "Attraction weight");
+                Require(place.NativeTrafficIndex >= -1 && place.NativeTrafficIndex <= 1000000, "Invalid native traffic index.");
+                Text(place.EvidenceSource, "Place evidence source", 256);
+                Bounded(place.ResidentialAreaSquareMetres, 0, 1000000000, "Residential area");
                 Require(place.Capacity >= 0 && place.Capacity <= 1000000, "Invalid place capacity.");
                 Require(place.OpenMinute >= 0 && place.OpenMinute < 1440 && place.CloseMinute >= 0 && place.CloseMinute <= 1440, "Invalid opening hours.");
                 Require(place.WeeklyHours != null && place.WeeklyHours.Count <= MaxOpeningWindows, "Invalid weekly opening window count.");
                 embeddedRecords += place.WeeklyHours.Count;
-                Require(embeddedRecords <= (schema >= 3 ? MaxEmbeddedRecords : 100000), "Too many opening, route and visit records.");
+                Require(embeddedRecords <= MaxEmbeddedRecords, "Too many opening, route and visit records.");
                 foreach (var window in place.WeeklyHours)
                 {
                     Require(window != null, "Null weekly opening window.");
@@ -313,7 +237,7 @@ namespace PersistentCity.Persistence
                     Require(window.FromMinute != window.ToMinute && duration > 0, "Weekly opening window has no duration.");
                 }
             }
-            if (expansion) ValidateExpansion(state, schema >= 3);
+            ValidateExpansion(state);
             var ids = new HashSet<string>(StringComparer.Ordinal);
             var assigned = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (var citizen in state.Citizens!)
@@ -330,7 +254,7 @@ namespace PersistentCity.Persistence
                     Require(citizen.DayPlaceId == "", "A retiree cannot have a day-place assignment.");
                 else
                     OptionalReference(places, citizen.DayPlaceId, identity.Persona == Persona.Student ? PlaceKind.Study : PlaceKind.Work);
-                if (schema >= 6) ValidateCommutePreparation(citizen, places, state.Minute);
+                ValidateCommutePreparation(citizen, places, state.Minute);
                 CountAssignment(citizen.HomeId);
                 if (citizen.DayPlaceId != "") CountAssignment(citizen.DayPlaceId);
                 OptionalReference(places, citizen.ShopId, PlaceKind.Shop);
@@ -398,9 +322,9 @@ namespace PersistentCity.Persistence
                     Require((int)visited.Kind == (int)visit.Activity, "Visit activity does not match place.");
                     Require(visit.AtMinute >= lastVisit && visit.AtMinute <= state.Minute, "Visits are unordered or in the future."); lastVisit = visit.AtMinute;
                 }
-                Require(embeddedRecords <= (schema >= 3 ? MaxEmbeddedRecords : 100000), "Too many opening, route and visit records.");
+                Require(embeddedRecords <= MaxEmbeddedRecords, "Too many opening, route and visit records.");
             }
-            if (schema >= 7) ValidateTraffic(state, embeddedRecords);
+            ValidateTraffic(state, embeddedRecords);
             void CountAssignment(string id)
             {
                 int count = assigned.TryGetValue(id, out int previous) ? previous + 1 : 1;
@@ -423,7 +347,7 @@ namespace PersistentCity.Persistence
             var traffic = state.Traffic;
             Require(traffic.Clock == state.Minute, "Traffic and city clocks disagree.");
             Minute(traffic.Clock, "Traffic clock"); Minute(traffic.RequestedTime, "Requested traffic clock");
-            Require((traffic.Schema == 1 || traffic.Schema == 2) && traffic.RequestedTime >= traffic.Clock, "Invalid traffic schema or target.");
+            Require(traffic.Schema == 2 && traffic.RequestedTime >= traffic.Clock, "Invalid traffic schema or target.");
             Require(traffic.Definitions != null && traffic.Links != null && traffic.Vehicles != null && traffic.Events != null,
                 "Missing traffic collections.");
             Count(traffic.Definitions.Count, MaxTrafficLinks); Count(traffic.Links.Count, MaxTrafficLinks);
@@ -554,25 +478,17 @@ namespace PersistentCity.Persistence
                 "Commute preparation occurs in the future or after work starts.");
         }
 
-        private static void ValidateExpansion(CityState state, bool housing)
+        private static void ValidateExpansion(CityState state)
         {
             Require(state.SourceIdentities != null && state.SourceIdentities.Count > 0 && state.SourceIdentities.Count <= 5000,
                 "Invalid immutable identity source catalogue size.");
-            Require(state.NextResidentSequence >= 1 && state.NextResidentSequence < int.MaxValue && state.DepartedCount >= 0,
-                "Invalid resident sequence or departure count.");
-            if (housing)
-            {
-                Require(state.PopulationTarget == state.Citizens.Count, "Active population differs from its housing allocation.");
-                Require(state.InitialImportedResidents >= 0 && state.InitialImportedResidents <= state.SourceIdentities!.Count
-                    && state.InitialImportedResidents <= state.PopulationTarget, "Invalid imported resident count.");
-                Require((long)state.Citizens.Count + state.DepartedCount == (long)state.InitialImportedResidents + state.NextResidentSequence - 1,
-                    "Resident creation, active and departure counts disagree.");
-            }
-            else
-            {
-                Require(state.SourceIdentities!.Count == state.Citizens.Count, "Legacy source and active populations must have equal sizes.");
-                Require(state.DepartedCount == state.NextResidentSequence - 1, "Invalid legacy resident sequence.");
-            }
+            Require(state.NextResidentSequence >= 1 && state.NextResidentSequence < int.MaxValue,
+                "Invalid resident sequence.");
+            Require(state.PopulationTarget == state.Citizens.Count, "Active population differs from its housing allocation.");
+            Require(state.InitialImportedResidents >= 0 && state.InitialImportedResidents <= state.SourceIdentities!.Count
+                && state.InitialImportedResidents <= state.PopulationTarget, "Invalid imported resident count.");
+            Require((long)state.Citizens.Count == (long)state.InitialImportedResidents + state.NextResidentSequence - 1,
+                "Resident creation and active counts disagree.");
             var source = new Dictionary<string, CitizenIdentity>(StringComparer.Ordinal);
             foreach (var identity in state.SourceIdentities!)
             {
@@ -580,8 +496,7 @@ namespace PersistentCity.Persistence
                 Require(!identity.Id.StartsWith("pc:", StringComparison.Ordinal) && !source.ContainsKey(identity.Id), "Invalid or duplicate source ID.");
                 source.Add(identity.Id, identity);
             }
-            var importedIds = housing ? new HashSet<string>(source.Keys.OrderBy(id => id, StringComparer.Ordinal).Take(state.InitialImportedResidents), StringComparer.Ordinal)
-                : new HashSet<string>(source.Keys, StringComparer.Ordinal);
+            var importedIds = new HashSet<string>(source.Keys.OrderBy(id => id, StringComparer.Ordinal).Take(state.InitialImportedResidents), StringComparer.Ordinal);
             var active = new HashSet<string>(StringComparer.Ordinal);
             foreach (var citizen in state.Citizens)
             {
@@ -590,19 +505,15 @@ namespace PersistentCity.Persistence
                 Require(active.Add(citizen.Identity.Id), "Duplicate active ID.");
                 Minute(citizen.JoinedMinute, "Joined minute");
                 Require(citizen.JoinedMinute <= state.Minute, "Resident joins in the future.");
-                Minute(citizen.NextDepartureMinute, "Next departure minute");
-                Minute(citizen.NextJobChangeMinute, "Next job change minute");
-                Require(citizen.NextDepartureMinute >= citizen.JoinedMinute && citizen.NextJobChangeMinute >= citizen.JoinedMinute,
-                    "Lifecycle date precedes joining.");
+                Require(citizen.LastEmploymentCheckDay >= (int)(citizen.JoinedMinute / 1440)
+                    && citizen.LastEmploymentCheckDay <= (int)(state.Minute / 1440), "Invalid daily employment checkpoint.");
                 Require(citizen.JobChanges >= 0, "Invalid job-change count.");
-                if (citizen.Identity.Persona == Persona.Student || citizen.Identity.Persona == Persona.Retiree)
-                    Require(citizen.NextJobChangeMinute == ResidentLifecycle.Never, "Ineligible resident has a job-change event.");
                 if (citizen.Car != null)
                 {
                     Require(citizen.Preferences != null && citizen.Preferences.OwnsCar, "Unowned persistent car.");
                     Require(citizen.Car.Id == citizen.Identity.Id + ":car", "Car identity does not belong to resident.");
                     Point(citizen.Car.ParkedPosition);
-                    if (state.Schema >= 5) Text(citizen.Car.ModelId, "Car model ID", 128, true);
+                    Text(citizen.Car.ModelId, "Car model ID", 128, true);
                 }
                 if (citizen.Journey?.Legs != null)
                 {
@@ -621,20 +532,6 @@ namespace PersistentCity.Persistence
                     if (began) Require(citizen.Journey.Legs.All(l => l.Mode == TravelMode.Car || l.Mode == TravelMode.Walk),
                         "A car journey can only contain driving and walking access.");
                 }
-            }
-            Require(state.RecentDepartures != null && state.RecentDepartures.Count <= ResidentLifecycle.MaxRecentDepartures
-                && state.RecentDepartures.Count <= state.DepartedCount, "Invalid departure history.");
-            var departed = new HashSet<string>(StringComparer.Ordinal);
-            double previousMinute = 0;
-            foreach (var record in state.RecentDepartures!)
-            {
-                Require(record != null, "Null departure record.");
-                Provenance(record.Identity);
-                Require(!active.Contains(record.Identity.Id) && departed.Add(record.Identity.Id), "Departure identity is active or duplicated.");
-                Minute(record.JoinedMinute, "Departed resident joined minute"); Minute(record.DepartedMinute, "Departure minute");
-                Require(record.JoinedMinute <= record.DepartedMinute && record.DepartedMinute >= previousMinute && record.DepartedMinute <= state.Minute,
-                    "Departure history is unordered or has invalid dates.");
-                previousMinute = record.DepartedMinute;
             }
             void Provenance(CitizenIdentity identity)
             {
@@ -657,25 +554,89 @@ namespace PersistentCity.Persistence
             Require(state != null && state.Citizens != null && state.Places != null, "Missing food population.");
             var food = state.Food;
             if (food == null) { Require(state.Citizens.All(c => c != null && c.MealOuting == null), "Meal outing without economy."); return; }
-            Require(food.Shops != null && food.Shops.Count >= 1 && food.Shops.Count <= 8, "Invalid food scope.");
-            Require(food.Residents != null && food.Residents.Count == state.Citizens.Count, "Meal roster differs from population.");
+            Require(food.Shops != null && food.Shops.Count <= 1024, "Invalid food scope.");
+            Require(food.RepresentationFactor >= 1 && food.RepresentationFactor <= 3, "Invalid consumer representation factor.");
+            Require(food.Residents != null && food.Residents.Count == state.Citizens.Count * food.RepresentationFactor, "Meal roster differs from represented population.");
             Require(food.Districts != null, "Missing food budget districts.");
             FoodHouseholdPolicy.ValidateMixes(food.Districts);
+            Require(food.HouseholdFinanceVersion == 0 || food.HouseholdFinanceVersion == HouseholdFinance.PolicyVersion, "Unknown household finance policy.");
+            Require(food.MealRhythmVersion == 0 || food.MealRhythmVersion == MealRhythm.PolicyVersion, "Unknown meal rhythm policy.");
             var shops = new HashSet<string>(StringComparer.Ordinal);
             var businessIds = new HashSet<string>(StringComparer.Ordinal);
             foreach (var shop in food.Shops)
             {
                 Require(shop != null && shops.Add(shop.PlaceId) && businessIds.Add(shop.BusinessId), "Duplicate food scope.");
                 Text(shop.PlaceId, "Food place", 256); Text(shop.ProductId, "Food product", 256); Text(shop.BusinessId, "Food business", 512);
+                Require(shop.AdditionalProductIds != null && shop.AdditionalProductIds.Count <= 3
+                    && shop.Products().Distinct(StringComparer.Ordinal).Count() == shop.AdditionalProductIds.Count + 1, "Invalid food menu.");
+                foreach (var product in shop.AdditionalProductIds) Text(product, "Food menu product", 256);
                 Require(state.Places.Any(p => p.Id == shop.PlaceId && p.Kind == PlaceKind.Shop), "Unknown food shop.");
                 Minute(shop.NextServiceAt, "Food service clock");
             }
+            Require(food.History != null && food.History.Count <= 14 * MaxPlaces, "Oversized market history.");
+            var historyKeys = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var row in food.History)
+            {
+                Require(row != null && row.Day >= 0 && row.Day <= (int)(state.Minute / 1440) && state.Places.Any(p => p.Id == row.PlaceId && p.Kind == PlaceKind.Shop)
+                    && historyKeys.Add(row.Day + ":" + row.PlaceId + "\n" + row.BusinessId), "Invalid market history ownership.");
+                Text(row.BusinessId, "Historical business", 512);
+                Require(row.OffersConsidered >= 0 && row.ChosenOffers >= 0 && row.PriceRejections >= 0
+                    && row.AccessRejections >= 0 && row.ClosedRejections >= 0 && row.StockRejections >= 0 && row.StaffRejections >= 0
+                    && row.ServiceRejections >= 0 && row.UnknownEvidence >= 0 && row.PreferredAlternatives >= 0
+                    && row.Purchases >= 0 && row.ExistingStopPurchases >= 0 && row.ExistingStopPurchases <= row.Purchases
+                    && row.RevenueCents >= 0, "Invalid market history counters.");
+                Require(row.OffersConsidered == checked(row.ChosenOffers + row.PriceRejections + row.AccessRejections
+                    + row.ClosedRejections + row.StockRejections + row.StaffRejections + row.ServiceRejections + row.UnknownEvidence + row.PreferredAlternatives),
+                    "Market offer outcomes do not reconcile.");
+                Require(row.PurchaseHours != null && row.PurchaseHours.Length == 24 && row.PurchaseHours.All(n => n >= 0)
+                    && row.PurchaseHours.Sum() == row.Purchases, "Hourly purchases do not reconcile.");
+                Require(row.PurchaseMeals != null && row.PurchaseMeals.Length == 4 && row.PurchaseMeals.All(n => n >= 0)
+                    && row.PurchaseMeals.Sum() == row.Purchases, "Meal purchases do not reconcile.");
+                Require(row.ProductSales != null && row.ProductSales.Count <= 4 && row.ProductSales.All(p => p != null)
+                    && row.ProductSales.Select(p => p.ProductId).Distinct(StringComparer.Ordinal).Count() == row.ProductSales.Count,
+                    "Invalid product sales history.");
+                foreach (var product in row.ProductSales)
+                    Require(product != null && !string.IsNullOrWhiteSpace(product.ProductId)
+                        && product.Purchases > 0 && product.RevenueCents >= 0 && product.PurchaseMeals != null
+                        && product.PurchaseMeals.Length == 4 && product.PurchaseMeals.All(n => n >= 0)
+                        && product.PurchaseMeals.Sum() == product.Purchases, "Invalid product purchase counters.");
+                Require(row.ProductSales.Sum(p => p.Purchases) == row.Purchases
+                    && row.ProductSales.Sum(p => p.RevenueCents) == row.RevenueCents
+                    && Enumerable.Range(0, 4).All(k => row.ProductSales.Sum(p => p.PurchaseMeals[k]) == row.PurchaseMeals[k]),
+                    "Product sales do not reconcile.");
+                Require(row.BuyerDistricts != null && row.BuyerDistricts.Count <= 100
+                    && row.BuyerDistricts.All(d => d != null && d.Purchases > 0)
+                    && row.BuyerDistricts.Select(d => d.DistrictId).Distinct(StringComparer.Ordinal).Count() == row.BuyerDistricts.Count
+                    && row.BuyerDistricts.Sum(d => d.Purchases) == row.Purchases, "Customer districts do not reconcile.");
+                foreach (var district in row.BuyerDistricts) Text(district.DistrictId, "Buyer district", 256, emptyAllowed: true);
+            }
             var citizens = state.Citizens.ToDictionary(c => c.Identity.Id, StringComparer.Ordinal);
+            Require(food.RoutineStops != null && food.RoutineStops.Count <= citizens.Count, "Invalid shared routine stops.");
+            var stopOwners = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var stop in food.RoutineStops)
+            {
+                Require(stop != null && citizens.ContainsKey(stop.AnchorId) && stopOwners.Add(stop.AnchorId), "Invalid routine stop owner.");
+                Known(stop.Activity, "Shared routine activity");
+                Require(stop.Activity != Activity.Shop && state.Places.Any(p => p.Id == stop.PlaceId && (int)p.Kind == (int)stop.Activity), "Invalid shared routine place.");
+                Minute(stop.CapturedAt, "Routine capture"); Minute(stop.DepartureAt, "Routine departure");
+                Require(stop.CapturedAt <= state.Minute && stop.DepartureAt > stop.CapturedAt, "Invalid routine opportunity.");
+            }
             var seen = new HashSet<string>(StringComparer.Ordinal);
             foreach (var meal in food.Residents)
             {
-                Require(meal != null && seen.Add(meal.ResidentId) && citizens.ContainsKey(meal.ResidentId), "Unknown or duplicate meal owner.");
+                Require(meal != null && seen.Add(meal.ResidentId) && citizens.ContainsKey(meal.AnchorId)
+                    && meal.Slot >= 0 && meal.Slot < food.RepresentationFactor
+                    && meal.ResidentId == FoodRepresentation.ConsumerId(meal.AnchorId, meal.Slot), "Unknown or duplicate consumer/anchor slot.");
+                Require(meal.PreferenceBonusCents >= 0 && meal.PreferenceBonusCents <= 150
+                    && (meal.PreferredProductId.Length == 0 ? meal.PreferenceBonusCents == 0 : FoodProducts.Known(meal.PreferredProductId)), "Invalid consumer taste.");
+                Require(meal.Slot > 0 || meal.Excursion == null && !meal.NeedsHomeResync, "Physical anchor cannot own an abstract excursion.");
+                Require(meal.Slot == 0 || !meal.ExistingStop, "Represented consumer cannot claim anchor's existing-stop purchase.");
                 Known(meal.Status, "Meal status");
+                Known(meal.Kind, "Meal kind");
+                Require(food.MealRhythmVersion != 0 || meal.Kind == MealKind.Legacy, "Meal kind differs from rhythm policy.");
+                Require(meal.DayAllowanceUsedCents >= 0 && meal.DayAllowanceUsedCents <= 1000000, "Invalid daily food allowance use.");
+                Require((meal.Budget != null) == (food.HouseholdFinanceVersion != 0), "Household budget ownership differs from policy.");
+                if (meal.Budget != null) ValidateBudget(meal.Budget, state.Minute);
                 Require(meal.Day >= 0 && meal.Day <= 100000 && meal.AllowanceCents >= 0 && meal.AllowanceCents <= 1000000
                     && meal.PriceCents >= 0 && meal.PriceCents <= meal.AllowanceCents && meal.Purchases >= 0 && meal.SpentCents >= 0,
                     "Invalid meal allowance/accounting.");
@@ -688,11 +649,16 @@ namespace PersistentCity.Persistence
                 Text(meal.PlaceId, "Meal shop", 256, true); Text(meal.BusinessId, "Meal business", 512, true);
                 Text(meal.ProductId, "Meal product", 256, true); Text(meal.Reason, "Meal reason", 512, true);
                 if (meal.PlaceId.Length > 0)
-                    Require(food.Shops.Any(s => s.PlaceId == meal.PlaceId && s.BusinessId == meal.BusinessId && s.ProductId == meal.ProductId), "Meal outside its scope.");
+                    Require(state.Places.Any(p => p.Id == meal.PlaceId && p.Kind == PlaceKind.Shop) && meal.BusinessId.Length > 0 && meal.ProductId.Length > 0, "Meal lost its historical business/place identity.");
                 if (meal.Status == MealStatus.Travelling || meal.Status == MealStatus.Serving)
                     Require(meal.PlaceId.Length > 0 && meal.PriceCents > 0 && meal.ServiceMinutes > 0
                         && meal.Deadline <= meal.ExpiresAt, "Active meal lost its outing.");
-                var outing = citizens[meal.ResidentId].MealOuting;
+                Require(meal.ExistingStopPurchases >= 0 && meal.ExistingStopPurchases <= meal.Purchases, "Invalid existing-stop purchase count.");
+                Require(!meal.ExistingStop || meal.PlaceId.Length > 0 && meal.ReturnMinutes == 0
+                    && meal.Status != MealStatus.Travelling, "Existing-stop purchase cannot own a second trip.");
+                ValidateExcursion(meal, state);
+                var outing = meal.Slot == 0 ? citizens[meal.AnchorId].MealOuting : null;
+                Require(!meal.ExistingStop || outing == null, "Existing-stop purchase also owns an outing.");
                 if (outing != null)
                 {
                     Text(outing.OriginId, "Meal origin", 256); Known(outing.OriginActivity, "Meal origin activity");
@@ -701,6 +667,61 @@ namespace PersistentCity.Persistence
                     Require(outing.ResumeEvent <= outing.ResumeUntil && meal.PlaceId.Length > 0, "Invalid meal return ownership.");
                 }
             }
+        }
+
+        private static void ValidateExcursion(ResidentMeal meal, CityState state)
+        {
+            var excursion = meal.Excursion;
+            if (meal.Slot > 0 && (meal.Status == MealStatus.Travelling || meal.Status == MealStatus.Serving))
+                Require(excursion != null, "Active represented meal lost its excursion.");
+            if (excursion == null) return;
+            Require(meal.Slot > 0 && !meal.NeedsHomeResync && meal.Status != MealStatus.Pending
+                && excursion.DestinationId == meal.PlaceId, "Invalid represented excursion owner.");
+            Known(excursion.OriginActivity, "Excursion origin activity");
+            Require(excursion.ReturnGeometry.Length == 44, "Missing committed return geometry signature.");
+            Text(excursion.UnresolvedReason, "Excursion unresolved reason", 256, true);
+            Require(excursion.Unresolved == (excursion.UnresolvedReason.Length != 0), "Excursion unresolved evidence differs from state.");
+            Require(excursion.MaximumQueueMinutes >= 0 && excursion.MaximumQueueMinutes <= 60, "Invalid represented queue limit.");
+            Require(state.Places.Any(p => p.Id == excursion.OriginId && (int)p.Kind == (int)excursion.OriginActivity)
+                && state.Places.Any(p => p.Id == excursion.DestinationId && p.Kind == PlaceKind.Shop), "Invalid excursion endpoints.");
+            Require(excursion.OriginPosition.IsFinite && excursion.DestinationPosition.IsFinite, "Invalid excursion endpoint geometry.");
+            Minute(excursion.DepartedAt, "Excursion departure"); Minute(excursion.ArrivesAt, "Excursion arrival");
+            Minute(excursion.AdmissionAt, "Excursion admission");
+            Minute(excursion.SharedDepartureAt, "Excursion shared departure"); Minute(excursion.ReturnStartsAt, "Excursion return start");
+            Minute(excursion.ReturnsAt, "Excursion return completion");
+            Require(excursion.DepartedAt <= state.Minute && excursion.ArrivesAt > excursion.DepartedAt
+                && excursion.ArrivesAt <= meal.Deadline && meal.Deadline <= excursion.SharedDepartureAt,
+                "Excursion does not fit its committed opportunity.");
+            Require(excursion.AdmissionAt >= excursion.ArrivesAt && excursion.AdmissionAt < meal.Deadline, "Invalid represented admission time.");
+            Require(!excursion.Returning || excursion.ReturnsAt > excursion.ReturnStartsAt
+                && excursion.ReturnsAt <= excursion.SharedDepartureAt && excursion.ReturnsAt <= meal.Deadline,
+                "Invalid represented return interval.");
+            Require(!excursion.Unresolved || meal.Status != MealStatus.Travelling && meal.Status != MealStatus.Serving,
+                "Unresolved excursion cannot remain serviceable.");
+            Require(!excursion.Returning || meal.Status != MealStatus.Travelling && meal.Status != MealStatus.Serving,
+                "Returning excursion cannot purchase.");
+        }
+
+        private static void ValidateBudget(ResidentBudget b, double minute)
+        {
+            Known(b.IncomeSource, "Resident income source");
+            Require(b.BaseIncomeCents > 0 && b.BaseIncomeCents <= 1000000
+                && b.DailyIncomeCents >= 0 && b.DailyIncomeCents <= 1000000
+                && b.DailyHousingCents >= 0 && b.DailyHousingCents <= 1000000
+                && b.DailyEssentialsCents >= 0 && b.DailyEssentialsCents <= 1000000
+                && b.DailyHomeFoodCents > 0 && b.DailyHomeFoodCents <= 1000000, "Invalid household policy amounts.");
+            Require(b.OpeningBalanceCents >= 0 && b.BalanceCents >= 0 && b.IncomeReceivedCents >= 0
+                && b.EssentialsPaidCents >= 0 && b.HomeFoodPaidCents >= 0 && b.PreparedFoodSpentCents >= 0
+                && b.HeldPurchaseCents >= 0 && b.HeldPurchaseCents <= 1000000 && b.ArrearsCents >= 0,
+                "Negative household accounting.");
+            Require(checked(b.OpeningBalanceCents + b.IncomeReceivedCents) == checked(b.BalanceCents
+                + b.EssentialsPaidCents + b.HomeFoodPaidCents + b.PreparedFoodSpentCents + b.HeldPurchaseCents),
+                "Household cash is not conserved.");
+            Minute(b.NextPostingMinute, "Next household posting");
+            Require(b.LastPostedDay >= -1 && b.LastPostedDay <= (int)(minute / 1440)
+                && b.HomeFoodFundedDay >= -1 && b.HomeFoodFundedDay <= b.LastPostedDay
+                && b.NextPostingMinute >= minute && b.DaysWithoutHomeFood >= 0
+                && (b.LastPostedDay < 0 || b.NextPostingMinute == (b.LastPostedDay + 1) * 1440.0), "Invalid household posting ownership.");
         }
 
         private static void ValidateIdentity(CitizenIdentity identity)
@@ -730,35 +751,9 @@ namespace PersistentCity.Persistence
 
         private sealed class StateContractResolver : DefaultContractResolver
         {
-            private readonly int schema;
-            public StateContractResolver(int schema) { this.schema = schema; }
-            // An explicit, immutable v1 field allowlist. New optional defaults never weaken old reads.
-            private static readonly Dictionary<Type, HashSet<string>> LegacyFields = new Dictionary<Type, HashSet<string>>
-            {
-                [typeof(CityState)] = Fields("Schema RloVersion PopulationKey Seed Minute Places Citizens"),
-                [typeof(Place)] = Fields("Id Name District Kind Position Capacity OpenMinute CloseMinute WeeklyHours"),
-                [typeof(CitizenState)] = Fields("Identity HomeId DayPlaceId ShopId LeisureId Preferences Phase Activity PlaceId DestinationId DestinationActivity Journey DepartureMinute NextEventMinute ActivityUntilMinute CompletedJourneys MissedActivities RecentVisits"),
-                [typeof(TravelPreferences)] = Fields("OwnsCar AllowTransit WalkingToleranceMetres FareWeightMinutes")
-            };
-            private static readonly Dictionary<Type, HashSet<string>> SecondSchemaFields = new Dictionary<Type, HashSet<string>>
-            {
-                [typeof(CityState)] = Fields("Schema RloVersion PopulationKey Seed Minute Places Citizens SourceIdentities RecentDepartures NextResidentSequence DepartedCount"),
-                [typeof(Place)] = Fields("Id Name District Kind Position Capacity OpenMinute CloseMinute WeeklyHours AttractionWeight NativeTrafficIndex EvidenceSource"),
-                [typeof(CitizenState)] = Fields("Identity HomeId DayPlaceId ShopId LeisureId Preferences Phase Activity PlaceId DestinationId DestinationActivity Journey DepartureMinute NextEventMinute ActivityUntilMinute CompletedJourneys MissedActivities RecentVisits JoinedMinute NextJobChangeMinute NextDepartureMinute JobChanges Car"),
-                [typeof(TravelPreferences)] = Fields("OwnsCar AllowTransit WalkingToleranceMetres FareWeightMinutes")
-            };
-            private static HashSet<string> Fields(string names) => new HashSet<string>(names.Split(' '), StringComparer.Ordinal);
             protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
             {
-                return base.CreateProperties(type, memberSerialization).Where(property => property.Writable
-                    && (schema >= 8 || type != typeof(CityState) || property.PropertyName != "Food")
-                    && (schema >= 8 || type != typeof(CitizenState) || property.PropertyName != "MealOuting")
-                    && (schema >= 7 || type != typeof(CityState) || (property.PropertyName != "Traffic" && property.PropertyName != "TrafficTopologyId"))
-                    && (schema >= 6 || type != typeof(CitizenState) || property.PropertyName != "CommutePreparation")
-                    && (schema >= 5 || type != typeof(CityState) || (property.PropertyName != "TravelTimingVersion" && property.PropertyName != "TravelClockRate"))
-                    && (schema >= 5 || type != typeof(CarState) || (property.PropertyName != "ModelId" && property.PropertyName != "PaintSeed"))
-                    && (schema != 1 || !LegacyFields.TryGetValue(type, out var fields) || fields.Contains(property.PropertyName!))
-                    && (schema != 2 || !SecondSchemaFields.TryGetValue(type, out var secondFields) || secondFields.Contains(property.PropertyName!)))
+                return base.CreateProperties(type, memberSerialization).Where(property => property.Writable)
                     .OrderBy(property => property.PropertyName, StringComparer.Ordinal).Select(property =>
                 {
                     property.Required = NullableRecord(property.PropertyType!) || Nullable.GetUnderlyingType(property.PropertyType!) != null ? Required.AllowNull : Required.Always;

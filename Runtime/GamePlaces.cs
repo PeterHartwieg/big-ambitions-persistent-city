@@ -61,7 +61,13 @@ namespace PersistentCity.Runtime
                     continue;
                 }
                 if (registration == null || !registration.HasEstablishedBusiness || string.IsNullOrEmpty(registration.businessTypeName)
-                    || registration.businessTypeName == "ba:businesstype_empty" || registration.AvailableForRent) continue;
+                    || registration.businessTypeName == "ba:businesstype_empty" || registration.AvailableForRent)
+                {
+                    // Keep the entrance identity for a business established later in this city.
+                    // A dormant address has no open hours and creates no workplace allocation.
+                    if (building.BuildingType == "ba:buildingtype_retail") Add(PlaceKind.Shop, addressName, BusinessAllocation, 0, 0);
+                    continue;
+                }
 
                 if (!registration.temporarilyClosed && registration.scheduleDays != null)
                 {
@@ -86,9 +92,11 @@ namespace PersistentCity.Runtime
                 Add(PlaceKind.Work, registration.BusinessName, BusinessAllocation, 0, 0);
                 if (registration.businessTypeName == "ba:businesstype_school") Add(PlaceKind.Study, registration.BusinessName, BusinessAllocation, 0, 0);
                 else if (LeisureTypes.Contains(registration.businessTypeName)) Add(PlaceKind.Leisure, registration.BusinessName, BusinessAllocation, 0, 0);
-                else if (building.BuildingType == "ba:buildingtype_retail") Add(PlaceKind.Shop, registration.BusinessName, BusinessAllocation, 0, 0);
+                if (building.BuildingType == "ba:buildingtype_retail")
+                    Add(PlaceKind.Shop, registration.BusinessName, BusinessAllocation, 0, 0,
+                        copyWeeklyHours: IsRetailShopActivity(registration.businessTypeName));
 
-                void Add(PlaceKind kind, string name, int capacity, int opening, int closing, double residentialArea = 0, string? evidence = null)
+                void Add(PlaceKind kind, string name, int capacity, int opening, int closing, double residentialArea = 0, string? evidence = null, bool copyWeeklyHours = true)
                 {
                     string id = "address:" + address + ":" + kind.ToString().ToLowerInvariant();
                     if (!ids.Add(id)) return;
@@ -98,7 +106,8 @@ namespace PersistentCity.Runtime
                         NativeTrafficIndex = building.trafficIndex >= 0 && building.trafficIndex <= 100 ? building.trafficIndex : -1,
                         AttractionWeight = Attraction(kind, registration?.businessTypeName),
                         EvidenceSource = evidence ?? "native-building-traffic;policy:destination-weight" };
-                    foreach (var window in weekly) place.WeeklyHours.Add(new OpeningWindow { Day = window.Day, FromMinute = window.FromMinute, ToMinute = window.ToMinute });
+                    if (copyWeeklyHours)
+                        foreach (var window in weekly) place.WeeklyHours.Add(new OpeningWindow { Day = window.Day, FromMinute = window.FromMinute, ToMinute = window.ToMinute });
                     places.Add(place);
                 }
             }
@@ -109,6 +118,9 @@ namespace PersistentCity.Runtime
             places.Sort((a, b) => StringComparer.Ordinal.Compare(a.Id, b.Id));
             return places;
         }
+
+        internal static bool IsRetailShopActivity(string? businessType) => businessType != "ba:businesstype_school"
+            && (businessType == null || !LeisureTypes.Contains(businessType));
 
         internal static bool BuildingAccessible(CityBuildingController controller)
         {
