@@ -14,7 +14,7 @@ namespace PersistentCity.Core
         {
             internal readonly TrafficLinkDefinition Definition;
             internal readonly TrafficLinkState State;
-            internal readonly LinkedList<string> Queue = new LinkedList<string>();
+            internal readonly LinkedList<TrafficVehicleState> Queue = new LinkedList<TrafficVehicleState>();
             internal readonly Queue<string> Sources = new Queue<string>();
             internal readonly SortedSet<int> Incoming = new SortedSet<int>();
             internal TrafficEventState? Event;
@@ -70,7 +70,7 @@ namespace PersistentCity.Core
             {
                 Link link = links[id]; result.Add(id);
                 if (link.Queue.First == null) continue;
-                TrafficVehicleState head = vehicles[link.Queue.First.Value];
+                TrafficVehicleState head = link.Queue.First.Value;
                 if (head.RouteIndex + 1 < head.Route.Count) result.Add(head.Route[head.RouteIndex + 1].LinkId);
             }
             result.Sort();
@@ -228,7 +228,7 @@ namespace PersistentCity.Core
                 delay += green - ready;
                 if (link.Queue.Count >= link.Definition.Capacity && link.Queue.First != null)
                 {
-                    TrafficVehicleState head = vehicles[link.Queue.First.Value];
+                    TrafficVehicleState head = link.Queue.First.Value;
                     if (head.PhysicalControl)
                     {
                         TrafficRouteLeg leg = head.Route[head.RouteIndex];
@@ -282,7 +282,7 @@ namespace PersistentCity.Core
                 + (link.Queue.Count + link.Sources.Count) * link.Definition.HeadwayMinutes;
             if (link.Queue.Count >= link.Definition.Capacity && link.Queue.First != null)
             {
-                TrafficVehicleState head = vehicles[link.Queue.First.Value];
+                TrafficVehicleState head = link.Queue.First.Value;
                 if (head.PhysicalControl)
                 {
                     TrafficRouteLeg leg = head.Route[head.RouteIndex];
@@ -313,9 +313,8 @@ namespace PersistentCity.Core
             {
                 Link current = links[pending.Dequeue()];
                 if (selectedVehicles.Count + current.Queue.Count + current.Sources.Count > ForecastMaximumVehicles) return null;
-                foreach (string id in current.Queue.Concat(current.Sources))
+                foreach (TrafficVehicleState vehicle in current.Queue.Concat(current.Sources.Select(id => vehicles[id])))
                 {
-                    TrafficVehicleState vehicle = vehicles[id];
                     int start = Math.Max(0, vehicle.RouteIndex);
                     if (vehicle.Route.Count - start > ForecastMaximumReferences - references) return null;
                     selectedVehicles.Add(vehicle);
@@ -339,7 +338,6 @@ namespace PersistentCity.Core
                 copy.State.Closed = original.State.Closed;
                 copy.State.NextDischargeAt = original.State.NextDischargeAt;
                 copy.State.MergeCursor = original.State.MergeCursor;
-                foreach (string vehicle in original.Queue) copy.Queue.AddLast(vehicle);
                 foreach (string vehicle in original.Sources) copy.Sources.Enqueue(vehicle);
             }
             foreach (TrafficVehicleState original in selectedVehicles)
@@ -362,6 +360,11 @@ namespace PersistentCity.Core
                 }
                 projection.vehicles.Add(copy.VehicleId, copy);
             }
+            // Resolve queue references only after all projected vehicles have been cloned.
+            // Forecasts must never advance the live kernel's vehicle objects.
+            foreach (int id in selected)
+                foreach (var vehicle in links[id].Queue)
+                    projection.links[id].Queue.AddLast(projection.vehicles[vehicle.VehicleId]);
             foreach (Link copy in projection.links.Values) projection.Reconsider(copy);
             // This is an ETA projection, never authority over a live actor. Extrapolate
             // measured physical points at nominal speed without moving live ownership.
@@ -382,10 +385,10 @@ namespace PersistentCity.Core
                 for (var node = current.Queue.First; node != null; node = node.Next)
                 {
                     if (++references > ForecastMaximumReferences) return false;
-                    if (IsCurbExit(vehicles[node.Value]) && MayCurbFreeStorage(current, node, ref references)) return false;
+                    if (IsCurbExit(node.Value) && MayCurbFreeStorage(current, node, ref references)) return false;
                 }
                 if (!visited.Add(current.Definition.Id)) return true;
-                TrafficVehicleState head = vehicles[current.Queue.First.Value];
+                TrafficVehicleState head = current.Queue.First.Value;
                 if (head.RouteIndex + 1 >= head.Route.Count) return false;
                 current = links[head.Route[head.RouteIndex + 1].LinkId];
                 if (current.State.Closed) return true;
@@ -393,15 +396,15 @@ namespace PersistentCity.Core
             return false; // An unproven long dependency chain is not classified as a cycle.
         }
 
-        private bool MayCurbFreeStorage(Link link, LinkedListNode<string> target, ref int references)
+        private bool MayCurbFreeStorage(Link link, LinkedListNode<TrafficVehicleState> target, ref int references)
         {
-            TrafficVehicleState vehicle = vehicles[target.Value];
+            TrafficVehicleState vehicle = target.Value;
             double end = vehicle.Route[vehicle.RouteIndex].EndLinkFraction;
             int separation = 0;
             for (var predecessor = target.Previous; predecessor != null; predecessor = predecessor.Previous)
             {
                 if (++references > ForecastMaximumReferences) return true; // Unknown, not a proven cycle.
-                TrafficVehicleState ahead = vehicles[predecessor.Value];
+                TrafficVehicleState ahead = predecessor.Value;
                 if (end + ++separation / (double)link.Definition.Capacity > ahead.Route[ahead.RouteIndex].EndLinkFraction) return false;
             }
             return true;
@@ -414,7 +417,7 @@ namespace PersistentCity.Core
             // predecessor that has already passed its destination, retaining through FIFO.
             for (var node = link.Queue.First; node != null; node = node.Next)
             {
-                TrafficVehicleState vehicle = vehicles[node.Value];
+                TrafficVehicleState vehicle = node.Value;
                 if (vehicle.RouteIndex != vehicle.Route.Count - 1) continue;
                 bool curb = IsCurbExit(vehicle);
                 if ((!curb && node != link.Queue.First) ||
@@ -441,7 +444,7 @@ namespace PersistentCity.Core
                     else
                     {
                         Link source = links[candidate.Value];
-                        vehicle = vehicles[source.Queue.First!.Value];
+                        vehicle = source.Queue.First!.Value;
                         RemoveHead(source);
                         vehicle.RouteIndex++;
                         Reconsider(source);
@@ -452,7 +455,7 @@ namespace PersistentCity.Core
                     vehicle.MotionStartFraction = 0;
                     vehicle.ReadyAt = Clock + leg.FreeFlowMinutes;
                     vehicle.NominalMinutes = leg.StartNominalMinutes;
-                    link.Queue.AddLast(vehicle.VehicleId);
+                    link.Queue.AddLast(vehicle);
                 }
             }
             Reconsider(link);
@@ -487,7 +490,7 @@ namespace PersistentCity.Core
             UpdateActivity(link);
             if (link.Queue.First != null)
             {
-                TrafficVehicleState head = vehicles[link.Queue.First.Value];
+                TrafficVehicleState head = link.Queue.First.Value;
                 double at = EligibleAt(link, head);
                 if (head.RouteIndex == head.Route.Count - 1 && !IsCurbExit(head)) Schedule(link, at);
                 else if (head.RouteIndex + 1 < head.Route.Count)
@@ -497,7 +500,7 @@ namespace PersistentCity.Core
                 }
             }
             for (var node = link.Queue.First; node != null; node = node.Next)
-                if (IsCurbExit(vehicles[node.Value])) Schedule(link, CurbExitAt(link, node));
+                if (IsCurbExit(node.Value)) Schedule(link, CurbExitAt(link, node));
             if (link.State.Closed || link.Queue.Count >= link.Definition.Capacity) return;
             if (link.Sources.Count > 0 && CanReceive(link, vehicles[link.Sources.Peek()], 0)) Schedule(link, Clock);
             foreach (int sourceId in link.Incoming)
@@ -524,7 +527,7 @@ namespace PersistentCity.Core
 
         private bool Feeds(Link source, int destinationId, out TrafficVehicleState? vehicle)
         {
-            vehicle = source.Queue.First == null ? null : vehicles[source.Queue.First.Value];
+            vehicle = source.Queue.First == null ? null : source.Queue.First.Value;
             return vehicle != null && vehicle.RouteIndex + 1 < vehicle.Route.Count
                 && vehicle.Route[vehicle.RouteIndex + 1].LinkId == destinationId;
         }
@@ -541,9 +544,9 @@ namespace PersistentCity.Core
         private static bool IsCurbExit(TrafficVehicleState vehicle) => vehicle.RouteIndex == vehicle.Route.Count - 1
             && vehicle.Route[vehicle.RouteIndex].EndLinkFraction < 1;
 
-        private double CurbExitAt(Link link, LinkedListNode<string> target)
+        private double CurbExitAt(Link link, LinkedListNode<TrafficVehicleState> target)
         {
-            TrafficVehicleState vehicle = vehicles[target.Value];
+            TrafficVehicleState vehicle = target.Value;
             TrafficRouteLeg leg = vehicle.Route[vehicle.RouteIndex];
             if (vehicle.PhysicalControl && vehicle.NominalMinutes < leg.EndNominalMinutes) return double.PositiveInfinity;
             double at = Math.Max(Clock, vehicle.ReadyAt);
@@ -554,7 +557,7 @@ namespace PersistentCity.Core
             for (var predecessor = target.Previous; predecessor != null; predecessor = predecessor.Previous)
             {
                 double required = leg.EndLinkFraction + ++separation / (double)link.Definition.Capacity;
-                TrafficVehicleState ahead = vehicles[predecessor.Value];
+                TrafficVehicleState ahead = predecessor.Value;
                 TrafficRouteLeg aheadLeg = ahead.Route[ahead.RouteIndex];
                 if (required > aheadLeg.EndLinkFraction) return double.PositiveInfinity;
                 double fraction = (required - aheadLeg.StartLinkFraction) / (aheadLeg.EndLinkFraction - aheadLeg.StartLinkFraction);
@@ -593,9 +596,10 @@ namespace PersistentCity.Core
             int rank = 0;
             double previousFraction = 0;
             double maximum = vehicle.NominalMinutes;
-            foreach (string id in link.Queue)
+            var queueNode = link.Queue.First;
+            for (; queueNode != null; queueNode = queueNode.Next)
             {
-                TrafficVehicleState occupant = vehicles[id];
+                TrafficVehicleState occupant = queueNode.Value;
                 TrafficRouteLeg occupantLeg = occupant.Route[occupant.RouteIndex];
                 double span = occupantLeg.EndNominalMinutes - occupantLeg.StartNominalMinutes;
                 double floor = (occupant.NominalMinutes - occupantLeg.StartNominalMinutes) / span;
@@ -606,7 +610,7 @@ namespace PersistentCity.Core
                 double queueLimit = rank == 0 ? 1 : Math.Max(0, Math.Min(1,
                     (previousFraction - 1.0 / link.Definition.Capacity - occupantLeg.StartLinkFraction) / spatialSpan));
                 double allowed = Math.Max(floor, Math.Min(motion, queueLimit));
-                if (id == vehicle.VehicleId)
+                if (ReferenceEquals(occupant, vehicle))
                 {
                     // The committed endpoint is exact route evidence, not a reconstructed span.
                     maximum = allowed == 1 ? occupantLeg.EndNominalMinutes : occupantLeg.StartNominalMinutes + allowed * span;
@@ -626,7 +630,7 @@ namespace PersistentCity.Core
                 Link destination = links[vehicle.Route[vehicle.RouteIndex + 1].LinkId];
                 cross = CanReceive(destination, vehicle, vehicle.RouteIndex + 1);
             }
-            if (IsCurbExit(vehicle)) cross = CurbExitAt(link, link.Queue.Find(vehicle.VehicleId)!) <= Clock;
+            if (IsCurbExit(vehicle)) cross = CurbExitAt(link, queueNode!) <= Clock;
             return new TrafficVehicleSnapshot(vehicle.VehicleId, vehicle.RouteIndex, leg.LinkId, progress,
                 maximum, cross, vehicle.PhysicalControl, false, null);
         }
@@ -640,10 +644,12 @@ namespace PersistentCity.Core
             foreach (Link link in links.Values)
             {
                 state.Definitions.Add(CopyDefinition(link.Definition));
+                var queuedIds = new List<string>(link.Queue.Count);
+                foreach (var vehicle in link.Queue) queuedIds.Add(vehicle.VehicleId);
                 state.Links.Add(new TrafficLinkState
                 {
                     LinkId = link.Definition.Id, Closed = link.State.Closed, NextDischargeAt = link.State.NextDischargeAt,
-                    MergeCursor = link.State.MergeCursor, Vehicles = link.Queue.ToList(), WaitingSources = link.Sources.ToList(),
+                    MergeCursor = link.State.MergeCursor, Vehicles = queuedIds, WaitingSources = link.Sources.ToList(),
                     IncomingLinks = link.Incoming.ToList()
                 });
             }
@@ -728,7 +734,7 @@ namespace PersistentCity.Core
                     TrafficVehicleState vehicle = kernel.FindRestoredVehicle(id, occupied);
                     if (vehicle.Completed || vehicle.RouteIndex < 0 || vehicle.Route[vehicle.RouteIndex].LinkId != saved.LinkId)
                         throw new ArgumentException("Traffic queue and vehicle cursor disagree.", nameof(state));
-                    link.Queue.AddLast(id);
+                    link.Queue.AddLast(vehicle);
                 }
                 foreach (string id in saved.WaitingSources)
                 {
@@ -778,7 +784,7 @@ namespace PersistentCity.Core
             if (!vehicle.Completed)
             {
                 Link link = links[vehicle.Route[Math.Max(0, vehicle.RouteIndex)].LinkId];
-                if (vehicle.RouteIndex >= 0) link.Queue.Remove(vehicleId);
+                if (vehicle.RouteIndex >= 0) link.Queue.Remove(vehicle);
                 else
                 {
                     int count = link.Sources.Count;
@@ -889,7 +895,7 @@ namespace PersistentCity.Core
             {
                 if (link.Queue.First != null)
                 {
-                    TrafficVehicleState head = vehicles[link.Queue.First.Value];
+                    TrafficVehicleState head = link.Queue.First.Value;
                     double at = EligibleAt(link, head);
                     if (head.RouteIndex == head.Route.Count - 1 && !IsCurbExit(head)) RequireScheduled(link, at);
                     else if (head.RouteIndex + 1 < head.Route.Count)
@@ -899,7 +905,7 @@ namespace PersistentCity.Core
                     }
                 }
                 for (var node = link.Queue.First; node != null; node = node.Next)
-                    if (IsCurbExit(vehicles[node.Value])) RequireScheduled(link, CurbExitAt(link, node));
+                    if (IsCurbExit(node.Value)) RequireScheduled(link, CurbExitAt(link, node));
                 if (link.State.Closed || link.Queue.Count >= link.Definition.Capacity) continue;
                 if (link.Sources.Count > 0 && CanReceive(link, vehicles[link.Sources.Peek()], 0)) RequireScheduled(link, Clock);
                 foreach (int incoming in link.Incoming)
