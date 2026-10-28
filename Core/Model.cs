@@ -210,6 +210,7 @@ namespace PersistentCity.Core
         public TravelPreferences Preferences { get; set; } = new TravelPreferences();
         public CommutePreparation CommutePreparation { get; set; } = new CommutePreparation();
         public MealOuting? MealOuting { get; set; }
+        public OptionalStopState? OptionalStop { get; set; }
         public CarState? Car { get; set; }
         public double JoinedMinute { get; set; }
         public int LastEmploymentCheckDay { get; set; }
@@ -240,7 +241,7 @@ namespace PersistentCity.Core
 
     public sealed class CityState
     {
-        public const int CurrentSchema = 14;
+        public const int CurrentSchema = 15;
         public int Schema { get; set; } = CurrentSchema;
         public int TravelTimingVersion { get; set; } = 1;
         public double TravelClockRate { get; set; } = 1;

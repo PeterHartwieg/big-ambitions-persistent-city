@@ -37,6 +37,7 @@ namespace PersistentCity.Core
 
         private void DecideAtStop(ResidentMeal meal, CitizenState person)
         {
+            city.CancelOptionalStop(person.Identity.Id);
             double now = city.State.Minute;
             var consumer = Consumer(person, AvailableForMeal(meal), meal);
             MealRhythm.Apply(consumer, meal.Kind);

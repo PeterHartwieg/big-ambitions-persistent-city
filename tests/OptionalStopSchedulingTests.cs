@@ -1,0 +1,249 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Newtonsoft.Json.Linq;
+using PersistentCity.Core;
+using PersistentCity.Persistence;
+using Xunit;
+
+namespace PersistentCity.Tests;
+public sealed class OptionalStopSchedulingTests
+{
+    private sealed class Walking : IRoutePlanner
+    {
+        public Route Plan(Place from, Place to, double at, TravelPreferences p) => new()
+        { Legs = { new RouteLeg { From = from.Position, To = to.Position, Mode = TravelMode.Walk, Minutes = 10 } } };
+    }
+    private sealed class Environment : IOptionalStopEnvironment
+    {
+        public bool Raining { get; set; }
+        public bool Present = true;
+        public DwellKind Kind;
+        public int Capacity = 4;
+        public IReadOnlyList<OptionalStopSpot> Spots(Place place, DwellKind kind) => !Present || kind != Kind
+            ? Array.Empty<OptionalStopSpot>() : Enumerable.Range(0, Capacity).Select(i => new OptionalStopSpot
+            { Id = "spot:" + i, TargetId = "target", Position = new(10 + i, 0, 1), Facing = new(10, 0, 3) }).ToArray();
+        public bool Available(OptionalStopState stop) => Present;
+    }
+    private static (CitySimulator Sim, Environment Env) Ready(DwellKind kind, int count = 1, double stay = 120,
+        double minute = 1440, int percentage = 100, TravelMode arrivalMode = TravelMode.Walk)
+    {
+        var activity = kind == DwellKind.Break ? Activity.Work : kind == DwellKind.WindowShopping ? Activity.Shop : Activity.Leisure;
+        var identities = Enumerable.Range(0, count).Select(i => new CitizenIdentity { Id = "c" + i, Name = "Citizen " + i,
+            Age = 30, Persona = Persona.Commuter }).ToArray();
+        var places = new[] { new Place { Id = "home", Name = "Home", Capacity = count, Kind = PlaceKind.Home },
+            new Place { Id = "venue", Name = "Venue", Kind = (PlaceKind)activity, Capacity = count, Position = new(10, 0, 0) } };
+        var state = Population.Create(identities, places, "stop-tests", "0.40.4", 17, minute);
+        foreach (var c in state.Citizens)
+        {
+            c.Phase = CitizenPhase.Travelling; c.PlaceId = c.HomeId; c.Activity = Activity.Home;
+            c.DestinationId = "venue"; c.DestinationActivity = activity;
+            c.DepartureMinute = minute; c.NextEventMinute = minute + 10; c.ActivityUntilMinute = minute + 10 + stay;
+            c.Journey = new Walking().Plan(places[0], places[1], minute, c.Preferences);
+            c.Journey.Legs[0].Mode = arrivalMode;
+        }
+        var env = new Environment { Kind = kind };
+        var sim = new CitySimulator(state, new Walking()); sim.AttachOptionalStops(env, percentage);
+        return (sim, env);
+    }
+    [Theory]
+    [InlineData(DwellKind.Break, 5, 10)] [InlineData(DwellKind.WindowShopping, 1, 3)]
+    [InlineData(DwellKind.Resting, 10, 40)] [InlineData(DwellKind.Audience, 2, 8)]
+    public void ArrivalSchedulesBoundedSavedStopWithoutChangingContinuation(DwellKind kind, double min, double max)
+    {
+        var (sim, _) = Ready(kind); sim.AdvanceTo(1450);
+        var c = sim.State.Citizens.Single(); var stop = Assert.IsType<OptionalStopState>(c.OptionalStop);
+        Assert.Equal(kind, stop.Kind); Assert.InRange(stop.EndMinute - stop.StartMinute, min, max);
+        Assert.Equal(1570, c.NextEventMinute); Assert.Equal(1570, c.ActivityUntilMinute);
+        Assert.Equal(1, c.CompletedJourneys); Assert.Single(c.RecentVisits); Assert.Null(c.Journey);
+        if (kind == DwellKind.Break) Assert.Equal(1510, stop.StartMinute);
+        else Assert.Equal(1450, stop.StartMinute);
+        Assert.Equal(1450, stop.VisitMinute); Assert.Equal(c.NextEventMinute, stop.ResumeEventMinute);
+        string json = SaveCodec.Write(sim.State); var read = SaveCodec.Read(json);
+        Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(json, SaveCodec.Write(read.State!));
+        sim.AdvanceTo(stop.EndMinute); Assert.False(stop.ActiveAt(sim.State.Minute));
+        Assert.Equal(1570, c.NextEventMinute);
+    }
+    [Theory]
+    [InlineData(DwellKind.Break)] [InlineData(DwellKind.WindowShopping)] [InlineData(DwellKind.Resting)] [InlineData(DwellKind.Audience)]
+    public void AnyRainRefusesAndPermanentlyCancelsWithoutRestartOrIdentityChange(DwellKind kind)
+    {
+        var (wet, wetEnv) = Ready(kind); wetEnv.Raining = true; wet.AdvanceTo(1450);
+        Assert.Null(wet.State.Citizens[0].OptionalStop);
+        var (sim, env) = Ready(kind); sim.AdvanceTo(1450);
+        var c = sim.State.Citizens[0]; var identity = c.Identity; var stop = c.OptionalStop!; double end = stop.EndMinute;
+        env.Raining = true; sim.RefreshOptionalStops(); Assert.True(stop.Cancelled);
+        env.Raining = false; sim.RefreshOptionalStops(); sim.AdvanceTo(1451);
+        Assert.True(c.OptionalStop!.Cancelled); Assert.Equal(end, c.OptionalStop.EndMinute); Assert.Same(identity, c.Identity);
+        Assert.Equal(1570, c.NextEventMinute); Assert.Equal(1, c.CompletedJourneys);
+        var read = SaveCodec.Read(SaveCodec.Write(sim.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(env, 100);
+        Assert.True(loaded.State.Citizens[0].OptionalStop!.Cancelled);
+    }
+    [Theory]
+    [InlineData(DwellKind.Break, 4)] [InlineData(DwellKind.WindowShopping, 0.5)]
+    [InlineData(DwellKind.Resting, 9)] [InlineData(DwellKind.Audience, 1)]
+    public void InsufficientTimeNeverCreatesUndersizedStop(DwellKind kind, double stay)
+    {
+        var (sim, _) = Ready(kind, stay: stay); sim.AdvanceTo(1450); Assert.Null(sim.State.Citizens[0].OptionalStop);
+    }
+    [Fact]
+    public void MissingSpotAndPerformerLossEndRatherThanReroll()
+    {
+        var (sim, env) = Ready(DwellKind.Audience); sim.AdvanceTo(1450); var stop = sim.State.Citizens[0].OptionalStop!;
+        env.Present = false; sim.RefreshOptionalStops(); Assert.True(stop.Cancelled);
+        env.Present = true; sim.RefreshOptionalStops(); Assert.True(stop.Cancelled);
+        var (absent, noSpots) = Ready(DwellKind.Resting); noSpots.Present = false; absent.AdvanceTo(1450);
+        Assert.Null(absent.State.Citizens[0].OptionalStop);
+    }
+    [Fact]
+    public void ConversationsRequireTwoEligiblePersistentVisitorsAndDistinctSpots()
+    {
+        var (alone, _) = Ready(DwellKind.ChatOutsideVenue); alone.AdvanceTo(1450); Assert.Null(alone.State.Citizens[0].OptionalStop);
+        var (sim, env) = Ready(DwellKind.ChatOutsideVenue, 3); sim.AdvanceTo(1450);
+        var group = sim.State.Citizens.Where(c => c.OptionalStop != null).ToArray(); Assert.Equal(2, group.Length);
+        var a = group[0].OptionalStop!; var b = group[1].OptionalStop!;
+        Assert.Equal(a.Members, b.Members); Assert.Equal(2, a.Members.Count); Assert.Equal(a.TargetId, b.TargetId);
+        Assert.Equal(a.EndMinute, b.EndMinute); Assert.Equal(a.StartMinute, b.StartMinute);
+        Assert.InRange(a.EndMinute - a.StartMinute, 10, 30); Assert.NotEqual(a.SpotId, b.SpotId);
+        Assert.Equal(a.Position, b.Facing); Assert.Equal(b.Position, a.Facing);
+        var read = SaveCodec.Read(SaveCodec.Write(sim.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        env.Raining = true; sim.RefreshOptionalStops(); Assert.All(group, c => Assert.True(c.OptionalStop!.Cancelled));
+    }
+    [Fact]
+    public void NoSingletonIsPublishedWhenThereIsOnlyOneValidatedSpot()
+    {
+        var (sim, env) = Ready(DwellKind.ChatOutsideVenue, 2); env.Capacity = 1; sim.AdvanceTo(1450);
+        Assert.All(sim.State.Citizens, c => Assert.Null(c.OptionalStop));
+    }
+    [Fact]
+    public void AudienceRequiresPassingWalkerAndChoiceNotAnAnonymousPopulationTarget()
+    {
+        var (declined, _) = Ready(DwellKind.Audience, percentage: 0); declined.AdvanceTo(1450);
+        Assert.Null(declined.State.Citizens[0].OptionalStop);
+        var (transit, _) = Ready(DwellKind.Audience, arrivalMode: TravelMode.Bus); transit.AdvanceTo(1450);
+        Assert.Null(transit.State.Citizens[0].OptionalStop);
+        var (sim, _) = Ready(DwellKind.Audience, 3); var ids = sim.State.Citizens.Select(c => c.Identity.Id).ToArray(); sim.AdvanceTo(1450);
+        Assert.Equal(ids, sim.State.Citizens.Select(c => c.Identity.Id)); Assert.Equal(3, sim.State.Citizens.Count);
+        Assert.All(sim.State.Citizens, c => Assert.Equal(DwellKind.Audience, c.OptionalStop!.Kind));
+        Assert.Equal(3, sim.State.Citizens.Select(c => c.OptionalStop!.SpotId).Distinct().Count());
+    }
+    [Fact]
+    public void LegacyMigrationAddsNoStopsAndDoesNotInventVisitsOnLoad()
+    {
+        var (sim, env) = Ready(DwellKind.WindowShopping, percentage: 0); sim.AdvanceTo(1450);
+        foreach (int schema in new[] {13,14})
+        {
+            var wire = JObject.Parse(SaveCodec.Write(sim.State)); wire["Schema"] = schema;
+            foreach (var c in wire["Citizens"]!.OfType<JObject>()) c.Remove("OptionalStop");
+            string source = wire.ToString(); var read = SaveCodec.Read(source);
+            Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(schema, read.SourceSchema);
+            Assert.Equal(15, read.State!.Schema); Assert.Null(read.State.Citizens[0].OptionalStop);
+            var loaded = new CitySimulator(read.State, new Walking()); loaded.AttachOptionalStops(env,100); loaded.AdvanceTo(1451);
+            Assert.Null(loaded.State.Citizens[0].OptionalStop); Assert.Single(loaded.State.Citizens[0].RecentVisits);
+            Assert.Equal(source, wire.ToString());
+            wire["Citizens"]![0]!["OptionalStop"] = null;
+            Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status);
+        }
+    }
+    [Fact]
+    public void StrictWireRejectsMissingFieldsUnknownKindsAndImpossibleContinuation()
+    {
+        var (sim, _) = Ready(DwellKind.Resting); sim.AdvanceTo(1450); string source = SaveCodec.Write(sim.State);
+        foreach (Action<JObject> damage in new Action<JObject>[] {
+            j => ((JObject)j["Citizens"]![0]!).Remove("OptionalStop"),
+            j => j["Citizens"]![0]!["OptionalStop"]!["Kind"] = (int)DwellKind.WaitForBus,
+            j => j["Citizens"]![0]!["OptionalStop"]!["EndMinute"] = 1600,
+            j => j["Citizens"]![0]!["OptionalStop"]!["ResumeEventMinute"] = 1600,
+            j => j["Citizens"]![0]!["OptionalStop"]!["Members"] = new JArray("anonymous") })
+        { var wire = JObject.Parse(source); damage(wire); Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status); }
+        var future = JObject.Parse(source); future["Schema"] = 16; Assert.Equal(SaveReadStatus.Future, SaveCodec.Read(future.ToString()).Status);
+    }
+    [Theory]
+    [InlineData(DwellKind.Break)] [InlineData(DwellKind.WindowShopping)] [InlineData(DwellKind.Resting)]
+    [InlineData(DwellKind.Audience)] [InlineData(DwellKind.ChatOutsideVenue)]
+    public void EventBudgetReloadAndRouteRebuildPreserveDeadlinesAndMembership(DwellKind kind)
+    {
+        var (whole, _) = Ready(kind, 4); whole.AdvanceTo(1451);
+        var (sliced, env) = Ready(kind, 4); while (!sliced.AdvanceTo(1450, 1).CaughtUp) { }
+        var read = SaveCodec.Read(SaveCodec.Write(sliced.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(env, 100);
+        loaded = loaded.RebuildRoutes(new Walking()); loaded.AdvanceTo(1451);
+        Assert.Equal(SaveCodec.Write(whole.State), SaveCodec.Write(loaded.State));
+    }
+    [Fact]
+    public void NightStopsReuseExistingVisitsWithoutAddingNightOutings()
+    {
+        var (sim, _) = Ready(DwellKind.ChatOutsideVenue, 2, minute: 2880 + 3 * 60);
+        sim.AdvanceTo(3070); Assert.Equal(2, sim.State.Citizens.Count);
+        Assert.All(sim.State.Citizens, c => { Assert.Equal(1,c.CompletedJourneys); Assert.Single(c.RecentVisits); Assert.NotNull(c.OptionalStop); });
+    }
+    [Fact]
+    public void UndecidedFrequencyDoesNotInventAnAutomaticRateButRetainsSavedStops()
+    {
+        var (sim, env) = Ready(DwellKind.WindowShopping); sim.AttachOptionalStops(env, null); sim.AdvanceTo(1450);
+        Assert.Null(sim.State.Citizens[0].OptionalStop);
+        var (active, _) = Ready(DwellKind.WindowShopping); active.AdvanceTo(1450);
+        var read = SaveCodec.Read(SaveCodec.Write(active.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(env, null);
+        Assert.Equal(active.State.Citizens[0].OptionalStop!.EndMinute, loaded.State.Citizens[0].OptionalStop!.EndMinute);
+        Assert.False(loaded.State.Citizens[0].OptionalStop!.Cancelled);
+    }
+    [Fact]
+    public void CancellingOnePartnerCancelsWholeConversationBeforeImmediateSave()
+    {
+        var (sim, _) = Ready(DwellKind.ChatOutsideVenue, 2); sim.AdvanceTo(1450);
+        sim.CancelOptionalStop(sim.State.Citizens[0].Identity.Id);
+        Assert.All(sim.State.Citizens, c => Assert.True(c.OptionalStop!.Cancelled));
+        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(sim.State)).Status);
+    }
+    [Fact]
+    public void OrphanedActiveConversationCannotLoad()
+    {
+        var (sim, _) = Ready(DwellKind.ChatOutsideVenue, 2); sim.AdvanceTo(1450);
+        var wire = JObject.Parse(SaveCodec.Write(sim.State)); wire["Citizens"]![0]!["OptionalStop"] = null;
+        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status);
+    }
+    [Fact]
+    public void ExistingStopResumesOriginalActivityAndNewJourneyWithoutReplayingVisit()
+    {
+        var (sim, env) = Ready(DwellKind.WindowShopping); sim.AdvanceTo(1450);
+        var c = sim.State.Citizens[0]; double end = c.OptionalStop!.EndMinute;
+        sim.AdvanceTo(end + 1); Assert.Equal(CitizenPhase.AtPlace, c.Phase); Assert.Single(c.RecentVisits);
+        var loaded = new CitySimulator(SaveCodec.Read(SaveCodec.Write(sim.State)).State!, new Walking()); loaded.AttachOptionalStops(env,100);
+        sim.AdvanceTo(1580); loaded.AdvanceTo(1580);
+        Assert.Equal(SaveCodec.Write(sim.State), SaveCodec.Write(loaded.State));
+        Assert.Null(c.OptionalStop); Assert.Equal(2,c.CompletedJourneys); Assert.Equal(Activity.Home,c.Activity);
+    }
+    [Fact]
+    public void ExactMinimumAndMaximumDurationsAreReachableAndAlwaysBounded()
+    {
+        foreach (var kind in new[] {DwellKind.Break,DwellKind.WindowShopping,DwellKind.Resting,DwellKind.ChatOutsideVenue,DwellKind.Audience})
+        {
+            double min=OptionalStopPolicy.Minimum(kind), max=DwellRules.For(kind).MaximumMinutes;
+            var durations = Enumerable.Range(0,100000).Select(i => OptionalStopPolicy.Duration("c"+i,kind,17)).ToArray();
+            Assert.All(durations, d => Assert.InRange(d,min,max)); Assert.Equal(min,durations.Min()); Assert.Equal(max,durations.Max());
+        }
+    }
+
+    [Fact]
+    public void ClosedVisitOrMealOutingCannotStartAnOptionalStop()
+    {
+        var (closed, _) = Ready(DwellKind.WindowShopping); closed.State.Places.Single(p=>p.Id=="venue").CloseMinute=0;
+        closed.AdvanceTo(1450); Assert.Null(closed.State.Citizens[0].OptionalStop);
+        var (meal, _) = Ready(DwellKind.WindowShopping); var c=meal.State.Citizens[0];
+        c.MealOuting=new MealOuting {OriginId="home",OriginActivity=Activity.Home,ResumeUntil=1700,ResumeEvent=1700};
+        meal.AdvanceTo(1450); Assert.Null(c.OptionalStop); Assert.NotNull(c.MealOuting);
+    }
+    [Fact]
+    public void ClosureCancelsAnAlreadyPlannedBreakAndGroupPartnerLossCancelsConversation()
+    {
+        var (work, _) = Ready(DwellKind.Break); work.AdvanceTo(1450);
+        work.State.Places.Single(p=>p.Id=="venue").CloseMinute=0; work.RefreshOptionalStops();
+        Assert.True(work.State.Citizens[0].OptionalStop!.Cancelled);
+        var (group, _) = Ready(DwellKind.ChatOutsideVenue,2); group.AdvanceTo(1450);
+        group.State.Citizens[0].OptionalStop=null; group.RefreshOptionalStops();
+        Assert.True(group.State.Citizens[1].OptionalStop!.Cancelled);
+    }
+
+}

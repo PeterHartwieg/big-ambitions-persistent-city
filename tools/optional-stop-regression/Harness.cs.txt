@@ -1,0 +1,89 @@
+using System;
+using System.Linq;
+using System.Collections.Generic;
+using PersistentCity.Core;
+static class Time { public static float unscaledDeltaTime = 1; }
+static class RainHelper { public static bool isRaining; }
+static class NativeTravelPace { public static float WalkingMetresPerSecond = 1; }
+sealed class Agent { public bool isStopped; public bool hasPath; public void ResetPath() { hasPath = false; } }
+sealed class Body
+{
+    public bool Valid = true, Refuse;
+    public Position Position, Target, Facing;
+    public readonly Agent Agent = new();
+    public int Paths;
+    public bool SetPathTarget(Position target, float speed) { Paths++; if (Refuse) return false; Target = target; Agent.hasPath = true; Agent.isStopped = false; return true; }
+    public void Stop(bool stop) { Agent.isStopped = stop; }
+    public void Face(Position point) { Facing = point; }
+    public void Tick() { }
+}
+sealed class DoorQueue { public string Key = "door"; public List<Position> Spots = new() { new(2,0,0), new(3,0,0) }; }
+partial class Harness
+{
+    private enum QueueStep { Approaching, Standing, Entering }
+    private sealed class Binding
+    {
+        public CitizenState Citizen = null!;
+        public Body? Person;
+        public OptionalStopState? Optional;
+        public bool OptionalReturning;
+        public float StepWalked;
+        public Dwell? Queue;
+        public DoorQueue? Line;
+        public int Slot;
+        public QueueStep Step = QueueStep.Approaching;
+    }
+    private const float QueueStepSeconds = 20;
+    private readonly CitySimulator simulation;
+    private readonly Dictionary<string,Binding> bindings = new();
+    private sealed class Walking : IRoutePlanner { public Route? Plan(Place a,Place b,double t,TravelPreferences p) => null; }
+    private Harness()
+    {
+        var state = Population.Create(new[] {new CitizenIdentity { Id="c",Name="Citizen",Persona=Persona.Retiree }},
+            new[] {new Place { Id="home",Name="Home",Kind=PlaceKind.Home }}, "test","0.40.4",17,100);
+        var c=state.Citizens[0]; c.NextEventMinute=c.ActivityUntilMinute=1000;
+        simulation=new CitySimulator(state,new Walking());
+    }
+    private Binding New()
+    {
+        var c=simulation.State.Citizens[0];
+        c.OptionalStop=new OptionalStopState { Kind=DwellKind.Break,PlaceId="home",SpotId="spot",TargetId="home",Position=new(2,0,0),Facing=new(4,0,0),
+            ReturnPosition=new(0,0,0),StartMinute=100,EndMinute=110,VisitMinute=100,ResumeEventMinute=1000 };
+        return new Binding { Citizen=c,Person=new Body() };
+    }
+    private static int checks;
+    private static void Check(bool ok,string message) { checks++; if(!ok) throw new Exception(message); }
+    public static void Main()
+    {
+        var h=new Harness(); var b=h.New(); var identity=b.Citizen.Identity; var body=b.Person!;
+        Check(h.TryJoinOptional(b),"start walk"); Check(body.Target.Equals(new Position(2,0,0)),"target spot");
+        Check(h.ObserveOptional(b),"approaching retained"); body.Position=b.Optional!.Position;
+        Check(h.ObserveOptional(b)&&body.Agent.isStopped,"stand at reached spot"); Check(body.Facing.Equals(b.Optional.Facing),"face recorded target");
+        Check(ReferenceEquals(identity,b.Citizen.Identity)&&ReferenceEquals(body,b.Person),"identity and body retained");
+        for(int i=0;i<100;i++) Check(h.ObserveOptional(b)&&!b.OptionalReturning,"standing does not consume walking timeout");
+        // Save/event reconstruction must not restart or lose the physical transition.
+        b.Citizen.OptionalStop=b.Citizen.OptionalStop!.Copy(); Check(h.ObserveOptional(b),"reconstructed record retained");
+        RainHelper.isRaining=true; Check(h.ObserveOptional(b)&&b.OptionalReturning,"rain walks out");
+        Check(b.Citizen.OptionalStop!.Cancelled&&!body.Agent.isStopped&&body.Target.Equals(new Position(0,0,0)),"saved cancellation and return target");
+        RainHelper.isRaining=false; Check(h.ObserveOptional(b)&&b.OptionalReturning,"rain clearing does not restart");
+        body.Position=new(0,0,0); Check(!h.ObserveOptional(b),"release only at continuation entrance");
+        b=h.New(); body=b.Person!; Check(h.TryJoinOptional(b),"second approach"); body.Position=new(1,0,0);
+        for(int i=0;i<21;i++) h.ObserveOptional(b);
+        Check(b.OptionalReturning&&b.Citizen.OptionalStop!.Cancelled,"blocked approach cancels bounded stop");
+        b=h.New(); body=b.Person!; h.TryJoinOptional(b); body.Position=b.Optional!.Position; h.ObserveOptional(b);
+        body.Refuse=true; b.Citizen.OptionalStop!.Cancelled=true;
+        Check(h.ObserveOptional(b)&&b.OptionalReturning,"failed return path preserves visible body");
+        for(int i=0;i<60;i++) Check(h.ObserveOptional(b),"failed return never pops at spot");
+        body.Refuse=false; Check(h.ObserveOptional(b)&&body.Target.Equals(new Position(0,0,0)),"return recovers");
+        b=h.New(); b.Person!.Refuse=true; Check(!h.TryJoinOptional(b)&&b.Citizen.OptionalStop!.Cancelled,"failed admission does not stand in doorway");
+        var line=new DoorQueue(); b=h.New(); h.TryJoinOptional(b); h.bindings["c"]=b;
+        Check(h.Standing(line).Single().Value==0,"queue reserves optional occupied spot");
+        h.bindings.Clear(); h.bindings["q"]=new Binding {Citizen=new CitizenState {Identity=new CitizenIdentity {Id="q"}},Person=new Body(),
+            Line=line,Slot=0,Queue=new Dwell("q",DwellKind.QueueAtOpening,"home",100,105,"home")};
+        b=h.New(); Check(!h.TryJoinOptional(b)&&b.Citizen.OptionalStop!.Cancelled,"existing queue wins same spot");
+        h.bindings.Clear(); b=h.New(); h.TryJoinOptional(b); b.Person!.Position=b.Optional!.Position;
+        h.simulation.State.Minute=110;
+        Check(h.ObserveOptional(b)&&b.OptionalReturning,"original hard deadline starts return");
+        Console.WriteLine($"Optional stop physical adapter: {checks} checks passed.");
+    }
+}

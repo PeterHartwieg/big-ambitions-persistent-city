@@ -1,5 +1,21 @@
 # Validation status
 
+## Optional stops — 28 October 2026 (offline draft; activation decision pending)
+
+[Peter's DECISIONS-2](docs/decisions/2026-10-28-optional-stops.md) approves all five optional kinds and ranges, any-rain cancellation including audiences, already eligible visitors only and no anonymous crowds. Q1 is leave street crowds/routines unchanged now. [Implementation and remaining limits](docs/stationary-citizens.md).
+
+**Implemented:** deterministic per-visit scheduling for breaks, window shopping, validated park-edge resting, paired persistent conversations and timed audiences among pedestrians passing a performer at an existing walking arrival. Stops preserve original activity events/deadlines, identities and food priority. Runtime supplies live validated geometry and shared-budget physical approach/facing/return; anonymous stationary zones remain suppressed. General mid-route audience interception and distinct phone/smoking/clapping clips are not claimed.
+
+**Not activated:** participation frequency was not specified. The required `persistent-city-DESIGN-QUESTIONS-3.md` records options and the 25% recommendation; a question was asked, with no answer assumed. Production's approved rate remains null, so no new optional stops automatically appear yet. Explicit-rate tests exercise the implementation. This is a draft awaiting that product choice, not completion of activation or release approval.
+
+**Persistence:** schema **15** strictly migrates valid **13 and 14** with no active stops. Saved stop deadlines, geometry, original continuation and group membership round-trip. Corrupt/future saves remain refused and preserved. Schema-13 integer-money checks and schema-14 native-precision accounting remain intact.
+
+**Validation:** **1,337 tests passed, zero failed/skipped**. New tests exercise all ranges, scheduling, eligibility, rain/closure/missing-spot cancellation, paired membership, audience choice/identity, food precedence, exact save round trips, legacy migration/refusal, event budgets, reload and route rebuilds. All **21 existing standalone regression projects** pass. Source-extracted optional physical adapter: **179 checks**. Physical selection: **27,564** (including stop admission, shared budget and RLO reservations); native commands **72**; vehicle ownership **361 plus epoch checks**; pickup **25**; stall analyzer **8**. Synthetic 28-day run has an exact current-schema save round trip; no cross-schema byte-identity claim.
+
+Production compiles against the installed Steam Managed DLLs referenced read-only, with warnings as errors. DLL SHA-256 `2c0d390f817c93dfa3c737565bf955667cb8ed06fbd6124e0b6f79fc2cd80d84`. The audit helper also compiles with warnings as errors. Logs, generated fixtures and read-only metadata inspector are ignored under `build/pc-stops/`. `git diff --check` passes.
+
+**No game was launched.** No game-install, ModsLocal, agent-rig, RLO, ordinary-save, deployment, release or Workshop change. Native visual continuity, geometry, weather and performance remain unverified. No reviewer/subagent was invoked, including Grok. Historical native failures below remain unchanged.
+
 ## Peter?s decisions follow-up ? 28 October 2026 (offline only)
 
 [Recorded choices](docs/decisions/2026-10-28-peter-decisions.md): Q1 remains open and untouched; Q2 optional stops approved in principle; Q3 native-precision accounting; Q4 keeps the 30-second walking clear; Q5 single-pass RLO timing; Q6 retains save validation and behavior for performance work; Q7 keeps the decision cache and live checkout.

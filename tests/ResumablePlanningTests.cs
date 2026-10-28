@@ -537,6 +537,7 @@ public sealed class ResumablePlanningTests
 
     private static CitizenState Filled(int n, CitizenIdentity identity) => new()
     {
+        OptionalStop = new OptionalStopState { SpotId = "spot-" + n, Members = { "member-" + n } },
         Identity = identity, HomeId = "home-" + n, DayPlaceId = "work-" + n, ShopId = "shop-" + n, LeisureId = "leisure-" + n,
         Preferences = new TravelPreferences { OwnsCar = n % 2 == 1, AllowTransit = n % 2 == 0, WalkingToleranceMetres = 100 * n, FareWeightMinutes = n },
         CommutePreparation = new CommutePreparation { PlaceId = "work-" + n, WorkStartsAt = 10 * n, WorkEndsAt = 20 * n, PreparedAt = n, TravelMinutes = 2 * n },
@@ -568,6 +569,8 @@ public sealed class ResumablePlanningTests
         Assert.NotSame(live.RecentVisits, working.RecentVisits); Assert.NotSame(live.Car, working.Car);
         Assert.NotSame(live.CommutePreparation, working.CommutePreparation); Assert.NotSame(live.MealOuting, working.MealOuting);
         Assert.NotSame(live.Preferences, working.Preferences);
+        Assert.NotSame(live.OptionalStop, working.OptionalStop);
+        Assert.NotSame(live.OptionalStop!.Members, working.OptionalStop!.Members);
         var car = live.Car; var preparation = live.CommutePreparation; var outing = live.MealOuting; var preferences = live.Preferences; var visits = live.RecentVisits;
         CitySimulator.CommitEvent(live, Filled(2, identity));
         Assert.Equal(JsonConvert.SerializeObject(Filled(2, identity)), JsonConvert.SerializeObject(live));

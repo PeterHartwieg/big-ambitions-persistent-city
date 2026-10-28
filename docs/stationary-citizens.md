@@ -1,75 +1,57 @@
-# Stationary citizens: optional stops approved, policy choices pending
+# Stationary citizens: approved optional stops
 
-The game's stationary zones have been switched off (see [issues.md](issues.md)). This is a proposal for what should stand in the street instead. Step one (queues at opening; crossing waits stay the existing red-light hold, with no time cap) is in the development build but not checked in game; the rest isn't implemented.
+Peter's 28 October answers in `persistent-city-DECISIONS-2.md` approve all five proposed optional kinds. They supersede the earlier proposal and its unresolved questions. Q1 is **leave street crowds and routines unchanged now**; time/weather-aware routines are a separate future feature.
 
-## The idea
+| Kind | Existing eligible activity | Game minutes | Rain |
+|---|---|---:|---|
+| Individual break | Employee already admitted at an open workplace; mid-shift opportunity | 5–10 | Cancel in any rain |
+| Window shopping | Existing admitted shopping visit at an open shop | 1–3 | Cancel in any rain |
+| Resting | Existing park visit, at a validated park edge | 10–40 | Cancel in any rain |
+| Chatting | Two existing eligible visitors at the same nightlife venue | 10–30 | Cancel in any rain |
+| Performer audience | Persistent pedestrian passing a live performer while arriving on an existing walk | 2–8 | Cancel in any rain |
 
-Nobody stands in a street for no reason. Every person who stands still should be one of the simulation's citizens doing something the simulation knows about, for a bounded time, at a place where that thing happens. Because the standing comes from the citizen's day, it follows the hour, the weekday, the weather and the place's opening hours without separate rules, and it ends: the citizen walks on when the reason is over.
+No minimum crowd, anonymous audience, extra nightlife outing, replacement citizen or native sale is created. The existing quiet-hour and trip-generation rules remain authoritative. A late-night stop can use an already eligible visit; it cannot create one. Native anonymous stationary zones stay suppressed. Performers and the native exceptions already retained by `StationaryCrowds` remain unchanged.
 
-A standing citizen is a *dwell*: who stands (citizen id), why (dwell kind), where (spot), from when, until when, facing what. The Core plans dwells as part of the day schedule; Runtime only shows the ones near the camera.
+## Remaining decision and activation status
 
-## Dwell kinds
+**The automatic opportunity rate remains unset.** Peter selected the kinds, ranges, rain rule, night policy and audience ownership, but did not specify frequency. `persistent-city-DESIGN-QUESTIONS-3.md` records context, options and a recommendation: one deterministic opportunity per existing visit (mid-shift for workers), with 25%, 100% or 10% participation. A question was sent in this session; no answer is assumed.
 
-| Kind | Who | Where | When | Duration | Weather |
-|---|---|---|---|---|---|
-| Waiting for a bus | commuters whose route includes RLO's buses (0.41.1) | the stop | before the bus arrives | until it comes, at most ~10 min | stands under the shelter, umbrellas otherwise |
-| Waiting to cross | any walker | the kerb at a crossing | red phase | the light's wait | as is |
-| Queue at opening | customers of a place that opens soon | its door, in a line | the last ~10 min before opening | until opening | fewer people; under awnings |
-| Smoking or phone break | employees of an open business | beside its entrance, off the walking line | mid-shift, once or twice | 5–10 min | skipped in heavy rain, or under cover |
-| Waiting for someone | citizens with a meeting or a shared activity (dinner, cinema) | outside the venue | a few minutes before the shared start | until the other arrives | under cover |
-| Chatting outside a bar or club | evening and night visitors | in small groups (2–4) outside nightlife venues | Thursday to Saturday evenings most | 10–30 min | much rarer in rain or cold |
-| Window shopping | shoppers between stops | in front of open shops | shop hours, weekends most | 1–3 min | rare in rain |
-| Audience | passers-by with time to spare | a ring facing a street performer | while the performer plays | 2–8 min | fewer, under umbrellas |
-| Resting | older or tired citizens, park visitors | benches and park edges | daytime, warm days | 10–40 min | none in rain |
-| Waiting for a taxi or a lift | citizens whose next leg is a taxi or a car pickup | the kerb | until the pickup | a few minutes | under cover |
+The scheduler, persistence, Runtime integration and tests are implemented. Runtime attaches the environment with `OptionalStopPolicy.ApprovedChoicePercentage`, currently `null`: it restores/cancels saved stops but does not create new ones. Tests supply explicit percentages. This is an **incomplete activation decision**, not a shipped feature or a claim of new visible stops. No user-facing tuning control or manual enrollment was added.
 
-Each kind declares where it may happen, as a spot type (door, kerb, stop, venue front, bench, performer ring), and how it ends: a time, an event (bus arrives, light turns, place opens, friend arrives) or a cap.
+## Scheduling and continuation
 
-## Rules that keep it believable
+`Core/OptionalStopScheduling.cs` evaluates a newly admitted visit once, after its ordinary event commits. Stable citizen/place/visit keys choose participation and duration. Worker opportunities start midway through the remaining shift. Other opportunities start at admission. There is no camera input, frame-random roll or recurring chance while standing. If time before closure or the existing commitment is below the kind's minimum, the stop is skipped; otherwise the shared `OptionalStops.Plan` clips the duration to that commitment and cap.
 
-- **Bounded.** Every dwell has a hard maximum, except waiting to cross: that ends when the light lets the walker cross safely, however long it takes. When it ends, the citizen walks on toward the next activity's destination: never a freeze in the open, never a pop-out in view.
-- **Off the walking line.** Spots are sampled beside the pavement's flow (against a wall, beside a door, at the kerb), so standers don't block walkers or the player.
-- **Grouped where people group.** Chatters and audiences come in small groups facing each other or the performer. Queues line up. Most other dwells are alone.
-- **Weather-aware.** Rain moves dwells under cover (awnings, shelters, doorways), shortens them, or cancels the optional ones (window shopping, resting, chatting). Umbrellas stay as the game does them.
-- **Hour-aware.** Dwells come from the schedule, so a 3 a.m. street has a few people outside a club and at a taxi rank, and nobody window shopping.
-- **Animation fits the kind.** Phone, smoking, holding a bag, checking a watch, talking with gestures, clapping for a performer. The game's stationary poses (`StationaryAiBehavior`) already cover phone, held object and idle variety; talking pairs and queues can use them with facing rules.
-- **Budgeted.** Show at most N dwells within the visible radius (start with the existing 48 within 120 m), nearest first. Every dwell has a stable id, so a stander doesn't change appearance when it reappears.
+The stop overlays the existing admitted activity: the citizen's place, activity, original event/deadline, identity and assignments remain intact. The existing routine event owns the continuation and clears the record. Stops do not delay work, create travel or restart on reload. Food outings and existing native-food service have priority: meal outings cannot start a stop, food-owned shops are excluded, and an accepted meal outing or existing-stop food decision cancels any stop. Cancellation does not alter funds or sales.
 
-## How it fits the code
+Chatting forms a pair from eligible persistent visitors at the same open nightlife place. Both spots and a common deadline are chosen before either member is published. Membership, facing and the common group identity persist. Missing/cancelled partners cancel the conversation; no singleton or anonymous filler is created. The first visitor may wait indoors for a later eligible visitor without creating a separate meeting trip. There is no minimum evening crowd.
 
-1. **Core: a dwell planner (pure C#, tested).** Given a citizen's next activity, its route, the place's hours, the hour and the weather, it decides whether a dwell happens, which kind, and its start and end. It's deterministic per citizen and day, so reloads and camera moves don't change it. Tests: dwells always end; no dwell outside a place's hours or a kind's window; rain cancels the optional kinds; a queue never forms more than ~10 min before opening; group sizes stay in range.
-2. **Runtime: spots.** For each place, sample a few dwell spots per type from what we already read (`GamePlaces`, `OutdoorPlaces`, entrances, `WalkingRoutes` for kerbs and crossings), checked against the NPC navmesh and kept off the main walking line. Cache them per place.
-3. **Runtime: showing dwells.** Reuse the physical citizen bodies from `PhysicalPopulation`. A citizen in a dwell walks to its spot, turns to face what it faces, plays the kind's pose, and at the end walks on. This replaces both of today's frozen states: "awaiting opening" becomes a queue-at-opening dwell near the time, and "awaiting a route" waits indoors.
-4. **Rollout in steps:** queues at opening and waiting at crossings first (they reuse what exists and fix issues 2 and 3), then breaks and chatting outside venues, then audiences, resting and window shopping.
+Audience opportunities currently use pedestrians completing an existing walking arrival at a venue entrance within eight metres of a live performer. They do not divert routines toward a show or interrupt an in-progress road/transit leg. This is an entrance-passer implementation, **not general mid-route audience interception**. Each member chooses an individual timed stop and keeps its own end; one member is a valid audience. Performer disappearance, replacement, movement away from the recorded target or any rain cancels it. The audience is not native stationary-zone population.
 
-## Questions for Peter
+## Saved state
 
-- Should street performers keep a small anonymous audience until audiences come from citizens, or play to whoever passes?
-- How busy should a night street feel: a handful of people outside bars, or near empty?
+City schema **15** adds nullable `CitizenState.OptionalStop`: kind, place, stable spot/target identity, spot/facing/return geometry, start/end, original visit/event and conversation members/cancellation. The existing citizen activity remains the continuation; there is no second general itinerary or copied identity.
 
+Strict schema-13 and schema-14 migration initializes no active stops. It preserves balances, receipt evidence, assignments and interrupted journeys, retaining the previous schema-13 monetary validation. Loading an old save never infers a stop for a current visit. A later newly admitted visit can become an opportunity once a rate is approved. Current payloads must contain the new field, even when null; legacy payloads containing it are refused. Future/invalid payloads are preserved and refused, never overwritten.
 
-## 28 October implementation design
+Validation checks kind eligibility, bounded duration, finite geometry, original activity continuation, distinct group slots and reciprocal membership for active conversations. Cancelled/expired records do not restart. Route rebuilds retain the environment and opportunity setting; event working copies own their stop/member copies.
 
-Peter chose **Q2 B: add optional stops**. This approves the direction, not every row of the original proposal. Q1 (hour/rain crowds) remains open: this increment must not change ambient display caps, trip generation or quiet hours. The existing opening queues and safe crossing holds stay unchanged.
+## Runtime and physical continuity
 
-### Proposed first increment and unresolved choices
+`Runtime/OptionalStopEnvironment.cs` supplies validated geometry independently of the camera:
 
-Recommend individual employee breaks (5?10 game minutes) and window shopping during an existing shopping visit (1?3). Resting at verified benches or park edges (10?40) is a possible second increment. Chatting (10?30) needs persistent groups; audiences (2?8) need a live performer lifecycle. These are proposals, not enabled kinds. Meeting, pickup and bus waits require actual coordinated services; no fictional service is introduced.
+- Door/entrance stops reuse the off-flow facade sampling in `DwellSpots`, with complete NPC paths and neighbouring-door clearance.
+- Chat eligibility checks the native established nightclub category; other leisure categories are not silently treated as nightlife.
+- Rest spots are sampled at actual edges of an existing accepted native park volume, inside that volume and reachable on the dry NPC navmesh. No decorative object is assumed to be a usable bench. Bench-specific seating/animations are not claimed.
+- Performer-ring points require a live retained performer, complete walking access, small sampling displacement and proximity to a navmesh edge. The performer is read through its native stationary-spawner reference; no spawn method is called. Source metadata was inspected read-only from the installed Steam DLL.
+- Missing/unavailable geometry fails closed. Scene identities are revalidated on load; saved deadlines are not regenerated.
 
-The original ranges remain proposed. No new minimum night population is specified: recommend eligibility from existing visits and quiet hours, with no extra nightlife trips. Peter must select the kinds, ranges, density and audience policy. The requested `persistent-city-DESIGN-QUESTIONS-2.md` handoff records options and recommendations.
+The physical layer shares the existing pedestrian cap, radius and RLO reservations. A bound arrival can keep its body, walk to the recorded spot, stop and face the target, then walk back to the original entrance. A mid-visit admission emerges from that entrance. Walking to a spot consumes the original stop window; failed approaches cancel rather than extending it. Idle standing does not consume the approach timeout. Return-path failures retain/retry the body rather than popping it at the spot. Queues reserve positions already occupied by optional bodies; an existing queue blocks an optional admission to the same point. Idle/facing uses the current pedestrian body; distinct smoking/phone/clapping animation clips have not been validated or added.
 
-### Mechanics implemented without choosing policy
+Opening queues and safe crossing waits remain their existing mechanisms. A red-light crossing has no time cap. Optional-stop rain cancellation does not change routine eligibility or general crowd caps.
 
-`Core/OptionalStops.cs` accepts an explicitly selected kind, existing citizen/spot identities, requested duration and a free-until deadline. It clips to the existing kind cap and next commitment, refuses nonoptional event/audience kinds, and applies the already-declared `DwellRule.Optional` rain cancellation. Its continuation check ends a committed stop at its original deadline, on rain or when its spot disappears. These pure mechanics neither schedule stops nor alter citizens, trips, purchases or physical selection. There are **no new visible stops yet**: selecting and enabling a kind awaits Peter's answer.
+## Evidence and limits
 
-Rain semantics for the eventual scheduler remain a decision: recommend cancel in any rain for the initial individual kinds. Shelters, heavy-rain thresholds and umbrellas need native evidence. Cancellation means resume the saved continuation; it never means hide the citizen, restart the timer or teleport. No weather input is connected to the new helper in production yet, so Q1 stays untouched.
+Core tests cover scheduling, all ranges, insufficient windows, closure/rain/spot cancellation, eligibility, persistent audiences and paired conversations, cancellation/reload, strict schema migration, malformed/future refusal, original continuations, midnight visits, event-budget equivalence and route rebuilds. The source-extracted physical harness covers movement/facing/return, blocked paths, queue sharing and immutable deadlines. Selection tests cover shared budgets and RLO reservations.
 
-### Persistence and Runtime integration required after selection
-
-A scheduled stop must belong to the existing citizen, not a pooled body. Persist kind, place/spot identity, start, end, facing target and the original activity/route continuation. Commit a stop once in Core before physical admission. Camera movement, body reuse and different update cadence must never roll it again. A resumed save uses the recorded deadline; expired or cancelled stops resume their original continuation. Validate the spot against the live navmesh; missing spots end the optional stop safely without changing identity. Future integration must add a versioned schema with an explicit no-active-stop migration, not infer stops on loading old saves. The present helper has no saved fields and causes no stop-related schema change; schema 14 belongs solely to Q3 accounting.
-
-Runtime will share the existing physical citizen budget, sample off-flow spots, walk a body to its spot and out along the continuation, and retain leases across the transition. It must not book native sales, reassign identities or resurrect anonymous stationary crowds. Group/audience membership and performer loss need explicit policy before implementation.
-
-### Tests and remaining evidence
-
-Offline tests cover caps, clipping at commitments, no time available, rain refusal/cancellation, missing spots, immutable deadlines after reconstruction and varying sampling cadence, and refusal of event/audience kinds. They test common mechanics, not scheduler or rendered behavior. Once kinds are selected, add interrupted-journey save migration, mid-stop reload, route/spot removal, food/work priority, midnight/quiet-hours, cadence differential and camera/pool continuity tests, then separately authorized native motion/animation checks. Nothing in this design authorizes game launch or release.
+These are offline checks. No game was launched or installed. Native geometry, visible approach/exit, idle poses, weather observation and performance remain unverified. The opportunity rate remains open; audience opportunities are limited to existing walking arrivals; no release or ordinary-save deployment is authorized.

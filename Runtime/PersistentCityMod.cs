@@ -262,6 +262,7 @@ namespace PersistentCity.Runtime
                 // Build/refresh native road data in bounded slices before advancing any event.
                 // Mode availability must not depend on which citizen happened to request a route
                 // while the graph was half prepared, or on the number of rendered frames.
+                simulation.RefreshOptionalStops();
                 RunPhysical(() => physical?.BeforeAdvance());
                 double clockRate = NativeTravelPace.ClockRate;
                 if (Math.Abs(clockRate - simulation.State.TravelClockRate) > .000001)
@@ -552,6 +553,7 @@ namespace PersistentCity.Runtime
             routeObjects = new RouteObjectDiscovery();
             routes = new MultimodalRoutes(state.Places, NativeTravelPace.WalkingMetresPerSecond / state.TravelClockRate, state.TravelClockRate, dependency, routeObjects);
             simulation = new CitySimulator(state, routes);
+            simulation.AttachOptionalStops(new OptionalStopEnvironment(state.Places), OptionalStopPolicy.ApprovedChoicePercentage);
             seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
             if (state.Food == null)
                 state.Food = new FoodCommerceState { MealRhythmVersion = MealRhythm.PolicyVersion, HouseholdFinanceVersion = HouseholdFinance.PolicyVersion,

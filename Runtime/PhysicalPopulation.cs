@@ -27,6 +27,8 @@ namespace PersistentCity.Runtime
             public float NextTargetAttempt;
             // A queue-at-opening stand, its line and its place in it. Null for every other binding.
             public Dwell? Queue;
+            public OptionalStopState? Optional;
+            public bool OptionalReturning;
             public DoorQueue? Line;
             public int Slot = -1;
             public QueueStep Step;
@@ -267,7 +269,7 @@ namespace PersistentCity.Runtime
         // Waiting for a route or for an opening is indoors. Only a queue-at-opening dwell
         // (PlanQueues) puts a waiting citizen in the street, at a spot beside the door.
         private bool Outdoor(CitizenState c)
-            => c.Phase == CitizenPhase.AtPlace && c.Activity == Activity.Leisure && places[c.PlaceId].Id.StartsWith("scene-", StringComparison.Ordinal);
+            => OptionalVisible(c) || c.Phase == CitizenPhase.AtPlace && c.Activity == Activity.Leisure && places[c.PlaceId].Id.StartsWith("scene-", StringComparison.Ordinal);
 
         /// <summary>
         /// Which waiting citizens near the focus stand in a door queue now, and in which spot. One
@@ -297,7 +299,7 @@ namespace PersistentCity.Runtime
                 // only once the body accepts the walk; a refused move keeps its spot reserved.
                 var inLine = bindings.Values.Where(b => b.Line != null && b.Line.Key == found.Key && b.Queue.HasValue
                     && b.Step != QueueStep.Entering && b.Person != null).OrderBy(b => b.Slot).ToList();
-                var occupied = new HashSet<int>(inLine.Select(b => b.Slot));
+                var occupied = new HashSet<int>(Standing(found).Select(b => b.Value));
                 foreach (var bound in inLine)
                 {
                     int? ahead = DwellPlanner.MoveUp(occupied, bound.Slot);
@@ -328,9 +330,18 @@ namespace PersistentCity.Runtime
                 foreach (var stale in gaveUp.Where(p => p.Value <= simulation.State.Minute).Select(p => p.Key).ToList()) gaveUp.Remove(stale);
         }
 
-        private IEnumerable<KeyValuePair<string, int>> Standing(DoorQueue line) => bindings.Values
-            .Where(b => b.Queue.HasValue && b.Line != null && b.Line.Key == line.Key && b.Step != QueueStep.Entering)
-            .Select(b => new KeyValuePair<string, int>(b.Citizen.Identity.Id, b.Slot)).ToList();
+        private IEnumerable<KeyValuePair<string, int>> Standing(DoorQueue line)
+        {
+            foreach (var b in bindings.Values)
+            {
+                if (b.Queue.HasValue && b.Line != null && b.Line.Key == line.Key && b.Step != QueueStep.Entering)
+                    yield return new KeyValuePair<string, int>(b.Citizen.Identity.Id, b.Slot);
+                else if (b.Optional != null && !b.OptionalReturning)
+                    for (int slot = 0; slot < line.Spots.Count; slot++)
+                        if (Position.Distance(line.Spots[slot], b.Optional.Position) < 0.65)
+                            yield return new KeyValuePair<string, int>(b.Citizen.Identity.Id, slot);
+            }
+        }
 
         private bool TryLine(Place place, out DoorQueue line)
         {
@@ -448,6 +459,59 @@ namespace PersistentCity.Runtime
             return ++binding.EntryAttempts < EntryAttemptFrames;
         }
 
+        private bool OptionalVisible(CitizenState citizen) => citizen.Phase == CitizenPhase.AtPlace
+            && citizen.OptionalStop != null && citizen.OptionalStop.ActiveAt(simulation.State.Minute);
+
+        private bool TryJoinOptional(Binding binding)
+        {
+            if (binding.Person == null || !OptionalVisible(binding.Citizen)) return false;
+            var stop = binding.Citizen.OptionalStop!;
+            // A queue keeps priority over an optional user of the same facade spot.
+            if (bindings.Values.Any(b => b.Queue.HasValue && b.Line != null && b.Slot >= 0
+                && Position.Distance(b.Line.Spots[b.Slot], stop.Position) < 0.65))
+            { simulation.CancelOptionalStop(binding.Citizen.Identity.Id); return false; }
+            if (!binding.Person.SetPathTarget(stop.Position, NativeTravelPace.WalkingMetresPerSecond))
+            { simulation.CancelOptionalStop(binding.Citizen.Identity.Id); return false; }
+            binding.Optional = stop; binding.OptionalReturning = false; binding.StepWalked = 0;
+            return true;
+        }
+        private bool ObserveOptional(Binding binding)
+        {
+            var body = binding.Person!; var stop = binding.Optional!;
+            if (!body.Valid) return false;
+            if (!body.Agent.isStopped) binding.StepWalked += Time.unscaledDeltaTime;
+            bool active = OptionalVisible(binding.Citizen) && ReferenceEquals(binding.Citizen.OptionalStop, stop);
+            // Event copies preserve values but replace DTO instances; follow that same saved stop.
+            if (!active && OptionalVisible(binding.Citizen) && binding.Citizen.OptionalStop!.SpotId == stop.SpotId
+                && binding.Citizen.OptionalStop.StartMinute == stop.StartMinute)
+            { binding.Optional = stop = binding.Citizen.OptionalStop; active = true; }
+            if (!binding.OptionalReturning && (!active || RainHelper.isRaining || binding.StepWalked >= QueueStepSeconds))
+            {
+                simulation.CancelOptionalStop(binding.Citizen.Identity.Id);
+                binding.OptionalReturning = true; binding.StepWalked = 0;
+                body.Stop(false);
+                if (!body.SetPathTarget(stop.ReturnPosition, NativeTravelPace.WalkingMetresPerSecond))
+                { body.Stop(true); return true; }
+            }
+            if (binding.OptionalReturning)
+            {
+                if (Position.Distance(body.Position, stop.ReturnPosition) < 0.4) return false;
+                // Retry a temporarily blocked return; never retire a visible citizen at the spot.
+                if (!body.Agent.hasPath)
+                {
+                    body.Stop(false);
+                    if (!body.SetPathTarget(stop.ReturnPosition, NativeTravelPace.WalkingMetresPerSecond)) body.Stop(true);
+                }
+                body.Tick(); return true;
+            }
+            if (Position.Distance(body.Position, stop.Position) <= 0.3)
+            {
+                if (body.Agent.hasPath) body.Agent.ResetPath();
+                body.Stop(true); body.Face(stop.Facing); return true;
+            }
+            body.Tick(); return true;
+        }
+
         private bool MotionPermission(PhysicalVehicleBody body, out PhysicalJourneySample sample, out double maximum)
         {
             sample = default; maximum = 0;
@@ -480,14 +544,20 @@ namespace PersistentCity.Runtime
         private bool Observe(Binding binding)
         {
             if (binding.Person != null && !binding.Person.Valid || binding.Car != null && !binding.Car.Valid) return false;
+            if (binding.Optional != null) return ObserveOptional(binding);
             if (binding.Lease == null)
             {
+                if (TryJoinOptional(binding)) return ObserveOptional(binding);
                 if (binding.AwaitingArrival) return ObserveArrival(binding);
                 if (binding.Queue.HasValue) return ObserveQueue(binding);
                 if (!Outdoor(binding.Citizen) || binding.Citizen.Phase == CitizenPhase.Travelling) return false;
                 binding.Person!.Stop(true); return true;
             }
-            if (!simulation.TrySamplePhysicalJourney(binding.Lease, out var sample)) return false;
+            if (!simulation.TrySamplePhysicalJourney(binding.Lease, out var sample))
+            {
+                if (TryJoinOptional(binding)) { binding.Lease = null; return ObserveOptional(binding); }
+                return false;
+            }
             double elapsed = Math.Max(0, simulation.State.Minute - binding.ObservedMinute);
             binding.ObservedMinute = simulation.State.Minute;
             Position actual = binding.Person?.Position ?? binding.Car!.Position;
@@ -578,6 +648,7 @@ namespace PersistentCity.Runtime
         public void ObserveForSave()
         {
             vehicles.AssertHealthy();
+            simulation.RefreshOptionalStops();
             foreach (var binding in bindings.Values.ToArray()) if (!Observe(binding)) Release(binding);
         }
         private bool Bound(Binding binding) => bindings.TryGetValue(binding.Citizen.Identity.Id, out var registered) && ReferenceEquals(registered, binding);

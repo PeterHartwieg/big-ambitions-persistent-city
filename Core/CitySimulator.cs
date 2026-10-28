@@ -101,6 +101,7 @@ namespace PersistentCity.Core
             AbortPending();
             var replacement = new CitySimulator(State, replacementRoutes);
             replacement.activityObservers = activityObservers;
+            if (stopEnvironment != null) replacement.AttachOptionalStops(stopEnvironment, stopPercentage);
             if (food != null) replacement.AttachFoodMarket(food.Market);
             return replacement;
         }
@@ -334,6 +335,7 @@ namespace PersistentCity.Core
                 if (!due.Add(item)) throw new InvalidOperationException("An invalid event lost its queue slot.");
                 throw new InvalidOperationException("Each citizen event must schedule a later event.");
             }
+            var arrivalRoute = live.Phase == CitizenPhase.Travelling ? live.Journey : null;
             CommitEvent(live, working);
             if (ReferenceEquals(restartedItem, item)) restartedItem = null;
             item.Minute = ScheduledMinute(live);
@@ -341,6 +343,7 @@ namespace PersistentCity.Core
             // its sort key just changed inside the set.
             if (!due.Add(item)) throw new InvalidOperationException("A completed event was already queued.");
             food?.ObserveStop(live);
+            ScheduleOptionalStop(live, arrivalRoute);
             activityObservers.Handlers?.Invoke(live.Identity.Id, live, State.Minute);
         }
 
@@ -353,6 +356,7 @@ namespace PersistentCity.Core
                 WalkingToleranceMetres = live.Preferences.WalkingToleranceMetres, FareWeightMinutes = live.Preferences.FareWeightMinutes },
             CommutePreparation = CopyPreparation(live.CommutePreparation),
             MealOuting = live.MealOuting == null ? null : CopyOuting(live.MealOuting),
+            OptionalStop = live.OptionalStop?.Copy(),
             Car = live.Car == null ? null : CopyCar(live.Car),
             JoinedMinute = live.JoinedMinute, LastEmploymentCheckDay = live.LastEmploymentCheckDay, JobChanges = live.JobChanges,
             Phase = live.Phase, Activity = live.Activity, PlaceId = live.PlaceId, DestinationId = live.DestinationId,
@@ -379,6 +383,7 @@ namespace PersistentCity.Core
         // Objects other code may hold (the car, the preparation, an outing) keep their identity when they survive the event.
         internal static void CommitEvent(CitizenState live, CitizenState working)
         {
+            live.OptionalStop = working.OptionalStop;
             live.HomeId = working.HomeId; live.DayPlaceId = working.DayPlaceId; live.ShopId = working.ShopId; live.LeisureId = working.LeisureId;
             live.Preferences.OwnsCar = working.Preferences.OwnsCar; live.Preferences.AllowTransit = working.Preferences.AllowTransit;
             live.Preferences.WalkingToleranceMetres = working.Preferences.WalkingToleranceMetres;
@@ -473,6 +478,7 @@ namespace PersistentCity.Core
         // answer, so the side effects before and after each plan keep the order of the former synchronous Step.
         private IEnumerable<RouteRequest> StepEvent(CitizenState person, double now)
         {
+            person.OptionalStop = null; // The original activity event owns the continuation.
             var outing = BeginMealOuting(person, now);
             if (outing == MealOutingStep.Handled) yield break;
             if (outing == MealOutingStep.NeedsReturnRoute)

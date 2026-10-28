@@ -54,6 +54,13 @@ static class Program {
  .GetFields(System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.NonPublic)
  .All(f=>SameValue(f.GetValue(a),f.GetValue(b)));
  static void Main() {
+ var optional=new After(); optional.places["indoor"]=new Place {Id="indoor"};
+ for(int i=1;i<=4;i++) optional.simulation.State.Citizens.Add(new CitizenState {
+ Identity=new CitizenIdentity {Id=i.ToString()},PlaceId="indoor",Phase=CitizenPhase.AtPlace,Activity=Activity.Work,NextEventMinute=200,
+ OptionalStop=new OptionalStopState {StartMinute=i==4?101:90,EndMinute=i==2?100:110,Cancelled=i==3}});
+ Check(optional.Select().SequenceEqual(new[]{"1"}),"only active chosen optional stops are candidates");
+ optional.InitialPeople=optional.pedestrianLimit; Check(optional.Select().Count==0,"optional stops share person budget");
+ optional.InitialPeople=0; optional.ambient.Reserved.Add("1"); Check(optional.Select().Count==0,"optional stops respect RLO reservations");
  var rng = new Random(71933);
  int beforePositions = 0, afterPositions = 0, beforeHierarchy = 0, afterHierarchy = 0;
  for (int trial=0; trial<500; trial++) {

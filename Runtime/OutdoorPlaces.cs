@@ -239,7 +239,7 @@ namespace PersistentCity.Runtime
             return length <= 1500;
         }
 
-        private static bool StaticSceneKey(Transform transform, out string key)
+        internal static bool StaticSceneKey(Transform transform, out string key)
         {
             key = "";
             if (!transform.gameObject.scene.IsValid() || string.IsNullOrEmpty(transform.gameObject.scene.name)

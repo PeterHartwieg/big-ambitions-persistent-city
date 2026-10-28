@@ -92,8 +92,8 @@ namespace PersistentCity.Persistence
             {
                 int schema = ReadSchema(source);
                 if (schema > CityState.CurrentSchema) return new SaveReadResult(SaveReadStatus.Future, null, "State uses a newer schema; preserve the original payload.", sourceSchema: schema);
-                Require(schema == 13 || schema == CityState.CurrentSchema, "Unsupported experimental state schema; preserve the original payload and use a new development city.");
-                var serializer = JsonSerializer.Create(Settings());
+                Require(schema == 13 || schema == 14 || schema == CityState.CurrentSchema, "Unsupported experimental state schema; preserve the original payload and use a new development city.");
+                var serializer = JsonSerializer.Create(SettingsForSchema(schema));
                 using (var shape = Reader(source))
                 {
                     Require(shape.Read(), "Missing state.");
@@ -212,22 +212,24 @@ namespace PersistentCity.Persistence
                 string name = (string)reader.Value!;
                 Require(names.Add(name), "Duplicate field: " + name);
                 var property = properties.GetProperty(name, StringComparison.Ordinal);
-                Require(property != null, "Unknown field: " + name);
+                Require(property != null && !(schema < 15 && type == typeof(CitizenState) && name == "OptionalStop"), "Unknown field: " + name);
                 Require(reader.Read(), "Missing field value.");
                 CheckShape(reader, property.PropertyType!, resolver, ref records, schema);
             }
-            Require(reader.TokenType == JsonToken.EndObject && names.Count == properties.Count, "Missing object fields.");
+            Require(reader.TokenType == JsonToken.EndObject && names.Count == properties.Count - (schema < 15 && type == typeof(CitizenState) ? 1 : 0), "Missing object fields.");
         }
-        private static bool NullableRecord(Type type) => type == typeof(Route) || type == typeof(CarState)
+        private static bool NullableRecord(Type type) => type == typeof(OptionalStopState) || type == typeof(Route) || type == typeof(CarState)
             || type == typeof(TrafficKernelState) || type == typeof(TrafficSignalSchedule)
             || type == typeof(FoodCommerceState) || type == typeof(MealOuting) || type == typeof(MealExcursion) || type == typeof(ResidentBudget);
         // Contracts depend only on the sealed save DTO types, never a city or serializer setting.
         // DefaultContractResolver owns a thread-safe metadata cache; settings/serializer instances
         // remain per operation, including application-wide JsonConvert defaults.
         private static readonly IContractResolver StateContracts = new StateContractResolver();
-        private static JsonSerializerSettings Settings() => new JsonSerializerSettings
+        private static readonly IContractResolver LegacyContracts = new StateContractResolver(true);
+        private static JsonSerializerSettings Settings() => SettingsForSchema(CityState.CurrentSchema);
+        private static JsonSerializerSettings SettingsForSchema(int schema) => new JsonSerializerSettings
         {
-            ContractResolver = StateContracts,
+            ContractResolver = schema < 15 ? LegacyContracts : StateContracts,
             Converters = { new PositionConverter() },
             Culture = CultureInfo.InvariantCulture,
             MissingMemberHandling = MissingMemberHandling.Error,
@@ -235,6 +237,51 @@ namespace PersistentCity.Persistence
             MaxDepth = 48,
             FloatParseHandling = FloatParseHandling.Double
         };
+
+        private static void ValidateOptionalStop(CitizenState citizen, CityState state)
+        {
+            var stop = citizen.OptionalStop;
+            if (stop == null) return;
+            Known(stop.Kind, "Stop kind");
+            Require(DwellRules.For(stop.Kind).Optional, "Nonoptional stop kind.");
+            Text(stop.PlaceId, "Stop place", 256); Text(stop.SpotId, "Stop spot", 512); Text(stop.TargetId, "Stop target", 512);
+            Point(stop.Position); Point(stop.Facing); Point(stop.ReturnPosition);
+            Minute(stop.StartMinute, "Stop start"); Minute(stop.EndMinute, "Stop end");
+            Minute(stop.VisitMinute, "Stop visit"); Minute(stop.ResumeEventMinute, "Stop continuation");
+            Require(stop.VisitMinute <= stop.StartMinute && stop.VisitMinute <= state.Minute
+                && stop.EndMinute > stop.StartMinute && stop.EndMinute <= stop.ResumeEventMinute
+                && stop.EndMinute - stop.StartMinute >= OptionalStopPolicy.Minimum(stop.Kind) - 1e-9
+                && stop.EndMinute - stop.StartMinute <= DwellRules.For(stop.Kind).MaximumMinutes + 1e-9, "Invalid stop duration/continuation.");
+            var stopPlace = state.Places.SingleOrDefault(p => p.Id == stop.PlaceId);
+            Require(stopPlace != null && Position.Distance(stop.ReturnPosition, stopPlace.Position) < 0.001, "Missing/changed stop return place.");
+            Require(Position.Distance(stop.Position, stop.ReturnPosition) <= 100, "Stop is not local to its existing visit.");
+            Require(stop.Kind == DwellKind.Break ? stopPlace.Kind == PlaceKind.Work
+                : stop.Kind == DwellKind.WindowShopping ? stopPlace.Kind == PlaceKind.Shop
+                : stop.Kind == DwellKind.Audience ? stopPlace.Kind == PlaceKind.Shop || stopPlace.Kind == PlaceKind.Leisure
+                : stopPlace.Kind == PlaceKind.Leisure, "Stop is ineligible for its place.");
+            Require(stop.Members != null && stop.Members.Count <= 4 && stop.Members.Distinct(StringComparer.Ordinal).Count() == stop.Members.Count,
+                "Invalid stop members.");
+            if (stop.Kind == DwellKind.ChatOutsideVenue)
+            {
+                Require(stop.Members.Count >= 2 && stop.Members.Contains(citizen.Identity.Id), "Conversation requires persistent participants.");
+                foreach (string member in stop.Members)
+                {
+                    Text(member, "Stop member", 256);
+                    if (stop.Cancelled || state.Minute >= stop.EndMinute) continue;
+                    var partner = state.Citizens.FirstOrDefault(c => c?.Identity?.Id == member)?.OptionalStop;
+                    Require(partner != null && !partner.Cancelled && partner.Kind == stop.Kind && partner.PlaceId == stop.PlaceId
+                        && partner.TargetId == stop.TargetId && partner.StartMinute == stop.StartMinute && partner.EndMinute == stop.EndMinute
+                        && partner.Members != null && partner.Members.SequenceEqual(stop.Members), "Inconsistent conversation membership.");
+                    if (member != citizen.Identity.Id) Require(partner.SpotId != stop.SpotId
+                        && Position.Distance(partner.Position, stop.Position) >= 0.65, "Conversation members share a spot.");
+                }
+            }
+            else Require(stop.Members.Count == 0, "Individual stop has group members.");
+            if (!stop.Cancelled && state.Minute < stop.EndMinute)
+                Require(citizen.Phase == CitizenPhase.AtPlace && citizen.PlaceId == stop.PlaceId && citizen.MealOuting == null
+                    && citizen.NextEventMinute == stop.ResumeEventMinute && stop.EndMinute <= citizen.ActivityUntilMinute,
+                    "Active stop lost its original activity continuation.");
+        }
 
         private static void Money(decimal cents)
         {
@@ -303,6 +350,7 @@ namespace PersistentCity.Persistence
                 if (citizen.DayPlaceId != "") CountAssignment(citizen.DayPlaceId);
                 OptionalReference(places, citizen.ShopId, PlaceKind.Shop);
                 OptionalReference(places, citizen.LeisureId, PlaceKind.Leisure);
+                ValidateOptionalStop(citizen, state);
                 Known(citizen.Phase, "Citizen phase"); Known(citizen.Activity, "Activity"); Known(citizen.DestinationActivity, "Destination activity");
                 var current = Reference(places, citizen.PlaceId);
                 Require((int)current.Kind == (int)citizen.Activity, "Current activity does not match current place.");
@@ -822,11 +870,14 @@ namespace PersistentCity.Persistence
 
         private sealed class StateContractResolver : DefaultContractResolver
         {
+            private readonly bool legacy;
+            public StateContractResolver(bool legacy = false) { this.legacy = legacy; }
             protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
             {
                 return base.CreateProperties(type, memberSerialization).Where(property => property.Writable)
                     .OrderBy(property => property.PropertyName, StringComparer.Ordinal).Select(property =>
                 {
+                    if (legacy && type == typeof(CitizenState) && property.PropertyName == "OptionalStop") { property.Required = Required.Default; return property; }
                     property.Required = NullableRecord(property.PropertyType!) || Nullable.GetUnderlyingType(property.PropertyType!) != null ? Required.AllowNull : Required.Always;
                     return property;
                 }).ToList();
