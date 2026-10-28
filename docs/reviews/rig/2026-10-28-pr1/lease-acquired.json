@@ -1,0 +1,10 @@
+{
+  "instance": "agent1",
+  "held": true,
+  "owner": "persistent-city-pr1-rig",
+  "purpose": "PR1 before/after native gates; no publishing",
+  "acquired_utc": "2026-10-28T13:57:58.2702606Z",
+  "expires_automatically": false,
+  "pending": 0,
+  "legacy_blocked": false
+}

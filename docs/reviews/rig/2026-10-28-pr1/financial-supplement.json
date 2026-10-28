@@ -1,0 +1,66 @@
+{
+  "before-final": {
+    "scope": "Supplemental captured-state reconciliation, not the missing original 1936/2 strict verifier. Native skip, no save timing claim.",
+    "schema": 13,
+    "consumers": 1914,
+    "consumerIdsUnchanged": true,
+    "walletLedgerFailures": 0,
+    "purchasesDelta": 110,
+    "paymentCentsDelta": 112750,
+    "rawCroissantsUsed": 110,
+    "rawBagsUsed": 110,
+    "heldPurchaseCentsAtEnd": 0,
+    "days": [
+      {
+        "day": 5,
+        "purchases": 57,
+        "residentPaymentCents": 58425,
+        "nativeRevenueDollars": 584.4096,
+        "residualCents": 15.96,
+        "strictRevenueConservationAtPoint1Cent": false
+      },
+      {
+        "day": 6,
+        "purchases": 53,
+        "residentPaymentCents": 54325,
+        "nativeRevenueDollars": 543.3984,
+        "residualCents": 14.84,
+        "strictRevenueConservationAtPoint1Cent": false
+      }
+    ],
+    "totalResidualCents": 30.8,
+    "endPopulationSha256": "89c0e01b4c501cfb63f71b73c63e023b144feb1579b8ac04d44674be2c8c0028"
+  },
+  "after-final": {
+    "scope": "Supplemental captured-state reconciliation, not the missing original 1936/2 strict verifier. Native skip, no save timing claim.",
+    "schema": 13,
+    "consumers": 1914,
+    "consumerIdsUnchanged": true,
+    "walletLedgerFailures": 0,
+    "purchasesDelta": 110,
+    "paymentCentsDelta": 112750,
+    "rawCroissantsUsed": 110,
+    "rawBagsUsed": 110,
+    "heldPurchaseCentsAtEnd": 0,
+    "days": [
+      {
+        "day": 5,
+        "purchases": 57,
+        "residentPaymentCents": 58425,
+        "nativeRevenueDollars": 584.4096,
+        "residualCents": 15.96,
+        "strictRevenueConservationAtPoint1Cent": false
+      },
+      {
+        "day": 6,
+        "purchases": 53,
+        "residentPaymentCents": 54325,
+        "nativeRevenueDollars": 543.3984,
+        "residualCents": 14.84,
+        "strictRevenueConservationAtPoint1Cent": false
+      }
+    ],
+    "totalResidualCents": 30.8,
+    "endPopulationSha256": "6214ad1a3c37c1dbf86454352ff511d990d1614f010a604cfac714074cd75cfb"
+  }
+}

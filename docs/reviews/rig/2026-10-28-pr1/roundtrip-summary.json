@@ -1,0 +1,64 @@
+{
+  "after-saved": {
+    "identityAssignmentMismatches": {
+      "Identity": 0,
+      "HomeId": 0,
+      "DayPlaceId": 0,
+      "LeisureId": 0,
+      "ShopId": 0,
+      "Preferences": 0
+    },
+    "savedPayloadSha256": "6214ad1a3c37c1dbf86454352ff511d990d1614f010a604cfac714074cd75cfb",
+    "savedSchema": 13,
+    "liveSchema": 13,
+    "savedCitizens": 957,
+    "liveCitizens": 957,
+    "consumers": 1914,
+    "citizenIdsMatchPayload": true,
+    "consumerIdsMatchPayload": true,
+    "stateValidatedBySaveCodecWrite": true
+  },
+  "after-roundtrip-initial": {
+    "identityAssignmentMismatches": {
+      "Identity": 0,
+      "HomeId": 0,
+      "DayPlaceId": 0,
+      "LeisureId": 0,
+      "ShopId": 0,
+      "Preferences": 0
+    },
+    "savedPayloadSha256": "6214ad1a3c37c1dbf86454352ff511d990d1614f010a604cfac714074cd75cfb",
+    "savedSchema": 13,
+    "liveSchema": 13,
+    "savedCitizens": 957,
+    "liveCitizens": 957,
+    "consumers": 1914,
+    "citizenIdsMatchPayload": true,
+    "consumerIdsMatchPayload": true,
+    "stateValidatedBySaveCodecWrite": true
+  },
+  "before-roundtrip-initial": {
+    "identityAssignmentMismatches": {
+      "Identity": 0,
+      "HomeId": 0,
+      "DayPlaceId": 0,
+      "LeisureId": 0,
+      "ShopId": 0,
+      "Preferences": 0
+    },
+    "savedPayloadSha256": "6214ad1a3c37c1dbf86454352ff511d990d1614f010a604cfac714074cd75cfb",
+    "savedSchema": 13,
+    "liveSchema": 13,
+    "savedCitizens": 957,
+    "liveCitizens": 957,
+    "consumers": 1914,
+    "citizenIdsMatchPayload": true,
+    "consumerIdsMatchPayload": true,
+    "stateValidatedBySaveCodecWrite": true
+  },
+  "result": {
+    "allThreePayloadHashesIdentical": true,
+    "schema13Throughout": true,
+    "scope": "Native manual save after, reload after, reload before. Exact stored payload bytes retained. Live state is validated, not asserted byte-identical after physical rebind/post-load native ticks."
+  }
+}

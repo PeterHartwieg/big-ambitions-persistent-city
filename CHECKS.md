@@ -1,5 +1,9 @@
 # Validation status
 
+## PC PR #1 rig — 28 October 2026 (BLOCKED)
+
+Windows agent1 comparison of `76e903a` and `3df8232`: 1,260 / 1,267 unit tests and all README harnesses pass; traffic/save differential fixtures match. Native activation and schema-13 after-save reloads with both builds pass. Six save-free timing windows show lower after p95 but mixed maxima; stronger noise acceptance remains incomplete. The original strict accounting verifier is unavailable; a supplemental 110-sale replay matches both builds, including the preexisting 30.80-cent native revenue excess. Native unload/save-scope errors remain unresolved, so the broad log gate is not passed. All 4,828 original profile files, 107 receipt references and preferences were restored and hash-verified; rig stopped and lease released. No release, ordinary-save or Workshop clearance. [Report, screenshots, logs and exact limits](docs/reviews/rig/2026-10-28-pr1/README.md).
+
 ## PC advancement follow-up — 28 October 2026 (offline only)
 
 Optional frame diagnostics now retain slowest event slices, citizen/entry branch, plan counts, native-path/A-star timings, managed allocation or explicitly named signed heap deltas, and separate fixed-step/intersection mod-hook timings ([definitions and limits](docs/reviews/2026-10-28-event-attribution.md)). Production traffic queues retain owned vehicle references, with identical capture IDs and detached forecast copies ([partial finding 4](docs/reviews/2026-10-28-traffic-queue-references.md)). SaveCodec reuses type-only contract metadata while retaining all validation and bytes ([partial finding 5](docs/reviews/2026-10-28-save-contract-cache.md)). Schema 13 and policy versions are unchanged.

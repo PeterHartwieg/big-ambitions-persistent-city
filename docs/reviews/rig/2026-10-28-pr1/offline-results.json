@@ -1,0 +1,263 @@
+[
+  {
+    "check": "before-build",
+    "exit": 0,
+    "seconds": 2.77,
+    "command": [
+      "python",
+      "tools/build.py",
+      "--game-managed",
+      "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed"
+    ]
+  },
+  {
+    "check": "before-tests",
+    "exit": 0,
+    "seconds": 62.58,
+    "command": [
+      "dotnet",
+      "test",
+      "tests/PersistentCity.Tests.csproj",
+      "--logger",
+      "trx;LogFileName=<private-evidence>\\before-tests.trx"
+    ]
+  },
+  {
+    "check": "before-road-handoff-regression",
+    "exit": 0,
+    "seconds": 5.56,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/road-handoff-regression/RoadHandoffRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-road-speed-regression",
+    "exit": 0,
+    "seconds": 7.01,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/road-speed-regression/RoadSpeedRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-gate-access-regression",
+    "exit": 0,
+    "seconds": 5.0,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/gate-access-regression/GateAccessRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-road-ceiling-regression",
+    "exit": 0,
+    "seconds": 7.68,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/road-ceiling-regression/RoadCeilingRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-traffic-closure-regression",
+    "exit": 0,
+    "seconds": 7.94,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/traffic-closure-regression/TrafficClosureRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-native-command",
+    "exit": 0,
+    "seconds": 10.01,
+    "command": [
+      "python",
+      "tools/native-command-regression/run.py"
+    ]
+  },
+  {
+    "check": "before-simulate",
+    "exit": 0,
+    "seconds": 10.63,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/simulate/Simulate.csproj",
+      "--",
+      "28",
+      "<private-evidence>\\before-demo"
+    ]
+  },
+  {
+    "check": "after-build",
+    "exit": 0,
+    "seconds": 4.28,
+    "command": [
+      "python",
+      "tools/build.py",
+      "--game-managed",
+      "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed"
+    ]
+  },
+  {
+    "check": "after-tests",
+    "exit": 0,
+    "seconds": 38.3,
+    "command": [
+      "dotnet",
+      "test",
+      "tests/PersistentCity.Tests.csproj",
+      "--logger",
+      "trx;LogFileName=<private-evidence>\\after-tests.trx"
+    ]
+  },
+  {
+    "check": "after-road-handoff-regression",
+    "exit": 0,
+    "seconds": 3.09,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/road-handoff-regression/RoadHandoffRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-road-speed-regression",
+    "exit": 0,
+    "seconds": 3.69,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/road-speed-regression/RoadSpeedRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-gate-access-regression",
+    "exit": 0,
+    "seconds": 4.3,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/gate-access-regression/GateAccessRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-road-ceiling-regression",
+    "exit": 0,
+    "seconds": 4.23,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/road-ceiling-regression/RoadCeilingRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-traffic-closure-regression",
+    "exit": 0,
+    "seconds": 3.16,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/traffic-closure-regression/TrafficClosureRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-native-command",
+    "exit": 0,
+    "seconds": 2.99,
+    "command": [
+      "python",
+      "tools/native-command-regression/run.py"
+    ]
+  },
+  {
+    "check": "after-simulate",
+    "exit": 0,
+    "seconds": 6.26,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/simulate/Simulate.csproj",
+      "--",
+      "28",
+      "<private-evidence>\\after-demo"
+    ]
+  },
+  {
+    "check": "differential-traffic-queue-regression",
+    "exit": 0,
+    "seconds": 4.99,
+    "command": [
+      "python",
+      "tools/traffic-queue-regression/compare.py",
+      "--baseline",
+      "<before-worktree>",
+      "--output",
+      "<private-evidence>\\diff-traffic-queue-regression"
+    ]
+  },
+  {
+    "check": "differential-save-contract-regression",
+    "exit": 0,
+    "seconds": 6.0,
+    "command": [
+      "python",
+      "tools/save-contract-regression/compare.py",
+      "--baseline",
+      "<before-worktree>",
+      "--output",
+      "<private-evidence>\\diff-save-contract-regression"
+    ]
+  },
+  {
+    "check": "differential-core-identity-regression",
+    "exit": 0,
+    "seconds": 10.72,
+    "command": [
+      "python",
+      "tools/core-identity-regression/compare.py",
+      "--baseline",
+      "<before-worktree>",
+      "--output",
+      "<private-evidence>\\diff-core-identity-regression"
+    ]
+  }
+]
