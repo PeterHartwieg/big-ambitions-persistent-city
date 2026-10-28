@@ -130,6 +130,26 @@ replacement = new BuildingRegistration(); current = new RetailBusinessSimulator(
 Check(!(bool)Hooks.Call("HourlyCustomers", current)!, "replacement object cannot run protected current hour before bounded observation");
 Check(NativeFoodOwnership.Find(replacement) == null, "replacement remains ineligible for mod service until generation observation");
 
+// Review round 1: every supported receipt version proves earlier accounting ownership,
+// even when the authority manifest is missing or empty.
+foreach (string prefix in new[] { FoodSaleReceipts.LegacyPrefix, FoodSaleReceipts.Prefix })
+foreach (string state in new[] { "paid", "pending" })
+foreach (bool emptyManifest in new[] { false, true })
+{
+    string receiptKey = prefix + "food:resident:lunch:1";
+    string receiptValue = state + "|1025|business|product";
+    string? manifest = emptyManifest ? FoodAuthorityStore.Write(Array.Empty<FoodAuthority>()) : null;
+    reg = Fresh(8, manifest, ownPayload: false, receiptKey: receiptKey, receiptValue: receiptValue);
+    Check(NativeFoodOwnership.Error.Contains("without the population"), "orphaned " + prefix + state + " suspends startup");
+    var originalData = SaveGameManager.Current.modData.OrderBy(p => p.Key).ToArray();
+    Check(originalData.Length == (emptyManifest ? 2 : 1) && SaveGameManager.Current.modData[receiptKey] == receiptValue,
+        "orphaned receipt and manifest retained by initial guard without new state");
+    try { NativeFoodOwnership.ValidatePopulation(new FoodCommerceState()); throw new Exception("Replacement wallets must refuse"); }
+    catch (InvalidOperationException) { checks++; }
+    Check(CustomerEntriesHelper.GetEntriesByAddress(reg.Address).Count == 0, "orphaned receipt blocks native demand while suspended");
+    Check(originalData.SequenceEqual(SaveGameManager.Current.modData.OrderBy(p => p.Key)), "partial save bytes remain untouched after refusal");
+}
+
 reg = Fresh(9, saved, ownPayload: false);
 Check(NativeFoodOwnership.Error.Contains("without the population"), "owned manifest without population is rejected before fresh city creation");
 try { NativeFoodOwnership.ValidatePopulation(new FoodCommerceState()); throw new Exception("Replacement wallets must refuse"); }
@@ -239,7 +259,7 @@ GameManager.DuringNewHour = null; IndoorCustomerSpawner.Customers.Clear(); GameM
 Check(!NativeFoodOwnership.Find(reg)!.Managed, "drain-time body deferral still cannot acquire midway through the same hour");
 Console.WriteLine($"PASS {checks} actual ownership-hook checks against native field/callback doubles. No Unity/game execution.");
 
-BuildingRegistration Fresh(int hour = 8, string? payload = null, bool? ownPayload = null)
+BuildingRegistration Fresh(int hour = 8, string? payload = null, bool? ownPayload = null, string? receiptKey = null, string? receiptValue = null)
 {
     var shop = new BuildingRegistration();
     SaveGameManager.Current = new Save { Hour = hour, BuildingRegistrations = new() { shop } };
@@ -249,6 +269,7 @@ BuildingRegistration Fresh(int hour = 8, string? payload = null, bool? ownPayloa
     BusinessSimulatorHelper.TimeMachineRunning = false;
     CustomerEntriesHelper.Generated.Clear(); IndoorCustomerSpawner.Customers.Clear();
     BuildingManager.Instance.buildingRegistration = null; GameManager.DuringNewHour = null; GameManager.DailySettlementOrderCounts.Clear();
+    if (receiptKey != null) SaveGameManager.Current.modData[receiptKey] = receiptValue!;
     NativeFoodOwnership.EnsureSave(); return shop;
 }
 void Check(bool value, string message) { checks++; if (!value) throw new InvalidOperationException(message); }

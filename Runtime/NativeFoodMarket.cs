@@ -341,7 +341,14 @@ namespace PersistentCity.Runtime
                 simulator.SetUp(reg, SaveGameManager.Current.Hour);
                 approvedProduct = meal.ProductId;
                 approvedPrice = reg.retailPrices.Single(p => p.itemName == meal.ProductId).price;
-                if (FoodMoney.FromNative(approvedPrice) != meal.PriceCents)
+                decimal livePrice;
+                try { livePrice = FoodMoney.FromNative(approvedPrice); }
+                catch (ArgumentOutOfRangeException)
+                {
+                    // No receipt or native sale exists yet: this is a definite refusal, not uncertain ownership.
+                    return new FoodSale(false, "Approved price is outside the supported range");
+                }
+                if (livePrice != meal.PriceCents)
                     return new FoodSale(false, "Approved price changed during native setup");
                 FoodSaleReceipts.Begin(data, meal);
                 buyerShop = reg; buying = true;

@@ -86,8 +86,32 @@ static partial class Program
         Check(f.Stock(Croissant) == units && f.Receipt(next) == FoodReceiptStatus.Missing, "setup-price refusal leaves stock and receipts unchanged");
     }
 
+    static void InvalidPostSetupPricesRefuseWithoutUncertainFunds()
+    {
+        foreach (float invalid in new[] { float.NaN, float.PositiveInfinity, 0f, -1f, 10001f, float.Epsilon, 1e-20f })
+        {
+            using var f = new Fixture();
+            var meal = f.Meal("invalid-price");
+            var budget = new ResidentBudget { BalanceCents = 100000, OpeningBalanceCents = 100000 };
+            Check(HouseholdFinance.HoldPurchase(budget, meal.PriceCents), "checkout owns held funds before price mutation");
+            int units = f.Stock(Croissant), bags = f.Bags, orders = f.Reg.unprocessedCompletedOrders.Count;
+            Hooks.OpenCheck = () => f.Reg.retailPrices.Single(p => p.itemName == Croissant).price = invalid;
+            var result = f.Market.Buy(meal, Minute);
+            Check(!result.Paid && result.Reason.Contains("supported range"), "unsupported live price returns definite refusal, not an exception");
+            Check(f.Receipt(meal) == FoodReceiptStatus.Missing && f.Market.NativePurchases == 0,
+                "invalid pre-sale price creates no receipt or purchase");
+            Check(f.Stock(Croissant) == units && f.Bags == bags && f.Reg.unprocessedCompletedOrders.Count == orders,
+                "invalid pre-sale price leaves inventory and orders unchanged");
+            // FoodCommerce refunds definite refusals; only thrown/unknown outcomes retain holds.
+            HouseholdFinance.RefusePurchase(budget);
+            Check(budget.BalanceCents == budget.OpeningBalanceCents && budget.HeldPurchaseCents == 0
+                && budget.PreparedFoodSpentCents == 0, "definite refusal permits complete refund without stranded funds");
+        }
+    }
+
     static void Main()
     {
+        InvalidPostSetupPricesRefuseWithoutUncertainFunds();
         FractionalCheckoutMatchesNativeAndRejectsSameCentPriceChanges();
         SuccessfulCheckoutUsesOnePreSaleRead();
         SameFrameSalesAndChangesAreSeenByTheNextCheckout();

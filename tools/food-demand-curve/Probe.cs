@@ -158,7 +158,7 @@ namespace FoodDemandCurveProbe
                 {
                     var state = FoodShadowCodec.Read(FoodShadowCodec.Write(initial), initial.CityKey);
                     foreach (var offer in state.Businesses.Single(b => b.Id == targetId).Offers)
-                        offer.PriceCents = (int)Math.Round((double)offer.PriceCents * factors[pointIndex]);
+                        offer.PriceCents = (int)Math.Round(offer.PriceCents * factors[pointIndex]);
                     controlled = new FoodDemand(state); return;
                 }
                 if (!controlled.AdvanceTo(controlled.State.EndsAt, 32)) return;
