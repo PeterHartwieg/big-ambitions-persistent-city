@@ -241,7 +241,8 @@ namespace PersistentCity.Persistence
             FloatParseHandling = FloatParseHandling.Double
         };
 
-        private static void ValidateOptionalStop(CitizenState citizen, CityState state)
+        private static void ValidateOptionalStop(CitizenState citizen, CityState state, IReadOnlyDictionary<string, Place> places,
+            IReadOnlyDictionary<string, CitizenState> citizens)
         {
             var stop = citizen.OptionalStop;
             if (stop == null) return;
@@ -255,7 +256,7 @@ namespace PersistentCity.Persistence
                 && stop.EndMinute > stop.StartMinute && stop.EndMinute <= stop.ResumeEventMinute
                 && stop.EndMinute - stop.StartMinute >= OptionalStopPolicy.Minimum(stop.Kind) - 1e-9
                 && stop.EndMinute - stop.StartMinute <= DwellRules.For(stop.Kind).MaximumMinutes + 1e-9, "Invalid stop duration/continuation.");
-            var stopPlace = state.Places.SingleOrDefault(p => p.Id == stop.PlaceId);
+            places.TryGetValue(stop.PlaceId, out var stopPlace);
             Require(stopPlace != null && Position.Distance(stop.ReturnPosition, stopPlace.Position) < 0.001, "Missing/changed stop return place.");
             Require(Position.Distance(stop.Position, stop.ReturnPosition) <= 100, "Stop is not local to its existing visit.");
             Require(stop.Kind == DwellKind.Break ? stopPlace.Kind == PlaceKind.Work
@@ -271,7 +272,8 @@ namespace PersistentCity.Persistence
                 {
                     Text(member, "Stop member", 256);
                     if (stop.Cancelled || state.Minute >= stop.EndMinute) continue;
-                    var partner = state.Citizens.FirstOrDefault(c => c?.Identity?.Id == member)?.OptionalStop;
+                    citizens.TryGetValue(member, out var partnerCitizen);
+                    var partner = partnerCitizen?.OptionalStop;
                     Require(partner != null && !partner.Cancelled && partner.Kind == stop.Kind && partner.PlaceId == stop.PlaceId
                         && partner.TargetId == stop.TargetId && partner.StartMinute == stop.StartMinute && partner.EndMinute == stop.EndMinute
                         && partner.Members != null && partner.Members.SequenceEqual(stop.Members), "Inconsistent conversation membership.");
@@ -333,6 +335,14 @@ namespace PersistentCity.Persistence
             }
             ValidateExpansion(state);
             var ids = new HashSet<string>(StringComparer.Ordinal);
+            var citizens = new Dictionary<string, CitizenState>(StringComparer.Ordinal);
+            foreach (var citizen in state.Citizens!)
+            {
+                Require(citizen != null && citizen.Identity != null, "Missing citizen identity.");
+                Text(citizen.Identity.Id, "Citizen ID", 256);
+                Require(!citizens.ContainsKey(citizen.Identity.Id), "Duplicate citizen ID: " + citizen.Identity.Id);
+                citizens.Add(citizen.Identity.Id, citizen);
+            }
             var assigned = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (var citizen in state.Citizens!)
             {
@@ -353,7 +363,7 @@ namespace PersistentCity.Persistence
                 if (citizen.DayPlaceId != "") CountAssignment(citizen.DayPlaceId);
                 OptionalReference(places, citizen.ShopId, PlaceKind.Shop);
                 OptionalReference(places, citizen.LeisureId, PlaceKind.Leisure);
-                ValidateOptionalStop(citizen, state);
+                ValidateOptionalStop(citizen, state, places, citizens);
                 Known(citizen.Phase, "Citizen phase"); Known(citizen.Activity, "Activity"); Known(citizen.DestinationActivity, "Destination activity");
                 var current = Reference(places, citizen.PlaceId);
                 Require((int)current.Kind == (int)citizen.Activity, "Current activity does not match current place.");

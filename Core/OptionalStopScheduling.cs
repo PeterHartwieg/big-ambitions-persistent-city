@@ -170,18 +170,19 @@ namespace PersistentCity.Core
         }
         private bool TryConversation(CitizenState arriving, double now)
         {
-            foreach (var other in State.Citizens.OrderBy(c => c.Identity.Id, StringComparer.Ordinal))
+            // Sort only eligible local partners, not the whole city on every leisure admission.
+            foreach (var other in State.Citizens.Where(c => !ReferenceEquals(c, arriving) && c.PlaceId == arriving.PlaceId
+                && c.Phase == CitizenPhase.AtPlace && c.Activity == Activity.Leisure && c.OptionalStop == null
+                && c.MealOuting == null && c.RecentVisits.Count != 0 && c.OptionalStopChoice == true)
+                .OrderBy(c => c.Identity.Id, StringComparer.Ordinal))
             {
-                if (ReferenceEquals(other, arriving) || other.PlaceId != arriving.PlaceId || other.Phase != CitizenPhase.AtPlace
-                    || other.Activity != Activity.Leisure || other.OptionalStop != null || other.MealOuting != null
-                    || other.RecentVisits.Count == 0) continue;
                 double visit = other.RecentVisits.Last().AtMinute;
                 if (other.RecentVisits.Last().PlaceId != other.PlaceId
                     || other.OptionalStopChoice != true) continue;
                 string group = "chat:" + arriving.Identity.Id + ":" + now.ToString("R", CultureInfo.InvariantCulture);
                 if (!TryStop(arriving, DwellKind.ChatOutsideVenue, group, now, now, out var first)) return false;
                 // Choose both spots before publishing either member.
-                if (!TryStop(other, DwellKind.ChatOutsideVenue, group, visit, now, out var second, first!.Position)) return false;
+                if (!TryStop(other, DwellKind.ChatOutsideVenue, group, visit, now, out var second, first!.Position)) continue;
                 double end = Math.Min(first!.EndMinute, second!.EndMinute);
                 first.EndMinute = second.EndMinute = end;
                 first.TargetId = second.TargetId = group;

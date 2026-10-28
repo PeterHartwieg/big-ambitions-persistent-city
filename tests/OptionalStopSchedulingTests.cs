@@ -20,8 +20,9 @@ public sealed class OptionalStopSchedulingTests
         public bool Present = true;
         public DwellKind Kind;
         public int Capacity = 4;
+        public IReadOnlyList<OptionalStopSpot>? Supplied;
         public IReadOnlyList<OptionalStopSpot> Spots(Place place, DwellKind kind) => !Present || kind != Kind
-            ? Array.Empty<OptionalStopSpot>() : Enumerable.Range(0, Capacity).Select(i => new OptionalStopSpot
+            ? Array.Empty<OptionalStopSpot>() : Supplied ?? Enumerable.Range(0, Capacity).Select(i => new OptionalStopSpot
             { Id = "spot:" + i, TargetId = "target", Position = new(10 + i, 0, 1), Facing = new(10, 0, 3) }).ToArray();
         public bool Available(OptionalStopState stop) => Present;
     }
@@ -303,6 +304,55 @@ public sealed class OptionalStopSchedulingTests
         var (group, _) = Ready(DwellKind.ChatOutsideVenue,2); group.AdvanceTo(1450);
         group.State.Citizens[0].OptionalStop=null; group.RefreshOptionalStops();
         Assert.True(group.State.Citizens[1].OptionalStop!.Cancelled);
+    }
+
+    [Fact]
+    public void ConversationSkipsShortStayPartnerAndUsesLaterFeasibleVisitor()
+    {
+        var (sim, env) = Ready(DwellKind.ChatOutsideVenue, 3);
+        env.Present = false; sim.AdvanceTo(1450);
+        var shortStay = sim.State.Citizens[0];
+        shortStay.ActivityUntilMinute = shortStay.NextEventMinute = 1456;
+        // First two visitors already accepted, but geometry was not available at admission.
+        var arriving = sim.State.Citizens[2];
+        arriving.Phase = CitizenPhase.Travelling; arriving.PlaceId = "home";
+        arriving.DestinationId = "venue"; arriving.DestinationActivity = Activity.Leisure;
+        arriving.DepartureMinute = 1450; arriving.NextEventMinute = 1451;
+        arriving.Journey = new Walking().Plan(sim.State.Places[0], sim.State.Places[1], 1450, arriving.Preferences);
+        arriving.Journey.Legs[0].Minutes = 1;
+        sim = sim.RebuildRoutes(new Walking()); env.Present = true; sim.AdvanceTo(1451);
+        Assert.Null(shortStay.OptionalStop);
+        Assert.Equal(new[] { "c1", "c2" }, sim.State.Citizens.Where(c => c.OptionalStop != null).Select(c => c.Identity.Id));
+        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(sim.State)).Status);
+    }
+
+    [Fact]
+    public void InvalidGeometryIsSkippedAndIndividualsCannotShareTheOnlyValidSlot()
+    {
+        var (sim, env) = Ready(DwellKind.WindowShopping, 2);
+        env.Supplied = new[] {
+            new OptionalStopSpot { Id="a", TargetId="", Position=new(10,0,1) },
+            new OptionalStopSpot { Id="b", TargetId="target", Position=new(double.NaN,0,1) },
+            new OptionalStopSpot { Id="c", TargetId="target", Position=new(10,0,1), Facing=new(double.PositiveInfinity,0,0) },
+            new OptionalStopSpot { Id="d", TargetId="target", Position=new(1000,0,1) },
+            new OptionalStopSpot { Id="e", TargetId="target", Position=new(10,0,1), Facing=new(10,0,3) }
+        };
+        sim.AdvanceTo(1450);
+        var stop = Assert.Single(sim.State.Citizens, c => c.OptionalStop != null).OptionalStop!;
+        Assert.Equal("e", stop.SpotId);
+        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(sim.State)).Status);
+    }
+
+    [Fact]
+    public void IndexedStopValidationStillRejectsDuplicateAndMissingReferences()
+    {
+        var (sim, _) = Ready(DwellKind.ChatOutsideVenue, 2); sim.AdvanceTo(1450);
+        var wire = JObject.Parse(SaveCodec.Write(sim.State));
+        wire["Citizens"]![1]!["Identity"]!["Id"] = "c0";
+        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status);
+        wire = JObject.Parse(SaveCodec.Write(sim.State));
+        wire["Citizens"]![0]!["OptionalStop"]!["PlaceId"] = "missing";
+        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status);
     }
 
 }
