@@ -38,7 +38,7 @@ static class Program
     }
 
 
-    static (string save, int observed, Probe probe) Run(bool measured, bool fail)
+    static (string save, int observed, Probe probe) Run(bool measured, bool fail, string? observerFault = null)
     {
         var planner = new MultimodalRoutes();
         var sim = new CitySimulator(City(36), planner);
@@ -46,10 +46,12 @@ static class Program
         sim.ActivityObserved += (_, _, _) => observed++;
         var probe = new Probe();
         if (measured) probe.Start();
-        bool injected = false;
+        bool injected = false, observerInjected = false;
         for (int frame = 0; !sim.IsCaughtUpTo(4320); frame++)
         {
             UnityEngine.Time.frameCount++;
+            if (observerFault != null && !observerInjected)
+            { probe.InjectObserverFault(observerFault); observerInjected = true; }
             if (sim.PlanningPending)
             {
                 if (fail && !injected) { planner.FailNext = true; injected = true; }
@@ -76,5 +78,20 @@ static class Program
             if (fail && measured.probe.Failures == 0) throw new Exception("Missing failure observation");
             Console.WriteLine($"fail={fail};events={measured.observed};save={Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(measured.save)))}");
         }
+        foreach (string seam in new[] { "event-prefix", "event-finalizer", "query-prefix", "query-finalizer" })
+        foreach (bool fail in new[] { false, true })
+        {
+            var plain = Run(false, fail); var broken = Run(true, fail, seam);
+            if (plain.save != broken.save || plain.observed != broken.observed
+                || broken.probe.DiagnosticFailures != 1 || !broken.probe.EventCaptureDisabled)
+                throw new Exception("Observer fault changed simulation or was not reported: " + seam);
+            Console.WriteLine($"observerFault={seam};nativeFailure={fail};events={broken.observed};outputs=identical");
+        }
+        foreach (bool query in new[] { false, true })
+        {
+            var probe = new Probe(); probe.Start();
+            probe.VerifyOriginalExceptionSurvivesObserverFault(query); probe.Stop();
+        }
+        Console.WriteLine("Both diagnostic finalizers preserve the exact original exception on observer failure.");
     }
 }

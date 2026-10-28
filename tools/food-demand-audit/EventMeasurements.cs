@@ -16,6 +16,8 @@ namespace FoodDemandAuditProbe
         private EventScope? activeEvent;
         private long eventCrossFrameCalls;
         private long eventSequence;
+        private bool eventMeasurementsFailed;
+        private long eventMeasurementFailures;
         private PropertyInfo? foodNextMinute;
         private PropertyInfo? walkingMetrics, navMeshMilliseconds;
         private Func<long>? managedCounter;
@@ -39,7 +41,7 @@ namespace FoodDemandAuditProbe
         }
         private void StartEventMeasurements(Harmony patches)
         {
-            eventWork.Clear(); activeEvent = null; eventCrossFrameCalls = eventSequence = 0;
+            eventWork.Clear(); activeEvent = null; eventCrossFrameCalls = eventSequence = eventMeasurementFailures = 0; eventMeasurementsFailed = false;
             pendingField = AccessTools.Field(typeof(CitySimulator), "pending");
             var pendingType = typeof(CitySimulator).GetNestedType("PendingEvent", BindingFlags.NonPublic);
             var dueType = typeof(CitySimulator).GetNestedType("Due", BindingFlags.NonPublic);
@@ -106,51 +108,76 @@ namespace FoodDemandAuditProbe
             patches.Patch(method, prefix: new HarmonyMethod(typeof(QueryPatches), nameof(QueryPatches.Before)),
                 finalizer: new HarmonyMethod(typeof(QueryPatches), nameof(QueryPatches.Finally)));
         }
+        // No Unity, reflection or logging here: a broken observer must not interrupt the city.
+        private void DisableEventMeasurements()
+        {
+            eventMeasurementsFailed = true;
+            eventMeasurementFailures++;
+            activeEvent = null;
+            eventWork.Clear(); // Discard the partial event image rather than export it as complete.
+        }
+
         private static class EventPatches
         {
-            public static void Plan() { if (frameOwner?.activeEvent != null) frameOwner.activeEvent.Work.Plans++; }
+            public static void Plan() { var owner = frameOwner; if (owner?.eventMeasurementsFailed == false && owner.activeEvent != null) owner.activeEvent.Work.Plans++; }
             public static void Before(object __instance, MethodBase __originalMethod, object[] __args, out EventScope? __state)
             {
-                __state = null;
                 var owner = frameOwner;
-                if (owner?.recordingFrames != true || owner.activeEvent != null) return;
-                owner.ObserveWorkFrame(Time.frameCount);
-                CitizenState? citizen = null;
-                double minute;
-                string branch;
-                if (__instance is CitySimulator simulator)
+                __state = null;
+                try
                 {
-                    object? item = __originalMethod.Name == "RunEvent" ? __args[0]
-                        : owner.pendingField!.GetValue(simulator) is object pending ? owner.pendingItemField!.GetValue(pending) : null;
-                    if (item == null) return;
-                    citizen = (CitizenState)owner.dueCitizenField!.GetValue(item)!;
-                    minute = simulator.State.Minute;
-                    // Entry branch, not a claim that no later branch ran within this event.
-                    branch = citizen.MealOuting != null ? "meal-outing" : citizen.Phase == CitizenPhase.Travelling ? "arrival"
-                        : citizen.Phase == CitizenPhase.WaitingForOpening ? "opening-wait"
-                        : citizen.Phase == CitizenPhase.WaitingForRoute ? "route-wait" : "routine";
+                    if (owner?.recordingFrames != true || owner.eventMeasurementsFailed || owner.activeEvent != null) return;
+                    owner.ObserveWorkFrame(Time.frameCount);
+                    CitizenState? citizen = null;
+                    double minute;
+                    string branch;
+                    if (__instance is CitySimulator simulator)
+                    {
+                        object? item = __originalMethod.Name == "RunEvent" ? __args[0]
+                            : owner.pendingField!.GetValue(simulator) is object pending ? owner.pendingItemField!.GetValue(pending) : null;
+                        if (item == null) return;
+                        citizen = (CitizenState)owner.dueCitizenField!.GetValue(item)!;
+                        minute = simulator.State.Minute;
+                        // Entry branch, not a claim that no later branch ran within this event.
+                        branch = citizen.MealOuting != null ? "meal-outing" : citizen.Phase == CitizenPhase.Travelling ? "arrival"
+                            : citizen.Phase == CitizenPhase.WaitingForOpening ? "opening-wait"
+                            : citizen.Phase == CitizenPhase.WaitingForRoute ? "route-wait" : "routine";
+                    }
+                    else
+                    {
+                        minute = __instance is TrafficKernel traffic ? traffic.Clock : (double)owner.foodNextMinute!.GetValue(__instance)!;
+                        branch = __instance is TrafficKernel ? "traffic-advance" : "food-step";
+                    }
+                    __state = new EventScope { Frame = Time.frameCount, Start = Stopwatch.GetTimestamp(),
+                        Work = new EventWork { Citizen = citizen?.Identity.Id ?? "", Branch = branch, Minute = minute, Slices = 1,
+                            Sequence = citizen == null ? ++owner.eventSequence : 0 } };
+                    owner.activeEvent = __state;
                 }
-                else
+                catch (Exception)
                 {
-                    minute = __instance is TrafficKernel traffic ? traffic.Clock : (double)owner.foodNextMinute!.GetValue(__instance)!;
-                    branch = __instance is TrafficKernel ? "traffic-advance" : "food-step";
+                    owner?.DisableEventMeasurements();
+                    __state = null;
                 }
-                __state = new EventScope { Frame = Time.frameCount, Start = Stopwatch.GetTimestamp(),
-                    Work = new EventWork { Citizen = citizen?.Identity.Id ?? "", Branch = branch, Minute = minute, Slices = 1,
-                        Sequence = citizen == null ? ++owner.eventSequence : 0 } };
-                owner.activeEvent = __state;
             }
             public static Exception? Finally(Exception? __exception, EventScope? __state)
             {
                 var owner = frameOwner;
-                if (__state == null || owner == null) return __exception;
-                owner.activeEvent = null;
-                if (!owner.recordingFrames) return __exception;
-                __state.Work.Ticks = Math.Max(0, Stopwatch.GetTimestamp() - __state.Start);
-                if (__exception != null) __state.Work.Failures++;
-                if (__state.Frame != Time.frameCount || __state.Frame != owner.currentWorkFrame) owner.eventCrossFrameCalls++;
-                else owner.eventWork.Add(__state.Work);
-                return __exception;
+                try
+                {
+                    if (__state == null || owner == null) return __exception;
+                    owner.activeEvent = null;
+                    if (!owner.recordingFrames || owner.eventMeasurementsFailed) return __exception;
+                    __state.Work.Ticks = Math.Max(0, Stopwatch.GetTimestamp() - __state.Start);
+                    if (__exception != null) __state.Work.Failures++;
+                    if (__state.Frame != Time.frameCount || __state.Frame != owner.currentWorkFrame) owner.eventCrossFrameCalls++;
+                    else owner.eventWork.Add(__state.Work);
+                    return __exception;
+                }
+                catch (Exception)
+                {
+                    owner?.DisableEventMeasurements();
+                    return __exception;
+                }
             }
         }
         private static class QueryPatches
@@ -158,27 +185,44 @@ namespace FoodDemandAuditProbe
             public static void Before(object __instance, MethodBase __originalMethod, out QueryScope __state)
             {
                 var owner = frameOwner;
-                var evt = owner?.activeEvent;
                 __state = default;
-                if (evt == null) return;
-                object? metrics = __originalMethod.Name == "Calculate" ? owner!.walkingMetrics!.GetValue(__instance) : null;
-                __state = new QueryScope { Event = evt, Start = Stopwatch.GetTimestamp(), Road = __originalMethod.Name == "Continue",
-                    AStar = __originalMethod.Name == "Advance", Metrics = metrics,
-                    NavMeshBefore = metrics == null ? 0 : (double)owner!.navMeshMilliseconds!.GetValue(metrics)! };
+                try
+                {
+                    var evt = owner?.activeEvent;
+                    if (evt == null || owner!.eventMeasurementsFailed) return;
+                    object? metrics = __originalMethod.Name == "Calculate" ? owner!.walkingMetrics!.GetValue(__instance) : null;
+                    __state = new QueryScope { Event = evt, Start = Stopwatch.GetTimestamp(), Road = __originalMethod.Name == "Continue",
+                        AStar = __originalMethod.Name == "Advance", Metrics = metrics,
+                        NavMeshBefore = metrics == null ? 0 : (double)owner!.navMeshMilliseconds!.GetValue(metrics)! };
+                }
+                catch (Exception)
+                {
+                    owner?.DisableEventMeasurements();
+                    __state = default;
+                }
             }
             public static Exception? Finally(Exception? __exception, QueryScope __state)
             {
-                if (__state.Event != null)
+                var owner = frameOwner;
+                try
                 {
-                    long elapsed = Math.Max(0, Stopwatch.GetTimestamp() - __state.Start);
-                    if (__state.AStar) __state.Event.Work.AStarTicks += elapsed;
-                    else if (__state.Road) __state.Event.Work.RoadSearchTicks += elapsed;
-                    else __state.Event.Work.NavMeshTicks += elapsed;
-                    if (__state.Metrics != null && frameOwner != null)
-                        __state.Event.Work.NavMeshPathMilliseconds += Math.Max(0,
-                            (double)frameOwner.navMeshMilliseconds!.GetValue(__state.Metrics)! - __state.NavMeshBefore);
+                    if (__state.Event != null && owner?.eventMeasurementsFailed == false)
+                    {
+                        long elapsed = Math.Max(0, Stopwatch.GetTimestamp() - __state.Start);
+                        if (__state.AStar) __state.Event.Work.AStarTicks += elapsed;
+                        else if (__state.Road) __state.Event.Work.RoadSearchTicks += elapsed;
+                        else __state.Event.Work.NavMeshTicks += elapsed;
+                        if (__state.Metrics != null)
+                            __state.Event.Work.NavMeshPathMilliseconds += Math.Max(0,
+                                (double)owner.navMeshMilliseconds!.GetValue(__state.Metrics)! - __state.NavMeshBefore);
+                    }
+                    return __exception;
                 }
-                return __exception;
+                catch (Exception)
+                {
+                    owner?.DisableEventMeasurements();
+                    return __exception;
+                }
             }
         }
         private static string CsvText(string? value) => "\"" + (value ?? "").Replace("\"", "\"\"") + "\"";
