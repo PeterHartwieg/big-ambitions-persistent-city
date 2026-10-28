@@ -1,5 +1,13 @@
 # Validation status
 
+## PR #3 independent review round 3 (offline)
+
+One Medium fix: intermediate events that retain an admitted visit now retain the granted stop as cancelled evidence, so accepted conversation partners cannot be recruited repeatedly during that visit. An interrupted pair is cancelled together; original stop times and the saved acceptance remain unchanged. Departures/new visits clear the record normally. This uses the existing schema-16 fields; the 25% setting and migration contract are unchanged. Four low-impact/already-covered findings were skipped with concrete reasons; no new product question.
+
+Validation: **1,370 unit tests**, **all 21 standalone regression projects**, and all additional physical/analysis harnesses pass. The two new active/expired-pair cases fail against the previous event-completion code and pass with the fix. They cover cancellation, retained deadlines/acceptance, exact save round-trip, later arrivals forming a new pair rather than recruiting used visitors, and departure cleanup. The synthetic 28-day save round-trip is exact. Production and audit helper compile against read-only Steam DLLs with warnings as errors; production SHA-256 `8e1ac1164d6bb5892350a16af3e47f0bb3ab7520c6076e09872d53f2547affbf`, helper `66cf568e3f12c0315ed762a2946781c9026f80bd2a22fcb21be500feee7fb12a`. `git diff --check` passes. Logs: ignored `build/review-r3/`.
+
+No game launch, install, rig access, deployment or release. Native appearance and performance remain unverified. Review comment prepared externally and not posted. Base `9ee38e9` was already included; no new merge required this round.
+
 ## PR #3 independent review round 2 (offline)
 
 Saved facade stops now distinguish deferred validation from confirmed unavailability. Reload can validate one entrance per frame without cancelling other saved stops or changing their choices/deadlines; deferred stops cannot receive physical bodies. Rain and confirmed disappearance still cancel. Same-visit routine/lifecycle events retain accepted and declined conversation choices, including across reload and rate changes. New visit opportunities still require geometry at admission; no delayed scheduling/reroll is added. Triage: two Medium FIX items, three SKIP items, no product question. Default 25% and schema 16 unchanged.
