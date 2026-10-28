@@ -1,6 +1,6 @@
 # Persistent City
 
-> **PR #3 review round 1 ? 28 October:** repaired visible arrival/departure continuity, shared geometry sampling and indexed stop validation; merged the base review fixes normally. **1,366 unit tests and all 21 standalone regressions pass**, with production/helper Steam-DLL builds passing warnings as errors. The approved **25% setting and schema 16** remain unchanged. Offline only; native behavior/performance remain unverified. [Evidence](CHECKS.md#pr-3-independent-review-round-1--28-october-2026-offline).
+> **PR #3 review round 1 — 28 October:** repaired visible arrival/departure continuity, shared geometry sampling and indexed stop validation; merged the base review fixes normally. **1,366 unit tests and all 21 standalone regressions pass**, with production/helper Steam-DLL builds passing warnings as errors. The approved **25% setting and schema 16** remain unchanged. Offline only; native behavior/performance remain unverified. [Evidence](CHECKS.md#pr-3-independent-review-round-1--28-october-2026-offline).
 
 > **Optional-stop follow-up - 28 October:** DECISIONS-3 sets the default to **25%**, adjustable with `OptionalStopChoicePercentage` in the existing JSON config. Schema **16** preserves visit choices across rate changes and reloads, including waiting conversation partners. **1,360 tests pass**; native playtesting remains pending. [QA settings](docs/stationary-citizens.md).
 
