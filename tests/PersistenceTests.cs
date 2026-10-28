@@ -11,6 +11,22 @@ namespace PersistentCity.Tests;
 public sealed class PersistenceTests
 {
     [Fact]
+    public async System.Threading.Tasks.Task ConcurrentCodecsShareOnlyMetadataAndStillRejectInvalidState()
+    {
+        string expected = SaveCodec.Write(Example());
+        var operations = Enumerable.Range(0, 32).Select(_ => System.Threading.Tasks.Task.Run(() =>
+        {
+            var loaded = SaveCodec.Read(expected);
+            Assert.Equal(SaveReadStatus.Loaded, loaded.Status);
+            Assert.Equal(expected, SaveCodec.Write(loaded.State!));
+            loaded.State!.Citizens[0].NextEventMinute = double.NaN;
+            Assert.Throws<SaveValidationException>(() => SaveCodec.Write(loaded.State));
+            Assert.Equal(expected, SaveCodec.Write(Example()));
+        }));
+        await System.Threading.Tasks.Task.WhenAll(operations);
+    }
+
+    [Fact]
     public void MidJourneyRoundTripPreservesExactPositionIdentityAndVisits()
     {
         var original = Example();
