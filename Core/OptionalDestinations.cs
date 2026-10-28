@@ -19,10 +19,18 @@ namespace PersistentCity.Core
             return opening.Value + stay <= Math.Min(deadline, close) ? opening : null;
         }
 
-        private bool ChooseOptionalDestination(CitizenState person, RoutineSlot proposed, double now,
-            out RoutineSlot selected, out Route? selectedRoute)
+        // The outcome of one optional decision, filled in once its request sequence has run to the end.
+        private sealed class OptionalChoice
         {
-            selected = proposed; selectedRoute = null;
+            public OptionalChoice(RoutineSlot proposed) { Slot = proposed; }
+            public RoutineSlot Slot;
+            public Route? Route;
+            public bool Selected;
+        }
+
+        private IEnumerable<RouteRequest> ChooseOptionalDestination(CitizenState person, RoutineSlot proposed, double now, OptionalChoice choice)
+        {
+            choice.Slot = proposed; choice.Route = null; choice.Selected = false;
             var origin = places[person.PlaceId];
             var kind = proposed.Activity == Activity.Shop ? PlaceKind.Shop : PlaceKind.Leisure;
             string key = person.Identity.Id + ":optional:" + proposed.Activity + ":" + proposed.EndsAt.ToString("R", CultureInfo.InvariantCulture);
@@ -52,8 +60,9 @@ namespace PersistentCity.Core
                     // At most two full multimodal searches per scheduled optional decision.
                     if (routeCalls == 2) break;
                     routeCalls++;
-                    route = routes is ICitizenRoutePlanner citizenRoutes ? citizenRoutes.Plan(origin, candidate, now, person)
-                        : routes.Plan(origin, candidate, now, person.Preferences);
+                    var request = CitizenRequest(origin, candidate, now, person);
+                    yield return request;
+                    route = request.Result;
                     if (route == null)
                     { ObserveRoutine(person, slot, now, "route-rejected", "unreachable"); continue; }
                     ValidateRoute(route, origin.Position, candidate.Position); ValidateCarRoute(route, person);
@@ -61,13 +70,13 @@ namespace PersistentCity.Core
                 double arrival = now + (route?.EstimatedMinutes ?? 0);
                 if (!UsefulOpening(candidate, arrival, slot.EndsAt, stay).HasValue)
                 { ObserveRoutine(person, slot, now, "route-rejected", "arrival-no-useful-opening"); continue; }
-                selected = slot; selectedRoute = route;
+                choice.Slot = slot; choice.Route = route; choice.Selected = true;
                 ObserveRoutine(person, slot, now, "selected", candidate.Id == proposed.PlaceId ? "preferred-feasible" : "alternative-feasible");
-                return true;
+                yield break;
             }
             MissRoutine(person, proposed, now, routeCalls == 2 ? "optional-search-exhausted" : "no-feasible-optional-venue");
-            selected = new RoutineSlot(person.HomeId, Activity.Home, proposed.EndsAt);
-            return false;
+            choice.Slot = new RoutineSlot(person.HomeId, Activity.Home, proposed.EndsAt);
+            choice.Route = null; choice.Selected = false;
         }
     }
 }

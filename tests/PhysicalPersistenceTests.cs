@@ -18,7 +18,6 @@ public sealed class PhysicalPersistenceTests
         var person = city.Citizens[0];
         person.Preferences.OwnsCar = true;
         person.Car = new CarState { Id = person.Identity.Id + ":car", ModelId = "sedan-stable-model", PaintSeed = int.MinValue, ParkedPosition = new Position(5, 0, 0) };
-        person.NextJobChangeMinute = 1000;
         person.Phase = CitizenPhase.Travelling; person.DestinationId = "work"; person.DestinationActivity = Activity.Work;
         person.DepartureMinute = 50; person.NextEventMinute = 70; person.ActivityUntilMinute = 480;
         person.Journey = new Route { Legs = new List<RouteLeg> {
@@ -108,25 +107,13 @@ public sealed class PhysicalPersistenceTests
     }
 
     [Fact]
-    public void SchemaFourMigrationPreservesAllOldFieldsAndAwaitsRuntimeTimingAndCarAssignment()
+    public void SchemaFourIsRefusedWithoutReplacingThePhysicalPayload()
     {
-        var original = Journey(); var old = SchemaFour(original); string payload = old.ToString();
+        var city = Journey(); string payload = SchemaFour(city).ToString();
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload };
-        var read = SaveStore.ReadFrom(data, original.PopulationKey);
-        Assert.Equal(SaveReadStatus.Loaded, read.Status); Assert.True(read.Migrated);
-        Assert.Equal(4, read.SourceSchema);
-        Assert.Same(payload, data[SaveStore.StateKey]);
-        var migrated = read.State!;
-        Assert.Equal(CityState.CurrentSchema, migrated.Schema);
-        Assert.Equal(0, migrated.TravelTimingVersion); Assert.Equal(1, migrated.TravelClockRate);
-        Assert.Equal("", migrated.Citizens[0].Car!.ModelId); Assert.Equal(0, migrated.Citizens[0].Car!.PaintSeed);
-        Assert.Equal(original.Citizens[0].NextJobChangeMinute, migrated.Citizens[0].NextJobChangeMinute);
-        Assert.Equal(original.Citizens[0].Journey!.PositionAt(10).X, migrated.Citizens[0].Journey!.PositionAt(10).X);
-        Assert.True(JToken.DeepEquals(old, SchemaFour(migrated)));
-        var roundTrip = SaveCodec.Read(SaveCodec.Write(migrated));
-        Assert.Equal(SaveReadStatus.Loaded, roundTrip.Status); Assert.False(roundTrip.Migrated);
-        Assert.Equal(CityState.CurrentSchema, roundTrip.SourceSchema);
-        Assert.Equal(0, roundTrip.State!.TravelTimingVersion);
+        var read = SaveStore.ReadFrom(data, city.PopulationKey);
+        Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
+        Assert.False(SaveStore.WriteTo(data, city).Success); Assert.Equal(payload, data[SaveStore.StateKey]);
     }
 
     [Fact]
@@ -137,10 +124,10 @@ public sealed class PhysicalPersistenceTests
         int futureSchema = CityState.CurrentSchema + 1;
         var future = SaveCodec.Read("{\"Schema\":" + futureSchema + "}");
         Assert.Equal(SaveReadStatus.Future, future.Status); Assert.Equal(futureSchema, future.SourceSchema);
-        Assert.Null(future.State); Assert.False(future.Migrated);
+        Assert.Null(future.State);
         var loaded = SaveCodec.Read(SaveCodec.Write(Journey()));
         Assert.Equal(CityState.CurrentSchema, loaded.SourceSchema);
-        Assert.False(loaded.Migrated);
+
     }
 
     [Theory]

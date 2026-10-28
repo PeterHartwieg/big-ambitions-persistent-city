@@ -8,16 +8,31 @@ internal static class Program
 {
     static int checks;
     static void Check(bool condition,string reason){checks++;if(!condition)throw new Exception(reason);}
-    static void Step(RouteObjectDiscovery source)
+    static void Step(RouteObjectDiscovery source,bool preparingPausedCity=false)
     {
-        int before=GameObject.ComponentReads;source.Step();
+        int before=GameObject.ComponentReads;source.Step(preparingPausedCity);
         Check(GameObject.ComponentReads-before<=4096,"unbounded branch queries in one slice");Time.unscaledTime+=.04f;
     }
     static void Sweep(RouteObjectDiscovery source)
     {
-        int before=source.Sweeps;Time.unscaledTime+=31;
-        for(int i=0;i<10000&&source.Sweeps==before;i++)Step(source);
-        Check(source.Sweeps==before+1,"sweep did not finish");
+        // Finish a pending load/invalidation, including one detected on the next Step.
+        // This helper never requests a scan merely because time has passed.
+        Step(source);
+        for(int i=0;i<10000&&!source.Ready;i++)Step(source);
+        Check(source.Ready,"discovery did not finish");
+    }
+    static void VerifyIdle(RouteObjectDiscovery source)
+    {
+        var doors=source.Doors;var stations=source.Stations;
+        int sweeps=source.Sweeps,revision=source.Revision,reads=GameObject.ComponentReads,roots=SceneManager.RootReadCount;
+        long visited=source.Visited;
+        foreach(float elapsed in new[]{0f,29f,31f,300f,3600f,86400f})
+        {
+            Time.unscaledTime+=elapsed;Step(source);Step(source,true);
+            Check(source.Ready&&source.Sweeps==sweeps&&source.Visited==visited,"elapsed time restarted discovery");
+            Check(GameObject.ComponentReads==reads&&SceneManager.RootReadCount==roots,"idle discovery searched the scene hierarchy");
+            Check(source.Revision==revision&&ReferenceEquals(doors,source.Doors)&&ReferenceEquals(stations,source.Stations),"idle discovery replaced the retained inventory");
+        }
     }
     static void Main()
     {
@@ -35,17 +50,18 @@ internal static class Program
             Check(source.Ready,"initial inventory never became ready");
             Check(source.Doors.Length==5&&source.Doors.Contains(gate)&&source.Doors.Contains(duplicate)&&source.Doors.Contains(privateGate)&&source.Doors.Contains(persistentGate)&&source.Doors.Contains(hierarchyHidden),"inactive, multiple, private, persistent or hidden-in-hierarchy doors lost");
             Check(source.Stations.SequenceEqual(new[]{station}),"inactive station lost");
-            var original=source.Doors;int revision=source.Revision;Sweep(source);
-            Check(ReferenceEquals(original,source.Doors)&&source.Revision==revision,"unchanged inventory republished/allocated");
-            var late=new GameObject();late.activeSelf=false;var added=late.Add<FenceDoor>();Sweep(source);
-            Check(source.Doors.Contains(added),"new inactive root not discovered");
-            var lateStation=child.Add<SubwayStation>();Sweep(source);Check(source.Stations.Contains(lateStation),"new component on known object missed");
+            Check(source.Sweeps==1,"initial load scanned more than once");VerifyIdle(source);
+            var late=new GameObject();late.activeSelf=false;var added=late.Add<FenceDoor>();
+            var lateStation=child.Add<SubwayStation>();VerifyIdle(source);
+            Check(!source.Doors.Contains(added)&&!source.Stations.Contains(lateStation),"unannounced additions triggered discovery");
+            source.RequestSweep();Sweep(source);
+            Check(source.Doors.Contains(added)&&source.Stations.Contains(lateStation),"explicit invalidation missed added components");
             Object.Destroy(added);Step(source);Check(!source.Ready||!source.Doors.Contains(added),"destroyed component published as ready");Sweep(source);Check(!source.Doors.Contains(added),"destroyed component retained after reconciliation");
-            hidden.hideFlags=HideFlags.None;Sweep(source);Check(source.Doors.Contains(hidden),"newly eligible component missed");
+            hidden.hideFlags=HideFlags.None;source.RequestSweep();Sweep(source);Check(source.Doors.Contains(hidden),"newly eligible component missed on explicit discovery");
             hidden.hideFlags=HideFlags.DontSave;Step(source);Check(!source.Ready||!source.Doors.Contains(hidden),"ineligible component published ready");Sweep(source);
             var scene=SceneManager.New();var extra=new GameObject();extra.Move(scene);var extraGate=extra.Add<FenceDoor>();Sweep(source);Check(source.Doors.Contains(extraGate),"new additive scene missed");
             SceneManager.Unload(scene);Check(!source.Ready,"scene unload did not fence readiness");Sweep(source);Check(!source.Doors.Contains(extraGate),"unloaded scene retained");
-            scene.Data!.Loaded=true;Sweep(source);Check(source.Doors.Contains(extraGate),"reloaded scene missed");
+            SceneManager.Reload(scene);Check(!source.Ready,"scene reload did not fence readiness");Sweep(source);Check(source.Doors.Contains(extraGate),"reloaded scene missed");
             child.transform.SetParent(null);Sweep(source);Check(source.Doors.Contains(privateGate),"reparented live gate removed");
             Object.Destroy(gate);var replacement=root.Add<FenceDoor>();replacement.Id=gate.Id;Sweep(source);
             Check(source.Doors.Contains(replacement)&&!source.Doors.Any(x=>ReferenceEquals(x,gate)),"instance ID reuse kept dead wrapper");
@@ -124,26 +140,24 @@ internal static class Program
         {
             Sweep(source);Check(source.SplitBranches==256,"adaptive hint cache did not remain capped");
             Check(source.Doors.Length==280,"capping hints lost discovered doors");
-            Transform.Slow.Clear();Transform.RecursiveQueries.Clear();Sweep(source);
+            Transform.Slow.Clear();Transform.RecursiveQueries.Clear();source.RequestSweep();Sweep(source);
             Check(!Transform.RecursiveQueries.Contains(branches[0]),"slow branch was queried recursively again");
             Check(Transform.RecursiveQueries.Contains(branches.Last()),"uncached branch skipped instead of safely searched");
             Check(source.Doors.Length==280&&source.LastSweepBranchCaptures>0&&source.LastSweepMilliseconds>=0,"split traversal lost objects or diagnostics");
             Object.Destroy(branches[0].gameObject);Sweep(source);Check(source.SplitBranches<=255,"destroyed split hint retained");
         }
-        // Even a sweep lasting longer than the polling interval gets a full idle gap;
-        // explicit topology invalidation must still bypass that deadline.
+        // Even a long initial load stays idle indefinitely afterwards. Explicit lifecycle
+        // invalidation still restarts discovery immediately and fences partial inventory.
         SceneManager.Reset();root=new GameObject();
         for(int i=0;i<10000;i++){var go=new GameObject();go.transform.SetParent(root.transform);}
         using(var source=new RouteObjectDiscovery())
         {
             for(int i=0;i<10000&&source.Sweeps==0;i++){Time.unscaledTime+=20;Step(source);}
             Check(source.Ready&&source.LastSweepSeconds>30,"fixture did not exceed polling interval");
-            int sweeps=source.Sweeps,reads=GameObject.ComponentReads;float completed=Time.unscaledTime;
-            Step(source);Time.unscaledTime=completed+29;Step(source);
-            Check(source.Sweeps==sweeps&&GameObject.ComponentReads==reads,"long sweep ran again without idle interval");
-            Time.unscaledTime=completed+31;Step(source);Check(GameObject.ComponentReads>reads,"periodic sweep did not resume after idle interval");
-            Sweep(source);reads=GameObject.ComponentReads;source.RequestSweep();Step(source);
-            Check(GameObject.ComponentReads>reads&&!source.Ready,"explicit invalidation did not bypass idle interval");
+            VerifyIdle(source);
+            int reads=GameObject.ComponentReads;source.RequestSweep();Step(source);
+            Check(GameObject.ComponentReads>reads&&!source.Ready,"explicit invalidation did not restart discovery");
+            Sweep(source);VerifyIdle(source);
         }
         // Defensive reentrant-callback fixture. A finite burst of invalidations during
         // the last scene read must not publish a stale generation; recover after it stops.
@@ -164,6 +178,28 @@ internal static class Program
             SceneManager.RootsRead=null;Sweep(source);
             Check(source.Ready&&source.Revision==1&&additions.All(source.Doors.Contains),"finite invalidation burst did not recover atomically");
         }
-        Console.WriteLine("PASS "+checks+" discovery assertions, including bounded branch scheduling through wide/deep hierarchies, inactive additions, mutation, persistent/additive scenes and disposal.");
+        // The larger first-pass budget during a paused load cannot change the published
+        // inventory, bypass atomic readiness, or remove the hard branch-query bound.
+        SceneManager.Reset();root=new GameObject();
+        for(int i=0;i<15000;i++)
+        {
+            var go=new GameObject();go.transform.SetParent(root.transform);
+            if(i%1000==0)go.Add<FenceDoor>();
+            if(i%2300==0)go.Add<SubwayStation>();
+        }
+        using(var ordinary=new RouteObjectDiscovery())using(var paused=new RouteObjectDiscovery())
+        {
+            Sweep(ordinary);
+            for(int i=0;i<10000&&!paused.Ready;i++)
+            {
+                Check(paused.Doors.Length==0&&paused.Stations.Length==0,"partial paused inventory published");
+                Step(paused,true);
+            }
+            Check(paused.Ready&&paused.Sweeps==1,"paused preparation failed to finish");
+            Check(ordinary.Doors.OrderBy(d=>d.Id).SequenceEqual(paused.Doors.OrderBy(d=>d.Id)),"paused budget changed doors");
+            Check(ordinary.Stations.OrderBy(s=>s.Id).SequenceEqual(paused.Stations.OrderBy(s=>s.Id)),"paused budget changed stations");
+            VerifyIdle(paused);
+        }
+        Console.WriteLine("PASS "+checks+" discovery assertions, including zero steady-state hierarchy queries, load/reset discovery, explicit invalidation, mutation, persistent/additive scenes, bounded initialization and disposal.");
     }
 }

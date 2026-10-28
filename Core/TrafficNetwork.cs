@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -195,16 +194,46 @@ namespace PersistentCity.Core
         public bool TryMapRemaining(Route route, double progress, out List<TrafficRouteLeg> mapped) =>
             TryMapCore(route, progress, true, out mapped);
 
+        /// <summary>One mapped traffic span, as TryMapRemaining would return it, without allocating a leg object.</summary>
+        internal struct MappedSpan
+        {
+            public int LinkId;
+            public double StartNominalMinutes, EndNominalMinutes, FreeFlowMinutes, StartLinkFraction, EndLinkFraction;
+        }
+
+        [ThreadStatic] private static List<MappedSpan>? mappingScratch;
+
+        /// <summary>TryMapRemaining into a caller-owned buffer, cleared first and left empty on failure.</summary>
+        internal bool TryMapRemainingSpans(Route route, double progress, List<MappedSpan> spans) =>
+            TryMapSpans(route, progress, true, spans);
+
         private bool TryMapCore(Route route, double progress, bool remaining, out List<TrafficRouteLeg> mapped)
         {
-            mapped = new List<TrafficRouteLeg>();
+            var spans = mappingScratch ??= new List<MappedSpan>();
+            if (!TryMapSpans(route, progress, remaining, spans)) { mapped = new List<TrafficRouteLeg>(); return false; }
+            mapped = new List<TrafficRouteLeg>(spans.Count);
+            foreach (var span in spans)
+                mapped.Add(new TrafficRouteLeg
+                {
+                    LinkId = span.LinkId, StartNominalMinutes = span.StartNominalMinutes, EndNominalMinutes = span.EndNominalMinutes,
+                    FreeFlowMinutes = span.FreeFlowMinutes, StartLinkFraction = span.StartLinkFraction, EndLinkFraction = span.EndLinkFraction
+                });
+            spans.Clear();
+            return true;
+        }
+
+        private bool TryMapSpans(Route route, double progress, bool remaining, List<MappedSpan> mapped)
+        {
+            mapped.Clear();
             if (route == null || route.Legs == null || !Position.Finite(progress) || progress < 0) return false;
             double nominal = 0, previousEndFraction = 0;
             int previousNativeTo = -1, previousLink = -1;
             Position previousPoint = default;
             bool previousWasRoad = false;
-            foreach (RouteLeg leg in route.Legs)
+            var legs = route.Legs;
+            for (int index = 0; index < legs.Count; index++)
             {
+                RouteLeg leg = legs[index];
                 if (leg == null || !Position.Finite(leg.Minutes) || leg.Minutes <= 0 || leg.ServiceId == null)
                 { mapped.Clear(); return false; }
                 double end = nominal + leg.Minutes;
@@ -228,12 +257,13 @@ namespace PersistentCity.Core
                     { mapped.Clear(); return false; }
                     if (sameSection)
                     {
-                        TrafficRouteLeg existing = mapped[mapped.Count - 1];
+                        MappedSpan existing = mapped[mapped.Count - 1];
                         existing.EndNominalMinutes = end;
                         existing.FreeFlowMinutes += end - start;
                         existing.EndLinkFraction = legEnd;
+                        mapped[mapped.Count - 1] = existing;
                     }
-                    else mapped.Add(new TrafficRouteLeg
+                    else mapped.Add(new MappedSpan
                     {
                         LinkId = edge.LinkId, StartNominalMinutes = start, EndNominalMinutes = end,
                         FreeFlowMinutes = end - start, StartLinkFraction = startFraction, EndLinkFraction = legEnd
@@ -256,7 +286,7 @@ namespace PersistentCity.Core
             edge = default;
             startFraction = endFraction = 0;
             if (leg.Mode != TravelMode.Car || !leg.From.IsFinite || !leg.To.IsFinite ||
-                !TryTag(leg.ServiceId, out int from, out int to, out bool fragment) || !edges.TryGetValue((from, to), out edge)) return false;
+                !TryTag(leg, out int from, out int to, out bool fragment) || !edges.TryGetValue((from, to), out edge)) return false;
             double localStart = 0, localEnd = 1;
             if (fragment)
             {
@@ -503,17 +533,16 @@ namespace PersistentCity.Core
             return Position.Finite(projected) && Near(point, Position.Lerp(from, to, fraction));
         }
 
-        private bool TryTag(string service, out int from, out int to, out bool fragment)
+        // The leg decoded its tag when ServiceId was set; only the topology is compared here, in place,
+        // so a tag from another network still fails and the caller falls back as before.
+        private bool TryTag(RouteLeg leg, out int from, out int to, out bool fragment)
         {
             from = to = -1;
             fragment = false;
-            if (service == null) return false;
-            string[] parts = service.Split(':');
-            if (parts.Length != 6 || parts[0] != "native" || parts[1] != "road" ||
-                (parts[2] != "v1" && parts[2] != "fragment1") || !string.Equals(parts[3], NativeTopologyId, StringComparison.Ordinal) ||
-                !int.TryParse(parts[4], NumberStyles.None, CultureInfo.InvariantCulture, out from) ||
-                !int.TryParse(parts[5], NumberStyles.None, CultureInfo.InvariantCulture, out to)) return false;
-            fragment = parts[2] == "fragment1";
+            var tag = leg.RoadTag;
+            if (leg.ServiceId == null || !tag.IsTopology(leg.ServiceId, NativeTopologyId)) return false;
+            from = tag.From; to = tag.To;
+            fragment = tag.Kind == RoadTagKind.Fragment1;
             return true;
         }
         private static bool Usable(TrafficNetworkNode node) => node.AllowsCar && node.Position.IsFinite

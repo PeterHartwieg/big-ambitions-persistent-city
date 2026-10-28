@@ -80,10 +80,30 @@ namespace PersistentCity.Runtime
                 if (!ReferenceEquals(Vehicle.rb, NativeRigidbody)) return "native-rigidbody-changed";
                 if (FrontMarker == null || !FrontMarker.IsChildOf(Vehicle.transform) || !ReferenceEquals(Vehicle.GetFrontAxle(), FrontMarker)) return "native-front-marker-changed";
                 if (!PhysicalVehicles.Point(FrontMarker.position).IsFinite) return "native-front-marker-invalid";
-                if (!PhysicalVehicles.RandomAmbient(Vehicle)) return "native-service-or-foreign-component";
+                if (!NativeComponentsOwned()) return "native-service-or-foreign-component";
                 if (!ReferenceEquals(Vehicle.presetPath, Path)) return "native-path-replaced";
                 return "";
             }
+        }
+        // The ownership epoch advances at the start of every adapter Update, at every native fixed
+        // step, before every Release and after every native mutation this adapter performs. Only the
+        // component search below is memoized, for one epoch within one frame. Every reference, state
+        // and geometry check above runs live on every call. A foreign component added to an owned body
+        // mid-epoch is therefore seen at the next epoch boundary, at most one frame or physics step later.
+        private static long ownershipEpoch;
+        internal static long OwnershipEpoch => ownershipEpoch;
+        internal static void AdvanceOwnershipEpoch() => ownershipEpoch++;
+        private long componentEpoch = -1;
+        private int componentFrame = -1;
+        private bool componentsOwned;
+        private bool NativeComponentsOwned()
+        {
+            // Stamp before searching. A search that advances the epoch leaves a stale stamp, so the next call searches again.
+            long epoch = ownershipEpoch; int frame = Time.frameCount;
+            if (componentEpoch == epoch && componentFrame == frame) return componentsOwned;
+            bool owned = PhysicalVehicles.RandomAmbient(Vehicle);
+            componentsOwned = owned; componentEpoch = epoch; componentFrame = frame;
+            return owned;
         }
         public bool Valid => OwnershipLossReason.Length == 0;
         public Position Position => Valid ? PhysicalVehicles.Point(FrontMarker.position) : LastTargetOrigin;
@@ -117,6 +137,9 @@ namespace PersistentCity.Runtime
         { resolve = resolveNode; maximum = Math.Max(1, Math.Min(64, max)); intersections = new PhysicalIntersections(); hooks = new PhysicalTrafficHooks(this); }
         public bool Ready => hooks.Ready && intersections.Ready;
         public bool Active => active && !disposed;
+        public string LastAdmissionStage { get; private set; } = "";
+        public string LastAdmissionResident { get; private set; } = "";
+        public string LastAdmissionError { get; private set; } = "";
         public string LastError => recoveryError.Length != 0 ? recoveryError : hooks.LastError.Length != 0 ? hooks.LastError : intersections.LastError;
         public bool Activate()
         {
@@ -129,8 +152,39 @@ namespace PersistentCity.Runtime
         }
         internal static bool IsTaxi(VehicleComponent vehicle) => vehicle != null
             && vehicle.GetComponentInChildren<TaxiController>(true) != null;
-        internal bool TaxiNeedsReplenishment => Active && TrafficManager.IsInitialized
-            && Manager.GetVehicleList().Count(v => IsTaxi(v) && v.gameObject.activeInHierarchy) < taxiTarget;
+        // Native AddVehicle draws classify taxis once per vehicle per frame and count active taxis
+        // once per frame. A taxi that native spawns earlier in a frame is counted from the next
+        // frame's first draw, so several draws in one frame can each see the same shortfall.
+        private readonly Dictionary<VehicleComponent, bool> taxiClasses = new Dictionary<VehicleComponent, bool>();
+        private int taxiFrame = -1, activeTaxis = -1;
+        private void StampTaxis()
+        {
+            if (taxiFrame == Time.frameCount) return;
+            taxiFrame = Time.frameCount; taxiClasses.Clear(); activeTaxis = -1;
+        }
+        internal bool IsTaxiThisFrame(VehicleComponent vehicle)
+        {
+            if (vehicle == null) return false;
+            StampTaxis();
+            if (!taxiClasses.TryGetValue(vehicle, out bool taxi)) taxiClasses.Add(vehicle, taxi = IsTaxi(vehicle));
+            return taxi;
+        }
+        internal bool TaxiNeedsReplenishment
+        {
+            get
+            {
+                if (!Active || !TrafficManager.IsInitialized) return false;
+                StampTaxis();
+                if (activeTaxis < 0)
+                {
+                    int count = 0;
+                    foreach (var vehicle in Manager.GetVehicleList())
+                        if (IsTaxiThisFrame(vehicle) && vehicle.gameObject.activeInHierarchy) count++;
+                    activeTaxis = count;
+                }
+                return activeTaxis < taxiTarget;
+            }
+        }
         public void Disable()
         {
             active = false;
@@ -179,9 +233,12 @@ namespace PersistentCity.Runtime
         public bool TryAcquire(CitizenState citizen, PhysicalRoadSample sample, out PhysicalVehicleBody body)
         {
             body = null!;
+            LastAdmissionResident = citizen.Identity.Id; LastAdmissionError = "";
+            LastAdmissionStage = "native availability";
             if (!Active || !NativeReady || citizen.Car == null || bodies.Count >= maximum || !sample.Position.IsFinite
                 || !sample.DirectionTarget.IsFinite || sample.RemainingRoadNodes == null || sample.RemainingRoadNodes.Count == 0 || sample.RemainingRoadNodes.Count > 512) return false;
             if (bodies.Values.Any(b => b.Id == citizen.Car.Id)) return false;
+            LastAdmissionStage = "committed road validation";
             var path = new List<int>(sample.RemainingRoadNodes);
             Waypoint? first = null;
             for (int i = 0; i < path.Count; i++)
@@ -198,18 +255,34 @@ namespace PersistentCity.Runtime
             if (segment.sqrMagnitude < 0.001f) return false;
             float fraction = Vector3.Dot(offset, segment) / segment.sqrMagnitude;
             if (fraction < -0.001f || fraction > 1.001f || (offset - segment * fraction).sqrMagnitude > 0.25f) return false;
+            LastAdmissionStage = "model catalogue";
             var all = Manager.GetVehicleList();
-            var models = all.Where(Ordinary).Select(v => v.prefab.name).Distinct().OrderBy(n => n, StringComparer.Ordinal).ToArray();
-            if (models.Length == 0) return false;
-            if (string.IsNullOrEmpty(citizen.Car.ModelId)) citizen.Car.ModelId = models[Hash(citizen.Car.Id) % (uint)models.Length];
-            if (citizen.Car.PaintSeed == 0) citizen.Car.PaintSeed = 1 + (int)(Hash(citizen.Car.Id + ":paint") % 2147483646u);
-            var slot = all.FirstOrDefault(v => Ordinary(v) && !v.gameObject.activeInHierarchy && v.prefab.name == citizen.Car.ModelId);
+            bool hasOrdinaryModel = false;
+            if (string.IsNullOrEmpty(citizen.Car.ModelId))
+            {
+                var models = all.Where(Ordinary).Select(v => v.prefab.name).Distinct().OrderBy(n => n, StringComparer.Ordinal).ToArray();
+                if (models.Length == 0) return false;
+                citizen.Car.ModelId = models[Hash(citizen.Car.Id) % (uint)models.Length];
+                hasOrdinaryModel = true;
+            }
+            if (citizen.Car.PaintSeed == 0)
+            {
+                // Preserve initialization even on a later failed admission, but not when the
+                // ordinary catalogue is empty. Warm saved cars need no catalogue traversal.
+                if (!hasOrdinaryModel && !all.Any(Ordinary)) return false;
+                citizen.Car.PaintSeed = 1 + (int)(Hash(citizen.Car.Id + ":paint") % 2147483646u);
+            }
+            LastAdmissionStage = "inactive model slot";
+            var slot = all.FirstOrDefault(v => v != null && v.vehicleType == VehicleTypes.Car && v.prefab != null
+                && v.prefab.name == citizen.Car.ModelId && !v.gameObject.activeInHierarchy && Ordinary(v));
             if (slot == null || bodies.ContainsKey(slot.GetIndex())) return false; // Never invoke LoadVehicle's active-name fallback.
             // LoadVehicle chooses the first inactive exact-prefab slot, including protected slots.
             // Reject that ordering conflict rather than activate a service body and roll it back later.
             var nativeChoice = all.FirstOrDefault(v => v != null && ReferenceEquals(v.prefab, slot.prefab) && !v.gameObject.activeInHierarchy);
             if (!ReferenceEquals(nativeChoice, slot)) return false;
+            LastAdmissionStage = "junction rear clearance";
             if (!PhysicalRoadAdmission.Allows(sample.AdmissionBoundaries, sample.RouteProgress, slot.length)) return false;
+            LastAdmissionStage = "native body geometry";
             var direction = Vector(sample.DirectionTarget) - Vector(sample.Position); direction.y = 0;
             if (direction.sqrMagnitude < 0.001f) return false;
             var rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
@@ -227,8 +300,10 @@ namespace PersistentCity.Runtime
             var clearance = new Vector3(Math.Max(0.5f, slot.colliderWidth + Math.Abs(markerOffset.x)),
                 Math.Max(0.3f, slot.coliderHeight / 2f - 0.15f), Math.Max(1f, slot.length + Math.Abs(markerOffset.z)));
             int mask = LayerMask.GetMask("Vehicles", "AiVehicles", "PlayerVehicles", "Obstacles", "Default");
+            LastAdmissionStage = "spawn obstruction";
             if (mask == 0 || Physics.CheckBox(rootPosition + Vector3.up * (slot.coliderHeight / 2f + 0.2f),
                 clearance, rotation, mask, QueryTriggerInteraction.Ignore)) return false;
+            LastAdmissionStage = "intersection ownership";
             var pinnedRoute = new List<Waypoint> { spawn };
             foreach (int index in path)
             {
@@ -241,7 +316,8 @@ namespace PersistentCity.Runtime
             bool transferredPin = false, rollbackRemovalFailed = false;
             try
             {
-                loaded = TrafficManager.Instance.LoadVehicle(slot.prefab, spawn, true);
+                LastAdmissionStage = "native activation";
+                loaded = LoadNative(slot.prefab, spawn);
                 if (loaded == null) return false;
                 pin.NativeIndex = loaded.GetIndex();
                 if (!ReferenceEquals(slot, loaded)) { unexpectedPoolReturns++; throw new InvalidOperationException("Native traffic pool returned an unexpected slot."); }
@@ -267,20 +343,22 @@ namespace PersistentCity.Runtime
                 var palette = colors.Where(c => c != null).OrderBy(c => c.name, StringComparer.Ordinal).ToArray();
                 if (palette.Length > 0)
                     foreach (var features in loaded.GetComponentsInChildren<CarFeatures>(true)) features.SetColor(palette[(uint)citizen.Car.PaintSeed % (uint)palette.Length]);
-                TrafficManager.Instance.SetVehicleTargetWaypoint(loaded, first!);
+                TargetNative(loaded, first!);
                 // VehicleActivated already defaults to Forward; resetting it here clears native stop/give-way actions.
                 if (!body.Valid) throw new InvalidOperationException("Native vehicle ownership changed during activation.");
+                LastAdmissionStage = "admitted";
                 return true;
             }
-            catch
+            catch (Exception error)
             {
+                LastAdmissionError = error.GetType().Name + ": " + error.Message;
                 // LoadVehicle can activate a slot and then throw from a synchronous native/mod callback.
                 if (loaded == null && slot.gameObject.activeInHierarchy) { loaded = slot; pin.NativeIndex = slot.GetIndex(); }
                 if (body != null) Release(body);
                 else if (loaded != null && ReferenceEquals(slot, loaded) && loaded.gameObject.activeInHierarchy
                     && RandomAmbient(loaded) && loaded.presetPath == null)
                 {
-                    try { Manager.RemoveVehicle(loaded.GetIndex()); }
+                    try { RemoveNative(loaded.GetIndex()); }
                     catch { rollbackRemovalFailed = true; intersections.ReportRemovalFailure(); throw; }
                 }
                 body = null!; return false;
@@ -294,6 +372,8 @@ namespace PersistentCity.Runtime
         public void Release(PhysicalVehicleBody body)
         {
             if (body == null || body.Released) return;
+            // Decide ownership from a fresh component search: never despawn a body claimed this epoch.
+            PhysicalVehicleBody.AdvanceOwnershipEpoch();
             string loss = body.OwnershipLossReason;
             if (loss == "native-service-or-foreign-component" || loss == "native-slot-or-prefab-changed" || loss == "native-path-replaced") foreignRelinquishments++;
             bool owned = body.Valid && bodies.TryGetValue(body.NativeIndex, out var found) && ReferenceEquals(body, found);
@@ -306,7 +386,7 @@ namespace PersistentCity.Runtime
             try
             {
                 if (owned && body.Vehicle != null && TrafficManager.IsInitialized)
-                { body.Vehicle.presetPath = null; Manager.RemoveVehicle(body.Vehicle.GetIndex()); removed = true; }
+                { body.Vehicle.presetPath = null; RemoveNative(body.Vehicle.GetIndex()); removed = true; }
             }
             finally
             {
@@ -316,12 +396,40 @@ namespace PersistentCity.Runtime
                 else intersections.ReportRemovalFailure();
             }
         }
+        // Native mutations this adapter performs. Each ends the ownership epoch, also when it throws:
+        // its synchronous native or mod callbacks may have claimed or changed any body.
+        private static VehicleComponent? LoadNative(GameObject prefab, Waypoint spawn)
+        {
+            try { return TrafficManager.Instance.LoadVehicle(prefab, spawn, true); }
+            finally { PhysicalVehicleBody.AdvanceOwnershipEpoch(); }
+        }
+        private static void TargetNative(VehicleComponent vehicle, Waypoint target)
+        {
+            try { TrafficManager.Instance.SetVehicleTargetWaypoint(vehicle, target); }
+            finally { PhysicalVehicleBody.AdvanceOwnershipEpoch(); }
+        }
+        private static void StopNative(VehicleComponent vehicle)
+        {
+            try { TrafficManager.Instance.SetVehicleAction(vehicle, SpecialDriveActionTypes.StopNow, true); }
+            finally { PhysicalVehicleBody.AdvanceOwnershipEpoch(); }
+        }
+        private static void RemoveNative(int index)
+        {
+            try { Manager.RemoveVehicle(index); }
+            finally { PhysicalVehicleBody.AdvanceOwnershipEpoch(); }
+        }
+        private static void ExpireNativeStop(DrivingAI ai, int index)
+        {
+            try { PhysicalTrafficHooks.RemoveAction!.Invoke(ai, new object[] { index, SpecialDriveActionTypes.StopNow, false }); }
+            finally { PhysicalVehicleBody.AdvanceOwnershipEpoch(); }
+        }
         internal void AssertHealthy()
         {
             if (!intersections.Ready || recoveryError.Length != 0) throw new InvalidOperationException("Physical native adapter failed: " + LastError);
         }
         internal void BeginNativeFixedStep()
         {
+            PhysicalVehicleBody.AdvanceOwnershipEpoch();
             if (!Active) return;
             if (nativeStepActive && recoveryError.Length == 0) recoveryError = "Native traffic fixed steps overlapped.";
             nativeStepActive = true; nativeStep++;
@@ -443,13 +551,14 @@ namespace PersistentCity.Runtime
             && Position.Finite(value.z) && Position.Finite(value.w);
         public void Update()
         {
+            PhysicalVehicleBody.AdvanceOwnershipEpoch();
             if (!Active) return;
             AssertHealthy();
             foreach (var body in bodies.Values.ToArray())
             {
                 if (!body.Valid) { Release(body); continue; }
                 if (!NativeReady) continue;
-                if (body.Path.Count == 0) { body.RouteFinished = true; TrafficManager.Instance.SetVehicleAction(body.Vehicle, SpecialDriveActionTypes.StopNow, true); }
+                if (body.Path.Count == 0) { body.RouteFinished = true; StopNative(body.Vehicle); }
             }
             // One classification per frame, offscreen only. Foreign preset paths are never retired.
             if (!NativeReady) return;
@@ -457,7 +566,7 @@ namespace PersistentCity.Runtime
             var vehicle = pool[retireCursor++ % pool.Count];
             if (vehicle != null && vehicle.gameObject.activeInHierarchy && vehicle.presetPath == null && RandomAmbient(vehicle)
                 && Owned(vehicle.GetIndex()) == null && !vehicle.GetComponentsInChildren<Renderer>().Any(r => r.isVisible))
-                Manager.RemoveVehicle(vehicle.GetIndex());
+                RemoveNative(vehicle.GetIndex());
         }
         internal void ObserveCrashExpiry(DrivingAI ai, int index, int otherIndex, bool addAction)
         {
@@ -479,7 +588,7 @@ namespace PersistentCity.Runtime
                 if (!body.Valid || body.RouteFinished || state.Item2 != SpecialDriveActionTypes.StopNow || !(state.Item1 < 0)) return;
                 // Exactly the native ambient-car expiry operation: remove this one timed action.
                 // Keep obstacle, red-light, yield and all other actions; their normal priority wins.
-                PhysicalTrafficHooks.RemoveAction!.Invoke(ai, new object[] { index, SpecialDriveActionTypes.StopNow, false });
+                ExpireNativeStop(ai, index);
                 body.StopRecoveryDeferredReason = ""; expiredStopRecoveries++;
             }
             catch (Exception error)
@@ -525,7 +634,7 @@ namespace PersistentCity.Runtime
         internal bool MayRequest(int index)
         {
             var body = Owned(index); if (body == null) return true;
-            if (body.Path.Count == 0) { body.RouteFinished = true; TrafficManager.Instance.SetVehicleAction(body.Vehicle, SpecialDriveActionTypes.StopNow, true); return false; }
+            if (body.Path.Count == 0) { body.RouteFinished = true; StopNative(body.Vehicle); return false; }
             var target = TrafficManager.Instance.GetTargetWaypoint(index);
             if (target == null || target.stop || body.Path[0] != target.listIndex) return false;
             // Gley's front axle reaches its request threshold before our centre-of-mass proof.
@@ -535,7 +644,7 @@ namespace PersistentCity.Runtime
             if (body.Path.Count == 1)
             {
                 body.RouteFinished = true;
-                TrafficManager.Instance.SetVehicleAction(body.Vehicle, SpecialDriveActionTypes.StopNow, true);
+                StopNative(body.Vehicle);
                 // Release uses native RemoveVehicle, which performs final intersection cleanup.
                 return false;
             }

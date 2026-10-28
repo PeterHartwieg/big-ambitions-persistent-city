@@ -219,6 +219,10 @@ namespace PersistentCity.Core
                         arrivals.Add(change.Citizen.Identity.Id, change.EventMinute);
                 foreach (var meal in state.Food.Residents)
                 {
+                    // Represented excursions retain their committed abstract game-minute quotes.
+                    // They validate the same return geometry/access before completing; only the
+                    // physical anchor follows native walking pace retiming.
+                    if (meal.Slot > 0) continue;
                     if (meal.Status != MealStatus.Travelling && meal.Status != MealStatus.Serving) continue;
                     double back = meal.ReturnMinutes * ratio;
                     double due = meal.Status == MealStatus.Travelling && arrivals.TryGetValue(meal.ResidentId, out var arrival)

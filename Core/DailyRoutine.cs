@@ -28,6 +28,14 @@ namespace PersistentCity.Core
     public static class DailyRoutine
     {
         public static RoutineSlot At(CitizenState person, int citySeed, double minute, IReadOnlyList<Place> places)
+            => At(person, citySeed, minute, places, null, true);
+
+        /// <summary>As At with the place list, with the resident's home already resolved by the caller
+        /// (null when HomeId names no place), so no catalogue scan is needed.</summary>
+        public static RoutineSlot At(CitizenState person, int citySeed, double minute, IReadOnlyList<Place> places, Place? home)
+            => At(person, citySeed, minute, places, home, false);
+
+        private static RoutineSlot At(CitizenState person, int citySeed, double minute, IReadOnlyList<Place> places, Place? home, bool findHome)
         {
             var slot = SelectRoutine(person, citySeed, minute, out int anchorDay);
             if (slot.Activity != Activity.Leisure) return slot;
@@ -47,11 +55,15 @@ namespace PersistentCity.Core
                 if (committed.Activity == Activity.Leisure && committed.EndsAt == slot.EndsAt)
                     return new RoutineSlot(person.PlaceId, slot.Activity, slot.EndsAt);
             }
-            Place? home = null;
-            foreach (var place in places) if (place.Id == person.HomeId) { home = place; break; }
+            if (findHome)
+            {
+                home = null;
+                foreach (var place in places) if (place.Id == person.HomeId) { home = place; break; }
+            }
             if (home == null) return slot;
-            string selected = DestinationChoice.Choose(places, home, PlaceKind.Leisure,
-                person.Identity.Id + ":leisure-day:" + anchorDay.ToString(System.Globalization.CultureInfo.InvariantCulture), citySeed);
+            // The choice key is Identity.Id + ":leisure-day:" + anchorDay, hashed per venue as key + ":" + venue ID.
+            uint key = StableRandom.Append(StableRandom.AppendDecimal(RoutineKeys.For(person, citySeed).LeisureChoiceDay, anchorDay), ':');
+            string selected = DestinationChoice.Choose(places, home, PlaceKind.Leisure, key);
             return selected == "" ? slot : new RoutineSlot(selected, slot.Activity, slot.EndsAt);
         }
 
@@ -68,11 +80,12 @@ namespace PersistentCity.Core
             if (minute == MaxMinute) throw new ArgumentOutOfRangeException(nameof(minute), "The supported simulation clock is exhausted.");
             int day = (int)Math.Floor(minute / 1440);
             anchorDay = day;
-            int shift = HourShift(person, citySeed);
+            var keys = RoutineKeys.For(person, citySeed);
+            int shift = keys.HourShift;
             var work = WorkOnDay(person, day, shift);
             if (work.HasValue && minute >= work.Value.StartsAt && minute < work.Value.EndsAt)
                 return new RoutineSlot(work.Value.PlaceId, work.Value.Activity, Math.Min(MaxMinute, work.Value.EndsAt));
-            var quiet = new DailyRhythm.Lookup(person, citySeed);
+            var quiet = new DailyRhythm.Lookup(person, keys);
             bool late = person.Identity.Persona == Persona.NightOwl;
             double next = MaxMinute;
             // Yesterday supplies overnight leisure; a week ahead finds the next real activity
@@ -91,7 +104,7 @@ namespace PersistentCity.Core
                 double shopUntil = Math.Min(MaxMinute, shopFrom + 45);
                 if (person.ShopId.Length > 0 && shopUntil > minute && shopUntil > shopFrom && shopFrom < next
                     && (person.Identity.Persona == Persona.Foodie
-                    || StableRandom.Hash(person.Identity.Id + ":shop:" + currentDay.ToString(System.Globalization.CultureInfo.InvariantCulture), citySeed) % 3 != 0))
+                    || RoutineKeys.Draw(keys.ShopDay, currentDay) % 3 != 0))
                 {
                     double until = quiet.OptionalEndsAt(shopFrom, shopUntil);
                     if (until > shopFrom && minute >= shopFrom && minute < until)
@@ -102,7 +115,7 @@ namespace PersistentCity.Core
                 double leisureUntil = Math.Min(MaxMinute, leisureFrom + (weekend ? 120 : 75));
                 if (person.LeisureId.Length > 0 && leisureUntil > minute && leisureUntil > leisureFrom && leisureFrom < next
                     && (weekend || person.Identity.Persona == Persona.Sporty || late
-                    || StableRandom.Hash(person.Identity.Id + ":leisure:" + currentDay.ToString(System.Globalization.CultureInfo.InvariantCulture), citySeed) % 2 == 0))
+                    || RoutineKeys.Draw(keys.LeisureDay, currentDay) % 2 == 0))
                 {
                     double until = quiet.OptionalEndsAt(leisureFrom, leisureUntil);
                     if (until > leisureFrom && minute >= leisureFrom && minute < until)
@@ -130,8 +143,7 @@ namespace PersistentCity.Core
             return WorkOnDay(person, (int)Math.Floor(minute / 1440), HourShift(person, citySeed));
         }
 
-        private static int HourShift(CitizenState person, int citySeed)
-            => (int)(StableRandom.Hash(person.Identity.Id + ":hours", citySeed) % 31) - 15;
+        private static int HourShift(CitizenState person, int citySeed) => RoutineKeys.For(person, citySeed).HourShift;
 
         private static WorkWindow? WorkOnDay(CitizenState person, int day, int shift)
         {
@@ -164,9 +176,10 @@ namespace PersistentCity.Core
             CheckMinute(window.StartsAt);
             if (!Position.Finite(previousMinutes) || previousMinutes < 0)
                 throw new ArgumentOutOfRangeException(nameof(previousMinutes));
-            uint personal = StableRandom.Hash(person.Identity.Id + ":commute-preparation", citySeed);
+            var keys = RoutineKeys.For(person, citySeed);
+            uint personal = keys.CommutePreparation;
             double ordinaryLead = 480 + personal % 361;
-            double margin = 30 + StableRandom.Hash(person.Identity.Id + ":commute-margin", citySeed) % 61;
+            double margin = 30 + keys.CommuteMargin % 61;
             double lead = Math.Max(ordinaryLead, previousMinutes + margin);
             return Math.Max(0, window.StartsAt - lead);
         }
@@ -208,11 +221,25 @@ namespace PersistentCity.Core
             return null;
         }
 
-        private static List<OpeningInterval> OpeningIntervals(Place place, double minute)
+        private static OpeningInterval[] OpeningIntervals(Place place, double minute)
         {
             if (place == null) throw new ArgumentNullException(nameof(place));
             if (!Position.Finite(minute) || minute < 0 || minute > 1e9) throw new ArgumentOutOfRangeException(nameof(minute));
             int day = (int)Math.Floor(minute / 1440);
+            // The windows for a day depend only on the day and the place's hours. The cache keeps an exact
+            // copy of the hours it was built from and is rebuilt whenever any of them differ, so every
+            // writer (a replaced list, an edited window, changed daily hours) is observed without a hook.
+            var cache = place.OpeningCache;
+            if (cache == null || !cache.Matches(place)) cache = null;
+            else if (cache.Day == day) return cache.Intervals;
+            else if (cache.Previous != null && cache.PreviousDay == day) return cache.Previous;
+            var intervals = BuildOpeningIntervals(place, day);
+            place.OpeningCache = cache == null ? new OpeningCache(place, day, intervals) : cache.With(day, intervals);
+            return intervals;
+        }
+
+        private static OpeningInterval[] BuildOpeningIntervals(Place place, int day)
+        {
             bool weekly = place.WeeklyHours.Count != 0;
             var intervals = new List<OpeningInterval>();
             // Yesterday supplies overnight windows; a full future week plus tomorrow allows us
@@ -230,7 +257,7 @@ namespace PersistentCity.Core
                 else AddInterval(intervals, midnight, place.OpenMinute, place.CloseMinute);
             }
             intervals.Sort((a, b) => { int from = a.From.CompareTo(b.From); return from != 0 ? from : a.To.CompareTo(b.To); });
-            return intervals;
+            return intervals.ToArray();
         }
 
         private static void AddInterval(List<OpeningInterval> intervals, double midnight, int from, int to)
@@ -239,11 +266,110 @@ namespace PersistentCity.Core
             intervals.Add(new OpeningInterval(midnight + from, midnight + to + (to < from ? 1440 : 0)));
         }
 
-        private readonly struct OpeningInterval
+        internal readonly struct OpeningInterval
         {
             public OpeningInterval(double from, double to) { From = from; To = to; }
             public double From { get; }
             public double To { get; }
         }
+    }
+
+    /// <summary>Transient opening windows of one place for its two most recently built days, with an
+    /// exact copy of the hours they were built from. Immutable: a change publishes a new instance.</summary>
+    internal sealed class OpeningCache
+    {
+        private readonly int openMinute, closeMinute;
+        private readonly List<OpeningWindow> source;
+        private readonly int[] windows;
+        internal readonly int Day, PreviousDay;
+        internal readonly DailyRoutine.OpeningInterval[] Intervals;
+        internal readonly DailyRoutine.OpeningInterval[]? Previous;
+
+        internal OpeningCache(Place place, int day, DailyRoutine.OpeningInterval[] intervals)
+        {
+            openMinute = place.OpenMinute; closeMinute = place.CloseMinute; source = place.WeeklyHours;
+            windows = new int[source.Count * 3];
+            for (int i = 0; i < source.Count; i++)
+            { var window = source[i]; windows[i * 3] = window.Day; windows[i * 3 + 1] = window.FromMinute; windows[i * 3 + 2] = window.ToMinute; }
+            Day = day; Intervals = intervals; PreviousDay = 0; Previous = null;
+        }
+
+        private OpeningCache(OpeningCache hours, int day, DailyRoutine.OpeningInterval[] intervals, int previousDay, DailyRoutine.OpeningInterval[]? previous)
+        {
+            openMinute = hours.openMinute; closeMinute = hours.closeMinute; source = hours.source; windows = hours.windows;
+            Day = day; Intervals = intervals; PreviousDay = previousDay; Previous = previous;
+        }
+
+        internal OpeningCache With(int day, DailyRoutine.OpeningInterval[] intervals) => new OpeningCache(this, day, intervals, Day, Intervals);
+
+        internal bool Matches(Place place)
+        {
+            var hours = place.WeeklyHours;
+            if (place.OpenMinute != openMinute || place.CloseMinute != closeMinute || !ReferenceEquals(hours, source)
+                || hours.Count * 3 != windows.Length) return false;
+            for (int i = 0; i < hours.Count; i++)
+            {
+                var window = hours[i];
+                if (window.Day != windows[i * 3] || window.FromMinute != windows[i * 3 + 1] || window.ToMinute != windows[i * 3 + 2]) return false;
+            }
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// Per-resident routine hash inputs, each a pure function of Identity.Id and the city seed, computed
+    /// once instead of concatenating and hashing a key string at every routine evaluation. The day-keyed
+    /// draws keep the hash state after the fixed key prefix and continue it over the day's digits, which
+    /// gives exactly StableRandom.Hash(prefix + day, seed).
+    /// </summary>
+    internal sealed class RoutineKeys
+    {
+        internal readonly string Id;
+        internal readonly int Seed;
+        internal readonly int HourShift, QuietPersonal;
+        internal readonly uint CommutePreparation, CommuteMargin, EmploymentTime;
+        // Hash states after Id + ":shop:", ":leisure:", ":quiet-day:" and ":leisure-day:".
+        internal readonly uint ShopDay, LeisureDay, QuietDay, LeisureChoiceDay;
+
+        private RoutineKeys(string id, int seed)
+        {
+            Id = id; Seed = seed;
+            uint person = StableRandom.Append(StableRandom.Begin(seed), id);
+            HourShift = (int)(Final(person, ":hours") % 31) - 15;
+            QuietPersonal = (int)(Final(person, ":quiet-hours") % 91) - 45;
+            CommutePreparation = Final(person, ":commute-preparation");
+            CommuteMargin = Final(person, ":commute-margin");
+            EmploymentTime = EmploymentTimeOf(id);
+            ShopDay = StableRandom.Append(person, ":shop:");
+            LeisureDay = StableRandom.Append(person, ":leisure:");
+            QuietDay = StableRandom.Append(person, ":quiet-day:");
+            LeisureChoiceDay = StableRandom.Append(person, ":leisure-day:");
+        }
+
+        private static uint Final(uint state, string suffix) => StableRandom.Finish(StableRandom.Append(state, suffix));
+        // The employment check time is drawn with seed 0, independent of the city.
+        private static uint EmploymentTimeOf(string id) => Final(StableRandom.Append(StableRandom.Begin(0), id), ":employment-time");
+
+        internal static RoutineKeys For(CitizenState person, int seed)
+        {
+            // A null ID concatenates as empty, as the string keys did.
+            string id = person.Identity.Id ?? "";
+            var keys = person.RoutineKeys;
+            if (keys != null && keys.Seed == seed && string.Equals(keys.Id, id, StringComparison.Ordinal)) return keys;
+            keys = new RoutineKeys(id, seed);
+            person.RoutineKeys = keys;
+            return keys;
+        }
+
+        /// <summary>StableRandom.Hash(Identity.Id + ":employment-time", 0), from the cache when it is current.</summary>
+        internal static uint EmploymentTimeFor(CitizenState person)
+        {
+            string id = person.Identity.Id ?? "";
+            var keys = person.RoutineKeys;
+            return keys != null && string.Equals(keys.Id, id, StringComparison.Ordinal) ? keys.EmploymentTime : EmploymentTimeOf(id);
+        }
+
+        /// <summary>The hash of a day-keyed draw: the prefix state continued over the day's invariant digits.</summary>
+        internal static uint Draw(uint prefix, int day) => StableRandom.Finish(StableRandom.AppendDecimal(prefix, day));
     }
 }

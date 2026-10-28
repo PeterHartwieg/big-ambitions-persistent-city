@@ -32,11 +32,26 @@ namespace FoodDemandAuditProbe
         private static Probe? observing;
         private CitySimulator? auditSimulation;
         private readonly JArray decisions = new JArray();
+        private const int DecisionLimit = 5000, RoutineDiagnosticLimit = 100000;
+        private long droppedDecisions, droppedRoutineDiagnostics;
         private void Decision(FoodDecisionTrace trace)
         {
-            if (decisions.Count >= 5000) throw new InvalidOperationException("Diagnostic decision limit reached.");
+            if (decisions.Count >= DecisionLimit) { if (droppedDecisions < long.MaxValue) droppedDecisions++; return; }
             decisions.Add(JObject.FromObject(trace));
         }
+        private void DetachAuditObservers()
+        {
+            if (auditSimulation == null) return;
+            auditSimulation.FoodDecisionObserved -= Decision;
+            auditSimulation.RoutineObserved -= RoutineDiagnosticObserved;
+            auditSimulation = null;
+        }
+        private object AuditCaptureStatus() => new {
+            recording = auditSimulation != null,
+            decisionsRetained = decisions.Count, decisionLimit = DecisionLimit, droppedDecisions,
+            routineDiagnosticsRetained = routineDiagnostics.Count, routineDiagnosticLimit = RoutineDiagnosticLimit, droppedRoutineDiagnostics,
+            truncated = droppedDecisions != 0 || droppedRoutineDiagnostics != 0,
+            note = "Bounded diagnostic traces only; dropped records do not stop simulation or alter authoritative saved ledgers." };
         private int restockChecks, restocks, stockTasks;
         private const string HousekeepingPatch = "persistentcity.food-routine-test.housekeeping";
         private void ObserveHousekeeping()
@@ -55,23 +70,30 @@ namespace FoodDemandAuditProbe
             else if(__originalMethod.Name=="RestockShelves") observing.restocks++;
             else observing.stockTasks++;
         }
-        private void OnDestroy() { StopClockAudit(); if(auditSimulation!=null) { auditSimulation.FoodDecisionObserved-=Decision; auditSimulation.RoutineObserved-=RoutineDiagnosticObserved; } if(ReferenceEquals(observing,this)) { new Harmony(HousekeepingPatch).UnpatchAll(HousekeepingPatch); observing=null; } }
+        private void OnDestroy() { StopFrames(); StopClockAudit(); DetachAuditObservers(); if(ReferenceEquals(observing,this)) { new Harmony(HousekeepingPatch).UnpatchAll(HousekeepingPatch); observing=null; } }
 
         private readonly System.Collections.Generic.List<RoutineDiagnostic> routineDiagnostics = new System.Collections.Generic.List<RoutineDiagnostic>();
-        private void RoutineDiagnosticObserved(RoutineDiagnostic trace) { if(routineDiagnostics.Count >= 100000) throw new InvalidOperationException("Routine diagnostic bound exceeded."); routineDiagnostics.Add(trace); }
+        private void RoutineDiagnosticObserved(RoutineDiagnostic trace)
+        {
+            if (routineDiagnostics.Count >= RoutineDiagnosticLimit) { if (droppedRoutineDiagnostics < long.MaxValue) droppedRoutineDiagnostics++; return; }
+            routineDiagnostics.Add(trace);
+        }
         private string last = "", pendingId = "", pauseStatus = "";
         private float poll;
         private PopulationRuntime? cached;
         private static readonly BindingFlags Fields = BindingFlags.Instance | BindingFlags.NonPublic;
-        public static bool Allowed() => Environment.GetCommandLineArgs().Contains("-agent-tests")
+        private static readonly Lazy<bool> allowedProcess = new Lazy<bool>(() => Environment.GetCommandLineArgs().Contains("-agent-tests")
             && (Application.persistentDataPath.Replace('\\','/').EndsWith("/Hovgaard Games/Big Ambitions Agent Tests", StringComparison.Ordinal)
-                || Application.persistentDataPath.EndsWith("/com.hovgaardgames.bigambitions.agenttests.mac", StringComparison.Ordinal));
+                || Application.persistentDataPath.EndsWith("/com.hovgaardgames.bigambitions.agenttests.mac", StringComparison.Ordinal)));
+        public static bool Allowed() => allowedProcess.Value;
         private PopulationRuntime Runtime => cached != null ? cached : cached = Object.FindObjectOfType<PopulationRuntime>() ?? throw new InvalidOperationException("Population runtime absent.");
         private CitySimulator Simulation => (CitySimulator?)typeof(PopulationRuntime).GetField("simulation", Fields)!.GetValue(Runtime) ?? throw new InvalidOperationException("Population not ready.");
         private static string PlaceId(BuildingRegistration r) => NativeFoodMarket.PlaceId(r);
         private void Update()
         {
-            if (!Allowed() || SaveGameManager.Current?.SaveGameName?.StartsWith("FT Food Routines", StringComparison.Ordinal) != true) return;
+            bool framesAllowed = Allowed() && SaveGameManager.Current?.SaveGameName?.StartsWith("FT Food Routines", StringComparison.Ordinal) == true;
+            SampleFrameSafely(framesAllowed);
+            if (!framesAllowed) return;
             try
             {
                 if (pauseStatus.Length > 0 && Simulation.State.Food?.Residents.Any(m => m.Status.ToString() == pauseStatus) == true)
@@ -84,10 +106,36 @@ namespace FoodDemandAuditProbe
                 SampleClockAudit();
                 string path = Path.Combine(Root,"request.json"); if (!File.Exists(path) || new FileInfo(path).Length > 2048) return;
                 string text = File.ReadAllText(path); if (text == last) return; last = text;
+                pendingId = "";
                 var request = JObject.Parse(text); pendingId = (string?)request["id"] ?? "";
-                if (!System.Text.RegularExpressions.Regex.IsMatch(pendingId,"^[a-zA-Z0-9_-]{1,60}$")) return;
+                if (!System.Text.RegularExpressions.Regex.IsMatch(pendingId,"\\A[a-zA-Z0-9_-]{1,60}\\z")) { pendingId = ""; return; }
+                if (DiagnosticResponses.Exists(Root, pendingId)) { pendingId = ""; return; }
                 string op = (string?)request["op"] ?? "";
-                if (op == "status") Respond(Status());
+                RecordDiagnosticDispatch(op);
+                if (op.StartsWith("operations-", StringComparison.Ordinal)) Respond(OperationsOperation(op, request));
+                else if (op == "return-quote-check") Respond(ReturnQuoteCheck(request));
+                else if (op == "status") Respond(Status());
+                else if (op == "runtime-state")
+                {
+                    var runtime=Runtime;
+                    object? Read(string name)=>typeof(PopulationRuntime).GetField(name,Fields)!.GetValue(runtime);
+                    var task=Read("initialization") as System.Threading.Tasks.Task;
+                    var discovery=Read("routeObjects");
+                    object? Discovery(string name)=>discovery?.GetType().GetProperty(name)?.GetValue(discovery);
+                    Respond(new {runtime.enabled,failed=Read("failed"),status=Read("status"),taskStatus=task?.Status.ToString(),
+                        taskCompleted=task?.IsCompleted,taskError=task?.Exception?.ToString(),saveMatches=ReferenceEquals(Read("initializingSave"),SaveGameManager.Current),
+                        discoveryReady=Discovery("Ready"),discoverySweeps=Discovery("Sweeps"),lastDiscoverySeconds=Discovery("LastSweepSeconds"),
+                        lastDiscoveryWorkMs=Discovery("LastSweepMilliseconds"),maximumDiscoverySliceMs=Discovery("MaximumSliceMilliseconds"),
+                        waitingRoutingFrames=Read("waitingFrames"),maximumPreparationMs=Read("maxPrepareMilliseconds")});
+                }
+                else if (op == "skip-needs-start") Respond(SkipNeeds(true));
+                else if (op == "skip-needs-end") Respond(SkipNeeds(false));
+                else if (op == "fixture-staffing") Respond(FixtureStaffing());
+                else if (op == "frames-start") Respond(StartFrames());
+                else if (op == "frames-status") Respond(FrameReport());
+                else if (op == "frames-stop") Respond(StopAndReportFrames());
+                else if (op == "clock-only-baseline") Respond(ClockOnlyBaseline());
+                else if (op == "panel-screenshot") Respond(PanelScreenshot());
                 else if (op == "taxi-locations") Respond(new {
                     stands=Object.FindObjectsOfType<PermanentTaxiController>().Where(t=>t.gameObject.activeInHierarchy)
                         .Select(t=>new {x=t.transform.position.x,z=t.transform.position.z}).ToArray(),
@@ -95,20 +143,30 @@ namespace FoodDemandAuditProbe
                         .Select(t=>new {x=t.transform.position.x,z=t.transform.position.z}).ToArray() });
                 else if (op == "audit-start")
                 {
-                    if(auditSimulation!=null) { auditSimulation.FoodDecisionObserved-=Decision; auditSimulation.RoutineObserved-=RoutineDiagnosticObserved; }
-                    decisions.Clear(); routineDiagnostics.Clear(); auditSimulation=Simulation; auditSimulation.FoodDecisionObserved+=Decision; auditSimulation.RoutineObserved+=RoutineDiagnosticObserved;
+                    DetachAuditObservers();
+                    decisions.Clear(); routineDiagnostics.Clear(); droppedDecisions = droppedRoutineDiagnostics = 0;
+                    auditSimulation=Simulation; auditSimulation.FoodDecisionObserved+=Decision; auditSimulation.RoutineObserved+=RoutineDiagnosticObserved;
                     StartClockAudit();
                     File.WriteAllText(Path.Combine(Root,"audit-start-population.json"),SaveCodec.Write(Simulation.State));
                     Respond(Status());
                 }
                 else if (op == "audit-end")
                 {
-                    clockAuditActive = false;
-                    File.WriteAllText(Path.Combine(Root,"food-audit.json"),JsonConvert.SerializeObject(new {decisions, routineDiagnostics, meals=Simulation.State.Food!.Residents,status=Status()},Formatting.Indented));
+                    DetachAuditObservers(); StopClockAudit();
+                    File.WriteAllText(Path.Combine(Root,"food-audit.json"),JsonConvert.SerializeObject(new {decisions, routineDiagnostics, capture=AuditCaptureStatus(), meals=Simulation.State.Food!.Residents,status=Status()},Formatting.Indented));
                     File.WriteAllText(Path.Combine(Root,"audit-end-population.json"),SaveCodec.Write(Simulation.State));
-                    Respond(new {decisions=decisions.Count,status=Status()});
+                    Respond(new {decisions=decisions.Count,capture=AuditCaptureStatus(),status=Status()});
                 }
                 else if (op == "setup") Respond(SetupPilot());
+                else if (op == "hours-refresh-check") Respond(CheckLiveHours());
+                else if (op == "menu-edit-reload") Respond(EditMenuForReload());
+                else if (op == "menu-contract-check") Respond(MenuContractCheck((string?)request["shop"]));
+                else if (op == "menu-catalogue") Respond(MenuCatalogue());
+                else if (op == "neighborhood-candidates") Respond(NeighborhoodCandidates());
+                else if (op == "neighborhood-setup") Respond(SetupNeighborhood(request));
+                else if (op == "finances-enable") { Runtime.EnableHouseholdFinances(); Respond(Status()); }
+                else if (op == "economy-report") Respond(new { report = Runtime.EconomyOverview, accounts = Runtime.NativeEconomyAccounts,
+                    managementText = typeof(PopulationRuntime).GetMethod("BuildEconomyText", Fields)!.Invoke(Runtime, null) });
                 else if (op.StartsWith("pause-",StringComparison.Ordinal)) { pauseStatus = op.Substring(6); Respond(new { waitingFor = pauseStatus }); }
                 else if (op == "normal" || op == "fast-forward")
                 { var speed=Object.FindObjectOfType<GameSpeedController>(); speed.isFastForwarding=op=="fast-forward";speed.Reset();Respond(new {fastForward=speed.isFastForwarding}); }
@@ -128,6 +186,7 @@ namespace FoodDemandAuditProbe
                     var result=native.Buy(meal,Simulation.State.Minute);
                     Respond(new { paid=result.Paid,reason=result.Reason,before,after=Status() });
                 }
+                else if (op == "replay-meal-receipts") Respond(ReplayMealReceipts());
                 else if (op == "dump")
                 { File.WriteAllText(Path.Combine(Root,"population.json"),SaveCodec.Write(Simulation.State)); Respond(Status()); }
                 else throw new InvalidOperationException("Unknown diagnostic operation.");
@@ -137,12 +196,14 @@ namespace FoodDemandAuditProbe
         private object Status()
         {
             var sim=Simulation; var state=sim.State.Food;
-            if(state!=null && pilotShop==null) pilotShop=SaveGameManager.Current.BuildingRegistrations.Single(r=>PlaceId(r)==state.Shops.Single().PlaceId);
+            var market=(NativeFoodMarket?)typeof(PopulationRuntime).GetField("foodMarket",Fields)!.GetValue(Runtime);
+            if(state!=null && state.Shops.Count>0 && pilotShop==null) pilotShop=SaveGameManager.Current.BuildingRegistrations.Single(r=>PlaceId(r)==state.Shops.First().PlaceId);
             if(pilotShop!=null) ObserveHousekeeping();
             return new { minute=sim.State.Minute, nativeMinute=SaveGameManager.Current.Day*1440.0+SaveGameManager.Current.Hour*60+SaveGameManager.Current.Minute,
+                caughtUp=sim.IsCaughtUpTo(SaveGameManager.Current.Day*1440.0+SaveGameManager.Current.Hour*60+SaveGameManager.Current.Minute),
                 clock=ClockAuditStatus(), travelClockRate=sim.State.TravelClockRate,
                 routines=new { citizens=sim.State.Citizens.Count, journeys=sim.State.Citizens.Sum(c=>c.CompletedJourneys), missed=sim.State.Citizens.Sum(c=>c.MissedActivities) },
-                diagnostics=Runtime.FoodDiagnostics, auditDecisions=decisions.Count, housekeeping=new { restockChecks,restocks,stockTasks },
+                diagnostics=Runtime.FoodDiagnostics, auditDecisions=decisions.Count, auditCapture=AuditCaptureStatus(), housekeeping=new { restockChecks,restocks,stockTasks },
                 receipts=SaveGameManager.Current.modData.Where(p=>p.Key.StartsWith("persistentcity:food-sale-v1:",StringComparison.Ordinal)).ToDictionary(p=>p.Key,p=>p.Value), count=state?.Residents.Count, scope=state?.Shops,
                 totals=state?.Residents.GroupBy(m=>m.Status.ToString()).ToDictionary(g=>g.Key,g=>g.Count()),
                 purchases=state?.Residents.Sum(m=>m.Purchases),spendingCents=state?.Residents.Sum(m=>m.SpentCents),
@@ -151,9 +212,14 @@ namespace FoodDemandAuditProbe
                 supply=pilotShop==null?null:FoodSupplyReader.Read(pilotShop,Product), orders=pilotShop?.unprocessedCompletedOrders,
                 nativeItems=pilotShop?.itemInstances.Values.Select(i=>new { i.id,i.itemName,i.parentId,i.stackedItems,i.cargoInstances,requirements=ItemHelper.GetMissingRequirements(i).Select(r=>r.GetType().FullName).ToArray() }).ToArray(),
                 nativeShifts=pilotShop?.scheduleDays,
+                economy=state==null?null:Runtime.EconomyOverview, accounts=state==null?null:Runtime.NativeEconomyAccounts,
+                shops=state?.Shops.Select(scope=> { var shop=SaveGameManager.Current.BuildingRegistrations.Single(r=>PlaceId(r)==scope.PlaceId); return new {scope.PlaceId,shop.BusinessName,shop.customerCapacity,shop.RentPerDay,advertisedProducts=shop.cachedAvailableProducts,exclusion=market?.ScopeStatus(scope.PlaceId),supply=FoodSupplyReader.Read(shop,Product),menuSupply=FoodSupplyReader.ReadMenu(shop,scope.Products()),nativeItems=shop.itemInstances.Values.Select(i=>new { i.id,i.itemName,i.cargoInstances }).ToArray(),history=shop.orderHistory.Select(h=>new {h.dayNumber,h.totalRevenue,h.totalCustomers}).ToArray()}; }).ToArray(),
                 history=pilotShop?.orderHistory.Select(h=>new { h.dayNumber,h.totalRevenue,h.totalCustomers }).ToArray() };
         }
         private void Respond(object data)
-        { File.WriteAllText(Path.Combine(Root,"response-"+pendingId+".json"),JsonConvert.SerializeObject(data,Formatting.Indented));pendingId=""; }
+        {
+            DiagnosticResponses.Publish(Root, pendingId, JsonConvert.SerializeObject(data, Formatting.Indented));
+            pendingId = "";
+        }
     }
 }

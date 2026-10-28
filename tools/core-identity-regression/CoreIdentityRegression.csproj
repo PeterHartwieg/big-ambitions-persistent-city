@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <LangVersion>9</LangVersion>
+    <!-- compare.py builds the same harness against a pre-change copy of the sources. -->
+    <SourceRoot Condition="'$(SourceRoot)' == ''">../..</SourceRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(SourceRoot)/Core/*.cs" />
+    <Compile Include="$(SourceRoot)/Persistence/*.cs" />
+    <Compile Include="Program.cs" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+  </ItemGroup>
+</Project>

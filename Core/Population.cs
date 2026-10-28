@@ -16,6 +16,43 @@ namespace PersistentCity.Core
                 return value;
             }
         }
+
+        // Hash is one FNV-1a pass over the characters followed by a fixed finaliser, so a key built as
+        // prefix + suffix can be hashed by continuing the prefix state over the suffix. These produce
+        // exactly Hash(prefix + suffix, seed) without building the concatenated string.
+        internal static uint Begin(int seed) { unchecked { return 2166136261u ^ (uint)seed; } }
+
+        internal static uint Append(uint state, string text)
+        {
+            unchecked
+            {
+                foreach (char c in text) { state ^= c; state *= 16777619u; }
+                return state;
+            }
+        }
+
+        internal static uint Append(uint state, char c) { unchecked { state ^= c; return state * 16777619u; } }
+
+        /// <summary>The characters of value.ToString(CultureInfo.InvariantCulture).</summary>
+        internal static uint AppendDecimal(uint state, int value)
+        {
+            uint magnitude;
+            if (value < 0) { state = Append(state, '-'); magnitude = unchecked((uint)(-(long)value)); }
+            else magnitude = (uint)value;
+            uint divisor = 1;
+            while (magnitude / divisor >= 10) divisor *= 10;
+            for (; divisor > 0; divisor /= 10) state = Append(state, (char)('0' + magnitude / divisor % 10));
+            return state;
+        }
+
+        internal static uint Finish(uint state)
+        {
+            unchecked
+            {
+                state ^= state >> 16; state *= 0x7feb352du; state ^= state >> 15;
+                return state;
+            }
+        }
     }
 
     public static class Population
@@ -104,26 +141,13 @@ namespace PersistentCity.Core
             && a.District == b.District && a.Age == b.Age && a.Female == b.Female
             && a.Persona == b.Persona && a.AppearanceSeed == b.AppearanceSeed;
 
-        // Called only after strict v1 validation. Preserve every physical event, route and
-        // assignment; expansion starts from the recorded simulation clock, not game time.
-        public static void InitializeExpansion(CityState city)
+        internal static CitizenState CreateResident(CityState city, CitizenIdentity identity, double minute, Dictionary<string, int> used)
         {
-            city.SourceIdentities = city.Citizens.OrderBy(c => c.Identity.Id, StringComparer.Ordinal).Select(c => CloneIdentity(c.Identity)).ToList();
-            city.RecentDepartures = new List<DepartureRecord>();
-            city.NextResidentSequence = 1;
-            city.DepartedCount = 0;
-            city.PopulationTarget = city.Citizens.Count;
-            city.InitialImportedResidents = city.Citizens.Count;
-            foreach (var person in city.Citizens) ResidentLifecycle.Initialize(person, city.Seed, city.Minute);
-            city.Schema = CityState.CurrentSchema;
-        }
-
-        internal static CitizenState CreateResident(CityState city, CitizenIdentity identity, double minute, Dictionary<string, int> used,
-            bool established = true)
-        {
+            // Hash(identity.Id + ":home:" + p.Id) for every vacancy, continued from one shared prefix.
+            uint homeKey = StableRandom.Append(StableRandom.Append(StableRandom.Begin(city.Seed), identity.Id), ":home:");
             var home = city.Places.Where(p => p.Kind == PlaceKind.Home && Used(used, p.Id) < p.Capacity)
                 .OrderBy(p => p.District == identity.District ? 0 : 1)
-                .ThenBy(p => StableRandom.Hash(identity.Id + ":home:" + p.Id, city.Seed)).ThenBy(p => p.Id, StringComparer.Ordinal).FirstOrDefault();
+                .ThenBy(p => StableRandom.Finish(StableRandom.Append(homeKey, p.Id))).ThenBy(p => p.Id, StringComparer.Ordinal).FirstOrDefault();
             if (home == null) throw new InvalidOperationException("No residential vacancy is available for the new resident.");
             string day = identity.Persona == Persona.Retiree ? "" : DestinationChoice.Choose(city.Places, home,
                 identity.Persona == Persona.Student ? PlaceKind.Study : PlaceKind.Work, identity.Id + ":day", city.Seed,
@@ -144,7 +168,7 @@ namespace PersistentCity.Core
                         * (0.75 + StableRandom.Hash(identity.Id + ":fare", city.Seed) % 51 / 100.0)
                 }
             };
-            ResidentLifecycle.Initialize(person, city.Seed, minute, established);
+            ResidentLifecycle.Initialize(person, city.Seed, minute);
             return person;
         }
 
@@ -153,7 +177,8 @@ namespace PersistentCity.Core
             var used = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (var person in city.Citizens)
             {
-                if (ReferenceEquals(person, excluded)) continue;
+                // An event works on a copy of the resident that shares the immutable identity object.
+                if (excluded != null && (ReferenceEquals(person, excluded) || ReferenceEquals(person.Identity, excluded.Identity))) continue;
                 Count(used, person.HomeId);
                 if (person.DayPlaceId != "") Count(used, person.DayPlaceId);
             }

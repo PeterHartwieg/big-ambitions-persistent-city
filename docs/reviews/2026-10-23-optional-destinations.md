@@ -28,6 +28,31 @@ The matched isolated-PC comparison uses the same `FT Food Routines Settled 20261
 
 The completed reference day has 948 missed activities: 514 late arrivals, 364 without usable opening time and 70 failed route waits. Every late arrival is shopping/leisure; 47 optional trips already had expired deadlines in the starting checkpoint. Work contributes 58 misses (26 closed arrivals and 32 route failures); work assignment policy is outside this increment. Reference admitted visits are 228 shopping, 238 leisure, 698 work and 16 study, with 38 native food purchases.
 
-The candidate run is in progress. Report its completed comparison and final cleanup receipts here before handing over the increment. The first reference-to-candidate handoff encountered a plain-text stop response that the runner tried to parse as JSON. The reference evidence was preserved and the rig restored/verified/released; the corrected runner then reacquired the rig and deployed the candidate from that restored baseline.
+The completed comparison gives:
+
+| Per observed game day | Previous planner | Feasibility planner |
+| --- | ---: | ---: |
+| Admitted shopping visits, including meals | 228 | 429 |
+| Admitted leisure visits | 238 | 552 |
+| Missed activities | 948 | 446 |
+| Late arrivals | 514 | 47 |
+| Completed journeys, all purposes | 3,523 | 3,644 |
+| Native food purchases | 38 | 38 |
+| Native settled gross revenue | $389.61 | $389.61 |
+| Work / study admissions | 698 / 16 | 698 / 16 |
+
+All 47 candidate late arrivals belonged to already-expired windows in the starting checkpoint. No newly chosen optional outing missed admission on arrival in this run. Of the remaining candidate misses, 312 exhausted the two-route search, 29 had no feasible candidate in the shortlist and 58 were unchanged work failures. A bounded search is not proof that no suitable place exists anywhere in the city. The planner selected 537 alternatives and 384 originally proposed venues.
+
+Native advancement p95 was essentially unchanged, **3.075→3.004 ms**, with total measured advancement **10.30→9.68 seconds** over the game day. The maximum call increased **19.96→27.12 ms**; sampled lag decreased **1.96→1.62 game minutes**. These timings include diagnostic trace capture and exclude route preparation and rendering. They do not establish an FPS improvement or native 5,000-resident clearance.
+
+Stock/bag depletion matches all native customer counts, orders settled, all food outings returned, and saving/reloading plus explicitly replaying a paid intention produced no duplicate sale. Every missed-activity increment has a diagnostic reason.
+
+The same checkpoint, start minute, stock, staffing, scopes, identities, assignments, journeys and other population fields were retained. Loading this older normal-clock checkpoint recomputes cached commute times against live native navigation: 287 estimates differed, mostly rounding; 33 differences exceeded one millisecond of game time and the largest was 23.71 game minutes, with matching departure adjustments. The evidence records each difference. This limits causal precision; it is a directional native comparison, not bitwise-identical route input. Offline cadence checks supply the deterministic control.
+
+Both runs restored and verified the rig's 4,012 preexisting files, preferences and installation manifest, removed the helper and released ownership. The final stopped/unheld state is checked separately. Normal profiles were untouched. The private package remains disabled.
+
+Keep the one-third calendar and feasibility planner as the candidate. Next, let eligible purchases happen during existing shopping stops, using the resident's current journey, remaining visit time, budget and native stock/service constraints. Work assignment feasibility, household incomes and rendered population performance remain later gates.
+
+The first reference-to-candidate handoff encountered a plain-text stop response that the runner tried to parse as JSON. The reference evidence was preserved and the rig restored/verified/released; the corrected runner then reacquired the rig and deployed the candidate from that restored baseline. Final cleanup also needed a bounded wait for the asynchronous game shutdown; no file restoration ran while the player was still alive.
 
 Evidence is retained under ignored `build/routine-venues-20261023/`. Earlier transfer and test-fixture failures are retained separately; they are not successful validation.

@@ -33,8 +33,6 @@ public sealed class PopulationExpansionTests
             new Place { Id = "leisure-a", Name = "Leisure A", Kind = PlaceKind.Leisure, Capacity = count, Position = new(150, 0, 0) },
             new Place { Id = "leisure-b", Name = "Leisure B", Kind = PlaceKind.Leisure, Capacity = count, Position = new(250, 0, 0) }
         }, "test-source", "0.40.4", 7, 1440);
-        foreach (var person in city.Citizens)
-        { person.NextDepartureMinute = ResidentLifecycle.Never; person.NextJobChangeMinute = ResidentLifecycle.Never; }
         return city;
     }
 
@@ -91,119 +89,6 @@ public sealed class PopulationExpansionTests
         }
         Assert.Contains(residents, r => city.SourceIdentities.Single(s => s.AppearanceSeed == r.AppearanceSeed).Persona != r.Persona);
         Assert.Equal(8, residents.Select(r => r.Persona).Distinct().Count());
-    }
-
-    [Fact]
-    public void ExpansionMigrationPreservesPhysicalJourneyAndDueEvent()
-    {
-        var city = City(); var person = city.Citizens[0];
-        person.Phase = CitizenPhase.Travelling; person.DestinationId = "work-a"; person.DestinationActivity = Activity.Work;
-        person.DepartureMinute = city.Minute; person.NextEventMinute = city.Minute + 100;
-        person.Journey = new Route { Legs = new() { new() { From = new(0, 0, 0), To = new(300, 0, 0), Minutes = 100 } } };
-        var route = person.Journey;
-        city.Schema = 1;
-        Population.InitializeExpansion(city);
-        Assert.Equal(CityState.CurrentSchema, city.Schema); Assert.Same(route, person.Journey);
-        Assert.Equal(1540, person.NextEventMinute); Assert.Equal(1440, person.DepartureMinute);
-        Assert.Equal("work-a", person.DestinationId); Assert.Equal(CitizenPhase.Travelling, person.Phase);
-        Assert.All(city.Citizens, c => Assert.True(c.NextDepartureMinute > city.Minute));
-        Assert.Equal(city.Citizens.Count, city.SourceIdentities.Count);
-    }
-
-    [Fact]
-    public void DepartureWaitsForPhysicalHomeArrivalAndOldCitizenIsNeverRequeued()
-    {
-        var city = City(1); var original = city.Citizens[0];
-        original.PlaceId = "work-a"; original.Activity = Activity.Work; original.Phase = CitizenPhase.Travelling;
-        original.DestinationId = "home"; original.DestinationActivity = Activity.Home;
-        original.DepartureMinute = city.Minute; original.NextEventMinute = city.Minute + 60; original.ActivityUntilMinute = city.Minute + 120;
-        original.Journey = new() { Legs = new() { new() { From = new(300, 0, 0), To = new(0, 0, 0), Minutes = 60 } } };
-        original.NextDepartureMinute = city.Minute + 5;
-        var simulation = new CitySimulator(city, new Walking());
-        simulation.AdvanceTo(1470);
-        Assert.Same(original, city.Citizens[0]); Assert.Empty(city.RecentDepartures);
-        Assert.Equal(150, simulation.PositionOf(original).X);
-        simulation.AdvanceTo(1500);
-        Assert.Equal("pc:1", city.Citizens[0].Identity.Id);
-        Assert.Equal(1500, Assert.Single(city.RecentDepartures).DepartedMinute);
-        Assert.Equal("c0", city.RecentDepartures[0].Identity.Id);
-        Assert.Equal("home", city.Citizens[0].PlaceId);
-        simulation.AdvanceTo(1600);
-        Assert.Equal(1, city.DepartedCount); Assert.DoesNotContain(original, city.Citizens);
-    }
-
-    [Fact]
-    public void SimultaneousTurnoverPreservesCapacityAndArchiveEvictionNeverReusesIds()
-    {
-        var city = City(3);
-        foreach (var person in city.Citizens) person.NextDepartureMinute = city.Minute + 1;
-        new CitySimulator(city, new Walking()).AdvanceTo(city.Minute + 1);
-        Assert.Equal(new[] { "pc:1", "pc:2", "pc:3" }, city.Citizens.Select(c => c.Identity.Id));
-        Assert.Equal(3, city.SourceIdentities.Count);
-        Assert.Equal(3, city.Citizens.Count(c => c.HomeId == "home"));
-        for (int index = 0; index < ResidentLifecycle.MaxRecentDepartures + 5; index++)
-        {
-            city.Citizens[0].NextDepartureMinute = city.Minute + 1;
-            city.Citizens[0].NextEventMinute = city.Minute;
-            new CitySimulator(city, new Walking()).AdvanceTo(city.Minute + 1);
-        }
-        Assert.Equal(ResidentLifecycle.MaxRecentDepartures, city.RecentDepartures.Count);
-        Assert.Equal(city.DepartedCount + 1, city.NextResidentSequence);
-        Assert.Equal("pc:" + city.DepartedCount, city.Citizens[0].Identity.Id);
-        Assert.Equal(city.Citizens.Count, city.Citizens.Select(c => c.Identity.Id).Distinct().Count());
-        foreach (var place in city.Places.Where(p => p.Kind == PlaceKind.Work || p.Kind == PlaceKind.Study))
-            Assert.True(city.Citizens.Count(c => c.DayPlaceId == place.Id) <= place.Capacity);
-    }
-
-    [Fact]
-    public void JobChangeRequiresSafeHomeAndVacantDifferentWorkplace()
-    {
-        var city = City(2); var worker = city.Citizens[0];
-        worker.DayPlaceId = "work-a"; city.Citizens[1].DayPlaceId = "work-b";
-        city.Places.Single(p => p.Id == "work-b").Capacity = 1;
-        worker.NextJobChangeMinute = city.Minute + 1;
-        new CitySimulator(city, new Walking()).AdvanceTo(city.Minute + 1);
-        Assert.Equal("work-a", worker.DayPlaceId); Assert.Equal(0, worker.JobChanges);
-        Assert.True(worker.NextJobChangeMinute > city.Minute);
-        city.Places.Single(p => p.Id == "work-b").Capacity = 2;
-        worker.NextJobChangeMinute = city.Minute + 1; worker.NextEventMinute = city.Minute;
-        new CitySimulator(city, new Walking()).AdvanceTo(city.Minute + 1);
-        Assert.Equal("work-b", worker.DayPlaceId); Assert.Equal(1, worker.JobChanges);
-        Assert.Equal(0, worker.CompletedJourneys);
-    }
-
-    [Fact]
-    public void PendingJobChangeLeavesCurrentCommuteIntactUntilHomeArrival()
-    {
-        var city = City(1); var person = city.Citizens[0]; person.DayPlaceId = "work-a";
-        person.PlaceId = "work-a"; person.Activity = Activity.Work; person.Phase = CitizenPhase.Travelling;
-        person.DestinationId = "home"; person.DestinationActivity = Activity.Home;
-        person.DepartureMinute = city.Minute; person.NextEventMinute = city.Minute + 60; person.ActivityUntilMinute = city.Minute + 120;
-        person.Journey = new() { Legs = new() { new() { From = new(300, 0, 0), To = new(0, 0, 0), Minutes = 60 } } };
-        person.NextJobChangeMinute = city.Minute + 5;
-        var simulation = new CitySimulator(city, new Walking());
-        simulation.AdvanceTo(1470);
-        Assert.Equal("work-a", person.DayPlaceId); Assert.Equal(0, person.JobChanges);
-        Assert.Equal(150, simulation.PositionOf(person).X);
-        simulation.AdvanceTo(1500);
-        Assert.Equal("work-b", person.DayPlaceId); Assert.Equal(1, person.JobChanges);
-        Assert.Equal("home", person.PlaceId); Assert.Null(person.Journey);
-        Assert.Same(person, Assert.Single(city.Citizens));
-    }
-
-    [Fact]
-    public void RareLifecycleDatesAreStaggeredAndIneligibleJobsStayDisabled()
-    {
-        var city = City(400);
-        Population.InitializeExpansion(city);
-        Assert.Contains(city.Citizens, c => c.NextDepartureMinute < city.Minute + 100 * 1440);
-        Assert.Contains(city.Citizens, c => c.NextDepartureMinute > city.Minute + 1000 * 1440);
-        Assert.True(city.Citizens.Select(c => c.NextDepartureMinute).Distinct().Count() > 390);
-        Assert.All(city.Citizens, c => Assert.True(c.NextDepartureMinute >= city.Minute + 7 * 1440));
-        Assert.All(city.Citizens.Where(c => !ResidentLifecycle.IsWorker(c)),
-            c => Assert.Equal(ResidentLifecycle.Never, c.NextJobChangeMinute));
-        Assert.All(city.Citizens.Where(ResidentLifecycle.IsWorker),
-            c => Assert.True(c.NextJobChangeMinute >= city.Minute + 1440));
     }
 
     [Fact]
@@ -283,8 +168,6 @@ public sealed class PopulationExpansionTests
     public void DueLifecycleAndDailyChoicesIgnoreTickSizeBudgetAndReloadBoundary()
     {
         var initial = City(12);
-        foreach (var person in initial.Citizens)
-        { person.NextJobChangeMinute = initial.Minute + 1440; person.NextDepartureMinute = initial.Minute + 7 * 1440; }
         var fine = new CitySimulator(Copy(initial), new Walking());
         var coarse = new CitySimulator(Copy(initial), new Walking());
         double end = initial.Minute + 20 * 1440;
@@ -299,7 +182,8 @@ public sealed class PopulationExpansionTests
                 coarse = new CitySimulator(read.State!, new Walking());
             }
         }
-        Assert.True(coarse.State.DepartedCount >= 12);
+        Assert.Equal(initial.Citizens.Select(c => c.Identity.Id), coarse.State.Citizens.Select(c => c.Identity.Id));
+        Assert.All(coarse.State.Citizens.Where(ResidentLifecycle.IsWorker), c => Assert.True(c.LastEmploymentCheckDay >= 20));
         Assert.Equal(SaveCodec.Write(fine.State), SaveCodec.Write(coarse.State));
     }
 

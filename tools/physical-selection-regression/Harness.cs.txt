@@ -1,0 +1,126 @@
+class Fixture {
+ public string LastAdmissionStage = "";
+ public Sim simulation = new();
+ public Dictionary<string, object> bindings = new();
+ public Ambient ambient = new();
+ public Dictionary<string,float> attempted = new();
+ public Dictionary<string, QueuePlanEntry> queuers = new();
+ public Dictionary<string,Place> places = new();
+ public Position focus;
+ public double radius = 100;
+ public int InitialPeople, InitialCars, pedestrianLimit = 3, vehicleLimit = 3;
+ public HashSet<string> Failed = new();
+ public Dictionary<int, object> bodies = new();
+}
+class Sim {
+ public CityState State = new() { Minute = 100 };
+ public int Positions;
+ public Dictionary<string, PhysicalJourneySample> Samples = new();
+ public Position PositionOf(CitizenState c) { Positions++; return c.Journey?.Legs[0].From ?? new Position(int.Parse(c.Identity.Id), 0, 0); }
+ public PhysicalJourneySample SampleJourney(CitizenState c) => Samples[c.Identity.Id];
+}
+class Ambient { public HashSet<string> Reserved = new(); public bool IsReserved(string id) => Reserved.Contains(id); }
+class QueuePlanEntry {}
+static class Time { public static float unscaledTime = 10; }
+enum VehicleTypes { Car, Truck }
+class Prefab { public string name = ""; }
+class GameObject { public bool Active; public int Reads; public bool activeInHierarchy { get { Reads++; return Active; } } }
+class TaxiController {}
+class PrivateDriverVehicle {}
+class VehicleController {}
+class VehicleComponent {
+ public VehicleTypes vehicleType;
+ public Prefab prefab = new();
+ public GameObject gameObject = new();
+ public int Index, HierarchyReads;
+ public bool Taxi, Driver, Service, Native = true;
+ public int GetIndex() => Index;
+ public T? GetComponentInChildren<T>(bool include) where T:class,new() {
+ HierarchyReads++;
+ return (typeof(T) == typeof(TaxiController) && Taxi || typeof(T) == typeof(PrivateDriverVehicle) && Driver || typeof(T) == typeof(VehicleController) && Service) ? new T() : null;
+ }
+}
+static class VehicleScriptOwnership { public static bool NativeOnly(VehicleComponent v) => v.Native; }
+static class Manager { public static VehicleComponent[] All = Array.Empty<VehicleComponent>(); public static VehicleComponent[] GetVehicleList() => All; }
+static class Program {
+ static int checks;
+ static void Check(bool condition, string text) { checks++; if (!condition) throw new Exception(text); }
+ static bool SameValue(object? a, object? b) {
+ if(a is double x && b is double y) return BitConverter.DoubleToInt64Bits(x)==BitConverter.DoubleToInt64Bits(y);
+ if(a is Position p && b is Position q) return SameValue(p.X,q.X)&&SameValue(p.Y,q.Y)&&SameValue(p.Z,q.Z);
+ return Equals(a,b);
+ }
+ static bool SameSample(PhysicalJourneySample a, PhysicalJourneySample b) => typeof(PhysicalJourneySample)
+ .GetFields(System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.NonPublic)
+ .All(f=>SameValue(f.GetValue(a),f.GetValue(b)));
+ static void Main() {
+ var rng = new Random(71933);
+ int beforePositions = 0, afterPositions = 0, beforeHierarchy = 0, afterHierarchy = 0;
+ for (int trial=0; trial<500; trial++) {
+ var before = new Before(); var after = new After();
+ foreach(var f in new Fixture[]{before,after}) {
+ f.InitialPeople = trial%4; f.InitialCars = trial/4%4;
+ // An off-axis focus gives non-integer distances for the comparer's second key.
+ f.focus = new Position(trial%60,0,trial%3*0.37);
+ f.places["indoor"] = new Place { Id="indoor" }; f.places["outdoor"] = new Place { Id="scene-park" };
+ }
+ int roster = trial%100==0?5000:trial%10==0?957:120;
+ for(int i=0;i<roster;i++) {
+ var id=i.ToString(); int kind=trial==0?6:rng.Next(9); float spread=(float)(rng.NextDouble()*8); var phase=kind<4?CitizenPhase.Travelling:kind==4?CitizenPhase.WaitingForOpening:CitizenPhase.AtPlace;
+ var mode=kind==0?TravelMode.Walk:kind==1?TravelMode.Car:TravelMode.Subway;
+ var leg=new RouteLeg { Minutes=1,Mode=mode,From=new Position(i%5,0,0),To=new Position(kind==3?i%5:i%5+5,0,0) };
+ foreach(var f in new Fixture[]{before,after}) {
+ var c=new CitizenState { Identity=new CitizenIdentity{Id=id},Phase=phase,Journey=phase==CitizenPhase.Travelling?new Route{Legs=new(){leg}}:null,PlaceId=kind==7?"outdoor":"indoor",Activity=Activity.Leisure,NextEventMinute=i%19==0?99:101 };
+ f.simulation.State.Citizens.Add(c);
+ if(c.Journey!=null) f.simulation.Samples[id]=new PhysicalJourneySample(0,1,0,0,leg,leg.From,null,null);
+ if(trial!=0 && i%7==0) f.queuers[id]=new QueuePlanEntry();
+ if(i%11==0) f.attempted[id]=9; else if(i%13==0) f.attempted[id]=1;
+ else if(trial%5==1&&i%2==0) f.attempted[id]=spread; // Many distinct past attempts, all outside the cooldown.
+ if(i%17==0) f.ambient.Reserved.Add(id);
+ if(i%23==0) f.bindings[id]=new object();
+ if(i%3==0) f.Failed.Add(id);
+ }
+ }
+ Check(before.Select().SequenceEqual(after.Select()),"Attempt order/caps changed");
+ Check(before.attempted.OrderBy(x=>x.Key).SequenceEqual(after.attempted.OrderBy(x=>x.Key)),"Cooldown writes changed");
+ Check(after.simulation.Positions<=before.simulation.Positions,"Position work increased");
+ if(trial==0) Check(after.simulation.Positions==0,"Indoor population reached position sampling");
+ beforePositions+=before.simulation.Positions; afterPositions+=after.simulation.Positions;
+ }
+ for(int trial=0; trial<1000; trial++) {
+ var prefab=new Prefab{name="model"};
+ Manager.All=Enumerable.Range(0,32).Select(i=>new VehicleComponent{Index=i,prefab=i%3==0?prefab:new Prefab{name="other"},vehicleType=i%7==0?VehicleTypes.Truck:VehicleTypes.Car,Taxi=i%11==0,Driver=i%13==0,Service=i%17==0,Native=i%19!=0,gameObject=new GameObject{Active=(i+trial)%4==0}}).ToArray();
+ if(trial%10==0) foreach(var v in Manager.All) v.Native=false;
+ var b=new Before(); var a=new After();
+ if(trial%9==0) {b.bodies[3]=new();a.bodies[3]=new();}
+ CitizenState Car() => new(){Car=new CarState{Id="car"+trial,ModelId=trial%3==0?"":trial%5==0?"missing":"model",PaintSeed=trial%2==0?0:12}};
+ var bc=Car();var ac=Car();
+ bool br=b.Slot(bc,out var bs);
+ beforeHierarchy+=Manager.All.Sum(v=>v.HierarchyReads);
+ foreach(var v in Manager.All) v.HierarchyReads=0;
+ bool ar=a.Slot(ac,out var ass);
+ afterHierarchy+=Manager.All.Sum(v=>v.HierarchyReads);
+ if (ac.Car!.ModelId == "missing" && ac.Car.PaintSeed == 12) Check(Manager.All.Sum(v=>v.HierarchyReads)==0,"Warm missing model rebuilt catalogue");
+ Check(br==ar && ReferenceEquals(bs,ass),"Native slot choice/refusal changed");
+ Check(bc.Car!.ModelId==ac.Car!.ModelId && bc.Car.PaintSeed==ac.Car.PaintSeed,"Saved model/paint changed");
+ }
+ for(int trial=0;trial<1500;trial++) {
+ var route=new Route();
+ int n=1+trial%512;
+ for(int i=0;i<n;i++) route.Legs.Add(new RouteLeg{Minutes=.001+rng.NextDouble(),From=new Position(i,0,0),To=new Position(i+1,0,0),Mode=(TravelMode)(i%4),ServiceId=i.ToString()});
+ foreach(double at in new[]{0,route.Minutes,route.Minutes*rng.NextDouble(),route.Legs[0].Minutes,Math.BitIncrement(route.Legs[0].Minutes)}) {
+ if(at>route.Minutes)continue;
+ var b=Before.SampleRoute(route,at,null); var a=After.SampleRoute(route,at,null);
+ Check(SameSample(b,a),"Sample changed at boundary");
+ // Invoke the compiled production method, rather than only comparing extracted copies.
+ Route.DurationReads = 0;
+ Check(SameSample(CitySimulator.SampleRoute(route,at,null),b),"Actual Core sampler differs");
+ Check(Route.DurationReads == 1,"Actual sampler rescanned route duration");
+ }
+ route.Legs[0].Minutes*=2;
+ Check(SameSample(CitySimulator.SampleRoute(route,route.Minutes,null),Before.SampleRoute(route,route.Minutes,null)),"Mutable route total retained");
+ }
+ Check(afterPositions<beforePositions,"No position reduction"); Check(afterHierarchy<beforeHierarchy,"No hierarchy reduction");
+ Console.WriteLine($"PASS {checks} checks; positions {beforePositions}->{afterPositions}; hierarchy {beforeHierarchy}->{afterHierarchy}");
+ }
+}

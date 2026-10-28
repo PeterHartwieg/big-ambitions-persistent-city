@@ -1,22 +1,29 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("PersistentCity.Tests")]
 
 namespace PersistentCity.Core
 {
     public readonly struct AdvanceResult
     {
-        public AdvanceResult(int events, bool caughtUp, int trafficEvents = 0) { Events = events; CaughtUp = caughtUp; TrafficEvents = trafficEvents; }
+        public AdvanceResult(int events, bool caughtUp, int trafficEvents = 0, bool planningPending = false)
+        { Events = events; CaughtUp = caughtUp; TrafficEvents = trafficEvents; PlanningPending = planningPending; }
         public int Events { get; }
         public int TrafficEvents { get; }
         public bool CaughtUp { get; }
+        /// <summary>A citizen event is waiting for a route answer. The clock stays at that event's minute
+        /// until ContinuePlanning reports completion; nothing else advances meanwhile.</summary>
+        public bool PlanningPending { get; }
     }
 
     public sealed partial class CitySimulator
     {
         private sealed class Due
         {
-            // ResidentLifecycle replaces residents in this same list slot; never rebind a lease
-            // after external removal, replacement or reordering of the public snapshot list.
+            // Never rebind a lease after external removal, replacement or reordering
+            // of the public snapshot list. Residents retain their identities.
             public readonly int ListIndex;
             public Due(int listIndex) { ListIndex = listIndex; }
             public CitizenState Citizen = null!;
@@ -86,9 +93,12 @@ namespace PersistentCity.Core
         internal void ObserveFood(FoodDecisionTrace trace) => activityObservers.FoodHandlers?.Invoke(trace);
 
         /// <summary>Rebuild scheduling indexes after retiming this same state, retaining observation
-        /// ownership. The caller replaces the old simulator and must not advance it again.</summary>
+        /// ownership. The caller replaces the old simulator and must not advance it again. An event
+        /// waiting for a route is abandoned here; the state still holds it unstarted, so the replacement
+        /// runs it again from the beginning.</summary>
         public CitySimulator RebuildRoutes(IRoutePlanner replacementRoutes)
         {
+            AbortPending();
             var replacement = new CitySimulator(State, replacementRoutes);
             replacement.activityObservers = activityObservers;
             if (food != null) replacement.AttachFoodMarket(food.Market);
@@ -120,9 +130,21 @@ namespace PersistentCity.Core
         public AdvanceResult AdvanceTo(double targetMinute, int eventBudget = 10000)
             => AdvanceCore(targetMinute, eventBudget, true);
 
-        /// <summary>Native frames may stop between events for their time budget; publish once after the frame batch.</summary>
+        /// <summary>Native frames may stop between events for their time budget; publish once after the frame batch.
+        /// With a resumable planner a citizen event that needs a route returns PlanningPending instead of
+        /// finishing; drive it with ContinuePlanning until that reports completion.</summary>
         public AdvanceResult AdvanceFrameSlice(double targetMinute, int eventBudget = 1)
             => AdvanceCore(targetMinute, eventBudget, false);
+
+        // Several events may share the published minute, especially daily budget postings.
+        // Minute equality alone does not establish that the simulation has drained its work.
+        public bool IsCaughtUpTo(double targetMinute) => Position.Finite(targetMinute)
+            && State.Minute >= targetMinute && NoEventsThrough(targetMinute);
+
+        private bool NoEventsThrough(double targetMinute) => pending == null
+            && (due.Count == 0 || due.Min!.Minute > targetMinute)
+            && (traffic == null || traffic.NextEventMinute > targetMinute)
+            && (State.Food == null || (food != null && food.NextMinute > targetMinute));
 
         private AdvanceResult AdvanceCore(double targetMinute, int eventBudget, bool publishSnapshot)
         {
@@ -133,6 +155,15 @@ namespace PersistentCity.Core
             EnsureTrafficNetwork();
             ValidatePhysicalClock(targetMinute);
             int count = 0, trafficCount = 0;
+            if (pending != null)
+            {
+                // The non-frame path finishes an interrupted event inline; a frame slice leaves it to ContinuePlanning.
+                if (!publishSnapshot) return new AdvanceResult(0, false, 0, planningPending: true);
+                // A restart requeues the event unstarted; the loop below then runs it again inline.
+                bool completed = false;
+                while (pending != null) completed = ContinuePlanning(double.PositiveInfinity);
+                if (completed) count++;
+            }
             while (count < eventBudget)
             {
                 double citizenMinute = due.Count == 0 ? double.PositiveInfinity : due.Min!.Minute;
@@ -156,28 +187,227 @@ namespace PersistentCity.Core
                 traffic?.AdvanceTo(next, 0);
                 var item = due.Min!;
                 due.Remove(item);
-                string oldId = item.Citizen.Identity.Id;
-                bool enteredTraffic = TryStartTraffic(item.Citizen);
-                if (!enteredTraffic) item.Citizen = Step(item.Citizen, item.Minute);
-                citizenEvents.Remove(oldId);
-                citizenEvents[item.Citizen.Identity.Id] = item;
-                if (!enteredTraffic && (!Position.Finite(item.Citizen.NextEventMinute) || item.Citizen.NextEventMinute <= State.Minute))
-                    throw new InvalidOperationException("Each citizen event must schedule a later event.");
-                if (!enteredTraffic)
+                if (TryStartTraffic(item.Citizen))
                 {
-                    item.Minute = ScheduledMinute(item.Citizen);
-                    due.Add(item);
+                    count++;
+                    food?.ObserveStop(item.Citizen);
+                    activityObservers.Handlers?.Invoke(item.Citizen.Identity.Id, item.Citizen, State.Minute);
+                    continue;
                 }
+                bool inline = publishSnapshot;
+                if (!inline && RestartsExhausted(item)) { inline = true; InlineAfterRestarts++; }
+                if (!RunEvent(item, inline))
+                    return new AdvanceResult(count, false, trafficCount, planningPending: true);
                 count++;
-                food?.Replace(oldId, item.Citizen);
-                activityObservers.Handlers?.Invoke(oldId, item.Citizen, State.Minute);
             }
-            bool caughtUp = (due.Count == 0 || due.Min!.Minute > targetMinute)
-                && (traffic == null || traffic.NextEventMinute > targetMinute)
-                && (food == null || food.NextMinute > targetMinute);
+            bool caughtUp = NoEventsThrough(targetMinute);
             if (caughtUp) { traffic?.AdvanceTo(targetMinute, 0); State.Minute = targetMinute; }
             if (publishSnapshot) SynchronizeSnapshot();
             return new AdvanceResult(count, caughtUp, trafficCount);
+        }
+
+        // One citizen event in flight. The event runs on a working copy of the resident, so the published
+        // state keeps the unstarted event (NextEventMinute equal to the clock) until the copy is committed.
+        // A save or a planner rebuild taken meanwhile therefore stores and replays the event from its start.
+        private sealed class PendingEvent
+        {
+            public PendingEvent(Due item, CitizenState working, IEnumerator<RouteRequest> steps)
+            { Item = item; Working = working; Steps = steps; }
+            public readonly Due Item;
+            public readonly CitizenState Working;
+            public readonly IEnumerator<RouteRequest> Steps;
+            public RouteRequest? Request;
+            public IRoutePlanningJob? Job;
+        }
+        private PendingEvent? pending;
+        /// <summary>True while a citizen event waits for its route answer.</summary>
+        public bool PlanningPending => pending != null;
+        /// <summary>Route requests handed to a resumable planner, inline or across frames.</summary>
+        public long PlanningRequests { get; private set; }
+        private bool InProgress(Due item) => pending != null && ReferenceEquals(pending.Item, item);
+        /// <summary>Citizen events abandoned between slices because a job lost its captured native state and
+        /// requeued to run again from their first request.</summary>
+        public long EventRestarts { get; private set; }
+        /// <summary>Events run inline in a frame slice because the same resident's event had already restarted
+        /// MaximumEventRestarts times at the same held minute.</summary>
+        public long InlineAfterRestarts { get; private set; }
+        // A city whose snapshot keeps changing must still progress: after this many restarts of one event at one
+        // held minute, the next attempt runs inline, where every job gets an unlimited budget in one call.
+        private const int MaximumEventRestarts = 3;
+        private Due? restartedItem;
+        private double restartedMinute;
+        private int restartedCount;
+        private bool RestartsExhausted(Due item) => ReferenceEquals(restartedItem, item)
+            && restartedMinute == State.Minute && restartedCount >= MaximumEventRestarts;
+
+        // Returns false only when a resumable planner's job was left pending for the frame loop.
+        private bool RunEvent(Due item, bool inline)
+        {
+            var working = CloneForEvent(item.Citizen);
+            var evt = new PendingEvent(item, working, StepEvent(working, item.Minute).GetEnumerator());
+            try
+            {
+                while (evt.Steps.MoveNext())
+                {
+                    var request = evt.Steps.Current;
+                    if (routes is IResumableRoutePlanner resumable)
+                    {
+                        PlanningRequests++;
+                        var job = resumable.Begin(request);
+                        if (!inline) { evt.Request = request; evt.Job = job; pending = evt; return false; }
+                        try { while (!job.Continue(double.PositiveInfinity)) { } request.Answer(job.Result); }
+                        finally { job.Dispose(); }
+                    }
+                    else request.Answer(AnswerSynchronously(request));
+                }
+            }
+            catch { evt.Steps.Dispose(); due.Add(item); throw; }
+            CompleteEvent(evt);
+            return true;
+        }
+
+        private Route? AnswerSynchronously(RouteRequest request)
+            => request.Citizen != null && routes is ICitizenRoutePlanner citizenRoutes
+                ? citizenRoutes.Plan(request.From, request.To, request.DepartureMinute, request.Citizen)
+                : routes.Plan(request.From, request.To, request.DepartureMinute, request.Preferences);
+
+        /// <summary>Give the pending route job up to the budget (it always performs at least one unit of
+        /// work), resume the event when the answer arrives, and report true once no request is pending.
+        /// A planner exception leaves the resident's published state untouched with the event still due;
+        /// the next advance runs it again from the beginning. A job that throws RoutePlanningRestartRequired
+        /// abandons the whole event the same way, without propagating: earlier answers of the event belong to
+        /// the replaced snapshot, so the working copy is discarded, the clock stays held and this returns false.
+        /// The next advance replays the event from its first request on the new snapshot, as a reload would.</summary>
+        public bool ContinuePlanning(double budgetMilliseconds)
+        {
+            if (double.IsNaN(budgetMilliseconds) || budgetMilliseconds < 0) throw new ArgumentOutOfRangeException(nameof(budgetMilliseconds));
+            var evt = pending;
+            if (evt == null) return true;
+            try
+            {
+                var job = evt.Job!;
+                if (!job.Continue(budgetMilliseconds)) return false;
+                evt.Request!.Answer(job.Result);
+                job.Dispose(); evt.Job = null; evt.Request = null;
+                if (evt.Steps.MoveNext())
+                {
+                    PlanningRequests++;
+                    evt.Request = evt.Steps.Current;
+                    evt.Job = ((IResumableRoutePlanner)routes).Begin(evt.Request);
+                    return false;
+                }
+                pending = null;
+                CompleteEvent(evt);
+                return true;
+            }
+            catch (RoutePlanningRestartRequired) { RestartPending(evt); return false; }
+            catch { AbortPending(); throw; }
+        }
+
+        private void RestartPending(PendingEvent evt)
+        {
+            EventRestarts++;
+            if (ReferenceEquals(restartedItem, evt.Item) && restartedMinute == State.Minute) restartedCount++;
+            else { restartedItem = evt.Item; restartedMinute = State.Minute; restartedCount = 1; }
+            AbortPending();
+        }
+
+        private void AbortPending()
+        {
+            var evt = pending;
+            if (evt == null) return;
+            pending = null;
+            try { evt.Job?.Dispose(); }
+            finally
+            {
+                evt.Steps.Dispose();
+                if (!due.Add(evt.Item)) throw new InvalidOperationException("An interrupted event lost its queue slot.");
+            }
+        }
+
+        private void CompleteEvent(PendingEvent evt)
+        {
+            var item = evt.Item; var working = evt.Working; var live = item.Citizen;
+            evt.Steps.Dispose();
+            if (!Position.Finite(working.NextEventMinute) || working.NextEventMinute <= State.Minute)
+            {
+                if (!due.Add(item)) throw new InvalidOperationException("An invalid event lost its queue slot.");
+                throw new InvalidOperationException("Each citizen event must schedule a later event.");
+            }
+            CommitEvent(live, working);
+            if (ReferenceEquals(restartedItem, item)) restartedItem = null;
+            item.Minute = ScheduledMinute(live);
+            // The in-flight item is outside the queue; failing to add it means it was queued meanwhile and
+            // its sort key just changed inside the set.
+            if (!due.Add(item)) throw new InvalidOperationException("A completed event was already queued.");
+            food?.ObserveStop(live);
+            activityObservers.Handlers?.Invoke(live.Identity.Id, live, State.Minute);
+        }
+
+        // The event works on a copy that shares the immutable identity and the route object (events replace
+        // journeys, never edit their legs) and owns copies of everything an event edits in place.
+        internal static CitizenState CloneForEvent(CitizenState live) => new CitizenState
+        {
+            Identity = live.Identity, HomeId = live.HomeId, DayPlaceId = live.DayPlaceId, ShopId = live.ShopId, LeisureId = live.LeisureId,
+            Preferences = new TravelPreferences { OwnsCar = live.Preferences.OwnsCar, AllowTransit = live.Preferences.AllowTransit,
+                WalkingToleranceMetres = live.Preferences.WalkingToleranceMetres, FareWeightMinutes = live.Preferences.FareWeightMinutes },
+            CommutePreparation = CopyPreparation(live.CommutePreparation),
+            MealOuting = live.MealOuting == null ? null : CopyOuting(live.MealOuting),
+            Car = live.Car == null ? null : CopyCar(live.Car),
+            JoinedMinute = live.JoinedMinute, LastEmploymentCheckDay = live.LastEmploymentCheckDay, JobChanges = live.JobChanges,
+            Phase = live.Phase, Activity = live.Activity, PlaceId = live.PlaceId, DestinationId = live.DestinationId,
+            DestinationActivity = live.DestinationActivity, Journey = live.Journey, DepartureMinute = live.DepartureMinute,
+            NextEventMinute = live.NextEventMinute, ActivityUntilMinute = live.ActivityUntilMinute,
+            CompletedJourneys = live.CompletedJourneys, MissedActivities = live.MissedActivities,
+            RecentVisits = new List<VisitRecord>(live.RecentVisits),
+            // Derived from the shared identity and the seed, so the copy may share it.
+            RoutineKeys = live.RoutineKeys
+        };
+        private static CommutePreparation CopyPreparation(CommutePreparation source) => new CommutePreparation
+        {
+            PlaceId = source.PlaceId, WorkStartsAt = source.WorkStartsAt, WorkEndsAt = source.WorkEndsAt,
+            PreparedAt = source.PreparedAt, TravelMinutes = source.TravelMinutes
+        };
+        private static MealOuting CopyOuting(MealOuting source) => new MealOuting
+        {
+            OriginId = source.OriginId, OriginActivity = source.OriginActivity, ResumeUntil = source.ResumeUntil,
+            ResumeEvent = source.ResumeEvent, Returning = source.Returning
+        };
+        private static CarState CopyCar(CarState source) => new CarState
+        { Id = source.Id, ModelId = source.ModelId, PaintSeed = source.PaintSeed, ParkedPosition = source.ParkedPosition };
+
+        // Objects other code may hold (the car, the preparation, an outing) keep their identity when they survive the event.
+        internal static void CommitEvent(CitizenState live, CitizenState working)
+        {
+            live.HomeId = working.HomeId; live.DayPlaceId = working.DayPlaceId; live.ShopId = working.ShopId; live.LeisureId = working.LeisureId;
+            live.Preferences.OwnsCar = working.Preferences.OwnsCar; live.Preferences.AllowTransit = working.Preferences.AllowTransit;
+            live.Preferences.WalkingToleranceMetres = working.Preferences.WalkingToleranceMetres;
+            live.Preferences.FareWeightMinutes = working.Preferences.FareWeightMinutes;
+            var preparation = live.CommutePreparation; var prepared = working.CommutePreparation;
+            preparation.PlaceId = prepared.PlaceId; preparation.WorkStartsAt = prepared.WorkStartsAt; preparation.WorkEndsAt = prepared.WorkEndsAt;
+            preparation.PreparedAt = prepared.PreparedAt; preparation.TravelMinutes = prepared.TravelMinutes;
+            if (working.MealOuting == null) live.MealOuting = null;
+            else if (live.MealOuting == null) live.MealOuting = CopyOuting(working.MealOuting);
+            else
+            {
+                var outing = live.MealOuting; var changed = working.MealOuting;
+                outing.OriginId = changed.OriginId; outing.OriginActivity = changed.OriginActivity; outing.ResumeUntil = changed.ResumeUntil;
+                outing.ResumeEvent = changed.ResumeEvent; outing.Returning = changed.Returning;
+            }
+            if (working.Car == null) live.Car = null;
+            else if (live.Car == null) live.Car = CopyCar(working.Car);
+            else
+            {
+                var car = live.Car; var changed = working.Car;
+                car.Id = changed.Id; car.ModelId = changed.ModelId; car.PaintSeed = changed.PaintSeed; car.ParkedPosition = changed.ParkedPosition;
+            }
+            live.JoinedMinute = working.JoinedMinute; live.LastEmploymentCheckDay = working.LastEmploymentCheckDay; live.JobChanges = working.JobChanges;
+            live.Phase = working.Phase; live.Activity = working.Activity; live.PlaceId = working.PlaceId; live.DestinationId = working.DestinationId;
+            live.DestinationActivity = working.DestinationActivity; live.Journey = working.Journey; live.DepartureMinute = working.DepartureMinute;
+            live.NextEventMinute = working.NextEventMinute; live.ActivityUntilMinute = working.ActivityUntilMinute;
+            live.CompletedJourneys = working.CompletedJourneys; live.MissedActivities = working.MissedActivities;
+            live.RecentVisits.Clear(); live.RecentVisits.AddRange(working.RecentVisits);
+            live.RoutineKeys = working.RoutineKeys;
         }
 
         public Position PositionOf(CitizenState person) => person.Phase == CitizenPhase.Travelling && person.Journey != null
@@ -208,7 +438,7 @@ namespace PersistentCity.Core
                 if (leg.Mode == TravelMode.Bus || leg.Mode == TravelMode.Subway) containsTransit = true;
                 if (leg.Mode == TravelMode.Car)
                 {
-                    if (!person.Preferences.OwnsCar || person.Car == null || person.Car.Id != person.Identity.Id + ":car"
+                    if (!person.Preferences.OwnsCar || person.Car == null || !OwnedCarId(person.Car.Id, person.Identity.Id)
                         || !person.Car.ParkedPosition.IsFinite || leftCar)
                         throw new InvalidOperationException("A car route requires its owned parked car and one contiguous car block.");
                     if (!seenCar && Position.Distance(leg.From, person.Car.ParkedPosition) > 0.01)
@@ -220,6 +450,14 @@ namespace PersistentCity.Core
             if (seenCar && containsTransit) throw new InvalidOperationException("A car route cannot also use public transit.");
         }
 
+        // Car.Id == Identity.Id + ":car" (a null ID concatenating as empty) without building the string for every car leg.
+        private static bool OwnedCarId(string? car, string? resident)
+        {
+            resident ??= "";
+            return car != null && car.Length == resident.Length + 4 && car.StartsWith(resident, StringComparison.Ordinal)
+                && string.CompareOrdinal(car, resident.Length, ":car", 0, 4) == 0;
+        }
+
         private static void CommitCarArrival(CitizenState person)
         {
             if (person.Journey == null) return;
@@ -228,10 +466,25 @@ namespace PersistentCity.Core
                 if (leg.Mode == TravelMode.Car) person.Car!.ParkedPosition = leg.To;
         }
 
-        private CitizenState Step(CitizenState person, double now)
+        private RouteRequest CitizenRequest(Place from, Place to, double now, CitizenState person)
+            => new RouteRequest(from, to, now, person, person.Preferences);
+
+        // One citizen event. Every route question is yielded as a request and the event resumes with its
+        // answer, so the side effects before and after each plan keep the order of the former synchronous Step.
+        private IEnumerable<RouteRequest> StepEvent(CitizenState person, double now)
         {
-            if (StepMealOuting(person, now)) return person;
+            var outing = BeginMealOuting(person, now);
+            if (outing == MealOutingStep.Handled) yield break;
+            if (outing == MealOutingStep.NeedsReturnRoute)
+            {
+                var returnRequest = new RouteRequest(places[person.PlaceId], places[person.MealOuting!.OriginId], now, null,
+                    new TravelPreferences { OwnsCar = false, AllowTransit = false, WalkingToleranceMetres = person.Preferences.WalkingToleranceMetres });
+                yield return returnRequest;
+                FinishMealReturn(person, now, returnRequest.Result);
+                yield break;
+            }
             RoutineSlot? missedArrival = null;
+            bool arrived = false;
             if ((person.Phase == CitizenPhase.WaitingForRoute || person.Phase == CitizenPhase.WaitingForOpening)
                 && person.DestinationActivity != Activity.Home && now >= person.ActivityUntilMinute)
                 MissRoutine(person, new RoutineSlot(person.DestinationId, person.DestinationActivity, person.ActivityUntilMinute),
@@ -261,7 +514,7 @@ namespace PersistentCity.Core
                     if (opening.HasValue)
                     {
                         WaitForOpening(person, new RoutineSlot(person.PlaceId, person.Activity, person.ActivityUntilMinute), opening.Value);
-                        return person;
+                        yield break;
                     }
                     MissRoutine(person, new RoutineSlot(person.PlaceId, person.Activity, person.ActivityUntilMinute),
                         now, now >= person.ActivityUntilMinute ? "arrival-after-deadline" : "arrival-no-opening");
@@ -270,16 +523,26 @@ namespace PersistentCity.Core
                 person.Journey = null;
                 person.DestinationId = "";
                 person.DepartureMinute = 0;
-                person = ResidentLifecycle.ApplyAtHome(State, person, now);
-                // Retain a home fallback until its original window ends. This also survives reload
-                // and prevents counting the same closed activity again after the journey home.
-                if (person.Activity == Activity.Home && now < person.ActivityUntilMinute)
-                {
-                    person.NextEventMinute = HomeEvent(person, person.ActivityUntilMinute, now);
-                    return person;
-                }
+                arrived = true;
             }
-            person = ResidentLifecycle.ApplyAtHome(State, person, now);
+            // The daily employment check probes candidate workplaces with detached residents; each probe is one request.
+            var candidates = ResidentLifecycle.BeginEmploymentCheck(State, person, now, places);
+            if (candidates != null)
+                foreach (var candidate in candidates)
+                {
+                    var probe = WorkplaceProbe(person, candidate);
+                    yield return probe;
+                    if (!ReachableWorkplace(probe)) continue;
+                    ResidentLifecycle.AssignWorkplace(person, candidate);
+                    break;
+                }
+            // Retain a home fallback until its original window ends. This also survives reload
+            // and prevents counting the same closed activity again after the journey home.
+            if (arrived && person.Activity == Activity.Home && now < person.ActivityUntilMinute)
+            {
+                person.NextEventMinute = HomeEvent(person, person.ActivityUntilMinute, now);
+                yield break;
+            }
             if (person.CommutePreparation.PlaceId != person.DayPlaceId)
                 person.CommutePreparation = new CommutePreparation();
             // An admitted activity retains its saved deadline, including an old
@@ -290,7 +553,7 @@ namespace PersistentCity.Core
             if (attending && currentClose.HasValue)
             {
                 person.NextEventMinute = Math.Min(person.ActivityUntilMinute, currentClose.Value);
-                return person;
+                yield break;
             }
             // Waits own their original destination/window too. In particular, a
             // failed early commute must not become Home on its next pre-shift retry.
@@ -300,20 +563,36 @@ namespace PersistentCity.Core
             var slot = committedWait
                 ? new RoutineSlot(person.DestinationId, person.DestinationActivity, person.ActivityUntilMinute)
                 : attending || homeFallback ? new RoutineSlot(person.HomeId, Activity.Home, person.ActivityUntilMinute)
-                : DailyRoutine.At(person, State.Seed, now, State.Places);
+                : DailyRoutine.At(person, State.Seed, now, State.Places, places.TryGetValue(person.HomeId, out var home) ? home : null);
             Route? commuteRoute = null;
             bool earlyCommute = false;
             double commuteAt = double.PositiveInfinity;
-            if (!homeFallback && TryPrepareCommute(person, now, out var commute, out commuteRoute, out commuteAt) && now >= commuteAt)
+            if (!homeFallback)
             {
-                slot = new RoutineSlot(commute.PlaceId, commute.Activity, commute.EndsAt);
-                earlyCommute = true;
+                var commute = DecideCommute(person, now, allowPlanning: true);
+                if (commute.Plan != CommutePlanPoint.None)
+                {
+                    var request = CitizenRequest(places[person.HomeId], places[commute.Window.PlaceId], now, person);
+                    yield return request;
+                    commuteRoute = ValidatedCommute(request, person);
+                    commute = FinishCommute(person, commute, commuteRoute, now);
+                }
+                commuteAt = commute.LeaveAt;
+                if (commute.Prepared && now >= commuteAt)
+                {
+                    slot = new RoutineSlot(commute.Window.PlaceId, commute.Window.Activity, commute.Window.EndsAt);
+                    earlyCommute = true;
+                }
             }
             Route? optionalRoute = null;
             bool optionalSelected = false;
             if (!committedWait && !attending && !homeFallback && !earlyCommute
                 && (slot.Activity == Activity.Shop || slot.Activity == Activity.Leisure))
-                optionalSelected = ChooseOptionalDestination(person, slot, now, out slot, out optionalRoute);
+            {
+                var choice = new OptionalChoice(slot);
+                foreach (var request in ChooseOptionalDestination(person, slot, now, choice)) yield return request;
+                optionalSelected = choice.Selected; slot = choice.Slot; optionalRoute = choice.Route;
+            }
             if (!places.TryGetValue(slot.PlaceId, out var destination)) throw new InvalidOperationException("Unknown destination " + slot.PlaceId);
             bool commutingToWork = routes is ICommuteTimingPlanner && person.PlaceId == person.HomeId && person.Journey == null
                 && (slot.Activity == Activity.Work || slot.Activity == Activity.Study) && slot.PlaceId != person.PlaceId;
@@ -328,7 +607,7 @@ namespace PersistentCity.Core
                 if (retryAt.HasValue)
                 {
                     WaitForOpening(person, slot, retryAt.Value);
-                    return person;
+                    yield break;
                 }
                 if (!attendedUntilClosure && !alreadyMissedArrival)
                     MissRoutine(person, slot, now, "no-opening-in-window");
@@ -351,19 +630,25 @@ namespace PersistentCity.Core
                     : Math.Min(slot.EndsAt, DailyRoutine.NextClose(destination, now)!.Value);
                 person.NextEventMinute = ResidentLifecycle.NextHomeEvent(person, person.ActivityUntilMinute, now);
                 if (slot.Activity == Activity.Home && commuteAt > now && commuteAt < person.NextEventMinute) person.NextEventMinute = commuteAt;
-                return person;
+                yield break;
             }
             person.DestinationId = slot.PlaceId;
             person.DestinationActivity = slot.Activity;
-            var route = optionalSelected ? optionalRoute : earlyCommute ? commuteRoute : routes is ICitizenRoutePlanner citizenRoutes
-                ? citizenRoutes.Plan(places[person.PlaceId], destination, now, person)
-                : routes.Plan(places[person.PlaceId], destination, now, person.Preferences);
+            Route? route;
+            if (optionalSelected) route = optionalRoute;
+            else if (earlyCommute) route = commuteRoute;
+            else
+            {
+                var request = CitizenRequest(places[person.PlaceId], destination, now, person);
+                yield return request;
+                route = request.Result;
+            }
             if (route == null)
             {
                 ObserveRoutine(person, slot, now, "route-rejected", "unreachable");
                 person.Phase = CitizenPhase.WaitingForRoute;
                 person.NextEventMinute = Math.Min(now + 30, slot.EndsAt);
-                return person;
+                yield break;
             }
             ValidateRoute(route, places[person.PlaceId].Position, destination.Position);
             ValidateCarRoute(route, person);
@@ -371,7 +656,34 @@ namespace PersistentCity.Core
             person.Journey = route;
             person.DepartureMinute = now;
             person.NextEventMinute = now + route.Minutes;
-            return person;
+        }
+
+        private RouteRequest WorkplaceProbe(CitizenState person, Place destination)
+        {
+            var home = places[person.HomeId];
+            // Native planners may allocate a home car. Feasibility checks use a detached
+            // resident, preserving live car identity, parking and committed travel state.
+            var probe = new CitizenState
+            {
+                Identity = Population.CloneIdentity(person.Identity), HomeId = person.HomeId,
+                PlaceId = person.HomeId, DayPlaceId = destination.Id, Activity = Activity.Home,
+                Phase = CitizenPhase.AtPlace,
+                Preferences = new TravelPreferences { OwnsCar = person.Preferences.OwnsCar,
+                    AllowTransit = person.Preferences.AllowTransit, WalkingToleranceMetres = person.Preferences.WalkingToleranceMetres,
+                    FareWeightMinutes = person.Preferences.FareWeightMinutes },
+                Car = person.Car == null ? null : new CarState { Id = person.Car.Id, ModelId = person.Car.ModelId,
+                    PaintSeed = person.Car.PaintSeed, ParkedPosition = person.Car.ParkedPosition }
+            };
+            return new RouteRequest(home, destination, State.Minute, probe, probe.Preferences);
+        }
+
+        private static bool ReachableWorkplace(RouteRequest probe)
+        {
+            var route = probe.Result;
+            if (route == null) return false;
+            try { ValidateRoute(route, probe.From.Position, probe.To.Position); ValidateCarRoute(route, probe.Citizen!); }
+            catch (InvalidOperationException) { return false; }
+            return true;
         }
 
         private double AdmissionFrom(CitizenState person)
@@ -381,21 +693,35 @@ namespace PersistentCity.Core
             return window.HasValue && window.Value.EndsAt == person.ActivityUntilMinute ? window.Value.StartsAt : 0;
         }
 
-        private bool TryPrepareCommute(CitizenState person, double now, out WorkWindow window, out Route? route, out double leaveAt, bool allowPlanning = true)
+        private enum CommutePlanPoint { None, MatchingPreparation, KnownDuration, FreshEstimate }
+
+        private readonly struct CommuteDecision
         {
-            window = default; route = null; leaveAt = double.PositiveInfinity;
-            if (!(routes is ICommuteTimingPlanner) || !ResidentLifecycle.IsSafelyHome(person)) return false;
+            public CommuteDecision(bool prepared, WorkWindow window, double leaveAt, CommutePlanPoint plan)
+            { Prepared = prepared; Window = window; LeaveAt = leaveAt; Plan = plan; }
+            public static readonly CommuteDecision None = new CommuteDecision(false, default, double.PositiveInfinity, CommutePlanPoint.None);
+            public bool Prepared { get; }
+            public WorkWindow Window { get; }
+            public double LeaveAt { get; }
+            public CommutePlanPoint Plan { get; }
+        }
+
+        // The former TryPrepareCommute up to its route search. A decision that names a plan point has done
+        // every side effect that preceded the search; FinishCommute performs the ones that followed it.
+        private CommuteDecision DecideCommute(CitizenState person, double now, bool allowPlanning)
+        {
+            if (!(routes is ICommuteTimingPlanner) || !ResidentLifecycle.IsSafelyHome(person)) return CommuteDecision.None;
             // A current shift is handled by the ordinary activity path, never by
             // planning tomorrow while today's worker still needs to leave home.
             var current = DailyRoutine.WorkOnDay(person, State.Seed, now);
-            if (current.HasValue && now >= current.Value.StartsAt && now < current.Value.EndsAt) return false;
+            if (current.HasValue && now >= current.Value.StartsAt && now < current.Value.EndsAt) return CommuteDecision.None;
             var planned = DailyRoutine.NextWork(person, State.Seed, now);
-            if (!planned.HasValue || planned.Value.PlaceId == person.HomeId) return false;
-            window = planned.Value;
+            if (!planned.HasValue || planned.Value.PlaceId == person.HomeId) return CommuteDecision.None;
+            var window = planned.Value;
             // A return-home fallback owns a missed activity's original deadline.
             // Replanning that same shift after an early closed-venue arrival would
             // send the resident out again and count the same miss twice.
-            if (person.ActivityUntilMinute == window.EndsAt) return false;
+            if (person.ActivityUntilMinute == window.EndsAt) return CommuteDecision.None;
             var preparation = person.CommutePreparation;
             bool matches = preparation.PlaceId == window.PlaceId && preparation.WorkStartsAt == window.StartsAt
                 && preparation.WorkEndsAt == window.EndsAt;
@@ -403,16 +729,14 @@ namespace PersistentCity.Core
             {
                 // A failed estimate is retried at shift start, not at every home
                 // event overnight. A successful estimate schedules one departure.
-                leaveAt = preparation.TravelMinutes > 0
+                double leaveAt = preparation.TravelMinutes > 0
                     ? Math.Max(preparation.PreparedAt, window.StartsAt - preparation.TravelMinutes) : window.StartsAt;
-                if (now < leaveAt || !allowPlanning) return true;
-                route = PlanCommute(person, window, now);
-                if (route != null) { preparation.TravelMinutes = route.EstimatedMinutes; preparation.PreparedAt = now; }
-                return true;
+                return new CommuteDecision(true, window, leaveAt,
+                    now < leaveAt || !allowPlanning ? CommutePlanPoint.None : CommutePlanPoint.MatchingPreparation);
             }
             double previousMinutes = preparation.PlaceId == window.PlaceId ? preparation.TravelMinutes : 0;
             double prepareAt = DailyRoutine.CommutePreparationAt(person, State.Seed, window, previousMinutes);
-            if (now < prepareAt) { leaveAt = prepareAt; return false; }
+            if (now < prepareAt) return new CommuteDecision(false, window, prepareAt, CommutePlanPoint.None);
             if (previousMinutes > 0)
             {
                 // A known commute supplies tomorrow's departure estimate without
@@ -422,36 +746,48 @@ namespace PersistentCity.Core
                     PlaceId = window.PlaceId, WorkStartsAt = window.StartsAt, WorkEndsAt = window.EndsAt,
                     PreparedAt = now, TravelMinutes = previousMinutes
                 };
-                leaveAt = Math.Max(now, window.StartsAt - previousMinutes);
-                if (now < leaveAt || !allowPlanning) return true;
-                route = PlanCommute(person, window, now);
-                if (route != null) person.CommutePreparation.TravelMinutes = route.EstimatedMinutes;
-                return true;
+                double leaveAt = Math.Max(now, window.StartsAt - previousMinutes);
+                return new CommuteDecision(true, window, leaveAt,
+                    now < leaveAt || !allowPlanning ? CommutePlanPoint.None : CommutePlanPoint.KnownDuration);
             }
             // A home arrival only schedules work. Its next event will perform any
             // required search once, retaining the result when departure is due now.
-            if (!allowPlanning) { leaveAt = now; return false; }
+            if (!allowPlanning) return new CommuteDecision(false, window, now, CommutePlanPoint.None);
             // Only a duration estimate is retained. Route geometry and winners are
             // freshly selected at departure so reopened/off-path roads can compete.
-            route = PlanCommute(person, window, now);
-            double minutes = route?.EstimatedMinutes ?? 0;
-            person.CommutePreparation = new CommutePreparation
-            {
-                PlaceId = window.PlaceId, WorkStartsAt = window.StartsAt, WorkEndsAt = window.EndsAt,
-                PreparedAt = now, TravelMinutes = minutes
-            };
-            // A first unknown or changed route can already be too long. Leave now
-            // when necessary; never backdate a departure or invent punctuality.
-            leaveAt = minutes > 0 ? Math.Max(now, window.StartsAt - minutes) : window.StartsAt;
-            return true;
+            return new CommuteDecision(true, window, double.PositiveInfinity, CommutePlanPoint.FreshEstimate);
         }
 
-        private Route? PlanCommute(CitizenState person, WorkWindow window, double now)
+        private CommuteDecision FinishCommute(CitizenState person, CommuteDecision decision, Route? route, double now)
         {
-            var home = places[person.HomeId]; var destination = places[window.PlaceId];
-            var route = routes is ICitizenRoutePlanner citizenRoutes ? citizenRoutes.Plan(home, destination, now, person)
-                : routes.Plan(home, destination, now, person.Preferences);
-            if (route != null) { ValidateRoute(route, home.Position, destination.Position); ValidateCarRoute(route, person); }
+            var window = decision.Window;
+            switch (decision.Plan)
+            {
+                case CommutePlanPoint.MatchingPreparation:
+                    if (route != null) { person.CommutePreparation.TravelMinutes = route.EstimatedMinutes; person.CommutePreparation.PreparedAt = now; }
+                    return new CommuteDecision(true, window, decision.LeaveAt, CommutePlanPoint.None);
+                case CommutePlanPoint.KnownDuration:
+                    if (route != null) person.CommutePreparation.TravelMinutes = route.EstimatedMinutes;
+                    return new CommuteDecision(true, window, decision.LeaveAt, CommutePlanPoint.None);
+                case CommutePlanPoint.FreshEstimate:
+                    double minutes = route?.EstimatedMinutes ?? 0;
+                    person.CommutePreparation = new CommutePreparation
+                    {
+                        PlaceId = window.PlaceId, WorkStartsAt = window.StartsAt, WorkEndsAt = window.EndsAt,
+                        PreparedAt = now, TravelMinutes = minutes
+                    };
+                    // A first unknown or changed route can already be too long. Leave now
+                    // when necessary; never backdate a departure or invent punctuality.
+                    return new CommuteDecision(true, window, minutes > 0 ? Math.Max(now, window.StartsAt - minutes) : window.StartsAt, CommutePlanPoint.None);
+                default:
+                    return decision;
+            }
+        }
+
+        private static Route? ValidatedCommute(RouteRequest request, CitizenState person)
+        {
+            var route = request.Result;
+            if (route != null) { ValidateRoute(route, request.From.Position, request.To.Position); ValidateCarRoute(route, person); }
             return route;
         }
 
@@ -469,7 +805,7 @@ namespace PersistentCity.Core
         {
             double next = ResidentLifecycle.NextHomeEvent(person, deadline, now);
             if (IsHomeRoutineFallback(person, now)) return next;
-            TryPrepareCommute(person, now, out _, out _, out double leaveAt, allowPlanning: false);
+            double leaveAt = DecideCommute(person, now, allowPlanning: false).LeaveAt;
             if (Position.Finite(leaveAt)) next = Math.Min(next, Math.Max(now + 0.000001, leaveAt));
             return next;
         }

@@ -8,10 +8,13 @@ namespace StagingHarness
         public static int MainThread = Environment.CurrentManagedThreadId;
         public static long Reads;
         public static long FailAtRead = -1;
+        // Runs foreign code inside a native read, as a reentrant callback would.
+        public static Action? OnRead;
         public static void Read()
         {
             if (Environment.CurrentManagedThreadId != MainThread) throw new InvalidOperationException("Native read from worker");
             Reads++;
+            OnRead?.Invoke();
             if (Reads == FailAtRead) throw new InvalidOperationException("Injected native read failure");
         }
     }
@@ -29,7 +32,9 @@ namespace GleyTrafficSystem
         public int maxSpeed = 30;
         public bool temporaryDisabled;
         private int index;
-        public int listIndex { get { StagingHarness.Guard.Read(); return index; } set { index = value; } }
+        // Each full node validation reads listIndex once.
+        public int IndexReads;
+        public int listIndex { get { StagingHarness.Guard.Read(); IndexReads++; return index; } set { index = value; } }
         private bool entering, exiting, yielding, stopping;
         public bool enter { get { StagingHarness.Guard.Read(); return entering; } set { entering = value; } }
         public bool exit { get { StagingHarness.Guard.Read(); return exiting; } set { exiting = value; } }

@@ -7,12 +7,15 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <LangVersion>9</LangVersion>
     <DefineConstants>$(DefineConstants);MULTIMODAL_REGRESSION</DefineConstants>
+    <!-- compare.py builds a pre-slicing baseline tree with -p:SlicedPlanner=false. -->
+    <DefineConstants Condition="'$(SlicedPlanner)' != 'false'">$(DefineConstants);SLICED_PLANNER</DefineConstants>
     <SourceRoot Condition="'$(SourceRoot)' == ''">../..</SourceRoot>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(SourceRoot)/Core/*.cs" />
     <Compile Include="$(SourceRoot)/Compatibility/*.cs" />
     <Compile Include="$(SourceRoot)/Runtime/MultimodalRoutes.cs" />
+    <Compile Include="$(SourceRoot)/Runtime/NativeRouteMetrics.cs" />
     <Compile Include="$(SourceRoot)/Runtime/RoadRoutes.cs" />
     <Compile Include="$(SourceRoot)/Runtime/TrafficRoadNetwork.cs" />
     <Compile Include="$(SourceRoot)/Runtime/NativeRoadSpeeds.cs" />

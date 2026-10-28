@@ -13,7 +13,7 @@ def ready():
  checked(label+'-pause','time',{'pause':True,'speed':1,'keep_needs':True})
  while True:
   d=probe_call('status',30)
-  if 'error' not in d and abs(d['minute']-d['nativeMinute'])<.01:return d
+  if 'error' not in d and d.get('caughtUp',False):return d
   if time.monotonic()>end:raise RuntimeError('Population catch-up timeout')
   time.sleep(2)
 def until(day,clock):

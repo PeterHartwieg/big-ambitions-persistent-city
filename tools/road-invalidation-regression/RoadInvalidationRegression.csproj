@@ -13,6 +13,7 @@
     <Compile Include="$(SourceRoot)/Core/*.cs" />
     <Compile Include="$(SourceRoot)/Compatibility/*.cs" />
     <Compile Include="$(SourceRoot)/Runtime/MultimodalRoutes.cs" />
+    <Compile Include="$(SourceRoot)/Runtime/NativeRouteMetrics.cs" />
     <Compile Include="$(SourceRoot)/Runtime/RoadRoutes.cs" />
     <Compile Include="$(SourceRoot)/Runtime/TrafficRoadNetwork.cs" />
     <Compile Include="$(SourceRoot)/Runtime/NativeRoadSpeeds.cs" />

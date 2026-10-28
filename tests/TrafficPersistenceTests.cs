@@ -18,7 +18,7 @@ public sealed class TrafficPersistenceTests
         string wire = SaveCodec.Write(state);
         var read = SaveCodec.Read(wire);
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
-        Assert.False(read.Migrated);
+
         Assert.Equal(CityState.CurrentSchema, read.SourceSchema);
         Assert.Equal(wire, SaveCodec.Write(read.State!));
         var restored = TrafficKernel.Restore(read.State!.Traffic!, false);
@@ -31,27 +31,15 @@ public sealed class TrafficPersistenceTests
     }
 
     [Fact]
-    public void LegacyTrafficMigrationIsExplicitAndOnlyTheFirstReadReportsIt()
+    public void OldTrafficSchemaIsRefusedWithoutChangingTheOwnedQueue()
     {
-        var state = QueuedCity();
-        var kernel = TrafficKernel.Restore(state.Traffic!, false);
-        kernel.SetPhysicalControl("c0", true);
-        state.Traffic = kernel.Capture();
-        var wire = JObject.Parse(SaveCodec.Write(state)); wire["Traffic"]!["Schema"] = 1;
-        string source = wire.ToString();
-        var data = new Dictionary<string, string> { [SaveStore.StateKey] = source, ["rlo:state"] = "unchanged" };
+        var state = QueuedCity(); var wire = JObject.Parse(SaveCodec.Write(state)); wire["Traffic"]!["Schema"] = 1;
+        string payload = wire.ToString();
+        var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload, ["rlo:state"] = "unchanged" };
         var read = SaveStore.ReadFrom(data, state.PopulationKey);
-        Assert.Equal(SaveReadStatus.Loaded, read.Status); Assert.True(read.Migrated);
-        Assert.Equal(2, read.State!.Traffic!.Schema);
-        Assert.True(read.State.Traffic.Vehicles[0].PhysicalControl);
-        Assert.Equal(source, data[SaveStore.StateKey]); Assert.Equal("unchanged", data["rlo:state"]);
-        string migrated = SaveCodec.Write(read.State);
-        var again = SaveCodec.Read(migrated);
-        Assert.Equal(SaveReadStatus.Loaded, again.Status); Assert.False(again.Migrated);
-        Assert.Equal(migrated, SaveCodec.Write(again.State!));
-        wire["Traffic"]!["Vehicles"]![0]!["PhysicalControl"] = false;
-        wire["Traffic"]!["Events"] = new JArray();
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status);
+        Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
+        Assert.False(SaveStore.WriteTo(data, state).Success);
+        Assert.Equal(payload, data[SaveStore.StateKey]); Assert.Equal("unchanged", data["rlo:state"]);
     }
 
     [Fact]
@@ -67,20 +55,15 @@ public sealed class TrafficPersistenceTests
     }
 
     [Fact]
-    public void SchemaSixMigratesWithoutInventingTrafficAndKeepsExistingJourney()
+    public void SchemaSixIsRefusedWithoutInventingTrafficOrReplacingTheJourney()
     {
         var state = QueuedCity(); state.Traffic = null; state.TrafficTopologyId = "";
         var wire = JObject.Parse(SaveCodec.Write(state)); wire["Schema"] = 6;
         wire.Remove("Traffic"); wire.Remove("TrafficTopologyId"); FoodCommerceTests.StripNewFields(wire);
-        string source = wire.ToString();
-        var read = SaveCodec.Read(source);
-        Assert.Equal(SaveReadStatus.Loaded, read.Status); Assert.True(read.Migrated);
-        Assert.Equal(6, read.SourceSchema); Assert.Equal(CityState.CurrentSchema, read.State!.Schema);
-        Assert.Null(read.State.Traffic); Assert.Equal("", read.State.TrafficTopologyId);
-        Assert.Equal(state.Citizens[0].NextEventMinute, read.State.Citizens[0].NextEventMinute);
-        Assert.Equal(state.Citizens[0].Journey!.PositionAt(7).X, read.State.Citizens[0].Journey!.PositionAt(7).X);
-        wire["Traffic"] = null;
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status);
+        string payload = wire.ToString(); var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload };
+        var read = SaveStore.ReadFrom(data, state.PopulationKey);
+        Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
+        Assert.False(SaveStore.WriteTo(data, state).Success); Assert.Equal(payload, data[SaveStore.StateKey]);
     }
 
     [Theory]

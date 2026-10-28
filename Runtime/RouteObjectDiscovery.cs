@@ -7,12 +7,13 @@ using Object = UnityEngine.Object;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>Save-scoped, main-thread discovery. Walks loaded hierarchies (including inactive objects)
-    /// in small slices instead of periodically blocking on Unity's global object search.</summary>
+    /// <summary>Save-scoped, main-thread discovery. Captures loaded hierarchies (including inactive
+    /// objects) in small slices, then retains the inventory until an actual lifecycle invalidation.</summary>
     internal sealed class RouteObjectDiscovery : IRouteObjectSource, IDisposable
     {
         private const int MaximumSteps = 2048;
         private const double BudgetMilliseconds = 1;
+        private const double PausedInitializationBudgetMilliseconds = 16;
         // Do not fragment branches merely because the last native call crosses the 1 ms
         // scheduling budget. Native testing showed that doing so triples traversal work.
         private const double SplitThresholdMilliseconds = 4;
@@ -33,7 +34,7 @@ namespace PersistentCity.Runtime
         private int sceneIndex, rootIndex;
         private bool scanning, disposed;
         private bool restartRequested = true, membershipChanged = true;
-        private float nextSweep, sweepStarted;
+        private float sweepStarted;
         private double sweepMilliseconds;
         private long sweepVisits;
         private struct Cursor
@@ -68,7 +69,7 @@ namespace PersistentCity.Runtime
         {
             ClearPending(); childLists.Clear(); roots.Clear(); scenes.Clear(); foundDoors.Clear(); foundStations.Clear(); split.Clear(); doors.Clear(); stations.Clear();
             Doors = Array.Empty<FenceDoor>(); Stations = Array.Empty<SubwayStation>();
-            Ready = scanning = false; nextSweep = 0; restartRequested = membershipChanged = true; Revision++;
+            Ready = scanning = false; restartRequested = membershipChanged = true; Revision++;
         }
 
         /// <summary>Keep population preflight closed until a fresh, complete inventory is available.</summary>
@@ -76,19 +77,25 @@ namespace PersistentCity.Runtime
         private void SceneLoaded(Scene scene, LoadSceneMode mode) => RequestSweep();
         private void SceneUnloaded(Scene scene) => RequestSweep();
 
-        public void Step()
+        public void Step(bool preparingPausedCity = false)
         {
             if (disposed) throw new ObjectDisposedException(nameof(RouteObjectDiscovery));
-            long started = Stopwatch.GetTimestamp();
-            // A removal can be one half of a replacement. Do not expose a temporarily empty
-            // gate set: fence readiness and rediscover before publishing either side.
+            // The map is static during ordinary movement. Inspect only retained references
+            // after loading; elapsed time must never trigger another world traversal.
+            // A removal can be one half of a replacement, so rediscover before publishing it.
             if (Prune(doors) | Prune(stations)) RequestSweep();
+            if (!restartRequested && !scanning) return;
+            long started = Stopwatch.GetTimestamp();
+            // Before the first complete inventory, population processing is fenced.
+            // A slow rendered load should not stretch this preparation over hundreds
+            // of frames. Keep the same hard work bound for lifecycle-triggered discovery.
+            double budget = preparingPausedCity && Sweeps == 0 ? PausedInitializationBudgetMilliseconds : BudgetMilliseconds;
             bool changed = false;
-            if (restartRequested || (!scanning && Time.unscaledTime >= nextSweep)) { restartRequested = false; Begin(); }
+            if (restartRequested) { restartRequested = false; Begin(); }
             bool worked = scanning;
             for (int step = 0; scanning && step < MaximumSteps; step++)
             {
-                if (step > 0 && Elapsed(started) >= BudgetMilliseconds) break;
+                if (step > 0 && Elapsed(started) >= budget) break;
                 if (pending.Count == 0)
                 {
                     if (rootIndex < roots.Count)
@@ -167,8 +174,6 @@ namespace PersistentCity.Runtime
             if (changed && scanning) Ready = false;
             if (!scanning && worked)
             {
-                // A slow city must still get an idle interval between complete sweeps.
-                nextSweep = Time.unscaledTime + 30;
                 // Publish one complete generation, never a different subset on each slice.
                 // A synchronous invalidation during the final native read wins over completion.
                 if (!restartRequested && membershipChanged)

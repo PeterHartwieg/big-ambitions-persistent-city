@@ -86,7 +86,9 @@ internal static class Program
         Check(f.Sample(afterExit,4,.01,out road) && road.RemainingRoadNodes.SequenceEqual(new[]{7,8}) && road.AdmissionBoundaries.Count==2 && !PhysicalRoadAdmission.Allows(road.AdmissionBoundaries,road.RouteProgress,12),"Earlier exit clearance was lost across fragments");
         Check(f.Sample(afterExit,4,.4,out road) && PhysicalRoadAdmission.Allows(road.AdmissionBoundaries,road.RouteProgress,12),"Verified rear clearance after fragments remains permanently blocked");
         var missingPriorEntry=f.Journey(); missingPriorEntry.Journey!.Legs=new List<RouteLeg>{f.Leg(50,55,"fragment1",5,6),f.Leg(55,60,"fragment1",5,6),f.Leg(60,70,"v1",6,7),f.Leg(70,80,"v1",7,8)};
-        Check(f.Sample(missingPriorEntry,2,.9,out road) && road.AdmissionBoundaries.Count==1 && road.AdmissionBoundaries[0].Exit && !PhysicalRoadAdmission.Allows(road.AdmissionBoundaries,road.RouteProgress,4),"Historical exit fragment invented a missing junction entry");
+        // A lone leading exit proves outside only after the whole body and margin clear it (PhysicalRoadAdmission).
+        Check(f.Sample(missingPriorEntry,2,.9,out road) && road.AdmissionBoundaries.Count==1 && road.AdmissionBoundaries[0].Exit && road.AdmissionBoundaries[0].Distance==0
+            && !PhysicalRoadAdmission.Allows(road.AdmissionBoundaries,4.999,4) && PhysicalRoadAdmission.Allows(road.AdmissionBoundaries,road.RouteProgress,4),"Historical exit fragment invented a missing junction entry or skipped rear clearance");
         var nextFixture=new Fixture(true,new double[]{-50,-40,-30,-20,-10,0,2,20,30});
         afterExit.Journey.Legs=new List<RouteLeg>{nextFixture.Leg(-20,-10,"v1",3,4),nextFixture.Leg(-10,0,"v1",4,5),nextFixture.Leg(0,1,"fragment1",5,6),nextFixture.Leg(1,2,"fragment1",5,6),nextFixture.Leg(2,20,"v1",6,7),nextFixture.Leg(20,30,"v1",7,8)};
         Check(nextFixture.Sample(afterExit,4,.1/18,out road) && road.AdmissionBoundaries.Count==4 && Math.Abs(road.RouteProgress-22.1)<1e-9,"Exact two-junction sample did not reach x=2.1");
@@ -107,7 +109,91 @@ internal static class Program
         Check(nextFixture.Sample(nearEntry,5,4.0/18,out road) && road.AdmissionBoundaries.Count==4 && PhysicalRoadAdmission.Allows(road.AdmissionBoundaries,road.RouteProgress,4),"Tiny split before entry permanently blocks later rear clearance");
         SweepRegressions();
         GateRegressions();
+        ScopeRegressions();
         Console.WriteLine("PASS actual RoadRoutes: current fragments rejected; later full run sampled; malformed/unknown history rejected; future fragment bounded; junction identities/history/admission preserved.");
+    }
+    // One physical sample validates each node and junction contract once. Nothing it learns survives into
+    // the next sample or a public resolve, though no frame or Update boundary separates these calls.
+    private static void ScopeRegressions()
+    {
+        static string Pt(Position p) => p.X.ToString("R") + "," + p.Y.ToString("R") + "," + p.Z.ToString("R");
+        static string Text(PhysicalRoadSample r) => string.Join("|", Pt(r.Position), Pt(r.DirectionTarget), r.SpawnNode.ToString(),
+            string.Join(",", r.RemainingRoadNodes), r.TopologyId, r.RouteProgress.ToString("R"),
+            string.Join(";", r.AdmissionBoundaries.Select(b => b.Distance.ToString("R") + ":" + b.Enter + ":" + b.Exit + ":" + b.Junction)));
+        static int[] Validations(Fixture x) => x.Native.Select(w => w.IndexReads).ToArray();
+        static string Delta(Fixture x, int[] before) => string.Join(",", x.Native.Select((w, i) => w.IndexReads - before[i]));
+        var f = new Fixture(); var person = f.Journey();
+        var junction = (GenericIntersection)f.Native[3].AssociationForTest!;
+        Check(f.Sample(person, 2, .5, out var road), "Scope fixture did not sample");
+        string reference = Text(road);
+        // Leg 2 after two historical fragments touches nodes 0..8; nodes 3 and 5 share one junction.
+        int groups = junction.GroupReads; var before = Validations(f);
+        Check(f.Sample(person, 2, .5, out road) && Text(road) == reference, "Repeated sample changed");
+        Check(junction.GroupReads - groups == 1, "Junction contract validated " + (junction.GroupReads - groups) + " times in one sample");
+        Check(Delta(f, before) == "1,1,1,1,1,1,1,1,1", "Nodes not validated exactly once in one sample: " + Delta(f, before));
+        groups = junction.GroupReads; before = Validations(f);
+        Check(ReferenceEquals(f.Roads.ResolveWaypoint(f.Roads.TopologyId, 3), f.Native[3])
+            && ReferenceEquals(f.Roads.ResolveWaypoint(f.Roads.TopologyId, 3), f.Native[3]), "Public resolve refused");
+        Check(junction.GroupReads - groups == 2 && f.Native[3].IndexReads - before[3] == 2, "Public resolve reused a validation between calls");
+        var two = new Fixture(true); var twoPerson = two.Journey();
+        var first = (GenericIntersection)two.Native[3].AssociationForTest!; var second = (GenericIntersection)two.Native[7].AssociationForTest!;
+        int firstGroups = first.GroupReads, secondGroups = second.GroupReads; before = Validations(two);
+        Check(two.Sample(twoPerson, 2, .5, out road) && road.AdmissionBoundaries.Count == 4, "Two-junction sample failed");
+        Check(first.GroupReads - firstGroups == 1 && second.GroupReads - secondGroups == 1 && Delta(two, before) == "1,1,1,1,1,1,1,1,1",
+            "Two-junction sample repeated validation: " + Delta(two, before));
+        // Historical fragment, entry, interior, exit and final nodes, closed and reopened between samples.
+        foreach (int node in new[] { 0, 3, 4, 5, 8 })
+        {
+            f.Native[node].temporaryDisabled = true;
+            Check(!f.Sample(person, 2, .5, out _), "Same-frame closure of node " + node + " missed by the next sample");
+            Check(f.Roads.ResolveWaypoint(f.Roads.TopologyId, node) == null, "Public resolve missed closure of node " + node);
+            f.Native[node].temporaryDisabled = false;
+            Check(f.Sample(person, 2, .5, out road) && Text(road) == reference && f.Roads.IsCurrent, "Same-frame reopening of node " + node + " missed");
+        }
+        foreach (var mutation in new (string Reason, Action<Fixture> Change)[] {
+            ("junction-groups", x => ((GenericIntersection)x.Native[3].AssociationForTest!).Groups[0].roadWaypoints.Add(4)),
+            ("junction-exits", x => ((GenericIntersection)x.Native[5].AssociationForTest!).exitWaypoints!.Add(6)),
+            ("waypoint-flags", x => x.Native[4].giveWay = true), ("car-restrictions", x => x.Native[6].allowedCars!.Clear()),
+            ("waypoint-identity", x => x.Native[1] = new Waypoint()) })
+        {
+            var x = new Fixture(); var journey = x.Journey();
+            Check(x.Sample(journey, 2, .5, out _), "Mutation fixture did not sample");
+            mutation.Change(x);
+            Check(!x.Sample(journey, 2, .5, out _) && !x.Roads.IsCurrent && x.Roads.InvalidationReason == mutation.Reason,
+                "Same-frame " + mutation.Reason + " change missed by the next sample: " + x.Roads.InvalidationReason);
+        }
+        // A callback inside the sample cannot share its partial scope; a public resolve there stays live.
+        bool nested = true; Waypoint? nestedResolve = null; int hooks = 0;
+        Guard.OnRead = () => { Guard.OnRead = null; hooks++; nested = f.Sample(person, 2, .5, out _);
+            nestedResolve = f.Roads.ResolveWaypoint(f.Roads.TopologyId, 4); f.Native[6].temporaryDisabled = true; };
+        try { f.Sample(person, 2, .5, out _); } finally { Guard.OnRead = null; }
+        Check(hooks == 1 && !nested && ReferenceEquals(nestedResolve, f.Native[4]), "Reentrant sample shared a partial scope or public resolve was refused");
+        Check(!f.Sample(person, 2, .5, out _), "Closure made by a callback inside a sample was missed by the next sample");
+        f.Native[6].temporaryDisabled = false;
+        Check(f.Sample(person, 2, .5, out road) && Text(road) == reference, "Sample after reentrancy failed");
+        // An exception leaves no open scope and no retained validation.
+        Guard.FailAtRead = Guard.Reads + 5; bool threw = false;
+        try { f.Sample(person, 2, .5, out _); } catch (InvalidOperationException) { threw = true; }
+        finally { Guard.FailAtRead = -1; }
+        groups = junction.GroupReads; before = Validations(f);
+        Check(threw && f.Sample(person, 2, .5, out road) && Text(road) == reference && junction.GroupReads - groups == 1
+            && Delta(f, before) == "1,1,1,1,1,1,1,1,1", "Scope or validation survived an exception");
+        // Generation wrap cannot revive a stamp from an earlier sample.
+        typeof(RoadRoutes).GetField("sampleGeneration", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .SetValue(f.Roads, int.MaxValue - 1);
+        for (int i = 0; i < 3; i++)
+        {
+            Check(f.Sample(person, 2, .5, out road) && Text(road) == reference, "Sample across generation wrap changed");
+            f.Native[4].temporaryDisabled = true; Check(!f.Sample(person, 2, .5, out _), "Closure missed across generation wrap");
+            f.Native[4].temporaryDisabled = false;
+        }
+        var speed = new Fixture(); var speedPerson = speed.Journey();
+        Check(speed.Sample(speedPerson, 2, .5, out var speedReference), "Speed fixture did not sample");
+        speed.Native[4].maxSpeed++; threw = false;
+        try { speed.Sample(speedPerson, 2, .5, out _); } catch (InvalidOperationException) { threw = true; }
+        speed.Native[4].maxSpeed--;
+        Check(threw && speed.Sample(speedPerson, 2, .5, out road) && Text(road) == Text(speedReference), "Unverified speed did not fail, or left a scope open");
+        Console.WriteLine("PASS sample scope: each node/junction validated once per sample; public resolve live; same-frame closures, contract changes, reentrancy, exceptions and generation wrap detected.");
     }
     // The periodic refresh keeps a snapshot whose gates are unchanged; only the staged sweep sees nodes no search touches.
     private static void SweepRegressions()

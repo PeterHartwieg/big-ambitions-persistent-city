@@ -75,14 +75,16 @@ namespace UnityEngine.SceneManagement
         public bool IsValid()=>Data!=null;
         public bool isLoaded=>Data?.Loaded??false;
         public int rootCount=>Data?.Roots.Count??0;
-        public void GetRootGameObjects(List<UnityEngine.GameObject> roots) { roots.Clear(); if(Data!=null)roots.AddRange(Data.Roots); SceneManager.RootsRead?.Invoke(this); }
+        public void GetRootGameObjects(List<UnityEngine.GameObject> roots) { SceneManager.RootReadCount++; roots.Clear(); if(Data!=null)roots.AddRange(Data.Roots); SceneManager.RootsRead?.Invoke(this); }
     }
     public static class SceneManager
     {
         public static Action<Scene>? RootsRead;
+        public static int RootReadCount;
         public static event Action<Scene,LoadSceneMode>? sceneLoaded;
         public static event Action<Scene>? sceneUnloaded;
         public static void Unload(Scene scene){scene.Data!.Loaded=false;sceneUnloaded?.Invoke(scene);}
+        public static void Reload(Scene scene){scene.Data!.Loaded=true;sceneLoaded?.Invoke(scene,LoadSceneMode.Additive);}
         public static readonly List<Scene> Scenes=new List<Scene>();
         public static Scene Persistent=new Scene{Data=new SceneData()};
         public static Scene Current=>Scenes[0];

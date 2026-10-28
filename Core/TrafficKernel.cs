@@ -529,13 +529,13 @@ namespace PersistentCity.Core
                 && vehicle.Route[vehicle.RouteIndex + 1].LinkId == destinationId;
         }
 
-        private double EligibleAt(Link source, TrafficVehicleState vehicle, bool legacySignals = false)
+        private double EligibleAt(Link source, TrafficVehicleState vehicle)
         {
             TrafficRouteLeg leg = vehicle.Route[vehicle.RouteIndex];
             if (vehicle.PhysicalControl && vehicle.NominalMinutes < leg.EndNominalMinutes) return double.PositiveInfinity;
             double ready = Math.Max(Clock, Math.Max(vehicle.ReadyAt, source.State.NextDischargeAt));
             var signal = source.Definition.Signal;
-            return signal == null ? ready : legacySignals ? signal.LegacyNextGreen(ready) : signal.NextGreen(ready);
+            return signal == null ? ready : signal.NextGreen(ready);
         }
 
         private static bool IsCurbExit(TrafficVehicleState vehicle) => vehicle.RouteIndex == vehicle.Route.Count - 1
@@ -656,12 +656,11 @@ namespace PersistentCity.Core
         public static TrafficKernel Restore(TrafficKernelState state, bool releasePhysicalControl = true)
             => Restore(state, releasePhysicalControl, false);
 
-        // Retiming can reconstruct derived wakeups. Legacy saves must first pass their
-        // original schedule rules; current saves must already supply timely wakeups.
+        // Retiming can reconstruct derived wakeups. Saved states must already supply timely wakeups.
         private static TrafficKernel Restore(TrafficKernelState state, bool releasePhysicalControl, bool rebuildWakeups)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
-            if (state.Schema != 1 && state.Schema != 2) throw new ArgumentException("Unsupported traffic schema.", nameof(state));
+            if (state.Schema != 2) throw new ArgumentException("Unsupported traffic schema.", nameof(state));
             RequireTime(state.Clock, nameof(state));
             RequireTime(state.RequestedTime, nameof(state));
             if (state.RequestedTime < state.Clock || state.NextEventOrder < 0 || state.NextVehicleOrder < 0 ||
@@ -756,8 +755,7 @@ namespace PersistentCity.Core
                 kernel.events.Add(item);
             }
             foreach (Link link in kernel.links.Values) kernel.UpdateActivity(link);
-            if (state.Schema == 1) kernel.ValidateRequiredWakeups(true);
-            if (rebuildWakeups || state.Schema == 1)
+            if (rebuildWakeups)
                 foreach (Link link in kernel.links.Values) kernel.Reconsider(link);
             kernel.ValidateRequiredWakeups();
             if (releasePhysicalControl)
@@ -885,14 +883,14 @@ namespace PersistentCity.Core
             return Restore(state, false, true);
         }
 
-        private void ValidateRequiredWakeups(bool legacySignals = false)
+        private void ValidateRequiredWakeups()
         {
             foreach (Link link in links.Values)
             {
                 if (link.Queue.First != null)
                 {
                     TrafficVehicleState head = vehicles[link.Queue.First.Value];
-                    double at = EligibleAt(link, head, legacySignals);
+                    double at = EligibleAt(link, head);
                     if (head.RouteIndex == head.Route.Count - 1 && !IsCurbExit(head)) RequireScheduled(link, at);
                     else if (head.RouteIndex + 1 < head.Route.Count)
                     {
@@ -908,7 +906,7 @@ namespace PersistentCity.Core
                 {
                     Link source = links[incoming];
                     if (Feeds(source, link.Definition.Id, out TrafficVehicleState? vehicle) && CanReceive(link, vehicle!, vehicle!.RouteIndex + 1))
-                        RequireScheduled(link, EligibleAt(source, vehicle!, legacySignals));
+                        RequireScheduled(link, EligibleAt(source, vehicle!));
                 }
             }
         }

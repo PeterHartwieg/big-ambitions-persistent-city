@@ -24,7 +24,7 @@ internal static class Scale
                 var state=Population.Create(Enumerable.Range(0,population).Select(n=>new CitizenIdentity {Id="r"+n,Name="Person "+n,Age=30,Persona=(Persona)(n%8)}),places,"scale","0.41.1",19,1440);
                 for(int j=0;j<population;j++) {
                     var c=state.Citizens[j];c.HomeId=c.PlaceId="h"+(j%100);c.Phase=CitizenPhase.AtPlace;c.Activity=Activity.Home;
-                    c.NextEventMinute=c.ActivityUntilMinute=2879;c.NextDepartureMinute=c.NextJobChangeMinute=ResidentLifecycle.Never;
+                    c.NextEventMinute=c.ActivityUntilMinute=2879;
                     c.Preferences.WalkingToleranceMetres=1000;
                 }
                 state.Food=new FoodCommerceState {Shops=Enumerable.Range(0,8).Select(n=>new FoodScope {PlaceId="s"+n,BusinessId="b"+n,ProductId="pastry"}).ToList()};

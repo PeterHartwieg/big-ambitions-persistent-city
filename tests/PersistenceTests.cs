@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using PersistentCity.Core;
@@ -121,7 +122,7 @@ public sealed class PersistenceTests
         citizen.DayPlaceId = persona == Persona.Student ? "study" : persona == Persona.Retiree ? "" : "work";
         citizen.Phase = CitizenPhase.AtPlace; citizen.DestinationId = ""; citizen.Journey = null; citizen.DepartureMinute = 0;
         citizen.NextEventMinute = state.Minute; citizen.ActivityUntilMinute = state.Minute;
-        Population.InitializeExpansion(state);
+        InitializeFixture(state);
         var json = JObject.Parse(SaveCodec.Write(state));
         // Leave identity and population fingerprint untouched, as in a damaged assignment record.
         json["Citizens"]![0]!["DayPlaceId"] = wrongPlace;
@@ -141,7 +142,7 @@ public sealed class PersistenceTests
         foreach (Persona persona in Enum.GetValues(typeof(Persona)))
         {
             var state = Example(); state.Citizens[0].Identity.Persona = persona; state.Citizens[0].DayPlaceId = "";
-            Population.InitializeExpansion(state);
+            InitializeFixture(state);
             Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
         }
     }
@@ -215,7 +216,7 @@ public sealed class PersistenceTests
     {
         var first = new Dictionary<string, string> { ["rlo:readonly"] = "first original" };
         var second = new Dictionary<string, string> { ["rlo:readonly"] = "second original" };
-        var a = Example(); var b = Example(); b.PopulationKey = "population-b"; b.Citizens[0].Identity.Name = "Other Resident"; Population.InitializeExpansion(b);
+        var a = Example(); var b = Example(); b.PopulationKey = "population-b"; b.Citizens[0].Identity.Name = "Other Resident"; InitializeFixture(b);
         Assert.True(SaveStore.WriteTo(first, a).Success); Assert.True(SaveStore.WriteTo(second, b).Success);
         string firstRaw = first[SaveStore.StateKey]; string secondRaw = second[SaveStore.StateKey];
         Assert.False(SaveStore.WriteTo(first, b).Success); Assert.Equal(firstRaw, first[SaveStore.StateKey]);
@@ -230,7 +231,7 @@ public sealed class PersistenceTests
     {
         var state = Example(); state.Citizens[0].DayPlaceId = ""; state.Citizens[0].ShopId = ""; state.Citizens[0].LeisureId = "";
         state.Citizens[0].ActivityUntilMinute = 1;
-        state.Citizens[0].Identity.District = ""; state.Places[0].District = ""; Population.InitializeExpansion(state);
+        state.Citizens[0].Identity.District = ""; state.Places[0].District = ""; InitializeFixture(state);
         Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(state)).Status);
     }
 
@@ -330,6 +331,13 @@ public sealed class PersistenceTests
         };
     }
 
+    private static void InitializeFixture(CityState state)
+    {
+        state.SourceIdentities = state.Citizens.Select(c => Population.CloneIdentity(c.Identity)).ToList();
+        state.InitialImportedResidents = state.PopulationTarget = state.Citizens.Count;
+        foreach (var person in state.Citizens) ResidentLifecycle.Initialize(person, state.Seed, state.Minute);
+    }
+
     private static CityState Example()
     {
         var home = new Position(10.1234567890123, 2.5, -8.125);
@@ -362,7 +370,7 @@ public sealed class PersistenceTests
                 }
             }
         };
-        Population.InitializeExpansion(state);
+        InitializeFixture(state);
         return state;
     }
 }

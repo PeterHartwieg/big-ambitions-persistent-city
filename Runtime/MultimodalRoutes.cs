@@ -8,6 +8,7 @@ using GleyUrbanAssets;
 using System.Linq;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace PersistentCity.Runtime
 {
@@ -20,7 +21,7 @@ namespace PersistentCity.Runtime
         void RequestSweep();
     }
     /// <summary>Background routes only. Native geometry, explicit simulation timing, no actors or economy writes.</summary>
-    internal sealed class MultimodalRoutes : ICitizenRoutePlanner, ICommuteTimingPlanner, ITrafficRoutePlanner, ITrafficEntryRoutePlanner, ITrafficClosureBatchPlanner, IWalkingTimeBound
+    internal sealed class MultimodalRoutes : ICitizenRoutePlanner, ICommuteTimingPlanner, ITrafficRoutePlanner, ITrafficEntryRoutePlanner, ITrafficClosureBatchPlanner, IWalkingTimeBound, IWalkingQuoteValidity, IWalkingQuoteOperation, IResumableRoutePlanner
     {
         private readonly double subwayMetresPerMinute;
         private readonly double clockRate;
@@ -29,6 +30,7 @@ namespace PersistentCity.Runtime
         public string LastDiscoveryGateChange { get; private set; } = "";
         private const double SubwayWaitMinutes = 3;
         private readonly WalkingRoutes walking;
+        public NativeRouteMetrics Metrics => walking.Metrics;
         private readonly double walkingSpeed;
         private readonly Dictionary<string, Place> places = new Dictionary<string, Place>(StringComparer.Ordinal);
         private List<Station>? stations;
@@ -79,6 +81,18 @@ namespace PersistentCity.Runtime
             }
             walking = new WalkingRoutes(walkingMetresPerMinute, (from, to) => access != null && access.ClearSegment(from, to));
             foreach (var place in places) this.places[place.Id] = place;
+        }
+        /// <summary>Retiming changes movement costs, not the native scene container. Reuse only
+        /// that live reference within the same save-scoped discovery owner and CityManager.
+        /// Access, stations, road geometry and timing still undergo fresh preparation.</summary>
+        internal bool ReuseRoadSceneForRetiming(MultimodalRoutes previous)
+        {
+            var city = CityManager.Instance;
+            if (roadSceneSearched || objects == null || !ReferenceEquals(objects, previous.objects)
+                || city == null || !ReferenceEquals(previous.roadCity, city)
+                || !previous.roadSceneSearched || previous.roadScene == null) return false;
+            roadScene = previous.roadScene; roadCity = city; roadSceneSearched = true;
+            return true;
         }
         /// <summary>Periodic refresh. Gate geometry is recaptured and the walking cache dropped every time. Refresh never
         /// discards the road snapshot unless the public gates changed, since the snapshot cannot see them; it starts a
@@ -215,99 +229,321 @@ namespace PersistentCity.Runtime
             return walking.Plan(from, to, departureMinute, preferences);
         }
 
+        public bool IsWalkingQuoteValid(Place from, Place to, Route route, TravelPreferences preferences)
+            => ReadyForPopulation && walking.IsWalkingQuoteValid(from, to, route, preferences);
+        public void BeginWalkingQuote() => walking.BeginWalkingQuote();
+        public void EndWalkingQuote() => walking.EndWalkingQuote();
+
         public Route? Plan(Place from, Place to, double departureMinute, CitizenState person)
         {
-            if (from == null || to == null || person == null || person.Preferences == null
-                || !from.Position.IsFinite || !to.Position.IsFinite || !Position.Finite(departureMinute) || departureMinute < 0) return null;
-            var preferences = person.Preferences;
-            if (!Position.Finite(preferences.WalkingToleranceMetres) || preferences.WalkingToleranceMetres < 0
-                || !Position.Finite(preferences.FareWeightMinutes) || preferences.FareWeightMinutes < 0) return null;
-            if (roads == null || !roads.Ready) throw new InvalidOperationException("Call Prepare before advancing the population.");
-            if (!roads.IsCurrent) return null;
-            EnsureAccess();
-            // Ownership is established while physically home, independently of this trip's fastest mode.
-            if (roads.Available && person.Car == null && preferences.OwnsCar && person.Phase == CitizenPhase.AtPlace
-                && person.PlaceId == person.HomeId && from.Id == person.HomeId && places.TryGetValue(person.HomeId, out var home))
-            {
-                foreach (var curb in roads.Near(home.Position, 90))
-                {
-                    var homeAccess = walking.Plan(home, At(curb.Position), departureMinute, preferences);
-                    if (homeAccess != null && TransportComposition.TryAllocateHomeCar(person, from, home, curb.Position, homeAccess)) break;
-                }
-            }
-            Route? best = null; double bestScore = double.PositiveInfinity;
-            Consider(walking.Plan(from, to, departureMinute, preferences));
-            if (preferences.AllowTransit && bestScore > TransportComposition.ModeLowerBound(TravelMode.Subway,
-                from.Position, to.Position, preferences, person.Identity.Id, walkingSpeed, gameMinutesPerScaledSecond: clockRate))
-            {
-                EnsureStations();
-                if (subway != null && stations != null)
-                {
-                    var origins = Nearby(from.Position); var destinations = Nearby(to.Position);
-                    var originWalks = new Dictionary<string, Route?>(); var destinationWalks = new Dictionary<string, Route?>();
-                    foreach (var a in origins) originWalks[a.Id] = walking.Plan(from, a.Entrance, departureMinute, preferences);
-                    foreach (var b in destinations) destinationWalks[b.Id] = walking.Plan(b.Entrance, to, departureMinute, preferences);
-                    foreach (var a in origins)
-                        foreach (var b in destinations)
-                        {
-                            if (a.Id == b.Id || originWalks[a.Id] == null || destinationWalks[b.Id] == null) continue;
-                            var train = Train(a, b);
-                            if (train != null) Consider(TransportComposition.Join(originWalks[a.Id]!, train, destinationWalks[b.Id]!));
-                        }
-                }
-            }
-            if (roads.Available && preferences.OwnsCar && person.Car != null
-                && bestScore > TransportComposition.ModeLowerBound(TravelMode.Car, from.Position, to.Position,
-                    preferences, person.Identity.Id, walkingSpeed, person.Car?.ParkedPosition, gameMinutesPerScaledSecond: clockRate))
-            {
-                if (person.Car != null)
-                {
-                    var pickup = At(person.Car.ParkedPosition);
-                    var accessWalk = walking.Plan(from, pickup, departureMinute, preferences);
-                    if (accessWalk != null)
-                    {
-                        double accessMetres = WalkMetres(accessWalk);
-                        var starts = roads.AtParked(person.Car.ParkedPosition);
-                        var ends = roads.Near(to.Position, 90);
-                        // At most two road searches per request. Reachability does not trigger an unbounded candidate scan.
-                        int searches = 0;
-                        foreach (var end in ends)
-                        {
-                            var egress = walking.Plan(At(end.Position), to, departureMinute, preferences);
-                            if (egress == null) continue;
-                            if (accessMetres + WalkMetres(egress) > preferences.WalkingToleranceMetres) continue;
-                            foreach (var start in starts)
-                            {
-                                if (searches >= 2) break;
-                                // Exact access/egress durations plus a geometric drive lower bound can prove
-                                // this candidate cannot beat the existing route before starting another A*.
-                                double lower = accessWalk.Minutes + egress.Minutes + TransportComposition.ModeLowerBound(
-                                    TravelMode.Car, start.Position, end.Position, preferences, person.Identity.Id, walkingSpeed, gameMinutesPerScaledSecond: clockRate);
-                                if (bestScore <= lower) continue;
-                                searches++;
-                                double driveCeiling = TransportComposition.RemainingSearchMinutes(bestScore,
-                                    accessWalk.EstimatedMinutes + TransportComposition.CarPreparationMinutes
-                                    + TransportComposition.CarParkingMinutes + egress.EstimatedMinutes);
-                                var drive = roads.Plan(start, end, departureMinute + accessWalk.Minutes + TransportComposition.CarPreparationMinutes,
-                                    maximumEstimatedMinutes: driveCeiling);
-                                if (drive != null) Consider(TransportComposition.Join(accessWalk,
-                                    Pause(person.Car.ParkedPosition, TransportComposition.CarPreparationMinutes), drive,
-                                    Pause(end.Position, TransportComposition.CarParkingMinutes), egress));
-                            }
-                            if (searches >= 2) break;
-                        }
-                    }
-                }
-            }
-            return best;
+            // The synchronous plan is the resumable job driven without a budget, so both share one code path.
+            using var job = new PlanningJob(this, from, to, departureMinute, person, person?.Preferences, preferenceOnly: false);
+            job.Continue(double.PositiveInfinity);
+            return job.Result;
+        }
 
-            void Consider(Route? route)
+        public IRoutePlanningJob Begin(RouteRequest request)
+        {
+            if (request == null) throw new ArgumentNullException(nameof(request));
+            return new PlanningJob(this, request.From, request.To, request.DepartureMinute, request.Citizen, request.Preferences,
+                preferenceOnly: request.Citizen == null);
+        }
+
+        /// <summary>Road searches of the current snapshot that started over while suspended.</summary>
+        public int RoadSearchRestarts => roads?.SearchRestarts ?? 0;
+        /// <summary>Units of planning work performed by jobs, for the frame summary.</summary>
+        public long JobUnits { get; private set; }
+        /// <summary>The kind of the unit a job performed last, for attributing a slow slice.</summary>
+        public string LastJobUnit { get; private set; } = "";
+        private static readonly string[] StageNames =
+        {
+            "validate", "home-curbs", "home-curb-walk", "direct-walk", "subway-stations", "subway-connector", "subway-candidates",
+            "car-access-walk", "car-starts", "car-ends", "car-egress-walk", "car-search-begin", "car-search", "finish", "done"
+        };
+
+        /// <summary>The former synchronous citizen plan as a resumable job. Each unit is one native query (a walk,
+        /// a curb search, a station capture) or one slice of a road A*; Continue runs units until the budget is
+        /// spent and always at least one. The job captures the road snapshot, public access and station list it
+        /// plans against; if any of them was replaced while it was suspended, Continue throws
+        /// RoutePlanningRestartRequired and the simulator replays the whole citizen event, so no event mixes two
+        /// snapshots. Forecasts and node validations it reads are live at the moment of each read, as
+        /// they are inside the synchronous plan.</summary>
+        private sealed class PlanningJob : IRoutePlanningJob
+        {
+            private enum Stage
             {
-                if (route == null || !TransportComposition.Valid(route, from.Position, to.Position, preferences, person.Car?.ParkedPosition)) return;
+                Validate, HomeCurbs, HomeCurbWalk, DirectWalk, SubwayStations, SubwayConnector, SubwayCandidates,
+                CarAccessWalk, CarStarts, CarEnds, CarEgressWalk, CarSearchBegin, CarSearch, Finish, Done
+            }
+            private readonly MultimodalRoutes owner;
+            private readonly Place? from, to;
+            private readonly double departureMinute;
+            private readonly CitizenState? person;
+            private readonly TravelPreferences? preferences;
+            private readonly bool preferenceOnly;
+            private Stage stage;
+            // Captured when the job is begun, so a change at any later slice boundary, including the one before
+            // the first slice, is seen: an earlier answer of the same event was given on this same state.
+            private RoadRoutes? roads;
+            private PublicRoadAccess? access;
+            private List<Station>? stationList;
+            private readonly bool roadsCurrentAtBegin;
+            // Working state of the former local variables.
+            private Route? best;
+            private double bestScore = double.PositiveInfinity;
+            private Place? home;
+            private List<RoadRoutes.Curb>? homeCurbs;
+            private int homeCurbIndex;
+            private List<Station>? origins, destinations;
+            private Dictionary<string, Route?>? originWalks, destinationWalks;
+            private int connectorIndex;
+            private Route? accessWalk, egress;
+            private double accessMetres, driveCeiling;
+            private List<RoadRoutes.Curb>? starts, ends;
+            private int endIndex, startIndex, searches;
+            private RoadRoutes.RoadPlan? drive;
+            public Route? Result { get; private set; }
+            public bool Completed => stage == Stage.Done;
+
+            internal PlanningJob(MultimodalRoutes owner, Place? from, Place? to, double departureMinute, CitizenState? person,
+                TravelPreferences? preferences, bool preferenceOnly)
+            {
+                this.owner = owner; this.from = from; this.to = to; this.departureMinute = departureMinute;
+                this.person = person; this.preferences = preferences; this.preferenceOnly = preferenceOnly;
+                if (!preferenceOnly)
+                {
+                    owner.Metrics.CitizenPlanRequests++;
+                    roads = owner.roads; access = owner.access; stationList = owner.stations;
+                    roadsCurrentAtBegin = roads != null && roads.IsCurrent;
+                }
+            }
+
+            public bool Continue(double budgetMilliseconds)
+            {
+                if (Completed) return true;
+                if (double.IsNaN(budgetMilliseconds) || budgetMilliseconds < 0) throw new ArgumentOutOfRangeException(nameof(budgetMilliseconds));
+                long started = Stopwatch.GetTimestamp();
+                long deadline = double.IsPositiveInfinity(budgetMilliseconds)
+                    ? long.MaxValue : started + (long)(budgetMilliseconds * Stopwatch.Frequency / 1000);
+                // A car this attempt allocated and the event's earlier answers belong to the captured snapshot,
+                // so the caller discards the working copy and replays the event instead of this job starting over.
+                if (RevisionChanged())
+                    throw new RoutePlanningRestartRequired("The road snapshot, public access or station list changed while a route plan was suspended.");
+                bool first = true;
+                while (!Completed)
+                {
+                    if (!first && Stopwatch.GetTimestamp() >= deadline) return false;
+                    first = false;
+                    owner.JobUnits++; owner.LastJobUnit = StageNames[(int)stage];
+                    Unit(deadline);
+                }
+                return true;
+            }
+
+            private bool RevisionChanged()
+            {
+                if (preferenceOnly) return false;
+                // Access is created lazily by EnsureAccess, so its first appearance is not a replacement. A snapshot
+                // that was already stale when the job began answers "no route" in Validate, as the one-shot plan does.
+                return !ReferenceEquals(owner.roads, roads) || (access != null && !ReferenceEquals(owner.access, access))
+                    || (roadsCurrentAtBegin && (roads == null || !roads.IsCurrent)) || !ReferenceEquals(owner.stations, stationList);
+            }
+
+            private void Unit(long deadline)
+            {
+                var owner = this.owner;
+                switch (stage)
+                {
+                    case Stage.Validate:
+                        if (preferenceOnly)
+                        {
+                            // A preference-only request is the walking plan of IRoutePlanner.Plan.
+                            owner.EnsureAccess();
+                            Result = owner.walking.Plan(from!, to!, departureMinute, preferences!);
+                            stage = Stage.Done; return;
+                        }
+                        if (from == null || to == null || person == null || person.Preferences == null
+                            || !from.Position.IsFinite || !to.Position.IsFinite || !Position.Finite(departureMinute) || departureMinute < 0)
+                        { Result = null; stage = Stage.Done; return; }
+                        var checkedPreferences = person.Preferences;
+                        if (!Position.Finite(checkedPreferences.WalkingToleranceMetres) || checkedPreferences.WalkingToleranceMetres < 0
+                            || !Position.Finite(checkedPreferences.FareWeightMinutes) || checkedPreferences.FareWeightMinutes < 0)
+                        { Result = null; stage = Stage.Done; return; }
+                        if (owner.roads == null || !owner.roads.Ready) throw new InvalidOperationException("Call Prepare before advancing the population.");
+                        if (!owner.roads.IsCurrent) { Result = null; stage = Stage.Done; return; }
+                        owner.EnsureAccess();
+                        roads = owner.roads; access = owner.access;
+                        best = null; bestScore = double.PositiveInfinity;
+                        // Ownership is established while physically home, independently of this trip's fastest mode.
+                        if (roads.Available && person.Car == null && checkedPreferences.OwnsCar && person.Phase == CitizenPhase.AtPlace
+                            && person.PlaceId == person.HomeId && from.Id == person.HomeId && owner.places.TryGetValue(person.HomeId, out var homePlace))
+                        { home = homePlace; stage = Stage.HomeCurbs; }
+                        else stage = Stage.DirectWalk;
+                        return;
+                    case Stage.HomeCurbs:
+                        homeCurbs = roads!.Near(home!.Position, 90); homeCurbIndex = 0;
+                        stage = homeCurbs.Count == 0 ? Stage.DirectWalk : Stage.HomeCurbWalk;
+                        return;
+                    case Stage.HomeCurbWalk:
+                    {
+                        var curb = homeCurbs![homeCurbIndex++];
+                        var homeAccess = owner.walking.Plan(home!, At(curb.Position), departureMinute, Preferences);
+                        if ((homeAccess != null && TransportComposition.TryAllocateHomeCar(person!, from!, home!, curb.Position, homeAccess))
+                            || homeCurbIndex >= homeCurbs.Count) stage = Stage.DirectWalk;
+                        return;
+                    }
+                    case Stage.DirectWalk:
+                        Consider(owner.walking.Plan(from!, to!, departureMinute, Preferences));
+                        if (Preferences.AllowTransit && bestScore > TransportComposition.ModeLowerBound(TravelMode.Subway,
+                            from!.Position, to!.Position, Preferences, person!.Identity.Id, owner.walkingSpeed, gameMinutesPerScaledSecond: owner.clockRate))
+                            stage = Stage.SubwayStations;
+                        else AfterModes();
+                        return;
+                    case Stage.SubwayStations:
+                        owner.EnsureStations();
+                        stationList = owner.stations;
+                        if (owner.subway != null && owner.stations != null)
+                        {
+                            origins = owner.Nearby(from!.Position); destinations = owner.Nearby(to!.Position);
+                            originWalks = new Dictionary<string, Route?>(); destinationWalks = new Dictionary<string, Route?>();
+                            connectorIndex = 0;
+                            stage = origins.Count + destinations.Count > 0 ? Stage.SubwayConnector : Stage.SubwayCandidates;
+                        }
+                        else AfterModes();
+                        return;
+                    case Stage.SubwayConnector:
+                    {
+                        int index = connectorIndex++;
+                        if (index < origins!.Count)
+                        { var a = origins[index]; originWalks![a.Id] = owner.SubwayConnector(from!, a.Entrance, departureMinute, Preferences); }
+                        else
+                        { var b = destinations![index - origins.Count]; destinationWalks![b.Id] = owner.SubwayConnector(b.Entrance, to!, departureMinute, Preferences); }
+                        if (connectorIndex >= origins.Count + destinations!.Count) stage = Stage.SubwayCandidates;
+                        return;
+                    }
+                    case Stage.SubwayCandidates:
+                        foreach (var a in origins!)
+                            foreach (var b in destinations!)
+                            {
+                                if (a.Id == b.Id || originWalks![a.Id] == null || destinationWalks![b.Id] == null) continue;
+                                owner.Metrics.SubwayCandidates++;
+                                var train = owner.Train(a, b);
+                                if (train != null) Consider(TransportComposition.Join(originWalks[a.Id]!, train, destinationWalks[b.Id]!));
+                            }
+                        AfterModes();
+                        return;
+                    case Stage.CarAccessWalk:
+                        accessWalk = owner.walking.Plan(from!, At(person!.Car!.ParkedPosition), departureMinute, Preferences);
+                        if (accessWalk == null) { stage = Stage.Finish; return; }
+                        accessMetres = WalkMetres(accessWalk);
+                        stage = Stage.CarStarts;
+                        return;
+                    case Stage.CarStarts:
+                        starts = roads!.AtParked(person!.Car!.ParkedPosition);
+                        stage = Stage.CarEnds;
+                        return;
+                    case Stage.CarEnds:
+                        ends = roads!.Near(to!.Position, 90);
+                        // At most two road searches per request. Reachability does not trigger an unbounded candidate scan.
+                        endIndex = 0; searches = 0;
+                        NextEnd();
+                        return;
+                    case Stage.CarEgressWalk:
+                    {
+                        var end = ends![endIndex];
+                        egress = owner.walking.Plan(At(end.Position), to!, departureMinute, Preferences);
+                        if (egress == null || accessMetres + WalkMetres(egress) > Preferences.WalkingToleranceMetres) { endIndex++; NextEnd(); return; }
+                        startIndex = 0;
+                        NextStart();
+                        return;
+                    }
+                    case Stage.CarSearchBegin:
+                        drive = roads!.BeginPlan(starts![startIndex], ends![endIndex],
+                            departureMinute + accessWalk!.Minutes + TransportComposition.CarPreparationMinutes, driveCeiling);
+                        stage = Stage.CarSearch;
+                        return;
+                    case Stage.CarSearch:
+                    {
+                        if (!drive!.Continue(deadline)) return;
+                        var road = drive.Result; drive.Dispose(); drive = null;
+                        if (road != null) Consider(TransportComposition.Join(accessWalk!,
+                            Pause(person!.Car!.ParkedPosition, TransportComposition.CarPreparationMinutes), road,
+                            Pause(ends![endIndex].Position, TransportComposition.CarParkingMinutes), egress!));
+                        startIndex++;
+                        NextStart();
+                        return;
+                    }
+                    case Stage.Finish:
+                        if (best == null) owner.Metrics.NoFeasibleRoute++;
+                        else if (best.Legs.Any(leg => leg.Mode == TravelMode.Car)) owner.Metrics.SelectedCar++;
+                        else if (best.Legs.Any(leg => leg.Mode == TravelMode.Subway)) owner.Metrics.SelectedSubway++;
+                        else owner.Metrics.SelectedWalking++;
+                        Result = best;
+                        stage = Stage.Done;
+                        return;
+                    default:
+                        return;
+                }
+            }
+
+            private TravelPreferences Preferences => person!.Preferences;
+
+            // After walking and subway: the car is considered only when its geometric bound can still beat the incumbent.
+            private void AfterModes()
+            {
+                var car = person!.Car;
+                stage = roads!.Available && Preferences.OwnsCar && car != null
+                    && bestScore > TransportComposition.ModeLowerBound(TravelMode.Car, from!.Position, to!.Position,
+                        Preferences, person.Identity.Id, owner.walkingSpeed, car.ParkedPosition, gameMinutesPerScaledSecond: owner.clockRate)
+                    ? Stage.CarAccessWalk : Stage.Finish;
+            }
+
+            private void NextEnd() => stage = searches >= 2 || endIndex >= ends!.Count ? Stage.Finish : Stage.CarEgressWalk;
+
+            private void NextStart()
+            {
+                while (startIndex < starts!.Count && searches < 2)
+                {
+                    var start = starts[startIndex]; var end = ends![endIndex];
+                    // Exact access/egress durations plus a geometric drive lower bound can prove
+                    // this candidate cannot beat the existing route before starting another A*.
+                    double lower = accessWalk!.Minutes + egress!.Minutes + TransportComposition.ModeLowerBound(
+                        TravelMode.Car, start.Position, end.Position, Preferences, person!.Identity.Id, owner.walkingSpeed, gameMinutesPerScaledSecond: owner.clockRate);
+                    if (bestScore <= lower) { startIndex++; continue; }
+                    searches++;
+                    driveCeiling = TransportComposition.RemainingSearchMinutes(bestScore,
+                        accessWalk.EstimatedMinutes + TransportComposition.CarPreparationMinutes
+                        + TransportComposition.CarParkingMinutes + egress.EstimatedMinutes);
+                    stage = Stage.CarSearchBegin;
+                    return;
+                }
+                endIndex++;
+                NextEnd();
+            }
+
+            private void Consider(Route? route)
+            {
+                if (route == null || !TransportComposition.Valid(route, from!.Position, to!.Position, Preferences, person!.Car?.ParkedPosition)) return;
                 double score = route.EstimatedMinutes;
                 if (!TransportComposition.IsFaster(score, bestScore)) return;
                 best = route; bestScore = score;
             }
+
+            public void Dispose()
+            {
+                drive?.Dispose(); drive = null;
+                if (!Completed) { Result = null; stage = Stage.Done; }
+            }
+        }
+
+        private Route? SubwayConnector(Place from, Place to, double minute, TravelPreferences preferences)
+        {
+            Metrics.SubwayConnectorRequests++;
+            long hits = Metrics.WalkingCacheHits, misses = Metrics.WalkingCacheMisses;
+            var route = walking.Plan(from, to, minute, preferences);
+            Metrics.SubwayConnectorCacheHits += Metrics.WalkingCacheHits - hits;
+            Metrics.SubwayConnectorCacheMisses += Metrics.WalkingCacheMisses - misses;
+            return route;
         }
 
         private void EnsureAccess()

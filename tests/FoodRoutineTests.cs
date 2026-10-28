@@ -35,7 +35,6 @@ public sealed class FoodRoutineTests
             new Place { Id = "shop", Name = "Shop", Kind = PlaceKind.Shop, Position = new(150, 0, 0) },
             new Place { Id = "park", Name = "Park", Kind = PlaceKind.Leisure, Position = new(200, 0, 0) }
         }, "routine-test", "0.40.4", 17, 1440);
-        foreach (var p in city.Citizens) { p.NextDepartureMinute = p.NextJobChangeMinute = ResidentLifecycle.Never; }
         return city;
     }
 

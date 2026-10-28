@@ -123,7 +123,7 @@ static CityState Fixture(int count)
         p.HomeId = p.PlaceId = "home-" + side; p.DayPlaceId = p.Identity.Persona == Persona.Retiree ? "" : "work-" + side;
         p.ShopId = "cafe-" + side; p.LeisureId = "park-" + side;
         p.Preferences.OwnsCar = false; p.Preferences.AllowTransit = false; p.Preferences.WalkingToleranceMetres = 900;
-        p.NextDepartureMinute = p.NextJobChangeMinute = ResidentLifecycle.Never;
+
     }
     return city;
 }

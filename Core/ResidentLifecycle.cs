@@ -8,90 +8,68 @@ namespace PersistentCity.Core
     public static class ResidentLifecycle
     {
         public const double Never = 1000000000;
-        public const int MaxRecentDepartures = 128;
-
         public static bool IsWorker(CitizenState person) => person.Identity.Persona != Persona.Student && person.Identity.Persona != Persona.Retiree;
         public static bool IsSafelyHome(CitizenState person) => person.Phase == CitizenPhase.AtPlace
             && person.Activity == Activity.Home && person.PlaceId == person.HomeId
-            && person.DestinationId == "" && person.Journey == null && person.DepartureMinute == 0;
+            && person.DestinationId == "" && person.Journey == null && person.DepartureMinute == 0
+            && person.MealOuting == null;
 
-        public static void Initialize(CitizenState person, int seed, double minute, bool established = true)
+        public static void Initialize(CitizenState person, int seed, double minute)
         {
             person.JoinedMinute = minute;
             person.JobChanges = 0;
-            person.NextJobChangeMinute = IsWorker(person) ? NextJob(person, seed, minute, established ? 1 : 90) : Never;
-            person.NextDepartureMinute = After(minute, 7 + WaitingDays(person.Identity.Id + ":departure", seed, 1200));
-        }
-
-        // Schema 2 workers retain overdue events; future dates get the slower rate
-        // without changing a commute, daily wake-up, assignment or departure date.
-        public static void RetuneLegacyJobs(CityState city)
-        {
-            foreach (var person in city.Citizens)
-                if (IsWorker(person) && Position.Finite(person.NextJobChangeMinute)
-                    && person.NextJobChangeMinute > city.Minute && person.NextJobChangeMinute < Never)
-                    person.NextJobChangeMinute = Math.Min(Never, city.Minute + (person.NextJobChangeMinute - city.Minute) * 10);
+            person.LastEmploymentCheckDay = (int)(minute / 1440);
         }
 
         public static double NextHomeEvent(CitizenState person, double routineMinute, double now)
         {
-            if (!IsSafelyHome(person)) return routineMinute;
-            double next = routineMinute;
-            if (person.NextJobChangeMinute > now && person.NextJobChangeMinute < Never) next = Math.Min(next, person.NextJobChangeMinute);
-            if (person.NextDepartureMinute > now && person.NextDepartureMinute < Never) next = Math.Min(next, person.NextDepartureMinute);
-            return next;
+            if (!IsWorker(person) || !IsSafelyHome(person)) return routineMinute;
+            // One overdue day per event. Requeue through the simulator's ordinary budget;
+            // never loop through months of missed days inside a resident update.
+            // Spread the small daily check through the first four hours. This adds
+            // no midnight pulse and does not change the resident/day chance.
+            double nextDay = (person.LastEmploymentCheckDay + 1) * 1440.0
+                + 1 + RoutineKeys.EmploymentTimeFor(person) % 240;
+            return Math.Min(routineMinute, nextDay <= now ? now + 1 : nextDay);
         }
 
-        // Called only at a completed physical home event. Dates remain pending while away.
-        // Return the current resident so the caller never requeues a departed object.
-        internal static CitizenState ApplyAtHome(CityState city, CitizenState person, double now)
+        /// <summary>The daily employment check up to its route probes. Returns the ordered workplace candidates
+        /// the caller must probe for reachability (assigning the first reachable one with AssignWorkplace), or
+        /// null when the day needs no probe: not due, no roll, or a job loss already applied here.</summary>
+        internal static IReadOnlyList<Place>? BeginEmploymentCheck(CityState city, CitizenState person, double now)
+            => BeginEmploymentCheck(city, person, now, null);
+
+        /// <summary>As above, resolving the home through the simulator's place index instead of a catalogue scan.</summary>
+        internal static IReadOnlyList<Place>? BeginEmploymentCheck(CityState city, CitizenState person, double now,
+            IReadOnlyDictionary<string, Place>? places)
         {
-            if (!IsSafelyHome(person)) return person;
-            if (person.NextDepartureMinute < Never && person.NextDepartureMinute <= now)
+            if (!IsWorker(person) || !IsSafelyHome(person) || person.LastEmploymentCheckDay >= (int)(now / 1440)) return null;
+            int day = checked(person.LastEmploymentCheckDay + 1);
+            person.LastEmploymentCheckDay = day;
+            string key = person.Identity.Id + ":employment:" + day.ToString(CultureInfo.InvariantCulture);
+            double chance = (StableRandom.Hash(key, city.Seed) + 1.0) / (uint.MaxValue + 2.0);
+            if (person.DayPlaceId != "")
             {
-                if (city.NextResidentSequence < 1 || city.NextResidentSequence == int.MaxValue || city.DepartedCount == int.MaxValue)
-                    throw new InvalidOperationException("Resident identity sequence exhausted.");
-                var identity = RemixIdentity(city, city.NextResidentSequence);
-                var replacement = Population.CreateResident(city, identity, now, Population.Assignments(city, person), established: false);
-                int index = city.Citizens.IndexOf(person);
-                if (index < 0) throw new InvalidOperationException("Departing resident is not active.");
-                // Construct first, commit once. No game/RLO state is involved in this change.
-                city.Citizens[index] = replacement;
-                city.RecentDepartures.Add(new DepartureRecord
-                {
-                    Identity = Population.CloneIdentity(person.Identity), JoinedMinute = person.JoinedMinute, DepartedMinute = now
-                });
-                if (city.RecentDepartures.Count > MaxRecentDepartures) city.RecentDepartures.RemoveAt(0);
-                city.NextResidentSequence++;
-                city.DepartedCount++;
-                return replacement;
+                if (chance >= CityBalance.DailyJobLossChance) return null;
+                person.DayPlaceId = "";
+                person.JobChanges = checked(person.JobChanges + 1);
+                person.CommutePreparation = new CommutePreparation();
+                return null;
             }
-            if (person.NextJobChangeMinute < Never && person.NextJobChangeMinute <= now)
-            {
-                if (IsWorker(person))
-                {
-                    var used = Population.Assignments(city, person);
-                    var home = city.Places.First(p => p.Id == person.HomeId);
-                    string next = DestinationChoice.Choose(city.Places, home, PlaceKind.Work,
-                        person.Identity.Id + ":job:" + person.JobChanges.ToString(CultureInfo.InvariantCulture), city.Seed,
-                        p => p.Id != person.DayPlaceId && Population.Used(used, p.Id) < p.Capacity);
-                    if (next != "") { person.DayPlaceId = next; person.JobChanges = checked(person.JobChanges + 1); }
-                    person.NextJobChangeMinute = NextJob(person, city.Seed, now, next != "" ? 90 : 1);
-                }
-                else person.NextJobChangeMinute = Never;
-            }
-            return person;
+            if (chance >= CityBalance.DailyJobFindingChance) return null;
+            var used = Population.Assignments(city, person);
+            var home = places != null && places.TryGetValue(person.HomeId, out var indexed) ? indexed
+                : city.Places.First(p => p.Id == person.HomeId);
+            return DestinationChoice.Shortlist(city.Places.Where(p => Population.Used(used, p.Id) < p.Capacity),
+                home, PlaceKind.Work, key, city.Seed, CityBalance.WorkplaceRouteProbes);
         }
 
-        private static double NextJob(CitizenState person, int seed, double minute, double minimumDays) => After(minute,
-            minimumDays + WaitingDays(person.Identity.Id + ":job-date:" + person.JobChanges.ToString(CultureInfo.InvariantCulture)
-                + ":" + BitConverter.DoubleToInt64Bits(minute).ToString("X16", CultureInfo.InvariantCulture), seed, 900));
-        private static double WaitingDays(string key, int seed, double mean)
+        internal static void AssignWorkplace(CitizenState person, Place candidate)
         {
-            double uniform = (StableRandom.Hash(key, seed) + 1.0) / (uint.MaxValue + 2.0);
-            return -Math.Log(uniform) * mean;
+            person.DayPlaceId = candidate.Id;
+            person.JobChanges = checked(person.JobChanges + 1);
+            person.CommutePreparation = new CommutePreparation();
         }
-        private static double After(double minute, double days) => Math.Min(Never, minute + days * 1440);
 
         public static CitizenIdentity RemixIdentity(CityState city, int sequence) => CreateRemixer(city)(sequence);
 

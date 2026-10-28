@@ -258,6 +258,73 @@ namespace PersistentCity.Tests
             Assert.Throws<InvalidOperationException>(() => speeds.Capture());
         }
 
+        [Fact]
+        public void TheCityApiBindingIsReusedForItsAssemblyAndEveryReadStaysLive()
+        {
+            var city = City(); Serve(city);
+            var rlo = StandIn.Build("0.99.0", liveContract: true);
+            var first = adapter.Read(rlo);
+            Assert.Equal(RloReadStatus.Ready, first.Status);
+            Assert.Equal(1, adapter.Bindings);
+            Assert.Equal(first.PopulationKey, adapter.Read(rlo).PopulationKey);
+            Assert.Equal(1, adapter.Bindings);
+
+            // Status, citizens and seed are asked for again on the reused binding.
+            CityApiHooks.CitizensStatus = 3;
+            Assert.Contains("refreshing", adapter.Read(rlo).Message);
+            CityApiHooks.CitizensStatus = 0;
+            CityApiHooks.Citizens[7] = CityApiHooks.Citizens[7] with { AppearanceSeed = 12345 };
+            var changed = adapter.Read(rlo);
+            Assert.Equal(RloReadStatus.Ready, changed.Status);
+            Assert.NotEqual(first.PopulationKey, changed.PopulationKey);
+            Serve(City(2000));
+            Assert.Equal(2000, adapter.Read(rlo).CitySeed);
+            Assert.Equal(1, adapter.Bindings);
+
+            // The contract version is read on every call; a refusal drops the binding and the next read binds afresh.
+            CityApiHooks.Contract = 2;
+            var refused = adapter.Read(rlo);
+            Assert.Equal(RloReadStatus.Incompatible, refused.Status);
+            Assert.Contains("contract 2 is not supported", refused.Message);
+            Assert.Empty(refused.Identities);
+            CityApiHooks.Contract = 1;
+            Assert.Equal(RloReadStatus.Ready, adapter.Read(rlo).Status);
+            Assert.Equal(2, adapter.Bindings);
+            CityApiHooks.Throw = true;
+            Assert.Contains("forbids", adapter.Read(rlo).Message);
+            CityApiHooks.Throw = false;
+            Assert.Equal(RloReadStatus.Ready, adapter.Read(rlo).Status);
+            Assert.Equal(3, adapter.Bindings);
+
+            // Another assembly object binds its own contract and refuses on its own terms.
+            Assert.Equal(RloReadStatus.Incompatible, adapter.Read(StandIn.Build("0.99.0", contract: 2)).Status);
+            Assert.Equal(RloReadStatus.Ready, adapter.Read(StandIn.Build("0.99.0")).Status);
+            Assert.Equal(4, adapter.Bindings);
+            Assert.Equal(RloReadStatus.Ready, adapter.Read(rlo).Status);
+            Assert.Equal(5, adapter.Bindings);
+            Assert.True(adapter.BindingMilliseconds >= 0);
+        }
+
+        [Fact]
+        public void ANestedReadDuringTheCityApiCallLeavesTheOuterReadIntact()
+        {
+            var city = City(); Serve(city);
+            var rlo = StandIn.Build("0.99.0");
+            var expected = adapter.Read(rlo);
+            RloReadResult? nested = null;
+            CityApiHooks.DuringRead = () => { CityApiHooks.DuringRead = null; nested = adapter.Read(rlo); };
+            var outer = adapter.Read(rlo);
+            Assert.Equal(RloReadStatus.Ready, outer.Status);
+            Assert.Equal(400, outer.Identities.Count);
+            Assert.Equal(expected.PopulationKey, outer.PopulationKey);
+            Assert.NotNull(nested);
+            Assert.Equal(expected.PopulationKey, nested!.PopulationKey);
+            // The nested read bound its own buffers; the outer binding stays cached.
+            Assert.Equal(2, adapter.Bindings);
+            Assert.Equal(expected.PopulationKey, adapter.Read(rlo).PopulationKey);
+            Assert.Equal(2, adapter.Bindings);
+        }
+
         private static string Describe(CitizenIdentity c) =>
             string.Join("|", c.Id, c.Name, c.District, c.Age, c.Female, c.Persona, c.AppearanceSeed);
     }
@@ -267,8 +334,9 @@ namespace PersistentCity.Tests
     {
         public sealed record Citizen(int Index, string? First, string? Last, string? District, int Age, bool Female, string? Persona, int AppearanceSeed);
 
-        public static int Seed, CitizensStatus, ReservedStatus, BodiesStatus, LanesStatus;
+        public static int Seed, CitizensStatus, ReservedStatus, BodiesStatus, LanesStatus, Contract = 1;
         public static bool Throw, ShortLimits;
+        public static Action? DuringRead;
         public static List<Citizen> Citizens = new List<Citizen>();
         public static List<int> Reserved = new List<int>();
         public static List<object> Pedestrians = new List<object>(), Characters = new List<object>();
@@ -277,7 +345,7 @@ namespace PersistentCity.Tests
         public static void Reset()
         {
             Seed = CitizensStatus = ReservedStatus = BodiesStatus = LanesStatus = 0;
-            Throw = ShortLimits = false;
+            Contract = 1; Throw = ShortLimits = false; DuringRead = null;
             Citizens = new List<Citizen>(); Reserved = new List<int>();
             Pedestrians = new List<object>(); Characters = new List<object>(); Lanes = new List<(object, int, int)>();
         }
@@ -296,6 +364,7 @@ namespace PersistentCity.Tests
                 foreach (var p in typeof(Citizen).GetProperties()) if (p.Name != "EqualityContract") type.GetField(p.Name)!.SetValue(record, p.GetValue(c));
                 list.Add(record);
             }
+            DuringRead?.Invoke();
             return 0;
         }
 
@@ -324,7 +393,8 @@ namespace PersistentCity.Tests
     {
         private const string Space = "RealLifeOverhaul.ModApi.";
 
-        public static Assembly Build(string version, int contract = 1, string fault = "")
+        /// <summary><c>liveContract</c> answers ContractVersion from <see cref="CityApiHooks.Contract"/> on every call.</summary>
+        public static Assembly Build(string version, int contract = 1, string fault = "", bool liveContract = false)
         {
             var name = new AssemblyName("RealLifeOverhaul") { Version = Version.TryParse(version, out var v) ? v : new Version(0, 0) };
             var assembly = AssemblyBuilder.DefineDynamicAssembly(name, AssemblyBuilderAccess.Run);
@@ -346,7 +416,10 @@ namespace PersistentCity.Tests
 
             var api = module.DefineType(Space + "CityApi", TypeAttributes.Public | TypeAttributes.Abstract | TypeAttributes.Sealed | TypeAttributes.Class);
             var getter = api.DefineMethod("get_ContractVersion", MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.SpecialName | MethodAttributes.HideBySig, typeof(int), Type.EmptyTypes);
-            var il = getter.GetILGenerator(); il.Emit(OpCodes.Ldc_I4, contract); il.Emit(OpCodes.Ret);
+            var il = getter.GetILGenerator();
+            if (liveContract) il.Emit(OpCodes.Ldsfld, typeof(CityApiHooks).GetField(nameof(CityApiHooks.Contract))!);
+            else il.Emit(OpCodes.Ldc_I4, contract);
+            il.Emit(OpCodes.Ret);
             api.DefineProperty("ContractVersion", PropertyAttributes.None, typeof(int), Type.EmptyTypes).SetGetMethod(getter);
 
             var citizenList = typeof(List<>).MakeGenericType(citizenType);

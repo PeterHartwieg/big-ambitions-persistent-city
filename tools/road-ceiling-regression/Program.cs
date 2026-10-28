@@ -41,6 +41,8 @@ internal static class Program
         internal bool NoEgress;
         internal bool HaveSubway;
         internal double? SecondEgressMinutes;
+        // A second home curb the walking stub can reach, for a home car allocated on a replacement snapshot.
+        internal Position? SecondHomeCurb;
         internal int ForecastCalls;
         internal Fixture(int count, bool reachable, double rate = 1, double curbOffset = 0, float platformHeight = 0, float endOffset = 0)
         {
@@ -74,6 +76,7 @@ internal static class Program
                 if (b.Id.StartsWith("subway:") || a.Id.StartsWith("subway:"))
                     return HaveSubway && Same(a.Position, b.Position) ? Walk(a.Position, b.Position, .01) : null;
                 if (a.Id == "home" && Same(b.Position, Parked)) return Walk(a.Position, b.Position, AccessMinutes);
+                if (a.Id == "home" && SecondHomeCurb.HasValue && Same(b.Position, SecondHomeCurb.Value)) return Walk(a.Position, b.Position, AccessMinutes);
                 if (b.Id == "work" && Same(a.Position, End) && !NoEgress) return Walk(a.Position, b.Position, EgressMinutes);
                 if (b.Id == "work" && SecondEgressMinutes.HasValue && Same(a.Position, Point(Native[count - 2].position)))
                     return Walk(a.Position, b.Position, SecondEgressMinutes.Value);
@@ -90,12 +93,38 @@ internal static class Program
             Planner.SetTrafficForecast((id, _) => { ForecastCalls++; return new TrafficLinkForecast(id, 0, 0, Delay, Closed); });
         }
         internal Route? Plan() => Planner.Plan(From, To, 100, Person);
+#if SLICED_PLANNER
+        // The same request through the resumable job, one unit of work per call (budget 0), as a frame loop would drive it.
+        internal (Route? Route, int Slices) PlanSliced()
+        {
+            using var job = Planner.Begin(new RouteRequest(From, To, 100, Person, Person.Preferences));
+            int slices = 1;
+            while (!job.Continue(0)) slices++;
+            return (job.Result, slices);
+        }
+        // The traffic network is constructed on a pool task; retry at the fixture's pace until preparation reports ready.
+        internal void Preflight()
+        {
+            for (int tries = 0; ; tries++)
+            {
+                Time.frameCount++;
+                if (Planner.Prepare()) break;
+                if (tries > 10000) throw new Exception("Preflight did not finish");
+                Thread.Sleep(1);
+            }
+        }
+#endif
     }
 
     private static void Main(string[] args)
     {
         System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
         var results = new List<object>();
+#if SLICED_PLANNER
+        var sliced = new List<object>();
+        int slicedChecks = 0;
+        void SlicedCheck(bool value, string message) { slicedChecks++; if (!value) throw new Exception(message); }
+#endif
         void Record(string name, Fixture f, TravelMode? mode)
         {
             long reads = StagingHarness.Guard.Reads;
@@ -104,6 +133,14 @@ internal static class Program
             else Check(route == null, name + " expected refusal");
             if (route != null) Check(TransportComposition.Valid(route, f.From.Position, f.To.Position, f.Person.Preferences, f.Parked), name + " invalid result");
             results.Add(new { name, fingerprint = Fingerprint(route), minutes = route?.Minutes, estimate = route?.EstimatedMinutes, nativeReads = reads });
+#if SLICED_PLANNER
+            // Every case again through the sliced job: the complete route fingerprint must not change with slicing.
+            long slicedReads = StagingHarness.Guard.Reads;
+            var (slicedRoute, slices) = f.PlanSliced(); slicedReads = StagingHarness.Guard.Reads - slicedReads;
+            SlicedCheck(Fingerprint(slicedRoute) == Fingerprint(route), name + " sliced route differs from the one-shot route");
+            SlicedCheck(slices >= 3, name + " ran in too few slices: " + slices);
+            sliced.Add(new { name, fingerprint = Fingerprint(slicedRoute), slices, nativeReads = slicedReads });
+#endif
         }
         foreach (double rate in new[] { .01, 1, 2, 1000 })
         {
@@ -144,7 +181,136 @@ internal static class Program
         var stranded = new Fixture(1200, false) { DirectMinutes = 30 };
         Record("unreachable-walk", stranded, TravelMode.Walk);
         stranded.DirectMinutes = null; Record("unreachable-no-alternative", stranded, null);
+#if SLICED_PLANNER
+        {
+            // A road search suspended mid-A*: a one-shot plan meanwhile reuses the per-node memo generation, so the
+            // suspended search starts over and still answers the one-shot route.
+            var f = new Fixture(300, true) { DirectMinutes = 2000, AccessMinutes = 2, EgressMinutes = 3 };
+            string expected = Fingerprint(f.Plan());
+            using var job = f.Planner.Begin(new RouteRequest(f.From, f.To, 100, f.Person, f.Person.Preferences));
+            int units = 0;
+            while (f.Planner.LastJobUnit != "car-search") { SlicedCheck(!job.Continue(0), "job finished before its road search started"); units++; }
+            SlicedCheck(!job.Continue(0) && f.Planner.LastJobUnit == "car-search", "a 300-node road search finished in one 64-expansion slice");
+            SlicedCheck(Fingerprint(f.Plan()) == expected, "one-shot plan during a suspended search changed");
+            SlicedCheck(f.Planner.RoadSearchRestarts == 0, "road search restarted before resuming");
+            while (!job.Continue(0)) units++;
+            SlicedCheck(f.Planner.RoadSearchRestarts == 1, "suspended road search did not start over after another search");
+            SlicedCheck(Fingerprint(job.Result) == expected, "restarted road search answered a different route");
+            sliced.Add(new { name = "search-generation-restart", fingerprint = Fingerprint(job.Result), slices = units, nativeReads = 0L });
+        }
+        {
+            // The road snapshot is replaced between slices (a native node changed; the sweep marks the snapshot
+            // stale; preparation captures a new one). The job refuses to mix two snapshots: Continue throws so the
+            // simulator can replay the whole event, and a fresh job on the new snapshot answers the one-shot route.
+            var f = new Fixture(31, true) { DirectMinutes = 2000, AccessMinutes = 2, EgressMinutes = 3 };
+            string expected = Fingerprint(f.Plan());
+            int snapshots = f.Planner.RoadSnapshots;
+            var job = f.Planner.Begin(new RouteRequest(f.From, f.To, 100, f.Person, f.Person.Preferences));
+            for (int i = 0; i < 3; i++) SlicedCheck(!job.Continue(0), "job finished before the snapshot change");
+            var contract = f.Native[10].allowedAgents;
+            f.Native[10].allowedAgents = null;
+            SlicedCheck(f.Planner.Refresh() == "", "gates changed unexpectedly");
+            Time.frameCount++;
+            SlicedCheck(!f.Planner.Prepare(), "the sweep did not notice the changed node");
+            f.Native[10].allowedAgents = contract;
+            f.Preflight();
+            SlicedCheck(f.Planner.RoadSnapshots == snapshots + 1 && f.Planner.ReadyForPopulation, "no replacement snapshot");
+            bool refused = false;
+            try { job.Continue(0); }
+            catch (RoutePlanningRestartRequired) { refused = true; }
+            job.Dispose();
+            SlicedCheck(refused, "a job resumed on a replaced snapshot did not ask for an event restart");
+            SlicedCheck(job.Result == null, "a refused job kept a result");
+            var (fresh, units) = f.PlanSliced();
+            SlicedCheck(Fingerprint(fresh) == expected, "a fresh job on the replacement snapshot answered a different route");
+            SlicedCheck(Fingerprint(f.Plan()) == expected, "one-shot plan after the replacement differs");
+            sliced.Add(new { name = "snapshot-replacement-restart", fingerprint = Fingerprint(fresh), slices = units, nativeReads = 0L });
+        }
+        {
+            // The snapshot is replaced after the job was begun but before its first slice: the frame that answered
+            // the event's previous request also began this one, then preparation installed a new snapshot. The
+            // first Continue must refuse, since the earlier answer belongs to the old snapshot.
+            var f = new Fixture(31, true) { DirectMinutes = 2000, AccessMinutes = 2, EgressMinutes = 3 };
+            string expected = Fingerprint(f.Plan());
+            int snapshots = f.Planner.RoadSnapshots;
+            var job = f.Planner.Begin(new RouteRequest(f.From, f.To, 100, f.Person, f.Person.Preferences));
+            var contract = f.Native[10].allowedAgents;
+            f.Native[10].allowedAgents = null;
+            SlicedCheck(f.Planner.Refresh() == "", "gates changed unexpectedly");
+            Time.frameCount++;
+            SlicedCheck(!f.Planner.Prepare(), "the sweep did not notice the changed node");
+            f.Native[10].allowedAgents = contract;
+            f.Preflight();
+            SlicedCheck(f.Planner.RoadSnapshots == snapshots + 1 && f.Planner.ReadyForPopulation, "no replacement snapshot");
+            bool refused = false;
+            try { job.Continue(0); }
+            catch (RoutePlanningRestartRequired) { refused = true; }
+            job.Dispose();
+            SlicedCheck(refused, "a job begun before a snapshot replacement did not refuse its first slice");
+            SlicedCheck(job.Result == null, "a refused job kept a result");
+            var (fresh, units) = f.PlanSliced();
+            SlicedCheck(Fingerprint(fresh) == expected, "a fresh job on the replacement snapshot answered a different route");
+            sliced.Add(new { name = "snapshot-replacement-before-first-slice", fingerprint = Fingerprint(fresh), slices = units, nativeReads = 0L });
+        }
+        {
+            // A resident without a car whose job allocated one at a home curb of the old snapshot. The replacement
+            // snapshot no longer lets cars use that curb's node, so a retried plan that kept the car would drive
+            // from a curb the new snapshot does not offer. The caller discards the working copy with the job; a
+            // fresh job on a fresh copy must allocate against the new snapshot exactly as a one-shot plan does.
+            var oldCurb = new Position(0, 0, 0); var newCurb = new Position(10, 0, 0);
+            var f = new Fixture(31, true) { DirectMinutes = 2000, AccessMinutes = 2, EgressMinutes = 3, SecondHomeCurb = newCurb };
+            CitizenState Resident() => new CitizenState { Identity = f.Person.Identity, HomeId = "home", PlaceId = "home",
+                Phase = CitizenPhase.AtPlace, Preferences = new TravelPreferences { OwnsCar = true, AllowTransit = true, WalkingToleranceMetres = 100000 } };
+            var before = Resident();
+            var oldRoute = f.Planner.Plan(f.From, f.To, 100, before);
+            SlicedCheck(before.Car != null && Same(before.Car.ParkedPosition, oldCurb), "the old snapshot did not allocate the nearest home curb");
+            SlicedCheck(oldRoute != null && oldRoute.Legs.Any(l => l.Mode == TravelMode.Car), "the old snapshot did not drive");
+            int snapshots = f.Planner.RoadSnapshots;
+            var working = Resident();
+            var job = f.Planner.Begin(new RouteRequest(f.From, f.To, 100, working, working.Preferences));
+            int guard = 0;
+            while (working.Car == null) { SlicedCheck(!job.Continue(0) && ++guard < 100, "job finished before allocating a home car"); }
+            SlicedCheck(f.Planner.LastJobUnit == "home-curb-walk" && Same(working.Car.ParkedPosition, oldCurb), "the suspended job did not allocate at the old curb");
+            f.Native[0].allowedAgents = new List<int>();
+            SlicedCheck(f.Planner.Refresh() == "", "gates changed unexpectedly");
+            Time.frameCount++;
+            SlicedCheck(!f.Planner.Prepare(), "the sweep did not notice the changed curb node");
+            f.Preflight();
+            SlicedCheck(f.Planner.RoadSnapshots == snapshots + 1 && f.Planner.ReadyForPopulation, "no replacement snapshot");
+            bool refused = false;
+            try { job.Continue(0); }
+            catch (RoutePlanningRestartRequired) { refused = true; }
+            job.Dispose();
+            SlicedCheck(refused, "a job holding a car from the old snapshot did not ask for an event restart");
+            // The caller drops the working copy (and its car). One-shot and fresh sliced plans on fresh copies.
+            var expectedResident = Resident();
+            var expectedRoute = f.Planner.Plan(f.From, f.To, 100, expectedResident);
+            SlicedCheck(expectedResident.Car != null && Same(expectedResident.Car.ParkedPosition, newCurb), "the new snapshot did not allocate the remaining curb");
+            SlicedCheck(expectedRoute != null && expectedRoute.Legs.Any(l => l.Mode == TravelMode.Car), "the new snapshot did not drive");
+            SlicedCheck(Fingerprint(expectedRoute) != Fingerprint(oldRoute), "the replacement snapshot did not change the route");
+            var retried = Resident();
+            using var fresh = f.Planner.Begin(new RouteRequest(f.From, f.To, 100, retried, retried.Preferences));
+            int units = 1;
+            while (!fresh.Continue(0)) units++;
+            SlicedCheck(Fingerprint(fresh.Result) == Fingerprint(expectedRoute), "the replayed request answered a different route than the one-shot plan");
+            SlicedCheck(retried.Car != null && Same(retried.Car.ParkedPosition, expectedResident.Car!.ParkedPosition),
+                "the replayed request parked the car somewhere else than the one-shot plan");
+            sliced.Add(new { name = "home-car-snapshot-restart", fingerprint = Fingerprint(fresh.Result), slices = units, nativeReads = 0L });
+        }
+        {
+            // A job abandoned mid-search releases the shared scratch storage; the next plans are unaffected.
+            var f = new Fixture(300, true) { DirectMinutes = 2000, AccessMinutes = 2, EgressMinutes = 3 };
+            string expected = Fingerprint(f.Plan());
+            var job = f.Planner.Begin(new RouteRequest(f.From, f.To, 100, f.Person, f.Person.Preferences));
+            while (f.Planner.LastJobUnit != "car-search") SlicedCheck(!job.Continue(0), "job finished early");
+            job.Dispose();
+            SlicedCheck(job.Result == null, "abandoned job kept a result");
+            SlicedCheck(Fingerprint(f.Plan()) == expected && Fingerprint(f.PlanSliced().Route) == expected, "plans after an abandoned job differ");
+        }
+        Console.WriteLine(JsonSerializer.Serialize(new { checks, results, slicedChecks, sliced }));
+#else
         Console.WriteLine(JsonSerializer.Serialize(new { checks, results }));
+#endif
         if (args.Contains("--benchmark") || args.Contains("--benchmark-fixtures"))
         {
             foreach (var name in new[] { "unreachable-walk", "congested-walk", "winning-car" })

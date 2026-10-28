@@ -22,6 +22,7 @@ namespace PersistentCity.Compatibility
         private const BindingFlags PublicStatic = BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly;
         private const BindingFlags PublicInstance = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly;
         private readonly MethodInfo citizens, reservedCitizens, reservedBodies, slowedLanes;
+        private readonly PropertyInfo version;
         private readonly Type citizenType;
         private readonly FieldInfo index, first, last, district, age, female, persona, appearance;
         private readonly object[] citizenArgs = new object[2], indexArgs = new object[1], bodyArgs = new object[2], laneArgs = new object[3];
@@ -40,12 +41,12 @@ namespace PersistentCity.Compatibility
                     throw Invalid("CityApiStatus." + known + " is missing or has another value");
             if (!citizenType.IsPublic || !citizenType.IsClass) throw Invalid("CityApiCitizen must be a public class");
 
-            var version = api.GetProperty("ContractVersion", PublicStatic);
-            if (version == null || version.PropertyType != typeof(int) || version.GetMethod == null || !version.GetMethod.IsPublic || version.GetIndexParameters().Length != 0)
+            var property = api.GetProperty("ContractVersion", PublicStatic);
+            if (property == null || property.PropertyType != typeof(int) || property.GetMethod == null || !property.GetMethod.IsPublic || property.GetIndexParameters().Length != 0)
                 throw Invalid("missing public static int CityApi.ContractVersion");
+            version = property;
             ContractVersion = (int)version.GetValue(null)!;
-            if (ContractVersion != SupportedContract)
-                throw Invalid("contract " + ContractVersion + " is not supported; Persistent City reads contract " + SupportedContract);
+            if (ContractVersion != SupportedContract) throw Unsupported(ContractVersion);
 
             index = Field("Index", typeof(int)); first = Field("First", typeof(string)); last = Field("Last", typeof(string));
             district = Field("District", typeof(string)); age = Field("Age", typeof(int)); female = Field("Female", typeof(bool));
@@ -71,6 +72,15 @@ namespace PersistentCity.Compatibility
         {
             try { return new RloBridge(api); }
             catch (Exception error) when (!(error is InvalidOperationException)) { throw Invalid("could not bind", error); }
+        }
+
+        /// <summary>Asks RLO for its contract version again, as a fresh binding would. Throws, as binding does, if it has changed.</summary>
+        public void CheckContractVersion()
+        {
+            int current;
+            try { current = (int)version.GetValue(null)!; }
+            catch (Exception error) { throw Invalid("could not bind", error); }
+            if (current != SupportedContract) throw Unsupported(current);
         }
 
         /// <summary>Copies the citizens into Persistent City identities, in RLO's order. Ready leaves <paramref name="read"/> filled.</summary>
@@ -148,6 +158,9 @@ namespace PersistentCity.Compatibility
             if (method == null || method.ReturnType != returns) throw Invalid("missing or changed method CityApi." + name);
             return method;
         }
+
+        private static InvalidOperationException Unsupported(int contract) =>
+            Invalid("contract " + contract + " is not supported; Persistent City reads contract " + SupportedContract);
 
         internal static InvalidOperationException Invalid(string message, Exception? inner = null) =>
             new InvalidOperationException("RLO CityApi: " + message + ".", inner);

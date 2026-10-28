@@ -17,7 +17,7 @@ public sealed class OptionalVisitTests
         var state = Population.Create(new[] { new CitizenIdentity { Id = "person", Name = "Resident", Persona = Persona.Commuter } },
             new[] { new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 1 },
                 new Place { Id = "shop", Name = "Shop", Kind = PlaceKind.Shop, Position = new(10, 0, 0) } }, "optional-test", "0.40.4", 17, 1440);
-        var person = state.Citizens.Single(); person.NextDepartureMinute = person.NextJobChangeMinute = ResidentLifecycle.Never;
+        var person = state.Citizens.Single();
         person.Phase = CitizenPhase.AtPlace; person.PlaceId = person.HomeId; person.Activity = Activity.Home;
         person.ActivityUntilMinute = person.NextEventMinute = 1800;
         return new CitySimulator(state, new Walking());

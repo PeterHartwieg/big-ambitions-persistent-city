@@ -116,14 +116,15 @@ namespace PersistentCity.Runtime
             var candidate = idle[selected];
             if (candidate == null) return -1;
             bool needTaxi = current.TaxiNeedsReplenishment;
-            if (!PhysicalVehicles.IsTaxi(candidate) && !PhysicalVehicles.RandomAmbient(candidate)) return selected;
-            if (PhysicalVehicles.IsTaxi(candidate) && needTaxi) return selected;
+            // Taxi classification is memoized per frame; the ordinary-ambient verdict stays live.
+            if (!current.IsTaxiThisFrame(candidate) && !PhysicalVehicles.RandomAmbient(candidate)) return selected;
+            if (current.IsTaxiThisFrame(candidate) && needTaxi) return selected;
             // Native FindIndex chooses the first idle member of the drawn group. Ordinary members stay
             // idle, so skip those queue heads while retaining the same group draw (no retry/random draw).
             var group = candidate.vehicleGroupType;
             for (int i = 0; i < idle.Count; i++)
                 if (idle[i] != null && idle[i].vehicleGroupType == group && !idle[i].gameObject.activeInHierarchy
-                    && (PhysicalVehicles.IsTaxi(idle[i]) ? needTaxi : !PhysicalVehicles.RandomAmbient(idle[i]))) return i;
+                    && (current.IsTaxiThisFrame(idle[i]) ? needTaxi : !PhysicalVehicles.RandomAmbient(idle[i]))) return i;
             return -1;
         }
         private static IEnumerable<CodeInstruction> BodyForceTranspiler(IEnumerable<CodeInstruction> instructions)

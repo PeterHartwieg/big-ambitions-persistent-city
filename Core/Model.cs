@@ -47,6 +47,9 @@ namespace PersistentCity.Core
         public int NativeTrafficIndex { get; set; } = -1;
         public string EvidenceSource { get; set; } = "legacy";
         public double ResidentialAreaSquareMetres { get; set; }
+        // Transient and never serialized: DailyRoutine's opening windows for recently queried days,
+        // validated against an exact copy of the hours on every use.
+        internal OpeningCache? OpeningCache;
     }
 
     public sealed class OpeningWindow
@@ -67,11 +70,67 @@ namespace PersistentCity.Core
 
     public sealed class RouteLeg
     {
+        private string serviceId = "";
         public Position From { get; set; }
         public Position To { get; set; }
         public TravelMode Mode { get; set; }
         public double Minutes { get; set; }
-        public string ServiceId { get; set; } = "";
+        /// <summary>Native provenance on the wire, e.g. native:road:v1:&lt;topology&gt;:&lt;from&gt;:&lt;to&gt;. Setting it
+        /// (when planned, copied or loaded) also decodes a native road tag into transient fields.</summary>
+        public string ServiceId
+        {
+            get => serviceId;
+            set { serviceId = value; RoadTag = RoadTag.Decode(value); }
+        }
+        /// <summary>Transient decoding of ServiceId; never serialized.</summary>
+        internal RoadTag RoadTag { get; private set; }
+    }
+
+    internal enum RoadTagKind : byte { None, V1, Fragment1 }
+
+    /// <summary>
+    /// A native road tag split once: the kind ("v1" or "fragment1"), the position of the topology segment
+    /// within the tag and the two native node indices. Kind None means the tag is not a well-formed
+    /// native:road tag: exactly six colon-separated parts, "native", "road", "v1" or "fragment1", any
+    /// topology text, then two node indices accepted by int.TryParse with NumberStyles.None. Callers still
+    /// check the topology against their own network on every use.
+    /// </summary>
+    internal readonly struct RoadTag
+    {
+        private RoadTag(RoadTagKind kind, int topologyStart, int topologyLength, int from, int to)
+        { Kind = kind; TopologyStart = topologyStart; TopologyLength = topologyLength; From = from; To = to; }
+        public RoadTagKind Kind { get; }
+        public int TopologyStart { get; }
+        public int TopologyLength { get; }
+        public int From { get; }
+        public int To { get; }
+
+        private const string Prefix = "native:road:";
+
+        internal static RoadTag Decode(string? service)
+        {
+            if (service == null || !service.StartsWith(Prefix, StringComparison.Ordinal)) return default;
+            int kindEnd = service.IndexOf(':', Prefix.Length);
+            if (kindEnd < 0) return default;
+            int topologyEnd = service.IndexOf(':', kindEnd + 1);
+            if (topologyEnd < 0) return default;
+            int fromEnd = service.IndexOf(':', topologyEnd + 1);
+            if (fromEnd < 0 || service.IndexOf(':', fromEnd + 1) >= 0) return default;
+            RoadTagKind kind;
+            int kindLength = kindEnd - Prefix.Length;
+            if (kindLength == 2 && string.CompareOrdinal(service, Prefix.Length, "v1", 0, 2) == 0) kind = RoadTagKind.V1;
+            else if (kindLength == 9 && string.CompareOrdinal(service, Prefix.Length, "fragment1", 0, 9) == 0) kind = RoadTagKind.Fragment1;
+            else return default;
+            if (!int.TryParse(service.AsSpan(topologyEnd + 1, fromEnd - topologyEnd - 1), System.Globalization.NumberStyles.None,
+                    System.Globalization.CultureInfo.InvariantCulture, out int from)
+                || !int.TryParse(service.AsSpan(fromEnd + 1), System.Globalization.NumberStyles.None,
+                    System.Globalization.CultureInfo.InvariantCulture, out int to)) return default;
+            return new RoadTag(kind, kindEnd + 1, topologyEnd - kindEnd - 1, from, to);
+        }
+
+        /// <summary>True when the decoded tag names this topology, compared in place without allocation.</summary>
+        internal bool IsTopology(string service, string? topology) => Kind != RoadTagKind.None && topology != null
+            && topology.Length == TopologyLength && string.CompareOrdinal(service, TopologyStart, topology, 0, TopologyLength) == 0;
     }
 
     public sealed class Route
@@ -153,8 +212,7 @@ namespace PersistentCity.Core
         public MealOuting? MealOuting { get; set; }
         public CarState? Car { get; set; }
         public double JoinedMinute { get; set; }
-        public double NextJobChangeMinute { get; set; } = ResidentLifecycle.Never;
-        public double NextDepartureMinute { get; set; } = ResidentLifecycle.Never;
+        public int LastEmploymentCheckDay { get; set; }
         public int JobChanges { get; set; }
         public CitizenPhase Phase { get; set; }
         public Activity Activity { get; set; }
@@ -168,6 +226,9 @@ namespace PersistentCity.Core
         public int CompletedJourneys { get; set; }
         public int MissedActivities { get; set; }
         public List<VisitRecord> RecentVisits { get; set; } = new List<VisitRecord>();
+        // Transient and never serialized: per-resident routine hashes derived from Identity.Id and the
+        // city seed. RoutineKeys.For rebuilds it when either differs; event copies share it.
+        internal RoutineKeys? RoutineKeys;
     }
 
     public sealed class VisitRecord
@@ -179,7 +240,7 @@ namespace PersistentCity.Core
 
     public sealed class CityState
     {
-        public const int CurrentSchema = 8;
+        public const int CurrentSchema = 13;
         public int Schema { get; set; } = CurrentSchema;
         public int TravelTimingVersion { get; set; } = 1;
         public double TravelClockRate { get; set; } = 1;
@@ -197,17 +258,9 @@ namespace PersistentCity.Core
         public List<CitizenState> Citizens { get; set; } = new List<CitizenState>();
         // The RLO import remains immutable even as this mod's own roster changes.
         public List<CitizenIdentity> SourceIdentities { get; set; } = new List<CitizenIdentity>();
-        public List<DepartureRecord> RecentDepartures { get; set; } = new List<DepartureRecord>();
         public int NextResidentSequence { get; set; } = 1;
-        public int DepartedCount { get; set; }
         public int PopulationTarget { get; set; }
         public int InitialImportedResidents { get; set; }
     }
 
-    public sealed class DepartureRecord
-    {
-        public CitizenIdentity Identity { get; set; } = new CitizenIdentity();
-        public double JoinedMinute { get; set; }
-        public double DepartedMinute { get; set; }
-    }
 }

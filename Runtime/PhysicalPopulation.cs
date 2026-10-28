@@ -67,6 +67,11 @@ namespace PersistentCity.Runtime
         private float nextSelection;
         private bool active, disposed;
         private long acquired, released, blockedSamples, failedAcquisitions, trafficOvershoots, queued;
+        // Running counts of registered bindings with a walker, a car and a queue stand. Only Bind,
+        // Unbind and TryJoinQueue change registration or a registered binding's queue.
+        private int personBindings, carBindings, queueBindings;
+        // Reused per-frame snapshot of bindings; taken out while in use so a nested call cannot share it.
+        private List<Binding>? bindingSnapshot = new List<Binding>();
 
         public PhysicalPopulation(Transform parent, CitySimulator simulation, MultimodalRoutes routes, Assembly dependency,
             IModLogger log, int pedestrianLimit, int vehicleLimit, double radius)
@@ -101,10 +106,11 @@ namespace PersistentCity.Runtime
             catch { Dispose(); throw; }
         }
 
-        public string Diagnostics => "physical=" + active + ", pedestrians=" + bindings.Values.Count(b => b.Person != null)
-            + ", cars=" + bindings.Values.Count(b => b.Car != null) + ", acquired=" + acquired + ", released=" + released
+        public string Diagnostics => "physical=" + active + ", pedestrians=" + personBindings
+            + ", cars=" + carBindings + ", acquired=" + acquired + ", released=" + released
             + ", blockedSamples=" + blockedSamples + ", unavailable=" + failedAcquisitions + ", trafficOvershoots=" + trafficOvershoots
-            + ", queueing=" + bindings.Values.Count(b => b.Queue != null) + ", queued=" + queued + ", walkersResumed=" + ambient.Resumed;
+            + ", queueing=" + queueBindings + ", queued=" + queued + ", walkersResumed=" + ambient.Resumed
+            + ", carAdmission=" + vehicles.LastAdmissionResident + ":" + vehicles.LastAdmissionStage + ":" + vehicles.LastAdmissionError;
 
         // Release before an unrendered time jump so catch-up can use the same committed geometry.
         public void BeforeAdvance()
@@ -134,26 +140,44 @@ namespace PersistentCity.Runtime
             if (NativeTravelPace.HiddenTravel) { SuspendBeforeNativeFastForward(); return; }
             Position focus = NativeTravelPace.Focus;
             if (!focus.IsFinite) { Suspend(); return; }
-            foreach (var binding in bindings.Values.ToArray())
+            var snapshot = bindingSnapshot ?? new List<Binding>(bindings.Count);
+            bindingSnapshot = null;
+            try
             {
-                if (ambient.IsReserved(binding.Citizen.Identity.Id)) { Release(binding); continue; }
-                if (!Observe(binding)) { if (!TryAwaitArrival(binding)) Release(binding); continue; }
-                Position position = binding.Person?.Position ?? binding.Car!.Position;
-                if (Position.Distance(position, focus) > radius * 1.4) Release(binding);
+                snapshot.AddRange(bindings.Values);
+                foreach (var binding in snapshot)
+                {
+                    if (ambient.IsReserved(binding.Citizen.Identity.Id)) { Release(binding); continue; }
+                    if (!Observe(binding)) { if (!TryAwaitArrival(binding)) Release(binding); continue; }
+                    Position position = binding.Person?.Position ?? binding.Car!.Position;
+                    if (Position.Distance(position, focus) > radius * 1.4) Release(binding);
+                }
             }
+            finally { snapshot.Clear(); bindingSnapshot = snapshot; }
             if (Time.unscaledTime < nextSelection || !routes.ReadyForPopulation) return;
             nextSelection = Time.unscaledTime + .25f;
             // The bounded view is selected deterministically. No filler identities or unrelated trips are created.
-            int people = bindings.Values.Count(b => b.Person != null), cars = bindings.Count - people;
+            int people = personBindings, cars = bindings.Count - people;
             int attempts = 0;
             PlanQueues(focus);
-            foreach (var candidate in simulation.State.Citizens.Where(c => c.NextEventMinute > simulation.State.Minute
-                    && !bindings.ContainsKey(c.Identity.Id) && !ambient.IsReserved(c.Identity.Id)
-                    && (!attempted.TryGetValue(c.Identity.Id, out float at) || Time.unscaledTime - at >= 2))
-                .Select(c => (Citizen: c, Position: simulation.PositionOf(c)))
-                .Where(c => Position.Distance(c.Position, focus) <= radius)
-                .OrderBy(c => attempted.TryGetValue(c.Citizen.Identity.Id, out float at) ? at : float.NegativeInfinity)
-                .ThenBy(c => Position.Distance(c.Position, focus)).ThenBy(c => c.Citizen.Identity.Id, StringComparer.Ordinal))
+            // Candidate selection. tools/physical-selection-regression extracts the text from this line
+            // to the road sample below and compares it with the frozen LINQ selection.
+            candidates.Clear();
+            foreach (var c in simulation.State.Citizens)
+            {
+                if (!(c.NextEventMinute > simulation.State.Minute) || bindings.ContainsKey(c.Identity.Id) || ambient.IsReserved(c.Identity.Id)) continue;
+                bool tried = attempted.TryGetValue(c.Identity.Id, out float lastAttempt);
+                if (tried && !(Time.unscaledTime - lastAttempt >= 2)) continue;
+                // Stationary indoor residents cannot consume an attempt. Keep travelling
+                // residents here: PositionOf and SampleJourney have distinct boundary rules.
+                if (!((c.Phase == CitizenPhase.Travelling && c.Journey != null) || queuers.ContainsKey(c.Identity.Id) || Outdoor(c))) continue;
+                Position sampled = simulation.PositionOf(c);
+                double distance = Position.Distance(sampled, focus);
+                if (!(distance <= radius)) continue;
+                candidates.Add(new SelectionCandidate(c, sampled, tried ? lastAttempt : float.NegativeInfinity, distance, candidates.Count));
+            }
+            candidates.Sort(SelectionCandidate.ByPriority);
+            foreach (var candidate in candidates)
             {
                 var citizen = candidate.Citizen;
                 bool moving = citizen.Phase == CitizenPhase.Travelling && citizen.Journey != null;
@@ -189,7 +213,7 @@ namespace PersistentCity.Runtime
                         if (!pedestrians.TryAcquire(citizen.Identity, at, out var body)) { failedAcquisitions++; continue; }
                         binding.Person = body;
                     }
-                    bindings.Add(citizen.Identity.Id, binding); bound = true; acquired++;
+                    Bind(binding); bound = true; acquired++;
                 }
                 finally
                 {
@@ -206,12 +230,39 @@ namespace PersistentCity.Runtime
                 if (car) cars++; else people++;
                 if (queuer) queued++;
             }
+            candidates.Clear();
             if (attempted.Count > simulation.State.Citizens.Count + 128)
             {
                 var ids = new HashSet<string>(simulation.State.Citizens.Select(c => c.Identity.Id), StringComparer.Ordinal);
                 foreach (var id in attempted.Keys.Where(id => !ids.Contains(id)).ToArray()) attempted.Remove(id);
             }
         }
+
+        /// <summary>One physical selection candidate, with its sort keys captured before any attempt is recorded.</summary>
+        private readonly struct SelectionCandidate
+        {
+            public SelectionCandidate(CitizenState citizen, Position position, float lastAttempt, double distance, int rosterIndex)
+            { Citizen = citizen; Position = position; LastAttempt = lastAttempt; Distance = distance; RosterIndex = rosterIndex; }
+            public CitizenState Citizen { get; }
+            public Position Position { get; }
+            public float LastAttempt { get; }
+            public double Distance { get; }
+            public int RosterIndex { get; }
+            // Least recently attempted first (never attempted first of all), then nearest, then ordinal id.
+            // Roster order breaks any remaining tie, as the stable LINQ OrderBy/ThenBy chain did.
+            public static readonly IComparer<SelectionCandidate> ByPriority = new Priority();
+            private sealed class Priority : IComparer<SelectionCandidate>
+            {
+                public int Compare(SelectionCandidate a, SelectionCandidate b)
+                {
+                    int order = a.LastAttempt.CompareTo(b.LastAttempt);
+                    if (order == 0) order = a.Distance.CompareTo(b.Distance);
+                    if (order == 0) order = StringComparer.Ordinal.Compare(a.Citizen.Identity.Id, b.Citizen.Identity.Id);
+                    return order != 0 ? order : a.RosterIndex.CompareTo(b.RosterIndex);
+                }
+            }
+        }
+        private readonly List<SelectionCandidate> candidates = new List<SelectionCandidate>();
 
         // Waiting for a route or for an opening is indoors. Only a queue-at-opening dwell
         // (PlanQueues) puts a waiting citizen in the street, at a spot beside the door.
@@ -342,7 +393,9 @@ namespace PersistentCity.Runtime
             if (!slots.TryGetValue(citizen.Identity.Id, out int slot)) return false;
             if (!person.SetPathTarget(line.Spots[slot], NativeTravelPace.WalkingMetresPerSecond))
             { gaveUp[citizen.Identity.Id] = dwell.Value.EndMinute; return false; }
+            bool counted = binding.Queue.HasValue || !Bound(binding);
             binding.Queue = dwell; binding.Line = line; binding.Slot = slot;
+            if (!counted) queueBindings++;
             binding.Step = QueueStep.Approaching; binding.StepWalked = 0;
             queued++;
             return ObserveQueue(binding);
@@ -527,6 +580,25 @@ namespace PersistentCity.Runtime
             vehicles.AssertHealthy();
             foreach (var binding in bindings.Values.ToArray()) if (!Observe(binding)) Release(binding);
         }
+        private bool Bound(Binding binding) => bindings.TryGetValue(binding.Citizen.Identity.Id, out var registered) && ReferenceEquals(registered, binding);
+        private void Bind(Binding binding)
+        {
+            bindings.Add(binding.Citizen.Identity.Id, binding);
+            CountBinding(binding, 1);
+        }
+        private void Unbind(string citizenId)
+        {
+            // Removes whatever binding holds this id, as before; the counts follow the removed binding.
+            if (!bindings.TryGetValue(citizenId, out var registered)) return;
+            bindings.Remove(citizenId);
+            CountBinding(registered, -1);
+        }
+        private void CountBinding(Binding binding, int delta)
+        {
+            if (binding.Person != null) personBindings += delta;
+            if (binding.Car != null) carBindings += delta;
+            if (binding.Queue.HasValue) queueBindings += delta;
+        }
         private void ReleaseBodies(Binding binding)
         {
             try { if (binding.Person != null) pedestrians.Release(binding.Person); }
@@ -540,7 +612,7 @@ namespace PersistentCity.Runtime
                 try { ReleaseBodies(binding); }
                 finally
                 {
-                    bindings.Remove(binding.Citizen.Identity.Id);
+                    Unbind(binding.Citizen.Identity.Id);
                     attempted[binding.Citizen.Identity.Id] = Time.unscaledTime;
                     released++;
                 }

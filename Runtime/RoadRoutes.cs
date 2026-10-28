@@ -299,6 +299,15 @@ namespace PersistentCity.Runtime
         private readonly int[] searchedAt;
         private readonly bool[] searchDisabled;
         private int searchGeneration;
+        // Immutable type metadata. Its value is still read from the live waypoint at every boundary.
+        private static readonly System.Reflection.FieldInfo? AssociatedIntersection = typeof(Waypoint).GetField("associatedIntersection",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        // One read-only physical sample validates each node once and shares junction contracts.
+        // Nothing survives the sample: the next sample and every public resolve read live data.
+        private bool sampleScope;
+        private int sampleGeneration;
+        private int[] sampledAt = Array.Empty<int>();
+        private bool[] sampleDisabled = Array.Empty<bool>();
         public string TopologyId { get; private set; } = "";
         public bool Ready => copiedNodes == waypoints.Length && TrafficNetwork != null;
         public bool Available => scene != null && waypoints.Length > 0;
@@ -491,93 +500,183 @@ namespace PersistentCity.Runtime
         public Route? Plan(Curb from, Curb to, double departureMinute = 0,
             double maximumEstimatedMinutes = double.PositiveInfinity)
         {
-            speeds.Refresh();
-            if (!Ready || TrafficNetwork == null || !Position.Finite(departureMinute) || departureMinute < 0
-                || from.Node == to.Node || !ConnectorClear(from.Position, nodes[from.Node].Position) || !ConnectorClear(to.Position, nodes[to.Node].Position)) return null;
-            // This search is synchronous on Unity's main thread and its access callbacks are
-            // read-only. Repeated visits to a node therefore share one native validation;
-            // every new search and the final selected-path validation still read live data.
-            if (searchGeneration == int.MaxValue) { Array.Clear(searchedAt, 0, searchedAt.Length); searchGeneration = 0; }
-            searchGeneration++;
-            trafficBuilder?.BeginQuery();
-            int[]? path = null;
-            var begin = Connector(from.Position, nodes[from.Node].Position);
-            var end = Connector(nodes[to.Node].Position, to.Position);
-            double roadCeiling = TransportComposition.RemainingSearchMinutes(maximumEstimatedMinutes, begin.Minutes + end.Minutes);
-            var forecast = trafficForecast;
-            var captured = new Dictionary<int, TrafficLinkForecast>();
-            var entryDelays = new Dictionary<int, double>();
-            var network = TrafficNetwork;
-            var sectionPace = new Dictionary<int, double>();
-            double entryMinute = departureMinute + begin.Minutes;
-            double Traversal(int a, int b, double baseline)
+            // The one-shot plan is the resumable plan driven without a deadline, so both share one search.
+            using var plan = BeginPlan(from, to, departureMinute, maximumEstimatedMinutes);
+            plan.Continue(long.MaxValue);
+            return plan.Result;
+        }
+
+        /// <summary>Start a curb-to-curb plan whose A* the caller advances in slices. Searches of this snapshot
+        /// that were started over while suspended, because another search reused the per-node memo.</summary>
+        public RoadPlan BeginPlan(Curb from, Curb to, double departureMinute = 0, double maximumEstimatedMinutes = double.PositiveInfinity)
+            => new RoadPlan(this, from, to, departureMinute, maximumEstimatedMinutes);
+        public int SearchRestarts { get; private set; }
+
+        /// <summary>One road search in progress. The prologue (connector checks, forecast capture, search start) and
+        /// the epilogue (live path validation, leg tagging, connector join) are the former synchronous Plan; between
+        /// them the A* runs in 64-expansion slices until the caller's deadline. The per-search node memo belongs to
+        /// the search generation taken at the start: if another search bumps it while this one is suspended, this
+        /// one starts over rather than mixing two validations.</summary>
+        internal sealed class RoadPlan : IDisposable
+        {
+            private const int ExpansionSlice = 64;
+            private readonly RoadRoutes owner;
+            private readonly Curb from, to;
+            private readonly double departureMinute, maximumEstimatedMinutes;
+            private TransportRoadGraph.RoadSearch? search;
+            private int generation;
+            private int[]? path;
+            private Route? begin, end;
+            private Dictionary<int, TrafficLinkForecast>? captured;
+            private Dictionary<int, double>? entryDelays;
+            private TrafficNetwork? network;
+            public bool Finished { get; private set; }
+            public Route? Result { get; private set; }
+            public int Restarts { get; private set; }
+            /// <summary>Frontier expansions so far in the current search attempt.</summary>
+            public int Expanded => search?.Expanded ?? 0;
+
+            internal RoadPlan(RoadRoutes owner, Curb from, Curb to, double departureMinute, double maximumEstimatedMinutes)
             {
-                if (!speeds.HasOverrides) return baseline;
-                if (!network.TryGetEdge(a, b, out var edge)) return double.NaN;
-                if (!sectionPace.TryGetValue(edge.LinkId, out double factor))
+                this.owner = owner; this.from = from; this.to = to;
+                this.departureMinute = departureMinute; this.maximumEstimatedMinutes = maximumEstimatedMinutes;
+                Start();
+            }
+
+            private void Start()
+            {
+                var owner = this.owner; var from = this.from; var to = this.to;
+                var speeds = owner.speeds; var nodes = owner.nodes; var waypoints = owner.waypoints;
+                speeds.Refresh();
+                if (!owner.Ready || owner.TrafficNetwork == null || !Position.Finite(departureMinute) || departureMinute < 0
+                    || from.Node == to.Node || !owner.ConnectorClear(from.Position, nodes[from.Node].Position) || !owner.ConnectorClear(to.Position, nodes[to.Node].Position))
+                { Finish(null); return; }
+                // This search runs on Unity's main thread and its access callbacks are read-only. Repeated
+                // visits to a node therefore share one native validation within the search generation;
+                // every new search and the final selected-path validation still read live data.
+                if (owner.searchGeneration == int.MaxValue) { Array.Clear(owner.searchedAt, 0, owner.searchedAt.Length); owner.searchGeneration = 0; }
+                owner.searchGeneration++;
+                generation = owner.searchGeneration;
+                owner.trafficBuilder?.BeginQuery();
+                path = null;
+                begin = owner.Connector(from.Position, nodes[from.Node].Position);
+                end = owner.Connector(nodes[to.Node].Position, to.Position);
+                double roadCeiling = TransportComposition.RemainingSearchMinutes(maximumEstimatedMinutes, begin.Minutes + end.Minutes);
+                var forecast = owner.trafficForecast;
+                var trafficEntryForecast = owner.trafficEntryForecast;
+                var captured = this.captured = new Dictionary<int, TrafficLinkForecast>();
+                var entryDelays = this.entryDelays = new Dictionary<int, double>();
+                var network = this.network = owner.TrafficNetwork;
+                var sectionPace = new Dictionary<int, double>();
+                double entryMinute = departureMinute + begin.Minutes;
+                double Traversal(int a, int b, double baseline)
                 {
-                    // FIFO spacing uses a linear distance/time coordinate inside a section.
-                    // Average the full section's effective travel time, then apply one pace to
-                    // all its edges. Partial curb journeys receive the same proportional pace.
-                    var indices = network.NativeNodes(edge.LinkId);
-                    double effective = 0; bool changed = false;
-                    for (int i = 1; i < indices.Count; i++)
+                    if (!speeds.HasOverrides) return baseline;
+                    if (!network.TryGetEdge(a, b, out var edge)) return double.NaN;
+                    if (!sectionPace.TryGetValue(edge.LinkId, out double factor))
                     {
-                        int fromNode = indices[i - 1];
-                        if (!network.TryGetEdge(fromNode, indices[i], out var part)) return double.NaN;
-                        double original = Math.Min(40, speeds.Canonical(waypoints[fromNode]));
-                        double current = Math.Min(40, speeds.Effective(waypoints[fromNode]));
-                        changed |= original != current;
-                        effective += part.FreeFlowMinutes * (original / current);
+                        // FIFO spacing uses a linear distance/time coordinate inside a section.
+                        // Average the full section's effective travel time, then apply one pace to
+                        // all its edges. Partial curb journeys receive the same proportional pace.
+                        var indices = network.NativeNodes(edge.LinkId);
+                        double effective = 0; bool changed = false;
+                        for (int i = 1; i < indices.Count; i++)
+                        {
+                            int fromNode = indices[i - 1];
+                            if (!network.TryGetEdge(fromNode, indices[i], out var part)) return double.NaN;
+                            double original = Math.Min(40, speeds.Canonical(waypoints[fromNode]));
+                            double current = Math.Min(40, speeds.Effective(waypoints[fromNode]));
+                            changed |= original != current;
+                            effective += part.FreeFlowMinutes * (original / current);
+                        }
+                        factor = changed ? Math.Max(1, effective / network.Links[edge.LinkId].FreeFlowMinutes) : 1;
+                        sectionPace.Add(edge.LinkId, factor);
                     }
-                    factor = changed ? Math.Max(1, effective / network.Links[edge.LinkId].FreeFlowMinutes) : 1;
-                    sectionPace.Add(edge.LinkId, factor);
+                    return baseline * factor;
                 }
-                return baseline * factor;
-            }
-            // One read per section for this query. A* has no arrival-time callback, so this is a departure-time
-            // local forecast. Proportional edge shares avoid repeatedly charging an entire section at every waypoint.
-            double Extra(int a, int b)
-            {
-                if (!network.TryGetEdge(a, b, out var edge)) return 1e15;
-                if (forecast == null) return 0;
-                double entryDelay = 0;
-                if (a == from.Node && edge.StartLinkFraction > 0 && trafficEntryForecast != null)
+                // One read per section for this query. A* has no arrival-time callback, so this is a departure-time
+                // local forecast. Proportional edge shares avoid repeatedly charging an entire section at every waypoint.
+                double Extra(int a, int b)
                 {
-                    if (!entryDelays.TryGetValue(edge.LinkId, out entryDelay))
+                    if (!network.TryGetEdge(a, b, out var edge)) return 1e15;
+                    if (forecast == null) return 0;
+                    double entryDelay = 0;
+                    if (a == from.Node && edge.StartLinkFraction > 0 && trafficEntryForecast != null)
                     {
-                        double endFraction = 1;
-                        var sectionNodes = network.NativeNodes(edge.LinkId);
-                        for (int i = 1; i < sectionNodes.Count; i++)
-                            if (sectionNodes[i] == to.Node && network.TryGetEdge(sectionNodes[i - 1], to.Node, out var final)
-                                && final.EndLinkFraction > edge.StartLinkFraction)
-                            { endFraction = final.EndLinkFraction; break; }
-                        entryDelay = trafficEntryForecast(edge.LinkId, entryMinute, edge.StartLinkFraction, endFraction - edge.StartLinkFraction);
-                        entryDelays.Add(edge.LinkId, entryDelay);
+                        if (!entryDelays.TryGetValue(edge.LinkId, out entryDelay))
+                        {
+                            double endFraction = 1;
+                            var sectionNodes = network.NativeNodes(edge.LinkId);
+                            for (int i = 1; i < sectionNodes.Count; i++)
+                                if (sectionNodes[i] == to.Node && network.TryGetEdge(sectionNodes[i - 1], to.Node, out var final)
+                                    && final.EndLinkFraction > edge.StartLinkFraction)
+                                { endFraction = final.EndLinkFraction; break; }
+                            entryDelay = trafficEntryForecast(edge.LinkId, entryMinute, edge.StartLinkFraction, endFraction - edge.StartLinkFraction);
+                            entryDelays.Add(edge.LinkId, entryDelay);
+                        }
+                        if (!Position.Finite(entryDelay) || entryDelay < 0) return 1e15;
                     }
-                    if (!Position.Finite(entryDelay) || entryDelay < 0) return 1e15;
+                    if (!captured.TryGetValue(edge.LinkId, out var value)) { value = forecast(edge.LinkId, entryMinute); captured.Add(edge.LinkId, value); }
+                    if (value.Closed || !Position.Finite(value.DelayMinutes)) return 1e15;
+                    return entryDelay + value.DelayMinutes * edge.FreeFlowMinutes / network.Links[edge.LinkId].FreeFlowMinutes;
                 }
-                if (!captured.TryGetValue(edge.LinkId, out var value)) { value = forecast(edge.LinkId, entryMinute); captured.Add(edge.LinkId, value); }
-                if (value.Closed || !Position.Finite(value.DelayMinutes)) return 1e15;
-                return entryDelay + value.DelayMinutes * edge.FreeFlowMinutes / network.Links[edge.LinkId].FreeFlowMinutes;
+                search = owner.graph.BeginSearch(from.Node, to.Node, owner.SearchDisabled, owner.access.ClearSegment, Traversal,
+                    pathFound: found => path = found, extraMinutes: Extra, maximumEstimatedMinutes: roadCeiling);
             }
-            var road = graph.PlanWithTraversal(from.Node, to.Node, SearchDisabled, access.ClearSegment, Traversal,
-                pathFound: found => path = found, extraMinutes: Extra, maximumEstimatedMinutes: roadCeiling);
-            if (road == null || path == null || !NativePathValid(path)) return null;
-            // A fresh A* search and live validation check every node, directed edge and gate. No route winner
-            // is cached: an off-path closure reopening must immediately make its shorter path competitive.
-            // Background cars do not collide with
-            // traffic or artificial bridge skip hiders; local curb access receives the physical barrier test.
-            if (TopologyId.Length != 64 || road.Legs.Count != path.Length - 1) return null;
-            for (int i = 0; i < road.Legs.Count; i++)
+
+            /// <summary>Advance the search in slices until it finishes or the Stopwatch deadline passes; at least
+            /// one slice always runs. Returns true once Result is final.</summary>
+            public bool Continue(long deadlineTimestamp)
             {
-                if (!network.TryGetEdge(path[i], path[i + 1], out var edge)
-                    || captured.TryGetValue(edge.LinkId, out var value) && (value.Closed || !Position.Finite(value.DelayMinutes))
-                    || i == 0 && entryDelays.TryGetValue(edge.LinkId, out var entryDelay) && (!Position.Finite(entryDelay) || entryDelay < 0)) return null;
-                road.Legs[i].ServiceId = "native:road:v1:" + TopologyId + ":" + path[i].ToString(CultureInfo.InvariantCulture)
-                    + ":" + path[i + 1].ToString(CultureInfo.InvariantCulture);
+                if (Finished) return true;
+                if (owner.searchGeneration != generation)
+                {
+                    Restarts++; owner.SearchRestarts++;
+                    search?.Dispose(); search = null;
+                    Start();
+                    if (Finished) return true;
+                }
+                while (true)
+                {
+                    if (search!.Advance(ExpansionSlice)) { Complete(); return true; }
+                    if (Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
+                }
             }
-            return TransportComposition.Join(begin, road, end);
+
+            private void Complete()
+            {
+                var owner = this.owner; var road = search!.Result; var path = this.path; var network = this.network!;
+                if (road == null || path == null || !owner.NativePathValid(path)) { Finish(null); return; }
+                // A fresh A* search and live validation check every node, directed edge and gate. No route winner
+                // is cached: an off-path closure reopening must immediately make its shorter path competitive.
+                // Background cars do not collide with
+                // traffic or artificial bridge skip hiders; local curb access receives the physical barrier test.
+                if (owner.TopologyId.Length != 64 || road.Legs.Count != path.Length - 1) { Finish(null); return; }
+                string tagPrefix = "native:road:v1:" + owner.TopologyId + ":";
+                for (int i = 0; i < road.Legs.Count; i++)
+                {
+                    if (!network.TryGetEdge(path[i], path[i + 1], out var edge)
+                        || captured!.TryGetValue(edge.LinkId, out var value) && (value.Closed || !Position.Finite(value.DelayMinutes))
+                        || i == 0 && entryDelays!.TryGetValue(edge.LinkId, out var entryDelay) && (!Position.Finite(entryDelay) || entryDelay < 0)) { Finish(null); return; }
+                    // The same tag text as before; setting it also decodes the transient road tag once.
+                    road.Legs[i].ServiceId = string.Concat(tagPrefix, path[i].ToString(CultureInfo.InvariantCulture),
+                        ":", path[i + 1].ToString(CultureInfo.InvariantCulture));
+                }
+                Finish(TransportComposition.Join(begin!, road, end!));
+            }
+
+            private void Finish(Route? result)
+            {
+                Finished = true; Result = result;
+                search?.Dispose(); search = null;
+            }
+
+            /// <summary>Abandon an unfinished plan, or release a finished one. Safe to call twice.</summary>
+            public void Dispose()
+            {
+                if (!Finished) { Finished = true; Result = null; }
+                search?.Dispose(); search = null;
+            }
         }
 
         private bool ConnectorClear(Position curb, Position road) => curb.IsFinite && road.IsFinite
@@ -676,7 +775,33 @@ namespace PersistentCity.Runtime
                 || Disabled(index)) return null;
             return waypoints[index];
         }
+        // ResolveWaypoint's checks in its order. Inside a sample, a node's verdict is read once and
+        // junction results are shared between its nodes; outside one this is ResolveWaypoint itself.
+        private Waypoint? ResolveSampled(string topology, int index)
+        {
+            if (!sampleScope) return ResolveWaypoint(topology, index);
+            if (!Ready || !IsCurrent || TopologyId.Length != 64 || !string.Equals(topology, TopologyId, StringComparison.Ordinal)
+                || index < 0 || index >= waypoints.Length) return null;
+            if (sampledAt[index] != sampleGeneration)
+            { sampleDisabled[index] = Disabled(index); sampledAt[index] = sampleGeneration; }
+            return sampleDisabled[index] ? null : waypoints[index];
+        }
+        /// <summary>Synchronous and read-only: no native load, pin, hook or callback runs inside it, so one
+        /// validation of each node holds for the whole sample. The scope closes before the caller acquires a body.</summary>
         public bool TryPhysicalRoadSample(CitizenState citizen, PhysicalJourneySample sample, out PhysicalRoadSample roadSample)
+        {
+            roadSample = default;
+            // A reentrant sample is refused rather than validated against this one's partial results.
+            if (sampleScope) return false;
+            if (sampledAt.Length != waypoints.Length) { sampledAt = new int[waypoints.Length]; sampleDisabled = new bool[waypoints.Length]; }
+            if (sampleGeneration == int.MaxValue) { Array.Clear(sampledAt, 0, sampledAt.Length); sampleGeneration = 0; }
+            sampleGeneration++;
+            trafficBuilder?.BeginQuery();
+            sampleScope = true;
+            try { return SamplePhysicalRoad(citizen, sample, out roadSample); }
+            finally { sampleScope = false; trafficBuilder?.BeginQuery(); }
+        }
+        private bool SamplePhysicalRoad(CitizenState citizen, PhysicalJourneySample sample, out PhysicalRoadSample roadSample)
         {
             roadSample = default;
             var legs = citizen.Journey?.Legs;
@@ -701,7 +826,7 @@ namespace PersistentCity.Runtime
             var targets = new List<int>();
             var boundaries = new List<RoadBoundary>();
             var junctions = new List<object>();
-            var associated = typeof(Waypoint).GetField("associatedIntersection", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            var associated = AssociatedIntersection;
             if (associated == null) return false;
             double distance = 0, progress = 0;
             int previousFrom = -1, previousTo = -1, nodeCount = 0, lastBoundaryNode = -1;
@@ -730,7 +855,7 @@ namespace PersistentCity.Runtime
 
             bool Boundary(int index, double at)
             {
-                var native = ResolveWaypoint(TopologyId, index);
+                var native = ResolveSampled(TopologyId, index);
                 if (native == null) return false;
                 bool repeatedEndpoint = index == lastBoundaryNode;
                 lastBoundaryNode = index;
@@ -756,11 +881,11 @@ namespace PersistentCity.Runtime
         {
             from = to = -1;
             if (leg.Mode != TravelMode.Car || !leg.From.IsFinite || !leg.To.IsFinite || !Position.Finite(leg.Minutes) || leg.Minutes <= 0) return false;
-            var parts = leg.ServiceId.Split(':');
-            if (parts.Length != 6 || parts[0] != "native" || parts[1] != "road" || parts[2] != "fragment1" || parts[3] != TopologyId
-                || !int.TryParse(parts[4], NumberStyles.None, CultureInfo.InvariantCulture, out from)
-                || !int.TryParse(parts[5], NumberStyles.None, CultureInfo.InvariantCulture, out to) || from == to) return false;
-            var a = ResolveWaypoint(parts[3], from); var b = ResolveWaypoint(parts[3], to);
+            // Decoded when ServiceId was set; the topology is compared in place on every call.
+            var tag = leg.RoadTag;
+            if (tag.Kind != RoadTagKind.Fragment1 || !tag.IsTopology(leg.ServiceId, TopologyId) || tag.From == tag.To) return false;
+            from = tag.From; to = tag.To;
+            var a = ResolveSampled(TopologyId, from); var b = ResolveSampled(TopologyId, to);
             if (a == null || b == null || a.neighbors == null || !a.neighbors.Contains(to) || !access.ClearSegment(leg.From, leg.To)) return false;
             Position start = Point(a.position), end = Point(b.position);
             double x = end.X - start.X, y = end.Y - start.Y, z = end.Z - start.Z;
@@ -778,11 +903,10 @@ namespace PersistentCity.Runtime
         {
             from = to = -1;
             if (leg.Mode != TravelMode.Car || string.IsNullOrEmpty(leg.ServiceId)) return false;
-            var parts = leg.ServiceId.Split(':');
-            if (parts.Length != 6 || parts[0] != "native" || parts[1] != "road" || parts[2] != "v1"
-                || parts[3] != TopologyId || !int.TryParse(parts[4], NumberStyles.None, CultureInfo.InvariantCulture, out from)
-                || !int.TryParse(parts[5], NumberStyles.None, CultureInfo.InvariantCulture, out to)) return false;
-            var a = ResolveWaypoint(parts[3], from); var b = ResolveWaypoint(parts[3], to);
+            var tag = leg.RoadTag;
+            if (tag.Kind != RoadTagKind.V1 || !tag.IsTopology(leg.ServiceId, TopologyId)) return false;
+            from = tag.From; to = tag.To;
+            var a = ResolveSampled(TopologyId, from); var b = ResolveSampled(TopologyId, to);
             return a != null && b != null && a.neighbors != null && a.neighbors.Contains(to)
                 && Position.Distance(Point(a.position), leg.From) <= 0.001 && Position.Distance(Point(b.position), leg.To) <= 0.001
                 && access.ClearSegment(leg.From, leg.To);

@@ -15,14 +15,16 @@ namespace FoodDemandAuditProbe
         private const string ClockAuditOwner="persistentcity.clock-audit.probe";
         private static Probe? clockAudit;
         private bool clockAuditActive;
-        private float auditStarted;
+        private float auditStarted, auditStopped;
         private int peakServing,peakTravelling;
         private double maxLag;
         private readonly List<double> advanceSamples=new List<double>();
+        private const int AdvanceSampleLimit = 2000000;
+        private long droppedAdvanceSamples;
         private void StartClockAudit()
         {
             StopClockAudit();clockAudit=this;clockAuditActive=true;auditStarted=Time.realtimeSinceStartup;
-            peakServing=peakTravelling=0;maxLag=0;advanceSamples.Clear();
+            peakServing=peakTravelling=0;maxLag=0;advanceSamples.Clear();droppedAdvanceSamples=0;
             new Harmony(ClockAuditOwner).Patch(AccessTools.Method(typeof(PopulationRuntime),"AdvancePopulation"),
                 prefix:new HarmonyMethod(typeof(Probe),nameof(AdvanceBefore)),postfix:new HarmonyMethod(typeof(Probe),nameof(AdvanceAfter)));
         }
@@ -30,7 +32,8 @@ namespace FoodDemandAuditProbe
         private static void AdvanceAfter(long __state)
         {
             if(__state==0 || clockAudit==null)return;
-            if(clockAudit.advanceSamples.Count>=2000000)throw new InvalidOperationException("Clock audit sample limit");
+            if(clockAudit.advanceSamples.Count>=AdvanceSampleLimit)
+            { if(clockAudit.droppedAdvanceSamples<long.MaxValue)clockAudit.droppedAdvanceSamples++;return; }
             clockAudit.advanceSamples.Add((Stopwatch.GetTimestamp()-__state)*1000.0/Stopwatch.Frequency);
         }
         private void SampleClockAudit()
@@ -50,13 +53,14 @@ namespace FoodDemandAuditProbe
             var ride=AppDomain.CurrentDomain.GetAssemblies().Select(a=>a.GetType("DrivenRides.Ride",false)).FirstOrDefault(t=>t!=null);
             bool driving=ride?.GetProperty("IsDriving",BindingFlags.Public|BindingFlags.Static)?.GetValue(null) is bool flag && flag;
             return new {factor=Read("Factor"),active=Read("Active"),drivenRides=Read("CoordinatesDrivenRides"),
-                rideActive=ride?.GetProperty("Active",BindingFlags.Public|BindingFlags.Static)?.GetValue(null)!=null,rideDriving=driving,
-                realSeconds=Time.realtimeSinceStartup-auditStarted,frames=sorted.Length,totalAdvanceMs=sorted.Sum(),
+                heldEconomySkipTicks=Read("HeldEconomySkipTicks"),rideActive=ride?.GetProperty("Active",BindingFlags.Public|BindingFlags.Static)?.GetValue(null)!=null,rideDriving=driving,
+                realSeconds=(clockAuditActive?Time.realtimeSinceStartup:auditStopped)-auditStarted,frames=sorted.Length,totalAdvanceMs=sorted.Sum(),
+                recording=clockAuditActive,sampleLimit=AdvanceSampleLimit,droppedAdvanceSamples,truncated=droppedAdvanceSamples!=0,
                 p95AdvanceMs=sorted.Length==0?0:sorted[(int)(sorted.Length*.95)],maxAdvanceMs=sorted.Length==0?0:sorted.Last(),
                 peakServing,peakTravelling,maxLag,timeScale=Time.timeScale,fixedDeltaTime=Time.fixedDeltaTime,
                 note="Diagnostic advancement timing includes trace capture, excludes rendering and route preparation. Peaks/lag sampled every 0.2 real seconds."};
         }
         private void StopClockAudit()
-        {clockAuditActive=false;if(ReferenceEquals(clockAudit,this)){new Harmony(ClockAuditOwner).UnpatchAll(ClockAuditOwner);clockAudit=null;}}
+        {if(clockAuditActive)auditStopped=Time.realtimeSinceStartup;clockAuditActive=false;if(ReferenceEquals(clockAudit,this)){new Harmony(ClockAuditOwner).UnpatchAll(ClockAuditOwner);clockAudit=null;}}
     }
 }

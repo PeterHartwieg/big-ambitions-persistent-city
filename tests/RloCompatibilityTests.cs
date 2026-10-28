@@ -18,7 +18,7 @@ namespace PersistentCity.Tests
         public const string SharedFlareState = "RLO stand-in GoingPublic state";
 
         private readonly RloIdentityAdapter adapter = new RloIdentityAdapter();
-        private RloReadResult Read(Fake.FlareDirector? director) => adapter.ReadContract(typeof(Fake.FlareDirector).Assembly, RloIdentityAdapter.ReviewedVersion, director, true);
+        private RloReadResult Read(object? director) => adapter.ReadContract(typeof(Fake.FlareDirector).Assembly, RloIdentityAdapter.ReviewedVersion, director, true);
 
         private static Fake.FlareDirector City(int seed = 1000)
         {
@@ -237,6 +237,59 @@ namespace PersistentCity.Tests
             var result = Read(city);
             Assert.Equal(RloReadStatus.NotReady, result.Status);
             Assert.Contains("disagree", result.Message); Assert.Empty(result.Identities);
+        }
+
+        [Fact]
+        public void TheReflectionBindingIsReusedForItsAssemblyAndEveryReadStaysLive()
+        {
+            var assembly = typeof(Fake.FlareDirector).Assembly;
+            var city = City(); var snapshot = Snapshot(city);
+            Assert.Equal(1, adapter.Bindings);
+            Assert.True(Read(city).MatchesPopulation(snapshot));
+            Assert.Equal(1, adapter.Bindings);
+
+            // Session, director, Flare, seed and every citizen are read again on the reused binding.
+            RealLifeOverhaul.GoingPublic.InSession = true;
+            Assert.Contains("Multiplayer", Read(city).Message);
+            RealLifeOverhaul.GoingPublic.InSession = false;
+            city.Running = false;
+            Assert.False(Read(city).MatchesPopulation(snapshot));
+            city.Running = true; city.File = new Fake.FlareFile { Seed = 2000 };
+            Assert.False(Read(city).MatchesPopulation(snapshot));
+            city.File = new Fake.FlareFile { Seed = 1000 };
+            var citizens = city.Citizens.ToList(); var c = citizens[3]; c.Last = "Changed"; citizens[3] = c; city.Citizens = citizens;
+            Assert.False(Read(city).MatchesPopulation(snapshot));
+            Assert.True(Read(City()).MatchesPopulation(snapshot));
+            Assert.Equal(1, adapter.Bindings);
+
+            // The live director is looked up on each unsupplied read, never kept with the binding.
+            var previous = Fake.FlareDirector.Instance;
+            try
+            {
+                Fake.FlareDirector.Instance = City();
+                Assert.True(adapter.ReadContract(assembly, RloIdentityAdapter.ReviewedVersion, null, false).MatchesPopulation(snapshot));
+                Fake.FlareDirector.Instance = null;
+                Assert.Contains("not available yet", adapter.ReadContract(assembly, RloIdentityAdapter.ReviewedVersion, null, false).Message);
+                Fake.FlareDirector.Instance = City(2000);
+                Assert.False(adapter.ReadContract(assembly, RloIdentityAdapter.ReviewedVersion, null, false).MatchesPopulation(snapshot));
+            }
+            finally { Fake.FlareDirector.Instance = previous; }
+            Assert.Equal(1, adapter.Bindings);
+
+            // A refusal drops the binding; the next read binds again, as every read did before.
+            city = City(); citizens = city.Citizens.ToList(); citizens[399] = citizens[0]; city.Citizens = citizens;
+            Assert.Equal(RloReadStatus.Incompatible, Read(city).Status);
+            Assert.True(Read(City()).MatchesPopulation(snapshot));
+            Assert.Equal(2, adapter.Bindings);
+            Assert.Contains("Director snapshot", Read(new object()).Message);
+            Assert.True(Read(City()).MatchesPopulation(snapshot));
+            Assert.Equal(3, adapter.Bindings);
+
+            // An assembly without the contract never replaces a good binding with a partial one.
+            Assert.Equal(RloReadStatus.Incompatible, adapter.ReadContract(typeof(RloIdentityAdapter).Assembly, RloIdentityAdapter.ReviewedVersion, City(), true).Status);
+            Assert.Equal(3, adapter.Bindings);
+            Assert.True(Read(City()).MatchesPopulation(snapshot));
+            Assert.Equal(4, adapter.Bindings);
         }
 
         [Fact]

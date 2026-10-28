@@ -186,6 +186,55 @@ internal static class Program
         Check(!cached.Planner.Prepare() && !objects.Ready && objects.Requests == 2,
             "lost road scene reused ready old inventory");
         objects.Ready = true; objects.Revision++; cached.Ready();
+
+        // A true clock retiming may retain the scene container, never its old graph/access/timing.
+        void ReadyPlanner(MultimodalRoutes planner)
+        {
+            for (int i = 0; i < 10000; i++)
+            { Time.frameCount++; if (planner.Prepare()) return; Thread.Sleep(1); }
+            throw new Exception("retimed preflight did not finish");
+        }
+        var shared = new Objects { Ready = true };
+        var retiming = new Fixture(objects: shared);
+        var oldNetwork = retiming.Planner.TrafficNetwork;
+        string oldTopology = retiming.Roads.TopologyId;
+        searches = Object.SceneSearches;
+        retiming.Native[4].position.z = 2;
+        shared.Doors = new[] { new FenceDoor { name = "new gate", acceptsVehicles = true } };
+        shared.Stations = new[] { new SubwayStation { stationName = "New station", Entrance = new Vector3(200, 0, 0) } };
+        shared.Revision++;
+        var retimed = new MultimodalRoutes(Array.Empty<Place>(), 6, 1.0 / 3, null, shared);
+        Check(retimed.ReuseRoadSceneForRetiming(retiming.Planner), "same-save retiming did not reuse live scene container");
+        Check(!retimed.ReadyForPopulation && retimed.TrafficNetwork == null, "retiming reused a prepared graph");
+        ReadyPlanner(retimed);
+        var newRoads = (RoadRoutes)typeof(MultimodalRoutes).GetField("roads", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(retimed)!;
+        Check(Object.SceneSearches == searches && retimed.RoadSceneSearches == 0, "retiming repeated global scene discovery");
+        Check(!ReferenceEquals(oldNetwork, retimed.TrafficNetwork) && oldTopology != newRoads.TopologyId,
+            "retiming failed to capture current geometry into a new network");
+        Check(((System.Collections.IList)stationField.GetValue(retimed)!).Count == 1 && retimed.StationSearches == 1,
+            "retiming failed to refresh station eligibility");
+        Check(!retimed.ReuseRoadSceneForRetiming(retiming.Planner), "prepared target accepted a late scene replacement");
+        var foreign = new MultimodalRoutes(Array.Empty<Place>(), 6, 1.0 / 3, null, new Objects { Ready = true });
+        Check(!foreign.ReuseRoadSceneForRetiming(retiming.Planner), "different save discovery owner reused scene");
+        CityManager.Instance = new CityManager();
+        var otherCity = new MultimodalRoutes(Array.Empty<Place>(), 6, 1.0 / 3, null, shared);
+        Check(!otherCity.ReuseRoadSceneForRetiming(retiming.Planner), "changed city reused old scene");
+        var destroyed = new Fixture(objects: shared); destroyed.Scene.Destroyed = true;
+        var noLiveScene = new MultimodalRoutes(Array.Empty<Place>(), 6, 1.0 / 3, null, shared);
+        Check(!noLiveScene.ReuseRoadSceneForRetiming(destroyed.Planner), "destroyed scene reused on retiming");
+        var unsearched = new Fixture(prepare: false, objects: shared);
+        var noSearch = new MultimodalRoutes(Array.Empty<Place>(), 6, 1.0 / 3, null, shared);
+        Check(!noSearch.ReuseRoadSceneForRetiming(unsearched.Planner), "unsearched planner seeded scene cache");
+        unsearched.Ready();
+        var destroyedAfterReuse = new MultimodalRoutes(Array.Empty<Place>(), 6, 1.0 / 3, null, shared);
+        Check(destroyedAfterReuse.ReuseRoadSceneForRetiming(unsearched.Planner), "second valid retiming refused");
+        unsearched.Scene.Destroyed = true;
+        Object.Scene = new CurrentSceneData { allWaypoints = unsearched.Native };
+        Time.frameCount++;
+        Check(!destroyedAfterReuse.Prepare() && !shared.Ready && shared.Requests > 0,
+            "scene destroyed after handoff bypassed discovery readiness fence");
+        shared.Ready = true; shared.Revision++; searches = Object.SceneSearches; ReadyPlanner(destroyedAfterReuse);
+        Check(Object.SceneSearches == searches + 1, "scene destroyed after handoff was not rediscovered");
         Console.WriteLine("PASS " + checks + " road invalidation checks; 40 signal cycles preserve network; 20 genuine rebuilds perform zero additional global road-scene searches.");
     }
 }

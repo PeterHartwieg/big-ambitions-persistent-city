@@ -207,45 +207,119 @@ namespace PersistentCity.Core
             Func<int, int, double, double>? traversalMinutes, int expansionLimit, Action<int[]>? pathFound,
             Func<int, int, double>? extraMinutes, Action<double>? estimateFound, double maximumEstimatedMinutes)
         {
+            // The one-shot search is the resumable search run without a slice bound, so both share one expansion order.
+            using var search = BeginSearch(start, goal, disabled, clear, traversalMinutes, expansionLimit, pathFound,
+                extraMinutes, estimateFound, maximumEstimatedMinutes);
+            search.Advance(int.MaxValue);
+            return search.Result;
+        }
+
+        /// <summary>Start a search that the caller advances in bounded expansion slices. Its callbacks run exactly
+        /// when the one-shot search would run them. The borrowed scratch storage stays reserved until Dispose, so a
+        /// one-shot query issued while a slice is suspended uses the same fallback storage as a nested query.</summary>
+        public RoadSearch BeginSearch(int start, int goal, Func<int, bool> disabled, Func<Position, Position, bool> clear,
+            Func<int, int, double, double>? traversalMinutes = null, int expansionLimit = 30000, Action<int[]>? pathFound = null,
+            Func<int, int, double>? extraMinutes = null, Action<double>? estimateFound = null,
+            double maximumEstimatedMinutes = double.PositiveInfinity)
+        {
             if (double.IsNaN(maximumEstimatedMinutes) || maximumEstimatedMinutes < 0)
                 throw new ArgumentOutOfRangeException(nameof(maximumEstimatedMinutes));
-            if (!Usable(start) || !Usable(goal) || start == goal || disabled(start) || disabled(goal)) return null;
+            if (disabled == null) throw new ArgumentNullException(nameof(disabled));
+            if (clear == null) throw new ArgumentNullException(nameof(clear));
+            if (!Usable(start) || !Usable(goal) || start == goal || disabled(start) || disabled(goal)) return new RoadSearch(this);
             // Callbacks may issue nested queries (or another caller may query concurrently).
             // Only the uncontended invocation borrows the retained scratch storage.
             bool borrowed = Interlocked.CompareExchange(ref workspaceInUse, 1, 0) == 0;
-            var search = borrowed ? workspace : new RoadSearchWorkspace();
-            try { return Search(start, goal, disabled, clear, traversalMinutes, expansionLimit, pathFound, extraMinutes, estimateFound,
-                TransportComposition.RemainingSearchMinutes(maximumEstimatedMinutes, 0), search); }
-            finally { if (borrowed) Volatile.Write(ref workspaceInUse, 0); }
+            return new RoadSearch(this, start, goal, disabled, clear, traversalMinutes, expansionLimit, pathFound, extraMinutes, estimateFound,
+                TransportComposition.RemainingSearchMinutes(maximumEstimatedMinutes, 0), borrowed ? workspace : new RoadSearchWorkspace(), borrowed);
         }
-        private Route? Search(int start, int goal, Func<int, bool> disabled, Func<Position, Position, bool> clear,
-            Func<int, int, double, double>? traversalMinutes, int expansionLimit, Action<int[]>? pathFound, Func<int, int, double>? extraMinutes,
-            Action<double>? estimateFound, double maximumEstimatedMinutes, RoadSearchWorkspace search)
+        private bool Usable(int index) => index >= 0 && index < nodes.Count && nodes[index] != null && nodes[index].AllowsCar
+            && nodes[index].Position.IsFinite && Position.Finite(nodes[index].KilometresPerHour) && nodes[index].KilometresPerHour > 0;
+
+        /// <summary>A* over the captured road topology, expanded in caller-bounded slices. The frontier, costs and
+        /// the expansion counter live here between slices; no estimate or winner survives the search.</summary>
+        public sealed class RoadSearch : IDisposable
         {
-            search.Begin(nodes.Count);
-            // No estimate or winner survives the query. Revisited edges share their first cost;
-            // selected edges are checked again before accepting the result.
-            var costs = extraMinutes == null && traversalMinutes == null ? null
-                : new Dictionary<(int From, int To), (double Baseline, double Nominal, double Extra)>();
-            search.SetDistance(start, 0, -1);
-            // Slowdown-only traversal and nonnegative extra delays preserve this free-flow lower bound.
-            double Heuristic(int node) => Position.Distance(nodes[node].Position, nodes[goal].Position) / (40.0 / 3.6 / clockRate);
-            search.Add((Heuristic(start), 0, start));
-            int expanded = 0;
-            while (search.Count != 0 && expanded++ < expansionLimit)
+            private readonly TransportRoadGraph graph;
+            private readonly int start, goal, expansionLimit;
+            private readonly Func<int, bool> disabled;
+            private readonly Func<Position, Position, bool> clear;
+            private readonly Func<int, int, double, double>? traversalMinutes;
+            private readonly Action<int[]>? pathFound;
+            private readonly Func<int, int, double>? extraMinutes;
+            private readonly Action<double>? estimateFound;
+            private readonly double maximumEstimatedMinutes;
+            private readonly RoadSearchWorkspace? search;
+            private readonly bool borrowed;
+            // Revisited edges share their first cost; selected edges are checked again before accepting the result.
+            private readonly Dictionary<(int From, int To), (double Baseline, double Nominal, double Extra)>? costs;
+            private int expanded;
+            private bool released;
+            public bool Finished { get; private set; }
+            public Route? Result { get; private set; }
+            /// <summary>Frontier pops so far, including the one that found the goal.</summary>
+            public int Expanded => expanded;
+
+            internal RoadSearch(TransportRoadGraph graph)
             {
+                this.graph = graph; disabled = _ => true; clear = (_, _) => false; Finished = true; released = true;
+            }
+            internal RoadSearch(TransportRoadGraph graph, int start, int goal, Func<int, bool> disabled, Func<Position, Position, bool> clear,
+                Func<int, int, double, double>? traversalMinutes, int expansionLimit, Action<int[]>? pathFound, Func<int, int, double>? extraMinutes,
+                Action<double>? estimateFound, double maximumEstimatedMinutes, RoadSearchWorkspace search, bool borrowed)
+            {
+                this.graph = graph; this.start = start; this.goal = goal; this.disabled = disabled; this.clear = clear;
+                this.traversalMinutes = traversalMinutes; this.expansionLimit = expansionLimit; this.pathFound = pathFound;
+                this.extraMinutes = extraMinutes; this.estimateFound = estimateFound; this.maximumEstimatedMinutes = maximumEstimatedMinutes;
+                this.search = search; this.borrowed = borrowed;
+                search.Begin(graph.nodes.Count);
+                costs = extraMinutes == null && traversalMinutes == null ? null
+                    : new Dictionary<(int From, int To), (double Baseline, double Nominal, double Extra)>();
+                search.SetDistance(start, 0, -1);
+                search.Add((Heuristic(start), 0, start));
+            }
+
+            // Slowdown-only traversal and nonnegative extra delays preserve this free-flow lower bound.
+            private double Heuristic(int node) => Position.Distance(graph.nodes[node].Position, graph.nodes[goal].Position) / (40.0 / 3.6 / graph.clockRate);
+
+            /// <summary>Expand up to the given number of frontier entries. Returns true once the search is finished,
+            /// in which case Result holds the route or null. Further calls after that return true without work.</summary>
+            public bool Advance(int maximumExpansions)
+            {
+                if (maximumExpansions < 1) throw new ArgumentOutOfRangeException(nameof(maximumExpansions));
+                if (Finished) return true;
+                int remaining = maximumExpansions;
+                while (search!.Count != 0 && expanded++ < expansionLimit)
+                {
+                    if (ExpandOne()) return true;
+                    if (--remaining == 0) return false;
+                }
+                return Finish(null);
+            }
+
+            private bool Finish(Route? route)
+            {
+                Finished = true; Result = route;
+                Release();
+                return true;
+            }
+
+            // One frontier pop. Returns true when the search finished during it.
+            private bool ExpandOne()
+            {
+                var nodes = graph.nodes; var search = this.search!;
                 var current = search.Pop();
                 // The frontier is ordered by a free-flow lower bound on the complete road ETA.
                 // Stop only beyond the conservative ceiling, preserving callback order and winners
                 // inside it. Snapshot traversal slowdowns and queue delays are nonnegative.
-                if (current.Estimate > maximumEstimatedMinutes) return null;
+                if (current.Estimate > maximumEstimatedMinutes) return Finish(null);
                 if (current.Node == goal)
                 {
                     var path = new List<int> { goal };
                     int cursor = goal;
                     while (cursor != start)
                     {
-                        if (!search.TryGetPredecessor(cursor, out cursor) || path.Count >= TransportComposition.MaximumLegs) return null;
+                        if (!search.TryGetPredecessor(cursor, out cursor) || path.Count >= TransportComposition.MaximumLegs) return Finish(null);
                         path.Add(cursor);
                     }
                     path.Reverse();
@@ -253,18 +327,18 @@ namespace PersistentCity.Core
                     for (int k = 1; k < path.Count; k++)
                     {
                         var a = nodes[path[k - 1]]; var b = nodes[path[k]];
-                        if (disabled(path[k - 1]) || disabled(path[k]) || !clear(a.Position, b.Position)) return null;
-                        double baseline = Position.Distance(a.Position, b.Position) / (Math.Min(40, a.KilometresPerHour) / 3.6 / clockRate);
+                        if (disabled(path[k - 1]) || disabled(path[k]) || !clear(a.Position, b.Position)) return Finish(null);
+                        double baseline = Position.Distance(a.Position, b.Position) / (Math.Min(40, a.KilometresPerHour) / 3.6 / graph.clockRate);
                         double nominal = baseline;
-                        if (traversalMinutes != null && (!Position.Finite(baseline) || baseline <= 0)) return null;
+                        if (traversalMinutes != null && (!Position.Finite(baseline) || baseline <= 0)) return Finish(null);
                         if (costs != null)
                         {
-                            if (!costs.TryGetValue((path[k - 1], path[k]), out var captured) || baseline != captured.Baseline) return null;
+                            if (!costs.TryGetValue((path[k - 1], path[k]), out var captured) || baseline != captured.Baseline) return Finish(null);
                             nominal = traversalMinutes == null ? baseline : traversalMinutes(path[k - 1], path[k], baseline);
                             double currentExtra = extraMinutes == null ? 0 : extraMinutes(path[k - 1], path[k]);
                             if ((traversalMinutes != null && (!Position.Finite(nominal) || nominal < baseline || nominal <= 0))
                                 || nominal != captured.Nominal || !Position.Finite(currentExtra) || currentExtra < 0
-                                || currentExtra != captured.Extra) return null;
+                                || currentExtra != captured.Extra) return Finish(null);
                         }
                         route.Legs.Add(new RouteLeg { From = a.Position, To = b.Position, Mode = TravelMode.Car,
                             Minutes = nominal });
@@ -272,25 +346,25 @@ namespace PersistentCity.Core
                     if (extraMinutes != null) route.WithEstimate(current.Cost);
                     pathFound?.Invoke(path.ToArray());
                     estimateFound?.Invoke(route.EstimatedMinutes);
-                    return route;
+                    return Finish(route);
                 }
-                if (disabled(current.Node)) continue;
+                if (disabled(current.Node)) return false;
                 var node = nodes[current.Node];
                 foreach (int next in node.Successors)
                 {
-                    if (!Usable(next) || disabled(next)) continue;
+                    if (!graph.Usable(next) || disabled(next)) continue;
                     var target = nodes[next];
                     double metres = Position.Distance(node.Position, target.Position);
                     // Reject corrupt/coarse long-distance links, rather than interpreting them as vehicle teleports.
                     if (!Position.Finite(metres) || metres <= 0.000001 || metres > 60 || !clear(node.Position, target.Position)) continue;
-                    double baseline = metres / (Math.Min(40, node.KilometresPerHour) / 3.6 / clockRate);
+                    double baseline = metres / (Math.Min(40, node.KilometresPerHour) / 3.6 / graph.clockRate);
                     double nominal = baseline, extra = 0;
-                    if (traversalMinutes != null && (!Position.Finite(baseline) || baseline <= 0)) return null;
+                    if (traversalMinutes != null && (!Position.Finite(baseline) || baseline <= 0)) return Finish(null);
                     if (costs != null)
                     {
                         if (costs.TryGetValue((current.Node, next), out var captured))
                         {
-                            if (captured.Baseline != baseline) return null;
+                            if (captured.Baseline != baseline) return Finish(null);
                             nominal = captured.Nominal; extra = captured.Extra;
                         }
                         else
@@ -298,12 +372,12 @@ namespace PersistentCity.Core
                             nominal = traversalMinutes == null ? baseline : traversalMinutes(current.Node, next, baseline);
                             extra = extraMinutes == null ? 0 : extraMinutes(current.Node, next);
                             if ((traversalMinutes != null && (!Position.Finite(nominal) || nominal < baseline || nominal <= 0))
-                                || !Position.Finite(extra) || extra < 0) return null;
+                                || !Position.Finite(extra) || extra < 0) return Finish(null);
                             costs.Add((current.Node, next), (baseline, nominal, extra));
                         }
                     }
                     double cost = current.Cost + nominal + extra;
-                    if (costs != null && !Position.Finite(cost)) return null;
+                    if (costs != null && !Position.Finite(cost)) return Finish(null);
                     if (search.TryGetDistance(next, out double old))
                     {
                         if (old <= cost) continue;
@@ -311,10 +385,22 @@ namespace PersistentCity.Core
                     }
                     search.SetDistance(next, cost, current.Node); search.Add((cost + Heuristic(next), cost, next));
                 }
+                return false;
             }
-            return null;
+
+            private void Release()
+            {
+                if (released) return;
+                released = true;
+                if (borrowed) Volatile.Write(ref graph.workspaceInUse, 0);
+            }
+
+            /// <summary>Abandon an unfinished search, or release a finished one. Safe to call twice.</summary>
+            public void Dispose()
+            {
+                if (!Finished) { Finished = true; Result = null; }
+                Release();
+            }
         }
-        private bool Usable(int index) => index >= 0 && index < nodes.Count && nodes[index] != null && nodes[index].AllowsCar
-            && nodes[index].Position.IsFinite && Position.Finite(nodes[index].KilometresPerHour) && nodes[index].KilometresPerHour > 0;
     }
 }

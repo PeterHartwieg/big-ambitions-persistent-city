@@ -43,6 +43,13 @@ namespace PersistentCity.Runtime
         private readonly Dictionary<Pedestrian, int> failedSearches = new Dictionary<Pedestrian, int>();
         private readonly StationaryCrowds stationary = new StationaryCrowds();
         private readonly List<Renderer> renderers = new List<Renderer>();
+        // Per-frame answers: one RLO reservation read, one renderer verdict per pedestrian, and one
+        // membership set for the active pool while Update checks held and departing bodies.
+        private readonly Dictionary<Pedestrian, bool> offscreen = new Dictionary<Pedestrian, bool>();
+        private readonly HashSet<Pedestrian> activeSet = new HashSet<Pedestrian>();
+        private List<Pedestrian>? activeSetSource;
+        private int reservationFrame = -1, offscreenFrame = -1, activeSetFrame = -1, activeSetCount = -1;
+        private const int ActiveSetMinimum = 16;
         private int retiredFrame = -1, resumedFrame = -1;
         private long resumed;
         public long Resumed => resumed;
@@ -139,11 +146,18 @@ namespace PersistentCity.Runtime
                 // native handler skips arrival and crossings) the ordinary rule below holds or retires it.
                 if (!departure.WalkAway && !owner.city!.IsOutsidePlayerRange(__instance.transform.position)
                     && Vector3.Distance(__instance.transform.position, departure.Target) <= ArrivalMetres)
-                { owner.Retire(__instance, force: true); return false; }
+                {
+                    // The arrival retires the body, so it takes the same live lease read as a takeover.
+                    owner.RefreshReservations(force: true);
+                    if (!owner.Active || !owner.IsOrdinaryUnreserved(__instance)) return true;
+                    owner.Retire(__instance, force: true); return false;
+                }
             }
             // Native OnEndCycle calls OnSpawn directly, bypassing spawner population
-            // requests. Recheck RLO's current leases before taking the body over.
-            owner.RefreshReservations();
+            // requests. Recheck RLO's leases live before taking the body over: a lease RLO
+            // took after this frame's shared read must still exempt the body. The cheaper
+            // checks above ran on the shared read; this read happens once per takeover.
+            owner.RefreshReservations(force: true);
             if (!owner.Active || !owner.IsOrdinaryUnreserved(__instance)) return true;
             if (owner.IsOffscreen(__instance) && owner.retiredFrame != Time.frameCount)
                 owner.Retire(__instance);
@@ -296,9 +310,16 @@ namespace PersistentCity.Runtime
             return true;
         }
 
-        private void RefreshReservations()
+        /// <summary>
+        /// Reads RLO's reservations at most once per frame for Update and the cycle hook's early checks.
+        /// A takeover in the cycle hook and Dispose force a live read.
+        /// </summary>
+        private void RefreshReservations(bool force = false)
         {
+            int frame = Time.frameCount;
+            if (!force && reservationFrame == frame) return;
             reservations.Update();
+            reservationFrame = frame;
             if (!reservations.Ready) LastError = reservations.LastError;
         }
 
@@ -310,6 +331,17 @@ namespace PersistentCity.Runtime
         private bool CanRetire(Pedestrian pedestrian) => IsOrdinaryUnreserved(pedestrian) && IsOffscreen(pedestrian);
 
         private bool IsOffscreen(Pedestrian pedestrian)
+        {
+            // Renderer visibility only changes when the camera renders, so one answer serves the frame.
+            int frame = Time.frameCount;
+            if (offscreenFrame != frame) { offscreen.Clear(); offscreenFrame = frame; }
+            else if (offscreen.TryGetValue(pedestrian, out bool known)) return known;
+            bool answer = RenderersOffscreen(pedestrian);
+            offscreen[pedestrian] = answer;
+            return answer;
+        }
+
+        private bool RenderersOffscreen(Pedestrian pedestrian)
         {
             // ThirdPersonCharacter.visible is its distance/LOD rendering switch, not
             // camera visibility. Match the vehicle adapter's renderer visibility rule.
@@ -330,19 +362,35 @@ namespace PersistentCity.Runtime
             pedestrian.Release();
         }
 
+        /// <summary>
+        /// Active-pool membership for Update. A large pool is hashed once per frame and rehashed if its
+        /// list or count changes. Unity object equality is by instance ID in both List.Contains and the set.
+        /// </summary>
+        private bool InActivePool(List<Pedestrian> pool, Pedestrian pedestrian)
+        {
+            if (pool.Count < ActiveSetMinimum) return pool.Contains(pedestrian);
+            if (activeSetFrame != Time.frameCount || !ReferenceEquals(activeSetSource, pool) || activeSetCount != pool.Count)
+            {
+                activeSet.Clear();
+                foreach (var member in pool) activeSet.Add(member);
+                activeSetFrame = Time.frameCount; activeSetSource = pool; activeSetCount = pool.Count;
+            }
+            return activeSet.Contains(pedestrian);
+        }
+
         public void Update()
         {
             if (disposed) return;
             RefreshReservations();
             if (!Active || spawner!.activePedestrians == null) return;
             held.RemoveWhere(pedestrian => pedestrian == null || !pedestrian.gameObject.activeInHierarchy
-                || !spawner.activePedestrians.Contains(pedestrian));
+                || !InActivePool(spawner.activePedestrians, pedestrian));
             if (resumeAt.Count > held.Count)
                 foreach (var gone in new List<Pedestrian>(resumeAt.Keys)) if (!held.Contains(gone)) resumeAt.Remove(gone);
             if (departing.Count > 0)
                 foreach (var gone in new List<Pedestrian>(departing.Keys))
                 {
-                    if (gone == null || !gone.gameObject.activeInHierarchy || !spawner.activePedestrians.Contains(gone)) { departing.Remove(gone!); continue; }
+                    if (gone == null || !gone.gameObject.activeInHierarchy || !InActivePool(spawner.activePedestrians, gone)) { departing.Remove(gone!); continue; }
                     // A walk that outlives the safety bound is stopped rather than handed back to
                     // native retargeting, which could send it to a stationary zone.
                     if (Time.time >= departing[gone].Until) { departing.Remove(gone); if (IsOrdinaryUnreserved(gone)) Hold(gone); }
@@ -388,7 +436,7 @@ namespace PersistentCity.Runtime
                 {
                     if (restore && spawner != null)
                     {
-                        RefreshReservations();
+                        RefreshReservations(force: true);
                         foreach (var pedestrian in held)
                         {
                             try

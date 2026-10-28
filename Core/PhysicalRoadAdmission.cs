@@ -23,8 +23,9 @@ namespace PersistentCity.Core
                 || double.IsNaN(vehicleLength) || double.IsInfinity(vehicleLength) || vehicleLength <= 0
                 || double.IsNaN(margin) || double.IsInfinity(margin) || margin < 0) return false;
             int inside = -1; double previous = -1; bool blocked = false;
-            foreach (var boundary in boundaries)
+            for (int index = 0; index < boundaries.Count; index++)
             {
+                var boundary = boundaries[index];
                 if (double.IsNaN(boundary.Distance) || double.IsInfinity(boundary.Distance)
                     || boundary.Distance < 0 || boundary.Distance <= previous || boundary.Enter == boundary.Exit
                     || boundary.Junction < 0) return false;
@@ -37,7 +38,14 @@ namespace PersistentCity.Core
                 }
                 else
                 {
-                    if (inside != boundary.Junction) return false;
+                    if (inside != boundary.Junction)
+                    {
+                        // A route may begin inside a native junction and record its exit
+                        // first. That explicit exit proves outside only after rear clearance.
+                        // No later unmatched exit can repair missing or ambiguous history.
+                        if (index != 0) return false;
+                        blocked = true;
+                    }
                     inside = -1;
                     // Reset only after the whole body has cleared this exit. Later entries can block again.
                     if (progress >= boundary.Distance + vehicleLength + margin) blocked = false;

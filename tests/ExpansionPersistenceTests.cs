@@ -35,26 +35,19 @@ public sealed class ExpansionPersistenceTests
     }
 
     [Fact]
-    public void StrictLegacyMigrationPreservesActiveJourneyAndSourceIdentities()
+    public void LegacyJourneyPayloadIsRefusedWithoutChangingItsBytesOrOtherNamespaces()
     {
-        var city=City(); var person=city.Citizens[0];
-        person.Phase=CitizenPhase.Travelling; person.DestinationId="work"; person.DestinationActivity=Activity.Work;
-        person.DepartureMinute=1435; person.NextEventMinute=1455; person.ActivityUntilMinute=2000;
-        person.Journey=new Route { Legs=new List<RouteLeg> { new() {From=city.Places.Single(p=>p.Id=="home").Position,To=new Position(50,0,0),Minutes=20,Mode=TravelMode.Walk} } };
-        string payload=Legacy(city).ToString();
-        var data=new Dictionary<string,string> { [SaveStore.StateKey]=payload, ["rlo:data"]="untouched" };
-        var read=SaveStore.ReadFrom(data,"source");
-        Assert.Equal(SaveReadStatus.Loaded,read.Status); Assert.True(read.Migrated);
-        Assert.Equal(1, read.SourceSchema);
-        Assert.Equal(payload,data[SaveStore.StateKey]);
-        var migrated=read.State!;
-        Assert.Equal(CityState.CurrentSchema,migrated.Schema); Assert.Equal(2,migrated.SourceIdentities.Count);
-        Assert.Equal(1455,migrated.Citizens[0].NextEventMinute);
-        Assert.Equal(person.Journey.PositionAt(5).X,migrated.Citizens[0].Journey!.PositionAt(5).X);
-        Assert.All(migrated.Citizens,c=>Assert.True(c.NextDepartureMinute>migrated.Minute));
-        Assert.True(SaveStore.WriteTo(data,migrated).Success);
-        Assert.False(SaveCodec.Read(data[SaveStore.StateKey]).Migrated);
-        Assert.Equal("untouched",data["rlo:data"]);
+        var city = City(); var person = city.Citizens[0];
+        person.Phase = CitizenPhase.Travelling; person.DestinationId = "work"; person.DestinationActivity = Activity.Work;
+        person.DepartureMinute = 1435; person.NextEventMinute = 1455; person.ActivityUntilMinute = 2000;
+        person.Journey = new Route { Legs = new List<RouteLeg> { new() { From = new Position(0,0,0), To = new Position(50,0,0), Minutes = 20, Mode = TravelMode.Walk } } };
+        string payload = Legacy(city).ToString();
+        var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload, ["rlo:data"] = "untouched" };
+        var read = SaveStore.ReadFrom(data, "source");
+        Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
+        Assert.Contains("Unsupported experimental state schema", read.Error);
+        Assert.False(SaveStore.WriteTo(data, city).Success);
+        Assert.Equal(payload, data[SaveStore.StateKey]); Assert.Equal("untouched", data["rlo:data"]);
     }
 
     [Theory]
@@ -95,57 +88,36 @@ public sealed class ExpansionPersistenceTests
     }
 
     [Theory]
-    [InlineData(1500, 2040)]
-    [InlineData(1440, 1440)]
-    [InlineData(1439, 1439)]
-    [InlineData(1000000000, 1000000000)]
-    public void SchemaTwoMigrationRetunesOnlyFutureWorkerJobAndPreservesPhysicalState(double oldJob, double expectedJob)
+    [InlineData(1500)]
+    [InlineData(1440)]
+    [InlineData(1439)]
+    [InlineData(1000000000)]
+    public void SchemaTwoIsRefusedWithoutRetuningAnyJob(double oldJob)
     {
-        var city = City(); var person = city.Citizens[0];
-        person.JoinedMinute = 0; person.NextJobChangeMinute = oldJob; person.Preferences.OwnsCar = true;
-        person.Car = new CarState { Id = person.Identity.Id + ":car", ParkedPosition = city.Places.Single(p => p.Id == "home").Position };
-        person.Phase = CitizenPhase.Travelling; person.DestinationId = "work"; person.DestinationActivity = Activity.Work;
-        person.DepartureMinute = 1435; person.NextEventMinute = 1455; person.ActivityUntilMinute = 2000;
-        person.Journey = new Route { Legs = new List<RouteLeg> { new() { From = person.Car.ParkedPosition, To = new Position(50,0,0), Minutes = 20, Mode = TravelMode.Car } } };
-        var payload = SecondSchema(city);
-        var result = SaveCodec.Read(payload.ToString());
-        Assert.Equal(SaveReadStatus.Loaded, result.Status); Assert.True(result.Migrated);
-        Assert.Equal(2, result.SourceSchema);
-        var copy = result.State!; Assert.Equal(CityState.CurrentSchema, copy.Schema);
-        Assert.Equal(2, copy.PopulationTarget); Assert.Equal(2, copy.InitialImportedResidents);
-        Assert.Equal(expectedJob, copy.Citizens[0].NextJobChangeMinute);
-        var wire = SecondSchema(copy); wire["Citizens"]![0]!["NextJobChangeMinute"] = oldJob;
-        Assert.True(JToken.DeepEquals(payload, wire));
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(copy)).Status);
+        var city = City();
+        var legacy = SecondSchema(city); legacy["Citizens"]![0]!["NextJobChangeMinute"] = oldJob;
+        var payload = legacy.ToString();
+        var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload };
+        var result = SaveStore.ReadFrom(data, city.PopulationKey);
+        Assert.Equal(SaveReadStatus.Invalid, result.Status); Assert.Null(result.State);
+        Assert.False(SaveStore.WriteTo(data, city).Success); Assert.Equal(payload, data[SaveStore.StateKey]);
     }
 
     [Fact]
-    public void SchemaThreeMigrationChangesOnlySchemaWithoutRetuningJobsOrReshapingResidents()
+    public void CurrentSchemaPreservesActiveCarJourneyAndResidentAssignmentsExactly()
     {
         var city = City(); var person = city.Citizens[0];
-        person.NextJobChangeMinute = city.Minute + 50;
         person.Preferences.OwnsCar = true;
-        person.Car = new CarState { Id = person.Identity.Id + ":car", ParkedPosition = city.Places.Single(p => p.Id == "home").Position };
+        person.Car = new CarState { Id = person.Identity.Id + ":car", ModelId = "car:model", PaintSeed = 41, ParkedPosition = new Position(0,0,0) };
         person.Phase = CitizenPhase.Travelling; person.DestinationId = "work"; person.DestinationActivity = Activity.Work;
         person.DepartureMinute = 1435; person.NextEventMinute = 1455; person.ActivityUntilMinute = 2000;
         person.Journey = new Route { Legs = new List<RouteLeg> { new() { From = person.Car.ParkedPosition, To = new Position(50,0,0), Minutes = 20, Mode = TravelMode.Car } } };
-        var original = JObject.Parse(SaveCodec.Write(city)); original["Schema"] = 3; StripTiming(original);
-        string payload = original.ToString();
-        var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload };
-        var read = SaveStore.ReadFrom(data, city.PopulationKey);
-        Assert.Equal(SaveReadStatus.Loaded, read.Status); Assert.True(read.Migrated);
-        Assert.Equal(3, read.SourceSchema);
-        Assert.Same(payload, data[SaveStore.StateKey]);
-        var migrated = read.State!;
-        Assert.Equal(CityState.CurrentSchema, migrated.Schema);
-        Assert.Equal(city.Citizens.Count, migrated.Citizens.Count);
-        Assert.Equal(person.NextJobChangeMinute, migrated.Citizens[0].NextJobChangeMinute);
-        Assert.Equal(person.HomeId, migrated.Citizens[0].HomeId);
-        Assert.Equal(person.Car.Id, migrated.Citizens[0].Car!.Id);
-        Assert.Equal(person.Journey.PositionAt(5).X, migrated.Citizens[0].Journey!.PositionAt(5).X);
-        var after = JObject.Parse(SaveCodec.Write(migrated)); after["Schema"] = 3; StripTiming(after);
-        Assert.True(JToken.DeepEquals(original, after));
-        Assert.False(SaveCodec.Read(SaveCodec.Write(migrated)).Migrated);
+        string payload = SaveCodec.Write(city); var read = SaveCodec.Read(payload);
+        Assert.Equal(SaveReadStatus.Loaded, read.Status);
+        Assert.Equal(CityState.CurrentSchema, read.SourceSchema);
+        Assert.Equal(payload, SaveCodec.Write(read.State!));
+        Assert.Equal(person.Car.Id, read.State!.Citizens[0].Car!.Id);
+        Assert.Equal(person.Journey.PositionAt(5).X, read.State.Citizens[0].Journey!.PositionAt(5).X);
     }
 
     [Theory]
@@ -186,23 +158,22 @@ public sealed class ExpansionPersistenceTests
     }
 
     [Fact]
-    public void TurnoverRoundTripPreservesOriginalSourceAndNewPersistentIdentity()
+    public void CurrentRoundTripPreservesOriginalSourceAndPersistentIdentity()
     {
         var city=City(); var source=city.SourceIdentities.Select(Population.CloneIdentity).ToArray();
-        city.Citizens[0].NextDepartureMinute=city.Minute;
         var sim=new CitySimulator(city,new Direct()); sim.AdvanceTo(city.Minute);
-        Assert.Equal(1,city.DepartedCount); Assert.Contains(city.Citizens,c=>c.Identity.Id=="pc:1");
+        Assert.Equal(source.Select(c=>c.Id), city.Citizens.Select(c=>c.Identity.Id));
         string json=SaveCodec.Write(city); var copy=SaveCodec.Read(json).State!;
         Assert.Equal(json,SaveCodec.Write(copy)); Assert.Equal(2,copy.Citizens.Count);
         Assert.All(source,id=>Assert.True(Population.EqualIdentity(id,copy.SourceIdentities.Single(c=>c.Id==id.Id))));
-        Assert.DoesNotContain(copy.Citizens,c=>c.Identity.Id==copy.RecentDepartures[0].Identity.Id);
+        Assert.Equal(source.Select(c=>c.Id), copy.Citizens.Select(c=>c.Identity.Id));
     }
 
     [Theory]
     [InlineData("source")]
     [InlineData("forged-source")]
     [InlineData("sequence")]
-    [InlineData("active-departure")]
+    [InlineData("future-employment-day")]
     [InlineData("missing-car")]
     [InlineData("foreign-car")]
     public void ExpansionCorruptionIsRejected(string defect)
@@ -211,7 +182,7 @@ public sealed class ExpansionPersistenceTests
         if(defect=="source") state.SourceIdentities.Clear();
         if(defect=="forged-source") state.Citizens[0].Identity.Name="Changed";
         if(defect=="sequence") state.NextResidentSequence=4;
-        if(defect=="active-departure") {state.DepartedCount=1;state.NextResidentSequence=2;state.RecentDepartures.Add(new DepartureRecord{Identity=Population.CloneIdentity(state.Citizens[0].Identity),JoinedMinute=0,DepartedMinute=1440});}
+        if(defect=="future-employment-day") state.Citizens[0].LastEmploymentCheckDay=2;
         if(defect=="missing-car" || defect=="foreign-car")
         {
             var person=state.Citizens[0];person.Preferences.OwnsCar=true;
@@ -223,11 +194,11 @@ public sealed class ExpansionPersistenceTests
         Assert.Throws<SaveValidationException>(()=>SaveCodec.Write(state));
     }
     [Fact]
-    public void MigratedResidentWithoutOldLeisureCanVisitNewParkWithoutChangingPhysicalState()
+    public void CurrentResidentWithoutLeisureCanVisitNewParkWithoutChangingPhysicalState()
     {
         var city=City();city.Places.RemoveAll(p=>p.Kind==PlaceKind.Leisure);
         foreach(var c in city.Citizens)c.LeisureId="";
-        var migrated=SaveCodec.Read(Legacy(city).ToString()).State!;
+        var migrated=SaveCodec.Read(SaveCodec.Write(city)).State!;
         var person=migrated.Citizens[0];double next=person.NextEventMinute;
         CatalogueMigration.Enrich(migrated,new[]{new Place{Id="new-park",Name="Park",Kind=PlaceKind.Leisure,Capacity=64}});
         Assert.Equal("new-park",person.LeisureId);
@@ -236,14 +207,14 @@ public sealed class ExpansionPersistenceTests
         Assert.Equal(SaveReadStatus.Loaded,SaveCodec.Read(SaveCodec.Write(migrated)).Status);
     }
     [Fact]
-    public void LegacySchemasKeepFourMiCharacterLimit()
+    public void LegacyPayloadsAreRefusedEvenWithinTheCurrentSizeLimit()
     {
         foreach (var payload in new[] { Legacy(City()), SecondSchema(City()) })
         {
-            string oversized = new string(' ', SaveCodec.LegacyMaxInputCharacters) + payload;
+            string oversized = new string(' ', 4 * 1024 * 1024) + payload;
             var result = SaveCodec.Read(oversized);
             Assert.Equal(SaveReadStatus.Invalid, result.Status);
-            Assert.Contains("Legacy state exceeds", result.Error);
+            Assert.Contains("Unsupported experimental state schema", result.Error);
         }
     }
 

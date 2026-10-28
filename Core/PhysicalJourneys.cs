@@ -61,7 +61,7 @@ namespace PersistentCity.Core
         {
             lease = null;
             if (citizenId == null) throw new ArgumentNullException(nameof(citizenId));
-            if (physicalJourneys.ContainsKey(citizenId) || !citizenEvents.TryGetValue(citizenId, out var item)) return false;
+            if (physicalJourneys.ContainsKey(citizenId) || !citizenEvents.TryGetValue(citizenId, out var item) || InProgress(item)) return false;
             var c = item.Citizen;
             if (c.Phase != CitizenPhase.Travelling || c.Journey == null || c.Identity.Id != citizenId || !CurrentCitizenSlot(item, c)) return false;
             double progress = JourneyProgress(c);
@@ -177,7 +177,8 @@ namespace PersistentCity.Core
         // Shared pure sampling keeps clock-retime validation on the exact physical pose contract.
         internal static PhysicalJourneySample SampleRoute(Route route, double routeElapsedMinutes, Position? parkedCar)
         {
-            if (!Position.Finite(routeElapsedMinutes) || routeElapsedMinutes < 0 || routeElapsedMinutes > route.Minutes)
+            double totalMinutes = route.Minutes;
+            if (!Position.Finite(routeElapsedMinutes) || routeElapsedMinutes < 0 || routeElapsedMinutes > totalMinutes)
                 throw new ArgumentOutOfRangeException(nameof(routeElapsedMinutes));
             double remaining = routeElapsedMinutes;
             double sampledElapsed = routeElapsedMinutes;
@@ -202,7 +203,7 @@ namespace PersistentCity.Core
                     double fraction = Math.Min(1, remaining / leg.Minutes);
                     var position = Position.Lerp(leg.From, leg.To, fraction);
                     if (leg.Mode == TravelMode.Car) car = position;
-                    return new PhysicalJourneySample(i == route.Legs.Count - 1 && fraction == 1 ? route.Minutes : Math.Min(route.Minutes, Math.Max(routeElapsedMinutes, sampledElapsed)), route.Minutes, i, fraction, leg, position, car, i + 1 < route.Legs.Count ? route.Legs[i + 1].Mode : (TravelMode?)null);
+                    return new PhysicalJourneySample(i == route.Legs.Count - 1 && fraction == 1 ? totalMinutes : Math.Min(totalMinutes, Math.Max(routeElapsedMinutes, sampledElapsed)), totalMinutes, i, fraction, leg, position, car, i + 1 < route.Legs.Count ? route.Legs[i + 1].Mode : (TravelMode?)null);
                 }
                 if (leg.Mode == TravelMode.Car) car = leg.To;
                 remaining -= leg.Minutes;
@@ -221,9 +222,10 @@ namespace PersistentCity.Core
 
         private void RebasePhysicalJourney(PhysicalJourneyLease lease)
         {
+            double totalMinutes = lease.Route.Minutes;
             lease.Citizen.DepartureMinute = State.Minute - lease.Progress;
-            lease.Citizen.NextEventMinute = lease.Progress == lease.Route.Minutes
-                ? State.Minute : lease.Citizen.DepartureMinute + lease.Route.Minutes;
+            lease.Citizen.NextEventMinute = lease.Progress == totalMinutes
+                ? State.Minute : lease.Citizen.DepartureMinute + totalMinutes;
         }
 
         private void ValidatePhysicalClock(double target)

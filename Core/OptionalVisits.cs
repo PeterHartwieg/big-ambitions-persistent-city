@@ -9,7 +9,7 @@ namespace PersistentCity.Core
             double returnMinutes, double stayMinutes, double latestReturnMinute)
         {
             if (!citizenEvents.TryGetValue(citizenId, out var item) || !places.TryGetValue(shopId, out var shop)
-                || shop.Kind != PlaceKind.Shop || !CurrentCitizenSlot(item, item.Citizen)) return false;
+                || shop.Kind != PlaceKind.Shop || !CurrentCitizenSlot(item, item.Citizen) || InProgress(item)) return false;
             var person = item.Citizen; double now = State.Minute;
             if (person.Phase != CitizenPhase.AtPlace || person.MealOuting != null || person.Activity == Activity.Shop
                 || physicalJourneys.ContainsKey(citizenId) || trafficCitizens.ContainsKey(citizenId)
@@ -35,23 +35,27 @@ namespace PersistentCity.Core
         internal void ExtendMealStay(CitizenState person, double until)
         {
             var item = citizenEvents[person.Identity.Id];
-            if (!due.Remove(item)) throw new InvalidOperationException("Meal stay has no event.");
+            if (InProgress(item) || !due.Remove(item)) throw new InvalidOperationException("Meal stay has no event.");
             person.ActivityUntilMinute = until; person.NextEventMinute = until;
             item.Minute = ScheduledMinute(person); due.Add(item);
         }
 
-        private bool StepMealOuting(CitizenState person, double now)
+        private enum MealOutingStep { Ordinary, Handled, NeedsReturnRoute }
+
+        // The former StepMealOuting up to its return-route search. Ordinary hands the event to the regular
+        // routine, Handled ends it, and NeedsReturnRoute asks for the walk back before FinishMealReturn.
+        private MealOutingStep BeginMealOuting(CitizenState person, double now)
         {
             var outing = person.MealOuting;
-            if (outing == null) return false;
+            if (outing == null) return MealOutingStep.Ordinary;
             if (outing.Returning && person.Phase == CitizenPhase.Travelling)
             {
                 person.PlaceId = outing.OriginId; person.Activity = outing.OriginActivity; person.Phase = CitizenPhase.AtPlace;
                 person.Journey = null; person.DestinationId = ""; person.DepartureMinute = 0; person.CompletedJourneys++;
                 person.ActivityUntilMinute = outing.ResumeUntil; person.MealOuting = null;
                 // A late return lets the regular routine decide what to do next.
-                if (now >= outing.ResumeEvent) return false;
-                person.NextEventMinute = outing.ResumeEvent; return true;
+                if (now >= outing.ResumeEvent) return MealOutingStep.Ordinary;
+                person.NextEventMinute = outing.ResumeEvent; return MealOutingStep.Handled;
             }
             if (!outing.Returning && person.Phase == CitizenPhase.Travelling)
             {
@@ -63,22 +67,26 @@ namespace PersistentCity.Core
                     person.RecentVisits.Add(new VisitRecord { AtMinute = now, PlaceId = person.PlaceId, Activity = Activity.Shop });
                     if (person.RecentVisits.Count > 32) person.RecentVisits.RemoveAt(0);
                     person.NextEventMinute = Math.Min(person.ActivityUntilMinute, DailyRoutine.NextClose(places[person.PlaceId], now)!.Value);
-                    return true;
+                    return MealOutingStep.Handled;
                 }
             }
             // While admitted, the ordinary event owns the planned eating/stay interval.
             if (!outing.Returning && person.Phase == CitizenPhase.AtPlace && now < person.ActivityUntilMinute
-                && DailyRoutine.Open(places[person.PlaceId], now)) return false;
-            var route = routes.Plan(places[person.PlaceId], places[outing.OriginId], now,
-                new TravelPreferences { OwnsCar = false, AllowTransit = false, WalkingToleranceMetres = person.Preferences.WalkingToleranceMetres });
+                && DailyRoutine.Open(places[person.PlaceId], now)) return MealOutingStep.Ordinary;
+            return MealOutingStep.NeedsReturnRoute;
+        }
+
+        private void FinishMealReturn(CitizenState person, double now, Route? route)
+        {
+            var outing = person.MealOuting!;
             outing.Returning = true; person.DestinationId = outing.OriginId; person.DestinationActivity = outing.OriginActivity;
             person.ActivityUntilMinute = outing.ResumeUntil;
             if (route == null)
-            { person.Phase = CitizenPhase.WaitingForRoute; person.NextEventMinute = now + 5; return true; }
+            { person.Phase = CitizenPhase.WaitingForRoute; person.NextEventMinute = now + 5; return; }
             ValidateRoute(route, places[person.PlaceId].Position, places[outing.OriginId].Position);
             if (route.Legs.Any(l => l.Mode != TravelMode.Walk)) throw new InvalidOperationException("Meal return must be walking.");
             person.Phase = CitizenPhase.Travelling; person.Journey = route; person.DepartureMinute = now;
-            person.NextEventMinute = now + route.Minutes; return true;
+            person.NextEventMinute = now + route.Minutes;
         }
 
         /// <summary>Explicit, bounded home-origin walking visit. The caller owns the decision,
@@ -91,7 +99,7 @@ namespace PersistentCity.Core
                 || !Position.Finite(stayMinutes) || stayMinutes <= 0 || stayMinutes > 120
                 || !Position.Finite(latestReturnMinute)) throw new ArgumentException("Invalid optional outing.");
             if (!citizenEvents.TryGetValue(citizenId, out var item) || !places.TryGetValue(shopId, out var shop)
-                || shop.Kind != PlaceKind.Shop || !CurrentCitizenSlot(item, item.Citizen)) return false;
+                || shop.Kind != PlaceKind.Shop || !CurrentCitizenSlot(item, item.Citizen) || InProgress(item)) return false;
             var person = item.Citizen;
             double now = State.Minute;
             if (person.Phase != CitizenPhase.AtPlace || person.Activity != Activity.Home || person.PlaceId != person.HomeId

@@ -52,6 +52,9 @@ namespace CommandHarness
         public Transform FrontMarker=new Transform();
         private readonly Queue<(Position Corner,Position Marker)> reachedCorners=new Queue<(Position,Position)>();
         private int lastReachedNode=-1;
+        // Ownership epoch double; tools/vehicle-ownership-regression runs the production memo.
+        public static long Epoch;
+        internal static void AdvanceOwnershipEpoch()=>Epoch++;
     }
     sealed partial class PhysicalVehicles
     {
@@ -159,6 +162,14 @@ namespace CommandHarness
                 var(v,b,rb)=Setup();v.BeginNativeFixedStep();Pair(v,rb,new Vector3(4,-2,5),Quaternion.AngleAxis(45,Vector3.up));
                 v.EndNativeFixedStep(failed:true);rb.Integrate();
                 Check(rb.velocity.x==0&&rb.velocity.z==0&&rb.rotation.y==0,"native exception after pair cannot apply queued propulsion/yaw");
+            }
+            {
+                // Each native fixed step starts a new ownership epoch, also while the adapter is inactive.
+                var(v,b,rb)=Setup();long epoch=PhysicalVehicleBody.Epoch;v.BeginNativeFixedStep();
+                Check(PhysicalVehicleBody.Epoch==epoch+1,"fixed step advances the ownership epoch");
+                Pair(v,rb,new Vector3(1,0,1),Quaternion.identity);v.EndNativeFixedStep();
+                Check(PhysicalVehicleBody.Epoch==epoch+1,"one epoch spans the step's force, rotation and final command");
+                v.Active=false;v.BeginNativeFixedStep();Check(PhysicalVehicleBody.Epoch==epoch+2,"inactive adapter still advances the epoch");
             }
             if(args.Length==2) NativeIl.Check(args[0],args[1]);
             Console.WriteLine($"PASS {checks} native command/step checks; actual production method source, deferred physics test doubles (not game evidence).");

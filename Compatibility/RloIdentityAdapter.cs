@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
@@ -61,6 +62,18 @@ namespace PersistentCity.Compatibility
         private const BindingFlags PublicInstance = BindingFlags.Public | BindingFlags.Instance;
         private const BindingFlags PublicStatic = BindingFlags.Public | BindingFlags.Static;
 
+        // Contract metadata bound for one RLO assembly object. A loaded assembly's types and members cannot change, so a
+        // successful binding is reused for that same object; every read still asks RLO for its live state and checks it in
+        // full. Any refusal drops both bindings, so the next read binds afresh exactly as before. Main thread only.
+        private Assembly? bridgeAssembly, contractAssembly;
+        private RloBridge? bridge;
+        private ReflectionContract? contract;
+        private bool bridgeReading;
+
+        /// <summary>Fresh contract bindings (CityApi or reviewed reflection) and their total time; diagnostic only.</summary>
+        internal long Bindings { get; private set; }
+        internal double BindingMilliseconds { get; private set; }
+
         public RloReadResult Read(Assembly? rloAssembly) => ReadCore(rloAssembly, null, false);
         public RloReadResult ReadSnapshot(Assembly? rloAssembly, object? director) => ReadCore(rloAssembly, director, true);
 
@@ -73,17 +86,57 @@ namespace PersistentCity.Compatibility
                 version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? assembly.GetName().Version?.ToString() ?? "";
                 if (assembly.GetName().Name != "RealLifeOverhaul") throw new ContractException("The supplied assembly is not RealLifeOverhaul.");
                 // A release with RLO's CityApi is read through it on any version. Without it, only reviewed releases are read.
-                RloBridge? bridge = RloBridge.Find(assembly);
-                if (bridge != null)
+                RloBridge? api = Bridge(assembly);
+                if (api != null)
                 {
                     if (supplied) throw new ContractException("A captured FlareDirector cannot be read through RLO's CityApi; use Read.");
-                    return ReadBridge(bridge, version);
+                    // The bridge reuses its argument buffers; a nested read (never expected) binds its own.
+                    bool outer = !bridgeReading && ReferenceEquals(api, bridge);
+                    if (outer) bridgeReading = true;
+                    RloReadResult read;
+                    try { read = ReadBridge(api, version); }
+                    finally { if (outer) bridgeReading = false; }
+                    if (read.Status == RloReadStatus.Incompatible) Forget();
+                    return read;
                 }
                 if (!IsReviewedAssembly(assembly)) throw new ContractException("RLO assembly/informational version pair has not been reviewed and has no CityApi; required: " + ReviewedVersions + " or CityApi contract " + RloBridge.SupportedContract + ".");
                 return ReadContract(assembly, version, director, supplied);
             }
-            catch (Exception e) { return Failure(e, version); }
+            catch (Exception e) { Forget(); return Failure(e, version); }
         }
+
+        private RloBridge? Bridge(Assembly assembly)
+        {
+            if (!bridgeReading && bridge != null && ReferenceEquals(bridgeAssembly, assembly))
+            {
+                bridge.CheckContractVersion();
+                return bridge;
+            }
+            long started = Stopwatch.GetTimestamp();
+            RloBridge? found = RloBridge.Find(assembly);
+            if (found == null) return null; // No CityApi: not cached, so the lookup is repeated on every read.
+            CountBinding(started);
+            if (!bridgeReading) { bridgeAssembly = assembly; bridge = found; }
+            return found;
+        }
+
+        private ReflectionContract Contract(Assembly assembly)
+        {
+            if (contract != null && ReferenceEquals(contractAssembly, assembly)) return contract;
+            long started = Stopwatch.GetTimestamp();
+            var bound = new ReflectionContract(assembly);
+            CountBinding(started);
+            contractAssembly = assembly; contract = bound;
+            return bound;
+        }
+
+        private void CountBinding(long started)
+        {
+            Bindings++;
+            BindingMilliseconds += (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
+        }
+
+        private void Forget() { bridgeAssembly = contractAssembly = null; bridge = null; contract = null; }
 
         internal static bool IsReviewedVersion(string version) =>
             VersionForm(version, ReviewedVersion, ReviewedCommit) || VersionForm(version, LegacyVersion, LegacyCommit)
@@ -104,84 +157,98 @@ namespace PersistentCity.Compatibility
         private static bool VersionForm(string information, string version, string commit) =>
             information == version || information == version + ".0" || information == version + "+" + commit;
 
-        // Separated for synthetic contract tests; the public entry points always check assembly identity/version first.
-        internal RloReadResult ReadContract(Assembly assembly, string version, object? director, bool supplied)
+        // The reviewed reflection contract's types and members for one RLO assembly. Binding checks only metadata
+        // (names, types, enum values, the population constant); it reads no RLO state.
+        private sealed class ReflectionContract
         {
-            try
+            public readonly Type DirectorType, CitizenType;
+            public readonly PropertyInfo InSession, Instance, Running, File, Citizens;
+            public readonly MethodInfo CitySeed, Avatar;
+            public readonly FieldInfo Index, First, Last, District, Age, Female, Persona, LookSeed, LookAge, LookFemale;
+
+            public ReflectionContract(Assembly assembly)
             {
-                Type directorType = RequiredType(assembly, "FlareDirector");
-                Type citizenType = RequiredType(assembly, "FlareCitizen");
+                DirectorType = RequiredType(assembly, "FlareDirector");
+                CitizenType = RequiredType(assembly, "FlareCitizen");
                 Type fileType = RequiredType(assembly, "FlareFile");
                 Type rules = RequiredType(assembly, "FlareLiveRules");
                 Type avatarRules = RequiredType(assembly, "FlareAvatarRules");
                 Type avatarType = RequiredType(assembly, "FlareAvatarPlan");
                 Type personaType = RequiredType(assembly, "FlarePersona");
                 Type multiplayer = assembly.GetType("RealLifeOverhaul.GoingPublic", false) ?? throw new ContractException("Missing public contract type: RealLifeOverhaul.GoingPublic.");
-                PropertyInfo inSession = Property(multiplayer, "InSession", typeof(bool), true);
+                InSession = Property(multiplayer, "InSession", typeof(bool), true);
                 if (!personaType.IsEnum || Enum.GetUnderlyingType(personaType) != typeof(int)) throw new ContractException("FlarePersona must be an Int32 enum.");
                 foreach (Persona p in Enum.GetValues(typeof(Persona)))
                     if (!Enum.IsDefined(personaType, p.ToString()) || Convert.ToInt32(Enum.Parse(personaType, p.ToString()), CultureInfo.InvariantCulture) != (int)p)
                         throw new ContractException("FlarePersona values differ from the reviewed mapping.");
                 if (Enum.GetNames(personaType).Length != Enum.GetNames(typeof(Persona)).Length) throw new ContractException("FlarePersona has unreviewed values.");
 
-                PropertyInfo instance = Property(directorType, "Instance", directorType, true);
-                PropertyInfo running = Property(directorType, "Running", typeof(bool));
-                PropertyInfo file = Property(directorType, "File", fileType);
-                PropertyInfo citizens = Property(directorType, "Citizens", typeof(IReadOnlyList<>).MakeGenericType(citizenType));
+                Instance = Property(DirectorType, "Instance", DirectorType, true);
+                Running = Property(DirectorType, "Running", typeof(bool));
+                File = Property(DirectorType, "File", fileType);
+                Citizens = Property(DirectorType, "Citizens", typeof(IReadOnlyList<>).MakeGenericType(CitizenType));
                 FieldInfo count = Field(rules, "Citizens", typeof(int), true);
                 if (!count.IsLiteral || (int)count.GetRawConstantValue()! != ReviewedPopulation) throw new ContractException("RLO population constant differs from reviewed 400.");
-                MethodInfo citySeed = Method(rules, "CitySeed", typeof(int), fileType);
-                MethodInfo avatar = Method(avatarRules, "Citizen", avatarType, typeof(int), typeof(int));
-                FieldInfo index = Field(citizenType, "Index", typeof(int));
-                FieldInfo first = Field(citizenType, "First", typeof(string));
-                FieldInfo last = Field(citizenType, "Last", typeof(string));
-                FieldInfo district = Field(citizenType, "District", typeof(string));
-                FieldInfo age = Field(citizenType, "Age", typeof(int));
-                FieldInfo female = Field(citizenType, "Female", typeof(bool));
-                FieldInfo persona = Field(citizenType, "Persona", personaType);
-                FieldInfo lookSeed = Field(avatarType, "Seed", typeof(int));
-                FieldInfo lookAge = Field(avatarType, "Age", typeof(int));
-                FieldInfo lookFemale = Field(avatarType, "Female", typeof(bool));
+                CitySeed = Method(rules, "CitySeed", typeof(int), fileType);
+                Avatar = Method(avatarRules, "Citizen", avatarType, typeof(int), typeof(int));
+                Index = Field(CitizenType, "Index", typeof(int));
+                First = Field(CitizenType, "First", typeof(string));
+                Last = Field(CitizenType, "Last", typeof(string));
+                District = Field(CitizenType, "District", typeof(string));
+                Age = Field(CitizenType, "Age", typeof(int));
+                Female = Field(CitizenType, "Female", typeof(bool));
+                Persona = Field(CitizenType, "Persona", personaType);
+                LookSeed = Field(avatarType, "Seed", typeof(int));
+                LookAge = Field(avatarType, "Age", typeof(int));
+                LookFemale = Field(avatarType, "Female", typeof(bool));
+            }
+        }
 
-                if ((bool)inSession.GetValue(null)!) return NotReady("Multiplayer sessions are unsupported by Persistent City v0.1; leave the Going Public session first.", version);
-                if (!supplied) director = instance.GetValue(null);
+        // Separated for synthetic contract tests; the public entry points always check assembly identity/version first.
+        internal RloReadResult ReadContract(Assembly assembly, string version, object? director, bool supplied)
+        {
+            try
+            {
+                var c = Contract(assembly);
+                if ((bool)c.InSession.GetValue(null)!) return NotReady("Multiplayer sessions are unsupported by Persistent City v0.1; leave the Going Public session first.", version);
+                if (!supplied) director = c.Instance.GetValue(null);
                 if (director == null) return NotReady("FlareDirector.Instance is not available yet.", version);
-                if (director.GetType() != directorType) throw new ContractException("Director snapshot is not the reviewed RLO type.");
-                if (!(bool)running.GetValue(director)!) return NotReady("Flare is not running; enable RLO's Social Media option and load a city with Flare available.", version);
-                object? liveFile = file.GetValue(director);
+                if (director.GetType() != c.DirectorType) throw new ContractException("Director snapshot is not the reviewed RLO type.");
+                if (!(bool)c.Running.GetValue(director)!) return NotReady("Flare is not running; enable RLO's Social Media option and load a city with Flare available.", version);
+                object? liveFile = c.File.GetValue(director);
                 if (liveFile == null) return NotReady("Flare's current account is not available yet.", version);
-                int seed = (int)citySeed.Invoke(null, new[] { liveFile })!;
+                int seed = (int)c.CitySeed.Invoke(null, new[] { liveFile })!;
                 if (seed == 0) return NotReady("Flare has no initialized city seed yet.", version);
-                if (!(citizens.GetValue(director) is IEnumerable population)) throw new ContractException("Citizens is not enumerable.");
+                if (!(c.Citizens.GetValue(director) is IEnumerable population)) throw new ContractException("Citizens is not enumerable.");
                 var identities = new List<CitizenIdentity>(ReviewedPopulation);
                 var ids = new HashSet<int>();
-                foreach (object c in population)
+                foreach (object citizen in population)
                 {
                     if (identities.Count >= ReviewedPopulation) throw new ContractException("Citizens exceeds reviewed 400.");
-                    if (c == null || c.GetType() != citizenType) throw new ContractException("Citizens contains an unexpected type.");
-                    int id = (int)index.GetValue(c)!;
+                    if (citizen == null || citizen.GetType() != c.CitizenType) throw new ContractException("Citizens contains an unexpected type.");
+                    int id = (int)c.Index.GetValue(citizen)!;
                     if (id < 0 || id >= ReviewedPopulation || !ids.Add(id)) throw new ContractException("Citizens has a duplicate or out-of-range Index.");
-                    string? given = (string?)first.GetValue(c), family = (string?)last.GetValue(c);
+                    string? given = (string?)c.First.GetValue(citizen), family = (string?)c.Last.GetValue(citizen);
                     if (string.IsNullOrWhiteSpace(given) || string.IsNullOrWhiteSpace(family)) throw new ContractException("A citizen has no complete RLO name.");
-                    int years = (int)age.GetValue(c)!;
-                    bool sex = (bool)female.GetValue(c)!;
-                    int character = Convert.ToInt32(persona.GetValue(c), CultureInfo.InvariantCulture);
+                    int years = (int)c.Age.GetValue(citizen)!;
+                    bool sex = (bool)c.Female.GetValue(citizen)!;
+                    int character = Convert.ToInt32(c.Persona.GetValue(citizen), CultureInfo.InvariantCulture);
                     if (years < 1 || years > 130 || !Enum.IsDefined(typeof(Persona), character)) throw new ContractException("A citizen has an invalid age or persona.");
-                    object plan = avatar.Invoke(null, new object[] { seed, id })!;
-                    int appearance = (int)lookSeed.GetValue(plan)!;
-                    if (appearance == 0 || (int)lookAge.GetValue(plan)! != years || (bool)lookFemale.GetValue(plan)! != sex)
+                    object plan = c.Avatar.Invoke(null, new object[] { seed, id })!;
+                    int appearance = (int)c.LookSeed.GetValue(plan)!;
+                    if (appearance == 0 || (int)c.LookAge.GetValue(plan)! != years || (bool)c.LookFemale.GetValue(plan)! != sex)
                         return NotReady("Current citizen age/sex and city avatar seed disagree; wait for RLO's city refresh.", version);
                     identities.Add(new CitizenIdentity { Id = "c" + id.ToString(CultureInfo.InvariantCulture), Name = given + " " + family,
-                        District = (string?)district.GetValue(c) ?? "", Age = years, Female = sex, Persona = (Persona)character, AppearanceSeed = appearance });
+                        District = (string?)c.District.GetValue(citizen) ?? "", Age = years, Female = sex, Persona = (Persona)character, AppearanceSeed = appearance });
                 }
                 if (identities.Count == 0) return NotReady("Flare's actual citizen population is not initialized yet.", version);
                 if (identities.Count != ReviewedPopulation) throw new ContractException("Citizens must contain the reviewed 400 identities; found " + identities.Count + ".");
-                if (!(bool)running.GetValue(director)! || !ReferenceEquals(liveFile, file.GetValue(director)) || seed != (int)citySeed.Invoke(null, new[] { liveFile })!)
+                if (!(bool)c.Running.GetValue(director)! || !ReferenceEquals(liveFile, c.File.GetValue(director)) || seed != (int)c.CitySeed.Invoke(null, new[] { liveFile })!)
                     return NotReady("RLO's current account changed during the read; retry on the main thread.", version);
                 identities.Sort((a, b) => StringComparer.Ordinal.Compare(a.Id, b.Id));
                 return new RloReadResult(RloReadStatus.Ready, "Read 400 actual RLO citizens through the reviewed reflection contract.", version, PopulationHash(seed, identities), seed, identities.AsReadOnly());
             }
-            catch (Exception e) { return Failure(e, version); }
+            catch (Exception e) { Forget(); return Failure(e, version); }
         }
 
         // Separated for tests with a stand-in CityApi; Read reaches it only for an assembly named RealLifeOverhaul.

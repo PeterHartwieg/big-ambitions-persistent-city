@@ -62,13 +62,14 @@ namespace PersistentCity.Core
                 if (citizen.Phase != CitizenPhase.Travelling || citizen.Journey == null || trafficCitizens.ContainsKey(citizen.Identity.Id)) continue;
                 double progress = JourneyProgress(citizen), offset = 0;
                 bool needsRoad = false;
+                double totalMinutes = citizen.Journey.Minutes;
                 foreach (var leg in citizen.Journey.Legs)
                 {
                     offset += leg.Minutes;
-                    if (offset > progress + JourneyClockTolerance(State.Minute, citizen.Journey.Minutes)
+                    if (offset > progress + JourneyClockTolerance(State.Minute, totalMinutes)
                         && leg.ServiceId.StartsWith("native:road:", StringComparison.Ordinal)) needsRoad = true;
                 }
-                if (needsRoad && !network.TryMapRemaining(citizen.Journey, MappingProgress(citizen, progress), out _))
+                if (needsRoad && !network.TryMapRemainingSpans(citizen.Journey, MappingProgress(citizen, progress), mappingSpans))
                     throw new InvalidOperationException("Committed road geometry no longer matches the native network; preserve the saved journey.");
             }
             if (traffic != null && State.TrafficTopologyId != network.TopologyId && traffic.VehicleCount != 0)
@@ -94,20 +95,28 @@ namespace PersistentCity.Core
                 entryPlanner.SetTrafficEntryForecast((id, at, fraction, share) => traffic.ForecastEntry(id, at, fraction, share));
             // A native snapshot can finish after simulator construction. Register existing
             // journeys at their current geometry, never rewind them to their departure.
+            // The event whose route request is in flight is outside the queue: CompleteEvent re-adds it with its
+            // new minute, or AbortPending with its unstarted one. Queuing it here as well would leave it in the
+            // set while CompleteEvent rewrites its sort key, duplicating the resident and breaking the order.
             due.Clear();
             foreach (var item in citizenEvents.Values)
-                if (!trafficCitizens.ContainsKey(item.Citizen.Identity.Id) && !physicalJourneys.ContainsKey(item.Citizen.Identity.Id))
+                if (!InProgress(item) && !trafficCitizens.ContainsKey(item.Citizen.Identity.Id) && !physicalJourneys.ContainsKey(item.Citizen.Identity.Id))
                 { item.Minute = ScheduledMinute(item.Citizen); due.Add(item); }
         }
+
+        // Reused by the boundary queries above and below, which only read the first unfinished span.
+        // Simulator calls are single-threaded and none of them nests another mapping.
+        private readonly List<TrafficNetwork.MappedSpan> mappingSpans = new List<TrafficNetwork.MappedSpan>();
 
         private double ScheduledMinute(CitizenState citizen)
         {
             if (trafficNetwork != null && citizen.Phase == CitizenPhase.Travelling && citizen.Journey != null
-                && trafficNetwork.TryMapRemaining(citizen.Journey, MappingProgress(citizen, JourneyProgress(citizen)), out var mapped))
+                && trafficNetwork.TryMapRemainingSpans(citizen.Journey, MappingProgress(citizen, JourneyProgress(citizen)), mappingSpans))
             {
                 double progress = JourneyProgress(citizen);
-                foreach (var leg in mapped)
-                    if (progress < leg.EndNominalMinutes - JourneyClockTolerance(State.Minute, citizen.Journey.Minutes))
+                double totalMinutes = citizen.Journey.Minutes;
+                foreach (var leg in mappingSpans)
+                    if (progress < leg.EndNominalMinutes - JourneyClockTolerance(State.Minute, totalMinutes))
                         return Math.Max(State.Minute, citizen.DepartureMinute + leg.StartNominalMinutes);
             }
             return citizen.NextEventMinute;
@@ -143,10 +152,13 @@ namespace PersistentCity.Core
 
         private double NextTrafficBoundary(CitizenState citizen, double progress)
         {
-            if (trafficNetwork != null && citizen.Journey != null && trafficNetwork.TryMapRemaining(citizen.Journey, MappingProgress(citizen, progress), out var mapped))
-                foreach (var leg in mapped)
-                    if (progress < leg.EndNominalMinutes - JourneyClockTolerance(State.Minute, citizen.Journey.Minutes))
+            if (trafficNetwork != null && citizen.Journey != null && trafficNetwork.TryMapRemainingSpans(citizen.Journey, MappingProgress(citizen, progress), mappingSpans))
+            {
+                double totalMinutes = citizen.Journey.Minutes;
+                foreach (var leg in mappingSpans)
+                    if (progress < leg.EndNominalMinutes - JourneyClockTolerance(State.Minute, totalMinutes))
                         return Math.Max(progress, leg.StartNominalMinutes);
+            }
             return double.PositiveInfinity;
         }
 

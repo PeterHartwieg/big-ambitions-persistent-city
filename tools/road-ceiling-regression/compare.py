@@ -33,8 +33,10 @@ for label, source in sources.items():
     source_hashes[label] = {str(p.relative_to(source)): hashlib.sha256(p.read_bytes()).hexdigest()
                             for folder in ('Core', 'Compatibility', 'Runtime')
                             for p in sorted((source / folder).glob('*.cs'))}
+    # A baseline tree from before the resumable planner has no sliced path; the harness skips those checks there.
     execute(['dotnet', 'build', str(ROOT / 'tools/road-ceiling-regression/RoadCeilingRegression.csproj'),
-             '--configuration', 'Release', '--output', str(outputs[label]), '-p:SourceRoot=' + str(source)],
+             '--configuration', 'Release', '--output', str(outputs[label]), '-p:SourceRoot=' + str(source)]
+            + (['-p:SlicedPlanner=false'] if label == 'baseline' else []),
             label + '-build.log')
 
 def run(label, suffix, mode=None):
