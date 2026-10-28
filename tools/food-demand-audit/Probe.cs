@@ -206,7 +206,7 @@ namespace FoodDemandAuditProbe
                 diagnostics=Runtime.FoodDiagnostics, auditDecisions=decisions.Count, auditCapture=AuditCaptureStatus(), housekeeping=new { restockChecks,restocks,stockTasks },
                 receipts=SaveGameManager.Current.modData.Where(p=>FoodSaleReceipts.IsReceiptKey(p.Key)).ToDictionary(p=>p.Key,p=>p.Value), count=state?.Residents.Count, scope=state?.Shops,
                 totals=state?.Residents.GroupBy(m=>m.Status.ToString()).ToDictionary(g=>g.Key,g=>g.Count()),
-                purchases=state?.Residents.Sum(m=>m.Purchases),spendingCents=state?.Residents.Sum(m=>m.SpentCents),
+                purchases=state?.Residents.Sum(m=>m.Purchases),spendingCents=state==null?null:Money.Sum(state.Residents.Select(m=>m.Spent)).ToCentsText(),
                 active=state?.Residents.Where(m=>m.Status==MealStatus.Travelling||m.Status==MealStatus.Serving||m.Status==MealStatus.Paid||m.Status==MealStatus.Uncertain).ToArray(),
                 outings=sim.State.Citizens.Where(c=>c.MealOuting!=null).Select(c=>new { c.Identity.Id,c.Phase,c.PlaceId,c.DestinationId,c.NextEventMinute,c.MealOuting }),
                 supply=pilotShop==null?null:FoodSupplyReader.Read(pilotShop,Product), orders=pilotShop?.unprocessedCompletedOrders,

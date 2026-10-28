@@ -126,7 +126,7 @@ namespace FoodDemandAuditProbe
                 var scope = food.Shops.Single(s => s.BusinessId == Uri.UnescapeDataString(value[2]) && s.ContainsProduct(Uri.UnescapeDataString(value[3])));
                 var meal = new ResidentMeal { ResidentId = Uri.UnescapeDataString(key[0]), Kind = kind,
                     Day = int.Parse(key[2], System.Globalization.CultureInfo.InvariantCulture), PlaceId = scope.PlaceId, BusinessId = scope.BusinessId, ProductId = Uri.UnescapeDataString(value[3]),
-                    PriceCents = decimal.Parse(value[1], System.Globalization.CultureInfo.InvariantCulture) };
+                    Price = Money.TryParseCents(value[1], 28, out var agreed) ? agreed : throw new InvalidOperationException("Receipt price is not exact money.") };
                 if (!food.Residents.Any(m => m.ResidentId == meal.ResidentId) || !FoodSaleReceipts.AlreadyPaid(SaveGameManager.Current.modData, meal))
                     throw new InvalidOperationException("Replay must identify an existing resident and confirmed saved receipt.");
                 var result = native.Buy(meal, Simulation.State.Minute);

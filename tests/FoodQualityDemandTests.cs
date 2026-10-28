@@ -11,7 +11,7 @@ public sealed class FoodQualityDemandTests
 {
     private static FoodShadowState Scenario(int qualityValue = 300, int districtValue = 200)
     {
-        var person = new FoodConsumer { Id = "p", Name = "Person", OriginPlaceId = "home", DailyAllowanceCents = 1000,
+        var person = new FoodConsumer { Id = "p", Name = "Person", OriginPlaceId = "home", DailyAllowance = Money.FromCents(1000),
             ServiceQualityValueCents = qualityValue, DistrictAppealValueCents = districtValue };
         var intent = new FoodIntent { Id = FoodDemand.IntentId("p", 1), ConsumerId = "p", Day = 1, DesiredAt = 2160,
             RequestedAt = 2160, Deadline = 2205, EatingMinutes = 15, MaximumQueueMinutes = 15,
@@ -19,7 +19,7 @@ public sealed class FoodQualityDemandTests
         var shops = new[] { "a", "b" }.Select(id => new FoodBusiness { Id = id, Name = id, PlaceId = id, DistrictId = "district",
             CustomerServicePercent = 50, MealsPerHour = 60,
             Hours = Enumerable.Range(0, 7).Select(day => new OpeningWindow { Day = day, FromMinute = 0, ToMinute = 1440 }).ToList(),
-            Offers = new() { new FoodOffer { ProductId = "meal", PriceCents = id == "a" ? 600 : 700, Units = 10, DistrictDemandPercent = 50 } } }).ToArray();
+            Offers = new() { new FoodOffer { ProductId = "meal", Price = Money.FromCents(id == "a" ? 600 : 700), Units = 10, DistrictDemandPercent = 50 } } }).ToArray();
         return FoodDemand.CreateObserved("city", "Controlled quality/district comparison", 1, 1, new[] { person }, shops,
             shops.Select(b => new FoodTravelQuote { ConsumerId = "p", BusinessId = b.Id, IntentId = intent.Id, OriginPlaceId = "work",
                 Minutes = 5, ReturnMinutes = 5, Evidence = "Controlled complete paths" }), new[] { intent });
@@ -28,11 +28,7 @@ public sealed class FoodQualityDemandTests
     private static FoodShadowState Finish(FoodShadowState state)
     { var engine = new FoodDemand(state); while (!engine.AdvanceTo(state.EndsAt, 1)) { } return state; }
 
-    internal static void LegacyMoney(JObject token)
-    {
-        foreach (var p in token.Descendants().OfType<JProperty>().Where(p => p.Name == "PriceCents" || p.Name == "SpentCents" || p.Name == "DailyAllowanceCents").ToArray())
-            p.Value = checked((int)(decimal)p.Value);
-    }
+    internal static void LegacyMoney(JObject token) => LegacyMoneyWire.ToLegacy(token, wholeCents: true);
 
     [Fact]
     public void BetterCustomerServiceCanJustifyAPremiumForResidentsWhoValueIt()
@@ -41,7 +37,7 @@ public sealed class FoodQualityDemandTests
         var indifferent = FoodShadowCodec.Read(FoodShadowCodec.Write(state), "city"); indifferent.Consumers[0].ServiceQualityValueCents = 0;
         Assert.Equal("a", Finish(indifferent).Intents.Single().BusinessId);
         var intent = Finish(state).Intents.Single();
-        Assert.Equal("b", intent.BusinessId); Assert.Equal(700, intent.SpentCents);
+        Assert.Equal("b", intent.BusinessId); Assert.Equal(Money.FromCents(700), intent.Spent);
         Assert.Equal(9, state.Businesses[1].Offers[0].Units);
         Assert.True(intent.Choices.Single(c => c.BusinessId == "b").ServiceQualityAdjustmentCents < 0);
     }
@@ -52,7 +48,7 @@ public sealed class FoodQualityDemandTests
         var state = Scenario(); state.Businesses[0].Offers[0].DistrictDemandPercent = 10; state.Businesses[1].Offers[0].DistrictDemandPercent = 90;
         state.Businesses[1].DistrictId = "other-district";
         Assert.Equal("b", Finish(state).Intents.Single().BusinessId);
-        Assert.Single(state.Intents); Assert.Equal(1000, state.Consumers[0].DailyAllowanceCents);
+        Assert.Single(state.Intents); Assert.Equal(Money.FromCents(1000), state.Consumers[0].DailyAllowance);
         Assert.Equal(19, state.Businesses.Sum(b => b.Offers[0].Units));
     }
 
@@ -64,7 +60,7 @@ public sealed class FoodQualityDemandTests
         foreach (var b in low.Businesses) b.Offers[0].DistrictDemandPercent = 20;
         Finish(high); Finish(low);
         Assert.Equal(high.Intents[0].BusinessId, low.Intents[0].BusinessId);
-        Assert.Equal(high.Intents[0].SpentCents, low.Intents[0].SpentCents);
+        Assert.Equal(high.Intents[0].Spent, low.Intents[0].Spent);
         Assert.Equal(high.Intents[0].Status, low.Intents[0].Status);
         Assert.Equal(low.Intents[0].Choices[0].DistrictAppealAdjustmentCents, low.Intents[0].Choices[1].DistrictAppealAdjustmentCents);
     }
@@ -78,7 +74,7 @@ public sealed class FoodQualityDemandTests
     public void AttractiveSignalsNeverOverrideFeasibility(string unavailable)
     {
         var state = Scenario(); var b = state.Businesses[1]; b.CustomerServicePercent = 100; b.Offers[0].DistrictDemandPercent = 100;
-        if (unavailable == "budget") b.Offers[0].PriceCents = 1001;
+        if (unavailable == "budget") b.Offers[0].Price = Money.FromCents(1001);
         if (unavailable == "stock") b.Offers[0].Units = 0;
         if (unavailable == "service") b.MealsPerHour = 0;
         if (unavailable == "closed") b.Hours.Clear();
@@ -120,7 +116,7 @@ public sealed class FoodQualityDemandTests
         Assert.Equal(0, migrated.Consumers[0].ServiceQualityValueCents);
         Finish(migrated); Finish(state);
         Assert.Equal(state.Intents[0].BusinessId, migrated.Intents[0].BusinessId);
-        Assert.Equal(state.Intents[0].SpentCents, migrated.Intents[0].SpentCents);
+        Assert.Equal(state.Intents[0].Spent, migrated.Intents[0].Spent);
         old["Consumers"]![0]!["ServiceQualityValueCents"] = 100;
         Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(old.ToString(), "city"));
     }

@@ -31,7 +31,7 @@ foreach(int price in new[]{300,500,700,900,1025,1200,1500,1800,2200,3000}) {
  var decisions=new List<FoodIntent>();
  foreach(var row in rows) {
  var businesses=JsonConvert.DeserializeObject<List<FoodBusiness>>(JsonConvert.SerializeObject(row.Businesses))!;
- foreach(var b in businesses)foreach(var offer in b.Offers)offer.PriceCents=price;
+ foreach(var b in businesses)foreach(var offer in b.Offers)offer.Price=Money.FromCents(price);
  var i=Fresh(row);FoodDemand.ChooseObserved(row.Consumer,businesses,row.Quotes,i,i.RequestedAt);decisions.Add(i);
  }
  points.Add(new {priceCents=price,chosen=decisions.Count(i=>i.Status==FoodIntentStatus.Travelling),declined=decisions.Count(i=>i.Status==FoodIntentStatus.DeclinedPurchase),unresolved=decisions.Count(i=>i.Status==FoodIntentStatus.Unresolved)});
