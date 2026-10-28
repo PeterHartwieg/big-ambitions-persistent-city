@@ -1,0 +1,142 @@
+[
+  {
+    "file": "after-financial-diagnostic.json",
+    "bytes": 63546,
+    "sha256": "1445bf88d3d8ee74ece03d07d89afe28e8568fc088708c2714806881a18522a2"
+  },
+  {
+    "file": "analyze_noise.py",
+    "bytes": 1540,
+    "sha256": "150a6debaa86ff581530228b8b2a56832f52b3590e1899b589af2896382a9d6b"
+  },
+  {
+    "file": "analyze_roundtrips.py",
+    "bytes": 1577,
+    "sha256": "f2ba5b938ce451aa6d2236e07cce2197e18716c67d83ab5e5957ed2adffc10a9"
+  },
+  {
+    "file": "analyze_runs.py",
+    "bytes": 3371,
+    "sha256": "d0a9d0ca034f85a356e3a38c670e68fe02d3976d854c4e7a1371c5a349230a11"
+  },
+  {
+    "file": "autosave-evidence.json",
+    "bytes": 8614,
+    "sha256": "b5df8ebb7eac0d7ea147a7b9d3363127fd16c387286d515df35ee5a646d51a78"
+  },
+  {
+    "file": "before-financial-diagnostic.json",
+    "bytes": 63546,
+    "sha256": "bf3b698e92efa1877aed11923cf7bc900c995cf39da4b9475439bb8df7408d13"
+  },
+  {
+    "file": "cleanup.json",
+    "bytes": 804,
+    "sha256": "55c6c6c53235516ce0228e8c0e79feb3d72a9996c248ea3e044b3658a0e4c003"
+  },
+  {
+    "file": "compare_finances.py",
+    "bytes": 2819,
+    "sha256": "33577135bd6a0e73fb4d14decc16bc220f37e0fae56ffbaaa6f8f9a4365c3619"
+  },
+  {
+    "file": "control_run.py",
+    "bytes": 1807,
+    "sha256": "3670bb24f27bcfdc5435ad68e8d84e2e0706c158b5c9aa2c48421f5aca90dca0"
+  },
+  {
+    "file": "dll-hashes.json",
+    "bytes": 327,
+    "sha256": "0eb0507da0d9fd2c549e5d6a067ae83585ea5abea4f94837547bf695588d134a"
+  },
+  {
+    "file": "error-attribution.json",
+    "bytes": 6284,
+    "sha256": "d477c6bffc4b073f2402bf6f38bd30f38ab1865cac32c1ec5b27151ee263cf9d"
+  },
+  {
+    "file": "financial-compared-values.json",
+    "bytes": 207424,
+    "sha256": "8aebb22bf5d8a3b4ad90ece3ea4c27aac67ef35614a18e927562f0f2a2f8e26b"
+  },
+  {
+    "file": "financial-equality.json",
+    "bytes": 3869,
+    "sha256": "e3894bddf65edd11f314003c991f39546d9029c04c308ded25044d8d0aad1d08"
+  },
+  {
+    "file": "lease-summary.json",
+    "bytes": 249,
+    "sha256": "c4460e719fb8dbeb1519f67498bed7b563fe5a9d7d08b3c396b886025e571c1c"
+  },
+  {
+    "file": "lock-released.json",
+    "bytes": 534,
+    "sha256": "bbb5bb7354dbeabf62289a77d4ff1d8add6e16bb6874d4363bad935997cd288c"
+  },
+  {
+    "file": "measure.py",
+    "bytes": 2124,
+    "sha256": "9c73fe5c969af136af1d7633637da89c4b475521d4971966116c0206c5684285"
+  },
+  {
+    "file": "methodology.json",
+    "bytes": 2164,
+    "sha256": "a367a67897cd3fc1f643cc3270f9696467211a74523355d075dd2c665db49859"
+  },
+  {
+    "file": "native-error-excerpts.txt",
+    "bytes": 24483,
+    "sha256": "ec43798b19972dd15b49fbc37c43a181171b16f22218e002bd9963091f35bba4"
+  },
+  {
+    "file": "native-full-exception-excerpts.txt",
+    "bytes": 41272,
+    "sha256": "6c1d8059a437d9942001d1b3837a81a3604b2549fd6b2a62cbaad3c9fb7afd2d"
+  },
+  {
+    "file": "native-log-checks.json",
+    "bytes": 45620,
+    "sha256": "249e09378ceefb73c48d8a7cb9386c281fe9d3c1853ba3560cd2c22e269ef47b"
+  },
+  {
+    "file": "offline-output.txt",
+    "bytes": 37452,
+    "sha256": "a21044c74d680081ddac8617052d624d343e3c2e75e55c6deb7a2fd58098f67f"
+  },
+  {
+    "file": "offline-results.json",
+    "bytes": 5973,
+    "sha256": "f4f83937c7202fd642d7366b3224547d17ef7867b13db891696ad0003b5d68f3"
+  },
+  {
+    "file": "performance-noise.json",
+    "bytes": 12645,
+    "sha256": "5313bd5bf931f04e578b5893abc04b070f5764ac00fd3c82c24a7dbf1f793a53"
+  },
+  {
+    "file": "performance-summary.json",
+    "bytes": 8548,
+    "sha256": "42f2171bf6f10fbd767b9c1e38bfcca9cac67fab3c59f0ef9304e5cf3d956e34"
+  },
+  {
+    "file": "private-evidence-hashes.json",
+    "bytes": 3195,
+    "sha256": "788e38905abd69110d624a72684f352698f9d43e2fcbe10458bbf6d4512d66f4"
+  },
+  {
+    "file": "README.md",
+    "bytes": 11988,
+    "sha256": "68b6d76aff5f7574c43d59b0a15820d7f95e7b77d4470878a9cd96cc67a99737"
+  },
+  {
+    "file": "roundtrip-summary.json",
+    "bytes": 3819,
+    "sha256": "d525e8708bfd932239a0af6fa97ebfd0f6ea6951030e371d098e60444a878c99"
+  },
+  {
+    "file": "verify_financial.py",
+    "bytes": 7950,
+    "sha256": "3d64d9f043f05afb6be3ed6235c930958802f456a0a55e25adbfefc4c00197c7"
+  }
+]

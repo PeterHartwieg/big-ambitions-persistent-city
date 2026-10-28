@@ -1,5 +1,9 @@
 # Validation status
 
+## PC PR #1 rig rerun - 29 October 2026 campaign (PASS)
+
+Executed 28 October UTC on agent1: `76e903a` / `3df8232` rebuild to the expected hashes; 1,260 / 1,267 tests and all README/differential checks pass. Exact financial **before/after equality** passes for 110 sales; the shared conservation defect remains. Six alternating A-B-A-B-A-B load/play/manual-save/unload/reload/play sequences reproduce neither target StreetLamp nor Food Trucks detached-save error. Six clean normal-speed 60-second windows show no median worsening beyond the larger within-build spread; tails are noisy and no speedup/statistical equivalence is claimed. All round trips preserve schema 13 and identities. All 4,828 original profile files, 107 references, root files and preferences restored/hash-verified; stopped and lease released. No release, ordinary-save or Workshop clearance. [Gate decisions, tables and evidence](docs/reviews/rig/2026-10-29-pr1-rerun/README.md).
+
 ## PC PR #1 rig — 28 October 2026 (BLOCKED)
 
 Windows agent1 comparison of `76e903a` and `3df8232`: 1,260 / 1,267 unit tests and all README harnesses pass; traffic/save differential fixtures match. Native activation and schema-13 after-save reloads with both builds pass. Six save-free timing windows show lower after p95 but mixed maxima; stronger noise acceptance remains incomplete. The original strict accounting verifier is unavailable; a supplemental 110-sale replay matches both builds, including the preexisting 30.80-cent native revenue excess. Native unload/save-scope errors remain unresolved, so the broad log gate is not passed. All 4,828 original profile files, 107 receipt references and preferences were restored and hash-verified; rig stopped and lease released. No release, ordinary-save or Workshop clearance. [Report, screenshots, logs and exact limits](docs/reviews/rig/2026-10-28-pr1/README.md).

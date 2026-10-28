@@ -1,0 +1,320 @@
+A1
+IOException: Cannot create a file when that file already exists
+  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0
+  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0
+
+[Mod:RealLifeOverhaul] People: character 9 of 12 made ready as Officer.
+[Mod:FoodTrucks] World: 883 buildings, 891 entrances cached.
+[Mod:CityPerformance] City ready; diagnostics=True; trace=True; autoexport=True; zones requested=True; refill requested=True; trace directory=<USER>/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests\CityPerformanceTraces
+[Mod:DrivenRides] Debug keys ready: Ctrl+Alt+Shift+G graph stats, Ctrl+Alt+Shift+X clear a stuck ride, Ctrl+Alt+Shift+K remove the ride car, Ctrl+Alt+Shift+V hospital now, Ctrl+Alt+Shift+U throw in the ride's frame update, Ctrl+Alt+Shift+J fake a save change, Ctrl+Alt+Shift+L park a dressed taxi beside you.
+[Mod:DrivenRides] Lane graph: 18791 waypoints, 0 bad edges dropped, 0 with listIndex not their position, 1849 allowing no vehicle type, 0 where allowedAgents and allowedCars differ, 4377 with Gley lane changes, 1613 with inferred ones, 168 junction entries with added turns, 147 with U-turns, top speed 80 km/h, built in 56 ms.
+[Mod:DrivenRides] City ready (9 manoeuvres left out from turn tests).
+[Mod:FoodTrucks] Item icons (city ready): 8 of 8 registered.
+[Mod:FoodTrucks] Save data Loaded: schema 2, written by 0.10.2, save count 21, street food days 0.
+[Mod:FoodTrucks] Debug actions ready: Ctrl+K food truck, Ctrl+Alt+K licence and permits, Ctrl+J food cart, Ctrl+Alt+J vanilla hand truck, Ctrl+U new items into the food vehicle here, Ctrl+Alt+U hire a worker, Ctrl+L status, Ctrl+Alt+L demand here, Ctrl+G grip log, Ctrl+Alt+G zone point, Ctrl+V twice city event here, Ctrl+Alt+V twice catering gig here, Ctrl+X twice tax statement now, Ctrl+Alt+X twice tax fixture, Ctrl+F3 commissary bays, Ctrl+Alt+F3 commissary deliveries now, Ctrl+Shift+F3 overnight check dry run, Ctrl+Shift+F11 uninstall step.
+[Mod:FoodTrucks] Parking lanes: no carts in this save.
+[Mod:FoodTrucks] Food Safety course: added at the Market Demands door, 360 minutes at $25 an hour.
+[Mod:FoodTrucks] City of New York: licences, permits and event places by phone.
+[Mod:FoodTrucks] World: 883 buildings, 891 entrances cached.
+[Mod:FoodTrucks] Pitches: 19 of 19 premium spots and 7 of 7 event places found in the city.
+
+B1
+IOException: Cannot create a file when that file already exists
+  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0
+  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0
+
+[Mod:RealLifeOverhaul] People: character 9 of 12 made ready as Officer.
+[Mod:FoodTrucks] World: 883 buildings, 891 entrances cached.
+[Mod:CityPerformance] Hyperreal discovery: active; full inactive-inclusive discovery, unsorted; no scene cache
+[Mod:CityPerformance] Bakery Help: inactive: unreviewed Bakery/game/Core/HGExtensions binary
+[Mod:CityPerformance] City ready; diagnostics=True; trace=True; autoexport=True; zones requested=True; refill requested=True; trace directory=<USER>/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests\CityPerformanceTraces
+[Mod:DrivenRides] Debug keys ready: Ctrl+Alt+Shift+G graph stats, Ctrl+Alt+Shift+X clear a stuck ride, Ctrl+Alt+Shift+K remove the ride car, Ctrl+Alt+Shift+V hospital now, Ctrl+Alt+Shift+U throw in the ride's frame update, Ctrl+Alt+Shift+J fake a save change, Ctrl+Alt+Shift+L park a dressed taxi beside you.
+[Mod:DrivenRides] Lane graph: 18791 waypoints, 0 bad edges dropped, 0 with listIndex not their position, 1849 allowing no vehicle type, 0 where allowedAgents and allowedCars differ, 4377 with Gley lane changes, 1613 with inferred ones, 168 junction entries with added turns, 147 with U-turns, top speed 80 km/h, built in 65 ms.
+[Mod:DrivenRides] City ready (9 manoeuvres left out from turn tests).
+[Mod:FoodTrucks] Item icons (city ready): 8 of 8 registered.
+[Mod:FoodTrucks] Save data Loaded: schema 2, written by 0.10.2, save count 20, street food days 0.
+[Mod:FoodTrucks] Debug actions ready: Ctrl+K food truck, Ctrl+Alt+K licence and permits, Ctrl+J food cart, Ctrl+Alt+J vanilla hand truck, Ctrl+U new items into the food vehicle here, Ctrl+Alt+U hire a worker, Ctrl+L status, Ctrl+Alt+L demand here, Ctrl+G grip log, Ctrl+Alt+G zone point, Ctrl+V twice city event here, Ctrl+Alt+V twice catering gig here, Ctrl+X twice tax statement now, Ctrl+Alt+X twice tax fixture, Ctrl+F3 commissary bays, Ctrl+Alt+F3 commissary deliveries now, Ctrl+Shift+F3 overnight check dry run, Ctrl+Shift+F11 uninstall step.
+[Mod:FoodTrucks] Vanilla hand truck: offset -0.75, left hand position (-0.302, 1.157, -0.118), rotation (329.4, 57.8, 141.7), right hand position (0.316, 1.157, -0.090), rotation (339.7, 314.2, 199.4).
+[Mod:FoodTrucks] Parking lanes: no carts in this save.
+[Mod:FoodTrucks] Food Safety course: added at the Market Demands door, 360 minutes at $25 an hour.
+
+IOException: Cannot create a file when that file already exists
+  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0
+  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0
+
+[Mod:RealLifeOverhaul] People: character 9 of 12 made ready as Officer.
+[Mod:FoodTrucks] World: 883 buildings, 891 entrances cached.
+[Mod:CityPerformance] City ready; diagnostics=True; trace=True; autoexport=True; zones requested=True; refill requested=True; trace directory=<USER>/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests\CityPerformanceTraces
+[Mod:DrivenRides] Debug keys ready: Ctrl+Alt+Shift+G graph stats, Ctrl+Alt+Shift+X clear a stuck ride, Ctrl+Alt+Shift+K remove the ride car, Ctrl+Alt+Shift+V hospital now, Ctrl+Alt+Shift+U throw in the ride's frame update, Ctrl+Alt+Shift+J fake a save change, Ctrl+Alt+Shift+L park a dressed taxi beside you.
+[Mod:DrivenRides] Lane graph: 18791 waypoints, 0 bad edges dropped, 0 with listIndex not their position, 1849 allowing no vehicle type, 0 where allowedAgents and allowedCars differ, 4377 with Gley lane changes, 1613 with inferred ones, 168 junction entries with added turns, 147 with U-turns, top speed 80 km/h, built in 120 ms.
+[Mod:DrivenRides] City ready (9 manoeuvres left out from turn tests).
+[Mod:FoodTrucks] Item icons (city ready): 8 of 8 registered.
+[Mod:FoodTrucks] Save data Loaded: schema 2, written by 0.10.2, save count 21, street food days 0.
+[Mod:FoodTrucks] Debug actions ready: Ctrl+K food truck, Ctrl+Alt+K licence and permits, Ctrl+J food cart, Ctrl+Alt+J vanilla hand truck, Ctrl+U new items into the food vehicle here, Ctrl+Alt+U hire a worker, Ctrl+L status, Ctrl+Alt+L demand here, Ctrl+G grip log, Ctrl+Alt+G zone point, Ctrl+V twice city event here, Ctrl+Alt+V twice catering gig here, Ctrl+X twice tax statement now, Ctrl+Alt+X twice tax fixture, Ctrl+F3 commissary bays, Ctrl+Alt+F3 commissary deliveries now, Ctrl+Shift+F3 overnight check dry run, Ctrl+Shift+F11 uninstall step.
+[Mod:FoodTrucks] Parking lanes: no carts in this save.
+[Mod:FoodTrucks] Food Safety course: added at the Market Demands door, 360 minutes at $25 an hour.
+[Mod:FoodTrucks] City of New York: licences, permits and event places by phone.
+[Mod:FoodTrucks] World: 883 buildings, 891 entrances cached.
+[Mod:FoodTrucks] Pitches: 19 of 19 premium spots and 7 of 7 event places found in the city.
+
+A2
+IOException: Cannot create a file when that file already exists
+  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0
+  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0
+
+[Mod:RealLifeOverhaul] People: character 9 of 12 made ready as Officer.
+[Mod:FoodTrucks] World: 883 buildings, 891 entrances cached.
+[Mod:CityPerformance] Hyperreal discovery: active; full inactive-inclusive discovery, unsorted; no scene cache
+[Mod:CityPerformance] Bakery Help: inactive: unreviewed Bakery/game/Core/HGExtensions binary
+[Mod:CityPerformance] City ready; diagnostics=True; trace=True; autoexport=True; zones requested=True; refill requested=True; trace directory=<USER>/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests\CityPerformanceTraces
+[Mod:DrivenRides] Debug keys ready: Ctrl+Alt+Shift+G graph stats, Ctrl+Alt+Shift+X clear a stuck ride, Ctrl+Alt+Shift+K remove the ride car, Ctrl+Alt+Shift+V hospital now, Ctrl+Alt+Shift+U throw in the ride's frame update, Ctrl+Alt+Shift+J fake a save change, Ctrl+Alt+Shift+L park a dressed taxi beside you.
+[Mod:DrivenRides] Lane graph: 18791 waypoints, 0 bad edges dropped, 0 with listIndex not their position, 1849 allowing no vehicle type, 0 where allowedAgents and allowedCars differ, 4377 with Gley lane changes, 1613 with inferred ones, 168 junction entries with added turns, 147 with U-turns, top speed 80 km/h, built in 70 ms.
+[Mod:DrivenRides] City ready (9 manoeuvres left out from turn tests).
+[Mod:FoodTrucks] Item icons (city ready): 8 of 8 registered.
+[Mod:FoodTrucks] Save data Loaded: schema 2, written by 0.10.2, save count 20, street food days 0.
+[Mod:FoodTrucks] Debug actions ready: Ctrl+K food truck, Ctrl+Alt+K licence and permits, Ctrl+J food cart, Ctrl+Alt+J vanilla hand truck, Ctrl+U new items into the food vehicle here, Ctrl+Alt+U hire a worker, Ctrl+L status, Ctrl+Alt+L demand here, Ctrl+G grip log, Ctrl+Alt+G zone point, Ctrl+V twice city event here, Ctrl+Alt+V twice catering gig here, Ctrl+X twice tax statement now, Ctrl+Alt+X twice tax fixture, Ctrl+F3 commissary bays, Ctrl+Alt+F3 commissary deliveries now, Ctrl+Shift+F3 overnight check dry run, Ctrl+Shift+F11 uninstall step.
+[Mod:FoodTrucks] Vanilla hand truck: offset -0.75, left hand position (-0.302, 1.157, -0.118), rotation (329.4, 57.8, 141.7), right hand position (0.316, 1.157, -0.090), rotation (339.7, 314.2, 199.4).
+[Mod:FoodTrucks] Parking lanes: no carts in this save.
+[Mod:FoodTrucks] Food Safety course: added at the Market Demands door, 360 minutes at $25 an hour.
+
+IOException: Cannot create a file when that file already exists
+  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0
+  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0
+
+[Mod:RealLifeOverhaul] People: character 9 of 12 made ready as Officer.
+[Mod:FoodTrucks] World: 883 buildings, 891 entrances cached.
+[Mod:CityPerformance] City ready; diagnostics=True; trace=True; autoexport=True; zones requested=True; refill requested=True; trace directory=<USER>/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests\CityPerformanceTraces
+[Mod:DrivenRides] Debug keys ready: Ctrl+Alt+Shift+G graph stats, Ctrl+Alt+Shift+X clear a stuck ride, Ctrl+Alt+Shift+K remove the ride car, Ctrl+Alt+Shift+V hospital now, Ctrl+Alt+Shift+U throw in the ride's frame update, Ctrl+Alt+Shift+J fake a save change, Ctrl+Alt+Shift+L park a dressed taxi beside you.
+[Mod:DrivenRides] Lane graph: 18791 waypoints, 0 bad edges dropped, 0 with listIndex not their position, 1849 allowing no vehicle type, 0 where allowedAgents and allowedCars differ, 4377 with Gley lane changes, 1613 with inferred ones, 168 junction entries with added turns, 147 with U-turns, top speed 80 km/h, built in 55 ms.
+[Mod:DrivenRides] City ready (9 manoeuvres left out from turn tests).
+[Mod:FoodTrucks] Item icons (city ready): 8 of 8 registered.
+[Mod:FoodTrucks] Save data Loaded: schema 2, written by 0.10.2, save count 21, street food days 0.
+[Mod:FoodTrucks] Debug actions ready: Ctrl+K food truck, Ctrl+Alt+K licence and permits, Ctrl+J food cart, Ctrl+Alt+J vanilla hand truck, Ctrl+U new items into the food vehicle here, Ctrl+Alt+U hire a worker, Ctrl+L status, Ctrl+Alt+L demand here, Ctrl+G grip log, Ctrl+Alt+G zone point, Ctrl+V twice city event here, Ctrl+Alt+V twice catering gig here, Ctrl+X twice tax statement now, Ctrl+Alt+X twice tax fixture, Ctrl+F3 commissary bays, Ctrl+Alt+F3 commissary deliveries now, Ctrl+Shift+F3 overnight check dry run, Ctrl+Shift+F11 uninstall step.
+[Mod:FoodTrucks] Parking lanes: no carts in this save.
+[Mod:FoodTrucks] Food Safety course: added at the Market Demands door, 360 minutes at $25 an hour.
+[Mod:FoodTrucks] City of New York: licences, permits and event places by phone.
+[Mod:FoodTrucks] World: 883 buildings, 891 entrances cached.
+[Mod:FoodTrucks] Pitches: 19 of 19 premium spots and 7 of 7 event places found in the city.
+
+B2
+IOException: Cannot create a file when that file already exists
+  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0
+  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0
+
+[Mod:RealLifeOverhaul] People: every female officer and paramedic has the same look (seed 2311, lightest or darkest skin tone, build: fatness 0.38 (lean), strength 0.7), haircut 'FemHair04' (the one with the least hair: no style has a name that says it is short), its darkest colour; the game's styles and their sizes in litres: None (no mesh), FemHair01 16.8, FemHair02 18.0, FemHair03 35.2, FemHair04 7.8, FemHair05 19.1, FemHair06 14.5.
+[Mod:RealLifeOverhaul] People: a female officer is 1.70 m as the game builds them (crown 0.221 m above the head joint; the player is 1.69 m); scaled by 1.035 to 1.76 m. (Logged once.)
+[Mod:RealLifeOverhaul] People: character 9 of 12 made ready as Officer.
+[Mod:FoodTrucks] World: 883 buildings, 891 entrances cached.
+[Mod:CityPerformance] Hyperreal discovery: active; full inactive-inclusive discovery, unsorted; no scene cache
+[Mod:CityPerformance] Bakery Help: inactive: unreviewed Bakery/game/Core/HGExtensions binary
+[Mod:CityPerformance] City ready; diagnostics=True; trace=True; autoexport=True; zones requested=True; refill requested=True; trace directory=<USER>/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests\CityPerformanceTraces
+[Mod:DrivenRides] Debug keys ready: Ctrl+Alt+Shift+G graph stats, Ctrl+Alt+Shift+X clear a stuck ride, Ctrl+Alt+Shift+K remove the ride car, Ctrl+Alt+Shift+V hospital now, Ctrl+Alt+Shift+U throw in the ride's frame update, Ctrl+Alt+Shift+J fake a save change, Ctrl+Alt+Shift+L park a dressed taxi beside you.
+[Mod:DrivenRides] Lane graph: 18791 waypoints, 0 bad edges dropped, 0 with listIndex not their position, 1849 allowing no vehicle type, 0 where allowedAgents and allowedCars differ, 4377 with Gley lane changes, 1613 with inferred ones, 168 junction entries with added turns, 147 with U-turns, top speed 80 km/h, built in 62 ms.
+[Mod:DrivenRides] City ready (9 manoeuvres left out from turn tests).
+[Mod:FoodTrucks] Item icons (city ready): 8 of 8 registered.
+[Mod:FoodTrucks] Save data Loaded: schema 2, written by 0.10.2, save count 20, street food days 0.
+[Mod:FoodTrucks] Debug actions ready: Ctrl+K food truck, Ctrl+Alt+K licence and permits, Ctrl+J food cart, Ctrl+Alt+J vanilla hand truck, Ctrl+U new items into the food vehicle here, Ctrl+Alt+U hire a worker, Ctrl+L status, Ctrl+Alt+L demand here, Ctrl+G grip log, Ctrl+Alt+G zone point, Ctrl+V twice city event here, Ctrl+Alt+V twice catering gig here, Ctrl+X twice tax statement now, Ctrl+Alt+X twice tax fixture, Ctrl+F3 commissary bays, Ctrl+Alt+F3 commissary deliveries now, Ctrl+Shift+F3 overnight check dry run, Ctrl+Shift+F11 uninstall step.
+[Mod:FoodTrucks] Vanilla hand truck: offset -0.75, left hand position (-0.302, 1.157, -0.118), rotation (329.4, 57.8, 141.7), right hand position (0.316, 1.157, -0.090), rotation (339.7, 314.2, 199.4).
+
+IOException: Cannot create a file when that file already exists
+  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0
+  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0
+
+[Mod:RealLifeOverhaul] People: character 9 of 12 made ready as Officer.
+[Mod:FoodTrucks] World: 883 buildings, 891 entrances cached.
+[Mod:CityPerformance] City ready; diagnostics=True; trace=True; autoexport=True; zones requested=True; refill requested=True; trace directory=<USER>/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests\CityPerformanceTraces
+[Mod:DrivenRides] Debug keys ready: Ctrl+Alt+Shift+G graph stats, Ctrl+Alt+Shift+X clear a stuck ride, Ctrl+Alt+Shift+K remove the ride car, Ctrl+Alt+Shift+V hospital now, Ctrl+Alt+Shift+U throw in the ride's frame update, Ctrl+Alt+Shift+J fake a save change, Ctrl+Alt+Shift+L park a dressed taxi beside you.
+[Mod:DrivenRides] Lane graph: 18791 waypoints, 0 bad edges dropped, 0 with listIndex not their position, 1849 allowing no vehicle type, 0 where allowedAgents and allowedCars differ, 4377 with Gley lane changes, 1613 with inferred ones, 168 junction entries with added turns, 147 with U-turns, top speed 80 km/h, built in 91 ms.
+[Mod:DrivenRides] City ready (9 manoeuvres left out from turn tests).
+[Mod:FoodTrucks] Item icons (city ready): 8 of 8 registered.
+[Mod:FoodTrucks] Save data Loaded: schema 2, written by 0.10.2, save count 21, street food days 0.
+[Mod:FoodTrucks] Debug actions ready: Ctrl+K food truck, Ctrl+Alt+K licence and permits, Ctrl+J food cart, Ctrl+Alt+J vanilla hand truck, Ctrl+U new items into the food vehicle here, Ctrl+Alt+U hire a worker, Ctrl+L status, Ctrl+Alt+L demand here, Ctrl+G grip log, Ctrl+Alt+G zone point, Ctrl+V twice city event here, Ctrl+Alt+V twice catering gig here, Ctrl+X twice tax statement now, Ctrl+Alt+X twice tax fixture, Ctrl+F3 commissary bays, Ctrl+Alt+F3 commissary deliveries now, Ctrl+Shift+F3 overnight check dry run, Ctrl+Shift+F11 uninstall step.
+[Mod:FoodTrucks] Parking lanes: no carts in this save.
+[Mod:FoodTrucks] Food Safety course: added at the Market Demands door, 360 minutes at $25 an hour.
+[Mod:FoodTrucks] City of New York: licences, permits and event places by phone.
+[Mod:FoodTrucks] World: 883 buildings, 891 entrances cached.
+[Mod:FoodTrucks] Pitches: 19 of 19 premium spots and 7 of 7 event places found in the city.
+
+A3
+IOException: Cannot create a file when that file already exists
+  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0
+  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0
+
+[Mod:RealLifeOverhaul] People: every male officer and paramedic has the same look (seed 1207, lightest or darkest skin tone, build: fatness 0.38 (lean), strength 0.7), haircut 'MaleHair07' (the one with the least hair: no style has a name that says it is short), its darkest colour; the game's styles and their sizes in litres: None (no mesh), MaleHair01 7.0, MaleHair02 7.0, MaleHair03 7.8, MaleHair04 7.0, MaleHair05 7.8, MaleHair06 6.5, MaleHair07 4.3, MaleHair08 8.2; beard 'None'.
+[Mod:RealLifeOverhaul] People: a male officer is 1.69 m as the game builds them (crown 0.215 m above the head joint; the player is 1.70 m); scaled by 1.098 to 1.86 m. (Logged once.)
+[Mod:RealLifeOverhaul] People: character 9 of 12 made ready as Officer.
+[Mod:FoodTrucks] World: 883 buildings, 891 entrances cached.
+[Mod:CityPerformance] Hyperreal discovery: active; full inactive-inclusive discovery, unsorted; no scene cache
+[Mod:CityPerformance] Bakery Help: inactive: unreviewed Bakery/game/Core/HGExtensions binary
+[Mod:CityPerformance] City ready; diagnostics=True; trace=True; autoexport=True; zones requested=True; refill requested=True; trace directory=<USER>/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests\CityPerformanceTraces
+[Mod:DrivenRides] Debug keys ready: Ctrl+Alt+Shift+G graph stats, Ctrl+Alt+Shift+X clear a stuck ride, Ctrl+Alt+Shift+K remove the ride car, Ctrl+Alt+Shift+V hospital now, Ctrl+Alt+Shift+U throw in the ride's frame update, Ctrl+Alt+Shift+J fake a save change, Ctrl+Alt+Shift+L park a dressed taxi beside you.
+[Mod:DrivenRides] Lane graph: 18791 waypoints, 0 bad edges dropped, 0 with listIndex not their position, 1849 allowing no vehicle type, 0 where allowedAgents and allowedCars differ, 4377 with Gley lane changes, 1613 with inferred ones, 168 junction entries with added turns, 147 with U-turns, top speed 80 km/h, built in 169 ms.
+[Mod:DrivenRides] City ready (9 manoeuvres left out from turn tests).
+[Mod:FoodTrucks] Item icons (city ready): 8 of 8 registered.
+[Mod:FoodTrucks] Save data Loaded: schema 2, written by 0.10.2, save count 20, street food days 0.
+[Mod:FoodTrucks] Debug actions ready: Ctrl+K food truck, Ctrl+Alt+K licence and permits, Ctrl+J food cart, Ctrl+Alt+J vanilla hand truck, Ctrl+U new items into the food vehicle here, Ctrl+Alt+U hire a worker, Ctrl+L status, Ctrl+Alt+L demand here, Ctrl+G grip log, Ctrl+Alt+G zone point, Ctrl+V twice city event here, Ctrl+Alt+V twice catering gig here, Ctrl+X twice tax statement now, Ctrl+Alt+X twice tax fixture, Ctrl+F3 commissary bays, Ctrl+Alt+F3 commissary deliveries now, Ctrl+Shift+F3 overnight check dry run, Ctrl+Shift+F11 uninstall step.
+[Mod:FoodTrucks] Vanilla hand truck: offset -0.75, left hand position (-0.302, 1.157, -0.118), rotation (329.4, 57.8, 141.7), right hand position (0.316, 1.157, -0.090), rotation (339.7, 314.2, 199.4).
+
+IOException: Cannot create a file when that file already exists
+  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0
+  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0
+
+[Mod:RealLifeOverhaul] People: character 9 of 12 made ready as Officer.
+[Mod:FoodTrucks] World: 883 buildings, 891 entrances cached.
+[Mod:CityPerformance] City ready; diagnostics=True; trace=True; autoexport=True; zones requested=True; refill requested=True; trace directory=<USER>/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests\CityPerformanceTraces
+[Mod:DrivenRides] Debug keys ready: Ctrl+Alt+Shift+G graph stats, Ctrl+Alt+Shift+X clear a stuck ride, Ctrl+Alt+Shift+K remove the ride car, Ctrl+Alt+Shift+V hospital now, Ctrl+Alt+Shift+U throw in the ride's frame update, Ctrl+Alt+Shift+J fake a save change, Ctrl+Alt+Shift+L park a dressed taxi beside you.
+[Mod:DrivenRides] Lane graph: 18791 waypoints, 0 bad edges dropped, 0 with listIndex not their position, 1849 allowing no vehicle type, 0 where allowedAgents and allowedCars differ, 4377 with Gley lane changes, 1613 with inferred ones, 168 junction entries with added turns, 147 with U-turns, top speed 80 km/h, built in 227 ms.
+[Mod:DrivenRides] City ready (9 manoeuvres left out from turn tests).
+[Mod:FoodTrucks] Item icons (city ready): 8 of 8 registered.
+[Mod:FoodTrucks] Save data Loaded: schema 2, written by 0.10.2, save count 21, street food days 0.
+[Mod:FoodTrucks] Debug actions ready: Ctrl+K food truck, Ctrl+Alt+K licence and permits, Ctrl+J food cart, Ctrl+Alt+J vanilla hand truck, Ctrl+U new items into the food vehicle here, Ctrl+Alt+U hire a worker, Ctrl+L status, Ctrl+Alt+L demand here, Ctrl+G grip log, Ctrl+Alt+G zone point, Ctrl+V twice city event here, Ctrl+Alt+V twice catering gig here, Ctrl+X twice tax statement now, Ctrl+Alt+X twice tax fixture, Ctrl+F3 commissary bays, Ctrl+Alt+F3 commissary deliveries now, Ctrl+Shift+F3 overnight check dry run, Ctrl+Shift+F11 uninstall step.
+[Mod:FoodTrucks] Parking lanes: no carts in this save.
+[Mod:FoodTrucks] Food Safety course: added at the Market Demands door, 360 minutes at $25 an hour.
+[Mod:FoodTrucks] City of New York: licences, permits and event places by phone.
+[Mod:FoodTrucks] World: 883 buildings, 891 entrances cached.
+[Mod:FoodTrucks] Pitches: 19 of 19 premium spots and 7 of 7 event places found in the city.
+
+IOException: Cannot create a file when that file already exists
+  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0
+  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0
+
+[Mod:RealLifeOverhaul] People: character 9 of 12 made ready as Officer.
+[Mod:FoodTrucks] World: 883 buildings, 891 entrances cached.
+[Mod:CityPerformance] City ready; diagnostics=True; trace=True; autoexport=True; zones requested=True; refill requested=True; trace directory=<USER>/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests\CityPerformanceTraces
+[Mod:DrivenRides] Debug keys ready: Ctrl+Alt+Shift+G graph stats, Ctrl+Alt+Shift+X clear a stuck ride, Ctrl+Alt+Shift+K remove the ride car, Ctrl+Alt+Shift+V hospital now, Ctrl+Alt+Shift+U throw in the ride's frame update, Ctrl+Alt+Shift+J fake a save change, Ctrl+Alt+Shift+L park a dressed taxi beside you.
+[Mod:DrivenRides] Lane graph: 18791 waypoints, 0 bad edges dropped, 0 with listIndex not their position, 1849 allowing no vehicle type, 0 where allowedAgents and allowedCars differ, 4377 with Gley lane changes, 1613 with inferred ones, 168 junction entries with added turns, 147 with U-turns, top speed 80 km/h, built in 192 ms.
+[Mod:DrivenRides] City ready (9 manoeuvres left out from turn tests).
+[Mod:FoodTrucks] Item icons (city ready): 8 of 8 registered.
+[Mod:FoodTrucks] Save data Loaded: schema 2, written by 0.10.2, save count 20, street food days 0.
+[Mod:FoodTrucks] Debug actions ready: Ctrl+K food truck, Ctrl+Alt+K licence and permits, Ctrl+J food cart, Ctrl+Alt+J vanilla hand truck, Ctrl+U new items into the food vehicle here, Ctrl+Alt+U hire a worker, Ctrl+L status, Ctrl+Alt+L demand here, Ctrl+G grip log, Ctrl+Alt+G zone point, Ctrl+V twice city event here, Ctrl+Alt+V twice catering gig here, Ctrl+X twice tax statement now, Ctrl+Alt+X twice tax fixture, Ctrl+F3 commissary bays, Ctrl+Alt+F3 commissary deliveries now, Ctrl+Shift+F3 overnight check dry run, Ctrl+Shift+F11 uninstall step.
+[Mod:FoodTrucks] Parking lanes: no carts in this save.
+[Mod:FoodTrucks] Food Safety course: added at the Market Demands door, 360 minutes at $25 an hour.
+[Mod:FoodTrucks] City of New York: licences, permits and event places by phone.
+[Mod:FoodTrucks] World: 883 buildings, 891 entrances cached.
+[Mod:FoodTrucks] Pitches: 19 of 19 premium spots and 7 of 7 event places found in the city.
+
+NullReferenceException: Object reference not set to an instance of an object
+  at (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition.Helpers.PlayerHelper.SaveCurrentPosition_Patch4()
+  at (wrapper delegate-invoke) <Module>.invoke_void()
+  at SaveGameManager.Save (SaveGameManager+SaveType saveType, System.String saveGameName, System.String characterFolder) [0x0005a] in <fdedeac4e1ad42668c1e57f28d2390d6>:0
+  at GameManager.ExecuteMidnightAutoSave () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0
+  at GameManager.TryRunPendingMidnightAutoSave () [0x00008] in <fdedeac4e1ad42668c1e57f28d2390d6>:0
+  at GameManager.SetPreventAutoSave (System.Boolean newPreventAutosaveValue) [0x00009] in <fdedeac4e1ad42668c1e57f28d2390d6>:0
+  at PR2Rig.Guard.OnDestroy () [0x0001e] in <b5a0d9580a3a466ca2304f9d73626baa>:0
+
+[Mod:RealLifeOverhaul] Home check (needs bars): hidden (not at home, no need in its warning zone and not ill, or a screen is open).
+[Mod:RealLifeOverhaul] Economy check (terms restored, the city is unloading): 0 bank(s) put back. : PASS
+[Mod:RealLifeOverhaul] Economy check (city, restored, the city is unloading): 0 wholesale price(s) and 0 footfall figure(s) put back, the bank rate already at the banks' own. 130 good(s) with a wholesale price, 0 not as expected: PASS
+[Mod:RealLifeOverhaul] Services check (restored, the city is unloading): no shift of the mod's was in any schedule; no wage, no employee and no schedule of the player's was ever written: PASS
+[Mod:RealLifeOverhaul] Company check (restored, the city is unloading): 0 footfall figure(s) put back; no wage and no figure of a business was ever written: PASS
+[Mod:RealLifeOverhaul] Estate: stopped (the city is unloading).
+[Mod:RealLifeOverhaul] City faults: stopped (the mod is unloading); every lamp, lane and prop put back as the game had it.
+[Mod:RealLifeOverhaul] Street talk: stopped (the mod is unloading).
+[Mod:RealLifeOverhaul] Utilities: stopped (the mod is unloading).
+Input System module state changed to: ShutdownInProgress.
+Input System polling thread exited.
+
+B3
+IOException: Cannot create a file when that file already exists
+  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0
+  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0
+
+[Mod:RealLifeOverhaul] People: character 9 of 12 made ready as Officer.
+[Mod:FoodTrucks] World: 883 buildings, 891 entrances cached.
+[Mod:CityPerformance] Hyperreal discovery: active; full inactive-inclusive discovery, unsorted; no scene cache
+[Mod:CityPerformance] Bakery Help: inactive: unreviewed Bakery/game/Core/HGExtensions binary
+[Mod:CityPerformance] City ready; diagnostics=True; trace=True; autoexport=True; zones requested=True; refill requested=True; trace directory=<USER>/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests\CityPerformanceTraces
+[Mod:DrivenRides] Debug keys ready: Ctrl+Alt+Shift+G graph stats, Ctrl+Alt+Shift+X clear a stuck ride, Ctrl+Alt+Shift+K remove the ride car, Ctrl+Alt+Shift+V hospital now, Ctrl+Alt+Shift+U throw in the ride's frame update, Ctrl+Alt+Shift+J fake a save change, Ctrl+Alt+Shift+L park a dressed taxi beside you.
+[Mod:DrivenRides] Lane graph: 18791 waypoints, 0 bad edges dropped, 0 with listIndex not their position, 1849 allowing no vehicle type, 0 where allowedAgents and allowedCars differ, 4377 with Gley lane changes, 1613 with inferred ones, 168 junction entries with added turns, 147 with U-turns, top speed 80 km/h, built in 202 ms.
+[Mod:DrivenRides] City ready (9 manoeuvres left out from turn tests).
+[Mod:FoodTrucks] Item icons (city ready): 8 of 8 registered.
+[Mod:FoodTrucks] Save data Loaded: schema 2, written by 0.10.2, save count 20, street food days 0.
+[Mod:FoodTrucks] Debug actions ready: Ctrl+K food truck, Ctrl+Alt+K licence and permits, Ctrl+J food cart, Ctrl+Alt+J vanilla hand truck, Ctrl+U new items into the food vehicle here, Ctrl+Alt+U hire a worker, Ctrl+L status, Ctrl+Alt+L demand here, Ctrl+G grip log, Ctrl+Alt+G zone point, Ctrl+V twice city event here, Ctrl+Alt+V twice catering gig here, Ctrl+X twice tax statement now, Ctrl+Alt+X twice tax fixture, Ctrl+F3 commissary bays, Ctrl+Alt+F3 commissary deliveries now, Ctrl+Shift+F3 overnight check dry run, Ctrl+Shift+F11 uninstall step.
+[Mod:FoodTrucks] Vanilla hand truck: offset -0.75, left hand position (-0.302, 1.157, -0.118), rotation (329.4, 57.8, 141.7), right hand position (0.316, 1.157, -0.090), rotation (339.7, 314.2, 199.4).
+[Mod:FoodTrucks] Parking lanes: no carts in this save.
+[Mod:FoodTrucks] Food Safety course: added at the Market Demands door, 360 minutes at $25 an hour.
+
+IOException: Cannot create a file when that file already exists
+  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0
+  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0
+
+[Mod:RealLifeOverhaul] People: character 9 of 12 made ready as Officer.
+[Mod:FoodTrucks] World: 883 buildings, 891 entrances cached.
+[Mod:CityPerformance] City ready; diagnostics=True; trace=True; autoexport=True; zones requested=True; refill requested=True; trace directory=<USER>/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests\CityPerformanceTraces
+[Mod:DrivenRides] Debug keys ready: Ctrl+Alt+Shift+G graph stats, Ctrl+Alt+Shift+X clear a stuck ride, Ctrl+Alt+Shift+K remove the ride car, Ctrl+Alt+Shift+V hospital now, Ctrl+Alt+Shift+U throw in the ride's frame update, Ctrl+Alt+Shift+J fake a save change, Ctrl+Alt+Shift+L park a dressed taxi beside you.
+[Mod:DrivenRides] Lane graph: 18791 waypoints, 0 bad edges dropped, 0 with listIndex not their position, 1849 allowing no vehicle type, 0 where allowedAgents and allowedCars differ, 4377 with Gley lane changes, 1613 with inferred ones, 168 junction entries with added turns, 147 with U-turns, top speed 80 km/h, built in 280 ms.
+[Mod:DrivenRides] City ready (9 manoeuvres left out from turn tests).
+[Mod:FoodTrucks] Item icons (city ready): 8 of 8 registered.
+[Mod:FoodTrucks] Save data Loaded: schema 2, written by 0.10.2, save count 21, street food days 0.
+[Mod:FoodTrucks] Debug actions ready: Ctrl+K food truck, Ctrl+Alt+K licence and permits, Ctrl+J food cart, Ctrl+Alt+J vanilla hand truck, Ctrl+U new items into the food vehicle here, Ctrl+Alt+U hire a worker, Ctrl+L status, Ctrl+Alt+L demand here, Ctrl+G grip log, Ctrl+Alt+G zone point, Ctrl+V twice city event here, Ctrl+Alt+V twice catering gig here, Ctrl+X twice tax statement now, Ctrl+Alt+X twice tax fixture, Ctrl+F3 commissary bays, Ctrl+Alt+F3 commissary deliveries now, Ctrl+Shift+F3 overnight check dry run, Ctrl+Shift+F11 uninstall step.
+[Mod:FoodTrucks] Parking lanes: no carts in this save.
+[Mod:FoodTrucks] Food Safety course: added at the Market Demands door, 360 minutes at $25 an hour.
+[Mod:FoodTrucks] City of New York: licences, permits and event places by phone.
+[Mod:FoodTrucks] World: 883 buildings, 891 entrances cached.
+[Mod:FoodTrucks] Pitches: 19 of 19 premium spots and 7 of 7 event places found in the city.
+
+IOException: Cannot create a file when that file already exists
+  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0
+  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0
+  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0
+
+[Mod:RealLifeOverhaul] People: character 9 of 12 made ready as Officer.
+[Mod:FoodTrucks] World: 883 buildings, 891 entrances cached.
+[Mod:CityPerformance] City ready; diagnostics=True; trace=True; autoexport=True; zones requested=True; refill requested=True; trace directory=<USER>/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests\CityPerformanceTraces
+[Mod:DrivenRides] Debug keys ready: Ctrl+Alt+Shift+G graph stats, Ctrl+Alt+Shift+X clear a stuck ride, Ctrl+Alt+Shift+K remove the ride car, Ctrl+Alt+Shift+V hospital now, Ctrl+Alt+Shift+U throw in the ride's frame update, Ctrl+Alt+Shift+J fake a save change, Ctrl+Alt+Shift+L park a dressed taxi beside you.
+[Mod:DrivenRides] Lane graph: 18791 waypoints, 0 bad edges dropped, 0 with listIndex not their position, 1849 allowing no vehicle type, 0 where allowedAgents and allowedCars differ, 4377 with Gley lane changes, 1613 with inferred ones, 168 junction entries with added turns, 147 with U-turns, top speed 80 km/h, built in 175 ms.
+[Mod:DrivenRides] City ready (9 manoeuvres left out from turn tests).
+[Mod:FoodTrucks] Item icons (city ready): 8 of 8 registered.
+[Mod:FoodTrucks] Save data Loaded: schema 2, written by 0.10.2, save count 20, street food days 0.
+[Mod:FoodTrucks] Debug actions ready: Ctrl+K food truck, Ctrl+Alt+K licence and permits, Ctrl+J food cart, Ctrl+Alt+J vanilla hand truck, Ctrl+U new items into the food vehicle here, Ctrl+Alt+U hire a worker, Ctrl+L status, Ctrl+Alt+L demand here, Ctrl+G grip log, Ctrl+Alt+G zone point, Ctrl+V twice city event here, Ctrl+Alt+V twice catering gig here, Ctrl+X twice tax statement now, Ctrl+Alt+X twice tax fixture, Ctrl+F3 commissary bays, Ctrl+Alt+F3 commissary deliveries now, Ctrl+Shift+F3 overnight check dry run, Ctrl+Shift+F11 uninstall step.
+[Mod:FoodTrucks] Parking lanes: no carts in this save.
+[Mod:FoodTrucks] Food Safety course: added at the Market Demands door, 360 minutes at $25 an hour.
+[Mod:FoodTrucks] City of New York: licences, permits and event places by phone.
+[Mod:FoodTrucks] World: 883 buildings, 891 entrances cached.
+[Mod:FoodTrucks] Pitches: 19 of 19 premium spots and 7 of 7 event places found in the city.
+
+NullReferenceException: Object reference not set to an instance of an object
+  at (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition.Helpers.PlayerHelper.SaveCurrentPosition_Patch4()
+  at (wrapper delegate-invoke) <Module>.invoke_void()
+  at SaveGameManager.Save (SaveGameManager+SaveType saveType, System.String saveGameName, System.String characterFolder) [0x0005a] in <fdedeac4e1ad42668c1e57f28d2390d6>:0
+  at GameManager.ExecuteMidnightAutoSave () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0
+  at GameManager.TryRunPendingMidnightAutoSave () [0x00008] in <fdedeac4e1ad42668c1e57f28d2390d6>:0
+  at GameManager.SetPreventAutoSave (System.Boolean newPreventAutosaveValue) [0x00009] in <fdedeac4e1ad42668c1e57f28d2390d6>:0
+  at PR2Rig.Guard.OnDestroy () [0x0001e] in <b5a0d9580a3a466ca2304f9d73626baa>:0
+
+[Mod:RealLifeOverhaul] Home check (needs bars): hidden (not at home, no need in its warning zone and not ill, or a screen is open).
+[Mod:RealLifeOverhaul] Economy check (terms restored, the city is unloading): 0 bank(s) put back. : PASS
+[Mod:RealLifeOverhaul] Economy check (city, restored, the city is unloading): 0 wholesale price(s) and 0 footfall figure(s) put back, the bank rate already at the banks' own. 130 good(s) with a wholesale price, 0 not as expected: PASS
+[Mod:RealLifeOverhaul] Services check (restored, the city is unloading): no shift of the mod's was in any schedule; no wage, no employee and no schedule of the player's was ever written: PASS
+[Mod:RealLifeOverhaul] Company check (restored, the city is unloading): 0 footfall figure(s) put back; no wage and no figure of a business was ever written: PASS
+[Mod:RealLifeOverhaul] Estate: stopped (the city is unloading).
+[Mod:RealLifeOverhaul] City faults: stopped (the mod is unloading); every lamp, lane and prop put back as the game had it.
+[Mod:RealLifeOverhaul] Street talk: stopped (the mod is unloading).
+[Mod:RealLifeOverhaul] Utilities: stopped (the mod is unloading).
+Input System module state changed to: ShutdownInProgress.
+Input System polling thread exited.
