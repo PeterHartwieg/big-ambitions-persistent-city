@@ -132,7 +132,9 @@ static partial class Program
             }
             int units = f.Stock(Croissant), bags = f.Bags, orders = f.Reg.unprocessedCompletedOrders.Count;
             var result = f.Market.Buy(meal, Minute);
-            Check(!result.Paid && result.Reason.Contains("Catalogue refused"), "known catalogue refusal is definite: " + fault);
+            string expected = fault == "price" ? "Ambiguous food price" : fault == "quality" ? "Customer-service score" : "Duplicate saved product/district demand";
+            Check(!result.Paid && result.Reason.StartsWith("Catalogue refused: " + expected, StringComparison.Ordinal),
+                "known catalogue refusal is definite and specific: " + fault);
             Check(f.Receipt(meal) == FoodReceiptStatus.Missing && f.Market.NativePurchases == 0,
                 "catalogue refusal precedes receipt and sale");
             Check(f.Stock(Croissant) == units && f.Bags == bags && f.Reg.unprocessedCompletedOrders.Count == orders,
