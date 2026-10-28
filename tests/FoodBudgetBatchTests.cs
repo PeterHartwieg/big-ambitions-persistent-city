@@ -35,7 +35,7 @@ public sealed class FoodBudgetBatchTests
             Trace?.Invoke("read");
             return new[] { new FoodBusiness { Id = "b", PlaceId = "shop", Name = "Bakery", MealsPerHour = 15,
                 Hours = Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = 0, ToMinute = 1440 }).ToList(),
-                Offers = new() { new FoodOffer { ProductId = "pastry", PriceCents = 100, Units = Units } } } };
+                Offers = new() { new FoodOffer { ProductId = "pastry", Price = Money.FromCents(100), Units = Units } } } };
         }
         public FoodSale Buy(ResidentMeal meal, double at)
         {

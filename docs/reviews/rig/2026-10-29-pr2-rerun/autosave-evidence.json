@@ -1,0 +1,302 @@
+[
+  {
+    "run": "before-qa-1",
+    "before": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 8,
+      "save": "FT Food Routines PR2 Rerun20261029",
+      "frame": 4635
+    },
+    "after": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 20,
+      "save": "FT Food Routines PR2 Rerun20261029",
+      "frame": 9692
+    },
+    "afterReload": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 0,
+      "save": "FT Food Routines PR2 Rerun QA before1 20261029",
+      "frame": 10591
+    },
+    "afterResumedPlay": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 9,
+      "save": "FT Food Routines PR2 Rerun QA before1 20261029",
+      "frame": 11672
+    },
+    "validity": {
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "broadSavingMentionDelta": 12,
+      "actualSaveLines": [],
+      "clean": true
+    }
+  },
+  {
+    "run": "after-qa-1",
+    "before": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 3,
+      "save": "FT Food Routines PR2 Rerun20261029",
+      "frame": 2840
+    },
+    "after": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 18,
+      "save": "FT Food Routines PR2 Rerun20261029",
+      "frame": 7904
+    },
+    "afterReload": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 0,
+      "save": "FT Food Routines PR2 Rerun QA after1 20261029",
+      "frame": 8834
+    },
+    "afterResumedPlay": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 2,
+      "save": "FT Food Routines PR2 Rerun QA after1 20261029",
+      "frame": 9828
+    },
+    "validity": {
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "broadSavingMentionDelta": 15,
+      "actualSaveLines": [],
+      "clean": true
+    }
+  },
+  {
+    "run": "before-qa-2",
+    "before": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 8,
+      "save": "FT Food Routines PR2 Rerun20261029",
+      "frame": 8464
+    },
+    "after": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 17,
+      "save": "FT Food Routines PR2 Rerun20261029",
+      "frame": 13522
+    },
+    "afterReload": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 0,
+      "save": "FT Food Routines PR2 Rerun QA before2 20261029",
+      "frame": 14459
+    },
+    "afterResumedPlay": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 9,
+      "save": "FT Food Routines PR2 Rerun QA before2 20261029",
+      "frame": 15537
+    },
+    "validity": {
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "broadSavingMentionDelta": 9,
+      "actualSaveLines": [],
+      "clean": true
+    }
+  },
+  {
+    "run": "after-qa-2",
+    "before": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 5,
+      "save": "FT Food Routines PR2 Rerun20261029",
+      "frame": 2451
+    },
+    "after": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 19,
+      "save": "FT Food Routines PR2 Rerun20261029",
+      "frame": 7507
+    },
+    "afterReload": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 0,
+      "save": "FT Food Routines PR2 Rerun QA after2 20261029",
+      "frame": 8316
+    },
+    "afterResumedPlay": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 3,
+      "save": "FT Food Routines PR2 Rerun QA after2 20261029",
+      "frame": 9471
+    },
+    "validity": {
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "broadSavingMentionDelta": 14,
+      "actualSaveLines": [],
+      "clean": true
+    }
+  },
+  {
+    "run": "before-qa-3",
+    "before": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 4,
+      "save": "FT Food Routines PR2 Rerun20261029",
+      "frame": 4221
+    },
+    "after": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 17,
+      "save": "FT Food Routines PR2 Rerun20261029",
+      "frame": 9299
+    },
+    "afterReload": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 0,
+      "save": "FT Food Routines PR2 Rerun QA before3 20261029",
+      "frame": 10108
+    },
+    "afterResumedPlay": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 4,
+      "save": "FT Food Routines PR2 Rerun QA before3 20261029",
+      "frame": 11246
+    },
+    "validity": {
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "broadSavingMentionDelta": 13,
+      "actualSaveLines": [],
+      "clean": true
+    }
+  },
+  {
+    "run": "after-qa-3",
+    "before": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 4,
+      "save": "FT Food Routines PR2 Rerun20261029",
+      "frame": 4648
+    },
+    "after": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 14,
+      "save": "FT Food Routines PR2 Rerun20261029",
+      "frame": 9721
+    },
+    "afterReload": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 0,
+      "save": "FT Food Routines PR2 Rerun QA after3 20261029",
+      "frame": 10560
+    },
+    "afterResumedPlay": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 6,
+      "save": "FT Food Routines PR2 Rerun QA after3 20261029",
+      "frame": 11649
+    },
+    "validity": {
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "broadSavingMentionDelta": 10,
+      "actualSaveLines": [],
+      "clean": true
+    }
+  }
+]

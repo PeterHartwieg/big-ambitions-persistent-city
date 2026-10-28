@@ -1,0 +1,144 @@
+{
+  "before-qa-1": {
+    "arm": "before",
+    "sha256": "f83ca401e775f20bf54ce54d264c3ce0786f7bc292a2879f51562eb740d678f3",
+    "activePatchLines": 132,
+    "inactiveLines": [
+      "[Mod:CityPerformance] Not active: cinematic coverage (unverified build or conflicting hooks).",
+      "[Mod:CityPerformance] Not active: midnight cleanup deferral (build, signature, multiplayer or conflict).",
+      "[Mod:CityPerformance] Not active: pedestrian refill (unverified build or conflicting patch).",
+      "[Mod:CityPerformance] Not active: tree detail (unverified build, signature or conflicting patch)."
+    ],
+    "signatures": {
+      "streetLampNRE": 0,
+      "foodTrucksDetachedSave": 0,
+      "saveCurrentPositionNRE": 0,
+      "helperIO": 2,
+      "persistentCityExceptions": 0
+    },
+    "exceptions": [
+      "IOException: Cannot create a file when that file already exists\n  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0 \n  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0 ",
+      "IOException: Cannot create a file when that file already exists\n  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0 \n  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0 "
+    ],
+    "modErrors": []
+  },
+  "after-qa-1": {
+    "arm": "after",
+    "sha256": "6a0adc332222e9d0b17b11536f24759cd320342778da4678a6f1c78b94558bd9",
+    "activePatchLines": 132,
+    "inactiveLines": [
+      "[Mod:CityPerformance] Not active: cinematic coverage (unverified build or conflicting hooks).",
+      "[Mod:CityPerformance] Not active: midnight cleanup deferral (build, signature, multiplayer or conflict).",
+      "[Mod:CityPerformance] Not active: pedestrian refill (unverified build or conflicting patch).",
+      "[Mod:CityPerformance] Not active: tree detail (unverified build, signature or conflicting patch)."
+    ],
+    "signatures": {
+      "streetLampNRE": 0,
+      "foodTrucksDetachedSave": 0,
+      "saveCurrentPositionNRE": 0,
+      "helperIO": 2,
+      "persistentCityExceptions": 0
+    },
+    "exceptions": [
+      "IOException: Cannot create a file when that file already exists\n  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0 \n  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0 ",
+      "IOException: Cannot create a file when that file already exists\n  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0 \n  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0 "
+    ],
+    "modErrors": []
+  },
+  "before-qa-2": {
+    "arm": "before",
+    "sha256": "990a969764efabe6bf1efc2f71d4a8f6ba574681ea88dcda9b99c018eb463d1f",
+    "activePatchLines": 132,
+    "inactiveLines": [
+      "[Mod:CityPerformance] Not active: cinematic coverage (unverified build or conflicting hooks).",
+      "[Mod:CityPerformance] Not active: midnight cleanup deferral (build, signature, multiplayer or conflict).",
+      "[Mod:CityPerformance] Not active: pedestrian refill (unverified build or conflicting patch).",
+      "[Mod:CityPerformance] Not active: tree detail (unverified build, signature or conflicting patch)."
+    ],
+    "signatures": {
+      "streetLampNRE": 0,
+      "foodTrucksDetachedSave": 0,
+      "saveCurrentPositionNRE": 0,
+      "helperIO": 2,
+      "persistentCityExceptions": 0
+    },
+    "exceptions": [
+      "IOException: Cannot create a file when that file already exists\n  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0 \n  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0 ",
+      "IOException: Cannot create a file when that file already exists\n  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0 \n  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0 "
+    ],
+    "modErrors": []
+  },
+  "after-qa-2": {
+    "arm": "after",
+    "sha256": "0f8b74585c158898e1aaf450a7bb39e92750b840f9585413893b821bc7230b3f",
+    "activePatchLines": 132,
+    "inactiveLines": [
+      "[Mod:CityPerformance] Not active: cinematic coverage (unverified build or conflicting hooks).",
+      "[Mod:CityPerformance] Not active: midnight cleanup deferral (build, signature, multiplayer or conflict).",
+      "[Mod:CityPerformance] Not active: pedestrian refill (unverified build or conflicting patch).",
+      "[Mod:CityPerformance] Not active: tree detail (unverified build, signature or conflicting patch)."
+    ],
+    "signatures": {
+      "streetLampNRE": 0,
+      "foodTrucksDetachedSave": 0,
+      "saveCurrentPositionNRE": 0,
+      "helperIO": 2,
+      "persistentCityExceptions": 0
+    },
+    "exceptions": [
+      "IOException: Cannot create a file when that file already exists\n  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0 \n  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0 ",
+      "IOException: Cannot create a file when that file already exists\n  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0 \n  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0 "
+    ],
+    "modErrors": []
+  },
+  "before-qa-3": {
+    "arm": "before",
+    "sha256": "124c2a038d505dbb30a7848bdac453401435cc9c4a846d7244068eaee95774e9",
+    "activePatchLines": 132,
+    "inactiveLines": [
+      "[Mod:CityPerformance] Not active: cinematic coverage (unverified build or conflicting hooks).",
+      "[Mod:CityPerformance] Not active: midnight cleanup deferral (build, signature, multiplayer or conflict).",
+      "[Mod:CityPerformance] Not active: pedestrian refill (unverified build or conflicting patch).",
+      "[Mod:CityPerformance] Not active: tree detail (unverified build, signature or conflicting patch)."
+    ],
+    "signatures": {
+      "streetLampNRE": 0,
+      "foodTrucksDetachedSave": 0,
+      "saveCurrentPositionNRE": 1,
+      "helperIO": 3,
+      "persistentCityExceptions": 0
+    },
+    "exceptions": [
+      "IOException: Cannot create a file when that file already exists\n  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0 \n  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0 ",
+      "IOException: Cannot create a file when that file already exists\n  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0 \n  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0 ",
+      "IOException: Cannot create a file when that file already exists\n  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0 \n  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0 ",
+      "NullReferenceException: Object reference not set to an instance of an object\n  at (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition.Helpers.PlayerHelper.SaveCurrentPosition_Patch4()\n  at (wrapper delegate-invoke) <Module>.invoke_void()\n  at SaveGameManager.Save (SaveGameManager+SaveType saveType, System.String saveGameName, System.String characterFolder) [0x0005a] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at GameManager.ExecuteMidnightAutoSave () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at GameManager.TryRunPendingMidnightAutoSave () [0x00008] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at GameManager.SetPreventAutoSave (System.Boolean newPreventAutosaveValue) [0x00009] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at PR2Rig.Guard.OnDestroy () [0x0001e] in <127c0c36cfd44420b343ed60f6322aa6>:0 "
+    ],
+    "modErrors": []
+  },
+  "after-qa-3": {
+    "arm": "after",
+    "sha256": "314933b3630d3dd8c3db49cb6df0aad1c04fa99bee2414c2202e50797c874634",
+    "activePatchLines": 132,
+    "inactiveLines": [
+      "[Mod:CityPerformance] Not active: cinematic coverage (unverified build or conflicting hooks).",
+      "[Mod:CityPerformance] Not active: midnight cleanup deferral (build, signature, multiplayer or conflict).",
+      "[Mod:CityPerformance] Not active: pedestrian refill (unverified build or conflicting patch).",
+      "[Mod:CityPerformance] Not active: tree detail (unverified build, signature or conflicting patch)."
+    ],
+    "signatures": {
+      "streetLampNRE": 0,
+      "foodTrucksDetachedSave": 0,
+      "saveCurrentPositionNRE": 1,
+      "helperIO": 3,
+      "persistentCityExceptions": 0
+    },
+    "exceptions": [
+      "IOException: Cannot create a file when that file already exists\n  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0 \n  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0 ",
+      "IOException: Cannot create a file when that file already exists\n  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0 \n  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0 ",
+      "IOException: Cannot create a file when that file already exists\n  at System.IO.FileSystem.MoveFile (System.String sourceFullPath, System.String destFullPath) [0x00013] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at System.IO.File.Move (System.String sourceFileName, System.String destFileName) [0x0007e] in <1071a2cb0cb3433aae80a793c277a048>:0 \n  at FoodDemandAuditProbe.Probe.Respond (System.Object data) [0x00043] in <3664fca022ee41d880e5431321900775>:0 \n  at FoodDemandAuditProbe.Probe.Update () [0x00b5f] in <3664fca022ee41d880e5431321900775>:0 ",
+      "NullReferenceException: Object reference not set to an instance of an object\n  at (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition.Helpers.PlayerHelper.SaveCurrentPosition_Patch4()\n  at (wrapper delegate-invoke) <Module>.invoke_void()\n  at SaveGameManager.Save (SaveGameManager+SaveType saveType, System.String saveGameName, System.String characterFolder) [0x0005a] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at GameManager.ExecuteMidnightAutoSave () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at GameManager.TryRunPendingMidnightAutoSave () [0x00008] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at GameManager.SetPreventAutoSave (System.Boolean newPreventAutosaveValue) [0x00009] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at PR2Rig.Guard.OnDestroy () [0x0001e] in <d918e1be0b2a41cb840eb01828b1fb9d>:0 "
+    ],
+    "modErrors": []
+  }
+}

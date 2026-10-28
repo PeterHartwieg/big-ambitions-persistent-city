@@ -1,0 +1,74 @@
+[
+  {
+    "scope": "mod",
+    "metric": "p50",
+    "beforeMedian": 0.1567,
+    "afterMedian": 0.1525,
+    "change": -0.004200000000000009,
+    "beforeRange": 0.002599999999999991,
+    "afterRange": 0.001600000000000018,
+    "largerSpread": 0.002599999999999991,
+    "rangesOverlap": false,
+    "worseBeyondObservedSpread": false
+  },
+  {
+    "scope": "mod",
+    "metric": "p95",
+    "beforeMedian": 0.2202,
+    "afterMedian": 0.2156,
+    "change": -0.004599999999999993,
+    "beforeRange": 0.0020999999999999908,
+    "afterRange": 0.0025000000000000022,
+    "largerSpread": 0.0025000000000000022,
+    "rangesOverlap": false,
+    "worseBeyondObservedSpread": false
+  },
+  {
+    "scope": "mod",
+    "metric": "maximum",
+    "beforeMedian": 8.6442,
+    "afterMedian": 8.4313,
+    "change": -0.21289999999999942,
+    "beforeRange": 4.232700000000001,
+    "afterRange": 0.7724999999999991,
+    "largerSpread": 4.232700000000001,
+    "rangesOverlap": true,
+    "worseBeyondObservedSpread": false
+  },
+  {
+    "scope": "wholeFrame",
+    "metric": "p50",
+    "beforeMedian": 11.0802,
+    "afterMedian": 11.0971,
+    "change": 0.016899999999999693,
+    "beforeRange": 0.028499999999999304,
+    "afterRange": 0.05620000000000047,
+    "largerSpread": 0.05620000000000047,
+    "rangesOverlap": true,
+    "worseBeyondObservedSpread": false
+  },
+  {
+    "scope": "wholeFrame",
+    "metric": "p95",
+    "beforeMedian": 13.6422,
+    "afterMedian": 13.3964,
+    "change": -0.2458000000000009,
+    "beforeRange": 0.7118000000000002,
+    "afterRange": 0.3916000000000004,
+    "largerSpread": 0.7118000000000002,
+    "rangesOverlap": true,
+    "worseBeyondObservedSpread": false
+  },
+  {
+    "scope": "wholeFrame",
+    "metric": "maximum",
+    "beforeMedian": 99.605,
+    "afterMedian": 105.9853,
+    "change": 6.380299999999991,
+    "beforeRange": 17.939499999999995,
+    "afterRange": 4.352899999999991,
+    "largerSpread": 17.939499999999995,
+    "rangesOverlap": true,
+    "worseBeyondObservedSpread": false
+  }
+]

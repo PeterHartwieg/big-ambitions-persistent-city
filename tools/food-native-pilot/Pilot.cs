@@ -226,7 +226,7 @@ namespace FoodNativePilotProbe
                     OriginPlaceId = home.Id, Minutes = outward.Minutes, ReturnMinutes = back.Minutes, Evidence = "Complete native walking routes" } }, new[] { intent });
             state.Scope = "Controlled live pilot opportunity at actual home. Native supply and routes at decision time; selected trip belongs to the population scheduler. Provisional spending allowance, no household ledger.";
             var model = new FoodDemand(state); model.AdvanceTo(now, 1); var choice = state.Intents.Single();
-            decisions.Add(JObject.FromObject(new { choice.Id, status = choice.Status.ToString(), c.DailyAllowanceCents, c.HomeDistrictId,
+            decisions.Add(JObject.FromObject(new { choice.Id, status = choice.Status.ToString(), c.DailyAllowance, c.HomeDistrictId,
                 outward = outward.Minutes, back = back.Minutes, choice.Outcome }));
             if (choice.Status != FoodIntentStatus.Travelling) return;
             double service = 60.0 / supply!.MealsPerHour!.Value;
@@ -248,7 +248,7 @@ namespace FoodNativePilotProbe
         {
             var current = ReadSupply(); var price = pilotShop!.retailPrices.Single(p => p.itemName == Product).price;
             if (!current.Units.HasValue || current.Units <= 0 || !current.MealsPerHour.HasValue || current.MealsPerHour <= 0
-                || Math.Round(price * 100) > buyerPolicy!.DailyAllowanceCents || !BusinessHelper.IsBusinessOpen(pilotShop))
+                || Money.FromCents((long)Math.Round(price * 100)) > buyerPolicy!.DailyAllowance || !BusinessHelper.IsBusinessOpen(pilotShop))
             { receipts.Add(JObject.FromObject(new { intentKey, refused = "Revalidated supply, hours or affordability failed", current })); return; }
             var beforeFood = pilotShop.itemInstances[productSource].cargoInstances[0].amount;
             var beforeBags = pilotShop.itemInstances[counterSource].cargoInstances[0].amount;

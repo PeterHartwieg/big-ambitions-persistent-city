@@ -28,7 +28,7 @@ for (int seed = 1; seed <= 12; seed++)
     {
         Id = "comparison:" + i.ToString("D3"), Name = "Resident " + (i + 1), OriginPlaceId = "controlled-home:" + (i / 3),
         MealMinuteOfDay = new[] { 480, 720, 1080 }[random.Next(3)] + random.Next(120), MealWindowMinutes = 120,
-        DailyAllowanceCents = 400 + random.Next(1601), ValueOfTimeCentsPerMinute = 2 + random.Next(19),
+        DailyAllowance = Money.FromCents(400 + random.Next(1601)), ValueOfTimeCentsPerMinute = 2 + random.Next(19),
         PreferredProductId = productIds[random.Next(productIds.Length)], PreferenceBonusCents = random.Next(301)
     }).ToArray();
     var routes = people.SelectMany(p => shops.Select(b => new FoodTravelQuote { ConsumerId = p.Id, BusinessId = b.Id,
@@ -40,7 +40,7 @@ for (int seed = 1; seed <= 12; seed++)
         var state = FoodShadowCodec.Read(original, initial.CityKey);
         var engine = new FoodDemand(state);
         var changed = state.Businesses.Single(b => b.Id == target);
-        if (name.StartsWith("price-")) foreach (var offer in changed.Offers) engine.SetPrice(target, offer.ProductId, (int)Math.Round((double)offer.PriceCents * factor));
+        if (name.StartsWith("price-")) foreach (var offer in changed.Offers) engine.SetPrice(target, offer.ProductId, Money.FromCents((int)Math.Round(offer.Price.ApproximateCents() * factor)));
         if (name == "closed") engine.Close(target);
         if (name == "target-stockout") foreach (var offer in changed.Offers) engine.SetStock(target, offer.ProductId, 0);
         if (name == "all-stockout") foreach (var b in state.Businesses) foreach (var o in b.Offers) engine.SetStock(b.Id, o.ProductId, 0);
@@ -52,7 +52,7 @@ for (int seed = 1; seed <= 12; seed++)
         var repeatGroups = fulfilled.GroupBy(i => i.ConsumerId).Where(g => g.Count() > 1).ToArray();
         runs.Add(new Run(seed, name, factor, fulfilled.Length, fulfilled.Count(i => i.BusinessId == target),
             state.Intents.Count(i => i.Status == FoodIntentStatus.Unmet), state.Intents.Count(i => i.Status == FoodIntentStatus.Unresolved),
-            fulfilled.Sum(i => i.SpentCents), groups.Length == 0 ? 0 : Math.Exp(entropy),
+            Money.Sum(fulfilled.Select(i => i.Spent)).ApproximateCents(), groups.Length == 0 ? 0 : Math.Exp(entropy),
             repeatGroups.Length == 0 ? 0 : 100.0 * repeatGroups.Count(g => g.Select(i => i.BusinessId).Distinct().Count() > 1) / repeatGroups.Length,
             state.Businesses.ToDictionary(b => b.Name, b => fulfilled.Count(i => i.BusinessId == b.Id))));
         if (seed == 1 && name == "price-1")
@@ -88,4 +88,4 @@ var summaries = cases.Select(c => new { scenario = c.Item1, factor = c.Item2, fu
 File.WriteAllText(Path.Combine(output, "comparison.json"), JsonConvert.SerializeObject(new { evidence, targetShop = shops[targetIndex].Name, cohorts = 12, residentsPerCohort = 240, days = 7, totalSimulatedIntentions = runs.Count * 1680, invariants, summaries, runs }, Formatting.Indented));
 Console.WriteLine(JsonConvert.SerializeObject(new { targetShop = shops[targetIndex].Name, invariants, summaries }, Formatting.Indented));
 if (invariants.Any(p => !p.Value)) Environment.ExitCode = 2;
-record Run(int Seed, string Scenario, double Factor, int Fulfilled, int Target, int Unmet, int Unresolved, decimal SpendingCents, double EffectiveShops, double SwitchingPercent, Dictionary<string, int> ShopMeals);
+record Run(int Seed, string Scenario, double Factor, int Fulfilled, int Target, int Unmet, int Unresolved, double SpendingCents, double EffectiveShops, double SwitchingPercent, Dictionary<string, int> ShopMeals);

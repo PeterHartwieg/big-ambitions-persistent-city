@@ -16,11 +16,11 @@ namespace PersistentCity.Core
         public Dictionary<string, string> RouteChecks { get; set; } = new Dictionary<string, string>();
         public MealKind MealKind { get; set; }
         public IEnumerable<object> ChoiceCosts => Intent.Choices.Select(c => new {
-            c.BusinessId, c.ProductId, c.PriceCents, c.Reason, c.ScoreCents,
+            c.BusinessId, c.ProductId, c.Price, c.Reason, c.ScoreCents,
             FitCents = MealRhythm.ProductPenalty(MealKind, c.ProductId),
             c.ServiceQualityAdjustmentCents, c.DistrictAppealAdjustmentCents,
             PreferenceCents = c.ProductId == Consumer.PreferredProductId ? -Consumer.PreferenceBonusCents : 0,
-            TimeCents = c.ScoreCents - (double)c.PriceCents - c.ServiceQualityAdjustmentCents - c.DistrictAppealAdjustmentCents
+            TimeCents = c.ScoreCents - c.Price.ApproximateCents() - c.ServiceQualityAdjustmentCents - c.DistrictAppealAdjustmentCents
                 - MealRhythm.ProductPenalty(MealKind, c.ProductId)
                 + (c.ProductId == Consumer.PreferredProductId ? Consumer.PreferenceBonusCents : 0),
             HomeFoodMarginCents = Intent.OutsideOptionScoreCents - c.ScoreCents
@@ -59,7 +59,7 @@ namespace PersistentCity.Core
         public MealExcursion? Excursion { get; set; }
         public int Day { get; set; }
         public MealKind Kind { get; set; }
-        public decimal DayAllowanceUsedCents { get; set; }
+        public Money DayAllowanceUsed { get; set; }
         public double DesiredAt { get; set; }
         public double ExpiresAt { get; set; }
         public double DueAt { get; set; }
@@ -68,8 +68,8 @@ namespace PersistentCity.Core
         public string BusinessId { get; set; } = "";
         public string ProductId { get; set; } = "";
         public string Reason { get; set; } = "";
-        public decimal AllowanceCents { get; set; }
-        public decimal PriceCents { get; set; }
+        public Money Allowance { get; set; }
+        public Money Price { get; set; }
         public double ServiceMinutes { get; set; }
         public double ServiceAt { get; set; }
         public double Deadline { get; set; }
@@ -78,7 +78,7 @@ namespace PersistentCity.Core
         public bool ExistingStop { get; set; }
         public long ExistingStopPurchases { get; set; }
         public long Purchases { get; set; }
-        public decimal SpentCents { get; set; }
+        public Money Spent { get; set; }
         public string IntentId => MealRhythm.IntentId(ResidentId, Day, Kind);
     }
     public sealed class FoodCommerceState
@@ -187,23 +187,23 @@ namespace PersistentCity.Core
                 meal.PreferredProductId = products[StableRandom.Hash(id + ":taste", city.State.Seed) % (uint)products.Length];
                 meal.PreferenceBonusCents = 50 + (int)(StableRandom.Hash(id + ":taste-strength", city.State.Seed) % 101);
             }
-            var consumer = Consumer(person, 0, meal);
+            var consumer = Consumer(person, Money.Zero, meal);
             FoodHouseholdPolicy.SetAllowance(consumer, resident, city.State.Seed,
                 state.Districts.SingleOrDefault(d => d.DistrictId == resident.HomeDistrictId), null);
-            meal.AllowanceCents = consumer.DailyAllowanceCents;
+            meal.Allowance = consumer.DailyAllowance;
             if (state.HouseholdFinanceVersion != 0) CreateBudget(meal, person);
             StartMeal(meal, person, (int)(city.State.Minute / 1440), state.MealRhythmVersion == 0 ? MealKind.Legacy : MealKind.Breakfast);
             records.Add(meal.ResidentId, meal); state.Residents.Add(meal); return meal;
         }
         private void StartMeal(ResidentMeal meal, CitizenState person, int day, MealKind kind)
         {
-            if (meal.Day != day) meal.DayAllowanceUsedCents = 0;
+            if (meal.Day != day) meal.DayAllowanceUsed = Money.Zero;
             meal.Day = day; meal.Kind = kind; meal.DesiredAt = MealRhythm.DesiredAt(person, city.State.Seed, day, kind);
             meal.ExpiresAt = MealRhythm.ExpiresAt(person, city.State.Seed, day, kind);
             meal.DueAt = Math.Max(city.State.Minute, meal.DesiredAt);
             meal.Status = MealStatus.Pending; meal.Reason = ""; meal.PlaceId = meal.BusinessId = meal.ProductId = "";
             meal.ExistingStop = false;
-            meal.PriceCents = 0; meal.ServiceAt = meal.ServiceMinutes = meal.ReturnMinutes = meal.Deadline = 0;
+            meal.Price = Money.Zero; meal.ServiceAt = meal.ServiceMinutes = meal.ReturnMinutes = meal.Deadline = 0;
         }
         internal void Step()
         {
@@ -323,9 +323,12 @@ namespace PersistentCity.Core
                     Finish(meal, MealStatus.Missed, "Resident left before service");
                 else
                 {
-                    if (meal.Budget != null && !HouseholdFinance.HoldPurchase(meal.Budget, meal.PriceCents))
+                    // Every later addition must fit before funds move or native checkout starts.
+                    if (!CanSettle(meal))
+                    { Finish(meal, MealStatus.Missed, "Purchase would exceed the exact money range"); due.Add(meal); return; }
+                    if (meal.Budget != null && !HouseholdFinance.HoldPurchase(meal.Budget, meal.Price))
                     { Finish(meal, MealStatus.Missed, "Household funds no longer available at checkout"); due.Add(meal); return; }
-                    if (meal.Budget == null) meal.DayAllowanceUsedCents = checked(meal.DayAllowanceUsedCents + meal.PriceCents);
+                    if (meal.Budget == null) meal.DayAllowanceUsed += meal.Price;
                     // Persist uncertainty before entering native code. No exception can trigger a replay.
                     meal.ServiceAt = now;
                     Finish(meal, MealStatus.Uncertain, "Native purchase did not confirm completion");
@@ -336,7 +339,7 @@ namespace PersistentCity.Core
                             if (result.Paid) HouseholdFinance.ConfirmPurchase(meal.Budget);
                             else HouseholdFinance.RefusePurchase(meal.Budget);
                         }
-                        else if (!result.Paid) meal.DayAllowanceUsedCents -= meal.PriceCents;
+                        else if (!result.Paid) meal.DayAllowanceUsed -= meal.Price;
                         meal.Status = result.Paid ? MealStatus.Paid : MealStatus.Missed; meal.Reason = result.Reason;
                         if (result.Paid) ConfirmPurchase(meal, result.Reason);
                         if (meal.Slot > 0 && meal.Excursion != null) ScheduleReturn(meal);
@@ -348,7 +351,7 @@ namespace PersistentCity.Core
         }
         private void ConfirmPurchase(ResidentMeal meal, string reason)
         {
-            RecordPurchase(meal); meal.Purchases++; meal.SpentCents += meal.PriceCents;
+            RecordPurchase(meal); meal.Purchases++; meal.Spent += meal.Price;
             if (meal.ExistingStop) meal.ExistingStopPurchases++;
             meal.Status = MealStatus.Paid; meal.Reason = reason;
         }
@@ -369,9 +372,9 @@ namespace PersistentCity.Core
         }
         private FoodRoutineResident Resident(CitizenState p) => new FoodRoutineResident { Identity = p.Identity, HomeId = p.HomeId,
             HomeDistrictId = city.FindPlace(p.HomeId).District, WalkingToleranceMetres = p.Preferences.WalkingToleranceMetres };
-        private FoodConsumer Consumer(CitizenState p, decimal allowance, ResidentMeal? meal = null) => new FoodConsumer { Id = meal?.ResidentId ?? p.Identity.Id, Name = p.Identity.Name,
+        private FoodConsumer Consumer(CitizenState p, Money allowance, ResidentMeal? meal = null) => new FoodConsumer { Id = meal?.ResidentId ?? p.Identity.Id, Name = p.Identity.Name,
             PreferredProductId = meal?.PreferredProductId ?? "", PreferenceBonusCents = meal?.PreferenceBonusCents ?? 0,
-            OriginPlaceId = p.PlaceId, DailyAllowanceCents = allowance,
+            OriginPlaceId = p.PlaceId, DailyAllowance = allowance,
             ValueOfTimeCentsPerMinute = 4 + (int)(StableRandom.Hash((meal?.ResidentId ?? p.Identity.Id) + ":food-time", city.State.Seed) % 9),
             ServiceQualityValueCents = 100 + (int)(StableRandom.Hash((meal?.ResidentId ?? p.Identity.Id) + ":food-quality", city.State.Seed) % 301),
             DistrictAppealValueCents = 50 + (int)(StableRandom.Hash((meal?.ResidentId ?? p.Identity.Id) + ":food-district", city.State.Seed) % 151) };
@@ -443,7 +446,7 @@ namespace PersistentCity.Core
             if (meal.Slot == 0 && !city.TryBeginMealVisit(person.Identity.Id, selected.PlaceId, paths[selected.Id], choice.ReturnTravelMinutes!.Value, stay, intent.Deadline))
             { Finish(meal, MealStatus.Missed, "Schedule or shop changed before departure"); return; }
             meal.PlaceId = selected.PlaceId; meal.BusinessId = selected.Id; meal.ProductId = choice.ProductId;
-            meal.PriceCents = selectedChoice.PriceCents; meal.ServiceMinutes = 60.0 / selected.MealsPerHour!.Value;
+            meal.Price = selectedChoice.Price; meal.ServiceMinutes = 60.0 / selected.MealsPerHour!.Value;
             meal.ReturnMinutes = choice.ReturnTravelMinutes!.Value; meal.Deadline = intent.Deadline;
             meal.Status = MealStatus.Travelling;
             if (meal.Slot > 0)

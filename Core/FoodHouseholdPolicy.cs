@@ -37,7 +37,7 @@ namespace PersistentCity.Core
             person.HomeDistrictId = resident.HomeDistrictId;
             if (fixedAllowance.HasValue)
             {
-                person.DailyAllowanceCents = fixedAllowance.Value;
+                person.DailyAllowance = Money.FromCents(fixedAllowance.Value);
                 person.BudgetEvidence = "Explicit fixed allowance for a controlled comparison; not observed income";
                 return;
             }
@@ -50,7 +50,7 @@ namespace PersistentCity.Core
                 else if (band < mix.WorkingPercent + mix.MiddlePercent) { low = 1400; range = 2200; }
                 else { low = 2400; range = 3000; }
             }
-            person.DailyAllowanceCents = low + (int)(StableRandom.Hash(person.Id + ":food-budget", seed) % (uint)(range + 1));
+            person.DailyAllowance = Money.FromCents(low + (int)(StableRandom.Hash(person.Id + ":food-budget", seed) % (uint)(range + 1)));
             person.BudgetEvidence = mix == null
                 ? "Provisional individual allowance ($11–33); home-district economic mix unknown; not observed income"
                 : "Provisional individual allowance from overlapping $9–24/$14–36/$24–54 bands, sampled using the home district's economic mix; not observed income. " + mix.Evidence;
@@ -73,7 +73,7 @@ namespace PersistentCity.Core
                 : character == Persona.Parent ? .9 : character == Persona.Commuter ? 1.05 : 1;
             double fraction = (home ? .50 : .45) + (StableRandom.Hash(dayKey + ":value", seed) % 301) / 1000.0;
             int preparationMinutes = home ? 15 + (int)(StableRandom.Hash(person.Id + ":food-preparation", seed) % 21) : 0;
-            intent.OutsideOptionScoreCents = (int)Math.Min(1000000, Math.Round((double)person.DailyAllowanceCents * fraction * characterValue
+            intent.OutsideOptionScoreCents = (int)Math.Min(1000000, Math.Round(person.DailyAllowance.ApproximateCents() * fraction * characterValue
                 + (preparationMinutes + intent.EatingMinutes) * person.ValueOfTimeCentsPerMinute * intent.TimeCostMultiplier));
             intent.OutsideOptionEvidence = home
                 ? "Provisional willingness-to-buy comparison with preparing food at the observed home; household ingredients/cost/consumption unverified"

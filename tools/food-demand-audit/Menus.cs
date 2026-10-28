@@ -100,8 +100,8 @@ namespace FoodDemandAuditProbe
             var results = new List<object>(); int resident = state.Shops.IndexOf(scope) * 20;
             ResidentMeal Meal(string product) => new ResidentMeal {
                 ResidentId = Simulation.State.Citizens[resident++].Identity.Id, Day = SaveGameManager.Current.Day, Kind = MealKind.Legacy,
-                PlaceId = scope.PlaceId, BusinessId = scope.BusinessId, ProductId = product, AllowanceCents = 10000,
-                PriceCents = FoodMoney.FromNative(shop.retailPrices.Single(p => p.itemName == product).price),
+                PlaceId = scope.PlaceId, BusinessId = scope.BusinessId, ProductId = product, Allowance = Money.FromCents(10000),
+                Price = Money.FromNative(shop.retailPrices.Single(p => p.itemName == product).price),
                 ServiceMinutes = 60.0 / FoodSupplyReader.Read(shop, product).MealsPerHour!.Value };
             foreach (var product in scope.Products())
             {

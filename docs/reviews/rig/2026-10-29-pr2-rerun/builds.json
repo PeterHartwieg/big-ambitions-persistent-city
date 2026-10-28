@@ -1,0 +1,52 @@
+{
+  "before": {
+    "sourceSha": "36140a741c2bac9c54611561119a9b2ff783c79f",
+    "dllSha256": "222008b91283e2765747e1dbdf393efa6754b62a93fa1a50b613b87ceb2191ff",
+    "unitTestCounts": {
+      "total": "1267",
+      "executed": "1267",
+      "passed": "1267",
+      "failed": "0",
+      "error": "0",
+      "timeout": "0",
+      "aborted": "0",
+      "inconclusive": "0",
+      "passedButRunAborted": "0",
+      "notRunnable": "0",
+      "notExecuted": "0",
+      "disconnected": "0",
+      "warning": "0",
+      "completed": "0",
+      "inProgress": "0",
+      "pending": "0"
+    },
+    "guardSha256": "8d041a5539028d2a06dda91432181a92cff54aa037ab8477a6c8a5801ebdd232"
+  },
+  "after": {
+    "sourceSha": "d7892fde71a1d912d0d0ca52e09cb4191db63314",
+    "dllSha256": "54aa9dc8be97f0a3c89b629b7bc06813de0dad61e515ecd6d02d1f5cee470f54",
+    "unitTestCounts": {
+      "total": "1403",
+      "executed": "1403",
+      "passed": "1403",
+      "failed": "0",
+      "error": "0",
+      "timeout": "0",
+      "aborted": "0",
+      "inconclusive": "0",
+      "passedButRunAborted": "0",
+      "notRunnable": "0",
+      "notExecuted": "0",
+      "disconnected": "0",
+      "warning": "0",
+      "completed": "0",
+      "inProgress": "0",
+      "pending": "0"
+    },
+    "guardSha256": "d0af9c72444db78b536fc92696716220f65d2836758376a8122e749d45a7e002"
+  },
+  "timingHelperSha256": "dc939f272b1b451a7eb15dd7c6665e3a74d4a389e3ebfe6bf9d35d15d18696aa",
+  "campaignLabel": "2026-10-29",
+  "actualRunDateUtc": "2026-10-28",
+  "role": "rig_test"
+}

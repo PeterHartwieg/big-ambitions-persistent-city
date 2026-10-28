@@ -15,7 +15,7 @@ parser.add_argument("--game-managed", required=True, type=Path)
 parser.add_argument("--json-assembly", type=Path, help="Explicit Newtonsoft.Json reference when the local Managed copy omits it")
 args = parser.parse_args()
 managed = args.game_managed.resolve()
-references = ["mscorlib", "System", "System.Core", "netstandard", "BigAmbitions",
+references = ["mscorlib", "System", "System.Core", "System.Numerics", "System.Runtime.Serialization", "netstandard", "BigAmbitions",
               "BigAmbitions.ModAPI", "BigAmbitions.AI", "BigAmbitions.Items", "BigAmbitions.Characters", "BigAmbitions.Neighborhoods", "HGExtensions", "HGPlugins",
               "UnityEngine.CoreModule", "UnityEngine.IMGUIModule", "UnityEngine.TextRenderingModule", "UnityEngine.AIModule", "UnityEngine.PhysicsModule", "UnityEngine.AnimationModule", "ExternalPlugins", "DayNightCycle"]
 for name in references:

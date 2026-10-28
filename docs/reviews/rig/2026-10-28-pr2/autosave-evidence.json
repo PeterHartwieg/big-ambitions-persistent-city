@@ -1,0 +1,261 @@
+{
+  "original": {
+    "originalPreventAutoSave": false,
+    "preventAutoSave": true,
+    "minutesBetweenAutoSaves": 5,
+    "maxAutoSavesPerGame": 3,
+    "savingGameInProgress": false,
+    "saveLogMessages": 0,
+    "save": "FT Food Routines PR2 20261028",
+    "frame": 2122
+  },
+  "windows": {
+    "before-window-1": {
+      "autosave-before": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 10,
+        "save": "FT Food Routines PR2 20261028",
+        "frame": 4158
+      },
+      "autosave-after": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 22,
+        "save": "FT Food Routines PR2 20261028",
+        "frame": 9110
+      },
+      "validity": {
+        "autosaveOffBeforeAfter": true,
+        "saveFilesUnchanged": true,
+        "broadSavingMentionDelta": 12,
+        "actualSaveLines": [],
+        "clean": true
+      }
+    },
+    "before-window-2": {
+      "autosave-before": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 23,
+        "save": "FT Food Routines PR2 20261028",
+        "frame": 9146
+      },
+      "autosave-after": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 25,
+        "save": "FT Food Routines PR2 20261028",
+        "frame": 14115
+      },
+      "validity": {
+        "autosaveOffBeforeAfter": true,
+        "saveFilesUnchanged": true,
+        "broadSavingMentionDelta": 2,
+        "actualSaveLines": [],
+        "clean": true
+      }
+    },
+    "before-window-3": {
+      "autosave-before": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 25,
+        "save": "FT Food Routines PR2 20261028",
+        "frame": 14148
+      },
+      "autosave-after": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 27,
+        "save": "FT Food Routines PR2 20261028",
+        "frame": 19511
+      },
+      "validity": {
+        "autosaveOffBeforeAfter": true,
+        "saveFilesUnchanged": true,
+        "broadSavingMentionDelta": 2,
+        "actualSaveLines": [],
+        "clean": true
+      }
+    },
+    "after-window-1": {
+      "autosave-before": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 9,
+        "save": "FT Food Routines PR2 20261028",
+        "frame": 2491
+      },
+      "autosave-after": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 24,
+        "save": "FT Food Routines PR2 20261028",
+        "frame": 7451
+      },
+      "validity": {
+        "autosaveOffBeforeAfter": true,
+        "saveFilesUnchanged": true,
+        "broadSavingMentionDelta": 15,
+        "actualSaveLines": [],
+        "clean": true
+      }
+    },
+    "after-window-2": {
+      "autosave-before": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 24,
+        "save": "FT Food Routines PR2 20261028",
+        "frame": 7484
+      },
+      "autosave-after": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 28,
+        "save": "FT Food Routines PR2 20261028",
+        "frame": 12338
+      },
+      "validity": {
+        "autosaveOffBeforeAfter": true,
+        "saveFilesUnchanged": true,
+        "broadSavingMentionDelta": 4,
+        "actualSaveLines": [],
+        "clean": true
+      }
+    },
+    "after-window-3": {
+      "autosave-before": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 28,
+        "save": "FT Food Routines PR2 20261028",
+        "frame": 12365
+      },
+      "autosave-after": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 30,
+        "save": "FT Food Routines PR2 20261028",
+        "frame": 17745
+      },
+      "validity": {
+        "autosaveOffBeforeAfter": true,
+        "saveFilesUnchanged": true,
+        "broadSavingMentionDelta": 2,
+        "actualSaveLines": [],
+        "clean": true
+      }
+    }
+  },
+  "reloads": {
+    "before-control-reloaded-autosave-off": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 2,
+      "save": "FT Food Routines PR2 Schema13 Migration 20261028",
+      "frame": 23174
+    },
+    "after-control-reloaded-autosave-off": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 2,
+      "save": "FT Food Routines PR2 After Control 20261028",
+      "frame": 22075
+    },
+    "migration-control-reloaded-autosave-off": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 0,
+      "save": "FT Food Routines PR2 Migrated14 20261028",
+      "frame": 28332
+    },
+    "after-serving-reload-autosave-off": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 0,
+      "save": "FT Food Routines PR2 Serving 20261028",
+      "frame": 31853
+    },
+    "after-serving-normal-autosave-off": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 0,
+      "save": "FT Food Routines PR2 Serving 20261028",
+      "frame": 33928
+    },
+    "after-paid-reload-autosave-off": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 0,
+      "save": "FT Food Routines PR2 Paid 20261028",
+      "frame": 35327
+    }
+  },
+  "final": {
+    "originalPreventAutoSave": false,
+    "preventAutoSave": true,
+    "minutesBetweenAutoSaves": 5,
+    "maxAutoSavesPerGame": 3,
+    "savingGameInProgress": false,
+    "saveLogMessages": 0,
+    "save": "FT Food Routines PR2 Paid 20261028",
+    "frame": 38806
+  },
+  "restoredPreferencesSha256": "66fccbcc5f63bc492e36ba7f342d9d2480adb2b87404a650a8607094d207381d"
+}
