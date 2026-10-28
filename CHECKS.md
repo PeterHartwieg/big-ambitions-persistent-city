@@ -1,5 +1,24 @@
 # Validation status
 
+## Base merge: PR #1 and PR #2 into PR #3 — 28 October 2026 (offline)
+
+Two normal merges: `3dd58eb` merges PR #2's final branch head `015b1a6` (code and doc conflicts resolved); `b6fc02d` merges `origin/codex/persistent-city` (squash commits `36140a7`/`7357f78`, whose tree equals `015b1a6`). The second merge took this branch's side for every conflict and does not change the tree.
+
+**Resolution.** `SaveCodec` keeps both sides. The schema gate accepts 13-16 and uses the per-schema contracts for the optional-stop fields. PR #2's legacy money migration runs before shape checking for every accepted schema. Shape checking validates each money token from its original text, using the schema-aware field rules. Optional stops are nullable records, and the old decimal `Money` validator is replaced by PR #2's unit checks. Schema-16 money uses PR #2's integer-unit fields and codec, so it is written exactly as current schema 14 is. Schema 13 must use whole-cent `...Cents` fields. Schemas 14-16 accept either current unit fields or decimal `...Cents` fields from earlier development saves, including optional-stop saves written before this merge. Exact amounts migrate exactly. Non-representable, non-canonical, mixed-generation or out-of-range money is Invalid, and the payload is preserved. Nothing is rounded. Test helpers now label earlier schemas with `LegacyMoneyWire.AsSchema`, which drops fields absent there. PR #2's schema-13 and earlier-schema-14 tests keep their intent. README and CHECKS keep entries from both sides.
+
+**New tests** (`tests/BaseMergeMoneyMigrationTests.cs`, 34 cases) cover:
+- schema 13 to 16 exact migration;
+- current schema 14 to 16 byte-identical migration;
+- optional-stop-era schema 14/15/16 `...Cents` saves, using fixtures written verbatim by `4aebca2`. Exact saves migrate field by field; twelve-digit cents are refused and preserved; mixed generations are refused;
+- 14 non-canonical tokens in schemas 15/16 (hex, octal, exponent, fraction, negative, overflow), all refused and preserved;
+- byte-identical schema-16 money round trips through `SaveStore`.
+
+**Red/green.** A probe running seven of these expectations at the pre-merge head `4aebca2` failed **7/7**. Integer-unit schema 16 and current schema 14 were refused, schema 13 wrote decimal cents, and twelve-digit, hex and octal money loaded. Against two naive conflict resolutions, the new tests fail **16/34** without the migration call and **15/34** with PR #2's 13-or-current schema gate. After the fix all 34 pass.
+
+**Validation:** `dotnet test`: **1,503 passed**, zero failed/skipped. All **21** `tools/*regression` projects pass. Optional stops: **213** physical/cache checks, **6** native-door checks and **18** saved-facade checks. Physical selection **27,567**, native commands **72**, vehicle ownership **361** plus epoch checks, pickup **25**, analyzer **8**. Synthetic 28-day schema-16 save round trip exact. Production builds against read-only Steam DLLs with warnings as errors; DLL SHA-256 `f860f88cc4cd1cf4cfbe69e164b596492d27b419fe63a57e6a6dbd145b890343`. Audit helper `c6836f296c611a3aa4c0107f1b13f789351b134ff78e56ca46f3a86d2657e642` (changed by PR #2's money edits). `git diff --check` passes and there are no conflict markers. Logs: ignored `build/basemerge/`.
+
+No game launch, install, rig, RLO, Workshop or Steam change. Native optional-stop behavior and the PR #2 financial result on this merged tree remain unverified in game.
+
 ## PR #3 independent review round 3 (offline)
 
 One Medium fix: intermediate events that retain an admitted visit now retain the granted stop as cancelled evidence, so accepted conversation partners cannot be recruited repeatedly during that visit. An interrupted pair is cancelled together; original stop times and the saved acceptance remain unchanged. Departures/new visits clear the record normally. This uses the existing schema-16 fields; the 25% setting and migration contract are unchanged. Four low-impact/already-covered findings were skipped with concrete reasons; no new product question.
