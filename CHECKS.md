@@ -16,7 +16,7 @@ Normal merge `32cc844` includes base `9ee38e9`. Combined validation: **1,368 uni
 
 Production and audit helper compile against read-only Steam DLLs with warnings as errors. Production SHA-256 `d32f3c9a75ff811e815eefb2da043e6dce05c3aa713401595eed8eb769a69cd5`; helper `66cf568e3f12c0315ed762a2946781c9026f80bd2a22fcb21be500feee7fb12a`. `git diff --check` passes. Logs: ignored `build/review-r2/`. No game launch, install, rig access, deployment or release; native visual/performance evidence remains outstanding.
 
-## PR #3 independent review round 1 ? 28 October 2026 (offline)
+## PR #3 independent review round 1 — 28 October 2026 (offline)
 
 Deduplicated 17 findings: 10 FIX (six High/Medium), seven SKIP, no new product questions. Visible arrivals now retain their body through admission, and ordinary/meal departures hold journey progress while the body returns to the entrance. Opening queues and optional stops share one facade cache/frame budget; live performer images reuse ring geometry until invalidated. Save validation uses indexed references; chat selection filters local candidates and tries later feasible partners. The approved 25% config, saved per-visit choices and schema 16 remain intact.
 
