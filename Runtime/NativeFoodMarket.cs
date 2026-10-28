@@ -247,7 +247,9 @@ namespace PersistentCity.Runtime
             RefreshRoutineHours(minute, true);
             if (selectedPlaces.Length == 0) return Array.Empty<FoodBusiness>();
             var catalogue = FoodBusinessCatalogue.ReadSelected(selectedPlaces, Products,
-                selectedPlaces.Where(shopControllers.ContainsKey).Select(p => shopControllers[p]),
+                // A replaced registration can leave historical place keys pointing at one controller.
+                // Observe that controller once; distinct controllers with conflicting addresses still refuse.
+                selectedPlaces.Where(shopControllers.ContainsKey).Select(p => shopControllers[p]).Distinct(),
                 r => NativeFoodOwnership.Find(r)?.BusinessId ?? FoodBusinessCatalogue.BusinessIdentity(r));
             var result = new List<FoodBusiness>();
             foreach (var b in catalogue.Businesses)
@@ -315,6 +317,10 @@ namespace PersistentCity.Runtime
             {
                 // No receipt or native sale has started. A known invalid quote is refundable.
                 return new FoodSale(false, "Approved price is outside the supported range");
+            }
+            catch (FoodBusinessCatalogue.CatalogueRefusalException ex)
+            {
+                return new FoodSale(false, "Catalogue refused: " + ex.Message);
             }
             var offer = business?.Offers.SingleOrDefault(o => o.ProductId == meal.ProductId);
             string exclusion = ScopeStatus(meal.PlaceId);

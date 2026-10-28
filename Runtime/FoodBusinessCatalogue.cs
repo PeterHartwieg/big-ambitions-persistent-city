@@ -20,8 +20,14 @@ namespace PersistentCity.Runtime
     /// </summary>
     public static class FoodBusinessCatalogue
     {
-        // Distinguish a known invalid price from unrelated observation failures.
-        internal sealed class UnsupportedPriceException : InvalidOperationException
+        // These explicit data refusals are known to occur before native sale processing.
+        internal class CatalogueRefusalException : InvalidOperationException
+        {
+            internal CatalogueRefusalException(string message, Exception? cause = null) : base(message, cause) { }
+        }
+
+        // Keep the price-specific checkout reason for compatibility.
+        internal sealed class UnsupportedPriceException : CatalogueRefusalException
         {
             internal UnsupportedPriceException(ArgumentOutOfRangeException cause)
                 : base("Food price is outside the supported range or precision.", cause) { }
@@ -67,13 +73,13 @@ namespace PersistentCity.Runtime
                 string place = "address:" + address + ":shop";
                 if (!selected.Contains(place) || !reg.HasEstablishedBusiness || reg.AvailableForRent
                     || string.IsNullOrWhiteSpace(reg.businessTypeName) || reg.businessTypeName == "ba:businesstype_empty") continue;
-                if (!found.Add(place)) throw new InvalidOperationException("Duplicate live shop address; observation refused.");
+                if (!found.Add(place)) throw new CatalogueRefusalException("Duplicate live shop address; observation refused.");
                 var business = new FoodBusiness { Id = identity?.Invoke(reg) ?? BusinessIdentity(reg),
                     PlaceId = place, Name = reg.BusinessName, DistrictId = controller.building.Neighbourhood ?? "" };
                 if (reg.satisfaction != null)
                 {
                     int quality = reg.satisfaction.customerService;
-                    if (quality < 0 || quality > 100) throw new InvalidOperationException("Customer-service score is outside 0–100.");
+                    if (quality < 0 || quality > 100) throw new CatalogueRefusalException("Customer-service score is outside 0–100.");
                     business.CustomerServicePercent = quality;
                     business.CustomerServiceEvidence = "Native saved customer-service score; may be the game's initial default, not verified current staffing";
                 }
@@ -95,7 +101,7 @@ namespace PersistentCity.Runtime
                         try { cents = FoodMoney.FromNative(price.price); }
                         catch (ArgumentOutOfRangeException ex) { throw new UnsupportedPriceException(ex); }
                         if (cents == 0 || business.Offers.Any(o => o.ProductId == price.itemName))
-                            throw new InvalidOperationException("Ambiguous food price; observation refused.");
+                            throw new CatalogueRefusalException("Ambiguous food price; observation refused.");
                         // An advertised product is not proof of stocked, staffed production.
                         var offer = new FoodOffer { ProductId = price.itemName, PriceCents = cents, Units = null };
                         // Read existing saved values only. Demand helpers can supply fabricated
@@ -107,7 +113,7 @@ namespace PersistentCity.Runtime
                                 foreach (var demand in entry.demandValues)
                                 {
                                     if (demand == null || demand.neighborhood != business.DistrictId) continue;
-                                    if (offer.DistrictDemandPercent.HasValue) throw new InvalidOperationException("Duplicate saved product/district demand; observation refused.");
+                                    if (offer.DistrictDemandPercent.HasValue) throw new CatalogueRefusalException("Duplicate saved product/district demand; observation refused.");
                                     offer.DistrictDemandPercent = Math.Max(0, Math.Min(100, demand.demand));
                                     offer.DistrictDemandEvidence = "Native saved product/district demand " + demand.demand.ToString(CultureInfo.InvariantCulture)
                                         + "; normalized to 0–100; includes provider saturation and market events, not a resident count";

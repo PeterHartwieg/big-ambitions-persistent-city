@@ -1,5 +1,13 @@
 # Validation status
 
+## Independent review round 3 (offline)
+
+Known pre-sale catalogue validation refusals (duplicate address, invalid service score, ambiguous price, duplicate district demand) now share a dedicated refusal type. Checkout returns an unpaid result before receipt/sale processing so the caller can refund held funds. Arbitrary exceptions and post-sale uncertainty are not caught by this change. The earlier round-2 assertion requiring ambiguous prices to throw has been replaced with refund coverage.
+
+Catalogue input deduplicates controllers reached through historical place aliases. The restored full-catalogue discovery regression now passes after registration/address replacement; distinct controllers at a conflicting address remain refused. Saved scopes and ownership are not removed. Native address-change reachability remains unverified.
+
+Both failures were reproduced before fixing them. **329 checkout checks**, **29 catalogue checks**, and **1,304 unit tests** pass. Steam-DLL production compilation passes with warnings as errors, SHA-256 `2c2a9c14f34f4a7ba7522000ef6002e12d932ddca2fdde225dd5d951ca8403a0`; `git diff --check` passes. Ignored logs: `build/review-r3/`. No game execution or native financial/release clearance. PR #1 and #3 are unchanged.
+
 ## Independent review round 2 (offline)
 
 Unsupported range/precision prices in the initial live checkout catalogue read now produce a definite pre-sale refusal, allowing the existing caller to refund held funds. A dedicated catalogue exception distinguishes this case from unrelated observation failures, which still propagate. No receipt or native sale has started at this point. The original failure was reproduced before the fix using the real catalogue source.

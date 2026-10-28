@@ -114,23 +114,40 @@ static partial class Program
         }
     }
 
-    static void UnrelatedCatalogueFailuresStillThrow()
+    static void CatalogueRefusalsRefundBeforeSale()
     {
-        using var f = new Fixture();
-        var meal = f.Meal("ambiguous-catalogue");
-        f.Reg.retailPrices.Add(new RetailPrice { itemName = Croissant, price = 3f });
-        bool threw = false;
-        try { f.Market.Buy(meal, Minute); }
-        catch (InvalidOperationException ex) { threw = ex.Message.Contains("Ambiguous food price"); }
-        Check(threw, "unrelated catalogue failure is not converted into an invalid-price refusal");
-        Check(f.Receipt(meal) == FoodReceiptStatus.Missing && f.Market.NativePurchases == 0,
-            "ambiguous catalogue fails before any receipt or purchase");
+        foreach (string fault in new[] { "price", "quality", "demand" })
+        {
+            using var f = new Fixture();
+            var meal = f.Meal("invalid-catalogue");
+            var budget = new ResidentBudget { BalanceCents = 100000, OpeningBalanceCents = 100000 };
+            Check(HouseholdFinance.HoldPurchase(budget, meal.PriceCents), "hold before catalogue refusal");
+            if (fault == "price") f.Reg.retailPrices.Add(new RetailPrice { itemName = Croissant, price = 3f });
+            if (fault == "quality") f.Reg.satisfaction = new Satisfaction { customerService = 101 };
+            if (fault == "demand")
+            {
+                f.Controller.building.Neighbourhood = "district";
+                SaveGameManager.Current.productMarketEntries = new() { new() { itemName = Croissant,
+                    demandValues = new() { new() { neighborhood = "district" }, new() { neighborhood = "district" } } } };
+            }
+            int units = f.Stock(Croissant), bags = f.Bags, orders = f.Reg.unprocessedCompletedOrders.Count;
+            var result = f.Market.Buy(meal, Minute);
+            Check(!result.Paid && result.Reason.Contains("Catalogue refused"), "known catalogue refusal is definite: " + fault);
+            Check(f.Receipt(meal) == FoodReceiptStatus.Missing && f.Market.NativePurchases == 0,
+                "catalogue refusal precedes receipt and sale");
+            Check(f.Stock(Croissant) == units && f.Bags == bags && f.Reg.unprocessedCompletedOrders.Count == orders,
+                "catalogue refusal leaves inventory and orders intact");
+            HouseholdFinance.RefusePurchase(budget);
+            Check(budget.BalanceCents == budget.OpeningBalanceCents && budget.HeldPurchaseCents == 0,
+                "catalogue refusal permits full refund");
+            SaveGameManager.Current.productMarketEntries = null;
+        }
     }
 
     static void Main()
     {
         InvalidPreSalePricesRefuseWithoutUncertainFunds();
-        UnrelatedCatalogueFailuresStillThrow();
+        CatalogueRefusalsRefundBeforeSale();
         FractionalCheckoutMatchesNativeAndRejectsSameCentPriceChanges();
         SuccessfulCheckoutUsesOnePreSaleRead();
         SameFrameSalesAndChangesAreSeenByTheNextCheckout();
@@ -425,8 +442,14 @@ static partial class Program
         controllers[149].buildingRegistration = Registration(151, 5, 5, 5);
         for (int call = 0; call < 3; call++) market.RefreshDiscovery();
         Check(market.DiscoveryPlaceIdBuilds == 151, "a replaced registration builds its slot's place ID once");
-        Check(state.Shops.Any(s => s.PlaceId == spare) && market.ScopeStatus(spare) == "" && market.ReadBusiness(state.Shops.Single(s => s.PlaceId == spare).BusinessId, Minute)?.PlaceId == spare,
+        Check(state.Shops.Any(s => s.PlaceId == spare) && market.ScopeStatus(spare) == "" && market.Read(Minute).Any(b => b.PlaceId == spare),
             "the new registration is known under its own place ID");
+        Check(market.Read(Minute).Count(b => b.PlaceId == spare) == 1, "aliased controller is observed exactly once");
+        var conflicting = new CityBuildingController { buildingRegistration = Registration(151, 5, 5, 5) };
+        bool refused = false;
+        try { FoodBusinessCatalogue.ReadSelected(new[] { spare }, new[] { Croissant }, new[] { controllers[149], conflicting }); }
+        catch (FoodBusinessCatalogue.CatalogueRefusalException ex) { refused = ex.Message.Contains("Duplicate live shop address"); }
+        Check(refused, "distinct controllers at a conflicting address remain refused");
     }
 }
 
