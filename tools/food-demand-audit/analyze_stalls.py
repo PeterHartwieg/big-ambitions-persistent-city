@@ -63,6 +63,12 @@ def analyze(observations, mod_frames, frequency, threshold=50.0, limit=30, conte
                 'combinedUnionMs': number(m, 'combinedUnionMs'),
                 'populationMs': number(m, 'populationMs'), 'authorityMs': number(m, 'authorityMs'),
                 'inclusiveComponents': {k: number(m, k) for k in m if k.endswith('InclusiveMs')},
+                'slowestEvent': None if not m.get('eventSlices') else {
+                    'citizen': m.get('slowestCitizen'), 'entryBranch': m.get('entryBranch'),
+                    **{k: number(m, k) for k in ('eventMinute', 'eventSlices', 'planCalls', 'eventMs',
+                        'walkingCalculationMs', 'roadSearchSliceMs', 'navMeshPathMs', 'aStarAdvanceMs', 'eventFailures', 'eventSlicesDropped')}},
+                'managedDelta': {'bytes': number(m, 'managedDeltaBytes', 'managedDeltaAvailable'),
+                    'kind': m.get('managedCounterKind', 'unavailable'), 'scope': 'between-first-work-observations'},
                 'observedBounds': {k: int(m[k]) if m.get(k) else None for k in ('firstObservedTicks', 'closedAtTicks', 'nextObservedUnityFrame')}})
         events.append({'wallIntervalMs': elapsed, 'startTicks': int(row['startTicks']), 'endTicks': int(row['endTicks']),
             'priorUnityFrame': prior, 'currentUnityFrame': current, 'frameGap': gap, 'intervalDiscontinuity': discontinuous,

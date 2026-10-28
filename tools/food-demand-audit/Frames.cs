@@ -67,6 +67,9 @@ namespace FoodDemandAuditProbe
             public int UnityFrame, PopulationCalls, AuthorityCalls, HourChangeCalls;
             public long PopulationTicks, AuthorityTicks, CombinedTicks;
             public ComponentSlots Components;
+            public EventWork SlowestEvent;
+            public int EventSlicesDropped;
+            public ManagedDelta Managed;
             public long FirstObservedTicks, ClosedAtTicks;
             public int NextObservedUnityFrame;
         }
@@ -125,6 +128,13 @@ namespace FoodDemandAuditProbe
                 PatchComponent(patches, "PersistentCity.Runtime.MultimodalRoutes", "Prepare");
                 PatchComponent(patches, "PersistentCity.Core.CitySimulator", "RefreshTrafficClosures");
                 PatchComponent(patches, "PersistentCity.Runtime.PhysicalVehicles", "Update");
+                PatchComponent(patches, "PersistentCity.Runtime.PhysicalTrafficHooks", "FixedStepPrefix", typeof(bool).MakeByRefType());
+                PatchComponent(patches, "PersistentCity.Runtime.PhysicalTrafficHooks", "FixedStepPostfix", typeof(bool));
+                PatchComponent(patches, "PersistentCity.Runtime.PhysicalTrafficHooks", "FixedStepFinalizer", typeof(Exception), typeof(bool));
+                PatchComponent(patches, "PersistentCity.Runtime.PhysicalVehicles", "DeferNativeForce", typeof(Rigidbody), typeof(Vector3), typeof(ForceMode));
+                PatchComponent(patches, "PersistentCity.Runtime.PhysicalVehicles", "ApplyNativeRotation", typeof(Rigidbody), typeof(Quaternion));
+                PatchComponent(patches, "PersistentCity.Runtime.PhysicalIntersections", "UpdatePostfix", typeof(GleyTrafficSystem.IntersectionManager));
+                StartEventMeasurements(patches);
                 foreach (var component in componentTimings) component.CallTimes.Capacity = FrameSampleLimit;
                 workFrame = NewWorkFrame(currentWorkFrame);
                 startNativeMinute = SaveGameManager.Current.Day * 1440.0 + SaveGameManager.Current.Hour * 60 + SaveGameManager.Current.Minute;
@@ -245,6 +255,9 @@ namespace FoodDemandAuditProbe
         private void ObserveWorkFrame(int frame)
         {
             if (frame == currentWorkFrame) return;
+            long managedEnd = ReadManagedCounter();
+            workFrame.Managed = ManagedDelta.Between(managedStart, managedEnd, managedCounterKind == "thread-allocated-bytes");
+            workFrame.SlowestEvent = eventWork.Slowest; workFrame.EventSlicesDropped = eventWork.Dropped;
             if (currentWorkFrame > firstUnityFrame && currentWorkFrame < frame)
             {
                 workFrame.ClosedAtTicks = Stopwatch.GetTimestamp(); workFrame.NextObservedUnityFrame = frame;
@@ -252,6 +265,7 @@ namespace FoodDemandAuditProbe
             }
             currentWorkFrame = frame;
             workFrame = NewWorkFrame(frame);
+            eventWork.Clear(); managedStart = ReadManagedCounter();
         }
         // Called even when the request guard fails, so a load/save transition cannot bridge captures.
         private void RecordDiagnosticDispatch(string operation)
@@ -335,7 +349,8 @@ namespace FoodDemandAuditProbe
                 timedExceptions, crossFrameCalls, perFrameEvidence, observationEvidence, stopReason, sampleError,
                 activeReportCount, lastActiveReportUnityFrame, activeReportUnityFrames = activeReportUnityFrames.ToArray(), activeReportIdsDropped = Math.Max(0, activeReportCount - activeReportUnityFrames.Count), droppedModFrames, replacedUnexportedCapture,
                 rawObservations = observations == null ? null : new { observations.Count, observations.Capacity, observations.MarshaledStorageEstimateBytes, observations.Dropped, observations.Duplicates, observations.InvalidOrder, observations.SkippedUnityFrames, stopwatchFrequency = Stopwatch.Frequency, terminationObservedTicks, discardedLifecycleTailTicks = terminationObservedTicks > stoppedFrame ? terminationObservedTicks - stoppedFrame : 0, unobservedTailTicks = stoppedFrame > 0 ? Math.Max(0, stoppedFrame - observations.LastTicks) : 0, initialIntervalPartial = true, currentModFrameExcluded = true, outstandingPrimaryScopes = stoppedMeasurementDepth },
-                componentTimedExceptions, componentCrossFrameCalls,
+                componentTimedExceptions, componentCrossFrameCalls, eventCrossFrameCalls, managedCounterKind,
+                eventMeasurementNote = "Slowest event sums this frame's RunEvent/ContinuePlanning slices by citizen, simulation minute and entry branch. Branch names describe entry state, not every internal Step branch. Food steps and traffic advances are separate calls with blank citizen IDs. Native query fields time managed WalkingRoutes.Calculate (sampling, path, geometry) and RoadPlan.Continue (A-star slices plus completion), navMeshPathMs separately differences the existing native CalculatePath timer; aStarAdvanceMs times actual RoadSearch.Advance including its callbacks/result construction. These nested fields must not be added. Plans count MultimodalRoutes Plan/Begin calls in the measured scope. Timings exclude time suspended between frames. Allocation delta spans consecutive first observed work points, includes other main-thread work and diagnostic allocation, and is not mod-attributed. Heap fallback is signed live-heap change, not allocated bytes. Initial/current partial frames are excluded; frame gaps must be checked. Hook components time mod hook bodies, not the full native methods; force/rotation verdicts exclude native Rigidbody writes. No automatic performance pass.",
                 components = componentTimings.Select((c, index) => new { name = c.Name, calls = c.Calls,
                     outsidePrimaryScopeCalls = c.OutsidePrimaryScopeCalls, callSamplesDropped = c.Calls - c.CallTimes.Count, totalInclusiveMilliseconds = Milliseconds(c.TotalTicks),
                     inclusiveCallMilliseconds = Distribution(c.CallTimes),
@@ -345,7 +360,7 @@ namespace FoodDemandAuditProbe
                 managedBytesBefore = initialManagedBytes, managedBytesAfter = GC.GetTotalMemory(false),
                 collections = Enumerable.Range(0, 3).Select(i => GC.CollectionCount(i) - initialCollections[i]).ToArray(),
                 framesOver50ms = frameTimes.Count(n => n > 50), framesOver100ms = frameTimes.Count(n => n > 100), framesOver250ms = frameTimes.Count(n => n > 250),
-                environment = FrameEnvironment(), note = "Whole-frame wall intervals include native rendering, other mods and diagnostics. Population Update includes route preparation and physical work. Authority-hook wall time includes native work it force-drains, and includes no-op hook calls. Observed native-hour-change calls are clock transitions, not actual ownership transfers. Combined mod work is the union of timed Update/authority scopes, so nested scopes count once; separate component totals must not be added when nested. Per-frame distributions exclude initial and current partial Unity frames and include zero-work completed frames. Instrumentation overhead remains; crossFrameCalls or timedExceptions invalidate clean attribution. No hour-change sample means no hourly-boundary performance proof. Named component timings are inclusive call and completed-frame totals; nested components (PhysicalVehicles.Update inside PhysicalPopulation.Update, for example) must not be added. Components do not extend or double-count the original Update/authority union. Outside-primary-scope component calls are reported separately, and nonzero componentCrossFrameCalls or componentTimedExceptions invalidate clean component attribution. Per-call and completed-frame samples cap at65536; total call counts remain uncapped. Fixed seven-slot value storage replaces per-frame component arrays; timing patches and existing sample lists still add diagnostic overhead. Raw observations are bounded and excess rows are counted as dropped. CPU/GPU availability means a finite nonnegative value was returned, not that Unity measured it: returned zero may be unmeasured. CPU/GPU raw values are latest asynchronous observations with no wall-interval mapping; historical CPU/GPU distributions retain their positive-only filter. Active status/report calls allocate and contaminate the capture; their count and last Unity frame are reported. Raw allocation values are latest recorder observations, not attributed mod allocations. Timestamp bounds are observations, not engine frame boundaries. Paused means timeScale equals zero. Other mod entry points are outside this attribution. Body peaks sampled only on frame-status calls. GPU/CPU counters absent when unsupported. GC recorder is whole game, not attributed solely to this mod; an all-zero recorder without positive observations does not establish zero allocations." };
+                environment = FrameEnvironment(), note = "Whole-frame wall intervals include native rendering, other mods and diagnostics. Population Update includes route preparation and physical work. Authority-hook wall time includes native work it force-drains, and includes no-op hook calls. Observed native-hour-change calls are clock transitions, not actual ownership transfers. Combined mod work is the union of timed Update/authority scopes, so nested scopes count once; separate component totals must not be added when nested. Per-frame distributions exclude initial and current partial Unity frames and include zero-work completed frames. Instrumentation overhead remains; crossFrameCalls or timedExceptions invalidate clean attribution. No hour-change sample means no hourly-boundary performance proof. Named component timings are inclusive call and completed-frame totals; nested components (PhysicalVehicles.Update inside PhysicalPopulation.Update, for example) must not be added. Components do not extend or double-count the original Update/authority union. Outside-primary-scope component calls are reported separately, and nonzero componentCrossFrameCalls or componentTimedExceptions invalidate clean component attribution. Per-call and completed-frame samples cap at65536; total call counts remain uncapped. Fixed thirteen-slot value storage replaces per-frame component arrays; timing patches and existing sample lists still add diagnostic overhead. Raw observations are bounded and excess rows are counted as dropped. CPU/GPU availability means a finite nonnegative value was returned, not that Unity measured it: returned zero may be unmeasured. CPU/GPU raw values are latest asynchronous observations with no wall-interval mapping; historical CPU/GPU distributions retain their positive-only filter. Active status/report calls allocate and contaminate the capture; their count and last Unity frame are reported. Raw allocation values are latest recorder observations, not attributed mod allocations. Timestamp bounds are observations, not engine frame boundaries. Paused means timeScale equals zero. Other mod entry points are outside this attribution. Body peaks sampled only on frame-status calls. GPU/CPU counters absent when unsupported. GC recorder is whole game, not attributed solely to this mod; an all-zero recorder without positive observations does not establish zero allocations." };
         }
         private object StopAndReportFrames()
         {
@@ -356,6 +371,7 @@ namespace FoodDemandAuditProbe
             string modPath = Path.Combine(Root, "frames-mod-work-" + pendingId + ".csv");
             var csv = new StringBuilder("unityFrame,populationCalls,authorityCalls,observedHourChangeCalls,populationMs,authorityMs,combinedUnionMs,firstObservedTicks,closedAtTicks,nextObservedUnityFrame");
             foreach (var component in componentTimings) csv.Append(',').Append(component.Name).Append("Calls,").Append(component.Name).Append("InclusiveMs");
+            csv.Append(",slowestCitizen,entryBranch,eventMinute,eventSlices,planCalls,eventMs,walkingCalculationMs,roadSearchSliceMs,navMeshPathMs,aStarAdvanceMs,eventFailures,eventSlicesDropped,managedDeltaBytes,managedDeltaAvailable,managedCounterKind");
             csv.Append('\n');
             foreach (var f in modWorkFrames)
             {
@@ -365,6 +381,7 @@ namespace FoodDemandAuditProbe
                     .Append(Milliseconds(f.CombinedTicks).ToString("R", CultureInfo.InvariantCulture)).Append(',').Append(f.FirstObservedTicks).Append(',').Append(f.ClosedAtTicks).Append(',').Append(f.NextObservedUnityFrame);
                 for (int i = 0; i < componentTimings.Count; i++)
                     csv.Append(',').Append(f.Components.Calls(i)).Append(',').Append(Milliseconds(f.Components.Ticks(i)).ToString("R", CultureInfo.InvariantCulture));
+                AppendEventCsv(csv, f);
                 csv.Append('\n');
             }
             File.WriteAllText(modPath, csv.ToString());

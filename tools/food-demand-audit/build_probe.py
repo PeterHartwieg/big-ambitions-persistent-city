@@ -38,7 +38,7 @@ command = ['dotnet', str(csc), '-nologo', '-noconfig', '-nostdlib+', '-target:li
            '-langversion:9', '-nullable:enable', '-optimize+', '-warn:4', '-warnaserror+',
            '-deterministic+', '-pathmap:' + str(root) + '=/Probe', '-out:' + str(output)]
 command += ['-reference:' + str(path) for path in references]
-sources = [module / 'Probe.cs', module / 'Pilot.cs', module / 'ClockAudit.cs', module / 'Neighborhood.cs', module / 'Frames.cs', module / 'FrameObservations.cs', module / 'DiagnosticResponses.cs', module / 'Menus.cs', module / 'Operations.cs', module / 'ReturnQuotes.cs']
+sources = [module / 'Probe.cs', module / 'Pilot.cs', module / 'ClockAudit.cs', module / 'Neighborhood.cs', module / 'Frames.cs', module / 'EventMeasurements.cs', module / 'EventObservations.cs', module / 'FrameObservations.cs', module / 'DiagnosticResponses.cs', module / 'Menus.cs', module / 'Operations.cs', module / 'ReturnQuotes.cs']
 subprocess.run(command + [str(p) for p in sources], check=True)
 (root / 'sources').mkdir(exist_ok=True)
 for path in sources:
