@@ -238,8 +238,8 @@ namespace PersistentCity.Persistence
 
         private static void Money(decimal cents)
         {
-            Require(cents >= 0 && cents <= long.MaxValue && decimal.Round(cents, 12) == cents,
-                "Money is outside the supported range or fractional-cent unit.");
+            // Exact native binary32 prices may carry up to System.Decimal's 28 fractional digits.
+            Require(cents >= 0 && cents <= long.MaxValue, "Money is outside the supported range.");
         }
 
         private static void Validate(CityState state)

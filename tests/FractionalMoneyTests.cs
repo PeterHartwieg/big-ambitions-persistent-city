@@ -18,7 +18,89 @@ public sealed class FractionalMoneyTests
     {
         decimal cents = FoodMoney.FromNative(price);
         Assert.Equal(BitConverter.SingleToInt32Bits(price), BitConverter.SingleToInt32Bits((float)(cents / 100m)));
-        Assert.Equal(cents, decimal.Round(cents, 12));
+    }
+
+    [Theory]
+    [InlineData(1092881272, "1025.279998779296875")] // 10.2528f; a 15-digit conversion stores 1025.279998779297
+    [InlineData(1008981770, "0.999999977648258209228515625")] // .01f
+    [InlineData(1036831949, "10.0000001490116119384765625")] // .1f
+    [InlineData(1089051034, "730.000019073486328125")] // 7.3f
+    [InlineData(1095227146, "1248.99997711181640625")] // 12.49f
+    [InlineData(1051372203, "33.33333432674407958984375")] // 1/3f
+    [InlineData(1176256511, "999999.90234375")] // 9999.999f
+    [InlineData(1176256512, "1000000")] // 10000f
+    public void NativePriceBecomesExactlyItsBinaryValueInCents(int bits, string expected)
+    {
+        decimal cents = FoodMoney.FromNative(BitConverter.Int32BitsToSingle(bits));
+        Assert.Equal(expected, cents.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        Assert.Equal(ExactCents(bits), Rational(cents));
+    }
+
+    [Fact]
+    public void EveryRepresentableNativePriceConvertsWithoutRounding()
+    {
+        var random = new Random(20261029);
+        int checkedPrices = 0;
+        for (int i = 0; i < 200000; i++)
+        {
+            int bits = random.Next(BitConverter.SingleToInt32Bits(.01f), BitConverter.SingleToInt32Bits(10000f) + 1);
+            decimal cents = FoodMoney.FromNative(BitConverter.Int32BitsToSingle(bits));
+            Assert.Equal(ExactCents(bits), Rational(cents));
+            checkedPrices++;
+        }
+        Assert.Equal(200000, checkedPrices);
+    }
+
+    [Fact]
+    public void SumOfResidentPaymentsEqualsTheExactSumOfNativeOrderPrices()
+    {
+        // Menu-scale native prices: the rig croissant (10.2528) and other fractional prices.
+        int[] orders = new[] { 10.2528f, 7.3f, 12.49f, 3.99f, 10.2528f, 4.79f, 15.99f }.Select(BitConverter.SingleToInt32Bits).ToArray();
+        var budget = new ResidentBudget { OpeningBalanceCents = 10000000, BalanceCents = 10000000 };
+        var data = new Dictionary<string, string>();
+        var nativeSum = (Numerator: System.Numerics.BigInteger.Zero, Denominator: System.Numerics.BigInteger.One);
+        decimal receipts = 0;
+        for (int i = 0; i < 1100; i++)
+        {
+            int bits = orders[i % orders.Length];
+            decimal cents = FoodMoney.FromNative(BitConverter.Int32BitsToSingle(bits));
+            var meal = new ResidentMeal { ResidentId = "r" + i, Day = 5, Kind = MealKind.Lunch,
+                BusinessId = "shop", ProductId = FoodProducts.Croissant, PriceCents = cents };
+            Assert.True(HouseholdFinance.HoldPurchase(budget, cents));
+            FoodSaleReceipts.Begin(data, meal); FoodSaleReceipts.Confirm(data, meal);
+            HouseholdFinance.ConfirmPurchase(budget);
+            receipts = FoodMoney.Add(receipts, cents);
+            var price = ExactCents(bits);
+            nativeSum = Normal(nativeSum.Numerator * price.Denominator + price.Numerator * nativeSum.Denominator,
+                nativeSum.Denominator * price.Denominator);
+        }
+        Assert.Equal(nativeSum, Rational(receipts));
+        Assert.Equal(nativeSum, Rational(budget.PreparedFoodSpentCents));
+        Assert.Equal(nativeSum, Rational(budget.OpeningBalanceCents - budget.BalanceCents));
+        Assert.Equal(0, budget.HeldPurchaseCents);
+    }
+
+    // Exact cents of a binary32 dollar price, as a reduced fraction: m * 2^e * 100.
+    private static (System.Numerics.BigInteger Numerator, System.Numerics.BigInteger Denominator) ExactCents(int bits)
+    {
+        int biased = (bits >> 23) & 255;
+        var significand = new System.Numerics.BigInteger((bits & 0x7fffff) | 0x800000) * 100;
+        int exponent = biased - 150;
+        return exponent >= 0 ? Normal(significand << exponent, 1) : Normal(significand, System.Numerics.BigInteger.One << -exponent);
+    }
+
+    private static (System.Numerics.BigInteger Numerator, System.Numerics.BigInteger Denominator) Rational(decimal value)
+    {
+        int[] parts = decimal.GetBits(value);
+        var unscaled = (new System.Numerics.BigInteger((uint)parts[2]) << 64) | (new System.Numerics.BigInteger((uint)parts[1]) << 32) | (uint)parts[0];
+        if (parts[3] < 0) unscaled = -unscaled;
+        return Normal(unscaled, System.Numerics.BigInteger.Pow(10, (parts[3] >> 16) & 255));
+    }
+
+    private static (System.Numerics.BigInteger Numerator, System.Numerics.BigInteger Denominator) Normal(System.Numerics.BigInteger numerator, System.Numerics.BigInteger denominator)
+    {
+        var divisor = System.Numerics.BigInteger.GreatestCommonDivisor(numerator, denominator);
+        return (numerator / divisor, denominator / divisor);
     }
 
     [Theory]
@@ -32,7 +114,8 @@ public sealed class FractionalMoneyTests
     {
         const float native = 10.2528f;
         decimal cents = FoodMoney.FromNative(native);
-        Assert.Equal(1025.279998779297m, cents);
+        Assert.Equal(1092881272, BitConverter.SingleToInt32Bits(native));
+        Assert.Equal(1025.279998779296875m, cents);
         var budget = new ResidentBudget { OpeningBalanceCents = 200000, BalanceCents = 200000 };
         var data = new Dictionary<string, string>();
         decimal receipts = 0;
@@ -48,7 +131,8 @@ public sealed class FractionalMoneyTests
         Assert.Equal(receipts, budget.PreparedFoodSpentCents);
         Assert.Equal(receipts, budget.OpeningBalanceCents - budget.BalanceCents);
         Assert.Equal(0, budget.HeldPurchaseCents);
-        Assert.True(Math.Abs((double)(receipts / 100m) - (double)native * 109) < 1e-9);
+        Assert.Equal(111755.519866943359375m, receipts);
+        Assert.Equal(cents * 109, receipts);
         Assert.True(Math.Abs((double)(1025m * 109 / 100m) - (double)native * 109) > .30);
         decimal before = budget.BalanceCents;
         Assert.True(HouseholdFinance.HoldPurchase(budget, cents));
@@ -134,11 +218,29 @@ public sealed partial class FoodCommerceTests
         }
         meal = city.State.Food!.Residents.Single();
         Assert.Equal(market.Price, meal.SpentCents);
+        Assert.Equal("1025.279998779296875", meal.SpentCents.ToString(System.Globalization.CultureInfo.InvariantCulture));
         Assert.Equal(market.Price, meal.Budget!.PreparedFoodSpentCents);
         Assert.Equal(0, meal.Budget.HeldPurchaseCents);
         Assert.Equal(market.Price, city.State.Food.History.Sum(h => h.RevenueCents));
         city = Reload(city, market, routes);
         Assert.Single(market.Orders);
+    }
+
+    [Fact]
+    public void Schema14SavesWithTwelveDigitFractionalCentsStillLoadUnchanged()
+    {
+        var (city, market, routes) = Ready();
+        // The amount that twelve-digit conversion stored for 10.2528f before bit-exact conversion.
+        market.Price = 1025.279998779297m;
+        var person = city.State.Citizens.Single(); person.PlaceId = "shop"; person.Activity = Activity.Shop;
+        city = city.RebuildRoutes(routes); city.EnableHouseholdFinances();
+        Advance(city, city.State.Food!.Residents.Single().DesiredAt + 30);
+        string legacy = SaveCodec.Write(city.State);
+        Assert.Contains("1025.279998779297", legacy);
+        var read = SaveCodec.Read(legacy);
+        Assert.Equal(SaveReadStatus.Loaded, read.Status);
+        Assert.Equal(1025.279998779297m, read.State!.Food!.Residents.Single().SpentCents);
+        Assert.Equal(legacy, SaveCodec.Write(read.State));
     }
 
     [Fact]

@@ -67,6 +67,7 @@ static partial class Program
         var price = f.Reg.retailPrices.Single(p => p.itemName == Croissant);
         price.price = 10.2528f;
         decimal cents = FoodMoney.FromNative(price.price);
+        Check(cents == 1025.279998779296875m && cents.ToString(System.Globalization.CultureInfo.InvariantCulture) == "1025.279998779296875", "native binary32 price converts bit-exactly");
         var meal = f.Meal("fractional", cents: cents);
         var budget = new ResidentBudget { BalanceCents = 100000, OpeningBalanceCents = 100000 };
         Check(HouseholdFinance.HoldPurchase(budget, cents), "hold exact fractional price");
