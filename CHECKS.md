@@ -1,5 +1,13 @@
 # Validation status
 
+## PR #3 independent review round 1 ? 28 October 2026 (offline)
+
+Deduplicated 17 findings: 10 FIX (six High/Medium), seven SKIP, no new product questions. Visible arrivals now retain their body through admission, and ordinary/meal departures hold journey progress while the body returns to the entrance. Opening queues and optional stops share one facade cache/frame budget; live performer images reuse ring geometry until invalidated. Save validation uses indexed references; chat selection filters local candidates and tries later feasible partners. The approved 25% config, saved per-visit choices and schema 16 remain intact.
+
+Merged `origin/codex/pc-decisions-1` at `2764b27` normally, including PR #1/#2 review fixes. Combined validation: **1,366 unit tests, zero failures/skips**, **all 21 standalone regression projects**, **213 optional-stop physical/cache checks plus six native-door replacement checks**, physical selection **27,564**, native commands **72**, vehicle ownership **361 plus epoch checks**, pickup **25**, analyzer **8**. The synthetic 28-day schema-16 save round-trip is exact. Production and audit helper build against read-only Steam DLLs with warnings as errors. Production SHA-256 `dd501bd034b702dc396567dc172a13eae0ce09dbce0601c997adbcdd705d734f`; helper `66cf568e3f12c0315ed762a2946781c9026f80bd2a22fcb21be500feee7fb12a`. Logs: ignored `build/review-r1/` in this worktree. `git diff --check` passes.
+
+These are offline checks; native visual behavior and performance remain unverified. No game launch, installation, rig access, deployment or release. The independent review comment is prepared externally, not posted. Earlier dated sections retain historical evidence.
+
 ## Optional-stop rate - 28 October 2026 (offline follow-up)
 
 Peter's DECISIONS-3 selects 25%. `OptionalStopChoicePercentage` in the existing top-level JSON config defaults to 25, clamps to 0-100 and falls back gracefully for non-numeric values. Schema 16 persists accepted/declined visit choices so later conversation arrivals cannot re-evaluate an old choice with a changed rate. Strict migration supports schemas 13-15. See [QA configuration](docs/stationary-citizens.md).
