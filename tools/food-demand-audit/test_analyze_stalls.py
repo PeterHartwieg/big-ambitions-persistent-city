@@ -79,6 +79,11 @@ class StallAnalysisTests(unittest.TestCase):
         self.assertFalse(limited['events'][0]['observerContaminationUnknown'])
         self.assertTrue(limited['events'][1]['observerContaminationUnknown'])
         with self.assertRaises(ValueError): analyze_capture(rows,[],report,'frames-observations-OTHER.csv','frames-mod-work-ID.csv')
+        report['eventMeasurementsFailed'] = True; report['eventMeasurementFailures'] = 1
+        broken = analyze_capture(rows,[],report,'frames-observations-ID.csv','frames-mod-work-ID.csv')
+        self.assertTrue(broken['capture']['eventMeasurementsFailed'])
+        self.assertEqual(broken['capture']['eventMeasurementFailures'], 1)
+        self.assertTrue(any('capture failed' in line for line in broken['limitations']))
         report['rawObservations']['Count']=3
         with self.assertRaises(ValueError): analyze_capture(rows,[],report,'frames-observations-ID.csv','frames-mod-work-ID.csv')
 

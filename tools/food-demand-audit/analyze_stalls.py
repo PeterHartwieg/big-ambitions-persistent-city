@@ -128,6 +128,8 @@ def analyze_capture(observations, mod_frames, report, observation_path, mod_path
         event['latestTimingObservation']['zeroMayBeUnmeasured'] = event['latestTimingObservation']['cpuMs'] == 0 or event['latestTimingObservation']['gpuMs'] == 0
     whole_count = report.get({50.0:'framesOver50ms',100.0:'framesOver100ms',250.0:'framesOver250ms'}.get(threshold, ''))
     result['capture'] = {'stopReason': report.get('stopReason'), 'samplerError': report.get('sampleError'),
+        'eventMeasurementFailures': report.get('eventMeasurementFailures'),
+        'eventMeasurementsFailed': report.get('eventMeasurementsFailed'),
         'rawRowsDropped': raw.get('Dropped'), 'rawCapacity': raw.get('Capacity'),
         'initialIntervalPartial': raw.get('initialIntervalPartial'), 'outstandingPrimaryScopes': raw.get('outstandingPrimaryScopes'),
         'discardedLifecycleTailTicks': raw.get('discardedLifecycleTailTicks'),
@@ -136,6 +138,8 @@ def analyze_capture(observations, mod_frames, report, observation_path, mod_path
         'wholeCaptureIntervalsOverThreshold': whole_count,
         'wholeCaptureMinusRetainedSlowIntervals': None if whole_count is None else whole_count-result['intervalsOverThreshold'],
         'reportAndCsvNamesAndCountsMatch': True, 'csvContentCryptographicallyBoundByReport': False}
+    if report.get('eventMeasurementsFailed') or report.get('eventMeasurementFailures', 0):
+        result['limitations'].append('Event/query capture failed and is incomplete; missing event timings must not be treated as zero work.')
     result['timestampFrequency'] = frequency
     result['limitations'].append('Names and counts bind selection to the stop report, but the report contains no CSV content hashes; input hashes are recorded by this analyzer.')
     result['limitations'].append('Zero CPU/GPU means returned zero; it may represent an unavailable measurement rather than a measured zero-duration frame.')

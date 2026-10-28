@@ -18,3 +18,9 @@ Managed-byte deltas span consecutive first-observed work points, with frame IDs 
 - Final helper builds with warnings as errors against local native references: SHA-256 `c0eeea6e5f2843348979ca71f578155094f6722eb803446d8b8e60f1b0a88644`.
 
 The helper is not installed and no capture was taken. Harmony installation on Unity/Mono, native hook coverage, food-event attribution and recorder overhead remain unverified. The helper allocates a scope and Harmony argument arrays per observed event; it must be used identically in comparison arms, with capture-on/off overhead measured before drawing performance conclusions. Native runs remain separately authorized work and must obey the autosave exclusion rule. There is no production instrumentation when this helper is absent.
+
+## Independent review round 1
+
+Event/query prefix and finalizer faults now disable event/query capture until the next recording, discard partial event scratch, and increment `eventMeasurementFailures`. The stop report exposes the counter and `eventMeasurementsFailed`; the analyzer preserves both and flags incomplete event attribution. Other frame measurements continue. Both finalizers always preserve the original simulation exception. Failure handling performs no Unity/reflection/logging calls.
+
+The actual-patch harness injects clock/reflection/metric faults at all four seams, with and without a planner failure: all eight comparisons retain 680 activity events and exact saves. Direct finalizer checks retain the identical original exception object. These are offline doubles, not native runtime evidence. Citizen aggregation remains the documented citizen/minute/entry-branch grouping, including attempts replayed at that same minute; it is not an attempt-by-attempt trace.

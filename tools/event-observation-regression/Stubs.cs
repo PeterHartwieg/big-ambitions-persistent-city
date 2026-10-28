@@ -3,7 +3,19 @@ using System.Runtime.CompilerServices;
 using HarmonyLib;
 using PersistentCity.Core;
 
-namespace UnityEngine { public static class Time { public static int frameCount; } }
+namespace UnityEngine
+{
+    public static class Time
+    {
+        private static int frame;
+        public static int Reads, FailAtRead = -1;
+        public static int frameCount
+        {
+            get { if (++Reads == FailAtRead) throw new InvalidOperationException("injected observer clock fault"); return frame; }
+            set { frame = value; }
+        }
+    }
+}
 namespace UnityEngine.Profiling { public static class Profiler { public static long GetMonoUsedSizeLong() => GC.GetTotalMemory(false); } }
 namespace PersistentCity.Runtime
 {
@@ -11,9 +23,18 @@ namespace PersistentCity.Runtime
     public class WalkingRoutes
     {
         public NativeRouteMetrics Metrics { get; } = new NativeRouteMetrics();
-        [MethodImpl(MethodImplOptions.NoInlining)] public void Calculate() { Metrics.NavMeshPathMilliseconds += .25; }
+        [MethodImpl(MethodImplOptions.NoInlining)] public void Calculate() { Metrics.Add(.25); }
     }
-    public class NativeRouteMetrics { public double NavMeshPathMilliseconds { get; set; } }
+    public class NativeRouteMetrics
+    {
+        private double value;
+        public static int Reads, FailAtRead = -1;
+        public double NavMeshPathMilliseconds
+        {
+            get { if (++Reads == FailAtRead) throw new InvalidOperationException("injected observer metric fault"); return value; }
+        }
+        public void Add(double amount) { value += amount; }
+    }
     public class RoadRoutes
     {
         public class RoadPlan
@@ -69,6 +90,35 @@ namespace FoodDemandAuditProbe
         private struct ModWorkFrame { public EventWork SlowestEvent; public int EventSlicesDropped; public ManagedDelta Managed; }
         public long Samples, Plans, Failures, NavTicks, RoadTicks, AStarTicks;
         public double NavMeshPathMilliseconds;
+        public long DiagnosticFailures => eventMeasurementFailures;
+        public bool EventCaptureDisabled => eventMeasurementsFailed && activeEvent == null;
+        public void InjectObserverFault(string seam)
+        {
+            if (seam == "event-prefix") UnityEngine.Time.FailAtRead = UnityEngine.Time.Reads + 1;
+            else if (seam == "event-finalizer") UnityEngine.Time.FailAtRead = UnityEngine.Time.Reads + 3;
+            else if (seam == "query-prefix") walkingMetrics = null;
+            else if (seam == "query-finalizer") PersistentCity.Runtime.NativeRouteMetrics.FailAtRead = PersistentCity.Runtime.NativeRouteMetrics.Reads + 2;
+            else throw new ArgumentException(seam);
+        }
+        public void VerifyOriginalExceptionSurvivesObserverFault(bool query)
+        {
+            var original = new InvalidOperationException("original simulation failure");
+            var scope = new EventScope { Start = System.Diagnostics.Stopwatch.GetTimestamp() };
+            activeEvent = scope;
+            Exception? result;
+            if (query)
+            {
+                navMeshMilliseconds = null;
+                result = QueryPatches.Finally(original, new QueryScope { Event = scope, Metrics = new object() });
+            }
+            else
+            {
+                UnityEngine.Time.FailAtRead = UnityEngine.Time.Reads + 1;
+                result = EventPatches.Finally(original, scope);
+            }
+            if (!ReferenceEquals(result, original) || !EventCaptureDisabled || DiagnosticFailures != 1)
+                throw new Exception("Observer changed original exception or failed to disable capture");
+        }
         public void Start()
         {
             frameOwner = this;
