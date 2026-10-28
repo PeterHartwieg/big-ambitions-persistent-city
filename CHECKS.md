@@ -30,6 +30,20 @@ Production compiles against the installed Steam Managed DLLs referenced read-onl
 
 **No game was launched.** No game-install, ModsLocal, agent-rig, RLO, ordinary-save, deployment, release or Workshop change. Native visual continuity, geometry, weather and performance remain unverified. No reviewer/subagent was invoked, including Grok. Historical native failures below remain unchanged.
 
+## Independent review round 3 (offline)
+
+Known pre-sale catalogue validation refusals (duplicate address, invalid service score, ambiguous price, duplicate district demand) now share a dedicated refusal type. Checkout returns an unpaid result before receipt/sale processing so the caller can refund held funds. Arbitrary exceptions and post-sale uncertainty are not caught by this change. The earlier round-2 assertion requiring ambiguous prices to throw has been replaced with refund coverage.
+
+Catalogue input deduplicates controllers reached through historical place aliases. The restored full-catalogue discovery regression now passes after registration/address replacement; distinct controllers at a conflicting address remain refused. Saved scopes and ownership are not removed. Native address-change reachability remains unverified.
+
+Both failures were reproduced before fixing them. **329 checkout checks**, **29 catalogue checks**, and **1,304 unit tests** pass. Steam-DLL production compilation passes with warnings as errors, SHA-256 `2c2a9c14f34f4a7ba7522000ef6002e12d932ddca2fdde225dd5d951ca8403a0`; `git diff --check` passes. Ignored logs: `build/review-r3/`. No game execution or native financial/release clearance. PR #1 and #3 are unchanged.
+
+## Independent review round 2 (offline)
+
+Unsupported range/precision prices in the initial live checkout catalogue read now produce a definite pre-sale refusal, allowing the existing caller to refund held funds. A dedicated catalogue exception distinguishes this case from unrelated observation failures, which still propagate. No receipt or native sale has started at this point. The original failure was reproduced before the fix using the real catalogue source.
+
+The checkout harness now includes the actual catalogue instead of a price-only stand-in. It covers seven invalid prices both before the initial read and after setup, plus an unrelated ambiguous-price failure. **314 checkout checks**, **29 catalogue checks**, and **1,304 unit tests** pass. The Steam-DLL build passes with warnings as errors; production SHA-256 `c223607646d2d20c370cf53bdc7c39512fbf54e63e80fc88c64b3c9377fb7f33`. `git diff --check` passes. Logs are ignored under `build/review-r2/`. No game execution or native release-gate clearance; PR #1 and #3 code are unchanged.
+
 ## Independent review round 1 (offline)
 
 The partial-save startup guard now recognizes both v1 and v2 food receipts: paid or pending evidence without a population payload suspends ownership and refuses replacement wallets, including absent/empty authority manifests. Invalid post-setup prices now return a definite pre-sale refusal so held funds can be refunded; no receipt or native sale has started at that point. Both regressions were reproduced before their fixes.

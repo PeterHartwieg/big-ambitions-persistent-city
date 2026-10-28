@@ -86,8 +86,9 @@ static partial class Program
         Check(f.Stock(Croissant) == units && f.Receipt(next) == FoodReceiptStatus.Missing, "setup-price refusal leaves stock and receipts unchanged");
     }
 
-    static void InvalidPostSetupPricesRefuseWithoutUncertainFunds()
+    static void InvalidPreSalePricesRefuseWithoutUncertainFunds()
     {
+        foreach (bool beforeCatalogue in new[] { true, false })
         foreach (float invalid in new[] { float.NaN, float.PositiveInfinity, 0f, -1f, 10001f, float.Epsilon, 1e-20f })
         {
             using var f = new Fixture();
@@ -95,7 +96,11 @@ static partial class Program
             var budget = new ResidentBudget { BalanceCents = 100000, OpeningBalanceCents = 100000 };
             Check(HouseholdFinance.HoldPurchase(budget, meal.PriceCents), "checkout owns held funds before price mutation");
             int units = f.Stock(Croissant), bags = f.Bags, orders = f.Reg.unprocessedCompletedOrders.Count;
-            Hooks.OpenCheck = () => f.Reg.retailPrices.Single(p => p.itemName == Croissant).price = invalid;
+            // Establish a valid decision quote, then mutate before the first live checkout
+            // read or after that read during setup. Both are known pre-sale refusals.
+            Check(f.Market.Read(Minute).Single().Offers.Any(o => o.ProductId == Croissant), "valid decision quote exists");
+            if (beforeCatalogue) f.Reg.retailPrices.Single(p => p.itemName == Croissant).price = invalid;
+            else Hooks.OpenCheck = () => f.Reg.retailPrices.Single(p => p.itemName == Croissant).price = invalid;
             var result = f.Market.Buy(meal, Minute);
             Check(!result.Paid && result.Reason.Contains("supported range"), "unsupported live price returns definite refusal, not an exception");
             Check(f.Receipt(meal) == FoodReceiptStatus.Missing && f.Market.NativePurchases == 0,
@@ -109,9 +114,40 @@ static partial class Program
         }
     }
 
+    static void CatalogueRefusalsRefundBeforeSale()
+    {
+        foreach (string fault in new[] { "price", "quality", "demand" })
+        {
+            using var f = new Fixture();
+            var meal = f.Meal("invalid-catalogue");
+            var budget = new ResidentBudget { BalanceCents = 100000, OpeningBalanceCents = 100000 };
+            Check(HouseholdFinance.HoldPurchase(budget, meal.PriceCents), "hold before catalogue refusal");
+            if (fault == "price") f.Reg.retailPrices.Add(new RetailPrice { itemName = Croissant, price = 3f });
+            if (fault == "quality") f.Reg.satisfaction = new Satisfaction { customerService = 101 };
+            if (fault == "demand")
+            {
+                f.Controller.building.Neighbourhood = "district";
+                SaveGameManager.Current.productMarketEntries = new() { new() { itemName = Croissant,
+                    demandValues = new() { new() { neighborhood = "district" }, new() { neighborhood = "district" } } } };
+            }
+            int units = f.Stock(Croissant), bags = f.Bags, orders = f.Reg.unprocessedCompletedOrders.Count;
+            var result = f.Market.Buy(meal, Minute);
+            Check(!result.Paid && result.Reason.Contains("Catalogue refused"), "known catalogue refusal is definite: " + fault);
+            Check(f.Receipt(meal) == FoodReceiptStatus.Missing && f.Market.NativePurchases == 0,
+                "catalogue refusal precedes receipt and sale");
+            Check(f.Stock(Croissant) == units && f.Bags == bags && f.Reg.unprocessedCompletedOrders.Count == orders,
+                "catalogue refusal leaves inventory and orders intact");
+            HouseholdFinance.RefusePurchase(budget);
+            Check(budget.BalanceCents == budget.OpeningBalanceCents && budget.HeldPurchaseCents == 0,
+                "catalogue refusal permits full refund");
+            SaveGameManager.Current.productMarketEntries = null;
+        }
+    }
+
     static void Main()
     {
-        InvalidPostSetupPricesRefuseWithoutUncertainFunds();
+        InvalidPreSalePricesRefuseWithoutUncertainFunds();
+        CatalogueRefusalsRefundBeforeSale();
         FractionalCheckoutMatchesNativeAndRejectsSameCentPriceChanges();
         SuccessfulCheckoutUsesOnePreSaleRead();
         SameFrameSalesAndChangesAreSeenByTheNextCheckout();
@@ -408,6 +444,12 @@ static partial class Program
         Check(market.DiscoveryPlaceIdBuilds == 151, "a replaced registration builds its slot's place ID once");
         Check(state.Shops.Any(s => s.PlaceId == spare) && market.ScopeStatus(spare) == "" && market.Read(Minute).Any(b => b.PlaceId == spare),
             "the new registration is known under its own place ID");
+        Check(market.Read(Minute).Count(b => b.PlaceId == spare) == 1, "aliased controller is observed exactly once");
+        var conflicting = new CityBuildingController { buildingRegistration = Registration(151, 5, 5, 5) };
+        bool refused = false;
+        try { FoodBusinessCatalogue.ReadSelected(new[] { spare }, new[] { Croissant }, new[] { controllers[149], conflicting }); }
+        catch (FoodBusinessCatalogue.CatalogueRefusalException ex) { refused = ex.Message.Contains("Duplicate live shop address"); }
+        Check(refused, "distinct controllers at a conflicting address remain refused");
     }
 }
 
@@ -421,13 +463,14 @@ static class Hooks
     public static void Reset() { Fault = ""; OpenCheck = null; PriceChecks = 0; LastPriceAccepted = false; }
 }
 
-public sealed class Save { public int Day = 3, Hour = 12; public float Minute; public Dictionary<string, string> modData = new(); }
+public sealed class Save { public List<ProductMarketEntry>? productMarketEntries; public int Day = 3, Hour = 12; public float Minute; public Dictionary<string, string> modData = new(); }
 public static class SaveGameManager { public static Save Current = new(); }
 public sealed class RetailPrice { public string itemName = ""; public float price; }
 public sealed class OpeningHourSlot { public int startingHour, endingHour; }
 public sealed class ScheduleDay { public int day; public bool isOpen; public List<OpeningHourSlot> openingHourSlots = new(); }
 public sealed class BuildingRegistration
 {
+    public int creationDay; public string businessOwnerRivalId = ""; public Satisfaction? satisfaction;
     public string StreetName = ""; public int StreetNumber;
     public bool RentedByPlayer = true, AvailableForRent, temporarilyClosed, Open = true;
     public string BusinessName = "Bakery", businessTypeName = "full";
@@ -440,31 +483,15 @@ public sealed class BuildingRegistration
     public List<ItemInstance> Shelves = new();
     public List<PointOfSale> Registers = new();
 }
-public sealed class CityBuildingController { public BuildingRegistration? buildingRegistration; }
+public sealed class Building { public string Neighbourhood = ""; }
+public sealed class Satisfaction { public int customerService = 75; }
+public sealed class NeighborhoodDemand { public string neighborhood = ""; public int demand; }
+public sealed class ProductMarketEntry { public string itemName = ""; public List<NeighborhoodDemand> demandValues = new(); }
+public sealed class CityBuildingController { public Building building = new(); public BuildingRegistration? buildingRegistration; }
 public sealed class CityManager { public static CityManager Instance = new(); public CityBuildingController[] cityBuildingControllers = Array.Empty<CityBuildingController>(); }
 
 namespace PersistentCity.Runtime
 {
-    public sealed class FoodCatalogueObservation { public List<FoodBusiness> Businesses { get; } = new(); }
-    public static class FoodBusinessCatalogue
-    {
-        internal static string BusinessIdentity(BuildingRegistration reg) => "business:" + Uri.EscapeDataString(reg.StreetName) + ":" + reg.StreetNumber + ":player";
-        internal static FoodCatalogueObservation ReadSelected(IReadOnlyCollection<string> places, IReadOnlyCollection<string> products,
-            IEnumerable<CityBuildingController> controllers, Func<BuildingRegistration, string>? identity = null)
-        {
-            var result = new FoodCatalogueObservation();
-            foreach (var controller in controllers)
-            {
-                var reg = controller.buildingRegistration;
-                if (reg == null || !places.Contains(NativeFoodMarket.PlaceId(reg))) continue;
-                var business = new FoodBusiness { Id = identity?.Invoke(reg) ?? BusinessIdentity(reg), PlaceId = NativeFoodMarket.PlaceId(reg) };
-                foreach (var price in reg.retailPrices.Where(p => products.Contains(p.itemName) && reg.cachedAvailableProducts.Contains(p.itemName)))
-                    business.Offers.Add(new FoodOffer { ProductId = price.itemName, PriceCents = FoodMoney.FromNative(price.price) });
-                result.Businesses.Add(business);
-            }
-            return result;
-        }
-    }
     public static class GamePlaces
     {
         public static bool BuildingAccessible(CityBuildingController controller) => true;
@@ -473,6 +500,8 @@ namespace PersistentCity.Runtime
     // Ownership has its own regression; this one grants whole-business authority to the current registration.
     internal static class NativeFoodOwnership
     {
+        // This harness keeps ownership stable while mutating catalogue/cache inputs.
+        private static string TestIdentity(BuildingRegistration reg) => "business:" + Uri.EscapeDataString(reg.StreetName) + ":" + reg.StreetNumber + ":player";
         private static readonly Dictionary<string, FoodAuthority> Rows = new(StringComparer.Ordinal);
         internal static long SuppressedBatches => 0;
         internal static long SuppressedDraws => 0;
@@ -484,11 +513,11 @@ namespace PersistentCity.Runtime
         {
             string place = NativeFoodMarket.PlaceId(reg);
             if (!Rows.TryGetValue(place, out var row)) Rows[place] = row = new FoodAuthority { PlaceId = place, FromHour = 0 };
-            row.Signature = FoodBusinessCatalogue.BusinessIdentity(reg); row.Desired = eligible;
+            row.Signature = TestIdentity(reg); row.Desired = eligible;
             return row;
         }
         internal static FoodAuthority? Find(BuildingRegistration reg)
-            => Rows.TryGetValue(NativeFoodMarket.PlaceId(reg), out var row) && row.Signature == FoodBusinessCatalogue.BusinessIdentity(reg) ? row : null;
+            => Rows.TryGetValue(NativeFoodMarket.PlaceId(reg), out var row) && row.Signature == TestIdentity(reg) ? row : null;
     }
 }
 namespace Entities { public sealed class Unused { } }
