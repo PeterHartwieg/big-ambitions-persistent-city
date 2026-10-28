@@ -1,5 +1,9 @@
 # Validation status
 
+## PR #2 Windows rig — 28 October 2026
+
+**FAIL exact financial gate.** Before `3df8232` / after `9f89590`: 1,267 / 1,304 unit tests and all README harnesses pass; fractional-charge regression is red/green. Matched 110-sale native replay has after wallet/receipt payments `$1127.8079986572267` versus native history/accounts/cash revenue `$1127.8079833984375` under exact raw comparison. Schema 13→14 migration and bounded Serving/Paid reload/receipt replay pass. All six autosave-off timing windows are clean, but frame-tail/rendered acceptance and final native shutdown-error attribution remain incomplete. All 4,828 original profile files/preferences and 107 references restored/hash-verified; stopped/released. No production changes, ordinary-save or Workshop clearance. [Full verifiable report, raw financial measurements and scripts](docs/reviews/rig/2026-10-28-pr2/README.md).
+
 ## Independent review round 3 (offline)
 
 Known pre-sale catalogue validation refusals (duplicate address, invalid service score, ambiguous price, duplicate district demand) now share a dedicated refusal type. Checkout returns an unpaid result before receipt/sale processing so the caller can refund held funds. Arbitrary exceptions and post-sale uncertainty are not caught by this change. The earlier round-2 assertion requiring ambiguous prices to throw has been replaced with refund coverage.

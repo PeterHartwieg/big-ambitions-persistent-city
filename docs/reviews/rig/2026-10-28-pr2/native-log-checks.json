@@ -1,0 +1,70 @@
+{
+  "before": {
+    "logSha256": "44700af2af01b7ef7b7821b51e9986e8708a0ad65a51ecbcff577f4226d6e4ed",
+    "activePatchLines": 132,
+    "inactiveLines": [
+      "[Mod:CityPerformance] Not active: cinematic coverage (unverified build or conflicting hooks).",
+      "[Mod:CityPerformance] Not active: midnight cleanup deferral (build, signature, multiplayer or conflict).",
+      "[Mod:CityPerformance] Not active: pedestrian refill (unverified build or conflicting patch).",
+      "[Mod:CityPerformance] Not active: tree detail (unverified build, signature or conflicting patch)."
+    ],
+    "inactiveLineCount": 4,
+    "modErrors": [
+      "[Mod:FoodTrucks] ERROR: Save data: 'FT Food Routines PR2 Schema13 Migration 20261028' is being saved while the mod isn't attached to this game (game's city mod scope loaded False, this mod in it False, 16 city entries discovered, this mod's among them); it keeps the Food Trucks block as loaded or last written (save count 21, written by 0.10.2, 2322 characters), and nothing the mod would have done since is in it."
+    ],
+    "persistentCityExceptions": [],
+    "navMeshWarnings": 32,
+    "loader": "native ModAPI / Player-agent.log; no BepInEx or MelonLoader installation used"
+  },
+  "after": {
+    "logSha256": "b379cf0987cf55d0c7e3623bd5560c5da8a1c78e57236b26c538d12b6cf394c6",
+    "activePatchLines": 132,
+    "inactiveLines": [
+      "[Mod:CityPerformance] Not active: cinematic coverage (unverified build or conflicting hooks).",
+      "[Mod:CityPerformance] Not active: midnight cleanup deferral (build, signature, multiplayer or conflict).",
+      "[Mod:CityPerformance] Not active: pedestrian refill (unverified build or conflicting patch).",
+      "[Mod:CityPerformance] Not active: tree detail (unverified build, signature or conflicting patch)."
+    ],
+    "inactiveLineCount": 4,
+    "modErrors": [
+      "[Mod:FoodTrucks] ERROR: Save data: 'FT Food Routines PR2 After Control 20261028' is being saved while the mod isn't attached to this game (game's city mod scope loaded False, this mod in it False, 16 city entries discovered, this mod's among them); it keeps the Food Trucks block as loaded or last written (save count 21, written by 0.10.2, 2322 characters), and nothing the mod would have done since is in it."
+    ],
+    "persistentCityExceptions": [],
+    "navMeshWarnings": 32,
+    "loader": "native ModAPI / Player-agent.log; no BepInEx or MelonLoader installation used"
+  },
+  "after-full": {
+    "logSha256": "32af94d615a8b755b02f72b65ffa79426e7f13a0cf87321b2bb636ef4aa1ce1f",
+    "activePatchLines": 132,
+    "inactiveLines": [
+      "[Mod:CityPerformance] Not active: cinematic coverage (unverified build or conflicting hooks).",
+      "[Mod:CityPerformance] Not active: midnight cleanup deferral (build, signature, multiplayer or conflict).",
+      "[Mod:CityPerformance] Not active: pedestrian refill (unverified build or conflicting patch).",
+      "[Mod:CityPerformance] Not active: tree detail (unverified build, signature or conflicting patch)."
+    ],
+    "inactiveLineCount": 4,
+    "modErrors": [
+      "[Mod:FoodTrucks] ERROR: Save data: 'FT Food Routines PR2 After Control 20261028' is being saved while the mod isn't attached to this game (game's city mod scope loaded False, this mod in it False, 16 city entries discovered, this mod's among them); it keeps the Food Trucks block as loaded or last written (save count 21, written by 0.10.2, 2322 characters), and nothing the mod would have done since is in it."
+    ],
+    "persistentCityExceptions": [],
+    "navMeshWarnings": 96,
+    "loader": "native ModAPI / Player-agent.log; no BepInEx or MelonLoader installation used"
+  },
+  "after-final": {
+    "logSha256": "1dc959fe2c6b1e5eeb9c9dafe9fed411cfc4c1ee75905789d77a0cd59dce8d3a",
+    "activePatchLines": 132,
+    "inactiveLines": [
+      "[Mod:CityPerformance] Not active: cinematic coverage (unverified build or conflicting hooks).",
+      "[Mod:CityPerformance] Not active: midnight cleanup deferral (build, signature, multiplayer or conflict).",
+      "[Mod:CityPerformance] Not active: pedestrian refill (unverified build or conflicting patch).",
+      "[Mod:CityPerformance] Not active: tree detail (unverified build, signature or conflicting patch)."
+    ],
+    "inactiveLineCount": 4,
+    "modErrors": [
+      "[Mod:FoodTrucks] ERROR: Save data: 'FT Food Routines PR2 After Control 20261028' is being saved while the mod isn't attached to this game (game's city mod scope loaded False, this mod in it False, 16 city entries discovered, this mod's among them); it keeps the Food Trucks block as loaded or last written (save count 21, written by 0.10.2, 2322 characters), and nothing the mod would have done since is in it."
+    ],
+    "persistentCityExceptions": [],
+    "navMeshWarnings": 96,
+    "loader": "native ModAPI / Player-agent.log; no BepInEx or MelonLoader installation used"
+  }
+}
