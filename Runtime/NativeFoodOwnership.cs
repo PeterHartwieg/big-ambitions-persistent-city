@@ -88,7 +88,7 @@ namespace PersistentCity.Runtime
                     records.Add(row.PlaceId, row);
                 }
                 if (!current.modData.ContainsKey(SaveStore.StateKey) && (records.Values.Any(r => r.FromHour >= 0)
-                    || current.modData.Keys.Any(k => k.StartsWith("persistentcity:food-sale-v1:", StringComparison.Ordinal))))
+                    || current.modData.Keys.Any(FoodSaleReceipts.IsReceiptKey)))
                     throw new InvalidOperationException("Saved food authority or receipts exist without the population payload; original data retained, fresh identities and wallets refused.");
             }
             catch (Exception e)
