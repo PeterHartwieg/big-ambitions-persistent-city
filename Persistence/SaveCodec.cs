@@ -92,18 +92,21 @@ namespace PersistentCity.Persistence
             {
                 int schema = ReadSchema(source);
                 if (schema > CityState.CurrentSchema) return new SaveReadResult(SaveReadStatus.Future, null, "State uses a newer schema; preserve the original payload.", sourceSchema: schema);
-                Require(schema == CityState.CurrentSchema, "Unsupported experimental state schema; preserve the original payload and use a new development city.");
+                Require(schema == 13 || schema == CityState.CurrentSchema, "Unsupported experimental state schema; preserve the original payload and use a new development city.");
+                // The caller retains the original text; only this in-memory copy is migrated.
+                source = MigrateLegacyMoney(source, schema);
                 var serializer = JsonSerializer.Create(Settings());
                 using (var shape = Reader(source))
                 {
                     Require(shape.Read(), "Missing state.");
                     int records = 0;
-                    CheckShape(shape, typeof(CityState), serializer.ContractResolver, ref records);
+                    CheckShape(shape, typeof(CityState), serializer.ContractResolver, ref records, new TokenText(source));
                     Require(!shape.Read(), "State contains trailing JSON content.");
                 }
                 using var reader = Reader(source);
                 var state = serializer.Deserialize<CityState>(reader);
                 Require(state != null, "State is null.");
+                state!.Schema = CityState.CurrentSchema;
                 Validate(state!);
                 return new SaveReadResult(SaveReadStatus.Loaded, state, "", sourceSchema: schema);
             }
@@ -145,7 +148,7 @@ namespace PersistentCity.Persistence
 
         // Validate directly from tokens before deserialization: no full payload DOM, no coercion,
         // and bounded collection allocation even for hostile arrays of otherwise valid records.
-        private static void CheckShape(JsonReader reader, Type type, IContractResolver resolver, ref int records)
+        private static void CheckShape(JsonReader reader, Type type, IContractResolver resolver, ref int records, TokenText text)
         {
             var token = reader.TokenType;
             Type? nullable = Nullable.GetUnderlyingType(type);
@@ -155,6 +158,12 @@ namespace PersistentCity.Persistence
             if (type == typeof(bool)) { Require(token == JsonToken.Boolean, "Expected a boolean."); return; }
             if (type == typeof(int) || type.IsEnum) { Require(token == JsonToken.Integer, "Expected an integer."); Require(int.TryParse(Convert.ToString(reader.Value, CultureInfo.InvariantCulture), NumberStyles.Integer, CultureInfo.InvariantCulture, out _), "Integer is out of range."); return; }
             if (type == typeof(long)) { Require(token == JsonToken.Integer, "Expected an integer."); Require(long.TryParse(Convert.ToString(reader.Value, CultureInfo.InvariantCulture), NumberStyles.Integer, CultureInfo.InvariantCulture, out _), "Integer is out of range."); return; }
+            if (type == typeof(Money))
+            {
+                // Validate the original token: Json.NET reads "010" as octal 8 and rounds fractions.
+                Require(token == JsonToken.Integer && TokenText.CanonicalUnits(text.Number((IJsonLineInfo)reader)), "Money must be a canonical whole number of units.");
+                return;
+            }
             if (type == typeof(double)) { Require(token == JsonToken.Integer || token == JsonToken.Float, "Expected a number."); return; }
             if (type == typeof(Position))
             {
@@ -192,7 +201,7 @@ namespace PersistentCity.Persistence
                         || item == typeof(TrafficRouteLeg) || item == typeof(TrafficVehicleState) || item == typeof(TrafficLinkDefinition)
                         || item == typeof(TrafficLinkState) || item == typeof(TrafficEventState) || item == typeof(int) || item == typeof(string))
                         Require(++records <= MaxEmbeddedRecords, "Too many opening, route and visit records.");
-                    CheckShape(reader, item, resolver, ref records);
+                    CheckShape(reader, item, resolver, ref records, text);
                 }
                 Require(reader.TokenType == JsonToken.EndArray, "Incomplete array."); return;
             }
@@ -207,9 +216,52 @@ namespace PersistentCity.Persistence
                 var property = properties.GetProperty(name, StringComparison.Ordinal);
                 Require(property != null, "Unknown field: " + name);
                 Require(reader.Read(), "Missing field value.");
-                CheckShape(reader, property.PropertyType!, resolver, ref records);
+                CheckShape(reader, property.PropertyType!, resolver, ref records, text);
             }
             Require(reader.TokenType == JsonToken.EndObject && names.Count == properties.Count, "Missing object fields.");
+        }
+        /// <summary>Schema 13 (whole cents) and earlier schema-14 payloads (decimal cents) name money
+        /// "...Cents". Rewrite exactly those fields to whole units from their original token text,
+        /// refusing any amount that is not a whole number of units; nothing is rounded. A payload
+        /// mixing both field generations is refused. Current payloads pass through unchanged.</summary>
+        private static string MigrateLegacyMoney(string source, int schema)
+        {
+            var legacy = LegacyMoneyFields.Names;
+            bool found = schema == 13;
+            // Any quoted occurrence, so whitespace before the colon is still migrated; the reader
+            // below rewrites only actual field names.
+            foreach (var name in legacy.Keys) found = found || source.IndexOf("\"" + name + "\"", StringComparison.Ordinal) >= 0;
+            if (!found) return source;
+            var current = new HashSet<string>(legacy.Values, StringComparer.Ordinal);
+            var text = new TokenText(source);
+            var migrated = new System.Text.StringBuilder(source.Length + source.Length / 8);
+            int copied = 0; bool sawLegacy = false, sawCurrent = false;
+            using (var reader = Reader(source))
+                while (reader.Read())
+                {
+                    if (reader.TokenType != JsonToken.PropertyName) continue;
+                    string name = (string)reader.Value!;
+                    if (current.Contains(name)) { sawCurrent = true; continue; }
+                    if (!legacy.TryGetValue(name, out var unitName)) continue;
+                    sawLegacy = true;
+                    // Json.NET's position follows the colon; the name itself must be written plainly.
+                    int colon = text.End(reader) - 1, quote = colon - 1;
+                    while (quote > 0 && char.IsWhiteSpace(source[quote])) quote--;
+                    int nameStart = quote - name.Length - 1;
+                    Require(source[colon] == ':' && nameStart >= 0 && string.CompareOrdinal(source, nameStart, "\"" + name + "\"", 0, name.Length + 2) == 0,
+                        "Legacy money field is not written plainly.");
+                    Require(reader.Read() && (reader.TokenType == JsonToken.Integer || schema != 13 && reader.TokenType == JsonToken.Float),
+                        "Expected a monetary number (integer cents in schema 13).");
+                    string amount = text.Number(reader);
+                    Require(Money.TryParseCents(amount, schema == 13 ? 0 : LegacyMoneyFields.MaximumFractionDigits, out var money),
+                        "Legacy money is not an exact whole number of units: " + name + ".");
+                    int amountStart = text.End(reader) - amount.Length;
+                    migrated.Append(source, copied, nameStart - copied).Append('"').Append(unitName).Append('"')
+                        .Append(source, quote + 1, amountStart - quote - 1).Append(money.Units.ToString(CultureInfo.InvariantCulture));
+                    copied = amountStart + amount.Length;
+                }
+            Require(!(sawLegacy && sawCurrent) && !(schema == 13 && sawCurrent), "State mixes money field generations.");
+            return migrated.Append(source, copied, source.Length - copied).ToString();
         }
         private static bool NullableRecord(Type type) => type == typeof(Route) || type == typeof(CarState)
             || type == typeof(TrafficKernelState) || type == typeof(TrafficSignalSchedule)
@@ -221,13 +273,15 @@ namespace PersistentCity.Persistence
         private static JsonSerializerSettings Settings() => new JsonSerializerSettings
         {
             ContractResolver = StateContracts,
-            Converters = { new PositionConverter() },
+            Converters = { new PositionConverter(), new MoneyJsonConverter() },
             Culture = CultureInfo.InvariantCulture,
             MissingMemberHandling = MissingMemberHandling.Error,
             TypeNameHandling = TypeNameHandling.None,
             MaxDepth = 48,
             FloatParseHandling = FloatParseHandling.Double
         };
+
+        private static readonly Money MaximumAllowance = Money.FromCents(1000000);
 
         private static void Validate(CityState state)
         {
@@ -634,7 +688,7 @@ namespace PersistentCity.Persistence
                     && row.AccessRejections >= 0 && row.ClosedRejections >= 0 && row.StockRejections >= 0 && row.StaffRejections >= 0
                     && row.ServiceRejections >= 0 && row.UnknownEvidence >= 0 && row.PreferredAlternatives >= 0
                     && row.Purchases >= 0 && row.ExistingStopPurchases >= 0 && row.ExistingStopPurchases <= row.Purchases
-                    && row.RevenueCents >= 0, "Invalid market history counters.");
+                    && row.Revenue >= Money.Zero, "Invalid market history counters.");
                 Require(row.OffersConsidered == checked(row.ChosenOffers + row.PriceRejections + row.AccessRejections
                     + row.ClosedRejections + row.StockRejections + row.StaffRejections + row.ServiceRejections + row.UnknownEvidence + row.PreferredAlternatives),
                     "Market offer outcomes do not reconcile.");
@@ -647,11 +701,11 @@ namespace PersistentCity.Persistence
                     "Invalid product sales history.");
                 foreach (var product in row.ProductSales)
                     Require(product != null && !string.IsNullOrWhiteSpace(product.ProductId)
-                        && product.Purchases > 0 && product.RevenueCents >= 0 && product.PurchaseMeals != null
+                        && product.Purchases > 0 && product.Revenue >= Money.Zero && product.PurchaseMeals != null
                         && product.PurchaseMeals.Length == 4 && product.PurchaseMeals.All(n => n >= 0)
                         && product.PurchaseMeals.Sum() == product.Purchases, "Invalid product purchase counters.");
                 Require(row.ProductSales.Sum(p => p.Purchases) == row.Purchases
-                    && row.ProductSales.Sum(p => p.RevenueCents) == row.RevenueCents
+                    && Money.Sum(row.ProductSales.Select(p => p.Revenue)) == row.Revenue
                     && Enumerable.Range(0, 4).All(k => row.ProductSales.Sum(p => p.PurchaseMeals[k]) == row.PurchaseMeals[k]),
                     "Product sales do not reconcile.");
                 Require(row.BuyerDistricts != null && row.BuyerDistricts.Count <= 100
@@ -684,11 +738,11 @@ namespace PersistentCity.Persistence
                 Known(meal.Status, "Meal status");
                 Known(meal.Kind, "Meal kind");
                 Require(food.MealRhythmVersion != 0 || meal.Kind == MealKind.Legacy, "Meal kind differs from rhythm policy.");
-                Require(meal.DayAllowanceUsedCents >= 0 && meal.DayAllowanceUsedCents <= 1000000, "Invalid daily food allowance use.");
+                Require(meal.DayAllowanceUsed >= Money.Zero && meal.DayAllowanceUsed <= MaximumAllowance, "Invalid daily food allowance use.");
                 Require((meal.Budget != null) == (food.HouseholdFinanceVersion != 0), "Household budget ownership differs from policy.");
                 if (meal.Budget != null) ValidateBudget(meal.Budget, state.Minute);
-                Require(meal.Day >= 0 && meal.Day <= 100000 && meal.AllowanceCents >= 0 && meal.AllowanceCents <= 1000000
-                    && meal.PriceCents >= 0 && meal.PriceCents <= meal.AllowanceCents && meal.Purchases >= 0 && meal.SpentCents >= 0,
+                Require(meal.Day >= 0 && meal.Day <= 100000 && meal.Allowance >= Money.Zero && meal.Allowance <= MaximumAllowance
+                    && meal.Price >= Money.Zero && meal.Price <= meal.Allowance && meal.Purchases >= 0 && meal.Spent >= Money.Zero,
                     "Invalid meal allowance/accounting.");
                 Minute(meal.DesiredAt, "Meal appetite time"); Minute(meal.ExpiresAt, "Meal expiry"); Minute(meal.DueAt, "Meal event");
                 Minute(meal.ServiceAt, "Meal service time"); Minute(meal.Deadline, "Meal return deadline");
@@ -701,7 +755,7 @@ namespace PersistentCity.Persistence
                 if (meal.PlaceId.Length > 0)
                     Require(foodPlaces.Contains(meal.PlaceId, (int)PlaceKind.Shop) && meal.BusinessId.Length > 0 && meal.ProductId.Length > 0, "Meal lost its historical business/place identity.");
                 if (meal.Status == MealStatus.Travelling || meal.Status == MealStatus.Serving)
-                    Require(meal.PlaceId.Length > 0 && meal.PriceCents > 0 && meal.ServiceMinutes > 0
+                    Require(meal.PlaceId.Length > 0 && meal.Price > Money.Zero && meal.ServiceMinutes > 0
                         && meal.Deadline <= meal.ExpiresAt, "Active meal lost its outing.");
                 Require(meal.ExistingStopPurchases >= 0 && meal.ExistingStopPurchases <= meal.Purchases, "Invalid existing-stop purchase count.");
                 Require(!meal.ExistingStop || meal.PlaceId.Length > 0 && meal.ReturnMinutes == 0
@@ -760,13 +814,12 @@ namespace PersistentCity.Persistence
                 && b.DailyHousingCents >= 0 && b.DailyHousingCents <= 1000000
                 && b.DailyEssentialsCents >= 0 && b.DailyEssentialsCents <= 1000000
                 && b.DailyHomeFoodCents > 0 && b.DailyHomeFoodCents <= 1000000, "Invalid household policy amounts.");
-            Require(b.OpeningBalanceCents >= 0 && b.BalanceCents >= 0 && b.IncomeReceivedCents >= 0
-                && b.EssentialsPaidCents >= 0 && b.HomeFoodPaidCents >= 0 && b.PreparedFoodSpentCents >= 0
-                && b.HeldPurchaseCents >= 0 && b.HeldPurchaseCents <= 1000000 && b.ArrearsCents >= 0,
+            Require(b.OpeningBalance >= Money.Zero && b.Balance >= Money.Zero && b.IncomeReceived >= Money.Zero
+                && b.EssentialsPaid >= Money.Zero && b.HomeFoodPaid >= Money.Zero && b.PreparedFoodSpent >= Money.Zero
+                && b.HeldPurchase >= Money.Zero && b.HeldPurchase <= MaximumAllowance && b.Arrears >= Money.Zero,
                 "Negative household accounting.");
-            Require(checked(b.OpeningBalanceCents + b.IncomeReceivedCents) == checked(b.BalanceCents
-                + b.EssentialsPaidCents + b.HomeFoodPaidCents + b.PreparedFoodSpentCents + b.HeldPurchaseCents),
-                "Household cash is not conserved.");
+            // Checked unit sums: an amount beyond the unit's range is refused (OverflowException), never rounded.
+            Require(HouseholdFinance.CashConserved(b), "Household cash is not conserved.");
             Minute(b.NextPostingMinute, "Next household posting");
             Require(b.LastPostedDay >= -1 && b.LastPostedDay <= (int)(minute / 1440)
                 && b.HomeFoodFundedDay >= -1 && b.HomeFoodFundedDay <= b.LastPostedDay

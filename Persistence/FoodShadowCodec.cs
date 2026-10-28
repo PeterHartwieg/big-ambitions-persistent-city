@@ -15,7 +15,8 @@ namespace PersistentCity.Persistence
         {
             TypeNameHandling = TypeNameHandling.None, MissingMemberHandling = MissingMemberHandling.Error,
             MaxDepth = 24, FloatParseHandling = FloatParseHandling.Double,
-            Culture = System.Globalization.CultureInfo.InvariantCulture
+            Culture = System.Globalization.CultureInfo.InvariantCulture,
+            Converters = { new MoneyJsonConverter() }
         };
 
         public static string Write(FoodShadowState state)
@@ -35,20 +36,24 @@ namespace PersistentCity.Persistence
             if (token["Schema"]?.Type != JTokenType.Integer || (int)token["Schema"]! < 1 || (int)token["Schema"]! > FoodShadowState.CurrentSchema)
                 throw new InvalidDataException("Unsupported food shadow schema; retain the original document.");
             int schema = (int)token["Schema"]!;
-            CheckShape(token, typeof(FoodShadowState), schema);
+            var text = new TokenText(json);
+            bool migrated = MigrateLegacyMoney(token, text, schema);
+            CheckShape(token, typeof(FoodShadowState), schema, text);
             if (schema < FoodShadowState.CurrentSchema)
             {
                 Upgrade(token, typeof(FoodShadowState), schema);
                 token["Schema"] = FoodShadowState.CurrentSchema;
             }
-            var state = token.ToObject<FoodShadowState>(JsonSerializer.Create(Settings()))
+            var state = (schema == FoodShadowState.CurrentSchema && !migrated
+                ? JsonConvert.DeserializeObject<FoodShadowState>(json, Settings())
+                : token.ToObject<FoodShadowState>(JsonSerializer.Create(Settings())))
                 ?? throw new InvalidDataException("Missing food shadow state.");
             if (state.CityKey != expectedCityKey) throw new InvalidDataException("Food shadow document belongs to another city.");
             FoodDemand.Validate(state);
             return state;
         }
 
-        private static void CheckShape(JToken token, Type type, int schema)
+        private static void CheckShape(JToken token, Type type, int schema, TokenText text)
         {
             Type? nullable = Nullable.GetUnderlyingType(type);
             if (token.Type == JTokenType.Null)
@@ -59,11 +64,13 @@ namespace PersistentCity.Persistence
             type = nullable ?? type;
             if (type == typeof(string)) { Require(token.Type == JTokenType.String); return; }
             if (type == typeof(int) || type.IsEnum) { Require(token.Type == JTokenType.Integer); return; }
+            // Original money tokens must be canonical unit integers; migrated values carry no line information.
+            if (type == typeof(Money)) { Require(token.Type == JTokenType.Integer && (!((IJsonLineInfo)token).HasLineInfo() || TokenText.CanonicalUnits(text.Number((IJsonLineInfo)token)))); return; }
             if (type == typeof(double)) { Require(token.Type == JTokenType.Integer || token.Type == JTokenType.Float); return; }
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Collections.Generic.List<>))
             {
                 Require(token is JArray);
-                foreach (var item in (JArray)token) CheckShape(item, type.GetGenericArguments()[0], schema);
+                foreach (var item in (JArray)token) CheckShape(item, type.GetGenericArguments()[0], schema, text);
                 return;
             }
             Require(token is JObject);
@@ -75,8 +82,27 @@ namespace PersistentCity.Persistence
             foreach (var field in fields)
             {
                 Require(obj.TryGetValue(field.Name, StringComparison.Ordinal, out var value));
-                CheckShape(value!, field.PropertyType, schema);
+                CheckShape(value!, field.PropertyType, schema, text);
             }
+        }
+
+        /// <summary>Schemas 1-4 (whole cents) and earlier schema-5 documents (decimal cents) name money
+        /// "...Cents". Rewrite those fields to whole units from their original token text; an amount
+        /// that is not a whole number of units, or a document mixing field generations, is refused.</summary>
+        private static bool MigrateLegacyMoney(JObject document, TokenText text, int schema)
+        {
+            var legacy = document.Descendants().OfType<JProperty>().Where(p => LegacyMoneyFields.Names.ContainsKey(p.Name)).ToArray();
+            if (legacy.Length == 0) return false;
+            var current = new System.Collections.Generic.HashSet<string>(LegacyMoneyFields.Names.Values, StringComparer.Ordinal);
+            Require(!document.Descendants().OfType<JProperty>().Any(p => current.Contains(p.Name)));
+            foreach (var property in legacy)
+            {
+                var value = property.Value;
+                Require(value.Type == JTokenType.Integer || schema >= 5 && value.Type == JTokenType.Float);
+                Require(Money.TryParseCents(text.Number((IJsonLineInfo)value), schema >= 5 ? LegacyMoneyFields.MaximumFractionDigits : 0, out var money));
+                property.Replace(new JProperty(LegacyMoneyFields.Names[property.Name], money.Units));
+            }
+            return true;
         }
 
         private static bool AddedInV2(Type type, string name)

@@ -32,7 +32,8 @@ public sealed partial class FoodCommerceTests
     private sealed class Market : IFoodMarket, IFoodSaleEvidence
     {
         public double EarliestMinute { get; set; }
-        public int Units = 100, Price = 100, Capacity = 15, OpenFromMinute;
+        public int Units = 100, Capacity = 15, OpenFromMinute;
+        public Money Price = Money.FromCents(100);
         public string BusinessId = "b";
         public string UnavailableReason = "";
         public string[] Products = new[] { "pastry" };
@@ -47,10 +48,10 @@ public sealed partial class FoodCommerceTests
             ? throw new InvalidOperationException("Evidence unavailable") : ConfirmEvidence && Orders.Contains(meal.IntentId);
         public IReadOnlyList<FoodBusiness> Read(double minute) => new[] { new FoodBusiness { Id = BusinessId, PlaceId = "shop", Name = "Bakery", ServiceUnavailableReason = UnavailableReason,
             MealsPerHour = Capacity, Hours = Closed ? new() : Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = OpenFromMinute, ToMinute = 1440 }).ToList(),
-            Offers = Products.Select(p => new FoodOffer { ProductId = p, PriceCents = Price, Units = Units }).ToList() } };
+            Offers = Products.Select(p => new FoodOffer { ProductId = p, Price = Price, Units = Units }).ToList() } };
         public FoodSale Buy(ResidentMeal meal, double at)
         {
-            if (Units <= 0 || Capacity <= 0 || Closed || Price != meal.PriceCents) return new(false, "Unavailable at checkout");
+            if (Units <= 0 || Capacity <= 0 || Closed || Price != meal.Price) return new(false, "Unavailable at checkout");
             Assert.DoesNotContain(meal.IntentId, Orders); Orders.Add(meal.IntentId); Times.Add(at); Units--;
             if (ThrowAfterSale || ThrowForResident == meal.ResidentId) throw new Exception("Lost native acknowledgement");
             return new(true, "Native fake confirmed");
@@ -108,7 +109,7 @@ public sealed partial class FoodCommerceTests
         double until=a.State.Food!.Residents.Max(m=>m.DesiredAt)+80;
         Advance(a,until); Advance(b,until,1);
         Assert.Equal(ma.Orders,mb.Orders);
-        Assert.Equal(a.State.Food.Residents.Sum(m=>m.SpentCents),b.State.Food!.Residents.Sum(m=>m.SpentCents));
+        Assert.Equal(Money.Sum(a.State.Food.Residents.Select(m=>m.Spent)),Money.Sum(b.State.Food!.Residents.Select(m=>m.Spent)));
         Assert.Equal(a.State.Citizens.Sum(c=>c.CompletedJourneys),b.State.Citizens.Sum(c=>c.CompletedJourneys));
         if(metres==100) {Assert.Equal(0,bounded.Calls);Assert.Equal(2400,slow.Calls);}
         else Assert.NotEmpty(mb.Orders);
@@ -172,7 +173,7 @@ public sealed partial class FoodCommerceTests
     public void SoldOutOrPriceChangeDuringTravelDoesNotInventSale()
     {
         var (city, market, _) = Ready(); var desired = city.State.Food!.Residents.Single().DesiredAt;
-        Advance(city, desired + 2); market.Units = 0; market.Price = 200;
+        Advance(city, desired + 2); market.Units = 0; market.Price = Money.FromCents(200);
         Advance(city, desired + 40); Assert.Empty(market.Orders); Assert.Equal(MealStatus.Missed, city.State.Food.Residents.Single().Status);
     }
     [Fact]
@@ -205,7 +206,7 @@ public sealed partial class FoodCommerceTests
     [Fact]
     public void HighPriceMayProduceNoSalesAndDoesNotInterruptRoutine()
     {
-        var (city, market, _) = Ready(); market.Price = 100000;
+        var (city, market, _) = Ready(); market.Price = Money.FromCents(100000);
         Advance(city, city.State.Food!.Residents.Single().DesiredAt + 80);
         Assert.Empty(market.Orders); Assert.Equal(MealStatus.Declined, city.State.Food.Residents.Single().Status);
         Assert.Equal(0, city.State.Citizens.Single().CompletedJourneys);
@@ -229,13 +230,13 @@ public sealed partial class FoodCommerceTests
         var restoredMeal = SaveCodec.Read(oldPopulation).State!.Food!.Residents.Single();
         Assert.True(FoodSaleReceipts.AlreadyPaid(nativeData, restoredMeal));
         Assert.Throws<InvalidOperationException>(() => FoodSaleReceipts.Begin(nativeData, restoredMeal));
-        restoredMeal.PriceCents++; Assert.Throws<InvalidOperationException>(() => FoodSaleReceipts.AlreadyPaid(nativeData, restoredMeal));
+        restoredMeal.Price += Money.FromCents(1); Assert.Throws<InvalidOperationException>(() => FoodSaleReceipts.AlreadyPaid(nativeData, restoredMeal));
         Assert.Empty(market.Orders);
     }
     [Fact]
     public void UncertainNativeReceiptCannotExpireIntoASecondPurchase()
     {
-        var (_, _, _) = Ready(); var meal = new ResidentMeal { ResidentId="r", Day=1, PriceCents=900, BusinessId="b", ProductId="pastry" };
+        var (_, _, _) = Ready(); var meal = new ResidentMeal { ResidentId="r", Day=1, Price=Money.FromCents(900), BusinessId="b", ProductId="pastry" };
         var nativeData = new Dictionary<string,string> { ["rlo:data"]="keep" };
         FoodSaleReceipts.Begin(nativeData,meal);
         Assert.Throws<InvalidOperationException>(() => FoodSaleReceipts.AlreadyPaid(nativeData,meal));
@@ -267,7 +268,7 @@ public sealed partial class FoodCommerceTests
         Assert.Single(market.Orders);
         var meal = city.State.Food!.Residents.Single();
         Assert.Equal(1, meal.ExistingStopPurchases); Assert.True(meal.ExistingStop);
-        Assert.Equal(100, meal.SpentCents);
+        Assert.Equal(Money.FromCents(100), meal.Spent);
         Assert.Equal(end, city.State.Citizens.Single().NextEventMinute);
         Assert.Equal(0, city.State.Citizens.Single().CompletedJourneys);
         city = Reload(city, market, routes);
@@ -302,7 +303,7 @@ public sealed partial class FoodCommerceTests
     {
         var (city, market, routes) = Ready();
         var person = city.State.Citizens.Single(); person.PlaceId = "shop"; person.Activity = Activity.Shop;
-        market.Price = price; market.Units = units; market.Capacity = capacity;
+        market.Price = Money.FromCents(price); market.Units = units; market.Capacity = capacity;
         city = city.RebuildRoutes(routes);
         Advance(city, city.State.Food!.Residents.Single().DesiredAt + 30);
         Assert.Empty(market.Orders); Assert.Null(person.MealOuting);
@@ -345,18 +346,18 @@ public sealed partial class FoodCommerceTests
         city = city.RebuildRoutes(routes); city.EnableHouseholdFinances();
         Advance(city, city.State.Minute + 1);
         var budget = city.State.Food!.Residents.Single().Budget!;
-        long before = budget.BalanceCents;
-        Assert.True(budget.IncomeReceivedCents > 0); Assert.True(budget.HomeFoodPaidCents > 0);
-        Assert.True(budget.EssentialsPaidCents > 0);
+        Money before = budget.Balance;
+        Assert.True(budget.IncomeReceived > Money.Zero); Assert.True(budget.HomeFoodPaid > Money.Zero);
+        Assert.True(budget.EssentialsPaid > Money.Zero);
         double desired = city.State.Food.Residents.Single().DesiredAt;
         Advance(city, desired + 2); city = Reload(city, market, routes);
         Advance(city, desired + 30);
         budget = city.State.Food!.Residents.Single().Budget!;
-        Assert.Single(market.Orders); Assert.Equal(before - market.Price, budget.BalanceCents);
-        Assert.Equal(market.Price, budget.PreparedFoodSpentCents); Assert.Equal(0, budget.HeldPurchaseCents);
-        long paid = budget.IncomeReceivedCents;
+        Assert.Single(market.Orders); Assert.Equal(before - market.Price, budget.Balance);
+        Assert.Equal(market.Price, budget.PreparedFoodSpent); Assert.Equal(Money.FromCents(0), budget.HeldPurchase);
+        Money paid = budget.IncomeReceived;
         city = Reload(city, market, routes); Advance(city, desired + 60);
-        Assert.Equal(paid, city.State.Food!.Residents.Single().Budget!.IncomeReceivedCents);
+        Assert.Equal(paid, city.State.Food!.Residents.Single().Budget!.IncomeReceived);
         Assert.Single(market.Orders);
     }
 
@@ -369,12 +370,12 @@ public sealed partial class FoodCommerceTests
         double desired = city.State.Food!.Residents.Single().DesiredAt;
         Advance(city, desired + 30);
         var meal = city.State.Food.Residents.Single();
-        Assert.Equal(MealStatus.Uncertain, meal.Status); Assert.Equal(market.Price, meal.Budget!.HeldPurchaseCents);
-        Assert.Equal(0, meal.Budget.PreparedFoodSpentCents);
+        Assert.Equal(MealStatus.Uncertain, meal.Status); Assert.Equal(market.Price, meal.Budget!.HeldPurchase);
+        Assert.Equal(Money.FromCents(0), meal.Budget.PreparedFoodSpent);
         city = Reload(city, market, routes); Advance(city, desired + 1440 + 60);
         Assert.Single(market.Orders);
-        Assert.Equal(market.Price, city.State.Food!.Residents.Single().Budget!.HeldPurchaseCents);
-        Assert.Equal(0, HouseholdFinance.SpendingLimit(city.State.Food.Residents.Single().Budget!));
+        Assert.Equal(market.Price, city.State.Food!.Residents.Single().Budget!.HeldPurchase);
+        Assert.Equal(Money.FromCents(0), HouseholdFinance.SpendingLimit(city.State.Food.Residents.Single().Budget!));
     }
 
     [Fact]
@@ -385,10 +386,10 @@ public sealed partial class FoodCommerceTests
         city = city.RebuildRoutes(routes); city.EnableHouseholdFinances();
         double desired = city.State.Food!.Residents.Single().DesiredAt;
         Advance(city, desired + 2); var budget = city.State.Food.Residents.Single().Budget!;
-        long before = budget.BalanceCents; market.Units = 0;
+        Money before = budget.Balance; market.Units = 0;
         Advance(city, desired + 30);
-        Assert.Empty(market.Orders); Assert.Equal(before, budget.BalanceCents);
-        Assert.Equal(0, budget.HeldPurchaseCents); Assert.Equal(0, budget.PreparedFoodSpentCents);
+        Assert.Empty(market.Orders); Assert.Equal(before, budget.Balance);
+        Assert.Equal(Money.FromCents(0), budget.HeldPurchase); Assert.Equal(Money.FromCents(0), budget.PreparedFoodSpent);
     }
 
     [Fact]
@@ -407,7 +408,7 @@ public sealed partial class FoodCommerceTests
     {
         var (city, _, _) = Ready(); city.EnableHouseholdFinances(); Advance(city, city.State.Minute + 1);
         var payload = JObject.Parse(SaveCodec.Write(city.State));
-        payload["Food"]!["Residents"]![0]!["Budget"]!["BalanceCents"] = 999999999L;
+        payload["Food"]!["Residents"]![0]!["Budget"]!["Balance"] = 999999999L;
         Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(payload.ToString()).Status);
         payload = JObject.Parse(SaveCodec.Write(city.State)); payload["Food"]!["HouseholdFinanceVersion"] = 99;
         Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(payload.ToString()).Status);
@@ -431,9 +432,9 @@ public sealed partial class FoodCommerceTests
     public void ABetterLaterOfferCanReplaceAnEarlierDeclineButCannotBuyTwice()
     {
         var (city, market, routes) = Ready();
-        var meal = city.State.Food!.Residents.Single(); market.Price = 100000;
+        var meal = city.State.Food!.Residents.Single(); market.Price = Money.FromCents(100000);
         Advance(city, meal.DesiredAt + 1); Assert.Equal(MealStatus.Declined, meal.Status);
-        string intention = meal.IntentId; market.Price = 100;
+        string intention = meal.IntentId; market.Price = Money.FromCents(100);
         var c = city.State.Citizens.Single();
         var outward = routes.Plan(city.State.Places.Single(p => p.Id == "home"),
             city.State.Places.Single(p => p.Id == "shop"), city.State.Minute, c.Preferences)!;

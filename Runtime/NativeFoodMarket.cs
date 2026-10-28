@@ -216,7 +216,7 @@ namespace PersistentCity.Runtime
         private static bool ResidentPrice(string itemName, float price, ref bool __result)
         {
             if (active == null || !active.buying || itemName != active.approvedProduct) return true;
-            __result = Math.Abs(price - active.approvedPrice) < .001f; return false;
+            __result = price == active.approvedPrice; return false;
         }
         public IReadOnlyList<FoodBusiness> Read(double minute) => ReadSelected(minute, state.Shops.Select(s => s.PlaceId).ToArray());
         public FoodBusiness? ReadBusiness(string businessId, double minute)
@@ -247,7 +247,9 @@ namespace PersistentCity.Runtime
             RefreshRoutineHours(minute, true);
             if (selectedPlaces.Length == 0) return Array.Empty<FoodBusiness>();
             var catalogue = FoodBusinessCatalogue.ReadSelected(selectedPlaces, Products,
-                selectedPlaces.Where(shopControllers.ContainsKey).Select(p => shopControllers[p]),
+                // A replaced registration can leave historical place keys pointing at one controller.
+                // Observe that controller once; distinct controllers with conflicting addresses still refuse.
+                selectedPlaces.Where(shopControllers.ContainsKey).Select(p => shopControllers[p]).Distinct(),
                 r => NativeFoodOwnership.Find(r)?.BusinessId ?? FoodBusinessCatalogue.BusinessIdentity(r));
             var result = new List<FoodBusiness>();
             foreach (var b in catalogue.Businesses)
@@ -309,13 +311,23 @@ namespace PersistentCity.Runtime
             }
             if (!CanServe(meal.BusinessId)) return new FoodSale(false, "Business is no longer owned by Persistent City");
             var observed = new Dictionary<string, SupplyObservation>(1, StringComparer.Ordinal);
-            var business = ReadSelected(minute, new[] { meal.PlaceId }, observed).SingleOrDefault(b => b.PlaceId == meal.PlaceId && b.Id == meal.BusinessId);
+            FoodBusiness? business;
+            try { business = ReadSelected(minute, new[] { meal.PlaceId }, observed).SingleOrDefault(b => b.PlaceId == meal.PlaceId && b.Id == meal.BusinessId); }
+            catch (FoodBusinessCatalogue.UnsupportedPriceException)
+            {
+                // No receipt or native sale has started. A known invalid quote is refundable.
+                return new FoodSale(false, "Approved price is outside the supported range");
+            }
+            catch (FoodBusinessCatalogue.CatalogueRefusalException ex)
+            {
+                return new FoodSale(false, "Catalogue refused: " + ex.Message);
+            }
             var offer = business?.Offers.SingleOrDefault(o => o.ProductId == meal.ProductId);
             string exclusion = ScopeStatus(meal.PlaceId);
             if (exclusion.Length > 0) return new FoodSale(false, exclusion);
-            if (offer != null && offer.PriceCents != meal.PriceCents) return new FoodSale(false, "Approved price changed");
+            if (offer != null && offer.Price != meal.Price) return new FoodSale(false, "Approved price changed");
             if (offer == null || !offer.Units.HasValue || offer.Units <= 0 || !business!.MealsPerHour.HasValue || business.MealsPerHour <= 0
-                || offer.PriceCents != meal.PriceCents || meal.PriceCents > meal.AllowanceCents
+                || offer.Price != meal.Price || meal.Price > meal.Allowance
                 || meal.ServiceMinutes + 1e-7 < 60.0 / business.MealsPerHour.Value)
                 return new FoodSale(false, "Stock or staffing changed");
             var reg = registrations[meal.PlaceId];
@@ -341,6 +353,15 @@ namespace PersistentCity.Runtime
                 simulator.SetUp(reg, SaveGameManager.Current.Hour);
                 approvedProduct = meal.ProductId;
                 approvedPrice = reg.retailPrices.Single(p => p.itemName == meal.ProductId).price;
+                Money livePrice;
+                try { livePrice = Money.FromNative(approvedPrice); }
+                catch (ArgumentOutOfRangeException)
+                {
+                    // No receipt or native sale exists yet: this is a definite refusal, not uncertain ownership.
+                    return new FoodSale(false, "Approved price is outside the supported range");
+                }
+                if (livePrice != meal.Price)
+                    return new FoodSale(false, "Approved price changed during native setup");
                 FoodSaleReceipts.Begin(data, meal);
                 buyerShop = reg; buying = true;
                 Process.Invoke(simulator, new object[] { customer });
@@ -348,7 +369,7 @@ namespace PersistentCity.Runtime
             finally { buying = false; buyerShop = null; UnityEngine.Object.Destroy(simulator); }
             var entries = customer.order.entries.Where(e => e.paid && ItemsGetter.GetByName(e.itemName)?.HasTag(BigAmbitions.Tags.TagRef.Itemtag.isbag) != true).ToArray();
             var after = FoodSupplyReader.ReadMenu(reg, scope.Products());
-            if (entries.Length != 1 || entries[0].itemName != meal.ProductId || Math.Abs(entries[0].price - approvedPrice) >= .001f
+            if (entries.Length != 1 || entries[0].itemName != meal.ProductId || entries[0].price != approvedPrice
                 || !customer.order.completed || after[meal.ProductId].ProducerUnits != before[meal.ProductId].ProducerUnits - 1
                 || after[meal.ProductId].BagUnits != before[meal.ProductId].BagUnits - 1
                 || scope.Products().Any(p => p != meal.ProductId && after[p].ProducerUnits != before[p].ProducerUnits)

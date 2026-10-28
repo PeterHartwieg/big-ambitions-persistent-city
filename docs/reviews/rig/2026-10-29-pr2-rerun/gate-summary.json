@@ -1,0 +1,16 @@
+{
+  "verdict": "PASS",
+  "gates": {
+    "offline": true,
+    "redGreen": true,
+    "financial": true,
+    "residentLedgers": true,
+    "migration": true,
+    "checkout": true,
+    "nativeQA": true,
+    "performance": true,
+    "autosave": true,
+    "restoration": true,
+    "leaseRelease": true
+  }
+}

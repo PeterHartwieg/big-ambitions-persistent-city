@@ -31,7 +31,7 @@ namespace PersistentCity.Core
     public sealed class FoodOffer
     {
         public string ProductId { get; set; } = "";
-        public int PriceCents { get; set; }
+        public Money Price { get; set; }
         // null means unknown, not unlimited. The experiment consumes its own copy only.
         public int? Units { get; set; }
         public int? DistrictDemandPercent { get; set; }
@@ -45,7 +45,7 @@ namespace PersistentCity.Core
         public string OriginPlaceId { get; set; } = "";
         public int MealMinuteOfDay { get; set; } = 720;
         public int MealWindowMinutes { get; set; } = 90;
-        public int DailyAllowanceCents { get; set; } = 1200;
+        public Money DailyAllowance { get; set; } = Money.FromCents(1200);
         public int ValueOfTimeCentsPerMinute { get; set; } = 5;
         public string PreferredProductId { get; set; } = "";
         public int PreferenceBonusCents { get; set; } = 100;
@@ -73,7 +73,7 @@ namespace PersistentCity.Core
     {
         public string BusinessId { get; set; } = "";
         public string ProductId { get; set; } = "";
-        public int PriceCents { get; set; }
+        public Money Price { get; set; }
         public double? TravelMinutes { get; set; }
         public double? AdmissionMinute { get; set; }
         public double? ScoreCents { get; set; }
@@ -97,7 +97,7 @@ namespace PersistentCity.Core
         public string BusinessId { get; set; } = "";
         public string ProductId { get; set; } = "";
         public double? ArrivalMinute { get; set; }
-        public int SpentCents { get; set; }
+        public Money Spent { get; set; }
         public string Outcome { get; set; } = "";
         public List<FoodChoice> Choices { get; set; } = new List<FoodChoice>();
         public string OriginPlaceId { get; set; } = "";
@@ -117,7 +117,7 @@ namespace PersistentCity.Core
 
     public sealed class FoodShadowState
     {
-        public const int CurrentSchema = 4;
+        public const int CurrentSchema = 5;
         public int Schema { get; set; } = CurrentSchema;
         public string Kind { get; set; } = "persistentcity:food-shadow";
         public string CityKey { get; set; } = "";
@@ -234,10 +234,10 @@ namespace PersistentCity.Core
         }
 
         /// <summary>Explicit experiment intervention; never writes back into an observed business.</summary>
-        public void SetPrice(string businessId, string productId, int cents)
+        public void SetPrice(string businessId, string productId, Money price)
         {
-            if (cents <= 0 || cents > 1000000) throw new ArgumentOutOfRangeException(nameof(cents));
-            Offer(businessId, productId).PriceCents = cents;
+            if (price <= Money.Zero || price > Money.FromCents(1000000)) throw new ArgumentOutOfRangeException(nameof(price));
+            Offer(businessId, productId).Price = price;
         }
 
         public void SetStock(string businessId, string productId, int? units)
@@ -279,7 +279,7 @@ namespace PersistentCity.Core
             if (business.MealsPerHour == 0) return business.ServiceUnavailableReason.Length == 0
                 ? "Service unavailable" : business.ServiceUnavailableReason;
             if (business.Offers.Count > 0 && business.Offers.All(o => o.Units == 0)) return "Out of stock";
-            if (business.Offers.Count > 0 && business.Offers.All(o => o.PriceCents > consumer.DailyAllowanceCents)) return "Over allowance";
+            if (business.Offers.Count > 0 && business.Offers.All(o => o.Price > consumer.DailyAllowance)) return "Over allowance";
             return null;
         }
 
@@ -292,7 +292,7 @@ namespace PersistentCity.Core
             foreach (var business in shops.OrderBy(b => b.Id, StringComparer.Ordinal))
             foreach (var offer in business.Offers.OrderBy(o => o.ProductId, StringComparer.Ordinal))
             {
-                var choice = new FoodChoice { BusinessId = business.Id, ProductId = offer.ProductId, PriceCents = offer.PriceCents,
+                var choice = new FoodChoice { BusinessId = business.Id, ProductId = offer.ProductId, Price = offer.Price,
                     CustomerServicePercent = business.CustomerServicePercent, DistrictDemandPercent = offer.DistrictDemandPercent,
                     ServiceQualityAdjustmentCents = business.CustomerServicePercent.HasValue
                         ? (50 - business.CustomerServicePercent.Value) / 100.0 * person.ServiceQualityValueCents : 0,
@@ -314,7 +314,7 @@ namespace PersistentCity.Core
                     choice.ReturnMinutes = route.ReturnMinutes;
                     if (!offer.Units.HasValue) choice.Reason = "Stock unknown";
                     else if (offer.Units == 0) choice.Reason = "Out of stock";
-                    else if (offer.PriceCents > person.DailyAllowanceCents) choice.Reason = "Over allowance";
+                    else if (offer.Price > person.DailyAllowance) choice.Reason = "Over allowance";
                     else if (!admission.HasValue) choice.Reason = "Closed or too late";
                     else if (routine && !business.MealsPerHour.HasValue) choice.Reason = "Service unknown";
                     else if (routine && business.MealsPerHour == 0) choice.Reason = "Service unavailable";
@@ -328,7 +328,7 @@ namespace PersistentCity.Core
                         { choice.Reason = "Expected queue exceeds patience"; intent.Choices.Add(choice); continue; }
                         if (routine && (minute + time > intent.Deadline || !close.HasValue || finish >= close.Value))
                         { choice.Reason = "Service and return do not fit available time"; intent.Choices.Add(choice); continue; }
-                        choice.ScoreCents = offer.PriceCents + time * person.ValueOfTimeCentsPerMinute * intent.TimeCostMultiplier
+                        choice.ScoreCents = offer.Price.ApproximateCents() + time * person.ValueOfTimeCentsPerMinute * intent.TimeCostMultiplier
                             - (offer.ProductId == person.PreferredProductId ? person.PreferenceBonusCents : 0)
                             + choice.ServiceQualityAdjustmentCents + choice.DistrictAppealAdjustmentCents
                             + MealRhythm.ProductPenalty(mealKind, offer.ProductId);
@@ -363,7 +363,7 @@ namespace PersistentCity.Core
             { Miss(intent, "Closed on arrival"); return; }
             if (!offer.Units.HasValue) { Miss(intent, "Stock unknown on arrival", true); return; }
             if (offer.Units.Value == 0) { Miss(intent, "Out of stock on arrival"); return; }
-            if (offer.PriceCents > consumers[intent.ConsumerId].DailyAllowanceCents)
+            if (offer.Price > consumers[intent.ConsumerId].DailyAllowance)
             { Miss(intent, "Over allowance on arrival"); return; }
             if (Routine)
             {
@@ -396,7 +396,7 @@ namespace PersistentCity.Core
             if (business.MealsPerHour == 0 || !DailyRoutine.Open(Place(business), State.Minute))
             { Miss(intent, "Service closed before completion"); return; }
             if (offer.Units == 0) { Miss(intent, "Out of stock at completion"); return; }
-            if (offer.PriceCents > consumers[intent.ConsumerId].DailyAllowanceCents)
+            if (offer.Price > consumers[intent.ConsumerId].DailyAllowance)
             { Miss(intent, "Over allowance at completion"); return; }
             Fulfill(intent, offer);
         }
@@ -404,7 +404,7 @@ namespace PersistentCity.Core
         private void Fulfill(FoodIntent intent, FoodOffer offer)
         {
             offer.Units--;
-            intent.SpentCents = offer.PriceCents;
+            intent.Spent = offer.Price;
             intent.Status = FoodIntentStatus.Fulfilled;
             intent.Outcome = Routine ? "Hypothetical served meal; return fits recorded activity; temporary allowance; no native sale"
                 : "Hypothetical meal; temporary allowance; no native sale";
@@ -436,7 +436,7 @@ namespace PersistentCity.Core
 
         private static FoodConsumer Clone(FoodConsumer c) => new FoodConsumer { Id = c.Id, Name = c.Name,
             OriginPlaceId = c.OriginPlaceId, MealMinuteOfDay = c.MealMinuteOfDay, MealWindowMinutes = c.MealWindowMinutes,
-            DailyAllowanceCents = c.DailyAllowanceCents, ValueOfTimeCentsPerMinute = c.ValueOfTimeCentsPerMinute,
+            DailyAllowance = c.DailyAllowance, ValueOfTimeCentsPerMinute = c.ValueOfTimeCentsPerMinute,
             PreferredProductId = c.PreferredProductId, PreferenceBonusCents = c.PreferenceBonusCents,
             ServiceQualityValueCents = c.ServiceQualityValueCents, DistrictAppealValueCents = c.DistrictAppealValueCents,
             HomeDistrictId = c.HomeDistrictId, BudgetEvidence = c.BudgetEvidence };
@@ -444,7 +444,7 @@ namespace PersistentCity.Core
             MealsPerHour = b.MealsPerHour, ServiceEvidence = b.ServiceEvidence, NextServiceMinute = b.NextServiceMinute,
             DistrictId = b.DistrictId, CustomerServicePercent = b.CustomerServicePercent, CustomerServiceEvidence = b.CustomerServiceEvidence,
             Hours = b.Hours.Select(h => new OpeningWindow { Day = h.Day, FromMinute = h.FromMinute, ToMinute = h.ToMinute }).ToList(),
-            Offers = b.Offers.Select(o => new FoodOffer { ProductId = o.ProductId, PriceCents = o.PriceCents, Units = o.Units,
+            Offers = b.Offers.Select(o => new FoodOffer { ProductId = o.ProductId, Price = o.Price, Units = o.Units,
                 DistrictDemandPercent = o.DistrictDemandPercent, DistrictDemandEvidence = o.DistrictDemandEvidence }).ToList() };
 
         public static void Validate(FoodShadowState state)
@@ -464,7 +464,7 @@ namespace PersistentCity.Core
             Require(state.Consumers != null && state.Consumers.Count > 0 && state.Consumers.Count <= 5000
                 && state.Consumers.All(c => c != null && Text(c.Id) && Text(c.Name) && Text(c.OriginPlaceId)
                     && c.MealMinuteOfDay >= 0 && c.MealMinuteOfDay < 1440 && c.MealWindowMinutes > 0 && c.MealWindowMinutes <= 240
-                    && c.DailyAllowanceCents >= 0 && c.DailyAllowanceCents <= 1000000
+                    && c.DailyAllowance >= Money.Zero && c.DailyAllowance <= Money.FromCents(1000000)
                     && c.HomeDistrictId != null && c.HomeDistrictId.Length <= 1024 && Text(c.BudgetEvidence)
                     && c.ValueOfTimeCentsPerMinute >= 0 && c.ValueOfTimeCentsPerMinute <= 10000
                     && c.ServiceQualityValueCents >= 0 && c.ServiceQualityValueCents <= 1000000
@@ -480,7 +480,7 @@ namespace PersistentCity.Core
                     && b.Hours != null && b.Hours.Count <= 64 && b.Hours.All(h => h != null && h.Day >= 0 && h.Day <= 6
                         && h.FromMinute >= 0 && h.FromMinute < 1440 && h.ToMinute >= 0 && h.ToMinute <= 1440 && h.FromMinute != h.ToMinute)
                     && b.Offers != null && b.Offers.Count <= 32 && b.Offers.All(o => o != null && Text(o.ProductId)
-                        && o.PriceCents > 0 && o.PriceCents <= 1000000 && (!o.Units.HasValue || o.Units >= 0 && o.Units <= 1000000)
+                        && o.Price > Money.Zero && o.Price <= Money.FromCents(1000000) && (!o.Units.HasValue || o.Units >= 0 && o.Units <= 1000000)
                         && Percent(o.DistrictDemandPercent) && Text(o.DistrictDemandEvidence)
                         && (!o.DistrictDemandPercent.HasValue || Text(b.DistrictId)))
                     && b.Offers.Select(o => o.ProductId).Distinct(StringComparer.Ordinal).Count() == b.Offers.Count), "invalid businesses.");
@@ -526,11 +526,11 @@ namespace PersistentCity.Core
                 if (!routine) Require(intent.Status != FoodIntentStatus.WaitingForService && intent.DesiredAt == 0 && intent.EatingMinutes == 0 && intent.MaximumQueueMinutes == 0
                     && intent.TimeCostMultiplier == 1 && intent.OriginPlaceId == "" && !intent.ReturnTravelMinutes.HasValue
                     && !intent.ServiceEndsAt.HasValue && !intent.ReturnBy.HasValue, "routine fields in fixed reference.");
-                Require(intent.SpentCents >= 0 && intent.SpentCents <= person.DailyAllowanceCents
-                    && (intent.Status == FoodIntentStatus.Fulfilled ? intent.SpentCents > 0 : intent.SpentCents == 0), "invalid hypothetical spend.");
+                Require(intent.Spent >= Money.Zero && intent.Spent <= person.DailyAllowance
+                    && (intent.Status == FoodIntentStatus.Fulfilled ? intent.Spent > Money.Zero : intent.Spent == Money.Zero), "invalid hypothetical spend.");
                 Require(intent.Choices != null && intent.Choices.Count <= 3200 && intent.Choices.All(c => c != null
                     && shops.ContainsKey(c.BusinessId) && shops[c.BusinessId].Offers.Any(o => o.ProductId == c.ProductId)
-                    && c.PriceCents > 0 && c.PriceCents <= 1000000 && Text(c.Reason)
+                    && c.Price > Money.Zero && c.Price <= Money.FromCents(1000000) && Text(c.Reason)
                     && Percent(c.CustomerServicePercent) && Percent(c.DistrictDemandPercent)
                     && Position.Finite(c.ServiceQualityAdjustmentCents) && Math.Abs(c.ServiceQualityAdjustmentCents) <= person.ServiceQualityValueCents / 2.0
                     && Position.Finite(c.DistrictAppealAdjustmentCents) && Math.Abs(c.DistrictAppealAdjustmentCents) <= person.DistrictAppealValueCents / 2.0

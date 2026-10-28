@@ -61,7 +61,7 @@ internal static class Scale
         public IReadOnlyList<FoodBusiness> Read(double minute) {
             Reads++;return Enumerable.Range(0,8).Select(j=>new FoodBusiness {Id="b"+j,PlaceId="s"+j,Name="Shop "+j,MealsPerHour=15,
                 Hours=Enumerable.Range(0,7).Select(d=>new OpeningWindow {Day=d,FromMinute=480,ToMinute=1080}).ToList(),
-                Offers=new() {new FoodOffer {ProductId="pastry",PriceCents=700,Units=units[j]}}}).ToArray();
+                Offers=new() {new FoodOffer {ProductId="pastry",Price=Money.FromCents(700),Units=units[j]}}}).ToArray();
         }
         public FoodSale Buy(ResidentMeal meal,double minute) {int n=int.Parse(meal.BusinessId.Substring(1));if(units[n]==0)return new(false,"Sold out");units[n]--;Orders.Add(meal.IntentId);return new(true,"Synthetic receipt");}
     }

@@ -4,7 +4,8 @@ namespace PersistentCity.Core
 {
     public enum ResidentIncomeSource { ExternalEmployment, ExternalPension, ExternalSupport }
 
-    /// <summary>Individual budget unit, not an inferred family. All values are cents.
+    /// <summary>Individual budget unit, not an inferred family. Policy rates are whole cents;
+    /// ledger amounts are exact <see cref="Money"/>.
     /// Income and essentials cross an explicit outside-economy boundary. Native business
     /// payroll is not credited a second time and native retail remains the sale authority.</summary>
     public sealed class ResidentBudget
@@ -15,14 +16,14 @@ namespace PersistentCity.Core
         public int DailyHousingCents { get; set; }
         public int DailyEssentialsCents { get; set; }
         public int DailyHomeFoodCents { get; set; }
-        public long OpeningBalanceCents { get; set; }
-        public long BalanceCents { get; set; }
-        public long IncomeReceivedCents { get; set; }
-        public long EssentialsPaidCents { get; set; }
-        public long HomeFoodPaidCents { get; set; }
-        public long PreparedFoodSpentCents { get; set; }
-        public long HeldPurchaseCents { get; set; }
-        public long ArrearsCents { get; set; }
+        public Money OpeningBalance { get; set; }
+        public Money Balance { get; set; }
+        public Money IncomeReceived { get; set; }
+        public Money EssentialsPaid { get; set; }
+        public Money HomeFoodPaid { get; set; }
+        public Money PreparedFoodSpent { get; set; }
+        public Money HeldPurchase { get; set; }
+        public Money Arrears { get; set; }
         public int LastPostedDay { get; set; } = -1;
         public int HomeFoodFundedDay { get; set; } = -1;
         public int DaysWithoutHomeFood { get; set; }
@@ -52,7 +53,7 @@ namespace PersistentCity.Core
             var budget = new ResidentBudget { IncomeSource = source, BaseIncomeCents = baseIncome, DailyIncomeCents = income,
                 DailyHousingCents = housing, DailyEssentialsCents = Draw(id, "essentials", seed, 1500, 2500),
                 DailyHomeFoodCents = Draw(id, "home-food", seed, 900, 1500),
-                OpeningBalanceCents = income * 7L, BalanceCents = income * 7L, NextPostingMinute = minute };
+                OpeningBalance = Money.FromCents(income) * 7, Balance = Money.FromCents(income) * 7, NextPostingMinute = minute };
             // Opening savings are an explicit endowment, not a first earned wage.
             return budget;
         }
@@ -64,30 +65,42 @@ namespace PersistentCity.Core
                 throw new InvalidOperationException("Household posting is duplicate or out of order.");
             // Refresh only the next unposted wage. Earlier postings, savings and holds
             // retain their exact amounts through job transitions and reloads.
-            if (person != null)
-            {
-                budget.IncomeSource = IncomeSource(person);
-                budget.DailyIncomeCents = IncomeAmount(budget.BaseIncomeCents, budget.IncomeSource);
-            }
-            budget.BalanceCents = checked(budget.BalanceCents + budget.DailyIncomeCents);
-            budget.IncomeReceivedCents = checked(budget.IncomeReceivedCents + budget.DailyIncomeCents);
+            var source = person != null ? IncomeSource(person) : budget.IncomeSource;
+            int dailyIncome = person != null ? IncomeAmount(budget.BaseIncomeCents, source) : budget.DailyIncomeCents;
+            // Compute every change, including the wage refresh, before assigning any: an overflow
+            // leaves the budget unchanged.
+            var income = Money.FromCents(dailyIncome);
+            var balance = budget.Balance + income;
+            var received = budget.IncomeReceived + income;
             // Fund a real-cost subsistence basket before discretionary spending. A failed
             // payment does not provision food and never turns a declined shop visit into a meal.
-            if (budget.BalanceCents >= budget.DailyHomeFoodCents)
-            {
-                budget.BalanceCents -= budget.DailyHomeFoodCents;
-                budget.HomeFoodPaidCents = checked(budget.HomeFoodPaidCents + budget.DailyHomeFoodCents);
-                budget.HomeFoodFundedDay = day;
-            }
-            else budget.DaysWithoutHomeFood = checked(budget.DaysWithoutHomeFood + 1);
-            long required = checked(budget.ArrearsCents + budget.DailyHousingCents + budget.DailyEssentialsCents);
-            long paid = Math.Min(budget.BalanceCents, required);
-            budget.BalanceCents -= paid;
-            budget.EssentialsPaidCents = checked(budget.EssentialsPaidCents + paid);
-            budget.ArrearsCents = required - paid;
+            var homeFood = Money.FromCents(budget.DailyHomeFoodCents);
+            bool fed = balance >= homeFood;
+            var homeFoodPaid = fed ? budget.HomeFoodPaid + homeFood : budget.HomeFoodPaid;
+            if (fed) balance -= homeFood;
+            int unfed = fed ? budget.DaysWithoutHomeFood : checked(budget.DaysWithoutHomeFood + 1);
+            var required = budget.Arrears + Money.FromCents(budget.DailyHousingCents) + Money.FromCents(budget.DailyEssentialsCents);
+            var paid = Money.Min(balance, required);
+            var essentials = budget.EssentialsPaid + paid;
+            balance -= paid;
+            // The save contract also sums the conservation totals (CashConserved), which can overflow
+            // when every amount fits. Posting adds the income to both sides of a conserved ledger, so
+            // the funded total bounds the accounted one.
+            _ = budget.OpeningBalance + received;
+            budget.IncomeSource = source; budget.DailyIncomeCents = dailyIncome;
+            budget.Balance = balance; budget.IncomeReceived = received; budget.HomeFoodPaid = homeFoodPaid;
+            budget.EssentialsPaid = essentials; budget.Arrears = required - paid; budget.DaysWithoutHomeFood = unfed;
+            if (fed) budget.HomeFoodFundedDay = day;
             budget.LastPostedDay = day;
             budget.NextPostingMinute = (day + 1) * 1440.0;
         }
+
+        /// <summary>The save contract's cash conservation: opening savings plus income received equals
+        /// cash plus every payment and hold. Both totals are checked, so a total beyond one amount's
+        /// range throws <see cref="OverflowException"/> even when every component fits. Holds,
+        /// confirmations and refunds move money between accounted amounts and leave both totals unchanged.</summary>
+        public static bool CashConserved(ResidentBudget b)
+            => b.OpeningBalance + b.IncomeReceived == b.Balance + b.EssentialsPaid + b.HomeFoodPaid + b.PreparedFoodSpent + b.HeldPurchase;
 
         private static ResidentIncomeSource IncomeSource(CitizenState person)
             => person.Identity.Persona == Persona.Retiree ? ResidentIncomeSource.ExternalPension
@@ -98,13 +111,13 @@ namespace PersistentCity.Core
             => source == ResidentIncomeSource.ExternalPension ? basis * CityBalance.PensionIncomePercent / 100
                 : source == ResidentIncomeSource.ExternalSupport ? basis * CityBalance.SupportIncomePercent / 100 : basis;
 
-        public static int SpendingLimit(ResidentBudget budget)
+        public static Money SpendingLimit(ResidentBudget budget)
         {
-            if (budget.HeldPurchaseCents != 0 || budget.ArrearsCents != 0) return 0;
+            if (budget.HeldPurchase != Money.Zero || budget.Arrears != Money.Zero) return Money.Zero;
             // Keep the next day's basic bill available. Savings can fund a considered purchase,
             // but replenishing a daily allowance never creates spendable money.
-            long reserve = budget.DailyHousingCents + budget.DailyEssentialsCents + budget.DailyHomeFoodCents;
-            return (int)Math.Min(1000000, Math.Max(0, budget.BalanceCents - reserve));
+            var reserve = Money.FromCents((long)budget.DailyHousingCents + budget.DailyEssentialsCents + budget.DailyHomeFoodCents);
+            return Money.Min(Money.FromCents(1000000), Money.Max(Money.Zero, budget.Balance - reserve));
         }
 
         public static int HomeAlternativeValue(ResidentBudget budget, CitizenState person, FoodConsumer consumer, FoodIntent intent, int seed, double convenienceWeight = 1)
@@ -117,14 +130,17 @@ namespace PersistentCity.Core
                 + (20 + intent.EatingMinutes) * consumer.ValueOfTimeCentsPerMinute * intent.TimeCostMultiplier));
         }
 
-        public static bool HoldPurchase(ResidentBudget budget, int cents)
+        /// <summary>Hold funds only if the hold and its later confirmation both fit the money unit,
+        /// so neither can fail after native checkout. A refused hold changes nothing.</summary>
+        public static bool HoldPurchase(ResidentBudget budget, Money price)
         {
-            if (cents <= 0 || cents > SpendingLimit(budget)) return false;
-            budget.BalanceCents -= cents; budget.HeldPurchaseCents = cents; return true;
+            if (price <= Money.Zero || price > SpendingLimit(budget)
+                || !Money.TryAdd(budget.PreparedFoodSpent, price, out _)) return false;
+            budget.Balance -= price; budget.HeldPurchase = price; return true;
         }
         public static void ConfirmPurchase(ResidentBudget budget)
-        { budget.PreparedFoodSpentCents = checked(budget.PreparedFoodSpentCents + budget.HeldPurchaseCents); budget.HeldPurchaseCents = 0; }
+        { budget.PreparedFoodSpent += budget.HeldPurchase; budget.HeldPurchase = Money.Zero; }
         public static void RefusePurchase(ResidentBudget budget)
-        { budget.BalanceCents = checked(budget.BalanceCents + budget.HeldPurchaseCents); budget.HeldPurchaseCents = 0; }
+        { budget.Balance += budget.HeldPurchase; budget.HeldPurchase = Money.Zero; }
     }
 }

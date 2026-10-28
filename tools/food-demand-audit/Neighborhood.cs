@@ -119,14 +119,14 @@ namespace FoodDemandAuditProbe
             var before = Status();
             var results = new System.Collections.Generic.List<object>();
             var kinds = new System.Collections.Generic.HashSet<string>();
-            foreach (var receipt in SaveGameManager.Current.modData.Where(p => p.Key.StartsWith(prefix, StringComparison.Ordinal) && p.Value.StartsWith("paid|", StringComparison.Ordinal)).ToArray())
+            foreach (var receipt in SaveGameManager.Current.modData.Where(p => FoodSaleReceipts.IsReceiptKey(p.Key) && p.Value.StartsWith("paid|", StringComparison.Ordinal)).ToArray())
             {
                 var key = receipt.Key.Substring(prefix.Length).Split(':'); var value = receipt.Value.Split('|');
                 if (key.Length != 3 || value.Length != 4 || !Enum.TryParse<MealKind>(key[1], true, out var kind) || kind == MealKind.Legacy || !kinds.Add(kind + ":" + value[3])) continue;
                 var scope = food.Shops.Single(s => s.BusinessId == Uri.UnescapeDataString(value[2]) && s.ContainsProduct(Uri.UnescapeDataString(value[3])));
                 var meal = new ResidentMeal { ResidentId = Uri.UnescapeDataString(key[0]), Kind = kind,
                     Day = int.Parse(key[2], System.Globalization.CultureInfo.InvariantCulture), PlaceId = scope.PlaceId, BusinessId = scope.BusinessId, ProductId = Uri.UnescapeDataString(value[3]),
-                    PriceCents = int.Parse(value[1], System.Globalization.CultureInfo.InvariantCulture) };
+                    Price = Money.TryParseCents(value[1], 28, out var agreed) ? agreed : throw new InvalidOperationException("Receipt price is not exact money.") };
                 if (!food.Residents.Any(m => m.ResidentId == meal.ResidentId) || !FoodSaleReceipts.AlreadyPaid(SaveGameManager.Current.modData, meal))
                     throw new InvalidOperationException("Replay must identify an existing resident and confirmed saved receipt.");
                 var result = native.Buy(meal, Simulation.State.Minute);

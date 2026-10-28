@@ -36,7 +36,7 @@ public sealed partial class FoodCommerceTests
         ReadyForRepresentedReturn()
     {
         var (initial, market, _) = Ready(atWork: true, representation: 2);
-        initial.State.Food!.Residents.Single(m => m.Slot == 0).AllowanceCents = 0;
+        initial.State.Food!.Residents.Single(m => m.Slot == 0).Allowance = Money.FromCents(0);
         var routes = new ReturnReplanningWalking();
         var city = initial.RebuildRoutes(routes);
         var meal = city.State.Food!.Residents.Single(m => m.Slot == 1);
@@ -54,7 +54,7 @@ public sealed partial class FoodCommerceTests
         var (city, market, routes, meal) = ReadyForRepresentedReturn();
         var excursion = meal.Excursion!;
         string originalGeometry = excursion.ReturnGeometry, receipt = meal.IntentId;
-        long spent = meal.SpentCents;
+        Money spent = meal.Spent;
         routes.Changed = true;
         Advance(city, excursion.ReturnStartsAt + .01);
         Assert.True(excursion.Returning); Assert.False(excursion.Unresolved);
@@ -64,7 +64,7 @@ public sealed partial class FoodCommerceTests
         Advance(city, excursion.ReturnsAt);
         Assert.Null(meal.Excursion);
         Assert.False(meal.NeedsHomeResync);
-        Assert.Equal(receipt, meal.IntentId); Assert.Equal(spent, meal.SpentCents);
+        Assert.Equal(receipt, meal.IntentId); Assert.Equal(spent, meal.Spent);
         Assert.Equal(1, meal.Purchases); Assert.Single(market.Orders);
         Assert.Single(city.State.Citizens);
     }
@@ -111,7 +111,7 @@ public sealed partial class FoodCommerceTests
         Assert.True(meal.Excursion.Returning);
         double arrival = meal.Excursion.ReturnsAt;
         string geometry = meal.Excursion.ReturnGeometry, receipt = meal.IntentId;
-        long spent = meal.SpentCents;
+        Money spent = meal.Spent;
         var read = SaveCodec.Read(SaveCodec.Write(city.State)); Assert.Equal("", read.Error);
         routes.ReturnMinutes = 100;
         city = new CitySimulator(read.State!, routes); city.AttachFoodMarket(market);
@@ -123,7 +123,7 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(8, meal.ReturnMinutes);
         Advance(city, arrival);
         Assert.Null(meal.Excursion);
-        Assert.Equal(receipt, meal.IntentId); Assert.Equal(spent, meal.SpentCents);
+        Assert.Equal(receipt, meal.IntentId); Assert.Equal(spent, meal.Spent);
         Assert.Equal(1, meal.Purchases); Assert.Single(market.Orders);
     }
 }

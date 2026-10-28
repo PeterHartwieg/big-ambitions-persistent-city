@@ -20,7 +20,10 @@ namespace PersistentCity.Runtime
         public object EconomyOverview => simulation == null || simulation.State.Food == null
             ? new { active = false } : FoodEconomyInsight.Capture(simulation.State);
         public object NativeEconomyAccounts => foodMarket?.ReadAccounts() ?? Array.Empty<NativeFoodAccount>();
-        private static string Money(long cents) => (cents / 100.0).ToString("C0", CultureInfo.GetCultureInfo("en-US"));
+        // Whole-dollar display only; never changes a settlement amount. Totals may exceed one amount's range.
+        private static string Amount(Money amount) => Amount(amount.Units);
+        private static string Amount(System.Numerics.BigInteger units)
+            => ((decimal)units / Money.UnitsPerDollar).ToString("C0", CultureInfo.GetCultureInfo("en-US"));
         private static string Dollars(float amount) => amount.ToString("C0", CultureInfo.GetCultureInfo("en-US"));
         private void OnGUI()
         {
@@ -91,7 +94,7 @@ namespace PersistentCity.Runtime
                 if (observed == null) text.AppendLine("No evaluated food offers recorded yet.");
                 else
                 {
-                    text.AppendLine("Day " + observed.Day + ": " + observed.Purchases + " purchases · " + observed.ExistingStopPurchases + " during existing visits · " + Money(observed.RevenueCents) + " sales");
+                    text.AppendLine("Day " + observed.Day + ": " + observed.Purchases + " purchases · " + observed.ExistingStopPurchases + " during existing visits · " + Amount(observed.Revenue) + " sales");
                     text.AppendLine("Meals: breakfast " + observed.PurchaseMeals[1] + " · lunch " + observed.PurchaseMeals[2] + " · dinner " + observed.PurchaseMeals[3]
                         + (observed.PurchaseMeals[0] > 0 ? " · earlier single-meal routine " + observed.PurchaseMeals[0] : ""));
                     foreach (var product in observed.ProductSales.OrderByDescending(p => p.Purchases))
@@ -116,10 +119,10 @@ namespace PersistentCity.Runtime
             if (budgets.Length > 0)
             {
                 text.AppendLine("CURRENT RESIDENT ACCOUNTS · lifetime totals");
-                text.AppendLine("Cash " + Money(budgets.Sum(b => b.BalanceCents)) + " · received income/support " + Money(budgets.Sum(b => b.IncomeReceivedCents)));
-                text.AppendLine("Housing/essentials paid " + Money(budgets.Sum(b => b.EssentialsPaidCents)) + " · home-food baskets "
-                    + Money(budgets.Sum(b => b.HomeFoodPaidCents)) + " · prepared food " + Money(budgets.Sum(b => b.PreparedFoodSpentCents)));
-                text.AppendLine("Unpaid bills " + Money(budgets.Sum(b => b.ArrearsCents)) + " · purchase funds awaiting confirmation " + Money(budgets.Sum(b => b.HeldPurchaseCents)));
+                text.AppendLine("Cash " + Amount(Money.TotalUnits(budgets.Select(b => b.Balance))) + " · received income/support " + Amount(Money.TotalUnits(budgets.Select(b => b.IncomeReceived))));
+                text.AppendLine("Housing/essentials paid " + Amount(Money.TotalUnits(budgets.Select(b => b.EssentialsPaid))) + " · home-food baskets "
+                    + Amount(Money.TotalUnits(budgets.Select(b => b.HomeFoodPaid))) + " · prepared food " + Amount(Money.TotalUnits(budgets.Select(b => b.PreparedFoodSpent))));
+                text.AppendLine("Unpaid bills " + Amount(Money.TotalUnits(budgets.Select(b => b.Arrears))) + " · purchase funds awaiting confirmation " + Amount(Money.TotalUnits(budgets.Select(b => b.HeldPurchase))));
             }
             text.AppendLine();
             text.AppendLine("Offer counts describe evaluated choices, not unique people or all district demand. Native operating results exclude initial investment, loans and personal taxes. Consumer income is modeled outside income/support; native business accounts remain authoritative.");

@@ -1,0 +1,33 @@
+{
+  "servingResident": "consumer:pc%3A399:1",
+  "intent": "food:consumer%3Apc%253A399%3A1:breakfast:5",
+  "servingStatus": 2,
+  "paidStatus": 3,
+  "sameIntentionContinued": true,
+  "servingResumePreservesPrice": true,
+  "onePurchaseOnPaidContinuation": true,
+  "priceCents": "1025.279998779296875",
+  "exactWalletDebit": "1025.279998779296875",
+  "walletDebitEqualsQuote": true,
+  "servingHeldCents": "0",
+  "paidHeldCents": "0",
+  "samePaidPurchaseCountAfterReload": true,
+  "samePaidSpendingAfterReload": true,
+  "savedSchema14PayloadHash": "58728bc6da5d27ffe61f5f01734f6333b869cfbfa7cf3b2baee8eabe8a5f0cbe",
+  "payloadByteIdenticalAcrossPaidReload": true,
+  "receiptReplayReturnedPaid": true,
+  "receiptReplayReason": "Native saved receipt already confirms this intention",
+  "receiptReplayLeftNativeOrdersCashHistoryWalletsReceiptsUnchanged": true,
+  "matchingOriginalV2Receipt": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+  "day5Purchases": 34,
+  "day5NativeCustomers": 34,
+  "day5PaidReceipts": 34,
+  "allPurchaseCountsAgree": true,
+  "allConsumersHeldCentsAfterDrain": "0",
+  "ledgerFailuresAfterDrain": 0,
+  "limitations": [
+    "Serving and Paid save/reload plus receipt replay. No forced crash inside native ProcessCustomer or between native order and receipt confirmation.",
+    "Serving checkpoint reached at speed 10; saved/reloaded and continued at speed 1. No forced crash inside native checkout."
+  ],
+  "verdict": "PASS"
+}

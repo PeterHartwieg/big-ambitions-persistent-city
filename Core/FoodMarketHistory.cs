@@ -14,7 +14,7 @@ namespace PersistentCity.Core
     {
         public string ProductId { get; set; } = "";
         public long Purchases { get; set; }
-        public long RevenueCents { get; set; }
+        public Money Revenue { get; set; }
         public long[] PurchaseMeals { get; set; } = new long[4];
     }
     public sealed class FoodShopDay
@@ -34,7 +34,7 @@ namespace PersistentCity.Core
         public long PreferredAlternatives { get; set; }
         public long Purchases { get; set; }
         public long ExistingStopPurchases { get; set; }
-        public long RevenueCents { get; set; }
+        public Money Revenue { get; set; }
         public long[] PurchaseHours { get; set; } = new long[24];
         public long[] PurchaseMeals { get; set; } = new long[4];
         public List<FoodProductSales> ProductSales { get; set; } = new List<FoodProductSales>();
@@ -67,19 +67,33 @@ namespace PersistentCity.Core
                 else row.AccessRejections++;
             }
         }
+        /// <summary>Whether every addition a confirmed sale makes fits the money unit. Checked before
+        /// funds are held or native checkout starts, so immediate settlement cannot fail after a native
+        /// sale. A receipt confirmed later adds to its checkout day's history row, whose headroom other
+        /// sales may use meanwhile; that is not reserved (it needs about $343.6M in one shop-day).</summary>
+        private bool CanSettle(ResidentMeal meal)
+        {
+            if (!Money.TryAdd(meal.Spent, meal.Price, out _)
+                || meal.Budget == null && !Money.TryAdd(meal.DayAllowanceUsed, meal.Price, out _)) return false;
+            int purchaseDay = (int)(city.State.Minute / 1440);
+            var row = state.History.FirstOrDefault(h => h.Day == purchaseDay && h.PlaceId == meal.PlaceId && h.BusinessId == meal.BusinessId);
+            var product = row?.ProductSales.FirstOrDefault(p => p.ProductId == meal.ProductId);
+            return (row == null || Money.TryAdd(row.Revenue, meal.Price, out _))
+                && (product == null || Money.TryAdd(product.Revenue, meal.Price, out _));
+        }
         private void RecordPurchase(ResidentMeal meal)
         {
             // Receipt reconciliation can happen days later; retain the actual checkout interval.
             int purchaseDay = (int)(meal.ServiceAt / 1440);
             if (purchaseDay < (int)(city.State.Minute / 1440) - 13) return;
             var row = ShopDay(meal.PlaceId, meal.BusinessId, purchaseDay); row.Purchases++;
-            row.RevenueCents = checked(row.RevenueCents + meal.PriceCents);
+            row.Revenue += meal.Price;
             if (meal.ExistingStop) row.ExistingStopPurchases++;
             row.PurchaseHours[(int)(meal.ServiceAt % 1440 / 60)]++;
             row.PurchaseMeals[(int)meal.Kind]++;
             var product = row.ProductSales.FirstOrDefault(p => p.ProductId == meal.ProductId);
             if (product == null) { product = new FoodProductSales { ProductId = meal.ProductId }; row.ProductSales.Add(product); }
-            product.Purchases++; product.RevenueCents = checked(product.RevenueCents + meal.PriceCents);
+            product.Purchases++; product.Revenue += meal.Price;
             product.PurchaseMeals[(int)meal.Kind]++;
             string district = city.FindPlace(city.FindCitizen(meal.AnchorId)!.HomeId).District;
             var group = row.BuyerDistricts.FirstOrDefault(d => d.DistrictId == district);
@@ -98,10 +112,11 @@ namespace PersistentCity.Core
                 minute = city.Minute, residents = food.Residents.Count, physicalResidents = city.Citizens.Count, representedConsumers = food.Residents.Count, representationFactor = food.RepresentationFactor,
                 unresolvedConsumers = food.Residents.Count(m => m.Status == MealStatus.Uncertain || m.Excursion?.Unresolved == true), financePolicy = food.HouseholdFinanceVersion, mealPolicy = food.MealRhythmVersion,
                 boundary = food.HouseholdFinanceVersion == 0 ? "Temporary allowance experiment" : HouseholdFinance.Evidence,
-                balances = budgets.Sum(b => b.BalanceCents), openingSavings = budgets.Sum(b => b.OpeningBalanceCents),
-                income = budgets.Sum(b => b.IncomeReceivedCents), essentials = budgets.Sum(b => b.EssentialsPaidCents),
-                householdFood = budgets.Sum(b => b.HomeFoodPaidCents), preparedFood = budgets.Sum(b => b.PreparedFoodSpentCents),
-                heldPurchases = budgets.Sum(b => b.HeldPurchaseCents), arrears = budgets.Sum(b => b.ArrearsCents),
+                // Exact cents text: totals across residents may exceed one amount's range.
+                balances = Total(budgets.Select(b => b.Balance)), openingSavings = Total(budgets.Select(b => b.OpeningBalance)),
+                income = Total(budgets.Select(b => b.IncomeReceived)), essentials = Total(budgets.Select(b => b.EssentialsPaid)),
+                householdFood = Total(budgets.Select(b => b.HomeFoodPaid)), preparedFood = Total(budgets.Select(b => b.PreparedFoodSpent)),
+                heldPurchases = Total(budgets.Select(b => b.HeldPurchase)), arrears = Total(budgets.Select(b => b.Arrears)),
                 unfundedFoodDays = budgets.Sum(b => b.DaysWithoutHomeFood),
                 incomeSources = budgets.GroupBy(b => b.IncomeSource.ToString()).ToDictionary(g => g.Key, g => g.Count()),
                 purchases = food.Residents.Sum(m => m.Purchases), existingStopPurchases = food.Residents.Sum(m => m.ExistingStopPurchases),
@@ -109,5 +124,6 @@ namespace PersistentCity.Core
                 history = food.History.OrderBy(h => h.Day).ThenBy(h => h.PlaceId, StringComparer.Ordinal).ThenBy(h => h.BusinessId, StringComparer.Ordinal).ToArray(),
                 historyMeaning = "Observed offers and confirmed purchases within enrolled shops; repeated decisions are not unique people or total district demand. Revenue is not profit." };
         }
+        private static string Total(IEnumerable<Money> amounts) => Money.TotalCentsText(amounts);
     }
 }

@@ -24,7 +24,7 @@ foreach (double factor in Enumerable.Range(10, 31).Select(i => i / 20.0))
     {
         var state = FoodShadowCodec.Read(input, key);
         foreach (var offer in state.Businesses.Single(b => b.Id == target).Offers)
-            offer.PriceCents = (int)Math.Round(offer.PriceCents * factor);
+            offer.Price = (int)Math.Round(offer.Price * factor);
         var engine = new FoodDemand(state);
         while (!engine.AdvanceTo(state.EndsAt, budget)) { }
         FoodDemand.Validate(state);
@@ -39,7 +39,7 @@ foreach (double factor in Enumerable.Range(10, 31).Select(i => i / 20.0))
         }
         // A bounded report, not a replacement save format. Preserve the original full input.
         string outcomes = JsonConvert.SerializeObject(state.Intents.Select(i => new {
-            i.Id, i.Status, i.BusinessId, i.ProductId, i.SpentCents, i.ArrivalMinute, i.ServiceEndsAt, i.ReturnBy, i.Outcome }));
+            i.Id, i.Status, i.BusinessId, i.ProductId, i.Spent, i.ArrivalMinute, i.ServiceEndsAt, i.ReturnBy, i.Outcome }));
         if (previous != null && previous != outcomes) throw new Exception("Event budget changes outcomes");
         previous = outcomes;
         if (budget == 1) continue;
@@ -47,11 +47,11 @@ foreach (double factor in Enumerable.Range(10, 31).Select(i => i / 20.0))
         if (completeNativeSweep)
         {
             var nativePoint = nativeResult["points"]!.Single(p => (double)p["factor"]! == factor);
-            if (chosen.Length != (int)nativePoint["meals"]! || chosen.Sum(i => i.SpentCents) != (int)nativePoint["revenueCents"]!)
+            if (chosen.Length != (int)nativePoint["meals"]! || chosen.Sum(i => i.Spent) != (int)nativePoint["revenueCents"]!)
                 throw new Exception("Complete native sweep differs from offline replay");
         }
-        points.Add(JObject.FromObject(new { factor, meals = chosen.Length, revenueCents = chosen.Sum(i => i.SpentCents),
-            allShops = Summary(state), targetPrices = state.Businesses.Single(b => b.Id == target).Offers.Select(o => new { o.ProductId, o.PriceCents }),
+        points.Add(JObject.FromObject(new { factor, meals = chosen.Length, revenueCents = chosen.Sum(i => i.Spent),
+            allShops = Summary(state), targetPrices = state.Businesses.Single(b => b.Id == target).Offers.Select(o => new { o.ProductId, o.Price }),
             eventBudgetIndependent = true, stockConserved = true, throughputRespected = true }));
         if (factor == 1) File.WriteAllText(Path.Combine(root, "offline-baseline-outcomes.json"), outcomes);
     }

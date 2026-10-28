@@ -233,7 +233,7 @@ namespace PersistentCity.Runtime
                 {
                     long checkStarted = Stopwatch.GetTimestamp();
                     nextDependencyCheck = Time.unscaledTime + 30;
-                    var source = rlo.Read(dependency);
+                    var source = ReadRlo("periodic");
                     maxRloCheckMilliseconds = Math.Max(maxRloCheckMilliseconds, (Stopwatch.GetTimestamp() - checkStarted) * MillisecondsPerTimestamp);
                     if (!source.MatchesPopulation(simulation.State))
                     {
@@ -479,7 +479,7 @@ namespace PersistentCity.Runtime
         {
             if (!NativeTravelPace.StartObservation()) { Fail(NativeTravelPace.LastError); return; }
             dependency = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "RealLifeOverhaul");
-            var source = rlo.Read(dependency);
+            var source = ReadRlo("startup");
             if (source.Status != RloReadStatus.Ready)
             {
                 Say(source.Message);
@@ -543,7 +543,7 @@ namespace PersistentCity.Runtime
             { Fail("Population payload changed during initialization. Original payload retained."); return; }
             var prepared = pending.Result;
             var state = prepared.State;
-            var source = rlo.Read(dependency);
+            var source = ReadRlo("activation");
             if (!source.MatchesPopulation(state)) { Fail("RLO donor catalogue changed during initialization. Original payload retained."); return; }
             if (state.Minute > Now() + 0.001) { Fail("Population snapshot is ahead of this save's clock; original payload retained."); return; }
             var binding = prepared.Saves.BindTo(save.modData);
@@ -584,12 +584,24 @@ namespace PersistentCity.Runtime
             return save.Day * 1440.0 + save.Hour * 60.0 + save.Minute;
         }
 
+        private RloReadResult ReadRlo(string context)
+        {
+            var result = rlo.Read(dependency);
+            log?.Info("RLO single-pass read context=" + context + " status=" + result.Status
+                + " identities=" + result.Identities.Count + " elapsedMs="
+                + rlo.LastReadMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                + " reads=" + rlo.Reads + " totalMs="
+                + rlo.TotalReadMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                + " maxMs=" + rlo.MaximumReadMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture));
+            return result;
+        }
+
         private void Save()
         {
             if (failed || simulation == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current)) return;
             try
             {
-                var source = rlo.Read(dependency);
+                var source = ReadRlo("save");
                 if (!source.MatchesPopulation(simulation.State))
                 { Fail("RLO changed before saving; original population payload retained."); return; }
                 RunPhysical(() => physical?.ObserveForSave());

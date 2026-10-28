@@ -130,9 +130,9 @@ public sealed partial class FoodCommerceTests
         var budgets = food.Residents.Select(m => m.Budget!).ToArray();
         Assert.NotSame(budgets[0], budgets[1]);
         Assert.NotEqual(budgets[0].BaseIncomeCents, budgets[1].BaseIncomeCents);
-        var balances = budgets.Select(b => b.BalanceCents).ToArray();
+        var balances = budgets.Select(b => b.Balance).ToArray();
         city = Reload(city, market, routes);
-        Assert.Equal(balances, city.State.Food!.Residents.Select(m => m.Budget!.BalanceCents));
+        Assert.Equal(balances, city.State.Food!.Residents.Select(m => m.Budget!.Balance));
         Assert.Single(city.State.Citizens);
         Assert.Equal(car?.Id, city.State.Citizens.Single().Car?.Id);
         Assert.Equal("", food.Residents[0].PreferredProductId);
@@ -153,9 +153,9 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(factor, market.Orders.Distinct().Count());
         Assert.All(market.Times.Zip(market.Times.Skip(1)), p => Assert.True(p.Second - p.First >= 4 - 1e-7));
         Assert.All(city.State.Food.Residents, m => {
-            Assert.Equal(1, m.Purchases); Assert.Equal(100, m.Budget!.PreparedFoodSpentCents);
-            Assert.Equal(m.Budget.OpeningBalanceCents + m.Budget.IncomeReceivedCents,
-                m.Budget.BalanceCents + m.Budget.PreparedFoodSpentCents + m.Budget.EssentialsPaidCents + m.Budget.HomeFoodPaidCents);
+            Assert.Equal(1, m.Purchases); Assert.Equal(Money.FromCents(100), m.Budget!.PreparedFoodSpent);
+            Assert.Equal(m.Budget.OpeningBalance + m.Budget.IncomeReceived,
+                m.Budget.Balance + m.Budget.PreparedFoodSpent + m.Budget.EssentialsPaid + m.Budget.HomeFoodPaid);
             Assert.Null(m.Excursion); Assert.False(m.NeedsHomeResync);
         });
         Assert.Single(city.State.Citizens);
@@ -204,12 +204,12 @@ public sealed partial class FoodCommerceTests
         market.ThrowForResident = extra.ResidentId;
         double first = extra.DesiredAt;
         Advance(city, first + 60); extra = city.State.Food.Residents.Single(m => m.Slot == 1);
-        Assert.Equal(MealStatus.Uncertain, extra.Status); Assert.Equal(100, extra.Budget!.HeldPurchaseCents);
+        Assert.Equal(MealStatus.Uncertain, extra.Status); Assert.Equal(Money.FromCents(100), extra.Budget!.HeldPurchase);
         string receipt = extra.IntentId;
         city = Reload(city, market, routes); Advance(city, 3 * 1440);
         extra = city.State.Food!.Residents.Single(m => m.Slot == 1);
         Assert.Equal(receipt, extra.IntentId); Assert.Equal(MealStatus.Uncertain, extra.Status);
-        Assert.Equal(100, extra.Budget!.HeldPurchaseCents);
+        Assert.Equal(Money.FromCents(100), extra.Budget!.HeldPurchase);
         Assert.Single(market.Orders, o => o == receipt);
         Assert.True(city.State.Food.Residents.Single(m => m.Slot == 0).Purchases > 1);
     }
@@ -335,12 +335,12 @@ public sealed partial class FoodCommerceTests
         Advance(city, extra.DesiredAt + 15); routes.Accessible = false;
         Advance(city, extra.DesiredAt + 40);
         Assert.Equal(MealStatus.Uncertain, extra.Status); Assert.True(extra.Excursion!.Unresolved);
-        Assert.Equal(100, extra.Budget!.HeldPurchaseCents);
+        Assert.Equal(Money.FromCents(100), extra.Budget!.HeldPurchase);
         string originalReceipt = extra.IntentId;
         market.ConfirmEvidence = true; routes.Accessible = true;
         Advance(city, 3 * 1440);
-        Assert.Equal(MealStatus.Paid, extra.Status); Assert.Equal(0, extra.Budget.HeldPurchaseCents);
-        Assert.Equal(100, extra.Budget.PreparedFoodSpentCents); Assert.Equal(1, extra.Purchases);
+        Assert.Equal(MealStatus.Paid, extra.Status); Assert.Equal(Money.FromCents(0), extra.Budget.HeldPurchase);
+        Assert.Equal(Money.FromCents(100), extra.Budget.PreparedFoodSpent); Assert.Equal(1, extra.Purchases);
         Assert.True(extra.Excursion!.Unresolved); Assert.Equal(originalReceipt, extra.IntentId);
         Assert.Single(market.Orders, key => key == originalReceipt);
         Assert.True(city.State.Food.Residents.Single(m => m.Slot == 0).Purchases > 1);
@@ -351,7 +351,7 @@ public sealed partial class FoodCommerceTests
     public void ConsumerCannotResynchronizeAtHomeUntilItsReturnActuallyCompletes()
     {
         var (city, market, routes) = Ready(atWork: true, representation: 2);
-        city.State.Food!.Residents.Single(m => m.Slot == 0).AllowanceCents = 0;
+        city.State.Food!.Residents.Single(m => m.Slot == 0).Allowance = Money.FromCents(0);
         var extra = city.State.Food.Residents.Single(m => m.Slot == 1);
         double desired = extra.DesiredAt;
         Advance(city, desired + 10);

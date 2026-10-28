@@ -52,17 +52,106 @@ static partial class Program
             Market = new NativeFoodMarket(State, new[] { new Place { Id = PlaceId, Kind = PlaceKind.Shop } });
         }
         public string BusinessId => State.Shops.Single().BusinessId;
-        public ResidentMeal Meal(string resident, string product = Croissant, int cents = 300) => new() {
+        public ResidentMeal Meal(string resident, string product = Croissant, Money? cents = null) => new() {
             ResidentId = resident, Day = SaveGameManager.Current.Day, Kind = MealKind.Lunch, PlaceId = PlaceId, BusinessId = BusinessId,
-            ProductId = product, PriceCents = cents, AllowanceCents = 1200, ServiceMinutes = 10, Status = MealStatus.Serving };
+            ProductId = product, Price = cents ?? Money.FromCents(300), Allowance = Money.FromCents(1200), ServiceMinutes = 10, Status = MealStatus.Serving };
         public int Stock(string product) => Reg.Shelves.Single(s => s.cargoInstances![0].itemName == product).cargoInstances![0].amount;
         public int Bags => Reg.Registers.Sum(r => r.instance.cargoInstances![0].amount);
         public FoodReceiptStatus Receipt(ResidentMeal meal) => FoodSaleReceipts.ReadStatus(SaveGameManager.Current.modData, meal);
         public void Dispose() => Market.Dispose();
     }
 
+    static void FractionalCheckoutMatchesNativeAndRejectsSameCentPriceChanges()
+    {
+        using var f = new Fixture();
+        var price = f.Reg.retailPrices.Single(p => p.itemName == Croissant);
+        price.price = 10.2528f;
+        Money cents = Money.FromNative(price.price);
+        Check(cents.Units == 275221504000 && cents.ToCentsText() == "1025.279998779296875", "native binary32 price converts bit-exactly");
+        var meal = f.Meal("fractional", cents: cents);
+        var budget = new ResidentBudget { Balance = Money.FromCents(100000), OpeningBalance = Money.FromCents(100000) };
+        Check(HouseholdFinance.HoldPurchase(budget, cents), "hold exact fractional price");
+        Check(f.Market.Buy(meal, Minute).Paid, "native adapter accepts fractional approved price");
+        HouseholdFinance.ConfirmPurchase(budget);
+        Check(budget.PreparedFoodSpent == cents && budget.Balance == Money.FromCents(100000) - cents, "wallet matches native quote");
+        Check(f.Receipt(meal) == FoodReceiptStatus.Paid, "fractional paid receipt");
+        int units = f.Stock(Croissant);
+        Check(f.Market.Buy(meal, Minute).Paid && f.Stock(Croissant) == units, "fractional replay is idempotent");
+        var next = f.Meal("price-changed", cents: cents);
+        price.price = BitConverter.Int32BitsToSingle(BitConverter.SingleToInt32Bits(price.price) + 1);
+        Check(!f.Market.Buy(next, Minute).Paid, "one native ULP price change refuses stale approval");
+        Check(f.Stock(Croissant) == units && f.Receipt(next) == FoodReceiptStatus.Missing, "price refusal consumes no stock or receipt");
+        price.price = 10.2528f;
+        Hooks.OpenCheck = () => price.price = BitConverter.Int32BitsToSingle(BitConverter.SingleToInt32Bits(10.2528f) + 1);
+        Check(!f.Market.Buy(next, Minute).Paid, "price mutation after live quote refuses before native sale");
+        Check(f.Stock(Croissant) == units && f.Receipt(next) == FoodReceiptStatus.Missing, "setup-price refusal leaves stock and receipts unchanged");
+    }
+
+    static void InvalidPreSalePricesRefuseWithoutUncertainFunds()
+    {
+        foreach (bool beforeCatalogue in new[] { true, false })
+        foreach (float invalid in new[] { float.NaN, float.PositiveInfinity, 0f, -1f, 10001f, float.Epsilon, 1e-20f })
+        {
+            using var f = new Fixture();
+            var meal = f.Meal("invalid-price");
+            var budget = new ResidentBudget { Balance = Money.FromCents(100000), OpeningBalance = Money.FromCents(100000) };
+            Check(HouseholdFinance.HoldPurchase(budget, meal.Price), "checkout owns held funds before price mutation");
+            int units = f.Stock(Croissant), bags = f.Bags, orders = f.Reg.unprocessedCompletedOrders.Count;
+            // Establish a valid decision quote, then mutate before the first live checkout
+            // read or after that read during setup. Both are known pre-sale refusals.
+            Check(f.Market.Read(Minute).Single().Offers.Any(o => o.ProductId == Croissant), "valid decision quote exists");
+            if (beforeCatalogue) f.Reg.retailPrices.Single(p => p.itemName == Croissant).price = invalid;
+            else Hooks.OpenCheck = () => f.Reg.retailPrices.Single(p => p.itemName == Croissant).price = invalid;
+            var result = f.Market.Buy(meal, Minute);
+            Check(!result.Paid && result.Reason.Contains("supported range"), "unsupported live price returns definite refusal, not an exception");
+            Check(f.Receipt(meal) == FoodReceiptStatus.Missing && f.Market.NativePurchases == 0,
+                "invalid pre-sale price creates no receipt or purchase");
+            Check(f.Stock(Croissant) == units && f.Bags == bags && f.Reg.unprocessedCompletedOrders.Count == orders,
+                "invalid pre-sale price leaves inventory and orders unchanged");
+            // FoodCommerce refunds definite refusals; only thrown/unknown outcomes retain holds.
+            HouseholdFinance.RefusePurchase(budget);
+            Check(budget.Balance == budget.OpeningBalance && budget.HeldPurchase == Money.Zero
+                && budget.PreparedFoodSpent == Money.Zero, "definite refusal permits complete refund without stranded funds");
+        }
+    }
+
+    static void CatalogueRefusalsRefundBeforeSale()
+    {
+        foreach (string fault in new[] { "price", "quality", "demand" })
+        {
+            using var f = new Fixture();
+            var meal = f.Meal("invalid-catalogue");
+            var budget = new ResidentBudget { Balance = Money.FromCents(100000), OpeningBalance = Money.FromCents(100000) };
+            Check(HouseholdFinance.HoldPurchase(budget, meal.Price), "hold before catalogue refusal");
+            if (fault == "price") f.Reg.retailPrices.Add(new RetailPrice { itemName = Croissant, price = 3f });
+            if (fault == "quality") f.Reg.satisfaction = new Satisfaction { customerService = 101 };
+            if (fault == "demand")
+            {
+                f.Controller.building.Neighbourhood = "district";
+                SaveGameManager.Current.productMarketEntries = new() { new() { itemName = Croissant,
+                    demandValues = new() { new() { neighborhood = "district" }, new() { neighborhood = "district" } } } };
+            }
+            int units = f.Stock(Croissant), bags = f.Bags, orders = f.Reg.unprocessedCompletedOrders.Count;
+            var result = f.Market.Buy(meal, Minute);
+            string expected = fault == "price" ? "Ambiguous food price" : fault == "quality" ? "Customer-service score" : "Duplicate saved product/district demand";
+            Check(!result.Paid && result.Reason.StartsWith("Catalogue refused: " + expected, StringComparison.Ordinal),
+                "known catalogue refusal is definite and specific: " + fault);
+            Check(f.Receipt(meal) == FoodReceiptStatus.Missing && f.Market.NativePurchases == 0,
+                "catalogue refusal precedes receipt and sale");
+            Check(f.Stock(Croissant) == units && f.Bags == bags && f.Reg.unprocessedCompletedOrders.Count == orders,
+                "catalogue refusal leaves inventory and orders intact");
+            HouseholdFinance.RefusePurchase(budget);
+            Check(budget.Balance == budget.OpeningBalance && budget.HeldPurchase == Money.Zero,
+                "catalogue refusal permits full refund");
+            SaveGameManager.Current.productMarketEntries = null;
+        }
+    }
+
     static void Main()
     {
+        InvalidPreSalePricesRefuseWithoutUncertainFunds();
+        CatalogueRefusalsRefundBeforeSale();
+        FractionalCheckoutMatchesNativeAndRejectsSameCentPriceChanges();
         SuccessfulCheckoutUsesOnePreSaleRead();
         SameFrameSalesAndChangesAreSeenByTheNextCheckout();
         ReplacedRegistrationIsReadAfresh();
@@ -107,13 +196,13 @@ static partial class Program
         Check(!second.Paid && second.Reason == "Stock or staffing changed", "same-minute second checkout sees the sale: " + second.Reason);
         Check(f.Receipt(f.Meal("r2")) == FoodReceiptStatus.Missing && f.Stock(Croissant) == 0 && f.Bags == 2, "refusal makes no receipt or sale");
         Check(RetailBusinessSimulator.Setups - native == 1, "a refused checkout makes only its selected read");
-        Check(f.Market.Buy(f.Meal("r3", Burger, 600), Minute).Paid, "another menu product is still sold");
+        Check(f.Market.Buy(f.Meal("r3", Burger, Money.FromCents(600)), Minute).Paid, "another menu product is still sold");
 
         // Native changes between checkouts in the same frame are read live.
         f.Reg.Registers.Clear();
-        Check(f.Market.Buy(f.Meal("r4", Burger, 600), Minute).Reason == "Stock or staffing changed", "unstaffed register refuses");
+        Check(f.Market.Buy(f.Meal("r4", Burger, Money.FromCents(600)), Minute).Reason == "Stock or staffing changed", "unstaffed register refuses");
         f.Reg.Registers.Add(new PointOfSale { instance = Shelf("register", "bag", 0) });
-        Check(f.Market.Buy(f.Meal("r5", Burger, 600), Minute).Reason == "Stock or staffing changed", "empty bag pool refuses");
+        Check(f.Market.Buy(f.Meal("r5", Burger, Money.FromCents(600)), Minute).Reason == "Stock or staffing changed", "empty bag pool refuses");
         f.Reg.Registers[0].instance.cargoInstances![0].amount = 2;
         f.Reg.Shelves[0].cargoInstances![0].amount = 3;
         Check(f.Market.Buy(f.Meal("r6"), Minute).Paid && f.Stock(Croissant) == 2 && f.Bags == 1, "restocked shelf and bags sell again");
@@ -202,7 +291,7 @@ static partial class Program
         var repeat = f.Market.Buy(meal, Minute);
         Check(repeat.Paid && repeat.Reason.Contains("already confirms") && RetailBusinessSimulator.Setups == native, "a paid intention is not sold or read again");
         Check(!f.Market.Buy(f.Meal("r2"), Minute + 60).Paid, "a service time outside the native hour refuses");
-        Check(f.Market.Buy(f.Meal("r3", Croissant, 250), Minute).Reason == "Approved price changed", "a different agreed price refuses");
+        Check(f.Market.Buy(f.Meal("r3", Croissant, Money.FromCents(250)), Minute).Reason == "Approved price changed", "a different agreed price refuses");
         var slow = f.Meal("r4"); slow.ServiceMinutes = 1;
         Check(f.Market.Buy(slow, Minute).Reason == "Stock or staffing changed", "service faster than native capacity refuses");
         Check(f.Stock(Croissant) == 4 && f.Bags == 2 && f.Market.NativePurchases == 1, "refusals consumed nothing");
@@ -315,7 +404,7 @@ static partial class Program
             for (int decision = 0; decision < 40; decision++) { Check(market.Read(Minute).Count == 8, "all eight shops offered"); reads++; }
             var scope = state.Shops[minute];
             var meal = new ResidentMeal { ResidentId = "w" + minute, Day = SaveGameManager.Current.Day, Kind = MealKind.Lunch, PlaceId = scope.PlaceId,
-                BusinessId = scope.BusinessId, ProductId = Croissant, PriceCents = 300, AllowanceCents = 1200, ServiceMinutes = 10, Status = MealStatus.Serving };
+                BusinessId = scope.BusinessId, ProductId = Croissant, Price = Money.FromCents(300), Allowance = Money.FromCents(1200), ServiceMinutes = 10, Status = MealStatus.Serving };
             Check(market.Buy(meal, Minute).Paid, "workload checkout is paid"); buys++;
             Check(market.Read(Minute).Single(b => b.PlaceId == scope.PlaceId).Offers.Single(o => o.ProductId == Croissant).Units == 49,
                 "the bought shop's next decision read shows the sale"); reads++;
@@ -358,6 +447,12 @@ static partial class Program
         Check(market.DiscoveryPlaceIdBuilds == 151, "a replaced registration builds its slot's place ID once");
         Check(state.Shops.Any(s => s.PlaceId == spare) && market.ScopeStatus(spare) == "" && market.Read(Minute).Any(b => b.PlaceId == spare),
             "the new registration is known under its own place ID");
+        Check(market.Read(Minute).Count(b => b.PlaceId == spare) == 1, "aliased controller is observed exactly once");
+        var conflicting = new CityBuildingController { buildingRegistration = Registration(151, 5, 5, 5) };
+        bool refused = false;
+        try { FoodBusinessCatalogue.ReadSelected(new[] { spare }, new[] { Croissant }, new[] { controllers[149], conflicting }); }
+        catch (FoodBusinessCatalogue.CatalogueRefusalException ex) { refused = ex.Message.Contains("Duplicate live shop address"); }
+        Check(refused, "distinct controllers at a conflicting address remain refused");
     }
 }
 
@@ -371,13 +466,14 @@ static class Hooks
     public static void Reset() { Fault = ""; OpenCheck = null; PriceChecks = 0; LastPriceAccepted = false; }
 }
 
-public sealed class Save { public int Day = 3, Hour = 12; public float Minute; public Dictionary<string, string> modData = new(); }
+public sealed class Save { public List<ProductMarketEntry>? productMarketEntries; public int Day = 3, Hour = 12; public float Minute; public Dictionary<string, string> modData = new(); }
 public static class SaveGameManager { public static Save Current = new(); }
 public sealed class RetailPrice { public string itemName = ""; public float price; }
 public sealed class OpeningHourSlot { public int startingHour, endingHour; }
 public sealed class ScheduleDay { public int day; public bool isOpen; public List<OpeningHourSlot> openingHourSlots = new(); }
 public sealed class BuildingRegistration
 {
+    public int creationDay; public string businessOwnerRivalId = ""; public Satisfaction? satisfaction;
     public string StreetName = ""; public int StreetNumber;
     public bool RentedByPlayer = true, AvailableForRent, temporarilyClosed, Open = true;
     public string BusinessName = "Bakery", businessTypeName = "full";
@@ -390,31 +486,15 @@ public sealed class BuildingRegistration
     public List<ItemInstance> Shelves = new();
     public List<PointOfSale> Registers = new();
 }
-public sealed class CityBuildingController { public BuildingRegistration? buildingRegistration; }
+public sealed class Building { public string Neighbourhood = ""; }
+public sealed class Satisfaction { public int customerService = 75; }
+public sealed class NeighborhoodDemand { public string neighborhood = ""; public int demand; }
+public sealed class ProductMarketEntry { public string itemName = ""; public List<NeighborhoodDemand> demandValues = new(); }
+public sealed class CityBuildingController { public Building building = new(); public BuildingRegistration? buildingRegistration; }
 public sealed class CityManager { public static CityManager Instance = new(); public CityBuildingController[] cityBuildingControllers = Array.Empty<CityBuildingController>(); }
 
 namespace PersistentCity.Runtime
 {
-    public sealed class FoodCatalogueObservation { public List<FoodBusiness> Businesses { get; } = new(); }
-    public static class FoodBusinessCatalogue
-    {
-        internal static string BusinessIdentity(BuildingRegistration reg) => "business:" + Uri.EscapeDataString(reg.StreetName) + ":" + reg.StreetNumber + ":player";
-        internal static FoodCatalogueObservation ReadSelected(IReadOnlyCollection<string> places, IReadOnlyCollection<string> products,
-            IEnumerable<CityBuildingController> controllers, Func<BuildingRegistration, string>? identity = null)
-        {
-            var result = new FoodCatalogueObservation();
-            foreach (var controller in controllers)
-            {
-                var reg = controller.buildingRegistration;
-                if (reg == null || !places.Contains(NativeFoodMarket.PlaceId(reg))) continue;
-                var business = new FoodBusiness { Id = identity?.Invoke(reg) ?? BusinessIdentity(reg), PlaceId = NativeFoodMarket.PlaceId(reg) };
-                foreach (var price in reg.retailPrices.Where(p => products.Contains(p.itemName) && reg.cachedAvailableProducts.Contains(p.itemName)))
-                    business.Offers.Add(new FoodOffer { ProductId = price.itemName, PriceCents = (int)Math.Round(price.price * 100) });
-                result.Businesses.Add(business);
-            }
-            return result;
-        }
-    }
     public static class GamePlaces
     {
         public static bool BuildingAccessible(CityBuildingController controller) => true;
@@ -423,6 +503,8 @@ namespace PersistentCity.Runtime
     // Ownership has its own regression; this one grants whole-business authority to the current registration.
     internal static class NativeFoodOwnership
     {
+        // This harness keeps ownership stable while mutating catalogue/cache inputs.
+        private static string TestIdentity(BuildingRegistration reg) => "business:" + Uri.EscapeDataString(reg.StreetName) + ":" + reg.StreetNumber + ":player";
         private static readonly Dictionary<string, FoodAuthority> Rows = new(StringComparer.Ordinal);
         internal static long SuppressedBatches => 0;
         internal static long SuppressedDraws => 0;
@@ -434,11 +516,11 @@ namespace PersistentCity.Runtime
         {
             string place = NativeFoodMarket.PlaceId(reg);
             if (!Rows.TryGetValue(place, out var row)) Rows[place] = row = new FoodAuthority { PlaceId = place, FromHour = 0 };
-            row.Signature = FoodBusinessCatalogue.BusinessIdentity(reg); row.Desired = eligible;
+            row.Signature = TestIdentity(reg); row.Desired = eligible;
             return row;
         }
         internal static FoodAuthority? Find(BuildingRegistration reg)
-            => Rows.TryGetValue(NativeFoodMarket.PlaceId(reg), out var row) && row.Signature == FoodBusinessCatalogue.BusinessIdentity(reg) ? row : null;
+            => Rows.TryGetValue(NativeFoodMarket.PlaceId(reg), out var row) && row.Signature == TestIdentity(reg) ? row : null;
     }
 }
 namespace Entities { public sealed class Unused { } }

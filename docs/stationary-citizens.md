@@ -1,4 +1,4 @@
-# Stationary citizens: a proposal
+# Stationary citizens: optional stops approved, policy choices pending
 
 The game's stationary zones have been switched off (see [issues.md](issues.md)). This is a proposal for what should stand in the street instead. Step one (queues at opening; crossing waits stay the existing red-light hold, with no time cap) is in the development build but not checked in game; the rest isn't implemented.
 
@@ -46,3 +46,30 @@ Each kind declares where it may happen, as a spot type (door, kerb, stop, venue 
 
 - Should street performers keep a small anonymous audience until audiences come from citizens, or play to whoever passes?
 - How busy should a night street feel: a handful of people outside bars, or near empty?
+
+
+## 28 October implementation design
+
+Peter chose **Q2 B: add optional stops**. This approves the direction, not every row of the original proposal. Q1 (hour/rain crowds) remains open: this increment must not change ambient display caps, trip generation or quiet hours. The existing opening queues and safe crossing holds stay unchanged.
+
+### Proposed first increment and unresolved choices
+
+Recommend individual employee breaks (5?10 game minutes) and window shopping during an existing shopping visit (1?3). Resting at verified benches or park edges (10?40) is a possible second increment. Chatting (10?30) needs persistent groups; audiences (2?8) need a live performer lifecycle. These are proposals, not enabled kinds. Meeting, pickup and bus waits require actual coordinated services; no fictional service is introduced.
+
+The original ranges remain proposed. No new minimum night population is specified: recommend eligibility from existing visits and quiet hours, with no extra nightlife trips. Peter must select the kinds, ranges, density and audience policy. The requested `persistent-city-DESIGN-QUESTIONS-2.md` handoff records options and recommendations.
+
+### Mechanics implemented without choosing policy
+
+`Core/OptionalStops.cs` accepts an explicitly selected kind, existing citizen/spot identities, requested duration and a free-until deadline. It clips to the existing kind cap and next commitment, refuses nonoptional event/audience kinds, and applies the already-declared `DwellRule.Optional` rain cancellation. Its continuation check ends a committed stop at its original deadline, on rain or when its spot disappears. These pure mechanics neither schedule stops nor alter citizens, trips, purchases or physical selection. There are **no new visible stops yet**: selecting and enabling a kind awaits Peter's answer.
+
+Rain semantics for the eventual scheduler remain a decision: recommend cancel in any rain for the initial individual kinds. Shelters, heavy-rain thresholds and umbrellas need native evidence. Cancellation means resume the saved continuation; it never means hide the citizen, restart the timer or teleport. No weather input is connected to the new helper in production yet, so Q1 stays untouched.
+
+### Persistence and Runtime integration required after selection
+
+A scheduled stop must belong to the existing citizen, not a pooled body. Persist kind, place/spot identity, start, end, facing target and the original activity/route continuation. Commit a stop once in Core before physical admission. Camera movement, body reuse and different update cadence must never roll it again. A resumed save uses the recorded deadline; expired or cancelled stops resume their original continuation. Validate the spot against the live navmesh; missing spots end the optional stop safely without changing identity. Future integration must add a versioned schema with an explicit no-active-stop migration, not infer stops on loading old saves. The present helper has no saved fields and causes no stop-related schema change; schema 14 belongs solely to Q3 accounting.
+
+Runtime will share the existing physical citizen budget, sample off-flow spots, walk a body to its spot and out along the continuation, and retain leases across the transition. It must not book native sales, reassign identities or resurrect anonymous stationary crowds. Group/audience membership and performer loss need explicit policy before implementation.
+
+### Tests and remaining evidence
+
+Offline tests cover caps, clipping at commitments, no time available, rain refusal/cancellation, missing spots, immutable deadlines after reconstruction and varying sampling cadence, and refusal of event/audience kinds. They test common mechanics, not scheduler or rendered behavior. Once kinds are selected, add interrupted-journey save migration, mid-stop reload, route/spot removal, food/work priority, midnight/quiet-hours, cadence differential and camera/pool continuity tests, then separately authorized native motion/animation checks. Nothing in this design authorizes game launch or release.

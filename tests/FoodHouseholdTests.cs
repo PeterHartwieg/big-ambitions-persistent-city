@@ -31,7 +31,7 @@ public sealed class FoodHouseholdTests
         var plan = FoodRoutinePlanning.Build(c, 1, 3);
         var shop = new FoodBusiness { Id = "shop", Name = "Shop", PlaceId = "shop", MealsPerHour = 60,
             Hours = Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = 0, ToMinute = 1440 }).ToList(),
-            Offers = new() { new FoodOffer { ProductId = "food", PriceCents = price, Units = 10000 } } };
+            Offers = new() { new FoodOffer { ProductId = "food", Price = Money.FromCents(price), Units = 10000 } } };
         return FoodDemand.CreateObserved(c.CityKey, "Controlled budget/outside-option comparison", 1, 3, plan.Consumers, new[] { shop },
             plan.Opportunities.Select(i => new FoodTravelQuote { ConsumerId = i.ConsumerId, BusinessId = shop.Id,
                 IntentId = i.Id, OriginPlaceId = i.OriginPlaceId, Minutes = 2, ReturnMinutes = 2, Evidence = "Controlled complete route" }), plan.Opportunities);
@@ -45,9 +45,9 @@ public sealed class FoodHouseholdTests
         var lower = Capture(1000); lower.HomeDistrictMixes.Add(Mix(80, 15, 5));
         var higher = Capture(1000); higher.HomeDistrictMixes.Add(Mix(15, 45, 40));
         var a = FoodRoutinePlanning.Build(lower, 1, 3).Consumers; var b = FoodRoutinePlanning.Build(higher, 1, 3).Consumers;
-        Assert.True(b.Average(p => p.DailyAllowanceCents) > a.Average(p => p.DailyAllowanceCents));
-        Assert.True(a.Select(p => p.DailyAllowanceCents).Distinct().Count() > 500);
-        Assert.True(a.Max(p => p.DailyAllowanceCents) > b.Min(p => p.DailyAllowanceCents));
+        Assert.True(b.Average(p => p.DailyAllowance.Units) > a.Average(p => p.DailyAllowance.Units));
+        Assert.True(a.Select(p => p.DailyAllowance).Distinct().Count() > 500);
+        Assert.True(a.Max(p => p.DailyAllowance) > b.Min(p => p.DailyAllowance));
         Assert.All(a.Concat(b), p => Assert.Equal("district", p.HomeDistrictId));
     }
 
@@ -59,7 +59,7 @@ public sealed class FoodHouseholdTests
         foreach (var r in capture.Residents) { r.Identity.Name = "Changed name"; r.Identity.Female = true; r.Identity.Age = 81; r.Identity.District = "changed-origin"; }
         foreach (var s in capture.Spans) { s.PlaceId = "different-work-district"; s.Activity = Activity.Work; }
         var second = FoodRoutinePlanning.Build(capture, 1, 3);
-        Assert.Equal(first.Consumers.Select(p => p.DailyAllowanceCents), second.Consumers.Select(p => p.DailyAllowanceCents));
+        Assert.Equal(first.Consumers.Select(p => p.DailyAllowance), second.Consumers.Select(p => p.DailyAllowance));
         Assert.Equal(first.Consumers.Select(p => p.HomeDistrictId), second.Consumers.Select(p => p.HomeDistrictId));
     }
 
@@ -68,7 +68,7 @@ public sealed class FoodHouseholdTests
     {
         var foodie = FoodRoutinePlanning.Build(Capture(1, Persona.Foodie), 1, 3);
         var student = FoodRoutinePlanning.Build(Capture(1, Persona.Student), 1, 3);
-        Assert.Equal(foodie.Consumers[0].DailyAllowanceCents, student.Consumers[0].DailyAllowanceCents);
+        Assert.Equal(foodie.Consumers[0].DailyAllowance, student.Consumers[0].DailyAllowance);
         Assert.True(foodie.Opportunities[0].OutsideOptionScoreCents > student.Opportunities[0].OutsideOptionScoreCents);
         Assert.Equal(JsonConvert.SerializeObject(foodie), JsonConvert.SerializeObject(FoodRoutinePlanning.Build(Capture(1, Persona.Foodie), 1, 3)));
     }
@@ -92,7 +92,7 @@ public sealed class FoodHouseholdTests
     public void ExplicitControlPreservesCommonAllowanceAndCanDisableOutsideChoices()
     {
         var p = FoodRoutinePlanning.Build(Capture(), 1, 3, 1800, allowOutsideOptions: false);
-        Assert.All(p.Consumers, c => Assert.Equal(1800, c.DailyAllowanceCents));
+        Assert.All(p.Consumers, c => Assert.Equal(Money.FromCents(1800), c.DailyAllowance));
         Assert.All(p.Opportunities, i => { Assert.Equal(FoodOutsideOption.None, i.OutsideOption); Assert.Null(i.OutsideOptionScoreCents); });
     }
 
@@ -115,7 +115,7 @@ public sealed class FoodHouseholdTests
         var s = Scenario(Capture(1), 500);
         foreach (var i in s.Intents) i.OutsideOptionScoreCents = 1;
         Finish(s); Assert.All(s.Intents, i => { Assert.Equal(FoodIntentStatus.DeclinedPurchase, i.Status);
-            Assert.Equal(0, i.SpentCents); Assert.Equal("", i.BusinessId); Assert.Null(i.ArrivalMinute); Assert.Null(i.ReturnBy); });
+            Assert.Equal(Money.FromCents(0), i.Spent); Assert.Equal("", i.BusinessId); Assert.Null(i.ArrivalMinute); Assert.Null(i.ReturnBy); });
         Assert.Equal(10000, s.Businesses[0].Offers[0].Units);
         Assert.Equal(FoodShadowCodec.Write(s), FoodShadowCodec.Write(FoodShadowCodec.Read(FoodShadowCodec.Write(s), s.CityKey)));
     }
@@ -132,13 +132,13 @@ public sealed class FoodHouseholdTests
     {
         var ordinary = Scenario(Capture(1), 1000);
         ordinary.Consumers[0].ValueOfTimeCentsPerMinute = 0; ordinary.Consumers[0].ServiceQualityValueCents = 400;
-        ordinary.Consumers[0].DailyAllowanceCents = 2000;
+        ordinary.Consumers[0].DailyAllowance = Money.FromCents(2000);
         foreach (var i in ordinary.Intents) i.OutsideOptionScoreCents = 950;
         ordinary.Businesses[0].CustomerServicePercent = 50;
         var better = FoodShadowCodec.Read(FoodShadowCodec.Write(ordinary), ordinary.CityKey);
         better.Businesses[0].CustomerServicePercent = 100;
         var unaffordable = FoodShadowCodec.Read(FoodShadowCodec.Write(better), better.CityKey);
-        unaffordable.Businesses[0].Offers[0].PriceCents = 2001;
+        unaffordable.Businesses[0].Offers[0].Price = Money.FromCents(2001);
         Finish(ordinary); Finish(better); Finish(unaffordable);
         Assert.All(ordinary.Intents, i => Assert.Equal(FoodIntentStatus.DeclinedPurchase, i.Status));
         Assert.All(better.Intents, i => Assert.Equal(FoodIntentStatus.Fulfilled, i.Status));
@@ -184,11 +184,11 @@ public sealed class FoodHouseholdTests
     public void StrictV3MigrationKeepsOldBuyingPowerAndDoesNotAddOutsideOptions()
     {
         var s = Scenario(Capture(1), 500); foreach (var i in s.Intents) { i.OutsideOption = FoodOutsideOption.None; i.OutsideOptionScoreCents = null; }
-        var old = JObject.Parse(FoodShadowCodec.Write(s)); RemoveV4Fields(old); old["Schema"] = 3;
+        var old = JObject.Parse(FoodShadowCodec.Write(s)); FoodQualityDemandTests.LegacyMoney(old); RemoveV4Fields(old); old["Schema"] = 3;
         var migrated = FoodShadowCodec.Read(old.ToString(), s.CityKey);
-        Assert.Equal(s.Consumers[0].DailyAllowanceCents, migrated.Consumers[0].DailyAllowanceCents);
+        Assert.Equal(s.Consumers[0].DailyAllowance, migrated.Consumers[0].DailyAllowance);
         Assert.All(migrated.Intents, i => Assert.Equal(FoodOutsideOption.None, i.OutsideOption)); Finish(migrated); Finish(s);
-        Assert.Equal(s.Intents.Select(i => (i.Status, i.SpentCents, i.BusinessId)), migrated.Intents.Select(i => (i.Status, i.SpentCents, i.BusinessId)));
+        Assert.Equal(s.Intents.Select(i => (i.Status, i.Spent, i.BusinessId)), migrated.Intents.Select(i => (i.Status, i.Spent, i.BusinessId)));
         old["Intents"]![0]!["OutsideOption"] = 1;
         Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(old.ToString(), s.CityKey));
     }

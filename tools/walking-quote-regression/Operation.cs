@@ -183,10 +183,10 @@ internal static class Operation
         public IReadOnlyList<FoodBusiness> Read(double minute) => new[] { Shop("b", "shop"), Shop("c", "shop2") };
         private FoodBusiness Shop(string id, string place) => new FoodBusiness { Id = id, PlaceId = place, Name = id, MealsPerHour = 15,
             Hours = Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = 0, ToMinute = 1440 }).ToList(),
-            Offers = new List<FoodOffer> { new FoodOffer { ProductId = "pastry", PriceCents = 100, Units = Units } } };
+            Offers = new List<FoodOffer> { new FoodOffer { ProductId = "pastry", Price = Money.FromCents(100), Units = Units } } };
         public FoodSale Buy(ResidentMeal meal, double minute)
         {
-            if (Units <= 0 || meal.PriceCents != 100) return new FoodSale(false, "Unavailable at checkout");
+            if (Units <= 0 || meal.Price != Money.FromCents(100)) return new FoodSale(false, "Unavailable at checkout");
             Orders.Add(meal.IntentId + "@" + meal.BusinessId + "@" + minute.ToString("R")); Units--;
             return new FoodSale(true, "Native fake confirmed");
         }

@@ -10,14 +10,14 @@ public sealed class HouseholdFinanceTests
         var b = new ResidentBudget { DailyIncomeCents = 1200, DailyHomeFoodCents = 500,
             DailyHousingCents = 1000, DailyEssentialsCents = 200, NextPostingMinute = 0 };
         HouseholdFinance.PostDay(b, 0);
-        Assert.Equal(0, b.BalanceCents); Assert.Equal(500, b.HomeFoodPaidCents);
-        Assert.Equal(700, b.EssentialsPaidCents); Assert.Equal(500, b.ArrearsCents);
-        Assert.Equal(0, HouseholdFinance.SpendingLimit(b));
+        Assert.Equal(Money.FromCents(0), b.Balance); Assert.Equal(Money.FromCents(500), b.HomeFoodPaid);
+        Assert.Equal(Money.FromCents(700), b.EssentialsPaid); Assert.Equal(Money.FromCents(500), b.Arrears);
+        Assert.Equal(Money.FromCents(0), HouseholdFinance.SpendingLimit(b));
         Assert.Throws<InvalidOperationException>(() => HouseholdFinance.PostDay(b, 0));
         HouseholdFinance.PostDay(b, 1440);
-        Assert.Equal(1000, b.ArrearsCents); Assert.Equal(2400, b.IncomeReceivedCents);
-        Assert.Equal(b.OpeningBalanceCents + b.IncomeReceivedCents,
-            b.BalanceCents + b.HomeFoodPaidCents + b.EssentialsPaidCents);
+        Assert.Equal(Money.FromCents(1000), b.Arrears); Assert.Equal(Money.FromCents(2400), b.IncomeReceived);
+        Assert.Equal(b.OpeningBalance + b.IncomeReceived,
+            b.Balance + b.HomeFoodPaid + b.EssentialsPaid);
     }
     [Fact]
     public void AnUnfundedBasketDoesNotBecomeFreeFood()
@@ -25,8 +25,8 @@ public sealed class HouseholdFinanceTests
         var b = new ResidentBudget { DailyIncomeCents = 100, DailyHomeFoodCents = 500,
             DailyHousingCents = 100, NextPostingMinute = 0 };
         HouseholdFinance.PostDay(b, 0);
-        Assert.Equal(-1, b.HomeFoodFundedDay); Assert.Equal(0, b.HomeFoodPaidCents);
-        Assert.Equal(1, b.DaysWithoutHomeFood); Assert.Equal(0, b.BalanceCents);
+        Assert.Equal(-1, b.HomeFoodFundedDay); Assert.Equal(Money.FromCents(0), b.HomeFoodPaid);
+        Assert.Equal(1, b.DaysWithoutHomeFood); Assert.Equal(Money.FromCents(0), b.Balance);
     }
     [Theory]
     [InlineData(Persona.Student, ResidentIncomeSource.ExternalSupport)]
@@ -37,33 +37,33 @@ public sealed class HouseholdFinanceTests
         var c = new CitizenState { Identity = new CitizenIdentity { Id = "r", Age = 30, Persona = persona }, DayPlaceId = "work" };
         var b = HouseholdFinance.Create(c, 1, 40, null);
         Assert.Equal(source, b.IncomeSource); Assert.True(b.DailyIncomeCents > 0);
-        Assert.Equal(7L * b.DailyIncomeCents, b.OpeningBalanceCents);
-        Assert.Equal(0, b.IncomeReceivedCents);
+        Assert.Equal(Money.FromCents(7) * b.DailyIncomeCents, b.OpeningBalance);
+        Assert.Equal(Money.FromCents(0), b.IncomeReceived);
     }
     [Fact]
     public void JobLossAndRecoveryAffectOnlyNextUnpostedIncomeAndPreserveOriginalBasis()
     {
         var person = new CitizenState { Identity = new CitizenIdentity { Id = "worker", Age = 30, Persona = Persona.Commuter }, DayPlaceId = "work" };
         var budget = HouseholdFinance.Create(person, 7, 0, null);
-        int basis = budget.BaseIncomeCents; long opening = budget.OpeningBalanceCents;
+        int basis = budget.BaseIncomeCents; Money opening = budget.OpeningBalance;
         HouseholdFinance.PostDay(budget, 0, person);
-        long posted = budget.IncomeReceivedCents, balance = budget.BalanceCents;
+        Money posted = budget.IncomeReceived, balance = budget.Balance;
         person.DayPlaceId = "";
-        Assert.Equal(posted, budget.IncomeReceivedCents); Assert.Equal(balance, budget.BalanceCents);
+        Assert.Equal(posted, budget.IncomeReceived); Assert.Equal(balance, budget.Balance);
         Assert.Throws<InvalidOperationException>(() => HouseholdFinance.PostDay(budget, 0, person));
         Assert.Equal(ResidentIncomeSource.ExternalEmployment, budget.IncomeSource);
         budget = Newtonsoft.Json.JsonConvert.DeserializeObject<ResidentBudget>(Newtonsoft.Json.JsonConvert.SerializeObject(budget))!;
         HouseholdFinance.PostDay(budget, 1440, person);
         Assert.Equal(ResidentIncomeSource.ExternalSupport, budget.IncomeSource);
         Assert.Equal(basis * CityBalance.SupportIncomePercent / 100, budget.DailyIncomeCents);
-        Assert.Equal(posted + budget.DailyIncomeCents, budget.IncomeReceivedCents);
+        Assert.Equal(posted + Money.FromCents(budget.DailyIncomeCents), budget.IncomeReceived);
         person.DayPlaceId = "new-work";
         HouseholdFinance.PostDay(budget, 2880, person);
         Assert.Equal(ResidentIncomeSource.ExternalEmployment, budget.IncomeSource);
         Assert.Equal(basis, budget.BaseIncomeCents); Assert.Equal(basis, budget.DailyIncomeCents);
-        Assert.Equal(opening, budget.OpeningBalanceCents);
-        Assert.Equal(budget.OpeningBalanceCents + budget.IncomeReceivedCents,
-            budget.BalanceCents + budget.HomeFoodPaidCents + budget.EssentialsPaidCents + budget.PreparedFoodSpentCents + budget.HeldPurchaseCents);
+        Assert.Equal(opening, budget.OpeningBalance);
+        Assert.Equal(budget.OpeningBalance + budget.IncomeReceived,
+            budget.Balance + budget.HomeFoodPaid + budget.EssentialsPaid + budget.PreparedFoodSpent + budget.HeldPurchase);
     }
 
     [Fact]
@@ -72,8 +72,8 @@ public sealed class HouseholdFinanceTests
         var person = new CitizenState { Identity = new CitizenIdentity { Id = "worker", Age = 30, Persona = Persona.Commuter } };
         var budget = HouseholdFinance.Create(person, 7, 0, null);
         Assert.Equal(budget.BaseIncomeCents * CityBalance.SupportIncomePercent / 100, budget.DailyIncomeCents);
-        long opening = budget.OpeningBalanceCents;
+        Money opening = budget.OpeningBalance;
         person.DayPlaceId = "work"; HouseholdFinance.PostDay(budget, 0, person);
-        Assert.Equal(budget.BaseIncomeCents, budget.DailyIncomeCents); Assert.Equal(opening, budget.OpeningBalanceCents);
+        Assert.Equal(budget.BaseIncomeCents, budget.DailyIncomeCents); Assert.Equal(opening, budget.OpeningBalance);
     }
 }

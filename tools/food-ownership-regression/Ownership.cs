@@ -96,7 +96,7 @@ namespace FoodDemandAuditProbe
                     representedBlockedReturns = sim.State.Food.Residents.Count(m => m.Slot > 0 && m.Excursion?.Unresolved == true),
                     representedNeedsHomeResync = sim.State.Food.Residents.Count(m => m.Slot > 0 && m.NeedsHomeResync),
                     uncertain = sim.State.Food.Residents.Where(m => m.Status == MealStatus.Uncertain).Select(m => new { m.IntentId, m.BusinessId,
-                        m.ProductId, m.PriceCents, held = m.Budget?.HeldPurchaseCents, receipt = FoodSaleReceipts.ReadStatus(save.modData, m).ToString() }) },
+                        m.ProductId, m.Price, held = m.Budget?.HeldPurchase, receipt = FoodSaleReceipts.ReadStatus(save.modData, m).ToString() }) },
                 diagnostics = Runtime.FoodDiagnostics,
                 nativeBodies = IndoorCustomerSpawner.Customers.Count,
                 inside = BuildingManager.Instance?.buildingRegistration == null ? null : PlaceId(BuildingManager.Instance.buildingRegistration),

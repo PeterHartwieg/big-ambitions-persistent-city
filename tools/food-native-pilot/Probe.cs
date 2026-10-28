@@ -193,21 +193,21 @@ namespace FoodNativePilotProbe
                 {
                     var state = FoodShadowCodec.Read(FoodShadowCodec.Write(initial), initial.CityKey);
                     foreach (var offer in state.Businesses.Single(b => b.Id == targetId).Offers)
-                        offer.PriceCents = (int)Math.Round(offer.PriceCents * factors[pointIndex]);
+                        offer.Price = Money.FromCents((int)Math.Round(offer.Price.ApproximateCents() * factors[pointIndex]));
                     controlled = new FoodDemand(state); return;
                 }
                 if (!controlled.AdvanceTo(controlled.State.EndsAt, 32)) return;
                 FoodDemand.Validate(controlled.State);
                 var chosen = controlled.State.Intents.Where(i => i.Status == FoodIntentStatus.Fulfilled && i.BusinessId == targetId).ToArray();
                 points.Add(JObject.FromObject(new { factor = factors[pointIndex], meals = chosen.Length,
-                    revenueCents = chosen.Sum(i => i.SpentCents), allShops = Summary(controlled.State),
-                    targetPrices = controlled.State.Businesses.Single(b => b.Id == targetId).Offers.Select(o => new { o.ProductId, o.PriceCents }),
+                    revenueCents = Money.Sum(chosen.Select(i => i.Spent)).ApproximateCents(), allShops = Summary(controlled.State),
+                    targetPrices = controlled.State.Businesses.Single(b => b.Id == targetId).Offers.Select(o => new { o.ProductId, o.Price }),
                     targetReasons = controlled.State.Intents.SelectMany(i => i.Choices).Where(c => c.BusinessId == targetId).GroupBy(c => c.Reason).ToDictionary(g => g.Key, g => g.Count()) }));
                 // Keep the immutable full input and a bounded outcome report. Repeating every
                 // choice explanation in a full three-day result exceeds the document size limit.
                 if (Math.Abs(factors[pointIndex] - 1) < .0001)
                     File.WriteAllText(Path.Combine(Root, "baseline-outcomes.json"), JsonConvert.SerializeObject(controlled.State.Intents.Select(i => new {
-                        i.Id, i.Status, i.BusinessId, i.ProductId, i.SpentCents, i.ArrivalMinute, i.ServiceEndsAt, i.ReturnBy, i.Outcome })));
+                        i.Id, i.Status, i.BusinessId, i.ProductId, i.Spent, i.ArrivalMinute, i.ServiceEndsAt, i.ReturnBy, i.Outcome })));
                 pointIndex++; controlled = null; return;
             }
             bool marketUnchanged = marketBefore == Fingerprint();

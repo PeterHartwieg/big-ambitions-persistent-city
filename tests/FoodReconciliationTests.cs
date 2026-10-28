@@ -23,16 +23,16 @@ public sealed partial class FoodCommerceTests
         double reconcileAt = meal.DueAt;
         city = Reload(city, market, routes);
         Advance(city, reconcileAt - .0001);
-        long balance = city.State.Food!.Residents.Single().Budget!.BalanceCents;
+        Money balance = city.State.Food!.Residents.Single().Budget!.Balance;
         market.ConfirmEvidence = true;
         market.EarliestMinute = reconcileAt; // Original checkout is now too old for Buy.
         Advance(city, reconcileAt);
         meal = city.State.Food!.Residents.Single();
         Assert.Equal(MealStatus.Paid, meal.Status);
         Assert.Equal(intent, meal.IntentId);
-        Assert.Equal(balance, meal.Budget!.BalanceCents);
-        Assert.Equal(0, meal.Budget.HeldPurchaseCents);
-        Assert.Equal(market.Price, meal.Budget.PreparedFoodSpentCents);
+        Assert.Equal(balance, meal.Budget!.Balance);
+        Assert.Equal(Money.FromCents(0), meal.Budget.HeldPurchase);
+        Assert.Equal(market.Price, meal.Budget.PreparedFoodSpent);
         Assert.Equal(1, meal.Purchases);
         Assert.Single(market.Orders); Assert.Equal(99, market.Units);
         var history = Assert.Single(city.State.Food.History, h => h.Purchases > 0);
@@ -40,7 +40,7 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(1, history.PurchaseHours[(int)(checkout % 1440 / 60)]);
         city = Reload(city, market, routes);
         Assert.Equal(1, city.State.Food!.Residents.Single().Purchases);
-        Assert.Equal(market.Price, city.State.Food.Residents.Single().Budget!.PreparedFoodSpentCents);
+        Assert.Equal(market.Price, city.State.Food.Residents.Single().Budget!.PreparedFoodSpent);
         Assert.Single(market.Orders);
     }
 
@@ -63,8 +63,8 @@ public sealed partial class FoodCommerceTests
             var meal = city.State.Food.Residents.Single();
             Assert.Equal(intent, meal.IntentId);
             Assert.Equal(MealStatus.Uncertain, meal.Status);
-            Assert.Equal(market.Price, meal.Budget!.HeldPurchaseCents);
-            Assert.Equal(0, meal.Budget.PreparedFoodSpentCents);
+            Assert.Equal(market.Price, meal.Budget!.HeldPurchase);
+            Assert.Equal(Money.FromCents(0), meal.Budget.PreparedFoodSpent);
             Assert.Single(market.Orders);
         }
     }
