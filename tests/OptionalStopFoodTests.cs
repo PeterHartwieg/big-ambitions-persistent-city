@@ -13,7 +13,7 @@ public sealed partial class FoodCommerceTests
         public bool Raining => false;
         public IReadOnlyList<OptionalStopSpot> Spots(Place p, DwellKind kind) => new[] {new OptionalStopSpot {
             Id="spot",TargetId=p.Id,Position=p.Position,Facing=p.Position}};
-        public bool Available(OptionalStopState stop) => true;
+        public OptionalStopAvailability Available(OptionalStopState stop) => OptionalStopAvailability.Ready;
     }
     [Fact]
     public void OptionalStopsCannotOccupyFoodServiceOrChangeItsPurchases()

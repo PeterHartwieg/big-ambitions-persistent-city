@@ -149,34 +149,45 @@ namespace PersistentCity.Runtime
             }
             return result;
         }
-        public bool Available(OptionalStopState stop)
+        public OptionalStopAvailability Available(OptionalStopState stop)
         {
             try { return ReadAvailable(stop); }
-            catch (Exception) { return false; }
+            catch (Exception) { return OptionalStopAvailability.Unavailable; }
         }
-        private bool ReadAvailable(OptionalStopState stop)
+        private OptionalStopAvailability ReadAvailable(OptionalStopState stop)
         {
-            if (!places.TryGetValue(stop.PlaceId, out var place)) return false;
-            if (stop.Kind != DwellKind.Audience && stop.Kind != DwellKind.Resting && !NativeDoorPresent(place, stop.Kind)) return false;
-            if (!validatedSpots.TryGetValue(stop.SpotId, out var geometry))
-            {
-                Spots(place, stop.Kind);
-                if (!validatedSpots.TryGetValue(stop.SpotId, out geometry)) return false;
-            }
-            if (Position.Distance(stop.Position, geometry.Position) > 0.01) return false;
+            if (!places.TryGetValue(stop.PlaceId, out var place)) return OptionalStopAvailability.Unavailable;
+            if (stop.Kind != DwellKind.Audience && stop.Kind != DwellKind.Resting && !NativeDoorPresent(place, stop.Kind)) return OptionalStopAvailability.Unavailable;
+            var geometryStatus = GeometryStatus(place, stop);
+            if (geometryStatus != OptionalStopAvailability.Ready) return geometryStatus;
             // Rebind saved native identities once. A missing performer/volume ends the saved stop;
             // a later reappearance cannot restart it.
             if (stop.Kind == DwellKind.Audience && !targets.ContainsKey(stop.TargetId)) Audience(place);
             if (stop.Kind == DwellKind.Resting && !targets.ContainsKey(stop.TargetId)) ParkEdge(place, place.Id + ":" + stop.Kind);
             if ((stop.Kind == DwellKind.Audience || stop.Kind == DwellKind.Resting)
-                && (!targets.TryGetValue(stop.TargetId, out var target) || target == null || !target.gameObject.activeInHierarchy)) return false;
+                && (!targets.TryGetValue(stop.TargetId, out var target) || target == null || !target.gameObject.activeInHierarchy)) return OptionalStopAvailability.Unavailable;
             if (stop.Kind == DwellKind.Audience
                 && (!performerZones.TryGetValue(stop.TargetId, out var zone) || zone == null
                     || !(Performer?.GetValue(zone) is StreetPerformer live) || live == null
                     || live.transform != targets[stop.TargetId]
-                    || Position.Distance(stop.Facing, PhysicalPedestrianBody.Point(live.transform.position)) > 0.5)) return false;
+                    || Position.Distance(stop.Facing, PhysicalPedestrianBody.Point(live.transform.position)) > 0.5)) return OptionalStopAvailability.Unavailable;
             return NavMesh.SamplePosition(PhysicalPedestrianBody.Vector(stop.Position), out var hit, 0.15f, WalkingRoutes.DryFilter)
-                && Position.Distance(PhysicalPedestrianBody.Point(hit.position), stop.Position) < 0.15;
+                && Position.Distance(PhysicalPedestrianBody.Point(hit.position), stop.Position) < 0.15
+                ? OptionalStopAvailability.Ready : OptionalStopAvailability.Unavailable;
+        }
+        // A cold facade waiting for this frame's budget is not evidence of disappearance.
+        private OptionalStopAvailability GeometryStatus(Place place, OptionalStopState stop)
+        {
+            if (!validatedSpots.TryGetValue(stop.SpotId, out var geometry))
+            {
+                Spots(place, stop.Kind);
+                if (!validatedSpots.TryGetValue(stop.SpotId, out geometry))
+                    return stop.Kind != DwellKind.Audience && stop.Kind != DwellKind.Resting
+                        && doors.Unsampled(place) && doors.SampledThisFrame
+                        ? OptionalStopAvailability.Deferred : OptionalStopAvailability.Unavailable;
+            }
+            if (Position.Distance(stop.Position, geometry.Position) > 0.01) return OptionalStopAvailability.Unavailable;
+            return OptionalStopAvailability.Ready;
         }
         private static bool Sample(Position from, Vector3 wanted, out Position point)
         {

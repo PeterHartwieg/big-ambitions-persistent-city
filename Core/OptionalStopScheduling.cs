@@ -38,11 +38,13 @@ namespace PersistentCity.Core
     }
 
     // Runtime supplies only validated, reachable, off-flow geometry. Selection never reads a camera.
+    public enum OptionalStopAvailability { Unavailable, Deferred, Ready }
+
     public interface IOptionalStopEnvironment
     {
         bool Raining { get; }
         IReadOnlyList<OptionalStopSpot> Spots(Place place, DwellKind kind);
-        bool Available(OptionalStopState stop);
+        OptionalStopAvailability Available(OptionalStopState stop);
     }
 
     public static class OptionalStopPolicy
@@ -85,6 +87,9 @@ namespace PersistentCity.Core
             // Old saves do not acquire new stops just because they were loaded.
             RefreshOptionalStops();
         }
+        public OptionalStopAvailability OptionalStopStatus(OptionalStopState stop)
+            => stopEnvironment?.Available(stop) ?? OptionalStopAvailability.Ready;
+
         public void RefreshOptionalStops()
         {
             if (stopEnvironment == null) return;
@@ -94,7 +99,7 @@ namespace PersistentCity.Core
                 if (stop == null || stop.Cancelled || State.Minute >= stop.EndMinute) continue;
                 if (stopEnvironment.Raining || person.Phase != CitizenPhase.AtPlace || person.PlaceId != stop.PlaceId
                     || person.MealOuting != null || State.Minute >= person.ActivityUntilMinute
-                    || !DailyRoutine.Open(places[person.PlaceId], State.Minute) || !stopEnvironment.Available(stop))
+                    || !DailyRoutine.Open(places[person.PlaceId], State.Minute) || OptionalStopStatus(stop) == OptionalStopAvailability.Unavailable)
                     stop.Cancelled = true;
             }
             // A conversation requires its actual persistent partner, including after removal or cancellation.

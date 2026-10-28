@@ -270,7 +270,7 @@ namespace PersistentCity.Runtime
         // Waiting for a route or for an opening is indoors. Only a queue-at-opening dwell
         // (PlanQueues) puts a waiting citizen in the street, at a spot beside the door.
         private bool Outdoor(CitizenState c)
-            => OptionalVisible(c) || c.Phase == CitizenPhase.AtPlace && c.Activity == Activity.Leisure && places[c.PlaceId].Id.StartsWith("scene-", StringComparison.Ordinal);
+            => OptionalVisible(c) && simulation.OptionalStopStatus(c.OptionalStop!) == OptionalStopAvailability.Ready || c.Phase == CitizenPhase.AtPlace && c.Activity == Activity.Leisure && places[c.PlaceId].Id.StartsWith("scene-", StringComparison.Ordinal);
 
         /// <summary>
         /// Which waiting citizens near the focus stand in a door queue now, and in which spot. One
@@ -473,7 +473,8 @@ namespace PersistentCity.Runtime
 
         private bool TryJoinOptional(Binding binding)
         {
-            if (binding.Person == null || !OptionalVisible(binding.Citizen)) return false;
+            if (binding.Person == null || !OptionalVisible(binding.Citizen)
+                || simulation.OptionalStopStatus(binding.Citizen.OptionalStop!) != OptionalStopAvailability.Ready) return false;
             var stop = binding.Citizen.OptionalStop!;
             // A queue keeps priority over an optional user of the same facade spot.
             if (bindings.Values.Any(b => b.Queue.HasValue && b.Line != null && b.Slot >= 0

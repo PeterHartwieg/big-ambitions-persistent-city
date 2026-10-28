@@ -24,7 +24,7 @@ public sealed class OptionalStopSchedulingTests
         public IReadOnlyList<OptionalStopSpot> Spots(Place place, DwellKind kind) => !Present || kind != Kind
             ? Array.Empty<OptionalStopSpot>() : Supplied ?? Enumerable.Range(0, Capacity).Select(i => new OptionalStopSpot
             { Id = "spot:" + i, TargetId = "target", Position = new(10 + i, 0, 1), Facing = new(10, 0, 3) }).ToArray();
-        public bool Available(OptionalStopState stop) => Present;
+        public OptionalStopAvailability Available(OptionalStopState stop) => Present ? OptionalStopAvailability.Ready : OptionalStopAvailability.Unavailable;
     }
     private static (CitySimulator Sim, Environment Env) Ready(DwellKind kind, int count = 1, double stay = 120,
         double minute = 1440, int percentage = 100, TravelMode arrivalMode = TravelMode.Walk)
@@ -353,6 +353,29 @@ public sealed class OptionalStopSchedulingTests
         wire = JObject.Parse(SaveCodec.Write(sim.State));
         wire["Citizens"]![0]!["OptionalStop"]!["PlaceId"] = "missing";
         Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status);
+    }
+
+    [Theory]
+    [InlineData(100, true)]
+    [InlineData(0, false)]
+    public void SameVisitEventAndReloadPreserveWaitingChoiceBeforePartnerArrives(int rate, bool chosen)
+    {
+        var (sim, env) = Ready(DwellKind.ChatOutsideVenue, 2, percentage: rate);
+        sim.State.Citizens[1].Journey!.Legs[0].Minutes = 20;
+        sim.State.Citizens[1].NextEventMinute = 1460;
+        sim = sim.RebuildRoutes(new Walking()); sim.AdvanceTo(1450);
+        var first = sim.State.Citizens[0];
+        Assert.Equal(chosen, first.OptionalStopChoice);
+        // A lifecycle/routine wakeup keeps the admitted activity and its original deadline.
+        first.NextEventMinute = 1451; sim = sim.RebuildRoutes(new Walking());
+        sim.AttachOptionalStops(env, 100-rate); sim.AdvanceTo(1451);
+        Assert.Equal(chosen, first.OptionalStopChoice);
+        Assert.Single(first.RecentVisits); Assert.Equal(1570, first.ActivityUntilMinute);
+        var read = SaveCodec.Read(SaveCodec.Write(sim.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        sim = new CitySimulator(read.State!, new Walking()); sim.AttachOptionalStops(env, 100);
+        sim.AdvanceTo(1460);
+        Assert.Equal(chosen, sim.State.Citizens[0].OptionalStopChoice);
+        Assert.All(sim.State.Citizens, c => Assert.Equal(chosen, c.OptionalStop != null));
     }
 
 }

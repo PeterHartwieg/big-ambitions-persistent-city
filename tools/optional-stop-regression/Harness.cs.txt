@@ -69,7 +69,7 @@ partial class Harness
         public bool Raining => false;
         public IReadOnlyList<OptionalStopSpot> Spots(Place p,DwellKind k) => k==DwellKind.WindowShopping
             ? new[] {new OptionalStopSpot {Id="shop-spot",TargetId=p.Id,Position=new(12,0,0),Facing=new(13,0,0)}} : Array.Empty<OptionalStopSpot>();
-        public bool Available(OptionalStopState s) => true;
+        public OptionalStopAvailability Available(OptionalStopState s) => OptionalStopAvailability.Ready;
     }
     private static void ArrivalSequence()
     {
@@ -127,6 +127,8 @@ partial class Harness
     {
         public Route Plan(Place a,Place b,double t,TravelPreferences p) => new() {Legs={new RouteLeg {From=a.Position,To=b.Position,Minutes=5,Mode=TravelMode.Walk}}};
     }
+    internal static bool TryDeferredAdmission(CitySimulator sim, CitizenState c)
+    { var h=new Harness(sim); return h.TryJoinOptional(new Binding {Citizen=c,Person=new Body()}); }
     private static void SharedSamplingBudget()
     {
         var spots = new PersistentCity.Runtime.DwellSpots();

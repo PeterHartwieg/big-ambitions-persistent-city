@@ -336,6 +336,14 @@ namespace PersistentCity.Core
                 throw new InvalidOperationException("Each citizen event must schedule a later event.");
             }
             var arrivalRoute = live.Phase == CitizenPhase.Travelling ? live.Journey : null;
+            // A routine/lifecycle event can retain the admitted visit without recording a new one.
+            // Keep its saved acceptance or decline; never reconstruct it using a changed rate.
+            if (live.Phase == CitizenPhase.AtPlace && working.Phase == CitizenPhase.AtPlace
+                && live.PlaceId == working.PlaceId && live.Activity == working.Activity
+                && live.RecentVisits.Count > 0 && working.RecentVisits.Count > 0
+                && live.RecentVisits[live.RecentVisits.Count - 1].AtMinute == working.RecentVisits[working.RecentVisits.Count - 1].AtMinute
+                && live.RecentVisits[live.RecentVisits.Count - 1].PlaceId == working.RecentVisits[working.RecentVisits.Count - 1].PlaceId)
+                working.OptionalStopChoice = live.OptionalStopChoice;
             CommitEvent(live, working);
             if (ReferenceEquals(restartedItem, item)) restartedItem = null;
             item.Minute = ScheduledMinute(live);
