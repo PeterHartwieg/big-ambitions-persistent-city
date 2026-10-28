@@ -64,6 +64,7 @@ namespace PersistentCity.Runtime
         private MultimodalRoutes? routes;
         private RouteObjectDiscovery? routeObjects;
         private PhysicalPopulation? physical;
+        private DwellSpots dwellSpots = new DwellSpots();
         private bool physicalFailed;
         private object? saveIdentity;
         private object? initializingSave;
@@ -295,7 +296,7 @@ namespace PersistentCity.Runtime
                 AdvancePopulation(Math.Max(target, simulation.State.Minute));
                 if (settings.PhysicalEnabled && !physicalFailed && physical == null && !NativeTravelPace.HiddenTravel)
                 {
-                    try { physical = new PhysicalPopulation(transform, simulation, routes!, dependency!, log!, settings.MaximumPedestrians, settings.MaximumVehicles, settings.PhysicalRadiusMetres); }
+                    try { physical = new PhysicalPopulation(transform, simulation, routes!, dependency!, log!, settings.MaximumPedestrians, settings.MaximumVehicles, settings.PhysicalRadiusMetres, dwellSpots); }
                     catch (Exception error)
                     {
                         physicalFailed = true;
@@ -542,7 +543,8 @@ namespace PersistentCity.Runtime
             routeObjects = new RouteObjectDiscovery();
             routes = new MultimodalRoutes(state.Places, NativeTravelPace.WalkingMetresPerSecond / state.TravelClockRate, state.TravelClockRate, dependency, routeObjects);
             simulation = new CitySimulator(state, routes);
-            simulation.AttachOptionalStops(new OptionalStopEnvironment(state.Places), settings.OptionalStopChoicePercentage);
+            dwellSpots = new DwellSpots();
+            simulation.AttachOptionalStops(new OptionalStopEnvironment(state.Places, dwellSpots), settings.OptionalStopChoicePercentage);
             seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
             if (state.Food == null)
                 state.Food = new FoodCommerceState { MealRhythmVersion = MealRhythm.PolicyVersion, HouseholdFinanceVersion = HouseholdFinance.PolicyVersion,

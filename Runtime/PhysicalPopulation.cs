@@ -55,14 +55,13 @@ namespace PersistentCity.Runtime
         private readonly Dictionary<string, Binding> bindings = new Dictionary<string, Binding>(StringComparer.Ordinal);
         private readonly Dictionary<string, float> attempted = new Dictionary<string, float>(StringComparer.Ordinal);
         private readonly Dictionary<string, Place> places;
-        private readonly DwellSpots spots = new DwellSpots();
+        private readonly DwellSpots spots;
         private readonly Dictionary<string, QueuePlanEntry> queuers = new Dictionary<string, QueuePlanEntry>(StringComparer.Ordinal);
         // Queue dwells whose citizen could not reach a spot: they wait inside for the rest of that dwell.
         private readonly Dictionary<string, double> gaveUp = new Dictionary<string, double>(StringComparer.Ordinal);
         private const float QueueStepSeconds = 20f;
         private const int EntryAttemptFrames = 30;
         // One uncached door is sampled per frame, shared by the queue plan and arriving walkers.
-        private int sampledFrame = -1;
         private readonly IModLogger log;
         private readonly int pedestrianLimit, vehicleLimit;
         private readonly double radius;
@@ -76,8 +75,9 @@ namespace PersistentCity.Runtime
         private List<Binding>? bindingSnapshot = new List<Binding>();
 
         public PhysicalPopulation(Transform parent, CitySimulator simulation, MultimodalRoutes routes, Assembly dependency,
-            IModLogger log, int pedestrianLimit, int vehicleLimit, double radius)
+            IModLogger log, int pedestrianLimit, int vehicleLimit, double radius, DwellSpots spots)
         {
+            this.spots = spots;
             this.simulation = simulation; this.routes = routes; this.log = log;
             this.pedestrianLimit = pedestrianLimit; this.vehicleLimit = vehicleLimit; this.radius = radius;
             places = simulation.State.Places.ToDictionary(p => p.Id, StringComparer.Ordinal);
@@ -103,6 +103,7 @@ namespace PersistentCity.Runtime
                 ambient.Activate();
                 if (!ambient.Active) throw new InvalidOperationException("Pedestrian activation: " + ambient.LastError);
                 active = true;
+                simulation.ActivityObserved += OnOptionalDeparture;
                 log.Info("Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained.");
             }
             catch { Dispose(); throw; }
@@ -345,17 +346,15 @@ namespace PersistentCity.Runtime
 
         private bool TryLine(Place place, out DoorQueue line)
         {
-            bool sampled = sampledFrame == Time.frameCount;
-            bool found = spots.TryQueue(place, ref sampled, out var queue) && queue != null;
-            if (sampled) sampledFrame = Time.frameCount;
+            bool found = spots.TryQueue(place, out var queue) && queue != null;
             line = queue!;
             return found;
         }
 
         /// <summary>
-        /// A visible walker that has just reached a closed shop or venue door. The journey lease is
+        /// A visible walker that has just reached a shop or venue door. The journey lease is
         /// already returned, but the simulator processes the arrival on its next event batch. Keep
-        /// the body standing at the door until then, so it can join the queue instead of vanishing.
+        /// the body standing at the door until then, so it can join a selected optional stop or opening queue without losing its body.
         /// </summary>
         private bool TryAwaitArrival(Binding binding)
         {
@@ -364,7 +363,6 @@ namespace PersistentCity.Runtime
                 || citizen.Phase != CitizenPhase.Travelling || simulation.IsPhysicalJourneyValid(lease)
                 || (citizen.DestinationActivity != Activity.Shop && citizen.DestinationActivity != Activity.Leisure)
                 || !places.TryGetValue(citizen.DestinationId, out var destination)
-                || DailyRoutine.Open(destination, simulation.State.Minute)
                 || Position.Distance(person.Position, destination.Position) > 3) return false;
             binding.Lease = null;
             simulation.ReleasePhysicalJourney(lease); // Already returned on completion; a no-op kept for symmetry with Release.
@@ -384,11 +382,11 @@ namespace PersistentCity.Runtime
             if (citizen.Phase == CitizenPhase.Travelling)
                 return ReferenceEquals(citizen.Journey, binding.AwaitJourney) && simulation.State.Minute <= binding.AwaitMinute + 0.5;
             // Another door used this frame's sampling budget: wait a frame rather than lose the body.
-            if (citizen.Phase == CitizenPhase.WaitingForOpening && sampledFrame == Time.frameCount
+            if (citizen.Phase == CitizenPhase.WaitingForOpening && spots.SampledThisFrame
                 && places.TryGetValue(citizen.PlaceId, out var place) && spots.Unsampled(place)
                 && simulation.State.Minute <= binding.AwaitMinute + 0.5) return true;
             binding.AwaitingArrival = false;
-            return TryJoinQueue(binding);
+            return TryJoinOptional(binding) || TryJoinQueue(binding);
         }
 
         /// <summary>Join the door's queue with the body that walked here. Its spot respects the people already planned for that line.</summary>
@@ -459,6 +457,17 @@ namespace PersistentCity.Runtime
             return ++binding.EntryAttempts < EntryAttemptFrames;
         }
 
+        // ActivityObserved runs at commitment, before another simulation event can advance this route.
+        private void OnOptionalDeparture(string id, CitizenState citizen, double minute)
+        {
+            if (!bindings.TryGetValue(id, out var binding) || binding.Optional == null || binding.Person == null
+                || !binding.Person.Valid || citizen.Phase != CitizenPhase.Travelling
+                || binding.Lease != null && simulation.IsPhysicalJourneyValid(binding.Lease)) return;
+            if (!simulation.TryHoldPhysicalDeparture(id, out var lease))
+                throw new InvalidOperationException("Optional-stop body lost departure ownership.");
+            binding.Lease = lease; binding.TargetLeg = -1; binding.ObservedMinute = minute;
+        }
+
         private bool OptionalVisible(CitizenState citizen) => citizen.Phase == CitizenPhase.AtPlace
             && citizen.OptionalStop != null && citizen.OptionalStop.ActiveAt(simulation.State.Minute);
 
@@ -472,6 +481,7 @@ namespace PersistentCity.Runtime
             { simulation.CancelOptionalStop(binding.Citizen.Identity.Id); return false; }
             if (!binding.Person.SetPathTarget(stop.Position, NativeTravelPace.WalkingMetresPerSecond))
             { simulation.CancelOptionalStop(binding.Citizen.Identity.Id); return false; }
+            binding.AwaitingArrival = false; binding.AwaitJourney = null;
             binding.Optional = stop; binding.OptionalReturning = false; binding.StepWalked = 0;
             return true;
         }
@@ -495,7 +505,15 @@ namespace PersistentCity.Runtime
             }
             if (binding.OptionalReturning)
             {
-                if (Position.Distance(body.Position, stop.ReturnPosition) < 0.4) return false;
+                if (Position.Distance(body.Position, stop.ReturnPosition) < 0.4)
+                {
+                    binding.Optional = null;
+                    if (binding.Lease != null && simulation.TrySamplePhysicalJourney(binding.Lease, out var resumed)
+                        && resumed.Mode == TravelMode.Walk)
+                    { body.Stop(false); binding.TargetLeg = -1; binding.ObservedMinute = simulation.State.Minute; return true; }
+                    // Indoor entry or transfer to a car/transit body happens at the original entrance.
+                    return false;
+                }
                 // Retry a temporarily blocked return; never retire a visible citizen at the spot.
                 if (!body.Agent.hasPath)
                 {
@@ -649,7 +667,7 @@ namespace PersistentCity.Runtime
         {
             vehicles.AssertHealthy();
             simulation.RefreshOptionalStops();
-            foreach (var binding in bindings.Values.ToArray()) if (!Observe(binding)) Release(binding);
+            foreach (var binding in bindings.Values.ToArray()) if (!Observe(binding) && !TryAwaitArrival(binding)) Release(binding);
         }
         private bool Bound(Binding binding) => bindings.TryGetValue(binding.Citizen.Identity.Id, out var registered) && ReferenceEquals(registered, binding);
         private void Bind(Binding binding)
@@ -693,6 +711,7 @@ namespace PersistentCity.Runtime
         {
             if (disposed) return;
             disposed = true; active = false;
+            simulation.ActivityObserved -= OnOptionalDeparture;
             vehicles.SuspendForNativeFastForward = null;
             vehicles.CommandLimit = null;
             vehicles.NativeTargetPermission = null;

@@ -15,7 +15,8 @@ namespace PersistentCity.Runtime
     /// <summary>Read-only spot discovery. No stationary crowd spawn, native sale or extra outing.</summary>
     internal sealed class OptionalStopEnvironment : IOptionalStopEnvironment
     {
-        private readonly DwellSpots doors = new DwellSpots();
+        private readonly DwellSpots doors;
+        private readonly AudienceGeometryCache audiences = new AudienceGeometryCache();
         private readonly Dictionary<string, CityBuildingController> buildings = new Dictionary<string, CityBuildingController>(StringComparer.Ordinal);
         private readonly Dictionary<string, OptionalStopSpot> validatedSpots = new Dictionary<string, OptionalStopSpot>(StringComparer.Ordinal);
         private readonly Dictionary<string, OptionalStopSpot[]> cached = new Dictionary<string, OptionalStopSpot[]>(StringComparer.Ordinal);
@@ -23,7 +24,8 @@ namespace PersistentCity.Runtime
         private readonly Dictionary<string, Transform> targets = new Dictionary<string, Transform>(StringComparer.Ordinal);
         private readonly Dictionary<string, Place> places;
         private static readonly FieldInfo? Performer = typeof(StationaryAiSpawner).GetField("_streetPerformer", BindingFlags.Instance | BindingFlags.NonPublic);
-        public OptionalStopEnvironment(IEnumerable<Place> places) { this.places = places.ToDictionary(p => p.Id, StringComparer.Ordinal); }
+        public OptionalStopEnvironment(IEnumerable<Place> places, DwellSpots doors)
+        { this.places = places.ToDictionary(p => p.Id, StringComparer.Ordinal); this.doors = doors; }
         public bool Raining => RainHelper.isRaining;
         public IReadOnlyList<OptionalStopSpot> Spots(Place place, DwellKind kind)
         {
@@ -39,11 +41,15 @@ namespace PersistentCity.Runtime
         {
             if (kind == DwellKind.Audience) return Audience(place);
             string key = place.Id + ":" + kind;
-            if (kind != DwellKind.Resting && !NativeDoorPresent(place, kind)) return Array.Empty<OptionalStopSpot>();
+            if (kind == DwellKind.Resting)
+                return cached.TryGetValue(key, out var park) ? park : ParkEdge(place, key);
+            // Refuse cold work before a separate native-building lookup when this frame's
+            // shared facade budget has already been consumed.
+            if (!doors.TryQueue(place, out var line) || line == null || !NativeDoorPresent(place, kind))
+                return Array.Empty<OptionalStopSpot>();
+            // A dead building reference can invalidate the shared facade during that check.
+            if (!doors.TryQueue(place, out line) || line == null) return Array.Empty<OptionalStopSpot>();
             if (cached.TryGetValue(key, out var known)) return known;
-            if (kind == DwellKind.Resting) return ParkEdge(place, key);
-            bool sampled = false;
-            if (!doors.TryQueue(place, ref sampled, out var line) || line == null) return Array.Empty<OptionalStopSpot>();
             // Geometry already validated beside the facade, reachable and clear of entrances.
             var result = line.Spots.Select((p, index) => new OptionalStopSpot { Id = key + ":" + index,
                 TargetId = place.Id, Position = p, Facing = kind == DwellKind.WindowShopping ? line.Door
@@ -52,7 +58,18 @@ namespace PersistentCity.Runtime
         }
         private bool NativeDoorPresent(Place place, DwellKind kind)
         {
-            if (!buildings.TryGetValue(place.Id, out var found))
+            bool known = buildings.TryGetValue(place.Id, out var found);
+            if (known && found == null)
+            {
+                buildings.Remove(place.Id); doors.Invalidate(place);
+                foreach (var doorKind in new[] { DwellKind.Break, DwellKind.WindowShopping, DwellKind.ChatOutsideVenue })
+                {
+                    string key = place.Id + ":" + doorKind;
+                    if (cached.TryGetValue(key, out var old)) foreach (var spot in old) validatedSpots.Remove(spot.Id);
+                    cached.Remove(key);
+                }
+            }
+            if (found == null)
             {
                 var manager = CityManager.Instance;
                 if (manager == null || manager.cityBuildingControllers == null) return false;
@@ -96,18 +113,29 @@ namespace PersistentCity.Runtime
         }
         private IReadOnlyList<OptionalStopSpot> Audience(Place place)
         {
-            var result = new List<OptionalStopSpot>();
-            if (Performer == null) return result;
+            var image = new List<AudienceTarget>();
+            if (Performer == null) return Array.Empty<OptionalStopSpot>();
             foreach (var zone in StationaryAiSpawner.AllPedestrianSpawners)
             {
-                if (zone == null || !OutdoorPlaces.StaticSceneKey(zone.transform, out string key)
-                    || !(Performer.GetValue(zone) is StreetPerformer performer) || performer == null
+                if (zone == null || !(Performer.GetValue(zone) is StreetPerformer performer) || performer == null
                     || !performer.gameObject.activeInHierarchy) continue;
                 var center = performer.transform.position;
                 // Only pedestrians passing this entrance; no destination/trip is generated for a show.
-                if (Position.Distance(place.Position, PhysicalPedestrianBody.Point(center)) > 8) continue;
+                if (Position.Distance(place.Position, PhysicalPedestrianBody.Point(center)) > 8
+                    || !OutdoorPlaces.StaticSceneKey(zone.transform, out string key)) continue;
                 string target = "performer:" + key;
                 targets[target] = performer.transform; performerZones[target] = zone;
+                image.Add(new AudienceTarget(zone, performer, target, PhysicalPedestrianBody.Point(center)));
+            }
+            return audiences.Get(place, image, SampleAudience);
+        }
+        private static IReadOnlyList<OptionalStopSpot> SampleAudience(Place place, IReadOnlyList<AudienceTarget> image)
+        {
+            var result = new List<OptionalStopSpot>();
+            foreach (var member in image)
+            {
+                var center = PhysicalPedestrianBody.Vector(member.Position);
+                string target = member.Id;
                 for (int i = 0; i < 8; i++)
                 {
                     double angle = i * Math.PI / 4;

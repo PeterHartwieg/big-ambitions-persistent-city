@@ -58,6 +58,15 @@ namespace PersistentCity.Core
 
         /// <summary>Acquire after advancing the city. Its committed route progress freezes until observed or released.</summary>
         public bool TryAcquirePhysicalJourney(string citizenId, out PhysicalJourneyLease? lease)
+            => AcquirePhysicalJourney(citizenId, false, out lease);
+
+        /// <summary>Called synchronously when a new route commits while its body is still returning
+        /// from an optional stop. Hold at the origin before even a traffic-first route can enqueue.
+        /// Reuses the ordinary lease's clock rebasing, save snapshot and release semantics.</summary>
+        public bool TryHoldPhysicalDeparture(string citizenId, out PhysicalJourneyLease? lease)
+            => AcquirePhysicalJourney(citizenId, true, out lease);
+
+        private bool AcquirePhysicalJourney(string citizenId, bool departureHold, out PhysicalJourneyLease? lease)
         {
             lease = null;
             if (citizenId == null) throw new ArgumentNullException(nameof(citizenId));
@@ -65,9 +74,10 @@ namespace PersistentCity.Core
             var c = item.Citizen;
             if (c.Phase != CitizenPhase.Travelling || c.Journey == null || c.Identity.Id != citizenId || !CurrentCitizenSlot(item, c)) return false;
             double progress = JourneyProgress(c);
+            if (departureHold && (progress != 0 || c.DepartureMinute != State.Minute || trafficCitizens.ContainsKey(citizenId))) return false;
             if (progress < 0 || progress >= c.Journey.Minutes) return false;
             if (traffic != null && traffic.TryGetVehicle(citizenId, out var trafficPosition) && !trafficPosition.LinkId.HasValue) return false;
-            if (!trafficCitizens.ContainsKey(citizenId) && NextTrafficBoundary(c, progress) <= progress) return false;
+            if (!departureHold && !trafficCitizens.ContainsKey(citizenId) && NextTrafficBoundary(c, progress) <= progress) return false;
             ValidateRoute(c.Journey, places[c.PlaceId].Position, places[c.DestinationId].Position);
             ValidateCarRoute(c.Journey, c);
             lease = new PhysicalJourneyLease(this, checked(++physicalGeneration), c) { Progress = progress };

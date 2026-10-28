@@ -27,6 +27,15 @@ namespace PersistentCity.Runtime
     internal sealed class DwellSpots
     {
         public const int QueueLength = 8;
+        private int sampledFrame = -1;
+        public bool SampledThisFrame => sampledFrame == Time.frameCount;
+        public bool TryQueue(Place place, out DoorQueue? queue)
+        {
+            bool sampled = SampledThisFrame;
+            return TryQueue(place, ref sampled, out queue);
+        }
+        public void Invalidate(Place place)
+        { string key = KeyOf(place); queues.Remove(key); retryAt.Remove(key); }
         // Native entrances are sampled 0.5 m in front of the door transform (GamePlaces.TryEntrance).
         private const float DoorMatchMetres = 2.5f, WallOffset = 0.6f, FirstGap = 1.1f, Spacing = 0.75f;
         private const float SampleRadius = 0.6f, LateralTolerance = 0.45f, OtherDoorClearance = 1.2f, RetrySeconds = 60f;
@@ -36,7 +45,7 @@ namespace PersistentCity.Runtime
         public static string KeyOf(Place place) => DwellPlanner.DoorKey(place.Position);
 
         /// <summary>
-        /// At most one uncached door is sampled per call. A door with no usable line is tried again
+        /// At most one uncached door is sampled per frame across all callers. A door with no usable line is tried again
         /// after a minute, in case its navmesh was not ready.
         /// </summary>
         public bool TryQueue(Place place, ref bool sampledThisCall, out DoorQueue? queue)
@@ -44,8 +53,8 @@ namespace PersistentCity.Runtime
             string key = KeyOf(place);
             if (queues.TryGetValue(key, out var cached)) { queue = cached; return true; }
             queue = null;
-            if (sampledThisCall || retryAt.TryGetValue(key, out float retry) && Time.unscaledTime < retry) return false;
-            sampledThisCall = true;
+            if (sampledThisCall || SampledThisFrame || retryAt.TryGetValue(key, out float retry) && Time.unscaledTime < retry) return false;
+            sampledThisCall = true; sampledFrame = Time.frameCount;
             queue = Sample(key, place);
             if (queue == null) { retryAt[key] = Time.unscaledTime + RetrySeconds; return false; }
             retryAt.Remove(key);
