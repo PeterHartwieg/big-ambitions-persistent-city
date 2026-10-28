@@ -378,4 +378,42 @@ public sealed class OptionalStopSchedulingTests
         Assert.All(sim.State.Citizens, c => Assert.Equal(chosen, c.OptionalStop != null));
     }
 
+    [Theory]
+    [InlineData(1451)] // an event interrupts an active pair
+    [InlineData(1490)] // both chats have naturally expired
+    public void UsedConversationOpportunityCannotBeRecruitedAgainAfterSameVisitEvent(double eventMinute)
+    {
+        var (sim, env) = Ready(DwellKind.ChatOutsideVenue, 4);
+        for (int i=2; i<4; i++)
+        {
+            var c=sim.State.Citizens[i];
+            c.Journey!.Legs[0].Minutes=60+(i-2)*10;
+            c.NextEventMinute=1500+(i-2)*10;
+        }
+        sim=sim.RebuildRoutes(new Walking()); sim.AdvanceTo(1450);
+        var first=sim.State.Citizens[0]; var partner=sim.State.Citizens[1];
+        var original=first.OptionalStop!.Copy();
+        first.NextEventMinute=eventMinute;
+        sim=sim.RebuildRoutes(new Walking()); sim.AdvanceTo(eventMinute);
+        Assert.True(first.OptionalStop!.Cancelled);
+        Assert.True(partner.OptionalStop!.Cancelled);
+        Assert.True(first.OptionalStopChoice); Assert.True(partner.OptionalStopChoice);
+        Assert.Equal(original.StartMinute,first.OptionalStop.StartMinute);
+        Assert.Equal(original.EndMinute,first.OptionalStop.EndMinute);
+        Assert.Equal(original.VisitMinute,first.OptionalStop.VisitMinute);
+        string saved=SaveCodec.Write(sim.State);
+        var read=SaveCodec.Read(saved); Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
+        Assert.Equal(saved,SaveCodec.Write(read.State!));
+        sim=new CitySimulator(read.State!,new Walking()); sim.AttachOptionalStops(env,100);
+        sim.AdvanceTo(1500);
+        Assert.Null(sim.State.Citizens[2].OptionalStop); // neither old partner is reusable
+        sim.AdvanceTo(1510);
+        Assert.All(sim.State.Citizens.Take(2),c=> { Assert.True(c.OptionalStop!.Cancelled); Assert.Single(c.RecentVisits); });
+        Assert.All(sim.State.Citizens.Skip(2),c=>Assert.False(c.OptionalStop!.Cancelled));
+        Assert.Equal(new[]{"c2","c3"},sim.State.Citizens[2].OptionalStop!.Members.OrderBy(id=>id));
+        Assert.Equal(SaveReadStatus.Loaded,SaveCodec.Read(SaveCodec.Write(sim.State)).Status);
+        sim.AdvanceTo(1580);
+        Assert.All(sim.State.Citizens.Take(2),c=>Assert.Null(c.OptionalStop)); // departure clears evidence
+    }
+
 }

@@ -338,13 +338,20 @@ namespace PersistentCity.Core
             var arrivalRoute = live.Phase == CitizenPhase.Travelling ? live.Journey : null;
             // A routine/lifecycle event can retain the admitted visit without recording a new one.
             // Keep its saved acceptance or decline; never reconstruct it using a changed rate.
-            if (live.Phase == CitizenPhase.AtPlace && working.Phase == CitizenPhase.AtPlace
+            bool sameVisit = live.Phase == CitizenPhase.AtPlace && working.Phase == CitizenPhase.AtPlace
                 && live.PlaceId == working.PlaceId && live.Activity == working.Activity
                 && live.RecentVisits.Count > 0 && working.RecentVisits.Count > 0
                 && live.RecentVisits[live.RecentVisits.Count - 1].AtMinute == working.RecentVisits[working.RecentVisits.Count - 1].AtMinute
-                && live.RecentVisits[live.RecentVisits.Count - 1].PlaceId == working.RecentVisits[working.RecentVisits.Count - 1].PlaceId)
+                && live.RecentVisits[live.RecentVisits.Count - 1].PlaceId == working.RecentVisits[working.RecentVisits.Count - 1].PlaceId;
+            if (sameVisit)
+            {
                 working.OptionalStopChoice = live.OptionalStopChoice;
+                // Retain consumed-opportunity evidence until this visit ends. The event still
+                // ends the stop; an accepted visitor must not be recruited again after it clears.
+                working.OptionalStop = live.OptionalStop?.Copy();
+            }
             CommitEvent(live, working);
+            if (sameVisit && live.OptionalStop != null) CancelOptionalStop(live.Identity.Id);
             if (ReferenceEquals(restartedItem, item)) restartedItem = null;
             item.Minute = ScheduledMinute(live);
             // The in-flight item is outside the queue; failing to add it means it was queued meanwhile and
