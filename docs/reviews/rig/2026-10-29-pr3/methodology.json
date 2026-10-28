@@ -1,0 +1,7 @@
+{
+  "role": "rig_test",
+  "date_label": "2026-10-29",
+  "financial": "exact rational prices; no tolerance",
+  "timing": "alternating before1 after1 before2 after2 before3 after3; 60 seconds at speed 1; median difference versus larger full within-build range for p50 p95 maximum; autosave off verified before/after; no saves inside windows",
+  "optional": "count distinct newly recorded per-visit choices separately from instantiated stops; source overlays existing visits, creates no extra trip or native sale; no fixture/price/RLO modification"
+}

@@ -1,0 +1,323 @@
+{
+  "resident": "c101",
+  "checkpointMinute": 9304.818838119507,
+  "stop": {
+    "Kind": 5,
+    "PlaceId": "address:ba%3Astreet_fourthavenue:15:shop",
+    "SpotId": "address:ba%3Astreet_fourthavenue:15:shop:WindowShopping:0",
+    "TargetId": "address:ba%3Astreet_fourthavenue:15:shop",
+    "Position": {
+      "X": 212.85400390625,
+      "Y": 0.09000396728515625,
+      "Z": -35.601776123046875,
+      "IsFinite": true
+    },
+    "Facing": {
+      "X": 211.75399780273438,
+      "Y": 0.09000015258789062,
+      "Z": -36.20177459716797,
+      "IsFinite": true
+    },
+    "ReturnPosition": {
+      "X": 211.75399780273438,
+      "Y": 0.09000015258789062,
+      "Z": -35.70177459716797,
+      "IsFinite": true
+    },
+    "StartMinute": 9304.556035041809,
+    "EndMinute": 9306.632435041809,
+    "VisitMinute": 9304.556035041809,
+    "ResumeEventMinute": 9340.0,
+    "Cancelled": false,
+    "Members": []
+  },
+  "identityUnchanged": true,
+  "choiceUnchanged": true,
+  "stopExactlyPreserved": true,
+  "savedPayloadByteIdenticalAcrossReload": true,
+  "walletsCountersAndReceiptsUnchangedAcrossReload": true,
+  "physicalBeforeReload": [
+    {
+      "id": "c101",
+      "phase": "approaching",
+      "minute": 9304.559738636017,
+      "frame": 28096,
+      "bodyGeneration": 29,
+      "bodyInstance": -9255692,
+      "position": {
+        "X": 211.82302856445312,
+        "Y": 0.09000396728515625,
+        "Z": -35.703651428222656,
+        "IsFinite": true
+      },
+      "stop": {
+        "Kind": 5,
+        "PlaceId": "address:ba%3Astreet_fourthavenue:15:shop",
+        "SpotId": "address:ba%3Astreet_fourthavenue:15:shop:WindowShopping:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:15:shop",
+        "Position": {
+          "X": 212.85400390625,
+          "Y": 0.09000396728515625,
+          "Z": -35.601776123046875,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 211.75399780273438,
+          "Y": 0.09000015258789062,
+          "Z": -36.20177459716797,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 211.75399780273438,
+          "Y": 0.09000015258789062,
+          "Z": -35.70177459716797,
+          "IsFinite": true
+        },
+        "StartMinute": 9304.556035041809,
+        "EndMinute": 9306.632435041809,
+        "VisitMinute": 9304.556035041809,
+        "ResumeEventMinute": 9340.0,
+        "Cancelled": false,
+        "Members": []
+      },
+      "activity": "Shop",
+      "citizenPhase": "AtPlace",
+      "PlaceId": "address:ba%3Astreet_fourthavenue:15:shop",
+      "CompletedJourneys": 5
+    },
+    {
+      "id": "c101",
+      "phase": "dwell",
+      "minute": 9304.818838119507,
+      "frame": 28132,
+      "bodyGeneration": 29,
+      "bodyInstance": -9255692,
+      "position": {
+        "X": 212.5595703125,
+        "Y": 0.09000396728515625,
+        "Z": -35.624244689941406,
+        "IsFinite": true
+      },
+      "stop": {
+        "Kind": 5,
+        "PlaceId": "address:ba%3Astreet_fourthavenue:15:shop",
+        "SpotId": "address:ba%3Astreet_fourthavenue:15:shop:WindowShopping:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:15:shop",
+        "Position": {
+          "X": 212.85400390625,
+          "Y": 0.09000396728515625,
+          "Z": -35.601776123046875,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 211.75399780273438,
+          "Y": 0.09000015258789062,
+          "Z": -36.20177459716797,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 211.75399780273438,
+          "Y": 0.09000015258789062,
+          "Z": -35.70177459716797,
+          "IsFinite": true
+        },
+        "StartMinute": 9304.556035041809,
+        "EndMinute": 9306.632435041809,
+        "VisitMinute": 9304.556035041809,
+        "ResumeEventMinute": 9340.0,
+        "Cancelled": false,
+        "Members": []
+      },
+      "activity": "Shop",
+      "citizenPhase": "AtPlace",
+      "PlaceId": "address:ba%3Astreet_fourthavenue:15:shop",
+      "CompletedJourneys": 5
+    }
+  ],
+  "physicalAfterReload": [
+    {
+      "id": "c101",
+      "phase": "approaching",
+      "minute": 9305.24693107605,
+      "frame": 29513,
+      "bodyGeneration": 13,
+      "bodyInstance": -10331486,
+      "position": {
+        "X": 211.75399780273438,
+        "Y": 0.09000015258789062,
+        "Z": -35.70177459716797,
+        "IsFinite": true
+      },
+      "stop": {
+        "Kind": 5,
+        "PlaceId": "address:ba%3Astreet_fourthavenue:15:shop",
+        "SpotId": "address:ba%3Astreet_fourthavenue:15:shop:WindowShopping:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:15:shop",
+        "Position": {
+          "X": 212.85400390625,
+          "Y": 0.09000396728515625,
+          "Z": -35.601776123046875,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 211.75399780273438,
+          "Y": 0.09000015258789062,
+          "Z": -36.20177459716797,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 211.75399780273438,
+          "Y": 0.09000015258789062,
+          "Z": -35.70177459716797,
+          "IsFinite": true
+        },
+        "StartMinute": 9304.556035041809,
+        "EndMinute": 9306.632435041809,
+        "VisitMinute": 9304.556035041809,
+        "ResumeEventMinute": 9340.0,
+        "Cancelled": false,
+        "Members": []
+      },
+      "activity": "Shop",
+      "citizenPhase": "AtPlace",
+      "PlaceId": "address:ba%3Astreet_fourthavenue:15:shop",
+      "CompletedJourneys": 5
+    },
+    {
+      "id": "c101",
+      "phase": "dwell",
+      "minute": 9305.441277503967,
+      "frame": 29549,
+      "bodyGeneration": 13,
+      "bodyInstance": -10331486,
+      "position": {
+        "X": 212.56480407714844,
+        "Y": 0.09000015258789062,
+        "Z": -35.6280517578125,
+        "IsFinite": true
+      },
+      "stop": {
+        "Kind": 5,
+        "PlaceId": "address:ba%3Astreet_fourthavenue:15:shop",
+        "SpotId": "address:ba%3Astreet_fourthavenue:15:shop:WindowShopping:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:15:shop",
+        "Position": {
+          "X": 212.85400390625,
+          "Y": 0.09000396728515625,
+          "Z": -35.601776123046875,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 211.75399780273438,
+          "Y": 0.09000015258789062,
+          "Z": -36.20177459716797,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 211.75399780273438,
+          "Y": 0.09000015258789062,
+          "Z": -35.70177459716797,
+          "IsFinite": true
+        },
+        "StartMinute": 9304.556035041809,
+        "EndMinute": 9306.632435041809,
+        "VisitMinute": 9304.556035041809,
+        "ResumeEventMinute": 9340.0,
+        "Cancelled": false,
+        "Members": []
+      },
+      "activity": "Shop",
+      "citizenPhase": "AtPlace",
+      "PlaceId": "address:ba%3Astreet_fourthavenue:15:shop",
+      "CompletedJourneys": 5
+    },
+    {
+      "id": "c101",
+      "phase": "returning",
+      "minute": 9306.633154392242,
+      "frame": 29781,
+      "bodyGeneration": 13,
+      "bodyInstance": -10331486,
+      "position": {
+        "X": 212.82228088378906,
+        "Y": 0.09000015258789062,
+        "Z": -35.60466003417969,
+        "IsFinite": true
+      },
+      "stop": {
+        "Kind": 5,
+        "PlaceId": "address:ba%3Astreet_fourthavenue:15:shop",
+        "SpotId": "address:ba%3Astreet_fourthavenue:15:shop:WindowShopping:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:15:shop",
+        "Position": {
+          "X": 212.85400390625,
+          "Y": 0.09000396728515625,
+          "Z": -35.601776123046875,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 211.75399780273438,
+          "Y": 0.09000015258789062,
+          "Z": -36.20177459716797,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 211.75399780273438,
+          "Y": 0.09000015258789062,
+          "Z": -35.70177459716797,
+          "IsFinite": true
+        },
+        "StartMinute": 9304.556035041809,
+        "EndMinute": 9306.632435041809,
+        "VisitMinute": 9304.556035041809,
+        "ResumeEventMinute": 9340.0,
+        "Cancelled": true,
+        "Members": []
+      },
+      "activity": "Shop",
+      "citizenPhase": "AtPlace",
+      "PlaceId": "address:ba%3Astreet_fourthavenue:15:shop",
+      "CompletedJourneys": 5
+    },
+    {
+      "id": "c101",
+      "phase": "returned-entrance",
+      "minute": 9306.806192874908,
+      "frame": 29793,
+      "bodyGeneration": 13,
+      "bodyInstance": -10331486,
+      "position": {
+        "X": 212.12460327148438,
+        "Y": 0.09000015258789062,
+        "Z": -35.6680908203125,
+        "IsFinite": true
+      },
+      "stop": null,
+      "activity": "Shop",
+      "citizenPhase": "AtPlace",
+      "PlaceId": "address:ba%3Astreet_fourthavenue:15:shop",
+      "CompletedJourneys": 5
+    }
+  ],
+  "sameNativeBodyAcrossReloadedDwellAndReturn": true,
+  "originalActivityContinued": true,
+  "continuation": {
+    "Phase": 0,
+    "PlaceId": "address:ba%3Astreet_fourthavenue:9:home",
+    "Activity": 0,
+    "CompletedJourneys": 6,
+    "NextEventMinute": 9475.0
+  },
+  "dwellObservedBeforeReload": true,
+  "dwellObservedAfterReload": true,
+  "returnObservedAfterReload": true,
+  "entranceOrWalkContinuationObserved": true,
+  "hashes": {
+    "optional-dwell-control-pre-save-2dd013-population.json": "2b70620e8c4e951fc5b6dc38da463e227b5798ab7fdb797fc1ada5f5a7f9a791",
+    "optional-dwell-control-saved-6c3591-population.json": "2b70620e8c4e951fc5b6dc38da463e227b5798ab7fdb797fc1ada5f5a7f9a791",
+    "optional-dwell-control-reloaded-c567e9-population.json": "c1e4f8c6072c12d0b961df2fcb74ac47b21d59783ba77bcb47791919a2839654",
+    "optional-dwell-control-saved-6c3591-saved-payload.json": "2b70620e8c4e951fc5b6dc38da463e227b5798ab7fdb797fc1ada5f5a7f9a791",
+    "optional-dwell-control-reloaded-c567e9-saved-payload.json": "2b70620e8c4e951fc5b6dc38da463e227b5798ab7fdb797fc1ada5f5a7f9a791"
+  },
+  "verdict": "PASS"
+}

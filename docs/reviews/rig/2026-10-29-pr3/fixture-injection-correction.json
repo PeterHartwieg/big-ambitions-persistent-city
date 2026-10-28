@@ -1,0 +1,9 @@
+{
+  "role": "rig_test",
+  "observed": "first negative-case city became active rather than refusing; injection hook attached after startup began",
+  "markerExists": true,
+  "fix": "install a separate process-lifetime fixture-input hook on a valid bootstrap city, retain it across unloads, then load each named negative fixture; ignore completed requests",
+  "productionChange": false,
+  "acceptedEvidenceAffected": false,
+  "cause": "fixture input was applied too late for the initial startup snapshot; a marker alone is not sufficient evidence"
+}

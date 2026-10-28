@@ -1,0 +1,66 @@
+[
+  {
+    "input": 0,
+    "missing": false,
+    "expected": 0,
+    "configured": 0,
+    "attached": 0,
+    "passed": true
+  },
+  {
+    "input": 100,
+    "missing": false,
+    "expected": 100,
+    "configured": 100,
+    "attached": 100,
+    "passed": true
+  },
+  {
+    "input": -5,
+    "missing": false,
+    "expected": 0,
+    "configured": 0,
+    "attached": 0,
+    "passed": true
+  },
+  {
+    "input": 150,
+    "missing": false,
+    "expected": 100,
+    "configured": 100,
+    "attached": 100,
+    "passed": true
+  },
+  {
+    "input": 12.5,
+    "missing": false,
+    "expected": 25,
+    "configured": 25,
+    "attached": 25,
+    "passed": true
+  },
+  {
+    "input": "invalid",
+    "missing": false,
+    "expected": 25,
+    "configured": 25,
+    "attached": 25,
+    "passed": true
+  },
+  {
+    "input": "75",
+    "missing": false,
+    "expected": 75,
+    "configured": 75,
+    "attached": 75,
+    "passed": true
+  },
+  {
+    "input": null,
+    "missing": true,
+    "expected": 25,
+    "configured": 25,
+    "attached": 25,
+    "passed": true
+  }
+]

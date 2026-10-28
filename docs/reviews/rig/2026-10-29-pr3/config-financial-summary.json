@@ -1,0 +1,34 @@
+{
+  "config-zero": {
+    "confirmedSales": 110,
+    "exactNativePaymentMatches": 110,
+    "nativeOrderSumDollars": "1127.8079986572265625",
+    "residentPaymentSumDollars": "1127.8079986572265625",
+    "gateA": "PASS",
+    "gateB": "PASS",
+    "gateC": {
+      "reference": "Exact native order sum; native float32 accumulation drift is attributed to the game",
+      "nativeHistorySumDollars": "1127.8079833984375",
+      "historyMinusExactOrderSumDollars": "-0.0000152587890625",
+      "cashRevenueMinusExactOrderSumDollars": "-0.0000152587890625",
+      "cashImpliedGrossMinusExactOrderSumDollars": "0.0000762939453125"
+    },
+    "verdict": "PASS"
+  },
+  "config-hundred": {
+    "confirmedSales": 110,
+    "exactNativePaymentMatches": 110,
+    "nativeOrderSumDollars": "1127.8079986572265625",
+    "residentPaymentSumDollars": "1127.8079986572265625",
+    "gateA": "PASS",
+    "gateB": "PASS",
+    "gateC": {
+      "reference": "Exact native order sum; native float32 accumulation drift is attributed to the game",
+      "nativeHistorySumDollars": "1127.8079833984375",
+      "historyMinusExactOrderSumDollars": "-0.0000152587890625",
+      "cashRevenueMinusExactOrderSumDollars": "-0.0000152587890625",
+      "cashImpliedGrossMinusExactOrderSumDollars": "0.0000762939453125"
+    },
+    "verdict": "PASS"
+  }
+}

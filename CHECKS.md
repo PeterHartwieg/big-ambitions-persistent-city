@@ -1,5 +1,9 @@
 # Validation status
 
+## PC PR #3 rig, after base merge - 29 October 2026 (BLOCKED)
+
+PC `rig_test`, before `7357f78` / after `06bc0fa`: 1,403 / 1,503 unit tests, all 21 regression projects each and README harnesses pass. Both strict native financial gates are green, 110/110 exact payments each, total $1127.8079986572265625; native float drift is recorded separately. Default choices are 317/1,309 (24.22%); 98 scheduler records and a real visible dwell/save/reload/return pass. Eight settings cases, exact schema 13/14-to-16 migrations, 13 native-codec and nine full startup/save refusal cases pass. Six clean autosave-off windows show no whole-frame worsening beyond spread, but measured mod p50/p95 work increases. **Literal realised-stop share among independently eligible trips remains INCOMPLETE**, so this is not an overall pass. All 4,828 original profile files, 107 references and preferences restored/hash-verified; rig stopped and lease released. No release, ordinary-save or Workshop clearance. [Report, raw data, exact verifiers, diagnostic image and cleanup proof](docs/reviews/rig/2026-10-29-pr3/README.md).
+
 ## Base merge: PR #1 and PR #2 into PR #3 — 28 October 2026 (offline)
 
 Two normal merges: `3dd58eb` merges PR #2's final branch head `015b1a6` (code and doc conflicts resolved); `b6fc02d` merges `origin/codex/persistent-city` (squash commits `36140a7`/`7357f78`, whose tree equals `015b1a6`). The second merge took this branch's side for every conflict and does not change the tree.
