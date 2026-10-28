@@ -33,10 +33,10 @@ static class Program
             Check(fields[8]==""&&fields[9]=="0"&&fields[10]==""&&fields[11]=="0"&&fields[14]=="","unknown CSV empty");
             var zero=lines[2].TrimEnd('\r').Split(',');Check(zero[8]=="0"&&zero[9]=="1"&&zero[10]=="0"&&zero[11]=="1","zero CSV retained");
         }
-        var slots=new ComponentSlots();for(int i=0;i<7;i++)slots.Add(i,i+1);var retained=slots;slots.Add(0,100);
+        var slots=new ComponentSlots();for(int i=0;i<ComponentSlots.Capacity;i++)slots.Add(i,i+1);var retained=slots;slots.Add(0,100);
         Check(retained.Ticks(0)==1&&retained.Calls(0)==1&&slots.Ticks(0)==101&&slots.Calls(0)==2,"retained value isolation");
-        for(int i=0;i<7;i++)Check(retained.Ticks(i)==i+1&&retained.Calls(i)==1,"all seven slots");
-        bool rejected=false;try{slots.Add(7,1);}catch(ArgumentOutOfRangeException){rejected=true;}Check(rejected,"capacity guard");
+        for(int i=0;i<ComponentSlots.Capacity;i++)Check(retained.Ticks(i)==i+1&&retained.Calls(i)==1,"all component slots");
+        bool rejected=false;try{slots.Add(ComponentSlots.Capacity,1);}catch(ArgumentOutOfRangeException){rejected=true;}Check(rejected,"capacity guard");
         var hot=new FrameObservationLog(11000,0,0,0,0,0);for(int i=1;i<1000;i++)hot.Add(i,i,0,0,0,row);
         long before=GC.GetAllocatedBytesForCurrentThread();for(int i=1000;i<11000;i++){hot.Add(i,i,0,0,0,row);slots.Add(i%7,1);}long allocated=GC.GetAllocatedBytesForCurrentThread()-before;
         Check(allocated==0&&hot.Count==10999&&hot.Dropped==0,"retained writes and component accumulation allocate zero after initialization");

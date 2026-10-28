@@ -214,9 +214,13 @@ namespace PersistentCity.Persistence
         private static bool NullableRecord(Type type) => type == typeof(Route) || type == typeof(CarState)
             || type == typeof(TrafficKernelState) || type == typeof(TrafficSignalSchedule)
             || type == typeof(FoodCommerceState) || type == typeof(MealOuting) || type == typeof(MealExcursion) || type == typeof(ResidentBudget);
+        // Contracts depend only on the sealed save DTO types, never a city or serializer setting.
+        // DefaultContractResolver owns a thread-safe metadata cache; settings/serializer instances
+        // remain per operation, including application-wide JsonConvert defaults.
+        private static readonly IContractResolver StateContracts = new StateContractResolver();
         private static JsonSerializerSettings Settings() => new JsonSerializerSettings
         {
-            ContractResolver = new StateContractResolver(),
+            ContractResolver = StateContracts,
             Converters = { new PositionConverter() },
             Culture = CultureInfo.InvariantCulture,
             MissingMemberHandling = MissingMemberHandling.Error,

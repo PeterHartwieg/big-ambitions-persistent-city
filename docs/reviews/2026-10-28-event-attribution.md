@@ -1,0 +1,26 @@
+# Optional event and hook attribution — 28 October 2026
+
+Offline/source/build evidence only. No game launched, rig contacted, profile changed, installation, release or native performance claim.
+
+The opt-in `tools/food-demand-audit` frame helper now exports the slowest measured event's work in each completed frame. Actual `CitySimulator.RunEvent` and `ContinuePlanning` calls are grouped by citizen, simulation minute and entry branch, so several resumed slices in one frame sum together without charging time suspended between frames. Food `Step` and traffic `AdvanceTo` calls are separate operations with blank citizen IDs; nested traffic calls belong to the enclosing event. Traffic advance includes zero-event clock synchronization. Branch labels describe entry state (routine, arrival, meal outing, opening wait, route wait), **not an exhaustive trace of internal Step branches**. This narrows the measurement gap but does not completely close that branch-level requirement.
+
+The CSV adds plan-request counts, event failures, bounded scratch overflow and inclusive walking-calculation/road-plan-slice timings. `navMeshPathMs` differences the existing `NativeRouteMetrics.NavMeshPathMilliseconds` counter around actual walking calculations. `aStarAdvanceMs` times `TransportRoadGraph.RoadSearch.Advance`, including native callbacks and result construction. These are nested measurements: do not sum them. The scratch accumulator holds at most 512 distinct events per frame; excess new events are counted, while known events continue accumulating. Retained frame rows own value copies. Capture remains capped by the existing 65,536-row limit.
+
+Separate component columns cover the mod's fixed-step prefix, postfix and exceptional cleanup; force/rotation ownership verdicts; and the intersection update postfix. The force/rotation timings exclude native Rigidbody writes. They do not time entire native `TrafficManager.FixedUpdate` or `IntersectionManager.UpdateIntersections`. Thirteen fixed value slots replace seven; the existing combined Update/authority union definition remains unchanged. These new components can run outside that union and are reported separately.
+
+Managed-byte deltas span consecutive first-observed work points, with frame IDs and observation bounds. A positively probed `GC.GetAllocatedBytesForCurrentThread` counter is preferred; otherwise `Profiler.GetMonoUsedSizeLong` supplies a **signed live-heap delta**, explicitly named, never labelled allocated bytes. Counter failures/resets remain unavailable. Initial/current partial frames stay excluded. The old asynchronous profiler allocation observation is retained separately. Deltas include other main-thread work and diagnostic allocation; they are not mod-attributed. The analyzer retains these fields alongside neighboring-frame context.
+
+## Verification and limits
+
+- `tools/event-observation-regression/compare.py` against baseline `63248e4`: actual Harmony patches on actual Core/Persistence, with Runtime/Unity doubles, capture off/on and injected planner failure; 680 activity events and exact save bytes agree in all four runs on both source trees. Resumed requests, null-pending calls, walking/road/A-star measurements and exception finalizers are exercised. Native CalculatePath timing is a controlled counter in this fixture.
+- Four new `EventObservationTests` cover grouping, same-minute distinct calls, overflow, failure retention, value isolation and counter meanings. The integrated suite passes 1,267 tests, including the traffic and codec changes documented separately.
+- Frame-observation harness: 38 checks; diagnostic-response harness: 14; analyzer: 8 tests.
+- Final helper builds with warnings as errors against local native references: SHA-256 `c0eeea6e5f2843348979ca71f578155094f6722eb803446d8b8e60f1b0a88644`.
+
+The helper is not installed and no capture was taken. Harmony installation on Unity/Mono, native hook coverage, food-event attribution and recorder overhead remain unverified. The helper allocates a scope and Harmony argument arrays per observed event; it must be used identically in comparison arms, with capture-on/off overhead measured before drawing performance conclusions. Native runs remain separately authorized work and must obey the autosave exclusion rule. There is no production instrumentation when this helper is absent.
+
+## Independent review round 1
+
+Event/query prefix and finalizer faults now disable event/query capture until the next recording, discard partial event scratch, and increment `eventMeasurementFailures`. The stop report exposes the counter and `eventMeasurementsFailed`; the analyzer preserves both and flags incomplete event attribution. Other frame measurements continue. Both finalizers always preserve the original simulation exception. Failure handling performs no Unity/reflection/logging calls.
+
+The actual-patch harness injects clock/reflection/metric faults at all four seams, with and without a planner failure: all eight comparisons retain 680 activity events and exact saves. Direct finalizer checks retain the identical original exception object. These are offline doubles, not native runtime evidence. Citizen aggregation remains the documented citizen/minute/entry-branch grouping, including attempts replayed at that same minute; it is not an attempt-by-attempt trace.

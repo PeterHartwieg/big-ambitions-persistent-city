@@ -1,0 +1,263 @@
+[
+  {
+    "check": "before-build",
+    "exit": 0,
+    "seconds": 2.64,
+    "command": [
+      "python",
+      "tools/build.py",
+      "--game-managed",
+      "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed"
+    ]
+  },
+  {
+    "check": "before-tests",
+    "exit": 0,
+    "seconds": 53.13,
+    "command": [
+      "dotnet",
+      "test",
+      "tests/PersistentCity.Tests.csproj",
+      "--logger",
+      "trx;LogFileName=<USER>\\HART-Builds\\persistent-city-pr1-rig-rerun\\before-tests.trx"
+    ]
+  },
+  {
+    "check": "before-road-handoff-regression",
+    "exit": 0,
+    "seconds": 3.28,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/road-handoff-regression/RoadHandoffRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-road-speed-regression",
+    "exit": 0,
+    "seconds": 2.81,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/road-speed-regression/RoadSpeedRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-gate-access-regression",
+    "exit": 0,
+    "seconds": 2.59,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/gate-access-regression/GateAccessRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-road-ceiling-regression",
+    "exit": 0,
+    "seconds": 2.25,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/road-ceiling-regression/RoadCeilingRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-traffic-closure-regression",
+    "exit": 0,
+    "seconds": 2.36,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/traffic-closure-regression/TrafficClosureRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-native-command",
+    "exit": 0,
+    "seconds": 2.53,
+    "command": [
+      "python",
+      "tools/native-command-regression/run.py"
+    ]
+  },
+  {
+    "check": "before-simulate",
+    "exit": 0,
+    "seconds": 5.31,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/simulate/Simulate.csproj",
+      "--",
+      "28",
+      "<USER>\\HART-Builds\\persistent-city-pr1-rig-rerun\\before-demo"
+    ]
+  },
+  {
+    "check": "after-build",
+    "exit": 0,
+    "seconds": 1.62,
+    "command": [
+      "python",
+      "tools/build.py",
+      "--game-managed",
+      "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed"
+    ]
+  },
+  {
+    "check": "after-tests",
+    "exit": 0,
+    "seconds": 27.06,
+    "command": [
+      "dotnet",
+      "test",
+      "tests/PersistentCity.Tests.csproj",
+      "--logger",
+      "trx;LogFileName=<USER>\\HART-Builds\\persistent-city-pr1-rig-rerun\\after-tests.trx"
+    ]
+  },
+  {
+    "check": "after-road-handoff-regression",
+    "exit": 0,
+    "seconds": 2.25,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/road-handoff-regression/RoadHandoffRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-road-speed-regression",
+    "exit": 0,
+    "seconds": 2.55,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/road-speed-regression/RoadSpeedRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-gate-access-regression",
+    "exit": 0,
+    "seconds": 3.01,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/gate-access-regression/GateAccessRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-road-ceiling-regression",
+    "exit": 0,
+    "seconds": 2.33,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/road-ceiling-regression/RoadCeilingRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-traffic-closure-regression",
+    "exit": 0,
+    "seconds": 2.4,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/traffic-closure-regression/TrafficClosureRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-native-command",
+    "exit": 0,
+    "seconds": 3.14,
+    "command": [
+      "python",
+      "tools/native-command-regression/run.py"
+    ]
+  },
+  {
+    "check": "after-simulate",
+    "exit": 0,
+    "seconds": 6.56,
+    "command": [
+      "dotnet",
+      "run",
+      "--project",
+      "tools/simulate/Simulate.csproj",
+      "--",
+      "28",
+      "<USER>\\HART-Builds\\persistent-city-pr1-rig-rerun\\after-demo"
+    ]
+  },
+  {
+    "check": "differential-traffic-queue-regression",
+    "exit": 0,
+    "seconds": 4.84,
+    "command": [
+      "python",
+      "tools/traffic-queue-regression/compare.py",
+      "--baseline",
+      "<USER>\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\rig-pr1-before",
+      "--output",
+      "<USER>\\HART-Builds\\persistent-city-pr1-rig-rerun\\diff-traffic-queue-regression"
+    ]
+  },
+  {
+    "check": "differential-save-contract-regression",
+    "exit": 0,
+    "seconds": 5.3,
+    "command": [
+      "python",
+      "tools/save-contract-regression/compare.py",
+      "--baseline",
+      "<USER>\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\rig-pr1-before",
+      "--output",
+      "<USER>\\HART-Builds\\persistent-city-pr1-rig-rerun\\diff-save-contract-regression"
+    ]
+  },
+  {
+    "check": "differential-core-identity-regression",
+    "exit": 0,
+    "seconds": 11.18,
+    "command": [
+      "python",
+      "tools/core-identity-regression/compare.py",
+      "--baseline",
+      "<USER>\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\rig-pr1-before",
+      "--output",
+      "<USER>\\HART-Builds\\persistent-city-pr1-rig-rerun\\diff-core-identity-regression"
+    ]
+  }
+]

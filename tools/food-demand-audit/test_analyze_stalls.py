@@ -7,6 +7,17 @@ def observation(start=100, end=200, prior=1, current=2, **extra):
 
 
 class StallAnalysisTests(unittest.TestCase):
+    def test_event_context_and_signed_heap_delta_survive_analysis(self):
+        mod = {'unityFrame': '1', 'slowestCitizen': 'pc:3', 'entryBranch': 'arrival',
+               'eventSlices': '2', 'eventMs': '4', 'managedDeltaBytes': '-128',
+               'managedDeltaAvailable': '1', 'managedCounterKind': 'mono-used-heap-bytes'}
+        result = analyze([observation()], [mod], 1000)
+        context = result['events'][0]['neighborModFrames'][0]
+        self.assertEqual(context['slowestEvent']['citizen'], 'pc:3')
+        self.assertEqual(context['slowestEvent']['eventSlices'], 2)
+        self.assertEqual(context['managedDelta']['bytes'], -128)
+        self.assertEqual(context['managedDelta']['kind'], 'mono-used-heap-bytes')
+
     def test_unknown_is_not_zero_and_neighbors_are_context(self):
         row = observation(cpuLatestMs='0', cpuAvailable='true', gpuLatestMs='0', gpuAvailable='false', gcAvailable='true', gc0Delta='1', gc1Delta='0', gc2Delta='0')
         result = analyze([row], [{'unityFrame':'1','combinedUnionMs':'5','Physical.UpdateInclusiveMs':'4'}], 1000)
@@ -68,6 +79,11 @@ class StallAnalysisTests(unittest.TestCase):
         self.assertFalse(limited['events'][0]['observerContaminationUnknown'])
         self.assertTrue(limited['events'][1]['observerContaminationUnknown'])
         with self.assertRaises(ValueError): analyze_capture(rows,[],report,'frames-observations-OTHER.csv','frames-mod-work-ID.csv')
+        report['eventMeasurementsFailed'] = True; report['eventMeasurementFailures'] = 1
+        broken = analyze_capture(rows,[],report,'frames-observations-ID.csv','frames-mod-work-ID.csv')
+        self.assertTrue(broken['capture']['eventMeasurementsFailed'])
+        self.assertEqual(broken['capture']['eventMeasurementFailures'], 1)
+        self.assertTrue(any('capture failed' in line for line in broken['limitations']))
         report['rawObservations']['Count']=3
         with self.assertRaises(ValueError): analyze_capture(rows,[],report,'frames-observations-ID.csv','frames-mod-work-ID.csv')
 
