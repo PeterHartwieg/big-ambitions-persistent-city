@@ -23,7 +23,7 @@ public sealed partial class FoodCommerceTests
         double reconcileAt = meal.DueAt;
         city = Reload(city, market, routes);
         Advance(city, reconcileAt - .0001);
-        long balance = city.State.Food!.Residents.Single().Budget!.BalanceCents;
+        decimal balance = city.State.Food!.Residents.Single().Budget!.BalanceCents;
         market.ConfirmEvidence = true;
         market.EarliestMinute = reconcileAt; // Original checkout is now too old for Buy.
         Advance(city, reconcileAt);

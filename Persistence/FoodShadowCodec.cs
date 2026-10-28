@@ -41,7 +41,9 @@ namespace PersistentCity.Persistence
                 Upgrade(token, typeof(FoodShadowState), schema);
                 token["Schema"] = FoodShadowState.CurrentSchema;
             }
-            var state = token.ToObject<FoodShadowState>(JsonSerializer.Create(Settings()))
+            var state = (schema == FoodShadowState.CurrentSchema
+                ? JsonConvert.DeserializeObject<FoodShadowState>(json, Settings())
+                : token.ToObject<FoodShadowState>(JsonSerializer.Create(Settings())))
                 ?? throw new InvalidDataException("Missing food shadow state.");
             if (state.CityKey != expectedCityKey) throw new InvalidDataException("Food shadow document belongs to another city.");
             FoodDemand.Validate(state);
@@ -59,6 +61,7 @@ namespace PersistentCity.Persistence
             type = nullable ?? type;
             if (type == typeof(string)) { Require(token.Type == JTokenType.String); return; }
             if (type == typeof(int) || type.IsEnum) { Require(token.Type == JTokenType.Integer); return; }
+            if (type == typeof(decimal)) { Require(token.Type == JTokenType.Integer || (schema >= 5 && token.Type == JTokenType.Float)); return; }
             if (type == typeof(double)) { Require(token.Type == JTokenType.Integer || token.Type == JTokenType.Float); return; }
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Collections.Generic.List<>))
             {

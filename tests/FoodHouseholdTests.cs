@@ -184,7 +184,7 @@ public sealed class FoodHouseholdTests
     public void StrictV3MigrationKeepsOldBuyingPowerAndDoesNotAddOutsideOptions()
     {
         var s = Scenario(Capture(1), 500); foreach (var i in s.Intents) { i.OutsideOption = FoodOutsideOption.None; i.OutsideOptionScoreCents = null; }
-        var old = JObject.Parse(FoodShadowCodec.Write(s)); RemoveV4Fields(old); old["Schema"] = 3;
+        var old = JObject.Parse(FoodShadowCodec.Write(s)); FoodQualityDemandTests.LegacyMoney(old); RemoveV4Fields(old); old["Schema"] = 3;
         var migrated = FoodShadowCodec.Read(old.ToString(), s.CityKey);
         Assert.Equal(s.Consumers[0].DailyAllowanceCents, migrated.Consumers[0].DailyAllowanceCents);
         Assert.All(migrated.Intents, i => Assert.Equal(FoodOutsideOption.None, i.OutsideOption)); Finish(migrated); Finish(s);

@@ -40,7 +40,7 @@ for (int seed = 1; seed <= 12; seed++)
         var state = FoodShadowCodec.Read(original, initial.CityKey);
         var engine = new FoodDemand(state);
         var changed = state.Businesses.Single(b => b.Id == target);
-        if (name.StartsWith("price-")) foreach (var offer in changed.Offers) engine.SetPrice(target, offer.ProductId, (int)Math.Round(offer.PriceCents * factor));
+        if (name.StartsWith("price-")) foreach (var offer in changed.Offers) engine.SetPrice(target, offer.ProductId, (int)Math.Round((double)offer.PriceCents * factor));
         if (name == "closed") engine.Close(target);
         if (name == "target-stockout") foreach (var offer in changed.Offers) engine.SetStock(target, offer.ProductId, 0);
         if (name == "all-stockout") foreach (var b in state.Businesses) foreach (var o in b.Offers) engine.SetStock(b.Id, o.ProductId, 0);
@@ -88,4 +88,4 @@ var summaries = cases.Select(c => new { scenario = c.Item1, factor = c.Item2, fu
 File.WriteAllText(Path.Combine(output, "comparison.json"), JsonConvert.SerializeObject(new { evidence, targetShop = shops[targetIndex].Name, cohorts = 12, residentsPerCohort = 240, days = 7, totalSimulatedIntentions = runs.Count * 1680, invariants, summaries, runs }, Formatting.Indented));
 Console.WriteLine(JsonConvert.SerializeObject(new { targetShop = shops[targetIndex].Name, invariants, summaries }, Formatting.Indented));
 if (invariants.Any(p => !p.Value)) Environment.ExitCode = 2;
-record Run(int Seed, string Scenario, double Factor, int Fulfilled, int Target, int Unmet, int Unresolved, int SpendingCents, double EffectiveShops, double SwitchingPercent, Dictionary<string, int> ShopMeals);
+record Run(int Seed, string Scenario, double Factor, int Fulfilled, int Target, int Unmet, int Unresolved, decimal SpendingCents, double EffectiveShops, double SwitchingPercent, Dictionary<string, int> ShopMeals);

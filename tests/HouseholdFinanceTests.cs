@@ -45,9 +45,9 @@ public sealed class HouseholdFinanceTests
     {
         var person = new CitizenState { Identity = new CitizenIdentity { Id = "worker", Age = 30, Persona = Persona.Commuter }, DayPlaceId = "work" };
         var budget = HouseholdFinance.Create(person, 7, 0, null);
-        int basis = budget.BaseIncomeCents; long opening = budget.OpeningBalanceCents;
+        int basis = budget.BaseIncomeCents; decimal opening = budget.OpeningBalanceCents;
         HouseholdFinance.PostDay(budget, 0, person);
-        long posted = budget.IncomeReceivedCents, balance = budget.BalanceCents;
+        decimal posted = budget.IncomeReceivedCents, balance = budget.BalanceCents;
         person.DayPlaceId = "";
         Assert.Equal(posted, budget.IncomeReceivedCents); Assert.Equal(balance, budget.BalanceCents);
         Assert.Throws<InvalidOperationException>(() => HouseholdFinance.PostDay(budget, 0, person));
@@ -72,7 +72,7 @@ public sealed class HouseholdFinanceTests
         var person = new CitizenState { Identity = new CitizenIdentity { Id = "worker", Age = 30, Persona = Persona.Commuter } };
         var budget = HouseholdFinance.Create(person, 7, 0, null);
         Assert.Equal(budget.BaseIncomeCents * CityBalance.SupportIncomePercent / 100, budget.DailyIncomeCents);
-        long opening = budget.OpeningBalanceCents;
+        decimal opening = budget.OpeningBalanceCents;
         person.DayPlaceId = "work"; HouseholdFinance.PostDay(budget, 0, person);
         Assert.Equal(budget.BaseIncomeCents, budget.DailyIncomeCents); Assert.Equal(opening, budget.OpeningBalanceCents);
     }

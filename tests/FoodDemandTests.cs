@@ -31,6 +31,18 @@ public sealed class FoodDemandTests
     { var engine = new FoodDemand(state); while (!engine.AdvanceTo(state.EndsAt)) { } return state; }
 
     [Fact]
+    public void ShadowCodecRetainsFractionalPriceWithoutAnIntermediateDouble()
+    {
+        var state = Scenario();
+        decimal amount = FoodMoney.FromNative(10.2528f);
+        state.Businesses[0].Offers[0].PriceCents = amount;
+        string source = FoodShadowCodec.Write(state);
+        var loaded = FoodShadowCodec.Read(source, state.CityKey);
+        Assert.Equal(amount, loaded.Businesses[0].Offers[0].PriceCents);
+        Assert.Equal(source, FoodShadowCodec.Write(loaded));
+    }
+
+    [Fact]
     public void HigherPriceRedirectsDemandToACompetingBusiness()
     {
         Assert.Equal("far", Finish(Scenario()).Intents.Single().BusinessId);
@@ -179,12 +191,12 @@ public sealed class FoodDemandTests
     public void CodecRefusesFutureForeignUnknownAndDuplicateDocuments()
     {
         string source = FoodShadowCodec.Write(Scenario());
-        Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source.Replace("\"Schema\": 4", "\"Schema\": 5"), "test-city"));
+        Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source.Replace("\"Schema\": 5", "\"Schema\": 6"), "test-city"));
         Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source, "another-city"));
         Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source.Insert(1, "\"NewField\":1,"), "test-city"));
         Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source.Insert(1, "\"Schema\":1,"), "test-city"));
-        Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source.Replace("\"SpentCents\": 0,", ""), "test-city"));
-        Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source.Replace("\"SpentCents\": 0", "\"SpentCents\": \"0\""), "test-city"));
+        Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source.Replace("\"SpentCents\": 0.0,", ""), "test-city"));
+        Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source.Replace("\"SpentCents\": 0.0", "\"SpentCents\": \"0\""), "test-city"));
         Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source + "{}", "test-city"));
         Assert.Equal(source, FoodShadowCodec.Write(FoodShadowCodec.Read(source, "test-city")));
     }

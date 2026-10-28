@@ -28,6 +28,12 @@ public sealed class FoodQualityDemandTests
     private static FoodShadowState Finish(FoodShadowState state)
     { var engine = new FoodDemand(state); while (!engine.AdvanceTo(state.EndsAt, 1)) { } return state; }
 
+    internal static void LegacyMoney(JObject token)
+    {
+        foreach (var p in token.Descendants().OfType<JProperty>().Where(p => p.Name == "PriceCents" || p.Name == "SpentCents" || p.Name == "DailyAllowanceCents").ToArray())
+            p.Value = checked((int)(decimal)p.Value);
+    }
+
     [Fact]
     public void BetterCustomerServiceCanJustifyAPremiumForResidentsWhoValueIt()
     {
@@ -108,7 +114,7 @@ public sealed class FoodQualityDemandTests
     public void StrictSchemaTwoMigrationKeepsOldChoicesAndAddsNoInventedSignals()
     {
         var state = Scenario(0, 0); new FoodDemand(state).AdvanceTo(2165);
-        var old = JObject.Parse(FoodShadowCodec.Write(state)); RemoveV3Fields(old); old["Schema"] = 2;
+        var old = JObject.Parse(FoodShadowCodec.Write(state)); LegacyMoney(old); RemoveV3Fields(old); old["Schema"] = 2;
         var migrated = FoodShadowCodec.Read(old.ToString(), "city");
         Assert.Equal(FoodShadowState.CurrentSchema, migrated.Schema); Assert.Null(migrated.Businesses[0].CustomerServicePercent);
         Assert.Equal(0, migrated.Consumers[0].ServiceQualityValueCents);

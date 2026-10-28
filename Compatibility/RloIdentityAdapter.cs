@@ -74,8 +74,25 @@ namespace PersistentCity.Compatibility
         internal long Bindings { get; private set; }
         internal double BindingMilliseconds { get; private set; }
 
-        public RloReadResult Read(Assembly? rloAssembly) => ReadCore(rloAssembly, null, false);
-        public RloReadResult ReadSnapshot(Assembly? rloAssembly, object? director) => ReadCore(rloAssembly, director, true);
+        public RloReadResult Read(Assembly? rloAssembly) => TimedRead(rloAssembly, null, false);
+        public RloReadResult ReadSnapshot(Assembly? rloAssembly, object? director) => TimedRead(rloAssembly, director, true);
+
+        public long Reads { get; private set; }
+        public double LastReadMilliseconds { get; private set; }
+        public double TotalReadMilliseconds { get; private set; }
+        public double MaximumReadMilliseconds { get; private set; }
+        private RloReadResult TimedRead(Assembly? assembly, object? director, bool supplied)
+        {
+            long started = Stopwatch.GetTimestamp();
+            try { return ReadCore(assembly, director, supplied); }
+            finally
+            {
+                LastReadMilliseconds = (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
+                Reads++;
+                TotalReadMilliseconds += LastReadMilliseconds;
+                MaximumReadMilliseconds = Math.Max(MaximumReadMilliseconds, LastReadMilliseconds);
+            }
+        }
 
         private RloReadResult ReadCore(Assembly? assembly, object? director, bool supplied)
         {

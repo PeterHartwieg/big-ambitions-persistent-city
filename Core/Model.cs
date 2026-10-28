@@ -240,7 +240,7 @@ namespace PersistentCity.Core
 
     public sealed class CityState
     {
-        public const int CurrentSchema = 13;
+        public const int CurrentSchema = 14;
         public int Schema { get; set; } = CurrentSchema;
         public int TravelTimingVersion { get; set; } = 1;
         public double TravelClockRate { get; set; } = 1;

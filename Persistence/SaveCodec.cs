@@ -92,18 +92,19 @@ namespace PersistentCity.Persistence
             {
                 int schema = ReadSchema(source);
                 if (schema > CityState.CurrentSchema) return new SaveReadResult(SaveReadStatus.Future, null, "State uses a newer schema; preserve the original payload.", sourceSchema: schema);
-                Require(schema == CityState.CurrentSchema, "Unsupported experimental state schema; preserve the original payload and use a new development city.");
+                Require(schema == 13 || schema == CityState.CurrentSchema, "Unsupported experimental state schema; preserve the original payload and use a new development city.");
                 var serializer = JsonSerializer.Create(Settings());
                 using (var shape = Reader(source))
                 {
                     Require(shape.Read(), "Missing state.");
                     int records = 0;
-                    CheckShape(shape, typeof(CityState), serializer.ContractResolver, ref records);
+                    CheckShape(shape, typeof(CityState), serializer.ContractResolver, ref records, schema);
                     Require(!shape.Read(), "State contains trailing JSON content.");
                 }
                 using var reader = Reader(source);
                 var state = serializer.Deserialize<CityState>(reader);
                 Require(state != null, "State is null.");
+                state!.Schema = CityState.CurrentSchema;
                 Validate(state!);
                 return new SaveReadResult(SaveReadStatus.Loaded, state, "", sourceSchema: schema);
             }
@@ -145,7 +146,7 @@ namespace PersistentCity.Persistence
 
         // Validate directly from tokens before deserialization: no full payload DOM, no coercion,
         // and bounded collection allocation even for hostile arrays of otherwise valid records.
-        private static void CheckShape(JsonReader reader, Type type, IContractResolver resolver, ref int records)
+        private static void CheckShape(JsonReader reader, Type type, IContractResolver resolver, ref int records, int schema)
         {
             var token = reader.TokenType;
             Type? nullable = Nullable.GetUnderlyingType(type);
@@ -155,6 +156,12 @@ namespace PersistentCity.Persistence
             if (type == typeof(bool)) { Require(token == JsonToken.Boolean, "Expected a boolean."); return; }
             if (type == typeof(int) || type.IsEnum) { Require(token == JsonToken.Integer, "Expected an integer."); Require(int.TryParse(Convert.ToString(reader.Value, CultureInfo.InvariantCulture), NumberStyles.Integer, CultureInfo.InvariantCulture, out _), "Integer is out of range."); return; }
             if (type == typeof(long)) { Require(token == JsonToken.Integer, "Expected an integer."); Require(long.TryParse(Convert.ToString(reader.Value, CultureInfo.InvariantCulture), NumberStyles.Integer, CultureInfo.InvariantCulture, out _), "Integer is out of range."); return; }
+            if (type == typeof(decimal))
+            {
+                Require(token == JsonToken.Integer || (schema != 13 && token == JsonToken.Float), "Expected a monetary number (integer in schema 13).");
+                if (schema == 13) Require(long.TryParse(Convert.ToString(reader.Value, CultureInfo.InvariantCulture), out _), "Legacy money is out of range.");
+                return;
+            }
             if (type == typeof(double)) { Require(token == JsonToken.Integer || token == JsonToken.Float, "Expected a number."); return; }
             if (type == typeof(Position))
             {
@@ -192,7 +199,7 @@ namespace PersistentCity.Persistence
                         || item == typeof(TrafficRouteLeg) || item == typeof(TrafficVehicleState) || item == typeof(TrafficLinkDefinition)
                         || item == typeof(TrafficLinkState) || item == typeof(TrafficEventState) || item == typeof(int) || item == typeof(string))
                         Require(++records <= MaxEmbeddedRecords, "Too many opening, route and visit records.");
-                    CheckShape(reader, item, resolver, ref records);
+                    CheckShape(reader, item, resolver, ref records, schema);
                 }
                 Require(reader.TokenType == JsonToken.EndArray, "Incomplete array."); return;
             }
@@ -207,7 +214,7 @@ namespace PersistentCity.Persistence
                 var property = properties.GetProperty(name, StringComparison.Ordinal);
                 Require(property != null, "Unknown field: " + name);
                 Require(reader.Read(), "Missing field value.");
-                CheckShape(reader, property.PropertyType!, resolver, ref records);
+                CheckShape(reader, property.PropertyType!, resolver, ref records, schema);
             }
             Require(reader.TokenType == JsonToken.EndObject && names.Count == properties.Count, "Missing object fields.");
         }
@@ -228,6 +235,12 @@ namespace PersistentCity.Persistence
             MaxDepth = 48,
             FloatParseHandling = FloatParseHandling.Double
         };
+
+        private static void Money(decimal cents)
+        {
+            Require(cents >= 0 && cents <= long.MaxValue && decimal.Round(cents, 12) == cents,
+                "Money is outside the supported range or fractional-cent unit.");
+        }
 
         private static void Validate(CityState state)
         {
@@ -630,6 +643,7 @@ namespace PersistentCity.Persistence
                 Require(row != null && row.Day >= 0 && row.Day <= (int)(state.Minute / 1440) && foodPlaces.Contains(row.PlaceId, (int)PlaceKind.Shop)
                     && historyKeys.Add(row.Day + ":" + row.PlaceId + "\n" + row.BusinessId), "Invalid market history ownership.");
                 Text(row.BusinessId, "Historical business", 512);
+                Money(row.RevenueCents);
                 Require(row.OffersConsidered >= 0 && row.ChosenOffers >= 0 && row.PriceRejections >= 0
                     && row.AccessRejections >= 0 && row.ClosedRejections >= 0 && row.StockRejections >= 0 && row.StaffRejections >= 0
                     && row.ServiceRejections >= 0 && row.UnknownEvidence >= 0 && row.PreferredAlternatives >= 0
@@ -650,6 +664,7 @@ namespace PersistentCity.Persistence
                         && product.Purchases > 0 && product.RevenueCents >= 0 && product.PurchaseMeals != null
                         && product.PurchaseMeals.Length == 4 && product.PurchaseMeals.All(n => n >= 0)
                         && product.PurchaseMeals.Sum() == product.Purchases, "Invalid product purchase counters.");
+                foreach (var product in row.ProductSales) Money(product.RevenueCents);
                 Require(row.ProductSales.Sum(p => p.Purchases) == row.Purchases
                     && row.ProductSales.Sum(p => p.RevenueCents) == row.RevenueCents
                     && Enumerable.Range(0, 4).All(k => row.ProductSales.Sum(p => p.PurchaseMeals[k]) == row.PurchaseMeals[k]),
@@ -684,6 +699,7 @@ namespace PersistentCity.Persistence
                 Known(meal.Status, "Meal status");
                 Known(meal.Kind, "Meal kind");
                 Require(food.MealRhythmVersion != 0 || meal.Kind == MealKind.Legacy, "Meal kind differs from rhythm policy.");
+                Money(meal.DayAllowanceUsedCents); Money(meal.AllowanceCents); Money(meal.PriceCents); Money(meal.SpentCents);
                 Require(meal.DayAllowanceUsedCents >= 0 && meal.DayAllowanceUsedCents <= 1000000, "Invalid daily food allowance use.");
                 Require((meal.Budget != null) == (food.HouseholdFinanceVersion != 0), "Household budget ownership differs from policy.");
                 if (meal.Budget != null) ValidateBudget(meal.Budget, state.Minute);
@@ -760,13 +776,18 @@ namespace PersistentCity.Persistence
                 && b.DailyHousingCents >= 0 && b.DailyHousingCents <= 1000000
                 && b.DailyEssentialsCents >= 0 && b.DailyEssentialsCents <= 1000000
                 && b.DailyHomeFoodCents > 0 && b.DailyHomeFoodCents <= 1000000, "Invalid household policy amounts.");
+            Money(b.OpeningBalanceCents); Money(b.BalanceCents); Money(b.IncomeReceivedCents);
+            Money(b.EssentialsPaidCents); Money(b.HomeFoodPaidCents); Money(b.PreparedFoodSpentCents);
+            Money(b.HeldPurchaseCents); Money(b.ArrearsCents);
             Require(b.OpeningBalanceCents >= 0 && b.BalanceCents >= 0 && b.IncomeReceivedCents >= 0
                 && b.EssentialsPaidCents >= 0 && b.HomeFoodPaidCents >= 0 && b.PreparedFoodSpentCents >= 0
                 && b.HeldPurchaseCents >= 0 && b.HeldPurchaseCents <= 1000000 && b.ArrearsCents >= 0,
                 "Negative household accounting.");
-            Require(checked(b.OpeningBalanceCents + b.IncomeReceivedCents) == checked(b.BalanceCents
-                + b.EssentialsPaidCents + b.HomeFoodPaidCents + b.PreparedFoodSpentCents + b.HeldPurchaseCents),
-                "Household cash is not conserved.");
+            decimal funded = FoodMoney.Add(b.OpeningBalanceCents, b.IncomeReceivedCents);
+            decimal accounted = FoodMoney.Add(FoodMoney.Add(FoodMoney.Add(FoodMoney.Add(b.BalanceCents,
+                b.EssentialsPaidCents), b.HomeFoodPaidCents), b.PreparedFoodSpentCents), b.HeldPurchaseCents);
+            Require(funded <= long.MaxValue && accounted <= long.MaxValue && funded == accounted,
+                "Household cash is not conserved or exceeds the supported ledger range.");
             Minute(b.NextPostingMinute, "Next household posting");
             Require(b.LastPostedDay >= -1 && b.LastPostedDay <= (int)(minute / 1440)
                 && b.HomeFoodFundedDay >= -1 && b.HomeFoodFundedDay <= b.LastPostedDay

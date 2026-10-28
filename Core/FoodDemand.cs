@@ -31,7 +31,7 @@ namespace PersistentCity.Core
     public sealed class FoodOffer
     {
         public string ProductId { get; set; } = "";
-        public int PriceCents { get; set; }
+        public decimal PriceCents { get; set; }
         // null means unknown, not unlimited. The experiment consumes its own copy only.
         public int? Units { get; set; }
         public int? DistrictDemandPercent { get; set; }
@@ -45,7 +45,7 @@ namespace PersistentCity.Core
         public string OriginPlaceId { get; set; } = "";
         public int MealMinuteOfDay { get; set; } = 720;
         public int MealWindowMinutes { get; set; } = 90;
-        public int DailyAllowanceCents { get; set; } = 1200;
+        public decimal DailyAllowanceCents { get; set; } = 1200;
         public int ValueOfTimeCentsPerMinute { get; set; } = 5;
         public string PreferredProductId { get; set; } = "";
         public int PreferenceBonusCents { get; set; } = 100;
@@ -73,7 +73,7 @@ namespace PersistentCity.Core
     {
         public string BusinessId { get; set; } = "";
         public string ProductId { get; set; } = "";
-        public int PriceCents { get; set; }
+        public decimal PriceCents { get; set; }
         public double? TravelMinutes { get; set; }
         public double? AdmissionMinute { get; set; }
         public double? ScoreCents { get; set; }
@@ -97,7 +97,7 @@ namespace PersistentCity.Core
         public string BusinessId { get; set; } = "";
         public string ProductId { get; set; } = "";
         public double? ArrivalMinute { get; set; }
-        public int SpentCents { get; set; }
+        public decimal SpentCents { get; set; }
         public string Outcome { get; set; } = "";
         public List<FoodChoice> Choices { get; set; } = new List<FoodChoice>();
         public string OriginPlaceId { get; set; } = "";
@@ -117,7 +117,7 @@ namespace PersistentCity.Core
 
     public sealed class FoodShadowState
     {
-        public const int CurrentSchema = 4;
+        public const int CurrentSchema = 5;
         public int Schema { get; set; } = CurrentSchema;
         public string Kind { get; set; } = "persistentcity:food-shadow";
         public string CityKey { get; set; } = "";
@@ -234,7 +234,7 @@ namespace PersistentCity.Core
         }
 
         /// <summary>Explicit experiment intervention; never writes back into an observed business.</summary>
-        public void SetPrice(string businessId, string productId, int cents)
+        public void SetPrice(string businessId, string productId, decimal cents)
         {
             if (cents <= 0 || cents > 1000000) throw new ArgumentOutOfRangeException(nameof(cents));
             Offer(businessId, productId).PriceCents = cents;
@@ -328,7 +328,7 @@ namespace PersistentCity.Core
                         { choice.Reason = "Expected queue exceeds patience"; intent.Choices.Add(choice); continue; }
                         if (routine && (minute + time > intent.Deadline || !close.HasValue || finish >= close.Value))
                         { choice.Reason = "Service and return do not fit available time"; intent.Choices.Add(choice); continue; }
-                        choice.ScoreCents = offer.PriceCents + time * person.ValueOfTimeCentsPerMinute * intent.TimeCostMultiplier
+                        choice.ScoreCents = (double)offer.PriceCents + time * person.ValueOfTimeCentsPerMinute * intent.TimeCostMultiplier
                             - (offer.ProductId == person.PreferredProductId ? person.PreferenceBonusCents : 0)
                             + choice.ServiceQualityAdjustmentCents + choice.DistrictAppealAdjustmentCents
                             + MealRhythm.ProductPenalty(mealKind, offer.ProductId);

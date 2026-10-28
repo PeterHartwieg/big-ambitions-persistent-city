@@ -54,7 +54,7 @@ public sealed partial class FoodCommerceTests
         var (city, market, routes, meal) = ReadyForRepresentedReturn();
         var excursion = meal.Excursion!;
         string originalGeometry = excursion.ReturnGeometry, receipt = meal.IntentId;
-        long spent = meal.SpentCents;
+        decimal spent = meal.SpentCents;
         routes.Changed = true;
         Advance(city, excursion.ReturnStartsAt + .01);
         Assert.True(excursion.Returning); Assert.False(excursion.Unresolved);
@@ -111,7 +111,7 @@ public sealed partial class FoodCommerceTests
         Assert.True(meal.Excursion.Returning);
         double arrival = meal.Excursion.ReturnsAt;
         string geometry = meal.Excursion.ReturnGeometry, receipt = meal.IntentId;
-        long spent = meal.SpentCents;
+        decimal spent = meal.SpentCents;
         var read = SaveCodec.Read(SaveCodec.Write(city.State)); Assert.Equal("", read.Error);
         routes.ReturnMinutes = 100;
         city = new CitySimulator(read.State!, routes); city.AttachFoodMarket(market);

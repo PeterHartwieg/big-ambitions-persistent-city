@@ -20,7 +20,7 @@ namespace PersistentCity.Runtime
         public object EconomyOverview => simulation == null || simulation.State.Food == null
             ? new { active = false } : FoodEconomyInsight.Capture(simulation.State);
         public object NativeEconomyAccounts => foodMarket?.ReadAccounts() ?? Array.Empty<NativeFoodAccount>();
-        private static string Money(long cents) => (cents / 100.0).ToString("C0", CultureInfo.GetCultureInfo("en-US"));
+        private static string Money(decimal cents) => (cents / 100m).ToString("C0", CultureInfo.GetCultureInfo("en-US"));
         private static string Dollars(float amount) => amount.ToString("C0", CultureInfo.GetCultureInfo("en-US"));
         private void OnGUI()
         {

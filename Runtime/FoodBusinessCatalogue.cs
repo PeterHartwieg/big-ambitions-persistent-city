@@ -86,9 +86,9 @@ namespace PersistentCity.Runtime
                         if (price == null || !products.Contains(price.itemName) || !reg.cachedAvailableProducts.Contains(price.itemName)) continue;
                         if (!Position.Finite(price.price) || price.price <= 0 || price.price > 10000)
                             throw new InvalidOperationException("Food price is outside the experiment's range.");
-                        int cents = checked((int)Math.Round((double)price.price * 100, MidpointRounding.AwayFromZero));
+                        decimal cents = FoodMoney.FromNative(price.price);
                         if (cents == 0 || business.Offers.Any(o => o.ProductId == price.itemName))
-                            throw new InvalidOperationException("Ambiguous or sub-cent food price; observation refused.");
+                            throw new InvalidOperationException("Ambiguous food price; observation refused.");
                         // An advertised product is not proof of stocked, staffed production.
                         var offer = new FoodOffer { ProductId = price.itemName, PriceCents = cents, Units = null };
                         // Read existing saved values only. Demand helpers can supply fabricated

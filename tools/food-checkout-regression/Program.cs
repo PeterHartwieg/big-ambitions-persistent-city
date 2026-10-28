@@ -52,7 +52,7 @@ static partial class Program
             Market = new NativeFoodMarket(State, new[] { new Place { Id = PlaceId, Kind = PlaceKind.Shop } });
         }
         public string BusinessId => State.Shops.Single().BusinessId;
-        public ResidentMeal Meal(string resident, string product = Croissant, int cents = 300) => new() {
+        public ResidentMeal Meal(string resident, string product = Croissant, decimal cents = 300) => new() {
             ResidentId = resident, Day = SaveGameManager.Current.Day, Kind = MealKind.Lunch, PlaceId = PlaceId, BusinessId = BusinessId,
             ProductId = product, PriceCents = cents, AllowanceCents = 1200, ServiceMinutes = 10, Status = MealStatus.Serving };
         public int Stock(string product) => Reg.Shelves.Single(s => s.cargoInstances![0].itemName == product).cargoInstances![0].amount;
@@ -61,8 +61,34 @@ static partial class Program
         public void Dispose() => Market.Dispose();
     }
 
+    static void FractionalCheckoutMatchesNativeAndRejectsSameCentPriceChanges()
+    {
+        using var f = new Fixture();
+        var price = f.Reg.retailPrices.Single(p => p.itemName == Croissant);
+        price.price = 10.2528f;
+        decimal cents = FoodMoney.FromNative(price.price);
+        var meal = f.Meal("fractional", cents: cents);
+        var budget = new ResidentBudget { BalanceCents = 100000, OpeningBalanceCents = 100000 };
+        Check(HouseholdFinance.HoldPurchase(budget, cents), "hold exact fractional price");
+        Check(f.Market.Buy(meal, Minute).Paid, "native adapter accepts fractional approved price");
+        HouseholdFinance.ConfirmPurchase(budget);
+        Check(budget.PreparedFoodSpentCents == cents && budget.BalanceCents == 100000 - cents, "wallet matches native quote");
+        Check(f.Receipt(meal) == FoodReceiptStatus.Paid, "fractional paid receipt");
+        int units = f.Stock(Croissant);
+        Check(f.Market.Buy(meal, Minute).Paid && f.Stock(Croissant) == units, "fractional replay is idempotent");
+        var next = f.Meal("price-changed", cents: cents);
+        price.price = BitConverter.Int32BitsToSingle(BitConverter.SingleToInt32Bits(price.price) + 1);
+        Check(!f.Market.Buy(next, Minute).Paid, "one native ULP price change refuses stale approval");
+        Check(f.Stock(Croissant) == units && f.Receipt(next) == FoodReceiptStatus.Missing, "price refusal consumes no stock or receipt");
+        price.price = 10.2528f;
+        Hooks.OpenCheck = () => price.price = BitConverter.Int32BitsToSingle(BitConverter.SingleToInt32Bits(10.2528f) + 1);
+        Check(!f.Market.Buy(next, Minute).Paid, "price mutation after live quote refuses before native sale");
+        Check(f.Stock(Croissant) == units && f.Receipt(next) == FoodReceiptStatus.Missing, "setup-price refusal leaves stock and receipts unchanged");
+    }
+
     static void Main()
     {
+        FractionalCheckoutMatchesNativeAndRejectsSameCentPriceChanges();
         SuccessfulCheckoutUsesOnePreSaleRead();
         SameFrameSalesAndChangesAreSeenByTheNextCheckout();
         ReplacedRegistrationIsReadAfresh();
@@ -409,7 +435,7 @@ namespace PersistentCity.Runtime
                 if (reg == null || !places.Contains(NativeFoodMarket.PlaceId(reg))) continue;
                 var business = new FoodBusiness { Id = identity?.Invoke(reg) ?? BusinessIdentity(reg), PlaceId = NativeFoodMarket.PlaceId(reg) };
                 foreach (var price in reg.retailPrices.Where(p => products.Contains(p.itemName) && reg.cachedAvailableProducts.Contains(p.itemName)))
-                    business.Offers.Add(new FoodOffer { ProductId = price.itemName, PriceCents = (int)Math.Round(price.price * 100) });
+                    business.Offers.Add(new FoodOffer { ProductId = price.itemName, PriceCents = FoodMoney.FromNative(price.price) });
                 result.Businesses.Add(business);
             }
             return result;

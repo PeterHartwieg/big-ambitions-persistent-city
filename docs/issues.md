@@ -38,6 +38,8 @@ Status: implemented in the development build, not checked in game. They wait ind
 
 ## 4. The hour and the rain no longer change how many people walk the streets
 
+**28 October: Q1 remains OPEN.** No hour/rain crowd policy change is authorized by the optional-stop decision. See [Peter?s decisions](decisions/2026-10-28-peter-decisions.md).
+
 The game sets the number of walking pedestrians by hour and rain through `PedestrianSpawner.SetActivePedestrians` (1.0: `TimeOfDayController.cs`, around line 552). `AmbientPedestrians.SetActivePrefix` stores the requested amount and skips the call, so the street crowd no longer thins at night or in the rain. Persistent City's own population fills the street instead, and it doesn't account for weather either.
 
 Expected: the visible crowd follows the time of day and the weather, either through the game's request or through the simulation's own outdoor share.
@@ -51,3 +53,5 @@ Expected: the two agree on one owner. For example, CityPerformance stands down w
 ## Done: the game's anonymous standers are switched off
 
 The game's stationary zones placed 2–4 anonymous standers each time a zone came into view, regardless of hour or weather (1.0: `StationaryAiSpawner.SpawnGroupOverFrames`). `Runtime/StationaryCrowds.cs` now skips their `Spawn(Vector3)`. Street performers and the homeless from the same zones remain. The proposed replacement is in [stationary-citizens.md](stationary-citizens.md). It compiles, but hasn't been checked in game yet.
+
+28 October: Peter approved adding optional stops. Shared mechanics and the updated design are implemented, but no new kinds are scheduled until the recorded kind/density/audience choices are answered.

@@ -12,15 +12,25 @@ namespace PersistentCity.Persistence
     /// because the clock advanced. No separate disk transaction or household ledger.</summary>
     public static class FoodSaleReceipts
     {
-        private const string Prefix = "persistentcity:food-sale-v1:";
+        public const string Prefix = "persistentcity:food-sale-v2:";
+        public const string LegacyPrefix = "persistentcity:food-sale-v1:";
+        public static bool IsReceiptKey(string key) => key.StartsWith(Prefix, StringComparison.Ordinal) || key.StartsWith(LegacyPrefix, StringComparison.Ordinal);
         private static string Key(ResidentMeal m) => Prefix + m.IntentId;
-        private static string Identity(ResidentMeal m) => m.PriceCents.ToString(CultureInfo.InvariantCulture)
+        private static string Identity(ResidentMeal m) => m.PriceCents.ToString("0.############################", CultureInfo.InvariantCulture)
             + "|" + Uri.EscapeDataString(m.BusinessId) + "|" + Uri.EscapeDataString(m.ProductId);
         /// <summary>Missing is absence of evidence, never proof that a native purchase failed.
         /// Only Paid confirms this exact intention, business, product and agreed price.</summary>
         public static FoodReceiptStatus ReadStatus(IDictionary<string, string> data, ResidentMeal meal)
         {
-            if (!data.TryGetValue(Key(meal), out var value)) return FoodReceiptStatus.Missing;
+            bool current = data.TryGetValue(Key(meal), out var value);
+            bool legacy = data.TryGetValue(LegacyPrefix + meal.IntentId, out var oldValue);
+            if (current && legacy) return FoodReceiptStatus.Conflict;
+            if (!current && !legacy) return FoodReceiptStatus.Missing;
+            if (legacy)
+            {
+                if (meal.PriceCents != decimal.Truncate(meal.PriceCents)) return FoodReceiptStatus.Conflict;
+                value = oldValue;
+            }
             string identity = Identity(meal);
             if (value == "paid|" + identity) return FoodReceiptStatus.Paid;
             if (value == "pending|" + identity) return FoodReceiptStatus.Pending;
@@ -35,7 +45,7 @@ namespace PersistentCity.Persistence
         }
         public static void Begin(IDictionary<string, string> data, ResidentMeal meal)
         {
-            if (data.ContainsKey(Key(meal))) throw new InvalidOperationException("Native food intention already has a receipt.");
+            if (ReadStatus(data, meal) != FoodReceiptStatus.Missing) throw new InvalidOperationException("Native food intention already has a receipt.");
             data.Add(Key(meal), "pending|" + Identity(meal));
         }
         public static void Confirm(IDictionary<string, string> data, ResidentMeal meal)
@@ -52,25 +62,29 @@ namespace PersistentCity.Persistence
         {
             var protectedKeys = new HashSet<string>(StringComparer.Ordinal);
             if (unresolvedIntentIds != null)
-                foreach (var id in unresolvedIntentIds) protectedKeys.Add(Prefix + id);
+                foreach (var id in unresolvedIntentIds) { protectedKeys.Add(Prefix + id); protectedKeys.Add(LegacyPrefix + id); }
             var remove = new List<string>();
             foreach (var pair in data)
             {
-                if (!pair.Key.StartsWith(Prefix, StringComparison.Ordinal) || protectedKeys.Contains(pair.Key)
-                    || !ConfirmedValue(pair.Value)) continue;
+                if (!IsReceiptKey(pair.Key) || protectedKeys.Contains(pair.Key)
+                    || !ConfirmedValue(pair.Value, pair.Key.StartsWith(LegacyPrefix, StringComparison.Ordinal))) continue;
+                string other = (pair.Key.StartsWith(Prefix, StringComparison.Ordinal) ? LegacyPrefix : Prefix)
+                    + pair.Key.Substring(Prefix.Length);
+                if (data.ContainsKey(other)) continue; // Two versions are conflicting evidence, never garbage.
                 if (!KnownDay(pair.Key, out int day)) continue;
                 if (day < nativeDay - 1) remove.Add(pair.Key);
             }
             foreach (var key in remove) data.Remove(key);
         }
-        private static bool ConfirmedValue(string value)
+        private static bool ConfirmedValue(string value, bool legacy)
         {
             // Unknown or damaged markers are evidence to investigate, not garbage to erase.
             if (value == null) return false;
             var parts = value.Split('|');
             if (parts.Length != 4 || parts[0] != "paid"
-                || !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out int cents) || cents <= 0
-                || cents.ToString(CultureInfo.InvariantCulture) != parts[1]) return false;
+                || !decimal.TryParse(parts[1], NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out decimal cents) || cents <= 0
+                || cents.ToString("0.############################", CultureInfo.InvariantCulture) != parts[1]) return false;
+            if (legacy && (cents != decimal.Truncate(cents) || cents > int.MaxValue)) return false;
             return CanonicalText(parts[2]) && CanonicalText(parts[3]);
         }
         private static bool CanonicalText(string value) => value.Length > 0 && value.Length <= 8192

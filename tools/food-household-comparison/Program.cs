@@ -29,7 +29,7 @@ foreach (string name in variations)
     foreach (var p in (JArray)native["points"]!)
     {
         double factor = (double)p["factor"]!; var state = FoodShadowCodec.Read(json, initial.CityKey);
-        foreach (var o in state.Businesses.Single(b => b.Id == target).Offers) o.PriceCents = (int)Math.Round(o.PriceCents * factor);
+        foreach (var o in state.Businesses.Single(b => b.Id == target).Offers) o.PriceCents = (int)Math.Round((double)o.PriceCents * factor);
         Finish(state);
         var served = state.Intents.Where(i => i.Status == FoodIntentStatus.Fulfilled && i.BusinessId == target).ToArray();
         if (name == variations[0] && (served.Length != (int)p["meals"]! || served.Sum(i => i.SpentCents) != (int)p["revenueCents"]!))
@@ -63,6 +63,6 @@ var low = current!.Consumers.Min(c => c.DailyAllowanceCents); var high = current
 File.WriteAllText(Path.Combine(output, "report.json"), JsonConvert.SerializeObject(new { target = (string)native["selection"]!["name"]!, scenarios = reports, districtSensitivity = districts,
     retainedPcPricePointsUnchanged = 31, individualBudgetRangeCents = new[] { low, high },
     note = "New policy is offline only. Home district is unknown in the original PC capture. District examples are separate controlled distributions, not measurements. No shop gets guaranteed customers; no household food or costs are booked." }, Formatting.Indented));
-Console.WriteLine($"31 retained PC price points unchanged after schema migration; 62 new counterfactual points conserve opportunities, stock and buying power. Individual budgets ${low/100.0:F2}–${high/100.0:F2}; district sensitivity kept separate.");
+Console.WriteLine($"31 retained PC price points unchanged after schema migration; 62 new counterfactual points conserve opportunities, stock and buying power. Individual budgets ${low/100m:F2}–${high/100m:F2}; district sensitivity kept separate.");
 
 static void Finish(FoodShadowState state) { var e = new FoodDemand(state); while (!e.AdvanceTo(state.EndsAt, 128)) { } FoodShadowCodec.Write(state); }

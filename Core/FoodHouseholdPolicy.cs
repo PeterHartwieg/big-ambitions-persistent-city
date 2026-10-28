@@ -73,7 +73,7 @@ namespace PersistentCity.Core
                 : character == Persona.Parent ? .9 : character == Persona.Commuter ? 1.05 : 1;
             double fraction = (home ? .50 : .45) + (StableRandom.Hash(dayKey + ":value", seed) % 301) / 1000.0;
             int preparationMinutes = home ? 15 + (int)(StableRandom.Hash(person.Id + ":food-preparation", seed) % 21) : 0;
-            intent.OutsideOptionScoreCents = (int)Math.Min(1000000, Math.Round(person.DailyAllowanceCents * fraction * characterValue
+            intent.OutsideOptionScoreCents = (int)Math.Min(1000000, Math.Round((double)person.DailyAllowanceCents * fraction * characterValue
                 + (preparationMinutes + intent.EatingMinutes) * person.ValueOfTimeCentsPerMinute * intent.TimeCostMultiplier));
             intent.OutsideOptionEvidence = home
                 ? "Provisional willingness-to-buy comparison with preparing food at the observed home; household ingredients/cost/consumption unverified"

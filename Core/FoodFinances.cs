@@ -55,7 +55,7 @@ namespace PersistentCity.Core
             while (posted < BudgetPostingsPerEvent && budgetDue.Min!.Budget!.NextPostingMinute == minute);
             return true;
         }
-        private int AvailableForMeal(ResidentMeal meal)
+        private decimal AvailableForMeal(ResidentMeal meal)
         {
             if (meal.Budget != null) meal.AllowanceCents = HouseholdFinance.SpendingLimit(meal.Budget);
             return meal.Budget != null ? meal.AllowanceCents : Math.Max(0, meal.AllowanceCents - meal.DayAllowanceUsedCents);

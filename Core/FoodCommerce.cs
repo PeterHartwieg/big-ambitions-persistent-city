@@ -20,7 +20,7 @@ namespace PersistentCity.Core
             FitCents = MealRhythm.ProductPenalty(MealKind, c.ProductId),
             c.ServiceQualityAdjustmentCents, c.DistrictAppealAdjustmentCents,
             PreferenceCents = c.ProductId == Consumer.PreferredProductId ? -Consumer.PreferenceBonusCents : 0,
-            TimeCents = c.ScoreCents - c.PriceCents - c.ServiceQualityAdjustmentCents - c.DistrictAppealAdjustmentCents
+            TimeCents = c.ScoreCents - (double)c.PriceCents - c.ServiceQualityAdjustmentCents - c.DistrictAppealAdjustmentCents
                 - MealRhythm.ProductPenalty(MealKind, c.ProductId)
                 + (c.ProductId == Consumer.PreferredProductId ? Consumer.PreferenceBonusCents : 0),
             HomeFoodMarginCents = Intent.OutsideOptionScoreCents - c.ScoreCents
@@ -59,7 +59,7 @@ namespace PersistentCity.Core
         public MealExcursion? Excursion { get; set; }
         public int Day { get; set; }
         public MealKind Kind { get; set; }
-        public int DayAllowanceUsedCents { get; set; }
+        public decimal DayAllowanceUsedCents { get; set; }
         public double DesiredAt { get; set; }
         public double ExpiresAt { get; set; }
         public double DueAt { get; set; }
@@ -68,8 +68,8 @@ namespace PersistentCity.Core
         public string BusinessId { get; set; } = "";
         public string ProductId { get; set; } = "";
         public string Reason { get; set; } = "";
-        public int AllowanceCents { get; set; }
-        public int PriceCents { get; set; }
+        public decimal AllowanceCents { get; set; }
+        public decimal PriceCents { get; set; }
         public double ServiceMinutes { get; set; }
         public double ServiceAt { get; set; }
         public double Deadline { get; set; }
@@ -78,7 +78,7 @@ namespace PersistentCity.Core
         public bool ExistingStop { get; set; }
         public long ExistingStopPurchases { get; set; }
         public long Purchases { get; set; }
-        public long SpentCents { get; set; }
+        public decimal SpentCents { get; set; }
         public string IntentId => MealRhythm.IntentId(ResidentId, Day, Kind);
     }
     public sealed class FoodCommerceState
@@ -369,7 +369,7 @@ namespace PersistentCity.Core
         }
         private FoodRoutineResident Resident(CitizenState p) => new FoodRoutineResident { Identity = p.Identity, HomeId = p.HomeId,
             HomeDistrictId = city.FindPlace(p.HomeId).District, WalkingToleranceMetres = p.Preferences.WalkingToleranceMetres };
-        private FoodConsumer Consumer(CitizenState p, int allowance, ResidentMeal? meal = null) => new FoodConsumer { Id = meal?.ResidentId ?? p.Identity.Id, Name = p.Identity.Name,
+        private FoodConsumer Consumer(CitizenState p, decimal allowance, ResidentMeal? meal = null) => new FoodConsumer { Id = meal?.ResidentId ?? p.Identity.Id, Name = p.Identity.Name,
             PreferredProductId = meal?.PreferredProductId ?? "", PreferenceBonusCents = meal?.PreferenceBonusCents ?? 0,
             OriginPlaceId = p.PlaceId, DailyAllowanceCents = allowance,
             ValueOfTimeCentsPerMinute = 4 + (int)(StableRandom.Hash((meal?.ResidentId ?? p.Identity.Id) + ":food-time", city.State.Seed) % 9),

@@ -15,14 +15,14 @@ namespace PersistentCity.Core
         public int DailyHousingCents { get; set; }
         public int DailyEssentialsCents { get; set; }
         public int DailyHomeFoodCents { get; set; }
-        public long OpeningBalanceCents { get; set; }
-        public long BalanceCents { get; set; }
-        public long IncomeReceivedCents { get; set; }
-        public long EssentialsPaidCents { get; set; }
-        public long HomeFoodPaidCents { get; set; }
-        public long PreparedFoodSpentCents { get; set; }
-        public long HeldPurchaseCents { get; set; }
-        public long ArrearsCents { get; set; }
+        public decimal OpeningBalanceCents { get; set; }
+        public decimal BalanceCents { get; set; }
+        public decimal IncomeReceivedCents { get; set; }
+        public decimal EssentialsPaidCents { get; set; }
+        public decimal HomeFoodPaidCents { get; set; }
+        public decimal PreparedFoodSpentCents { get; set; }
+        public decimal HeldPurchaseCents { get; set; }
+        public decimal ArrearsCents { get; set; }
         public int LastPostedDay { get; set; } = -1;
         public int HomeFoodFundedDay { get; set; } = -1;
         public int DaysWithoutHomeFood { get; set; }
@@ -80,8 +80,8 @@ namespace PersistentCity.Core
                 budget.HomeFoodFundedDay = day;
             }
             else budget.DaysWithoutHomeFood = checked(budget.DaysWithoutHomeFood + 1);
-            long required = checked(budget.ArrearsCents + budget.DailyHousingCents + budget.DailyEssentialsCents);
-            long paid = Math.Min(budget.BalanceCents, required);
+            decimal required = checked(budget.ArrearsCents + budget.DailyHousingCents + budget.DailyEssentialsCents);
+            decimal paid = Math.Min(budget.BalanceCents, required);
             budget.BalanceCents -= paid;
             budget.EssentialsPaidCents = checked(budget.EssentialsPaidCents + paid);
             budget.ArrearsCents = required - paid;
@@ -98,13 +98,13 @@ namespace PersistentCity.Core
             => source == ResidentIncomeSource.ExternalPension ? basis * CityBalance.PensionIncomePercent / 100
                 : source == ResidentIncomeSource.ExternalSupport ? basis * CityBalance.SupportIncomePercent / 100 : basis;
 
-        public static int SpendingLimit(ResidentBudget budget)
+        public static decimal SpendingLimit(ResidentBudget budget)
         {
             if (budget.HeldPurchaseCents != 0 || budget.ArrearsCents != 0) return 0;
             // Keep the next day's basic bill available. Savings can fund a considered purchase,
             // but replenishing a daily allowance never creates spendable money.
             long reserve = budget.DailyHousingCents + budget.DailyEssentialsCents + budget.DailyHomeFoodCents;
-            return (int)Math.Min(1000000, Math.Max(0, budget.BalanceCents - reserve));
+            return Math.Min(1000000, Math.Max(0, budget.BalanceCents - reserve));
         }
 
         public static int HomeAlternativeValue(ResidentBudget budget, CitizenState person, FoodConsumer consumer, FoodIntent intent, int seed, double convenienceWeight = 1)
@@ -117,14 +117,16 @@ namespace PersistentCity.Core
                 + (20 + intent.EatingMinutes) * consumer.ValueOfTimeCentsPerMinute * intent.TimeCostMultiplier));
         }
 
-        public static bool HoldPurchase(ResidentBudget budget, int cents)
+        public static bool HoldPurchase(ResidentBudget budget, decimal cents)
         {
             if (cents <= 0 || cents > SpendingLimit(budget)) return false;
-            budget.BalanceCents -= cents; budget.HeldPurchaseCents = cents; return true;
+            decimal remaining = FoodMoney.Add(budget.BalanceCents, -cents);
+            FoodMoney.Add(budget.PreparedFoodSpentCents, cents); // Refuse unrepresentable confirmation before native checkout.
+            budget.BalanceCents = remaining; budget.HeldPurchaseCents = cents; return true;
         }
         public static void ConfirmPurchase(ResidentBudget budget)
-        { budget.PreparedFoodSpentCents = checked(budget.PreparedFoodSpentCents + budget.HeldPurchaseCents); budget.HeldPurchaseCents = 0; }
+        { budget.PreparedFoodSpentCents = FoodMoney.Add(budget.PreparedFoodSpentCents, budget.HeldPurchaseCents); budget.HeldPurchaseCents = 0; }
         public static void RefusePurchase(ResidentBudget budget)
-        { budget.BalanceCents = checked(budget.BalanceCents + budget.HeldPurchaseCents); budget.HeldPurchaseCents = 0; }
+        { budget.BalanceCents = FoodMoney.Add(budget.BalanceCents, budget.HeldPurchaseCents); budget.HeldPurchaseCents = 0; }
     }
 }

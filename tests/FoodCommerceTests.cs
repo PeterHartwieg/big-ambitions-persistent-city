@@ -32,7 +32,8 @@ public sealed partial class FoodCommerceTests
     private sealed class Market : IFoodMarket, IFoodSaleEvidence
     {
         public double EarliestMinute { get; set; }
-        public int Units = 100, Price = 100, Capacity = 15, OpenFromMinute;
+        public int Units = 100, Capacity = 15, OpenFromMinute;
+        public decimal Price = 100;
         public string BusinessId = "b";
         public string UnavailableReason = "";
         public string[] Products = new[] { "pastry" };
@@ -345,7 +346,7 @@ public sealed partial class FoodCommerceTests
         city = city.RebuildRoutes(routes); city.EnableHouseholdFinances();
         Advance(city, city.State.Minute + 1);
         var budget = city.State.Food!.Residents.Single().Budget!;
-        long before = budget.BalanceCents;
+        decimal before = budget.BalanceCents;
         Assert.True(budget.IncomeReceivedCents > 0); Assert.True(budget.HomeFoodPaidCents > 0);
         Assert.True(budget.EssentialsPaidCents > 0);
         double desired = city.State.Food.Residents.Single().DesiredAt;
@@ -354,7 +355,7 @@ public sealed partial class FoodCommerceTests
         budget = city.State.Food!.Residents.Single().Budget!;
         Assert.Single(market.Orders); Assert.Equal(before - market.Price, budget.BalanceCents);
         Assert.Equal(market.Price, budget.PreparedFoodSpentCents); Assert.Equal(0, budget.HeldPurchaseCents);
-        long paid = budget.IncomeReceivedCents;
+        decimal paid = budget.IncomeReceivedCents;
         city = Reload(city, market, routes); Advance(city, desired + 60);
         Assert.Equal(paid, city.State.Food!.Residents.Single().Budget!.IncomeReceivedCents);
         Assert.Single(market.Orders);
@@ -385,7 +386,7 @@ public sealed partial class FoodCommerceTests
         city = city.RebuildRoutes(routes); city.EnableHouseholdFinances();
         double desired = city.State.Food!.Residents.Single().DesiredAt;
         Advance(city, desired + 2); var budget = city.State.Food.Residents.Single().Budget!;
-        long before = budget.BalanceCents; market.Units = 0;
+        decimal before = budget.BalanceCents; market.Units = 0;
         Advance(city, desired + 30);
         Assert.Empty(market.Orders); Assert.Equal(before, budget.BalanceCents);
         Assert.Equal(0, budget.HeldPurchaseCents); Assert.Equal(0, budget.PreparedFoodSpentCents);

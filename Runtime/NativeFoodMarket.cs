@@ -216,7 +216,7 @@ namespace PersistentCity.Runtime
         private static bool ResidentPrice(string itemName, float price, ref bool __result)
         {
             if (active == null || !active.buying || itemName != active.approvedProduct) return true;
-            __result = Math.Abs(price - active.approvedPrice) < .001f; return false;
+            __result = price == active.approvedPrice; return false;
         }
         public IReadOnlyList<FoodBusiness> Read(double minute) => ReadSelected(minute, state.Shops.Select(s => s.PlaceId).ToArray());
         public FoodBusiness? ReadBusiness(string businessId, double minute)
@@ -341,6 +341,8 @@ namespace PersistentCity.Runtime
                 simulator.SetUp(reg, SaveGameManager.Current.Hour);
                 approvedProduct = meal.ProductId;
                 approvedPrice = reg.retailPrices.Single(p => p.itemName == meal.ProductId).price;
+                if (FoodMoney.FromNative(approvedPrice) != meal.PriceCents)
+                    return new FoodSale(false, "Approved price changed during native setup");
                 FoodSaleReceipts.Begin(data, meal);
                 buyerShop = reg; buying = true;
                 Process.Invoke(simulator, new object[] { customer });
@@ -348,7 +350,7 @@ namespace PersistentCity.Runtime
             finally { buying = false; buyerShop = null; UnityEngine.Object.Destroy(simulator); }
             var entries = customer.order.entries.Where(e => e.paid && ItemsGetter.GetByName(e.itemName)?.HasTag(BigAmbitions.Tags.TagRef.Itemtag.isbag) != true).ToArray();
             var after = FoodSupplyReader.ReadMenu(reg, scope.Products());
-            if (entries.Length != 1 || entries[0].itemName != meal.ProductId || Math.Abs(entries[0].price - approvedPrice) >= .001f
+            if (entries.Length != 1 || entries[0].itemName != meal.ProductId || entries[0].price != approvedPrice
                 || !customer.order.completed || after[meal.ProductId].ProducerUnits != before[meal.ProductId].ProducerUnits - 1
                 || after[meal.ProductId].BagUnits != before[meal.ProductId].BagUnits - 1
                 || scope.Products().Any(p => p != meal.ProductId && after[p].ProducerUnits != before[p].ProducerUnits)

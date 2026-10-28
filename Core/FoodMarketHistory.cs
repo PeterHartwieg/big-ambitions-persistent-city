@@ -14,7 +14,7 @@ namespace PersistentCity.Core
     {
         public string ProductId { get; set; } = "";
         public long Purchases { get; set; }
-        public long RevenueCents { get; set; }
+        public decimal RevenueCents { get; set; }
         public long[] PurchaseMeals { get; set; } = new long[4];
     }
     public sealed class FoodShopDay
@@ -34,7 +34,7 @@ namespace PersistentCity.Core
         public long PreferredAlternatives { get; set; }
         public long Purchases { get; set; }
         public long ExistingStopPurchases { get; set; }
-        public long RevenueCents { get; set; }
+        public decimal RevenueCents { get; set; }
         public long[] PurchaseHours { get; set; } = new long[24];
         public long[] PurchaseMeals { get; set; } = new long[4];
         public List<FoodProductSales> ProductSales { get; set; } = new List<FoodProductSales>();

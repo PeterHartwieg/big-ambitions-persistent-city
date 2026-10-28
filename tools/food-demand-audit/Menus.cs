@@ -101,7 +101,7 @@ namespace FoodDemandAuditProbe
             ResidentMeal Meal(string product) => new ResidentMeal {
                 ResidentId = Simulation.State.Citizens[resident++].Identity.Id, Day = SaveGameManager.Current.Day, Kind = MealKind.Legacy,
                 PlaceId = scope.PlaceId, BusinessId = scope.BusinessId, ProductId = product, AllowanceCents = 10000,
-                PriceCents = (int)Math.Round(shop.retailPrices.Single(p => p.itemName == product).price * 100.0),
+                PriceCents = FoodMoney.FromNative(shop.retailPrices.Single(p => p.itemName == product).price),
                 ServiceMinutes = 60.0 / FoodSupplyReader.Read(shop, product).MealsPerHour!.Value };
             foreach (var product in scope.Products())
             {
@@ -136,7 +136,7 @@ namespace FoodDemandAuditProbe
             if (!winner.Paid || loser.Paid || SaveGameManager.Current.modData.Count != receiptCount || shop.unprocessedCompletedOrders.Count != orderCount)
                 throw new InvalidOperationException("Last bag contention did not refuse without side effects.");
             return new { ownership = new { ownedDraw, soldDraw }, products = results, changedPrice = new { priceRefusal.Paid, priceRefusal.Reason, before = priceBefore }, changedMenu = excluded, lastBag = new { first = first.ProductId, second = second.ProductId, winner.Paid, loser = loser.Reason,
-                noLoserReceipt = !SaveGameManager.Current.modData.ContainsKey("persistentcity:food-sale-v1:" + second.IntentId), before = snapshot, after = Status() },
+                noLoserReceipt = FoodSaleReceipts.ReadStatus(SaveGameManager.Current.modData, second) == FoodReceiptStatus.Missing, before = snapshot, after = Status() },
                 boundary = "Direct native adapter checks in a disposable fixture, not generated resident journeys. Core wallet contention is separately regression-tested. Reload base before demand measurement." };
         }
         private object EditMenuForReload()

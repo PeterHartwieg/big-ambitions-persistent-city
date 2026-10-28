@@ -204,7 +204,7 @@ namespace FoodDemandAuditProbe
                 clock=ClockAuditStatus(), travelClockRate=sim.State.TravelClockRate,
                 routines=new { citizens=sim.State.Citizens.Count, journeys=sim.State.Citizens.Sum(c=>c.CompletedJourneys), missed=sim.State.Citizens.Sum(c=>c.MissedActivities) },
                 diagnostics=Runtime.FoodDiagnostics, auditDecisions=decisions.Count, auditCapture=AuditCaptureStatus(), housekeeping=new { restockChecks,restocks,stockTasks },
-                receipts=SaveGameManager.Current.modData.Where(p=>p.Key.StartsWith("persistentcity:food-sale-v1:",StringComparison.Ordinal)).ToDictionary(p=>p.Key,p=>p.Value), count=state?.Residents.Count, scope=state?.Shops,
+                receipts=SaveGameManager.Current.modData.Where(p=>FoodSaleReceipts.IsReceiptKey(p.Key)).ToDictionary(p=>p.Key,p=>p.Value), count=state?.Residents.Count, scope=state?.Shops,
                 totals=state?.Residents.GroupBy(m=>m.Status.ToString()).ToDictionary(g=>g.Key,g=>g.Count()),
                 purchases=state?.Residents.Sum(m=>m.Purchases),spendingCents=state?.Residents.Sum(m=>m.SpentCents),
                 active=state?.Residents.Where(m=>m.Status==MealStatus.Travelling||m.Status==MealStatus.Serving||m.Status==MealStatus.Paid||m.Status==MealStatus.Uncertain).ToArray(),
