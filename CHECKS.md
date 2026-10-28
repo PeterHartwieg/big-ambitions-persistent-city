@@ -1,5 +1,13 @@
 # Validation status
 
+## PR #3 independent review round 2 (offline)
+
+Saved facade stops now distinguish deferred validation from confirmed unavailability. Reload can validate one entrance per frame without cancelling other saved stops or changing their choices/deadlines; deferred stops cannot receive physical bodies. Rain and confirmed disappearance still cancel. Same-visit routine/lifecycle events retain accepted and declined conversation choices, including across reload and rate changes. New visit opportunities still require geometry at admission; no delayed scheduling/reroll is added. Triage: two Medium FIX items, three SKIP items, no product question. Default 25% and schema 16 unchanged.
+
+Normal merge `32cc844` includes base `9ee38e9`. Combined validation: **1,368 unit tests**, **21 standalone regression projects**, **213 optional-stop physical/cache checks + six native replacement checks + 18 saved-facade integration checks**, **27,567 selection checks**, and all native-command, vehicle-ownership, pickup, analyzer and exact 28-day save-round-trip checks pass. The new reload test fails with the old unavailable-on-budget-exhaustion behavior, then passes in both roster orders with deferred validation. The selection harness initially needed its simulator double updated for the new status API; its targeted rerun passes.
+
+Production and audit helper compile against read-only Steam DLLs with warnings as errors. Production SHA-256 `d32f3c9a75ff811e815eefb2da043e6dce05c3aa713401595eed8eb769a69cd5`; helper `66cf568e3f12c0315ed762a2946781c9026f80bd2a22fcb21be500feee7fb12a`. `git diff --check` passes. Logs: ignored `build/review-r2/`. No game launch, install, rig access, deployment or release; native visual/performance evidence remains outstanding.
+
 ## PR #3 independent review round 1 ? 28 October 2026 (offline)
 
 Deduplicated 17 findings: 10 FIX (six High/Medium), seven SKIP, no new product questions. Visible arrivals now retain their body through admission, and ordinary/meal departures hold journey progress while the body returns to the entrance. Opening queues and optional stops share one facade cache/frame budget; live performer images reuse ring geometry until invalidated. Save validation uses indexed references; chat selection filters local candidates and tries later feasible partners. The approved 25% config, saved per-visit choices and schema 16 remain intact.
