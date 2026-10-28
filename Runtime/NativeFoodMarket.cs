@@ -309,7 +309,13 @@ namespace PersistentCity.Runtime
             }
             if (!CanServe(meal.BusinessId)) return new FoodSale(false, "Business is no longer owned by Persistent City");
             var observed = new Dictionary<string, SupplyObservation>(1, StringComparer.Ordinal);
-            var business = ReadSelected(minute, new[] { meal.PlaceId }, observed).SingleOrDefault(b => b.PlaceId == meal.PlaceId && b.Id == meal.BusinessId);
+            FoodBusiness? business;
+            try { business = ReadSelected(minute, new[] { meal.PlaceId }, observed).SingleOrDefault(b => b.PlaceId == meal.PlaceId && b.Id == meal.BusinessId); }
+            catch (FoodBusinessCatalogue.UnsupportedPriceException)
+            {
+                // No receipt or native sale has started. A known invalid quote is refundable.
+                return new FoodSale(false, "Approved price is outside the supported range");
+            }
             var offer = business?.Offers.SingleOrDefault(o => o.ProductId == meal.ProductId);
             string exclusion = ScopeStatus(meal.PlaceId);
             if (exclusion.Length > 0) return new FoodSale(false, exclusion);

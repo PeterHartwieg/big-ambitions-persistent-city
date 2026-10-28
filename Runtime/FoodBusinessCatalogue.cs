@@ -20,6 +20,13 @@ namespace PersistentCity.Runtime
     /// </summary>
     public static class FoodBusinessCatalogue
     {
+        // Distinguish a known invalid price from unrelated observation failures.
+        internal sealed class UnsupportedPriceException : InvalidOperationException
+        {
+            internal UnsupportedPriceException(ArgumentOutOfRangeException cause)
+                : base("Food price is outside the supported range or precision.", cause) { }
+        }
+
         internal static string BusinessIdentity(BuildingRegistration reg)
         {
             string address = Uri.EscapeDataString(reg.StreetName) + ":" + reg.StreetNumber.ToString(CultureInfo.InvariantCulture);
@@ -84,9 +91,9 @@ namespace PersistentCity.Runtime
                     foreach (var price in reg.retailPrices)
                     {
                         if (price == null || !products.Contains(price.itemName) || !reg.cachedAvailableProducts.Contains(price.itemName)) continue;
-                        if (!Position.Finite(price.price) || price.price <= 0 || price.price > 10000)
-                            throw new InvalidOperationException("Food price is outside the experiment's range.");
-                        decimal cents = FoodMoney.FromNative(price.price);
+                        decimal cents;
+                        try { cents = FoodMoney.FromNative(price.price); }
+                        catch (ArgumentOutOfRangeException ex) { throw new UnsupportedPriceException(ex); }
                         if (cents == 0 || business.Offers.Any(o => o.ProductId == price.itemName))
                             throw new InvalidOperationException("Ambiguous food price; observation refused.");
                         // An advertised product is not proof of stocked, staffed production.
