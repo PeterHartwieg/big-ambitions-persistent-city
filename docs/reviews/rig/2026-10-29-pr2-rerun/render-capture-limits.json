@@ -1,0 +1,7 @@
+{
+  "gameViewBefore": "null texture error, scene-camera fallback",
+  "gameViewAfter": "black image, retained privately as failed game-view capture",
+  "windowsInspection": "isolated hidden process exposes no targetable window; no normal game was launched or controlled",
+  "usableEvidence": "native bridge diagnostic scene-camera renders, not screenshots of game UI",
+  "timingMode": "same hidden windowed launch for all six fresh QA cycles"
+}

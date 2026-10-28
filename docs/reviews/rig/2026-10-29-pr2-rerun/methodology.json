@@ -1,0 +1,20 @@
+{
+  "recordedUtc": "2026-10-28T18:41:39.041654+00:00",
+  "timingOrder": [
+    "before1",
+    "after1",
+    "before2",
+    "after2",
+    "before3",
+    "after3"
+  ],
+  "windowSeconds": 60,
+  "warmupSeconds": 10,
+  "fixture": "same copied FT morning checkpoint",
+  "quality": "unchanged identical isolated preferences",
+  "autosave": "verify off and no save before/after each window and after reload; invalidate any save in window",
+  "descriptiveNoiseRule": "For mod and whole-frame p50, p95 and maxima: compare after median minus before median against the larger full within-build range. Record overlap and all tails. Three windows do not prove causal performance or statistical equivalence. Financial comparisons remain exact and never use this rule.",
+  "nativeControl": "Each QA fresh process: load same checkpoint; warmup; timing; pause; manual save unique named FT disposable copy; native unload/load; verify autosave off; ten seconds normal play; pause; graceful quit. Compare complete logs including shutdown.",
+  "pairedShutdownAttributionAddedUtc": "2026-10-28T18:57:58.876175+00:00",
+  "cycle3AdditionalIdenticalSteps": "Both cycle-3 arms, after their standard QA reload/play: load original morning copy again, run identical 17h and 24h native skips with financial observer and needs suppression, pause, restore needs, quit without intervening manual save/reload. This pairs the pending-midnight-autosave shutdown path seen after the extended checkout campaign."
+}

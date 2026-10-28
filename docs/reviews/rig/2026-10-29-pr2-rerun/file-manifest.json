@@ -1,0 +1,262 @@
+[
+  {
+    "file": ".gitattributes",
+    "bytes": 104,
+    "sha256": "27b684bdbd6616ebbf3bc79fe5d5a74652f7dff9d938ce8a70ac0a68e0eb907a"
+  },
+  {
+    "file": "after-financial-verification.json",
+    "bytes": 66958,
+    "sha256": "cb2530e7bd4ab937a810aac7869aedacab358ed5effcd9f8c362924ad2b9c373"
+  },
+  {
+    "file": "after-financial.jsonl",
+    "bytes": 488358,
+    "sha256": "d367a2638aa13fe81490c57a68ebc1face3e9a210d0064c7fe954c470fa0e111"
+  },
+  {
+    "file": "after-money-regression.log",
+    "bytes": 599,
+    "sha256": "56f2f62aa15702aca1d1c2570f245e14bc0d33696622b5937c142de0acb2d60a"
+  },
+  {
+    "file": "after-resident-ledgers.json",
+    "bytes": 296161,
+    "sha256": "414bcc178cad2571f9494090398177c5f795beee5404ecdf8ba36bf2ab6741f9"
+  },
+  {
+    "file": "analyze_campaign.py",
+    "bytes": 3595,
+    "sha256": "5af0a0fad94ae56707eebca0f56d62e398e1e31312231b309ad26d4c2e1113b5"
+  },
+  {
+    "file": "analyze_interruption.py",
+    "bytes": 4089,
+    "sha256": "d638ab8da91a62e3077637b3f373b3f0cb9ec512da311e6e46019a8199eb2af0"
+  },
+  {
+    "file": "analyze_migration.py",
+    "bytes": 3212,
+    "sha256": "80e262e9f0173f347f9f3c7e01508e8c0afe920dad8708716bcb94bf765a3476"
+  },
+  {
+    "file": "autosave-evidence.json",
+    "bytes": 8714,
+    "sha256": "64b94146933742908046cb736956098f23d6122af35cee11b12b0d3e6ac2c67a"
+  },
+  {
+    "file": "backup-receipt.json",
+    "bytes": 206,
+    "sha256": "7db8640f34ee643f68cee3962e0debfdacd24c9fab1581ea89a635c03c1f5bbd"
+  },
+  {
+    "file": "before-financial-verification.json",
+    "bytes": 64105,
+    "sha256": "e87518901da26b503d2136df4bd0e1c3d9a7c85d36506844c2b56c9199fb5416"
+  },
+  {
+    "file": "before-financial.jsonl",
+    "bytes": 473190,
+    "sha256": "136c588dde89260619139ef43e94c17a64adca033f745bf4626ca4b535e6fcda"
+  },
+  {
+    "file": "before-money-regression.log",
+    "bytes": 588,
+    "sha256": "741b3698007160bebddba57fd65da68b2a29cc401bb4e67a65f11d6d1fccd8b0"
+  },
+  {
+    "file": "before-resident-ledgers.json",
+    "bytes": 292917,
+    "sha256": "b7a5c02db13bf74b3a21a058d0c9f86211db29e6b770587e9cbb06ba74fa49c3"
+  },
+  {
+    "file": "builds.json",
+    "bytes": 1529,
+    "sha256": "723e632fcaba48ecc8c637dd8bbfc5af53adca37d6aa2ed6ea901710fa76393c"
+  },
+  {
+    "file": "cleanup.json",
+    "bytes": 586,
+    "sha256": "acd5f0bfae5112837aef4858e6a9f83dd1a33c78fe22a092039bf45657629e42"
+  },
+  {
+    "file": "compile_helper.py",
+    "bytes": 1059,
+    "sha256": "51045030a126720d618b1169a9ab1972945630a2c5c5dbfc38ec118a593d0dd4"
+  },
+  {
+    "file": "drain_checkouts.py",
+    "bytes": 1036,
+    "sha256": "c8493b30931f46e805df905ab30f9eb66bf380703e21e11f34db1459e04ab936"
+  },
+  {
+    "file": "FinanceObserver.cs",
+    "bytes": 9128,
+    "sha256": "affeb1a82179517498037e95d99f4c1c6e3c9c97ad5d034fd716f884200efc8f"
+  },
+  {
+    "file": "financial_run.py",
+    "bytes": 1405,
+    "sha256": "36ffc4c358aec8b78a16de20729bdf6b56de4ce0e1493c365da32bd60a2b20e4"
+  },
+  {
+    "file": "gate-summary.json",
+    "bytes": 301,
+    "sha256": "3a5a373cc7ff0ec6dfeb3dd853375ab5eb7a4b14d09b707dee4edc623e1e0976"
+  },
+  {
+    "file": "interrupted_run.py",
+    "bytes": 1617,
+    "sha256": "295195984914519fe0f65dc08e0993a81ca369e475f1c2e5cd50cbdea798f697"
+  },
+  {
+    "file": "interruption-summary.json",
+    "bytes": 1555,
+    "sha256": "7487da107beee0eb96b1cc07576cfadcda153ba0998684e600d626121dab131d"
+  },
+  {
+    "file": "lease-acquired.json",
+    "bytes": 295,
+    "sha256": "8a4c25c5a4c37076023cb8bad98869ebfe198c923f0c883be99fa1a8955270a2"
+  },
+  {
+    "file": "load.py",
+    "bytes": 1555,
+    "sha256": "1d090d8ac93082bff9030fa8c57b19aad22859516e9b654585bf2729ba049282"
+  },
+  {
+    "file": "lock-released.json",
+    "bytes": 384,
+    "sha256": "fd8daa80641bf7c0a6134c29b0d69619a685f6e5925d9cfe19cc4179570f9315"
+  },
+  {
+    "file": "measure.py",
+    "bytes": 2115,
+    "sha256": "3ceab336a7ed35a616c5b561ea975ce4bf78509ac3b8fce38c91a289f8504007"
+  },
+  {
+    "file": "methodology.json",
+    "bytes": 1475,
+    "sha256": "641415418ed25a97d1505bedc24f888522d0d6b42672e2c1335ec293c4c5b11c"
+  },
+  {
+    "file": "migration-summary.json",
+    "bytes": 1349,
+    "sha256": "2c6ebb69335fbf222e880fda4d7a2497a794ede682b75986c977226439ade725"
+  },
+  {
+    "file": "money-regression/Program.cs",
+    "bytes": 5209,
+    "sha256": "1ef0a568e64cc769aaab98ae65bb32c1197e52f8abb69ee3c7401fe2ad61161b"
+  },
+  {
+    "file": "money-regression/Regression.csproj",
+    "bytes": 497,
+    "sha256": "1e72636552038d2f6b413aa6f9ecb74237acb8ec07d028bbb5f4f06257cef1c7"
+  },
+  {
+    "file": "money-regression-results.json",
+    "bytes": 136,
+    "sha256": "4af4c82f457d41000d2e08c9e0210cc76ea839c418c43eef772095bae6addb4d"
+  },
+  {
+    "file": "native-extra-summary.json",
+    "bytes": 6151,
+    "sha256": "f8fa2cffec032bc0be2fb861ccddd777dc8a514afec1f23f6be33f8e821f3fc3"
+  },
+  {
+    "file": "native-log-excerpts.txt",
+    "bytes": 12970,
+    "sha256": "2e270eda0ad8190da3c77070d07cc3fef7907d57bd97db5c37e4868c58431168"
+  },
+  {
+    "file": "native-qa-summary.json",
+    "bytes": 14573,
+    "sha256": "223b3c0c2083acd22440bdc1054765e2b14495b216f488720ae75fc632f2bd10"
+  },
+  {
+    "file": "native_control.py",
+    "bytes": 1441,
+    "sha256": "827734096242314fc482e1ef6965b778edca0c3204b14393f8405529b6858611"
+  },
+  {
+    "file": "offline-output.txt",
+    "bytes": 36871,
+    "sha256": "28fda8c39e323c69872bfe50f1f056d16bee455b1001dce367543872adee4100"
+  },
+  {
+    "file": "offline-results.json",
+    "bytes": 5321,
+    "sha256": "c3ad9a03c26dc552cb9fa53aa41224e444c3b4eac33794efa811f996fd426283"
+  },
+  {
+    "file": "performance-noise.json",
+    "bytes": 1998,
+    "sha256": "37dda445f191aa5c5a4869d911ed8282f3152a93a13480712ebb0e16efab24d8"
+  },
+  {
+    "file": "performance-summary.json",
+    "bytes": 8559,
+    "sha256": "55806f137189fcf7f58c012215ea004d8e80d0e810870b8aeaea798253966afa"
+  },
+  {
+    "file": "private-evidence-hashes.json",
+    "bytes": 28545,
+    "sha256": "035858afd5e456379157dc9d046b53c25237c71c60768920a05f56400e8fd40c"
+  },
+  {
+    "file": "qa_cycle.py",
+    "bytes": 1079,
+    "sha256": "bcf2e8364e42a746f1790ec021a96175b749954200fcae3e26f78ab884a03d82"
+  },
+  {
+    "file": "README.md",
+    "bytes": 16972,
+    "sha256": "9a13d83a057d991ce81b4d60590ddb0dad19ea0751fe1e867f16d02737ae7c4f"
+  },
+  {
+    "file": "render-capture-limits.json",
+    "bytes": 444,
+    "sha256": "3fc8286ffb83b6ff8552279399fe38520a440d4dd6bd26652a988dac7d4cff11"
+  },
+  {
+    "file": "rig.py",
+    "bytes": 2887,
+    "sha256": "7817c5f83bb595e31b6cc509db91025e85298d84e16d83b7ae04c800422a833d"
+  },
+  {
+    "file": "RigGuard.cs",
+    "bytes": 5189,
+    "sha256": "b3ebb412614f6dd3cdbd00c6abb1d4ff6d33b96abc8930d823936fe9aaa5c832"
+  },
+  {
+    "file": "screenshots/after-loaded-scene.png",
+    "bytes": 1118285,
+    "sha256": "cf35f6dd37a148aee5b55c25b4812442cbab2c2cec0b186544b244bbc2f72990"
+  },
+  {
+    "file": "screenshots/before-loaded-scene.png",
+    "bytes": 678525,
+    "sha256": "de0ec33a0413019818b03101f578c86cd45933100cead80b0b560264824f3d1c"
+  },
+  {
+    "file": "verifier-self-checks.json",
+    "bytes": 331,
+    "sha256": "f837c4258f4c255c10a278cb9384edbf7ce1b2d7bcf57fe3a4bf9828166f145a"
+  },
+  {
+    "file": "verify_financial.py",
+    "bytes": 9340,
+    "sha256": "9c01c8f584a50234cb7c8c3a4a89fa1abb7eba82127486c72385650205271261"
+  },
+  {
+    "file": "verify_resident_ledgers.py",
+    "bytes": 2671,
+    "sha256": "4dcd159a211a21db0e49defc1c4f74d9f680ad4fed29dd63309c6363197342f2"
+  },
+  {
+    "file": "verify_verifiers.py",
+    "bytes": 1443,
+    "sha256": "c0b52612ce8ca8a0b469eb6ed207bfff2d630d9cc71c5205c792ff33ca39a643"
+  }
+]

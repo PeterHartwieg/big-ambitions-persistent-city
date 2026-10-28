@@ -1,0 +1,6 @@
+nativeFloatBits=1092881272; chargeUnits=275221504000; exactExpectedUnits=275221504000; debit109Units=29999143936000; expected109Units=29999143936000; heldUnits=0; fractional=PASS
+moneyToken generation=schema13 field=Allowance hex=11A42 expected=Invalid observed=Invalid PASS
+moneyToken generation=schema13 field=Arrears hex=0 expected=Invalid observed=Invalid PASS
+moneyToken generation=current field=Allowance hex=11A420000000 expected=Invalid observed=Invalid PASS
+moneyToken generation=current field=Arrears hex=0 expected=Invalid observed=Invalid PASS
+money-token rejection 4/4; fractional PASS

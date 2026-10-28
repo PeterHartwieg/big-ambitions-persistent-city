@@ -1,0 +1,27 @@
+{
+  "sourceSchema": 13,
+  "liveMigratedSchema": 14,
+  "savedSchema": 14,
+  "reloadedSchema": 14,
+  "sourcePayloadNotRewrittenByLoad": true,
+  "schema14PayloadByteIdenticalAcrossReload": true,
+  "monetaryFieldsChecked": 34456,
+  "allHistoricalAmountsPreservedOnLoad": true,
+  "allHistoricalAmountsPreservedOnSave": true,
+  "allHistoricalAmountsPreservedOnReload": true,
+  "citizens": 957,
+  "identitiesAndAssignmentsPreserved": true,
+  "consumers": 1914,
+  "consumerIdsPreserved": true,
+  "historicalReceipts": 110,
+  "allHistoricalReceiptKeysAndValuesPreserved": true,
+  "inputSha256": {
+    "before-control-saved-5dee67-saved-payload.json": "b831c091e71483deb1cbeb8267ec0b3709d0505ccc97c15d80adfe64c397e7f1",
+    "migration-initial-510d8c-saved-payload.json": "b831c091e71483deb1cbeb8267ec0b3709d0505ccc97c15d80adfe64c397e7f1",
+    "migration-initial-510d8c-population.json": "3e7b582dc041057ddd794a507db52468618633c01a7357271a964396c1765ef1",
+    "migration-control-saved-e1f0fe-saved-payload.json": "3e7b582dc041057ddd794a507db52468618633c01a7357271a964396c1765ef1",
+    "migration-control-reloaded-17a3a9-saved-payload.json": "3e7b582dc041057ddd794a507db52468618633c01a7357271a964396c1765ef1",
+    "migration-control-reloaded-17a3a9-population.json": "537686ba5381272c53cd501b922a626398d6e3c17f546b320ababaa22313d5b0"
+  },
+  "verdict": "PASS"
+}
