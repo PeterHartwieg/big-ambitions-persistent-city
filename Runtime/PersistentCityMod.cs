@@ -50,17 +50,6 @@ namespace PersistentCity.Runtime
         }
     }
 
-    internal sealed class PrototypeSettings
-    {
-        // Optional developer overrides; normal installation needs no configuration.
-        public bool Enabled { get; set; } = true;
-        public double GameClockFactor { get; set; } = CityBalance.GameClockFactor;
-        public bool PhysicalEnabled { get; set; } = true;
-        public int MaximumPedestrians { get; set; } = 48;
-        public int MaximumVehicles { get; set; } = 24;
-        public double PhysicalRadiusMetres { get; set; } = 120;
-    }
-
     public sealed partial class PopulationRuntime : MonoBehaviour
     {
         private const int MaxAdvanceEventsPerFrame = 128;
@@ -553,7 +542,7 @@ namespace PersistentCity.Runtime
             routeObjects = new RouteObjectDiscovery();
             routes = new MultimodalRoutes(state.Places, NativeTravelPace.WalkingMetresPerSecond / state.TravelClockRate, state.TravelClockRate, dependency, routeObjects);
             simulation = new CitySimulator(state, routes);
-            simulation.AttachOptionalStops(new OptionalStopEnvironment(state.Places), OptionalStopPolicy.ApprovedChoicePercentage);
+            simulation.AttachOptionalStops(new OptionalStopEnvironment(state.Places), settings.OptionalStopChoicePercentage);
             seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
             if (state.Food == null)
                 state.Food = new FoodCommerceState { MealRhythmVersion = MealRhythm.PolicyVersion, HouseholdFinanceVersion = HouseholdFinance.PolicyVersion,

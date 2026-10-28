@@ -47,6 +47,65 @@ public sealed class OptionalStopSchedulingTests
         return (sim, env);
     }
     [Theory]
+    [InlineData(0, 100, false)]
+    [InlineData(100, 0, true)]
+    public void ChangedRateOnlyAffectsNewChancesAndNeverRerollsSavedVisits(int oldRate, int newRate, bool chosen)
+    {
+        var (sim, env) = Ready(DwellKind.WindowShopping, percentage: oldRate);
+        sim.AdvanceTo(1450);
+        string saved = SaveCodec.Write(sim.State);
+        var read = SaveCodec.Read(saved); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var loaded = new CitySimulator(read.State!, new Walking());
+        loaded.AttachOptionalStops(env, newRate);
+        loaded = loaded.RebuildRoutes(new Walking());
+        loaded.RefreshOptionalStops();
+        Assert.Equal(saved, SaveCodec.Write(loaded.State));
+        loaded.AdvanceTo(1451);
+        Assert.Equal(chosen, loaded.State.Citizens[0].OptionalStopChoice);
+        Assert.Equal(chosen, loaded.State.Citizens[0].OptionalStop != null);
+
+        var (fresh, freshEnv) = Ready(DwellKind.WindowShopping, percentage: oldRate);
+        fresh.AttachOptionalStops(freshEnv, newRate); fresh.AdvanceTo(1450);
+        Assert.Equal(!chosen, fresh.State.Citizens[0].OptionalStopChoice);
+        Assert.Equal(!chosen, fresh.State.Citizens[0].OptionalStop != null);
+    }
+
+    [Theory]
+    [InlineData(0, false)]
+    [InlineData(100, true)]
+    public void WaitingConversationPartnerRetainsSavedChoiceAfterRateChange(int oldRate, bool joins)
+    {
+        var (sim, env) = Ready(DwellKind.ChatOutsideVenue, 2, percentage: oldRate);
+        // The second citizen is still en route when the first visit is saved.
+        sim.State.Citizens[1].Journey!.Legs[0].Minutes = 20;
+        sim.State.Citizens[1].NextEventMinute = 1460;
+        sim = sim.RebuildRoutes(new Walking()); sim.AdvanceTo(1450);
+        Assert.Equal(joins, sim.State.Citizens[0].OptionalStopChoice);
+        var read = SaveCodec.Read(SaveCodec.Write(sim.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var loaded = new CitySimulator(read.State!, new Walking()); loaded.AttachOptionalStops(env, 100);
+        loaded.AdvanceTo(1460);
+        Assert.Equal(joins, loaded.State.Citizens[0].OptionalStopChoice);
+        Assert.All(loaded.State.Citizens, c => Assert.Equal(joins, c.OptionalStop != null));
+        Assert.True(loaded.State.Citizens[1].OptionalStopChoice);
+    }
+
+    [Fact]
+    public void Schema15MigrationPreservesStopsButDoesNotInventWaitingChoices()
+    {
+        var (sim, env) = Ready(DwellKind.Resting); sim.AdvanceTo(1450);
+        var wire = JObject.Parse(SaveCodec.Write(sim.State)); wire["Schema"] = 15;
+        ((JObject)wire["Citizens"]![0]!).Remove("OptionalStopChoice");
+        var read = SaveCodec.Read(wire.ToString()); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Null(read.State!.Citizens[0].OptionalStopChoice);
+        var loaded = new CitySimulator(read.State, new Walking()); loaded.AttachOptionalStops(env, 0);
+        Assert.Equal(sim.State.Citizens[0].OptionalStop!.EndMinute, loaded.State.Citizens[0].OptionalStop!.EndMinute);
+        wire["Citizens"]![0]!["OptionalStopChoice"] = true;
+        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status);
+        wire["Schema"] = 16; ((JObject)wire["Citizens"]![0]!).Remove("OptionalStopChoice");
+        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status);
+    }
+
+    [Theory]
     [InlineData(DwellKind.Break, 5, 10)] [InlineData(DwellKind.WindowShopping, 1, 3)]
     [InlineData(DwellKind.Resting, 10, 40)] [InlineData(DwellKind.Audience, 2, 8)]
     public void ArrivalSchedulesBoundedSavedStopWithoutChangingContinuation(DwellKind kind, double min, double max)
@@ -135,10 +194,10 @@ public sealed class OptionalStopSchedulingTests
         foreach (int schema in new[] {13,14})
         {
             var wire = JObject.Parse(SaveCodec.Write(sim.State)); wire["Schema"] = schema;
-            foreach (var c in wire["Citizens"]!.OfType<JObject>()) c.Remove("OptionalStop");
+            foreach (var c in wire["Citizens"]!.OfType<JObject>()) { c.Remove("OptionalStop"); c.Remove("OptionalStopChoice"); }
             string source = wire.ToString(); var read = SaveCodec.Read(source);
             Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(schema, read.SourceSchema);
-            Assert.Equal(15, read.State!.Schema); Assert.Null(read.State.Citizens[0].OptionalStop);
+            Assert.Equal(16, read.State!.Schema); Assert.Null(read.State.Citizens[0].OptionalStop);
             var loaded = new CitySimulator(read.State, new Walking()); loaded.AttachOptionalStops(env,100); loaded.AdvanceTo(1451);
             Assert.Null(loaded.State.Citizens[0].OptionalStop); Assert.Single(loaded.State.Citizens[0].RecentVisits);
             Assert.Equal(source, wire.ToString());
@@ -157,7 +216,7 @@ public sealed class OptionalStopSchedulingTests
             j => j["Citizens"]![0]!["OptionalStop"]!["ResumeEventMinute"] = 1600,
             j => j["Citizens"]![0]!["OptionalStop"]!["Members"] = new JArray("anonymous") })
         { var wire = JObject.Parse(source); damage(wire); Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status); }
-        var future = JObject.Parse(source); future["Schema"] = 16; Assert.Equal(SaveReadStatus.Future, SaveCodec.Read(future.ToString()).Status);
+        var future = JObject.Parse(source); future["Schema"] = CityState.CurrentSchema + 1; Assert.Equal(SaveReadStatus.Future, SaveCodec.Read(future.ToString()).Status);
     }
     [Theory]
     [InlineData(DwellKind.Break)] [InlineData(DwellKind.WindowShopping)] [InlineData(DwellKind.Resting)]

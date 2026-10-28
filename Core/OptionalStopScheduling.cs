@@ -47,8 +47,8 @@ namespace PersistentCity.Core
 
     public static class OptionalStopPolicy
     {
-        // DECISIONS-3 asks for the opportunity rate. Null deliberately does not infer a product choice.
-        public static int? ApprovedChoicePercentage => null;
+        // Peter approved 25% in DECISIONS-3; settings affect only new visit chances.
+        public static int ApprovedChoicePercentage => 25;
 
         public static double Minimum(DwellKind kind)
         {
@@ -129,7 +129,8 @@ namespace PersistentCity.Core
             // Existing food service has priority over optional presentation at the same shop.
             if (State.Food != null && State.Food.Shops.Any(s => s.PlaceId == person.PlaceId)) return;
             string key = OptionalStopPolicy.VisitKey(person, now);
-            if (!OptionalStopPolicy.Choose(key, State.Seed, stopPercentage.Value)) return;
+            person.OptionalStopChoice = OptionalStopPolicy.Choose(key, State.Seed, stopPercentage.Value);
+            if (person.OptionalStopChoice != true) return;
             DwellKind kind = person.Activity == Activity.Work ? DwellKind.Break
                 : person.Activity == Activity.Shop ? DwellKind.WindowShopping : DwellKind.Resting;
             // Arrival pedestrians are passers-by at this entrance. No trip is generated toward a performer.
@@ -176,7 +177,7 @@ namespace PersistentCity.Core
                     || other.RecentVisits.Count == 0) continue;
                 double visit = other.RecentVisits.Last().AtMinute;
                 if (other.RecentVisits.Last().PlaceId != other.PlaceId
-                    || !OptionalStopPolicy.Choose(OptionalStopPolicy.VisitKey(other, visit), State.Seed, stopPercentage.GetValueOrDefault())) continue;
+                    || other.OptionalStopChoice != true) continue;
                 string group = "chat:" + arriving.Identity.Id + ":" + now.ToString("R", CultureInfo.InvariantCulture);
                 if (!TryStop(arriving, DwellKind.ChatOutsideVenue, group, now, now, out var first)) return false;
                 // Choose both spots before publishing either member.

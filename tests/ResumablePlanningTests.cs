@@ -537,6 +537,7 @@ public sealed class ResumablePlanningTests
 
     private static CitizenState Filled(int n, CitizenIdentity identity) => new()
     {
+        OptionalStopChoice = n % 2 == 1,
         OptionalStop = new OptionalStopState { SpotId = "spot-" + n, Members = { "member-" + n } },
         Identity = identity, HomeId = "home-" + n, DayPlaceId = "work-" + n, ShopId = "shop-" + n, LeisureId = "leisure-" + n,
         Preferences = new TravelPreferences { OwnsCar = n % 2 == 1, AllowTransit = n % 2 == 0, WalkingToleranceMetres = 100 * n, FareWeightMinutes = n },

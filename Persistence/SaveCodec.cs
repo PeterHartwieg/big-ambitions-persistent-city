@@ -92,7 +92,7 @@ namespace PersistentCity.Persistence
             {
                 int schema = ReadSchema(source);
                 if (schema > CityState.CurrentSchema) return new SaveReadResult(SaveReadStatus.Future, null, "State uses a newer schema; preserve the original payload.", sourceSchema: schema);
-                Require(schema == 13 || schema == 14 || schema == CityState.CurrentSchema, "Unsupported experimental state schema; preserve the original payload and use a new development city.");
+                Require(schema == 13 || schema == 14 || schema == 15 || schema == CityState.CurrentSchema, "Unsupported experimental state schema; preserve the original payload and use a new development city.");
                 var serializer = JsonSerializer.Create(SettingsForSchema(schema));
                 using (var shape = Reader(source))
                 {
@@ -212,11 +212,13 @@ namespace PersistentCity.Persistence
                 string name = (string)reader.Value!;
                 Require(names.Add(name), "Duplicate field: " + name);
                 var property = properties.GetProperty(name, StringComparison.Ordinal);
-                Require(property != null && !(schema < 15 && type == typeof(CitizenState) && name == "OptionalStop"), "Unknown field: " + name);
+                Require(property != null && !(schema < 15 && type == typeof(CitizenState) && name == "OptionalStop")
+                    && !(schema < 16 && type == typeof(CitizenState) && name == "OptionalStopChoice"), "Unknown field: " + name);
                 Require(reader.Read(), "Missing field value.");
                 CheckShape(reader, property.PropertyType!, resolver, ref records, schema);
             }
-            Require(reader.TokenType == JsonToken.EndObject && names.Count == properties.Count - (schema < 15 && type == typeof(CitizenState) ? 1 : 0), "Missing object fields.");
+            Require(reader.TokenType == JsonToken.EndObject && names.Count == properties.Count - (schema < 15 && type == typeof(CitizenState) ? 1 : 0)
+                - (schema < 16 && type == typeof(CitizenState) ? 1 : 0), "Missing object fields.");
         }
         private static bool NullableRecord(Type type) => type == typeof(OptionalStopState) || type == typeof(Route) || type == typeof(CarState)
             || type == typeof(TrafficKernelState) || type == typeof(TrafficSignalSchedule)
@@ -225,11 +227,12 @@ namespace PersistentCity.Persistence
         // DefaultContractResolver owns a thread-safe metadata cache; settings/serializer instances
         // remain per operation, including application-wide JsonConvert defaults.
         private static readonly IContractResolver StateContracts = new StateContractResolver();
-        private static readonly IContractResolver LegacyContracts = new StateContractResolver(true);
+        private static readonly IContractResolver LegacyContracts = new StateContractResolver(14);
+        private static readonly IContractResolver StopContracts = new StateContractResolver(15);
         private static JsonSerializerSettings Settings() => SettingsForSchema(CityState.CurrentSchema);
         private static JsonSerializerSettings SettingsForSchema(int schema) => new JsonSerializerSettings
         {
-            ContractResolver = schema < 15 ? LegacyContracts : StateContracts,
+            ContractResolver = schema < 15 ? LegacyContracts : schema == 15 ? StopContracts : StateContracts,
             Converters = { new PositionConverter() },
             Culture = CultureInfo.InvariantCulture,
             MissingMemberHandling = MissingMemberHandling.Error,
@@ -870,14 +873,15 @@ namespace PersistentCity.Persistence
 
         private sealed class StateContractResolver : DefaultContractResolver
         {
-            private readonly bool legacy;
-            public StateContractResolver(bool legacy = false) { this.legacy = legacy; }
+            private readonly int schema;
+            public StateContractResolver(int schema = CityState.CurrentSchema) { this.schema = schema; }
             protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
             {
                 return base.CreateProperties(type, memberSerialization).Where(property => property.Writable)
                     .OrderBy(property => property.PropertyName, StringComparer.Ordinal).Select(property =>
                 {
-                    if (legacy && type == typeof(CitizenState) && property.PropertyName == "OptionalStop") { property.Required = Required.Default; return property; }
+                    if (schema < 15 && type == typeof(CitizenState) && property.PropertyName == "OptionalStop") { property.Required = Required.Default; return property; }
+                    if (schema < 16 && type == typeof(CitizenState) && property.PropertyName == "OptionalStopChoice") { property.Required = Required.Default; return property; }
                     property.Required = NullableRecord(property.PropertyType!) || Nullable.GetUnderlyingType(property.PropertyType!) != null ? Required.AllowNull : Required.Always;
                     return property;
                 }).ToList();

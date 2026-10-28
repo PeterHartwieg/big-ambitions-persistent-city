@@ -357,6 +357,7 @@ namespace PersistentCity.Core
             CommutePreparation = CopyPreparation(live.CommutePreparation),
             MealOuting = live.MealOuting == null ? null : CopyOuting(live.MealOuting),
             OptionalStop = live.OptionalStop?.Copy(),
+            OptionalStopChoice = live.OptionalStopChoice,
             Car = live.Car == null ? null : CopyCar(live.Car),
             JoinedMinute = live.JoinedMinute, LastEmploymentCheckDay = live.LastEmploymentCheckDay, JobChanges = live.JobChanges,
             Phase = live.Phase, Activity = live.Activity, PlaceId = live.PlaceId, DestinationId = live.DestinationId,
@@ -384,6 +385,7 @@ namespace PersistentCity.Core
         internal static void CommitEvent(CitizenState live, CitizenState working)
         {
             live.OptionalStop = working.OptionalStop;
+            live.OptionalStopChoice = working.OptionalStopChoice;
             live.HomeId = working.HomeId; live.DayPlaceId = working.DayPlaceId; live.ShopId = working.ShopId; live.LeisureId = working.LeisureId;
             live.Preferences.OwnsCar = working.Preferences.OwnsCar; live.Preferences.AllowTransit = working.Preferences.AllowTransit;
             live.Preferences.WalkingToleranceMetres = working.Preferences.WalkingToleranceMetres;
@@ -478,6 +480,7 @@ namespace PersistentCity.Core
         // answer, so the side effects before and after each plan keep the order of the former synchronous Step.
         private IEnumerable<RouteRequest> StepEvent(CitizenState person, double now)
         {
+            person.OptionalStopChoice = null;
             person.OptionalStop = null; // The original activity event owns the continuation.
             var outing = BeginMealOuting(person, now);
             if (outing == MealOutingStep.Handled) yield break;

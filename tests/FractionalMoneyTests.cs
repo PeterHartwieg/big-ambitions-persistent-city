@@ -157,7 +157,7 @@ public sealed partial class FoodCommerceTests
     private static string Schema13(CityState state)
     {
         var token = JObject.Parse(SaveCodec.Write(state)); token["Schema"] = 13;
-        foreach (var citizen in token["Citizens"]!.OfType<JObject>()) citizen.Remove("OptionalStop");
+        foreach (var citizen in token["Citizens"]!.OfType<JObject>()) { citizen.Remove("OptionalStop"); citizen.Remove("OptionalStopChoice"); }
         foreach (var prop in token.Descendants().OfType<JProperty>().Where(p => p.Name.EndsWith("Cents", StringComparison.Ordinal)).ToArray())
             prop.Value = checked((long)(decimal)prop.Value);
         return token.ToString();
