@@ -1,5 +1,11 @@
 # Validation status
 
+## Optional-stop rate - 28 October 2026 (offline follow-up)
+
+Peter's DECISIONS-3 selects 25%. `OptionalStopChoicePercentage` in the existing top-level JSON config defaults to 25, clamps to 0-100 and falls back gracefully for non-numeric values. Schema 16 persists accepted/declined visit choices so later conversation arrivals cannot re-evaluate an old choice with a changed rate. Strict migration supports schemas 13-15. See [QA configuration](docs/stationary-citizens.md).
+
+Validation: **1,360 unit tests pass, zero failures/skips**; **179 optional-stop physical checks** and **all 21 standalone regression projects** pass; the 28-day synthetic run round-trips schema 16 exactly. Production builds against read-only local Steam Managed references with warnings treated as errors (DLL SHA-256 `8c14477ebc239957dca743a052724c68417c54b924fdc6afc68ca8df1eb7dc63`). No game run, installation or release; native visual behavior remains unverified. Logs are under ignored `build/pc-stop-rate-*`. The earlier activation-pending record below is superseded by this decision and implementation.
+
 ## Optional stops — 28 October 2026 (offline draft; activation decision pending)
 
 [Peter's DECISIONS-2](docs/decisions/2026-10-28-optional-stops.md) approves all five optional kinds and ranges, any-rain cancellation including audiences, already eligible visitors only and no anonymous crowds. Q1 is leave street crowds/routines unchanged now. [Implementation and remaining limits](docs/stationary-citizens.md).

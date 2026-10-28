@@ -10,6 +10,8 @@ Authoritative source: Peter's `C:/Users/Peter/.codex/handoffs/leftover-2026-10-2
 
 The prior directions to await kind selection, duration/rain selection, night-density selection and anonymous-audience policy are superseded. The required stop-related version migration is authorized by this task; it does not relax financial or save-refusal rules.
 
-Implementation details and limits are in [stationary citizens](../stationary-citizens.md). The automatic opportunity frequency is a new product choice, not answered by DECISIONS-2. It was recorded in the requested DESIGN-QUESTIONS-3 handoff and asked in this session; no answer is assumed. Production activation remains unset. Audience opportunities use entrance-passing walking arrivals; general mid-route interception and kind-specific animation clips are not claimed. This draft does not claim activation is finished.
+DECISIONS-3 (28 October, 14:55 JST) resolves frequency: **25% of chances**. One fixed chance per existing visit, at most one audience chance per journey, mid-shift breaks for workers, no minimum crowd and no new outings. Decisions persist and never re-roll on camera changes or reloads.
+
+QA can change the existing JSON setting `OptionalStopChoicePercentage` (default 25, clamped 0-100). Only new chances use the new rate. Schema 16 records the per-visit choice, including declines and accepted visitors waiting for conversation partners; schemas 13-15 migrate without inferring choices for existing visits. See [configuration and implementation limits](../stationary-citizens.md). Audience opportunities remain entrance-passing walking arrivals; general mid-route interception and kind-specific animation clips are not claimed.
 
 No game launch, installation, rig access, release or deployment follows from these decisions.

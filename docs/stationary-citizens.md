@@ -12,11 +12,13 @@ Peter's 28 October answers in `persistent-city-DECISIONS-2.md` approve all five 
 
 No minimum crowd, anonymous audience, extra nightlife outing, replacement citizen or native sale is created. The existing quiet-hour and trip-generation rules remain authoritative. A late-night stop can use an already eligible visit; it cannot create one. Native anonymous stationary zones stay suppressed. Performers and the native exceptions already retained by `StationaryCrowds` remain unchanged.
 
-## Remaining decision and activation status
+## Approved frequency and QA configuration
 
-**The automatic opportunity rate remains unset.** Peter selected the kinds, ranges, rain rule, night policy and audience ownership, but did not specify frequency. `persistent-city-DESIGN-QUESTIONS-3.md` records context, options and a recommendation: one deterministic opportunity per existing visit (mid-shift for workers), with 25%, 100% or 10% participation. A question was sent in this session; no answer is assumed.
+DECISIONS-3 approves **25% of chances**. Runtime reads `OptionalStopChoicePercentage` from the existing `persistent-city.json` in `ModContext.ModRootPath`: installed as `<game directory>/ModsLocal/PersistentCity/persistent-city.json`. The section is the **top-level JSON object**, not a nested section. The source default is `config/persistent-city.json`; the build copies it to `build/PersistentCity/persistent-city.json`.
 
-The scheduler, persistence, Runtime integration and tests are implemented. Runtime attaches the environment with `OptionalStopPolicy.ApprovedChoicePercentage`, currently `null`: it restores/cancels saved stops but does not create new ones. Tests supply explicit percentages. This is an **incomplete activation decision**, not a shipped feature or a claim of new visible stops. No user-facing tuning control or manual enrollment was added.
+Use an integer from **0 through 100** (default **25**). Negative values clamp to 0 and values above 100 clamp to 100. Missing, non-numeric, null, boolean, object/array or in-range fractional values fall back to 25; numeric strings are accepted. Invalid JSON syntax still follows the existing configuration failure path. Edit while the city is unloaded and reload the mod/city; there is no live file watcher.
+
+Only new visit chances use the updated rate. A saved acceptance, decline or pending conversation choice is never re-rolled; active stop deadlines and cancellation remain authoritative even at rate 0. Camera moves and route rebuilds do not affect choices. No QA reset path was added: use a later ordinary visit or a disposable fresh city to observe a new rate. There is one fixed chance per visit and at most one audience chance per existing journey, with worker stops timed mid-shift. This enables production scheduling in source; it is not native playtest or release clearance.
 
 ## Scheduling and continuation
 
@@ -30,9 +32,9 @@ Audience opportunities currently use pedestrians completing an existing walking 
 
 ## Saved state
 
-City schema **15** adds nullable `CitizenState.OptionalStop`: kind, place, stable spot/target identity, spot/facing/return geometry, start/end, original visit/event and conversation members/cancellation. The existing citizen activity remains the continuation; there is no second general itinerary or copied identity.
+City schema **15** introduced nullable `CitizenState.OptionalStop`: kind, place, stable spot/target identity, spot/facing/return geometry, start/end, original visit/event and conversation members/cancellation. The existing citizen activity remains the continuation; there is no second general itinerary or copied identity.
 
-Strict schema-13 and schema-14 migration initializes no active stops. It preserves balances, receipt evidence, assignments and interrupted journeys, retaining the previous schema-13 monetary validation. Loading an old save never infers a stop for a current visit. A later newly admitted visit can become an opportunity once a rate is approved. Current payloads must contain the new field, even when null; legacy payloads containing it are refused. Future/invalid payloads are preserved and refused, never overwritten.
+Schema **16** additionally persists nullable `CitizenState.OptionalStopChoice` for the current visit, including declines and accepted waiting conversation partners. Strict schema-13 and schema-14 migration initializes no active stops; schema-15 migration preserves existing stops. All three migrations leave the unknown visit choice null, which cannot be recruited by a later conversation arrival. It preserves balances, receipt evidence, assignments and interrupted journeys, retaining the previous schema-13 monetary validation. Loading an old save never infers a stop for a current visit. A later newly admitted visit can become an opportunity at the configured rate. Schema-16 payloads must contain both fields, even when null; `OptionalStop` is refused before schema 15 and `OptionalStopChoice` is refused before schema 16. Future/invalid payloads are preserved and refused, never overwritten.
 
 Validation checks kind eligibility, bounded duration, finite geometry, original activity continuation, distinct group slots and reciprocal membership for active conversations. Cancelled/expired records do not restart. Route rebuilds retain the environment and opportunity setting; event working copies own their stop/member copies.
 
@@ -54,4 +56,4 @@ Opening queues and safe crossing waits remain their existing mechanisms. A red-l
 
 Core tests cover scheduling, all ranges, insufficient windows, closure/rain/spot cancellation, eligibility, persistent audiences and paired conversations, cancellation/reload, strict schema migration, malformed/future refusal, original continuations, midnight visits, event-budget equivalence and route rebuilds. The source-extracted physical harness covers movement/facing/return, blocked paths, queue sharing and immutable deadlines. Selection tests cover shared budgets and RLO reservations.
 
-These are offline checks. No game was launched or installed. Native geometry, visible approach/exit, idle poses, weather observation and performance remain unverified. The opportunity rate remains open; audience opportunities are limited to existing walking arrivals; no release or ordinary-save deployment is authorized.
+These are offline checks. No game was launched or installed. Native geometry, visible approach/exit, idle poses, weather observation and performance remain unverified. The default opportunity rate is 25%; audience opportunities are limited to existing walking arrivals; no release or ordinary-save deployment is authorized.

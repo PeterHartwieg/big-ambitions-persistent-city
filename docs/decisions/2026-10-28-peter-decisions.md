@@ -8,4 +8,4 @@
 - Q6: performance changes must retain outputs, save validation and bytes. Q3?s explicitly requested accounting migration is a separate authorized exception, not permission for save-performance redesign.
 - Q7: existing food decision cache remains; checkout stays live.
 
-DECISIONS-2 resolves the original stop choices. The remaining frequency question is in `persistent-city-DESIGN-QUESTIONS-3.md`. No game run, deployment or release is authorized here.
+DECISIONS-2 resolves the original stop choices. DECISIONS-3 selects **25% of chances**, persisted once per existing visit (at most one audience chance per journey; worker breaks mid-shift), with no new outings or minimum crowd. The existing JSON config exposes `OptionalStopChoicePercentage` for QA; changes apply only to new chances. No game run, deployment or release is authorized here.
