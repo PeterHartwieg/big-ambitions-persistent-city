@@ -18,7 +18,7 @@ public sealed class FoodDemandTests
         Offers = new() { new FoodOffer { ProductId = "meal", Price = Money.FromCents(price), Units = stock } }
     };
 
-    private static FoodShadowState Scenario(int people = 1, int days = 1)
+    internal static FoodShadowState Scenario(int people = 1, int days = 1)
     {
         var consumers = Enumerable.Range(1, people).Select(i => Person("resident:" + i)).ToArray();
         var shops = new[] { Shop("near", 600), Shop("far", 500) };

@@ -228,7 +228,9 @@ namespace PersistentCity.Persistence
         {
             var legacy = LegacyMoneyFields.Names;
             bool found = schema == 13;
-            foreach (var name in legacy.Keys) found = found || source.IndexOf("\"" + name + "\":", StringComparison.Ordinal) >= 0;
+            // Any quoted occurrence, so whitespace before the colon is still migrated; the reader
+            // below rewrites only actual field names.
+            foreach (var name in legacy.Keys) found = found || source.IndexOf("\"" + name + "\"", StringComparison.Ordinal) >= 0;
             if (!found) return source;
             var current = new HashSet<string>(legacy.Values, StringComparer.Ordinal);
             var text = new TokenText(source);
@@ -817,9 +819,7 @@ namespace PersistentCity.Persistence
                 && b.HeldPurchase >= Money.Zero && b.HeldPurchase <= MaximumAllowance && b.Arrears >= Money.Zero,
                 "Negative household accounting.");
             // Checked unit sums: an amount beyond the unit's range is refused (OverflowException), never rounded.
-            var funded = b.OpeningBalance + b.IncomeReceived;
-            var accounted = b.Balance + b.EssentialsPaid + b.HomeFoodPaid + b.PreparedFoodSpent + b.HeldPurchase;
-            Require(funded == accounted, "Household cash is not conserved.");
+            Require(HouseholdFinance.CashConserved(b), "Household cash is not conserved.");
             Minute(b.NextPostingMinute, "Next household posting");
             Require(b.LastPostedDay >= -1 && b.LastPostedDay <= (int)(minute / 1440)
                 && b.HomeFoodFundedDay >= -1 && b.HomeFoodFundedDay <= b.LastPostedDay

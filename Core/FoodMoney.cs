@@ -62,6 +62,8 @@ namespace PersistentCity.Core
             foreach (var value in values) total += value.Units;
             return total;
         }
+        /// <summary>Exact cents text of <see cref="TotalUnits"/>, for diagnostics.</summary>
+        public static string TotalCentsText(IEnumerable<Money> values) => CentsText(TotalUnits(values));
 
         // Methods rather than properties: serialized diagnostics show only the exact Units.
         public bool IsWholeCents() => Units % UnitsPerCent == 0;

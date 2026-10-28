@@ -65,13 +65,11 @@ namespace PersistentCity.Core
                 throw new InvalidOperationException("Household posting is duplicate or out of order.");
             // Refresh only the next unposted wage. Earlier postings, savings and holds
             // retain their exact amounts through job transitions and reloads.
-            if (person != null)
-            {
-                budget.IncomeSource = IncomeSource(person);
-                budget.DailyIncomeCents = IncomeAmount(budget.BaseIncomeCents, budget.IncomeSource);
-            }
-            // Compute every amount before assigning any: an overflow leaves the budget unchanged.
-            var income = Money.FromCents(budget.DailyIncomeCents);
+            var source = person != null ? IncomeSource(person) : budget.IncomeSource;
+            int dailyIncome = person != null ? IncomeAmount(budget.BaseIncomeCents, source) : budget.DailyIncomeCents;
+            // Compute every change, including the wage refresh, before assigning any: an overflow
+            // leaves the budget unchanged.
+            var income = Money.FromCents(dailyIncome);
             var balance = budget.Balance + income;
             var received = budget.IncomeReceived + income;
             // Fund a real-cost subsistence basket before discretionary spending. A failed
@@ -84,12 +82,25 @@ namespace PersistentCity.Core
             var required = budget.Arrears + Money.FromCents(budget.DailyHousingCents) + Money.FromCents(budget.DailyEssentialsCents);
             var paid = Money.Min(balance, required);
             var essentials = budget.EssentialsPaid + paid;
-            budget.Balance = balance - paid; budget.IncomeReceived = received; budget.HomeFoodPaid = homeFoodPaid;
+            balance -= paid;
+            // The save contract also sums the conservation totals (CashConserved), which can overflow
+            // when every amount fits. Posting adds the income to both sides of a conserved ledger, so
+            // the funded total bounds the accounted one.
+            _ = budget.OpeningBalance + received;
+            budget.IncomeSource = source; budget.DailyIncomeCents = dailyIncome;
+            budget.Balance = balance; budget.IncomeReceived = received; budget.HomeFoodPaid = homeFoodPaid;
             budget.EssentialsPaid = essentials; budget.Arrears = required - paid; budget.DaysWithoutHomeFood = unfed;
             if (fed) budget.HomeFoodFundedDay = day;
             budget.LastPostedDay = day;
             budget.NextPostingMinute = (day + 1) * 1440.0;
         }
+
+        /// <summary>The save contract's cash conservation: opening savings plus income received equals
+        /// cash plus every payment and hold. Both totals are checked, so a total beyond one amount's
+        /// range throws <see cref="OverflowException"/> even when every component fits. Holds,
+        /// confirmations and refunds move money between accounted amounts and leave both totals unchanged.</summary>
+        public static bool CashConserved(ResidentBudget b)
+            => b.OpeningBalance + b.IncomeReceived == b.Balance + b.EssentialsPaid + b.HomeFoodPaid + b.PreparedFoodSpent + b.HeldPurchase;
 
         private static ResidentIncomeSource IncomeSource(CitizenState person)
             => person.Identity.Persona == Persona.Retiree ? ResidentIncomeSource.ExternalPension

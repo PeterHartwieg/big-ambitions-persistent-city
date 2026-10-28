@@ -35,12 +35,15 @@ namespace PersistentCity.Persistence
         }
         public string Source => source;
         public int End(IJsonLineInfo token) => lineStarts[token.LineNumber - 1] + token.LinePosition;
+        /// <summary>The whole number token, back to the preceding JSON delimiter or whitespace, so
+        /// a prefix such as Json.NET's hexadecimal "0x" stays in the text that is validated.</summary>
         public string Number(IJsonLineInfo token)
         {
             int end = End(token), start = end;
-            while (start > 0 && "0123456789+-.eE".IndexOf(source[start - 1]) >= 0) start--;
+            while (start > 0 && !Delimiter(source[start - 1])) start--;
             return source.Substring(start, end - start);
         }
+        private static bool Delimiter(char c) => c == ':' || c == ',' || c == '[' || c == '{' || char.IsWhiteSpace(c);
         public static bool CanonicalUnits(string text)
             => long.TryParse(text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out long units)
                 && units.ToString(CultureInfo.InvariantCulture) == text;

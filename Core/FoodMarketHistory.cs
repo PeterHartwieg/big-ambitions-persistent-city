@@ -68,7 +68,9 @@ namespace PersistentCity.Core
             }
         }
         /// <summary>Whether every addition a confirmed sale makes fits the money unit. Checked before
-        /// funds are held or native checkout starts, so settlement cannot fail after a native sale.</summary>
+        /// funds are held or native checkout starts, so immediate settlement cannot fail after a native
+        /// sale. A receipt confirmed later adds to its checkout day's history row, whose headroom other
+        /// sales may use meanwhile; that is not reserved (it needs about $343.6M in one shop-day).</summary>
         private bool CanSettle(ResidentMeal meal)
         {
             if (!Money.TryAdd(meal.Spent, meal.Price, out _)
@@ -122,6 +124,6 @@ namespace PersistentCity.Core
                 history = food.History.OrderBy(h => h.Day).ThenBy(h => h.PlaceId, StringComparer.Ordinal).ThenBy(h => h.BusinessId, StringComparer.Ordinal).ToArray(),
                 historyMeaning = "Observed offers and confirmed purchases within enrolled shops; repeated decisions are not unique people or total district demand. Revenue is not profit." };
         }
-        private static string Total(IEnumerable<Money> amounts) => Money.CentsText(Money.TotalUnits(amounts));
+        private static string Total(IEnumerable<Money> amounts) => Money.TotalCentsText(amounts);
     }
 }
