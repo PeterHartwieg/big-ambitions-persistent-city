@@ -63,7 +63,7 @@ def analyze(observations, mod_frames, frequency, threshold=50.0, limit=30, conte
                 'combinedUnionMs': number(m, 'combinedUnionMs'),
                 'populationMs': number(m, 'populationMs'), 'authorityMs': number(m, 'authorityMs'),
                 'inclusiveComponents': {k: number(m, k) for k in m if k.endswith('InclusiveMs')},
-                'slowestEvent': None if not m.get('eventSlices') else {
+                'slowestEvent': None if not number(m, 'eventSlices') else {
                     'citizen': m.get('slowestCitizen'), 'entryBranch': m.get('entryBranch'),
                     **{k: number(m, k) for k in ('eventMinute', 'eventSlices', 'planCalls', 'eventMs',
                         'walkingCalculationMs', 'roadSearchSliceMs', 'navMeshPathMs', 'aStarAdvanceMs', 'eventFailures', 'eventSlicesDropped')}},
