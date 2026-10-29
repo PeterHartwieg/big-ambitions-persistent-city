@@ -1,0 +1,128 @@
+{
+  "after-qa-1": {
+    "schemaBefore": 16,
+    "schemaAfter": 16,
+    "citizens": 957,
+    "identityAssignmentChanges": [],
+    "choiceChanges": [],
+    "stopChanges": [],
+    "receiptsEqual": true,
+    "walletsEqual": true,
+    "savedPayloadByteIdentical": true,
+    "minuteBefore": 7689.214502334595,
+    "minuteAfter": 7689.547835350037,
+    "newVisitChoiceChanges": [],
+    "rerolledExistingVisitChoices": [],
+    "passed": true
+  },
+  "after-qa-2": {
+    "schemaBefore": 16,
+    "schemaAfter": 16,
+    "citizens": 957,
+    "identityAssignmentChanges": [],
+    "choiceChanges": [],
+    "stopChanges": [],
+    "receiptsEqual": true,
+    "walletsEqual": true,
+    "savedPayloadByteIdentical": true,
+    "minuteBefore": 7689.358643531799,
+    "minuteAfter": 7689.691976547241,
+    "newVisitChoiceChanges": [],
+    "rerolledExistingVisitChoices": [],
+    "passed": true
+  },
+  "after-qa-3": {
+    "schemaBefore": 16,
+    "schemaAfter": 16,
+    "citizens": 957,
+    "identityAssignmentChanges": [],
+    "choiceChanges": [],
+    "stopChanges": [],
+    "receiptsEqual": true,
+    "walletsEqual": true,
+    "savedPayloadByteIdentical": true,
+    "minuteBefore": 7689.287076950073,
+    "minuteAfter": 7689.620409965515,
+    "newVisitChoiceChanges": [],
+    "rerolledExistingVisitChoices": [],
+    "passed": true
+  },
+  "after-finance-save": {
+    "schemaBefore": 16,
+    "schemaAfter": 16,
+    "citizens": 957,
+    "identityAssignmentChanges": [],
+    "choiceChanges": [],
+    "stopChanges": [],
+    "receiptsEqual": true,
+    "walletsEqual": true,
+    "savedPayloadByteIdentical": true,
+    "minuteBefore": 10125.368656158447,
+    "minuteAfter": 10125.701988220215,
+    "newVisitChoiceChanges": [],
+    "rerolledExistingVisitChoices": [],
+    "passed": true
+  },
+  "event-hand-on-control": {
+    "schemaBefore": 16,
+    "schemaAfter": 16,
+    "citizens": 957,
+    "identityAssignmentChanges": [],
+    "choiceChanges": [],
+    "stopChanges": [],
+    "receiptsEqual": true,
+    "walletsEqual": true,
+    "savedPayloadByteIdentical": true,
+    "minuteBefore": 22096.529302597046,
+    "minuteAfter": 22096.862636566162,
+    "newVisitChoiceChanges": [],
+    "rerolledExistingVisitChoices": [],
+    "passed": true
+  },
+  "event-pass-on-control": {
+    "schemaBefore": 16,
+    "schemaAfter": 16,
+    "citizens": 957,
+    "identityAssignmentChanges": [],
+    "choiceChanges": [],
+    "stopChanges": [],
+    "receiptsEqual": true,
+    "walletsEqual": true,
+    "savedPayloadByteIdentical": true,
+    "minuteBefore": 22067.04998779297,
+    "minuteAfter": 22067.383319854736,
+    "newVisitChoiceChanges": [],
+    "rerolledExistingVisitChoices": [],
+    "passed": true
+  },
+  "event-conversation-control": {
+    "schemaBefore": 16,
+    "schemaAfter": 16,
+    "citizens": 957,
+    "identityAssignmentChanges": [],
+    "choiceChanges": [
+      "c395"
+    ],
+    "stopChanges": [],
+    "receiptsEqual": true,
+    "walletsEqual": true,
+    "savedPayloadByteIdentical": true,
+    "minuteBefore": 22973.207248687744,
+    "minuteAfter": 22973.54058074951,
+    "newVisitChoiceChanges": [
+      {
+        "id": "c395",
+        "choiceBefore": null,
+        "choiceAfter": true,
+        "arrival": {
+          "Activity": 3,
+          "AtMinute": 22973.355394318838,
+          "PlaceId": "address:ba%3Astreet_broadwaystreet:14:leisure"
+        },
+        "scheduledEventBefore": 22973.355394318838
+      }
+    ],
+    "rerolledExistingVisitChoices": [],
+    "passed": true
+  }
+}

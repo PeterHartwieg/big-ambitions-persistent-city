@@ -1,0 +1,42 @@
+{
+  "initial10": {
+    "numerator": 2272,
+    "eligible": 10037,
+    "share": 0.22636245890206236,
+    "wilson95": [
+      0.2182811898457583,
+      0.2346531062958763
+    ],
+    "target25WithinInterval": false
+  },
+  "continued28": {
+    "numerator": 7911,
+    "eligible": 32063,
+    "share": 0.24673299441724106,
+    "wilson95": [
+      0.24204469225235878,
+      0.2514819770064075
+    ],
+    "target25WithinInterval": true
+  },
+  "combined38": {
+    "numerator": 10183,
+    "eligible": 42100,
+    "share": 0.24187648456057007,
+    "wilson95": [
+      0.2378096779531682,
+      0.2459903923739834
+    ],
+    "target25WithinInterval": false
+  },
+  "combinedDraws": {
+    "numerator": 10339,
+    "eligible": 42100,
+    "share": 0.24558194774346792,
+    "wilson95": [
+      0.2414936781332219,
+      0.24971664240364397
+    ],
+    "target25WithinInterval": false
+  }
+}

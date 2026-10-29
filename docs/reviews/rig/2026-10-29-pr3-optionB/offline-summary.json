@@ -1,0 +1,59 @@
+{
+  "before": {
+    "commands": 30,
+    "failed": [],
+    "testCounters": {
+      "total": "1403",
+      "executed": "1403",
+      "passed": "1403",
+      "failed": "0",
+      "error": "0",
+      "timeout": "0",
+      "aborted": "0",
+      "inconclusive": "0",
+      "passedButRunAborted": "0",
+      "notRunnable": "0",
+      "notExecuted": "0",
+      "disconnected": "0",
+      "warning": "0",
+      "completed": "0",
+      "inProgress": "0",
+      "pending": "0"
+    }
+  },
+  "after": {
+    "commands": 31,
+    "failed": [
+      "after-core-identity-regression",
+      "after-event-observation-regression",
+      "after-gate-access-regression",
+      "after-road-ceiling-regression",
+      "after-road-handoff-regression",
+      "after-road-invalidation-regression",
+      "after-road-speed-regression",
+      "after-save-contract-regression",
+      "after-traffic-closure-regression",
+      "after-traffic-queue-regression",
+      "after-walking-quote-regression",
+      "after-physical-selection-regression-py"
+    ],
+    "testCounters": {
+      "total": "1548",
+      "executed": "1548",
+      "passed": "1548",
+      "failed": "0",
+      "error": "0",
+      "timeout": "0",
+      "aborted": "0",
+      "inconclusive": "0",
+      "passedButRunAborted": "0",
+      "notRunnable": "0",
+      "notExecuted": "0",
+      "disconnected": "0",
+      "warning": "0",
+      "completed": "0",
+      "inProgress": "0",
+      "pending": "0"
+    }
+  }
+}

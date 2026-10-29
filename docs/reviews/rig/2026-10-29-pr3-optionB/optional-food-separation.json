@@ -1,0 +1,32 @@
+{
+  "ownedFoodPlaces": [
+    "address:ba%3Astreet_thirdstreet:30:shop"
+  ],
+  "optionalVenueOverlapByArm": {
+    "constant10": {},
+    "constant25": {},
+    "dec100-0-25": {},
+    "dec100-0-25-zero": {},
+    "dec100-25": {},
+    "dec50-10": {},
+    "dec50-25": {},
+    "pending-zero": {},
+    "rate0": {},
+    "rate10": {},
+    "rate100": {},
+    "rate25-continued": {},
+    "rate25": {},
+    "rate50": {}
+  },
+  "confirmedFoodSalesWithOptionBActive": 110,
+  "gateA": "PASS",
+  "gateB": "PASS",
+  "optionalStopNativeOrdersObserved": 0,
+  "scope": "No optional scheduled venue overlaps the owned food shop in the audited rate arms. All 110 food sales pass exact verification with option B active. No optional-stop sale/payment case was exercised because the scheduler excludes the owned food shop.",
+  "sourceGuard": "Core/OptionalStopScheduling.cs:177-178 (tested head)",
+  "inputHashes": {
+    "after-final-af1449-population.json": "81f24de9f12142561d3ecf4a6b316320e29c6d3993f10b00f5b25bc32ffebd4e",
+    "rate-summary.json": "a1346b6bbda35574f243195d2b5004601192eb97982bb61eaf1b807b7770d7ad",
+    "after-financial-verification.json": "00796d73929b322d4639dc960a3bf8b46e3acd146ec0f8f381b01e5af0c5ed86"
+  }
+}

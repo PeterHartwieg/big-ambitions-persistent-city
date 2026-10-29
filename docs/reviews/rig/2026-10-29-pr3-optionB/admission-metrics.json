@@ -1,0 +1,34 @@
+{
+  "25": {
+    "scheduleCalls": 1310,
+    "spotCalls": 3299,
+    "spotCount": 1127,
+    "occupancyCalls": 285,
+    "occupancyBlocked": 154,
+    "facadeDeferrals": 268,
+    "scheduleMillisecondsSummary": {
+      "samples": 1310,
+      "p50": 0.0795,
+      "p95": 1.3516,
+      "p99": 2.7705,
+      "maximum": 94.1556,
+      "mean": 0.41413114503816795
+    }
+  },
+  "100": {
+    "scheduleCalls": 1310,
+    "spotCalls": 3473,
+    "spotCount": 1578,
+    "occupancyCalls": 385,
+    "occupancyBlocked": 192,
+    "facadeDeferrals": 265,
+    "scheduleMillisecondsSummary": {
+      "samples": 1310,
+      "p50": 0.082,
+      "p95": 1.9113,
+      "p99": 3.0735,
+      "maximum": 101.7186,
+      "mean": 0.46841335877862594
+    }
+  }
+}

@@ -1,0 +1,20 @@
+[
+  {
+    "control": "one-price-unit",
+    "expected": "FAIL",
+    "observed": "FAIL",
+    "passed": true
+  },
+  {
+    "control": "one-native-bit",
+    "expected": "FAIL",
+    "observed": "FAIL",
+    "passed": true
+  },
+  {
+    "control": "one-wallet-unit",
+    "expected": "FAIL",
+    "observed": "FAIL",
+    "passed": true
+  }
+]

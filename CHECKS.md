@@ -1,5 +1,11 @@
 # Validation status
 
+## PR #3 option B rig - 29 October 2026 (native evidence, FAIL)
+
+Tested after 646daef877e916e1bdd973d9e390aaaf41239be against before 7357f78ca13edd5200e7e708950ffbc7a6ade1fe. **FAIL:** 1,548/1,548 after unit tests pass, but 12 of 31 offline commands fail on nullable warnings as errors in Core/OptionalStopScheduling.cs:212,225,234,235. Cold/full and untraced default scheduled-stop shares miss the specified 25% interval gate; the warm continuation includes 25%. Exact finance passes in both builds. Mod-work medians increase +0.0832 ms p50 / +0.1837 ms p95; external interference leaves whole-frame clearance incomplete.
+
+Cleanup recovery restored all 4,828 original profile files, 107 installation references, ModsLocal/config and preferences by hash, then released agent1. No measurements were rerun during recovery. This evidence-only update grants no merge or release clearance. [Completed report, raw checks and limits](docs/reviews/rig/2026-10-29-pr3-optionB/README.md).
+
 ## PR #3 ob3 nits - 29 October 2026 (offline, documentation and tests only)
 
 Astra and Opus both approved `1d72910` with nits. This follow-up changes no production behaviour. The wording below now qualifies available recipient capacity, deterministic persistence transitions, inherited stock after 26-99-to-25-or-above decreases, identity-order concentration and feasibility-dependent drain time. The external ob2 fix report has an appended correction to its rig expectations, including a 50-to-25 arm.

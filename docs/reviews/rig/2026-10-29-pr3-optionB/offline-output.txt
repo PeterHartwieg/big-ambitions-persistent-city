@@ -1,0 +1,839 @@
+COMMAND before-build EXIT 0
+Package: <worktrees>\rig-pr3-before\build\PersistentCity
+DLL SHA256: 54aa9dc8be97f0a3c89b629b7bc06813de0dad61e515ecd6d02d1f5cee470f54
+Game assemblies and RLO are referenced externally; neither is copied into this package.
+
+
+COMMAND before-tests EXIT 0
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  PersistentCity.Core -> <worktrees>\rig-pr3-before\Core\bin\Debug\netstandard2.1\PersistentCity.Core.dll
+  PersistentCity.Persistence -> <worktrees>\rig-pr3-before\Persistence\bin\Debug\netstandard2.1\PersistentCity.Persistence.dll
+  PersistentCity.Compatibility -> <worktrees>\rig-pr3-before\Compatibility\bin\Debug\netstandard2.1\PersistentCity.Compatibility.dll
+  PersistentCity.Tests -> <worktrees>\rig-pr3-before\tests\bin\Debug\net10.0\PersistentCity.Tests.dll
+Test run for <worktrees>\rig-pr3-before\tests\bin\Debug\net10.0\PersistentCity.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: <private-evidence>\before-tests.trx
+
+Passed!  - Failed:     0, Passed:  1403, Skipped:     0, Total:  1403, Duration: 40 s - PersistentCity.Tests.dll (net10.0)
+
+
+COMMAND before-optional-test-list EXIT 0
+Test run for <worktrees>\rig-pr3-before\tests\bin\Debug\net10.0\PersistentCity.Tests.dll (.NETCoreApp,Version=v10.0)
+The following Tests are available:
+    PersistentCity.Tests.OptionalStopTests.StopsRespectExistingCapsAndTheNextCommitment(kind: Break)
+    PersistentCity.Tests.OptionalStopTests.StopsRespectExistingCapsAndTheNextCommitment(kind: ChatOutsideVenue)
+    PersistentCity.Tests.OptionalStopTests.StopsRespectExistingCapsAndTheNextCommitment(kind: WindowShopping)
+    PersistentCity.Tests.OptionalStopTests.StopsRespectExistingCapsAndTheNextCommitment(kind: Resting)
+    PersistentCity.Tests.OptionalStopTests.RestoringACommittedStopKeepsItsDeadlineAndIdentity
+    PersistentCity.Tests.OptionalStopTests.UnapprovedEventAndAudienceKindsAreNotReinterpretedAsOptional(kind: Audience)
+    PersistentCity.Tests.OptionalStopTests.UnapprovedEventAndAudienceKindsAreNotReinterpretedAsOptional(kind: WaitForBus)
+    PersistentCity.Tests.OptionalStopTests.UnapprovedEventAndAudienceKindsAreNotReinterpretedAsOptional(kind: WaitToCross)
+    PersistentCity.Tests.OptionalStopTests.UnapprovedEventAndAudienceKindsAreNotReinterpretedAsOptional(kind: QueueAtOpening)
+    PersistentCity.Tests.OptionalStopTests.UnapprovedEventAndAudienceKindsAreNotReinterpretedAsOptional(kind: WaitForSomeone)
+    PersistentCity.Tests.OptionalStopTests.UnapprovedEventAndAudienceKindsAreNotReinterpretedAsOptional(kind: WaitForPickup)
+
+
+COMMAND before-core-identity-regression EXIT 0
+{"residents":600,"places":1011,"days":6,"events":38924,"eventDigest":"d5337f2a6c665cb1","advanceEvents":101968,"frames":35438,"residentsWithCars":186,"trafficEvents":63044,"routeRequests":16452,"carRoutes":3293,"trafficVehiclesAtSaves":[0,0,3,0,0,0,0],"saves":["31473b61a305389a1ab9d1be03fe189c1a2c5b419dda98c2528c96bc232cc338","43d6e605849b9aaeedf7b5e2d2e2c8a3c704fab509dabd09d1135ef2fea96f23","cec18106334c5f2f37d95b1a3b4fcef1121c183916ffb00f698c7f7de424dae1","e4f17cb1faa4d241f30ac444af1c307ab5035976be397c60402e577c8887c4b5","fad71979a86e583f0a69f660b0af3dcb37046ce9d79e0ee7b9d051d816a590ad","bda68bd159cc520c97c24429ff2721f3351dc12175571287fcea0f7a4f26b513","08b793f3a4755ebb477f856d2e7ecb82cb8927b3fada33031d17baac8b79671e"],"routineDigest":"0631e52806483d91","openingDigest":"7104ba65ac720db5","choiceDigest":"4cfd8693c5de0c00","mappingDigest":"6dc5adecf1d31d33","bytes":{"advance":120442624,"planner":31022224,"routine":107720,"opening":1627592,"choice":705600,"mapping":1146608},"simulateMs":3812}
+
+
+COMMAND before-diagnostic-response-regression EXIT 0
+14 diagnostic response invariants passed.
+
+
+COMMAND before-event-observation-regression EXIT 0
+fail=False;events=680;save=CEC4EDD74FDBFDBC64191BAD5BCB820675B7042A4953CD7A012F7B1083A2F597
+fail=True;events=680;save=CEC4EDD74FDBFDBC64191BAD5BCB820675B7042A4953CD7A012F7B1083A2F597
+observerFault=event-prefix;nativeFailure=False;events=680;outputs=identical
+observerFault=event-prefix;nativeFailure=True;events=680;outputs=identical
+observerFault=event-finalizer;nativeFailure=False;events=680;outputs=identical
+observerFault=event-finalizer;nativeFailure=True;events=680;outputs=identical
+observerFault=query-prefix;nativeFailure=False;events=680;outputs=identical
+observerFault=query-prefix;nativeFailure=True;events=680;outputs=identical
+observerFault=query-finalizer;nativeFailure=False;events=680;outputs=identical
+observerFault=query-finalizer;nativeFailure=True;events=680;outputs=identical
+Both diagnostic finalizers preserve the exact original exception on observer failure.
+
+
+COMMAND before-food-catalogue-regression EXIT 0
+29 actual catalogue-adapter checks passed against native field doubles. No Unity/game execution.
+
+
+COMMAND before-food-checkout-regression EXIT 0
+Decision workload: 123 reads over 8 shops, 3 checkouts; decision cache 957 hits / 27 misses; supply-reader setups 33 (uncached: 990)
+330 actual NativeFoodMarket checkout checks passed (synthetic native surfaces, not game execution).
+
+
+COMMAND before-food-hours-regression EXIT 0
+PASS live enrolled-shop hours: extension, closure, reopening, stable identity, unchanged schedule allocation and save ownership.
+PASS actual GamePlaces + NativeFoodHours: five retail study/leisure roles stay dormant, convert in place, return dormant; vacant retail has no fake Work role.
+
+
+COMMAND before-food-household-catalogue-regression EXIT 0
+11 actual native household-reader checks passed against field doubles; no game execution.
+
+
+COMMAND before-food-ownership-regression EXIT 0
+PASS 118 actual ownership-hook checks against native field/callback doubles. No Unity/game execution.
+
+
+COMMAND before-food-supply-regression EXIT 0
+19 actual FoodSupplyReader checks passed (synthetic native surfaces, not game execution).
+
+
+COMMAND before-frame-observation-regression EXIT 0
+38 checks passed; marshaled row estimate bytes=120; default marshaled storage estimate=7864320
+
+
+COMMAND before-gate-access-regression EXIT 0
+PASS 213884 gate-access checks against actual Runtime PublicRoadAccess; offline only.
+
+
+COMMAND before-road-ceiling-regression EXIT 0
+{"checks":69,"results":[{"name":"car-wins-0.01","fingerprint":"7E7B6DAC833F16432F174694D1B38198775B5542213138E2E4BD2A718C211955","minutes":4.364999999999994,"estimate":4.364999999999994,"nativeReads":498},{"name":"congestion-walk-0.01","fingerprint":"4576B1B83D2F83B1FBF58D6530EE6D177365521C5CA1CFA074EEE30AFC55E06C","minutes":20,"estimate":20,"nativeReads":150},{"name":"congestion-subway-0.01","fingerprint":"96BD5E1FDB9E52A097B9232A15AE4E95D605890DD771EDD1B64F119BF7AF575C","minutes":3.3200016666620367,"estimate":3.3200016666620367,"nativeReads":0},{"name":"drained-car-0.01","fingerprint":"7E7B6DAC833F16432F174694D1B38198775B5542213138E2E4BD2A718C211955","minutes":4.364999999999994,"estimate":4.364999999999994,"nativeReads":498},{"name":"no-alternative-0.01","fingerprint":"87FEFA5253672BF90376C87E3C6886F597EB79E6838E15967522F2BD5B19376A","minutes":4.364999999999994,"estimate":404.36499999999995,"nativeReads":498},{"name":"closed-0.01","fingerprint":"null","minutes":null,"estimate":null,"nativeReads":498},{"name":"no-egress-0.01","fingerprint":"null","minutes":null,"estimate":null,"nativeReads":126},{"name":"car-wins-1","fingerprint":"008ACB53FCAFCE2FB91BE081DAE5666C92C5B666411B05573D226ACCBE093612","minutes":40.5,"estimate":40.5,"nativeReads":498},{"name":"congestion-walk-1","fingerprint":"EC34423C728DFF1F53D904BFCA1796F95BD328DC8C9E842D83BB65488ABA8912","minutes":2000,"estimate":2000,"nativeReads":150},{"name":"congestion-subway-1","fingerprint":"0CDBEDCB31B5F75FA007803C83C1A6E1800840ADC5BBC70463E9B36F79726905","minutes":33.0201666662037,"estimate":33.0201666662037,"nativeReads":126},{"name":"drained-car-1","fingerprint":"008ACB53FCAFCE2FB91BE081DAE5666C92C5B666411B05573D226ACCBE093612","minutes":40.5,"estimate":40.5,"nativeReads":498},{"name":"no-alternative-1","fingerprint":"B88FEC45EFDC051B883D2FE3474EAEDBD52FE8715B32F4D277D27FD717435AA7","minutes":40.5,"estimate":40040.49999999999,"nativeReads":498},{"name":"closed-1","fingerprint":"null","minutes":null,"estimate":null,"nativeReads":498},{"name":"no-egress-1","fingerprint":"null","minutes":null,"estimate":null,"nativeReads":126},{"name":"car-wins-2","fingerprint":"A55AD96D0007F90B2A5D0BF6AA4B3DE4D0E08DA7893CED1DE133956AA091A61E","minutes":77,"estimate":77,"nativeReads":498},{"name":"congestion-walk-2","fingerprint":"100AE0F6C926A619D1DD2382DC167DEA47EF5239AF2DEE3F66AA07E40C3D1AD4","minutes":4000,"estimate":4000,"nativeReads":150},{"name":"congestion-subway-2","fingerprint":"43900D432B3B90DB998472A87C32A4FE6121099C7169DB83F01ED3069A645B51","minutes":63.020333332407404,"estimate":63.020333332407404,"nativeReads":126},{"name":"drained-car-2","fingerprint":"A55AD96D0007F90B2A5D0BF6AA4B3DE4D0E08DA7893CED1DE133956AA091A61E","minutes":77,"estimate":77,"nativeReads":498},{"name":"no-alternative-2","fingerprint":"C66BFEA200704B0BCA26ACD69F5FB0C6B0D03176569DF8E9FB0DD4E3F696C646","minutes":77,"estimate":80076.99999999999,"nativeReads":498},{"name":"closed-2","fingerprint":"null","minutes":null,"estimate":null,"nativeReads":498},{"name":"no-egress-2","fingerprint":"null","minutes":null,"estimate":null,"nativeReads":126},{"name":"car-wins-1000","fingerprint":"D02094454604EAA65E57F4C457DF91BFC55315FE2284E8F2BA3D58CEDEA6772C","minutes":36504,"estimate":36504,"nativeReads":498},{"name":"congestion-walk-1000","fingerprint":"D2EE1E8117DC14CCDFF7AE20E8114B8E3C1662E80AE5B67182EEB35B6D9CAA43","minutes":2000000,"estimate":2000000,"nativeReads":150},{"name":"congestion-subway-1000","fingerprint":"6CD6C2934DA1F1AFDA75B1D4D55A841CE3216AFF69C607CB1BA50F56B6EBE27B","minutes":30003.186666203703,"estimate":30003.186666203703,"nativeReads":126},{"name":"drained-car-1000","fingerprint":"D02094454604EAA65E57F4C457DF91BFC55315FE2284E8F2BA3D58CEDEA6772C","minutes":36504,"estimate":36504,"nativeReads":498},{"name":"no-alternative-1000","fingerprint":"EDD1A36934FE58EBFCF24AF16610E39254D04DFE24E69D7A916F179A302C330C","minutes":36504,"estimate":40036503.99999999,"nativeReads":498},{"name":"closed-1000","fingerprint":"null","minutes":null,"estimate":null,"nativeReads":498},{"name":"no-egress-1000","fingerprint":"null","minutes":null,"estimate":null,"nativeReads":126},{"name":"tie","fingerprint":"5BBA7835CA8A9DE7FD4B691F125FF0DB2745DDA16683390511C6A94CE5053AA4","minutes":11,"estimate":11,"nativeReads":72},{"name":"ulp-car-win","fingerprint":"13543B40ED91C893EFC0B4E23793D1B4F25425D371393C27E565FA6B572EBDF0","minutes":7,"estimate":11,"nativeReads":72},{"name":"ulp-walk-win","fingerprint":"3A48571431FA3A267699F8AC2A708BB9319E4F0718C129F5E38C95729FEBE752","minutes":10.999999999999998,"estimate":10.999999999999998,"nativeReads":72},{"name":"connectors-tie","fingerprint":"A28642D9237ACB684F9FE4B1D01677ED08C1AF1592359F37E41DB9570B24C05F","minutes":15.5,"estimate":15.5,"nativeReads":72},{"name":"connectors-ulp-car-win","fingerprint":"6BE1A547F86240D68B41D18A5629F713CB909CE3FD851089EE5FDC546E427B0B","minutes":11.5,"estimate":15.5,"nativeReads":72},{"name":"connectors-ulp-walk-win","fingerprint":"D63B1A8F7BFC764EB38ADD2D8D63C60916AED0FAE1F90D1961D78042DE358E12","minutes":15.499999999999998,"estimate":15.499999999999998,"nativeReads":72},{"name":"second-curb-car-wins","fingerprint":"2F697DDC4E70CED20AE8E44B77B4DB6577A198E3AC6380729984C9381BCF485A","minutes":18.5,"estimate":18.5,"nativeReads":348},{"name":"subway-ceiling-during-car-search","fingerprint":"D75E50D29AC6BE3AABFFA651EA8D7886ACFCB407E868DE66CF8FA354CB76570A","minutes":43.02066665925942,"estimate":43.02066665925942,"nativeReads":144},{"name":"unreachable-walk","fingerprint":"AB52E139F6E42376969341E53C805DB122692D8130F2312583F18346F780059A","minutes":30,"estimate":30,"nativeReads":252},{"name":"unreachable-no-alternative","fingerprint":"null","minutes":null,"estimate":null,"nativeReads":7362}],"slicedChecks":142,"sliced":[{"name":"car-wins-0.01","fingerprint":"7E7B6DAC833F16432F174694D1B38198775B5542213138E2E4BD2A718C211955","slices":16,"nativeReads":498},{"name":"congestion-walk-0.01","fingerprint":"4576B1B83D2F83B1FBF58D6530EE6D177365521C5CA1CFA074EEE30AFC55E06C","slices":16,"nativeReads":150},{"name":"congestion-subway-0.01","fingerprint":"96BD5E1FDB9E52A097B9232A15AE4E95D605890DD771EDD1B64F119BF7AF575C","slices":9,"nativeReads":0},{"name":"drained-car-0.01","fingerprint":"7E7B6DAC833F16432F174694D1B38198775B5542213138E2E4BD2A718C211955","slices":16,"nativeReads":498},{"name":"no-alternative-0.01","fingerprint":"87FEFA5253672BF90376C87E3C6886F597EB79E6838E15967522F2BD5B19376A","slices":16,"nativeReads":498},{"name":"closed-0.01","fingerprint":"null","slices":16,"nativeReads":498},{"name":"no-egress-0.01","fingerprint":"null","slices":14,"nativeReads":126},{"name":"car-wins-1","fingerprint":"008ACB53FCAFCE2FB91BE081DAE5666C92C5B666411B05573D226ACCBE093612","slices":16,"nativeReads":498},{"name":"congestion-walk-1","fingerprint":"EC34423C728DFF1F53D904BFCA1796F95BD328DC8C9E842D83BB65488ABA8912","slices":16,"nativeReads":150},{"name":"congestion-subway-1","fingerprint":"0CDBEDCB31B5F75FA007803C83C1A6E1800840ADC5BBC70463E9B36F79726905","slices":14,"nativeReads":126},{"name":"drained-car-1","fingerprint":"008ACB53FCAFCE2FB91BE081DAE5666C92C5B666411B05573D226ACCBE093612","slices":16,"nativeReads":498},{"name":"no-alternative-1","fingerprint":"B88FEC45EFDC051B883D2FE3474EAEDBD52FE8715B32F4D277D27FD717435AA7","slices":16,"nativeReads":498},{"name":"closed-1","fingerprint":"null","slices":16,"nativeReads":498},{"name":"no-egress-1","fingerprint":"null","slices":14,"nativeReads":126},{"name":"car-wins-2","fingerprint":"A55AD96D0007F90B2A5D0BF6AA4B3DE4D0E08DA7893CED1DE133956AA091A61E","slices":16,"nativeReads":498},{"name":"congestion-walk-2","fingerprint":"100AE0F6C926A619D1DD2382DC167DEA47EF5239AF2DEE3F66AA07E40C3D1AD4","slices":16,"nativeReads":150},{"name":"congestion-subway-2","fingerprint":"43900D432B3B90DB998472A87C32A4FE6121099C7169DB83F01ED3069A645B51","slices":14,"nativeReads":126},{"name":"drained-car-2","fingerprint":"A55AD96D0007F90B2A5D0BF6AA4B3DE4D0E08DA7893CED1DE133956AA091A61E","slices":16,"nativeReads":498},{"name":"no-alternative-2","fingerprint":"C66BFEA200704B0BCA26ACD69F5FB0C6B0D03176569DF8E9FB0DD4E3F696C646","slices":16,"nativeReads":498},{"name":"closed-2","fingerprint":"null","slices":16,"nativeReads":498},{"name":"no-egress-2","fingerprint":"null","slices":14,"nativeReads":126},{"name":"car-wins-1000","fingerprint":"D02094454604EAA65E57F4C457DF91BFC55315FE2284E8F2BA3D58CEDEA6772C","slices":16,"nativeReads":498},{"name":"congestion-walk-1000","fingerprint":"D2EE1E8117DC14CCDFF7AE20E8114B8E3C1662E80AE5B67182EEB35B6D9CAA43","slices":16,"nativeReads":150},{"name":"congestion-subway-1000","fingerprint":"6CD6C2934DA1F1AFDA75B1D4D55A841CE3216AFF69C607CB1BA50F56B6EBE27B","slices":14,"nativeReads":126},{"name":"drained-car-1000","fingerprint":"D02094454604EAA65E57F4C457DF91BFC55315FE2284E8F2BA3D58CEDEA6772C","slices":16,"nativeReads":498},{"name":"no-alternative-1000","fingerprint":"EDD1A36934FE58EBFCF24AF16610E39254D04DFE24E69D7A916F179A302C330C","slices":16,"nativeReads":498},{"name":"closed-1000","fingerprint":"null","slices":16,"nativeReads":498},{"name":"no-egress-1000","fingerprint":"null","slices":14,"nativeReads":126},{"name":"tie","fingerprint":"5BBA7835CA8A9DE7FD4B691F125FF0DB2745DDA16683390511C6A94CE5053AA4","slices":16,"nativeReads":72},{"name":"ulp-car-win","fingerprint":"13543B40ED91C893EFC0B4E23793D1B4F25425D371393C27E565FA6B572EBDF0","slices":16,"nativeReads":72},{"name":"ulp-walk-win","fingerprint":"3A48571431FA3A267699F8AC2A708BB9319E4F0718C129F5E38C95729FEBE752","slices":16,"nativeReads":72},{"name":"connectors-tie","fingerprint":"A28642D9237ACB684F9FE4B1D01677ED08C1AF1592359F37E41DB9570B24C05F","slices":16,"nativeReads":72},{"name":"connectors-ulp-car-win","fingerprint":"6BE1A547F86240D68B41D18A5629F713CB909CE3FD851089EE5FDC546E427B0B","slices":16,"nativeReads":72},{"name":"connectors-ulp-walk-win","fingerprint":"D63B1A8F7BFC764EB38ADD2D8D63C60916AED0FAE1F90D1961D78042DE358E12","slices":16,"nativeReads":72},{"name":"second-curb-car-wins","fingerprint":"2F697DDC4E70CED20AE8E44B77B4DB6577A198E3AC6380729984C9381BCF485A","slices":18,"nativeReads":348},{"name":"subway-ceiling-during-car-search","fingerprint":"D75E50D29AC6BE3AABFFA651EA8D7886ACFCB407E868DE66CF8FA354CB76570A","slices":16,"nativeReads":144},{"name":"unreachable-walk","fingerprint":"AB52E139F6E42376969341E53C805DB122692D8130F2312583F18346F780059A","slices":16,"nativeReads":252},{"name":"unreachable-no-alternative","fingerprint":"null","slices":34,"nativeReads":7362},{"name":"search-generation-restart","fingerprint":"125B7B2452E59A6229C9F811636A4E5FC7CD9B158043C12E117DC2BCA3220526","slices":20,"nativeReads":0},{"name":"snapshot-replacement-restart","fingerprint":"7D32A79462F6F6B67DB14E9C419B3AC7CD224E3BF527B64CDBF04441809C6C51","slices":16,"nativeReads":0},{"name":"snapshot-replacement-before-first-slice","fingerprint":"7D32A79462F6F6B67DB14E9C419B3AC7CD224E3BF527B64CDBF04441809C6C51","slices":16,"nativeReads":0},{"name":"home-car-snapshot-restart","fingerprint":"F89850F0256F83B8BEF00AB7895F11473E09413BEF6B7DFB4F6D20AB96C771C8","slices":18,"nativeReads":0}]}
+
+
+COMMAND before-road-handoff-regression EXIT 0
+PASS staged snapshot sweep: unchanged snapshot kept; excluded node, interrupted sweep, neighbour nullness and stop flag detected.
+PASS public gates: leaf poses neither open a road nor repeat a change; replaced doors are recorded; a moved frame is a change.
+PASS sample scope: each node/junction validated once per sample; public resolve live; same-frame closures, contract changes, reentrancy, exceptions and generation wrap detected.
+PASS actual RoadRoutes: current fragments rejected; later full run sampled; malformed/unknown history rejected; future fragment bounded; junction identities/history/admission preserved.
+
+
+COMMAND before-road-invalidation-regression EXIT 0
+PASS 265 road invalidation checks; 40 signal cycles preserve network; 20 genuine rebuilds perform zero additional global road-scene searches.
+
+
+COMMAND before-road-speed-regression EXIT 0
+PASS slowdown during staged preflight on both sides of the copied-node cursor
+PASS unexplained raw/original/observed speed mutations fail closed
+PASS canonical topology, initial-active overlay, old queue immutability, SaveCodec/rebind/restoration: native=824bd5ba73d50953231f3c2a14ba83b2feb08004df74b2abc0cb6f47c41f4409, traffic=88b88ec4817e749052ed4d49e16ea1f8cfd8089ce99eeabb4e48fc412427af41, links=1, capacity=13, baseline=9.6, slowed=10.200000000000001, partial40m=5.1
+PASS actual Runtime mapping preserves 6m FIFO storage spacing with heterogeneous native speed overlay
+PASS 602 offline assertions using actual Runtime/Core/Persistence and synthetic Unity/native surfaces; no rig or RLO mutation.
+
+
+COMMAND before-route-discovery-regression EXIT 0
+PASS 675 discovery assertions, including zero steady-state hierarchy queries, load/reset discovery, explicit invalidation, mutation, persistent/additive scenes, bounded initialization and disposal.
+
+
+COMMAND before-save-contract-regression EXIT 0
+{"digest":"92BF195BE37A5B61438C7319FEC546851FBD6C555498AB827FE3A85539971B5E","length":108227,"refusals":["Invalid:Invalid state: Missing state schema.","Future:State uses a newer schema; preserve the original payload.","Invalid:Invalid state: Incomplete or trailing JSON content.","Invalid:Invalid state: Unknown field: UnknownCitizens"],"writeBytes":21794544,"readBytes":61945928}
+
+
+COMMAND before-startup-clock-regression EXIT 0
+PASS 17 actual startup-clock source checks; native clock/UI doubles, no Unity execution.
+
+
+COMMAND before-traffic-closure-regression EXIT 0
+{"checks":35,"results":[{"name":"initial","fingerprint":"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D","nativeReads":255},{"name":"repeat","fingerprint":"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D","nativeReads":255},{"name":"temporary-close","fingerprint":"996D9E7FB8A0E65E10407CAD5F45A3B445F397DFD5B87D5079E66A772595E3C9","nativeReads":255},{"name":"same-frame-reopen","fingerprint":"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D","nativeReads":255},{"name":"after-boundary","fingerprint":"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D","nativeReads":255},{"name":"generation-wrap","fingerprint":"F0BF59C5C985A05CE5E4E603292864414543DDEDC0B99B27C21E06BC89ED2A2A","nativeReads":255},{"name":"after-wrap","fingerprint":"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D","nativeReads":255},{"name":"new-gate-snapshot","fingerprint":"98E62076064D5251192C219A89CD0317949315F97CE67CFEFCBDBE15BCD86E34","nativeReads":255},{"name":"gate-removed","fingerprint":"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D","nativeReads":255},{"name":"after-read-exception","fingerprint":"4642CBB939E2E9A03D8AE5F833AECDD12FF4D7F3EA8730C898C74D6256B2D190","nativeReads":255},{"name":"exception-reopened","fingerprint":"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D","nativeReads":255},{"name":"agents","fingerprint":"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB","nativeReads":25},{"name":"cars","fingerprint":"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB","nativeReads":25},{"name":"neighbours","fingerprint":"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB","nativeReads":25},{"name":"position","fingerprint":"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB","nativeReads":26},{"name":"flags","fingerprint":"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB","nativeReads":29},{"name":"road-id","fingerprint":"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB","nativeReads":31},{"name":"association","fingerprint":"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB","nativeReads":29},{"name":"lanes","fingerprint":"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB","nativeReads":31},{"name":"junction-group","fingerprint":"E7AC5253D23F99A544FBC74509CF1D0E057A0926A274B8B4FC0DE9190A6AA968","nativeReads":7},{"name":"junction-name","fingerprint":"E7AC5253D23F99A544FBC74509CF1D0E057A0926A274B8B4FC0DE9190A6AA968","nativeReads":6},{"name":"junction-array","fingerprint":"E7AC5253D23F99A544FBC74509CF1D0E057A0926A274B8B4FC0DE9190A6AA968","nativeReads":0},{"name":"waypoint-array","fingerprint":"E7AC5253D23F99A544FBC74509CF1D0E057A0926A274B8B4FC0DE9190A6AA968","nativeReads":0},{"name":"empty-closed-reopened","fingerprint":"A1472043595E769929FCBD6110FDB92A22D96208FCC97C32EC271FF018702B9E","nativeReads":13}]}
+
+
+COMMAND before-traffic-queue-regression EXIT 0
+32414 observations; SHA256=D328799A130E4BF1834A448B46765F4D5BC1750A21DF86B879B42B97307ABAFE
+
+
+COMMAND before-walking-quote-regression EXIT 0
+Walking quote regression: 28 checks passed (actual Runtime source; native calls replaced by controlled doubles).
+Integrated K=2 walking requests: native path queries 545 unscoped, 489 scoped (56 reused); quote checks 498, rejected 24; purchases identical.
+Walking quote operation: 48 checks passed (actual Core FoodCommerce and Runtime WalkingRoutes; native calls replaced by controlled doubles).
+
+
+COMMAND before-native-command-regression-py EXIT 0
+PASS 72 native command/step checks; actual production method source, deferred physics test doubles (not game evidence).
+
+
+COMMAND before-physical-selection-regression-py EXIT 0
+PASS 27561 checks; positions 93665->55737; hierarchy 88308->33300
+
+
+COMMAND before-vehicle-ownership-regression-py EXIT 0
+PASS 361 actual Runtime vehicle ownership assertions
+PASS epoch call sites: Update, BeginNativeFixedStep and Release advance first; 5 native mutation wrappers advance in finally; no raw native mutation elsewhere
+
+
+COMMAND before-simulate EXIT 0
+{
+  "Scenario": "Synthetic connected grid, not game performance or RLO population evidence",
+  "Citizens": 400,
+  "Days": 28,
+  "Events": 97156,
+  "BoundedBatches": 486,
+  "ElapsedMilliseconds": 3540.2434,
+  "CompletedJourneys": 44266,
+  "MissedActivities": 88,
+  "RouteRequests": 45205,
+  "Unreachable": 916,
+  "PlannedModeCounts": {
+    "Walk": 39630,
+    "Bus": 4659
+  },
+  "SnapshotBytes": 1221573,
+  "SaveRoundTrip": "Exact",
+  "EconomyTransactions": "Not implemented in this project"
+}
+
+
+COMMAND before-food-routines EXIT 0
+{
+  "evidence": "Synthetic two-neighborhood city replayed through the actual population/routine engine. Connected fixture paths, controlled prices/stock/staffed hourly throughput and temporary allowances. No native sales or measured profitability.",
+  "residents": 957,
+  "days": 7,
+  "purchasedMealOpportunities": 6699,
+  "actualObservedSpans": 27231,
+  "opportunityOrigins": {
+    "Home": 2872,
+    "Work": 3630,
+    "Shop": 130,
+    "Leisure": 67
+  },
+  "distinctDailyMealTimes": 6.83594566353187,
+  "populationReplayMs": 429.8675,
+  "opportunityMs": 60.9686,
+  "invariants": {
+    "Second neighborhood serves additional needs": true,
+    "First shop retains its customers when second covers another neighborhood": true,
+    "Two local shops reach more needs than one larger distant shop in this fixture": true,
+    "Unavailable service makes no sale": true,
+    "No extra needs or purchasing power created by adding shops": true,
+    "Quote work never exceeds two route calls per batch": true
+  },
+  "scenarios": [
+    {
+      "Name": "one-small",
+      "Fulfilled": 535,
+      "Unmet": 6164,
+      "Unresolved": 0,
+      "ShopMeals": {
+        "a": 535
+      },
+      "MeanOutingMinutes": 36.78355140186918,
+      "MeanQueueMinutes": 12.95102803738317,
+      "RouteCalls": 6692,
+      "MaximumRouteCallsPerBatch": 2,
+      "QuoteMs": 53.8139,
+      "SimulationMs": 135.4065,
+      "Maximum16EventBatchMs": 15.0241,
+      "Batches": 542
+    },
+    {
+      "Name": "two-neighborhoods",
+      "Fulfilled": 1045,
+      "Unmet": 5654,
+      "Unresolved": 0,
+      "ShopMeals": {
+        "a": 535,
+        "b": 510
+      },
+      "MeanOutingMinutes": 36.76513875598104,
+      "MeanQueueMinutes": 12.93564593301436,
+      "RouteCalls": 13398,
+      "MaximumRouteCallsPerBatch": 2,
+      "QuoteMs": 83.849,
+      "SimulationMs": 175.1185,
+      "Maximum16EventBatchMs": 28.7688,
+      "Batches": 664
+    },
+    {
+      "Name": "one-larger",
+      "Fulfilled": 959,
+      "Unmet": 5740,
+      "Unresolved": 0,
+      "ShopMeals": {
+        "a": 959
+      },
+      "MeanOutingMinutes": 33.699572471324764,
+      "MeanQueueMinutes": 11.906141814390034,
+      "RouteCalls": 6692,
+      "MaximumRouteCallsPerBatch": 2,
+      "QuoteMs": 30.4254,
+      "SimulationMs": 105.755,
+      "Maximum16EventBatchMs": 19.2692,
+      "Batches": 610
+    },
+    {
+      "Name": "two-same-location",
+      "Fulfilled": 952,
+      "Unmet": 5747,
+      "Unresolved": 0,
+      "ShopMeals": {
+        "a": 506,
+        "a2": 446
+      },
+      "MeanOutingMinutes": 34.97413865546264,
+      "MeanQueueMinutes": 11.173865546218535,
+      "RouteCalls": 13384,
+      "MaximumRouteCallsPerBatch": 2,
+      "QuoteMs": 90.0096,
+      "SimulationMs": 98.5474,
+      "Maximum16EventBatchMs": 21.6408,
+      "Batches": 644
+    },
+    {
+      "Name": "second-unavailable",
+      "Fulfilled": 535,
+      "Unmet": 6164,
+      "Unresolved": 0,
+      "ShopMeals": {
+        "a": 535,
+        "b": 0
+      },
+      "MeanOutingMinutes": 36.78355140186918,
+      "MeanQueueMinutes": 12.95102803738317,
+      "RouteCalls": 13398,
+      "MaximumRouteCallsPerBatch": 2,
+      "QuoteMs": 84.8073,
+      "SimulationMs": 112.4566,
+      "Maximum16EventBatchMs": 55.6232,
+      "Batches": 542
+    },
+    {
+      "Name": "second-price-plus-25pct",
+      "Fulfilled": 1045,
+      "Unmet": 5654,
+      "Unresolved": 0,
+      "ShopMeals": {
+        "a": 535,
+        "b": 510
+      },
+      "MeanOutingMinutes": 36.76513875598104,
+      "MeanQueueMinutes": 12.93564593301436,
+      "RouteCalls": 13398,
+      "MaximumRouteCallsPerBatch": 2,
+      "QuoteMs": 57.2006,
+      "SimulationMs": 81.2162,
+      "Maximum16EventBatchMs": 21.3179,
+      "Batches": 664
+    }
+  ],
+  "limitations": "One purchased meal/day; provisional lunch breaks; hourly service smoothing; walking outings; no home food, wages, operating costs or live native stock/service validation. Timings are offline .NET measurements, not Unity frame-time evidence."
+}
+
+
+COMMAND before-food-demand EXIT 0
+{
+  "Evidence": "Synthetic demonstration: 24 fictional residents and two fictional shops. No live city was read.",
+  "Consumers": 24,
+  "Days": 2,
+  "Comparisons": 4,
+  "NativeSalesChanged": 0
+}
+Comparison and saved intentions: <private-evidence>\before-food-demand-demo
+
+
+COMMAND after-build EXIT 0
+Package: <worktrees>\rig-pr3-after\build\PersistentCity
+DLL SHA256: 40e5ace63ebef339ea09c43298d0c8403c8e087abdb008d7629e6716fc15538a
+Game assemblies and RLO are referenced externally; neither is copied into this package.
+
+
+COMMAND after-tests EXIT 0
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  PersistentCity.Core -> <worktrees>\rig-pr3-after\Core\bin\Debug\netstandard2.1\PersistentCity.Core.dll
+  PersistentCity.Compatibility -> <worktrees>\rig-pr3-after\Compatibility\bin\Debug\netstandard2.1\PersistentCity.Compatibility.dll
+  PersistentCity.Persistence -> <worktrees>\rig-pr3-after\Persistence\bin\Debug\netstandard2.1\PersistentCity.Persistence.dll
+  PersistentCity.Tests -> <worktrees>\rig-pr3-after\tests\bin\Debug\net10.0\PersistentCity.Tests.dll
+Test run for <worktrees>\rig-pr3-after\tests\bin\Debug\net10.0\PersistentCity.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: <private-evidence>\after-tests.trx
+
+Passed!  - Failed:     0, Passed:  1548, Skipped:     0, Total:  1548, Duration: 3 m 1 s - PersistentCity.Tests.dll (net10.0)
+
+
+COMMAND after-optional-test-list EXIT 0
+Test run for <worktrees>\rig-pr3-after\tests\bin\Debug\net10.0\PersistentCity.Tests.dll (.NETCoreApp,Version=v10.0)
+The following Tests are available:
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_Schema13MoneyMigratesToSchema16Exactly(native: 0,25)
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_Schema13MoneyMigratesToSchema16Exactly(native: 12,5)
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_Schema13MoneyMigratesToSchema16Exactly(native: 3)
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_CurrentSchema14MoneyMigratesToSchema16Exactly(native: 0,00999999978)
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_CurrentSchema14MoneyMigratesToSchema16Exactly(native: 0,300000012)
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_CurrentSchema14MoneyMigratesToSchema16Exactly(native: 1,37)
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_CurrentSchema14MoneyMigratesToSchema16Exactly(native: 10,2528)
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_CurrentSchema14MoneyMigratesToSchema16Exactly(native: 12,4899998)
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_OptionalStopEraCentsSavesMigrateExactly(schema: 14)
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_OptionalStopEraCentsSavesMigrateExactly(schema: 15)
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_OptionalStopEraCentsSavesMigrateExactly(schema: 16)
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_OptionalStopEraNonRepresentableCentsAreRefusedAndPreserved(schema: 14)
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_OptionalStopEraNonRepresentableCentsAreRefusedAndPreserved(schema: 15)
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_OptionalStopEraNonRepresentableCentsAreRefusedAndPreserved(schema: 16)
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_OptionalStopEraMixedMoneyGenerationsAreRefused(schema: 15)
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_OptionalStopEraMixedMoneyGenerationsAreRefused(schema: 16)
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_NonCanonicalMoneyTokensAreRefusedInSchemas15And16(schema: 15, field: "Allowance", token: "0x10")
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_NonCanonicalMoneyTokensAreRefusedInSchemas15And16(schema: 16, field: "Allowance", token: "0X10")
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_NonCanonicalMoneyTokensAreRefusedInSchemas15And16(schema: 16, field: "Arrears", token: "0x0")
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_NonCanonicalMoneyTokensAreRefusedInSchemas15And16(schema: 15, field: "Allowance", token: "05")
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_NonCanonicalMoneyTokensAreRefusedInSchemas15And16(schema: 16, field: "Allowance", token: "05")
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_NonCanonicalMoneyTokensAreRefusedInSchemas15And16(schema: 16, field: "Allowance", token: "5e2")
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_NonCanonicalMoneyTokensAreRefusedInSchemas15And16(schema: 15, field: "Allowance", token: "1.0")
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_NonCanonicalMoneyTokensAreRefusedInSchemas15And16(schema: 16, field: "Allowance", token: "-1")
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_NonCanonicalMoneyTokensAreRefusedInSchemas15And16(schema: 16, field: "Allowance", token: "9223372036854775808")
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_NonCanonicalMoneyTokensAreRefusedInSchemas15And16(schema: 15, field: "AllowanceCents", token: "0x1")
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_NonCanonicalMoneyTokensAreRefusedInSchemas15And16(schema: 16, field: "ArrearsCents", token: "0x10")
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_NonCanonicalMoneyTokensAreRefusedInSchemas15And16(schema: 16, field: "AllowanceCents", token: "1e2")
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_NonCanonicalMoneyTokensAreRefusedInSchemas15And16(schema: 15, field: "AllowanceCents", token: "0.1")
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_NonCanonicalMoneyTokensAreRefusedInSchemas15And16(schema: 16, field: "AllowanceCents", token: "-2")
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_Schema16MoneyRoundTripsByteIdentically(native: 0,00999999978)
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_Schema16MoneyRoundTripsByteIdentically(native: 0,300000012)
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_Schema16MoneyRoundTripsByteIdentically(native: 10,2528)
+    PersistentCity.Tests.FoodCommerceTests.BaseMerge_Schema16MoneyRoundTripsByteIdentically(native: 12,4899998)
+    PersistentCity.Tests.FoodCommerceTests.OptionalStopsCannotOccupyFoodServiceOrChangeItsPurchases
+    PersistentCity.Tests.OptionalStopHandoffTests.ExhaustedRecipientsDropASecondChanceBelowTheNominalBound
+    PersistentCity.Tests.OptionalStopHandoffTests.ChancesAreHandedOnFromHoldersAwayBeforeWaitingPartnersInOrdinalIdentityOrder
+    PersistentCity.Tests.OptionalStopHandoffTests.APendingChanceOutlivesItsVisitAndPaysForTheHoldersOwnNextFeasibleVisit
+    PersistentCity.Tests.OptionalStopHandoffTests.TakenOverWaitingPartnerCanNoLongerBeRecruited
+    PersistentCity.Tests.OptionalStopHandoffTests.UndrawnArrivalConversesWithAWaitingPartnerUsingAnotherPendingChance
+    PersistentCity.Tests.OptionalStopHandoffTests.UndrawnArrivalDoesNotConverseWhenThePartnersChanceIsTheOnlyOne
+    PersistentCity.Tests.OptionalStopHandoffTests.AtZeroAPendingChanceIsNeitherUsedNorHandedOn
+    PersistentCity.Tests.OptionalStopHandoffTests.UndrawnArrivalKeepsItsOnlyLocalPartnerAndTakesAnotherWaitingDonor(local: "a", remote: "z")
+    PersistentCity.Tests.OptionalStopHandoffTests.UndrawnArrivalKeepsItsOnlyLocalPartnerAndTakesAnotherWaitingDonor(local: "z", remote: "a")
+    PersistentCity.Tests.OptionalStopHandoffTests.ARepeatedVisitsSecondChancePassesToTheFirstCitizenHoldingNone(venue: "far")
+    PersistentCity.Tests.OptionalStopHandoffTests.ARepeatedVisitsSecondChancePassesToTheFirstCitizenHoldingNone(venue: "shop")
+    PersistentCity.Tests.OptionalStopHandoffTests.InheritedChancesAboveTheCurrentBoundAreTrimmedLowestIdentityFirst(rate: 10, trimmed: 4)
+    PersistentCity.Tests.OptionalStopHandoffTests.InheritedChancesAboveTheCurrentBoundAreTrimmedLowestIdentityFirst(rate: 25, trimmed: 0)
+    PersistentCity.Tests.OptionalStopHandoffTests.InheritedChancesAboveTheCurrentBoundAreTrimmedLowestIdentityFirst(rate: 0, trimmed: 0)
+    PersistentCity.Tests.OptionalStopHandoffTests.AtHundredOnlyWaitingConversationPartnersKeepAChance
+    PersistentCity.Tests.OptionalStopRoutineTests.RepeatedDailyRoutinesRealiseTheSettingWithoutLosingChances
+    PersistentCity.Tests.OptionalStopRoutineTests.MixedRoutinesWithConversationsTrackTheSetting(wide: False)
+    PersistentCity.Tests.OptionalStopRoutineTests.MixedRoutinesWithConversationsTrackTheSetting(wide: True)
+    PersistentCity.Tests.OptionalStopRoutineTests.LoweringFromHundredReleasesNoStockBankedAtTheHigherSetting
+    PersistentCity.Tests.OptionalStopRoutineTests.HighSettingDeficitIsReconciledWhileTheDefaultTracksInAnotherGeometry
+    PersistentCity.Tests.OptionalStopRoutineTests.LoweringFromFiftyRetainsInBoundStockAndCanSpendItOverSeveralDays
+    PersistentCity.Tests.OptionalStopSchedulingTests.ChangedRateOnlyAffectsNewChancesAndNeverRerollsSavedVisits(oldRate: 0, newRate: 100, chosen: False)
+    PersistentCity.Tests.OptionalStopSchedulingTests.ChangedRateOnlyAffectsNewChancesAndNeverRerollsSavedVisits(oldRate: 100, newRate: 0, chosen: True)
+    PersistentCity.Tests.OptionalStopSchedulingTests.WaitingConversationPartnerRetainsSavedChoiceAfterRateChange(oldRate: 0, joins: False)
+    PersistentCity.Tests.OptionalStopSchedulingTests.WaitingConversationPartnerRetainsSavedChoiceAfterRateChange(oldRate: 100, joins: True)
+    PersistentCity.Tests.OptionalStopSchedulingTests.Schema15MigrationPreservesStopsButDoesNotInventWaitingChoices
+    PersistentCity.Tests.OptionalStopSchedulingTests.ArrivalSchedulesBoundedSavedStopWithoutChangingContinuation(kind: Break, min: 5, max: 10)
+    PersistentCity.Tests.OptionalStopSchedulingTests.ArrivalSchedulesBoundedSavedStopWithoutChangingContinuation(kind: WindowShopping, min: 1, max: 3)
+    PersistentCity.Tests.OptionalStopSchedulingTests.ArrivalSchedulesBoundedSavedStopWithoutChangingContinuation(kind: Resting, min: 10, max: 40)
+    PersistentCity.Tests.OptionalStopSchedulingTests.ArrivalSchedulesBoundedSavedStopWithoutChangingContinuation(kind: Audience, min: 2, max: 8)
+    PersistentCity.Tests.OptionalStopSchedulingTests.AnyRainRefusesAndPermanentlyCancelsWithoutRestartOrIdentityChange(kind: Break)
+    PersistentCity.Tests.OptionalStopSchedulingTests.AnyRainRefusesAndPermanentlyCancelsWithoutRestartOrIdentityChange(kind: WindowShopping)
+    PersistentCity.Tests.OptionalStopSchedulingTests.AnyRainRefusesAndPermanentlyCancelsWithoutRestartOrIdentityChange(kind: Resting)
+    PersistentCity.Tests.OptionalStopSchedulingTests.AnyRainRefusesAndPermanentlyCancelsWithoutRestartOrIdentityChange(kind: Audience)
+    PersistentCity.Tests.OptionalStopSchedulingTests.InsufficientTimeNeverCreatesUndersizedStop(kind: Break, stay: 4)
+    PersistentCity.Tests.OptionalStopSchedulingTests.InsufficientTimeNeverCreatesUndersizedStop(kind: WindowShopping, stay: 0,5)
+    PersistentCity.Tests.OptionalStopSchedulingTests.InsufficientTimeNeverCreatesUndersizedStop(kind: Resting, stay: 9)
+    PersistentCity.Tests.OptionalStopSchedulingTests.InsufficientTimeNeverCreatesUndersizedStop(kind: Audience, stay: 1)
+    PersistentCity.Tests.OptionalStopSchedulingTests.MissingSpotAndPerformerLossEndRatherThanReroll
+    PersistentCity.Tests.OptionalStopSchedulingTests.ConversationsRequireTwoEligiblePersistentVisitorsAndDistinctSpots
+    PersistentCity.Tests.OptionalStopSchedulingTests.NoSingletonIsPublishedWhenThereIsOnlyOneValidatedSpot
+    PersistentCity.Tests.OptionalStopSchedulingTests.AudienceRequiresPassingWalkerAndChoiceNotAnAnonymousPopulationTarget
+    PersistentCity.Tests.OptionalStopSchedulingTests.LegacyMigrationAddsNoStopsAndDoesNotInventVisitsOnLoad
+    PersistentCity.Tests.OptionalStopSchedulingTests.StrictWireRejectsMissingFieldsUnknownKindsAndImpossibleContinuation
+    PersistentCity.Tests.OptionalStopSchedulingTests.EventBudgetReloadAndRouteRebuildPreserveDeadlinesAndMembership(kind: Break)
+    PersistentCity.Tests.OptionalStopSchedulingTests.EventBudgetReloadAndRouteRebuildPreserveDeadlinesAndMembership(kind: WindowShopping)
+    PersistentCity.Tests.OptionalStopSchedulingTests.EventBudgetReloadAndRouteRebuildPreserveDeadlinesAndMembership(kind: Resting)
+    PersistentCity.Tests.OptionalStopSchedulingTests.EventBudgetReloadAndRouteRebuildPreserveDeadlinesAndMembership(kind: Audience)
+    PersistentCity.Tests.OptionalStopSchedulingTests.EventBudgetReloadAndRouteRebuildPreserveDeadlinesAndMembership(kind: ChatOutsideVenue)
+    PersistentCity.Tests.OptionalStopSchedulingTests.NightStopsReuseExistingVisitsWithoutAddingNightOutings
+    PersistentCity.Tests.OptionalStopSchedulingTests.UndecidedFrequencyDoesNotInventAnAutomaticRateButRetainsSavedStops
+    PersistentCity.Tests.OptionalStopSchedulingTests.CancellingOnePartnerCancelsWholeConversationBeforeImmediateSave
+    PersistentCity.Tests.OptionalStopSchedulingTests.OrphanedActiveConversationCannotLoad
+    PersistentCity.Tests.OptionalStopSchedulingTests.ExistingStopResumesOriginalActivityAndNewJourneyWithoutReplayingVisit
+    PersistentCity.Tests.OptionalStopSchedulingTests.ExactMinimumAndMaximumDurationsAreReachableAndAlwaysBounded
+    PersistentCity.Tests.OptionalStopSchedulingTests.ClosedVisitOrMealOutingCannotStartAnOptionalStop
+    PersistentCity.Tests.OptionalStopSchedulingTests.ClosureCancelsAnAlreadyPlannedBreakAndGroupPartnerLossCancelsConversation
+    PersistentCity.Tests.OptionalStopSchedulingTests.ConversationSkipsShortStayPartnerAndUsesLaterFeasibleVisitor
+    PersistentCity.Tests.OptionalStopSchedulingTests.InvalidGeometryIsSkippedAndIndividualsCannotShareTheOnlyValidSlot
+    PersistentCity.Tests.OptionalStopSchedulingTests.IndexedStopValidationStillRejectsDuplicateAndMissingReferences
+    PersistentCity.Tests.OptionalStopSchedulingTests.SameVisitEventAndReloadPreserveWaitingChoiceBeforePartnerArrives(rate: 100, chosen: True)
+    PersistentCity.Tests.OptionalStopSchedulingTests.SameVisitEventAndReloadPreserveWaitingChoiceBeforePartnerArrives(rate: 0, chosen: False)
+    PersistentCity.Tests.OptionalStopSchedulingTests.UsedConversationOpportunityCannotBeRecruitedAgainAfterSameVisitEvent(eventMinute: 1451)
+    PersistentCity.Tests.OptionalStopSchedulingTests.UsedConversationOpportunityCannotBeRecruitedAgainAfterSameVisitEvent(eventMinute: 1490)
+    PersistentCity.Tests.OptionalStopSettingsTests.ApprovedAndMissingSettingsDefaultTo25
+    PersistentCity.Tests.OptionalStopSettingsTests.SetterClamps(input: -1, expected: 0)
+    PersistentCity.Tests.OptionalStopSettingsTests.SetterClamps(input: 101, expected: 100)
+    PersistentCity.Tests.OptionalStopSettingsTests.SetterClamps(input: 0, expected: 0)
+    PersistentCity.Tests.OptionalStopSettingsTests.SetterClamps(input: 100, expected: 100)
+    PersistentCity.Tests.OptionalStopSettingsTests.SetterClamps(input: 60, expected: 60)
+    PersistentCity.Tests.OptionalStopSettingsTests.JsonHandlesInvalidIndividualValuesWithoutLosingOtherSettings(input: "-10", expected: 0)
+    PersistentCity.Tests.OptionalStopSettingsTests.JsonHandlesInvalidIndividualValuesWithoutLosingOtherSettings(input: "150", expected: 100)
+    PersistentCity.Tests.OptionalStopSettingsTests.JsonHandlesInvalidIndividualValuesWithoutLosingOtherSettings(input: "75", expected: 75)
+    PersistentCity.Tests.OptionalStopSettingsTests.JsonHandlesInvalidIndividualValuesWithoutLosingOtherSettings(input: "\"nonsense\"", expected: 25)
+    PersistentCity.Tests.OptionalStopSettingsTests.JsonHandlesInvalidIndividualValuesWithoutLosingOtherSettings(input: "null", expected: 25)
+    PersistentCity.Tests.OptionalStopSettingsTests.JsonHandlesInvalidIndividualValuesWithoutLosingOtherSettings(input: "true", expected: 25)
+    PersistentCity.Tests.OptionalStopSettingsTests.JsonHandlesInvalidIndividualValuesWithoutLosingOtherSettings(input: "{}", expected: 25)
+    PersistentCity.Tests.OptionalStopSettingsTests.JsonHandlesInvalidIndividualValuesWithoutLosingOtherSettings(input: "[]", expected: 25)
+    PersistentCity.Tests.OptionalStopSettingsTests.JsonHandlesInvalidIndividualValuesWithoutLosingOtherSettings(input: "25.5", expected: 25)
+    PersistentCity.Tests.OptionalStopSettingsTests.JsonHandlesInvalidIndividualValuesWithoutLosingOtherSettings(input: "\"60\"", expected: 60)
+    PersistentCity.Tests.OptionalStopSettingsTests.JsonHandlesInvalidIndividualValuesWithoutLosingOtherSettings(input: "1e100", expected: 100)
+    PersistentCity.Tests.OptionalStopSettingsTests.JsonHandlesInvalidIndividualValuesWithoutLosingOtherSettings(input: "-1e100", expected: 0)
+    PersistentCity.Tests.OptionalStopShareTests.RealisedShareTracksTheSettingWhenFeasibilityAllowsIt(percentage: 25, feasibleVenues: 14)
+    PersistentCity.Tests.OptionalStopShareTests.RealisedShareTracksTheSettingWhenFeasibilityAllowsIt(percentage: 10, feasibleVenues: 14)
+    PersistentCity.Tests.OptionalStopShareTests.RealisedShareTracksTheSettingWhenFeasibilityAllowsIt(percentage: 50, feasibleVenues: 32)
+    PersistentCity.Tests.OptionalStopShareTests.RealisedShareSurvivesFiniteStaysSparseAndSeparatedAdmissions(percentage: 25, stay: 45, width: 600, timing: SeparatedWaves)
+    PersistentCity.Tests.OptionalStopShareTests.RealisedShareSurvivesFiniteStaysSparseAndSeparatedAdmissions(percentage: 50, stay: 45, width: 600, timing: SeparatedWaves)
+    PersistentCity.Tests.OptionalStopShareTests.RealisedShareSurvivesFiniteStaysSparseAndSeparatedAdmissions(percentage: 25, stay: 45, width: 6000, timing: Uniform)
+    PersistentCity.Tests.OptionalStopShareTests.RealisedShareSurvivesFiniteStaysSparseAndSeparatedAdmissions(percentage: 25, stay: 45, width: 15000, timing: Uniform)
+    PersistentCity.Tests.OptionalStopShareTests.RealisedShareSurvivesFiniteStaysSparseAndSeparatedAdmissions(percentage: 25, stay: 3, width: 6000, timing: Uniform)
+    PersistentCity.Tests.OptionalStopShareTests.RealisedShareSurvivesFiniteStaysSparseAndSeparatedAdmissions(percentage: 10, stay: 3, width: 15000, timing: SeparatedWaves)
+    PersistentCity.Tests.OptionalStopShareTests.ZeroSchedulesNothingAndHundredSchedulesEveryFeasibleVisitOnly(timing: Uniform)
+    PersistentCity.Tests.OptionalStopShareTests.ZeroSchedulesNothingAndHundredSchedulesEveryFeasibleVisitOnly(timing: SeparatedWaves)
+    PersistentCity.Tests.OptionalStopShareTests.TargetAboveFeasibleShareIsCappedAtFeasibility(percentage: 50)
+    PersistentCity.Tests.OptionalStopShareTests.TargetAboveFeasibleShareIsCappedAtFeasibility(percentage: 75)
+    PersistentCity.Tests.OptionalStopShareTests.SameSeedSlicedBudgetsAndReloadReproduceTheSameDecisionsWithoutRerolling
+    PersistentCity.Tests.OptionalStopShareTests.EveryDrawIsRealisedOnceOrStillPendingAndEachHandOnMovesExactlyOneChance
+    PersistentCity.Tests.OptionalStopShareTests.FirstHandOnSurvivesSaveAndReloadOnEitherSideAtAnyRate
+    PersistentCity.Tests.OptionalStopShareTests.ReloadAtZeroNeverSpendsChancesSavedPendingAtAHigherRate
+    PersistentCity.Tests.OptionalStopShareTests.ConversationOnlyFeasibleVisitsTrackTheSetting(percentage: 0)
+    PersistentCity.Tests.OptionalStopShareTests.ConversationOnlyFeasibleVisitsTrackTheSetting(percentage: 25)
+    PersistentCity.Tests.OptionalStopShareTests.ConversationOnlyFeasibleVisitsTrackTheSetting(percentage: 50)
+    PersistentCity.Tests.OptionalStopShareTests.ConversationOnlyFeasibleVisitsTrackTheSetting(percentage: 100)
+    PersistentCity.Tests.OptionalStopShareTests.ConversationDecisionsSurviveSaveAndReloadBetweenTheWaves
+    PersistentCity.Tests.OptionalStopShareTests.MixedIndividualAndConversationVisitsTrackTheSetting(percentage: 10)
+    PersistentCity.Tests.OptionalStopShareTests.MixedIndividualAndConversationVisitsTrackTheSetting(percentage: 25)
+    PersistentCity.Tests.OptionalStopTests.StopsRespectExistingCapsAndTheNextCommitment(kind: Break)
+    PersistentCity.Tests.OptionalStopTests.StopsRespectExistingCapsAndTheNextCommitment(kind: ChatOutsideVenue)
+    PersistentCity.Tests.OptionalStopTests.StopsRespectExistingCapsAndTheNextCommitment(kind: WindowShopping)
+    PersistentCity.Tests.OptionalStopTests.StopsRespectExistingCapsAndTheNextCommitment(kind: Resting)
+    PersistentCity.Tests.OptionalStopTests.StopsRespectExistingCapsAndTheNextCommitment(kind: Audience)
+    PersistentCity.Tests.OptionalStopTests.RestoringACommittedStopKeepsItsDeadlineAndIdentity
+    PersistentCity.Tests.OptionalStopTests.EventKindsAreNotReinterpretedAsOptional(kind: WaitForBus)
+    PersistentCity.Tests.OptionalStopTests.EventKindsAreNotReinterpretedAsOptional(kind: WaitToCross)
+    PersistentCity.Tests.OptionalStopTests.EventKindsAreNotReinterpretedAsOptional(kind: QueueAtOpening)
+    PersistentCity.Tests.OptionalStopTests.EventKindsAreNotReinterpretedAsOptional(kind: WaitForSomeone)
+    PersistentCity.Tests.OptionalStopTests.EventKindsAreNotReinterpretedAsOptional(kind: WaitForPickup)
+
+
+COMMAND after-core-identity-regression EXIT 1
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(212,13): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\core-identity-regression\CoreIdentityRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(225,48): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\core-identity-regression\CoreIdentityRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(234,131): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\core-identity-regression\CoreIdentityRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(235,55): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\core-identity-regression\CoreIdentityRegression.csproj]
+
+The build failed. Fix the build errors and run again.
+
+
+COMMAND after-diagnostic-response-regression EXIT 0
+14 diagnostic response invariants passed.
+
+
+COMMAND after-event-observation-regression EXIT 1
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(212,13): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\event-observation-regression\EventObservationRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(225,48): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\event-observation-regression\EventObservationRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(234,131): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\event-observation-regression\EventObservationRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(235,55): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\event-observation-regression\EventObservationRegression.csproj]
+
+The build failed. Fix the build errors and run again.
+
+
+COMMAND after-food-catalogue-regression EXIT 0
+29 actual catalogue-adapter checks passed against native field doubles. No Unity/game execution.
+
+
+COMMAND after-food-checkout-regression EXIT 0
+Decision workload: 123 reads over 8 shops, 3 checkouts; decision cache 957 hits / 27 misses; supply-reader setups 33 (uncached: 990)
+330 actual NativeFoodMarket checkout checks passed (synthetic native surfaces, not game execution).
+
+
+COMMAND after-food-hours-regression EXIT 0
+PASS live enrolled-shop hours: extension, closure, reopening, stable identity, unchanged schedule allocation and save ownership.
+PASS actual GamePlaces + NativeFoodHours: five retail study/leisure roles stay dormant, convert in place, return dormant; vacant retail has no fake Work role.
+
+
+COMMAND after-food-household-catalogue-regression EXIT 0
+11 actual native household-reader checks passed against field doubles; no game execution.
+
+
+COMMAND after-food-ownership-regression EXIT 0
+PASS 118 actual ownership-hook checks against native field/callback doubles. No Unity/game execution.
+
+
+COMMAND after-food-supply-regression EXIT 0
+19 actual FoodSupplyReader checks passed (synthetic native surfaces, not game execution).
+
+
+COMMAND after-frame-observation-regression EXIT 0
+38 checks passed; marshaled row estimate bytes=120; default marshaled storage estimate=7864320
+
+
+COMMAND after-gate-access-regression EXIT 1
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(212,13): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\gate-access-regression\GateAccessRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(225,48): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\gate-access-regression\GateAccessRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(234,131): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\gate-access-regression\GateAccessRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(235,55): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\gate-access-regression\GateAccessRegression.csproj]
+
+The build failed. Fix the build errors and run again.
+
+
+COMMAND after-road-ceiling-regression EXIT 1
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(212,13): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\road-ceiling-regression\RoadCeilingRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(225,48): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\road-ceiling-regression\RoadCeilingRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(234,131): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\road-ceiling-regression\RoadCeilingRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(235,55): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\road-ceiling-regression\RoadCeilingRegression.csproj]
+
+The build failed. Fix the build errors and run again.
+
+
+COMMAND after-road-handoff-regression EXIT 1
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(212,13): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\road-handoff-regression\RoadHandoffRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(225,48): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\road-handoff-regression\RoadHandoffRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(234,131): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\road-handoff-regression\RoadHandoffRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(235,55): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\road-handoff-regression\RoadHandoffRegression.csproj]
+
+The build failed. Fix the build errors and run again.
+
+
+COMMAND after-road-invalidation-regression EXIT 1
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(212,13): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\road-invalidation-regression\RoadInvalidationRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(225,48): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\road-invalidation-regression\RoadInvalidationRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(234,131): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\road-invalidation-regression\RoadInvalidationRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(235,55): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\road-invalidation-regression\RoadInvalidationRegression.csproj]
+
+The build failed. Fix the build errors and run again.
+
+
+COMMAND after-road-speed-regression EXIT 1
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(212,13): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\road-speed-regression\RoadSpeedRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(225,48): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\road-speed-regression\RoadSpeedRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(234,131): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\road-speed-regression\RoadSpeedRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(235,55): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\road-speed-regression\RoadSpeedRegression.csproj]
+
+The build failed. Fix the build errors and run again.
+
+
+COMMAND after-route-discovery-regression EXIT 0
+PASS 675 discovery assertions, including zero steady-state hierarchy queries, load/reset discovery, explicit invalidation, mutation, persistent/additive scenes, bounded initialization and disposal.
+
+
+COMMAND after-save-contract-regression EXIT 1
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(212,13): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\save-contract-regression\SaveContractRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(225,48): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\save-contract-regression\SaveContractRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(234,131): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\save-contract-regression\SaveContractRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(235,55): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\save-contract-regression\SaveContractRegression.csproj]
+
+The build failed. Fix the build errors and run again.
+
+
+COMMAND after-startup-clock-regression EXIT 0
+PASS 17 actual startup-clock source checks; native clock/UI doubles, no Unity execution.
+
+
+COMMAND after-traffic-closure-regression EXIT 1
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(212,13): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\traffic-closure-regression\TrafficClosureRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(225,48): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\traffic-closure-regression\TrafficClosureRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(234,131): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\traffic-closure-regression\TrafficClosureRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(235,55): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\traffic-closure-regression\TrafficClosureRegression.csproj]
+
+The build failed. Fix the build errors and run again.
+
+
+COMMAND after-traffic-queue-regression EXIT 1
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(212,13): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\traffic-queue-regression\TrafficQueueRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(225,48): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\traffic-queue-regression\TrafficQueueRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(234,131): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\traffic-queue-regression\TrafficQueueRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(235,55): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\traffic-queue-regression\TrafficQueueRegression.csproj]
+
+The build failed. Fix the build errors and run again.
+
+
+COMMAND after-walking-quote-regression EXIT 1
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(212,13): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\walking-quote-regression\WalkingQuoteRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(225,48): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\walking-quote-regression\WalkingQuoteRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(234,131): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\walking-quote-regression\WalkingQuoteRegression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(235,55): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\walking-quote-regression\WalkingQuoteRegression.csproj]
+
+The build failed. Fix the build errors and run again.
+
+
+COMMAND after-native-command-regression-py EXIT 0
+PASS 72 native command/step checks; actual production method source, deferred physics test doubles (not game evidence).
+
+
+COMMAND after-physical-selection-regression-py EXIT 1
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(212,13): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\physical-selection-regression\obj\generated\Regression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(225,48): error CS8602: Dereference of a possibly null reference. [<worktrees>\rig-pr3-after\tools\physical-selection-regression\obj\generated\Regression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(234,131): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\physical-selection-regression\obj\generated\Regression.csproj]
+<worktrees>\rig-pr3-after\Core\OptionalStopScheduling.cs(235,55): error CS8604: Possible null reference argument for parameter 'holder' in 'void CitySimulator.Drop(CitizenState holder)'. [<worktrees>\rig-pr3-after\tools\physical-selection-regression\obj\generated\Regression.csproj]
+
+The build failed. Fix the build errors and run again.
+Traceback (most recent call last):
+  File "<worktrees>\rig-pr3-after\tools\physical-selection-regression\run.py", line 76, in <module>
+    subprocess.run(['dotnet', 'run', '--project', str(build / 'Regression.csproj'), '--configuration', 'Release'], check=True)
+  File "<user-home>\AppData\Local\Programs\Python\Python312\Lib\subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['dotnet', 'run', '--project', '<worktrees>\\rig-pr3-after\\tools\\physical-selection-regression\\obj\\generated\\Regression.csproj', '--configuration', 'Release']' returned non-zero exit status 1.
+
+
+COMMAND after-vehicle-ownership-regression-py EXIT 0
+PASS 361 actual Runtime vehicle ownership assertions
+PASS epoch call sites: Update, BeginNativeFixedStep and Release advance first; 5 native mutation wrappers advance in finally; no raw native mutation elsewhere
+
+
+COMMAND after-optional-stop-regression-py EXIT 0
+Saved facade reload: 9 integration checks passed.
+Saved facade reload: 9 integration checks passed.
+Native door replacement: 6 checks passed.
+Optional stop physical adapter: 213 checks passed.
+
+
+COMMAND after-simulate EXIT 0
+{
+  "Scenario": "Synthetic connected grid, not game performance or RLO population evidence",
+  "Citizens": 400,
+  "Days": 28,
+  "Events": 97156,
+  "BoundedBatches": 486,
+  "ElapsedMilliseconds": 2790.1198,
+  "CompletedJourneys": 44266,
+  "MissedActivities": 88,
+  "RouteRequests": 45205,
+  "Unreachable": 916,
+  "PlannedModeCounts": {
+    "Walk": 39630,
+    "Bus": 4659
+  },
+  "SnapshotBytes": 1239973,
+  "SaveRoundTrip": "Exact",
+  "EconomyTransactions": "Not implemented in this project"
+}
+
+
+COMMAND after-food-routines EXIT 0
+{
+  "evidence": "Synthetic two-neighborhood city replayed through the actual population/routine engine. Connected fixture paths, controlled prices/stock/staffed hourly throughput and temporary allowances. No native sales or measured profitability.",
+  "residents": 957,
+  "days": 7,
+  "purchasedMealOpportunities": 6699,
+  "actualObservedSpans": 27231,
+  "opportunityOrigins": {
+    "Home": 2872,
+    "Work": 3630,
+    "Shop": 130,
+    "Leisure": 67
+  },
+  "distinctDailyMealTimes": 6.83594566353187,
+  "populationReplayMs": 256.2576,
+  "opportunityMs": 30.4923,
+  "invariants": {
+    "Second neighborhood serves additional needs": true,
+    "First shop retains its customers when second covers another neighborhood": true,
+    "Two local shops reach more needs than one larger distant shop in this fixture": true,
+    "Unavailable service makes no sale": true,
+    "No extra needs or purchasing power created by adding shops": true,
+    "Quote work never exceeds two route calls per batch": true
+  },
+  "scenarios": [
+    {
+      "Name": "one-small",
+      "Fulfilled": 535,
+      "Unmet": 6164,
+      "Unresolved": 0,
+      "ShopMeals": {
+        "a": 535
+      },
+      "MeanOutingMinutes": 36.78355140186918,
+      "MeanQueueMinutes": 12.95102803738317,
+      "RouteCalls": 6692,
+      "MaximumRouteCallsPerBatch": 2,
+      "QuoteMs": 23.7965,
+      "SimulationMs": 66.5285,
+      "Maximum16EventBatchMs": 7.3605,
+      "Batches": 542
+    },
+    {
+      "Name": "two-neighborhoods",
+      "Fulfilled": 1045,
+      "Unmet": 5654,
+      "Unresolved": 0,
+      "ShopMeals": {
+        "a": 535,
+        "b": 510
+      },
+      "MeanOutingMinutes": 36.76513875598104,
+      "MeanQueueMinutes": 12.93564593301436,
+      "RouteCalls": 13398,
+      "MaximumRouteCallsPerBatch": 2,
+      "QuoteMs": 48.2116,
+      "SimulationMs": 92.7652,
+      "Maximum16EventBatchMs": 9.8623,
+      "Batches": 664
+    },
+    {
+      "Name": "one-larger",
+      "Fulfilled": 959,
+      "Unmet": 5740,
+      "Unresolved": 0,
+      "ShopMeals": {
+        "a": 959
+      },
+      "MeanOutingMinutes": 33.699572471324764,
+      "MeanQueueMinutes": 11.906141814390034,
+      "RouteCalls": 6692,
+      "MaximumRouteCallsPerBatch": 2,
+      "QuoteMs": 14.0509,
+      "SimulationMs": 46.1738,
+      "Maximum16EventBatchMs": 6.018,
+      "Batches": 610
+    },
+    {
+      "Name": "two-same-location",
+      "Fulfilled": 952,
+      "Unmet": 5747,
+      "Unresolved": 0,
+      "ShopMeals": {
+        "a": 506,
+        "a2": 446
+      },
+      "MeanOutingMinutes": 34.97413865546264,
+      "MeanQueueMinutes": 11.173865546218535,
+      "RouteCalls": 13384,
+      "MaximumRouteCallsPerBatch": 2,
+      "QuoteMs": 33.6695,
+      "SimulationMs": 82.3937,
+      "Maximum16EventBatchMs": 7.9384,
+      "Batches": 644
+    },
+    {
+      "Name": "second-unavailable",
+      "Fulfilled": 535,
+      "Unmet": 6164,
+      "Unresolved": 0,
+      "ShopMeals": {
+        "a": 535,
+        "b": 0
+      },
+      "MeanOutingMinutes": 36.78355140186918,
+      "MeanQueueMinutes": 12.95102803738317,
+      "RouteCalls": 13398,
+      "MaximumRouteCallsPerBatch": 2,
+      "QuoteMs": 18.944,
+      "SimulationMs": 69.9646,
+      "Maximum16EventBatchMs": 13.8387,
+      "Batches": 542
+    },
+    {
+      "Name": "second-price-plus-25pct",
+      "Fulfilled": 1045,
+      "Unmet": 5654,
+      "Unresolved": 0,
+      "ShopMeals": {
+        "a": 535,
+        "b": 510
+      },
+      "MeanOutingMinutes": 36.76513875598104,
+      "MeanQueueMinutes": 12.93564593301436,
+      "RouteCalls": 13398,
+      "MaximumRouteCallsPerBatch": 2,
+      "QuoteMs": 32.3942,
+      "SimulationMs": 117.8064,
+      "Maximum16EventBatchMs": 11.6969,
+      "Batches": 664
+    }
+  ],
+  "limitations": "One purchased meal/day; provisional lunch breaks; hourly service smoothing; walking outings; no home food, wages, operating costs or live native stock/service validation. Timings are offline .NET measurements, not Unity frame-time evidence."
+}
+
+
+COMMAND after-food-demand EXIT 0
+{
+  "Evidence": "Synthetic demonstration: 24 fictional residents and two fictional shops. No live city was read.",
+  "Consumers": 24,
+  "Days": 2,
+  "Comparisons": 4,
+  "NativeSalesChanged": 0
+}
+Comparison and saved intentions: <private-evidence>\after-food-demand-demo

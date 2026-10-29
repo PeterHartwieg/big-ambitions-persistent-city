@@ -1,0 +1,53 @@
+{
+  "pre-save": {
+    "minute": 22973.207248687744,
+    "citizen": {
+      "Phase": 1,
+      "Activity": 0,
+      "PlaceId": "address:ba%3Astreet_fifthavenue:51:home",
+      "NextEventMinute": 22973.355394318838,
+      "ActivityUntilMinute": 22994.0,
+      "OptionalStopChoice": null,
+      "OptionalStop": null
+    },
+    "lastVisit": {
+      "Activity": 0,
+      "AtMinute": 22766.718578554483,
+      "PlaceId": "address:ba%3Astreet_fifthavenue:51:home"
+    }
+  },
+  "saved": {
+    "minute": 22973.207248687744,
+    "citizen": {
+      "Phase": 1,
+      "Activity": 0,
+      "PlaceId": "address:ba%3Astreet_fifthavenue:51:home",
+      "NextEventMinute": 22973.355394318838,
+      "ActivityUntilMinute": 22994.0,
+      "OptionalStopChoice": null,
+      "OptionalStop": null
+    },
+    "lastVisit": {
+      "Activity": 0,
+      "AtMinute": 22766.718578554483,
+      "PlaceId": "address:ba%3Astreet_fifthavenue:51:home"
+    }
+  },
+  "reloaded": {
+    "minute": 22973.54058074951,
+    "citizen": {
+      "Phase": 0,
+      "Activity": 3,
+      "PlaceId": "address:ba%3Astreet_broadwaystreet:14:leisure",
+      "NextEventMinute": 22994.0,
+      "ActivityUntilMinute": 22994.0,
+      "OptionalStopChoice": true,
+      "OptionalStop": null
+    },
+    "lastVisit": {
+      "Activity": 3,
+      "AtMinute": 22973.355394318838,
+      "PlaceId": "address:ba%3Astreet_broadwaystreet:14:leisure"
+    }
+  }
+}

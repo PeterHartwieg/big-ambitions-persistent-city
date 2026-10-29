@@ -1,0 +1,31 @@
+{
+  "recorded_utc": "2026-10-29T06:44:28.443986+00:00",
+  "note": "Hashes of complete retained log snapshots; snapshots may overlap. Raw logs remain private.",
+  "files": [
+    {
+      "file": "after-events-v3-Player-agent.log",
+      "bytes": 6221694,
+      "sha256": "a222710a59f9bcdf44205a52aced9397a632e661fe95633527c92dbdb3bdc685"
+    },
+    {
+      "file": "after-primary-Player-agent.log",
+      "bytes": 1149830,
+      "sha256": "2906af67399d5002947d877c412df67b3ee25fcab8622a6d3eb5cb0091771172"
+    },
+    {
+      "file": "after-rates-v2-Player-agent.log",
+      "bytes": 1413915,
+      "sha256": "ed885030d9af354aee3f0df136c3d1edb1494ee6fa6abb3e817d64e9b45a96ae"
+    },
+    {
+      "file": "before-all-Player-agent.log",
+      "bytes": 1120568,
+      "sha256": "220320d496b43b10a3effdd04b7653a70a7809dc8f8a8eafa6df7557fb0f39fa"
+    },
+    {
+      "file": "native-final.log",
+      "bytes": 379636,
+      "sha256": "16382d71ea02b3e174e1c73b03ee036da10b2f153063034c9a63773921134780"
+    }
+  ]
+}

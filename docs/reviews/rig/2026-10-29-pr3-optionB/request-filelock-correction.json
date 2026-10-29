@@ -1,0 +1,6 @@
+{
+  "error": "PermissionError writing request.json while the Unity helper was reading it",
+  "affected": "First rate100 attempt, retained separately and excluded from the matched full-rate comparison",
+  "correction": "Write complete JSON to a unique temporary file, then atomically replace request.json; retry only sharing violations, without an execution deadline. No native state, prices, fixture guards or production code changed. Restart rate100 from the same original disposable checkpoint.",
+  "retainedFiles": 56
+}

@@ -1,0 +1,20 @@
+[
+  {
+    "arm": "before",
+    "sha": "7357f78ca13edd5200e7e708950ffbc7a6ade1fe",
+    "dll_sha256": "54aa9dc8be97f0a3c89b629b7bc06813de0dad61e515ecd6d02d1f5cee470f54",
+    "helper_sha256": "5aaf5093e33c3f695803b7fc5443cf869e21e08ca3a6542db032a308eaa45e8e"
+  },
+  {
+    "arm": "after",
+    "sha": "b646daef877e916e1bdd973d9e390aaaf41239be",
+    "dll_sha256": "40e5ace63ebef339ea09c43298d0c8403c8e087abdb008d7629e6716fc15538a",
+    "helper_sha256": "a93b075f8fb071e25d8bc9fc08fc80c139002b6e3c04fb03d660f7f03bef11a0",
+    "helperVersions": {
+      "PR3RigGuard-v1.dll": "a93b075f8fb071e25d8bc9fc08fc80c139002b6e3c04fb03d660f7f03bef11a0",
+      "PR3RigGuard-v2.dll": "f41e510df502ba8a7ee01e0771186ae24704e99b939aa3cbe3bf62cfe8b49026",
+      "PR3RigGuard.dll": "a791d6de10fbe5245019a450678aea7df16f0363bcbb89a13ef616c2ffdcb8db"
+    },
+    "timingHelperSha256": "dc939f272b1b451a7eb15dd7c6665e3a74d4a389e3ebfe6bf9d35d15d18696aa"
+  }
+]
