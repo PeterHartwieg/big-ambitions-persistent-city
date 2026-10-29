@@ -208,7 +208,7 @@ namespace PersistentCity.Core
             if (bankedChances.Count + waitingChances.Count == 0 || !TryPublish(person, arrivalRoute, key, now, true)) return;
             // The donor is chosen after planning, so a waiting holder that became this visit's conversation
             // partner (spending its own chance) is never also the donor.
-            var donor = bankedChances.Count > 0 ? bankedChances.Min : waitingChances.Min;
+            var donor = Lowest(bankedChances.Count > 0 ? bankedChances : waitingChances);
             donor.OptionalStopChoice = false; FileOptionalStop(donor);
             person.OptionalStopChoice = true;
             chanceTally.HandedOn++; chanceTally.Realised++;
@@ -222,7 +222,7 @@ namespace PersistentCity.Core
         private bool PassOnChance()
         {
             if (freeOfChances.Count == 0) return false;
-            var recipient = freeOfChances.Min; recipient.OptionalStopChoice = true; FileOptionalStop(recipient);
+            var recipient = Lowest(freeOfChances); recipient.OptionalStopChoice = true; FileOptionalStop(recipient);
             chanceTally.PassedOn++; return true;
         }
         // Chances inherited from a save at a higher setting are trimmed to the current bound at the first
@@ -231,9 +231,12 @@ namespace PersistentCity.Core
         private void TrimPendingChances()
         {
             int limit = PendingChanceLimit;
-            while (bankedChances.Count > 0 && (stopPercentage == 100 || bankedChances.Count + waitingChances.Count > limit)) Drop(bankedChances.Min);
-            while (waitingChances.Count > limit) Drop(waitingChances.Min);
+            while (bankedChances.Count > 0 && (stopPercentage == 100 || bankedChances.Count + waitingChances.Count > limit)) Drop(Lowest(bankedChances));
+            while (waitingChances.Count > limit) Drop(Lowest(waitingChances));
         }
+        // Callers check the set is non-empty; an empty set here is an index bug, not a missing chance.
+        private static CitizenState Lowest(SortedSet<CitizenState> set)
+            => set.Min ?? throw new InvalidOperationException("Optional-stop index is unexpectedly empty.");
         private void Drop(CitizenState holder) { holder.OptionalStopChoice = false; FileOptionalStop(holder); chanceTally.Dropped++; }
         private bool TryPublish(CitizenState person, Route? arrivalRoute, string key, double now, bool taker)
         {

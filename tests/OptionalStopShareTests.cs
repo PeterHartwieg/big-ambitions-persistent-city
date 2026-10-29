@@ -107,6 +107,26 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
         Assert.InRange(tally.Share, target - 0.03, Math.Min(target + 0.03, tally.FeasibleShare));
     }
 
+    // ob4: the rig's 42,100 default draws came to 24.56% for its one fixed seed. Over visit keys of the
+    // rig's shape, the draw share across seeds averages the setting, with binomial seed-to-seed spread;
+    // a low share for one seed is sampling, not a hashing or rounding bias.
+    [Theory]
+    [InlineData(10)] [InlineData(25)] [InlineData(50)]
+    public void DrawShareAcrossSeedsIsUnbiasedForRigShapedVisitKeys(int percentage)
+    {
+        string[] streets = { "thirdstreet", "fourthstreet", "tenthstreet", "twentyfourthstreet" };
+        var keys = Enumerable.Range(0, 5000).Select(i => (i % 3 == 0 ? "pc:" + i % 600 : "c" + i % 400)
+            + ":address:ba%3Astreet_" + streets[i % 4] + ":" + i % 50 + ":shop:"
+            + (9290 + i * 0.3711 + i % 7 * 0.0131).ToString("R", System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+        var shares = Enumerable.Range(0, 200).Select(seed => keys.Count(k => OptionalStopPolicy.Choose(k, seed * 7919 + 13, percentage))
+            / (double)keys.Length).ToArray();
+        double p = percentage / 100.0, mean = shares.Average(), binomial = Math.Sqrt(p * (1 - p) / keys.Length);
+        double spread = Math.Sqrt(shares.Sum(s => (s - mean) * (s - mean)) / (shares.Length - 1));
+        output.WriteLine($"{percentage}%: mean {mean:P3}, seed spread {spread:P3}, binomial {binomial:P3}");
+        Assert.InRange(mean, p - 4 * binomial / Math.Sqrt(shares.Length), p + 4 * binomial / Math.Sqrt(shares.Length));
+        Assert.InRange(spread, 0.75 * binomial, 1.25 * binomial);
+    }
+
     [Theory]
     [InlineData(25, 14)] // ~33% feasible, like the rig
     [InlineData(10, 14)]
