@@ -1,0 +1,10 @@
+{
+    "instance":  "agent1",
+    "held":  true,
+    "owner":  "persistent-city-pr3-ob-rig",
+    "purpose":  "PR3 isolated before/after strict financial migration checkout QA",
+    "acquired_utc":  "2026-10-29T03:38:47.5224126Z",
+    "expires_automatically":  false,
+    "pending":  0,
+    "legacy_blocked":  false
+}

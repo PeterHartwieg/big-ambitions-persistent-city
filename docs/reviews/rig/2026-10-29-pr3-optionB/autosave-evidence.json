@@ -1,0 +1,248 @@
+[
+  {
+    "run": "before-qa-1",
+    "before": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 9,
+      "save": "FT Food Routines PR3 OB20261029",
+      "frame": 26974
+    },
+    "after": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 24,
+      "save": "FT Food Routines PR3 OB20261029",
+      "frame": 32064
+    },
+    "afterReload": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 0,
+      "save": "FT Food Routines PR3 OB QA before1",
+      "frame": 32915
+    },
+    "afterResumedPlay": null,
+    "validity": {
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "broadSavingMentionDelta": 15,
+      "actualSaveLines": [],
+      "clean": true
+    }
+  },
+  {
+    "run": "after-qa-1",
+    "before": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 9,
+      "save": "FT Food Routines PR3 OB20261029",
+      "frame": 4086
+    },
+    "after": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 22,
+      "save": "FT Food Routines PR3 OB20261029",
+      "frame": 9120
+    },
+    "afterReload": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 0,
+      "save": "FT Food Routines PR3 OB QA after1",
+      "frame": 9997
+    },
+    "afterResumedPlay": null,
+    "validity": {
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "broadSavingMentionDelta": 13,
+      "actualSaveLines": [],
+      "clean": true
+    }
+  },
+  {
+    "run": "before-qa-2",
+    "before": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 10,
+      "save": "FT Food Routines PR3 OB20261029",
+      "frame": 35056
+    },
+    "after": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 23,
+      "save": "FT Food Routines PR3 OB20261029",
+      "frame": 40083
+    },
+    "afterReload": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 0,
+      "save": "FT Food Routines PR3 OB QA before2",
+      "frame": 40936
+    },
+    "afterResumedPlay": null,
+    "validity": {
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "broadSavingMentionDelta": 13,
+      "actualSaveLines": [],
+      "clean": true
+    }
+  },
+  {
+    "run": "after-qa-2",
+    "before": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 10,
+      "save": "FT Food Routines PR3 OB20261029",
+      "frame": 16926
+    },
+    "after": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 24,
+      "save": "FT Food Routines PR3 OB20261029",
+      "frame": 20150
+    },
+    "afterReload": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 0,
+      "save": "FT Food Routines PR3 OB QA after2",
+      "frame": 21010
+    },
+    "afterResumedPlay": null,
+    "validity": {
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "broadSavingMentionDelta": 14,
+      "actualSaveLines": [],
+      "clean": true
+    }
+  },
+  {
+    "run": "before-qa-3",
+    "before": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 10,
+      "save": "FT Food Routines PR3 OB20261029",
+      "frame": 42870
+    },
+    "after": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 23,
+      "save": "FT Food Routines PR3 OB20261029",
+      "frame": 47637
+    },
+    "afterReload": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 0,
+      "save": "FT Food Routines PR3 OB QA before3",
+      "frame": 49175
+    },
+    "afterResumedPlay": null,
+    "validity": {
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "broadSavingMentionDelta": 13,
+      "actualSaveLines": [],
+      "clean": true
+    }
+  },
+  {
+    "run": "after-qa-3",
+    "before": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 10,
+      "save": "FT Food Routines PR3 OB20261029",
+      "frame": 23153
+    },
+    "after": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 24,
+      "save": "FT Food Routines PR3 OB20261029",
+      "frame": 28188
+    },
+    "afterReload": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 0,
+      "save": "FT Food Routines PR3 OB QA after3",
+      "frame": 29139
+    },
+    "afterResumedPlay": null,
+    "validity": {
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "broadSavingMentionDelta": 14,
+      "actualSaveLines": [],
+      "clean": true
+    }
+  }
+]

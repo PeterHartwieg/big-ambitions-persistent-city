@@ -1,0 +1,771 @@
+[
+  {
+    "check": "before-build",
+    "exit": 0,
+    "seconds": 5.52,
+    "command": [
+      "python",
+      "tools/build.py",
+      "--game-managed",
+      "C:/Program Files (x86)/Steam/steamapps/common/Big Ambitions/Big Ambitions_Data/Managed"
+    ]
+  },
+  {
+    "check": "before-tests",
+    "exit": 0,
+    "seconds": 51.14,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "test",
+      "tests/PersistentCity.Tests.csproj",
+      "--logger",
+      "trx;LogFileName=<private-evidence>\\before-tests.trx"
+    ]
+  },
+  {
+    "check": "before-optional-test-list",
+    "exit": 0,
+    "seconds": 2.18,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "test",
+      "tests/PersistentCity.Tests.csproj",
+      "--no-build",
+      "--list-tests",
+      "--filter",
+      "FullyQualifiedName~OptionalStop|FullyQualifiedName~BaseMerge_"
+    ]
+  },
+  {
+    "check": "before-core-identity-regression",
+    "exit": 0,
+    "seconds": 8.65,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-before\\tools\\core-identity-regression\\CoreIdentityRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-diagnostic-response-regression",
+    "exit": 0,
+    "seconds": 5.07,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-before\\tools\\diagnostic-response-regression\\DiagnosticResponseRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-event-observation-regression",
+    "exit": 0,
+    "seconds": 5.72,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-before\\tools\\event-observation-regression\\EventObservationRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-food-catalogue-regression",
+    "exit": 0,
+    "seconds": 1.96,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-before\\tools\\food-catalogue-regression\\FoodCatalogueRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-food-checkout-regression",
+    "exit": 0,
+    "seconds": 3.0,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-before\\tools\\food-checkout-regression\\FoodCheckoutRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-food-hours-regression",
+    "exit": 0,
+    "seconds": 2.69,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-before\\tools\\food-hours-regression\\FoodHoursRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-food-household-catalogue-regression",
+    "exit": 0,
+    "seconds": 3.84,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-before\\tools\\food-household-catalogue-regression\\FoodHouseholdCatalogueRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-food-ownership-regression",
+    "exit": 0,
+    "seconds": 7.62,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-before\\tools\\food-ownership-regression\\FoodOwnershipRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-food-supply-regression",
+    "exit": 0,
+    "seconds": 4.86,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-before\\tools\\food-supply-regression\\FoodSupplyRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-frame-observation-regression",
+    "exit": 0,
+    "seconds": 5.08,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-before\\tools\\frame-observation-regression\\FrameObservationRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-gate-access-regression",
+    "exit": 0,
+    "seconds": 9.05,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-before\\tools\\gate-access-regression\\GateAccessRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-road-ceiling-regression",
+    "exit": 0,
+    "seconds": 9.25,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-before\\tools\\road-ceiling-regression\\RoadCeilingRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-road-handoff-regression",
+    "exit": 0,
+    "seconds": 4.58,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-before\\tools\\road-handoff-regression\\RoadHandoffRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-road-invalidation-regression",
+    "exit": 0,
+    "seconds": 6.6,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-before\\tools\\road-invalidation-regression\\RoadInvalidationRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-road-speed-regression",
+    "exit": 0,
+    "seconds": 3.45,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-before\\tools\\road-speed-regression\\RoadSpeedRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-route-discovery-regression",
+    "exit": 0,
+    "seconds": 12.73,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-before\\tools\\route-discovery-regression\\RouteDiscoveryRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-save-contract-regression",
+    "exit": 0,
+    "seconds": 4.47,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-before\\tools\\save-contract-regression\\SaveContractRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-startup-clock-regression",
+    "exit": 0,
+    "seconds": 6.87,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-before\\tools\\startup-clock-regression\\StartupClockRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-traffic-closure-regression",
+    "exit": 0,
+    "seconds": 3.26,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-before\\tools\\traffic-closure-regression\\TrafficClosureRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-traffic-queue-regression",
+    "exit": 0,
+    "seconds": 6.4,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-before\\tools\\traffic-queue-regression\\TrafficQueueRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-walking-quote-regression",
+    "exit": 0,
+    "seconds": 2.85,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-before\\tools\\walking-quote-regression\\WalkingQuoteRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "before-native-command-regression-py",
+    "exit": 0,
+    "seconds": 5.51,
+    "command": [
+      "python",
+      "<worktrees>\\rig-pr3-before\\tools\\native-command-regression\\run.py"
+    ]
+  },
+  {
+    "check": "before-physical-selection-regression-py",
+    "exit": 0,
+    "seconds": 5.69,
+    "command": [
+      "python",
+      "<worktrees>\\rig-pr3-before\\tools\\physical-selection-regression\\run.py"
+    ]
+  },
+  {
+    "check": "before-vehicle-ownership-regression-py",
+    "exit": 0,
+    "seconds": 5.54,
+    "command": [
+      "python",
+      "<worktrees>\\rig-pr3-before\\tools\\vehicle-ownership-regression\\run.py"
+    ]
+  },
+  {
+    "check": "before-simulate",
+    "exit": 0,
+    "seconds": 9.89,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "tools/simulate/Simulate.csproj",
+      "--",
+      "28",
+      "<private-evidence>\\before-demo"
+    ]
+  },
+  {
+    "check": "before-food-routines",
+    "exit": 0,
+    "seconds": 9.04,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "tools/food-routines/FoodRoutines.csproj",
+      "--configuration",
+      "Release",
+      "--",
+      "<private-evidence>\\before-food-routines-demo",
+      "957"
+    ]
+  },
+  {
+    "check": "before-food-demand",
+    "exit": 0,
+    "seconds": 4.56,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "tools/food-demand/FoodDemand.csproj",
+      "--",
+      "<private-evidence>\\before-food-demand-demo"
+    ]
+  },
+  {
+    "check": "after-build",
+    "exit": 0,
+    "seconds": 3.85,
+    "command": [
+      "python",
+      "tools/build.py",
+      "--game-managed",
+      "C:/Program Files (x86)/Steam/steamapps/common/Big Ambitions/Big Ambitions_Data/Managed"
+    ]
+  },
+  {
+    "check": "after-tests",
+    "exit": 0,
+    "seconds": 194.19,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "test",
+      "tests/PersistentCity.Tests.csproj",
+      "--logger",
+      "trx;LogFileName=<private-evidence>\\after-tests.trx"
+    ]
+  },
+  {
+    "check": "after-optional-test-list",
+    "exit": 0,
+    "seconds": 1.95,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "test",
+      "tests/PersistentCity.Tests.csproj",
+      "--no-build",
+      "--list-tests",
+      "--filter",
+      "FullyQualifiedName~OptionalStop|FullyQualifiedName~BaseMerge_"
+    ]
+  },
+  {
+    "check": "after-core-identity-regression",
+    "exit": 1,
+    "seconds": 3.47,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-after\\tools\\core-identity-regression\\CoreIdentityRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-diagnostic-response-regression",
+    "exit": 0,
+    "seconds": 2.75,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-after\\tools\\diagnostic-response-regression\\DiagnosticResponseRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-event-observation-regression",
+    "exit": 1,
+    "seconds": 5.84,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-after\\tools\\event-observation-regression\\EventObservationRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-food-catalogue-regression",
+    "exit": 0,
+    "seconds": 6.23,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-after\\tools\\food-catalogue-regression\\FoodCatalogueRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-food-checkout-regression",
+    "exit": 0,
+    "seconds": 9.58,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-after\\tools\\food-checkout-regression\\FoodCheckoutRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-food-hours-regression",
+    "exit": 0,
+    "seconds": 4.93,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-after\\tools\\food-hours-regression\\FoodHoursRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-food-household-catalogue-regression",
+    "exit": 0,
+    "seconds": 6.01,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-after\\tools\\food-household-catalogue-regression\\FoodHouseholdCatalogueRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-food-ownership-regression",
+    "exit": 0,
+    "seconds": 2.7,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-after\\tools\\food-ownership-regression\\FoodOwnershipRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-food-supply-regression",
+    "exit": 0,
+    "seconds": 2.07,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-after\\tools\\food-supply-regression\\FoodSupplyRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-frame-observation-regression",
+    "exit": 0,
+    "seconds": 1.71,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-after\\tools\\frame-observation-regression\\FrameObservationRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-gate-access-regression",
+    "exit": 1,
+    "seconds": 1.39,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-after\\tools\\gate-access-regression\\GateAccessRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-road-ceiling-regression",
+    "exit": 1,
+    "seconds": 1.4,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-after\\tools\\road-ceiling-regression\\RoadCeilingRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-road-handoff-regression",
+    "exit": 1,
+    "seconds": 1.74,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-after\\tools\\road-handoff-regression\\RoadHandoffRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-road-invalidation-regression",
+    "exit": 1,
+    "seconds": 1.56,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-after\\tools\\road-invalidation-regression\\RoadInvalidationRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-road-speed-regression",
+    "exit": 1,
+    "seconds": 2.71,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-after\\tools\\road-speed-regression\\RoadSpeedRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-route-discovery-regression",
+    "exit": 0,
+    "seconds": 10.83,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-after\\tools\\route-discovery-regression\\RouteDiscoveryRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-save-contract-regression",
+    "exit": 1,
+    "seconds": 1.26,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-after\\tools\\save-contract-regression\\SaveContractRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-startup-clock-regression",
+    "exit": 0,
+    "seconds": 2.49,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-after\\tools\\startup-clock-regression\\StartupClockRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-traffic-closure-regression",
+    "exit": 1,
+    "seconds": 1.45,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-after\\tools\\traffic-closure-regression\\TrafficClosureRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-traffic-queue-regression",
+    "exit": 1,
+    "seconds": 1.36,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-after\\tools\\traffic-queue-regression\\TrafficQueueRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-walking-quote-regression",
+    "exit": 1,
+    "seconds": 1.43,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "<worktrees>\\rig-pr3-after\\tools\\walking-quote-regression\\WalkingQuoteRegression.csproj",
+      "--configuration",
+      "Release"
+    ]
+  },
+  {
+    "check": "after-native-command-regression-py",
+    "exit": 0,
+    "seconds": 2.45,
+    "command": [
+      "python",
+      "<worktrees>\\rig-pr3-after\\tools\\native-command-regression\\run.py"
+    ]
+  },
+  {
+    "check": "after-physical-selection-regression-py",
+    "exit": 1,
+    "seconds": 1.72,
+    "command": [
+      "python",
+      "<worktrees>\\rig-pr3-after\\tools\\physical-selection-regression\\run.py"
+    ]
+  },
+  {
+    "check": "after-vehicle-ownership-regression-py",
+    "exit": 0,
+    "seconds": 2.18,
+    "command": [
+      "python",
+      "<worktrees>\\rig-pr3-after\\tools\\vehicle-ownership-regression\\run.py"
+    ]
+  },
+  {
+    "check": "after-optional-stop-regression-py",
+    "exit": 0,
+    "seconds": 3.6,
+    "command": [
+      "python",
+      "<worktrees>\\rig-pr3-after\\tools\\optional-stop-regression\\run.py"
+    ]
+  },
+  {
+    "check": "after-simulate",
+    "exit": 0,
+    "seconds": 6.36,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "tools/simulate/Simulate.csproj",
+      "--",
+      "28",
+      "<private-evidence>\\after-demo"
+    ]
+  },
+  {
+    "check": "after-food-routines",
+    "exit": 0,
+    "seconds": 5.14,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "tools/food-routines/FoodRoutines.csproj",
+      "--configuration",
+      "Release",
+      "--",
+      "<private-evidence>\\after-food-routines-demo",
+      "957"
+    ]
+  },
+  {
+    "check": "after-food-demand",
+    "exit": 0,
+    "seconds": 4.89,
+    "command": [
+      "<user-home>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "tools/food-demand/FoodDemand.csproj",
+      "--",
+      "<private-evidence>\\after-food-demand-demo"
+    ]
+  }
+]

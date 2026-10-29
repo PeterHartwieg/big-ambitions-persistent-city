@@ -1,0 +1,9 @@
+{
+  "nativeFoodShopPlaces": [
+    "address:ba%3Astreet_thirdstreet:30:shop"
+  ],
+  "optionalStopPlaceCount": 74,
+  "overlap": [],
+  "noOptionalStopsAtFoodOwnedPlaces": true,
+  "confirmedFoodSales": 110
+}

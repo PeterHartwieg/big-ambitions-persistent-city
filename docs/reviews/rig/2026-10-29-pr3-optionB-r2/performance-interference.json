@@ -1,0 +1,170 @@
+{
+  "before-1": {
+    "logSha256": "9932c136c9ca37fb47b0eabfb5737bc9dd0dba31161a04fe4167a51c127c468e",
+    "slowFrameOtherProgramCpuPercent": {
+      "samples": 15,
+      "median": 11,
+      "maximum": 18
+    },
+    "minuteOtherProgramCpuPercent": [
+      16
+    ],
+    "minuteSummaries": [
+      "[Mod:RealLifeOverhaul] Session 1 min: frames 4932, average 12.2 ms, worst 133 ms, over 33 ms: 64, over 50 ms: 63; managed heap 1246 MB of 1798 MB, collections in the minute 5, grown by 184.3 MB in the minute (3145 KB a second), the collector at work 22 ms in the minute and 19.3 ms at most in a frame; engine memory 3047 MB; mod objects 6252 (814 shown) under 5 roots; people 2 out, 12 made of 12; city people 2 out, 8 made of 8, city props made 2; looks built in the minute 6 (0 while playing), since the city loaded 22 (0 while playing); frames over 80 ms: 55, of them 0 behind the game's black screen (into or out of a building) or its loading screen and 55 seen; the mod's navigation obstacles changed in the minute 7; handlers put back on the game's events 30 (changed events looked into 56); searches of the whole scene 1 (0 while playing); the mod's own scripts: 0.17 ms a frame on average and 37.0 ms at most in a frame, the most in the minute: Camera: ThirdPersonCamera.Update (0.05 ms a frame, 0.2 ms at worst), Transport: TransitDirector.Update (0.02 ms a frame, 5.3 ms at worst), Civic: CivicDirector.Update (0.01 ms a frame, 36.7 ms at worst); the heap grew under them by about 113 KB a second (one frame in 8 sampled) of the 3145 KB a second it grew in all, the most under Social: FlareDirector.Tick (37 KB a second), Coroutine: FlareDirector.Tick (37 KB a second), Coroutine: SettingsApp.Install (34 KB a second); waiting for the last frame to be shown 21814 ms in the minute, 28 ms at most in a frame; outside the engine's steps 597 ms, 1 ms at most; the main thread ran 63% of the time; other programs held 16% of the processors on average and 100% at most in a frame; page faults 679327 in the minute, 3889 at most in a frame; the frames over 33 ms: 64 the main thread's own work; the engine's own frame timing: not offered by this build; on foot in the street, game hour 8."
+    ]
+  },
+  "before-2": {
+    "logSha256": "1c65f40b25a006b86c1d6c89b0aae2f84e638afe2c332f7edb9abcd02b129783",
+    "slowFrameOtherProgramCpuPercent": {
+      "samples": 14,
+      "median": 12.0,
+      "maximum": 18
+    },
+    "minuteOtherProgramCpuPercent": [
+      16
+    ],
+    "minuteSummaries": [
+      "[Mod:RealLifeOverhaul] Session 1 min: frames 4918, average 12.2 ms, worst 111 ms, over 33 ms: 64, over 50 ms: 64; managed heap 1623 MB of 2004 MB, collections in the minute 2, grown by 166.9 MB in the minute (2848 KB a second), the collector at work 0 ms in the minute and 0.0 ms at most in a frame; engine memory 3050 MB; mod objects 6253 (739 shown) under 6 roots; people 2 out, 12 made of 12; city people 1 out, 8 made of 8, city props made 1; looks built in the minute 6 (0 while playing), since the city loaded 22 (0 while playing); frames over 80 ms: 56, of them 0 behind the game's black screen (into or out of a building) or its loading screen and 56 seen; the mod's navigation obstacles changed in the minute 7; handlers put back on the game's events 30 (changed events looked into 57); searches of the whole scene 1 (0 while playing); the mod's own scripts: 0.15 ms a frame on average and 7.7 ms at most in a frame, the most in the minute: Camera: ThirdPersonCamera.Update (0.05 ms a frame, 0.1 ms at worst), Transport: TransitDirector.Update (0.02 ms a frame, 5.8 ms at worst), World: NearbyInteraction.Update (0.01 ms a frame, 0.1 ms at worst); the heap grew under them by about 152 KB a second (one frame in 8 sampled) of the 2848 KB a second it grew in all, the most under Social: FlareDirector.Tick (57 KB a second), Coroutine: FlareDirector.Tick (57 KB a second), Coroutine: SettingsApp.Install (50 KB a second); waiting for the last frame to be shown 21220 ms in the minute, 7 ms at most in a frame; outside the engine's steps 582 ms, 1 ms at most; the main thread ran 64% of the time; other programs held 16% of the processors on average and 100% at most in a frame; page faults 352229 in the minute, 3909 at most in a frame; the frames over 33 ms: 64 the main thread's own work; the engine's own frame timing: not offered by this build; on foot in the street, game hour 8."
+    ]
+  },
+  "before-3": {
+    "logSha256": "5489155356d32be8b0640c28f8236eac723fba8ac9474ec648c605548c3a4e05",
+    "slowFrameOtherProgramCpuPercent": {
+      "samples": 13,
+      "median": 18,
+      "maximum": 81
+    },
+    "minuteOtherProgramCpuPercent": [
+      26
+    ],
+    "minuteSummaries": [
+      "[Mod:RealLifeOverhaul] Session 1 min: frames 4404, average 13.6 ms, worst 238 ms, over 33 ms: 86, over 50 ms: 73; managed heap 1330 MB of 2263 MB, collections in the minute 3, grown by 140.7 MB in the minute (2398 KB a second), the collector at work 27 ms in the minute and 24.0 ms at most in a frame; engine memory 3040 MB; mod objects 6252 (816 shown) under 5 roots; people 2 out, 12 made of 12; city people 2 out, 8 made of 8, city props made 2; looks built in the minute 6 (0 while playing), since the city loaded 22 (0 while playing); frames over 80 ms: 60, of them 0 behind the game's black screen (into or out of a building) or its loading screen and 60 seen; the mod's navigation obstacles changed in the minute 7; handlers put back on the game's events 30 (changed events looked into 67); searches of the whole scene 1 (0 while playing); the mod's own scripts: 0.22 ms a frame on average and 29.4 ms at most in a frame, the most in the minute: Camera: ThirdPersonCamera.Update (0.06 ms a frame, 0.3 ms at worst), Transport: TransitDirector.Update (0.05 ms a frame, 15.3 ms at worst), Traffic: SolidStreets.Update (0.01 ms a frame, 23.2 ms at worst); the heap grew under them by about 137 KB a second (one frame in 8 sampled) of the 2398 KB a second it grew in all, the most under Social: FlareDirector.Tick (54 KB a second), Coroutine: FlareDirector.Tick (54 KB a second), Coroutine: SettingsApp.Install (53 KB a second); waiting for the last frame to be shown 15115 ms in the minute, 7 ms at most in a frame; outside the engine's steps 914 ms, 26 ms at most; the main thread ran 73% of the time; other programs held 26% of the processors on average and 100% at most in a frame; page faults 576323 in the minute, 3917 at most in a frame; the frames over 33 ms: 2 spread over the engine's steps, 79 the main thread's own work, 5 other programs holding the processor; the engine's own frame timing: not offered by this build; on foot in the street, game hour 8."
+    ]
+  },
+  "after-1": {
+    "logSha256": "1eee6bb4a336ae697f8c1870569ad02435ecd2846481ca1f9f549ec0848896c7",
+    "slowFrameOtherProgramCpuPercent": {
+      "samples": 15,
+      "median": 32,
+      "maximum": 35
+    },
+    "minuteOtherProgramCpuPercent": [
+      33
+    ],
+    "minuteSummaries": [
+      "[Mod:RealLifeOverhaul] Session 1 min: frames 4675, average 12.8 ms, worst 205 ms, over 33 ms: 70, over 50 ms: 62; managed heap 1180 MB of 1529 MB, collections in the minute 6, grown by 300.0 MB in the minute (5120 KB a second), the collector at work 52 ms in the minute and 24.2 ms at most in a frame; engine memory 3035 MB; mod objects 6252 (1003 shown) under 5 roots; people 4 out, 12 made of 12; city people 2 out, 8 made of 8, city props made 2; looks built in the minute 6 (0 while playing), since the city loaded 22 (0 while playing); frames over 80 ms: 61, of them 0 behind the game's black screen (into or out of a building) or its loading screen and 61 seen; the mod's navigation obstacles changed in the minute 8; handlers put back on the game's events 30 (changed events looked into 54); searches of the whole scene 1 (0 while playing); the mod's own scripts: 0.22 ms a frame on average and 16.1 ms at most in a frame, the most in the minute: Camera: ThirdPersonCamera.Update (0.07 ms a frame, 0.3 ms at worst), Transport: TransitDirector.Update (0.02 ms a frame, 15.9 ms at worst), Traffic: CityDrivers.Update (0.01 ms a frame, 4.3 ms at worst); the heap grew under them by about 144 KB a second (one frame in 8 sampled) of the 5120 KB a second it grew in all, the most under Social: FlareDirector.Tick (50 KB a second), Coroutine: FlareDirector.Tick (50 KB a second), Coroutine: SettingsApp.Install (48 KB a second); waiting for the last frame to be shown 11976 ms in the minute, 34 ms at most in a frame; outside the engine's steps 993 ms, 1 ms at most; the main thread ran 79% of the time; other programs held 33% of the processors on average and 100% at most in a frame; page faults 355036 in the minute, 3907 at most in a frame; the frames over 33 ms: 70 the main thread's own work; the engine's own frame timing: not offered by this build; on foot in the street, game hour 8."
+    ]
+  },
+  "after-2": {
+    "logSha256": "f9ddd54ea13301d5dc29a2d2b83b53117aecb719971a5253d877199abeb7353e",
+    "slowFrameOtherProgramCpuPercent": {
+      "samples": 15,
+      "median": 33,
+      "maximum": 44
+    },
+    "minuteOtherProgramCpuPercent": [
+      25
+    ],
+    "minuteSummaries": [
+      "[Mod:RealLifeOverhaul] Session 1 min: frames 4779, average 12.6 ms, worst 128 ms, over 33 ms: 69, over 50 ms: 63; managed heap 1478 MB of 1915 MB, collections in the minute 4, grown by 376.6 MB in the minute (6427 KB a second), the collector at work 59 ms in the minute and 28.6 ms at most in a frame; engine memory 3043 MB; mod objects 6250 (491 shown) under 5 roots; people 0 out, 12 made of 12; city people 0 out, 8 made of 8, city props made 0; looks built in the minute 6 (0 while playing), since the city loaded 22 (0 while playing); frames over 80 ms: 59, of them 0 behind the game's black screen (into or out of a building) or its loading screen and 59 seen; the mod's navigation obstacles changed in the minute 7; handlers put back on the game's events 30 (changed events looked into 56); searches of the whole scene 1 (0 while playing); the mod's own scripts: 0.17 ms a frame on average and 6.1 ms at most in a frame, the most in the minute: Camera: ThirdPersonCamera.Update (0.07 ms a frame, 0.3 ms at worst), Transport: TransitDirector.Update (0.02 ms a frame, 6.0 ms at worst), World: NearbyInteraction.Update (0.01 ms a frame, 0.0 ms at worst); the heap grew under them by about 214 KB a second (one frame in 8 sampled) of the 6427 KB a second it grew in all, the most under Coroutine: SettingsApp.Install (61 KB a second), Social: FlareDirector.Tick (60 KB a second), Coroutine: FlareDirector.Tick (60 KB a second); waiting for the last frame to be shown 16205 ms in the minute, 42 ms at most in a frame; outside the engine's steps 848 ms, 1 ms at most; the main thread ran 72% of the time; other programs held 25% of the processors on average and 100% at most in a frame; page faults 153792 in the minute, 3901 at most in a frame; the frames over 33 ms: 1 spread over the engine's steps, 68 the main thread's own work; the engine's own frame timing: not offered by this build; on foot in the street, game hour 8."
+    ]
+  },
+  "after-3": {
+    "logSha256": "b38cef52e78416f3778004cac32bd8e4ffe9ef8d798b6c736715c341d4e364d6",
+    "slowFrameOtherProgramCpuPercent": {
+      "samples": 12,
+      "median": 31.5,
+      "maximum": 43
+    },
+    "minuteOtherProgramCpuPercent": [
+      33
+    ],
+    "minuteSummaries": [
+      "[Mod:RealLifeOverhaul] Session 1 min: frames 4619, average 13.0 ms, worst 190 ms, over 33 ms: 66, over 50 ms: 65; managed heap 1330 MB of 2271 MB, collections in the minute 4, grown by 287.0 MB in the minute (4898 KB a second), the collector at work 84 ms in the minute and 47.2 ms at most in a frame; engine memory 3044 MB; mod objects 6252 (786 shown) under 5 roots; people 2 out, 12 made of 12; city people 2 out, 8 made of 8, city props made 2; looks built in the minute 6 (0 while playing), since the city loaded 22 (0 while playing); frames over 80 ms: 63, of them 0 behind the game's black screen (into or out of a building) or its loading screen and 63 seen; the mod's navigation obstacles changed in the minute 7; handlers put back on the game's events 30 (changed events looked into 67); searches of the whole scene 1 (0 while playing); the mod's own scripts: 0.22 ms a frame on average and 10.8 ms at most in a frame, the most in the minute: Camera: ThirdPersonCamera.Update (0.07 ms a frame, 0.3 ms at worst), Transport: TransitDirector.Update (0.02 ms a frame, 10.4 ms at worst), Traffic: CityDrivers.Update (0.01 ms a frame, 2.0 ms at worst); the heap grew under them by about 131 KB a second (one frame in 8 sampled) of the 4898 KB a second it grew in all, the most under Social: FlareDirector.Tick (41 KB a second), Coroutine: FlareDirector.Tick (41 KB a second), Coroutine: SettingsApp.Install (38 KB a second); waiting for the last frame to be shown 10700 ms in the minute, 59 ms at most in a frame; outside the engine's steps 995 ms, 1 ms at most; the main thread ran 82% of the time; other programs held 33% of the processors on average and 100% at most in a frame; page faults 165878 in the minute, 3882 at most in a frame; the frames over 33 ms: 66 the main thread's own work; the engine's own frame timing: not offered by this build; on foot in the street, game hour 8."
+    ]
+  },
+  "fresh-before-1": {
+    "logSha256": "49c949ba54f855b31de61548270994e3f613e35ec384eb253ed85760fe63f496",
+    "slowFrameOtherProgramCpuPercent": {
+      "samples": 13,
+      "median": 1,
+      "maximum": 7
+    },
+    "minuteOtherProgramCpuPercent": [
+      2
+    ],
+    "minuteSummaries": [
+      "[Mod:RealLifeOverhaul] Session 1 min: frames 4974, average 12.1 ms, worst 99 ms, over 33 ms: 66, over 50 ms: 66; managed heap 971 MB of 1015 MB, collections in the minute 7, grown by 210.2 MB in the minute (3587 KB a second), the collector at work 14 ms in the minute and 11.2 ms at most in a frame; engine memory 3005 MB; mod objects 6254 (817 shown) under 6 roots; people 2 out, 12 made of 12; city people 2 out, 8 made of 8, city props made 2; looks built in the minute 6 (0 while playing), since the city loaded 22 (0 while playing); frames over 80 ms: 42, of them 0 behind the game's black screen (into or out of a building) or its loading screen and 42 seen; the mod's navigation obstacles changed in the minute 7; handlers put back on the game's events 30 (changed events looked into 61); searches of the whole scene 2 (0 while playing); the mod's own scripts: 0.15 ms a frame on average and 16.4 ms at most in a frame, the most in the minute: Camera: ThirdPersonCamera.Update (0.05 ms a frame, 0.2 ms at worst), Transport: TransitDirector.Update (0.02 ms a frame, 11.6 ms at worst), Traffic: CityDrivers.Update (0.01 ms a frame, 5.9 ms at worst); the heap grew under them by about 152 KB a second (one frame in 8 sampled) of the 3587 KB a second it grew in all, the most under Coroutine: FlareDirector.Tick (63 KB a second), Social: FlareDirector.Tick (63 KB a second), Coroutine: SettingsApp.Install (48 KB a second); waiting for the last frame to be shown 27240 ms in the minute, 17 ms at most in a frame; outside the engine's steps 356 ms, 1 ms at most; the main thread ran 55% of the time; other programs held 2% of the processors on average and 100% at most in a frame; page faults 253546 in the minute, 2585 at most in a frame; the frames over 33 ms: 66 the main thread's own work; the engine's own frame timing: not offered by this build; on foot in the street, game hour 8."
+    ]
+  },
+  "fresh-before-2": {
+    "logSha256": "37909b08b7c91ecfea2355b764db22b3cb298623eb4afc5cd22259fd661d70cb",
+    "slowFrameOtherProgramCpuPercent": {
+      "samples": 13,
+      "median": 1,
+      "maximum": 2
+    },
+    "minuteOtherProgramCpuPercent": [
+      2
+    ],
+    "minuteSummaries": [
+      "[Mod:RealLifeOverhaul] Session 1 min: frames 4975, average 12.1 ms, worst 100 ms, over 33 ms: 65, over 50 ms: 64; managed heap 1171 MB of 1501 MB, collections in the minute 4, grown by 183.6 MB in the minute (3134 KB a second), the collector at work 19 ms in the minute and 16.3 ms at most in a frame; engine memory 3040 MB; mod objects 6254 (725 shown) under 6 roots; people 1 out, 12 made of 12; city people 2 out, 8 made of 8, city props made 2; looks built in the minute 6 (0 while playing), since the city loaded 22 (0 while playing); frames over 80 ms: 56, of them 0 behind the game's black screen (into or out of a building) or its loading screen and 56 seen; the mod's navigation obstacles changed in the minute 7; handlers put back on the game's events 30 (changed events looked into 56); searches of the whole scene 1 (0 while playing); the mod's own scripts: 0.14 ms a frame on average and 6.0 ms at most in a frame, the most in the minute: Camera: ThirdPersonCamera.Update (0.05 ms a frame, 0.2 ms at worst), Transport: TransitDirector.Update (0.01 ms a frame, 5.4 ms at worst), Traffic: CityDrivers.Update (0.01 ms a frame, 0.8 ms at worst); the heap grew under them by about 151 KB a second (one frame in 8 sampled) of the 3134 KB a second it grew in all, the most under Social: FlareDirector.Tick (46 KB a second), Coroutine: FlareDirector.Tick (46 KB a second), Coroutine: SettingsApp.Install (45 KB a second); waiting for the last frame to be shown 26412 ms in the minute, 27 ms at most in a frame; outside the engine's steps 359 ms, 1 ms at most; the main thread ran 57% of the time; other programs held 2% of the processors on average and 100% at most in a frame; page faults 463427 in the minute, 3898 at most in a frame; the frames over 33 ms: 65 the main thread's own work; the engine's own frame timing: not offered by this build; on foot in the street, game hour 8."
+    ]
+  },
+  "fresh-before-3": {
+    "logSha256": "84c9ddfa2a74669cbaff99e80ad7963fe8a5c7e24b65f469d1f56bd56e5c87b7",
+    "slowFrameOtherProgramCpuPercent": {
+      "samples": 14,
+      "median": 1.0,
+      "maximum": 10
+    },
+    "minuteOtherProgramCpuPercent": [
+      2
+    ],
+    "minuteSummaries": [
+      "[Mod:RealLifeOverhaul] Session 1 min: frames 4968, average 12.1 ms, worst 108 ms, over 33 ms: 65, over 50 ms: 64; managed heap 1098 MB of 1757 MB, collections in the minute 4, grown by 222.3 MB in the minute (3795 KB a second), the collector at work 44 ms in the minute and 17.6 ms at most in a frame; engine memory 3026 MB; mod objects 6253 (652 shown) under 6 roots; people 2 out, 12 made of 12; city people 0 out, 8 made of 8, city props made 0; looks built in the minute 6 (0 while playing), since the city loaded 22 (0 while playing); frames over 80 ms: 55, of them 0 behind the game's black screen (into or out of a building) or its loading screen and 55 seen; the mod's navigation obstacles changed in the minute 7; handlers put back on the game's events 30 (changed events looked into 67); searches of the whole scene 1 (0 while playing); the mod's own scripts: 0.14 ms a frame on average and 12.5 ms at most in a frame, the most in the minute: Camera: ThirdPersonCamera.Update (0.05 ms a frame, 0.2 ms at worst), Transport: TransitDirector.Update (0.01 ms a frame, 4.0 ms at worst), Crime: CrimeDirector.Update (0.01 ms a frame, 12.4 ms at worst); the heap grew under them by about 121 KB a second (one frame in 8 sampled) of the 3795 KB a second it grew in all, the most under Social: FlareDirector.Tick (40 KB a second), Coroutine: FlareDirector.Tick (40 KB a second), Coroutine: SettingsApp.Install (36 KB a second); waiting for the last frame to be shown 26706 ms in the minute, 32 ms at most in a frame; outside the engine's steps 359 ms, 1 ms at most; the main thread ran 56% of the time; other programs held 2% of the processors on average and 100% at most in a frame; page faults 167626 in the minute, 3081 at most in a frame; the frames over 33 ms: 1 spread over the engine's steps, 64 the main thread's own work; the engine's own frame timing: not offered by this build; on foot in the street, game hour 8."
+    ]
+  },
+  "fresh-after-1": {
+    "logSha256": "7c2dd63abcda1164456b02131407b80a08eb599b02303c93b0e5b8dc2131523d",
+    "slowFrameOtherProgramCpuPercent": {
+      "samples": 13,
+      "median": 1,
+      "maximum": 6
+    },
+    "minuteOtherProgramCpuPercent": [
+      2
+    ],
+    "minuteSummaries": [
+      "[Mod:RealLifeOverhaul] Session 1 min: frames 4975, average 12.1 ms, worst 89 ms, over 33 ms: 65, over 50 ms: 65; managed heap 770 MB of 1059 MB, collections in the minute 8, grown by 341.5 MB in the minute (5828 KB a second), the collector at work 29 ms in the minute and 11.0 ms at most in a frame; engine memory 3004 MB; mod objects 6252 (818 shown) under 5 roots; people 2 out, 12 made of 12; city people 2 out, 8 made of 8, city props made 2; looks built in the minute 6 (0 while playing), since the city loaded 22 (0 while playing); frames over 80 ms: 45, of them 0 behind the game's black screen (into or out of a building) or its loading screen and 45 seen; the mod's navigation obstacles changed in the minute 7; handlers put back on the game's events 30 (changed events looked into 61); searches of the whole scene 2 (0 while playing); the mod's own scripts: 0.15 ms a frame on average and 16.9 ms at most in a frame, the most in the minute: Camera: ThirdPersonCamera.Update (0.05 ms a frame, 0.2 ms at worst), Transport: TransitDirector.Update (0.01 ms a frame, 11.4 ms at worst), Traffic: CityDrivers.Update (0.01 ms a frame, 5.9 ms at worst); the heap grew under them by about 206 KB a second (one frame in 8 sampled) of the 5828 KB a second it grew in all, the most under Coroutine: FlareDirector.Tick (65 KB a second), Social: FlareDirector.Tick (65 KB a second), Coroutine: SettingsApp.Install (65 KB a second); waiting for the last frame to be shown 26164 ms in the minute, 19 ms at most in a frame; outside the engine's steps 361 ms, 1 ms at most; the main thread ran 58% of the time; other programs held 2% of the processors on average and 100% at most in a frame; page faults 352786 in the minute, 4034 at most in a frame; the frames over 33 ms: 2 spread over the engine's steps, 63 the main thread's own work; the engine's own frame timing: not offered by this build; on foot in the street, game hour 8."
+    ]
+  },
+  "fresh-after-2": {
+    "logSha256": "df88e74d0e560da8263dd1ceec2531c66e5f9b392851877fb6e7ef4991025b9e",
+    "slowFrameOtherProgramCpuPercent": {
+      "samples": 13,
+      "median": 1,
+      "maximum": 2
+    },
+    "minuteOtherProgramCpuPercent": [
+      2
+    ],
+    "minuteSummaries": [
+      "[Mod:RealLifeOverhaul] Session 1 min: frames 4972, average 12.1 ms, worst 101 ms, over 33 ms: 65, over 50 ms: 64; managed heap 1203 MB of 1645 MB, collections in the minute 5, grown by 375.9 MB in the minute (6416 KB a second), the collector at work 39 ms in the minute and 16.6 ms at most in a frame; engine memory 3039 MB; mod objects 6252 (910 shown) under 5 roots; people 3 out, 12 made of 12; city people 2 out, 8 made of 8, city props made 2; looks built in the minute 6 (0 while playing), since the city loaded 22 (0 while playing); frames over 80 ms: 54, of them 0 behind the game's black screen (into or out of a building) or its loading screen and 54 seen; the mod's navigation obstacles changed in the minute 8; handlers put back on the game's events 30 (changed events looked into 57); searches of the whole scene 1 (0 while playing); the mod's own scripts: 0.14 ms a frame on average and 7.6 ms at most in a frame, the most in the minute: Camera: ThirdPersonCamera.Update (0.05 ms a frame, 0.2 ms at worst), Transport: TransitDirector.Update (0.01 ms a frame, 4.7 ms at worst), Traffic: CityDrivers.Update (0.01 ms a frame, 0.7 ms at worst); the heap grew under them by about 106 KB a second (one frame in 8 sampled) of the 6416 KB a second it grew in all, the most under Social: FlareDirector.Tick (37 KB a second), Coroutine: FlareDirector.Tick (37 KB a second), Coroutine: SettingsApp.Install (36 KB a second); waiting for the last frame to be shown 26408 ms in the minute, 26 ms at most in a frame; outside the engine's steps 357 ms, 1 ms at most; the main thread ran 57% of the time; other programs held 2% of the processors on average and 100% at most in a frame; page faults 463406 in the minute, 5626 at most in a frame; the frames over 33 ms: 65 the main thread's own work; the engine's own frame timing: not offered by this build; on foot in the street, game hour 8."
+    ]
+  },
+  "fresh-after-3": {
+    "logSha256": "709d333e8c3d66faa66a6e50c37826c818218066c09f7ffb58d3d24f1134de12",
+    "slowFrameOtherProgramCpuPercent": {
+      "samples": 12,
+      "median": 1.0,
+      "maximum": 7
+    },
+    "minuteOtherProgramCpuPercent": [
+      2
+    ],
+    "minuteSummaries": [
+      "[Mod:RealLifeOverhaul] Session 1 min: frames 4966, average 12.1 ms, worst 102 ms, over 33 ms: 66, over 50 ms: 64; managed heap 1116 MB of 1754 MB, collections in the minute 5, grown by 329.9 MB in the minute (5630 KB a second), the collector at work 43 ms in the minute and 18.8 ms at most in a frame; engine memory 3028 MB; mod objects 6252 (723 shown) under 5 roots; people 1 out, 12 made of 12; city people 2 out, 8 made of 8, city props made 2; looks built in the minute 6 (0 while playing), since the city loaded 22 (0 while playing); frames over 80 ms: 56, of them 0 behind the game's black screen (into or out of a building) or its loading screen and 56 seen; the mod's navigation obstacles changed in the minute 7; handlers put back on the game's events 30 (changed events looked into 56); searches of the whole scene 1 (0 while playing); the mod's own scripts: 0.14 ms a frame on average and 7.7 ms at most in a frame, the most in the minute: Camera: ThirdPersonCamera.Update (0.05 ms a frame, 0.1 ms at worst), Transport: TransitDirector.Update (0.02 ms a frame, 5.5 ms at worst), Traffic: CityDrivers.Update (0.01 ms a frame, 0.9 ms at worst); the heap grew under them by about 107 KB a second (one frame in 8 sampled) of the 5630 KB a second it grew in all, the most under Social: FlareDirector.Tick (33 KB a second), Coroutine: FlareDirector.Tick (33 KB a second), Coroutine: SettingsApp.Install (27 KB a second); waiting for the last frame to be shown 25584 ms in the minute, 29 ms at most in a frame; outside the engine's steps 360 ms, 1 ms at most; the main thread ran 58% of the time; other programs held 2% of the processors on average and 100% at most in a frame; page faults 554003 in the minute, 3956 at most in a frame; the frames over 33 ms: 66 the main thread's own work; the engine's own frame timing: not offered by this build; on foot in the street, game hour 8."
+    ]
+  }
+}

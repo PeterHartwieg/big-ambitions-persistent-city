@@ -1,0 +1,18 @@
+{
+  "choiceDenominator": 1309,
+  "acceptedChoices": 317,
+  "directScheduledRecords": 98,
+  "directRecordShareOfChoices": 0.0748663101604278,
+  "wilson95ForDirectRecordsPerChoice": [
+    0.06182005047311377,
+    0.0904005070648914
+  ],
+  "literal25PercentWithinDirectRecordInterval": false,
+  "hundredChoiceDenominator": 1310,
+  "hundredAcceptedChoices": 1310,
+  "hundredScheduledRecords": 420,
+  "hundredDirectRecordShare": 0.32061068702290074,
+  "eligibleTripDenominatorIndependentlyObserved": false,
+  "verdict": "INCOMPLETE",
+  "reason": "Approved source rate is participation choices before geometry, duration, occupancy and group checks. Full realised-stop share among independently eligible trips was not instrumented; paired peers are not separate scheduler callbacks. Choice rate and visible persistent stops are verified, but cannot certify the literal realised-trip density gate."
+}

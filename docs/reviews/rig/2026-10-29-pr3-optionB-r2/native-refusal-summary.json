@@ -1,0 +1,67 @@
+[
+  {
+    "case": "schema16-legacy-twelve-digit.private.json",
+    "expected": "Invalid",
+    "runtimeFailed": true,
+    "runtimeStatus": "Population save refused: Invalid state: Legacy money is not an exact whole number of units: PriceCents. Original payload retained.",
+    "sourceSha256": "fc5fde220d62f38bcd5cb69630a0b99e6c5851b6b42f005d6ecd9f10524a9fc7",
+    "storedHashes": [
+      "fc5fde220d62f38bcd5cb69630a0b99e6c5851b6b42f005d6ecd9f10524a9fc7",
+      "fc5fde220d62f38bcd5cb69630a0b99e6c5851b6b42f005d6ecd9f10524a9fc7",
+      "fc5fde220d62f38bcd5cb69630a0b99e6c5851b6b42f005d6ecd9f10524a9fc7"
+    ],
+    "preservedAcrossSaveReload": true
+  },
+  {
+    "case": "schema16-mixed.private.json",
+    "expected": "Invalid",
+    "runtimeFailed": true,
+    "runtimeStatus": "Population save refused: Invalid state: State mixes money field generations. Original payload retained.",
+    "sourceSha256": "bb95f8c3de5c64a94189bf6757509b0b8e57faa872376e1f9aaf7d33080983e8",
+    "storedHashes": [
+      "bb95f8c3de5c64a94189bf6757509b0b8e57faa872376e1f9aaf7d33080983e8",
+      "bb95f8c3de5c64a94189bf6757509b0b8e57faa872376e1f9aaf7d33080983e8",
+      "bb95f8c3de5c64a94189bf6757509b0b8e57faa872376e1f9aaf7d33080983e8"
+    ],
+    "preservedAcrossSaveReload": true
+  },
+  {
+    "case": "schema16-hex.private.json",
+    "expected": "Invalid",
+    "runtimeFailed": true,
+    "runtimeStatus": "Population save refused: Invalid state: Money must be a canonical whole number of units. Original payload retained.",
+    "sourceSha256": "74b651a2fbdb0889a9cf9ac5305039256b59884600a4389c543c8ce6106748e2",
+    "storedHashes": [
+      "74b651a2fbdb0889a9cf9ac5305039256b59884600a4389c543c8ce6106748e2",
+      "74b651a2fbdb0889a9cf9ac5305039256b59884600a4389c543c8ce6106748e2",
+      "74b651a2fbdb0889a9cf9ac5305039256b59884600a4389c543c8ce6106748e2"
+    ],
+    "preservedAcrossSaveReload": true
+  },
+  {
+    "case": "schema16-exponent.private.json",
+    "expected": "Invalid",
+    "runtimeFailed": true,
+    "runtimeStatus": "Population save refused: Invalid state: Money must be a canonical whole number of units. Original payload retained.",
+    "sourceSha256": "f7985fd9e3843aa637863bc3037830c144ac9f5cf355eecf6fe622feb5e6a51c",
+    "storedHashes": [
+      "f7985fd9e3843aa637863bc3037830c144ac9f5cf355eecf6fe622feb5e6a51c",
+      "f7985fd9e3843aa637863bc3037830c144ac9f5cf355eecf6fe622feb5e6a51c",
+      "f7985fd9e3843aa637863bc3037830c144ac9f5cf355eecf6fe622feb5e6a51c"
+    ],
+    "preservedAcrossSaveReload": true
+  },
+  {
+    "case": "schema17-future.private.json",
+    "expected": "Future",
+    "runtimeFailed": true,
+    "runtimeStatus": "Population save refused: State uses a newer schema; preserve the original payload. Original payload retained.",
+    "sourceSha256": "4a60b57152d2973bb1c12b5d8b076ca9445434c2c7a7c4c21fe875ac309fddb9",
+    "storedHashes": [
+      "4a60b57152d2973bb1c12b5d8b076ca9445434c2c7a7c4c21fe875ac309fddb9",
+      "4a60b57152d2973bb1c12b5d8b076ca9445434c2c7a7c4c21fe875ac309fddb9",
+      "4a60b57152d2973bb1c12b5d8b076ca9445434c2c7a7c4c21fe875ac309fddb9"
+    ],
+    "preservedAcrossSaveReload": true
+  }
+]

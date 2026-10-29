@@ -29,8 +29,8 @@ public sealed partial class FoodCommerceTests
     private static string R8_Generation(string current, string generation)
     {
         if (generation == "current") return current;
-        var token = LegacyMoneyWire.ToLegacy(JObject.Parse(current), wholeCents: generation == "schema13");
-        if (generation == "schema13") token["Schema"] = 13;
+        var token = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(JObject.Parse(current), wholeCents: generation == "schema13"),
+            generation == "schema13" ? 13 : 14);
         return token.ToString(Formatting.None);
     }
 
@@ -66,7 +66,7 @@ public sealed partial class FoodCommerceTests
     public void R8_EarlierSchema14MoneyMigratesWithWhitespaceBeforeColons()
     {
         var (_, current) = R8_Paid(.3f);
-        string spaced = LegacyMoneyWire.ToLegacy(JObject.Parse(current), wholeCents: false).ToString(Formatting.Indented)
+        string spaced = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(JObject.Parse(current), wholeCents: false), 14).ToString(Formatting.Indented)
             .Replace("\": ", "\"   :  ");
         var read = SaveCodec.Read(spaced);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);

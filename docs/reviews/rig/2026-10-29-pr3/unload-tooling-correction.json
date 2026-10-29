@@ -1,0 +1,9 @@
+{
+  "role": "rig_test",
+  "preliminaryAttempt": "config-zero via helper unload on a city-scoped MonoBehaviour",
+  "observed": "bridge scene loading despite load done; RLO catalogue remains NotReady; native startup stopped during overlap",
+  "cause": "test unload coroutine host is destroyed with its city; persistent unload runner and explicit completion marker required",
+  "action": "stop only the stalled Python controller for a tooling correction; gracefully quit the owned rig; restore campaign config; retain all preliminary outputs; rebuild test helper; restart",
+  "productionChange": false,
+  "acceptedEvidenceAffected": false
+}

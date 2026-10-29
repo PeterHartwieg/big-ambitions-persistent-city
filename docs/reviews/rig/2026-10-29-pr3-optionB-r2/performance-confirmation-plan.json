@@ -1,0 +1,6 @@
+{
+  "reason": "Fresh AFTER primary p99 values 114.498-120.882 ms versus historical BEFORE 87.2917-89.3566 ms; primary p50/p95 pass the pre-recorded rule but tails require investigation. Timed logs also show external CPU activity, which is not sufficient attribution.",
+  "samples": "Three new 60-second windows per build; BEFORE then AFTER, fresh game process for each build, identical checkpoint and load/warmup/measure/save/reload sequence, autosave verified off. No finance replay before the first window in either process.",
+  "selection": "Retain every primary and confirmation sample. No selection based on outcome. Compare fresh builds descriptively with median change versus larger within-build range for p50, p95, p99, mean and maximum; retain mod and whole-frame separately. Whole-frame worsening beyond spread remains a failure requiring explanation, not a mod-only exemption.",
+  "authorization": "User-authorized rig before/after performance validation; no production changes. Reuse unchanged compiled BEFORE diagnostic helper with verified SHA 5aaf5093e33c3f695803b7fc5443cf869e21e08ca3a6542db032a308eaa45e8e. All AFTER windows at tested head 7a104d6f41d7c92579dcdf2e790274856d31cb29."
+}

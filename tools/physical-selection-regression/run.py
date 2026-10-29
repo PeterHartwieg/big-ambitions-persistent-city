@@ -20,6 +20,7 @@ def fragments(vehicle, population, journey):
         # are extracted too. The frozen baseline predates them and has no 'candidates' block.
         'selection': between(population, '            // Candidate selection. tools/physical-selection-regression extracts', '                PhysicalRoadSample road = default;'),
         'candidates': between(population, '        /// <summary>One physical selection candidate', '        // Waiting for a route or for an opening is indoors.'),
+        'optional_visible': between(population, '        private bool OptionalVisible(', '        private bool TryJoinOptional('),
         'outdoor': between(population, '        private bool Outdoor(', '        /// <summary>\n        /// Which waiting citizens'),
         'sample': between(journey, '        internal static PhysicalJourneySample SampleRoute(', '        private void ReturnPhysicalEvent(')
     }
@@ -28,7 +29,7 @@ baseline = json.loads(baseline_path.read_text())
 current = fragments(*[(root / p).read_text() for p in ['Runtime/PhysicalVehicles.cs', 'Runtime/PhysicalPopulation.cs', 'Core/PhysicalJourneys.cs']])
 classes = []
 for name, parts in [('Before', baseline), ('After', current)]:
-    classes.append('class ' + name + ' : Fixture {\n' + parts['ordinary'] + parts['hash'] + parts['outdoor'] + parts.get('candidates', '') + parts['sample'] + '''
+    classes.append('class ' + name + ' : Fixture {\n' + parts['ordinary'] + parts['hash'] + parts['outdoor'] + parts.get('optional_visible', '') + parts.get('candidates', '') + parts['sample'] + '''
  public bool Slot(CitizenState citizen, out VehicleComponent? chosen) {
  chosen = null;
  if (citizen.Car == null) return false;

@@ -302,7 +302,7 @@ public sealed partial class FoodCommerceTests
         city = city.RebuildRoutes(routes); city.EnableHouseholdFinances();
         Advance(city, city.State.Food!.Residents.Single().DesiredAt + 30);
         // The amount twelve-digit conversion stored for 10.2528f: not a whole number of 2^-28 cents.
-        var token = LegacyMoneyWire.ToLegacy(JObject.Parse(SaveCodec.Write(city.State)), wholeCents: false);
+        var token = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(JObject.Parse(SaveCodec.Write(city.State)), wholeCents: false), 14);
         token["Food"]!["Residents"]![0]!["PriceCents"] = 1025.279998779297m;
         string legacy = token.ToString(Newtonsoft.Json.Formatting.None);
         Assert.Contains("\"PriceCents\":1025.279998779297", legacy);
@@ -323,7 +323,7 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(MealStatus.Uncertain, city.State.Food.Residents.Single().Status);
         string current = SaveCodec.Write(city.State);
         // What the decimal-cents writer produced for this state: the same amounts as decimal cents.
-        string legacy = LegacyMoneyWire.ToLegacy(JObject.Parse(current), wholeCents: false).ToString(Newtonsoft.Json.Formatting.None);
+        string legacy = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(JObject.Parse(current), wholeCents: false), 14).ToString(Newtonsoft.Json.Formatting.None);
         Assert.Contains("\"PriceCents\":1025.279998779296875", legacy);
         Assert.Contains("\"BalanceCents\":", legacy); Assert.DoesNotContain("\"Balance\":", legacy);
         var read = SaveCodec.Read(legacy);
@@ -356,7 +356,7 @@ public sealed partial class FoodCommerceTests
 
     private static string Schema13(CityState state)
     {
-        var token = LegacyMoneyWire.ToLegacy(JObject.Parse(SaveCodec.Write(state)), wholeCents: true); token["Schema"] = 13;
+        var token = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(JObject.Parse(SaveCodec.Write(state)), wholeCents: true), 13);
         return token.ToString();
     }
 

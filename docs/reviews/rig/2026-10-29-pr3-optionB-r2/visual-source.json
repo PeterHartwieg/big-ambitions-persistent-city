@@ -1,0 +1,30 @@
+{
+  "source": {
+    "path": "<agent1-profile>\\FoodTrucksTest\\shots\\default-optional-dwell.png",
+    "camera": {
+      "x": 229.13,
+      "y": 3.09,
+      "z": -69.35,
+      "yaw": 174.7,
+      "pitch": 18.43,
+      "fov": 60.0
+    },
+    "pose_note": null,
+    "uncovered": [
+      "SM_FancyBuilding_V03 Variant 3 (CityBuildingController, reveal 0.00, blocking the game's camera)"
+    ],
+    "outlined": [
+      "SM_1StStreet_CheapRezidential_1"
+    ],
+    "hovered": [
+      "SM_Semi-Basement_V04_02 Variant 1 (under the mouse, 6 objects outlined)"
+    ],
+    "asis_path": null,
+    "game_path": "<agent1-profile>\\FoodTrucksTest\\shots\\default-optional-dwell-game.png",
+    "game_error": null
+  },
+  "selected": "path (native scene-camera diagnostic render)",
+  "bytes": 1053042,
+  "sha256": "03bdbc986ce74bfe68c99b3d5400ebe4f386a0a1940aa990af89d7de3eaefa57",
+  "claim": "The normal-speed observer records native approach, dwell, return and continuation; screenshot alone is not a completion census."
+}

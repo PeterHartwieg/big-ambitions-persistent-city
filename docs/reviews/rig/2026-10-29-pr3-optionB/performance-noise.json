@@ -1,0 +1,74 @@
+[
+  {
+    "scope": "mod",
+    "metric": "p50",
+    "beforeMedian": 0.1753,
+    "afterMedian": 0.2585,
+    "change": 0.0832,
+    "beforeRange": 0.0116,
+    "afterRange": 0.2284,
+    "largerSpread": 0.2284,
+    "rangesOverlap": false,
+    "worseBeyondObservedSpread": false
+  },
+  {
+    "scope": "mod",
+    "metric": "p95",
+    "beforeMedian": 0.2603,
+    "afterMedian": 0.444,
+    "change": 0.18370000000000003,
+    "beforeRange": 0.0892,
+    "afterRange": 0.4342,
+    "largerSpread": 0.4342,
+    "rangesOverlap": true,
+    "worseBeyondObservedSpread": false
+  },
+  {
+    "scope": "mod",
+    "metric": "maximum",
+    "beforeMedian": 8.2925,
+    "afterMedian": 8.5236,
+    "change": 0.23109999999999964,
+    "beforeRange": 2.4677,
+    "afterRange": 65.184,
+    "largerSpread": 65.184,
+    "rangesOverlap": true,
+    "worseBeyondObservedSpread": false
+  },
+  {
+    "scope": "wholeFrame",
+    "metric": "p50",
+    "beforeMedian": 11.1785,
+    "afterMedian": 11.123,
+    "change": -0.05550000000000033,
+    "beforeRange": 0.16939999999999955,
+    "afterRange": 3.6949999999999985,
+    "largerSpread": 3.6949999999999985,
+    "rangesOverlap": true,
+    "worseBeyondObservedSpread": false
+  },
+  {
+    "scope": "wholeFrame",
+    "metric": "p95",
+    "beforeMedian": 14.4998,
+    "afterMedian": 13.6552,
+    "change": -0.8445999999999998,
+    "beforeRange": 2.177299999999999,
+    "afterRange": 11.4924,
+    "largerSpread": 11.4924,
+    "rangesOverlap": true,
+    "worseBeyondObservedSpread": false
+  },
+  {
+    "scope": "wholeFrame",
+    "metric": "maximum",
+    "beforeMedian": 108.422,
+    "afterMedian": 111.1407,
+    "change": 2.7186999999999983,
+    "beforeRange": 182.21749999999997,
+    "afterRange": 207.0238,
+    "largerSpread": 207.0238,
+    "rangesOverlap": true,
+    "worseBeyondObservedSpread": false
+  }
+]

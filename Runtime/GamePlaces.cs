@@ -143,7 +143,7 @@ namespace PersistentCity.Runtime
             return weight;
         }
 
-        private static bool TryEntrance(CityBuildingController controller, out Position position)
+        internal static bool TryEntrance(CityBuildingController controller, out Position position)
         {
             position = default;
             if (controller.entranceDoors == null) return false;

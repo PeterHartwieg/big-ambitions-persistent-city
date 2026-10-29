@@ -5,9 +5,8 @@ using System.Linq;
 
 namespace PersistentCity.Core
 {
-    // Only QueueAtOpening is planned here so far. WaitToCross is the existing red-light hold in
-    // PhysicalPedestrianBody, which ends when the light lets the walker cross. The other kinds carry
-    // their rules for docs/stationary-citizens.md's later steps; nothing schedules them yet.
+    // Opening queues are planned here; OptionalStopScheduling owns the optional kinds.
+    // WaitToCross remains the existing safe red-light hold, with no time cap.
     public enum DwellKind { QueueAtOpening, WaitToCross, Break, WaitForSomeone, ChatOutsideVenue, WindowShopping, Audience, Resting, WaitForPickup, WaitForBus }
     public enum DwellSpot { Door, Kerb, Stop, VenueFront, Bench, PerformerRing }
     public enum DwellFacing { Door, Crossing, Group, Shopfront, Performer, Street }
@@ -61,7 +60,7 @@ namespace PersistentCity.Core
                 case DwellKind.WaitForSomeone: return new DwellRule(DwellSpot.VenueFront, DwellFacing.Street, 15, false);
                 case DwellKind.ChatOutsideVenue: return new DwellRule(DwellSpot.VenueFront, DwellFacing.Group, 30, true);
                 case DwellKind.WindowShopping: return new DwellRule(DwellSpot.VenueFront, DwellFacing.Shopfront, 3, true);
-                case DwellKind.Audience: return new DwellRule(DwellSpot.PerformerRing, DwellFacing.Performer, 8, false);
+                case DwellKind.Audience: return new DwellRule(DwellSpot.PerformerRing, DwellFacing.Performer, 8, true);
                 case DwellKind.Resting: return new DwellRule(DwellSpot.Bench, DwellFacing.Street, 40, true);
                 case DwellKind.WaitForPickup: return new DwellRule(DwellSpot.Kerb, DwellFacing.Street, 10, false);
                 case DwellKind.WaitForBus: return new DwellRule(DwellSpot.Stop, DwellFacing.Street, 10, false);

@@ -50,17 +50,6 @@ namespace PersistentCity.Runtime
         }
     }
 
-    internal sealed class PrototypeSettings
-    {
-        // Optional developer overrides; normal installation needs no configuration.
-        public bool Enabled { get; set; } = true;
-        public double GameClockFactor { get; set; } = CityBalance.GameClockFactor;
-        public bool PhysicalEnabled { get; set; } = true;
-        public int MaximumPedestrians { get; set; } = 48;
-        public int MaximumVehicles { get; set; } = 24;
-        public double PhysicalRadiusMetres { get; set; } = 120;
-    }
-
     public sealed partial class PopulationRuntime : MonoBehaviour
     {
         private const int MaxAdvanceEventsPerFrame = 128;
@@ -75,6 +64,7 @@ namespace PersistentCity.Runtime
         private MultimodalRoutes? routes;
         private RouteObjectDiscovery? routeObjects;
         private PhysicalPopulation? physical;
+        private DwellSpots dwellSpots = new DwellSpots();
         private bool physicalFailed;
         private object? saveIdentity;
         private object? initializingSave;
@@ -262,6 +252,7 @@ namespace PersistentCity.Runtime
                 // Build/refresh native road data in bounded slices before advancing any event.
                 // Mode availability must not depend on which citizen happened to request a route
                 // while the graph was half prepared, or on the number of rendered frames.
+                simulation.RefreshOptionalStops();
                 RunPhysical(() => physical?.BeforeAdvance());
                 double clockRate = NativeTravelPace.ClockRate;
                 if (Math.Abs(clockRate - simulation.State.TravelClockRate) > .000001)
@@ -305,7 +296,7 @@ namespace PersistentCity.Runtime
                 AdvancePopulation(Math.Max(target, simulation.State.Minute));
                 if (settings.PhysicalEnabled && !physicalFailed && physical == null && !NativeTravelPace.HiddenTravel)
                 {
-                    try { physical = new PhysicalPopulation(transform, simulation, routes!, dependency!, log!, settings.MaximumPedestrians, settings.MaximumVehicles, settings.PhysicalRadiusMetres); }
+                    try { physical = new PhysicalPopulation(transform, simulation, routes!, dependency!, log!, settings.MaximumPedestrians, settings.MaximumVehicles, settings.PhysicalRadiusMetres, dwellSpots); }
                     catch (Exception error)
                     {
                         physicalFailed = true;
@@ -552,6 +543,8 @@ namespace PersistentCity.Runtime
             routeObjects = new RouteObjectDiscovery();
             routes = new MultimodalRoutes(state.Places, NativeTravelPace.WalkingMetresPerSecond / state.TravelClockRate, state.TravelClockRate, dependency, routeObjects);
             simulation = new CitySimulator(state, routes);
+            dwellSpots = new DwellSpots();
+            simulation.AttachOptionalStops(new OptionalStopEnvironment(state.Places, dwellSpots), settings.OptionalStopChoicePercentage);
             seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
             if (state.Food == null)
                 state.Food = new FoodCommerceState { MealRhythmVersion = MealRhythm.PolicyVersion, HouseholdFinanceVersion = HouseholdFinance.PolicyVersion,

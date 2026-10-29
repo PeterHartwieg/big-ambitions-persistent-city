@@ -1,0 +1,79 @@
+[
+  {
+    "file": "after-extra-final-Player-agent.log",
+    "sha256": "ea29130366458416eb437d6f21c282e9a34c42d317624b7e64a1f08ef33ff2cd",
+    "bytes": 2048814,
+    "populationRefusalMessages": 18,
+    "role": "rig_test"
+  },
+  {
+    "file": "after-qa-1-Player-agent.log",
+    "sha256": "279a3674e62161101f6ae22262b1d5e727fb79df76d67cea6e48cfabf4879519",
+    "bytes": 610349,
+    "populationRefusalMessages": 0,
+    "role": "rig_test"
+  },
+  {
+    "file": "after-qa-2-Player-agent.log",
+    "sha256": "d6cbaddadf0a16048d6bc3c9cbd549130fbba02e61aff1d00b2d132d0f66cefc",
+    "bytes": 333201,
+    "populationRefusalMessages": 0,
+    "role": "rig_test"
+  },
+  {
+    "file": "after-qa-3-Player-agent.log",
+    "sha256": "a9ec1ed1b2ca49838872ef1ba11720ac1f9a5cc8266d00199e3ca88ea08e36a8",
+    "bytes": 329891,
+    "populationRefusalMessages": 0,
+    "role": "rig_test"
+  },
+  {
+    "file": "before-qa-2-Player-agent.log",
+    "sha256": "b9b667578e48686e16982d121fc9c0de4b22d1fdea050454859203e1671bd6cf",
+    "bytes": 573749,
+    "populationRefusalMessages": 0,
+    "role": "rig_test"
+  },
+  {
+    "file": "before-qa-3-Player-agent.log",
+    "sha256": "950081635a339b571d147bec8ce82e16c8b437f0b5b7625c73bbc17c1959f7b9",
+    "bytes": 332209,
+    "populationRefusalMessages": 0,
+    "role": "rig_test"
+  },
+  {
+    "file": "before-qa-4-Player-agent.log",
+    "sha256": "dd2070b4e9eba41ac0316c6c0ad961a4271f24b3d39749ab38477fce54d86d83",
+    "bytes": 335487,
+    "populationRefusalMessages": 0,
+    "role": "rig_test"
+  },
+  {
+    "file": "preliminary-before-qa-1-Player-agent.log",
+    "sha256": "cc98a20d7ed152f57f52d3c4db7f5b81726824e6215f944f403320f0ef7f14dd",
+    "bytes": 336899,
+    "populationRefusalMessages": 0,
+    "role": "rig_test"
+  },
+  {
+    "file": "preliminary-fixture-injection-Player-agent.log",
+    "sha256": "367a167bfa79c5c08523c5e05f99bd7d94b4053b21512643d12b08eb4454f83e",
+    "bytes": 1488934,
+    "populationRefusalMessages": 1,
+    "role": "rig_test"
+  },
+  {
+    "file": "preliminary-unload-replay-Player-agent.log",
+    "sha256": "dcef88820705e3a6a85131883655a355fdbc741e2c398863655e1a02dae81ff9",
+    "bytes": 146233,
+    "populationRefusalMessages": 0,
+    "role": "rig_test"
+  },
+  {
+    "file": "preliminary-unload-tooling-Player-agent.log",
+    "sha256": "1a82c9b0486f8bda9fe9e14992681efbbbddb1fa7b9f7fc9319793e5310d4678",
+    "bytes": 386805,
+    "populationRefusalMessages": 0,
+    "role": "rig_test"
+  }
+]

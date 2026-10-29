@@ -1,0 +1,12 @@
+{
+  "role": "rig_test",
+  "staleRequest": {
+    "id": "config-zero-unload-4bb492",
+    "op": "unload"
+  },
+  "alreadyAnswered": true,
+  "cause": "city helper re-read completed unload request after every city load, causing another unload during startup",
+  "fix": "ignore a request when its response file already exists; retain persistent unload runner and explicit completion marker",
+  "productionChange": false,
+  "acceptedEvidenceAffected": false
+}

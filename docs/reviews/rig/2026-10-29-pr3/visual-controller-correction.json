@@ -1,0 +1,1 @@
+{"role":"rig_test","observed":"pause request rejected because the asynchronous native skip had just begun","fix":"wait for both target game minute and time_skip=false, matching the financial controller; continue the already requested skip","productionChange":false}

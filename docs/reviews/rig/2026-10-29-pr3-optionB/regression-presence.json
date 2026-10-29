@@ -1,0 +1,11 @@
+{
+  "before": {
+    "optionalStopCases": 11,
+    "baseMergeCases": 0
+  },
+  "after": {
+    "optionalStopCases": 117,
+    "baseMergeCases": 34
+  },
+  "notes": "Before contains 11 low-level OptionalStop policy tests but no PR3 scheduling, setting, handoff, share or routine cases. After contains all those cases (106), plus the same 11 and 34 base-merge cases; all pass in the 1548-case suite."
+}

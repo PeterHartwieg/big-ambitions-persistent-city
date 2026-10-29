@@ -1,0 +1,66 @@
+{
+  "rate0": {
+    "eligible": 9553,
+    "uniqueVisitKeys": 9553,
+    "scheduledRecipients": 0,
+    "share": 0.0,
+    "wilson95": [
+      0,
+      0.0004019590402589097
+    ],
+    "drawn": 0,
+    "dropped": 0,
+    "openingPending": 0,
+    "closingPending": 0,
+    "auditExact": true,
+    "target25WithinInterval": false
+  },
+  "rate25": {
+    "eligible": 10038,
+    "uniqueVisitKeys": 10038,
+    "scheduledRecipients": 2297,
+    "share": 0.22883044431161587,
+    "wilson95": [
+      0.22071728157481818,
+      0.23715107630310645
+    ],
+    "drawn": 2482,
+    "dropped": 0,
+    "openingPending": 0,
+    "closingPending": 185,
+    "auditExact": true,
+    "target25WithinInterval": false
+  },
+  "rate100": {
+    "eligible": 11092,
+    "uniqueVisitKeys": 11092,
+    "scheduledRecipients": 5041,
+    "share": 0.4544716913090516,
+    "wilson95": [
+      0.44522276843368613,
+      0.46375213862961784
+    ],
+    "drawn": 11092,
+    "dropped": 6051,
+    "openingPending": 0,
+    "closingPending": 0,
+    "auditExact": true,
+    "target25WithinInterval": false
+  },
+  "rate25-continued": {
+    "eligible": 32084,
+    "uniqueVisitKeys": 32084,
+    "scheduledRecipients": 8016,
+    "share": 0.24984415908240867,
+    "wilson95": [
+      0.24513717806893465,
+      0.25461103588930173
+    ],
+    "drawn": 8012,
+    "dropped": 0,
+    "openingPending": 185,
+    "closingPending": 181,
+    "auditExact": true,
+    "target25WithinInterval": true
+  }
+}

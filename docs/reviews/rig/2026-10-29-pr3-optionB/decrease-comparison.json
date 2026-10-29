@@ -1,0 +1,1738 @@
+{
+  "dec100-25": {
+    "openingPending": 52,
+    "closingPending": 88,
+    "dropsByCause": {
+      "trim": 0,
+      "100Policy": 0,
+      "unavailableRecipient": 0,
+      "capExhaustion": 0
+    },
+    "trimCount": 0,
+    "trimOrder": [],
+    "trimIdsOrdinallySorted": true,
+    "daily": [
+      {
+        "day": 1,
+        "arm": {
+          "day": 1,
+          "eligible": 753,
+          "scheduledRecipients": 152,
+          "share": 0.20185922974767595,
+          "wilson95": [
+            0.17473618565696947,
+            0.23200878745849762
+          ],
+          "openingPending": 52,
+          "closingPending": 77,
+          "drawn": 177,
+          "dropped": 0
+        },
+        "control": {
+          "day": 1,
+          "eligible": 689,
+          "scheduledRecipients": 172,
+          "share": 0.24963715529753266,
+          "wilson95": [
+            0.21876829460282693,
+            0.2832822891090158
+          ],
+          "openingPending": 174,
+          "closingPending": 167,
+          "drawn": 165,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 2,
+        "arm": {
+          "day": 2,
+          "eligible": 565,
+          "scheduledRecipients": 39,
+          "share": 0.06902654867256637,
+          "wilson95": [
+            0.05090272792088321,
+            0.09297120663790492
+          ],
+          "openingPending": 77,
+          "closingPending": 154,
+          "drawn": 116,
+          "dropped": 0
+        },
+        "control": {
+          "day": 2,
+          "eligible": 1543,
+          "scheduledRecipients": 456,
+          "share": 0.29552819183408946,
+          "wilson95": [
+            0.27329209257939685,
+            0.3187798703216545
+          ],
+          "openingPending": 167,
+          "closingPending": 77,
+          "drawn": 366,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 3,
+        "arm": {
+          "day": 3,
+          "eligible": 8,
+          "scheduledRecipients": 7,
+          "share": 0.875,
+          "wilson95": [
+            0.5291118177871464,
+            0.9775825085499433
+          ],
+          "openingPending": 154,
+          "closingPending": 149,
+          "drawn": 2,
+          "dropped": 0
+        },
+        "control": {
+          "day": 3,
+          "eligible": 1531,
+          "scheduledRecipients": 363,
+          "share": 0.23709993468321358,
+          "wilson95": [
+            0.21647049058684908,
+            0.25904537108493086
+          ],
+          "openingPending": 77,
+          "closingPending": 101,
+          "drawn": 387,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 4,
+        "arm": {
+          "day": 4,
+          "eligible": 1527,
+          "scheduledRecipients": 430,
+          "share": 0.2815979043876883,
+          "wilson95": [
+            0.25960824018588996,
+            0.30468367511549393
+          ],
+          "openingPending": 149,
+          "closingPending": 85,
+          "drawn": 366,
+          "dropped": 0
+        },
+        "control": {
+          "day": 4,
+          "eligible": 1526,
+          "scheduledRecipients": 393,
+          "share": 0.2575360419397117,
+          "wilson95": [
+            0.23622443899355952,
+            0.28006530741556046
+          ],
+          "openingPending": 101,
+          "closingPending": 96,
+          "drawn": 388,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 5,
+        "arm": {
+          "day": 5,
+          "eligible": 136,
+          "scheduledRecipients": 52,
+          "share": 0.38235294117647056,
+          "wilson95": [
+            0.3049760312382753,
+            0.4661934039931557
+          ],
+          "openingPending": 85,
+          "closingPending": 65,
+          "drawn": 32,
+          "dropped": 0
+        },
+        "control": {
+          "day": 5,
+          "eligible": 1175,
+          "scheduledRecipients": 191,
+          "share": 0.1625531914893617,
+          "wilson95": [
+            0.1425622726044105,
+            0.18474336797484736
+          ],
+          "openingPending": 96,
+          "closingPending": 164,
+          "drawn": 259,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 6,
+        "arm": {
+          "day": 6,
+          "eligible": 1322,
+          "scheduledRecipients": 214,
+          "share": 0.16187594553706505,
+          "wilson95": [
+            0.14300485759521478,
+            0.18270637729466963
+          ],
+          "openingPending": 65,
+          "closingPending": 173,
+          "drawn": 322,
+          "dropped": 0
+        },
+        "control": {
+          "day": 6,
+          "eligible": 1322,
+          "scheduledRecipients": 303,
+          "share": 0.2291981845688351,
+          "wilson95": [
+            0.2073446844513649,
+            0.25262091306670803
+          ],
+          "openingPending": 164,
+          "closingPending": 172,
+          "drawn": 311,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 7,
+        "arm": {
+          "day": 7,
+          "eligible": 1347,
+          "scheduledRecipients": 336,
+          "share": 0.24944320712694878,
+          "wilson95": [
+            0.22707069637532346,
+            0.2732407609075426
+          ],
+          "openingPending": 173,
+          "closingPending": 168,
+          "drawn": 331,
+          "dropped": 0
+        },
+        "control": {
+          "day": 7,
+          "eligible": 1346,
+          "scheduledRecipients": 338,
+          "share": 0.2511144130757801,
+          "wilson95": [
+            0.22867789084179843,
+            0.27496752201627606
+          ],
+          "openingPending": 172,
+          "closingPending": 169,
+          "drawn": 335,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 8,
+        "arm": {
+          "day": 8,
+          "eligible": 1027,
+          "scheduledRecipients": 389,
+          "share": 0.37877312560856863,
+          "wilson95": [
+            0.34960949590874213,
+            0.40884026581808874
+          ],
+          "openingPending": 168,
+          "closingPending": 25,
+          "drawn": 246,
+          "dropped": 0
+        },
+        "control": {
+          "day": 8,
+          "eligible": 119,
+          "scheduledRecipients": 33,
+          "share": 0.2773109243697479,
+          "wilson95": [
+            0.2048037878718734,
+            0.3637457840005872
+          ],
+          "openingPending": 169,
+          "closingPending": 165,
+          "drawn": 29,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 9,
+        "arm": {
+          "day": 9,
+          "eligible": 914,
+          "scheduledRecipients": 158,
+          "share": 0.17286652078774617,
+          "wilson95": [
+            0.1497345182055813,
+            0.19873683896284344
+          ],
+          "openingPending": 25,
+          "closingPending": 93,
+          "drawn": 226,
+          "dropped": 0
+        },
+        "control": {
+          "day": 9,
+          "eligible": 1541,
+          "scheduledRecipients": 464,
+          "share": 0.3011031797534069,
+          "wilson95": [
+            0.2787169314541912,
+            0.32447859615162933
+          ],
+          "openingPending": 165,
+          "closingPending": 88,
+          "drawn": 387,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 10,
+        "arm": {
+          "day": 10,
+          "eligible": 1531,
+          "scheduledRecipients": 387,
+          "share": 0.2527759634225996,
+          "wilson95": [
+            0.23164341447414352,
+            0.27514603557000233
+          ],
+          "openingPending": 93,
+          "closingPending": 88,
+          "drawn": 382,
+          "dropped": 0
+        },
+        "control": {
+          "day": 10,
+          "eligible": 1523,
+          "scheduledRecipients": 388,
+          "share": 0.25476034143138543,
+          "wilson95": [
+            0.2335129302423884,
+            0.2772417747176341
+          ],
+          "openingPending": 88,
+          "closingPending": 94,
+          "drawn": 394,
+          "dropped": 0
+        }
+      }
+    ],
+    "control": "constant25",
+    "controlDayOffset": 0,
+    "auditExact": true,
+    "matching": "Same FT checkpoint family and native calendar days; native weather and unsaved geometry sampling can differ. No weather, price or safety override was used."
+  },
+  "dec100-0-25": {
+    "openingPending": 52,
+    "closingPending": 179,
+    "dropsByCause": {
+      "trim": 0,
+      "100Policy": 0,
+      "unavailableRecipient": 0,
+      "capExhaustion": 0
+    },
+    "trimCount": 0,
+    "trimOrder": [],
+    "trimIdsOrdinallySorted": true,
+    "daily": [
+      {
+        "day": 1,
+        "arm": {
+          "day": 1,
+          "eligible": 1532,
+          "scheduledRecipients": 334,
+          "share": 0.21801566579634465,
+          "wilson95": [
+            0.19805903436631886,
+            0.23938290012643273
+          ],
+          "openingPending": 52,
+          "closingPending": 106,
+          "drawn": 388,
+          "dropped": 0
+        },
+        "control": {
+          "day": 3,
+          "eligible": 1531,
+          "scheduledRecipients": 363,
+          "share": 0.23709993468321358,
+          "wilson95": [
+            0.21647049058684908,
+            0.25904537108493086
+          ],
+          "openingPending": 77,
+          "closingPending": 101,
+          "drawn": 387,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 2,
+        "arm": {
+          "day": 2,
+          "eligible": 1524,
+          "scheduledRecipients": 390,
+          "share": 0.2559055118110236,
+          "wilson95": [
+            0.23462985375857826,
+            0.2784086256565067
+          ],
+          "openingPending": 106,
+          "closingPending": 90,
+          "drawn": 374,
+          "dropped": 0
+        },
+        "control": {
+          "day": 4,
+          "eligible": 1526,
+          "scheduledRecipients": 393,
+          "share": 0.2575360419397117,
+          "wilson95": [
+            0.23622443899355952,
+            0.28006530741556046
+          ],
+          "openingPending": 101,
+          "closingPending": 96,
+          "drawn": 388,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 3,
+        "arm": {
+          "day": 3,
+          "eligible": 107,
+          "scheduledRecipients": 27,
+          "share": 0.2523364485981308,
+          "wilson95": [
+            0.17960432348612343,
+            0.34223524300914465
+          ],
+          "openingPending": 90,
+          "closingPending": 91,
+          "drawn": 28,
+          "dropped": 0
+        },
+        "control": {
+          "day": 5,
+          "eligible": 1175,
+          "scheduledRecipients": 191,
+          "share": 0.1625531914893617,
+          "wilson95": [
+            0.1425622726044105,
+            0.18474336797484736
+          ],
+          "openingPending": 96,
+          "closingPending": 164,
+          "drawn": 259,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 4,
+        "arm": {
+          "day": 4,
+          "eligible": 1319,
+          "scheduledRecipients": 239,
+          "share": 0.18119787717968158,
+          "wilson95": [
+            0.16134623399788958,
+            0.20290108801320997
+          ],
+          "openingPending": 91,
+          "closingPending": 174,
+          "drawn": 322,
+          "dropped": 0
+        },
+        "control": {
+          "day": 6,
+          "eligible": 1322,
+          "scheduledRecipients": 303,
+          "share": 0.2291981845688351,
+          "wilson95": [
+            0.2073446844513649,
+            0.25262091306670803
+          ],
+          "openingPending": 164,
+          "closingPending": 172,
+          "drawn": 311,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 5,
+        "arm": {
+          "day": 5,
+          "eligible": 1348,
+          "scheduledRecipients": 346,
+          "share": 0.25667655786350146,
+          "wilson95": [
+            0.23407321696650954,
+            0.28066277835333014
+          ],
+          "openingPending": 174,
+          "closingPending": 164,
+          "drawn": 336,
+          "dropped": 0
+        },
+        "control": {
+          "day": 7,
+          "eligible": 1346,
+          "scheduledRecipients": 338,
+          "share": 0.2511144130757801,
+          "wilson95": [
+            0.22867789084179843,
+            0.27496752201627606
+          ],
+          "openingPending": 172,
+          "closingPending": 169,
+          "drawn": 335,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 6,
+        "arm": {
+          "day": 6,
+          "eligible": 1487,
+          "scheduledRecipients": 422,
+          "share": 0.28379287155346333,
+          "wilson95": [
+            0.26145811440711286,
+            0.3072418327296975
+          ],
+          "openingPending": 164,
+          "closingPending": 110,
+          "drawn": 368,
+          "dropped": 0
+        },
+        "control": {
+          "day": 8,
+          "eligible": 119,
+          "scheduledRecipients": 33,
+          "share": 0.2773109243697479,
+          "wilson95": [
+            0.2048037878718734,
+            0.3637457840005872
+          ],
+          "openingPending": 169,
+          "closingPending": 165,
+          "drawn": 29,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 7,
+        "arm": {
+          "day": 7,
+          "eligible": 8,
+          "scheduledRecipients": 8,
+          "share": 1.0,
+          "wilson95": [
+            0.6755924351161198,
+            1.0
+          ],
+          "openingPending": 110,
+          "closingPending": 104,
+          "drawn": 2,
+          "dropped": 0
+        },
+        "control": {
+          "day": 9,
+          "eligible": 1541,
+          "scheduledRecipients": 464,
+          "share": 0.3011031797534069,
+          "wilson95": [
+            0.2787169314541912,
+            0.32447859615162933
+          ],
+          "openingPending": 165,
+          "closingPending": 88,
+          "drawn": 387,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 8,
+        "arm": {
+          "day": 8,
+          "eligible": 1530,
+          "scheduledRecipients": 404,
+          "share": 0.26405228758169935,
+          "wilson95": [
+            0.24257424236111508,
+            0.2867121803992168
+          ],
+          "openingPending": 104,
+          "closingPending": 76,
+          "drawn": 376,
+          "dropped": 0
+        },
+        "control": {
+          "day": 10,
+          "eligible": 1523,
+          "scheduledRecipients": 388,
+          "share": 0.25476034143138543,
+          "wilson95": [
+            0.2335129302423884,
+            0.2772417747176341
+          ],
+          "openingPending": 88,
+          "closingPending": 94,
+          "drawn": 394,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 9,
+        "arm": {
+          "day": 9,
+          "eligible": 1524,
+          "scheduledRecipients": 358,
+          "share": 0.23490813648293962,
+          "wilson95": [
+            0.21430658526728738,
+            0.25684273108672967
+          ],
+          "openingPending": 76,
+          "closingPending": 97,
+          "drawn": 379,
+          "dropped": 0
+        },
+        "control": {
+          "day": 11,
+          "eligible": 880,
+          "scheduledRecipients": 207,
+          "share": 0.23522727272727273,
+          "wilson95": [
+            0.20839221530879692,
+            0.26436390475171506
+          ],
+          "openingPending": 94,
+          "closingPending": 104,
+          "drawn": 217,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 10,
+        "arm": {
+          "day": 10,
+          "eligible": 1185,
+          "scheduledRecipients": 188,
+          "share": 0.15864978902953586,
+          "wilson95": [
+            0.1389555309162017,
+            0.18055003141293244
+          ],
+          "openingPending": 97,
+          "closingPending": 179,
+          "drawn": 270,
+          "dropped": 0
+        },
+        "control": {
+          "day": 12,
+          "eligible": 139,
+          "scheduledRecipients": 45,
+          "share": 0.3237410071942446,
+          "wilson95": [
+            0.25160292771019677,
+            0.4053594107834987
+          ],
+          "openingPending": 104,
+          "closingPending": 105,
+          "drawn": 46,
+          "dropped": 0
+        }
+      }
+    ],
+    "control": "constant25",
+    "controlDayOffset": 2,
+    "auditExact": true,
+    "matching": "Same FT checkpoint family and native calendar days; native weather and unsaved geometry sampling can differ. No weather, price or safety override was used."
+  },
+  "dec50-25": {
+    "openingPending": 801,
+    "closingPending": 104,
+    "dropsByCause": {
+      "trim": 0,
+      "100Policy": 0,
+      "unavailableRecipient": 0,
+      "capExhaustion": 0
+    },
+    "trimCount": 0,
+    "trimOrder": [],
+    "trimIdsOrdinallySorted": true,
+    "daily": [
+      {
+        "day": 1,
+        "arm": {
+          "day": 1,
+          "eligible": 654,
+          "scheduledRecipients": 189,
+          "share": 0.2889908256880734,
+          "wilson95": [
+            0.2555619629394868,
+            0.32488406049177804
+          ],
+          "openingPending": 801,
+          "closingPending": 768,
+          "drawn": 156,
+          "dropped": 0
+        },
+        "control": {
+          "day": 1,
+          "eligible": 689,
+          "scheduledRecipients": 172,
+          "share": 0.24963715529753266,
+          "wilson95": [
+            0.21876829460282693,
+            0.2832822891090158
+          ],
+          "openingPending": 174,
+          "closingPending": 167,
+          "drawn": 165,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 2,
+        "arm": {
+          "day": 2,
+          "eligible": 876,
+          "scheduledRecipients": 287,
+          "share": 0.3276255707762557,
+          "wilson95": [
+            0.2973562844284997,
+            0.35940005846446954
+          ],
+          "openingPending": 768,
+          "closingPending": 689,
+          "drawn": 208,
+          "dropped": 0
+        },
+        "control": {
+          "day": 2,
+          "eligible": 1543,
+          "scheduledRecipients": 456,
+          "share": 0.29552819183408946,
+          "wilson95": [
+            0.27329209257939685,
+            0.3187798703216545
+          ],
+          "openingPending": 167,
+          "closingPending": 77,
+          "drawn": 366,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 3,
+        "arm": {
+          "day": 3,
+          "eligible": 1525,
+          "scheduledRecipients": 840,
+          "share": 0.5508196721311476,
+          "wilson95": [
+            0.5257582269850366,
+            0.5756257321597938
+          ],
+          "openingPending": 689,
+          "closingPending": 248,
+          "drawn": 399,
+          "dropped": 0
+        },
+        "control": {
+          "day": 3,
+          "eligible": 1531,
+          "scheduledRecipients": 363,
+          "share": 0.23709993468321358,
+          "wilson95": [
+            0.21647049058684908,
+            0.25904537108493086
+          ],
+          "openingPending": 77,
+          "closingPending": 101,
+          "drawn": 387,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 4,
+        "arm": {
+          "day": 4,
+          "eligible": 846,
+          "scheduledRecipients": 336,
+          "share": 0.3971631205673759,
+          "wilson95": [
+            0.36472713490858844,
+            0.43052879407202893
+          ],
+          "openingPending": 248,
+          "closingPending": 105,
+          "drawn": 193,
+          "dropped": 0
+        },
+        "control": {
+          "day": 4,
+          "eligible": 1526,
+          "scheduledRecipients": 393,
+          "share": 0.2575360419397117,
+          "wilson95": [
+            0.23622443899355952,
+            0.28006530741556046
+          ],
+          "openingPending": 101,
+          "closingPending": 96,
+          "drawn": 388,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 5,
+        "arm": {
+          "day": 5,
+          "eligible": 1312,
+          "scheduledRecipients": 254,
+          "share": 0.19359756097560976,
+          "wilson95": [
+            0.1731246026032245,
+            0.21585953784134354
+          ],
+          "openingPending": 105,
+          "closingPending": 142,
+          "drawn": 291,
+          "dropped": 0
+        },
+        "control": {
+          "day": 5,
+          "eligible": 1175,
+          "scheduledRecipients": 191,
+          "share": 0.1625531914893617,
+          "wilson95": [
+            0.1425622726044105,
+            0.18474336797484736
+          ],
+          "openingPending": 96,
+          "closingPending": 164,
+          "drawn": 259,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 6,
+        "arm": {
+          "day": 6,
+          "eligible": 1321,
+          "scheduledRecipients": 289,
+          "share": 0.21877365632096896,
+          "wilson95": [
+            0.19731277940860031,
+            0.24186539919295064
+          ],
+          "openingPending": 142,
+          "closingPending": 159,
+          "drawn": 306,
+          "dropped": 0
+        },
+        "control": {
+          "day": 6,
+          "eligible": 1322,
+          "scheduledRecipients": 303,
+          "share": 0.2291981845688351,
+          "wilson95": [
+            0.2073446844513649,
+            0.25262091306670803
+          ],
+          "openingPending": 164,
+          "closingPending": 172,
+          "drawn": 311,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 7,
+        "arm": {
+          "day": 7,
+          "eligible": 1212,
+          "scheduledRecipients": 274,
+          "share": 0.22607260726072606,
+          "wilson95": [
+            0.2034104768112564,
+            0.2504656883887302
+          ],
+          "openingPending": 159,
+          "closingPending": 180,
+          "drawn": 295,
+          "dropped": 0
+        },
+        "control": {
+          "day": 7,
+          "eligible": 1346,
+          "scheduledRecipients": 338,
+          "share": 0.2511144130757801,
+          "wilson95": [
+            0.22867789084179843,
+            0.27496752201627606
+          ],
+          "openingPending": 172,
+          "closingPending": 169,
+          "drawn": 335,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 8,
+        "arm": {
+          "day": 8,
+          "eligible": 1495,
+          "scheduledRecipients": 444,
+          "share": 0.29698996655518395,
+          "wilson95": [
+            0.274371956942516,
+            0.3206485861390754
+          ],
+          "openingPending": 180,
+          "closingPending": 109,
+          "drawn": 373,
+          "dropped": 0
+        },
+        "control": {
+          "day": 8,
+          "eligible": 119,
+          "scheduledRecipients": 33,
+          "share": 0.2773109243697479,
+          "wilson95": [
+            0.2048037878718734,
+            0.3637457840005872
+          ],
+          "openingPending": 169,
+          "closingPending": 165,
+          "drawn": 29,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 9,
+        "arm": {
+          "day": 9,
+          "eligible": 1543,
+          "scheduledRecipients": 416,
+          "share": 0.2696046662346079,
+          "wilson95": [
+            0.24805540450635472,
+            0.292298265260123
+          ],
+          "openingPending": 109,
+          "closingPending": 88,
+          "drawn": 395,
+          "dropped": 0
+        },
+        "control": {
+          "day": 9,
+          "eligible": 1541,
+          "scheduledRecipients": 464,
+          "share": 0.3011031797534069,
+          "wilson95": [
+            0.2787169314541912,
+            0.32447859615162933
+          ],
+          "openingPending": 165,
+          "closingPending": 88,
+          "drawn": 387,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 10,
+        "arm": {
+          "day": 10,
+          "eligible": 1523,
+          "scheduledRecipients": 376,
+          "share": 0.2468811556139199,
+          "wilson95": [
+            0.2258800945727189,
+            0.26915588604866986
+          ],
+          "openingPending": 88,
+          "closingPending": 104,
+          "drawn": 392,
+          "dropped": 0
+        },
+        "control": {
+          "day": 10,
+          "eligible": 1523,
+          "scheduledRecipients": 388,
+          "share": 0.25476034143138543,
+          "wilson95": [
+            0.2335129302423884,
+            0.2772417747176341
+          ],
+          "openingPending": 88,
+          "closingPending": 94,
+          "drawn": 394,
+          "dropped": 0
+        }
+      }
+    ],
+    "control": "constant25",
+    "controlDayOffset": 0,
+    "auditExact": true,
+    "matching": "Same FT checkpoint family and native calendar days; native weather and unsaved geometry sampling can differ. No weather, price or safety override was used."
+  },
+  "dec50-10": {
+    "openingPending": 801,
+    "closingPending": 5,
+    "dropsByCause": {
+      "trim": 419,
+      "100Policy": 0,
+      "unavailableRecipient": 0,
+      "capExhaustion": 0
+    },
+    "trimCount": 419,
+    "trimOrder": [
+      "c0",
+      "c1",
+      "c10",
+      "c100",
+      "c101",
+      "c102",
+      "c103",
+      "c104",
+      "c105",
+      "c106",
+      "c107",
+      "c108",
+      "c109",
+      "c11",
+      "c110",
+      "c111",
+      "c112",
+      "c113",
+      "c114",
+      "c115",
+      "c116",
+      "c117",
+      "c118",
+      "c119",
+      "c12",
+      "c120",
+      "c121",
+      "c122",
+      "c123",
+      "c124",
+      "c125",
+      "c126",
+      "c127",
+      "c128",
+      "c129",
+      "c13",
+      "c130",
+      "c131",
+      "c132",
+      "c133",
+      "c134",
+      "c135",
+      "c136",
+      "c137",
+      "c138",
+      "c139",
+      "c14",
+      "c140",
+      "c141",
+      "c142",
+      "c144",
+      "c145",
+      "c146",
+      "c147",
+      "c148",
+      "c149",
+      "c15",
+      "c150",
+      "c151",
+      "c152",
+      "c153",
+      "c154",
+      "c155",
+      "c156",
+      "c157",
+      "c158",
+      "c159",
+      "c16",
+      "c160",
+      "c161",
+      "c162",
+      "c163",
+      "c164",
+      "c165",
+      "c166",
+      "c167",
+      "c168",
+      "c169",
+      "c17",
+      "c170",
+      "c171",
+      "c172",
+      "c173",
+      "c174",
+      "c175",
+      "c176",
+      "c177",
+      "c178",
+      "c179",
+      "c180",
+      "c181",
+      "c182",
+      "c183",
+      "c184",
+      "c185",
+      "c186",
+      "c187",
+      "c188",
+      "c19",
+      "c190",
+      "c191",
+      "c192",
+      "c193",
+      "c194",
+      "c195",
+      "c196",
+      "c197",
+      "c198",
+      "c199",
+      "c2",
+      "c20",
+      "c200",
+      "c201",
+      "c202",
+      "c203",
+      "c204",
+      "c205",
+      "c206",
+      "c207",
+      "c208",
+      "c209",
+      "c21",
+      "c210",
+      "c211",
+      "c212",
+      "c213",
+      "c215",
+      "c216",
+      "c217",
+      "c218",
+      "c219",
+      "c22",
+      "c220",
+      "c221",
+      "c222",
+      "c223",
+      "c224",
+      "c226",
+      "c227",
+      "c228",
+      "c229",
+      "c23",
+      "c230",
+      "c231",
+      "c232",
+      "c233",
+      "c234",
+      "c235",
+      "c236",
+      "c237",
+      "c238",
+      "c239",
+      "c24",
+      "c240",
+      "c241",
+      "c242",
+      "c243",
+      "c244",
+      "c245",
+      "c246",
+      "c247",
+      "c248",
+      "c249",
+      "c25",
+      "c250",
+      "c251",
+      "c252",
+      "c253",
+      "c254",
+      "c255",
+      "c256",
+      "c257",
+      "c258",
+      "c259",
+      "c26",
+      "c260",
+      "c261",
+      "c262",
+      "c263",
+      "c264",
+      "c265",
+      "c266",
+      "c267",
+      "c268",
+      "c269",
+      "c27",
+      "c270",
+      "c271",
+      "c272",
+      "c273",
+      "c274",
+      "c275",
+      "c276",
+      "c277",
+      "c278",
+      "c279",
+      "c28",
+      "c280",
+      "c281",
+      "c282",
+      "c283",
+      "c284",
+      "c285",
+      "c286",
+      "c289",
+      "c29",
+      "c290",
+      "c291",
+      "c292",
+      "c293",
+      "c294",
+      "c295",
+      "c296",
+      "c297",
+      "c298",
+      "c299",
+      "c3",
+      "c30",
+      "c300",
+      "c301",
+      "c302",
+      "c303",
+      "c304",
+      "c305",
+      "c306",
+      "c307",
+      "c308",
+      "c309",
+      "c31",
+      "c310",
+      "c311",
+      "c312",
+      "c313",
+      "c314",
+      "c315",
+      "c316",
+      "c317",
+      "c318",
+      "c319",
+      "c32",
+      "c320",
+      "c321",
+      "c322",
+      "c323",
+      "c325",
+      "c326",
+      "c327",
+      "c328",
+      "c329",
+      "c33",
+      "c330",
+      "c331",
+      "c332",
+      "c333",
+      "c334",
+      "c335",
+      "c336",
+      "c337",
+      "c338",
+      "c339",
+      "c34",
+      "c340",
+      "c341",
+      "c342",
+      "c343",
+      "c344",
+      "c345",
+      "c346",
+      "c347",
+      "c348",
+      "c349",
+      "c35",
+      "c350",
+      "c351",
+      "c352",
+      "c353",
+      "c354",
+      "c355",
+      "c356",
+      "c357",
+      "c358",
+      "c359",
+      "c360",
+      "c361",
+      "c362",
+      "c363",
+      "c364",
+      "c365",
+      "c366",
+      "c367",
+      "c368",
+      "c369",
+      "c37",
+      "c370",
+      "c371",
+      "c372",
+      "c373",
+      "c374",
+      "c375",
+      "c376",
+      "c377",
+      "c378",
+      "c379",
+      "c38",
+      "c380",
+      "c381",
+      "c382",
+      "c383",
+      "c384",
+      "c385",
+      "c386",
+      "c387",
+      "c388",
+      "c389",
+      "c39",
+      "c390",
+      "c391",
+      "c392",
+      "c393",
+      "c394",
+      "c395",
+      "c396",
+      "c397",
+      "c398",
+      "c399",
+      "c4",
+      "c40",
+      "c41",
+      "c42",
+      "c43",
+      "c44",
+      "c45",
+      "c46",
+      "c47",
+      "c48",
+      "c49",
+      "c5",
+      "c50",
+      "c51",
+      "c52",
+      "c53",
+      "c54",
+      "c55",
+      "c56",
+      "c57",
+      "c58",
+      "c59",
+      "c6",
+      "c60",
+      "c61",
+      "c62",
+      "c63",
+      "c65",
+      "c66",
+      "c67",
+      "c68",
+      "c69",
+      "c7",
+      "c71",
+      "c72",
+      "c73",
+      "c74",
+      "c75",
+      "c76",
+      "c77",
+      "c78",
+      "c79",
+      "c80",
+      "c81",
+      "c82",
+      "c84",
+      "c85",
+      "c86",
+      "c87",
+      "c88",
+      "c89",
+      "c9",
+      "c90",
+      "c91",
+      "c92",
+      "c93",
+      "c94",
+      "c95",
+      "c96",
+      "c97",
+      "c98",
+      "c99",
+      "pc:1",
+      "pc:10",
+      "pc:100",
+      "pc:101",
+      "pc:102",
+      "pc:103",
+      "pc:104",
+      "pc:105",
+      "pc:106",
+      "pc:107",
+      "pc:108",
+      "pc:109",
+      "pc:11",
+      "pc:110",
+      "pc:111",
+      "pc:112",
+      "pc:113",
+      "pc:114",
+      "pc:115",
+      "pc:116",
+      "pc:117",
+      "pc:118",
+      "pc:119",
+      "pc:12",
+      "pc:120",
+      "pc:121",
+      "pc:122",
+      "pc:123",
+      "pc:124",
+      "pc:125",
+      "pc:126",
+      "pc:127"
+    ],
+    "trimIdsOrdinallySorted": true,
+    "daily": [
+      {
+        "day": 1,
+        "arm": {
+          "day": 1,
+          "eligible": 652,
+          "scheduledRecipients": 202,
+          "share": 0.3098159509202454,
+          "wilson95": [
+            0.27552218907010917,
+            0.34633764204525985
+          ],
+          "openingPending": 801,
+          "closingPending": 242,
+          "drawn": 62,
+          "dropped": 419
+        },
+        "control": {
+          "day": 1,
+          "eligible": 1057,
+          "scheduledRecipients": 133,
+          "share": 0.12582781456953643,
+          "wilson95": [
+            0.10717914297780902,
+            0.1471863482810534
+          ],
+          "openingPending": 43,
+          "closingPending": 11,
+          "drawn": 101,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 2,
+        "arm": {
+          "day": 2,
+          "eligible": 875,
+          "scheduledRecipients": 270,
+          "share": 0.30857142857142855,
+          "wilson95": [
+            0.27885844742908295,
+            0.3399578969323538
+          ],
+          "openingPending": 242,
+          "closingPending": 67,
+          "drawn": 95,
+          "dropped": 0
+        },
+        "control": {
+          "day": 2,
+          "eligible": 1544,
+          "scheduledRecipients": 158,
+          "share": 0.10233160621761658,
+          "wilson95": [
+            0.08818734146815271,
+            0.11844975110874625
+          ],
+          "openingPending": 11,
+          "closingPending": 2,
+          "drawn": 149,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 3,
+        "arm": {
+          "day": 3,
+          "eligible": 1523,
+          "scheduledRecipients": 185,
+          "share": 0.12147078135259357,
+          "wilson95": [
+            0.10600978429210187,
+            0.13883650060603206
+          ],
+          "openingPending": 67,
+          "closingPending": 24,
+          "drawn": 142,
+          "dropped": 0
+        },
+        "control": {
+          "day": 3,
+          "eligible": 1530,
+          "scheduledRecipients": 121,
+          "share": 0.07908496732026143,
+          "wilson95": [
+            0.06659243500433014,
+            0.09368583717753619
+          ],
+          "openingPending": 2,
+          "closingPending": 20,
+          "drawn": 139,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 4,
+        "arm": {
+          "day": 4,
+          "eligible": 1529,
+          "scheduledRecipients": 156,
+          "share": 0.10202746893394375,
+          "wilson95": [
+            0.08783935757440767,
+            0.11821030072729932
+          ],
+          "openingPending": 24,
+          "closingPending": 17,
+          "drawn": 149,
+          "dropped": 0
+        },
+        "control": {
+          "day": 4,
+          "eligible": 975,
+          "scheduledRecipients": 101,
+          "share": 0.10358974358974359,
+          "wilson95": [
+            0.08599226621125075,
+            0.12429864143858604
+          ],
+          "openingPending": 20,
+          "closingPending": 1,
+          "drawn": 82,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 5,
+        "arm": {
+          "day": 5,
+          "eligible": 1310,
+          "scheduledRecipients": 103,
+          "share": 0.07862595419847328,
+          "wilson95": [
+            0.06525209003104457,
+            0.09446387677140974
+          ],
+          "openingPending": 17,
+          "closingPending": 36,
+          "drawn": 122,
+          "dropped": 0
+        },
+        "control": {
+          "day": 5,
+          "eligible": 1311,
+          "scheduledRecipients": 87,
+          "share": 0.06636155606407322,
+          "wilson95": [
+            0.054114725553117034,
+            0.08114223461317058
+          ],
+          "openingPending": 1,
+          "closingPending": 35,
+          "drawn": 121,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 6,
+        "arm": {
+          "day": 6,
+          "eligible": 1179,
+          "scheduledRecipients": 73,
+          "share": 0.06191687871077184,
+          "wilson95": [
+            0.04953171666818216,
+            0.07714752483396112
+          ],
+          "openingPending": 36,
+          "closingPending": 87,
+          "drawn": 124,
+          "dropped": 0
+        },
+        "control": {
+          "day": 6,
+          "eligible": 1322,
+          "scheduledRecipients": 120,
+          "share": 0.0907715582450832,
+          "wilson95": [
+            0.07644814621855445,
+            0.10746634612020944
+          ],
+          "openingPending": 35,
+          "closingPending": 46,
+          "drawn": 131,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 7,
+        "arm": {
+          "day": 7,
+          "eligible": 1346,
+          "scheduledRecipients": 186,
+          "share": 0.13818722139673106,
+          "wilson95": [
+            0.12077839993062317,
+            0.15765537935857776
+          ],
+          "openingPending": 87,
+          "closingPending": 43,
+          "drawn": 142,
+          "dropped": 0
+        },
+        "control": {
+          "day": 7,
+          "eligible": 1235,
+          "scheduledRecipients": 128,
+          "share": 0.10364372469635627,
+          "wilson95": [
+            0.08785558026314796,
+            0.12188995010362574
+          ],
+          "openingPending": 46,
+          "closingPending": 50,
+          "drawn": 132,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 8,
+        "arm": {
+          "day": 8,
+          "eligible": 1494,
+          "scheduledRecipients": 158,
+          "share": 0.10575635876840696,
+          "wilson95": [
+            0.09116081079695393,
+            0.12237411103149984
+          ],
+          "openingPending": 43,
+          "closingPending": 15,
+          "drawn": 130,
+          "dropped": 0
+        },
+        "control": {
+          "day": 8,
+          "eligible": 1461,
+          "scheduledRecipients": 165,
+          "share": 0.11293634496919917,
+          "wilson95": [
+            0.09771098682267489,
+            0.1301918055310186
+          ],
+          "openingPending": 50,
+          "closingPending": 18,
+          "drawn": 133,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 9,
+        "arm": {
+          "day": 9,
+          "eligible": 1065,
+          "scheduledRecipients": 105,
+          "share": 0.09859154929577464,
+          "wilson95": [
+            0.0821041364675312,
+            0.1179643180782309
+          ],
+          "openingPending": 15,
+          "closingPending": 14,
+          "drawn": 104,
+          "dropped": 0
+        },
+        "control": {
+          "day": 9,
+          "eligible": 1541,
+          "scheduledRecipients": 156,
+          "share": 0.10123296560674887,
+          "wilson95": [
+            0.08715042128343005,
+            0.11729868708125753
+          ],
+          "openingPending": 18,
+          "closingPending": 18,
+          "drawn": 156,
+          "dropped": 0
+        }
+      },
+      {
+        "day": 10,
+        "arm": {
+          "day": 10,
+          "eligible": 1530,
+          "scheduledRecipients": 145,
+          "share": 0.09477124183006536,
+          "wilson95": [
+            0.08109301282670886,
+            0.11047923678937363
+          ],
+          "openingPending": 14,
+          "closingPending": 5,
+          "drawn": 136,
+          "dropped": 0
+        },
+        "control": {
+          "day": 10,
+          "eligible": 1523,
+          "scheduledRecipients": 139,
+          "share": 0.0912672357189757,
+          "wilson95": [
+            0.07781372671361327,
+            0.10677744821975772
+          ],
+          "openingPending": 18,
+          "closingPending": 13,
+          "drawn": 134,
+          "dropped": 0
+        }
+      }
+    ],
+    "control": "constant10",
+    "controlDayOffset": 0,
+    "auditExact": true,
+    "matching": "Same FT checkpoint family and native calendar days; native weather and unsaved geometry sampling can differ. No weather, price or safety override was used."
+  }
+}

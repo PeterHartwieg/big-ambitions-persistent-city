@@ -1,0 +1,16 @@
+{
+  "before": {
+    "sha": "7357f78ca13edd5200e7e708950ffbc7a6ade1fe",
+    "dll_sha256": "54aa9dc8be97f0a3c89b629b7bc06813de0dad61e515ecd6d02d1f5cee470f54"
+  },
+  "after": {
+    "sha": "06bc0faa17004b45f4fc35e2820d19d564d2cb0f",
+    "dll_sha256": "f860f88cc4cd1cf4cfbe69e164b596492d27b419fe63a57e6a6dbd145b890343"
+  },
+  "afterDocsOnlySinceImplementation": [
+    "CHECKS.md",
+    "docs/decisions/2026-10-28-native-money.md"
+  ],
+  "expectedAfterDll": "f860f88cc4cd1cf4cfbe69e164b596492d27b419fe63a57e6a6dbd145b890343",
+  "managedAssemblies": "external Steam Managed, referenced in place; not copied or committed"
+}

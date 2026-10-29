@@ -34,4 +34,17 @@ internal static class LegacyMoneyWire
         }
         return token;
     }
+
+    /// <summary>Labels a current payload as an earlier city schema, dropping the citizen fields that
+    /// schema did not have (optional stops arrived in 15, saved visit choices in 16).</summary>
+    public static JObject AsSchema(JObject token, int schema)
+    {
+        token["Schema"] = schema;
+        foreach (var citizen in token["Citizens"]!.OfType<JObject>())
+        {
+            if (schema < 15) citizen.Remove("OptionalStop");
+            if (schema < 16) citizen.Remove("OptionalStopChoice");
+        }
+        return token;
+    }
 }

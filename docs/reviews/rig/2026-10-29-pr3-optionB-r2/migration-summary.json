@@ -1,0 +1,88 @@
+{
+  "schema13": {
+    "sourceSchema": 13,
+    "migratedSchema": 16,
+    "savedSchema": 16,
+    "reloadedSchema": 16,
+    "moneyFields": 34453,
+    "exactHistoricalMoneyPreservedOnLoad": true,
+    "allMoneyPreservedBySaveAndReload": true,
+    "identitiesAssignmentsPreserved": true,
+    "savedPayloadByteIdenticalAcrossReload": true,
+    "hashes": {
+      "after-qa-1-initial-d267a0-saved-payload.json": "918f305936c011a425fe34060ae7d66f0576c3c608679455d6a0283307c4f086",
+      "after-qa-1-initial-d267a0-population.json": "f932269246a5234f7b9928c4fb93e481bf1e4eabcde1d7c1d1590a9c1537af34",
+      "after-qa-1-pre-save-0c7742-population.json": "e2a6d3902563e5d5697ef02b1c9d5b082405e7bcd21d8369b322cd783d531992",
+      "after-qa-1-saved-593404-saved-payload.json": "e2a6d3902563e5d5697ef02b1c9d5b082405e7bcd21d8369b322cd783d531992",
+      "after-qa-1-reloaded-b54c44-saved-payload.json": "e2a6d3902563e5d5697ef02b1c9d5b082405e7bcd21d8369b322cd783d531992",
+      "after-qa-1-reloaded-b54c44-population.json": "c0badf808dd535ec354163770cf5fa48f6462d0ab0ee844753c2c3a9e3c28e26"
+    },
+    "passed": true,
+    "sourceWrittenByBefore": null,
+    "schema13WholeCentFixture": true
+  },
+  "schema14": {
+    "sourceSchema": 14,
+    "migratedSchema": 16,
+    "savedSchema": 16,
+    "reloadedSchema": 16,
+    "moneyFields": 34456,
+    "exactHistoricalMoneyPreservedOnLoad": true,
+    "allMoneyPreservedBySaveAndReload": true,
+    "identitiesAssignmentsPreserved": true,
+    "savedPayloadByteIdenticalAcrossReload": true,
+    "hashes": {
+      "schema14-migration-initial-384840-saved-payload.json": "13681a460c6a221b4d4d8c60fc0c1b41e8559a1a05172413309b2578c550aa80",
+      "schema14-migration-initial-384840-population.json": "99b0fb745fcce7e6e0a3121f8b9428115b4a274d678cb6c44a4fc35e39b66b23",
+      "schema14-migration-control-pre-save-c083d8-population.json": "ceb3e9c03f1c30ee9aa42f63b8601bc754d5abf759994a4997f200b6dccc75c5",
+      "schema14-migration-control-saved-5a91ca-saved-payload.json": "ceb3e9c03f1c30ee9aa42f63b8601bc754d5abf759994a4997f200b6dccc75c5",
+      "schema14-migration-control-reloaded-0f6b6f-saved-payload.json": "ceb3e9c03f1c30ee9aa42f63b8601bc754d5abf759994a4997f200b6dccc75c5",
+      "schema14-migration-control-reloaded-0f6b6f-population.json": "722b94193a6c60cf61bae7a2cb70e4083df24f279315c8c144ee7318a57b6406"
+    },
+    "passed": true,
+    "historicalReceipts": 110,
+    "allHistoricalReceiptKeysAndValuesPreserved": true,
+    "sourceWrittenByBefore": true,
+    "schema13WholeCentFixture": null
+  },
+  "schema15-exact-native-codec": {
+    "sourceSchema": 15,
+    "migratedSchema": 16,
+    "moneyFields": 34453,
+    "exactHistoricalMoneyPreserved": true,
+    "identitiesAssignmentsPreserved": true,
+    "sourceSha256": "32c1a2d5e5cf18091594b281c33c95a9f01a8ba74721ad2be11ea57907fe76f7",
+    "outputSha256": "b41cfffb13e035474a7c4a8245a889936aa5304c060eb16c397d327e45a2d309",
+    "passed": true
+  },
+  "schema15-legacy-exact-native-codec": {
+    "sourceSchema": 15,
+    "migratedSchema": 16,
+    "moneyFields": 34453,
+    "exactHistoricalMoneyPreserved": true,
+    "identitiesAssignmentsPreserved": true,
+    "sourceSha256": "6326ff285a878df9083139e59f472b08366ddaf1e015a06a92f7dcd48d4221f0",
+    "outputSha256": "f932269246a5234f7b9928c4fb93e481bf1e4eabcde1d7c1d1590a9c1537af34",
+    "passed": true
+  },
+  "schema16-exact-native-codec": {
+    "sourceSchema": 16,
+    "migratedSchema": 16,
+    "moneyFields": 34453,
+    "exactHistoricalMoneyPreserved": true,
+    "identitiesAssignmentsPreserved": true,
+    "sourceSha256": "b41cfffb13e035474a7c4a8245a889936aa5304c060eb16c397d327e45a2d309",
+    "outputSha256": "b41cfffb13e035474a7c4a8245a889936aa5304c060eb16c397d327e45a2d309",
+    "passed": true
+  },
+  "schema16-legacy-exact-native-codec": {
+    "sourceSchema": 16,
+    "migratedSchema": 16,
+    "moneyFields": 34453,
+    "exactHistoricalMoneyPreserved": true,
+    "identitiesAssignmentsPreserved": true,
+    "sourceSha256": "7d2b7565e980456cce20cd8b591ba748f2836dc341819db329150f5f682d0033",
+    "outputSha256": "f932269246a5234f7b9928c4fb93e481bf1e4eabcde1d7c1d1590a9c1537af34",
+    "passed": true
+  }
+}

@@ -2,8 +2,8 @@ using System;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Common mechanics for an explicitly selected optional stop. No kind, frequency,
-    /// night density, destination or duration is selected here. Runtime scheduling awaits policy approval.</summary>
+    /// <summary>Common bounds and cancellation mechanics shared by the approved optional stop kinds.
+    /// OptionalStopScheduling owns deterministic opportunities and persisted continuation.</summary>
     public static class OptionalStops
     {
         public static Dwell? Plan(string citizenId, DwellKind selectedKind, string spotId, string facingId,

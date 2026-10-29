@@ -1,0 +1,32 @@
+{
+  "verdict": "PASS",
+  "checks": {
+    "beforeAbsence": true,
+    "regressionPresence": true,
+    "offline": true,
+    "defaultLongRun": true,
+    "independentRateAudit": true,
+    "zero": true,
+    "hundred": true,
+    "settings": true,
+    "decreaseArms": true,
+    "pendingAtZero": true,
+    "migrations": true,
+    "codecRefusals": true,
+    "nativeRefusals": true,
+    "finance": true,
+    "persistence": true,
+    "transferAndConversationReloads": true,
+    "visibleDwellReturn": true,
+    "timingWindows": true,
+    "wholeFrameNoise": true,
+    "nativeQA": true,
+    "checkpointPreserved": true,
+    "freshTimingWindows": true,
+    "freshWholeFrameNoise": true,
+    "cleanup": true
+  },
+  "cleanup": "Full profile, original root files and install references, ModsLocal/config and preferences hash-verified; rig stopped; lease released.",
+  "testedHead": "7a104d6f41d7c92579dcdf2e790274856d31cb29",
+  "productionCode": "067e8c589e3fa96294cfe03360df479bd822ffab"
+}

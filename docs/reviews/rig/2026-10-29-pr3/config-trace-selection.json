@@ -1,0 +1,4 @@
+{
+  "rawPrivateSha256": "b865dc3d2af6e6f1e66a49b502dc47acba95eb53ff519798bc37d68e5405bc63",
+  "selection": "All rows retained. In scheduled rows only Kind, PlaceId, VisitMinute, StartMinute, EndMinute and Members are retained within stop; large geometry fields omitted. No count, choice, identifier or time is changed."
+}

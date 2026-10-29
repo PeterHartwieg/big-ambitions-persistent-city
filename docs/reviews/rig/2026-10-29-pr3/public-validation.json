@@ -1,0 +1,50 @@
+{
+  "pythonScriptsParsed": 24,
+  "checks": [
+    {
+      "check": "before-published-finance",
+      "exit": 0
+    },
+    {
+      "check": "after-published-finance",
+      "exit": 0
+    },
+    {
+      "check": "config-zero-published-finance",
+      "exit": 0
+    },
+    {
+      "check": "config-hundred-published-finance",
+      "exit": 0
+    },
+    {
+      "check": "before-published-ledgers",
+      "exit": 0
+    },
+    {
+      "check": "after-published-ledgers",
+      "exit": 0
+    },
+    {
+      "check": "published-negative-controls",
+      "exit": 0
+    },
+    {
+      "check": "published-0-100-trace-reproduction",
+      "exit": 0
+    }
+  ],
+  "configurationTraceCounts": {
+    "config-zero": {
+      "distinctChoices": 1310,
+      "accepted": 0,
+      "scheduledRecords": 0
+    },
+    "config-hundred": {
+      "distinctChoices": 1310,
+      "accepted": 1310,
+      "scheduledRecords": 420
+    }
+  },
+  "financialResultsReproducedByteForValue": true
+}

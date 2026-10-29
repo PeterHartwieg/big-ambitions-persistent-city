@@ -1,0 +1,74 @@
+[
+  {
+    "scope": "mod",
+    "metric": "p50",
+    "beforeMedian": 0.1506,
+    "afterMedian": 0.2266,
+    "change": 0.07599999999999998,
+    "beforeRange": 0.0030999999999999917,
+    "afterRange": 0.004200000000000009,
+    "largerSpread": 0.004200000000000009,
+    "rangesOverlap": false,
+    "worseBeyondObservedSpread": true
+  },
+  {
+    "scope": "mod",
+    "metric": "p95",
+    "beforeMedian": 0.2161,
+    "afterMedian": 0.3015,
+    "change": 0.0854,
+    "beforeRange": 0.005600000000000022,
+    "afterRange": 0.014500000000000013,
+    "largerSpread": 0.014500000000000013,
+    "rangesOverlap": false,
+    "worseBeyondObservedSpread": true
+  },
+  {
+    "scope": "mod",
+    "metric": "maximum",
+    "beforeMedian": 11.1348,
+    "afterMedian": 11.888,
+    "change": 0.7531999999999996,
+    "beforeRange": 0.36629999999999896,
+    "afterRange": 0.8168000000000006,
+    "largerSpread": 0.8168000000000006,
+    "rangesOverlap": false,
+    "worseBeyondObservedSpread": false
+  },
+  {
+    "scope": "wholeFrame",
+    "metric": "p50",
+    "beforeMedian": 11.1162,
+    "afterMedian": 11.1177,
+    "change": 0.0015000000000000568,
+    "beforeRange": 0.01950000000000074,
+    "afterRange": 0.0522999999999989,
+    "largerSpread": 0.0522999999999989,
+    "rangesOverlap": true,
+    "worseBeyondObservedSpread": false
+  },
+  {
+    "scope": "wholeFrame",
+    "metric": "p95",
+    "beforeMedian": 13.3319,
+    "afterMedian": 13.3233,
+    "change": -0.008599999999999497,
+    "beforeRange": 0.1014999999999997,
+    "afterRange": 0.034900000000000375,
+    "largerSpread": 0.1014999999999997,
+    "rangesOverlap": true,
+    "worseBeyondObservedSpread": false
+  },
+  {
+    "scope": "wholeFrame",
+    "metric": "maximum",
+    "beforeMedian": 108.3813,
+    "afterMedian": 100.8914,
+    "change": -7.489899999999992,
+    "beforeRange": 107.46969999999999,
+    "afterRange": 39.71090000000001,
+    "largerSpread": 107.46969999999999,
+    "rangesOverlap": true,
+    "worseBeyondObservedSpread": false
+  }
+]

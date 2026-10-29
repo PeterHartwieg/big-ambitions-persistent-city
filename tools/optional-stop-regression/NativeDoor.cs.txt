@@ -1,0 +1,130 @@
+using System;
+using System.Collections.Generic;
+using PersistentCity.Core;
+using PersistentCity.Persistence;
+using System.Linq;
+namespace PersistentCity.Runtime
+{
+    sealed class CityBuildingController
+    {
+        public bool Destroyed;
+        public Position Entrance;
+        public GameObject gameObject = new GameObject();
+        public Registration buildingRegistration = new Registration();
+        public static bool operator ==(CityBuildingController? a, CityBuildingController? b)
+            => ReferenceEquals(a,b) || (ReferenceEquals(a,null) || a.Destroyed) && (ReferenceEquals(b,null) || b.Destroyed);
+        public static bool operator !=(CityBuildingController? a, CityBuildingController? b) => !(a==b);
+        public override bool Equals(object? o) => ReferenceEquals(this,o);
+        public override int GetHashCode() => base.GetHashCode();
+    }
+    sealed class GameObject { public bool activeInHierarchy = true; }
+    sealed class Registration
+    {
+        public bool HasEstablishedBusiness = true;
+        public bool temporarilyClosed = false;
+        public string businessTypeName = "ba:businesstype_nightclub";
+    }
+    sealed class CityManager
+    {
+        public static CityManager Instance = new CityManager();
+        public List<CityBuildingController> cityBuildingControllers = new List<CityBuildingController>();
+    }
+    static class GamePlaces
+    {
+        public static bool TryEntrance(CityBuildingController c, out Position p) { p=c.Entrance; return true; }
+        public static bool BuildingAccessible(CityBuildingController c) => true;
+    }
+    sealed class NativeDoorHarness : IOptionalStopEnvironment
+    {
+        readonly DwellSpots doors = new DwellSpots();
+        readonly Dictionary<string,CityBuildingController> buildings = new Dictionary<string,CityBuildingController>();
+        readonly Dictionary<string,OptionalStopSpot[]> cached = new Dictionary<string,OptionalStopSpot[]>();
+        readonly Dictionary<string,OptionalStopSpot> validatedSpots = new Dictionary<string,OptionalStopSpot>();
+        readonly Dictionary<string,Place> places = new Dictionary<string,Place>();
+        public bool Raining { get; set; }
+        public OptionalStopAvailability Available(OptionalStopState stop)
+            => NativeDoorPresent(places[stop.PlaceId],stop.Kind) ? GeometryStatus(places[stop.PlaceId],stop) : OptionalStopAvailability.Unavailable;
+        IReadOnlyList<OptionalStopSpot> Audience(Place p) => Array.Empty<OptionalStopSpot>();
+        IReadOnlyList<OptionalStopSpot> ParkEdge(Place p,string key) => Array.Empty<OptionalStopSpot>();
+        /* PRODUCTION METHOD */
+        static void ReloadMultipleEntrances(bool reverse)
+        {
+            CityManager.Instance.cityBuildingControllers.Clear(); Time.frameCount++;
+            var home=new Place {Id="home",Name="Home",Kind=PlaceKind.Home,Capacity=2};
+            var work1=new Place {Id="work1",Name="Work 1",Kind=PlaceKind.Work,Capacity=2,Position=new Position(10,0,0)};
+            var work2=new Place {Id="work2",Name="Work 2",Kind=PlaceKind.Work,Capacity=2,Position=new Position(20,0,0)};
+            var state=Population.Create(new[] {new CitizenIdentity {Id="a",Name="A",Age=30},new CitizenIdentity {Id="b",Name="B",Age=30}},
+                new[] {home,work1,work2},"saved-stops","0.40.4",17,100);
+            for(int i=0;i<2;i++)
+            {
+                var c=state.Citizens[i]; var p=i==0?work1:work2;
+                c.Phase=CitizenPhase.AtPlace; c.PlaceId=p.Id; c.Activity=Activity.Work;
+                c.NextEventMinute=c.ActivityUntilMinute=1000; c.OptionalStopChoice=true;
+                c.RecentVisits.Add(new VisitRecord {AtMinute=100,PlaceId=p.Id,Activity=Activity.Work});
+                c.OptionalStop=new OptionalStopState {Kind=DwellKind.Break,PlaceId=p.Id,TargetId=p.Id,SpotId=p.Id+":Break:0",
+                    Position=p.Position,Facing=p.Position,ReturnPosition=p.Position,VisitMinute=100,StartMinute=160,EndMinute=165,ResumeEventMinute=1000};
+                CityManager.Instance.cityBuildingControllers.Add(new CityBuildingController {Entrance=p.Position});
+            }
+            if(reverse) state.Citizens.Reverse();
+            string saved=SaveCodec.Write(state);
+            var read=SaveCodec.Read(saved); if(read.Status!=SaveReadStatus.Loaded) throw new Exception(read.Error);
+            var env=new NativeDoorHarness(); foreach(var p in read.State!.Places) env.places[p.Id]=p;
+            var sim=new CitySimulator(read.State,new NoRoutes()); int before=DwellSpots.SampleCalls;
+            sim.AttachOptionalStops(env,25);
+            if(read.State.Citizens.Any(c=>c.OptionalStop!.Cancelled) || SaveCodec.Write(read.State)!=saved)
+                throw new Exception("Attach cancelled or modified a saved future break");
+            var second=read.State.Citizens[1].OptionalStop!;
+            if(sim.OptionalStopStatus(second)!=OptionalStopAvailability.Deferred || DwellSpots.SampleCalls!=before+1)
+                throw new Exception("Cold second entrance must defer without exceeding frame budget");
+            // Active saved records likewise cannot gain a body before validation.
+            read.State.Minute=160;
+            if(Harness.TryDeferredAdmission(sim,read.State.Citizens[1])) throw new Exception("Unvalidated stop received a body");
+            Time.frameCount++; sim.RefreshOptionalStops();
+            if(sim.OptionalStopStatus(second)!=OptionalStopAvailability.Ready || read.State.Citizens.Any(c=>c.OptionalStop!.Cancelled)
+                || DwellSpots.SampleCalls!=before+2) throw new Exception("Next frame failed to resume validation");
+            if(!Harness.TryDeferredAdmission(sim,read.State.Citizens[1])) throw new Exception("Validated stop cannot be joined");
+            if(second.StartMinute!=160 || second.EndMinute!=165 || read.State.Citizens.Any(c=>c.OptionalStopChoice!=true))
+                throw new Exception("Validation changed saved choice or deadline");
+            // A fresh reload while rain starts must cancel even the entrance still deferred.
+            var wet=SaveCodec.Read(saved).State!; var wetEnv=new NativeDoorHarness();
+            foreach(var p in wet.Places) wetEnv.places[p.Id]=p;
+            var wetSim=new CitySimulator(wet,new NoRoutes()); wetSim.AttachOptionalStops(wetEnv,25);
+            wetEnv.Raining=true; wetSim.RefreshOptionalStops();
+            if(wet.Citizens.Any(c=>!c.OptionalStop!.Cancelled)) throw new Exception("Rain must cancel deferred future stops");
+            // Confirmed native loss is different from budget deferral.
+            var native=CityManager.Instance.cityBuildingControllers.Single(b=>b.Entrance.Equals(second.ReturnPosition));
+            native.Destroyed=true; CityManager.Instance.cityBuildingControllers.Remove(native);
+            sim.RefreshOptionalStops();
+            if(!second.Cancelled) throw new Exception("Confirmed disappearance must cancel");
+            env.Raining=true; sim.RefreshOptionalStops();
+            if(read.State.Citizens.Any(c=>!c.OptionalStop!.Cancelled)) throw new Exception("Rain must still cancel");
+            Console.WriteLine("Saved facade reload: 9 integration checks passed.");
+        }
+        sealed class NoRoutes : IRoutePlanner { public Route? Plan(Place a,Place b,double t,TravelPreferences p)=>null; }
+
+        public static void Run()
+        {
+            ReloadMultipleEntrances(false);
+            ReloadMultipleEntrances(true);
+            var h=new NativeDoorHarness(); var p=new Place {Id="shop", Position=new Position(1,0,1)};
+            var old=new CityBuildingController {Entrance=p.Position}; CityManager.Instance.cityBuildingControllers.Add(old);
+            if (!h.NativeDoorPresent(p,DwellKind.WindowShopping)) throw new Exception("Initial native door missing");
+            Time.frameCount++; h.doors.TryQueue(p,out var line);
+            var spot=new OptionalStopSpot {Id="old-spot"};
+            h.cached[p.Id+":"+DwellKind.WindowShopping]=new[] {spot}; h.validatedSpots[spot.Id]=spot;
+            old.Destroyed=true; var replacement=new CityBuildingController {Entrance=p.Position};
+            CityManager.Instance.cityBuildingControllers.Clear(); CityManager.Instance.cityBuildingControllers.Add(replacement);
+            if (!h.NativeDoorPresent(p,DwellKind.WindowShopping) || !ReferenceEquals(h.buildings[p.Id],replacement))
+                throw new Exception("Destroyed cached native door must be replaced");
+            if (h.cached.Count!=0 || h.validatedSpots.Count!=0 || !h.doors.Unsampled(p))
+                throw new Exception("Native replacement must invalidate all derived facade geometry");
+            Time.frameCount++; h.doors.TryQueue(p,out var newLine);
+            if (ReferenceEquals(line,newLine)) throw new Exception("Replacement reused obsolete facade");
+            replacement.Destroyed=true; CityManager.Instance.cityBuildingControllers.Clear();
+            if (h.NativeDoorPresent(p,DwellKind.WindowShopping)) throw new Exception("Missing replacement must fail closed");
+            CityManager.Instance.cityBuildingControllers.Add(new CityBuildingController {Entrance=p.Position});
+            if (!h.NativeDoorPresent(p,DwellKind.WindowShopping)) throw new Exception("Later replacement must remain discoverable");
+            Console.WriteLine("Native door replacement: 6 checks passed.");
+        }
+    }
+}

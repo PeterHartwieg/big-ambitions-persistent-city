@@ -1,0 +1,16 @@
+{
+  "before": {
+    "total": 1403,
+    "baseMerge": 0,
+    "optionalScheduling": 0,
+    "optionalSettings": 0,
+    "optionalFood": 0
+  },
+  "after": {
+    "total": 1503,
+    "baseMerge": 34,
+    "optionalScheduling": 43,
+    "optionalSettings": 18,
+    "optionalFood": 0
+  }
+}

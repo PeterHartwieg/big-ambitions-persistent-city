@@ -6,7 +6,7 @@ public sealed class OptionalStopTests
 {
     [Theory]
     [InlineData(DwellKind.Break)] [InlineData(DwellKind.ChatOutsideVenue)]
-    [InlineData(DwellKind.WindowShopping)] [InlineData(DwellKind.Resting)]
+    [InlineData(DwellKind.WindowShopping)] [InlineData(DwellKind.Resting)] [InlineData(DwellKind.Audience)]
     public void StopsRespectExistingCapsAndTheNextCommitment(DwellKind kind)
     {
         var dwell = OptionalStops.Plan("pc:1", kind, "spot", "target", 100, 1000, 1000, false)!.Value;
@@ -28,8 +28,8 @@ public sealed class OptionalStopTests
         Assert.Equal(108, restored.EndMinute); Assert.Equal("pc:1", restored.CitizenId);
     }
     [Theory]
-    [InlineData(DwellKind.Audience)] [InlineData(DwellKind.WaitForBus)] [InlineData(DwellKind.WaitToCross)]
+    [InlineData(DwellKind.WaitForBus)] [InlineData(DwellKind.WaitToCross)]
     [InlineData(DwellKind.QueueAtOpening)] [InlineData(DwellKind.WaitForSomeone)] [InlineData(DwellKind.WaitForPickup)]
-    public void UnapprovedEventAndAudienceKindsAreNotReinterpretedAsOptional(DwellKind kind)
+    public void EventKindsAreNotReinterpretedAsOptional(DwellKind kind)
         => Assert.Throws<ArgumentException>(() => OptionalStops.Plan("pc:1", kind, "spot", "target", 100, 5, 110, false));
 }

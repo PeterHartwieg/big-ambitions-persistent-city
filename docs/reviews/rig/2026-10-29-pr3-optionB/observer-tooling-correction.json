@@ -1,0 +1,5 @@
+{
+  "reason": "Detailed observer prefix performed a full reflected resident scan even on ineligible scheduler calls, and event logging used repeated scene-wide runtime lookups. Disable this optional trace to let the independent financial replay finish. No production state, financial observer, prices or fixture guards changed. The partial optional trace is excluded from realised-share acceptance and performance. A revised helper will use the scheduler instance and indexed pending counts, verified against direct opening/closing snapshots, before long arms.",
+  "primaryFrameWindows": "detailed tracing disabled; unaffected",
+  "financialReplay": "continues with FinanceObserver active"
+}

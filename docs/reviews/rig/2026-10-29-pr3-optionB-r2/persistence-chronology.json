@@ -1,0 +1,29 @@
+{
+  "event-hand-on-control": {
+    "minuteBefore": 22067.03840637207,
+    "minuteAfter": 22067.371738433838,
+    "declinedChoiceClearedOnNewJourney": [
+      {
+        "id": "c117",
+        "choiceBefore": false,
+        "choiceAfter": null,
+        "phaseBefore": "AtPlace",
+        "phaseAfter": "Travelling",
+        "scheduledDeparture": 22067.119422455427,
+        "minuteBefore": 22067.03840637207,
+        "minuteAfter": 22067.371738433838,
+        "destination": "address:ba%3Astreet_fourthavenue:7:study",
+        "postReloadTally": {
+          "Eligible": 0,
+          "Drawn": 0,
+          "Realised": 0,
+          "HandedOn": 0,
+          "PassedOn": 0,
+          "Dropped": 0
+        }
+      }
+    ],
+    "savedPayloadByteIdentical": true,
+    "existingVisitRerolls": []
+  }
+}

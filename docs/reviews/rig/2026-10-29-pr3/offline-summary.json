@@ -1,0 +1,14 @@
+{
+  "before": {
+    "checks": 30,
+    "failed": [],
+    "standaloneRegressionProjects": 21,
+    "testSummary": "Passed!  - Failed:     0, Passed:  1403, Skipped:     0, Total:  1403, Duration: 23 s - PersistentCity.Tests.dll (net10.0)"
+  },
+  "after": {
+    "checks": 31,
+    "failed": [],
+    "standaloneRegressionProjects": 21,
+    "testSummary": "Passed!  - Failed:     0, Passed:  1503, Skipped:     0, Total:  1503, Duration: 25 s - PersistentCity.Tests.dll (net10.0)"
+  }
+}

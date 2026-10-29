@@ -1,0 +1,33 @@
+{
+  "before": {
+    "distinctEligibleVisitChoices": 0,
+    "acceptedChoices": 0,
+    "acceptedShare": null,
+    "wilson95": null,
+    "expected25WithinInterval": null,
+    "realisedStops": 0,
+    "realisedShare": null,
+    "kinds": {},
+    "physicalTransitions": {},
+    "notes": "Choices precede geometry/duration/occupancy checks; accepted choice does not guarantee a stop. Food-owned places excluded. Before feature absent means no denominator, not a 0/0 percentage."
+  },
+  "after": {
+    "distinctEligibleVisitChoices": 1309,
+    "acceptedChoices": 317,
+    "acceptedShare": 0.24216959511077157,
+    "wilson95": [
+      0.21973845227768732,
+      0.26610959474670925
+    ],
+    "expected25WithinInterval": true,
+    "realisedStops": 98,
+    "realisedShare": 0.0748663101604278,
+    "kinds": {
+      "5": 87,
+      "7": 10,
+      "4": 1
+    },
+    "physicalTransitions": {},
+    "notes": "Choices precede geometry/duration/occupancy checks; accepted choice does not guarantee a stop. Food-owned places excluded. Before feature absent means no denominator, not a 0/0 percentage."
+  }
+}

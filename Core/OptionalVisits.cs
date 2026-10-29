@@ -23,12 +23,13 @@ namespace PersistentCity.Core
             var outing = new MealOuting { OriginId = person.PlaceId, OriginActivity = person.Activity,
                 ResumeUntil = person.ActivityUntilMinute, ResumeEvent = person.NextEventMinute };
             if (!due.Remove(item)) throw new InvalidOperationException("Resident has no queued event.");
+            CancelOptionalStop(citizenId);
             person.MealOuting = outing; person.DestinationId = shopId; person.DestinationActivity = Activity.Shop;
             person.ActivityUntilMinute = leave; person.Phase = CitizenPhase.Travelling;
             person.Journey = new Route { Legs = outward.Legs.Select(l => new RouteLeg { From = l.From, To = l.To,
                 Minutes = l.Minutes, Mode = l.Mode, ServiceId = l.ServiceId }).ToList() };
             person.DepartureMinute = now; person.NextEventMinute = arrival;
-            item.Minute = ScheduledMinute(person); due.Add(item);
+            item.Minute = ScheduledMinute(person); due.Add(item); FileOptionalStop(person);
             activityObservers.Handlers?.Invoke(citizenId, person, now); SynchronizeSnapshot(); return true;
         }
 

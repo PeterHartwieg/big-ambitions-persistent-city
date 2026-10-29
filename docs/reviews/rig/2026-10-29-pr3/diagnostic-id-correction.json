@@ -1,0 +1,7 @@
+{
+  "role": "rig_test",
+  "cause": "negative-case runtime request ID exceeded the existing probe 60-character guard and was ignored",
+  "fix": "caller IDs capped at 55 characters with random suffix; existing probe and fixture guards unchanged; continue from already refused loaded city",
+  "productionChange": false,
+  "acceptedEvidenceAffected": false
+}

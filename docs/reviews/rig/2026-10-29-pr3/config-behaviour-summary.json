@@ -1,0 +1,20 @@
+{
+  "config-zero": {
+    "distinctChoices": 1310,
+    "accepted": 0,
+    "scheduledRecords": 0,
+    "allChoicesAtExpectedRate": true,
+    "noStopsAtZero": true,
+    "faults": [],
+    "passed": true
+  },
+  "config-hundred": {
+    "distinctChoices": 1310,
+    "accepted": 1310,
+    "scheduledRecords": 420,
+    "allChoicesAtExpectedRate": true,
+    "noStopsAtZero": null,
+    "faults": [],
+    "passed": true
+  }
+}

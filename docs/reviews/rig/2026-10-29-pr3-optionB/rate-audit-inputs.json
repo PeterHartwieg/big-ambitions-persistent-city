@@ -1,0 +1,110 @@
+{
+  "rate0": {
+    "rawSha256": "81c05a0cc52530a4dbd065703ebf2ec9a73a3032aaa22fe3831cdd1cd83c769e",
+    "opening": {
+      "pending": 0,
+      "tally": {
+        "Eligible": 0,
+        "Drawn": 0,
+        "Realised": 0,
+        "HandedOn": 0,
+        "PassedOn": 0,
+        "Dropped": 0
+      },
+      "minute": 7665.36665725708
+    },
+    "closing": {
+      "pending": 0,
+      "tally": {
+        "Eligible": 11411,
+        "Drawn": 0,
+        "Realised": 0,
+        "HandedOn": 0,
+        "PassedOn": 0,
+        "Dropped": 0
+      },
+      "minute": 22065.376651763916
+    }
+  },
+  "rate25": {
+    "rawSha256": "3b28eb17e1647c38641f5d6618c765b5eecc8a9193c36be99de9af06cde4befd",
+    "opening": {
+      "pending": 0,
+      "tally": {
+        "Eligible": 0,
+        "Drawn": 0,
+        "Realised": 0,
+        "HandedOn": 0,
+        "PassedOn": 0,
+        "Dropped": 0
+      },
+      "minute": 7665.36665725708
+    },
+    "closing": {
+      "pending": 174,
+      "tally": {
+        "Eligible": 10037,
+        "Drawn": 2446,
+        "Realised": 2272,
+        "HandedOn": 1117,
+        "PassedOn": 26,
+        "Dropped": 0
+      },
+      "minute": 22065.376651763916
+    }
+  },
+  "rate100": {
+    "rawSha256": "d2d1948ac395696d952cad77f1c5c0e9609ae134950ceb17354f42062b379b2d",
+    "opening": {
+      "pending": 0,
+      "tally": {
+        "Eligible": 0,
+        "Drawn": 0,
+        "Realised": 0,
+        "HandedOn": 0,
+        "PassedOn": 0,
+        "Dropped": 0
+      },
+      "minute": 7665.0333251953125
+    },
+    "closing": {
+      "pending": 52,
+      "tally": {
+        "Eligible": 10162,
+        "Drawn": 10162,
+        "Realised": 4392,
+        "HandedOn": 0,
+        "PassedOn": 0,
+        "Dropped": 5718
+      },
+      "minute": 22065.376651763916
+    }
+  },
+  "rate25-continued": {
+    "rawSha256": "488914cb9fd4306c95f28e49df88b2406bcdace5f295f266e351dcaa68af4b7a",
+    "opening": {
+      "pending": 174,
+      "tally": {
+        "Eligible": 0,
+        "Drawn": 0,
+        "Realised": 0,
+        "HandedOn": 0,
+        "PassedOn": 0,
+        "Dropped": 0
+      },
+      "minute": 22065.376651763916
+    },
+    "closing": {
+      "pending": 156,
+      "tally": {
+        "Eligible": 32063,
+        "Drawn": 7893,
+        "Realised": 7911,
+        "HandedOn": 4063,
+        "PassedOn": 147,
+        "Dropped": 0
+      },
+      "minute": 62385.737968444824
+    }
+  }
+}

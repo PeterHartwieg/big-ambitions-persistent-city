@@ -1,0 +1,39 @@
+{
+  "opening": {
+    "pending": 801,
+    "tally": {
+      "Eligible": 0,
+      "Drawn": 0,
+      "Realised": 0,
+      "HandedOn": 0,
+      "PassedOn": 0,
+      "Dropped": 0
+    },
+    "minute": 22065.376651763916
+  },
+  "ending": {
+    "pending": 801,
+    "tally": {
+      "Eligible": 650,
+      "Drawn": 0,
+      "Realised": 0,
+      "HandedOn": 0,
+      "PassedOn": 0,
+      "Dropped": 0
+    },
+    "minute": 23505.710983276367
+  },
+  "reloaded": {
+    "pending": 801,
+    "tally": {
+      "Eligible": 0,
+      "Drawn": 0,
+      "Realised": 0,
+      "HandedOn": 0,
+      "PassedOn": 0,
+      "Dropped": 0
+    },
+    "minute": 23505.710983276367
+  },
+  "pendingPreserved": true
+}
