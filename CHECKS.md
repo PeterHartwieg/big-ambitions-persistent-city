@@ -1,5 +1,13 @@
 # Validation status
 
+## PR #3 ob3 nits - 29 October 2026 (offline, documentation and tests only)
+
+Astra and Opus both approved `1d72910` with nits. This follow-up changes no production behaviour. The wording below now qualifies available recipient capacity, deterministic persistence transitions, inherited stock after 26-99-to-25-or-above decreases, identity-order concentration and feasibility-dependent drain time. The external ob2 fix report has an appended correction to its rig expectations, including a 50-to-25 arm.
+
+Three tests pin already-reviewed boundaries: a two-resident drop below the nominal cap when an expired stop record occupies the only recipient; the accepted 50-setting deficit with reconciled losses and a matched default control under a second 112-day geometry; and retained stock after 50-to-25 with elevated shares over multiple days. The former generic lowering test is explicitly named for 100. Mixed-routine index checks now cover every observed event at 0/10/25/50/75/100 in both narrow and wide geometry. The 4x capacity factor remains empirical.
+
+**Validation:** `dotnet test tests/PersistentCity.Tests.csproj` using the specified local SDK: **1,548/1,548 passed**, zero failures/skips (1,545 + 3). Result: ignored `build/ob3nits/ob3-nits-full.trx`. No standalone harness, production DLL build or native measurement was rerun. Recipient-order changes are declined as optional realism work; correct deterministic totals do not remove the per-citizen skew. The new rig round remains required before merge.
+
 ## PR #3 optional-stop share, review round ob2 fixes - 29 October 2026 (offline)
 
 Astra (REQUEST CHANGES) and Opus (APPROVE WITH NITS) reviewed `d438cc6`. There were two blocking findings:
@@ -12,16 +20,17 @@ Both reviewers also found that lowering the setting released a stock banked at t
 - **Pass-on.** A drawn visit that already carries a chance uses or keeps one and passes the other to the first citizen in ordinal identity order holding neither a chance nor a stop (an in-memory sorted index of such citizens).
 - **Bound.** Pending chances are bounded by 4 × setting% of residents, at most one per resident (every resident from 25 up). With 1× and 2×, the 112-day commuter fixture still dropped chances (21.5% / 24.3% realised); with 4× it dropped none (25.0%).
 - **Donor after planning.** An undrawn visit plans first; a conversation needs at least two pending chances. The donor is then the first remaining holder, so the partner it conversed with is never also the donor.
-- **Trim.** At the first eligible visit at a non-zero setting, pending chances above the current bound are dropped, lowest identity first and away-from-leisure holders first. Trimming cannot fire while the setting is unchanged, because new chances respect the same bound.
+- **Trim.** At the first eligible visit at a non-zero setting, pending chances above the current bound are dropped, lowest identity first and away-from-leisure holders first. Trimming cannot fire while the setting is unchanged, because new chances respect the same bound. This only fixes above-bound inheritance; lowering from 26-99 to 25 or above retains up to one chance per resident and can run at the feasible share for about three game days while that stock drains, as in the review's 50-to-25 probe. The 100-to-25 fix relies on the separate no-banking-at-100 rule.
 - **100 and 0.** At 100 nothing is banked: an unused chance stays only with a holder waiting at a leisure venue, and other holders lose theirs at the next eligible visit. At 0 nothing is trimmed or spent.
 - **Diagnostics.** `OptionalStopChanceTally` gains `Eligible` (the denominator) and `PassedOn`. It restarts at every attach, including `RebuildRoutes` after a travel clock rate change.
 - **Spot selection** finds the first usable spot in ordinal id order in one indexed pass, without `OrderBy` or an enumerator allocation.
 
 There is **no schema change or migration**: the state is still the schema-16 `OptionalStopChoice`/`OptionalStop`.
 
-**What is delivered.** This replaces ob1's unconditional convergence claim. Every draw is realised once, still pending or dropped. Within the bound, nothing is lost to repeated visits, stay length or admission timing. The share reaches min(setting, feasible share) once the backlog of chances drawn at infeasible visits is spent, provided that backlog stays within the bound. It sits lower in two cases:
+**What is delivered.** This replaces ob1's unconditional convergence claim. Every draw is realised once, still pending or dropped. Repeated visits, stay length and admission timing do not lose chances provided storage remains within the bound and every required pass-on has an available recipient holding neither a chance nor a stop record. The share reaches min(setting, feasible share) once the backlog of chances drawn at infeasible visits is spent, provided neither storage constraint causes drops. It can sit lower through pending backlog or permanent loss:
+
 - **A pending backlog in a short run near the feasible share**, carried rather than lost. Example: 10-day mixed routines at 25 realise 23.4% against 25.1% feasible, with 250 pending.
-- **A multi-day surplus beyond one chance per resident**, dropped. Example: a 112-day commuter probe at 50 against 47.9% feasible realised 43.7%.
+- **Storage exhaustion**, with counted drops at the cap or when no recipient slot is free. Even an expired stop record occupies its slot until the visit clears it, so loss can occur below the cap. Example: a 112-day commuter probe at 50 against 47.9% feasible realised 43.7%. The committed all-shops boundary fixture at 50 realises 46.214% against 53.739% feasible, with 7,614 drops reconciled and no closing pending balance; its matched default control reaches 25.009% without drops. These are accepted high-setting limitations, not target assertions.
 
 Determinism holds for Core with a deterministic environment. In native play, unsaved geometry sampling decides feasibility, so which visit takes a chance can differ between replays of a save; saved choices never re-roll.
 
@@ -39,7 +48,7 @@ Determinism holds for Core with a deterministic environment. In native play, uns
 | `OptionalStopRoutineTests.RepeatedDailyRoutinesRealiseTheSettingWithoutLosingChances`: 1,500 commuters, matched 0/25/100 arms, 112 days, feasible 25.30% | **21.07%** FAIL (days 1-28 21.22%, days 29-112 21.02%; 8,110 dropped) | 25.01% (25.07% / 24.99%; 0 dropped, 12,594 passed on) |
 | `MixedRoutinesWithConversationsTrackTheSetting(wide)`: 600 residents of all personas, 10 days, 0/10/25/50 against 100 | **46.23%** at 50 FAIL (feasible 50.38%) | 48.07% |
 | `MixedRoutinesWithConversationsTrackTheSetting(narrow)` | 22.94% at 25, pass | 23.37% |
-| `LoweringTheSettingReleasesNoStockBankedAtTheHigherSetting`: 100 → 25 and 100 → 0 → 25 against a city kept at 25 | **44.3%** on the first day FAIL (475 inherited) | 25.7% vs 25.6% (27 inherited, all waiting partners); 100 → 0 → 25: 25.2% vs 25.0% |
+| `LoweringFromHundredReleasesNoStockBankedAtTheHigherSetting`: 100 → 25 and 100 → 0 → 25 against a city kept at 25 | **44.3%** on the first day FAIL (475 inherited) | 25.7% vs 25.6% (27 inherited, all waiting partners); 100 → 0 → 25: 25.2% vs 25.0% |
 | `UndrawnArrivalKeepsItsOnlyLocalPartnerAndTakesAnotherWaitingDonor`, local partner sorts first / second, save/reload either side | FAIL (no stop) / pass | pass / pass |
 | `ARepeatedVisitsSecondChancePassesToTheFirstCitizenHoldingNone`, infeasible / feasible venue, replay from save | FAIL / FAIL (dropped) | pass |
 | `InheritedChancesAboveTheCurrentBoundAreTrimmedLowestIdentityFirst` at 10 / 25 / 0 | FAIL (not trimmed) / pass / pass | pass |
@@ -53,10 +62,11 @@ Existing share tests now also assert the `Eligible` count. At 100 they allow the
 - **Denominator:** `Choose` calls or the new `Eligible`, not non-null `OptionalStopChoice`.
 - **Numerator:** must include conversation partners.
 - **Starting state:** each arm starts from a save with no pending chances.
-- **Settings-decrease arm.**
-- **Cold-to-warm burst.** In Opus's probe, after a cold day at 25 the bank was 332 of 600, more than the old cap of 150. The following 2-hour windows realised 54%, 36%, 70%, 58% and 80% for about 10 game hours.
+- **Settings-decrease arms:** 100-to-25 and 100-to-0-to-25 against a constant-25 control (only waiting partners inherited); also 50-to-25 (expect inherited stock up to one per resident and a possible multi-day run at the feasible share) and 50-to-10 (trim to 4 x 10% of residents). Record opening pending, trim counts and daily shares.
+- **Cold-to-warm burst.** In Opus's probe, after a cold day at 25 the bank was 332 of 600, more than the old cap of 150. The following 2-hour windows realised 54%, 36%, 70%, 58% and 80%; these samples do not establish a fixed drain time. Drain time depends on the feasible-share margin above the setting: a narrower margin can leave pending stock well beyond 10 game hours. Measure hourly share and pending until the steady level returns.
 - **Chance audit:** snapshot before any reload or rebuild.
-- **Performance:** at 25 against 100.
+- **Per-citizen distribution:** measure stops per resident and the lowest-identity group against the rest; ordinal recipient/partner selection can concentrate stops even with correct totals. Seeded-hash ordering is a behaviour change deferred from this PR.
+- **Performance:** at 25 against 100, including per-admission timing, Spots() calls, occupancy scans and facade-budget deferrals. Planning volume remains close to 100; the existing spot scan can check occupancy for more candidates when the input is unsorted, with worst-case O(spots x stops). No cost reduction is claimed by this documentation/test follow-up.
 
 ## PR #3 optional-stop share, review round ob1 fixes - 29 October 2026 (offline)
 
