@@ -78,7 +78,7 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
     // 1,500 commuters keep the workplace and shops Population.Create gave them for 112 days. Only every fourth
     // shop has window-shopping geometry and no workplace has any, so the feasible share (what 100 realises) is
     // only just above 25%: almost every feasible visit must take a chance drawn at an infeasible one.
-    private static (CitySimulator Sim, Observer Observed) Commuters(int rate)
+    private static (CitySimulator Sim, Observer Observed) Commuters(int rate, bool allShops = false)
     {
         const int count = 1500;
         var places = new List<Place> { new() { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = count },
@@ -87,7 +87,7 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
         for (int i = 0; i < 40; i++)
         {
             places.Add(new() { Id = "shop" + i, Name = "Shop", Kind = PlaceKind.Shop, Capacity = count, Position = new(1000 * (i + 1), 0, 0) });
-            if (i % 4 == 0) env.Feasible.Add(places[^1].Id);
+            if (allShops || i % 4 == 0) env.Feasible.Add(places[^1].Id);
         }
         var state = Population.Create(Enumerable.Range(0, count).Select(i => new CitizenIdentity { Id = "r" + i.ToString("D4"), Name = "Resident",
             Age = 30, Persona = Persona.Commuter }), places, "astra-routines", "0.40.4", 17, 1440);
@@ -128,7 +128,7 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
 
     // 600 residents of every persona with homes, workplaces, schools, shops and leisure venues; about a third of the
     // venues ("narrow") or most of them ("wide") have geometry. Conversations count both members.
-    private static (CitySimulator Sim, Geometry Env) Mixed(int rate, bool wide)
+    private static (CitySimulator Sim, Geometry Env) Mixed(int rate, bool wide, bool mid = false)
     {
         var personas = (Persona[])Enum.GetValues(typeof(Persona));
         var ids = Enumerable.Range(0, 600).Select(i => new CitizenIdentity { Id = "r" + i.ToString("D4"), Name = "R" + i, Age = 20 + i % 50,
@@ -145,6 +145,7 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
         if (wide) foreach (var p in places.Where(p => p.Kind != PlaceKind.Home && string.CompareOrdinal(p.Id, "work08") < 0
             || p.Id.StartsWith("shop0", StringComparison.Ordinal) || p.Id.StartsWith("fun0", StringComparison.Ordinal) && p.Id != "fun07")) env.Feasible.Add(p.Id);
         else foreach (var id in new[] { "work02", "work03", "work04", "shop01", "shop02", "fun01", "fun02" }) env.Feasible.Add(id);
+        if (mid) foreach (var id in new[] { "work06", "work07", "work10", "shop03", "shop05", "fun04" }) env.Feasible.Add(id);
         var sim = new CitySimulator(state, new Walking()); sim.AttachOptionalStops(env, rate);
         return (sim, env);
     }
@@ -156,10 +157,10 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
     {
         var (all, _) = Mixed(100, wide); var feasible = Watch(all, 100); Until(all, 1440 * 13);
         AssertAudit(all, feasible, 0);
-        foreach (int rate in new[] { 0, 10, 25, 50 })
+        foreach (int rate in new[] { 0, 10, 25, 50, 75, 100 })
         {
             var (sim, _) = Mixed(rate, wide); var o = Watch(sim, rate); int stale = 0;
-            sim.ActivityObserved += (_, _, _) => { if (rate == 25 && !sim.OptionalStopIndexesMatchState()) stale++; };
+            sim.ActivityObserved += (_, _, _) => { if (!sim.OptionalStopIndexesMatchState()) stale++; };
             Until(sim, 1440 * 13);
             var t = sim.OptionalStopChances; double target = Math.Min(rate / 100.0, feasible.Share);
             output.WriteLine($"{(wide ? "wide" : "narrow")} {rate}: {o.Share:P2} of {o.Eligible} (feasible {feasible.Share:P2}); drawn {t.Drawn}, "
@@ -174,7 +175,7 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
     // Lowering the setting after days at 100 (d438cc6: 44.3% on the first day at 25 against 25.6% for a city
     // that ran at 25 throughout). At 100 nothing is banked, so the old setting leaves no stock to release.
     [Fact]
-    public void LoweringTheSettingReleasesNoStockBankedAtTheHigherSetting()
+    public void LoweringFromHundredReleasesNoStockBankedAtTheHigherSetting()
     {
         var (high, env) = Mixed(100, wide: true); Until(high, 1440 * 6);
         int inherited = Pending(high);
@@ -197,5 +198,67 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
             if (c != null) Assert.InRange(c.Share, b.Share - Tolerance, b.Share + Tolerance);
         }
         Assert.True(inherited <= high.State.Citizens.Count / 10, "pending after 100: " + inherited);
+    }
+
+    // Accepted schema-16 boundary, not a target for the setting: loss remains at 50 even with feasibility > 50.
+    // The matched default arm also guards the empirical 4x bound under a second full-routine geometry.
+    [Fact]
+    public void HighSettingDeficitIsReconciledWhileTheDefaultTracksInAnotherGeometry()
+    {
+        var (all, feasible) = Commuters(100, allShops: true); Until(all, 113 * 1440);
+        AssertAudit(all, feasible, 0);
+        Assert.InRange(feasible.Share, 0.53, 0.55);
+        foreach (int rate in new[] { 25, 50 })
+        {
+            var (sim, o) = Commuters(rate, allShops: true); Until(sim, 113 * 1440);
+            Assert.Equal(feasible.Eligible, o.Eligible);
+            AssertAudit(sim, o, 0);
+            Assert.Equal(0, Pending(sim));
+            output.WriteLine($"all shops, setting {rate}: {o.Share:P3} ({o.Stops.Count}/{o.Eligible}), feasible {feasible.Share:P3}, "
+                + $"drawn {sim.OptionalStopChances.Drawn}, dropped {sim.OptionalStopChances.Dropped}");
+            if (rate == 25)
+            {
+                Assert.InRange(o.Share, 0.25 - Tolerance, 0.25 + Tolerance);
+                Assert.Equal(0, sim.OptionalStopChances.Dropped);
+            }
+            else
+            {
+                // Pin awareness of the reviewed deficit (>3 points), without promising min(setting, feasibility).
+                Assert.InRange(o.Share, 0.46, 0.47);
+                Assert.True(sim.OptionalStopChances.Dropped > 0);
+            }
+        }
+    }
+
+    // A decrease within 25-99 cannot distinguish inherited stock from an ordinary backlog without saved state.
+    [Fact]
+    public void LoweringFromFiftyRetainsInBoundStockAndCanSpendItOverSeveralDays()
+    {
+        var (high, env) = Mixed(50, wide: false, mid: true); Until(high, 1440 * 9);
+        int inherited = Pending(high);
+        Assert.InRange(inherited, 400, 600);
+        var lowered = Reload(high, env, 25);
+        Assert.Equal(inherited, Pending(lowered));
+        Assert.Equal(0, lowered.OptionalStopChances.Dropped);
+        var observed = Watch(lowered, 25);
+        var (control, controlEnv) = Mixed(25, wide: false, mid: true); Until(control, 1440 * 9);
+        control = Reload(control, controlEnv, 25);
+        int controlOpening = Pending(control);
+        var kept = Watch(control, 25);
+        int elevatedDays = 0;
+        for (int day = 9; day < 15; day++)
+        {
+            int admissions = observed.Eligible, stops = observed.Stops.Count;
+            int controlAdmissions = kept.Eligible, controlStops = kept.Stops.Count;
+            Until(lowered, 1440 * (day + 1)); Until(control, 1440 * (day + 1));
+            double share = (double)(observed.Stops.Count - stops) / (observed.Eligible - admissions);
+            double baseline = (double)(kept.Stops.Count - controlStops) / (kept.Eligible - controlAdmissions);
+            if (share > baseline + Tolerance) elevatedDays++;
+            output.WriteLine($"day {day}: 50->25 {share:P1}, kept at 25 {baseline:P1}, pending {Pending(lowered)}");
+            AssertAudit(lowered, observed, inherited);
+        }
+        Assert.True(elevatedDays >= 2, "expected inherited stock to elevate multiple daily windows");
+        Assert.True(Pending(lowered) < inherited);
+        AssertAudit(control, kept, controlOpening);
     }
 }

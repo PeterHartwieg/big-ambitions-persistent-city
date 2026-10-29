@@ -31,7 +31,7 @@ public sealed class OptionalStopHandoffTests
     private sealed record Arrival(string Id, string Venue, double From, bool Drawn, bool Carrying = false);
     private sealed record Holder(string Id, string? Park = null, double EventAt = Until);
 
-    private static CitySimulator Scene(IEnumerable<Holder> holders, IEnumerable<Arrival> arrivals, out Dictionary<string, CitizenState> people)
+    private static CitySimulator Scene(IEnumerable<Holder> holders, IEnumerable<Arrival> arrivals, out Dictionary<string, CitizenState> people, int rate = Rate)
     {
         var holderList = holders.ToList(); var arrivalList = arrivals.ToList();
         var ids = holderList.Select(h => h.Id).Concat(arrivalList.Select(a => a.Id)).ToArray();
@@ -55,7 +55,7 @@ public sealed class OptionalStopHandoffTests
         foreach (var a in arrivalList)
         {
             var c = people[a.Id]; var venue = places.Single(p => p.Id == a.Venue); double at = a.From;
-            while (OptionalStopPolicy.Choose(OptionalStopPolicy.VisitKey(new CitizenState { Identity = c.Identity, PlaceId = a.Venue }, at), state.Seed, Rate) != a.Drawn) at++;
+            while (OptionalStopPolicy.Choose(OptionalStopPolicy.VisitKey(new CitizenState { Identity = c.Identity, PlaceId = a.Venue }, at), state.Seed, rate) != a.Drawn) at++;
             c.Phase = CitizenPhase.Travelling; c.PlaceId = c.HomeId; c.Activity = Activity.Home; c.DestinationId = a.Venue;
             c.DestinationActivity = venue.Kind == PlaceKind.Leisure ? Activity.Leisure : Activity.Shop;
             c.DepartureMinute = Start; c.NextEventMinute = at; c.ActivityUntilMinute = Until;
@@ -63,12 +63,33 @@ public sealed class OptionalStopHandoffTests
             c.Journey = new Walking().Plan(places[0], venue, Start, c.Preferences); c.Journey.Legs[0].Minutes = at - Start;
             Assert.True(at < Until - 60);
         }
-        var sim = new CitySimulator(state, new Walking()); sim.AttachOptionalStops(new Venues(), Rate);
+        var sim = new CitySimulator(state, new Walking()); sim.AttachOptionalStops(new Venues(), rate);
         return sim;
     }
     private static double ArrivalOf(Dictionary<string, CitizenState> people, string id) => people[id].NextEventMinute;
     private static void Through(CitySimulator sim, double minute) { sim.AdvanceTo(minute); Assert.True(sim.OptionalStopIndexesMatchState()); }
     private static bool Pending(CitizenState c) => c.OptionalStopChoice == true && c.OptionalStop == null;
+
+    // The nominal bound is two, but an expired stop record still occupies its resident's slot until departure.
+    [Fact]
+    public void ExhaustedRecipientsDropASecondChanceBelowTheNominalBound()
+    {
+        var sim = Scene(Array.Empty<Holder>(), new[] { new Arrival("b", "shop", 1450, true),
+            new Arrival("h", "far", 1480, true, Carrying: true) }, out var p, rate: 25);
+        Through(sim, ArrivalOf(p, "b"));
+        Assert.Equal(DwellKind.WindowShopping, p["b"].OptionalStop!.Kind);
+        Through(sim, ArrivalOf(p, "h"));
+        Assert.True(p["b"].OptionalStop!.EndMinute < sim.State.Minute);
+        Assert.True(p["b"].Phase == CitizenPhase.AtPlace && p["b"].PlaceId == "shop");
+        Assert.Single(sim.State.Citizens, Pending);
+        Assert.Equal(new OptionalStopChanceTally { Eligible = 2, Drawn = 2, Realised = 1, Dropped = 1 }, sim.OptionalStopChances);
+        // Opening pending = 1: two new draws = one stop + unchanged pending + one drop.
+        var t = sim.OptionalStopChances;
+        Assert.Equal(t.Drawn, t.Realised + sim.State.Citizens.Count(Pending) - 1 + t.Dropped);
+        var read = SaveCodec.Read(SaveCodec.Write(sim.State));
+        Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(SaveCodec.Write(sim.State), SaveCodec.Write(read.State!));
+    }
 
     [Fact]
     public void ChancesAreHandedOnFromHoldersAwayBeforeWaitingPartnersInOrdinalIdentityOrder()
