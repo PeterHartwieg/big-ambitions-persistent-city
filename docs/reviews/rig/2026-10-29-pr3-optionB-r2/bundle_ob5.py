@@ -11,7 +11,9 @@ def clean(t):
   for variant in [root,root.replace('\\','/'),root.replace('\\','\\\\')]:t=re.sub(re.escape(variant),lambda m:label,t,flags=re.I)
  return t
 def write(name,t):
- p=dest/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(clean(t),encoding='utf-8',newline='\n')
+ p=dest/name;p.parent.mkdir(parents=True,exist_ok=True);t=clean(t)
+ if p.suffix in ['.cs','.ps1']:t=t.rstrip('\r\n')+('\r\n' if '\r\n' in t else '\n')
+ p.write_text(t,encoding='utf-8',newline='\n')
 def read(name):return json.loads(readtext(s/name))
 def dump(name,obj):write(name,json.dumps(obj,indent=2)+'\n')
 summary=['builds.json','baseline-reuse.json','offline-summary.json','offline-results.json','regression-presence.json','performance-method.json','performance-summary.json','performance-noise.json','native-qa-summary.json','autosave-evidence.json','default-rate-gate.json','light25-summary.json','config-summary.json','migration-summary.json','native-codec-summary.json','native-refusal-summary.json','persistence-summary.json','optional-reload-summary.json','event-persistence-cases.json','event-detail-verification.json','pending-zero-summary.json','verifier-self-checks.json','rate-audit-inputs.json','rate-audit-verification.json','backup-receipt.json','restore-receipt.json','lock-released.json','long-phase-exits.json','native-campaign-exits.json','native-log-provenance.json','optional-food-separation.json','checkpoint-preserved.json','test-worktrees-unchanged.json','decrease-comparison.json','acceptance.json','visual-source.json']
@@ -59,7 +61,7 @@ for r in read('offline-results.json'):parts.append('COMMAND '+r['check']+' EXIT 
 with gzip.open(dest/'offline-output.txt.gz','wt',encoding='utf-8',newline='\n') as f:f.write(clean('\n\n'.join(parts)))
 shot=s.parent/'screenshots/persistent-city-pr3-ob5-2026-10-29/default-optional-dwell.png';assert shot.exists()
 (dest/'screenshots').mkdir();shutil.copy2(shot,dest/'screenshots/default-optional-dwell.png')
-write('README.md',readtext(s/'report-complete.md'));write('.gitattributes','* -text\n')
+write('README.md',readtext(s/'report-complete.md'));write('.gitattributes','* -text whitespace=cr-at-eol\n')
 files=[p for p in dest.rglob('*') if p.is_file()]
 assert not any(p.suffix.lower() in ['.dll','.hsg','.reg','.meta','.private'] for p in files)
 for p in files:

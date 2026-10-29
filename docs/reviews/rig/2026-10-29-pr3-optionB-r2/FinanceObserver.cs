@@ -82,4 +82,3 @@ public static class FinanceObserver {
   public override object ReadJson(JsonReader r,Type t,object old,JsonSerializer s)=>throw new NotSupportedException();
  }
 }}
-

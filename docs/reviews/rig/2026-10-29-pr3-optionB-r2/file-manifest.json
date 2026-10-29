@@ -1,7 +1,7 @@
 {
   ".gitattributes": {
-    "bytes": 8,
-    "sha256": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da"
+    "bytes": 29,
+    "sha256": "730a35ae3d558080083c3103d9ac8100c3f6561678092abe341701dfa331eb1d"
   },
   "acceptance.json": {
     "bytes": 1004,
@@ -124,8 +124,8 @@
     "sha256": "f72eb5f8bf268907be7d8867fea981d6311243dbdc9abf84a7d6736b28a07d35"
   },
   "bundle_ob5.py": {
-    "bytes": 8263,
-    "sha256": "3ea9f63583da4f3f496adb54238f1ef66690afd30a6a9a85eecc6dd3800b248c"
+    "bytes": 8373,
+    "sha256": "ed8ecfdbdd28025e7714888afb8efbfb58967dd53d52736a0cf43aac19e6c500"
   },
   "checkpoint-preserved.json": {
     "bytes": 281,
@@ -192,8 +192,8 @@
     "sha256": "a793f586abffcc03b3b72d7b955dda32eb4edbe859d17531979591bfcb4318ed"
   },
   "FinanceObserver.cs": {
-    "bytes": 9214,
-    "sha256": "369934df954cefeabdfc22cf6150089ddd9cb31e4f9b3e987384dd3f71270fa4"
+    "bytes": 9212,
+    "sha256": "beb261e6a69497fa05b224e985a279f33c842cfee216e1bfa98e30385358bbb1"
   },
   "financial_run.py": {
     "bytes": 1584,
@@ -224,8 +224,8 @@
     "sha256": "823d63b637df105bfd41d1a0ca412ed15a4e53a127285546bcace7b67c48c922"
   },
   "Launch-Rig.ps1": {
-    "bytes": 1342,
-    "sha256": "3cac80bacdcce40f8ed85598f754ca567569c9f7b0944ba6a660a98720e37c0e"
+    "bytes": 1340,
+    "sha256": "e562b556059d724abbfdcd950fad3856717f0e2b61306a14134fee3b3aa07473"
   },
   "lease-acquired.json": {
     "bytes": 293,

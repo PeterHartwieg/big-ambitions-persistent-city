@@ -14,4 +14,3 @@ try {
 
 $p.WaitForExit()
 Write-Output ('Rig exited '+$p.ExitCode)
-
