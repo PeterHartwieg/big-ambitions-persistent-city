@@ -1,0 +1,354 @@
+{
+  "opening": {
+    "pending": 0,
+    "tally": {
+      "Eligible": 0,
+      "Drawn": 0,
+      "Realised": 0,
+      "HandedOn": 0,
+      "PassedOn": 0,
+      "Dropped": 0
+    },
+    "minute": 7665.0333251953125
+  },
+  "days": [
+    {
+      "pending": 0,
+      "tally": {
+        "Eligible": 0,
+        "Drawn": 0,
+        "Realised": 0,
+        "HandedOn": 0,
+        "PassedOn": 0,
+        "Dropped": 0
+      },
+      "minute": 9105.367656707764
+    },
+    {
+      "pending": 194,
+      "tally": {
+        "Eligible": 1311,
+        "Drawn": 320,
+        "Realised": 126,
+        "HandedOn": 85,
+        "PassedOn": 1,
+        "Dropped": 0
+      },
+      "minute": 10545.368656158447
+    },
+    {
+      "pending": 233,
+      "tally": {
+        "Eligible": 2655,
+        "Drawn": 669,
+        "Realised": 436,
+        "HandedOn": 289,
+        "PassedOn": 32,
+        "Dropped": 0
+      },
+      "minute": 11985.36965560913
+    },
+    {
+      "pending": 97,
+      "tally": {
+        "Eligible": 4197,
+        "Drawn": 1034,
+        "Realised": 937,
+        "HandedOn": 595,
+        "PassedOn": 52,
+        "Dropped": 0
+      },
+      "minute": 13425.370655059814
+    },
+    {
+      "pending": 102,
+      "tally": {
+        "Eligible": 5738,
+        "Drawn": 1417,
+        "Realised": 1315,
+        "HandedOn": 761,
+        "PassedOn": 57,
+        "Dropped": 0
+      },
+      "minute": 14865.371654510498
+    },
+    {
+      "pending": 97,
+      "tally": {
+        "Eligible": 7304,
+        "Drawn": 1803,
+        "Realised": 1706,
+        "HandedOn": 922,
+        "PassedOn": 60,
+        "Dropped": 0
+      },
+      "minute": 16305.372653961182
+    },
+    {
+      "pending": 0,
+      "tally": {
+        "Eligible": 8028,
+        "Drawn": 1977,
+        "Realised": 1977,
+        "HandedOn": 1033,
+        "PassedOn": 62,
+        "Dropped": 0
+      },
+      "minute": 17745.373653411865
+    },
+    {
+      "pending": 185,
+      "tally": {
+        "Eligible": 9369,
+        "Drawn": 2333,
+        "Realised": 2148,
+        "HandedOn": 1073,
+        "PassedOn": 62,
+        "Dropped": 0
+      },
+      "minute": 19185.37465286255
+    },
+    {
+      "pending": 143,
+      "tally": {
+        "Eligible": 10711,
+        "Drawn": 2626,
+        "Realised": 2483,
+        "HandedOn": 1281,
+        "PassedOn": 71,
+        "Dropped": 0
+      },
+      "minute": 20625.375652313232
+    },
+    {
+      "pending": 173,
+      "tally": {
+        "Eligible": 12087,
+        "Drawn": 2978,
+        "Realised": 2805,
+        "HandedOn": 1464,
+        "PassedOn": 76,
+        "Dropped": 0
+      },
+      "minute": 22065.376651763916
+    },
+    {
+      "pending": 68,
+      "tally": {
+        "Eligible": 13468,
+        "Drawn": 3307,
+        "Realised": 3239,
+        "HandedOn": 1652,
+        "PassedOn": 83,
+        "Dropped": 0
+      },
+      "minute": 23505.3776512146
+    },
+    {
+      "pending": 75,
+      "tally": {
+        "Eligible": 14340,
+        "Drawn": 3506,
+        "Realised": 3431,
+        "HandedOn": 1751,
+        "PassedOn": 83,
+        "Dropped": 0
+      },
+      "minute": 24945.378650665283
+    },
+    {
+      "pending": 104,
+      "tally": {
+        "Eligible": 15856,
+        "Drawn": 3897,
+        "Realised": 3793,
+        "HandedOn": 1867,
+        "PassedOn": 87,
+        "Dropped": 0
+      },
+      "minute": 26385.379650115967
+    },
+    {
+      "pending": 85,
+      "tally": {
+        "Eligible": 17269,
+        "Drawn": 4237,
+        "Realised": 4152,
+        "HandedOn": 2006,
+        "PassedOn": 88,
+        "Dropped": 0
+      },
+      "minute": 27825.38064956665
+    },
+    {
+      "pending": 233,
+      "tally": {
+        "Eligible": 18220,
+        "Drawn": 4449,
+        "Realised": 4216,
+        "HandedOn": 2045,
+        "PassedOn": 109,
+        "Dropped": 0
+      },
+      "minute": 29265.381649017334
+    },
+    {
+      "pending": 167,
+      "tally": {
+        "Eligible": 19543,
+        "Drawn": 4754,
+        "Realised": 4587,
+        "HandedOn": 2282,
+        "PassedOn": 122,
+        "Dropped": 0
+      },
+      "minute": 30705.382648468018
+    },
+    {
+      "pending": 156,
+      "tally": {
+        "Eligible": 20891,
+        "Drawn": 5075,
+        "Realised": 4919,
+        "HandedOn": 2486,
+        "PassedOn": 131,
+        "Dropped": 0
+      },
+      "minute": 32145.3836479187
+    },
+    {
+      "pending": 114,
+      "tally": {
+        "Eligible": 22377,
+        "Drawn": 5449,
+        "Realised": 5335,
+        "HandedOn": 2671,
+        "PassedOn": 140,
+        "Dropped": 0
+      },
+      "minute": 33585.384647369385
+    },
+    {
+      "pending": 76,
+      "tally": {
+        "Eligible": 23256,
+        "Drawn": 5651,
+        "Realised": 5575,
+        "HandedOn": 2812,
+        "PassedOn": 148,
+        "Dropped": 0
+      },
+      "minute": 35025.38564682007
+    },
+    {
+      "pending": 79,
+      "tally": {
+        "Eligible": 24786,
+        "Drawn": 6036,
+        "Realised": 5957,
+        "HandedOn": 2962,
+        "PassedOn": 153,
+        "Dropped": 0
+      },
+      "minute": 36465.38664627075
+    },
+    {
+      "pending": 102,
+      "tally": {
+        "Eligible": 26311,
+        "Drawn": 6417,
+        "Realised": 6315,
+        "HandedOn": 3089,
+        "PassedOn": 154,
+        "Dropped": 0
+      },
+      "minute": 37905.387645721436
+    },
+    {
+      "pending": 102,
+      "tally": {
+        "Eligible": 26311,
+        "Drawn": 6417,
+        "Realised": 6315,
+        "HandedOn": 3089,
+        "PassedOn": 154,
+        "Dropped": 0
+      },
+      "minute": 39345.38864517212
+    },
+    {
+      "pending": 184,
+      "tally": {
+        "Eligible": 27659,
+        "Drawn": 6742,
+        "Realised": 6558,
+        "HandedOn": 3233,
+        "PassedOn": 155,
+        "Dropped": 0
+      },
+      "minute": 40785.3896446228
+    },
+    {
+      "pending": 170,
+      "tally": {
+        "Eligible": 28998,
+        "Drawn": 7049,
+        "Realised": 6879,
+        "HandedOn": 3445,
+        "PassedOn": 165,
+        "Dropped": 0
+      },
+      "minute": 42225.390644073486
+    },
+    {
+      "pending": 0,
+      "tally": {
+        "Eligible": 29626,
+        "Drawn": 7209,
+        "Realised": 7209,
+        "HandedOn": 3629,
+        "PassedOn": 173,
+        "Dropped": 0
+      },
+      "minute": 43665.39164352417
+    },
+    {
+      "pending": 108,
+      "tally": {
+        "Eligible": 31146,
+        "Drawn": 7596,
+        "Realised": 7488,
+        "HandedOn": 3683,
+        "PassedOn": 175,
+        "Dropped": 0
+      },
+      "minute": 45105.39264297485
+    },
+    {
+      "pending": 130,
+      "tally": {
+        "Eligible": 32725,
+        "Drawn": 8032,
+        "Realised": 7902,
+        "HandedOn": 3833,
+        "PassedOn": 177,
+        "Dropped": 0
+      },
+      "minute": 46545.39364242554
+    },
+    {
+      "pending": 130,
+      "tally": {
+        "Eligible": 32725,
+        "Drawn": 8032,
+        "Realised": 7902,
+        "HandedOn": 3833,
+        "PassedOn": 177,
+        "Dropped": 0
+      },
+      "minute": 47985.39464187622
+    }
+  ],
+  "traceEnabled": false,
+  "measurement": "Untraced Core Eligible/Realised counters; detailed observer previously reconciled counters against independent choices and unique scheduled recipients. Native skip output, not a physical dwell census."
+}

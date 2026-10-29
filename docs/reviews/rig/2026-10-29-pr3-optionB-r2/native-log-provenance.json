@@ -1,0 +1,32 @@
+[
+  {
+    "file": "after-main-closed-Player-agent.log",
+    "sha256": "19b3323bc454e53b8bf68ac37ec89f586c09c0b2c88026c5891d3881982c6683",
+    "bytes": 9451347
+  },
+  {
+    "file": "after-main-complete-Player-agent.log",
+    "sha256": "b0ed89679441788b66fe5463d152f8261b782476914f0e3187b849f1f194fab9",
+    "bytes": 9435945
+  },
+  {
+    "file": "after-primary-Player-agent.log",
+    "sha256": "723fabc999ac06ab7f325772619aa61ad8d2b28c9c21d14e1975accde3d8be35",
+    "bytes": 1232192
+  },
+  {
+    "file": "before-all-Player-agent.log",
+    "sha256": "220320d496b43b10a3effdd04b7653a70a7809dc8f8a8eafa6df7557fb0f39fa",
+    "bytes": 1120568
+  },
+  {
+    "file": "fresh-after-Player-agent.log",
+    "sha256": "2b71a5bd8c0bda44752c1fb8cc913c0e9542117cd190a68fd09d72a0e7016c5d",
+    "bytes": 866492
+  },
+  {
+    "file": "fresh-before-Player-agent.log",
+    "sha256": "76ef607d650d97a7db5218347c65655be876b1fc2dab8dc362e161cfec4b560c",
+    "bytes": 856715
+  }
+]

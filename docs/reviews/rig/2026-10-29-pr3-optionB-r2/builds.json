@@ -1,0 +1,21 @@
+[
+  {
+    "sha": "7357f78ca13edd5200e7e708950ffbc7a6ade1fe",
+    "dll_sha256": "54aa9dc8be97f0a3c89b629b7bc06813de0dad61e515ecd6d02d1f5cee470f54",
+    "arm": "before",
+    "helper_sha256": "5aaf5093e33c3f695803b7fc5443cf869e21e08ca3a6542db032a308eaa45e8e",
+    "nativeMeasurements": "Primary baseline, finance and schema14 input reused from 7937557; three additional performance confirmation windows rerun fresh at unchanged 7357f78.",
+    "timingHelperSha256": "dc939f272b1b451a7eb15dd7c6665e3a74d4a389e3ebfe6bf9d35d15d18696aa",
+    "performanceConfirmation": "Three fresh-process windows; fresh-before-installed.json"
+  },
+  {
+    "sha": "7a104d6f41d7c92579dcdf2e790274856d31cb29",
+    "dll_sha256": "f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c",
+    "arm": "after",
+    "helper_sha256": "60f6a33c98b3c4e3a66a45b1c3affd344edb2e2a0d18cc8b697b1be10f6b1065",
+    "nativeMeasurements": "fresh rerun",
+    "productionCodeCommit": "067e8c589e3fa96294cfe03360df479bd822ffab",
+    "timingHelperSha256": "dc939f272b1b451a7eb15dd7c6665e3a74d4a389e3ebfe6bf9d35d15d18696aa",
+    "performanceConfirmation": "Three fresh-process windows; fresh-after-installed.json"
+  }
+]

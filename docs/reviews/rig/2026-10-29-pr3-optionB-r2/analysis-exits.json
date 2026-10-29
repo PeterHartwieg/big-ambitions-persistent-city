@@ -1,0 +1,80 @@
+[
+  {
+    "script": "summarize_offline.py",
+    "args": [],
+    "exit": 0
+  },
+  {
+    "script": "analyze_campaign.py",
+    "args": [],
+    "exit": 0
+  },
+  {
+    "script": "verify_finance_arms.py",
+    "args": [
+      "before",
+      "after"
+    ],
+    "exit": 0
+  },
+  {
+    "script": "verify_verifiers.py",
+    "args": [],
+    "exit": 0
+  },
+  {
+    "script": "analyze_rates.py",
+    "args": [],
+    "exit": 0
+  },
+  {
+    "script": "analyze_decreases.py",
+    "args": [],
+    "exit": 0
+  },
+  {
+    "script": "export_rate_audit.py",
+    "args": [],
+    "exit": 0
+  },
+  {
+    "script": "verify_rate_audit.py",
+    "args": [],
+    "exit": 0
+  },
+  {
+    "script": "default_gate.py",
+    "args": [],
+    "exit": 0
+  },
+  {
+    "script": "analyze_migrations.py",
+    "args": [],
+    "exit": 0
+  },
+  {
+    "script": "analyze_persistence.py",
+    "args": [],
+    "exit": 0
+  },
+  {
+    "script": "verify_events.py",
+    "args": [],
+    "exit": 0
+  },
+  {
+    "script": "analyze_optional_reload.py",
+    "args": [],
+    "exit": 0
+  },
+  {
+    "script": "verify_optional_food_separation.py",
+    "args": [],
+    "exit": 0
+  },
+  {
+    "script": "collect_final.py",
+    "args": [],
+    "exit": 0
+  }
+]

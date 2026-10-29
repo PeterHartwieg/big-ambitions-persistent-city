@@ -1,0 +1,92 @@
+{
+  "cold10": {
+    "eligible": 10038,
+    "scheduledRecipients": 2297,
+    "share": 0.22883044431161587,
+    "wilson95": [
+      0.22071728157481818,
+      0.23715107630310645
+    ],
+    "drawn": 2482,
+    "drawShare": 0.24726041044032676,
+    "drawWilson95": [
+      0.2389185105361551,
+      0.2557956790069363
+    ],
+    "openingPending": 0,
+    "closingPending": 185,
+    "dropped": 0,
+    "deltaPendingOverN": 0.0184299661287109,
+    "dropsOverN": 0.0,
+    "auditExact": true
+  },
+  "warm28": {
+    "eligible": 32084,
+    "scheduledRecipients": 8016,
+    "share": 0.24984415908240867,
+    "wilson95": [
+      0.24513717806893465,
+      0.25461103588930173
+    ],
+    "drawn": 8012,
+    "drawShare": 0.24971948634833563,
+    "drawWilson95": [
+      0.24501330863612603,
+      0.25448558970484564
+    ],
+    "openingPending": 185,
+    "closingPending": 181,
+    "dropped": 0,
+    "deltaPendingOverN": -0.00012467273407305821,
+    "dropsOverN": 0.0,
+    "auditExact": true
+  },
+  "combined38": {
+    "eligible": 42122,
+    "scheduledRecipients": 10313,
+    "share": 0.24483642752006077,
+    "wilson95": [
+      0.2407535034329062,
+      0.24896588838000266
+    ],
+    "drawn": 10494,
+    "drawShare": 0.24913346944589526,
+    "drawWilson95": [
+      0.2450260814379297,
+      0.2532866105314607
+    ],
+    "openingPending": 0,
+    "closingPending": 181,
+    "dropped": 0,
+    "deltaPendingOverN": 0.004297041925834481,
+    "dropsOverN": 0.0,
+    "auditExact": true
+  },
+  "cold28Untraced": {
+    "eligible": 32725,
+    "scheduledRecipients": 7902,
+    "share": 0.24146676852559207,
+    "wilson95": [
+      0.2368604230995986,
+      0.24613380322246842
+    ],
+    "drawn": 8032,
+    "drawShare": 0.2454392666157372,
+    "drawWilson95": [
+      0.24080673119056825,
+      0.25013155878945414
+    ],
+    "openingPending": 0,
+    "closingPending": 130,
+    "dropped": 0,
+    "deltaPendingOverN": 0.003972498090145149,
+    "dropsOverN": 0.0,
+    "auditExact": true
+  },
+  "criterion": "About 25% long-run; owner accepts about 24-25% over a month or warm window. Fixed-seed draw interval is descriptive, not a mandatory gate. Cold lag is reported, with no catch-up logic.",
+  "acceptedLongRunWindows": [
+    "warm28",
+    "cold28Untraced"
+  ],
+  "passed": true
+}

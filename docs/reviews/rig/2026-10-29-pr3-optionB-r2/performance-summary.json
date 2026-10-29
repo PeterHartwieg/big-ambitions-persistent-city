@@ -1,0 +1,362 @@
+[
+  {
+    "arm": "before",
+    "window": 1,
+    "seconds": 60.3034151,
+    "nativeMinutes": 20.13113021850586,
+    "mod": {
+      "samples": 4970,
+      "mean": 0.1897888329979881,
+      "p50": 0.1697,
+      "p95": 0.2518,
+      "p99": 0.6048,
+      "maximum": 6.7337
+    },
+    "wholeFrame": {
+      "samples": 4971,
+      "mean": 12.129757050895192,
+      "p50": 11.1785,
+      "p95": 14.4893,
+      "p99": 87.2917,
+      "maximum": 103.8684
+    },
+    "populationLagMinutes": 0.0,
+    "timedExceptions": 0,
+    "crossFrameCalls": 0,
+    "environment": {
+      "width": 1920,
+      "height": 1080,
+      "quality": "Low",
+      "vSync": 0,
+      "focused": true,
+      "runInBackground": true,
+      "targetFps": 90,
+      "calendarFactor": 0.3333333333333333,
+      "gpu": "NVIDIA GeForce RTX 4070",
+      "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+      "graphicsApi": "Direct3D11",
+      "timeScale": 1.0,
+      "camera": {
+        "position": {
+          "x": 215.0,
+          "y": 20.1777115,
+          "z": 28.6703224
+        },
+        "eulerAngles": {
+          "x": 32.81996,
+          "y": 180.000259,
+          "z": 0.0
+        }
+      }
+    },
+    "validity": {
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "broadSavingMentionDelta": 15,
+      "actualSaveLines": [],
+      "clean": true
+    },
+    "componentTimedExceptions": 0,
+    "componentCrossFrameCalls": 0
+  },
+  {
+    "arm": "after",
+    "window": 1,
+    "seconds": 60.174894,
+    "nativeMinutes": 20.08780860900879,
+    "mod": {
+      "samples": 4697,
+      "mean": 0.3559952735788797,
+      "p50": 0.3237,
+      "p95": 0.5325,
+      "p99": 0.9029,
+      "maximum": 5.742
+    },
+    "wholeFrame": {
+      "samples": 4698,
+      "mean": 12.807199233716466,
+      "p50": 11.2874,
+      "p95": 15.0391,
+      "p99": 120.6283,
+      "maximum": 159.1545
+    },
+    "populationLagMinutes": 0.0,
+    "timedExceptions": 0,
+    "crossFrameCalls": 0,
+    "environment": {
+      "width": 1920,
+      "height": 1080,
+      "quality": "Low",
+      "vSync": 0,
+      "focused": true,
+      "runInBackground": true,
+      "targetFps": 90,
+      "calendarFactor": 0.3333333333333333,
+      "gpu": "NVIDIA GeForce RTX 4070",
+      "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+      "graphicsApi": "Direct3D11",
+      "timeScale": 1.0,
+      "camera": {
+        "position": {
+          "x": 215.0,
+          "y": 20.17771,
+          "z": 28.6703224
+        },
+        "eulerAngles": {
+          "x": 32.81996,
+          "y": 180.000259,
+          "z": 7.751009e-12
+        }
+      }
+    },
+    "validity": {
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "broadSavingMentionDelta": 14,
+      "actualSaveLines": [],
+      "clean": true
+    },
+    "componentTimedExceptions": 0,
+    "componentCrossFrameCalls": 0
+  },
+  {
+    "arm": "before",
+    "window": 2,
+    "seconds": 60.4364497,
+    "nativeMinutes": 20.162315368652344,
+    "mod": {
+      "samples": 4976,
+      "mean": 0.19480998794212176,
+      "p50": 0.1753,
+      "p95": 0.2603,
+      "p99": 0.5748,
+      "maximum": 9.2014
+    },
+    "wholeFrame": {
+      "samples": 4977,
+      "mean": 12.141873096242694,
+      "p50": 11.1129,
+      "p95": 14.4998,
+      "p99": 88.4675,
+      "maximum": 108.422
+    },
+    "populationLagMinutes": 0.0,
+    "timedExceptions": 0,
+    "crossFrameCalls": 0,
+    "environment": {
+      "width": 1920,
+      "height": 1080,
+      "quality": "Low",
+      "vSync": 0,
+      "focused": true,
+      "runInBackground": true,
+      "targetFps": 90,
+      "calendarFactor": 0.3333333333333333,
+      "gpu": "NVIDIA GeForce RTX 4070",
+      "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+      "graphicsApi": "Direct3D11",
+      "timeScale": 1.0,
+      "camera": {
+        "position": {
+          "x": 215.0,
+          "y": 20.17771,
+          "z": 28.6703224
+        },
+        "eulerAngles": {
+          "x": 32.81996,
+          "y": 180.000259,
+          "z": -7.751007e-12
+        }
+      }
+    },
+    "validity": {
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "broadSavingMentionDelta": 13,
+      "actualSaveLines": [],
+      "clean": true
+    },
+    "componentTimedExceptions": 0,
+    "componentCrossFrameCalls": 0
+  },
+  {
+    "arm": "after",
+    "window": 2,
+    "seconds": 60.3553758,
+    "nativeMinutes": 20.126543045043945,
+    "mod": {
+      "samples": 4758,
+      "mean": 0.3359136191677179,
+      "p50": 0.3048,
+      "p95": 0.4949,
+      "p99": 0.7442,
+      "maximum": 11.4337
+    },
+    "wholeFrame": {
+      "samples": 4759,
+      "mean": 12.680117167472142,
+      "p50": 11.2814,
+      "p95": 14.7252,
+      "p99": 114.498,
+      "maximum": 147.984
+    },
+    "populationLagMinutes": 0.0,
+    "timedExceptions": 0,
+    "crossFrameCalls": 0,
+    "environment": {
+      "width": 1920,
+      "height": 1080,
+      "quality": "Low",
+      "vSync": 0,
+      "focused": true,
+      "runInBackground": true,
+      "targetFps": 90,
+      "calendarFactor": 0.3333333333333333,
+      "gpu": "NVIDIA GeForce RTX 4070",
+      "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+      "graphicsApi": "Direct3D11",
+      "timeScale": 1.0,
+      "camera": {
+        "position": {
+          "x": 215.0,
+          "y": 20.1777115,
+          "z": 28.6703224
+        },
+        "eulerAngles": {
+          "x": 32.81996,
+          "y": 180.000259,
+          "z": 0.0
+        }
+      }
+    },
+    "validity": {
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "broadSavingMentionDelta": 15,
+      "actualSaveLines": [],
+      "clean": true
+    },
+    "componentTimedExceptions": 0,
+    "componentCrossFrameCalls": 0
+  },
+  {
+    "arm": "before",
+    "window": 3,
+    "seconds": 60.1707763,
+    "nativeMinutes": 20.09303092956543,
+    "mod": {
+      "samples": 4732,
+      "mean": 0.2138693998309381,
+      "p50": 0.1813,
+      "p95": 0.341,
+      "p99": 0.6505,
+      "maximum": 8.2925
+    },
+    "wholeFrame": {
+      "samples": 4733,
+      "mean": 12.711472469892222,
+      "p50": 11.2823,
+      "p95": 16.6666,
+      "p99": 89.3566,
+      "maximum": 286.0859
+    },
+    "populationLagMinutes": 0.0,
+    "timedExceptions": 0,
+    "crossFrameCalls": 0,
+    "environment": {
+      "width": 1920,
+      "height": 1080,
+      "quality": "Low",
+      "vSync": 0,
+      "focused": true,
+      "runInBackground": true,
+      "targetFps": 90,
+      "calendarFactor": 0.3333333333333333,
+      "gpu": "NVIDIA GeForce RTX 4070",
+      "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+      "graphicsApi": "Direct3D11",
+      "timeScale": 1.0,
+      "camera": {
+        "position": {
+          "x": 215.0,
+          "y": 20.1777115,
+          "z": 28.6703224
+        },
+        "eulerAngles": {
+          "x": 32.81996,
+          "y": 180.0003,
+          "z": -7.751007e-12
+        }
+      }
+    },
+    "validity": {
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "broadSavingMentionDelta": 13,
+      "actualSaveLines": [],
+      "clean": true
+    },
+    "componentTimedExceptions": 0,
+    "componentCrossFrameCalls": 0
+  },
+  {
+    "arm": "after",
+    "window": 3,
+    "seconds": 60.3237425,
+    "nativeMinutes": 20.121729850769043,
+    "mod": {
+      "samples": 4697,
+      "mean": 0.3719336810730266,
+      "p50": 0.3302,
+      "p95": 0.5398,
+      "p99": 0.8835,
+      "maximum": 41.5031
+    },
+    "wholeFrame": {
+      "samples": 4698,
+      "mean": 12.838108173690935,
+      "p50": 11.3593,
+      "p95": 15.2212,
+      "p99": 120.882,
+      "maximum": 180.7445
+    },
+    "populationLagMinutes": 0.0,
+    "timedExceptions": 0,
+    "crossFrameCalls": 0,
+    "environment": {
+      "width": 1920,
+      "height": 1080,
+      "quality": "Low",
+      "vSync": 0,
+      "focused": true,
+      "runInBackground": true,
+      "targetFps": 90,
+      "calendarFactor": 0.3333333333333333,
+      "gpu": "NVIDIA GeForce RTX 4070",
+      "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+      "graphicsApi": "Direct3D11",
+      "timeScale": 1.0,
+      "camera": {
+        "position": {
+          "x": 215.0,
+          "y": 20.1777115,
+          "z": 28.6703224
+        },
+        "eulerAngles": {
+          "x": 32.81996,
+          "y": 180.000259,
+          "z": -7.751007e-12
+        }
+      }
+    },
+    "validity": {
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "broadSavingMentionDelta": 12,
+      "actualSaveLines": [],
+      "clean": true
+    },
+    "componentTimedExceptions": 0,
+    "componentCrossFrameCalls": 0
+  }
+]

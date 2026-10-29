@@ -1,5 +1,11 @@
 # Validation status
 
+## PR #3 option B rig rerun - 29 October 2026 (native evidence, PASS)
+
+Tested `7a104d6` (production code `067e8c5`) against unchanged `7357f78`. All AFTER measurements are fresh; primary BEFORE native evidence is explicitly reused, with a fresh before/after performance confirmation added. **31/31 offline commands and 1,551/1,551 tests pass.** Default realised share: **7,902/32,725 = 24.1467%** over 28 cold days; **8,016/32,084 = 24.9844%** over 28 warm days, with zero ordinary-default drops. Both builds pass 110/110 exact native-price payments and all 1,914 resident ledgers. Settings, four decrease arms, migrations/refusals, actual transfer/conversation reloads and native dwell/return pass.
+
+Fresh-process whole-frame changes remain within observed spread; mod-work p50/p95 increases **+0.0704/+0.0722 ms**, retained as an optimisation issue. All primary samples and the incomplete first hand-on observation remain documented. Agent1 is stopped, 4,828 original profile files and 107 references restored/hash-verified, config/preferences restored, and lease released. No merge, Workshop publish or ordinary-save deployment. [Complete proof, raw checks, scripts and limits](docs/reviews/rig/2026-10-29-pr3-optionB-r2/README.md).
+
 ## PR #3 ob4 nits - 29 October 2026 (offline, documentation only)
 
 Astra 1/2 and Opus 1/2/3 are fixed in README, CHECKS and the optional-stop guidance: use the full chance-conservation identity and an approximate binomial reference across seeds, distinguish the pre-option-B sample from the 43.22% option-B output, scope the observed pending peaks, describe cyclical stock and record the existing `b646dae` native measurements. The default remains **about 25% long-run** (about 24-25% over a month counts); current-head native re-measurement remains pending. Opus 4 is declined: `Lowest()` versus `!` is style only, and the reviewed no-suppression implementation needs no change. No behaviour or catch-up logic changed; committed rig evidence is untouched.

@@ -1,0 +1,297 @@
+{
+  "realSeconds": 60.3246682,
+  "nativeGameMinutes": 20.12937641143799,
+  "citizens": 957,
+  "populationLagMinutes": 0.0,
+  "physical": "physical=True, pedestrians=2, cars=0, acquired=2, released=0, blockedSamples=331, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+  "peakObservedPedestrians": 2,
+  "peakObservedCars": 0,
+  "frameMilliseconds": {
+    "samples": 4945,
+    "mean": 12.197652234580378,
+    "p50": 11.077,
+    "p95": 13.6277,
+    "p99": 90.7083,
+    "maximum": 132.6
+  },
+  "totalPopulationUpdateMilliseconds": {
+    "samples": 4945,
+    "mean": 0.27470402426693685,
+    "p50": 0.2477,
+    "p95": 0.3294,
+    "p99": 0.7889,
+    "maximum": 13.5841
+  },
+  "authorityHookAvailable": true,
+  "authorityHookObserved": true,
+  "populationUpdateCalls": 4945,
+  "authorityHookCalls": 4945,
+  "authorityHookMilliseconds": {
+    "samples": 4945,
+    "mean": 0.0006487967644084649,
+    "p50": 0.0006,
+    "p95": 0.0011,
+    "p99": 0.0013,
+    "maximum": 0.0682
+  },
+  "authorityHookTotalMilliseconds": 3.2082999999999804,
+  "observedNativeHourChangeCalls": 1,
+  "observedNativeHourChangeMilliseconds": {
+    "samples": 1,
+    "mean": 0.0682,
+    "p50": 0.0682,
+    "p95": 0.0682,
+    "p99": 0.0682,
+    "maximum": 0.0682
+  },
+  "completedUnityFrames": 4944,
+  "populationUpdatePerUnityFrameMilliseconds": {
+    "samples": 4944,
+    "mean": 0.2747082322006478,
+    "p50": 0.2477,
+    "p95": 0.3294,
+    "p99": 0.7889,
+    "maximum": 13.5841
+  },
+  "authorityHookPerUnityFrameMilliseconds": {
+    "samples": 4944,
+    "mean": 0.0006488268608413955,
+    "p50": 0.0006,
+    "p95": 0.0011,
+    "p99": 0.0013,
+    "maximum": 0.0682
+  },
+  "combinedModWorkPerUnityFrameMilliseconds": {
+    "samples": 4944,
+    "mean": 0.275357059061489,
+    "p50": 0.2484,
+    "p95": 0.3299,
+    "p99": 0.7895,
+    "maximum": 13.5849
+  },
+  "combinedFramesOver5ms": 5,
+  "timedExceptions": 0,
+  "crossFrameCalls": 0,
+  "perFrameEvidence": "<agent1-profile>\\ModsLocal\\FoodDemandAuditProbe\\frames-mod-work-after100-window-1-stop-b2767b.csv",
+  "componentTimedExceptions": 0,
+  "componentCrossFrameCalls": 0,
+  "components": [
+    {
+      "name": "RouteObjectDiscovery.Step",
+      "calls": 4945,
+      "outsidePrimaryScopeCalls": 0,
+      "totalInclusiveMilliseconds": 139.4059,
+      "inclusiveCallMilliseconds": {
+        "samples": 4945,
+        "mean": 0.028191284125379072,
+        "p50": 0.0276,
+        "p95": 0.0334,
+        "p99": 0.0389,
+        "maximum": 0.1259
+      },
+      "inclusivePerUnityFrameMilliseconds": {
+        "samples": 4944,
+        "mean": 0.028191545307443267,
+        "p50": 0.0276,
+        "p95": 0.0334,
+        "p99": 0.0389,
+        "maximum": 0.1259
+      }
+    },
+    {
+      "name": "PhysicalPopulation.BeforeAdvance",
+      "calls": 4945,
+      "outsidePrimaryScopeCalls": 0,
+      "totalInclusiveMilliseconds": 25.5759,
+      "inclusiveCallMilliseconds": {
+        "samples": 4945,
+        "mean": 0.005172072800809079,
+        "p50": 0.005,
+        "p95": 0.0066,
+        "p99": 0.0088,
+        "maximum": 0.0866
+      },
+      "inclusivePerUnityFrameMilliseconds": {
+        "samples": 4944,
+        "mean": 0.005172168284789825,
+        "p50": 0.005,
+        "p95": 0.0066,
+        "p99": 0.0088,
+        "maximum": 0.0866
+      }
+    },
+    {
+      "name": "PhysicalPopulation.Update",
+      "calls": 4945,
+      "outsidePrimaryScopeCalls": 0,
+      "totalInclusiveMilliseconds": 191.9979,
+      "inclusiveCallMilliseconds": {
+        "samples": 4945,
+        "mean": 0.038826673407482484,
+        "p50": 0.0279,
+        "p95": 0.0616,
+        "p99": 0.1547,
+        "maximum": 9.4598
+      },
+      "inclusivePerUnityFrameMilliseconds": {
+        "samples": 4944,
+        "mean": 0.038826011326861025,
+        "p50": 0.0279,
+        "p95": 0.0616,
+        "p99": 0.1547,
+        "maximum": 9.4598
+      }
+    },
+    {
+      "name": "PopulationRuntime.AdvancePopulation",
+      "calls": 4945,
+      "outsidePrimaryScopeCalls": 0,
+      "totalInclusiveMilliseconds": 47.1328,
+      "inclusiveCallMilliseconds": {
+        "samples": 4945,
+        "mean": 0.009531405460060602,
+        "p50": 0.0059,
+        "p95": 0.0113,
+        "p99": 0.0144,
+        "maximum": 1.0981
+      },
+      "inclusivePerUnityFrameMilliseconds": {
+        "samples": 4944,
+        "mean": 0.009531047734627766,
+        "p50": 0.0059,
+        "p95": 0.0113,
+        "p99": 0.0144,
+        "maximum": 1.0981
+      }
+    },
+    {
+      "name": "MultimodalRoutes.Prepare",
+      "calls": 4945,
+      "outsidePrimaryScopeCalls": 0,
+      "totalInclusiveMilliseconds": 136.7511,
+      "inclusiveCallMilliseconds": {
+        "samples": 4945,
+        "mean": 0.02765441860465101,
+        "p50": 0.0225,
+        "p95": 0.0274,
+        "p99": 0.0444,
+        "maximum": 0.9591
+      },
+      "inclusivePerUnityFrameMilliseconds": {
+        "samples": 4944,
+        "mean": 0.02765542071197396,
+        "p50": 0.0225,
+        "p95": 0.0274,
+        "p99": 0.0444,
+        "maximum": 0.9591
+      }
+    },
+    {
+      "name": "CitySimulator.RefreshTrafficClosures",
+      "calls": 4945,
+      "outsidePrimaryScopeCalls": 0,
+      "totalInclusiveMilliseconds": 19.1607,
+      "inclusiveCallMilliseconds": {
+        "samples": 4945,
+        "mean": 0.003874762386248676,
+        "p50": 0.0037,
+        "p95": 0.005,
+        "p99": 0.0063,
+        "maximum": 0.1003
+      },
+      "inclusivePerUnityFrameMilliseconds": {
+        "samples": 4944,
+        "mean": 0.0038748381877022056,
+        "p50": 0.0037,
+        "p95": 0.005,
+        "p99": 0.0063,
+        "maximum": 0.1003
+      }
+    },
+    {
+      "name": "PhysicalVehicles.Update",
+      "calls": 4945,
+      "outsidePrimaryScopeCalls": 0,
+      "totalInclusiveMilliseconds": 11.599,
+      "inclusiveCallMilliseconds": {
+        "samples": 4945,
+        "mean": 0.00234560161779579,
+        "p50": 0.0022,
+        "p95": 0.0036,
+        "p99": 0.0048,
+        "maximum": 0.0868
+      },
+      "inclusivePerUnityFrameMilliseconds": {
+        "samples": 4944,
+        "mean": 0.002345752427184502,
+        "p50": 0.0022,
+        "p95": 0.0036,
+        "p99": 0.0048,
+        "maximum": 0.0868
+      }
+    }
+  ],
+  "unityCpuFrameMilliseconds": {
+    "samples": 4945,
+    "mean": 12.211479797775539,
+    "p50": 11.1114,
+    "p95": 11.2013,
+    "p99": 85.105,
+    "maximum": 125.7652
+  },
+  "unityGpuFrameMilliseconds": {
+    "samples": 0,
+    "mean": 0.0,
+    "p50": 0.0,
+    "p95": 0.0,
+    "p99": 0.0,
+    "maximum": 0.0
+  },
+  "allocationCounterAvailable": false,
+  "allocationCounterObservedPositive": false,
+  "allocatedBytesPerFrame": {
+    "samples": 0,
+    "mean": 0.0,
+    "p50": 0.0,
+    "p95": 0.0,
+    "p99": 0.0,
+    "maximum": 0.0
+  },
+  "managedBytesBefore": 2308390912,
+  "managedBytesAfter": 2337521664,
+  "collections": [
+    1,
+    1,
+    1
+  ],
+  "framesOver50ms": 65,
+  "framesOver100ms": 16,
+  "framesOver250ms": 0,
+  "environment": {
+    "width": 1920,
+    "height": 1080,
+    "quality": "Low",
+    "vSync": 0,
+    "focused": true,
+    "runInBackground": true,
+    "targetFps": 90,
+    "calendarFactor": 0.3333333333333333,
+    "gpu": "NVIDIA GeForce RTX 4070",
+    "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+    "graphicsApi": "Direct3D11",
+    "timeScale": 1.0,
+    "camera": {
+      "position": {
+        "x": 215.0,
+        "y": 20.17771,
+        "z": 28.6703224
+      },
+      "eulerAngles": {
+        "x": 32.81996,
+        "y": 180.00032,
+        "z": 1.55020181e-11
+      }
+    }
+  },
+  "note": "Whole-frame wall intervals include native rendering, other mods and diagnostics. Population Update includes route preparation and physical work. Authority-hook wall time includes native work it force-drains, and includes no-op hook calls. Observed native-hour-change calls are clock transitions, not actual ownership transfers. Combined mod work is the union of timed Update/authority scopes, so nested scopes count once; separate component totals must not be added when nested. Per-frame distributions exclude initial and current partial Unity frames and include zero-work completed frames. Instrumentation overhead remains; crossFrameCalls or timedExceptions invalidate clean attribution. No hour-change sample means no hourly-boundary performance proof. Named component timings are inclusive call and completed-frame totals; nested components (PhysicalVehicles.Update inside PhysicalPopulation.Update, for example) must not be added. Components do not extend or double-count the original Update/authority union. Outside-primary-scope component calls are reported separately, and nonzero componentCrossFrameCalls or componentTimedExceptions invalidate clean component attribution. Per-call samples cap at600000; total call counts remain uncapped. Per-frame component arrays and timing patches add diagnostic allocation/work overhead. Other mod entry points are outside this attribution. Body peaks sampled only on frame-status calls. GPU/CPU counters absent when unsupported. GC recorder is whole game, not attributed solely to this mod; an all-zero recorder without positive observations does not establish zero allocations."
+}

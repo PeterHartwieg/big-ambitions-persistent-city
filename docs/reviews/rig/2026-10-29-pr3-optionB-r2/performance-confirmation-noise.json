@@ -1,0 +1,122 @@
+[
+  {
+    "scope": "mod",
+    "metric": "p50",
+    "beforeMedian": 0.1607,
+    "afterMedian": 0.2311,
+    "change": 0.07039999999999999,
+    "beforeRange": 0.007199999999999984,
+    "afterRange": 0.007800000000000001,
+    "largerSpread": 0.007800000000000001,
+    "rangesOverlap": false,
+    "worseBeyondObservedSpread": true
+  },
+  {
+    "scope": "mod",
+    "metric": "p95",
+    "beforeMedian": 0.2248,
+    "afterMedian": 0.297,
+    "change": 0.07219999999999999,
+    "beforeRange": 0.009000000000000008,
+    "afterRange": 0.005599999999999994,
+    "largerSpread": 0.009000000000000008,
+    "rangesOverlap": false,
+    "worseBeyondObservedSpread": true
+  },
+  {
+    "scope": "mod",
+    "metric": "p99",
+    "beforeMedian": 0.5716,
+    "afterMedian": 0.6543,
+    "change": 0.0827,
+    "beforeRange": 0.08820000000000006,
+    "afterRange": 0.0716,
+    "largerSpread": 0.08820000000000006,
+    "rangesOverlap": true,
+    "worseBeyondObservedSpread": false
+  },
+  {
+    "scope": "mod",
+    "metric": "mean",
+    "beforeMedian": 0.17714018374276008,
+    "afterMedian": 0.24804252896524068,
+    "change": 0.0709023452224806,
+    "beforeRange": 0.005239206478017316,
+    "afterRange": 0.004452850511849599,
+    "largerSpread": 0.005239206478017316,
+    "rangesOverlap": false,
+    "worseBeyondObservedSpread": true
+  },
+  {
+    "scope": "mod",
+    "metric": "maximum",
+    "beforeMedian": 6.8793,
+    "afterMedian": 7.9874,
+    "change": 1.1081000000000003,
+    "beforeRange": 5.037700000000001,
+    "afterRange": 2.9587000000000003,
+    "largerSpread": 5.037700000000001,
+    "rangesOverlap": true,
+    "worseBeyondObservedSpread": false
+  },
+  {
+    "scope": "wholeFrame",
+    "metric": "p50",
+    "beforeMedian": 11.101,
+    "afterMedian": 11.0913,
+    "change": -0.009700000000000486,
+    "beforeRange": 0.021600000000001174,
+    "afterRange": 0.03119999999999834,
+    "largerSpread": 0.03119999999999834,
+    "rangesOverlap": true,
+    "worseBeyondObservedSpread": false
+  },
+  {
+    "scope": "wholeFrame",
+    "metric": "p95",
+    "beforeMedian": 13.2759,
+    "afterMedian": 13.3823,
+    "change": 0.10640000000000072,
+    "beforeRange": 0.4486000000000008,
+    "afterRange": 0.15009999999999835,
+    "largerSpread": 0.4486000000000008,
+    "rangesOverlap": true,
+    "worseBeyondObservedSpread": false
+  },
+  {
+    "scope": "wholeFrame",
+    "metric": "p99",
+    "beforeMedian": 87.0505,
+    "afterMedian": 86.7419,
+    "change": -0.30859999999999843,
+    "beforeRange": 3.999300000000005,
+    "afterRange": 2.4284999999999997,
+    "largerSpread": 3.999300000000005,
+    "rangesOverlap": true,
+    "worseBeyondObservedSpread": false
+  },
+  {
+    "scope": "wholeFrame",
+    "metric": "mean",
+    "beforeMedian": 12.041616952875417,
+    "afterMedian": 12.040355968806235,
+    "change": -0.0012609840691819585,
+    "beforeRange": 0.04215764573716463,
+    "afterRange": 0.03422427451034693,
+    "largerSpread": 0.04215764573716463,
+    "rangesOverlap": true,
+    "worseBeyondObservedSpread": false
+  },
+  {
+    "scope": "wholeFrame",
+    "metric": "maximum",
+    "beforeMedian": 102.588,
+    "afterMedian": 100.0768,
+    "change": -2.511199999999988,
+    "beforeRange": 10.9653,
+    "afterRange": 14.689400000000006,
+    "largerSpread": 14.689400000000006,
+    "rangesOverlap": true,
+    "worseBeyondObservedSpread": false
+  }
+]

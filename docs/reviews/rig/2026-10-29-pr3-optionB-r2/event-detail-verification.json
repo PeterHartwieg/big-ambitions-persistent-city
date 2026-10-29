@@ -1,0 +1,188 @@
+{
+  "event-hand-on": {
+    "checkpoint": {
+      "observed": "hand-on",
+      "id": "c58",
+      "key": "c58:address:ba%3Astreet_firststreet:16:work:22067",
+      "minute": 22067.0,
+      "hand": 1,
+      "pass": 0,
+      "stop": {
+        "Kind": 2,
+        "PlaceId": "address:ba%3Astreet_firststreet:16:work",
+        "SpotId": "address:ba%3Astreet_firststreet:16:work:Break:0",
+        "TargetId": "address:ba%3Astreet_firststreet:16:work",
+        "Position": {
+          "X": 404.0390319824219,
+          "Y": 0.09000015258789062,
+          "Z": 345.0132141113281,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 403.43902587890625,
+          "Y": 0.09000015258789062,
+          "Z": 346.11322021484375,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 404.1390380859375,
+          "Y": 0.09000015258789062,
+          "Z": 343.9132080078125,
+          "IsFinite": true
+        },
+        "StartMinute": 22307.0,
+        "EndMinute": 22316.656,
+        "VisitMinute": 22067.0,
+        "ResumeEventMinute": 22547.0,
+        "Cancelled": false,
+        "Members": []
+      },
+      "pending": 184,
+      "tally": {
+        "Eligible": 1,
+        "Drawn": 0,
+        "Realised": 1,
+        "HandedOn": 1,
+        "PassedOn": 0,
+        "Dropped": 0
+      }
+    },
+    "donorClears": [
+      {
+        "id": "c277",
+        "arriving": "c58",
+        "key": "c58:address:ba%3Astreet_firststreet:16:work:22067",
+        "minute": 22067.0
+      }
+    ],
+    "passAttempts": []
+  },
+  "event-pass-on": {
+    "checkpoint": {
+      "observed": "pass-on",
+      "id": "c58",
+      "key": "c58:address:ba%3Astreet_firststreet:16:work:22067",
+      "minute": 22067.0,
+      "hand": 0,
+      "pass": 1,
+      "stop": {
+        "Kind": 2,
+        "PlaceId": "address:ba%3Astreet_firststreet:16:work",
+        "SpotId": "address:ba%3Astreet_firststreet:16:work:Break:0",
+        "TargetId": "address:ba%3Astreet_firststreet:16:work",
+        "Position": {
+          "X": 404.0390319824219,
+          "Y": 0.09000015258789062,
+          "Z": 345.0132141113281,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 403.43902587890625,
+          "Y": 0.09000015258789062,
+          "Z": 346.11322021484375,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 404.1390380859375,
+          "Y": 0.09000015258789062,
+          "Z": 343.9132080078125,
+          "IsFinite": true
+        },
+        "StartMinute": 22307.0,
+        "EndMinute": 22316.656,
+        "VisitMinute": 22067.0,
+        "ResumeEventMinute": 22547.0,
+        "Cancelled": false,
+        "Members": []
+      },
+      "pending": 923,
+      "tally": {
+        "Eligible": 1,
+        "Drawn": 1,
+        "Realised": 1,
+        "HandedOn": 0,
+        "PassedOn": 1,
+        "Dropped": 0
+      }
+    },
+    "donorClears": [],
+    "passAttempts": [
+      {
+        "donor": "c58",
+        "recipient": "c143",
+        "available": true,
+        "minute": 22067.0
+      }
+    ]
+  },
+  "event-conversation": {
+    "checkpoint": {
+      "observed": "conversation",
+      "id": "pc:396",
+      "key": "pc:396:address:ba%3Astreet_seventhstreet:15:leisure:22946.159066329197",
+      "minute": 22946.159066329197,
+      "hand": 1,
+      "pass": 0,
+      "stop": {
+        "Kind": 4,
+        "PlaceId": "address:ba%3Astreet_seventhstreet:15:leisure",
+        "SpotId": "address:ba%3Astreet_seventhstreet:15:leisure:ChatOutsideVenue:0",
+        "TargetId": "chat:pc:396:22946.159066329197",
+        "Position": {
+          "X": -105.72142028808594,
+          "Y": 0.09000396728515625,
+          "Z": -81.95870971679688,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": -106.41484069824219,
+          "Y": 0.09000396728515625,
+          "Z": -82.24451446533203,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": -104.66632080078125,
+          "Y": 0.09000396728515625,
+          "Z": -81.63198852539062,
+          "IsFinite": true
+        },
+        "StartMinute": 22946.159066329197,
+        "EndMinute": 22965.669066329196,
+        "VisitMinute": 22946.159066329197,
+        "ResumeEventMinute": 22980.0,
+        "Cancelled": false,
+        "Members": [
+          "pc:396",
+          "pc:365"
+        ]
+      },
+      "pending": 196,
+      "tally": {
+        "Eligible": 1402,
+        "Drawn": 348,
+        "Realised": 337,
+        "HandedOn": 202,
+        "PassedOn": 57,
+        "Dropped": 0
+      }
+    },
+    "donorClears": [
+      {
+        "id": "c138",
+        "arriving": "pc:396",
+        "key": "pc:396:address:ba%3Astreet_seventhstreet:15:leisure:22946.159066329197",
+        "minute": 22946.159066329197
+      }
+    ],
+    "passAttempts": [],
+    "pairChecks": {
+      "distinctMembers": true,
+      "reciprocalMembers": true,
+      "sharedStartEnd": true,
+      "distinctSafeSpots": true,
+      "reciprocalFacing": true
+    },
+    "spotDistance": 0.750010812926391,
+    "pairPassed": true
+  }
+}

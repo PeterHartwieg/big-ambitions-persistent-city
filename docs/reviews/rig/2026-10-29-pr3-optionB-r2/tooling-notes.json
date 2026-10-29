@@ -1,0 +1,14 @@
+{
+  "nativeControlVersions": "native_control-v1.py used for primary windows and finance; native_control.py later adds read-only optional-status snapshots for reload chronology. No observer or production logic changed.",
+  "installVersions": "Install-v1.ps1 made the original AFTER install. Install.ps1 adds an optional receipt label, preserving the original receipts during the fresh-process comparison.",
+  "handOnRetry": "First normal-speed high-stock50 window had no hand-on and remains INCOMPLETE in event-persistence-initial-attempts.json. Default25 retry observed a real hand-on and performed native save/reload; both trace summaries remain.",
+  "analyzerCorrection": "A declined false choice clears to null when c117 starts its scheduled journey during the 0.333-game-minute reload advance. Exact scheduled/departure minute, AtPlace-to-Travelling transition, new journey, zero post-load draw/transfer/stop counters and unchanged stored bytes prove a new journey rather than a reroll.",
+  "stopKinds": {
+    "2": "Break",
+    "4": "Conversation (Core ChatOutsideVenue)",
+    "5": "WindowShopping",
+    "6": "Audience",
+    "7": "Resting"
+  },
+  "shutdown": "One shutdown invocation omitted its log label; installer refused while game running, before any file copy. Corrected graceful shutdown exited 0; no package was changed while running."
+}

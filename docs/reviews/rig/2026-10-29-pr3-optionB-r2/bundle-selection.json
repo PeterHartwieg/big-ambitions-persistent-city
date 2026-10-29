@@ -1,0 +1,4 @@
+{
+  "rateSummary": "Hourly and daily records are separate CSVs. Detailed observer timings are excluded from production timing. Actual settings-trim order is retained; duplicate individual 100-policy drop IDs are omitted. All counts, causes, source trace hashes and the per-admission main-arm audit remain.",
+  "fullPrivateRateSummarySha256": "8685e20e1997e3a7cf187a4f2b6a2a52fb46032f4ab381128107bf4f471757c5"
+}
