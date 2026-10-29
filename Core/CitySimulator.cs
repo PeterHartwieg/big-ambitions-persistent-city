@@ -350,6 +350,9 @@ namespace PersistentCity.Core
                 // ends the stop; an accepted visitor must not be recruited again after it clears.
                 working.OptionalStop = live.OptionalStop?.Copy();
             }
+            // A pending chance outlives its visit. Read it from the live citizen at commit, so a chance
+            // handed on while this event was in flight is not restored.
+            else if (live.OptionalStopChoice == true && live.OptionalStop == null) working.OptionalStopChoice = true;
             CommitEvent(live, working);
             if (sameVisit && live.OptionalStop != null) CancelOptionalStop(live.Identity.Id);
             if (ReferenceEquals(restartedItem, item)) restartedItem = null;
@@ -359,6 +362,7 @@ namespace PersistentCity.Core
             if (!due.Add(item)) throw new InvalidOperationException("A completed event was already queued.");
             food?.ObserveStop(live);
             ScheduleOptionalStop(live, arrivalRoute);
+            FileOptionalStop(live);
             activityObservers.Handlers?.Invoke(live.Identity.Id, live, State.Minute);
         }
 

@@ -29,7 +29,7 @@ namespace PersistentCity.Core
             person.Journey = new Route { Legs = outward.Legs.Select(l => new RouteLeg { From = l.From, To = l.To,
                 Minutes = l.Minutes, Mode = l.Mode, ServiceId = l.ServiceId }).ToList() };
             person.DepartureMinute = now; person.NextEventMinute = arrival;
-            item.Minute = ScheduledMinute(person); due.Add(item);
+            item.Minute = ScheduledMinute(person); due.Add(item); FileOptionalStop(person);
             activityObservers.Handlers?.Invoke(citizenId, person, now); SynchronizeSnapshot(); return true;
         }
 
