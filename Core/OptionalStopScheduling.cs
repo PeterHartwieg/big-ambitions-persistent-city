@@ -49,7 +49,8 @@ namespace PersistentCity.Core
 
     public static class OptionalStopPolicy
     {
-        // Peter approved 25% in DECISIONS-3; settings affect only new visit chances.
+        // Peter approved 25% in DECISIONS-3: the target share of eligible visits that visibly get a
+        // scheduled stop, capped by feasibility (option B, 29 October). Settings affect only new visits.
         public static int ApprovedChoicePercentage => 25;
 
         public static double Minimum(DwellKind kind)
@@ -134,19 +135,44 @@ namespace PersistentCity.Core
             // Existing food service has priority over optional presentation at the same shop.
             if (State.Food != null && State.Food.Shops.Any(s => s.PlaceId == person.PlaceId)) return;
             string key = OptionalStopPolicy.VisitKey(person, now);
+            // The setting is the share of eligible visits that visibly get a stop. A drawn visit with no
+            // feasible stop keeps its accepted chance (it may still be recruited for a conversation); a
+            // later feasible visit that was not drawn takes over one such pending chance. Feasible visits
+            // therefore fill the share left by infeasible ones, up to the feasible share itself.
             person.OptionalStopChoice = OptionalStopPolicy.Choose(key, State.Seed, stopPercentage.Value);
-            if (person.OptionalStopChoice != true) return;
+            if (person.OptionalStopChoice == true) { TryPublish(person, arrivalRoute, key, now, true); return; }
+            // At 0 no new stop appears, not even for chances still pending from a save at a higher rate.
+            if (stopPercentage.Value == 0) return;
+            var holder = PendingChanceHolder(person);
+            if (holder == null || !TryPublish(person, arrivalRoute, key, now, false)) return;
+            holder.OptionalStopChoice = false; person.OptionalStopChoice = true;
+        }
+        private bool TryPublish(CitizenState person, Route? arrivalRoute, string key, double now, bool conversation)
+        {
             DwellKind kind = person.Activity == Activity.Work ? DwellKind.Break
                 : person.Activity == Activity.Shop ? DwellKind.WindowShopping : DwellKind.Resting;
             // Arrival pedestrians are passers-by at this entrance. No trip is generated toward a performer.
             if ((person.Activity == Activity.Shop || person.Activity == Activity.Leisure) && arrivalRoute != null
                 && arrivalRoute.Legs.Count > 0 && arrivalRoute.Legs.Last().Mode == TravelMode.Walk
                 && TryStop(person, DwellKind.Audience, key, now, now, out var audience))
-            { person.OptionalStop = audience; return; }
-            if (person.Activity == Activity.Leisure && TryConversation(person, now)) return;
+            { person.OptionalStop = audience; return true; }
+            // A conversation also honours its partner's own chance, so a taken-over chance plans an individual stop.
+            if (conversation && person.Activity == Activity.Leisure && TryConversation(person, now)) return true;
             double end = Math.Min(person.NextEventMinute, person.ActivityUntilMinute);
             double start = kind == DwellKind.Break ? now + (end - now) / 2 : now;
-            if (TryStop(person, kind, key, now, start, out var planned)) person.OptionalStop = planned;
+            if (!TryStop(person, kind, key, now, start, out var planned)) return false;
+            person.OptionalStop = planned; return true;
+        }
+        // An accepted chance whose visit has no stop yet, from any place. The earliest-ending visit goes first
+        // because its chance expires soonest; the stable identity breaks ties. One pass, no allocation.
+        private CitizenState? PendingChanceHolder(CitizenState taker)
+        {
+            CitizenState? best = null;
+            foreach (var c in State.Citizens)
+                if (c.OptionalStopChoice == true && c.OptionalStop == null && !ReferenceEquals(c, taker)
+                    && (best == null || c.ActivityUntilMinute < best.ActivityUntilMinute || c.ActivityUntilMinute == best.ActivityUntilMinute
+                        && string.CompareOrdinal(c.Identity.Id, best.Identity.Id) < 0)) best = c;
+            return best;
         }
         private bool TryStop(CitizenState person, DwellKind kind, string key, double visit, double start,
             out OptionalStopState? planned, Position? reserved = null)
