@@ -89,10 +89,12 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
         Assert.Equal(1500, tally.Eligible.Count);
         // A stop is only ever published for a feasible visit.
         Assert.Subset(tally.FeasibleVisits, tally.Realised);
-        // One visit per citizen: every draw is realised once or still pending, and none is dropped.
-        Assert.Equal(tally.Drawn, tally.Realised.Count + Pending(sim));
-        Assert.Equal(new OptionalStopChanceTally { Drawn = tally.Drawn, Realised = tally.Realised.Count,
-            HandedOn = sim.OptionalStopChances.HandedOn }, sim.OptionalStopChances);
+        // One visit per citizen: every draw is realised once or still pending, and below 100 none is dropped.
+        // At 100 nothing can be handed on, so an unused chance ends with its visit.
+        var chances = sim.OptionalStopChances;
+        Assert.Equal(tally.Drawn, tally.Realised.Count + Pending(sim) + chances.Dropped);
+        Assert.Equal(new OptionalStopChanceTally { Eligible = 1500, Drawn = tally.Drawn, Realised = tally.Realised.Count,
+            HandedOn = chances.HandedOn, Dropped = percentage == 100 ? chances.Dropped : 0 }, chances);
         Assert.True(sim.OptionalStopIndexesMatchState());
         output.WriteLine($"setting {percentage}% stay {stay} width {width} {timing}: feasible {tally.FeasibleVisits.Count}/1500 ({tally.FeasibleShare:P1}), "
             + $"drawn {tally.Drawn}, realised {tally.Realised.Count}/1500 ({tally.Share:P1}), handed on {sim.OptionalStopChances.HandedOn}, pending {Pending(sim)}");
@@ -248,7 +250,8 @@ public sealed class OptionalStopShareTests(ITestOutputHelper output)
             loaded.AdvanceTo(Start + Window + 45); return loaded;
         }
         var zero = Load(0);
-        Assert.Equal(new OptionalStopChanceTally(), zero.OptionalStopChances);
+        Assert.True(zero.OptionalStopChances.Eligible > 0);
+        Assert.Equal(new OptionalStopChanceTally { Eligible = zero.OptionalStopChances.Eligible }, zero.OptionalStopChances);
         Assert.Equal(pending, zero.State.Citizens.Where(c => c.OptionalStopChoice == true && c.OptionalStop == null).Select(c => c.Identity.Id));
         // Control: the same save resumed at 25 does spend them.
         var resumed = Load(25).OptionalStopChances;

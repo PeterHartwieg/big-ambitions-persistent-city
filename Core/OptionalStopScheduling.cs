@@ -77,11 +77,13 @@ namespace PersistentCity.Core
             + ":" + at.ToString("R", CultureInfo.InvariantCulture);
     }
 
-    /// <summary>Chance accounting since attach: Drawn = Realised + change in pending chances + Dropped.
-    /// A conversation realises two stops, one of them from its partner's pending chance.</summary>
+    /// <summary>Chance accounting since the last attach (a load, or a route rebuild after the travel clock rate
+    /// changes): Drawn = Realised + change in pending chances + Dropped. Eligible counts eligible visits, the
+    /// share's denominator. A conversation realises two stops, one of them from its partner's pending chance.
+    /// HandedOn and PassedOn count chances moved to another citizen by a hand-on or a repeated visit.</summary>
     public struct OptionalStopChanceTally
     {
-        public long Drawn, Realised, HandedOn, Dropped;
+        public long Eligible, Drawn, Realised, HandedOn, PassedOn, Dropped;
     }
 
     public sealed partial class CitySimulator
@@ -90,19 +92,21 @@ namespace PersistentCity.Core
         private int? stopPercentage;
         // Derived, in-memory indexes of saved state, rebuilt on attach and kept exact at every change.
         // Pending chances are ordered by stable identity; holders waiting at a leisure venue (possible
-        // conversation partners) are kept apart so that other chances are handed on first.
+        // conversation partners) are kept apart so that other chances are handed on first. Citizens holding
+        // neither a chance nor a stop can receive a repeated visit's second chance.
         private static readonly IComparer<CitizenState> ById = Comparer<CitizenState>.Create((a, b) => string.CompareOrdinal(a.Identity.Id, b.Identity.Id));
         private readonly SortedSet<CitizenState> bankedChances = new SortedSet<CitizenState>(ById);
         private readonly SortedSet<CitizenState> waitingChances = new SortedSet<CitizenState>(ById);
         private readonly HashSet<CitizenState> withStops = new HashSet<CitizenState>();
+        private readonly SortedSet<CitizenState> freeOfChances = new SortedSet<CitizenState>(ById);
         private OptionalStopChanceTally chanceTally;
-        /// <summary>Diagnostics since attach (not saved): draws, stops, hand-ons and dropped chances.</summary>
+        /// <summary>Diagnostics since the last attach (not saved): eligible visits, draws, stops, moved and dropped chances.</summary>
         public OptionalStopChanceTally OptionalStopChances => chanceTally;
         public void AttachOptionalStops(IOptionalStopEnvironment environment, int? percentage)
         {
             if (percentage < 0 || percentage > 100) throw new ArgumentOutOfRangeException(nameof(percentage));
             stopEnvironment = environment ?? throw new ArgumentNullException(nameof(environment)); stopPercentage = percentage;
-            bankedChances.Clear(); waitingChances.Clear(); withStops.Clear(); chanceTally = default;
+            bankedChances.Clear(); waitingChances.Clear(); withStops.Clear(); freeOfChances.Clear(); chanceTally = default;
             foreach (var person in State.Citizens) FileOptionalStop(person);
             // Old saves do not acquire new stops just because they were loaded.
             RefreshOptionalStops();
@@ -152,11 +156,14 @@ namespace PersistentCity.Core
             if (pending && !waiting) bankedChances.Add(person); else bankedChances.Remove(person);
             if (waiting) waitingChances.Add(person); else waitingChances.Remove(person);
             if (person.OptionalStop != null) withStops.Add(person); else withStops.Remove(person);
+            if (Free(person)) freeOfChances.Add(person); else freeOfChances.Remove(person);
         }
+        private static bool Free(CitizenState c) => c.OptionalStopChoice != true && c.OptionalStop == null;
         internal bool OptionalStopIndexesMatchState()
             => bankedChances.SetEquals(State.Citizens.Where(c => PendingChance(c) && !WaitingForPartner(c)))
             && waitingChances.SetEquals(State.Citizens.Where(c => PendingChance(c) && WaitingForPartner(c)))
-            && withStops.SetEquals(State.Citizens.Where(c => c.OptionalStop != null));
+            && withStops.SetEquals(State.Citizens.Where(c => c.OptionalStop != null))
+            && freeOfChances.SetEquals(State.Citizens.Where(Free));
 
         private void ScheduleOptionalStop(CitizenState person, Route? arrivalRoute)
         {
@@ -171,37 +178,64 @@ namespace PersistentCity.Core
             if (State.Food != null && State.Food.Shops.Any(s => s.PlaceId == person.PlaceId)) return;
             string key = OptionalStopPolicy.VisitKey(person, now);
             // The setting is the share of eligible visits that visibly get a stop; each draw is one chance.
-            // A chance its visit cannot use stays pending on its citizen, across later events and saves,
+            // A chance its visit cannot use stays pending on a citizen, across later events and saves,
             // until a feasible visit uses it: the holder's own later visit, or a visit that was not drawn.
             // Feasible visits therefore fill the share left by infeasible ones, up to the feasible share.
-            bool carried = person.OptionalStopChoice == true, drawn = OptionalStopPolicy.Choose(key, State.Seed, stopPercentage.Value);
+            bool drawn = OptionalStopPolicy.Choose(key, State.Seed, stopPercentage.Value);
+            chanceTally.Eligible++;
             if (drawn) chanceTally.Drawn++;
             // At 0 no new stop appears, not even from chances still pending from a save at a higher rate.
-            if (stopPercentage.Value == 0) { person.OptionalStopChoice = carried; return; }
+            if (stopPercentage.Value == 0) { person.OptionalStopChoice = person.OptionalStopChoice == true; return; }
+            TrimPendingChances();
+            bool carried = person.OptionalStopChoice == true;
             if (drawn || carried)
             {
+                // A carried chance is already among the pending ones; a new pending chance needs room.
+                bool room = bankedChances.Count + waitingChances.Count < PendingChanceLimit, bank = stopPercentage.Value < 100;
                 person.OptionalStopChoice = true;
-                bool used = TryPublish(person, arrivalRoute, key, now);
+                bool used = TryPublish(person, arrivalRoute, key, now, false);
                 if (used) chanceTally.Realised++;
-                // A citizen holds at most one chance: with a drawn and a carried chance, one is dropped.
-                if (drawn && carried) chanceTally.Dropped++;
-                // Pending chances are bounded by one round of draws for the whole city, so a long period
-                // without feasible stops cannot later release more extra stops than that.
-                else if (!used && drawn && bankedChances.Count + waitingChances.Count >= PendingChanceLimit)
+                // An unused chance stays with this citizen. At 100 nothing can be handed on, so only a
+                // conversation partner waiting at a leisure venue keeps one.
+                if (!used && (!carried && !room || !bank && !WaitingForPartner(person)))
                 { person.OptionalStopChoice = false; chanceTally.Dropped++; }
+                // A citizen holds at most one chance. With a drawn and a carried chance the second passes to
+                // the first citizen in identity order holding none, so repeated visits do not lose chances.
+                if (drawn && carried && !(bank && (used || room) && PassOnChance())) chanceTally.Dropped++;
                 return;
             }
             person.OptionalStopChoice = false;
-            var donor = bankedChances.Count > 0 ? bankedChances.Min : waitingChances.Count > 0 ? waitingChances.Min : null;
-            if (donor == null) return;
-            // Spend the donor first so it cannot also be this visit's conversation partner.
-            donor.OptionalStopChoice = false;
-            if (!TryPublish(person, arrivalRoute, key, now)) { donor.OptionalStopChoice = true; return; }
-            person.OptionalStopChoice = true; FileOptionalStop(donor);
+            if (bankedChances.Count + waitingChances.Count == 0 || !TryPublish(person, arrivalRoute, key, now, true)) return;
+            // The donor is chosen after planning, so a waiting holder that became this visit's conversation
+            // partner (spending its own chance) is never also the donor.
+            var donor = bankedChances.Count > 0 ? bankedChances.Min : waitingChances.Min;
+            donor.OptionalStopChoice = false; FileOptionalStop(donor);
+            person.OptionalStopChoice = true;
             chanceTally.HandedOn++; chanceTally.Realised++;
         }
-        private int PendingChanceLimit => Math.Max(1, (int)((long)State.Citizens.Count * stopPercentage!.Value / 100));
-        private bool TryPublish(CitizenState person, Route? arrivalRoute, string key, double now)
+        // Pending chances are bounded by four rounds of draws for the whole city, and never more than one
+        // per resident (every resident from 25 up). Feasible visits can then absorb backlogs that build up
+        // over several days of repeated routines, while a long stretch without feasible stops cannot later
+        // release more extra stops than the bound.
+        private int PendingChanceLimit
+            => (int)Math.Min(State.Citizens.Count, Math.Max(1L, 4L * State.Citizens.Count * stopPercentage!.Value / 100));
+        private bool PassOnChance()
+        {
+            if (freeOfChances.Count == 0) return false;
+            var recipient = freeOfChances.Min; recipient.OptionalStopChoice = true; FileOptionalStop(recipient);
+            chanceTally.PassedOn++; return true;
+        }
+        // Chances inherited from a save at a higher setting are trimmed to the current bound at the first
+        // eligible visit, lowest identity first and holders away from leisure venues first. At 100 only
+        // waiting conversation partners keep a chance.
+        private void TrimPendingChances()
+        {
+            int limit = PendingChanceLimit;
+            while (bankedChances.Count > 0 && (stopPercentage == 100 || bankedChances.Count + waitingChances.Count > limit)) Drop(bankedChances.Min);
+            while (waitingChances.Count > limit) Drop(waitingChances.Min);
+        }
+        private void Drop(CitizenState holder) { holder.OptionalStopChoice = false; FileOptionalStop(holder); chanceTally.Dropped++; }
+        private bool TryPublish(CitizenState person, Route? arrivalRoute, string key, double now, bool taker)
         {
             DwellKind kind = person.Activity == Activity.Work ? DwellKind.Break
                 : person.Activity == Activity.Shop ? DwellKind.WindowShopping : DwellKind.Resting;
@@ -211,7 +245,7 @@ namespace PersistentCity.Core
                 && TryStop(person, DwellKind.Audience, key, now, now, out var audience))
             { Publish(person, audience!); return true; }
             // A conversation spends this visit's chance and the waiting partner's own chance.
-            if (person.Activity == Activity.Leisure && TryConversation(person, now)) return true;
+            if (person.Activity == Activity.Leisure && TryConversation(person, now, taker)) return true;
             double end = Math.Min(person.NextEventMinute, person.ActivityUntilMinute);
             double start = kind == DwellKind.Break ? now + (end - now) / 2 : now;
             if (!TryStop(person, kind, key, now, start, out var planned)) return false;
@@ -226,20 +260,26 @@ namespace PersistentCity.Core
             double until = Math.Min(person.NextEventMinute, Math.Min(person.ActivityUntilMinute, DailyRoutine.NextClose(place, start) ?? start));
             double duration = Math.Min(OptionalStopPolicy.Duration(key, kind, State.Seed), until - start);
             if (duration < OptionalStopPolicy.Minimum(kind)) return false;
-            foreach (var spot in stopEnvironment!.Spots(place, kind).OrderBy(s => s.Id, StringComparer.Ordinal))
+            // The first usable spot in ordinal id order, found without sorting or allocating.
+            var spots = stopEnvironment!.Spots(place, kind);
+            OptionalStopSpot? best = null;
+            for (int i = 0; i < spots.Count; i++)
             {
+                var spot = spots[i];
+                if (best != null && string.CompareOrdinal(spot.Id, best.Id) >= 0) continue;
                 if (string.IsNullOrEmpty(spot.Id) || spot.Id.Length > 512 || string.IsNullOrEmpty(spot.TargetId) || spot.TargetId.Length > 512
                     || !spot.Position.IsFinite || !spot.Facing.IsFinite || Position.Distance(spot.Position, place.Position) > 100) continue;
                 if (reserved.HasValue && Position.Distance(reserved.Value, spot.Position) < 0.65) continue;
                 if (Occupied(spot.Position, start, start + duration)) continue;
-                var dwell = OptionalStops.Plan(person.Identity.Id, kind, spot.Id, spot.TargetId, start, duration, until, stopEnvironment.Raining);
-                if (!dwell.HasValue) return false;
-                planned = new OptionalStopState { Kind = kind, PlaceId = place.Id, SpotId = spot.Id,
-                    TargetId = spot.TargetId, Position = spot.Position, Facing = spot.Facing, ReturnPosition = place.Position,
-                    StartMinute = dwell.Value.StartMinute, EndMinute = dwell.Value.EndMinute, VisitMinute = visit, ResumeEventMinute = person.NextEventMinute };
-                return true;
+                best = spot;
             }
-            return false;
+            if (best == null) return false;
+            var dwell = OptionalStops.Plan(person.Identity.Id, kind, best.Id, best.TargetId, start, duration, until, stopEnvironment.Raining);
+            if (!dwell.HasValue) return false;
+            planned = new OptionalStopState { Kind = kind, PlaceId = place.Id, SpotId = best.Id,
+                TargetId = best.TargetId, Position = best.Position, Facing = best.Facing, ReturnPosition = place.Position,
+                StartMinute = dwell.Value.StartMinute, EndMinute = dwell.Value.EndMinute, VisitMinute = visit, ResumeEventMinute = person.NextEventMinute };
+            return true;
         }
         // Only citizens with a stop can occupy a spot; the answer does not depend on iteration order.
         private bool Occupied(Position at, double start, double end)
@@ -249,11 +289,12 @@ namespace PersistentCity.Core
                     && c.OptionalStop.StartMinute < end && Position.Distance(c.OptionalStop.Position, at) < 0.65) return true;
             return false;
         }
-        private bool TryConversation(CitizenState arriving, double now)
+        private bool TryConversation(CitizenState arriving, double now, bool taker)
         {
-            if (waitingChances.Count == 0) return false;
+            // A visit without its own chance needs two others: the partner's own and a donor's.
+            if (waitingChances.Count == 0 || taker && bankedChances.Count + waitingChances.Count < 2) return false;
             CitizenState? partner = null;
-            // Waiting partners in stable-identity order. A donor spent for this visit reads false here.
+            // Waiting partners in stable-identity order.
             foreach (var other in waitingChances)
             {
                 if (ReferenceEquals(other, arriving) || other.PlaceId != arriving.PlaceId || other.RecentVisits.Count == 0) continue;
