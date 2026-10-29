@@ -1,12 +1,70 @@
 # Validation status
 
+## PR #3 optional-stop share, review round ob2 fixes - 29 October 2026 (offline)
+
+Astra (REQUEST CHANGES) and Opus (APPROVE WITH NITS) reviewed `d438cc6`. There were two blocking findings:
+- **Repeated routines dropped chances permanently.** A citizen drawn again while holding a chance dropped one, and draws beyond the cap of setting% of residents were dropped. At 25, 1,500 commuters on full daily routines realised **21.07%** over 112 days against a 25.30% feasible share (8,110 chances dropped). Opus measured 23.0% / 46.6% near the feasible share.
+- **The donor was spent before the partner search.** When the lowest-ordinal holder was the arriving visitor's only local partner, no conversation formed, even with a second holder elsewhere.
+
+Both reviewers also found that lowering the setting released a stock banked at the higher setting (100 → 25 realised 44.3%, then 32.4%, against 25.6% / 25.0% for a city kept at 25).
+
+**Design.** All geometry, time, occupancy, partner, rain, opening and food-priority filters and the visit draw are unchanged.
+- **Pass-on.** A drawn visit that already carries a chance uses or keeps one and passes the other to the first citizen in ordinal identity order holding neither a chance nor a stop (an in-memory sorted index of such citizens).
+- **Bound.** Pending chances are bounded by 4 × setting% of residents, at most one per resident (every resident from 25 up). With 1× and 2×, the 112-day commuter fixture still dropped chances (21.5% / 24.3% realised); with 4× it dropped none (25.0%).
+- **Donor after planning.** An undrawn visit plans first; a conversation needs at least two pending chances. The donor is then the first remaining holder, so the partner it conversed with is never also the donor.
+- **Trim.** At the first eligible visit at a non-zero setting, pending chances above the current bound are dropped, lowest identity first and away-from-leisure holders first. Trimming cannot fire while the setting is unchanged, because new chances respect the same bound.
+- **100 and 0.** At 100 nothing is banked: an unused chance stays only with a holder waiting at a leisure venue, and other holders lose theirs at the next eligible visit. At 0 nothing is trimmed or spent.
+- **Diagnostics.** `OptionalStopChanceTally` gains `Eligible` (the denominator) and `PassedOn`. It restarts at every attach, including `RebuildRoutes` after a travel clock rate change.
+- **Spot selection** finds the first usable spot in ordinal id order in one indexed pass, without `OrderBy` or an enumerator allocation.
+
+There is **no schema change or migration**: the state is still the schema-16 `OptionalStopChoice`/`OptionalStop`.
+
+**What is delivered.** This replaces ob1's unconditional convergence claim. Every draw is realised once, still pending or dropped. Within the bound, nothing is lost to repeated visits, stay length or admission timing. The share reaches min(setting, feasible share) once the backlog of chances drawn at infeasible visits is spent, provided that backlog stays within the bound. It sits lower in two cases:
+- **A pending backlog in a short run near the feasible share**, carried rather than lost. Example: 10-day mixed routines at 25 realise 23.4% against 25.1% feasible, with 250 pending.
+- **A multi-day surplus beyond one chance per resident**, dropped. Example: a 112-day commuter probe at 50 against 47.9% feasible realised 43.7%.
+
+Determinism holds for Core with a deterministic environment. In native play, unsaved geometry sampling decides feasibility, so which visit takes a chance can differ between replays of a save; saved choices never re-roll.
+
+**Cost per eligible admission (1-99).**
+- **Trim check:** O(1). A trim itself runs once after a decrease, O(k log H).
+- **Planning:** unchanged for drawn or carried visits. Undrawn visits still skip planning when no chance is pending, the only gate Core can apply correctly: any feasible undrawn visit can spend a chance. Because a chance is usually pending at 25, planning runs for **almost every eligible admission, about as often as at 100**. In Opus's 10-day probe the environment's `Spots()` was called 16,589 times at 25 against 17,318 at 100 (narrow geometry), and 11,139 against 17,226 (wide).
+- **Hand-on, pass-on and refiling:** a hand-on costs O(log H) and a pass-on O(log N). Each committed event refiles the citizen in three sorted sets and one hash set, O(log N).
+- **Allocation:** Core planning allocates only the planned stop record plus one small enumerator for the partner search. Runtime's `Spots()` still builds its cache key string.
+- **Memory and per-frame work:** the free-citizen index holds up to every resident. The handoff mechanism adds no per-frame work.
+
+**Red/green.** New tests run on d438cc6 logic in a scratch export, with a diagnostics-only stub that adds the two counters. Tolerance is ±3 points of min(setting, feasible share).
+
+| Test | d438cc6 | now |
+|---|---|---|
+| `OptionalStopRoutineTests.RepeatedDailyRoutinesRealiseTheSettingWithoutLosingChances`: 1,500 commuters, matched 0/25/100 arms, 112 days, feasible 25.30% | **21.07%** FAIL (days 1-28 21.22%, days 29-112 21.02%; 8,110 dropped) | 25.01% (25.07% / 24.99%; 0 dropped, 12,594 passed on) |
+| `MixedRoutinesWithConversationsTrackTheSetting(wide)`: 600 residents of all personas, 10 days, 0/10/25/50 against 100 | **46.23%** at 50 FAIL (feasible 50.38%) | 48.07% |
+| `MixedRoutinesWithConversationsTrackTheSetting(narrow)` | 22.94% at 25, pass | 23.37% |
+| `LoweringTheSettingReleasesNoStockBankedAtTheHigherSetting`: 100 → 25 and 100 → 0 → 25 against a city kept at 25 | **44.3%** on the first day FAIL (475 inherited) | 25.7% vs 25.6% (27 inherited, all waiting partners); 100 → 0 → 25: 25.2% vs 25.0% |
+| `UndrawnArrivalKeepsItsOnlyLocalPartnerAndTakesAnotherWaitingDonor`, local partner sorts first / second, save/reload either side | FAIL (no stop) / pass | pass / pass |
+| `ARepeatedVisitsSecondChancePassesToTheFirstCitizenHoldingNone`, infeasible / feasible venue, replay from save | FAIL / FAIL (dropped) | pass |
+| `InheritedChancesAboveTheCurrentBoundAreTrimmedLowestIdentityFirst` at 10 / 25 / 0 | FAIL (not trimmed) / pass / pass | pass |
+| `AtHundredOnlyWaitingConversationPartnersKeepAChance` | FAIL (banked) | pass |
+
+Existing share tests now also assert the `Eligible` count. At 100 they allow the drops that replace banking.
+
+**Validation:** `dotnet test`: **1,545 passed / 1,545**, zero failed/skipped (1,533 + 12). Settings clamp/fallback, schema 13/14/15 → 16 and exact-money migration tests are unchanged and pass. The optional-stop regression passes 213 physical, 6 native-door and 18 saved-facade checks. The release build (`tools/build.py`, `-optimize+ -deterministic`, read-only Steam DLL references) has DLL SHA-256 `40e5ace63ebef339ea09c43298d0c8403c8e087abdb008d7629e6716fc15538a`. Logs are in the ignored `build/ob2/`. No game launch, install or rig.
+
+**For the rig.**
+- **Denominator:** `Choose` calls or the new `Eligible`, not non-null `OptionalStopChoice`.
+- **Numerator:** must include conversation partners.
+- **Starting state:** each arm starts from a save with no pending chances.
+- **Settings-decrease arm.**
+- **Cold-to-warm burst.** In Opus's probe, after a cold day at 25 the bank was 332 of 600, more than the old cap of 150. The following 2-hour windows realised 54%, 36%, 70%, 58% and 80% for about 10 game hours.
+- **Chance audit:** snapshot before any reload or rebuild.
+- **Performance:** at 25 against 100.
+
 ## PR #3 optional-stop share, review round ob1 fixes - 29 October 2026 (offline)
 
 Astra (REQUEST CHANGES) and Opus (APPROVE WITH NITS) reviewed `fe72966`. Two blocking findings: chances pending when their visit ended were lost, so the share collapsed with finite stays and separated or sparse admissions (8.3% at 25 in a separated-wave fixture); and undrawn takers never formed conversations, so conversation-only feasible visits kept the old squared effect (6.0% at 25).
 
-**Design.** All geometry, time, occupancy, partner, rain, opening and food-priority filters and the visit draw are unchanged. A chance its visit cannot use now stays **pending on its citizen** after the visit ends, across events, saves and reloads, until a feasible visit spends it. That can be the holder's own later eligible visit, drawn or not, or an undrawn eligible visit anywhere with a feasible stop (a hand-on). Hand-ons take holders not waiting at a leisure venue first, then waiting leisure holders, each in ordinal stable-identity order. An undrawn leisure arrival can converse: the donor is spent before partner selection, and the partner spends its own chance (two stops, two chances). A citizen holds at most one chance (a second is dropped), and pending chances are capped at the setting's share of residents. Each draw is realised once, still pending or dropped, so the realised share converges to min(setting, feasible share) independently of stay length and admission timing. State is still the schema-16 `OptionalStopChoice`/`OptionalStop`: **no schema change or migration**. At 0 nothing is drawn, used or handed on, and saved pending chances are kept. At 100 the result is exactly the feasible visits.
+**Design.** All geometry, time, occupancy, partner, rain, opening and food-priority filters and the visit draw are unchanged. A chance its visit cannot use now stays **pending on its citizen** after the visit ends, across events, saves and reloads, until a feasible visit spends it. That can be the holder's own later eligible visit, drawn or not, or an undrawn eligible visit anywhere with a feasible stop (a hand-on). Hand-ons take holders not waiting at a leisure venue first, then waiting leisure holders, each in ordinal stable-identity order. An undrawn leisure arrival can converse: the donor is spent before partner selection, and the partner spends its own chance (two stops, two chances). A citizen holds at most one chance (a second is dropped), and pending chances are capped at the setting's share of residents. Each draw is realised once, still pending or dropped. *(Review ob2 showed that the dropped chances kept repeated routines below the setting, so the share did not converge as claimed here. Ob2 replaced both rules; see above.)* State is still the schema-16 `OptionalStopChoice`/`OptionalStop`: **no schema change or migration**. At 0 nothing is drawn, used or handed on, and saved pending chances are kept. At 100 the result is exactly the feasible visits.
 
-**Cost per eligible admission.** The O(citizens) holder pass is gone. Finding a donor is O(log H) on an in-memory sorted index of the H pending chances. The index is rebuilt from saved state on attach and refiled once per committed event in O(log H); it allocates only when a citizen becomes a holder. Stop planning now also runs for **undrawn** visits whenever any pending chance exists: up to every eligible admission instead of a quarter at 25%. Within planning, the per-spot occupancy check scans only citizens holding a stop record, not every citizen, and without a closure allocation. The conversation partner search walks the waiting-holder index (one small enumerator allocation) instead of filtering and sorting every citizen. The existing spot-list sort allocation is unchanged. Nothing runs per frame; it all runs inside admitted events. Simulator diagnostics `OptionalStopChances` (drawn, realised, handed on, dropped; in memory, not saved) support the rig audit.
+**Cost per eligible admission.** The O(citizens) holder pass is gone. Finding a donor is O(log H) on an in-memory sorted index of the H pending chances. The index is rebuilt from saved state on attach and refiled once per committed event in O(log H); it allocates only when a citizen becomes a holder. Stop planning now also runs for **undrawn** visits whenever any pending chance exists: up to every eligible admission instead of a quarter at 25%. Within planning, the per-spot occupancy check scans only citizens holding a stop record, not every citizen, and without a closure allocation. The conversation partner search walks the waiting-holder index (one small enumerator allocation) instead of filtering and sorting every citizen. The existing spot-list sort allocation is unchanged. The hand-on mechanism adds no per-frame work: donor lookup, planning and refiling run inside committed events. The existing per-frame stop refresh is unchanged. Simulator diagnostics `OptionalStopChances` (drawn, realised, handed on, dropped; in memory, not saved) support the rig audit.
 
 **Red/green.** New and extended tests in `tests/OptionalStopShareTests.cs` and `tests/OptionalStopHandoffTests.cs` (fe72966 logic, run in a scratch export with assertions on the new diagnostics removed -> this head, tolerance +/-3 points of min(setting, feasible share), feasible 32.7%):
 - 25%, 45-minute stays, separated waves: **8.3% -> 25.4%**; 50% separated: **17.2% -> 32.7%** (cap);
