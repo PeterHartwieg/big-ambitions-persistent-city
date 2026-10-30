@@ -1,5 +1,51 @@
 # Validation status
 
+## Step A2 population schema 17 and lifestyle traits - 30 October 2026 (offline only)
+
+Implements slice A2 of the [step A plan](docs/plans/step-a-inspector-traits-choice.md), stacked on A1. 17 was confirmed as the next free population schema (current was 16). No game, rig or native run.
+
+**What schema 17 adds.**
+- `CitizenState.Traits`: one required record per resident, also when there is no food scope. Ten traits in generation version 1 (three product tastes, price sensitivity, queue patience, loyalty/curiosity, travel willingness, health, quality/brand and time pressure). Each is a fixed band 0-4 stored as one digit in `Bands`. Traits come from the saved `CityState.Seed` and the stable ID through `pc:traits:v1|<length>:<id>|<trait>`, with no names, homes, jobs, bodies or settings in the key. Shares are 10/20/40/20/10%. Traits are immutable after generation, and event copies share them.
+- `ResidentMeal.RepresentedTraits`: required for slots above zero, keyed by the stable consumer ID. It is null for slot zero, which uses its anchor's traits.
+- `FoodCommerceState.ChoicePolicyVersion` (1) and `ChoiceStartsDay`. A new food scope starts at day 0; a migrated city starts the next in-game day.
+- `ResidentMeal.Today`: at most three outcomes keyed by breakfast, lunch and dinner, or one legacy meal. Each holds a status (bought, chose an alternative, skipped, unconfirmed), a fixed reason code, optional shop and product, the alternative kind, at most two factor codes, the recording minute and the checkout minute. One shared updater (`MealOutcomes.Record`) runs at `Finish`, `ConfirmPurchase` and the checkout-refusal assignment. It is idempotent per intent, and the day advances lazily on the consumer's next outcome, so there is no midnight scan. A late confirmation never overwrites a later day.
+- Wire contracts for A3, with their bounds: nullable `ResidentMeal.Decision` (at most 8 shops, 4 offers each, and only one route-bearing decision in the city carries the shortlist and its walking routes) and the retry latch `LastContextKey`/`ContextAttempts` (at most 4 contexts per meal). A2 never writes them.
+- No A3 logic: food choice, prices, purchases and money are unchanged. No new native authority, rival writes, RLO change or config keys; nothing reads choice tunables until A3.
+
+**Migration.** `SaveCodec.Read` accepts 13/14/15/16 through an explicit allow-list. Schema 16 now has its own contract resolver. One `IntroducedIn` table drives the per-schema unknown-field exclusions, the missing-field counts and the resolvers. After the old shape passes its own contract, `UpgradeTo17` generates traits, sets activation to the next day and synthesizes only the current meal's recorded facts. Meals of that day which ended earlier are marked "not recorded before upgrade". The full schema-17 validation then runs before a store or session may replace the payload. Refused and preserved: schemas 1-12, future schemas, partial/duplicate/unknown fields, bad trait version or bands, wrong slot linkage, invalid policy or activation day, impossible or mismatched outcomes, nonfinite values, oversized outcome/shortlist/menu arrays, a second route-bearing decision, unknown live products and inconsistent route endpoints. Shape limits run before deserialization, and the new nested records count toward `MaxEmbeddedRecords`.
+
+**Inspector.** Personality shows trait words only ("loves burgers", "watches prices", "dislikes queues", "happy to travel for food", "prefers lighter food", "values quality", ...); neutral bands and loyalty/curiosity are not described. Today's meals come from the recorded outcomes, with a meal under way shown live. Earlier upgraded meals read "not recorded (before the upgrade)", a funded alternative reads "chose household food", and an unconfirmed checkout is never called paid or skipped. Without a food scope, meal data reads unavailable; opening the popup changes nothing.
+
+**Same economy as before.** `tools/save-contract-regression` gained a fixed three-day economy scenario. It has 60 residents with two consumers each, three meals, finances, three shops, checkout refusals, lost acknowledgements with later proof and a mid-run reload. Compiled against the pre-A2 tree (`a817bcd`) and this branch, it gives identical results: **849 orders, 797 purchases, 2 unconfirmed**, identical order log, money and saves outside the schema-17 fields, before and after reload. `S17_EconomyScenarioMatchesThePreSchema17Baseline` pins those baseline values. `compare.py` passes; refusal outcomes match too.
+
+**Save size and time (offline .NET 10, this PC, median; not Unity/Mono).** Two consumers per resident and household finances. Schema 17 is measured at its largest steady state: every consumer holds three recorded outcomes at the end of the day.
+
+| Residents | Chars 16 → 17 | Write ms | Read ms | Read+upgrade from 16 ms | Retained MiB |
+|---|---|---|---|---|---|
+| 957 (reference) | 2,662,766 → 3,799,726 (**+42.7%**) | 71.0 → 94.0 | 103.1 → 115.5 | 69.5 → 73.6 | 1.8 → 3.0 |
+| 5,000 | 13,916,700 → 19,856,744 (**+42.7%**) | 144.0 → 201.8 | 477.4 → 698.9 | 452.2 → 450.8 | 9.3 → 15.7 |
+| 50,000 (codec ceiling) | 131,318,953 → 190,718,997 (**+45.2%**) | 1,028 → 1,949 | 4,088 → 5,942 | 4,020 → 4,104 | 79.4 → 143.1 |
+
+Schema 17 makes end-of-day saves **noticeably bigger and slower**: about +43% characters and up to +90% write time at the ceiling. Most of the growth is the three outcome records per consumer; traits plus empty decision fields add about 9%. Early in the day, payloads sit between the schema-16 and end-of-day sizes. At 50,000 residents the end-of-day payload uses 71% of the 256 Mi-character cap. The representation factor of three, which is not the runtime default, was not measured and could approach that cap. The cheap offsets taken below (compact trait digits, allocation-light codec) are in the roadmap's perf wins log. Upgrading a schema-16 payload costs about the same as reading one. Trait generation takes **463 ns** per consumer, once at creation or upgrade. The outcome updater takes **87 ns** per call and allocates **216 bytes** per consumer-day, with no per-frame or midnight work. Rig save time and size versus base are still unmeasured.
+
+**Perf wins taken (low risk, same acceptance and error text).** Validation messages are built only on failure. The shape check reuses one duplicate-field set per depth, uses bit flags for positions and checks integer ranges without formatting. Positions are streamed instead of building a `JObject` each. At 957 residents with journeys: read allocation **83.3 → 38.8 MiB**, read **119.7 → 89.2 ms**, validation allocation per save **8.39 → 1.31 MiB**, write allocation **26.1 → 19.1 MiB**. Traits as digits save 174 characters per record (333,036 at 957 residents).
+
+**Validation.** New `S17_*` tests:
+- trait golden vectors from an independent key reimplementation, determinism and band shares, and independence from order, names, districts and seed changes;
+- represented slots, housing-expansion residents, and events never changing traits;
+- 13/14/15/16 → 17 with exact preservation (everything except activation day and outcomes is byte-identical), next-day activation, and a meal in progress finishing on legacy terms with identical orders afterwards;
+- upgrade synthesis rules and a full-contract round trip with a route-bearing decision;
+- **61** refuse-and-preserve cases through codec, store and session, including four codec regressions for the perf changes, plus future schemas;
+- outcome capture, idempotency, skip→purchase replacement, lazy midnight, late receipt confirmation, and inspector words and today's meals.
+Existing migration tests now drop schema-17 fields when labelling older schemas. `dotnet test` **1,641/1,641**.
+
+**Rig session still required (`rig_test`, Codex Sol, high).**
+- Migrate a real schema-16 save of a disposable FT city and reload it.
+- Check that inspector trait words and today's meals agree with native purchases.
+- Check that the next-day activation leaves meals in progress and money unchanged.
+- Measure save time and size and mod work against base, with autosave off in measured windows.
+
+
 ## Step A1 resident inspector - 30 October 2026 (offline only)
 
 Implements slice A1 of the [step A plan](docs/plans/step-a-inspector-traits-choice.md), updated first with Peter's 15:46 JST decisions. In the normal view, hovering an own walking resident highlights them and a click opens a small popup with name, home and work addresses (links that open the native map through `CityMap.FocusOnBuilding`, the game's own "show on map" call), personality in words from existing facts (persona rules, walking tolerance, car/transit/fare preferences, an existing food preference), the resident's own story, current destination with the reason, and today's breakfast, lunch and dinner. Only the latest meal record exists before schema 17, so earlier meals today read "not recorded" and later or undecided ones "unknown"; uncertain receipts read "not yet confirmed". Read-only: no schema, economy, choice, schedule, rival or RLO change.

@@ -63,7 +63,9 @@ public static class EconomyScenario
 
     public static CityState Create(int residents, int seed)
     {
-        var identities = Enumerable.Range(0, residents).Select(i => new CitizenIdentity
+        // At most 5,000 immutable donors exist; larger cities grow through housing expansion with pc: residents.
+        int imported = residents <= 5000 ? residents : 1000;
+        var identities = Enumerable.Range(0, imported).Select(i => new CitizenIdentity
         {
             Id = "rlo:econ:c" + i.ToString("D5", CultureInfo.InvariantCulture), Name = "Citizen " + i, Age = 20 + i % 50,
             District = i % 2 == 0 ? "a" : "b", Persona = (Persona)(i % 8), AppearanceSeed = i + 1
@@ -80,7 +82,14 @@ public static class EconomyScenario
             new Place { Id = "shop-3", Name = "Shop 3", District = "a", Kind = PlaceKind.Shop, Position = new Position(300, 0, -200) },
             new Place { Id = "leisure-1", Name = "Leisure", District = "a", Kind = PlaceKind.Leisure, Position = new Position(60, 0, 250), OpenMinute = 600, CloseMinute = 1380 },
         };
-        return Population.Create(identities, places, "economy-scenario", "0.41.1", seed, 1440 + 300);
+        var city = Population.Create(identities, places, "economy-scenario", "0.41.1", seed, 1440 + 300);
+        if (imported == residents) return city;
+        long beds = (long)residents * 10 / 9;
+        while (HousingPolicy.Target(beds) < residents) beds++;
+        city.Places.Single(p => p.Id == "home-a").Capacity = (int)(beds - beds / 2);
+        city.Places.Single(p => p.Id == "home-b").Capacity = (int)(beds / 2);
+        Population.ExpandToHousing(city);
+        return city;
     }
 
     public static FoodCommerceState Food() => new FoodCommerceState

@@ -46,4 +46,6 @@ Record every taken win with before/after numbers.
 
 | Slice | Change | Before | After |
 |---|---|---|---|
-| - | none yet | - | - |
+| A2 | Save validation builds error text only on failure (`Text`/`Bounded`/`Known`/duplicate/unknown-field checks); runs on every save and load | Validation alloc per save **8.39 MiB** (957 residents with journeys, offline .NET 10) | **1.31 MiB** |
+| A2 | Read shape check: one reusable duplicate-field set per JSON depth, bit flags per position, integer range from the token value; positions streamed instead of one `JObject` each | Read alloc **83.3 MiB**, read median **119.7 ms**; write alloc **26.1 MiB** (same payload) | **38.8 MiB**, **89.2 ms**; **19.1 MiB** |
+| A2 | Schema-17 traits stored as one 0–4 digit per trait (`{"Bands":"…","Version":1}`) instead of ten named integer fields | 208 chars per trait record (+333,036 chars at 957 residents × 2 consumers) | 34 chars per record (174 fewer; 1.74 M chars saved at 5,000, 17.4 M at 50,000) |
