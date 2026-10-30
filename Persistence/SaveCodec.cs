@@ -46,10 +46,6 @@ namespace PersistentCity.Persistence
         public const int MaxTrafficLinkCapacity = 1024;
         // Schema 17 current-day outcomes per consumer; decision bounds come from FoodChoicePolicy.
         public const int MaxMealOutcomes = 3;
-        // Food consumers (residents x representation factor). Schema-17 end-of-day outcomes make each consumer
-        // ~720 characters larger; 50,000 residents at factor 3 measured above the input cap, so factor 3 is
-        // accepted only up to 43,333 residents. The runtime factor (2) reaches 100,000 at the citizen ceiling.
-        public const int MaxFoodConsumers = 130000;
         private const double MaxMinute = 1000000000;
         private const double MaxCoordinate = 10000000;
 
@@ -191,6 +187,12 @@ namespace PersistentCity.Persistence
                 return;
             }
             if (type == typeof(double)) { Require(token == JsonToken.Integer || token == JsonToken.Float, "Expected a number."); return; }
+            if (type == typeof(MealOutcomeRecord))
+            {
+                Require(token == JsonToken.String && ((string)reader.Value!).Length <= 512
+                    && MealOutcomeRecord.TryParse((string)reader.Value!, out _), "Invalid meal outcome record.");
+                return;
+            }
             if (type == typeof(Position))
             {
                 Require(token == JsonToken.StartObject, "Expected a position object.");
@@ -214,7 +216,7 @@ namespace PersistentCity.Persistence
                 var item = array.CollectionItemType!;
                 int limit = item == typeof(MealOutcomeRecord) ? MaxMealOutcomes : item == typeof(FoodDecisionShop) ? FoodChoicePolicy.MaximumShortlist
                     : item == typeof(FoodDecisionOffer) ? FoodChoicePolicy.MaximumOffersPerShop
-                    : item == typeof(FoodProductSales) ? 4 : item == typeof(FoodBuyerDistrict) ? 100 : item == typeof(long) ? 24 : item == typeof(FoodShopDay) ? 14 * MaxPlaces : item == typeof(ResidentMeal) ? MaxFoodConsumers : item == typeof(FoodScope) ? 1024
+                    : item == typeof(FoodProductSales) ? 4 : item == typeof(FoodBuyerDistrict) ? 100 : item == typeof(long) ? 24 : item == typeof(FoodShopDay) ? 14 * MaxPlaces : item == typeof(ResidentMeal) ? MaxCitizens * 3 : item == typeof(FoodScope) ? 1024
                     : item == typeof(FoodRoutineStop) ? MaxCitizens
                     : item == typeof(FoodDistrictBudgetMix) ? 100 : item == typeof(CitizenState) ? MaxCitizens
                     : item == typeof(Place) ? MaxPlaces : item == typeof(CitizenIdentity) ? 5000
@@ -359,7 +361,7 @@ namespace PersistentCity.Persistence
         private static JsonSerializerSettings SettingsForSchema(int schema) => new JsonSerializerSettings
         {
             ContractResolver = schema < 15 ? LegacyContracts : schema == 15 ? StopContracts : schema == 16 ? Schema16Contracts : StateContracts,
-            Converters = { new PositionConverter(), new MoneyJsonConverter() },
+            Converters = { new PositionConverter(), new MoneyJsonConverter(), new MealOutcomeConverter() },
             Culture = CultureInfo.InvariantCulture,
             MissingMemberHandling = MissingMemberHandling.Error,
             TypeNameHandling = TypeNameHandling.None,
@@ -799,7 +801,6 @@ namespace PersistentCity.Persistence
             Require(food.Shops != null && food.Shops.Count <= 1024, "Invalid food scope.");
             Require(food.RepresentationFactor >= 1 && food.RepresentationFactor <= 3, "Invalid consumer representation factor.");
             Require(food.Residents != null && food.Residents.Count == state.Citizens.Count * food.RepresentationFactor, "Meal roster differs from represented population.");
-            Require(food.Residents.Count <= MaxFoodConsumers, "Meal roster exceeds the food consumer ceiling.");
             Require(food.Districts != null, "Missing food budget districts.");
             FoodHouseholdPolicy.ValidateMixes(food.Districts);
             Require(food.HouseholdFinanceVersion == 0 || food.HouseholdFinanceVersion == HouseholdFinance.PolicyVersion, "Unknown household finance policy.");
@@ -950,8 +951,11 @@ namespace PersistentCity.Persistence
             foreach (var record in today.Meals!)
             {
                 Require(record != null, "Null meal outcome.");
-                Known(record!.Kind, "Meal outcome kind"); Known(record.Status, "Meal outcome status"); Known(record.Reason, "Meal outcome reason");
-                Known(record.Outside, "Meal outcome alternative"); Known(record.Factor1, "Meal outcome factor"); Known(record.Factor2, "Meal outcome factor");
+                Dense((int)record!.Kind, (int)MealKind.Dinner, "Meal outcome kind"); Dense((int)record.Status, (int)MealOutcomeStatus.Unconfirmed, "Meal outcome status");
+                Dense((int)record.Reason, (int)MealReasonCode.FundsUnavailable, "Meal outcome reason");
+                Dense((int)record.Outside, (int)FoodOutsideOption.FundedHouseholdFood, "Meal outcome alternative");
+                Dense((int)record.Factor1, (int)MealFactor.Household, "Meal outcome factor"); Dense((int)record.Factor2, (int)MealFactor.Household, "Meal outcome factor");
+                Require(record.ProductId.IndexOf('|') < 0, "Meal outcome product cannot contain '|'.");
                 Require(legacy ? record.Kind == MealKind.Legacy : record.Kind != MealKind.Legacy, "Meal outcome kind differs from rhythm policy.");
                 Require(record.Kind > previous, "Duplicate or unordered meal outcomes.");
                 previous = record.Kind;
@@ -997,8 +1001,10 @@ namespace PersistentCity.Persistence
             Require(decision.PolicyVersion == food.ChoicePolicyVersion && decision.IntentId == meal.IntentId, "Decision belongs to another policy or meal.");
             Require(decision.ContextKey.Length > 0 && decision.ContextKey == meal.LastContextKey && decision.Attempt == meal.ContextAttempts,
                 "Decision differs from its retry latch.");
-            Known(decision.Result, "Decision result"); Known(decision.Outside, "Decision alternative"); Known(decision.Reason, "Decision reason");
-            Known(decision.Factor1, "Decision factor"); Known(decision.Factor2, "Decision factor");
+            Dense((int)decision.Result, (int)FoodDecisionResult.NoFeasible, "Decision result");
+            Dense((int)decision.Outside, (int)FoodOutsideOption.FundedHouseholdFood, "Decision alternative");
+            Dense((int)decision.Reason, (int)MealReasonCode.FundsUnavailable, "Decision reason");
+            Dense((int)decision.Factor1, (int)MealFactor.Household, "Decision factor"); Dense((int)decision.Factor2, (int)MealFactor.Household, "Decision factor");
             Require(decision.Factor2 == MealFactor.None || decision.Factor1 != MealFactor.None && decision.Factor1 != decision.Factor2, "Invalid decision factors.");
             Minute(decision.OriginAt, "Decision origin"); Minute(decision.Deadline, "Decision deadline");
             Require(decision.Deadline >= decision.OriginAt, "Decision deadline precedes its origin.");
@@ -1010,11 +1016,16 @@ namespace PersistentCity.Persistence
             // Also for a compact decision without its shortlist image.
             Require(decision.ProductId.Length == 0 || FoodProducts.Known(decision.ProductId), "Unknown live product code.");
             Require(decision.Shops != null && decision.Shops.Count <= FoodChoicePolicy.MaximumShortlist, "Oversized decision shortlist.");
-            if (decision.Shops!.Count == 0) return 0;
+            Require(decision.QuotesDone >= 0 && decision.QuotesDone <= 2 * decision.Shops!.Count, "Invalid decision quote progress.");
+            // Choosing follows every feasibility answer; an undecided image may stop at any slot.
+            Require(decision.Result == FoodDecisionResult.Evaluating || decision.QuotesDone == 2 * decision.Shops.Count,
+                "Decision chose before its quotes were settled.");
+            if (decision.Shops.Count == 0) return 0;
             Require(++routeBearing <= FoodChoicePolicy.MaximumRouteBearingDecisions, "More than one route-bearing food decision.");
             int records = 0;
             var businesses = new HashSet<string>(StringComparer.Ordinal);
             bool selected = decision.Result != FoodDecisionResult.Selected;
+            int slot = 0;
             foreach (var shop in decision.Shops)
             {
                 Require(shop != null && businesses.Add(shop.BusinessId), "Duplicate decision shop.");
@@ -1037,12 +1048,23 @@ namespace PersistentCity.Persistence
                     Require(offer.Price >= Money.Zero && offer.Price <= MaximumAllowance && offer.Units >= -1, "Invalid decision offer evidence.");
                     Require(offer.DistrictDemandPercent >= -1 && offer.DistrictDemandPercent <= 100
                         && (offer.DistrictDemandPercent == -1 || shop.DistrictId.Length > 0), "Invalid decision district evidence.");
-                    if (shop.BusinessId == decision.BusinessId && offer.ProductId == decision.ProductId) selected = true;
+                    if (shop.BusinessId == decision.BusinessId && offer.ProductId == decision.ProductId)
+                        selected = shop.OutwardQuote == FoodQuoteState.Answered && shop.ReturnQuote == FoodQuoteState.Answered;
                 }
                 records += 1 + shop.Offers.Count;
+                Dense((int)shop.OutwardQuote, (int)FoodQuoteState.NotNeeded, "Decision quote state");
+                Dense((int)shop.ReturnQuote, (int)FoodQuoteState.NotNeeded, "Decision quote state");
+                // Slots before the cursor are settled, slots from it on are not.
+                Require((shop.OutwardQuote != FoodQuoteState.Unrequested) == (slot++ < decision.QuotesDone)
+                    && (shop.ReturnQuote != FoodQuoteState.Unrequested) == (slot++ < decision.QuotesDone), "Decision quote progress differs from its cursor.");
+                Require((shop.Outward != null) == (shop.OutwardQuote == FoodQuoteState.Answered)
+                    && (shop.Return != null) == (shop.ReturnQuote == FoodQuoteState.Answered), "Decision route differs from its quote state.");
+                // A return is asked only after an answered outward quote; otherwise its slot is settled unasked.
+                Require(shop.OutwardQuote == FoodQuoteState.Answered
+                    ? shop.ReturnQuote != FoodQuoteState.NotNeeded
+                    : shop.ReturnQuote == FoodQuoteState.Unrequested || shop.ReturnQuote == FoodQuoteState.NotNeeded, "Return quote without its outward quote.");
                 if (shop.Outward != null) records += DecisionRoute(shop.Outward, foodPlaces, shop.PlaceId, outward: true);
                 if (shop.Return != null) records += DecisionRoute(shop.Return, foodPlaces, shop.PlaceId, outward: false);
-                Require(shop.Return == null || shop.Outward != null, "Return quote without its outward quote.");
             }
             Require(selected, "Decision selects an offer outside its shortlist.");
             return records;
@@ -1139,6 +1161,9 @@ namespace PersistentCity.Persistence
         { Require(id != null, "Null place reference."); if (id != "") Reference(places, id, kinds); }
         // Messages are built only on failure: these checks run for every field of every save.
         private static void Known<T>(T value, string label) where T : struct { if (!Enum.IsDefined(typeof(T), value)) Fail("Unknown " + label + "."); }
+        // Schema-17 enums are dense from zero: an unboxed range check with Known's message, for records that
+        // occur per consumer on every save and load. FoodToday's enum tests pin each maximum to its last member.
+        private static void Dense(int value, int maximum, string label) { if ((uint)value > (uint)maximum) Fail("Unknown " + label + "."); }
         private static void Text(string value, string label, int max, bool emptyAllowed = false)
         { if (!(value != null && value.Length <= max && (emptyAllowed || !string.IsNullOrWhiteSpace(value)))) Fail("Invalid " + label + "."); }
         private static void Minute(double value, string label) => Bounded(value, 0, MaxMinute, label);
@@ -1162,6 +1187,22 @@ namespace PersistentCity.Persistence
                     property.Required = NullableRecord(property.PropertyType!) || Nullable.GetUnderlyingType(property.PropertyType!) != null ? Required.AllowNull : Required.Always;
                     return property;
                 }).ToList();
+            }
+        }
+
+        // One compact string per outcome record; see MealOutcomeRecord.ToWire.
+        private sealed class MealOutcomeConverter : JsonConverter<MealOutcomeRecord>
+        {
+            public override void WriteJson(JsonWriter writer, MealOutcomeRecord? value, JsonSerializer serializer)
+            {
+                if (value == null) { writer.WriteNull(); return; }
+                writer.WriteValue(value.ToWire());
+            }
+            public override MealOutcomeRecord ReadJson(JsonReader reader, Type objectType, MealOutcomeRecord? existingValue, bool hasExistingValue, JsonSerializer serializer)
+            {
+                MealOutcomeRecord? record = null;
+                if (reader.TokenType != JsonToken.String || !MealOutcomeRecord.TryParse((string)reader.Value!, out record)) Fail("Invalid meal outcome record.");
+                return record!;
             }
         }
 

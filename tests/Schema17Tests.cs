@@ -205,7 +205,8 @@ public sealed partial class FoodCommerceTests
                 CustomerServicePercent = 80, DistrictId = "a",
                 Offers = { new FoodDecisionOffer { ProductId = FoodProducts.Burger, Price = Money.FromCents(725), Units = 3, DistrictDemandPercent = 60 },
                     new FoodDecisionOffer { ProductId = FoodProducts.Croissant, Price = Money.FromCents(350) } },
-                Outward = Walk(new(0, 0, 0), new(2, 0, 0)), Return = Walk(new(2, 0, 0), new(0, 0, 0)) } } };
+                OutwardQuote = FoodQuoteState.Answered, ReturnQuote = FoodQuoteState.Answered,
+                Outward = Walk(new(0, 0, 0), new(2, 0, 0)), Return = Walk(new(2, 0, 0), new(0, 0, 0)) } }, QuotesDone = 2 };
         return (city, SaveCodec.Write(city.State));
     }
 
@@ -237,12 +238,18 @@ public sealed partial class FoodCommerceTests
         ("today-missing", "Missing object fields"), ("today-future", "Invalid current-day meal outcomes"),
         ("today-duplicate", "Duplicate or unordered meal outcomes"), ("today-oversized", "Oversized collection"),
         ("today-unrecorded-overlap", "Outcome recorded for a meal marked unrecorded"), ("today-unrecorded-range", "Invalid unrecorded meal count"),
-        ("today-bought-without-shop", "Purchase outcome lost its shop or product"), ("today-fractional-minute", "Expected an integer"),
+        ("today-bought-without-shop", "Purchase outcome lost its shop or product"), ("today-fractional-minute", "Invalid meal outcome record"),
         ("today-after-clock", "Invalid meal outcome time"), ("today-receipt-mismatch", "Meal outcome differs from its receipt state"),
         ("today-legacy-kind", "Meal outcome kind differs from rhythm policy"), ("today-unknown-status", "Unknown Meal outcome status"),
         ("today-alternative-on-skip", "Alternative recorded for a non-alternative outcome"), ("today-unconfirmed-reason", "Impossible unconfirmed outcome reason"),
         ("today-bought-reason", "Impossible purchase outcome reason"), ("today-checkout-after", "Invalid meal checkout time"),
-        ("today-factors", "Invalid meal outcome factors"), ("today-skip-names-shop", "Non-purchase outcome names a shop or product"),
+        ("today-factors", "Invalid meal outcome factors"), ("today-record-not-string", "Invalid meal outcome record"),
+        ("today-record-short", "Invalid meal outcome record"), ("today-record-leading-zero", "Invalid meal outcome record"),
+        ("today-record-signed", "Invalid meal outcome record"), ("today-record-overflow", "Invalid meal outcome record"),
+        ("decision-quote-cursor", "Decision quote progress differs from its cursor"), ("decision-quote-route", "Decision route differs from its quote state"),
+        ("decision-quote-return-unasked", "Return quote without its outward quote"), ("decision-quote-state", "Unknown Decision quote state"),
+        ("decision-chose-early", "Decision chose before its quotes were settled"), ("decision-selected-refused", "Decision selects an offer outside its shortlist"),
+        ("decision-quote-count", "Invalid decision quote progress"), ("today-skip-names-shop", "Non-purchase outcome names a shop or product"),
         ("decision-compact-unknown-product", "Unknown live product code"), ("decision-quality", "Invalid decision quality evidence"),
         ("decision-hours", "Weekly opening window has no duration"), ("decision-hours-oversized", "Oversized collection"),
         ("decision-district", "Invalid decision district evidence"), ("decision-district-demand-range", "Invalid decision district evidence"),
@@ -254,11 +261,20 @@ public sealed partial class FoodCommerceTests
         ("decision-not-walking", "Decision route is not a walking path"), ("decision-outside-shortlist", "Decision selects an offer outside its shortlist"),
         ("decision-duplicate-shop", "Duplicate decision shop"), ("decision-service-nan", "Invalid decision service evidence"),
         ("decision-not-pending", "Decision outside a pending version-1 meal"), ("decision-before-activation", "Decision outside a pending version-1 meal"),
-        ("decision-return-only", "Return quote without its outward quote"), ("decision-unknown-shop", "Unknown decision shop"),
+        ("decision-return-only", "Decision route differs from its quote state"), ("decision-unknown-shop", "Unknown decision shop"),
         ("meal-unknown-field", "Unknown field: Foo"), ("schema16-with-17-fields", "Unknown field"),
         ("integer-overflow", "Integer is out of range"), ("integer-huge", "Integer is out of range"),
         ("position-duplicate", "Unknown or duplicate position field"), ("position-huge", "Invalid position X"),
     }.Select(c => new object[] { c.name, c.error });
+
+    private static readonly string[] S17_RecordFields = { "Kind", "Status", "Reason", "Outside", "Factor1", "Factor2", "At", "CheckoutAt", "ProductId", "PlaceId" };
+    private static string S17_Get(JToken record, string field) => ((string)record!).Split('|', 10)[Array.IndexOf(S17_RecordFields, field)];
+    private static void S17_Set(JArray records, int index, string field, object value)
+    {
+        var parts = ((string)records[index]!).Split('|', 10);
+        parts[Array.IndexOf(S17_RecordFields, field)] = Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture)!;
+        records[index] = string.Join("|", parts);
+    }
 
     [Theory]
     [MemberData(nameof(S17_Damage))]
@@ -291,25 +307,38 @@ public sealed partial class FoodCommerceTests
             case "policy-missing": ((JObject)wire["Food"]!).Remove("ChoiceStartsDay"); break;
             case "today-missing": slot0.Remove("Today"); break;
             case "today-future": today["Day"] = 2; break;
-            case "today-duplicate": meals[1]!["Kind"] = (int)MealKind.Breakfast; break;
+            case "today-duplicate": S17_Set(meals, 1, "Kind", (int)MealKind.Breakfast); break;
             case "today-oversized": meals.Add(meals[2]!.DeepClone()); break;
             case "today-unrecorded-overlap": today["Unrecorded"] = 1; break;
             case "today-unrecorded-range": meals.RemoveAll(); today["Unrecorded"] = 4; break;
-            case "today-bought-without-shop": meals[2]!["PlaceId"] = ""; break;
-            case "today-fractional-minute": text = json.Replace("\"At\":760,", "\"At\":760.5,"); break;
-            case "today-after-clock": meals[2]!["At"] = 1440 + 1; break;
+            case "today-bought-without-shop": S17_Set(meals, 2, "PlaceId", ""); break;
+            case "today-fractional-minute": S17_Set(meals, 1, "At", "760.5"); break;
+            case "today-record-not-string": meals[1] = new JObject { ["Kind"] = 2 }; break;
+            case "today-record-short": meals[1] = "2|2|11|0|0|0|760|0|"; break;
+            case "today-record-leading-zero": S17_Set(meals, 1, "At", "0760"); break;
+            case "today-record-signed": S17_Set(meals, 1, "CheckoutAt", "-0"); break;
+            case "today-record-overflow": S17_Set(meals, 1, "At", "2147483648"); break;
+            case "today-after-clock": S17_Set(meals, 2, "At", 1440 + 1); break;
             case "today-receipt-mismatch":
                 // The pending day-1 breakfast cannot already have been bought.
-                today["Day"] = 1; meals[2]!["Kind"] = (int)MealKind.Breakfast; meals[2]!["At"] = 1440; meals[2]!["CheckoutAt"] = 1440;
+                today["Day"] = 1; S17_Set(meals, 2, "Kind", (int)MealKind.Breakfast); S17_Set(meals, 2, "At", 1440); S17_Set(meals, 2, "CheckoutAt", 1440);
                 meals.Insert(0, meals[2]!.DeepClone()); while (meals.Count > 1) meals.RemoveAt(1); break;
-            case "today-legacy-kind": meals[0]!["Kind"] = (int)MealKind.Legacy; break;
-            case "today-unknown-status": meals[0]!["Status"] = 9; break;
-            case "today-alternative-on-skip": meals[1]!["Outside"] = (int)FoodOutsideOption.PackedMeal; break;
-            case "today-unconfirmed-reason": meals[2]!["Status"] = (int)MealOutcomeStatus.Unconfirmed; break;
-            case "today-bought-reason": meals[1]!["Reason"] = (int)MealReasonCode.Bought; break;
-            case "today-checkout-after": meals[2]!["CheckoutAt"] = 1200; break;
-            case "today-factors": meals[1]!["Factor2"] = (int)MealFactor.Queue; break;
-            case "today-skip-names-shop": meals[1]!["PlaceId"] = "shop"; break;
+            case "today-legacy-kind": S17_Set(meals, 0, "Kind", (int)MealKind.Legacy); break;
+            case "today-unknown-status": S17_Set(meals, 0, "Status", 9); break;
+            case "today-alternative-on-skip": S17_Set(meals, 1, "Outside", (int)FoodOutsideOption.PackedMeal); break;
+            case "today-unconfirmed-reason": S17_Set(meals, 2, "Status", (int)MealOutcomeStatus.Unconfirmed); break;
+            case "today-bought-reason": S17_Set(meals, 1, "Reason", (int)MealReasonCode.Bought); break;
+            case "today-checkout-after": S17_Set(meals, 2, "CheckoutAt", 1200); break;
+            case "today-factors": S17_Set(meals, 1, "Factor2", (int)MealFactor.Queue); break;
+            case "today-skip-names-shop": S17_Set(meals, 1, "PlaceId", "shop"); break;
+            case "decision-quote-cursor": decision["QuotesDone"] = 1; decision["Result"] = (int)FoodDecisionResult.Evaluating; decision["BusinessId"] = ""; decision["ProductId"] = ""; break;
+            case "decision-quote-route": shop["ReturnQuote"] = (int)FoodQuoteState.Refused; break;
+            case "decision-quote-return-unasked": shop["OutwardQuote"] = (int)FoodQuoteState.Refused; shop["Outward"] = null; shop["Return"] = null;
+                shop["ReturnQuote"] = (int)FoodQuoteState.Refused; decision["Result"] = (int)FoodDecisionResult.NoFeasible; decision["BusinessId"] = ""; decision["ProductId"] = ""; break;
+            case "decision-quote-state": shop["ReturnQuote"] = 7; break;
+            case "decision-chose-early": decision["QuotesDone"] = 1; shop["ReturnQuote"] = (int)FoodQuoteState.Unrequested; shop["Return"] = null; break;
+            case "decision-selected-refused": shop["ReturnQuote"] = (int)FoodQuoteState.Refused; shop["Return"] = null; break;
+            case "decision-quote-count": decision["QuotesDone"] = 3; break;
             case "decision-compact-unknown-product": decision["Shops"] = new JArray(); decision["ProductId"] = "unsupported-live-product"; break;
             case "decision-quality": shop["CustomerServicePercent"] = 101; break;
             case "decision-hours": shop["Hours"]![0]!["ToMinute"] = 420; break;
@@ -340,7 +369,7 @@ public sealed partial class FoodCommerceTests
             case "decision-endpoint": shop["Outward"]!["Legs"]![1]!["To"]!["X"] = 5.0; break;
             case "decision-not-walking": shop["Return"]!["Legs"]![0]!["Mode"] = (int)TravelMode.Car; break;
             case "decision-outside-shortlist": decision["ProductId"] = FoodProducts.HotDog; break;
-            case "decision-duplicate-shop": ((JArray)decision["Shops"]!).Add(shop.DeepClone()); break;
+            case "decision-duplicate-shop": ((JArray)decision["Shops"]!).Add(shop.DeepClone()); decision["QuotesDone"] = 4; break;
             case "decision-service-nan": text = json.Replace("\"MealsPerHour\":15.0", "\"MealsPerHour\":NaN"); break;
             case "decision-not-pending": decided["Status"] = (int)MealStatus.Declined; break;
             case "decision-before-activation": wire["Food"]!["ChoiceStartsDay"] = 2; break;
@@ -363,6 +392,113 @@ public sealed partial class FoodCommerceTests
         Assert.False(SaveStore.WriteTo(data, city.State).Success);
         Assert.False(SaveSession.Open(data, city.State.PopulationKey).WriteTo(data, city.State).Success);
         Assert.Same(payload, data[SaveStore.StateKey]); Assert.Equal("owned by RLO", data["rlo:state"]);
+    }
+
+    [Fact]
+    public void S17_InterruptedDecisionKeepsEachQuoteSlotsProgressAcrossReload()
+    {
+        var (city, _) = S17_Full();
+        var decision = city.State.Food!.Residents.Single(m => m.Decision != null).Decision!;
+        var answered = decision.Shops[0];
+        Route Copy(Route r) => new Route { Legs = r.Legs.Select(l => new RouteLeg { From = l.From, To = l.To, Minutes = l.Minutes, Mode = l.Mode }).ToList() };
+        // Shop b1: outward refused, so its return was never asked. Shop b2: outward answered, return refused.
+        // Shop b3: not yet quoted. The cursor sits on b3's outward slot.
+        var refusedOutward = new FoodDecisionShop { BusinessId = "b1", PlaceId = "shop", OutwardQuote = FoodQuoteState.Refused, ReturnQuote = FoodQuoteState.NotNeeded };
+        var refusedReturn = new FoodDecisionShop { BusinessId = "b2", PlaceId = "shop", OutwardQuote = FoodQuoteState.Answered, ReturnQuote = FoodQuoteState.Refused, Outward = Copy(answered.Outward!) };
+        var pending = new FoodDecisionShop { BusinessId = "b3", PlaceId = "shop" };
+        decision.Shops = new List<FoodDecisionShop> { refusedOutward, refusedReturn, pending };
+        decision.Result = FoodDecisionResult.Evaluating; decision.BusinessId = decision.ProductId = ""; decision.QuotesDone = 4;
+        string json = SaveCodec.Write(city.State);
+        var read = SaveCodec.Read(json);
+        Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(json, SaveCodec.Write(read.State!));
+        var restored = read.State!.Food!.Residents.Single(m => m.Decision != null).Decision!;
+        Assert.Equal(4, restored.QuotesDone);
+        Assert.Equal(new[] { (FoodQuoteState.Refused, FoodQuoteState.NotNeeded), (FoodQuoteState.Answered, FoodQuoteState.Refused), (FoodQuoteState.Unrequested, FoodQuoteState.Unrequested) },
+            restored.Shops.Select(x => (x.OutwardQuote, x.ReturnQuote)));
+        Assert.Null(restored.Shops[0].Outward); Assert.NotNull(restored.Shops[1].Outward); Assert.Null(restored.Shops[1].Return);
+        // Before b2's return was asked, the same image differs: unrequested is not refused.
+        refusedReturn.ReturnQuote = FoodQuoteState.Unrequested; decision.QuotesDone = 3;
+        Assert.NotEqual(json, SaveCodec.Write(city.State));
+    }
+
+    [Fact]
+    public void S17_AnOutcomeProductThatCannotBeWrittenCompactlyIsRefusedAtWrite()
+    {
+        var (city, _) = S17_Full();
+        var meal = city.State.Food!.Residents.First(m => m.Today != null);
+        meal.Today!.Meals[2].ProductId = "pas|try";
+        Assert.Contains("cannot contain", Assert.Throws<SaveValidationException>(() => SaveCodec.Write(city.State)).Message);
+    }
+
+    [Fact]
+    public void S17_OutcomeRecordsUseOneCompactStringAndRoundTripExactly()
+    {
+        var record = new MealOutcomeRecord { Kind = MealKind.Lunch, Status = MealOutcomeStatus.Bought, Reason = MealReasonCode.ReceiptConfirmed,
+            Outside = FoodOutsideOption.None, Factor1 = MealFactor.Taste, Factor2 = MealFactor.Price, At = 2163, CheckoutAt = 2161,
+            ProductId = FoodProducts.Burger, PlaceId = "address:ba%3Astreet_harborroad:1042:shop" };
+        string wire = record.ToWire();
+        Assert.Equal("2|0|2|0|1|2|2163|2161|ba:itemname_burger|address:ba%3Astreet_harborroad:1042:shop", wire);
+        Assert.True(MealOutcomeRecord.TryParse(wire, out var parsed));
+        Assert.Equal(JsonConvert.SerializeObject(record), JsonConvert.SerializeObject(parsed));
+        // The place is last, so an opaque historical place ID may itself contain the separator.
+        record.PlaceId = "legacy|odd";
+        Assert.True(MealOutcomeRecord.TryParse(record.ToWire(), out parsed)); Assert.Equal("legacy|odd", parsed.PlaceId);
+        foreach (string bad in new[] { "", "2|0|2|0|1|2|2163|2161|x", "02|0|2|0|1|2|2163|2161|x|y", "2|0|2|0|1|2|+2163|2161|x|y", "2|0|2|0|1|2|99999999999|2161|x|y", "2|0|2|0|1|2| 1|2161|x|y" })
+            Assert.False(MealOutcomeRecord.TryParse(bad, out _), bad);
+        // Every dense enum the validator range-checks ends at the maximum it uses.
+        Assert.Equal(MealKind.Dinner, Enum.GetValues<MealKind>().Max());
+        Assert.Equal(MealOutcomeStatus.Unconfirmed, Enum.GetValues<MealOutcomeStatus>().Max());
+        Assert.Equal(MealReasonCode.FundsUnavailable, Enum.GetValues<MealReasonCode>().Max());
+        Assert.Equal(FoodOutsideOption.FundedHouseholdFood, Enum.GetValues<FoodOutsideOption>().Max());
+        Assert.Equal(MealFactor.Household, Enum.GetValues<MealFactor>().Max());
+        Assert.Equal(FoodDecisionResult.NoFeasible, Enum.GetValues<FoodDecisionResult>().Max());
+        Assert.Equal(FoodQuoteState.NotNeeded, Enum.GetValues<FoodQuoteState>().Max());
+        foreach (var e in new[] { typeof(MealKind), typeof(MealOutcomeStatus), typeof(MealReasonCode), typeof(FoodOutsideOption), typeof(MealFactor), typeof(FoodDecisionResult), typeof(FoodQuoteState) })
+            Assert.Equal(Enumerable.Range(0, Enum.GetValues(e).Length), Enum.GetValues(e).Cast<object>().Select(Convert.ToInt32));
+    }
+
+    private sealed class S17_NoMarket : IFoodMarket
+    {
+        public double EarliestMinute => 0;
+        public IReadOnlyList<FoodBusiness> Read(double minute) => Array.Empty<FoodBusiness>();
+        public FoodSale Buy(ResidentMeal meal, double minute) => throw new InvalidOperationException("No checkout here.");
+    }
+
+    // The supported roster limit (residents x factor, up to 150,000) is unchanged by schema 17: a city above
+    // 130,000 consumers loads from schema 16, upgrades, and saves and reloads at its largest end-of-day state.
+    [Fact]
+    public void S17_LargeRepresentedCitiesAboveOneHundredThirtyThousandConsumersMigrateAndSave()
+    {
+        var state = EconomyScenario.Create(43400, 5);
+        state.Food = EconomyScenario.Food(); state.Food.RepresentationFactor = 3;
+        var city = new CitySimulator(state, new Walking()); city.AttachFoodMarket(new S17_NoMarket()); city.EnableHouseholdFinances();
+        Assert.Equal(130200, state.Food.Residents.Count);
+        // Schema-16 image: the same city as an earlier writer produced it.
+        string fresh = SaveCodec.Write(state);
+        string old = System.Text.RegularExpressions.Regex.Replace(System.Text.RegularExpressions.Regex.Replace(System.Text.RegularExpressions.Regex.Replace(fresh,
+                "\"ChoicePolicyVersion\":1,\"ChoiceStartsDay\":[0-9]+,", ""),
+                ",\"(Traits|RepresentedTraits)\":(null|\\{\"Bands\":\"[0-4]{10}\",\"Version\":1\\})|,\"Today\":null|,\"Decision\":null|,\"LastContextKey\":\"\"|,\"ContextAttempts\":0", ""),
+                "\"Schema\":17,", "\"Schema\":16,");
+        Assert.DoesNotContain("\"Traits\":", old);
+        var migrated = SaveCodec.Read(old);
+        Assert.True(migrated.Status == SaveReadStatus.Loaded, migrated.Error); Assert.Equal(16, migrated.SourceSchema);
+        Assert.Equal(130200, migrated.State!.Food!.Residents.Count);
+        migrated = null!; old = null!; fresh = null!;
+        // End of day: three purchases per consumer at native-format shop addresses.
+        int day = (int)(state.Minute / 1440) - 1;
+        var today = new ResidentFoodToday { Day = day };
+        int kind = 1;
+        foreach (var (minute, street, product) in new[] { (487, "ba:street_thirdstreet", FoodProducts.Croissant), (763, "ba:street_harborroad", FoodProducts.Burger),
+            (1151, "ba:street_martinlutherkingjrblvd", FoodProducts.HotDog) })
+            today.Meals.Add(new MealOutcomeRecord { Kind = (MealKind)kind++, Status = MealOutcomeStatus.Bought, Reason = MealReasonCode.Bought,
+                At = day * 1440 + minute, CheckoutAt = day * 1440 + minute, ProductId = product, PlaceId = "address:" + Uri.EscapeDataString(street) + ":1042:shop" });
+        foreach (var meal in state.Food.Residents) meal.Today = today;
+        string json = SaveCodec.Write(state);
+        Assert.True(json.Length <= SaveCodec.MaxInputCharacters);
+        var read = SaveCodec.Read(json);
+        Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(130200, read.State!.Food!.Residents.Count(m => m.Today!.Meals.Count == 3));
     }
 
     [Fact]
@@ -398,13 +534,14 @@ public sealed partial class FoodCommerceTests
             Assert.Equal((MealOutcomeStatus.Bought, meal.PlaceId, meal.ProductId, (int)Math.Floor(meal.ServiceAt)),
                 (record.Status, record.PlaceId, record.ProductId, record.CheckoutAt));
             var wire = JObject.Parse(json);
-            var outcome = wire["Food"]!["Residents"]![0]!["Today"]!["Meals"]!.Single(m => (int)m["Kind"]! == (int)meal.Kind)!;
+            var outcomes = (JArray)wire["Food"]!["Residents"]![0]!["Today"]!["Meals"]!;
+            int index = outcomes.ToList().FindIndex(m => S17_Get(m, "Kind") == ((int)meal.Kind).ToString());
             switch (damage)
             {
-                case "other-shop": outcome["PlaceId"] = "work"; break;
-                case "other-product": outcome["ProductId"] = FoodProducts.HotDog; break;
-                case "erased-checkout": outcome["CheckoutAt"] = 0; break;
-                case "moved-checkout": outcome["CheckoutAt"] = (int)outcome["CheckoutAt"]! - 1; break;
+                case "other-shop": S17_Set(outcomes, index, "PlaceId", "work"); break;
+                case "other-product": S17_Set(outcomes, index, "ProductId", FoodProducts.HotDog); break;
+                case "erased-checkout": S17_Set(outcomes, index, "CheckoutAt", 0); break;
+                case "moved-checkout": S17_Set(outcomes, index, "CheckoutAt", int.Parse(S17_Get(outcomes[index], "CheckoutAt")) - 1); break;
             }
             string payload = wire.ToString(Formatting.None);
             var read = SaveCodec.Read(payload);

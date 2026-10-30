@@ -31,7 +31,10 @@ namespace PersistentCity.Core
     /// <summary>Explanatory factor codes, at most two per outcome or decision.</summary>
     public enum MealFactor { None, Taste, Price, Distance, Queue, Quality, TimePressure, Health, Household }
 
-    /// <summary>One meal's outcome on its own day, keyed by meal kind.</summary>
+    /// <summary>One meal's outcome on its own day, keyed by meal kind. On the wire it is one compact string,
+    /// "Kind|Status|Reason|Outside|Factor1|Factor2|At|CheckoutAt|ProductId|PlaceId", with canonical non-negative
+    /// integers: field names would otherwise make up about half of each record, and there are up to three per
+    /// consumer. PlaceId is last, so it may itself contain '|'; ProductId may not.</summary>
     public sealed class MealOutcomeRecord
     {
         public MealKind Kind { get; set; }
@@ -49,6 +52,51 @@ namespace PersistentCity.Core
         /// <summary>Whole minute of the native checkout attempt (rounded down); zero when none was attempted
         /// or, for an upgraded record, when the saved meal held no checkout minute on its day.</summary>
         public int CheckoutAt { get; set; }
+
+        private const int WireFields = 10;
+
+        public string ToWire()
+        {
+            var text = new System.Text.StringBuilder(32 + ProductId.Length + PlaceId.Length);
+            text.Append((int)Kind).Append('|').Append((int)Status).Append('|').Append((int)Reason).Append('|')
+                .Append((int)Outside).Append('|').Append((int)Factor1).Append('|').Append((int)Factor2).Append('|')
+                .Append(At.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append('|')
+                .Append(CheckoutAt.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append('|')
+                .Append(ProductId).Append('|').Append(PlaceId);
+            return text.ToString();
+        }
+
+        /// <summary>Strict inverse of ToWire: exactly ten fields, canonical non-negative integers (no sign, no
+        /// leading zero, within int). Enum ranges and every other rule are checked by save validation.</summary>
+        public static bool TryParse(string? wire, out MealOutcomeRecord record)
+        {
+            record = new MealOutcomeRecord();
+            if (wire == null) return false;
+            var parts = wire.Split(new[] { '|' }, WireFields);
+            if (parts.Length != WireFields) return false;
+            var numbers = new int[8];
+            for (int i = 0; i < 8; i++) if (!Canonical(parts[i], out numbers[i])) return false;
+            record.Kind = (MealKind)numbers[0]; record.Status = (MealOutcomeStatus)numbers[1]; record.Reason = (MealReasonCode)numbers[2];
+            record.Outside = (FoodOutsideOption)numbers[3]; record.Factor1 = (MealFactor)numbers[4]; record.Factor2 = (MealFactor)numbers[5];
+            record.At = numbers[6]; record.CheckoutAt = numbers[7];
+            record.ProductId = parts[8]; record.PlaceId = parts[9];
+            return true;
+        }
+
+        private static bool Canonical(string text, out int value)
+        {
+            value = 0;
+            if (text.Length == 0 || text.Length > 10 || text.Length > 1 && text[0] == '0') return false;
+            long total = 0;
+            foreach (char c in text)
+            {
+                if (c < '0' || c > '9') return false;
+                total = total * 10 + (c - '0');
+            }
+            if (total > int.MaxValue) return false;
+            value = (int)total;
+            return true;
+        }
     }
 
     /// <summary>One consumer's current-day outcomes: at most three named meals, or one legacy meal.
@@ -68,6 +116,11 @@ namespace PersistentCity.Core
 
     public enum FoodDecisionResult { Evaluating, Selected, Outside, NoFeasible }
 
+    /// <summary>Progress of one walking-quote slot of a shortlisted shop. Answered carries its route; Refused means
+    /// the planner returned no usable path; NotNeeded means the slot was settled without a request (the shop was
+    /// pruned by cheap factual checks, or its outward quote was not answered so no return was asked).</summary>
+    public enum FoodQuoteState { Unrequested, Answered, Refused, NotNeeded }
+
     /// <summary>One captured offer of a shortlisted shop. Units -1 means unknown stock;
     /// DistrictDemandPercent -1 means unknown district demand (no appeal adjustment), otherwise 0-100.</summary>
     public sealed class FoodDecisionOffer
@@ -82,8 +135,8 @@ namespace PersistentCity.Core
     /// native state: the same evidence FoodBusiness carries into feasibility and choice. MealsPerHour -1 means unknown
     /// service; ServiceUnavailable records a native refusal reason without its free text; Hours are the captured
     /// weekly opening windows (empty: closed all week); CustomerServicePercent -1 means unknown quality, otherwise
-    /// 0-100; DistrictId is the shop's district for district demand. Routes are validated walking answers, or null
-    /// when not yet quoted.</summary>
+    /// 0-100; DistrictId is the shop's district for district demand. Each quote slot records its progress; a route
+    /// is present exactly when its slot is Answered.</summary>
     public sealed class FoodDecisionShop
     {
         public string BusinessId { get; set; } = "";
@@ -95,6 +148,8 @@ namespace PersistentCity.Core
         public int CustomerServicePercent { get; set; } = -1;
         public string DistrictId { get; set; } = "";
         public List<FoodDecisionOffer> Offers { get; set; } = new List<FoodDecisionOffer>();
+        public FoodQuoteState OutwardQuote { get; set; }
+        public FoodQuoteState ReturnQuote { get; set; }
         public Route? Outward { get; set; }
         public Route? Return { get; set; }
     }
@@ -119,6 +174,10 @@ namespace PersistentCity.Core
         public MealFactor Factor2 { get; set; }
         public double OriginAt { get; set; }
         public double Deadline { get; set; }
+        /// <summary>Quote slots settled so far, in shortlist order (outward then return for each shop): slots
+        /// below this are not Unrequested, slots from it on are. A reload resumes at this slot without repeating a
+        /// request or skipping one. At most two per shop (sixteen).</summary>
+        public int QuotesDone { get; set; }
         public List<FoodDecisionShop> Shops { get; set; } = new List<FoodDecisionShop>();
         public bool RouteBearing => Shops.Count > 0;
     }

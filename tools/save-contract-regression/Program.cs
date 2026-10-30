@@ -184,7 +184,7 @@ static class Program
         {
             bool ceiling = args.Contains("--ceiling");
             var sizes = new List<object> { Bench(957, 5), Bench(5000, 3) };
-            if (ceiling) { sizes.Add(Bench(50000, 3)); sizes.Add(Bench(43333, 1, representation: 3)); sizes.Add(Bench(50000, 1, representation: 3)); }
+            if (ceiling) { sizes.Add(Bench(50000, 3)); sizes.Add(Bench(50000, 1, representation: 3)); }
             bench = sizes; hot = Hot();
         }
         Console.WriteLine(JsonConvert.SerializeObject(new { schema = CityState.CurrentSchema, digest = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(expected))),
