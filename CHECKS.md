@@ -18,15 +18,21 @@ Implements slice A2 of the [step A plan](docs/plans/step-a-inspector-traits-choi
 
 **Same economy as before.** `tools/save-contract-regression` gained a fixed three-day economy scenario. It has 60 residents with two consumers each, three meals, finances, three shops, checkout refusals, lost acknowledgements with later proof and a mid-run reload. Compiled against the pre-A2 tree (`a817bcd`) and this branch, it gives identical results: **849 orders, 797 purchases, 2 unconfirmed**, identical order log, money and saves outside the schema-17 fields, before and after reload. `S17_EconomyScenarioMatchesThePreSchema17Baseline` pins those baseline values. `compare.py` passes; refusal outcomes match too.
 
-**Save size and time (offline .NET 10, this PC, median; not Unity/Mono).** Two consumers per resident and household finances. Schema 17 is measured at its largest steady state: every consumer holds three recorded outcomes at the end of the day.
+**Save size and time (offline .NET 10, this PC, median of 5/3/3 runs, one run for factor 3; not Unity/Mono). Updated in review round 1.** Household finances, two consumers per resident unless stated. Schema 17 is measured at its largest steady state: every consumer holds three recorded purchases at the end of the day, each naming a shop in the native address format (`address:<escaped street>:<n>:shop`) and a live product.
 
-| Residents | Chars 16 → 17 | Write ms | Read ms | Read+upgrade from 16 ms | Retained MiB |
-|---|---|---|---|---|---|
-| 957 (reference) | 2,662,766 → 3,799,726 (**+42.7%**) | 71.0 → 94.0 | 103.1 → 115.5 | 69.5 → 73.6 | 1.8 → 3.0 |
-| 5,000 | 13,916,700 → 19,856,744 (**+42.7%**) | 144.0 → 201.8 | 477.4 → 698.9 | 452.2 → 450.8 | 9.3 → 15.7 |
-| 50,000 (codec ceiling) | 131,318,953 → 190,718,997 (**+45.2%**) | 1,028 → 1,949 | 4,088 → 5,942 | 4,020 → 4,104 | 79.4 → 143.1 |
+| Residents (factor) | Chars 16 → 17 | Share of input cap | Write ms | Read ms | Read+upgrade from 16 ms | Retained MiB |
+|---|---|---|---|---|---|---|
+| 957 (reference) | 2,662,766 → 4,038,976 (**+51.7%**) | 1.5% | 83.7 → 76.8 | 59.1 → 97.2 | 54.5 → 48.1 | 1.8 → 3.5 |
+| 5,000 | 13,916,700 → 21,106,744 (**+51.7%**) | 7.9% | 66.2 → 109.8 | 360.8 → 487.8 | 432.6 → 275.6 | 9.3 → 18.5 |
+| 50,000 (codec ceiling) | 131,318,953 → 203,218,997 (**+54.8%**) | 75.7% | 739.5 → 1,157.8 | 3,416.4 → 4,402.2 | 2,981.8 → 2,807.3 | 79.4 → 171.3 |
+| 43,333 (factor 3) | 154,045,387 → 247,211,381 (**+60.5%**) | 92.1% | 821.6 → 1,765.8 | 3,998.8 → 7,245.0 | 3,913.5 → 4,574.1 | 90.2 → 209.6 |
+| 50,000 (factor 3) | 177,730,855 → refused | above the cap | | | | |
 
-Schema 17 makes end-of-day saves **noticeably bigger and slower**: about +43% characters and up to +90% write time at the ceiling. Most of the growth is the three outcome records per consumer; traits plus empty decision fields add about 9%. Early in the day, payloads sit between the schema-16 and end-of-day sizes. At 50,000 residents the end-of-day payload uses 71% of the 256 Mi-character cap. The representation factor of three, which is not the runtime default, was not measured and could approach that cap. The cheap offsets taken below (compact trait digits, allocation-light codec) are in the roadmap's perf wins log. Upgrading a schema-16 payload costs about the same as reading one. Trait generation takes **463 ns** per consumer, once at creation or upgrade. The outcome updater takes **87 ns** per call and allocates **216 bytes** per consumer-day, with no per-frame or midnight work. Rig save time and size versus base are still unmeasured.
+Schema 17 makes end-of-day saves **noticeably bigger and slower**: +52-55% characters at the runtime factor, with write time up to about 1.6× and loaded memory about 2×. The earlier +43% figure used shorter shop IDs and was low. Almost all of the growth is the three outcome records per consumer; traits plus empty decision fields add about 9%. Early in the day, payloads sit between the schema-16 and end-of-day sizes. Single runs on this desktop vary by up to about 30% (for example the baseline write at 5,000 measured 66-144 ms across runs), so only the size columns are exact.
+
+**Consumer ceiling.** At factor 3, a 50,000-resident end-of-day schema-17 payload exceeds the 256 Mi-character input cap, so the city would stop saving every evening. `SaveCodec.MaxFoodConsumers` = **130,000** now bounds the meal roster in the shape check and in validation. The runtime factor (2) reaches only 100,000 at the citizen ceiling (75.7% of the cap). Factor 3, which the runtime never sets, is accepted up to 43,333 residents (92.1%), and above that the payload is refused and preserved. Real cities carry more journey and visit data than this fixture, so the cap shares are lower bounds; `SaveCodec.Write` still refuses any oversized payload rather than truncating it.
+
+Upgrading a schema-16 payload costs about the same as reading one. Trait generation takes **0.5-0.7 µs** per consumer, once at creation or upgrade. The outcome updater takes **65-80 ns** per call and allocates **192 bytes** per consumer-day, with no per-frame or midnight work. Rig save time and size versus base are still unmeasured.
 
 **Perf wins taken (low risk, same acceptance and error text).** Validation messages are built only on failure. The shape check reuses one duplicate-field set per depth, uses bit flags for positions and checks integer ranges without formatting. Positions are streamed instead of building a `JObject` each. At 957 residents with journeys: read allocation **83.3 → 38.8 MiB**, read **119.7 → 89.2 ms**, validation allocation per save **8.39 → 1.31 MiB**, write allocation **26.1 → 19.1 MiB**. Traits as digits save 174 characters per record (333,036 at 957 residents).
 
@@ -37,13 +43,25 @@ Schema 17 makes end-of-day saves **noticeably bigger and slower**: about +43% ch
 - upgrade synthesis rules and a full-contract round trip with a route-bearing decision;
 - **61** refuse-and-preserve cases through codec, store and session, including four codec regressions for the perf changes, plus future schemas;
 - outcome capture, idempotency, skip→purchase replacement, lazy midnight, late receipt confirmation, and inspector words and today's meals.
-Existing migration tests now drop schema-17 fields when labelling older schemas. `dotnet test` **1,641/1,641**.
+Existing migration tests now drop schema-17 fields when labelling older schemas. `dotnet test` **1,641/1,641** before review.
 
-**Rig session still required (`rig_test`, Codex Sol, high).**
-- Migrate a real schema-16 save of a disposable FT city and reload it.
-- Check that inspector trait words and today's meals agree with native purchases.
-- Check that the next-day activation leaves meals in progress and money unchanged.
-- Measure save time and size and mod work against base, with autosave off in measured windows.
+**Review round 1 fixes (offline).**
+- **Current outcomes agree with the retained meal (Astra r1-1).** A bought or unconfirmed outcome of the meal still held must name that meal's shop, product and checkout minute (`MealOutcomes.CheckoutMinute`). Once the meal advances, the record is an opaque historical reference, and a shop that has since left the catalogue stays valid. Skipped and alternative outcomes name no shop or product. Changed shop, changed product, erased checkout and moved checkout are refused and preserved through codec, store and session, both for live-recorded and upgrade-synthesized purchases, and refused at write.
+- **Compact decisions (Astra r1-2).** A selected decision's product must be a live product even when it carries no shortlist image.
+- **Complete decision snapshot (Astra r1-3).** `FoodDecisionShop` also captures the weekly opening windows (same rules and `MaxOpeningWindows` bound as places, counted toward `MaxEmbeddedRecords`), whether native service was refused, customer-service quality (-1 unknown, else 0-100) and the shop's district. `FoodDecisionOffer` adds district demand (-1 unknown, else 0-100, requiring a district). Shape, validation and round trip are covered; A3 choice execution stays inactive.
+- **Outcome compaction (Opus r1-1).** `At`/`CheckoutAt` are whole minutes stored as integers, and only purchases keep shop and product. A bought record goes from 210 to 182 characters and a skipped one from 196 to 122.
+- **Realistic size benchmark (Opus r1-2, r1-4).** The benchmark now uses native-format shop addresses and three purchases per consumer, takes three samples at the ceiling and also measures factor 3. This found the factor-3 overflow and led to the consumer ceiling above.
+- **Rig checklist (Opus r1-3).** Trait words are checked for stability and words-only, not against purchases: they have no behavioural effect until A3.
+- 11 new refusal cases (current-purchase mismatch ×4 in two forms, non-purchase naming a shop, compact unknown product, quality, opening hours, oversized hours, district and district-demand evidence, fractional outcome minute). `dotnet test` **1,652/1,652**. The economy scenario and its pinned baseline values are unchanged.
+
+**Offline gate (code head `123775c`).** All **31/31** gate commands exit 0: the production build, `dotnet test` (1,652/1,652), test list, 21 standalone regressions including the save-contract baseline/candidate economy comparison, four Python harnesses and three demos. The food-routines and food-demand demo reports equal the pre-A2 baseline, excluding timing fields. Production DLL SHA-256 `27f5dfa5b42f1bce6eec4c2ac7e81121da55edd28122b4dddbbb18e80c6962d6`. Logs: ignored `build/a2-gate-r1/`.
+
+**Rig session still required before merge (`rig_test`, Codex Sol, high), with baseline-to-candidate proof attached to the PR.**
+- Migrate a real schema-16 save of a disposable FT city, reload it, and save/reload again as schema 17.
+- Trait words: stable for the same resident across reload, pool reuse and camera movement, and never numbers. Trait words have **no behavioural effect until A3**: a resident shown as "dislikes burgers" or "watches prices" can still buy burgers or expensive items under the legacy choice, and that is not a defect.
+- Today's meal lines agree with native purchases (product, shop and bag/order evidence), including an upgraded day's "not recorded (before the upgrade)" meals and an unconfirmed checkout.
+- A meal interrupted by the upgrade (travelling, serving or unconfirmed) finishes on its legacy terms; the next-day activation leaves money and receipts unchanged.
+- Save time and size and mod work against base, with autosave off in measured windows (record the setting, verify after reload, restore it). Flag every mod-work spike of 30 ms or more.
 
 
 ## Step A1 resident inspector - 30 October 2026 (offline only)
