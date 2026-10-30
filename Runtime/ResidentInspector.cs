@@ -50,7 +50,10 @@ namespace PersistentCity.Runtime
         private bool mapFailureLogged, attachTried;
         private readonly InspectorPointerGesture gesture = new InspectorPointerGesture();
         private int decidedFrame = -1, ownedPressFrame = -1;
-        private bool suppressThisFrame, guardFailed, blockingZoom;
+        private bool suppressThisFrame, guardFailed, wheelFailed;
+        // Last frame Update ran. Input decisions require a fresh one, so a hidden or stale inspector
+        // (e.g. while the city prepares routes and Update returns early) never claims a click or the wheel.
+        private int updatedFrame = -10;
         // MouseController's private hold-walk flags: read before taking a gesture, cleared when an owned one ends.
         private static System.Reflection.FieldInfo? leftHeld, rightHeld;
 
@@ -74,15 +77,42 @@ namespace PersistentCity.Runtime
                 clickGuard = installing; guarded = this;
             }
             catch (Exception error) { warning("Resident inspector click guard unavailable; inspector clicks may also reach the game: " + error.Message); }
+            if (clickGuard == null) return;
+            try
+            {
+                // The camera applies wheel zoom in its private UpdateInput. Restore its distance afterwards
+                // while the cursor is on the popup; the shared blockCameraZoom flag is never written, so
+                // native dialogs and windows keep sole ownership of it.
+                var input = AccessTools.Method(typeof(CameraControllers.PedestrianCam), "UpdateInput", new[] { typeof(float) })
+                    ?? throw new MissingMethodException("PedestrianCam.UpdateInput(float)");
+                if (AccessTools.Field(typeof(CameraControllers.PedestrianCam), nameof(CameraControllers.PedestrianCam.distance))?.FieldType != typeof(float))
+                    throw new MissingFieldException("PedestrianCam.distance changed.");
+                clickGuard.Patch(input, prefix: new HarmonyMethod(typeof(ResidentInspector), nameof(CameraInputPrefix)),
+                    postfix: new HarmonyMethod(typeof(ResidentInspector), nameof(CameraInputPostfix)));
+            }
+            catch (Exception error) { warning("Resident inspector scroll guard unavailable; scrolling the popup may also zoom the camera: " + error.Message); }
+        }
+
+        private static void CameraInputPrefix(CameraControllers.PedestrianCam __instance, out float __state) => __state = __instance.distance;
+
+        private static void CameraInputPostfix(CameraControllers.PedestrianCam __instance, float __state)
+        {
+            var owner = guarded;
+            if (owner == null || owner.wheelFailed) return;
+            try { if (owner.PointerOnPopupNow()) __instance.distance = __state; }
+            catch (Exception error)
+            {
+                owner.wheelFailed = true;
+                owner.warn?.Invoke("Resident inspector scroll guard failed and is disabled: " + error);
+            }
         }
 
         public void Detach()
         {
             if (ReferenceEquals(guarded, this)) guarded = null;
             gesture.Reset(); decidedFrame = ownedPressFrame = -1; suppressThisFrame = false;
-            ReleaseZoom();
             try { clickGuard?.UnpatchAll(ClickGuardOwner); }
-            finally { clickGuard = null; attachTried = false; guardFailed = false; }
+            finally { clickGuard = null; attachTried = false; guardFailed = wheelFailed = false; }
         }
 
         // Current native cursor in GUI coordinates (y grows downwards); the inspector draws with an identity GUI matrix.
@@ -92,9 +122,15 @@ namespace PersistentCity.Runtime
             return new Vector2(position.x, Screen.height - position.y);
         }
 
+        // Update ran this frame or the previous one (script order against the game's input is not fixed).
+        private bool Fresh => updatedFrame >= Time.frameCount - 1;
+
         // Where an inspector click would land now: the popup, or a highlighted walker other than the open one.
-        private bool PointerOnInspector(Vector2 at) => visible && NormalView() && !NativeUiUnderPointer()
+        private bool PointerOnInspector(Vector2 at) => visible && Fresh && NormalView() && !NativeUiUnderPointer()
             && ((selectedId != null && popup.Contains(at)) || (hoveredId != null && hoveredId != selectedId && hoveredRect.Contains(at)));
+
+        // The current cursor is on the open popup in the normal view.
+        private bool PointerOnPopupNow() => visible && Fresh && selectedId != null && popup.Contains(CurrentMouse()) && NormalView();
 
         private static bool MouseRunPrefix()
         {
@@ -133,25 +169,13 @@ namespace PersistentCity.Runtime
         {
             ClearHover(); selectedId = null; insight = null; body = personality = header = homeLabel = workLabel = mapProblem = ""; throttle.Invalidate();
             gesture.Reset(); ownedPressFrame = -1;
-            ReleaseZoom();
         }
 
-        // The camera zooms on the wheel unless native uGUI is under the cursor or blockCameraZoom is set.
-        // Set it only while the current cursor is on the open popup, only if nobody else holds it, and
-        // clear only a block this inspector set.
-        private void UpdateZoomBlock()
+        /// <summary>The runtime skipped Update this frame (e.g. while routes prepare): hide the inspector's
+        /// input claims until the next update. The selection itself is kept.</summary>
+        public void Suspend()
         {
-            bool want = visible && selectedId != null && popup.Contains(mouse);
-            if (want && !blockingZoom && !CameraControllers.PedestrianCam.blockCameraZoom)
-            { CameraControllers.PedestrianCam.blockCameraZoom = true; blockingZoom = true; }
-            else if (!want) ReleaseZoom();
-        }
-
-        private void ReleaseZoom()
-        {
-            if (!blockingZoom) return;
-            blockingZoom = false;
-            CameraControllers.PedestrianCam.blockCameraZoom = false;
+            visible = false; ClearHover(); updatedFrame = -10;
         }
 
         private Mode Current => selectedId != null ? Mode.Open : hoveredId != null ? Mode.Hover : Mode.Closed;
@@ -209,7 +233,7 @@ namespace PersistentCity.Runtime
                     }
                 }
                 if (selectedId != null && Time.unscaledTime >= nextRefresh) Refresh(simulation);
-                UpdateZoomBlock();
+                updatedFrame = Time.frameCount;
             }
             finally
             {
