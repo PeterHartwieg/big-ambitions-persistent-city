@@ -1,0 +1,30 @@
+# Triage: persistent-city PRs 1 and 2 ? review round 1
+HIGH_MEDIUM_FIX: 2
+
+| ID | Severity | PR | file:line | Finding | Raised by (sol/astra/opus) | Decision (FIX / SKIP / QUESTION) | Reason |
+|---|---|---|---|---|---|---|---|
+| R1-01 | Medium | #2 | Runtime/NativeFoodOwnership.cs:90 | Orphaned-save guard overlooks v2 receipts | sol | FIX | Confirmed current guard hardcodes v1. Recognize both versions and test paid/pending markers with absent/empty manifests before population validation. |
+| R1-02 | Medium | #1 | tools/food-demand-audit/EventMeasurements.cs:112 | Event/query instrumentation faults can abort simulation or replace its exception | opus | FIX | Optional instrumentation must not change execution. Disable event capture on fault, expose a failure count, preserve the original exception and compare simulation outputs under injected faults. |
+| R1-03 | Low | #2 | Runtime/NativeFoodMarket.cs:344 | Invalid post-setup price throws before sale and strands a hold as uncertain | opus | FIX | This new pre-sale check knows no native transaction has started. Catch only conversion range refusals locally; test invalid live prices, unchanged stock/receipts and refundability. |
+| R1-04 | Low | #2 | Core/FoodMarketHistory.cs:76; Core/FoodCommerce.cs:328 | Other decimal accumulators lack precision-exhaustion guards | opus | SKIP | Requires implausible accumulated wealth/revenue near decimal precision limits, not attainable in the bounded campaign. Checkout wallet arithmetic and save conservation are already guarded. Broader extreme-ledger transactional changes are not warranted here. |
+| R1-05 | Low | #2 | CHECKS.md:7; README.md:3 | Summary wording could imply exact binary rational equality | opus | FIX | Cheap factual clarification: explicitly say native float round-trip identity at the documented unit; preserve the native validation caveat. |
+| R1-06 | Low | #2 | Persistence/FoodSaleReceipts.cs:71,95 | Receipt parsing relies on equal v1/v2 prefix lengths | opus | SKIP | Both supported prefixes are fixed and equal-length; v3 is also equal-length, and v10 is neither supported nor recognized. No current parsing failure. A future format migration must review its own prefix handling. |
+| R1-07 | Low | #1 | tools/food-demand-audit/EventMeasurements.cs:140 | Citizen calls at the same minute/entry branch aggregate together | opus | SKIP | This is the explicitly documented citizen/minute/entry-branch aggregation, including replay of the same uncommitted event. Distinguishing attempts would redefine diagnostic attribution, not fix a claimed attempt-level trace. No production behavior is affected. |
+| R1-08 | Low | #2 | Compatibility/RloIdentityAdapter.cs:78 | Snapshot reads increment totals without runtime log lines | opus | SKIP | No Runtime caller invokes ReadSnapshot; search finds only the adapter declaration in production. The runtime-owned adapter is used by the four logged ReadRlo call sites. No unreconciled runtime path exists. |
+| R1-09 | Low | #2 | Core/FoodMoney.cs:24 | Bit conversion allocates a small array | opus | SKIP | A tiny allocation without evidence of material cost at this cached boundary. Changing native-runtime API usage is not a necessary correctness fix or a measured worthwhile optimization in this review round. |
+| R1-10 | Low | #2 | Core/FoodMoney.cs:26 | Subnormal rejection follows an unused significand calculation | opus | SKIP | The value is never used before rejection; purely stylistic ordering with no faulty result. |
+| R1-11 | Low | #1 | Core/TrafficKernel.cs:599 | Curb-exit lookup relies on the current loop break | opus | SKIP | The current break and owned-queue invariant guarantee the node. The suggested guard addresses a hypothetical future deletion, not an existing regression. |
+| R1-12 | Low | #1 | Core/TrafficKernel.cs:70 | Queue references remove an implicit dictionary lookup assertion | opus | SKIP | Restore/capture validation and all queue mutation paths maintain ownership, as every reviewer confirmed. Adding duplicate hot-path guards or documentation solely for a hypothetical invariant violation is unnecessary. |
+| R1-13 | Low | #2 | tools/food-demand-curve/Probe.cs:161 | No-op cast changes a probe bound to historical frozen sources | opus | FIX | Confirmed build_probe.py references the frozen 22 October DLL. Restore only the unnecessary cast to avoid unrelated historical source churn. |
+
+Reviews contain 13 distinct findings (Sol 1; Astra none; Opus 12), with no duplicates. Severities above are my assessment; reviewer nits are classified Low. Five FIX items, eight SKIP items, no product/design questions. PR #1 fixes will be committed/pushed in pc-advance-perf and merged normally into #2. Both fetched branches initially matched origin; the existing untracked RESULT.md in pc-advance-perf is left untouched. PR #3 is excluded.
+
+## Completion
+
+- R1-02: fixed on PR #1 in `3df8232` (Fix review round 1: contain event diagnostic failures), pushed to codex/pc-advance-perf, then integrated into #2 with normal merge `6d61a91`.
+- R1-01: fixed on PR #2 in `fc99507` (Fix review round 1: reject orphaned v2 food receipts).
+- R1-03: fixed on PR #2 in `add60c8` (Fix review round 1: refuse invalid pre-sale prices without stranding funds).
+- R1-05 and R1-13: addressed in `2764b27` (Address review round 1: clarify precision and restore historical probe).
+- All fixes pushed normally. Both PR descriptions updated for material behavior changes; both remain draft. No PR comment posted.
+- Combined validation: 1,304 unit tests, 118 ownership checks, 263 checkout checks, eight observer-fault comparisons preserving 680 events and exact saves, exact original-exception preservation, and eight analyzer tests pass. Production and helper Steam-DLL builds pass with warnings as errors. Ownership and invalid-price tests failed before the fixes and pass after them.
+- No new product/design questions; no QUESTIONS file changes required. No game launched, no deployment/release, no PR #3 changes, no reviewers/models invoked.
