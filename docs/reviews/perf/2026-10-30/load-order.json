@@ -1,0 +1,222 @@
+{
+  "before": {
+    "sharedMethods": [
+      {
+        "method": "PedestrianSpawner.SetActivePedestrians",
+        "owners": [
+          "cityperformance.mod",
+          "hart.persistentcity.ambientpedestrians.v1"
+        ],
+        "prefix": [
+          {
+            "owner": "cityperformance.mod",
+            "priority": 400,
+            "method": "CityPerformance.FrameTrace.Begin"
+          },
+          {
+            "owner": "cityperformance.mod",
+            "priority": 400,
+            "method": "CityPerformance.Timings.Begin"
+          },
+          {
+            "owner": "hart.persistentcity.ambientpedestrians.v1",
+            "priority": 400,
+            "method": "PersistentCity.Runtime.AmbientPedestrians.SetActivePrefix"
+          }
+        ],
+        "postfix": [],
+        "finalizers": [
+          "cityperformance.mod",
+          "cityperformance.mod"
+        ]
+      },
+      {
+        "method": "GleyTrafficSystem.TrafficManager.FixedUpdate",
+        "owners": [
+          "cityperformance.mod",
+          "hart.persistentcity.physicalvehicles.v1"
+        ],
+        "prefix": [
+          {
+            "owner": "cityperformance.mod",
+            "priority": 400,
+            "method": "CityPerformance.FrameTrace.Begin"
+          },
+          {
+            "owner": "cityperformance.mod",
+            "priority": 400,
+            "method": "CityPerformance.Timings.Begin"
+          },
+          {
+            "owner": "hart.persistentcity.physicalvehicles.v1",
+            "priority": 400,
+            "method": "PersistentCity.Runtime.PhysicalTrafficHooks.FixedStepPrefix"
+          }
+        ],
+        "postfix": [
+          "cityperformance.mod",
+          "hart.persistentcity.physicalvehicles.v1"
+        ],
+        "finalizers": [
+          "cityperformance.mod",
+          "cityperformance.mod",
+          "hart.persistentcity.physicalvehicles.v1"
+        ]
+      },
+      {
+        "method": "GameManager.RunMainGameTick",
+        "owners": [
+          "cityperformance.mod",
+          "persistentcity.rig_test.bridge",
+          "hart.persistentcity.cityclock.v1",
+          "persistentcity.food-authority",
+          "hart.persistentcity.clockobserver.v1"
+        ],
+        "prefix": [
+          {
+            "owner": "cityperformance.mod",
+            "priority": 400,
+            "method": "CityPerformance.FrameTrace.Begin"
+          },
+          {
+            "owner": "cityperformance.mod",
+            "priority": 400,
+            "method": "CityPerformance.Timings.Begin"
+          },
+          {
+            "owner": "persistentcity.rig_test.bridge",
+            "priority": 800,
+            "method": "FoodTrucks.TestBridgeCommands.ClampTickPrefix"
+          },
+          {
+            "owner": "hart.persistentcity.cityclock.v1",
+            "priority": 801,
+            "method": "PersistentCity.Runtime.NativeCityClock.TickPrefix"
+          }
+        ],
+        "postfix": [
+          "persistentcity.food-authority",
+          "hart.persistentcity.clockobserver.v1"
+        ],
+        "finalizers": [
+          "cityperformance.mod",
+          "cityperformance.mod"
+        ]
+      }
+    ],
+    "firstCityPerformanceLine": 30,
+    "firstPersistentCityLine": 141,
+    "behavioralOptimizationsVerified": false,
+    "effectiveOrder": "City Performance initialization patches before Persistent City city-load patches"
+  },
+  "after": {
+    "sharedMethods": [
+      {
+        "method": "GameManager.RunMainGameTick",
+        "owners": [
+          "persistentcity.rig_test.bridge",
+          "cityperformance.mod",
+          "hart.persistentcity.cityclock.v1",
+          "persistentcity.food-authority",
+          "hart.persistentcity.clockobserver.v1"
+        ],
+        "prefix": [
+          {
+            "owner": "persistentcity.rig_test.bridge",
+            "priority": 800,
+            "method": "FoodTrucks.TestBridgeCommands.ClampTickPrefix"
+          },
+          {
+            "owner": "cityperformance.mod",
+            "priority": 400,
+            "method": "CityPerformance.FrameTrace.Begin"
+          },
+          {
+            "owner": "cityperformance.mod",
+            "priority": 400,
+            "method": "CityPerformance.Timings.Begin"
+          },
+          {
+            "owner": "hart.persistentcity.cityclock.v1",
+            "priority": 801,
+            "method": "PersistentCity.Runtime.NativeCityClock.TickPrefix"
+          }
+        ],
+        "postfix": [
+          "persistentcity.food-authority",
+          "hart.persistentcity.clockobserver.v1"
+        ],
+        "finalizers": [
+          "cityperformance.mod",
+          "cityperformance.mod"
+        ]
+      },
+      {
+        "method": "PedestrianSpawner.SetActivePedestrians",
+        "owners": [
+          "cityperformance.mod",
+          "hart.persistentcity.ambientpedestrians.v1"
+        ],
+        "prefix": [
+          {
+            "owner": "cityperformance.mod",
+            "priority": 400,
+            "method": "CityPerformance.FrameTrace.Begin"
+          },
+          {
+            "owner": "cityperformance.mod",
+            "priority": 400,
+            "method": "CityPerformance.Timings.Begin"
+          },
+          {
+            "owner": "hart.persistentcity.ambientpedestrians.v1",
+            "priority": 400,
+            "method": "PersistentCity.Runtime.AmbientPedestrians.SetActivePrefix"
+          }
+        ],
+        "postfix": [],
+        "finalizers": [
+          "cityperformance.mod",
+          "cityperformance.mod"
+        ]
+      },
+      {
+        "method": "GleyTrafficSystem.TrafficManager.FixedUpdate",
+        "owners": [
+          "cityperformance.mod",
+          "hart.persistentcity.physicalvehicles.v1"
+        ],
+        "prefix": [
+          {
+            "owner": "cityperformance.mod",
+            "priority": 400,
+            "method": "CityPerformance.FrameTrace.Begin"
+          },
+          {
+            "owner": "cityperformance.mod",
+            "priority": 400,
+            "method": "CityPerformance.Timings.Begin"
+          },
+          {
+            "owner": "hart.persistentcity.physicalvehicles.v1",
+            "priority": 400,
+            "method": "PersistentCity.Runtime.PhysicalTrafficHooks.FixedStepPrefix"
+          }
+        ],
+        "postfix": [
+          "cityperformance.mod",
+          "hart.persistentcity.physicalvehicles.v1"
+        ],
+        "finalizers": [
+          "cityperformance.mod",
+          "cityperformance.mod",
+          "hart.persistentcity.physicalvehicles.v1"
+        ]
+      }
+    ],
+    "firstCityPerformanceLine": 48,
+    "firstPersistentCityLine": 141,
+    "behavioralOptimizationsVerified": false,
+    "effectiveOrder": "City Performance initialization patches before Persistent City city-load patches"
+  }
+}

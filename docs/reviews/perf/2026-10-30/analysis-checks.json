@@ -1,0 +1,7 @@
+{
+  "verifiedWindows": 40,
+  "allClean": true,
+  "percentilesRecomputed": true,
+  "countsMatch": true,
+  "method": "floor(n*q), inclusive component percentiles never summed; GC coincidence is not pause attribution"
+}

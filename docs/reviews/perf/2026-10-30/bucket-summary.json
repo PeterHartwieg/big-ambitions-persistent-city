@@ -1,0 +1,584 @@
+[
+  {
+    "file": "buckets-alone-allocation-detail-extra-stop-92cbde.csv",
+    "sha256": "62658ac58c05a4828ce04232b27e2c21dd916e052c4634350b052fe8b833a8be",
+    "session": "first",
+    "frames": 5412,
+    "counterKind": "unavailable",
+    "buckets": {
+      "food-authority": {
+        "perObservedFrameMs": {
+          "samples": 5412,
+          "mean": 0.0014906134515890613,
+          "p50": 0.0013,
+          "p95": 0.0023,
+          "p99": 0.003,
+          "maximum": 0.406
+        },
+        "totalMs": 8.0672,
+        "calls": 5412
+      },
+      "optional-refresh": {
+        "perObservedFrameMs": {
+          "samples": 5412,
+          "mean": 0.07557511086474501,
+          "p50": 0.0709,
+          "p95": 0.1038,
+          "p99": 0.1407,
+          "maximum": 3.1092
+        },
+        "totalMs": 409.0125,
+        "calls": 5412
+      },
+      "traffic-core": {
+        "perObservedFrameMs": {
+          "samples": 5412,
+          "mean": 0.002172413155949741,
+          "p50": 0.0018,
+          "p95": 0.0037,
+          "p99": 0.0116,
+          "maximum": 0.0687
+        },
+        "totalMs": 11.7571,
+        "calls": 5595
+      },
+      "advancement": {
+        "perObservedFrameMs": {
+          "samples": 5412,
+          "mean": 0.0372960273466371,
+          "p50": 0.0271,
+          "p95": 0.0787,
+          "p99": 0.1132,
+          "maximum": 2.87
+        },
+        "totalMs": 201.8461,
+        "calls": 5412
+      },
+      "physical-population": {
+        "perObservedFrameMs": {
+          "samples": 5412,
+          "mean": 0.08966182557280118,
+          "p50": 0.0607,
+          "p95": 0.2076,
+          "p99": 0.3174,
+          "maximum": 6.9813
+        },
+        "totalMs": 485.2498,
+        "calls": 5412
+      },
+      "population-update": {
+        "perObservedFrameMs": {
+          "samples": 5412,
+          "mean": 0.3772691796008869,
+          "p50": 0.3244,
+          "p95": 0.668,
+          "p99": 0.9341,
+          "maximum": 7.5398
+        },
+        "totalMs": 2041.7808,
+        "calls": 5412
+      },
+      "food-commerce": {
+        "perObservedFrameMs": {
+          "samples": 5412,
+          "mean": 0.00021363636363636365,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "maximum": 0.7173
+        },
+        "totalMs": 1.1562000000000001,
+        "calls": 8
+      }
+    }
+  },
+  {
+    "file": "buckets-dedicated-save-stop-468ebc.csv",
+    "sha256": "7c4aa8906ed0828f1528e0128f8d36f1db19ba1fe73cc49797956b547fb4c896",
+    "session": "first",
+    "frames": 35,
+    "counterKind": "unavailable",
+    "buckets": {
+      "food-authority": {
+        "perObservedFrameMs": {
+          "samples": 35,
+          "mean": 0.0012971428571428572,
+          "p50": 0.0011,
+          "p95": 0.0019,
+          "p99": 0.0066,
+          "maximum": 0.0066
+        },
+        "totalMs": 0.0454,
+        "calls": 35
+      },
+      "optional-refresh": {
+        "perObservedFrameMs": {
+          "samples": 35,
+          "mean": 0.07324857142857143,
+          "p50": 0.0707,
+          "p95": 0.0989,
+          "p99": 0.1385,
+          "maximum": 0.1385
+        },
+        "totalMs": 2.5637,
+        "calls": 36
+      },
+      "traffic-core": {
+        "perObservedFrameMs": {
+          "samples": 35,
+          "mean": 0.0007914285714285715,
+          "p50": 0.0004,
+          "p95": 0.001,
+          "p99": 0.0102,
+          "maximum": 0.0102
+        },
+        "totalMs": 0.027700000000000002,
+        "calls": 35
+      },
+      "advancement": {
+        "perObservedFrameMs": {
+          "samples": 35,
+          "mean": 0.013048571428571428,
+          "p50": 0.0122,
+          "p95": 0.0178,
+          "p99": 0.03,
+          "maximum": 0.03
+        },
+        "totalMs": 0.4567,
+        "calls": 35
+      },
+      "physical-population": {
+        "perObservedFrameMs": {
+          "samples": 35,
+          "mean": 0.05309428571428572,
+          "p50": 0.037,
+          "p95": 0.2235,
+          "p99": 0.2241,
+          "maximum": 0.2241
+        },
+        "totalMs": 1.8583,
+        "calls": 35
+      },
+      "population-update": {
+        "perObservedFrameMs": {
+          "samples": 35,
+          "mean": 0.25298571428571426,
+          "p50": 0.2267,
+          "p95": 0.4915,
+          "p99": 0.5104,
+          "maximum": 0.5104
+        },
+        "totalMs": 8.8545,
+        "calls": 35
+      },
+      "serialize": {
+        "perObservedFrameMs": {
+          "samples": 35,
+          "mean": 5.421002857142857,
+          "p50": 0,
+          "p95": 0,
+          "p99": 189.7351,
+          "maximum": 189.7351
+        },
+        "totalMs": 189.7351,
+        "calls": 1
+      },
+      "save": {
+        "perObservedFrameMs": {
+          "samples": 35,
+          "mean": 5.4786028571428576,
+          "p50": 0,
+          "p95": 0,
+          "p99": 191.7511,
+          "maximum": 191.7511
+        },
+        "totalMs": 191.7511,
+        "calls": 1
+      }
+    }
+  },
+  {
+    "file": "buckets-workday-morning-detail-extra-stop-b0b772.csv",
+    "sha256": "3134d79bd4a4df47321255d2bd1c1a58774ad74ce3f4e97c4b421022c9cfe237",
+    "session": "first",
+    "frames": 5433,
+    "counterKind": "unavailable",
+    "buckets": {
+      "food-authority": {
+        "perObservedFrameMs": {
+          "samples": 5433,
+          "mean": 0.0015328547763666482,
+          "p50": 0.0013,
+          "p95": 0.0022,
+          "p99": 0.0027,
+          "maximum": 0.4042
+        },
+        "totalMs": 8.328,
+        "calls": 5433
+      },
+      "optional-refresh": {
+        "perObservedFrameMs": {
+          "samples": 5433,
+          "mean": 0.07604159764402724,
+          "p50": 0.0733,
+          "p95": 0.0901,
+          "p99": 0.1158,
+          "maximum": 3.1244
+        },
+        "totalMs": 413.134,
+        "calls": 5433
+      },
+      "traffic-core": {
+        "perObservedFrameMs": {
+          "samples": 5433,
+          "mean": 0.0031603349898766796,
+          "p50": 0.0022,
+          "p95": 0.0122,
+          "p99": 0.0161,
+          "maximum": 0.0424
+        },
+        "totalMs": 17.1701,
+        "calls": 6602
+      },
+      "advancement": {
+        "perObservedFrameMs": {
+          "samples": 5433,
+          "mean": 0.11880099392600772,
+          "p50": 0.0901,
+          "p95": 0.1395,
+          "p99": 1.0378,
+          "maximum": 2.7082
+        },
+        "totalMs": 645.4458,
+        "calls": 5433
+      },
+      "physical-population": {
+        "perObservedFrameMs": {
+          "samples": 5433,
+          "mean": 0.25062357813362784,
+          "p50": 0.1971,
+          "p95": 0.4086,
+          "p99": 0.9634,
+          "maximum": 7.9276
+        },
+        "totalMs": 1361.6379,
+        "calls": 5433
+      },
+      "population-update": {
+        "perObservedFrameMs": {
+          "samples": 5433,
+          "mean": 0.7310523467697405,
+          "p50": 0.6372,
+          "p95": 1.1109,
+          "p99": 2.7756,
+          "maximum": 8.3806
+        },
+        "totalMs": 3971.8074,
+        "calls": 5433
+      },
+      "food-commerce": {
+        "perObservedFrameMs": {
+          "samples": 5433,
+          "mean": 0.0036359838026872814,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.0286,
+          "maximum": 0.9138
+        },
+        "totalMs": 19.7543,
+        "calls": 604
+      }
+    }
+  },
+  {
+    "file": "buckets-workday-evening-detail-extra-stop-0bdbd8.csv",
+    "sha256": "d5f543eaa029cae3c099bea8a14a8ea17bcf7d668c2ae590cb2f794f3b07e263",
+    "session": "r2",
+    "frames": 5381,
+    "counterKind": "unavailable",
+    "buckets": {
+      "food-authority": {
+        "perObservedFrameMs": {
+          "samples": 5381,
+          "mean": 0.0015664188812488386,
+          "p50": 0.0014,
+          "p95": 0.0024,
+          "p99": 0.0029,
+          "maximum": 0.0182
+        },
+        "totalMs": 8.4289,
+        "calls": 5381
+      },
+      "optional-refresh": {
+        "perObservedFrameMs": {
+          "samples": 5381,
+          "mean": 0.07627797807099052,
+          "p50": 0.0731,
+          "p95": 0.093,
+          "p99": 0.1178,
+          "maximum": 3.1394
+        },
+        "totalMs": 410.4518,
+        "calls": 5381
+      },
+      "traffic-core": {
+        "perObservedFrameMs": {
+          "samples": 5381,
+          "mean": 0.0032632038654525184,
+          "p50": 0.0024,
+          "p95": 0.0124,
+          "p99": 0.0168,
+          "maximum": 0.053
+        },
+        "totalMs": 17.5593,
+        "calls": 5918
+      },
+      "advancement": {
+        "perObservedFrameMs": {
+          "samples": 5381,
+          "mean": 0.22159180449730534,
+          "p50": 0.1288,
+          "p95": 0.2324,
+          "p99": 2.4868,
+          "maximum": 3.4634
+        },
+        "totalMs": 1192.3855,
+        "calls": 5381
+      },
+      "physical-population": {
+        "perObservedFrameMs": {
+          "samples": 5381,
+          "mean": 0.46490839992566435,
+          "p50": 0.3482,
+          "p95": 0.7699,
+          "p99": 4.2475,
+          "maximum": 29.1058
+        },
+        "totalMs": 2501.6721,
+        "calls": 5381
+      },
+      "population-update": {
+        "perObservedFrameMs": {
+          "samples": 5381,
+          "mean": 1.0787308307006132,
+          "p50": 0.8658,
+          "p95": 2.8209,
+          "p99": 4.8314,
+          "maximum": 29.5303
+        },
+        "totalMs": 5804.6506,
+        "calls": 5381
+      },
+      "food-commerce": {
+        "perObservedFrameMs": {
+          "samples": 5381,
+          "mean": 0.0003469615313138822,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "maximum": 0.3726
+        },
+        "totalMs": 1.867,
+        "calls": 20
+      }
+    }
+  },
+  {
+    "file": "buckets-workday-normal-detail-extra-stop-40efa8.csv",
+    "sha256": "645868d4f45071d95fa4f427fe3e2c7229cdea6dc0e07e47718c0d7bf1aec3e5",
+    "session": "r2",
+    "frames": 5455,
+    "counterKind": "unavailable",
+    "buckets": {
+      "food-authority": {
+        "perObservedFrameMs": {
+          "samples": 5455,
+          "mean": 0.001380916590284143,
+          "p50": 0.0012,
+          "p95": 0.002,
+          "p99": 0.0023,
+          "maximum": 0.3954
+        },
+        "totalMs": 7.5329,
+        "calls": 5455
+      },
+      "optional-refresh": {
+        "perObservedFrameMs": {
+          "samples": 5455,
+          "mean": 0.07094621448212649,
+          "p50": 0.0694,
+          "p95": 0.079,
+          "p99": 0.0968,
+          "maximum": 3.0998
+        },
+        "totalMs": 387.0116,
+        "calls": 5455
+      },
+      "traffic-core": {
+        "perObservedFrameMs": {
+          "samples": 5455,
+          "mean": 0.001873363886342805,
+          "p50": 0.0017,
+          "p95": 0.0027,
+          "p99": 0.004,
+          "maximum": 0.0275
+        },
+        "totalMs": 10.2192,
+        "calls": 5712
+      },
+      "advancement": {
+        "perObservedFrameMs": {
+          "samples": 5455,
+          "mean": 0.02985899175068744,
+          "p50": 0.0163,
+          "p95": 0.0204,
+          "p99": 0.0538,
+          "maximum": 2.7144
+        },
+        "totalMs": 162.8808,
+        "calls": 5455
+      },
+      "physical-population": {
+        "perObservedFrameMs": {
+          "samples": 5455,
+          "mean": 0.043629899175068744,
+          "p50": 0.0375,
+          "p95": 0.0673,
+          "p99": 0.1583,
+          "maximum": 2.115
+        },
+        "totalMs": 238.0011,
+        "calls": 5455
+      },
+      "population-update": {
+        "perObservedFrameMs": {
+          "samples": 5455,
+          "mean": 0.2757811365719523,
+          "p50": 0.247,
+          "p95": 0.3551,
+          "p99": 0.757,
+          "maximum": 3.3518
+        },
+        "totalMs": 1504.3861,
+        "calls": 5455
+      },
+      "food-commerce": {
+        "perObservedFrameMs": {
+          "samples": 5455,
+          "mean": 0.0026060678276810267,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "maximum": 0.7716
+        },
+        "totalMs": 14.2161,
+        "calls": 252
+      }
+    }
+  },
+  {
+    "file": "buckets-workday-save-stop-cca0af.csv",
+    "sha256": "639fe8c198e19fc3529bc45f084129487dfbc7fe1ad92bb51aa03423b38b69b0",
+    "session": "r2",
+    "frames": 48,
+    "counterKind": "unavailable",
+    "buckets": {
+      "food-authority": {
+        "perObservedFrameMs": {
+          "samples": 48,
+          "mean": 0.0017583333333333333,
+          "p50": 0.0014,
+          "p95": 0.0034,
+          "p99": 0.0071,
+          "maximum": 0.0071
+        },
+        "totalMs": 0.0844,
+        "calls": 48
+      },
+      "optional-refresh": {
+        "perObservedFrameMs": {
+          "samples": 48,
+          "mean": 0.09707708333333333,
+          "p50": 0.0815,
+          "p95": 0.1641,
+          "p99": 0.2907,
+          "maximum": 0.2907
+        },
+        "totalMs": 4.6597,
+        "calls": 49
+      },
+      "traffic-core": {
+        "perObservedFrameMs": {
+          "samples": 48,
+          "mean": 0.0012,
+          "p50": 0.0008,
+          "p95": 0.0015,
+          "p99": 0.0163,
+          "maximum": 0.0163
+        },
+        "totalMs": 0.0576,
+        "calls": 48
+      },
+      "advancement": {
+        "perObservedFrameMs": {
+          "samples": 48,
+          "mean": 0.16118125,
+          "p50": 0.1504,
+          "p95": 0.2359,
+          "p99": 0.2579,
+          "maximum": 0.2579
+        },
+        "totalMs": 7.7367,
+        "calls": 48
+      },
+      "physical-population": {
+        "perObservedFrameMs": {
+          "samples": 48,
+          "mean": 0.50749375,
+          "p50": 0.444,
+          "p95": 0.7221,
+          "p99": 1.6649,
+          "maximum": 1.6649
+        },
+        "totalMs": 24.3597,
+        "calls": 48
+      },
+      "population-update": {
+        "perObservedFrameMs": {
+          "samples": 48,
+          "mean": 1.1032520833333332,
+          "p50": 1.036,
+          "p95": 1.4921,
+          "p99": 2.3918,
+          "maximum": 2.3918
+        },
+        "totalMs": 52.9561,
+        "calls": 48
+      },
+      "serialize": {
+        "perObservedFrameMs": {
+          "samples": 48,
+          "mean": 6.935689583333333,
+          "p50": 0,
+          "p95": 0,
+          "p99": 332.9131,
+          "maximum": 332.9131
+        },
+        "totalMs": 332.9131,
+        "calls": 1
+      },
+      "save": {
+        "perObservedFrameMs": {
+          "samples": 48,
+          "mean": 6.989689583333334,
+          "p50": 0,
+          "p95": 0,
+          "p99": 335.5051,
+          "maximum": 335.5051
+        },
+        "totalMs": 335.5051,
+        "calls": 1
+      }
+    }
+  }
+]

@@ -1,0 +1,841 @@
+[
+  {
+    "session": "first",
+    "file": "workday-native.log",
+    "sha256": "495bb52748ca72e2619db924b63f17c66201e68919f9d71f0d142da1855f5d88",
+    "bytes": 115347,
+    "inactiveLines": [],
+    "capabilities": [],
+    "errors": [
+      {
+        "line": 215,
+        "text": "NullReferenceException: Object reference not set to an instance of an object",
+        "context": [
+          "  at Helpers.BusinessHelper.GetBusinessOwnerDescription (BuildingRegistration registration) [0x0000b] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at UI.InGameUI.BuildingResume.UpdateDetails () [0x002f3] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at UI.InGameUI.BuildingResume.SelectTarget (EntityController entityController) [0x0004a] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at UI.InGameUI.BuildingResume.HoverBuilding (CityBuildingController cityBuildingController) [0x00009] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at CityBuildingController.OnIoEnter () [0x00081] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at ViewBlockingEntityPart.OnIoEnter () [0x0000e] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at MouseController.Run () [0x00291] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition.GameManager.RunMainGameTick_Patch3(GameManager,single)"
+        ]
+      },
+      {
+        "line": 703,
+        "text": "NullReferenceException: Object reference not set to an instance of an object",
+        "context": [
+          "  at Helpers.PlayerHelper.SaveCurrentPosition () [0x00005] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at (wrapper delegate-invoke) <Module>.invoke_void()",
+          "  at SaveGameManager.Save (SaveGameManager+SaveType saveType, System.String saveGameName, System.String characterFolder) [0x0005a] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at GameManager.ExecuteMidnightAutoSave () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at GameManager.TryRunPendingMidnightAutoSave () [0x00008] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at GameManager.SetPreventAutoSave (System.Boolean newPreventAutosaveValue) [0x00009] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at PerformanceReview.Guard.OnDestroy () [0x00018] in <3f5e742c2da2424aa204efd468a4a34b>:0 ",
+          ""
+        ]
+      }
+    ],
+    "persistentCityErrors": [],
+    "chronology": [
+      {
+        "line": 127,
+        "text": "[Mod:PersistentCity] RLO single-pass read context=startup status=NotReady identities=0 elapsedMs=2.727 reads=1 totalMs=2.727 maxMs=2.727"
+      },
+      {
+        "line": 128,
+        "text": "[Mod:PersistentCity] Flare is not running; enable RLO's Social Media option and load a city with Flare available."
+      },
+      {
+        "line": 153,
+        "text": "[Mod:PersistentCity] RLO single-pass read context=startup status=NotReady identities=0 elapsedMs=0.030 reads=2 totalMs=2.757 maxMs=2.727"
+      },
+      {
+        "line": 292,
+        "text": "[Mod:PersistentCity] RLO single-pass read context=startup status=Ready identities=400 elapsedMs=2.803 reads=3 totalMs=5.560 maxMs=2.803"
+      },
+      {
+        "line": 315,
+        "text": "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback."
+      },
+      {
+        "line": 316,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=1358, reason=initial index=-1, scene searches in this planner=1."
+      },
+      {
+        "line": 333,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 334,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 0 travelling, 0 awaiting a route, 0 awaiting opening; clock 7665.4, lag 0.0 game minutes. Advancement this observation: 1 frames, 0 events, 1.439 ms total, 1.439 ms maximum advance, 0 maximum events in one frame; these figures cover advancement calls only. Routes: 1 road snapshots started (0 for gate changes), 106 frames waiting for routes; rebuild reasons [initial=1]; slow routing frames 1 (first 1 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 88.452 ms, station captures 1; discovery sweeps 1, last branch captures 34333, split hints 4, maximum slice 20.119 ms, last sweep 0.465 s / 143.262 ms work; slowest RLO check 0.000 ms (RLO contract bindings this session 1, 0.919 ms), door search 0.000 ms, station search 1.827 ms, preparation frame 98.226 ms. Closure refresh: 1 calls, 3.365 ms total, 3.365 ms maximum. Route planning across frames: 0 requests, 0 slices, 0 events completed, 0 frames ended with a plan pending, 0.000 ms total, slowest slice 0.000 ms ending in none with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 0. physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      }
+    ]
+  },
+  {
+    "session": "first",
+    "file": "native-final.log",
+    "sha256": "e68dc7129989918e0c97540d3c6c0f85a5696c41cba8b8ef196e722d76013323",
+    "bytes": 197572,
+    "inactiveLines": [],
+    "capabilities": [],
+    "errors": [
+      {
+        "line": 214,
+        "text": "NullReferenceException: Object reference not set to an instance of an object",
+        "context": [
+          "  at Helpers.BusinessHelper.GetBusinessOwnerDescription (BuildingRegistration registration) [0x0000b] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at UI.InGameUI.BuildingResume.UpdateDetails () [0x002f3] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at UI.InGameUI.BuildingResume.SelectTarget (EntityController entityController) [0x0004a] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at UI.InGameUI.BuildingResume.HoverBuilding (CityBuildingController cityBuildingController) [0x00009] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at CityBuildingController.OnIoEnter () [0x00081] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at ViewBlockingEntityPart.OnIoEnter () [0x0000e] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at MouseController.Run () [0x00291] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition.GameManager.RunMainGameTick_Patch3(GameManager,single)"
+        ]
+      }
+    ],
+    "persistentCityErrors": [],
+    "chronology": [
+      {
+        "line": 127,
+        "text": "[Mod:PersistentCity] RLO single-pass read context=startup status=NotReady identities=0 elapsedMs=2.661 reads=1 totalMs=2.661 maxMs=2.661"
+      },
+      {
+        "line": 128,
+        "text": "[Mod:PersistentCity] Flare is not running; enable RLO's Social Media option and load a city with Flare available."
+      },
+      {
+        "line": 153,
+        "text": "[Mod:PersistentCity] RLO single-pass read context=startup status=NotReady identities=0 elapsedMs=0.039 reads=2 totalMs=2.699 maxMs=2.661"
+      },
+      {
+        "line": 291,
+        "text": "[Mod:PersistentCity] RLO single-pass read context=startup status=Ready identities=400 elapsedMs=2.803 reads=3 totalMs=5.502 maxMs=2.803"
+      },
+      {
+        "line": 313,
+        "text": "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback."
+      },
+      {
+        "line": 314,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=1290, reason=initial index=-1, scene searches in this planner=1."
+      },
+      {
+        "line": 327,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 328,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 0 travelling, 0 awaiting a route, 0 awaiting opening; clock 7665.4, lag 0.0 game minutes. Advancement this observation: 1 frames, 0 events, 1.701 ms total, 1.701 ms maximum advance, 0 maximum events in one frame; these figures cover advancement calls only. Routes: 1 road snapshots started (0 for gate changes), 94 frames waiting for routes; rebuild reasons [initial=1]; slow routing frames 1 (first 1 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 81.230 ms, station captures 1; discovery sweeps 1, last branch captures 34318, split hints 1, maximum slice 19.251 ms, last sweep 0.469 s / 141.993 ms work; slowest RLO check 0.000 ms (RLO contract bindings this session 1, 0.895 ms), door search 0.000 ms, station search 1.772 ms, preparation frame 91.273 ms. Closure refresh: 1 calls, 3.044 ms total, 3.044 ms maximum. Route planning across frames: 0 requests, 0 slices, 0 events completed, 0 frames ended with a plan pending, 0.000 ms total, slowest slice 0.000 ms ending in none with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 0. physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      {
+        "line": 690,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=3215, reason=clock-rate index=-1, scene searches in this planner=0."
+      },
+      {
+        "line": 714,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 753,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=3730, reason=clock-rate index=-1, scene searches in this planner=0."
+      },
+      {
+        "line": 769,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 776,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 484 travelling, 26 awaiting a route, 6 awaiting opening; clock 11942.8, lag 0.0 game minutes. Advancement this observation: 3404 frames, 75006 events, 23896.954 ms total, 97.671 ms maximum advance, 128 maximum events in one frame; these figures cover advancement calls only. Routes: 2 road snapshots started (0 for gate changes), 118 frames waiting for routes; rebuild reasons [clock-rate=2]; slow routing frames 1 (first 1 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 1; discovery sweeps 1, last branch captures 34318, split hints 1, maximum slice 19.251 ms, last sweep 0.469 s / 141.993 ms work; slowest RLO check 1.572 ms (RLO contract bindings this session 1, 0.895 ms), door search 1.485 ms, station search 0.126 ms, preparation frame 16.326 ms. Closure refresh: 3404 calls, 300.557 ms total, 4.968 ms maximum. Route planning across frames: 14670 requests, 16542 slices, 13049 events completed, 1918 frames ended with a plan pending, 20828.650 ms total, slowest slice 19.888 ms ending in car-search with 5 NavMesh path queries; event restarts 1 (run inline after repeated restarts 0), road search restarts 0, units 3025. physical=True, pedestrians=48, cars=0, acquired=51, released=3, blockedSamples=12734, unavailable=3, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=c112:native availability:"
+      },
+      {
+        "line": 809,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 452 travelling, 26 awaiting a route, 74 awaiting opening; clock 11962.8, lag 0.0 game minutes. Advancement this observation: 5367 frames, 773 events, 847.409 ms total, 2.865 ms maximum advance, 17 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 3; discovery sweeps 1, last branch captures 34318, split hints 1, maximum slice 19.251 ms, last sweep 0.469 s / 141.993 ms work; slowest RLO check 1.629 ms (RLO contract bindings this session 1, 0.895 ms), door search 0.112 ms, station search 0.090 ms, preparation frame 0.617 ms. Closure refresh: 5367 calls, 809.074 ms total, 0.309 ms maximum. Route planning across frames: 64 requests, 104 slices, 64 events completed, 41 frames ended with a plan pending, 152.160 ms total, slowest slice 2.689 ms ending in subway-connector with 4 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 3644. physical=True, pedestrians=40, cars=3, acquired=100, released=57, blockedSamples=66384, unavailable=3, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=pc:223:admitted:"
+      },
+      {
+        "line": 846,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 372 travelling, 25 awaiting a route, 189 awaiting opening; clock 11982.7, lag 0.0 game minutes. Advancement this observation: 5292 frames, 840 events, 697.960 ms total, 2.806 ms maximum advance, 16 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 5; discovery sweeps 1, last branch captures 34318, split hints 1, maximum slice 19.251 ms, last sweep 0.469 s / 141.993 ms work; slowest RLO check 1.646 ms (RLO contract bindings this session 1, 0.895 ms), door search 0.101 ms, station search 0.084 ms, preparation frame 0.722 ms. Closure refresh: 5292 calls, 523.282 ms total, 0.329 ms maximum. Route planning across frames: 67 requests, 95 slices, 67 events completed, 28 frames ended with a plan pending, 133.348 ms total, slowest slice 2.592 ms ending in subway-connector with 5 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 4257. physical=True, pedestrians=27, cars=2, acquired=130, released=101, blockedSamples=95287, unavailable=3, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=c399:admitted:"
+      },
+      {
+        "line": 885,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 268 travelling, 24 awaiting a route, 307 awaiting opening; clock 12002.6, lag 0.0 game minutes. Advancement this observation: 5321 frames, 1045 events, 601.123 ms total, 2.904 ms maximum advance, 17 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 7; discovery sweeps 1, last branch captures 34318, split hints 1, maximum slice 19.251 ms, last sweep 0.469 s / 141.993 ms work; slowest RLO check 1.717 ms (RLO contract bindings this session 1, 0.895 ms), door search 0.102 ms, station search 0.096 ms, preparation frame 0.656 ms. Closure refresh: 5321 calls, 614.369 ms total, 0.312 ms maximum. Route planning across frames: 66 requests, 99 slices, 66 events completed, 33 frames ended with a plan pending, 139.442 ms total, slowest slice 2.768 ms ending in car-ends with 6 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 4861. physical=True, pedestrians=20, cars=0, acquired=151, released=131, blockedSamples=114883, unavailable=10, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=c196:inactive model slot:"
+      },
+      {
+        "line": 921,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 202 travelling, 25 awaiting a route, 345 awaiting opening; clock 12022.6, lag 0.0 game minutes. Advancement this observation: 5310 frames, 1078 events, 612.975 ms total, 2.873 ms maximum advance, 17 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 9; discovery sweeps 1, last branch captures 34318, split hints 1, maximum slice 19.251 ms, last sweep 0.469 s / 141.993 ms work; slowest RLO check 1.632 ms (RLO contract bindings this session 1, 0.895 ms), door search 0.105 ms, station search 0.111 ms, preparation frame 0.626 ms. Closure refresh: 5310 calls, 667.041 ms total, 0.394 ms maximum. Route planning across frames: 59 requests, 91 slices, 59 events completed, 32 frames ended with a plan pending, 107.254 ms total, slowest slice 2.708 ms ending in car-ends with 6 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 5383. physical=True, pedestrians=21, cars=2, acquired=177, released=154, blockedSamples=138279, unavailable=11, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=pc:13:junction rear clearance:"
+      },
+      {
+        "line": 935,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=27794, reason=clock-rate index=-1, scene searches in this planner=0."
+      },
+      {
+        "line": 952,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 957,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=27926, reason=clock-rate index=-1, scene searches in this planner=0."
+      },
+      {
+        "line": 970,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 990,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 69 travelling, 35 awaiting a route, 103 awaiting opening; clock 12224.8, lag 0.0 game minutes. Advancement this observation: 5065 frames, 4222 events, 714.090 ms total, 16.072 ms maximum advance, 128 maximum events in one frame; these figures cover advancement calls only. Routes: 2 road snapshots started (0 for gate changes), 129 frames waiting for routes; rebuild reasons [clock-rate=2]; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 2; discovery sweeps 1, last branch captures 34318, split hints 1, maximum slice 19.251 ms, last sweep 0.469 s / 141.993 ms work; slowest RLO check 1.774 ms (RLO contract bindings this session 1, 0.895 ms), door search 0.100 ms, station search 0.134 ms, preparation frame 3.541 ms. Closure refresh: 5065 calls, 484.658 ms total, 11.201 ms maximum. Route planning across frames: 344 requests, 388 slices, 344 events completed, 44 frames ended with a plan pending, 361.265 ms total, slowest slice 7.381 ms ending in finish with 7 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 73. physical=True, pedestrians=10, cars=0, acquired=15, released=5, blockedSamples=903, unavailable=1, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      }
+    ]
+  },
+  {
+    "session": "r2",
+    "file": "workday-native.log",
+    "sha256": "f0f8b1029c448e6610cb1b2e8342fe7832affd5e0c41df13ad07afdc1765bbbd",
+    "bytes": 268748,
+    "inactiveLines": [],
+    "capabilities": [],
+    "errors": [
+      {
+        "line": 213,
+        "text": "NullReferenceException: Object reference not set to an instance of an object",
+        "context": [
+          "  at Helpers.BusinessHelper.GetBusinessOwnerDescription (BuildingRegistration registration) [0x0000b] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at UI.InGameUI.BuildingResume.UpdateDetails () [0x002f3] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at UI.InGameUI.BuildingResume.SelectTarget (EntityController entityController) [0x0004a] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at UI.InGameUI.BuildingResume.HoverBuilding (CityBuildingController cityBuildingController) [0x00009] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at CityBuildingController.OnIoEnter () [0x00081] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at ViewBlockingEntityPart.OnIoEnter () [0x0000e] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at MouseController.Run () [0x00291] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition.GameManager.RunMainGameTick_Patch3(GameManager,single)"
+        ]
+      },
+      {
+        "line": 1107,
+        "text": "NullReferenceException: Object reference not set to an instance of an object",
+        "context": [
+          "  at Helpers.PlayerHelper.SaveCurrentPosition () [0x00005] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at (wrapper delegate-invoke) <Module>.invoke_void()",
+          "  at SaveGameManager.Save (SaveGameManager+SaveType saveType, System.String saveGameName, System.String characterFolder) [0x0005a] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at GameManager.ExecuteMidnightAutoSave () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at GameManager.TryRunPendingMidnightAutoSave () [0x00008] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at GameManager.SetPreventAutoSave (System.Boolean newPreventAutosaveValue) [0x00009] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at PerformanceReview.Guard.OnDestroy () [0x00018] in <3f5e742c2da2424aa204efd468a4a34b>:0 ",
+          ""
+        ]
+      }
+    ],
+    "persistentCityErrors": [],
+    "chronology": [
+      {
+        "line": 127,
+        "text": "[Mod:PersistentCity] RLO single-pass read context=startup status=NotReady identities=0 elapsedMs=2.727 reads=1 totalMs=2.727 maxMs=2.727"
+      },
+      {
+        "line": 128,
+        "text": "[Mod:PersistentCity] Flare is not running; enable RLO's Social Media option and load a city with Flare available."
+      },
+      {
+        "line": 156,
+        "text": "[Mod:PersistentCity] RLO single-pass read context=startup status=NotReady identities=0 elapsedMs=0.033 reads=2 totalMs=2.760 maxMs=2.727"
+      },
+      {
+        "line": 291,
+        "text": "[Mod:PersistentCity] RLO single-pass read context=startup status=Ready identities=400 elapsedMs=2.739 reads=3 totalMs=5.499 maxMs=2.739"
+      },
+      {
+        "line": 307,
+        "text": "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback."
+      },
+      {
+        "line": 316,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=1924, reason=initial index=-1, scene searches in this planner=1."
+      },
+      {
+        "line": 339,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 340,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 0 travelling, 0 awaiting a route, 0 awaiting opening; clock 7665.4, lag 0.0 game minutes. Advancement this observation: 1 frames, 0 events, 1.419 ms total, 1.419 ms maximum advance, 0 maximum events in one frame; these figures cover advancement calls only. Routes: 1 road snapshots started (0 for gate changes), 94 frames waiting for routes; rebuild reasons [initial=1]; slow routing frames 1 (first 1 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 84.156 ms, station captures 1; discovery sweeps 1, last branch captures 34304, split hints 4, maximum slice 18.588 ms, last sweep 0.489 s / 138.822 ms work; slowest RLO check 0.000 ms (RLO contract bindings this session 1, 0.951 ms), door search 0.000 ms, station search 1.685 ms, preparation frame 93.922 ms. Closure refresh: 1 calls, 3.160 ms total, 3.160 ms maximum. Route planning across frames: 0 requests, 0 slices, 0 events completed, 0 frames ended with a plan pending, 0.000 ms total, slowest slice 0.000 ms ending in none with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 0. physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      {
+        "line": 685,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=3997, reason=clock-rate index=-1, scene searches in this planner=0."
+      },
+      {
+        "line": 709,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 726,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=4200, reason=clock-rate index=-1, scene searches in this planner=0."
+      },
+      {
+        "line": 747,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 773,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 92 travelling, 38 awaiting a route, 64 awaiting opening; clock 12237.1, lag 0.0 game minutes. Advancement this observation: 3405 frames, 82048 events, 23723.671 ms total, 100.954 ms maximum advance, 128 maximum events in one frame; these figures cover advancement calls only. Routes: 2 road snapshots started (0 for gate changes), 150 frames waiting for routes; rebuild reasons [clock-rate=2]; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 1; discovery sweeps 1, last branch captures 34304, split hints 4, maximum slice 18.588 ms, last sweep 0.489 s / 138.822 ms work; slowest RLO check 1.617 ms (RLO contract bindings this session 1, 0.951 ms), door search 1.542 ms, station search 0.124 ms, preparation frame 4.813 ms. Closure refresh: 3405 calls, 270.656 ms total, 11.013 ms maximum. Route planning across frames: 14939 requests, 16134 slices, 13320 events completed, 1234 frames ended with a plan pending, 20589.720 ms total, slowest slice 18.756 ms ending in car-search with 5 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 53. physical=True, pedestrians=17, cars=0, acquired=18, released=1, blockedSamples=1278, unavailable=1, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      {
+        "line": 805,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 28 travelling, 41 awaiting a route, 27 awaiting opening; clock 12257.2, lag 0.0 game minutes. Advancement this observation: 5378 frames, 520 events, 232.767 ms total, 2.878 ms maximum advance, 16 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 3; discovery sweeps 1, last branch captures 34304, split hints 4, maximum slice 18.588 ms, last sweep 0.489 s / 138.822 ms work; slowest RLO check 1.601 ms (RLO contract bindings this session 1, 0.951 ms), door search 0.115 ms, station search 0.100 ms, preparation frame 0.580 ms. Closure refresh: 5378 calls, 80.578 ms total, 0.085 ms maximum. Route planning across frames: 38 requests, 59 slices, 38 events completed, 21 frames ended with a plan pending, 68.142 ms total, slowest slice 2.592 ms ending in car-ends with 2 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 285. physical=True, pedestrians=1, cars=0, acquired=20, released=19, blockedSamples=3876, unavailable=1, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      {
+        "line": 839,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 12 travelling, 41 awaiting a route, 28 awaiting opening; clock 12277.2, lag 0.0 game minutes. Advancement this observation: 5373 frames, 366 events, 161.430 ms total, 2.852 ms maximum advance, 16 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 5; discovery sweeps 1, last branch captures 34304, split hints 4, maximum slice 18.588 ms, last sweep 0.489 s / 138.822 ms work; slowest RLO check 1.698 ms (RLO contract bindings this session 1, 0.951 ms), door search 0.110 ms, station search 0.096 ms, preparation frame 0.560 ms. Closure refresh: 5373 calls, 30.554 ms total, 0.030 ms maximum. Route planning across frames: 32 requests, 53 slices, 32 events completed, 21 frames ended with a plan pending, 54.534 ms total, slowest slice 2.108 ms ending in car-search with 1 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 460. physical=True, pedestrians=2, cars=0, acquired=22, released=20, blockedSamples=4722, unavailable=1, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      {
+        "line": 868,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 6 travelling, 41 awaiting a route, 29 awaiting opening; clock 12297.1, lag 0.0 game minutes. Advancement this observation: 5331 frames, 270 events, 116.612 ms total, 2.847 ms maximum advance, 16 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 7; discovery sweeps 1, last branch captures 34304, split hints 4, maximum slice 18.588 ms, last sweep 0.489 s / 138.822 ms work; slowest RLO check 1.642 ms (RLO contract bindings this session 1, 0.951 ms), door search 0.111 ms, station search 0.091 ms, preparation frame 0.689 ms. Closure refresh: 5331 calls, 30.086 ms total, 0.032 ms maximum. Route planning across frames: 20 requests, 26 slices, 20 events completed, 6 frames ended with a plan pending, 23.578 ms total, slowest slice 2.057 ms ending in car-search with 3 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 543. physical=True, pedestrians=0, cars=0, acquired=22, released=22, blockedSamples=4744, unavailable=1, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      {
+        "line": 899,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 4 travelling, 41 awaiting a route, 29 awaiting opening; clock 12317.1, lag 0.0 game minutes. Advancement this observation: 5328 frames, 275 events, 156.217 ms total, 2.714 ms maximum advance, 16 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 9; discovery sweeps 1, last branch captures 34304, split hints 4, maximum slice 18.588 ms, last sweep 0.489 s / 138.822 ms work; slowest RLO check 1.722 ms (RLO contract bindings this session 1, 0.951 ms), door search 0.103 ms, station search 0.110 ms, preparation frame 0.704 ms. Closure refresh: 5328 calls, 27.348 ms total, 0.090 ms maximum. Route planning across frames: 31 requests, 48 slices, 31 events completed, 17 frames ended with a plan pending, 55.174 ms total, slowest slice 2.114 ms ending in car-search with 2 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 713. physical=True, pedestrians=1, cars=0, acquired=23, released=22, blockedSamples=5300, unavailable=1, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      {
+        "line": 918,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=27945, reason=clock-rate index=-1, scene searches in this planner=0."
+      },
+      {
+        "line": 932,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 935,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=28081, reason=clock-rate index=-1, scene searches in this planner=0."
+      },
+      {
+        "line": 951,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 975,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 19 travelling, 42 awaiting a route, 28 awaiting opening; clock 12459.3, lag 0.0 game minutes. Advancement this observation: 5082 frames, 1355 events, 332.544 ms total, 16.180 ms maximum advance, 32 maximum events in one frame; these figures cover advancement calls only. Routes: 2 road snapshots started (0 for gate changes), 139 frames waiting for routes; rebuild reasons [clock-rate=2]; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 2; discovery sweeps 1, last branch captures 34304, split hints 4, maximum slice 18.588 ms, last sweep 0.489 s / 138.822 ms work; slowest RLO check 1.664 ms (RLO contract bindings this session 1, 0.951 ms), door search 0.119 ms, station search 0.110 ms, preparation frame 7.818 ms. Closure refresh: 5082 calls, 28.272 ms total, 1.887 ms maximum. Route planning across frames: 219 requests, 255 slices, 219 events completed, 37 frames ended with a plan pending, 233.623 ms total, slowest slice 8.737 ms ending in car-search with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 316. physical=True, pedestrians=4, cars=0, acquired=4, released=0, blockedSamples=47, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      {
+        "line": 1004,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 58 travelling, 42 awaiting a route, 28 awaiting opening; clock 12479.2, lag 0.0 game minutes. Advancement this observation: 5336 frames, 94 events, 215.148 ms total, 2.813 ms maximum advance, 5 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 4; discovery sweeps 1, last branch captures 34304, split hints 4, maximum slice 18.588 ms, last sweep 0.489 s / 138.822 ms work; slowest RLO check 1.718 ms (RLO contract bindings this session 1, 0.951 ms), door search 0.111 ms, station search 0.091 ms, preparation frame 0.531 ms. Closure refresh: 5336 calls, 29.492 ms total, 0.110 ms maximum. Route planning across frames: 68 requests, 104 slices, 68 events completed, 37 frames ended with a plan pending, 107.512 ms total, slowest slice 2.752 ms ending in car-access-walk with 3 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 860. physical=True, pedestrians=5, cars=0, acquired=8, released=3, blockedSamples=596, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      {
+        "line": 1042,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 171 travelling, 40 awaiting a route, 0 awaiting opening; clock 12499.2, lag 0.0 game minutes. Advancement this observation: 5238 frames, 268 events, 463.199 ms total, 3.128 ms maximum advance, 10 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 6; discovery sweeps 1, last branch captures 34304, split hints 4, maximum slice 18.588 ms, last sweep 0.489 s / 138.822 ms work; slowest RLO check 1.679 ms (RLO contract bindings this session 1, 0.951 ms), door search 0.116 ms, station search 0.094 ms, preparation frame 0.550 ms. Closure refresh: 5238 calls, 277.702 ms total, 0.216 ms maximum. Route planning across frames: 154 requests, 267 slices, 154 events completed, 116 frames ended with a plan pending, 275.967 ms total, slowest slice 2.680 ms ending in subway-connector with 4 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 2185. physical=True, pedestrians=21, cars=2, acquired=31, released=8, blockedSamples=6783, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=c327:admitted:"
+      },
+      {
+        "line": 1073,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 418 travelling, 32 awaiting a route, 0 awaiting opening; clock 12519.2, lag 0.0 game minutes. Advancement this observation: 5147 frames, 625 events, 1154.695 ms total, 10.744 ms maximum advance, 5 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 8; discovery sweeps 1, last branch captures 34304, split hints 4, maximum slice 18.588 ms, last sweep 0.489 s / 138.822 ms work; slowest RLO check 1.844 ms (RLO contract bindings this session 1, 0.951 ms), door search 0.114 ms, station search 0.108 ms, preparation frame 5.249 ms. Closure refresh: 5147 calls, 602.804 ms total, 1.924 ms maximum. Route planning across frames: 313 requests, 559 slices, 313 events completed, 252 frames ended with a plan pending, 612.842 ms total, slowest slice 10.681 ms ending in car-search with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 5106. physical=True, pedestrians=47, cars=3, acquired=93, released=43, blockedSamples=41497, unavailable=3, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=c185:junction rear clearance:"
+      }
+    ]
+  },
+  {
+    "session": "r2",
+    "file": "before-native.log",
+    "sha256": "24429f2d2ab4d4649ffcdcdca1ecfa6cae7b81bc066c214c055f9674fcdeaa35",
+    "bytes": 300110,
+    "inactiveLines": [
+      "[Mod:ACityPerformance] Not active: cinematic coverage (unverified build or conflicting hooks).",
+      "[Mod:ACityPerformance] Not active: midnight cleanup deferral (build, signature, multiplayer or conflict).",
+      "[Mod:ACityPerformance] Not active: pedestrian refill (unverified build or conflicting patch).",
+      "[Mod:ACityPerformance] Not active: tree detail (unverified build, signature or conflicting patch)."
+    ],
+    "capabilities": [
+      {
+        "line": 33,
+        "text": "[Mod:ACityPerformance] Version 0.5.1; BigAmbitions SHA256=055700fd26a7a6430bbb6a9d79379781909fbc518af760453396947887db5063; verified=False; game build not audited, so behavioral changes stay off and only timing/trace hooks and the presentation-only button-caption hook run"
+      },
+      {
+        "line": 34,
+        "text": "[Mod:ACityPerformance] Not active: pedestrian refill (unverified build or conflicting patch)."
+      },
+      {
+        "line": 35,
+        "text": "[Mod:ACityPerformance] Not active: midnight cleanup deferral (build, signature, multiplayer or conflict)."
+      },
+      {
+        "line": 36,
+        "text": "[Mod:ACityPerformance] AUTOSAVE inactive: option off, quitting, or unverified build."
+      },
+      {
+        "line": 37,
+        "text": "[Mod:ACityPerformance] Not active: tree detail (unverified build, signature or conflicting patch)."
+      },
+      {
+        "line": 40,
+        "text": "[Mod:ACityPerformance] Not active: cinematic coverage (unverified build or conflicting hooks)."
+      },
+      {
+        "line": 41,
+        "text": "[Mod:ACityPerformance] Active: timing PedestrianSpawner.SetActivePedestrians"
+      },
+      {
+        "line": 42,
+        "text": "[Mod:ACityPerformance] Active: timing GameManager.RunMainGameTick"
+      },
+      {
+        "line": 43,
+        "text": "[Mod:ACityPerformance] Active: timing SaveGameManager.SerializeSaveGame"
+      },
+      {
+        "line": 44,
+        "text": "[Mod:ACityPerformance] Active: timing CullingGroupController.Update"
+      },
+      {
+        "line": 45,
+        "text": "[Mod:ACityPerformance] Active: timing TrafficManager.FixedUpdate"
+      }
+    ],
+    "errors": [
+      {
+        "line": 231,
+        "text": "NullReferenceException: Object reference not set to an instance of an object",
+        "context": [
+          "  at (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition.GameManager.RunMainGameTick_Patch5(GameManager,single)",
+          "  at GameManager.Update () [0x00080] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "",
+          "[Mod:RealLifeOverhaul] Travel: hotels: garment_hostel=ba:street_fourthavenue 1 industry_hostel=ba:street_twentyfirststreet 23 kitchen_hotel=ba:street_secondavenue 8 downtown_hotel=ba:street_fourthavenue 45 murray_hotel=ba:street_sixthavenue 18 midtown_grand=ba:street_broadwaystreet 13 kitchen_tower=ba:street_secondavenue 14 hamptons_cottages=ba:street_oceancrestroad 1",
+          "[Mod:RealLifeOverhaul] Travel: state loaded. room=none ticket=none away=False agencies=15 hotels=8.",
+          "[Mod:RealLifeOverhaul] Garage check (bay): the game's panel for filling stations and repair bays is extended (the game's own object is kept to be put back): PASS.",
+          "[Mod:RealLifeOverhaul] Performance: 'sky_updates' on. skies updating every 2 s instead of on every change: 9 (the first was set to OnChanged)",
+          "[Mod:RealLifeOverhaul] Contacts check (picture): 'reallife-911' is a logo, from the game's logo shape 'lawfirm2', kept; 24 contact picture(s): 9 face(s), 15 logo(s), 1 drawn: PASS"
+        ]
+      },
+      {
+        "line": 1265,
+        "text": "NullReferenceException: Object reference not set to an instance of an object",
+        "context": [
+          "  at Helpers.PlayerHelper.SaveCurrentPosition () [0x00005] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at (wrapper delegate-invoke) <Module>.invoke_void()",
+          "  at SaveGameManager.Save (SaveGameManager+SaveType saveType, System.String saveGameName, System.String characterFolder) [0x0005a] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at GameManager.ExecuteMidnightAutoSave () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at GameManager.TryRunPendingMidnightAutoSave () [0x00008] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at GameManager.SetPreventAutoSave (System.Boolean newPreventAutosaveValue) [0x00009] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at PerformanceReview.Guard.OnDestroy () [0x00018] in <3f5e742c2da2424aa204efd468a4a34b>:0 ",
+          ""
+        ]
+      }
+    ],
+    "persistentCityErrors": [],
+    "chronology": [
+      {
+        "line": 34,
+        "text": "[Mod:ACityPerformance] Not active: pedestrian refill (unverified build or conflicting patch)."
+      },
+      {
+        "line": 35,
+        "text": "[Mod:ACityPerformance] Not active: midnight cleanup deferral (build, signature, multiplayer or conflict)."
+      },
+      {
+        "line": 36,
+        "text": "[Mod:ACityPerformance] AUTOSAVE inactive: option off, quitting, or unverified build."
+      },
+      {
+        "line": 37,
+        "text": "[Mod:ACityPerformance] Not active: tree detail (unverified build, signature or conflicting patch)."
+      },
+      {
+        "line": 40,
+        "text": "[Mod:ACityPerformance] Not active: cinematic coverage (unverified build or conflicting hooks)."
+      },
+      {
+        "line": 41,
+        "text": "[Mod:ACityPerformance] Active: timing PedestrianSpawner.SetActivePedestrians"
+      },
+      {
+        "line": 42,
+        "text": "[Mod:ACityPerformance] Active: timing GameManager.RunMainGameTick"
+      },
+      {
+        "line": 43,
+        "text": "[Mod:ACityPerformance] Active: timing SaveGameManager.SerializeSaveGame"
+      },
+      {
+        "line": 44,
+        "text": "[Mod:ACityPerformance] Active: timing CullingGroupController.Update"
+      },
+      {
+        "line": 45,
+        "text": "[Mod:ACityPerformance] Active: timing TrafficManager.FixedUpdate"
+      },
+      {
+        "line": 141,
+        "text": "[Mod:PersistentCity] RLO single-pass read context=startup status=NotReady identities=0 elapsedMs=3.450 reads=1 totalMs=3.450 maxMs=3.450"
+      },
+      {
+        "line": 142,
+        "text": "[Mod:PersistentCity] Flare is not running; enable RLO's Social Media option and load a city with Flare available."
+      },
+      {
+        "line": 170,
+        "text": "[Mod:PersistentCity] RLO single-pass read context=startup status=NotReady identities=0 elapsedMs=0.033 reads=2 totalMs=3.483 maxMs=3.450"
+      },
+      {
+        "line": 301,
+        "text": "[Mod:PersistentCity] RLO single-pass read context=startup status=Ready identities=400 elapsedMs=2.788 reads=3 totalMs=6.271 maxMs=3.450"
+      },
+      {
+        "line": 323,
+        "text": "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback."
+      },
+      {
+        "line": 324,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=1291, reason=initial index=-1, scene searches in this planner=1."
+      },
+      {
+        "line": 341,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 342,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 0 travelling, 0 awaiting a route, 0 awaiting opening; clock 7665.4, lag 0.0 game minutes. Advancement this observation: 1 frames, 0 events, 1.563 ms total, 1.563 ms maximum advance, 0 maximum events in one frame; these figures cover advancement calls only. Routes: 1 road snapshots started (0 for gate changes), 93 frames waiting for routes; rebuild reasons [initial=1]; slow routing frames 1 (first 1 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 94.419 ms, station captures 1; discovery sweeps 1, last branch captures 34324, split hints 8, maximum slice 19.209 ms, last sweep 0.497 s / 161.084 ms work; slowest RLO check 0.000 ms (RLO contract bindings this session 1, 1.200 ms), door search 0.000 ms, station search 1.900 ms, preparation frame 107.727 ms. Closure refresh: 1 calls, 3.803 ms total, 3.803 ms maximum. Route planning across frames: 0 requests, 0 slices, 0 events completed, 0 frames ended with a plan pending, 0.000 ms total, slowest slice 0.000 ms ending in none with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 0. physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      {
+        "line": 711,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=3437, reason=clock-rate index=-1, scene searches in this planner=0."
+      },
+      {
+        "line": 737,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 777,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=3878, reason=clock-rate index=-1, scene searches in this planner=0."
+      },
+      {
+        "line": 790,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 793,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 397 travelling, 25 awaiting a route, 0 awaiting opening; clock 11925.4, lag 14.6 game minutes. Advancement this observation: 2849 frames, 74014 events, 27374.134 ms total, 114.997 ms maximum advance, 128 maximum events in one frame; these figures cover advancement calls only. Routes: 2 road snapshots started (0 for gate changes), 120 frames waiting for routes; rebuild reasons [clock-rate=2]; slow routing frames 1 (first 1 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 1; discovery sweeps 1, last branch captures 34324, split hints 8, maximum slice 19.209 ms, last sweep 0.497 s / 161.084 ms work; slowest RLO check 1.711 ms (RLO contract bindings this session 1, 1.200 ms), door search 1.522 ms, station search 0.128 ms, preparation frame 16.437 ms. Closure refresh: 2849 calls, 288.534 ms total, 5.381 ms maximum. Route planning across frames: 14603 requests, 16699 slices, 12975 events completed, 2137 frames ended with a plan pending, 24054.330 ms total, slowest slice 26.389 ms ending in car-search with 3 NavMesh path queries; event restarts 1 (run inline after repeated restarts 0), road search restarts 0, units 3374. physical=True, pedestrians=37, cars=0, acquired=37, released=0, blockedSamples=11596, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      {
+        "line": 825,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 412 travelling, 25 awaiting a route, 43 awaiting opening; clock 11959.3, lag 0.0 game minutes. Advancement this observation: 5288 frames, 1219 events, 1017.563 ms total, 6.502 ms maximum advance, 55 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 3; discovery sweeps 1, last branch captures 34324, split hints 8, maximum slice 19.209 ms, last sweep 0.497 s / 161.084 ms work; slowest RLO check 1.705 ms (RLO contract bindings this session 1, 1.200 ms), door search 0.119 ms, station search 0.098 ms, preparation frame 2.780 ms. Closure refresh: 5288 calls, 698.729 ms total, 0.412 ms maximum. Route planning across frames: 124 requests, 240 slices, 125 events completed, 116 frames ended with a plan pending, 326.076 ms total, slowest slice 2.930 ms ending in car-ends with 6 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 4643. physical=True, pedestrians=43, cars=1, acquired=85, released=41, blockedSamples=51254, unavailable=3, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=c185:admitted:"
+      },
+      {
+        "line": 857,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 386 travelling, 24 awaiting a route, 127 awaiting opening; clock 11979.3, lag 0.0 game minutes. Advancement this observation: 5307 frames, 769 events, 745.818 ms total, 2.876 ms maximum advance, 16 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 5; discovery sweeps 1, last branch captures 34324, split hints 8, maximum slice 19.209 ms, last sweep 0.497 s / 161.084 ms work; slowest RLO check 1.614 ms (RLO contract bindings this session 1, 1.200 ms), door search 0.110 ms, station search 0.091 ms, preparation frame 0.531 ms. Closure refresh: 5307 calls, 528.911 ms total, 0.226 ms maximum. Route planning across frames: 89 requests, 127 slices, 89 events completed, 38 frames ended with a plan pending, 181.728 ms total, slowest slice 2.563 ms ending in subway-connector with 4 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 5500. physical=True, pedestrians=34, cars=3, acquired=118, released=81, blockedSamples=86552, unavailable=3, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=c399:admitted:"
+      },
+      {
+        "line": 890,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 317 travelling, 23 awaiting a route, 251 awaiting opening; clock 11999.3, lag 0.0 game minutes. Advancement this observation: 5323 frames, 990 events, 732.468 ms total, 2.999 ms maximum advance, 17 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 7; discovery sweeps 1, last branch captures 34324, split hints 8, maximum slice 19.209 ms, last sweep 0.497 s / 161.084 ms work; slowest RLO check 1.631 ms (RLO contract bindings this session 1, 1.200 ms), door search 0.112 ms, station search 0.089 ms, preparation frame 0.548 ms. Closure refresh: 5323 calls, 707.520 ms total, 0.303 ms maximum. Route planning across frames: 90 requests, 135 slices, 90 events completed, 45 frames ended with a plan pending, 196.967 ms total, slowest slice 2.826 ms ending in car-ends with 6 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 6381. physical=True, pedestrians=26, cars=1, acquired=145, released=118, blockedSamples=119959, unavailable=10, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=pc:223:admitted:"
+      },
+      {
+        "line": 917,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=22552, reason=clock-rate index=-1, scene searches in this planner=0."
+      },
+      {
+        "line": 932,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 939,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=22763, reason=clock-rate index=-1, scene searches in this planner=0."
+      },
+      {
+        "line": 954,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 971,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 77 travelling, 36 awaiting a route, 96 awaiting opening; clock 12203.0, lag 0.0 game minutes. Advancement this observation: 5048 frames, 5430 events, 950.843 ms total, 16.173 ms maximum advance, 128 maximum events in one frame; these figures cover advancement calls only. Routes: 2 road snapshots started (0 for gate changes), 113 frames waiting for routes; rebuild reasons [clock-rate=2]; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 2; discovery sweeps 1, last branch captures 34324, split hints 8, maximum slice 19.209 ms, last sweep 0.497 s / 161.084 ms work; slowest RLO check 1.748 ms (RLO contract bindings this session 1, 1.200 ms), door search 0.116 ms, station search 0.123 ms, preparation frame 4.016 ms. Closure refresh: 5048 calls, 529.552 ms total, 11.576 ms maximum. Route planning across frames: 414 requests, 491 slices, 414 events completed, 78 frames ended with a plan pending, 513.983 ms total, slowest slice 8.182 ms ending in finish with 5 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 80. physical=True, pedestrians=14, cars=0, acquired=14, released=0, blockedSamples=4159, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      {
+        "line": 1003,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 60 travelling, 36 awaiting a route, 112 awaiting opening; clock 12223.0, lag 0.0 game minutes. Advancement this observation: 5323 frames, 361 events, 254.046 ms total, 2.859 ms maximum advance, 16 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 4; discovery sweeps 1, last branch captures 34324, split hints 8, maximum slice 19.209 ms, last sweep 0.497 s / 161.084 ms work; slowest RLO check 1.628 ms (RLO contract bindings this session 1, 1.200 ms), door search 0.103 ms, station search 0.093 ms, preparation frame 0.649 ms. Closure refresh: 5323 calls, 340.951 ms total, 0.178 ms maximum. Route planning across frames: 28 requests, 41 slices, 28 events completed, 13 frames ended with a plan pending, 40.681 ms total, slowest slice 2.681 ms ending in subway-connector with 4 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 234. physical=True, pedestrians=2, cars=1, acquired=18, released=15, blockedSamples=7438, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=pc:113:admitted:"
+      },
+      {
+        "line": 1046,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 29 travelling, 39 awaiting a route, 62 awaiting opening; clock 12242.9, lag 0.0 game minutes. Advancement this observation: 5322 frames, 447 events, 217.307 ms total, 2.927 ms maximum advance, 16 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 6; discovery sweeps 1, last branch captures 34324, split hints 8, maximum slice 19.209 ms, last sweep 0.497 s / 161.084 ms work; slowest RLO check 1.776 ms (RLO contract bindings this session 1, 1.200 ms), door search 0.120 ms, station search 0.107 ms, preparation frame 0.643 ms. Closure refresh: 5322 calls, 279.020 ms total, 0.152 ms maximum. Route planning across frames: 36 requests, 55 slices, 36 events completed, 19 frames ended with a plan pending, 59.643 ms total, slowest slice 2.184 ms ending in car-ends with 2 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 451. physical=True, pedestrians=4, cars=0, acquired=22, released=18, blockedSamples=12772, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=pc:113:admitted:"
+      },
+      {
+        "line": 1085,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=40933, reason=clock-rate index=-1, scene searches in this planner=0."
+      },
+      {
+        "line": 1100,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 1103,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=41041, reason=clock-rate index=-1, scene searches in this planner=0."
+      },
+      {
+        "line": 1121,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 1124,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 3 travelling, 41 awaiting a route, 28 awaiting opening; clock 12444.7, lag 0.0 game minutes. Advancement this observation: 5083 frames, 2507 events, 416.605 ms total, 17.990 ms maximum advance, 68 maximum events in one frame; these figures cover advancement calls only. Routes: 2 road snapshots started (0 for gate changes), 126 frames waiting for routes; rebuild reasons [clock-rate=2]; slow routing frames 3 (first 3 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 1; discovery sweeps 1, last branch captures 34324, split hints 8, maximum slice 19.209 ms, last sweep 0.497 s / 161.084 ms work; slowest RLO check 1.718 ms (RLO contract bindings this session 1, 1.200 ms), door search 0.112 ms, station search 0.126 ms, preparation frame 22.211 ms. Closure refresh: 5083 calls, 77.052 ms total, 1.698 ms maximum. Route planning across frames: 273 requests, 285 slices, 273 events completed, 12 frames ended with a plan pending, 218.190 ms total, slowest slice 9.088 ms ending in finish with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 0. physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      {
+        "line": 1164,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 27 travelling, 42 awaiting a route, 28 awaiting opening; clock 12464.7, lag 0.0 game minutes. Advancement this observation: 5190 frames, 93 events, 196.702 ms total, 2.913 ms maximum advance, 7 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 3; discovery sweeps 1, last branch captures 34324, split hints 8, maximum slice 19.209 ms, last sweep 0.497 s / 161.084 ms work; slowest RLO check 2.790 ms (RLO contract bindings this session 1, 1.200 ms), door search 0.145 ms, station search 0.102 ms, preparation frame 5.022 ms. Closure refresh: 5190 calls, 33.253 ms total, 0.039 ms maximum. Route planning across frames: 57 requests, 96 slices, 57 events completed, 39 frames ended with a plan pending, 103.979 ms total, slowest slice 2.489 ms ending in subway-connector with 4 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 426. physical=True, pedestrians=4, cars=0, acquired=5, released=1, blockedSamples=104, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      {
+        "line": 1200,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 105 travelling, 42 awaiting a route, 0 awaiting opening; clock 12484.7, lag 0.0 game minutes. Advancement this observation: 5218 frames, 191 events, 344.006 ms total, 3.207 ms maximum advance, 10 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 5; discovery sweeps 1, last branch captures 34324, split hints 8, maximum slice 19.209 ms, last sweep 0.497 s / 161.084 ms work; slowest RLO check 1.741 ms (RLO contract bindings this session 1, 1.200 ms), door search 0.116 ms, station search 0.092 ms, preparation frame 0.599 ms. Closure refresh: 5218 calls, 86.443 ms total, 0.209 ms maximum. Route planning across frames: 118 requests, 197 slices, 118 events completed, 81 frames ended with a plan pending, 203.298 ms total, slowest slice 2.787 ms ending in car-ends with 3 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 1389. physical=True, pedestrians=6, cars=1, acquired=11, released=4, blockedSamples=2821, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=c196:admitted:"
+      },
+      {
+        "line": 1234,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 239 travelling, 40 awaiting a route, 0 awaiting opening; clock 12504.7, lag 0.0 game minutes. Advancement this observation: 5320 frames, 288 events, 523.218 ms total, 2.986 ms maximum advance, 5 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 7; discovery sweeps 1, last branch captures 34324, split hints 8, maximum slice 19.209 ms, last sweep 0.497 s / 161.084 ms work; slowest RLO check 1.750 ms (RLO contract bindings this session 1, 1.200 ms), door search 0.118 ms, station search 0.087 ms, preparation frame 0.545 ms. Closure refresh: 5320 calls, 280.597 ms total, 0.160 ms maximum. Route planning across frames: 169 requests, 285 slices, 169 events completed, 120 frames ended with a plan pending, 287.395 ms total, slowest slice 2.849 ms ending in car-ends with 3 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 2897. physical=True, pedestrians=30, cars=0, acquired=44, released=14, blockedSamples=13111, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=c327:admitted:"
+      }
+    ]
+  },
+  {
+    "session": "r2",
+    "file": "after-native.log",
+    "sha256": "c5a8219ae473e739820bcb29fdce362e9cfe9bb7e28662f8b978b546dd607b75",
+    "bytes": 293120,
+    "inactiveLines": [
+      "[Mod:ZCityPerformance] Not active: cinematic coverage (unverified build or conflicting hooks).",
+      "[Mod:ZCityPerformance] Not active: midnight cleanup deferral (build, signature, multiplayer or conflict).",
+      "[Mod:ZCityPerformance] Not active: pedestrian refill (unverified build or conflicting patch).",
+      "[Mod:ZCityPerformance] Not active: tree detail (unverified build, signature or conflicting patch)."
+    ],
+    "capabilities": [
+      {
+        "line": 49,
+        "text": "[Mod:ZCityPerformance] Version 0.5.1; BigAmbitions SHA256=055700fd26a7a6430bbb6a9d79379781909fbc518af760453396947887db5063; verified=False; game build not audited, so behavioral changes stay off and only timing/trace hooks and the presentation-only button-caption hook run"
+      },
+      {
+        "line": 50,
+        "text": "[Mod:ZCityPerformance] Not active: pedestrian refill (unverified build or conflicting patch)."
+      },
+      {
+        "line": 51,
+        "text": "[Mod:ZCityPerformance] Not active: midnight cleanup deferral (build, signature, multiplayer or conflict)."
+      },
+      {
+        "line": 52,
+        "text": "[Mod:ZCityPerformance] AUTOSAVE inactive: option off, quitting, or unverified build."
+      },
+      {
+        "line": 53,
+        "text": "[Mod:ZCityPerformance] Not active: tree detail (unverified build, signature or conflicting patch)."
+      },
+      {
+        "line": 56,
+        "text": "[Mod:ZCityPerformance] Not active: cinematic coverage (unverified build or conflicting hooks)."
+      },
+      {
+        "line": 57,
+        "text": "[Mod:ZCityPerformance] Active: timing PedestrianSpawner.SetActivePedestrians"
+      },
+      {
+        "line": 58,
+        "text": "[Mod:ZCityPerformance] Active: timing GameManager.RunMainGameTick"
+      },
+      {
+        "line": 59,
+        "text": "[Mod:ZCityPerformance] Active: timing SaveGameManager.SerializeSaveGame"
+      },
+      {
+        "line": 60,
+        "text": "[Mod:ZCityPerformance] Active: timing CullingGroupController.Update"
+      },
+      {
+        "line": 61,
+        "text": "[Mod:ZCityPerformance] Active: timing TrafficManager.FixedUpdate"
+      }
+    ],
+    "errors": [
+      {
+        "line": 234,
+        "text": "NullReferenceException: Object reference not set to an instance of an object",
+        "context": [
+          "  at (wrapper dynamic-method) MonoMod.Utils.DynamicMethodDefinition.GameManager.RunMainGameTick_Patch5(GameManager,single)",
+          "  at GameManager.Update () [0x00080] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "",
+          "[Mod:RealLifeOverhaul] Travel: hotels: garment_hostel=ba:street_fourthavenue 1 industry_hostel=ba:street_twentyfirststreet 23 kitchen_hotel=ba:street_secondavenue 8 downtown_hotel=ba:street_fourthavenue 45 murray_hotel=ba:street_sixthavenue 18 midtown_grand=ba:street_broadwaystreet 13 kitchen_tower=ba:street_secondavenue 14 hamptons_cottages=ba:street_oceancrestroad 1",
+          "[Mod:RealLifeOverhaul] Travel: state loaded. room=none ticket=none away=False agencies=15 hotels=8.",
+          "[Mod:RealLifeOverhaul] Garage check (bay): the game's panel for filling stations and repair bays is extended (the game's own object is kept to be put back): PASS.",
+          "[Mod:RealLifeOverhaul] Performance: 'sky_updates' on. skies updating every 2 s instead of on every change: 9 (the first was set to OnChanged)",
+          "[Mod:RealLifeOverhaul] Contacts check (picture): 'reallife-911' is a logo, from the game's logo shape 'lawfirm2', kept; 24 contact picture(s): 9 face(s), 15 logo(s), 1 drawn: PASS"
+        ]
+      },
+      {
+        "line": 1203,
+        "text": "NullReferenceException: Object reference not set to an instance of an object",
+        "context": [
+          "  at Helpers.PlayerHelper.SaveCurrentPosition () [0x00005] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at (wrapper delegate-invoke) <Module>.invoke_void()",
+          "  at SaveGameManager.Save (SaveGameManager+SaveType saveType, System.String saveGameName, System.String characterFolder) [0x0005a] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at GameManager.ExecuteMidnightAutoSave () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at GameManager.TryRunPendingMidnightAutoSave () [0x00008] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at GameManager.SetPreventAutoSave (System.Boolean newPreventAutosaveValue) [0x00009] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+          "  at PerformanceReview.Guard.OnDestroy () [0x00018] in <3f5e742c2da2424aa204efd468a4a34b>:0 ",
+          ""
+        ]
+      }
+    ],
+    "persistentCityErrors": [],
+    "chronology": [
+      {
+        "line": 50,
+        "text": "[Mod:ZCityPerformance] Not active: pedestrian refill (unverified build or conflicting patch)."
+      },
+      {
+        "line": 51,
+        "text": "[Mod:ZCityPerformance] Not active: midnight cleanup deferral (build, signature, multiplayer or conflict)."
+      },
+      {
+        "line": 52,
+        "text": "[Mod:ZCityPerformance] AUTOSAVE inactive: option off, quitting, or unverified build."
+      },
+      {
+        "line": 53,
+        "text": "[Mod:ZCityPerformance] Not active: tree detail (unverified build, signature or conflicting patch)."
+      },
+      {
+        "line": 56,
+        "text": "[Mod:ZCityPerformance] Not active: cinematic coverage (unverified build or conflicting hooks)."
+      },
+      {
+        "line": 57,
+        "text": "[Mod:ZCityPerformance] Active: timing PedestrianSpawner.SetActivePedestrians"
+      },
+      {
+        "line": 58,
+        "text": "[Mod:ZCityPerformance] Active: timing GameManager.RunMainGameTick"
+      },
+      {
+        "line": 59,
+        "text": "[Mod:ZCityPerformance] Active: timing SaveGameManager.SerializeSaveGame"
+      },
+      {
+        "line": 60,
+        "text": "[Mod:ZCityPerformance] Active: timing CullingGroupController.Update"
+      },
+      {
+        "line": 61,
+        "text": "[Mod:ZCityPerformance] Active: timing TrafficManager.FixedUpdate"
+      },
+      {
+        "line": 141,
+        "text": "[Mod:PersistentCity] RLO single-pass read context=startup status=NotReady identities=0 elapsedMs=3.061 reads=1 totalMs=3.061 maxMs=3.061"
+      },
+      {
+        "line": 142,
+        "text": "[Mod:PersistentCity] Flare is not running; enable RLO's Social Media option and load a city with Flare available."
+      },
+      {
+        "line": 173,
+        "text": "[Mod:PersistentCity] RLO single-pass read context=startup status=NotReady identities=0 elapsedMs=0.031 reads=2 totalMs=3.092 maxMs=3.061"
+      },
+      {
+        "line": 303,
+        "text": "[Mod:PersistentCity] RLO single-pass read context=startup status=Ready identities=400 elapsedMs=2.881 reads=3 totalMs=5.972 maxMs=3.061"
+      },
+      {
+        "line": 325,
+        "text": "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback."
+      },
+      {
+        "line": 326,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=1497, reason=initial index=-1, scene searches in this planner=1."
+      },
+      {
+        "line": 343,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 344,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 0 travelling, 0 awaiting a route, 0 awaiting opening; clock 7665.4, lag 0.0 game minutes. Advancement this observation: 1 frames, 0 events, 1.413 ms total, 1.413 ms maximum advance, 0 maximum events in one frame; these figures cover advancement calls only. Routes: 1 road snapshots started (0 for gate changes), 115 frames waiting for routes; rebuild reasons [initial=1]; slow routing frames 1 (first 1 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 88.343 ms, station captures 1; discovery sweeps 1, last branch captures 34327, split hints 7, maximum slice 17.667 ms, last sweep 0.462 s / 144.659 ms work; slowest RLO check 0.000 ms (RLO contract bindings this session 1, 1.040 ms), door search 0.000 ms, station search 1.825 ms, preparation frame 98.409 ms. Closure refresh: 1 calls, 3.196 ms total, 3.196 ms maximum. Route planning across frames: 0 requests, 0 slices, 0 events completed, 0 frames ended with a plan pending, 0.000 ms total, slowest slice 0.000 ms ending in none with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 0. physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      {
+        "line": 689,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=3530, reason=clock-rate index=-1, scene searches in this planner=0."
+      },
+      {
+        "line": 715,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 754,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=3993, reason=clock-rate index=-1, scene searches in this planner=0."
+      },
+      {
+        "line": 768,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 773,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 434 travelling, 25 awaiting a route, 2 awaiting opening; clock 11941.4, lag 0.0 game minutes. Advancement this observation: 3182 frames, 74311 events, 25025.178 ms total, 115.207 ms maximum advance, 128 maximum events in one frame; these figures cover advancement calls only. Routes: 2 road snapshots started (0 for gate changes), 110 frames waiting for routes; rebuild reasons [clock-rate=2]; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 1; discovery sweeps 1, last branch captures 34327, split hints 7, maximum slice 17.667 ms, last sweep 0.462 s / 144.659 ms work; slowest RLO check 1.717 ms (RLO contract bindings this session 1, 1.040 ms), door search 1.471 ms, station search 0.081 ms, preparation frame 2.263 ms. Closure refresh: 3182 calls, 300.969 ms total, 4.872 ms maximum. Route planning across frames: 14673 requests, 16594 slices, 13046 events completed, 1971 frames ended with a plan pending, 21727.570 ms total, slowest slice 20.569 ms ending in car-search with 0 NavMesh path queries; event restarts 1 (run inline after repeated restarts 0), road search restarts 0, units 3654. physical=True, pedestrians=48, cars=1, acquired=50, released=1, blockedSamples=16366, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=c112:admitted:"
+      },
+      {
+        "line": 817,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 428 travelling, 25 awaiting a route, 55 awaiting opening; clock 11961.4, lag 0.0 game minutes. Advancement this observation: 5361 frames, 735 events, 843.771 ms total, 2.851 ms maximum advance, 18 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 3; discovery sweeps 1, last branch captures 34327, split hints 7, maximum slice 17.667 ms, last sweep 0.462 s / 144.659 ms work; slowest RLO check 1.644 ms (RLO contract bindings this session 1, 1.040 ms), door search 0.119 ms, station search 0.093 ms, preparation frame 1.448 ms. Closure refresh: 5361 calls, 767.360 ms total, 0.314 ms maximum. Route planning across frames: 72 requests, 137 slices, 72 events completed, 65 frames ended with a plan pending, 206.639 ms total, slowest slice 2.680 ms ending in subway-connector with 5 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 4410. physical=True, pedestrians=41, cars=3, acquired=91, released=47, blockedSamples=55070, unavailable=2, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=pc:223:admitted:"
+      },
+      {
+        "line": 854,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 386 travelling, 24 awaiting a route, 152 awaiting opening; clock 11981.4, lag 0.0 game minutes. Advancement this observation: 5313 frames, 826 events, 736.430 ms total, 3.230 ms maximum advance, 16 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 5; discovery sweeps 1, last branch captures 34327, split hints 7, maximum slice 17.667 ms, last sweep 0.462 s / 144.659 ms work; slowest RLO check 1.646 ms (RLO contract bindings this session 1, 1.040 ms), door search 0.109 ms, station search 0.101 ms, preparation frame 0.722 ms. Closure refresh: 5313 calls, 638.241 ms total, 0.551 ms maximum. Route planning across frames: 86 requests, 127 slices, 86 events completed, 41 frames ended with a plan pending, 180.360 ms total, slowest slice 2.750 ms ending in car-access-walk with 2 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 5217. physical=True, pedestrians=29, cars=2, acquired=122, released=91, blockedSamples=79629, unavailable=2, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=c399:admitted:"
+      },
+      {
+        "line": 892,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 305 travelling, 23 awaiting a route, 261 awaiting opening; clock 12001.4, lag 0.0 game minutes. Advancement this observation: 5317 frames, 1038 events, 633.227 ms total, 2.915 ms maximum advance, 17 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 7; discovery sweeps 1, last branch captures 34327, split hints 7, maximum slice 17.667 ms, last sweep 0.462 s / 144.659 ms work; slowest RLO check 1.773 ms (RLO contract bindings this session 1, 1.040 ms), door search 0.108 ms, station search 0.088 ms, preparation frame 0.530 ms. Closure refresh: 5317 calls, 643.506 ms total, 0.379 ms maximum. Route planning across frames: 77 requests, 121 slices, 77 events completed, 44 frames ended with a plan pending, 170.645 ms total, slowest slice 2.790 ms ending in subway-connector with 4 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 5963. physical=True, pedestrians=25, cars=1, acquired=147, released=121, blockedSamples=101842, unavailable=9, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=c196:inactive model slot:"
+      },
+      {
+        "line": 904,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=22666, reason=clock-rate index=-1, scene searches in this planner=0."
+      },
+      {
+        "line": 919,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 926,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=22900, reason=clock-rate index=-1, scene searches in this planner=0."
+      },
+      {
+        "line": 941,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 961,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 76 travelling, 36 awaiting a route, 97 awaiting opening; clock 12205.5, lag 0.0 game minutes. Advancement this observation: 4958 frames, 5140 events, 842.168 ms total, 16.128 ms maximum advance, 128 maximum events in one frame; these figures cover advancement calls only. Routes: 2 road snapshots started (0 for gate changes), 114 frames waiting for routes; rebuild reasons [clock-rate=2]; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 2; discovery sweeps 1, last branch captures 34327, split hints 7, maximum slice 17.667 ms, last sweep 0.462 s / 144.659 ms work; slowest RLO check 1.710 ms (RLO contract bindings this session 1, 1.040 ms), door search 0.242 ms, station search 0.100 ms, preparation frame 15.897 ms. Closure refresh: 4958 calls, 484.416 ms total, 11.127 ms maximum. Route planning across frames: 399 requests, 462 slices, 399 events completed, 64 frames ended with a plan pending, 460.715 ms total, slowest slice 8.505 ms ending in finish with 7 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 82. physical=True, pedestrians=14, cars=0, acquired=15, released=1, blockedSamples=3549, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      {
+        "line": 990,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 56 travelling, 36 awaiting a route, 114 awaiting opening; clock 12225.5, lag 0.0 game minutes. Advancement this observation: 5323 frames, 361 events, 236.250 ms total, 2.786 ms maximum advance, 16 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 4; discovery sweeps 1, last branch captures 34327, split hints 7, maximum slice 17.667 ms, last sweep 0.462 s / 144.659 ms work; slowest RLO check 1.631 ms (RLO contract bindings this session 1, 1.040 ms), door search 0.108 ms, station search 0.096 ms, preparation frame 0.627 ms. Closure refresh: 5323 calls, 327.606 ms total, 0.208 ms maximum. Route planning across frames: 30 requests, 41 slices, 30 events completed, 11 frames ended with a plan pending, 43.253 ms total, slowest slice 2.562 ms ending in subway-connector with 4 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 248. physical=True, pedestrians=2, cars=1, acquired=18, released=15, blockedSamples=7622, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=pc:113:admitted:"
+      },
+      {
+        "line": 1020,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 22 travelling, 39 awaiting a route, 54 awaiting opening; clock 12245.4, lag 0.0 game minutes. Advancement this observation: 5323 frames, 479 events, 207.251 ms total, 3.084 ms maximum advance, 16 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 6; discovery sweeps 1, last branch captures 34327, split hints 7, maximum slice 17.667 ms, last sweep 0.462 s / 144.659 ms work; slowest RLO check 1.647 ms (RLO contract bindings this session 1, 1.040 ms), door search 0.110 ms, station search 0.092 ms, preparation frame 0.680 ms. Closure refresh: 5323 calls, 264.674 ms total, 0.117 ms maximum. Route planning across frames: 36 requests, 55 slices, 36 events completed, 19 frames ended with a plan pending, 57.565 ms total, slowest slice 2.172 ms ending in car-search with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 460. physical=True, pedestrians=3, cars=0, acquired=22, released=19, blockedSamples=11824, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=pc:113:admitted:"
+      },
+      {
+        "line": 1045,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=40962, reason=clock-rate index=-1, scene searches in this planner=0."
+      },
+      {
+        "line": 1060,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 1063,
+        "text": "[Mod:PersistentCity] Road snapshot started: frame=41102, reason=clock-rate index=-1, scene searches in this planner=0."
+      },
+      {
+        "line": 1080,
+        "text": "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+      },
+      {
+        "line": 1089,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 3 travelling, 41 awaiting a route, 28 awaiting opening; clock 12447.8, lag 0.0 game minutes. Advancement this observation: 5101 frames, 2436 events, 371.564 ms total, 16.088 ms maximum advance, 71 maximum events in one frame; these figures cover advancement calls only. Routes: 2 road snapshots started (0 for gate changes), 103 frames waiting for routes; rebuild reasons [clock-rate=2]; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 1; discovery sweeps 1, last branch captures 34327, split hints 7, maximum slice 17.667 ms, last sweep 0.462 s / 144.659 ms work; slowest RLO check 1.662 ms (RLO contract bindings this session 1, 1.040 ms), door search 0.107 ms, station search 0.100 ms, preparation frame 2.264 ms. Closure refresh: 5101 calls, 60.551 ms total, 1.832 ms maximum. Route planning across frames: 273 requests, 284 slices, 273 events completed, 11 frames ended with a plan pending, 218.979 ms total, slowest slice 9.032 ms ending in finish with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 6. physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      {
+        "line": 1125,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 33 travelling, 42 awaiting a route, 28 awaiting opening; clock 12467.8, lag 0.0 game minutes. Advancement this observation: 5343 frames, 102 events, 218.083 ms total, 2.885 ms maximum advance, 7 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 3; discovery sweeps 1, last branch captures 34327, split hints 7, maximum slice 17.667 ms, last sweep 0.462 s / 144.659 ms work; slowest RLO check 1.819 ms (RLO contract bindings this session 1, 1.040 ms), door search 0.116 ms, station search 0.097 ms, preparation frame 0.856 ms. Closure refresh: 5343 calls, 33.344 ms total, 0.045 ms maximum. Route planning across frames: 66 requests, 111 slices, 66 events completed, 46 frames ended with a plan pending, 121.126 ms total, slowest slice 2.679 ms ending in car-access-walk with 3 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 514. physical=True, pedestrians=4, cars=0, acquired=5, released=1, blockedSamples=184, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      {
+        "line": 1159,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 104 travelling, 42 awaiting a route, 0 awaiting opening; clock 12487.8, lag 0.0 game minutes. Advancement this observation: 5323 frames, 185 events, 327.065 ms total, 3.537 ms maximum advance, 10 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 5; discovery sweeps 1, last branch captures 34327, split hints 7, maximum slice 17.667 ms, last sweep 0.462 s / 144.659 ms work; slowest RLO check 1.708 ms (RLO contract bindings this session 1, 1.040 ms), door search 0.125 ms, station search 0.155 ms, preparation frame 0.578 ms. Closure refresh: 5323 calls, 128.463 ms total, 0.161 ms maximum. Route planning across frames: 110 requests, 183 slices, 110 events completed, 74 frames ended with a plan pending, 189.089 ms total, slowest slice 2.538 ms ending in car-ends with 3 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 1406. physical=True, pedestrians=6, cars=1, acquired=12, released=5, blockedSamples=2880, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=c196:admitted:"
+      },
+      {
+        "line": 1191,
+        "text": "[Mod:PersistentCity] Population: 957 citizens; 274 travelling, 39 awaiting a route, 0 awaiting opening; clock 12507.8, lag 0.0 game minutes. Advancement this observation: 5254 frames, 364 events, 709.136 ms total, 3.614 ms maximum advance, 4 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild clock-rate index=-1; this planner scene searches 0, maximum 0.000 ms, station captures 7; discovery sweeps 1, last branch captures 34327, split hints 7, maximum slice 17.667 ms, last sweep 0.462 s / 144.659 ms work; slowest RLO check 2.133 ms (RLO contract bindings this session 1, 1.040 ms), door search 0.153 ms, station search 0.094 ms, preparation frame 0.690 ms. Closure refresh: 5254 calls, 354.559 ms total, 0.255 ms maximum. Route planning across frames: 208 requests, 372 slices, 208 events completed, 169 frames ended with a plan pending, 398.551 ms total, slowest slice 3.187 ms ending in subway-connector with 4 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 3268. physical=True, pedestrians=31, cars=2, acquired=48, released=15, blockedSamples=16841, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=pc:129:admitted:"
+      }
+    ]
+  }
+]

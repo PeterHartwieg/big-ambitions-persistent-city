@@ -1,0 +1,19 @@
+{
+  "role": "rig_test",
+  "testedSha": "7a6153cfa9bb88e28dea905b285b4273c3e268c7",
+  "firstSha": "21db30b753b8fdbe8e4a4a836f5f2623e0935377",
+  "difference": [
+    "docs/roadmap.md",
+    "docs/reviews/2026-10-27-realism-gameplay-roadmap.md"
+  ],
+  "productionSourceUnchanged": true,
+  "productionDllSha256": "f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c",
+  "helpersIdentical": true,
+  "offline": {
+    "buildPassed": true,
+    "testsPassed": 1551,
+    "failed": 0,
+    "skipped": 0
+  },
+  "firstStageReadOnly": true
+}

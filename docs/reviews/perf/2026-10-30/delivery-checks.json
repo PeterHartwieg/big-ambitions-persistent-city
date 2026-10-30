@@ -1,0 +1,10 @@
+{
+  "role": "rig_test",
+  "verdict": "PASS",
+  "primaryWindows": 27,
+  "allPortableQuantilesVerified": true,
+  "allPrimaryWindowsAtLeast60Seconds": true,
+  "sourceUntouched": true,
+  "restoreVerified": true,
+  "leaseReleased": true
+}

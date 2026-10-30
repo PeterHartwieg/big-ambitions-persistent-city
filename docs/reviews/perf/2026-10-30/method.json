@@ -1,0 +1,20 @@
+{
+  "role": "rig_test",
+  "testedSha": "7a6153cfa9bb88e28dea905b285b4273c3e268c7",
+  "retainedFirstSessionSha": "21db30b753b8fdbe8e4a4a836f5f2623e0935377",
+  "relaunch": "Only documentation changed between sessions; all production and helper DLL hashes are identical. First stage remains read-only. New lease, backup, scripts and remaining captures use a separate r2 private stage.",
+  "productionDllSha256": "f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c",
+  "offline": {"build": "python tools/build.py --game-managed <read-only assembly references>", "sanityTests": {"passed": 1551, "failed": 0, "skipped": 0, "total": 1551}},
+  "gate": "Implementation-plan combined Update/authority union p95 <=5 ms per completed frame, no repeated mod-attributable >50 ms stalls; retain max and all >5 ms counts. This is not a claim that every frame is <=5 ms.",
+  "sample": "Three >=60 real-second windows per Monday morning, noon and evening condition. Separate supplemental Friday/weekend windows retained. Additional bucket profiling and saves are separate from primary windows.",
+  "conditions": {"day": 8, "weekday": "Monday under ((day-1)%7)", "morningStart": "07:00 then 15 real-second warmup", "normalStart": "12:00 then 15 real-second warmup", "eveningStart": "15:30 then 15 real-second warmup"},
+  "defaultMods": ["Persistent City", "Real Life Overhaul", "frame/event helper", "rig_test guard and bridge-only host"],
+  "bridge": "Retained patched bridge assembly loaded from private staging. Its gameplay initialization and city entries are never invoked. Bridge readiness is acknowledged after the native loading screen completes. No production DLL is modified.",
+  "settings": {"calendarFactor": 0.3333333333333333, "optionalStopPercentage": 25, "maximumPedestrians": 48, "maximumVehicles": 24, "physicalRadiusMetres": 120, "speedInWindows": 1, "screen": "1920x1080", "quality": "Low", "vSync": 0, "targetFps": 90},
+  "autosave": "Original preventAutoSave false and interval 5 minutes / 3 slots recorded; preventAutoSave true checked before and after every window and after reload. Save file size/mtime inventories and actual-save log markers are checked. Save activity invalidates a sample.",
+  "statistics": "Pooled frames within each condition, floor(n*q) order statistic as existing helper. Also retain each window and its spread. Inclusive nested component percentiles are never summed. First/current partial mod frames are excluded; historical whole-frame aggregate retains its first partial observation.",
+  "allocations": "Only positively verified allocation counters qualify. Current-thread counter and Unity GC Allocated In Frame recorder did not provide allocation evidence. Signed mono-used-heap deltas are reported distinctly; they cannot supply bytes allocated or subsystem allocation attribution.",
+  "loadOrder": "Test both directory placements; verify actual lifecycle/patch chronology. City Performance initialization-load patches precede Persistent City's city-load patches regardless of directory placement. Do not relabel an unchanged effective order as a reversed one.",
+  "comparison": "Quoted 31.63/517.95 baseline is actually combined mod work from the 24 October Mac final-candidate capture, not 28 October PC whole-frame data. It is an unmatched historical reference.",
+  "noise": "No builds/tests during windows. Other machine activity is uncontrolled. Runs are sequential, not randomized; shader/body/route histories can vary. Wall intervals are not presented-frame or user-visible FPS proof. Helper/event timing adds overhead that is not subtracted. No causal PR-specific effect is inferred from historical versus current numbers."
+}

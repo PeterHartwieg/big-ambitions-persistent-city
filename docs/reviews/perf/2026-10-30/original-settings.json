@@ -1,0 +1,12 @@
+{
+  "persistentCityConfig": {
+    "file": "ModsLocal/PersistentCity/persistent-city.json",
+    "sha256": "abfecb215a3c3ea89e6a1137c7445726dde66947c06d361adb2be1337cf78c66"
+  },
+  "autosave": {
+    "preventAutoSave": false,
+    "minutesBetweenAutoSaves": 5,
+    "maxAutoSavesPerGame": 3
+  },
+  "restorationProof": "Complete profile inventory, original install references, root files and original preference export must match; restored game is not relaunched."
+}
