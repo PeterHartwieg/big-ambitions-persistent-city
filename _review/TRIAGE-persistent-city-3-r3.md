@@ -1,0 +1,14 @@
+# PR #3 independent review round 3 triage
+HIGH_MEDIUM_FIX: 1
+
+| ID | Severity | PR | file:line | Finding | Raised by (sol/astra/opus) | Decision (FIX / SKIP / QUESTION) | Reason |
+|---|---|---|---|---|---|---|---|
+| R3-1 | Medium | #3 | Core/CitySimulator.cs:341; Core/OptionalStopScheduling.cs:179 | Same-visit events erase granted-stop evidence and permit repeat conversation recruitment | opus M1 | FIX | Retain the existing stop record as cancelled evidence until the visit changes. Preserve acceptance, original stop times and schema 16; cancel both members when an event interrupts a pair. Test active/expired pairs, reload, later arrivals and departure cleanup. This restores the existing single-opportunity bound rather than introducing repeat stops. |
+| R3-2 | Low | #3 | Runtime/PhysicalPopulation.cs:385 | Deferred arrival after native facade replacement lacks queue-style body grace | opus L1 | SKIP | Narrow scene-destruction/replacement window; ordinary arrivals and saved reloads are covered. Admission correctly refuses unvalidated geometry, with identity and saved continuation intact. No routine-path continuity failure is demonstrated; avoid adding another wait state for this exceptional native lifecycle case. |
+| R3-3 | Low | #3 | Runtime/PhysicalPopulation.cs:273 | Selection repeats native readiness queries before the radius filter | opus L2 | SKIP | Existing refresh already validates saved stops globally; cached facade/ring discovery bounds expensive resampling. There is no measured selection regression. Per-pass caching and moving checks are a performance follow-up requiring native evidence, not a correctness repair for this round. |
+| R3-4 | Low | #3 | tests/ | Deferred invariant is covered by a standalone harness rather than xunit | opus L3 | SKIP | The mandatory harness already exercises real Core/Persistence with extracted production geometry/status/cache methods, both roster orders, and physical refusal. The selection harness also explicitly switches to Deferred/Unavailable; duplicating these assertions in xunit adds no uncovered invariant. |
+| R3-5 | Low | #3 | Runtime/OptionalStopEnvironment.cs:186 | SampledThisFrame conjunct is redundant after discovery | opus N1 | SKIP | Harmless explicit statement of the reason for deferral; removing it provides no behavioral or meaningful performance benefit. |
+
+Sol: APPROVE, no findings. Astra: APPROVE, no findings. Opus: APPROVE WITH NITS. Five deduplicated findings: one FIX, four SKIP, no QUESTION. Starting head e904c5fe9f is current on origin; base 9ee38e9 is already merged. Approved 25% configuration and schema 16 stay unchanged. Existing untracked RESULT.md is untouched.
+
+Completed: R3-1 fixed in 49a140b; documentation/evidence in 4e3027a. All 1,370 unit tests, 21 standalone regressions and additional checks pass, as do production/helper warnings-as-errors Steam-DLL builds. Pushed normally through 4e3027a; PR remains draft. No questions or PR comments posted.
