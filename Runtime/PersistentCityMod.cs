@@ -68,6 +68,7 @@ namespace PersistentCity.Runtime
         private bool physicalFailed;
         private readonly ResidentInspector inspector = new ResidentInspector();
         private bool inspectorFailed;
+        private Action<string>? inspectorWarning;
         private object? saveIdentity;
         private object? initializingSave;
         private sealed class PreparedCity
@@ -205,7 +206,7 @@ namespace PersistentCity.Runtime
                 if (saveIdentity != null && !ReferenceEquals(saveIdentity, save))
                 {
                     physical?.Dispose(); physical = null; physicalFailed = false;
-                    inspector.Reset();
+                    inspector.Reset(); inspectorFailed = false;
                     Detach();
                     simulation = null;
                     saveSession = null;
@@ -429,7 +430,7 @@ namespace PersistentCity.Runtime
         private void UpdateInspector()
         {
             if (inspectorFailed || simulation == null) return;
-            try { inspector.Update(simulation, physical, economyRect); }
+            try { inspector.Attach(inspectorWarning ??= message => log?.Warn(message)); inspector.Update(simulation, physical, economyRect); }
             catch (Exception error)
             {
                 // The inspector is read-only; its failure must not stop the population.
@@ -641,6 +642,7 @@ namespace PersistentCity.Runtime
         private void Detach()
         {
             foodMarket?.Dispose(); foodMarket = null;
+            inspector.Detach();
             try { physical?.Dispose(); }
             finally { physical = null; routeObjects?.Dispose(); routeObjects = null; NativeCityClock.Stop(); NativeTravelPace.StopObservation(); }
             if (!subscribed) return;

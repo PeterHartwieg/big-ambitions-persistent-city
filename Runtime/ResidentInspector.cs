@@ -1,6 +1,8 @@
 using System;
+using HarmonyLib;
 using PersistentCity.Core;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace PersistentCity.Runtime
@@ -11,6 +13,10 @@ namespace PersistentCity.Runtime
     /// no route or market call. Picking runs in Update (inside mod-work attribution) only after the
     /// cursor moved and at most every <see cref="ResidentPickThrottle.DefaultIntervalSeconds"/>;
     /// popup content is built on click and refreshed once per second while open.
+    /// It only acts where the game itself would accept a world click: no open native menu, map, phone,
+    /// mini-game or screenshot mode, and no native UI element under the cursor. While the cursor is on
+    /// the popup or a highlighted walker, a prefix on the game's MouseController.Run skips that frame's
+    /// native world mouse handling, so an inspector click does not also move the player.
     /// </summary>
     internal sealed class ResidentInspector
     {
@@ -35,6 +41,40 @@ namespace PersistentCity.Runtime
         private readonly long[] updateTicks = new long[3], updateCalls = new long[3], updateMaxTicks = new long[3];
         private readonly long[] drawTicks = new long[3], drawCalls = new long[3], drawMaxTicks = new long[3];
         private long builds, buildTicks, buildMaxTicks;
+        private const string ClickGuardOwner = "persistentcity.resident-inspector-input";
+        private static ResidentInspector? guarded;
+        private Harmony? clickGuard;
+        private Action<string>? warn;
+        private bool mapFailureLogged, attachTried;
+
+        /// <summary>Install the native click guard. Failure leaves the inspector usable without it.</summary>
+        public void Attach(Action<string> warning)
+        {
+            warn = warning;
+            if (attachTried) return;
+            attachTried = true;
+            try
+            {
+                if (Harmony.HasAnyPatches(ClickGuardOwner)) throw new InvalidOperationException("Inspector input patch ID already owned.");
+                var run = AccessTools.Method(typeof(MouseController), nameof(MouseController.Run), Type.EmptyTypes)
+                    ?? throw new MissingMethodException("MouseController.Run()");
+                var installing = new Harmony(ClickGuardOwner);
+                installing.Patch(run, prefix: new HarmonyMethod(typeof(ResidentInspector), nameof(MouseRunPrefix)));
+                clickGuard = installing; guarded = this;
+            }
+            catch (Exception error) { warning("Resident inspector click guard unavailable; inspector clicks may also reach the game: " + error.Message); }
+        }
+
+        public void Detach()
+        {
+            if (ReferenceEquals(guarded, this)) guarded = null;
+            try { clickGuard?.UnpatchAll(ClickGuardOwner); }
+            finally { clickGuard = null; attachTried = false; }
+        }
+
+        // The cursor is on the inspector's own popup or highlighted walker (positions from the last GUI event).
+        private bool OwnsPointer => visible && ((selectedId != null && popup.Contains(mouse)) || (hoveredId != null && hoveredRect.Contains(mouse)));
+        private static bool MouseRunPrefix() => guarded == null || !guarded.OwnsPointer;
 
         public void Reset()
         {
@@ -45,7 +85,21 @@ namespace PersistentCity.Runtime
 
         private void ClearHover() { hoveredId = null; hoveredGeneration = 0; hoveredName = ""; }
 
-        private static bool NormalView() => !CityMap.IsOpen && !BuildingManager.IsInsideBuilding;
+        // The game's own conditions for world hover/clicks (see its EntityController hover and MouseController).
+        private static bool NormalView()
+        {
+            if (CityMap.IsOpen || BuildingManager.IsInsideBuilding || UI.Smartphone.FullMenu.IsOpen || UI.MiniMenu.MiniMenu.IsOpen
+                || PlayerActivity.PlayerActivityUI.IsPanelOpen || UI.InteriorDesigner.InteriorDesignerUI.IsOpen || SubwaySystem.IsRiding
+                || GameManager.IsAnyMiniGameActive() || !ScreenshotController.uiIsVisible || ScreenshotController.isInFreeLookMode) return false;
+            var screenshot = InstanceBehavior<UI.UIs>.Instance?.screenshot;
+            return screenshot == null || !screenshot.enabled;
+        }
+
+        private static bool NativeUiUnderPointer()
+        {
+            var events = EventSystem.current;
+            return events != null && events.IsPointerOverGameObject();
+        }
 
         public void Update(CitySimulator simulation, PhysicalPopulation? physical, Rect blocked)
         {
@@ -63,9 +117,10 @@ namespace PersistentCity.Runtime
                     else
                     {
                         // A hovered walker can walk out from under a still cursor: one projection per frame.
-                        if (hoveredId != null && (!physical.TryWalkerRect(camera, hoveredId, hoveredGeneration, out hoveredRect) || !hoveredRect.Contains(mouse)))
+                        // Native UI is checked only on hover or pick frames, never when closed and still.
+                        if (hoveredId != null && (NativeUiUnderPointer() || !physical.TryWalkerRect(camera, hoveredId, hoveredGeneration, out hoveredRect) || !hoveredRect.Contains(mouse)))
                             ClearHover();
-                        if (throttle.ShouldPick(Time.unscaledTime, mouse.x, mouse.y))
+                        if (throttle.ShouldPick(Time.unscaledTime, mouse.x, mouse.y) && !NativeUiUnderPointer())
                         {
                             var best = new ResidentPickAccumulator();
                             physical.PickWalker(camera, mouse.x, mouse.y, ref best);
@@ -92,7 +147,7 @@ namespace PersistentCity.Runtime
         {
             long started = Stopwatch.GetTimestamp();
             nextRefresh = Time.unscaledTime + RefreshSeconds;
-            insight = simulation.Inspect(selectedId!);
+            insight = simulation.Inspect(selectedId!, null, LocalizedStreet);
             if (insight == null) { body = "This resident has left the city."; personality = homeLabel = workLabel = ""; header = "Resident"; }
             else
             {
@@ -120,7 +175,7 @@ namespace PersistentCity.Runtime
                 {
                     if (input.type == EventType.Repaint) DrawHighlight();
                     else if (input.type == EventType.MouseDown && input.button == 0 && hoveredRect.Contains(input.mousePosition)
-                        && !(selectedId != null && popup.Contains(input.mousePosition)))
+                        && !(selectedId != null && popup.Contains(input.mousePosition)) && NormalView() && !NativeUiUnderPointer())
                     {
                         Open(hoveredId, input.mousePosition); input.Use();
                     }
@@ -191,9 +246,24 @@ namespace PersistentCity.Runtime
             if (address == null) GUILayout.Label("—", text);
             else if (!address.CanNavigate) GUILayout.Label(shown, text);
             else if (GUILayout.Button(shown, link))
-                mapProblem = NativeMap.TryFocus(address, out string problem) ? "" : problem;
+            {
+                try { mapProblem = NativeMap.TryFocus(address, out string problem) ? "" : problem; }
+                catch (Exception error)
+                {
+                    // A native map failure must not escape OnGUI mid-layout.
+                    mapProblem = "The map could not open.";
+                    if (!mapFailureLogged) { mapFailureLogged = true; warn?.Invoke("Resident inspector map link failed: " + error); }
+                }
+            }
             GUILayout.EndHorizontal();
         }
+
+        // Native street names are localization keys ("ba:street_..."); display the game's own text.
+        private static readonly Func<string, string> LocalizedStreet = key =>
+        {
+            try { return Localizor.LocalizorManager.Localize(key, (object?)null).ToString() ?? key; }
+            catch (Exception) { return key; }
+        };
 
         private static double Milliseconds(long ticks) => ticks * 1000.0 / Stopwatch.Frequency;
         private static object Modes(long[] ticks, long[] calls, long[] max) => new
@@ -224,6 +294,7 @@ namespace PersistentCity.Runtime
             Array.Clear(updateTicks, 0, 3); Array.Clear(updateCalls, 0, 3); Array.Clear(updateMaxTicks, 0, 3);
             Array.Clear(drawTicks, 0, 3); Array.Clear(drawCalls, 0, 3); Array.Clear(drawMaxTicks, 0, 3);
             builds = buildTicks = buildMaxTicks = 0;
+            throttle.ResetPicks();
         }
     }
 }

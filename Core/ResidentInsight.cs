@@ -20,10 +20,13 @@ namespace PersistentCity.Core
     {
         public string PlaceId { get; set; } = "";
         public string Name { get; set; } = "";
+        /// <summary>The native street key exactly as in the place ID (e.g. "ba:street_thirdstreet"), used to find the building on the map.</summary>
         public string Street { get; set; } = "";
+        /// <summary>The street as shown to the player; the localized key when a localizer is supplied.</summary>
+        public string DisplayStreet { get; set; } = "";
         public int Number { get; set; }
         public bool CanNavigate => Street.Length > 0;
-        public string AddressText => CanNavigate ? Street + " " + Number.ToString(CultureInfo.InvariantCulture) : "";
+        public string AddressText => CanNavigate ? (DisplayStreet.Length > 0 ? DisplayStreet : Street) + " " + Number.ToString(CultureInfo.InvariantCulture) : "";
         public string Label => !CanNavigate ? Name : Name.Length == 0 || Name == AddressText ? AddressText : Name + ", " + AddressText;
 
         /// <summary>Decode GamePlaces' "address:&lt;escaped street&gt;:&lt;number&gt;:&lt;kind&gt;" form.</summary>
@@ -38,10 +41,16 @@ namespace PersistentCity.Core
             return street.Trim().Length > 0;
         }
 
-        public static ResidentAddress From(Place place)
+        /// <param name="localize">Maps a native street key to display text; identity when null.</param>
+        public static ResidentAddress From(Place place, Func<string, string>? localize = null)
         {
             var address = new ResidentAddress { PlaceId = place.Id, Name = place.Name };
-            if (TryParse(place.Id, out string street, out int number)) { address.Street = street; address.Number = number; }
+            if (!TryParse(place.Id, out string street, out int number)) return address;
+            address.Street = street; address.Number = number;
+            string shown = localize == null ? street : localize(street);
+            address.DisplayStreet = string.IsNullOrWhiteSpace(shown) ? street : shown;
+            // Homes and unnamed businesses are named by their raw native address; show it localized.
+            if (place.Name == street + " " + number.ToString(CultureInfo.InvariantCulture)) address.Name = address.AddressText;
             return address;
         }
     }
@@ -73,26 +82,31 @@ namespace PersistentCity.Core
             : productId.Length == 0 ? "food" : productId;
 
         public static ResidentInsight Capture(CityState city, CitizenState person, ResidentMeal? meal,
-            Func<string, Place?> findPlace, Func<string, string>? productName = null)
+            Func<string, Place?> findPlace, Func<string, string>? productName = null, Func<string, string>? localize = null)
         {
             if (city == null) throw new ArgumentNullException(nameof(city));
             if (person == null) throw new ArgumentNullException(nameof(person));
             if (findPlace == null) throw new ArgumentNullException(nameof(findPlace));
             productName ??= DefaultProductName;
+            Func<string, string> label = id =>
+            {
+                var place = Find(findPlace, id);
+                return place == null ? "an unknown place" : ResidentAddress.From(place, localize).Label;
+            };
             double now = city.Minute;
             var insight = new ResidentInsight { ResidentId = person.Identity.Id, Name = person.Identity.Name, Age = person.Identity.Age, Minute = now };
             var home = Find(findPlace, person.HomeId);
-            insight.Home = home == null ? null : ResidentAddress.From(home);
+            insight.Home = home == null ? null : ResidentAddress.From(home, localize);
             var day = Find(findPlace, person.DayPlaceId);
-            insight.Work = day == null ? null : ResidentAddress.From(day);
+            insight.Work = day == null ? null : ResidentAddress.From(day, localize);
             insight.WorkRole = day == null ? person.Identity.Persona == Persona.Retiree ? "Retired" : "No regular workplace"
                 : day.Kind == PlaceKind.Study ? "Studies at" : "Works at";
             insight.Personality = DescribePersonality(person, meal, productName);
             var mealToday = meal != null && meal.Slot == 0 && meal.ResidentId == person.Identity.Id ? meal : null;
-            insight.Story = TellStory(person, insight, Doing(person, mealToday, findPlace, productName, now));
-            DescribeHeading(person, mealToday, findPlace, productName, now, out string heading, out string reason);
+            insight.Story = TellStory(person, insight, Doing(person, mealToday, label, productName, now));
+            DescribeHeading(person, mealToday, label, productName, now, out string heading, out string reason);
             insight.Heading = heading; insight.HeadingReason = reason;
-            insight.Meals = TodaysMeals(city, mealToday, findPlace, productName, now, out string note);
+            insight.Meals = TodaysMeals(city, mealToday, label, productName, now, out string note);
             insight.MealNote = note;
             return insight;
         }
@@ -123,12 +137,6 @@ namespace PersistentCity.Core
         }
 
         private static Place? Find(Func<string, Place?> findPlace, string id) => string.IsNullOrEmpty(id) ? null : findPlace(id);
-
-        private static string Label(Func<string, Place?> findPlace, string id)
-        {
-            var place = Find(findPlace, id);
-            return place == null ? "an unknown place" : ResidentAddress.From(place).Label;
-        }
 
         private static IReadOnlyList<string> DescribePersonality(CitizenState person, ResidentMeal? meal, Func<string, string> productName)
         {
@@ -204,10 +212,10 @@ namespace PersistentCity.Core
             }
         }
 
-        private static string Doing(CitizenState person, ResidentMeal? meal, Func<string, Place?> findPlace, Func<string, string> productName, double now)
+        private static string Doing(CitizenState person, ResidentMeal? meal, Func<string, string> label, Func<string, string> productName, double now)
         {
             var stop = person.OptionalStop;
-            if (stop != null && stop.ActiveAt(now)) return StopWords(stop.Kind) + " near " + Label(findPlace, stop.PlaceId);
+            if (stop != null && stop.ActiveAt(now)) return StopWords(stop.Kind) + " near " + label(stop.PlaceId);
             switch (person.Phase)
             {
                 case CitizenPhase.Travelling:
@@ -224,31 +232,31 @@ namespace PersistentCity.Core
                             elapsed -= leg.Minutes;
                         }
                     }
-                    return Mode(mode) + " to " + Label(findPlace, person.DestinationId);
+                    return Mode(mode) + " to " + label(person.DestinationId);
                 }
-                case CitizenPhase.WaitingForRoute: return "waiting to leave " + Label(findPlace, person.PlaceId);
-                case CitizenPhase.WaitingForOpening: return "waiting for " + Label(findPlace, person.DestinationId) + " to open";
+                case CitizenPhase.WaitingForRoute: return "waiting to leave " + label(person.PlaceId);
+                case CitizenPhase.WaitingForOpening: return "waiting for " + label(person.DestinationId) + " to open";
             }
             if (meal != null && person.MealOuting != null && meal.PlaceId == person.PlaceId
                 && (meal.Status == MealStatus.Travelling || meal.Status == MealStatus.Serving))
-                return "getting " + KindName(meal.Kind).ToLowerInvariant() + " (" + productName(meal.ProductId) + ") at " + Label(findPlace, person.PlaceId);
-            string at = ActivityAt(person.Activity, Label(findPlace, person.PlaceId));
+                return "getting " + KindName(meal.Kind).ToLowerInvariant() + " (" + productName(meal.ProductId) + ") at " + label(person.PlaceId);
+            string at = ActivityAt(person.Activity, label(person.PlaceId));
             return person.ActivityUntilMinute > now && person.ActivityUntilMinute - now < 1440 ? at + " until " + Clock(person.ActivityUntilMinute) : at;
         }
 
-        private static void DescribeHeading(CitizenState person, ResidentMeal? meal, Func<string, Place?> findPlace,
+        private static void DescribeHeading(CitizenState person, ResidentMeal? meal, Func<string, string> label,
             Func<string, string> productName, double now, out string heading, out string reason)
         {
             bool moving = person.Phase != CitizenPhase.AtPlace && person.DestinationId.Length > 0;
             var stop = person.OptionalStop;
             if (!moving)
             {
-                heading = "Not travelling: " + ActivityAt(person.Activity, Label(findPlace, person.PlaceId));
+                heading = "Not travelling: " + ActivityAt(person.Activity, label(person.PlaceId));
                 reason = stop != null && stop.ActiveAt(now) ? StopWords(stop.Kind) + " until " + Clock(stop.EndMinute)
                     : person.ActivityUntilMinute > now && person.ActivityUntilMinute - now < 1440 ? "stays until " + Clock(person.ActivityUntilMinute) : "";
                 return;
             }
-            string destination = Label(findPlace, person.DestinationId);
+            string destination = label(person.DestinationId);
             heading = "Heading to " + destination;
             if (person.Phase == CitizenPhase.Travelling && person.NextEventMinute > now && person.NextEventMinute - now < 1440)
                 heading += ", arriving about " + Clock(person.NextEventMinute);
@@ -277,7 +285,7 @@ namespace PersistentCity.Core
         private static string ActivityName(Activity activity) => activity == Activity.Work ? "work" : activity == Activity.Study ? "class"
             : activity == Activity.Shop ? "shopping" : activity == Activity.Leisure ? "their free time" : "home";
 
-        private static IReadOnlyList<ResidentMealInsight> TodaysMeals(CityState city, ResidentMeal? meal, Func<string, Place?> findPlace,
+        private static IReadOnlyList<ResidentMealInsight> TodaysMeals(CityState city, ResidentMeal? meal, Func<string, string> label,
             Func<string, string> productName, double now, out string note)
         {
             var meals = new ResidentMealInsight[3];
@@ -289,7 +297,7 @@ namespace PersistentCity.Core
             if (meal == null) { note = "No meal record for this resident yet."; return meals; }
             if (meal.Kind == MealKind.Legacy)
             {
-                note = "This city uses the earlier single daily meal: " + (meal.Day == today ? Describe(meal, findPlace, productName, now) : "unknown") + ".";
+                note = "This city uses the earlier single daily meal: " + (meal.Day == today ? Describe(meal, label, productName, now) : "unknown") + ".";
                 return meals;
             }
             if (meal.Day > today)
@@ -301,7 +309,7 @@ namespace PersistentCity.Core
             int current = meal.Kind - MealKind.Breakfast;
             for (int i = 0; i < current; i++) { meals[i].State = ResidentMealState.NotRecorded; meals[i].Text = "not recorded (only the latest meal is stored)"; }
             meals[current].State = State(meal.Status);
-            meals[current].Text = Describe(meal, findPlace, productName, now);
+            meals[current].Text = Describe(meal, label, productName, now);
             return meals;
         }
 
@@ -310,9 +318,9 @@ namespace PersistentCity.Core
             : status == MealStatus.Missed ? ResidentMealState.Skipped : status == MealStatus.Uncertain ? ResidentMealState.Unconfirmed
             : ResidentMealState.Unknown;
 
-        private static string Describe(ResidentMeal meal, Func<string, Place?> findPlace, Func<string, string> productName, double now)
+        private static string Describe(ResidentMeal meal, Func<string, string> label, Func<string, string> productName, double now)
         {
-            string shop = meal.PlaceId.Length == 0 ? "a shop" : Label(findPlace, meal.PlaceId);
+            string shop = meal.PlaceId.Length == 0 ? "a shop" : label(meal.PlaceId);
             string product = productName(meal.ProductId);
             switch (meal.Status)
             {

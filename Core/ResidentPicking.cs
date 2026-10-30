@@ -25,7 +25,11 @@ namespace PersistentCity.Core
             interval = intervalSeconds; this.movePixels = movePixels;
         }
 
+        /// <summary>Picks since construction or the last <see cref="ResetPicks"/>; diagnostic only.</summary>
         public long Picks { get; private set; }
+
+        /// <summary>Start a new diagnostic window. Scheduling state (last position, next time, pending move) is unchanged.</summary>
+        public void ResetPicks() => Picks = 0;
 
         public bool ShouldPick(double now, float x, float y)
         {

@@ -18,7 +18,7 @@ args = parser.parse_args()
 managed = args.game_managed.resolve()
 references = ["mscorlib", "System", "System.Core", "System.Numerics", "System.Runtime.Serialization", "netstandard", "BigAmbitions",
               "BigAmbitions.ModAPI", "BigAmbitions.AI", "BigAmbitions.Items", "BigAmbitions.Characters", "BigAmbitions.Neighborhoods", "HGExtensions", "HGPlugins",
-              "UnityEngine.CoreModule", "UnityEngine.IMGUIModule", "UnityEngine.TextRenderingModule", "UnityEngine.AIModule", "UnityEngine.PhysicsModule", "UnityEngine.AnimationModule", "ExternalPlugins", "DayNightCycle"]
+              "UnityEngine.CoreModule", "UnityEngine.IMGUIModule", "UnityEngine.UI", "UnityEngine.TextRenderingModule", "UnityEngine.AIModule", "UnityEngine.PhysicsModule", "UnityEngine.AnimationModule", "ExternalPlugins", "DayNightCycle"]
 for name in references:
     if not (managed / (name + ".dll")).is_file():
         raise SystemExit(f"Required game assembly is missing: {name}.dll")

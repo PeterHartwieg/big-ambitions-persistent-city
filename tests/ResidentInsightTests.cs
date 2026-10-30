@@ -228,6 +228,49 @@ public sealed class ResidentInsightTests
     }
 
     [Fact]
+    public void NativeStreetKeysAreLocalizedForDisplayButKeptRawForTheMap()
+    {
+        // GamePlaces names homes by their raw native address, e.g. "ba:street_thirdstreet 30".
+        const string home = "address:ba%3Astreet_thirdstreet:30:home", work = "address:ba%3Astreet_pier:7:work";
+        var places = new[] {
+            new Place { Id = home, Name = "ba:street_thirdstreet 30", Kind = PlaceKind.Home },
+            new Place { Id = work, Name = "ba:street_pier 7", Kind = PlaceKind.Work } }.ToDictionary(p => p.Id);
+        var person = new CitizenState { Identity = new CitizenIdentity { Id = "pc:9", Name = "Lee", Age = 40, Persona = Persona.Commuter },
+            HomeId = home, DayPlaceId = work, PlaceId = home, Activity = Activity.Home, Phase = CitizenPhase.AtPlace };
+        var city = new CityState { Minute = 1440 + 600, Places = places.Values.ToList(), Citizens = new() { person } };
+        var names = new Dictionary<string, string> { ["ba:street_thirdstreet"] = "Third Street", ["ba:street_pier"] = "Pier Road" };
+        var insight = ResidentInsight.Capture(city, person, null, id => places.TryGetValue(id, out var p) ? p : null,
+            localize: key => names.TryGetValue(key, out var name) ? name : key);
+        Assert.Equal("Third Street 30", insight.Home!.Label);
+        Assert.Equal("Pier Road 7", insight.Work!.Label);
+        Assert.Equal(("ba:street_thirdstreet", 30), (insight.Home.Street, insight.Home.Number)); // the map link matches the native key
+        Assert.Contains("Lives at Third Street 30.", insight.Story);
+        Assert.Contains("Works at Pier Road 7.", insight.Story);
+        Assert.Contains("at home", insight.Story);
+        Assert.DoesNotContain("ba:street", insight.Text());
+        Assert.DoesNotContain("ba:street", insight.Story);
+        // Without a localizer (and for a blank translation) the raw key remains visible rather than empty.
+        Assert.Equal("ba:street_thirdstreet 30", ResidentAddress.From(places[home]).Label);
+        Assert.Equal("ba:street_pier 7", ResidentAddress.From(places[work], _ => " ").Label);
+    }
+
+    [Fact]
+    public void ResettingThePickCountStartsANewWindowWithoutChangingScheduling()
+    {
+        var throttle = new ResidentPickThrottle(0.05, 1f);
+        Assert.True(throttle.ShouldPick(0, 10, 10));
+        Assert.True(throttle.ShouldPick(1, 30, 10));
+        Assert.False(throttle.ShouldPick(1.01, 50, 10)); // pending move, throttled
+        Assert.Equal(2, throttle.Picks);
+        throttle.ResetPicks();
+        Assert.Equal(0, throttle.Picks);
+        Assert.False(throttle.ShouldPick(1.02, 50, 10)); // still throttled after the reset
+        Assert.True(throttle.ShouldPick(1.06, 50, 10));  // the pending move survives the reset
+        for (int frame = 0; frame < 50; frame++) Assert.False(throttle.ShouldPick(2 + frame * .016, 50, 10)); // still cursor window
+        Assert.Equal(1, throttle.Picks);
+    }
+
+    [Fact]
     public void PickChoosesTheNearestWalkerIndependentOfOrder()
     {
         Assert.False(ResidentPickAccumulator.Hit(100, 50, 100, 200, 100, 100, 8, out _));   // above the head
