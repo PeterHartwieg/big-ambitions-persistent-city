@@ -201,9 +201,26 @@ public sealed class ResidentInsightTests
         Assert.Equal(new[] { "keeps a regular workday", "happy to walk far" }, words);
         Assert.DoesNotContain(words, w => w.Any(char.IsDigit));
         person.Identity.Persona = Persona.Student; person.Preferences = new TravelPreferences { WalkingToleranceMetres = 700, AllowTransit = false, FareWeightMinutes = 5 };
+        // A represented consumer's legacy taste is not the clicked person's; only the resident's own traits are described.
         var meal = Meal(MealKind.Lunch, MealStatus.Pending); meal.PreferredProductId = FoodProducts.Burger;
-        Assert.Equal(new[] { "on a student budget", "often packs lunch", "prefers short walks", "avoids public transport", "minds fares", "likes burgers" },
+        Assert.Equal(new[] { "on a student budget", "often packs lunch", "prefers short walks", "avoids public transport", "minds fares" },
             Capture(city, person, meal, places).Personality);
+    }
+
+    [Fact]
+    public void TraitsAreDescribedInWordsWithoutNumbersAndNeutralOrInactiveTraitsStaySilent()
+    {
+        var (city, person, places) = Fixture();
+        // Croissant 4, burger 0, hot dog 2, price 3, queue 1, loyalty 4, travel 4, health 3, quality 3, time pressure 0.
+        person.Traits = new ResidentTraits { Version = 1, Bands = "4023144330" };
+        var words = Capture(city, person, null, places).Personality;
+        Assert.Equal(new[] { "keeps a regular workday", "happy to walk far", "loves croissants", "dislikes burgers", "watches prices",
+            "dislikes queues", "happy to travel far for food", "prefers lighter food", "values quality", "takes their time over meals" }, words);
+        Assert.DoesNotContain(words, w => w.Any(char.IsDigit));
+        // Loyalty has no effect until shop memory exists, so it is never described.
+        Assert.DoesNotContain(words, w => w.Contains("loyal") || w.Contains("curious"));
+        person.Traits = new ResidentTraits { Version = 1, Bands = "2222222222" };
+        Assert.Equal(new[] { "keeps a regular workday", "happy to walk far" }, Capture(city, person, null, places).Personality);
     }
 
     [Fact]
