@@ -17,27 +17,36 @@ Implements slice A1 of the [step A plan](docs/plans/step-a-inspector-traits-choi
 - **Map link exceptions (Opus 3).** Exceptions from the native map call are caught inside OnGUI and shown as "The map could not open."; the first one is logged.
 - **Save switch (Opus 5).** `inspectorFailed` is reset on save switch.
 
-Two new tests cover localized addresses with raw map keys, and the pick-count reset window.
+Two new tests cover localized addresses with raw map keys, and the pick-count reset window. At `b93e8e2`: `dotnet test` **1,564/1,564** (1,562 + 2). All **31/31** offline gate commands exit 0. DLL SHA-256 `9a0bfbf092275de5795207c5f144aba2db54e2efb8eabced1969e5c34c6663f3`.
 
 **Review round 2 fixes (offline).**
 - **Current cursor and gesture ownership (Astra r2-1, Opus r2-1).** Ownership is now decided from the current native cursor (`Input.mousePosition`, converted to GUI coordinates), once per frame inside the `MouseController.Run` prefix (`Run` can be called twice per frame). It is no longer read from the last OnGUI event. The rule is the pure `InspectorPointerGesture`:
-  - A press on the popup or a highlighted walker, under the same view and native-UI checks and with no native hold-walk in progress, makes that whole press-hold-release gesture the inspector's. `Run` is skipped until every button is up, wherever the cursor goes, and the game's `LeftButtonHeld`/`RightButtonHeld` are cleared when the gesture ends.
+  - A left-button press on the popup or a highlighted walker, under the same view and native-UI checks and with no native hold-walk in progress, makes that whole press-hold-release gesture the inspector's. `Run` is skipped until every button is up, wherever the cursor goes, and the game's `LeftButtonHeld`/`RightButtonHeld` are cleared when the gesture ends.
   - Every other gesture stays native throughout, including a hold-walk released over the popup or a walker. On non-click frames `Run` always runs, so the game sees releases, hover outlines and cursor state.
   - The walker click is accepted in OnGUI only when the guard gave that frame's press to the inspector, so the guard and the click never disagree. Without the guard, the inspector falls back to the direct checks.
   - Picking also uses the current cursor.
 - **Placement mode (Opus r2-2).** `PlacementSystem.IsInPlacementMode` is excluded.
 - **Build inputs.** The build now also references `UnityEngine.InputLegacyModule` and `BigAmbitions.PlacementSystem`, read-only.
 
-Three new tests cover the gesture rule: moving in and pressing, then dragging and releasing outside; a press outside and a hold-walk released over the inspector staying native; and press-and-release in one frame or a lost release. `dotnet test` **R2_TESTS**. R2_GATE `dotnet test` **1,564/1,564** (1,562 + 2). All **31/31** offline gate commands exit 0. DLL SHA-256 `9a0bfbf092275de5795207c5f144aba2db54e2efb8eabced1969e5c34c6663f3`.
+Three new tests cover the gesture rule: moving in and pressing, then dragging and releasing outside; a press outside and a hold-walk released over the inspector staying native; and press-and-release in one frame or a lost release. The round-2 gate run was not completed before its harness commit `c7351c9`; results for the final head are under round 3.
+
+**Review round 3 fixes (offline).**
+- **Popup scrolling no longer zooms the camera (Astra r3-2).** The game's `PedestrianCam` zooms on the mouse wheel unless native uGUI is under the cursor or the static `PedestrianCam.blockCameraZoom` is set; the IMGUI popup is neither. While the current cursor is on the open popup, the inspector sets `blockCameraZoom`. It does this only if no other owner already holds it, and clears only a block it set itself, on leaving the popup, closing it, reset, failure or detach. Zoom elsewhere is unchanged. Update ordering against the camera can let one wheel step through on the frame the cursor enters the popup.
+- **The mouse hook fails open (Opus r3-2).** `MouseRunPrefix` wraps the decision in try/catch. On an exception it returns true (native handling), resets the gesture, logs once and stays disabled until detach.
+- **Left button only (Opus r3-3).** Only left presses are taken from the game; right-button gestures over a walker or the popup stay native. The inspector has no right-click action.
+- **Evidence record (Opus r3-1).** The unfilled round-2 placeholders and test count are replaced by this final-head record.
+
+R3_RESULTS
 
 **Not verified (native).** Required before merge (project rule): a separate rig_test session (Codex Sol, high) must attach baseline-red / candidate-green proof on the PC rig. This branch contains no native evidence. That session must verify:
 1. Hovering highlights only own walking residents; cars, ambient/RLO-reserved actors, workers and customers never highlight. A click opens the popup for that resident.
 2. Native UI never opens or highlights through the inspector: HUD buttons, phone, full/mini menus, dialogs, city map, interiors, placement/interior designer, subway, mini-games and screenshot mode.
-3. Inspector clicks do not also trigger game actions: no player walk or entity interaction from a walker click, a popup link, the close button or scrolling. Non-inspector clicks still behave natively. Include move-and-click across the popup and walker edges in both directions within one frame. Hold-walk, then release over a walker and over the popup: the player must stop. Press on the popup, drag outside and release: no walk starts.
+3. Inspector clicks do not also trigger game actions: no player walk or entity interaction from a walker click, a popup link, the close button or scrolling. Non-inspector clicks still behave natively. Right-clicks over a walker or the popup behave natively. Include move-and-click across the popup and walker edges in both directions within one frame. Hold-walk, then release over a walker and over the popup: the player must stop. Press on the popup, drag outside and release: no walk starts.
 4. The home and work links open the native map (`FocusOnBuilding`) at the right building, including when the map was closed. An unmatched address shows a message, not an exception.
 5. Popup content matches the clicked resident: localized street names (no `ba:street_` keys), personality words, the story, the destination and reason, and today's three meals with unknown/not recorded. The 1 s refresh works while open.
-6. Identity is stable across camera move away/back, pool reuse, entering a building and save switch; projection is correct under render scaling and UI scale.
-7. Performance: `PopulationRuntime.InspectorTiming` (update and draw, closed/hover/open, picks, builds; reset with `ResetInspectorTiming`) and the probe components `ResidentInspector.Update` (nested in Update) and `PopulationRuntime.OnGUI` (outside the primary scope; add to combined mod work, not nested). Report combined mod work and whole-frame p50/p95/max against base `7a6153c` in matched closed/hover/open windows, with autosave disabled and verified before each window (including after reload), and original settings and files restored afterwards.
+6. Scrolling the popup scrolls the story and leaves the camera distance unchanged; the wheel zooms normally elsewhere and after closing the popup, and an existing native zoom block is not released by the inspector.
+7. Identity is stable across camera move away/back, pool reuse, entering a building and save switch; projection is correct under render scaling and UI scale.
+8. Performance: `PopulationRuntime.InspectorTiming` (update and draw, closed/hover/open, picks, builds; reset with `ResetInspectorTiming`) and the probe components `ResidentInspector.Update` (nested in Update) and `PopulationRuntime.OnGUI` (outside the primary scope; add to combined mod work, not nested). Report combined mod work and whole-frame p50/p95/max against base `7a6153c` in matched closed/hover/open windows, with autosave disabled and verified before each window (including after reload), and original settings and files restored afterwards.
 
 ## PR #3 option B rig rerun - 29 October 2026 (native evidence, PASS)
 

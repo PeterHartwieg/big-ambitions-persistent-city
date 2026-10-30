@@ -50,7 +50,7 @@ namespace PersistentCity.Runtime
         private bool mapFailureLogged, attachTried;
         private readonly InspectorPointerGesture gesture = new InspectorPointerGesture();
         private int decidedFrame = -1, ownedPressFrame = -1;
-        private bool suppressThisFrame;
+        private bool suppressThisFrame, guardFailed, blockingZoom;
         // MouseController's private hold-walk flags: read before taking a gesture, cleared when an owned one ends.
         private static System.Reflection.FieldInfo? leftHeld, rightHeld;
 
@@ -80,8 +80,9 @@ namespace PersistentCity.Runtime
         {
             if (ReferenceEquals(guarded, this)) guarded = null;
             gesture.Reset(); decidedFrame = ownedPressFrame = -1; suppressThisFrame = false;
+            ReleaseZoom();
             try { clickGuard?.UnpatchAll(ClickGuardOwner); }
-            finally { clickGuard = null; attachTried = false; }
+            finally { clickGuard = null; attachTried = false; guardFailed = false; }
         }
 
         // Current native cursor in GUI coordinates (y grows downwards); the inspector draws with an identity GUI matrix.
@@ -95,7 +96,19 @@ namespace PersistentCity.Runtime
         private bool PointerOnInspector(Vector2 at) => visible && NormalView() && !NativeUiUnderPointer()
             && ((selectedId != null && popup.Contains(at)) || (hoveredId != null && hoveredId != selectedId && hoveredRect.Contains(at)));
 
-        private static bool MouseRunPrefix() => guarded == null || !guarded.SuppressNativeMouse();
+        private static bool MouseRunPrefix()
+        {
+            var owner = guarded;
+            if (owner == null || owner.guardFailed) return true;
+            try { return !owner.SuppressNativeMouse(); }
+            catch (Exception error)
+            {
+                // Runs inside the game's world-input path: fail open, once, and stay out of the way.
+                owner.guardFailed = true; owner.gesture.Reset(); owner.suppressThisFrame = false; owner.ownedPressFrame = -1;
+                owner.warn?.Invoke("Resident inspector click guard failed and is disabled; clicks go to the game: " + error);
+                return true;
+            }
+        }
 
         // MouseController.Run can run more than once per frame; decide once, from current input.
         private bool SuppressNativeMouse()
@@ -103,9 +116,10 @@ namespace PersistentCity.Runtime
             int frame = Time.frameCount;
             if (frame == decidedFrame) return suppressThisFrame;
             decidedFrame = frame;
-            bool pressed = Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1);
-            bool released = Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1);
-            bool anyDown = Input.GetMouseButton(0) || Input.GetMouseButton(1);
+            // Left button only: the inspector has no right-click action, so right gestures stay native.
+            bool pressed = Input.GetMouseButtonDown(0);
+            bool released = Input.GetMouseButtonUp(0);
+            bool anyDown = Input.GetMouseButton(0);
             bool hold = !gesture.Owned && pressed && ((bool)leftHeld!.GetValue(null) || (bool)rightHeld!.GetValue(null));
             bool onInspector = !gesture.Owned && pressed && !hold && PointerOnInspector(CurrentMouse());
             var action = gesture.Decide(pressed, released, anyDown, hold, onInspector);
@@ -119,6 +133,25 @@ namespace PersistentCity.Runtime
         {
             ClearHover(); selectedId = null; insight = null; body = personality = header = homeLabel = workLabel = mapProblem = ""; throttle.Invalidate();
             gesture.Reset(); ownedPressFrame = -1;
+            ReleaseZoom();
+        }
+
+        // The camera zooms on the wheel unless native uGUI is under the cursor or blockCameraZoom is set.
+        // Set it only while the current cursor is on the open popup, only if nobody else holds it, and
+        // clear only a block this inspector set.
+        private void UpdateZoomBlock()
+        {
+            bool want = visible && selectedId != null && popup.Contains(mouse);
+            if (want && !blockingZoom && !CameraControllers.PedestrianCam.blockCameraZoom)
+            { CameraControllers.PedestrianCam.blockCameraZoom = true; blockingZoom = true; }
+            else if (!want) ReleaseZoom();
+        }
+
+        private void ReleaseZoom()
+        {
+            if (!blockingZoom) return;
+            blockingZoom = false;
+            CameraControllers.PedestrianCam.blockCameraZoom = false;
         }
 
         private Mode Current => selectedId != null ? Mode.Open : hoveredId != null ? Mode.Hover : Mode.Closed;
@@ -176,6 +209,7 @@ namespace PersistentCity.Runtime
                     }
                 }
                 if (selectedId != null && Time.unscaledTime >= nextRefresh) Refresh(simulation);
+                UpdateZoomBlock();
             }
             finally
             {
