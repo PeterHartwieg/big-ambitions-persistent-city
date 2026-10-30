@@ -37,16 +37,18 @@ namespace PersistentCity.Core
         public MealKind Kind { get; set; }
         public MealOutcomeStatus Status { get; set; }
         public MealReasonCode Reason { get; set; }
-        /// <summary>Opaque historical shop identity; may later name a place no longer available.</summary>
+        /// <summary>Opaque historical shop identity, kept only for a purchase (bought or unconfirmed);
+        /// may later name a place no longer available.</summary>
         public string PlaceId { get; set; } = "";
         public string ProductId { get; set; } = "";
         public FoodOutsideOption Outside { get; set; }
         public MealFactor Factor1 { get; set; }
         public MealFactor Factor2 { get; set; }
-        /// <summary>Simulation minute the outcome was recorded.</summary>
-        public double At { get; set; }
-        /// <summary>Minute of the native checkout attempt; zero when no checkout was attempted.</summary>
-        public double CheckoutAt { get; set; }
+        /// <summary>Whole simulation minute the outcome was recorded (rounded down).</summary>
+        public int At { get; set; }
+        /// <summary>Whole minute of the native checkout attempt (rounded down); zero when none was attempted
+        /// or, for an upgraded record, when the saved meal held no checkout minute on its day.</summary>
+        public int CheckoutAt { get; set; }
     }
 
     /// <summary>One consumer's current-day outcomes: at most three named meals, or one legacy meal.
@@ -66,22 +68,32 @@ namespace PersistentCity.Core
 
     public enum FoodDecisionResult { Evaluating, Selected, Outside, NoFeasible }
 
-    /// <summary>One captured offer of a shortlisted shop. Units -1 means unknown stock.</summary>
+    /// <summary>One captured offer of a shortlisted shop. Units -1 means unknown stock;
+    /// DistrictDemandPercent -1 means unknown district demand (no appeal adjustment), otherwise 0-100.</summary>
     public sealed class FoodDecisionOffer
     {
         public string ProductId { get; set; } = "";
         public Money Price { get; set; }
         public int Units { get; set; } = -1;
+        public int DistrictDemandPercent { get; set; } = -1;
     }
 
-    /// <summary>Captured native input for one shortlisted shop, so a reload resumes without redrawing.
-    /// MealsPerHour -1 means unknown service. Routes are validated walking answers, or null when not yet quoted.</summary>
+    /// <summary>Captured native input for one shortlisted shop, so a reload resumes without rereading mutable
+    /// native state: the same evidence FoodBusiness carries into feasibility and choice. MealsPerHour -1 means unknown
+    /// service; ServiceUnavailable records a native refusal reason without its free text; Hours are the captured
+    /// weekly opening windows (empty: closed all week); CustomerServicePercent -1 means unknown quality, otherwise
+    /// 0-100; DistrictId is the shop's district for district demand. Routes are validated walking answers, or null
+    /// when not yet quoted.</summary>
     public sealed class FoodDecisionShop
     {
         public string BusinessId { get; set; } = "";
         public string PlaceId { get; set; } = "";
         public double MealsPerHour { get; set; } = -1;
+        public bool ServiceUnavailable { get; set; }
         public double NextServiceAt { get; set; }
+        public List<OpeningWindow> Hours { get; set; } = new List<OpeningWindow>();
+        public int CustomerServicePercent { get; set; } = -1;
+        public string DistrictId { get; set; } = "";
         public List<FoodDecisionOffer> Offers { get; set; } = new List<FoodDecisionOffer>();
         public Route? Outward { get; set; }
         public Route? Return { get; set; }
@@ -176,18 +188,29 @@ namespace PersistentCity.Core
                 while (at < today.Meals.Count && today.Meals[at].Kind < meal.Kind) at++;
                 today.Meals.Insert(at, record);
             }
-            Fill(record, meal, status.Value, minute, checkout, outside);
+            Fill(record, meal, status.Value, Minute(minute), checkout, checkout ? Minute(meal.ServiceAt) : 0, outside);
         }
 
-        private static void Fill(MealOutcomeRecord record, ResidentMeal meal, MealOutcomeStatus status, double minute, bool checkout, FoodOutsideOption outside)
+        /// <summary>A recorded minute: the whole minute, rounded down. The inspector shows no finer time.</summary>
+        public static int Minute(double minute) => (int)Math.Floor(minute);
+
+        /// <summary>The checkout minute an outcome of this meal must carry, from the retained meal: its checkout
+        /// minute (ServiceAt is set to it before native code runs), or zero when that is not on the meal's day or
+        /// after the clock (an upgraded record of a meal that held none).</summary>
+        public static int CheckoutMinute(ResidentMeal meal, double cityMinute)
+            => meal.ServiceAt >= meal.Day * 1440.0 && meal.ServiceAt <= cityMinute ? Minute(meal.ServiceAt) : 0;
+
+        private static void Fill(MealOutcomeRecord record, ResidentMeal meal, MealOutcomeStatus status, int minute, bool checkout, int checkoutAt, FoodOutsideOption outside)
         {
             record.Status = status;
             record.Reason = ReasonFor(meal.Status, meal.Reason, checkout);
-            record.PlaceId = meal.PlaceId; record.ProductId = meal.ProductId;
+            // Only a purchase names its shop and product; a skip or alternative is described by its reason.
+            bool purchase = status == MealOutcomeStatus.Bought || status == MealOutcomeStatus.Unconfirmed;
+            record.PlaceId = purchase ? meal.PlaceId : ""; record.ProductId = purchase ? meal.ProductId : "";
             record.Outside = status == MealOutcomeStatus.ChoseAlternative ? outside : FoodOutsideOption.None;
             record.Factor1 = record.Factor2 = MealFactor.None;
             record.At = minute;
-            record.CheckoutAt = checkout ? meal.ServiceAt : 0;
+            record.CheckoutAt = checkoutAt;
         }
 
         /// <summary>Schema 16 to 17: synthesize only what the single saved meal record shows. Meals of that day
@@ -204,12 +227,11 @@ namespace PersistentCity.Core
                 var outcome = new MealOutcomeRecord { Kind = meal.Kind };
                 double dayStart = meal.Day * 1440.0;
                 // The saved meal holds no outcome time: its appetite time, clamped to its day and the clock.
-                double at = Math.Min(cityMinute, Math.Max(dayStart, meal.DesiredAt));
+                int at = Minute(Math.Min(cityMinute, Math.Max(dayStart, meal.DesiredAt)));
                 // Checkout sets ServiceAt to the checkout minute before native code runs.
-                bool checkout = (meal.Status == MealStatus.Paid || meal.Status == MealStatus.Uncertain)
-                    && meal.ServiceAt >= dayStart && meal.ServiceAt <= cityMinute;
+                int checkoutAt = meal.Status == MealStatus.Paid || meal.Status == MealStatus.Uncertain ? CheckoutMinute(meal, cityMinute) : 0;
                 // The saved record does not name which alternative was chosen.
-                Fill(outcome, meal, status.Value, Math.Max(at, checkout ? meal.ServiceAt : at), checkout, FoodOutsideOption.None);
+                Fill(outcome, meal, status.Value, Math.Max(at, checkoutAt), checkoutAt != 0, checkoutAt, FoodOutsideOption.None);
                 record.Meals.Add(outcome);
             }
             return record;

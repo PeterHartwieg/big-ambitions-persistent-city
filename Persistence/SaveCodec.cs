@@ -46,6 +46,10 @@ namespace PersistentCity.Persistence
         public const int MaxTrafficLinkCapacity = 1024;
         // Schema 17 current-day outcomes per consumer; decision bounds come from FoodChoicePolicy.
         public const int MaxMealOutcomes = 3;
+        // Food consumers (residents x representation factor). Schema-17 end-of-day outcomes make each consumer
+        // ~720 characters larger; 50,000 residents at factor 3 measured above the input cap, so factor 3 is
+        // accepted only up to 43,333 residents. The runtime factor (2) reaches 100,000 at the citizen ceiling.
+        public const int MaxFoodConsumers = 130000;
         private const double MaxMinute = 1000000000;
         private const double MaxCoordinate = 10000000;
 
@@ -210,7 +214,7 @@ namespace PersistentCity.Persistence
                 var item = array.CollectionItemType!;
                 int limit = item == typeof(MealOutcomeRecord) ? MaxMealOutcomes : item == typeof(FoodDecisionShop) ? FoodChoicePolicy.MaximumShortlist
                     : item == typeof(FoodDecisionOffer) ? FoodChoicePolicy.MaximumOffersPerShop
-                    : item == typeof(FoodProductSales) ? 4 : item == typeof(FoodBuyerDistrict) ? 100 : item == typeof(long) ? 24 : item == typeof(FoodShopDay) ? 14 * MaxPlaces : item == typeof(ResidentMeal) ? MaxCitizens * 3 : item == typeof(FoodScope) ? 1024
+                    : item == typeof(FoodProductSales) ? 4 : item == typeof(FoodBuyerDistrict) ? 100 : item == typeof(long) ? 24 : item == typeof(FoodShopDay) ? 14 * MaxPlaces : item == typeof(ResidentMeal) ? MaxFoodConsumers : item == typeof(FoodScope) ? 1024
                     : item == typeof(FoodRoutineStop) ? MaxCitizens
                     : item == typeof(FoodDistrictBudgetMix) ? 100 : item == typeof(CitizenState) ? MaxCitizens
                     : item == typeof(Place) ? MaxPlaces : item == typeof(CitizenIdentity) ? 5000
@@ -440,15 +444,7 @@ namespace PersistentCity.Persistence
                 Require(place.WeeklyHours != null && place.WeeklyHours.Count <= MaxOpeningWindows, "Invalid weekly opening window count.");
                 embeddedRecords += place.WeeklyHours.Count;
                 Require(embeddedRecords <= MaxEmbeddedRecords, "Too many opening, route and visit records.");
-                foreach (var window in place.WeeklyHours)
-                {
-                    Require(window != null, "Null weekly opening window.");
-                    Require(window.Day >= 0 && window.Day <= 6, "Unknown weekly opening day.");
-                    Require(window.FromMinute >= 0 && window.FromMinute <= 1440 && window.ToMinute >= 0 && window.ToMinute <= 1440,
-                        "Invalid weekly opening minute.");
-                    int duration = window.ToMinute > window.FromMinute ? window.ToMinute - window.FromMinute : 1440 - window.FromMinute + window.ToMinute;
-                    Require(window.FromMinute != window.ToMinute && duration > 0, "Weekly opening window has no duration.");
-                }
+                foreach (var window in place.WeeklyHours) OpeningWindowRules(window);
             }
             ValidateExpansion(state);
             var ids = new HashSet<string>(StringComparer.Ordinal);
@@ -803,6 +799,7 @@ namespace PersistentCity.Persistence
             Require(food.Shops != null && food.Shops.Count <= 1024, "Invalid food scope.");
             Require(food.RepresentationFactor >= 1 && food.RepresentationFactor <= 3, "Invalid consumer representation factor.");
             Require(food.Residents != null && food.Residents.Count == state.Citizens.Count * food.RepresentationFactor, "Meal roster differs from represented population.");
+            Require(food.Residents.Count <= MaxFoodConsumers, "Meal roster exceeds the food consumer ceiling.");
             Require(food.Districts != null, "Missing food budget districts.");
             FoodHouseholdPolicy.ValidateMixes(food.Districts);
             Require(food.HouseholdFinanceVersion == 0 || food.HouseholdFinanceVersion == HouseholdFinance.PolicyVersion, "Unknown household finance policy.");
@@ -931,6 +928,16 @@ namespace PersistentCity.Persistence
             if (!traits.IsValid) Fail("Invalid " + owner + " trait bands.");
         }
 
+        private static void OpeningWindowRules(OpeningWindow window)
+        {
+            Require(window != null, "Null weekly opening window.");
+            Require(window!.Day >= 0 && window.Day <= 6, "Unknown weekly opening day.");
+            Require(window.FromMinute >= 0 && window.FromMinute <= 1440 && window.ToMinute >= 0 && window.ToMinute <= 1440,
+                "Invalid weekly opening minute.");
+            int duration = window.ToMinute > window.FromMinute ? window.ToMinute - window.FromMinute : 1440 - window.FromMinute + window.ToMinute;
+            Require(window.FromMinute != window.ToMinute && duration > 0, "Weekly opening window has no duration.");
+        }
+
         private static int ValidateToday(ResidentMeal meal, FoodCommerceState food, int currentDay, double minute)
         {
             var today = meal.Today;
@@ -952,12 +959,12 @@ namespace PersistentCity.Persistence
                 Require(record.Factor2 == MealFactor.None || record.Factor1 != MealFactor.None && record.Factor1 != record.Factor2, "Invalid meal outcome factors.");
                 Text(record.PlaceId, "Meal outcome shop", 256, true); Text(record.ProductId, "Meal outcome product", 256, true);
                 double dayStart = today.Day * 1440.0;
-                Require(Position.Finite(record.At) && record.At >= dayStart && record.At <= minute, "Invalid meal outcome time.");
-                Require(Position.Finite(record.CheckoutAt) && (record.CheckoutAt == 0 || record.CheckoutAt >= dayStart && record.CheckoutAt <= record.At),
-                    "Invalid meal checkout time.");
+                Require(record.At >= dayStart && record.At <= minute, "Invalid meal outcome time.");
+                Require(record.CheckoutAt == 0 || record.CheckoutAt >= dayStart && record.CheckoutAt <= record.At, "Invalid meal checkout time.");
                 Require(record.Outside == FoodOutsideOption.None || record.Status == MealOutcomeStatus.ChoseAlternative, "Alternative recorded for a non-alternative outcome.");
                 bool purchase = record.Status == MealOutcomeStatus.Bought || record.Status == MealOutcomeStatus.Unconfirmed;
                 Require(!purchase || record.PlaceId.Length > 0 && record.ProductId.Length > 0, "Purchase outcome lost its shop or product.");
+                Require(purchase || record.PlaceId.Length == 0 && record.ProductId.Length == 0, "Non-purchase outcome names a shop or product.");
                 Require(record.Status != MealOutcomeStatus.Unconfirmed || record.Reason == MealReasonCode.CheckoutUnconfirmed, "Impossible unconfirmed outcome reason.");
                 Require(record.Status == MealOutcomeStatus.Bought == (record.Reason == MealReasonCode.Bought || record.Reason == MealReasonCode.ReceiptConfirmed),
                     "Impossible purchase outcome reason.");
@@ -968,6 +975,12 @@ namespace PersistentCity.Persistence
                     Require(live.HasValue ? live.Value == record.Status
                         : record.Status == MealOutcomeStatus.Skipped || record.Status == MealOutcomeStatus.ChoseAlternative,
                         "Meal outcome differs from its receipt state.");
+                    // A current purchase must name the retained meal's own shop, product and checkout minute; the
+                    // inspector shows this record, so it cannot contradict the authoritative meal. Once the meal
+                    // advances, the record stays an opaque historical reference.
+                    if (purchase)
+                        Require(record.PlaceId == meal.PlaceId && record.ProductId == meal.ProductId
+                            && record.CheckoutAt == MealOutcomes.CheckoutMinute(meal, minute), "Purchase outcome differs from its retained meal.");
                 }
             }
             return today.Meals.Count;
@@ -994,6 +1007,8 @@ namespace PersistentCity.Persistence
                 && (decision.Result == FoodDecisionResult.Selected || decision.BusinessId.Length == 0 && decision.ProductId.Length == 0),
                 "Decision selection differs from its result.");
             Require((decision.Result == FoodDecisionResult.Outside) == (decision.Outside != FoodOutsideOption.None), "Decision alternative differs from its result.");
+            // Also for a compact decision without its shortlist image.
+            Require(decision.ProductId.Length == 0 || FoodProducts.Known(decision.ProductId), "Unknown live product code.");
             Require(decision.Shops != null && decision.Shops.Count <= FoodChoicePolicy.MaximumShortlist, "Oversized decision shortlist.");
             if (decision.Shops!.Count == 0) return 0;
             Require(++routeBearing <= FoodChoicePolicy.MaximumRouteBearingDecisions, "More than one route-bearing food decision.");
@@ -1008,6 +1023,11 @@ namespace PersistentCity.Persistence
                 Require(shop.MealsPerHour == -1 || Position.Finite(shop.MealsPerHour) && shop.MealsPerHour >= 0 && shop.MealsPerHour <= 100000,
                     "Invalid decision service evidence.");
                 Minute(shop.NextServiceAt, "Decision service clock");
+                Require(shop.CustomerServicePercent >= -1 && shop.CustomerServicePercent <= 100, "Invalid decision quality evidence.");
+                Text(shop.DistrictId, "Decision shop district", 256, true);
+                Require(shop.Hours != null && shop.Hours.Count <= MaxOpeningWindows, "Invalid decision opening evidence.");
+                foreach (var window in shop.Hours!) OpeningWindowRules(window);
+                records += shop.Hours.Count;
                 Require(shop.Offers != null && shop.Offers.Count <= FoodChoicePolicy.MaximumOffersPerShop, "Oversized decision menu.");
                 var products = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var offer in shop.Offers!)
@@ -1015,6 +1035,8 @@ namespace PersistentCity.Persistence
                     Require(offer != null && products.Add(offer.ProductId), "Duplicate decision offer.");
                     Require(FoodProducts.Known(offer!.ProductId), "Unknown live product code.");
                     Require(offer.Price >= Money.Zero && offer.Price <= MaximumAllowance && offer.Units >= -1, "Invalid decision offer evidence.");
+                    Require(offer.DistrictDemandPercent >= -1 && offer.DistrictDemandPercent <= 100
+                        && (offer.DistrictDemandPercent == -1 || shop.DistrictId.Length > 0), "Invalid decision district evidence.");
                     if (shop.BusinessId == decision.BusinessId && offer.ProductId == decision.ProductId) selected = true;
                 }
                 records += 1 + shop.Offers.Count;
