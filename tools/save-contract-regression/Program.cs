@@ -1,8 +1,10 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
@@ -36,8 +38,127 @@ static class Program
         return city;
     }
 
+    private sealed class NoMarket : IFoodMarket
+    {
+        public double EarliestMinute => 0;
+        public IReadOnlyList<FoodBusiness> Read(double minute) => Array.Empty<FoodBusiness>();
+        public FoodSale Buy(ResidentMeal meal, double minute) => throw new InvalidOperationException("No checkout in the size benchmark.");
+    }
+    private sealed class Straight : IRoutePlanner
+    {
+        public Route? Plan(Place from, Place to, double at, TravelPreferences preferences) => null;
+    }
 
-    static void Main()
+    // Schema-17-only members are reached by reflection so this file still compiles against a schema-16 tree.
+    private static readonly System.Reflection.PropertyInfo? TodayProperty = typeof(ResidentMeal).GetProperty("Today");
+
+    // A resident-food city with household finances, by default at the runtime representation factor (2). With
+    // steady set, each schema-17 consumer carries the largest end-of-day image: three recorded purchases, each
+    // naming a shop in the native address format (GamePlaces/NativeFoodMarket.PlaceId) and a live product.
+    private static CityState FoodCity(int residents, bool steady, int representation = 2)
+    {
+        var state = EconomyScenario.Create(residents, 11);
+        state.Food = EconomyScenario.Food(); state.Food.RepresentationFactor = representation;
+        var city = new CitySimulator(state, new Straight()); city.AttachFoodMarket(new NoMarket()); city.EnableHouseholdFinances();
+        if (steady && TodayProperty != null)
+        {
+            int day = (int)(state.Minute / 1440) - 1;
+            string Purchase(int kind, int minute, string street, int number, string product)
+            {
+                string at = (day * 1440 + minute).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                return "{\"At\":" + at + ",\"CheckoutAt\":" + at + ",\"Factor1\":0,\"Factor2\":0,\"Kind\":" + kind
+                    + ",\"Outside\":0,\"PlaceId\":\"address:" + Uri.EscapeDataString(street) + ":" + number + ":shop\",\"ProductId\":\"" + product + "\",\"Reason\":1,\"Status\":0}";
+            }
+            string template = "{\"Day\":" + day + ",\"Meals\":["
+                + Purchase(1, 487, "ba:street_thirdstreet", 128, FoodProducts.Croissant) + ","
+                + Purchase(2, 763, "ba:street_harborroad", 1042, FoodProducts.Burger) + ","
+                + Purchase(3, 1151, "ba:street_martinlutherkingjrblvd", 57, FoodProducts.HotDog)
+                + "],\"Unrecorded\":0}";
+            foreach (var meal in state.Food.Residents) TodayProperty.SetValue(meal, JsonConvert.DeserializeObject(template, TodayProperty.PropertyType));
+        }
+        return state;
+    }
+
+    // The same payload as an earlier writer would have produced it (schema 16): schema-17 fields removed.
+    private static string AsSchema16(string json) => Regex.Replace(Regex.Replace(Regex.Replace(json,
+            "\"ChoicePolicyVersion\":1,\"ChoiceStartsDay\":[0-9]+,", ""),
+            ",\"(Traits|RepresentedTraits)\":(null|\\{\"Bands\":\"[0-4]{10}\",\"Version\":1\\})|,\"Today\":null|,\"Decision\":null|,\"LastContextKey\":\"\"|,\"ContextAttempts\":0", ""),
+            "\"Schema\":17,", "\"Schema\":16,");
+
+    private static double Time(int runs, Action action)
+    {
+        var samples = new List<double>();
+        for (int i = 0; i < runs; i++)
+        {
+            var watch = Stopwatch.StartNew(); action(); samples.Add(watch.Elapsed.TotalMilliseconds);
+        }
+        samples.Sort();
+        return Math.Round(samples[samples.Count / 2], 1);
+    }
+
+    private static object Bench(int residents, int runs, int representation = 2)
+    {
+        var state = FoodCity(residents, steady: true, representation);
+        string json;
+        // The codec refuses a payload above its input cap; report that bound instead of timing it.
+        try { json = SaveCodec.Write(state); }
+        catch (SaveValidationException error) { return new { residents, representation, refused = error.Message }; }
+        catch (InvalidOperationException error) { return new { residents, representation, refused = error.Message }; }
+        bool candidate = TodayProperty != null;
+        // Schema-16 image of the same city without outcomes: what an upgrade actually reads.
+        var fresh = FoodCity(residents, steady: false, representation);
+        string old = candidate ? AsSchema16(SaveCodec.Write(fresh)) : SaveCodec.Write(fresh);
+        var migrated = SaveCodec.Read(old);
+        if (migrated.Status != SaveReadStatus.Loaded) throw new Exception("Schema-16 image did not load: " + migrated.Error);
+        migrated = null!;
+        double write = Time(runs, () => SaveCodec.Write(state));
+        double read = Time(runs, () => { if (SaveCodec.Read(json).Status != SaveReadStatus.Loaded) throw new Exception("read failed"); });
+        double upgrade = Time(runs, () => SaveCodec.Read(old));
+        GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
+        long before = GC.GetTotalMemory(true);
+        var retained = SaveCodec.Read(json).State;
+        long after = GC.GetTotalMemory(true);
+        GC.KeepAlive(retained);
+        return new
+        {
+            residents, representation, consumers = state.Food!.Residents.Count, chars = json.Length, capShare = Math.Round(json.Length / (double)SaveCodec.MaxInputCharacters, 3), utf8Bytes = Encoding.UTF8.GetByteCount(json),
+            schema16Chars = old.Length, writeMs = write, readMs = read, upgradeFrom16Ms = upgrade,
+            retainedMiB = Math.Round((after - before) / 1048576.0, 1)
+        };
+    }
+
+    // Candidate only: trait generation and the outcome updater's hot cost (no-ops on a schema-16 tree).
+    private static object? Hot()
+    {
+        var traits = Type.GetType("PersistentCity.Core.ResidentTraits, " + typeof(CityState).Assembly.FullName);
+        var outcomes = Type.GetType("PersistentCity.Core.MealOutcomes, " + typeof(CityState).Assembly.FullName);
+        if (traits == null || outcomes == null) return null;
+        var generate = (Func<int, string, object>)Delegate.CreateDelegate(typeof(Func<int, string, object>), traits.GetMethod("Generate")!);
+        var ids = Enumerable.Range(0, 50000).Select(i => "consumer:rlo%3Atest%3Ac" + i.ToString("D5") + ":1").ToArray();
+        foreach (var id in ids.Take(1000)) generate(11, id);
+        var watch = Stopwatch.StartNew();
+        foreach (var id in ids) generate(11, id);
+        double traitNs = watch.Elapsed.TotalMilliseconds * 1e6 / ids.Length;
+        var record = (Action<ResidentMeal, double, bool, FoodOutsideOption>)Delegate.CreateDelegate(
+            typeof(Action<ResidentMeal, double, bool, FoodOutsideOption>), outcomes.GetMethod("Record")!);
+        var meal = new ResidentMeal { ResidentId = "r", AnchorId = "r", PlaceId = "shop-1", ProductId = FoodProducts.Burger, Reason = "Native fake confirmed" };
+        const int calls = 3000000;
+        long allocated = GC.GetAllocatedBytesForCurrentThread();
+        watch.Restart();
+        for (int i = 0; i < calls; i++)
+        {
+            // Three outcomes a day, then the lazy advance to the next day on that consumer's first outcome.
+            meal.Day = i / 3; meal.Kind = MealKind.Breakfast + i % 3;
+            meal.Status = i % 3 == 0 ? MealStatus.Paid : i % 3 == 1 ? MealStatus.Declined : MealStatus.Missed;
+            record(meal, meal.Day * 1440.0 + 600, i % 3 == 0, FoodOutsideOption.FundedHouseholdFood);
+        }
+        double recordNs = watch.Elapsed.TotalMilliseconds * 1e6 / calls;
+        long bytes = GC.GetAllocatedBytesForCurrentThread() - allocated;
+        return new { traitGenerateNs = Math.Round(traitNs), outcomeRecordNs = Math.Round(recordNs, 1),
+            outcomeRecordBytesPerConsumerDay = Math.Round(bytes * 3.0 / calls) };
+    }
+
+    static void Main(string[] args)
     {
         var city = City(120);
         string expected = SaveCodec.Write(city);
@@ -56,7 +177,17 @@ static class Program
             var result = SaveCodec.Read(payload);
             refusals.Add(result.Status + ":" + result.Error);
         }
-        Console.WriteLine(JsonConvert.SerializeObject(new { digest = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(expected))),
-            length = expected.Length, refusals, writeBytes, readBytes }));
+        // Schema 17 adds fields by design: the save digest is reported, the economy digest must match.
+        var economy = EconomyScenario.Run();
+        object? bench = null, hot = null;
+        if (args.Contains("--bench"))
+        {
+            bool ceiling = args.Contains("--ceiling");
+            var sizes = new List<object> { Bench(957, 5), Bench(5000, 3) };
+            if (ceiling) { sizes.Add(Bench(50000, 3)); sizes.Add(Bench(50000, 1, representation: 3)); }
+            bench = sizes; hot = Hot();
+        }
+        Console.WriteLine(JsonConvert.SerializeObject(new { schema = CityState.CurrentSchema, digest = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(expected))),
+            length = expected.Length, refusals, economy, writeBytes, readBytes, bench, hot }));
     }
 }

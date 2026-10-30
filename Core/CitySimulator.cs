@@ -394,6 +394,8 @@ namespace PersistentCity.Core
             NextEventMinute = live.NextEventMinute, ActivityUntilMinute = live.ActivityUntilMinute,
             CompletedJourneys = live.CompletedJourneys, MissedActivities = live.MissedActivities,
             RecentVisits = new List<VisitRecord>(live.RecentVisits),
+            // Immutable once generated, so the copy shares it; events never change traits.
+            Traits = live.Traits,
             // Derived from the shared identity and the seed, so the copy may share it.
             RoutineKeys = live.RoutineKeys
         };
@@ -415,6 +417,7 @@ namespace PersistentCity.Core
         {
             live.OptionalStop = working.OptionalStop;
             live.OptionalStopChoice = working.OptionalStopChoice;
+            live.Traits = working.Traits;
             live.HomeId = working.HomeId; live.DayPlaceId = working.DayPlaceId; live.ShopId = working.ShopId; live.LeisureId = working.LeisureId;
             live.Preferences.OwnsCar = working.Preferences.OwnsCar; live.Preferences.AllowTransit = working.Preferences.AllowTransit;
             live.Preferences.WalkingToleranceMetres = working.Preferences.WalkingToleranceMetres;

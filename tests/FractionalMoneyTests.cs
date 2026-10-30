@@ -328,7 +328,7 @@ public sealed partial class FoodCommerceTests
         Assert.Contains("\"BalanceCents\":", legacy); Assert.DoesNotContain("\"Balance\":", legacy);
         var read = SaveCodec.Read(legacy);
         Assert.Equal(SaveReadStatus.Loaded, read.Status); Assert.Equal(14, read.SourceSchema);
-        Assert.Equal(current, SaveCodec.Write(read.State!));
+        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(SaveCodec.Write(read.State!)));
         // A native v2 receipt written before the unit change still identifies this intention.
         var meal = read.State!.Food!.Residents.Single();
         var receipt = new Dictionary<string, string> { [FoodSaleReceipts.Prefix + meal.IntentId] = "paid|1025.279998779296875|b|pastry" };
@@ -371,7 +371,7 @@ public sealed partial class FoodCommerceTests
         var read = SaveStore.ReadFrom(data, city.State.PopulationKey);
         Assert.Equal(SaveReadStatus.Loaded, read.Status); Assert.Equal(13, read.SourceSchema);
         Assert.Equal(CityState.CurrentSchema, read.State!.Schema); Assert.Equal(old, data[SaveStore.StateKey]);
-        Assert.Equal(SaveCodec.Write(city.State), SaveCodec.Write(read.State));
+        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(SaveCodec.Write(city.State)), LegacyMoneyWire.WithoutUpgradeFacts(SaveCodec.Write(read.State)));
         var loaded = new CitySimulator(read.State, routes); loaded.AttachFoodMarket(market);
         Assert.Equal(orders, market.Orders.Count);
         Assert.True(SaveStore.WriteTo(data, loaded.State).Success);
