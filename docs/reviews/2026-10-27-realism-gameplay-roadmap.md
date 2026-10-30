@@ -1,3 +1,5 @@
+> **Phase order superseded:** Peter's decisions in [docs/roadmap.md](../roadmap.md) replace this review's phase order.
+
 # Realism and gameplay roadmap, 27 October 2026
 
 A proposal from a read-only pass over the current source (schema 13, 0.10.0 candidate), the reviews up to 27 October and the sibling projects that already read native marketing and rival state. It does not change the required release scope in [the bounded plan](../implementation-plan.md), approve a release, or authorize deployment to an ordinary save. No game was launched and no rig was touched. Facts about native fields taken from `big-copilot` were read against build 3682 and need rechecking against the referenced assemblies before any adapter is written.
