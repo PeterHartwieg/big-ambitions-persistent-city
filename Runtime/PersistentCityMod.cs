@@ -66,6 +66,8 @@ namespace PersistentCity.Runtime
         private PhysicalPopulation? physical;
         private DwellSpots dwellSpots = new DwellSpots();
         private bool physicalFailed;
+        private readonly ResidentInspector inspector = new ResidentInspector();
+        private bool inspectorFailed;
         private object? saveIdentity;
         private object? initializingSave;
         private sealed class PreparedCity
@@ -203,6 +205,7 @@ namespace PersistentCity.Runtime
                 if (saveIdentity != null && !ReferenceEquals(saveIdentity, save))
                 {
                     physical?.Dispose(); physical = null; physicalFailed = false;
+                    inspector.Reset();
                     Detach();
                     simulation = null;
                     saveSession = null;
@@ -304,6 +307,7 @@ namespace PersistentCity.Runtime
                     }
                 }
                 RunPhysical(() => physical?.Update());
+                UpdateInspector();
                 if (Time.unscaledTime >= nextSummary)
                 {
                     nextSummary = Time.unscaledTime + 60;
@@ -420,6 +424,18 @@ namespace PersistentCity.Runtime
             long restarts = active.EventRestarts, inline = active.InlineAfterRestarts;
             eventRestarts += restarts - seenEventRestarts; inlineRestarts += inline - seenInlineRestarts;
             seenEventRestarts = restarts; seenInlineRestarts = inline;
+        }
+
+        private void UpdateInspector()
+        {
+            if (inspectorFailed || simulation == null) return;
+            try { inspector.Update(simulation, physical, economyRect); }
+            catch (Exception error)
+            {
+                // The inspector is read-only; its failure must not stop the population.
+                inspectorFailed = true; inspector.Reset();
+                log?.Warn("Resident inspector stopped; the city continues unchanged: " + error);
+            }
         }
 
         private void RunPhysical(Action action)

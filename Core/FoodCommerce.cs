@@ -146,6 +146,7 @@ namespace PersistentCity.Core
         private readonly Dictionary<string, int> reservations = new Dictionary<string, int>(StringComparer.Ordinal);
         public double NextMinute => Math.Min(NextBudgetMinute, due.Count == 0 ? double.PositiveInfinity : due.Min!.DueAt);
         internal IFoodMarket Market => market;
+        internal ResidentMeal? FindMeal(string consumerId) => records.TryGetValue(consumerId, out var meal) ? meal : null;
         internal FoodCommerce(CitySimulator city, IFoodMarket market, IRoutePlanner routes)
         {
             this.city = city; this.market = market; this.routes = routes;
