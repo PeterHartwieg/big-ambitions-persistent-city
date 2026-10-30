@@ -46,6 +46,10 @@ namespace PersistentCity.Persistence
         public const int MaxTrafficLinkCapacity = 1024;
         // Schema 17 current-day outcomes per consumer; decision bounds come from FoodChoicePolicy.
         public const int MaxMealOutcomes = 3;
+        // A compact outcome record that validation accepts is at most 553 characters: six enum fields of at most two
+        // digits, two whole minutes of at most ten, nine separators and two 256-character IDs. The reader's cap
+        // must not be tighter, or a save Write accepted could not be read back.
+        public const int MaxMealOutcomeWire = 600;
         private const double MaxMinute = 1000000000;
         private const double MaxCoordinate = 10000000;
 
@@ -189,7 +193,7 @@ namespace PersistentCity.Persistence
             if (type == typeof(double)) { Require(token == JsonToken.Integer || token == JsonToken.Float, "Expected a number."); return; }
             if (type == typeof(MealOutcomeRecord))
             {
-                Require(token == JsonToken.String && ((string)reader.Value!).Length <= 512
+                Require(token == JsonToken.String && ((string)reader.Value!).Length <= MaxMealOutcomeWire
                     && MealOutcomeRecord.TryParse((string)reader.Value!, out _), "Invalid meal outcome record.");
                 return;
             }

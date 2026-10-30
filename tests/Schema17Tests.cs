@@ -423,6 +423,34 @@ public sealed partial class FoodCommerceTests
     }
 
     [Fact]
+    public void S17_EveryOutcomeRecordWriteAcceptsReadsBackAndTheReaderCapIsBounded()
+    {
+        var (city, _) = S17_Full();
+        var meal = city.State.Food!.Residents.First(m => m.Today != null);
+        // Largest record validation accepts: two-digit enums, ten-digit minutes and two 256-character IDs.
+        var dinner = meal.Today!.Meals[2];
+        dinner.PlaceId = new string('p', 256); dinner.ProductId = new string('q', 256);
+        dinner.Reason = MealReasonCode.ReceiptConfirmed;
+        string wire = dinner.ToWire();
+        Assert.True(wire.Length <= SaveCodec.MaxMealOutcomeWire, wire.Length.ToString());
+        string json = SaveCodec.Write(city.State);
+        var read = SaveCodec.Read(json);
+        Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(json, SaveCodec.Write(read.State!));
+        Assert.Equal(553, 6 * 2 + 2 * 10 + 9 + 256 + 256);
+        // An ID one character longer is refused at write, so it never reaches the reader.
+        dinner.PlaceId += "p";
+        Assert.Throws<SaveValidationException>(() => SaveCodec.Write(city.State));
+        // A record string beyond the reader's cap is refused before deserialization and preserved.
+        string oversized = json.Replace(wire, wire.Substring(0, wire.Length - 256) + new string('p', SaveCodec.MaxMealOutcomeWire - (wire.Length - 256) + 1));
+        Assert.NotEqual(json, oversized);
+        var refused = SaveCodec.Read(oversized);
+        Assert.Equal(SaveReadStatus.Invalid, refused.Status); Assert.Contains("Invalid meal outcome record", refused.Error);
+        var data = new Dictionary<string, string> { [SaveStore.StateKey] = oversized };
+        Assert.False(SaveStore.WriteTo(data, read.State!).Success); Assert.Same(oversized, data[SaveStore.StateKey]);
+    }
+
+    [Fact]
     public void S17_AnOutcomeProductThatCannotBeWrittenCompactlyIsRefusedAtWrite()
     {
         var (city, _) = S17_Full();
