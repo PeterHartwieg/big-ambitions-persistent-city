@@ -51,6 +51,9 @@ namespace PersistentCity.Runtime
         private readonly InspectorPointerGesture gesture = new InspectorPointerGesture();
         private int decidedFrame = -1, ownedPressFrame = -1;
         private bool suppressThisFrame, guardFailed, wheelFailed;
+        // Native uGUI raycasts miss inside the open popup, so what the player sees on top is what takes the click.
+        private bool uiBlockInstalled, uiBlockFailed;
+        private bool UiBlockActive => uiBlockInstalled && !uiBlockFailed;
         // Last frame Update ran. Input decisions require a fresh one, so a hidden or stale inspector
         // (e.g. while the city prepares routes and Update returns early) never claims a click or the wheel.
         private int updatedFrame = -10;
@@ -91,6 +94,36 @@ namespace PersistentCity.Runtime
                     postfix: new HarmonyMethod(typeof(ResidentInspector), nameof(CameraInputPostfix)));
             }
             catch (Exception error) { warning("Resident inspector scroll guard unavailable; scrolling the popup may also zoom the camera: " + error.Message); }
+            try
+            {
+                // The popup is drawn on top of native uGUI (HUD, dialogs). Inside its rectangle, uGUI pointer
+                // raycasts find nothing, so hidden native buttons cannot take a popup click and
+                // IsPointerOverGameObject agrees with the popup. Keyboard and navigation input are untouched.
+                var raycast = AccessTools.Method(typeof(UnityEngine.UI.GraphicRaycaster), nameof(UnityEngine.UI.GraphicRaycaster.Raycast),
+                    new[] { typeof(PointerEventData), typeof(System.Collections.Generic.List<RaycastResult>) })
+                    ?? throw new MissingMethodException("GraphicRaycaster.Raycast(PointerEventData, List<RaycastResult>)");
+                clickGuard.Patch(raycast, prefix: new HarmonyMethod(typeof(ResidentInspector), nameof(UiRaycastPrefix)));
+                uiBlockInstalled = true;
+            }
+            catch (Exception error) { warning("Resident inspector UI block unavailable; native UI under the popup keeps its clicks and the popup yields there: " + error.Message); }
+        }
+
+        private static bool UiRaycastPrefix(PointerEventData eventData)
+        {
+            var owner = guarded;
+            if (owner == null || owner.uiBlockFailed || eventData == null) return true;
+            try
+            {
+                Vector2 screen = eventData.position;
+                return !(owner.visible && owner.Fresh && owner.selectedId != null
+                    && owner.popup.Contains(new Vector2(screen.x, Screen.height - screen.y)));
+            }
+            catch (Exception error)
+            {
+                owner.uiBlockFailed = true;
+                owner.warn?.Invoke("Resident inspector UI block failed and is disabled: " + error);
+                return true;
+            }
         }
 
         private static void CameraInputPrefix(CameraControllers.PedestrianCam __instance, out float __state) => __state = __instance.distance;
@@ -112,7 +145,7 @@ namespace PersistentCity.Runtime
             if (ReferenceEquals(guarded, this)) guarded = null;
             gesture.Reset(); decidedFrame = ownedPressFrame = -1; suppressThisFrame = false;
             try { clickGuard?.UnpatchAll(ClickGuardOwner); }
-            finally { clickGuard = null; attachTried = false; guardFailed = wheelFailed = false; }
+            finally { clickGuard = null; attachTried = false; guardFailed = wheelFailed = uiBlockFailed = uiBlockInstalled = false; }
         }
 
         // Current native cursor in GUI coordinates (y grows downwards); the inspector draws with an identity GUI matrix.
@@ -281,7 +314,17 @@ namespace PersistentCity.Runtime
                         Open(hoveredId, input.mousePosition); input.Use();
                     }
                 }
-                if (selectedId != null) DrawPopup();
+                if (selectedId != null)
+                {
+                    // Without the UI block, native uGUI under the popup owns the pointer: the popup's controls
+                    // then ignore that mouse event, so one click never acts on both.
+                    if (!UiBlockActive && IsPointerEvent(input.type) && popup.Contains(input.mousePosition) && NativeUiUnderPointer())
+                    {
+                        if (input.type == EventType.MouseUp) GUIUtility.hotControl = 0;
+                        input.Use();
+                    }
+                    DrawPopup();
+                }
             }
             finally
             {
@@ -289,6 +332,9 @@ namespace PersistentCity.Runtime
                 drawTicks[mode] += elapsed; drawCalls[mode]++; if (elapsed > drawMaxTicks[mode]) drawMaxTicks[mode] = elapsed;
             }
         }
+
+        private static bool IsPointerEvent(EventType type) => type == EventType.MouseDown || type == EventType.MouseUp
+            || type == EventType.MouseDrag || type == EventType.ScrollWheel || type == EventType.ContextClick;
 
         private void Open(string id, Vector2 at)
         {
