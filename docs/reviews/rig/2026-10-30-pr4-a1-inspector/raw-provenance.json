@@ -1,0 +1,74 @@
+[
+  {
+    "window": "after-closed-1",
+    "file": "frames-mod-work-after-closed-1-stop-41d138.csv",
+    "bytes": 1343283,
+    "sha256": "a513236910cc2e6b1ef8f5aa0f0ca3818835af47e7c081dbbdba3a779b8fa5b5"
+  },
+  {
+    "window": "after-closed-1",
+    "file": "frames-observations-after-closed-1-stop-41d138.csv",
+    "bytes": 391933,
+    "sha256": "69ee38673595a21a82acb280c38d386106d16ba04027a4b20228a1e8165765a8"
+  },
+  {
+    "window": "after-closed-2",
+    "file": "frames-mod-work-after-closed-2-stop-9ac811.csv",
+    "bytes": 1322345,
+    "sha256": "9b0bd21fada5d2bdab1de7733a1043a802e12d728ddbd2794b9a186f778e8466"
+  },
+  {
+    "window": "after-closed-2",
+    "file": "frames-observations-after-closed-2-stop-9ac811.csv",
+    "bytes": 392832,
+    "sha256": "345ef3302ab3a85316654a3aec285181a9f3a153cc5889851c6e944cd24b6fd5"
+  },
+  {
+    "window": "after-closed-3",
+    "file": "frames-mod-work-after-closed-3-stop-c3771f.csv",
+    "bytes": 1240940,
+    "sha256": "3dc059e613636d864b68eff6dfe1caa8ce4c893013509d18af117d65f0c13b57"
+  },
+  {
+    "window": "after-closed-3",
+    "file": "frames-observations-after-closed-3-stop-c3771f.csv",
+    "bytes": 367366,
+    "sha256": "4f3896170b32463f0fbbf45f7415795cfc7477dc37a0fe97220f5caf43ff8011"
+  },
+  {
+    "window": "before-closed-1",
+    "file": "frames-mod-work-before-closed-1-stop-07a18b.csv",
+    "bytes": 1424503,
+    "sha256": "014b7e5b9e05639120159fd3c6801612314d8a07e135f7b67b1fe145bb276eac"
+  },
+  {
+    "window": "before-closed-1",
+    "file": "frames-observations-before-closed-1-stop-07a18b.csv",
+    "bytes": 439810,
+    "sha256": "c7f4e5b8669beae3cacad779d64eae446bc52a814bf6e098546a38e28cf0105b"
+  },
+  {
+    "window": "before-closed-2",
+    "file": "frames-mod-work-before-closed-2-stop-3de220.csv",
+    "bytes": 1434273,
+    "sha256": "7f7e482ee6b7ab3461c3e5b987280a237e5c47e734fc9dd8905d679216096cff"
+  },
+  {
+    "window": "before-closed-2",
+    "file": "frames-observations-before-closed-2-stop-3de220.csv",
+    "bytes": 443298,
+    "sha256": "9c21fc80d1c9482bcb80750b5662c5709af56d6619767583ecc49c80f1afc387"
+  },
+  {
+    "window": "before-closed-3",
+    "file": "frames-mod-work-before-closed-3-stop-ed34c5.csv",
+    "bytes": 1422909,
+    "sha256": "312f21de11d9ca0a74e25f8db661acdb539d3ee1d4f3ee3888410146c260ac19"
+  },
+  {
+    "window": "before-closed-3",
+    "file": "frames-observations-before-closed-3-stop-ed34c5.csv",
+    "bytes": 439432,
+    "sha256": "cffa50191fcc923e06a3dbb57cac3fc4eeebf4848a45d17dc760aaf01384505a"
+  }
+]

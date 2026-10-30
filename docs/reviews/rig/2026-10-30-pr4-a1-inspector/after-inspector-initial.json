@@ -1,0 +1,28 @@
+{
+  "available": true,
+  "frame": 3742,
+  "minute": 7665.36665725708,
+  "stateSha256": "b41cfffb13e035474a7c4a8245a889936aa5304c060eb16c397d327e45a2d309",
+  "savedPayloadLength": 5665995,
+  "fields": {
+    "hoveredId": null,
+    "hoveredRect": "(x:0.00, y:0.00, width:0.00, height:0.00)",
+    "selectedId": null,
+    "body": "",
+    "personality": "",
+    "header": "",
+    "homeLabel": "",
+    "workLabel": "",
+    "visible": "True",
+    "popup": "(x:0.00, y:0.00, width:0.00, height:0.00)",
+    "guardFailed": "False",
+    "wheelFailed": "False",
+    "uiBlockInstalled": "True",
+    "uiBlockFailed": "False"
+  },
+  "cameraDistance": 35.0,
+  "blockCameraZoom": false,
+  "leftHeld": false,
+  "rightHeld": false,
+  "mouse": "(963.00, 546.00, 0.00)"
+}

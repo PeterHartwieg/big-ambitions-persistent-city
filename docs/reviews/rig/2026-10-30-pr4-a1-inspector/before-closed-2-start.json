@@ -1,0 +1,47 @@
+{
+  "started": true,
+  "allocationCounter": false,
+  "authorityHookAvailable": true,
+  "components": [
+    "RouteObjectDiscovery.Step",
+    "PhysicalPopulation.BeforeAdvance",
+    "PhysicalPopulation.Update",
+    "PopulationRuntime.AdvancePopulation",
+    "MultimodalRoutes.Prepare",
+    "CitySimulator.RefreshTrafficClosures",
+    "PhysicalVehicles.Update",
+    "PhysicalTrafficHooks.FixedStepPrefix",
+    "PhysicalTrafficHooks.FixedStepPostfix",
+    "PhysicalTrafficHooks.FixedStepFinalizer",
+    "PhysicalVehicles.DeferNativeForce",
+    "PhysicalVehicles.ApplyNativeRotation",
+    "PhysicalIntersections.UpdatePostfix",
+    "PopulationRuntime.OnGUI"
+  ],
+  "environment": {
+    "width": 1920,
+    "height": 1080,
+    "quality": "Low",
+    "vSync": 0,
+    "focused": true,
+    "runInBackground": true,
+    "targetFps": 90,
+    "calendarFactor": 0.3333333333333333,
+    "gpu": "NVIDIA GeForce RTX 4070",
+    "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+    "graphicsApi": "Direct3D11",
+    "timeScale": 1.0,
+    "camera": {
+      "position": {
+        "x": 215.0,
+        "y": 25.8321667,
+        "z": 23.7273273
+      },
+      "eulerAngles": {
+        "x": 47.2700729,
+        "y": 180.000443,
+        "z": 0.0
+      }
+    }
+  }
+}

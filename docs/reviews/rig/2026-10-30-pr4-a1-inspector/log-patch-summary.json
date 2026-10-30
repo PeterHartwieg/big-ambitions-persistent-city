@@ -1,0 +1,64 @@
+{
+  "beforeExceptionStacks": [
+    "NullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+    "NullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 "
+  ],
+  "afterExceptionStacks": [
+    "NullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+    "NullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 "
+  ],
+  "newExceptionStacks": [],
+  "persistentCityExceptionStacks": [],
+  "inspectorWarnings": [],
+  "beforeInspectorPatches": [],
+  "afterInspectorPatches": [
+    {
+      "method": "MouseController.Run",
+      "owners": [
+        "persistentcity.resident-inspector-input"
+      ],
+      "prefix": [
+        {
+          "owner": "persistentcity.resident-inspector-input",
+          "priority": 400,
+          "method": "PersistentCity.Runtime.ResidentInspector.MouseRunPrefix"
+        }
+      ],
+      "postfix": [],
+      "finalizers": []
+    },
+    {
+      "method": "CameraControllers.PedestrianCam.UpdateInput",
+      "owners": [
+        "persistentcity.resident-inspector-input"
+      ],
+      "prefix": [
+        {
+          "owner": "persistentcity.resident-inspector-input",
+          "priority": 400,
+          "method": "PersistentCity.Runtime.ResidentInspector.CameraInputPrefix"
+        }
+      ],
+      "postfix": [
+        "persistentcity.resident-inspector-input"
+      ],
+      "finalizers": []
+    },
+    {
+      "method": "UnityEngine.UI.GraphicRaycaster.Raycast",
+      "owners": [
+        "persistentcity.resident-inspector-input"
+      ],
+      "prefix": [
+        {
+          "owner": "persistentcity.resident-inspector-input",
+          "priority": 400,
+          "method": "PersistentCity.Runtime.ResidentInspector.UiRaycastPrefix"
+        }
+      ],
+      "postfix": [],
+      "finalizers": []
+    }
+  ],
+  "scope": "startup and all three closed-popup windows only; gesture-failure paths were not exercised"
+}

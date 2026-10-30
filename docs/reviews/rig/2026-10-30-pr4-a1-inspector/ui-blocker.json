@@ -1,0 +1,10 @@
+{
+  "role": "rig_test",
+  "nativeWindowDetected": true,
+  "nativeWindowExecutable": "C:/BigAmbitions-AgentTests/Big Ambitions Agent Tests.exe",
+  "activationError": "failed to activate captured window",
+  "captureError": "SetIsBorderRequired failed: Element not found. (0x80070490)",
+  "recovery": "Refreshed window binding and retried; alternate app binding also failed. Requested desktop unlock.",
+  "gameBridgeCapture": true,
+  "realPointerChecksPerformed": false
+}

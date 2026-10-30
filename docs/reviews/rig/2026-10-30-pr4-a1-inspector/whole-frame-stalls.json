@@ -1,0 +1,20 @@
+[
+  {
+    "window": "before-closed-1",
+    "wallMilliseconds": 214.695,
+    "priorUnityFrame": "12205",
+    "currentUnityFrame": "12206",
+    "gcDeltas": [
+      "0",
+      "0",
+      "0"
+    ],
+    "neighborCombinedModMilliseconds": [
+      0.2528,
+      0.30119999999999997,
+      0.5552,
+      0.3221
+    ],
+    "interpretation": "Unexplained whole-frame stall; no >=30 ms attributed mod spike. GC coincidence alone is not attribution."
+  }
+]

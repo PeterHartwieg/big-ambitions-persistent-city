@@ -1,0 +1,25 @@
+{
+  "role": "rig_test",
+  "testedSha": "ee9486b17db082aff1f764251568fb4670ffca2a",
+  "beforeSha": "73129e0fc93772e4d1460a71aea7d174186454e1",
+  "dllSha256": {
+    "before": "f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c",
+    "after": "4cb1181f46ec5536ed9922799601c27379c296ddece39b278c4e4f84222b414c"
+  },
+  "tests": {
+    "passed": 1567,
+    "failed": 0,
+    "skipped": 0,
+    "exitCode": 0
+  },
+  "builds": {
+    "before": 0,
+    "after": 0
+  },
+  "setupNotes": [
+    "BA_GAME_MANAGED was unset in the CLI shell; built against isolated agent1 Managed references.",
+    "BEFORE required per-user dotnet on the command PATH; no source change.",
+    "Native window activation failed; screenshot capture failed with SetIsBorderRequired failed: Element not found. (0x80070490).",
+    "Bridge game-view screenshots succeed; they cannot establish real pointer-input behavior."
+  ]
+}

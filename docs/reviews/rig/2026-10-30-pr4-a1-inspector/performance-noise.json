@@ -1,0 +1,56 @@
+[
+  {
+    "scope": "modWork",
+    "metric": "p50",
+    "beforeMedian": 0.2658,
+    "afterMedian": 0.3352,
+    "change": 0.06940000000000002,
+    "largerWithinBuildRange": 0.1038,
+    "worseBeyondObservedSpread": false
+  },
+  {
+    "scope": "modWork",
+    "metric": "p95",
+    "beforeMedian": 0.3664,
+    "afterMedian": 0.7003999999999999,
+    "change": 0.3339999999999999,
+    "largerWithinBuildRange": 0.10280000000000011,
+    "worseBeyondObservedSpread": true
+  },
+  {
+    "scope": "modWork",
+    "metric": "maximum",
+    "beforeMedian": 9.0734,
+    "afterMedian": 11.8542,
+    "change": 2.780800000000001,
+    "largerWithinBuildRange": 2.2454,
+    "worseBeyondObservedSpread": true
+  },
+  {
+    "scope": "wholeFrame",
+    "metric": "p50",
+    "beforeMedian": 11.1699,
+    "afterMedian": 12.2846,
+    "change": 1.1146999999999991,
+    "largerWithinBuildRange": 1.1735000000000007,
+    "worseBeyondObservedSpread": false
+  },
+  {
+    "scope": "wholeFrame",
+    "metric": "p95",
+    "beforeMedian": 12.7256,
+    "afterMedian": 17.6211,
+    "change": 4.895499999999998,
+    "largerWithinBuildRange": 0.5774000000000008,
+    "worseBeyondObservedSpread": true
+  },
+  {
+    "scope": "wholeFrame",
+    "metric": "maximum",
+    "beforeMedian": 25.9942,
+    "afterMedian": 46.6657,
+    "change": 20.6715,
+    "largerWithinBuildRange": 190.3571,
+    "worseBeyondObservedSpread": false
+  }
+]

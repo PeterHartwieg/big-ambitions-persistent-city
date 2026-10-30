@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "captures": 6,
+  "windowSecondsMinimum": 60,
+  "percentilesRecomputed": true,
+  "noPickingPassesInAfterClosed": true,
+  "attributionCountersClean": true,
+  "autosaveWindowsClean": true,
+  "verifiedBy": "verify_evidence.py",
+  "scope": "Evidence verification only; functional native tests remain blocked."
+}

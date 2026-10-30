@@ -1,0 +1,518 @@
+{
+  "captureStartedTicks": 2255536003,
+  "captureStoppedTicks": 2859267016,
+  "realSeconds": 60.3731013,
+  "nativeGameMinutes": 20.16809368133545,
+  "citizens": 957,
+  "populationLagMinutes": 0.0,
+  "physical": "physical=True, pedestrians=0, cars=0, acquired=4, released=4, blockedSamples=434, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+  "peakObservedPedestrians": 0,
+  "peakObservedCars": 0,
+  "frameMilliseconds": {
+    "samples": 5421,
+    "mean": 11.135700608743765,
+    "p50": 11.1699,
+    "p95": 12.6586,
+    "p99": 14.7121,
+    "maximum": 24.3379
+  },
+  "totalPopulationUpdateMilliseconds": {
+    "samples": 5421,
+    "mean": 0.28538105515587553,
+    "p50": 0.2598,
+    "p95": 0.3612,
+    "p99": 0.6809,
+    "maximum": 9.0698
+  },
+  "authorityHookAvailable": true,
+  "authorityHookObserved": true,
+  "populationUpdateCalls": 5421,
+  "authorityHookCalls": 5421,
+  "authorityHookMilliseconds": {
+    "samples": 5421,
+    "mean": 0.0007823833241099238,
+    "p50": 0.0007,
+    "p95": 0.0014,
+    "p99": 0.0018,
+    "maximum": 0.005
+  },
+  "authorityHookTotalMilliseconds": 4.241300000000023,
+  "observedNativeHourChangeCalls": 0,
+  "observedNativeHourChangeMilliseconds": {
+    "samples": 0,
+    "mean": 0.0,
+    "p50": 0.0,
+    "p95": 0.0,
+    "p99": 0.0,
+    "maximum": 0.0
+  },
+  "completedUnityFrames": 5420,
+  "populationUpdatePerUnityFrameMilliseconds": {
+    "samples": 5420,
+    "mean": 0.28538566420664224,
+    "p50": 0.2598,
+    "p95": 0.3613,
+    "p99": 0.6809,
+    "maximum": 9.0698
+  },
+  "authorityHookPerUnityFrameMilliseconds": {
+    "samples": 5420,
+    "mean": 0.000782380073800719,
+    "p50": 0.0007,
+    "p95": 0.0014,
+    "p99": 0.0018,
+    "maximum": 0.005
+  },
+  "combinedModWorkPerUnityFrameMilliseconds": {
+    "samples": 5420,
+    "mean": 0.2861680442804432,
+    "p50": 0.2606,
+    "p95": 0.362,
+    "p99": 0.6823,
+    "maximum": 9.0704
+  },
+  "combinedFramesOver5ms": 3,
+  "totalPopulationCalls": 5421,
+  "totalAuthorityCalls": 5421,
+  "totalHourChangeCalls": 0,
+  "populationCallSamplesDropped": 0,
+  "authorityCallSamplesDropped": 0,
+  "hourChangeSamplesDropped": 0,
+  "diagnosticDispatchCount": 2,
+  "diagnosticDispatchDropped": 0,
+  "diagnosticDispatches": [
+    {
+      "operation": "frames-start",
+      "unityFrame": 17451,
+      "ticks": 2255536015
+    },
+    {
+      "operation": "frames-stop",
+      "unityFrame": 22872,
+      "ticks": 2859266984
+    }
+  ],
+  "excludedLifecycleModFrames": 0,
+  "timedExceptions": 0,
+  "crossFrameCalls": 0,
+  "perFrameEvidence": "<user-home>/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests\\ModsLocal\\FoodDemandAuditProbe\\frames-mod-work-before-closed-2-stop-3de220.csv",
+  "observationEvidence": "<user-home>/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests\\ModsLocal\\FoodDemandAuditProbe\\frames-observations-before-closed-2-stop-3de220.csv",
+  "stopReason": "frames-stop",
+  "sampleError": "",
+  "activeReportCount": 0,
+  "lastActiveReportUnityFrame": 0,
+  "activeReportUnityFrames": [],
+  "activeReportIdsDropped": 0,
+  "droppedModFrames": 0,
+  "replacedUnexportedCapture": false,
+  "rawObservations": {
+    "Count": 5421,
+    "Capacity": 65536,
+    "MarshaledStorageEstimateBytes": 7864320,
+    "Dropped": 0,
+    "Duplicates": 0,
+    "InvalidOrder": 0,
+    "SkippedUnityFrames": 0,
+    "stopwatchFrequency": 10000000,
+    "terminationObservedTicks": 2859267016,
+    "discardedLifecycleTailTicks": 0,
+    "unobservedTailTicks": 64683,
+    "initialIntervalPartial": true,
+    "currentModFrameExcluded": true,
+    "outstandingPrimaryScopes": 0
+  },
+  "componentTimedExceptions": 0,
+  "componentCrossFrameCalls": 0,
+  "eventCrossFrameCalls": 0,
+  "eventMeasurementFailures": 0,
+  "eventMeasurementsFailed": false,
+  "managedCounterKind": "mono-used-heap-bytes",
+  "eventMeasurementNote": "A nonzero eventMeasurementFailures disables event/query capture until a new recording; partial event scratch is discarded, earlier rows remain but the event capture is incomplete. Other frame capture continues. Slowest event sums this frame's RunEvent/ContinuePlanning slices by citizen, simulation minute and entry branch. Branch names describe entry state, not every internal Step branch. Food steps and traffic advances are separate calls with blank citizen IDs. Native query fields time managed WalkingRoutes.Calculate (sampling, path, geometry) and RoadPlan.Continue (A-star slices plus completion), navMeshPathMs separately differences the existing native CalculatePath timer; aStarAdvanceMs times actual RoadSearch.Advance including its callbacks/result construction. These nested fields must not be added. Plans count MultimodalRoutes Plan/Begin calls in the measured scope. Timings exclude time suspended between frames. Allocation delta spans consecutive first observed work points, includes other main-thread work and diagnostic allocation, and is not mod-attributed. Heap fallback is signed live-heap change, not allocated bytes. Initial/current partial frames are excluded; frame gaps must be checked. Hook components time mod hook bodies, not the full native methods; force/rotation verdicts exclude native Rigidbody writes. No automatic performance pass.",
+  "components": [
+    {
+      "name": "RouteObjectDiscovery.Step",
+      "calls": 5421,
+      "outsidePrimaryScopeCalls": 0,
+      "callSamplesDropped": 0,
+      "totalInclusiveMilliseconds": 165.0222,
+      "inclusiveCallMilliseconds": {
+        "samples": 5421,
+        "mean": 0.030441283895960302,
+        "p50": 0.0296,
+        "p95": 0.0356,
+        "p99": 0.0497,
+        "maximum": 0.1085
+      },
+      "inclusivePerUnityFrameMilliseconds": {
+        "samples": 5420,
+        "mean": 0.03044140221402229,
+        "p50": 0.0296,
+        "p95": 0.0356,
+        "p99": 0.0497,
+        "maximum": 0.1085
+      }
+    },
+    {
+      "name": "PhysicalPopulation.BeforeAdvance",
+      "calls": 5421,
+      "outsidePrimaryScopeCalls": 0,
+      "callSamplesDropped": 0,
+      "totalInclusiveMilliseconds": 39.1107,
+      "inclusiveCallMilliseconds": {
+        "samples": 5421,
+        "mean": 0.00721466519092432,
+        "p50": 0.007,
+        "p95": 0.0096,
+        "p99": 0.0122,
+        "maximum": 0.0871
+      },
+      "inclusivePerUnityFrameMilliseconds": {
+        "samples": 5420,
+        "mean": 0.007214630996310099,
+        "p50": 0.007,
+        "p95": 0.0096,
+        "p99": 0.0122,
+        "maximum": 0.0871
+      }
+    },
+    {
+      "name": "PhysicalPopulation.Update",
+      "calls": 5421,
+      "outsidePrimaryScopeCalls": 0,
+      "callSamplesDropped": 0,
+      "totalInclusiveMilliseconds": 276.7121,
+      "inclusiveCallMilliseconds": {
+        "samples": 5421,
+        "mean": 0.05104447518907948,
+        "p50": 0.0439,
+        "p95": 0.0863,
+        "p99": 0.1556,
+        "maximum": 7.2103
+      },
+      "inclusivePerUnityFrameMilliseconds": {
+        "samples": 5420,
+        "mean": 0.051047859778597764,
+        "p50": 0.0439,
+        "p95": 0.0875,
+        "p99": 0.1556,
+        "maximum": 7.2103
+      }
+    },
+    {
+      "name": "PopulationRuntime.AdvancePopulation",
+      "calls": 5421,
+      "outsidePrimaryScopeCalls": 0,
+      "callSamplesDropped": 0,
+      "totalInclusiveMilliseconds": 125.8069,
+      "inclusiveCallMilliseconds": {
+        "samples": 5421,
+        "mean": 0.023207323372071667,
+        "p50": 0.0159,
+        "p95": 0.0202,
+        "p99": 0.0455,
+        "maximum": 8.3866
+      },
+      "inclusivePerUnityFrameMilliseconds": {
+        "samples": 5420,
+        "mean": 0.023209261992620023,
+        "p50": 0.0159,
+        "p95": 0.0202,
+        "p99": 0.0455,
+        "maximum": 8.3866
+      }
+    },
+    {
+      "name": "MultimodalRoutes.Prepare",
+      "calls": 5421,
+      "outsidePrimaryScopeCalls": 0,
+      "callSamplesDropped": 0,
+      "totalInclusiveMilliseconds": 146.5912,
+      "inclusiveCallMilliseconds": {
+        "samples": 5421,
+        "mean": 0.027041357683084195,
+        "p50": 0.0234,
+        "p95": 0.0298,
+        "p99": 0.0677,
+        "maximum": 0.5803
+      },
+      "inclusivePerUnityFrameMilliseconds": {
+        "samples": 5420,
+        "mean": 0.027041642066420558,
+        "p50": 0.0234,
+        "p95": 0.0298,
+        "p99": 0.0677,
+        "maximum": 0.5803
+      }
+    },
+    {
+      "name": "CitySimulator.RefreshTrafficClosures",
+      "calls": 5421,
+      "outsidePrimaryScopeCalls": 0,
+      "callSamplesDropped": 0,
+      "totalInclusiveMilliseconds": 21.1057,
+      "inclusiveCallMilliseconds": {
+        "samples": 5421,
+        "mean": 0.003893322265264675,
+        "p50": 0.0037,
+        "p95": 0.0052,
+        "p99": 0.0063,
+        "maximum": 0.0504
+      },
+      "inclusivePerUnityFrameMilliseconds": {
+        "samples": 5420,
+        "mean": 0.0038934870848708124,
+        "p50": 0.0037,
+        "p95": 0.0052,
+        "p99": 0.0063,
+        "maximum": 0.0504
+      }
+    },
+    {
+      "name": "PhysicalVehicles.Update",
+      "calls": 5421,
+      "outsidePrimaryScopeCalls": 0,
+      "callSamplesDropped": 0,
+      "totalInclusiveMilliseconds": 14.5574,
+      "inclusiveCallMilliseconds": {
+        "samples": 5421,
+        "mean": 0.0026853717026379034,
+        "p50": 0.0025,
+        "p95": 0.0043,
+        "p99": 0.0063,
+        "maximum": 0.0279
+      },
+      "inclusivePerUnityFrameMilliseconds": {
+        "samples": 5420,
+        "mean": 0.0026855166051660655,
+        "p50": 0.0025,
+        "p95": 0.0043,
+        "p99": 0.0063,
+        "maximum": 0.0279
+      }
+    },
+    {
+      "name": "PhysicalTrafficHooks.FixedStepPrefix",
+      "calls": 3025,
+      "outsidePrimaryScopeCalls": 3025,
+      "callSamplesDropped": 0,
+      "totalInclusiveMilliseconds": 3.0393,
+      "inclusiveCallMilliseconds": {
+        "samples": 3025,
+        "mean": 0.001004727272727249,
+        "p50": 0.0009,
+        "p95": 0.0016,
+        "p99": 0.0022,
+        "maximum": 0.0101
+      },
+      "inclusivePerUnityFrameMilliseconds": {
+        "samples": 5420,
+        "mean": 0.0005606088560885478,
+        "p50": 0.0007,
+        "p95": 0.0015,
+        "p99": 0.002,
+        "maximum": 0.0101
+      }
+    },
+    {
+      "name": "PhysicalTrafficHooks.FixedStepPostfix",
+      "calls": 3025,
+      "outsidePrimaryScopeCalls": 3025,
+      "callSamplesDropped": 0,
+      "totalInclusiveMilliseconds": 9.5409,
+      "inclusiveCallMilliseconds": {
+        "samples": 3025,
+        "mean": 0.0031540165289255925,
+        "p50": 0.003,
+        "p95": 0.0045,
+        "p99": 0.0061,
+        "maximum": 0.0469
+      },
+      "inclusivePerUnityFrameMilliseconds": {
+        "samples": 5420,
+        "mean": 0.0017597970479704646,
+        "p50": 0.0024,
+        "p95": 0.004,
+        "p99": 0.0055,
+        "maximum": 0.0469
+      }
+    },
+    {
+      "name": "PhysicalTrafficHooks.FixedStepFinalizer",
+      "calls": 3025,
+      "outsidePrimaryScopeCalls": 3025,
+      "callSamplesDropped": 0,
+      "totalInclusiveMilliseconds": 0.142,
+      "inclusiveCallMilliseconds": {
+        "samples": 3025,
+        "mean": 4.6942148760330896e-05,
+        "p50": 0.0,
+        "p95": 0.0001,
+        "p99": 0.0001,
+        "maximum": 0.0007
+      },
+      "inclusivePerUnityFrameMilliseconds": {
+        "samples": 5420,
+        "mean": 2.6199261992620108e-05,
+        "p50": 0.0,
+        "p95": 0.0001,
+        "p99": 0.0001,
+        "maximum": 0.0008
+      }
+    },
+    {
+      "name": "PhysicalVehicles.DeferNativeForce",
+      "calls": 14412,
+      "outsidePrimaryScopeCalls": 14412,
+      "callSamplesDropped": 0,
+      "totalInclusiveMilliseconds": 1.3557,
+      "inclusiveCallMilliseconds": {
+        "samples": 14412,
+        "mean": 9.406744379682703e-05,
+        "p50": 0.0001,
+        "p95": 0.0003,
+        "p99": 0.0007,
+        "maximum": 0.0179
+      },
+      "inclusivePerUnityFrameMilliseconds": {
+        "samples": 5420,
+        "mean": 0.0002500553505534947,
+        "p50": 0.0002,
+        "p95": 0.0007,
+        "p99": 0.001,
+        "maximum": 0.0203
+      }
+    },
+    {
+      "name": "PhysicalVehicles.ApplyNativeRotation",
+      "calls": 14412,
+      "outsidePrimaryScopeCalls": 14412,
+      "callSamplesDropped": 0,
+      "totalInclusiveMilliseconds": 0.8299,
+      "inclusiveCallMilliseconds": {
+        "samples": 14412,
+        "mean": 5.7583957812928736e-05,
+        "p50": 0.0001,
+        "p95": 0.0001,
+        "p99": 0.0002,
+        "maximum": 0.027
+      },
+      "inclusivePerUnityFrameMilliseconds": {
+        "samples": 5420,
+        "mean": 0.00015308118081180702,
+        "p50": 0.0001,
+        "p95": 0.0004,
+        "p99": 0.0005,
+        "maximum": 0.0272
+      }
+    },
+    {
+      "name": "PhysicalIntersections.UpdatePostfix",
+      "calls": 5421,
+      "outsidePrimaryScopeCalls": 5421,
+      "callSamplesDropped": 0,
+      "totalInclusiveMilliseconds": 6.1331,
+      "inclusiveCallMilliseconds": {
+        "samples": 5421,
+        "mean": 0.0011313595277623757,
+        "p50": 0.001,
+        "p95": 0.0017,
+        "p99": 0.0022,
+        "maximum": 0.0537
+      },
+      "inclusivePerUnityFrameMilliseconds": {
+        "samples": 5420,
+        "mean": 0.0011313837638376085,
+        "p50": 0.001,
+        "p95": 0.0017,
+        "p99": 0.0022,
+        "maximum": 0.0537
+      }
+    },
+    {
+      "name": "PopulationRuntime.OnGUI",
+      "calls": 10842,
+      "outsidePrimaryScopeCalls": 10842,
+      "callSamplesDropped": 0,
+      "totalInclusiveMilliseconds": 17.5285,
+      "inclusiveCallMilliseconds": {
+        "samples": 10842,
+        "mean": 0.0016167220070098247,
+        "p50": 0.0016,
+        "p95": 0.0033,
+        "p99": 0.0045,
+        "maximum": 0.1274
+      },
+      "inclusivePerUnityFrameMilliseconds": {
+        "samples": 5420,
+        "mean": 0.00323064575645763,
+        "p50": 0.0026,
+        "p95": 0.0039,
+        "p99": 0.0064,
+        "maximum": 0.1275
+      }
+    }
+  ],
+  "unityCpuFrameMilliseconds": {
+    "samples": 0,
+    "mean": 0.0,
+    "p50": 0.0,
+    "p95": 0.0,
+    "p99": 0.0,
+    "maximum": 0.0
+  },
+  "unityGpuFrameMilliseconds": {
+    "samples": 0,
+    "mean": 0.0,
+    "p50": 0.0,
+    "p95": 0.0,
+    "p99": 0.0,
+    "maximum": 0.0
+  },
+  "allocationCounterAvailable": false,
+  "allocationCounterObservedPositive": false,
+  "allocatedBytesPerFrame": {
+    "samples": 0,
+    "mean": 0.0,
+    "p50": 0.0,
+    "p95": 0.0,
+    "p99": 0.0,
+    "maximum": 0.0
+  },
+  "managedBytesBefore": 822386688,
+  "managedBytesAfter": 950435840,
+  "collections": [
+    1,
+    1,
+    1
+  ],
+  "framesOver50ms": 0,
+  "framesOver100ms": 0,
+  "framesOver250ms": 0,
+  "environment": {
+    "width": 1920,
+    "height": 1080,
+    "quality": "Low",
+    "vSync": 0,
+    "focused": true,
+    "runInBackground": true,
+    "targetFps": 90,
+    "calendarFactor": 0.3333333333333333,
+    "gpu": "NVIDIA GeForce RTX 4070",
+    "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+    "graphicsApi": "Direct3D11",
+    "timeScale": 1.0,
+    "camera": {
+      "position": {
+        "x": 215.0,
+        "y": 25.8321667,
+        "z": 23.7273273
+      },
+      "eulerAngles": {
+        "x": 47.2700729,
+        "y": 180.000519,
+        "z": 3.83985725e-11
+      }
+    }
+  },
+  "note": "Whole-frame wall intervals include native rendering, other mods and diagnostics. Population Update includes route preparation and physical work. Authority-hook wall time includes native work it force-drains, and includes no-op hook calls. Observed native-hour-change calls are clock transitions, not actual ownership transfers. Combined mod work is the union of timed Update/authority scopes, so nested scopes count once; separate component totals must not be added when nested. Per-frame distributions exclude initial and current partial Unity frames and include zero-work completed frames. Instrumentation overhead remains; crossFrameCalls or timedExceptions invalidate clean attribution. No hour-change sample means no hourly-boundary performance proof. Named component timings are inclusive call and completed-frame totals; nested components (PhysicalVehicles.Update inside PhysicalPopulation.Update, for example) must not be added. Components do not extend or double-count the original Update/authority union. Outside-primary-scope component calls are reported separately, and nonzero componentCrossFrameCalls or componentTimedExceptions invalidate clean component attribution. Per-call and completed-frame samples cap at65536; total call counts remain uncapped. Fixed thirteen-slot value storage replaces per-frame component arrays; timing patches and existing sample lists still add diagnostic overhead. Raw observations are bounded and excess rows are counted as dropped. CPU/GPU availability means a finite nonnegative value was returned, not that Unity measured it: returned zero may be unmeasured. CPU/GPU raw values are latest asynchronous observations with no wall-interval mapping; historical CPU/GPU distributions retain their positive-only filter. Active status/report calls allocate and contaminate the capture; their count and last Unity frame are reported. Raw allocation values are latest recorder observations, not attributed mod allocations. Timestamp bounds are observations, not engine frame boundaries. Paused means timeScale equals zero. Other mod entry points are outside this attribution. Body peaks sampled only on frame-status calls. GPU/CPU counters absent when unsupported. GC recorder is whole game, not attributed solely to this mod; an all-zero recorder without positive observations does not establish zero allocations."
+}

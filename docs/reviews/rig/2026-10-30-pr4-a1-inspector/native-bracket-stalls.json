@@ -1,0 +1,132 @@
+[
+  {
+    "window": "after-closed-1",
+    "logSha256": "0a56f161800798b98c021568e8254d0b78df01c13a7edfbd181f415f830d5b2e",
+    "stalls": [
+      {
+        "reportedMilliseconds": 110,
+        "nativeDiagnostic": "[Mod:RealLifeOverhaul] Session: a frame of 110 ms; none of the mod's large pieces of work was under way; where it went: scripts' Update 103 ms, rendering 4 ms, the rest 1 ms, outside the engine's steps 0 ms; the processor: the main thread ran 94 ms of it, the game 94 ms over all its threads, the machine's 20 processors 26% busy (other programs 22%); page faults in it: 0; the engine's own figures: not offered by this build; so: the main thread was working for most of it (the engine's own work, or a script's: the steps above say which); the mod's own scripts in it: 0.1 ms; the collector: no collection (173 so far), at work 0.0 ms, heap 790 MB before and 790 MB after; the game: its screen was clear, not saving, no scene loaded or unloaded; the mod's navigation obstacles changed in the second before it and in it: 0; the mod's last pieces of work: \"transit: a bus stop being put out\" (0.0 ms) 13.7 s before, \"transit: a bus stop being put out\" (0.1 ms) 13.7 s before, \"transit: a bus stop being put out\" (0.1 ms) 13.7 s before; on foot in the street, game hour 7."
+      },
+      {
+        "reportedMilliseconds": 170,
+        "nativeDiagnostic": "[Mod:RealLifeOverhaul] Session: a frame of 170 ms; none of the mod's large pieces of work was under way; where it went: scripts' Update 162 ms, rendering 4 ms, the rest 1 ms, outside the engine's steps 0 ms; the processor: the main thread ran 156 ms of it, the game 203 ms over all its threads, the machine's 20 processors 21% busy (other programs 15%); page faults in it: 7904; the engine's own figures: not offered by this build; so: the main thread was working for most of it (the engine's own work, or a script's: the steps above say which); the mod's own scripts in it: 0.1 ms; the collector: no collection (173 so far), at work 0.0 ms, heap 790 MB before and 854 MB after; the game: its screen was clear, not saving, no scene loaded or unloaded; the mod's navigation obstacles changed in the second before it and in it: 0; the mod's last pieces of work: \"transit: a bus stop being put out\" (0.0 ms) 14.0 s before, \"transit: a bus stop being put out\" (0.1 ms) 14.0 s before, \"transit: a bus stop being put out\" (0.1 ms) 14.0 s before; on foot in the street, game hour 7."
+      },
+      {
+        "reportedMilliseconds": 453,
+        "nativeDiagnostic": "[Mod:RealLifeOverhaul] Session: a frame of 453 ms; none of the mod's large pieces of work was under way; where it went: scripts' Update 444 ms, physics 1 ms, animation 1 ms, rendering 4 ms, the rest 1 ms, outside the engine's steps 0 ms; the processor: the main thread ran 438 ms of it, the game 469 ms over all its threads, the machine's 20 processors 26% busy (other programs 20%); page faults in it: 2396; the engine's own figures: not offered by this build; so: the main thread was working for most of it (the engine's own work, or a script's: the steps above say which); the mod's own scripts in it: 0.2 ms; the collector: no collection (175 so far), at work 0.0 ms, heap 761 MB before and 808 MB after; the game: its screen was clear, not saving, no scene loaded or unloaded; the mod's navigation obstacles changed in the second before it and in it: 0; the mod's last pieces of work: \"city life: a site being set up\" (5.3 ms) 14.6 s before, \"city life: a site being set up\" (13.5 ms) 32.7 s before, \"transit: a bus stop being put out\" (0.0 ms) 74.3 s before; on foot in the street, game hour 8."
+      }
+    ],
+    "saveMentionCount": 3,
+    "allSaveMentionsAreNotSavingDiagnostics": true,
+    "scope": "The driver log bracket begins before frames-start and ends after frames-stop/export. These log reports have no Unity-frame ID/timestamp mapping, so cannot be classified as inside the narrow capture. Retain as unaligned whole-session stalls; do not equate to sampled frame maxima."
+  },
+  {
+    "window": "after-closed-2",
+    "logSha256": "64c7665590dc3af0e526ef309dbfdeca0ca6306d3598784594ffcdda0362bf62",
+    "stalls": [
+      {
+        "reportedMilliseconds": 107,
+        "nativeDiagnostic": "[Mod:RealLifeOverhaul] Session: a frame of 107 ms; none of the mod's large pieces of work was under way; where it went: scripts' Update 100 ms, rendering 3 ms, the rest 1 ms, outside the engine's steps 0 ms; the processor: the main thread ran 94 ms of it, the game 94 ms over all its threads, the machine's 20 processors 22% busy (other programs 18%); page faults in it: 0; the engine's own figures: not offered by this build; so: the main thread was working for most of it (the engine's own work, or a script's: the steps above say which); the mod's own scripts in it: 0.1 ms; the collector: no collection (175 so far), at work 0.0 ms, heap 814 MB before and 814 MB after; the game: its screen was clear, not saving, no scene loaded or unloaded; the mod's navigation obstacles changed in the second before it and in it: 0; the mod's last pieces of work: \"city life: a site being set up\" (5.3 ms) 16.9 s before, \"city life: a site being set up\" (13.5 ms) 35.0 s before, \"transit: a bus stop being put out\" (0.0 ms) 76.6 s before; on foot in the street, game hour 8."
+      },
+      {
+        "reportedMilliseconds": 93,
+        "nativeDiagnostic": "[Mod:RealLifeOverhaul] Session: a frame of 93 ms; none of the mod's large pieces of work was under way; where it went: scripts' Update 85 ms, physics 1 ms, rendering 3 ms, waiting for the last frame to be shown 1 ms, the rest 1 ms, outside the engine's steps 0 ms; the processor: the main thread ran 94 ms of it, the game 109 ms over all its threads, the machine's 20 processors 26% busy (other programs 20%); page faults in it: 1696; the engine's own figures: not offered by this build; so: the main thread was working for most of it (the engine's own work, or a script's: the steps above say which); the mod's own scripts in it: 0.1 ms; the collector: no collection (175 so far), at work 3.0 ms, heap 814 MB before and 848 MB after; the game: its screen was clear, not saving, no scene loaded or unloaded; the mod's navigation obstacles changed in the second before it and in it: 0; the mod's last pieces of work: \"city life: a site being set up\" (5.3 ms) 17.2 s before, \"city life: a site being set up\" (13.5 ms) 35.3 s before, \"transit: a bus stop being put out\" (0.0 ms) 76.9 s before; on foot in the street, game hour 8."
+      },
+      {
+        "reportedMilliseconds": 544,
+        "nativeDiagnostic": "[Mod:RealLifeOverhaul] Session: a frame of 544 ms; none of the mod's large pieces of work was under way; where it went: scripts' Update 529 ms, physics 3 ms, rendering 6 ms, the rest 2 ms, outside the engine's steps 0 ms; the processor: the main thread ran 547 ms of it, the game 578 ms over all its threads, the machine's 20 processors 61% busy (other programs 56%); page faults in it: 51; the engine's own figures: not offered by this build; so: the main thread was working for most of it (the engine's own work, or a script's: the steps above say which); the mod's own scripts in it: 0.8 ms (Camera: ThirdPersonCamera.Update 0.1 ms, Coroutine: EconomyDirector.Tick 0.1 ms, Coroutine: SpecialNames.Look 0.1 ms); the collector: no collection (177 so far), at work 0.0 ms, heap 806 MB before and 854 MB after; the game: its screen was clear, not saving, no scene loaded or unloaded; the mod's navigation obstacles changed in the second before it and in it: 0; the mod's last pieces of work: \"city life: a site being set up\" (5.3 ms) 77.6 s before, \"city life: a site being set up\" (13.5 ms) 95.7 s before, \"transit: a bus stop being put out\" (0.0 ms) 137.3 s before; on foot in the street, game hour 8."
+      }
+    ],
+    "saveMentionCount": 3,
+    "allSaveMentionsAreNotSavingDiagnostics": true,
+    "scope": "The driver log bracket begins before frames-start and ends after frames-stop/export. These log reports have no Unity-frame ID/timestamp mapping, so cannot be classified as inside the narrow capture. Retain as unaligned whole-session stalls; do not equate to sampled frame maxima."
+  },
+  {
+    "window": "after-closed-3",
+    "logSha256": "e8782522947166a1c984af03efff409cbb908fddd8f9d0ce1fa800a935ce877a",
+    "stalls": [
+      {
+        "reportedMilliseconds": 156,
+        "nativeDiagnostic": "[Mod:RealLifeOverhaul] Session: a frame of 156 ms; none of the mod's large pieces of work was under way; where it went: scripts' Update 145 ms, physics 2 ms, navigation 1 ms, rendering 5 ms, the rest 2 ms, outside the engine's steps 1 ms; the processor: the main thread ran 141 ms of it, the game 172 ms over all its threads, the machine's 20 processors 65% busy (other programs 59%); page faults in it: 0; the engine's own figures: not offered by this build; so: the main thread was working for most of it (the engine's own work, or a script's: the steps above say which); the mod's own scripts in it: 0.2 ms (Camera: ThirdPersonCamera.Update 0.1 ms); the collector: no collection (177 so far), at work 0.0 ms, heap 860 MB before and 860 MB after; the game: its screen was clear, not saving, no scene loaded or unloaded; the mod's navigation obstacles changed in the second before it and in it: 0; the mod's last pieces of work: \"city life: a site being set up\" (5.3 ms) 80.3 s before, \"city life: a site being set up\" (13.5 ms) 98.4 s before, \"transit: a bus stop being put out\" (0.0 ms) 140.0 s before; on foot in the street, game hour 8."
+      },
+      {
+        "reportedMilliseconds": 191,
+        "nativeDiagnostic": "[Mod:RealLifeOverhaul] Session: a frame of 191 ms; none of the mod's large pieces of work was under way; where it went: scripts' Update 178 ms, physics 2 ms, rendering 6 ms, the rest 2 ms, outside the engine's steps 0 ms; the processor: the main thread ran 188 ms of it, the game 203 ms over all its threads, the machine's 20 processors 58% busy (other programs 53%); page faults in it: 36; the engine's own figures: not offered by this build; so: the main thread was working for most of it (the engine's own work, or a script's: the steps above say which); the mod's own scripts in it: 0.2 ms (Camera: ThirdPersonCamera.Update 0.1 ms); the collector: a collection finished in it (177 before, 178 after), at work 17.8 ms, heap 860 MB before and 788 MB after; the game: its screen was clear, not saving, no scene loaded or unloaded; the mod's navigation obstacles changed in the second before it and in it: 0; the mod's last pieces of work: \"city life: a site being set up\" (5.3 ms) 80.5 s before, \"city life: a site being set up\" (13.5 ms) 98.6 s before, \"transit: a bus stop being put out\" (0.0 ms) 140.2 s before; on foot in the street, game hour 8."
+      },
+      {
+        "reportedMilliseconds": 534,
+        "nativeDiagnostic": "[Mod:RealLifeOverhaul] Session: a frame of 534 ms; none of the mod's large pieces of work was under way; where it went: scripts' Update 521 ms, physics 2 ms, rendering 5 ms, the rest 2 ms, outside the engine's steps 0 ms; the processor: the main thread ran 531 ms of it, the game 641 ms over all its threads, the machine's 20 processors 57% busy (other programs 51%); page faults in it: 3626; the engine's own figures: not offered by this build; so: the main thread was working for most of it (the engine's own work, or a script's: the steps above say which); the mod's own scripts in it: 0.2 ms (Camera: ThirdPersonCamera.Update 0.1 ms); the collector: no collection (179 so far), at work 0.0 ms, heap 838 MB before and 884 MB after; the game: its screen was clear, not saving, no scene loaded or unloaded; the mod's navigation obstacles changed in the second before it and in it: 0; the mod's last pieces of work: \"streets: a reckless driver being picked\" (0.6 ms) 23.3 s before, \"city life: a site being set up\" (5.3 ms) 141.1 s before, \"city life: a site being set up\" (13.5 ms) 159.2 s before; on foot in the street, game hour 8."
+      }
+    ],
+    "saveMentionCount": 3,
+    "allSaveMentionsAreNotSavingDiagnostics": true,
+    "scope": "The driver log bracket begins before frames-start and ends after frames-stop/export. These log reports have no Unity-frame ID/timestamp mapping, so cannot be classified as inside the narrow capture. Retain as unaligned whole-session stalls; do not equate to sampled frame maxima."
+  },
+  {
+    "window": "before-closed-1",
+    "logSha256": "14c7e2cf83dc380f8a48e36b20fc63c72c0cc69f75bbf03052e62ff7529f65a8",
+    "stalls": [
+      {
+        "reportedMilliseconds": 106,
+        "nativeDiagnostic": "[Mod:RealLifeOverhaul] Session: a frame of 106 ms; none of the mod's large pieces of work was under way; where it went: scripts' Update 99 ms, rendering 4 ms, the rest 1 ms, outside the engine's steps 0 ms; the processor: the main thread ran 109 ms of it, the game 125 ms over all its threads, the machine's 20 processors 20% busy (other programs 14%); page faults in it: 0; the engine's own figures: not offered by this build; so: the main thread was working for most of it (the engine's own work, or a script's: the steps above say which); the mod's own scripts in it: 0.1 ms; the collector: no collection (175 so far), at work 0.0 ms, heap 758 MB before and 758 MB after; the game: its screen was clear, not saving, no scene loaded or unloaded; the mod's navigation obstacles changed in the second before it and in it: 0; the mod's last pieces of work: \"transit: a bus stop being put out\" (0.0 ms) 14.2 s before, \"transit: a bus stop being put out\" (0.1 ms) 14.2 s before, \"transit: a bus stop being put out\" (0.0 ms) 14.2 s before; on foot in the street, game hour 7."
+      },
+      {
+        "reportedMilliseconds": 167,
+        "nativeDiagnostic": "[Mod:RealLifeOverhaul] Session: a frame of 167 ms; none of the mod's large pieces of work was under way; where it went: scripts' Update 159 ms, rendering 4 ms, the rest 1 ms, outside the engine's steps 0 ms; the processor: the main thread ran 156 ms of it, the game 172 ms over all its threads, the machine's 20 processors 15% busy (other programs 10%); page faults in it: 5920; the engine's own figures: not offered by this build; so: the main thread was working for most of it (the engine's own work, or a script's: the steps above say which); the mod's own scripts in it: 0.1 ms; the collector: no collection (175 so far), at work 0.0 ms, heap 758 MB before and 818 MB after; the game: its screen was clear, not saving, no scene loaded or unloaded; the mod's navigation obstacles changed in the second before it and in it: 0; the mod's last pieces of work: \"transit: a bus stop being put out\" (0.0 ms) 14.4 s before, \"transit: a bus stop being put out\" (0.1 ms) 14.4 s before, \"transit: a bus stop being put out\" (0.0 ms) 14.4 s before; on foot in the street, game hour 7."
+      },
+      {
+        "reportedMilliseconds": 216,
+        "nativeDiagnostic": "[Mod:RealLifeOverhaul] Session: a frame of 216 ms; none of the mod's large pieces of work was under way; where it went: scripts' Update 2 ms, animation 1 ms, rendering 5 ms, the rest 1 ms, outside the engine's steps 204 ms; the processor: the main thread ran 0 ms of it, the game 0 ms over all its threads, the machine's 20 processors 11% busy (other programs 11%); page faults in it: 0; the engine's own figures: not offered by this build; so: the time was outside the engine's steps with the processor free (the window's messages, the system or the graphics driver held the game); the mod's own scripts in it: 0.1 ms; the collector: no collection (175 so far), at work 0.0 ms, heap 827 MB before and 827 MB after; the game: its screen was clear, not saving, no scene loaded or unloaded; the mod's navigation obstacles changed in the second before it and in it: 0; the mod's last pieces of work: \"transit: a bus stop being put out\" (0.0 ms) 17.5 s before, \"transit: a bus stop being put out\" (0.1 ms) 17.5 s before, \"transit: a bus stop being put out\" (0.0 ms) 17.5 s before; on foot in the street, game hour 7."
+      },
+      {
+        "reportedMilliseconds": 410,
+        "nativeDiagnostic": "[Mod:RealLifeOverhaul] Session: a frame of 410 ms; none of the mod's large pieces of work was under way; where it went: scripts' Update 403 ms, rendering 4 ms, the rest 1 ms, outside the engine's steps 0 ms; the processor: the main thread ran 406 ms of it, the game 469 ms over all its threads, the machine's 20 processors 13% busy (other programs 7%); page faults in it: 759; the engine's own figures: not offered by this build; so: the main thread was working for most of it (the engine's own work, or a script's: the steps above say which); the mod's own scripts in it: 0.4 ms (Coroutine: SpecialNames.Look 0.1 ms, Coroutine: Driver.Look 0.1 ms, Coroutine: EconomyDirector.Tick 0.1 ms); the collector: no collection (177 so far), at work 0.0 ms, heap 808 MB before and 866 MB after; the game: its screen was clear, not saving, no scene loaded or unloaded; the mod's navigation obstacles changed in the second before it and in it: 0; the mod's last pieces of work: \"city life: a site being set up\" (4.7 ms) 50.8 s before, \"city life: a site being set up\" (12.1 ms) 56.8 s before, \"transit: a bus stop being put out\" (0.0 ms) 74.8 s before; on foot in the street, game hour 8."
+      }
+    ],
+    "saveMentionCount": 4,
+    "allSaveMentionsAreNotSavingDiagnostics": true,
+    "scope": "The driver log bracket begins before frames-start and ends after frames-stop/export. These log reports have no Unity-frame ID/timestamp mapping, so cannot be classified as inside the narrow capture. Retain as unaligned whole-session stalls; do not equate to sampled frame maxima."
+  },
+  {
+    "window": "before-closed-2",
+    "logSha256": "5d1c5216787b28f4d5aee20cccfa1495de9dd266c6323854ecbb1617c934bcc9",
+    "stalls": [
+      {
+        "reportedMilliseconds": 102,
+        "nativeDiagnostic": "[Mod:RealLifeOverhaul] Session: a frame of 102 ms; none of the mod's large pieces of work was under way; where it went: scripts' Update 96 ms, rendering 3 ms, the rest 1 ms, outside the engine's steps 0 ms; the processor: the main thread ran 94 ms of it, the game 203 ms over all its threads, the machine's 20 processors 22% busy (other programs 13%); page faults in it: 1; the engine's own figures: not offered by this build; so: the main thread was working for most of it (the engine's own work, or a script's: the steps above say which); the mod's own scripts in it: 0.1 ms; the collector: no collection (177 so far), at work 0.0 ms, heap 872 MB before and 872 MB after; the game: its screen was clear, not saving, no scene loaded or unloaded; the mod's navigation obstacles changed in the second before it and in it: 0; the mod's last pieces of work: \"city life: a site being set up\" (4.7 ms) 52.8 s before, \"city life: a site being set up\" (12.1 ms) 58.8 s before, \"transit: a bus stop being put out\" (0.0 ms) 76.8 s before; on foot in the street, game hour 8."
+      },
+      {
+        "reportedMilliseconds": 145,
+        "nativeDiagnostic": "[Mod:RealLifeOverhaul] Session: a frame of 145 ms; none of the mod's large pieces of work was under way; where it went: scripts' Update 136 ms, physics 1 ms, animation 1 ms, rendering 4 ms, the rest 1 ms, outside the engine's steps 0 ms; the processor: the main thread ran 109 ms of it, the game 109 ms over all its threads, the machine's 20 processors 27% busy (other programs 24%); page faults in it: 216; the engine's own figures: not offered by this build; so: the main thread was working for most of it (the engine's own work, or a script's: the steps above say which); the mod's own scripts in it: 0.4 ms (Coroutine: Driver.Look 0.1 ms, Coroutine: SpecialNames.Look 0.1 ms, Coroutine: EconomyDirector.Tick 0.1 ms); the collector: a collection finished in it (177 before, 178 after), at work 15.0 ms, heap 872 MB before and 784 MB after; the game: its screen was clear, not saving, no scene loaded or unloaded; the mod's navigation obstacles changed in the second before it and in it: 0; the mod's last pieces of work: \"city life: a site being set up\" (4.7 ms) 53.1 s before, \"city life: a site being set up\" (12.1 ms) 59.1 s before, \"transit: a bus stop being put out\" (0.0 ms) 77.1 s before; on foot in the street, game hour 8."
+      },
+      {
+        "reportedMilliseconds": 417,
+        "nativeDiagnostic": "[Mod:RealLifeOverhaul] Session: a frame of 417 ms; none of the mod's large pieces of work was under way; where it went: scripts' Update 409 ms, rendering 4 ms, waiting for the last frame to be shown 1 ms, the rest 1 ms, outside the engine's steps 0 ms; the processor: the main thread ran 406 ms of it, the game 438 ms over all its threads, the machine's 20 processors 17% busy (other programs 11%); page faults in it: 1011; the engine's own figures: not offered by this build; so: the main thread was working for most of it (the engine's own work, or a script's: the steps above say which); the mod's own scripts in it: 0.1 ms; the collector: no collection (179 so far), at work 3.0 ms, heap 848 MB before and 906 MB after; the game: its screen was clear, not saving, no scene loaded or unloaded; the mod's navigation obstacles changed in the second before it and in it: 0; the mod's last pieces of work: \"city life: a site being set up\" (4.7 ms) 113.6 s before, \"city life: a site being set up\" (12.1 ms) 119.6 s before, \"transit: a bus stop being put out\" (0.0 ms) 137.6 s before; on foot in the street, game hour 8."
+      }
+    ],
+    "saveMentionCount": 3,
+    "allSaveMentionsAreNotSavingDiagnostics": true,
+    "scope": "The driver log bracket begins before frames-start and ends after frames-stop/export. These log reports have no Unity-frame ID/timestamp mapping, so cannot be classified as inside the narrow capture. Retain as unaligned whole-session stalls; do not equate to sampled frame maxima."
+  },
+  {
+    "window": "before-closed-3",
+    "logSha256": "fc1a88244a9a83f4f40c08ac9c267cc6d7eb6bbf27c5e7c5f50fcee95bd66502",
+    "stalls": [
+      {
+        "reportedMilliseconds": 103,
+        "nativeDiagnostic": "[Mod:RealLifeOverhaul] Session: a frame of 103 ms; none of the mod's large pieces of work was under way; where it went: scripts' Update 96 ms, rendering 3 ms, the rest 1 ms, outside the engine's steps 0 ms; the processor: the main thread ran 94 ms of it, the game 94 ms over all its threads, the machine's 20 processors 16% busy (other programs 11%); page faults in it: 0; the engine's own figures: not offered by this build; so: the main thread was working for most of it (the engine's own work, or a script's: the steps above say which); the mod's own scripts in it: 0.1 ms; the collector: no collection (180 so far), at work 0.0 ms, heap 788 MB before and 788 MB after; the game: its screen was clear, not saving, no scene loaded or unloaded; the mod's navigation obstacles changed in the second before it and in it: 0; the mod's last pieces of work: \"city life: a site being set up\" (4.7 ms) 115.6 s before, \"city life: a site being set up\" (12.1 ms) 121.6 s before, \"transit: a bus stop being put out\" (0.0 ms) 139.6 s before; on foot in the street, game hour 8."
+      },
+      {
+        "reportedMilliseconds": 95,
+        "nativeDiagnostic": "[Mod:RealLifeOverhaul] Session: a frame of 95 ms; none of the mod's large pieces of work was under way; where it went: scripts' Update 87 ms, rendering 4 ms, the rest 1 ms, outside the engine's steps 0 ms; the processor: the main thread ran 63 ms of it, the game 78 ms over all its threads, the machine's 20 processors 34% busy (other programs 30%); page faults in it: 1762; the engine's own figures: not offered by this build; so: the main thread was working for most of it (the engine's own work, or a script's: the steps above say which); the mod's own scripts in it: 0.1 ms; the collector: no collection (180 so far), at work 0.0 ms, heap 788 MB before and 807 MB after; the game: its screen was clear, not saving, no scene loaded or unloaded; the mod's navigation obstacles changed in the second before it and in it: 0; the mod's last pieces of work: \"city life: a site being set up\" (4.7 ms) 115.9 s before, \"city life: a site being set up\" (12.1 ms) 121.9 s before, \"transit: a bus stop being put out\" (0.0 ms) 139.9 s before; on foot in the street, game hour 8."
+      },
+      {
+        "reportedMilliseconds": 486,
+        "nativeDiagnostic": "[Mod:RealLifeOverhaul] Session: a frame of 486 ms; none of the mod's large pieces of work was under way; where it went: scripts' Update 479 ms, rendering 4 ms, the rest 1 ms, outside the engine's steps 0 ms; the processor: the main thread ran 484 ms of it, the game 500 ms over all its threads, the machine's 20 processors 23% busy (other programs 17%); page faults in it: 6250; the engine's own figures: not offered by this build; so: the main thread was working for most of it (the engine's own work, or a script's: the steps above say which); the mod's own scripts in it: 0.2 ms (Camera: ThirdPersonCamera.Update 0.1 ms); the collector: a collection finished in it (181 before, 182 after), at work 14.0 ms, heap 906 MB before and 826 MB after; the game: its screen was clear, not saving, no scene loaded or unloaded; the mod's navigation obstacles changed in the second before it and in it: 0; the mod's last pieces of work: \"crime: a scene starting\" (7.1 ms) 42.0 s before, \"city life: a site being set up\" (4.7 ms) 176.0 s before, \"city life: a site being set up\" (12.1 ms) 182.0 s before; on foot in the street, game hour 8."
+      }
+    ],
+    "saveMentionCount": 3,
+    "allSaveMentionsAreNotSavingDiagnostics": true,
+    "scope": "The driver log bracket begins before frames-start and ends after frames-stop/export. These log reports have no Unity-frame ID/timestamp mapping, so cannot be classified as inside the narrow capture. Retain as unaligned whole-session stalls; do not equate to sampled frame maxima."
+  }
+]

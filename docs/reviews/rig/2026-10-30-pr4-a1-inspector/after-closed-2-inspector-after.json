@@ -1,0 +1,42 @@
+{
+  "update": {
+    "closed": {
+      "calls": 4926,
+      "totalMilliseconds": 25.8089,
+      "maxMilliseconds": 0.0667
+    },
+    "hover": {
+      "calls": 0,
+      "totalMilliseconds": 0.0,
+      "maxMilliseconds": 0.0
+    },
+    "open": {
+      "calls": 0,
+      "totalMilliseconds": 0.0,
+      "maxMilliseconds": 0.0
+    }
+  },
+  "draw": {
+    "closed": {
+      "calls": 9852,
+      "totalMilliseconds": 3.4832,
+      "maxMilliseconds": 0.0128
+    },
+    "hover": {
+      "calls": 0,
+      "totalMilliseconds": 0.0,
+      "maxMilliseconds": 0.0
+    },
+    "open": {
+      "calls": 0,
+      "totalMilliseconds": 0.0,
+      "maxMilliseconds": 0.0
+    }
+  },
+  "picks": 0,
+  "builds": 0,
+  "buildMilliseconds": 0.0,
+  "buildMaxMilliseconds": 0.0,
+  "hovered": null,
+  "selected": null
+}

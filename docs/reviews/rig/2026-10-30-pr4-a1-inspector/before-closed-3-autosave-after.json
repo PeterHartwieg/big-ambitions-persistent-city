@@ -1,0 +1,10 @@
+{
+  "originalPreventAutoSave": false,
+  "preventAutoSave": true,
+  "minutesBetweenAutoSaves": 5,
+  "maxAutoSavesPerGame": 3,
+  "savingGameInProgress": false,
+  "saveLogMessages": 20,
+  "save": "FT Food Routines PR4 A1 20261030",
+  "frame": 28381
+}
