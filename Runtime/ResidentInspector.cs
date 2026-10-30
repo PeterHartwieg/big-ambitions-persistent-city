@@ -14,9 +14,11 @@ namespace PersistentCity.Runtime
     /// cursor moved and at most every <see cref="ResidentPickThrottle.DefaultIntervalSeconds"/>;
     /// popup content is built on click and refreshed once per second while open.
     /// It only acts where the game itself would accept a world click: no open native menu, map, phone,
-    /// mini-game or screenshot mode, and no native UI element under the cursor. While the cursor is on
-    /// the popup or a highlighted walker, a prefix on the game's MouseController.Run skips that frame's
-    /// native world mouse handling, so an inspector click does not also move the player.
+    /// placement, mini-game or screenshot mode, and no native UI element under the cursor. A press on
+    /// the popup or a highlighted walker (current cursor position) makes that whole press-hold-release
+    /// gesture the inspector's: a prefix on the game's MouseController.Run skips native world mouse
+    /// handling for it, so an inspector click does not also move the player. Every other gesture stays
+    /// native, including a hold-walk released over the popup or a walker (<see cref="InspectorPointerGesture"/>).
     /// </summary>
     internal sealed class ResidentInspector
     {
@@ -46,6 +48,11 @@ namespace PersistentCity.Runtime
         private Harmony? clickGuard;
         private Action<string>? warn;
         private bool mapFailureLogged, attachTried;
+        private readonly InspectorPointerGesture gesture = new InspectorPointerGesture();
+        private int decidedFrame = -1, ownedPressFrame = -1;
+        private bool suppressThisFrame;
+        // MouseController's private hold-walk flags: read before taking a gesture, cleared when an owned one ends.
+        private static System.Reflection.FieldInfo? leftHeld, rightHeld;
 
         /// <summary>Install the native click guard. Failure leaves the inspector usable without it.</summary>
         public void Attach(Action<string> warning)
@@ -58,6 +65,10 @@ namespace PersistentCity.Runtime
                 if (Harmony.HasAnyPatches(ClickGuardOwner)) throw new InvalidOperationException("Inspector input patch ID already owned.");
                 var run = AccessTools.Method(typeof(MouseController), nameof(MouseController.Run), Type.EmptyTypes)
                     ?? throw new MissingMethodException("MouseController.Run()");
+                leftHeld = AccessTools.Field(typeof(MouseController), "LeftButtonHeld");
+                rightHeld = AccessTools.Field(typeof(MouseController), "RightButtonHeld");
+                if (leftHeld?.FieldType != typeof(bool) || !leftHeld.IsStatic || rightHeld?.FieldType != typeof(bool) || !rightHeld.IsStatic)
+                    throw new MissingFieldException("MouseController hold-walk flags changed.");
                 var installing = new Harmony(ClickGuardOwner);
                 installing.Patch(run, prefix: new HarmonyMethod(typeof(ResidentInspector), nameof(MouseRunPrefix)));
                 clickGuard = installing; guarded = this;
@@ -68,17 +79,46 @@ namespace PersistentCity.Runtime
         public void Detach()
         {
             if (ReferenceEquals(guarded, this)) guarded = null;
+            gesture.Reset(); decidedFrame = ownedPressFrame = -1; suppressThisFrame = false;
             try { clickGuard?.UnpatchAll(ClickGuardOwner); }
             finally { clickGuard = null; attachTried = false; }
         }
 
-        // The cursor is on the inspector's own popup or highlighted walker (positions from the last GUI event).
-        private bool OwnsPointer => visible && ((selectedId != null && popup.Contains(mouse)) || (hoveredId != null && hoveredRect.Contains(mouse)));
-        private static bool MouseRunPrefix() => guarded == null || !guarded.OwnsPointer;
+        // Current native cursor in GUI coordinates (y grows downwards); the inspector draws with an identity GUI matrix.
+        private static Vector2 CurrentMouse()
+        {
+            Vector3 position = Input.mousePosition;
+            return new Vector2(position.x, Screen.height - position.y);
+        }
+
+        // Where an inspector click would land now: the popup, or a highlighted walker other than the open one.
+        private bool PointerOnInspector(Vector2 at) => visible && NormalView() && !NativeUiUnderPointer()
+            && ((selectedId != null && popup.Contains(at)) || (hoveredId != null && hoveredId != selectedId && hoveredRect.Contains(at)));
+
+        private static bool MouseRunPrefix() => guarded == null || !guarded.SuppressNativeMouse();
+
+        // MouseController.Run can run more than once per frame; decide once, from current input.
+        private bool SuppressNativeMouse()
+        {
+            int frame = Time.frameCount;
+            if (frame == decidedFrame) return suppressThisFrame;
+            decidedFrame = frame;
+            bool pressed = Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1);
+            bool released = Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1);
+            bool anyDown = Input.GetMouseButton(0) || Input.GetMouseButton(1);
+            bool hold = !gesture.Owned && pressed && ((bool)leftHeld!.GetValue(null) || (bool)rightHeld!.GetValue(null));
+            bool onInspector = !gesture.Owned && pressed && !hold && PointerOnInspector(CurrentMouse());
+            var action = gesture.Decide(pressed, released, anyDown, hold, onInspector);
+            if (onInspector && action != NativeMouseAction.Allow) ownedPressFrame = frame;
+            if (action == NativeMouseAction.SuppressAndReleaseHolds) { leftHeld!.SetValue(null, false); rightHeld!.SetValue(null, false); }
+            suppressThisFrame = action != NativeMouseAction.Allow;
+            return suppressThisFrame;
+        }
 
         public void Reset()
         {
             ClearHover(); selectedId = null; insight = null; body = personality = header = homeLabel = workLabel = mapProblem = ""; throttle.Invalidate();
+            gesture.Reset(); ownedPressFrame = -1;
         }
 
         private Mode Current => selectedId != null ? Mode.Open : hoveredId != null ? Mode.Hover : Mode.Closed;
@@ -88,7 +128,7 @@ namespace PersistentCity.Runtime
         // The game's own conditions for world hover/clicks (see its EntityController hover and MouseController).
         private static bool NormalView()
         {
-            if (CityMap.IsOpen || BuildingManager.IsInsideBuilding || UI.Smartphone.FullMenu.IsOpen || UI.MiniMenu.MiniMenu.IsOpen
+            if (CityMap.IsOpen || BuildingManager.IsInsideBuilding || BigAmbitions.PlacementSystem.PlacementSystem.IsInPlacementMode || UI.Smartphone.FullMenu.IsOpen || UI.MiniMenu.MiniMenu.IsOpen
                 || PlayerActivity.PlayerActivityUI.IsPanelOpen || UI.InteriorDesigner.InteriorDesignerUI.IsOpen || SubwaySystem.IsRiding
                 || GameManager.IsAnyMiniGameActive() || !ScreenshotController.uiIsVisible || ScreenshotController.isInFreeLookMode) return false;
             var screenshot = InstanceBehavior<UI.UIs>.Instance?.screenshot;
@@ -107,6 +147,7 @@ namespace PersistentCity.Runtime
             int mode = (int)Current;
             try
             {
+                mouse = CurrentMouse();
                 visible = NormalView();
                 if (!visible || physical == null) { ClearHover(); }
                 else
@@ -169,13 +210,15 @@ namespace PersistentCity.Runtime
             try
             {
                 var input = Event.current;
-                mouse = input.mousePosition;
                 if (!visible) return;
                 if (hoveredId != null && hoveredId != selectedId)
                 {
                     if (input.type == EventType.Repaint) DrawHighlight();
+                    // With the guard installed, accept only the press it gave the inspector this frame, so the
+                    // game never handles the same click; without it, apply the same checks directly.
                     else if (input.type == EventType.MouseDown && input.button == 0 && hoveredRect.Contains(input.mousePosition)
-                        && !(selectedId != null && popup.Contains(input.mousePosition)) && NormalView() && !NativeUiUnderPointer())
+                        && !(selectedId != null && popup.Contains(input.mousePosition))
+                        && (clickGuard != null ? ownedPressFrame == Time.frameCount : NormalView() && !NativeUiUnderPointer()))
                     {
                         Open(hoveredId, input.mousePosition); input.Use();
                     }

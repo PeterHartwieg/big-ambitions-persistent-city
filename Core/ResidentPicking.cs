@@ -90,4 +90,34 @@ namespace PersistentCity.Core
 
         public void Clear() { Id = null; Generation = 0; Score = Depth = 0; }
     }
+
+    public enum NativeMouseAction { Allow, Suppress, SuppressAndReleaseHolds }
+
+    /// <summary>
+    /// Who owns one mouse gesture (press, hold, release): the game's world mouse handling or the
+    /// inspector. Only a press made while the cursor is on the inspector's popup or highlighted walker,
+    /// with no native hold-walk in progress, becomes the inspector's; it then keeps the gesture until
+    /// every button is up, wherever the cursor goes. Any other gesture stays native throughout, including
+    /// its release over the popup or a walker, so the game always sees the release that ends a hold-walk.
+    /// The caller passes the current input state and decides once per frame.
+    /// </summary>
+    public sealed class InspectorPointerGesture
+    {
+        public bool Owned { get; private set; }
+
+        public NativeMouseAction Decide(bool pressed, bool released, bool anyButtonDown, bool nativeHoldActive, bool pointerOnInspector)
+        {
+            if (Owned)
+            {
+                if (released || !anyButtonDown) { Owned = false; return NativeMouseAction.SuppressAndReleaseHolds; }
+                return NativeMouseAction.Suppress;
+            }
+            if (!pressed || nativeHoldActive || !pointerOnInspector) return NativeMouseAction.Allow;
+            // A press and release within one frame ends the gesture at once.
+            Owned = !released && anyButtonDown;
+            return NativeMouseAction.Suppress;
+        }
+
+        public void Reset() => Owned = false;
+    }
 }

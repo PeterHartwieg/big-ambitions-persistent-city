@@ -270,6 +270,58 @@ public sealed class ResidentInsightTests
         Assert.Equal(1, throttle.Picks);
     }
 
+    // One frame of input as MouseController.Run would see it, with the current cursor position.
+    private static NativeMouseAction Frame(InspectorPointerGesture gesture, bool down, bool pressed = false, bool released = false,
+        bool nativeHold = false, bool onInspector = false) => gesture.Decide(pressed, released, down, nativeHold, onInspector);
+
+    [Fact]
+    public void AClickThatStartsOnTheInspectorNeverReachesTheGame()
+    {
+        var gesture = new InspectorPointerGesture();
+        // The cursor moves into the popup and presses in the same frame: decided from the current position.
+        Assert.Equal(NativeMouseAction.Allow, Frame(gesture, down: false, onInspector: false));
+        Assert.Equal(NativeMouseAction.Suppress, Frame(gesture, down: true, pressed: true, onInspector: true));
+        Assert.True(gesture.Owned);
+        // Dragging out of the popup (e.g. a scrollbar) while held stays with the inspector, so no hold-walk starts.
+        Assert.Equal(NativeMouseAction.Suppress, Frame(gesture, down: true, onInspector: false));
+        // The release outside still belongs to the gesture and ends it, clearing any native hold flags.
+        Assert.Equal(NativeMouseAction.SuppressAndReleaseHolds, Frame(gesture, down: false, released: true, onInspector: false));
+        Assert.False(gesture.Owned);
+        // The next world click is the game's again.
+        Assert.Equal(NativeMouseAction.Allow, Frame(gesture, down: true, pressed: true, onInspector: false));
+    }
+
+    [Fact]
+    public void GesturesThatStartOutsideTheInspectorStayNativeThroughTheirRelease()
+    {
+        var gesture = new InspectorPointerGesture();
+        // The cursor moves out of the popup and presses on the world in the same frame: the game handles it.
+        Assert.Equal(NativeMouseAction.Allow, Frame(gesture, down: true, pressed: true, onInspector: false));
+        // Hold-walk: the cursor passes over the popup and a walker; the release there is still seen natively,
+        // so MouseController clears LeftButtonHeld and the player stops.
+        Assert.Equal(NativeMouseAction.Allow, Frame(gesture, down: true, onInspector: true));
+        Assert.Equal(NativeMouseAction.Allow, Frame(gesture, down: false, released: true, onInspector: true));
+        Assert.False(gesture.Owned);
+        // A second button pressed over the inspector during a native hold-walk is not taken over.
+        Assert.Equal(NativeMouseAction.Allow, Frame(gesture, down: true, pressed: true, nativeHold: true, onInspector: true));
+        Assert.False(gesture.Owned);
+    }
+
+    [Fact]
+    public void APressAndReleaseInOneFrameEndsTheGestureAtOnce()
+    {
+        var gesture = new InspectorPointerGesture();
+        Assert.Equal(NativeMouseAction.Suppress, Frame(gesture, down: false, pressed: true, released: true, onInspector: true));
+        Assert.False(gesture.Owned);
+        Assert.Equal(NativeMouseAction.Allow, Frame(gesture, down: false));
+        // A lost release (focus change) cannot leave the gesture owned: no button down ends it.
+        Assert.Equal(NativeMouseAction.Suppress, Frame(gesture, down: true, pressed: true, onInspector: true));
+        Assert.Equal(NativeMouseAction.SuppressAndReleaseHolds, Frame(gesture, down: false));
+        Assert.False(gesture.Owned);
+        gesture.Reset();
+        Assert.False(gesture.Owned);
+    }
+
     [Fact]
     public void PickChoosesTheNearestWalkerIndependentOfOrder()
     {
