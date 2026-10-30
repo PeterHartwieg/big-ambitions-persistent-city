@@ -325,9 +325,9 @@ namespace PersistentCity.Runtime
             var offer = business?.Offers.SingleOrDefault(o => o.ProductId == meal.ProductId);
             string exclusion = ScopeStatus(meal.PlaceId);
             if (exclusion.Length > 0) return new FoodSale(false, exclusion);
-            if (offer != null && offer.Price != meal.Price) return new FoodSale(false, "Approved price changed");
+            if (offer != null && offer.PriceCents != meal.PriceCents) return new FoodSale(false, "Approved price changed");
             if (offer == null || !offer.Units.HasValue || offer.Units <= 0 || !business!.MealsPerHour.HasValue || business.MealsPerHour <= 0
-                || offer.Price != meal.Price || meal.Price > meal.Allowance
+                || offer.PriceCents != meal.PriceCents || meal.PriceCents > meal.AllowanceCents
                 || meal.ServiceMinutes + 1e-7 < 60.0 / business.MealsPerHour.Value)
                 return new FoodSale(false, "Stock or staffing changed");
             var reg = registrations[meal.PlaceId];
@@ -353,14 +353,14 @@ namespace PersistentCity.Runtime
                 simulator.SetUp(reg, SaveGameManager.Current.Hour);
                 approvedProduct = meal.ProductId;
                 approvedPrice = reg.retailPrices.Single(p => p.itemName == meal.ProductId).price;
-                Money livePrice;
-                try { livePrice = Money.FromNative(approvedPrice); }
+                decimal livePrice;
+                try { livePrice = FoodMoney.FromNative(approvedPrice); }
                 catch (ArgumentOutOfRangeException)
                 {
                     // No receipt or native sale exists yet: this is a definite refusal, not uncertain ownership.
                     return new FoodSale(false, "Approved price is outside the supported range");
                 }
-                if (livePrice != meal.Price)
+                if (livePrice != meal.PriceCents)
                     return new FoodSale(false, "Approved price changed during native setup");
                 FoodSaleReceipts.Begin(data, meal);
                 buyerShop = reg; buying = true;

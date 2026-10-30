@@ -12,7 +12,7 @@ public sealed class FoodReceiptEvidenceTests
     private static ResidentMeal Meal(string resident = "resident", int day = 1) => new()
     {
         ResidentId = resident, Day = day, Kind = MealKind.Lunch,
-        BusinessId = "business:shop:instance", ProductId = FoodProducts.HotDog, Price = Money.FromCents(825)
+        BusinessId = "business:shop:instance", ProductId = FoodProducts.HotDog, PriceCents = 825
     };
 
     [Fact]
@@ -69,7 +69,7 @@ public sealed class FoodReceiptEvidenceTests
     {
         var meal = Meal(); var data = new Dictionary<string, string>();
         FoodSaleReceipts.Begin(data, meal); FoodSaleReceipts.Confirm(data, meal);
-        if (change == "price") meal.Price += Money.FromCents(1);
+        if (change == "price") meal.PriceCents++;
         else if (change == "business") meal.BusinessId = "replacement-business";
         else meal.ProductId = FoodProducts.Burger;
         Assert.Equal(FoodReceiptStatus.Conflict, FoodSaleReceipts.ReadStatus(data, meal));
@@ -96,13 +96,13 @@ public sealed class FoodReceiptEvidenceTests
     public void MissingMarkerDoesNotResolveAnUncertainPurchaseOrChangeItsHeldFunds()
     {
         var meal = Meal(); meal.Status = MealStatus.Uncertain;
-        meal.Budget = new ResidentBudget { Balance = Money.FromCents(1000), HeldPurchase = Money.FromCents(825) };
+        meal.Budget = new ResidentBudget { BalanceCents = 1000, HeldPurchaseCents = 825 };
         var data = new Dictionary<string, string>();
         Assert.Equal(FoodReceiptStatus.Missing, FoodSaleReceipts.ReadStatus(data, meal));
         FoodSaleReceipts.Prune(data, 10000, new[] { meal.IntentId });
         Assert.Equal(MealStatus.Uncertain, meal.Status);
-        Assert.Equal(Money.FromCents(825), meal.Budget.HeldPurchase);
-        Assert.Equal(Money.FromCents(1000), meal.Budget.Balance);
+        Assert.Equal(825, meal.Budget.HeldPurchaseCents);
+        Assert.Equal(1000, meal.Budget.BalanceCents);
     }
 
     [Fact]

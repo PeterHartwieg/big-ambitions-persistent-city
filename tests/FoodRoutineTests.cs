@@ -51,12 +51,12 @@ public sealed class FoodRoutineTests
     private static FoodShadowState Scenario(int people = 1, int? capacity = 15, double outward = 5, double back = 5, int window = 45, int stock = 100)
     {
         var consumers = Enumerable.Range(0, people).Select(i => new FoodConsumer
-        { Id = "r" + i, Name = "Resident " + i, OriginPlaceId = "home", DailyAllowance = Money.FromCents(1000) }).ToArray();
+        { Id = "r" + i, Name = "Resident " + i, OriginPlaceId = "home", DailyAllowanceCents = 1000 }).ToArray();
         var intents = consumers.Select(p => new FoodIntent { Id = FoodDemand.IntentId(p.Id, 1), ConsumerId = p.Id, Day = 1,
             DesiredAt = 2160, RequestedAt = 2160, Deadline = 2160 + window, OriginPlaceId = "work", OriginActivity = Activity.Work,
             EatingMinutes = 15, MaximumQueueMinutes = 30, ContextEvidence = "Observed workplace; controlled lunch break" }).ToArray();
         var shops = new[] { new FoodBusiness { Id = "cafe", Name = "Cafe", PlaceId = "cafe-door", MealsPerHour = capacity,
-            ServiceEvidence = "Controlled staffed throughput", Offers = new() { new FoodOffer { ProductId = "meal", Price = Money.FromCents(500), Units = stock } },
+            ServiceEvidence = "Controlled staffed throughput", Offers = new() { new FoodOffer { ProductId = "meal", PriceCents = 500, Units = stock } },
             Hours = Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = 0, ToMinute = 1440 }).ToList() } };
         return FoodDemand.CreateObserved("routine-test", "Controlled observation/route fixture", 1, 1, consumers, shops,
             intents.Select(i => new FoodTravelQuote { ConsumerId = i.ConsumerId, BusinessId = "cafe", IntentId = i.Id,
@@ -150,7 +150,7 @@ public sealed class FoodRoutineTests
     public void UnverifiedOrUnavailableServiceCannotFulfill(int? capacity, FoodIntentStatus status)
     {
         var state = Finish(Scenario(capacity: capacity));
-        Assert.Equal(status, state.Intents.Single().Status); Assert.Equal(Money.FromCents(0), state.Intents.Single().Spent);
+        Assert.Equal(status, state.Intents.Single().Status); Assert.Equal(0, state.Intents.Single().SpentCents);
     }
 
     [Fact]
@@ -161,7 +161,7 @@ public sealed class FoodRoutineTests
         Assert.Equal(5, served); Assert.Equal(10, fast.Intents.Count(i => i.Status == FoodIntentStatus.Fulfilled));
         Assert.All(slow.Intents.Where(i => i.Status == FoodIntentStatus.Fulfilled), i => Assert.True(i.ReturnBy <= i.Deadline));
         Assert.Equal(100 - served, slow.Businesses[0].Offers[0].Units);
-        Assert.Equal(Money.FromCents(served * 500), Money.Sum(slow.Intents.Select(i => i.Spent)));
+        Assert.Equal(served * 500, slow.Intents.Sum(i => i.SpentCents));
     }
 
     [Fact]
@@ -189,12 +189,12 @@ public sealed class FoodRoutineTests
         var state = Scenario(); var engine = new FoodDemand(state); engine.AdvanceTo(2166);
         Assert.Equal(FoodIntentStatus.WaitingForService, state.Intents.Single().Status);
         if (change == "closed") engine.Close("cafe");
-        if (change == "price") engine.SetPrice("cafe", "meal", Money.FromCents(1500));
+        if (change == "price") engine.SetPrice("cafe", "meal", 1500);
         if (change == "service") state.Businesses[0].MealsPerHour = 0;
         if (change == "stock") engine.SetStock("cafe", "meal", 0);
         engine.AdvanceTo(state.EndsAt);
         Assert.Equal(FoodIntentStatus.Unmet, state.Intents.Single().Status);
-        Assert.Equal(Money.FromCents(0), state.Intents.Single().Spent);
+        Assert.Equal(0, state.Intents.Single().SpentCents);
         FoodShadowCodec.Write(state);
     }
 

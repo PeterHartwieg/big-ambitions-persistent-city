@@ -15,13 +15,13 @@ public sealed partial class FoodCommerceTests
     }
     private static FoodIntent MenuChoice(MealKind kind, int burgerPrice = 800, bool burgerStock = true)
     {
-        var consumer = new FoodConsumer { Id = "r", DailyAllowance = Money.FromCents(3000), ValueOfTimeCentsPerMinute = 10 };
+        var consumer = new FoodConsumer { Id = "r", DailyAllowanceCents = 3000, ValueOfTimeCentsPerMinute = 10 };
         var intent = new FoodIntent { Id = "trial", ConsumerId = "r", OriginPlaceId = "home", Deadline = 1000,
             EatingMinutes = 15, MaximumQueueMinutes = 15, OutsideOptionScoreCents = 2500 };
         var shop = new FoodBusiness { Id = "b", PlaceId = "shop", MealsPerHour = 15,
             Hours = Enumerable.Range(0,7).Select(d => new OpeningWindow { Day = d, FromMinute = 0, ToMinute = 1440 }).ToList(),
-            Offers = new() { new FoodOffer { ProductId = FoodProducts.Croissant, Price = Money.FromCents(800), Units = 10 },
-                new FoodOffer { ProductId = FoodProducts.Burger, Price = Money.FromCents(burgerPrice), Units = burgerStock ? 10 : 0 } } };
+            Offers = new() { new FoodOffer { ProductId = FoodProducts.Croissant, PriceCents = 800, Units = 10 },
+                new FoodOffer { ProductId = FoodProducts.Burger, PriceCents = burgerPrice, Units = burgerStock ? 10 : 0 } } };
         FoodDemand.ChooseObserved(consumer, new[] { shop }, new[] { new FoodTravelQuote { ConsumerId = "r", IntentId = "trial", BusinessId = "b", Minutes = 5, ReturnMinutes = 5 } }, intent, 700, mealKind: kind);
         return intent;
     }
@@ -42,7 +42,7 @@ public sealed partial class FoodCommerceTests
         if (reason == "stock") market.Units = 0;
         if (reason == "service") market.Capacity = 0;
         if (reason == "closed") market.Closed = true;
-        if (reason == "price") market.Price = Money.FromCents(1000001);
+        if (reason == "price") market.Price = 1000001;
         Advance(city, city.State.Food!.Residents.Max(m => m.DesiredAt) + 80);
         Assert.Equal(0, routes.Calls); Assert.Empty(market.Orders);
     }
@@ -51,8 +51,8 @@ public sealed partial class FoodCommerceTests
     {
         var business = new FoodBusiness { MealsPerHour = null,
             Hours = Enumerable.Range(0,7).Select(d => new OpeningWindow { Day = d, FromMinute = 0, ToMinute = 1440 }).ToList(),
-            Offers = new() { new FoodOffer { ProductId = FoodProducts.Burger, Price = Money.FromCents(100), Units = null } } };
-        Assert.Null(FoodDemand.KnownUnavailable(business, new FoodConsumer { DailyAllowance = Money.FromCents(1000) }, 1, 60));
+            Offers = new() { new FoodOffer { ProductId = FoodProducts.Burger, PriceCents = 100, Units = null } } };
+        Assert.Null(FoodDemand.KnownUnavailable(business, new FoodConsumer { DailyAllowanceCents = 1000 }, 1, 60));
     }
     [Theory]
     [InlineData(2, false)] [InlineData(7, false)] [InlineData(40, false)] [InlineData(40, true)]
@@ -67,7 +67,7 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
         Assert.False(SaveStore.WriteTo(data, city.State).Success); Assert.Equal(source, data[SaveStore.StateKey]);
         Assert.Equal(orders, market.Orders);
-        if (uncertain) Assert.Equal(Money.FromCents(100), city.State.Food.Residents.Single().Budget!.HeldPurchase);
+        if (uncertain) Assert.Equal(100, city.State.Food.Residents.Single().Budget!.HeldPurchaseCents);
     }
     [Theory]
     [InlineData("duplicate")] [InlineData("too-many")] [InlineData("null")] [InlineData("missing")]
@@ -87,7 +87,7 @@ public sealed partial class FoodCommerceTests
         var (city, _, _) = Ready(threeMeals: true); Advance(city, 2860);
         var row = city.State.Food!.History.Single(); Assert.Equal(3, row.ProductSales.Single().Purchases);
         var payload = JObject.Parse(SaveCodec.Write(city.State));
-        payload["Food"]!["History"]![0]!["ProductSales"]![0]!["Revenue"] = 1;
+        payload["Food"]!["History"]![0]!["ProductSales"]![0]!["RevenueCents"] = 1;
         Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(payload.ToString()).Status);
     }
     private sealed class MenuMarket : IFoodMarket
@@ -98,7 +98,7 @@ public sealed partial class FoodCommerceTests
         public List<string> Orders = new();
         public IReadOnlyList<FoodBusiness> Read(double at) => new[] { new FoodBusiness { Id = "b", PlaceId = "shop", MealsPerHour = 15,
             Hours = Enumerable.Range(0,7).Select(d => new OpeningWindow { Day=d, FromMinute=0, ToMinute=1440 }).ToList(),
-            Offers = Stock.Select(p => new FoodOffer { ProductId=p.Key, Price=Money.FromCents(100), Units=Math.Min(p.Value,Bags) }).ToList() } };
+            Offers = Stock.Select(p => new FoodOffer { ProductId=p.Key, PriceCents=100, Units=Math.Min(p.Value,Bags) }).ToList() } };
         public FoodSale Buy(ResidentMeal meal, double at)
         {
             if (Bags == 0 || Stock[meal.ProductId] == 0) return new(false, "Stock changed");
@@ -124,7 +124,7 @@ public sealed partial class FoodCommerceTests
         city = new CitySimulator(city.State, routes); city.AttachFoodMarket(market);
         Advance(city, first.DesiredAt + 60);
         Assert.Equal(2, market.Orders.Count); Assert.All(market.Stock.Values, n => Assert.Equal(0, n));
-        Assert.Equal(0, market.Bags); Assert.Equal(Money.FromCents(200), Money.Sum(meals.Select(m => m.Spent)));
+        Assert.Equal(0, market.Bags); Assert.Equal(200, meals.Sum(m => m.SpentCents));
         Assert.Equal(2, city.State.Food!.History.Single().ProductSales.Count); SaveCodec.Write(city.State);
     }
     [Fact]
@@ -137,8 +137,8 @@ public sealed partial class FoodCommerceTests
         city = new CitySimulator(city.State, routes); city.AttachFoodMarket(market); city.EnableHouseholdFinances();
         Advance(city, first.DesiredAt + 60);
         Assert.Single(market.Orders); Assert.Equal(0, market.Bags); Assert.Equal(1, market.Stock.Values.Sum());
-        Assert.Equal(Money.FromCents(100), Money.Sum(meals.Select(m => m.Budget!.PreparedFoodSpent)));
-        Assert.All(meals, m => Assert.Equal(Money.FromCents(0), m.Budget!.HeldPurchase)); SaveCodec.Write(city.State);
+        Assert.Equal(100, meals.Sum(m => m.Budget!.PreparedFoodSpentCents));
+        Assert.All(meals, m => Assert.Equal(0, m.Budget!.HeldPurchaseCents)); SaveCodec.Write(city.State);
     }
     [Fact]
     public void TwelveHundredMenuBuyersHaveTheSameResultsAcrossBatchingAndReload()
@@ -156,10 +156,10 @@ public sealed partial class FoodCommerceTests
     [InlineData("closed")] [InlineData("service")] [InlineData("stock")] [InlineData("price")]
     public void AvailabilityReasonsAreIdenticalWithFullRoutesAndEarlyRejection(string cause)
     {
-        var consumer = new FoodConsumer { Id="r", DailyAllowance=Money.FromCents(500) };
+        var consumer = new FoodConsumer { Id="r", DailyAllowanceCents=500 };
         var shop = new FoodBusiness { Id="b", PlaceId="shop", MealsPerHour=cause=="service"?0:15,
             Hours=cause=="closed"?new():Enumerable.Range(0,7).Select(d=>new OpeningWindow{Day=d,FromMinute=0,ToMinute=1440}).ToList(),
-            Offers=new(){new(){ProductId=FoodProducts.Croissant,Price=Money.FromCents(cause=="price"?600:100),Units=cause=="stock"?0:10}} };
+            Offers=new(){new(){ProductId=FoodProducts.Croissant,PriceCents=cause=="price"?600:100,Units=cause=="stock"?0:10}} };
         FoodIntent Intent()=>new(){Id="trial",ConsumerId="r",OriginPlaceId="home",Deadline=800,OutsideOptionScoreCents=1000};
         var full=Intent();var pruned=Intent();
         FoodDemand.ChooseObserved(consumer,new[]{shop},new[]{new FoodTravelQuote{ConsumerId="r",IntentId="trial",BusinessId="b",Minutes=5,ReturnMinutes=5}},full,700);

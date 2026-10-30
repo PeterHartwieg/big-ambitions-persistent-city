@@ -158,14 +158,14 @@ namespace FoodDemandCurveProbe
                 {
                     var state = FoodShadowCodec.Read(FoodShadowCodec.Write(initial), initial.CityKey);
                     foreach (var offer in state.Businesses.Single(b => b.Id == targetId).Offers)
-                        offer.Price = Money.FromCents((int)Math.Round(offer.Price.ApproximateCents() * factors[pointIndex]));
+                        offer.PriceCents = (int)Math.Round(offer.PriceCents * factors[pointIndex]);
                     controlled = new FoodDemand(state); return;
                 }
                 if (!controlled.AdvanceTo(controlled.State.EndsAt, 32)) return;
                 var chosen = controlled.State.Intents.Where(i => i.Status == FoodIntentStatus.Fulfilled && i.BusinessId == targetId).ToArray();
                 points.Add(JObject.FromObject(new { factor = factors[pointIndex], meals = chosen.Length,
-                    revenueCents = Money.Sum(chosen.Select(i => i.Spent)).ApproximateCents(), allShops = Summary(controlled.State),
-                    targetPrices = controlled.State.Businesses.Single(b => b.Id == targetId).Offers.Select(o => new { o.ProductId, o.Price }),
+                    revenueCents = chosen.Sum(i => i.SpentCents), allShops = Summary(controlled.State),
+                    targetPrices = controlled.State.Businesses.Single(b => b.Id == targetId).Offers.Select(o => new { o.ProductId, o.PriceCents }),
                     targetReasons = controlled.State.Intents.SelectMany(i => i.Choices).Where(c => c.BusinessId == targetId).GroupBy(c => c.Reason).ToDictionary(g => g.Key, g => g.Count()) }));
                 if (Math.Abs(factors[pointIndex] - 1) < .0001) File.WriteAllText(Path.Combine(Root, "baseline-final.json"), FoodShadowCodec.Write(controlled.State));
                 pointIndex++; controlled = null; return;

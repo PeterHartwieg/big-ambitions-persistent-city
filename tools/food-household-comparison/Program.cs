@@ -29,23 +29,23 @@ foreach (string name in variations)
     foreach (var p in (JArray)native["points"]!)
     {
         double factor = (double)p["factor"]!; var state = FoodShadowCodec.Read(json, initial.CityKey);
-        foreach (var o in state.Businesses.Single(b => b.Id == target).Offers) o.Price = Money.FromCents((int)Math.Round(o.Price.ApproximateCents() * factor));
+        foreach (var o in state.Businesses.Single(b => b.Id == target).Offers) o.PriceCents = (int)Math.Round((double)o.PriceCents * factor);
         Finish(state);
         var served = state.Intents.Where(i => i.Status == FoodIntentStatus.Fulfilled && i.BusinessId == target).ToArray();
-        if (name == variations[0] && (served.Length != (int)p["meals"]! || Money.Sum(served.Select(i => i.Spent)) != Money.FromCents((int)p["revenueCents"]!)))
+        if (name == variations[0] && (served.Length != (int)p["meals"]! || served.Sum(i => i.SpentCents) != (int)p["revenueCents"]!))
             throw new Exception("Migration changed original PC demand curve");
         if (name == variations[2] && factor == 1) File.WriteAllText(Path.Combine(output, "baseline-final.json"), FoodShadowCodec.Write(state));
         int fulfilled = state.Intents.Count(i => i.Status == FoodIntentStatus.Fulfilled), declined = state.Intents.Count(i => i.Status == FoodIntentStatus.DeclinedPurchase),
             unmet = state.Intents.Count(i => i.Status == FoodIntentStatus.Unmet), unresolved = state.Intents.Count(i => i.Status == FoodIntentStatus.Unresolved);
         if (fulfilled + declined + unmet + unresolved != old.Intents.Count) throw new Exception("Lost opportunity");
-        if (Money.Sum(state.Consumers.Select(c => c.DailyAllowance)) != Money.Sum(initial.Consumers.Select(c => c.DailyAllowance))) throw new Exception("Price changed buying power");
+        if (state.Consumers.Sum(c => c.DailyAllowanceCents) != initial.Consumers.Sum(c => c.DailyAllowanceCents)) throw new Exception("Price changed buying power");
         foreach (var b in state.Businesses)
         foreach (var o in b.Offers)
             if (o.Units != 10000 - state.Intents.Count(i => i.Status == FoodIntentStatus.Fulfilled && i.BusinessId == b.Id && i.ProductId == o.ProductId)) throw new Exception("Stock mismatch");
-        points.Add(new { factor, priceCents = state.Businesses.Single(b => b.Id == target).Offers[0].Price, meals = served.Length,
-            revenueCents = Money.Sum(served.Select(i => i.Spent)).ApproximateCents(), fulfilled, declined, unmet, unresolved });
+        points.Add(new { factor, priceCents = state.Businesses.Single(b => b.Id == target).Offers[0].PriceCents, meals = served.Length,
+            revenueCents = served.Sum(i => i.SpentCents), fulfilled, declined, unmet, unresolved });
     }
-    reports.Add(new { name, points, allowances = initial.Consumers.Select(c => c.DailyAllowance),
+    reports.Add(new { name, points, allowances = initial.Consumers.Select(c => c.DailyAllowanceCents),
         homeDistrictEvidence = name == variations[0] ? "Original fixed control" : "Unknown in retained PC capture; neutral individual prior" });
 }
 // Separate distribution sensitivity: same IDs/seed, controlled home-district composition.
@@ -57,12 +57,12 @@ foreach (var sample in new[] { (Name: "Working-heavy district", Working: 80, Mid
     c.HomeDistrictMixes = new() { new FoodDistrictBudgetMix { DistrictId = "controlled-home", WorkingPercent = sample.Working,
         MiddlePercent = sample.Middle, UpperPercent = sample.Upper, Evidence = "Controlled district sensitivity; not measured PC home data" } };
     var plan = FoodRoutinePlanning.Build(c, (int)(old.StartedAt / 1440), 1);
-    districts.Add(new { name = sample.Name, sample.Working, sample.Middle, sample.Upper, allowances = plan.Consumers.Select(p => p.DailyAllowance.ApproximateCents()), mean = plan.Consumers.Average(p => p.DailyAllowance.ApproximateCents()) });
+    districts.Add(new { name = sample.Name, sample.Working, sample.Middle, sample.Upper, allowances = plan.Consumers.Select(p => p.DailyAllowanceCents), mean = plan.Consumers.Average(p => p.DailyAllowanceCents) });
 }
-var low = current!.Consumers.Min(c => c.DailyAllowance); var high = current.Consumers.Max(c => c.DailyAllowance);
+var low = current!.Consumers.Min(c => c.DailyAllowanceCents); var high = current.Consumers.Max(c => c.DailyAllowanceCents);
 File.WriteAllText(Path.Combine(output, "report.json"), JsonConvert.SerializeObject(new { target = (string)native["selection"]!["name"]!, scenarios = reports, districtSensitivity = districts,
     retainedPcPricePointsUnchanged = 31, individualBudgetRangeCents = new[] { low, high },
     note = "New policy is offline only. Home district is unknown in the original PC capture. District examples are separate controlled distributions, not measurements. No shop gets guaranteed customers; no household food or costs are booked." }, Formatting.Indented));
-Console.WriteLine($"31 retained PC price points unchanged after schema migration; 62 new counterfactual points conserve opportunities, stock and buying power. Individual budgets ${low.ApproximateCents()/100:F2}–${high.ApproximateCents()/100:F2}; district sensitivity kept separate.");
+Console.WriteLine($"31 retained PC price points unchanged after schema migration; 62 new counterfactual points conserve opportunities, stock and buying power. Individual budgets ${low/100m:F2}–${high/100m:F2}; district sensitivity kept separate.");
 
 static void Finish(FoodShadowState state) { var e = new FoodDemand(state); while (!e.AdvanceTo(state.EndsAt, 128)) { } FoodShadowCodec.Write(state); }

@@ -12,7 +12,7 @@ FoodIntent Choose(FoodDecisionTrace row,int? burgerPrice=null)
   OriginPlaceId=i.OriginPlaceId,OriginActivity=i.OriginActivity,ContextEvidence=i.ContextEvidence,EatingMinutes=i.EatingMinutes,MaximumQueueMinutes=i.MaximumQueueMinutes,
   TimeCostMultiplier=i.TimeCostMultiplier,OutsideOption=i.OutsideOption,OutsideOptionScoreCents=i.OutsideOptionScoreCents,OutsideOptionEvidence=i.OutsideOptionEvidence };
  var businesses=Copy(row.Businesses);
- if(burgerPrice.HasValue)foreach(var b in businesses)foreach(var offer in b.Offers)if(offer.ProductId==FoodProducts.Burger)offer.Price=Money.FromCents(burgerPrice.Value);
+ if(burgerPrice.HasValue)foreach(var b in businesses)foreach(var offer in b.Offers)if(offer.ProductId==FoodProducts.Burger)offer.PriceCents=burgerPrice.Value;
  // Only these reasons are actual early rejections. Missing-path trace messages
  // remain missing evidence and must not be promoted to proved impossibility.
  var known=new[]{"Closed or too late","Service unavailable","Out of stock","Over allowance","Beyond walking tolerance","Travel and service cannot fit break"};

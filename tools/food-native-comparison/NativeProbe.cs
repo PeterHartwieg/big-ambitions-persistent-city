@@ -82,7 +82,7 @@ namespace FoodComparisonProbe
                             hours.Add(new JObject { ["Day"] = (int)day.day - 1, ["FromMinute"] = slot.startingHour * 60, ["ToMinute"] = slot.endingHour * 60 });
                     var business = new JObject { ["Id"] = PlaceId(reg), ["PlaceId"] = PlaceId(reg), ["Name"] = reg.BusinessName,
                         ["Hours"] = hours, ["Offers"] = new JArray(reg.retailPrices.Where(p => allowed.Contains(p.itemName) && reg.cachedAvailableProducts.Contains(p.itemName))
-                            .Select(p => new JObject { ["ProductId"] = p.itemName, ["Price"] = JToken.FromObject(PersistentCity.Core.Money.FromCents((int)Math.Round(p.price * 100))), ["Units"] = null })) };
+                            .Select(p => new JObject { ["ProductId"] = p.itemName, ["PriceCents"] = (int)Math.Round(p.price * 100), ["Units"] = null })) };
                     var calc = new CustomerEntriesCalculatorRetail(); calc.Init(reg);
                     var hourly = new JArray();
                     float initial = calc.GetInitialCustomers();

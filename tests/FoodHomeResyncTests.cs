@@ -61,13 +61,13 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(MealStatus.Uncertain, extra.Status); Assert.Null(extra.Excursion);
         var staged = BriefHomeArrival(city, routes); city = staged.City;
         extra.NeedsHomeResync = true;
-        string receipt = extra.IntentId; Money balance = extra.Budget!.Balance;
-        Money hold = extra.Budget.HeldPurchase, income = extra.Budget.IncomeReceived;
-        Assert.True(hold > Money.Zero);
+        string receipt = extra.IntentId; decimal balance = extra.Budget!.BalanceCents;
+        decimal hold = extra.Budget.HeldPurchaseCents, income = extra.Budget.IncomeReceivedCents;
+        Assert.True(hold > 0);
         Advance(city, staged.Arrival);
         Assert.False(extra.NeedsHomeResync); Assert.Equal(MealStatus.Uncertain, extra.Status);
-        Assert.Equal(receipt, extra.IntentId); Assert.Equal(hold, extra.Budget.HeldPurchase);
-        Assert.Equal(balance, extra.Budget.Balance); Assert.Equal(income, extra.Budget.IncomeReceived);
+        Assert.Equal(receipt, extra.IntentId); Assert.Equal(hold, extra.Budget.HeldPurchaseCents);
+        Assert.Equal(balance, extra.Budget.BalanceCents); Assert.Equal(income, extra.Budget.IncomeReceivedCents);
         Assert.Single(market.Orders, id => id == receipt);
         Assert.Equal("", SaveCodec.Read(SaveCodec.Write(city.State)).Error);
     }

@@ -16,13 +16,13 @@ foreach (var point in (JArray)native["points"]!)
     foreach (int budget in new[] { 1, 128 })
     {
         var state = FoodShadowCodec.Read(input, key);
-        foreach (var offer in state.Businesses.Single(b => b.Id == target).Offers) offer.Price = (int)Math.Round(offer.Price * factor);
+        foreach (var offer in state.Businesses.Single(b => b.Id == target).Offers) offer.PriceCents = (int)Math.Round(offer.PriceCents * factor);
         var engine = new FoodDemand(state);
         while (!engine.AdvanceTo(state.EndsAt, budget)) { }
         FoodShadowCodec.Write(state);
         var served = state.Intents.Where(i => i.Status == FoodIntentStatus.Fulfilled).ToArray();
         var chosen = served.Where(i => i.BusinessId == target).ToArray();
-        if (chosen.Length != (int)point["meals"]! || chosen.Sum(i => i.Spent) != (int)point["revenueCents"]!
+        if (chosen.Length != (int)point["meals"]! || chosen.Sum(i => i.SpentCents) != (int)point["revenueCents"]!
             || served.Length != (int)point["allShops"]!["fulfilled"]!) throw new Exception("PC replay mismatch at " + factor);
         foreach (var shop in state.Businesses)
         {
@@ -32,13 +32,13 @@ foreach (var point in (JArray)native["points"]!)
             foreach (var offer in shop.Offers)
                 if (offer.Units != 10000 - completions.Count(i => i.ProductId == offer.ProductId)) throw new Exception("Stock conservation failed");
         }
-        string result = JsonConvert.SerializeObject(state.Intents.Select(i => new { i.Id, i.Status, i.BusinessId, i.ProductId, i.Spent, i.ReturnBy }));
+        string result = JsonConvert.SerializeObject(state.Intents.Select(i => new { i.Id, i.Status, i.BusinessId, i.ProductId, i.SpentCents, i.ReturnBy }));
         if (outcomes != null && outcomes != result) throw new Exception("Event budget changes outcome");
         outcomes = result;
         if (factor == 1 && budget == 128)
         {
             var pc = FoodShadowCodec.Read(File.ReadAllText(Path.Combine(root, "probe-output/baseline-final.json")), key);
-            if (result != JsonConvert.SerializeObject(pc.Intents.Select(i => new { i.Id, i.Status, i.BusinessId, i.ProductId, i.Spent, i.ReturnBy }))) throw new Exception("Baseline per-person native replay mismatch");
+            if (result != JsonConvert.SerializeObject(pc.Intents.Select(i => new { i.Id, i.Status, i.BusinessId, i.ProductId, i.SpentCents, i.ReturnBy }))) throw new Exception("Baseline per-person native replay mismatch");
         }
     }
     results.Add(new { factor, pcCountsAndRevenueMatch = true, eventBudgetIndependent = true, stockConserved = true, throughputRespected = true });

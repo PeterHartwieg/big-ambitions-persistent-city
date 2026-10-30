@@ -97,13 +97,13 @@ namespace PersistentCity.Runtime
                     foreach (var price in reg.retailPrices)
                     {
                         if (price == null || !products.Contains(price.itemName) || !reg.cachedAvailableProducts.Contains(price.itemName)) continue;
-                        Money exact;
-                        try { exact = Money.FromNative(price.price); }
+                        decimal cents;
+                        try { cents = FoodMoney.FromNative(price.price); }
                         catch (ArgumentOutOfRangeException ex) { throw new UnsupportedPriceException(ex); }
-                        if (exact == Money.Zero || business.Offers.Any(o => o.ProductId == price.itemName))
+                        if (cents == 0 || business.Offers.Any(o => o.ProductId == price.itemName))
                             throw new CatalogueRefusalException("Ambiguous food price; observation refused.");
                         // An advertised product is not proof of stocked, staffed production.
-                        var offer = new FoodOffer { ProductId = price.itemName, Price = exact, Units = null };
+                        var offer = new FoodOffer { ProductId = price.itemName, PriceCents = cents, Units = null };
                         // Read existing saved values only. Demand helpers can supply fabricated
                         // defaults or recalculate providers/events; neither belongs in this observer.
                         if (business.DistrictId.Length > 0 && save.productMarketEntries != null)

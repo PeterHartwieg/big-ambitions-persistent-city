@@ -25,7 +25,7 @@ foreach (string variant in new[] { "Baseline", "Higher prices", "Shop closed", "
     var state = FoodShadowCodec.Read(original, initial.CityKey);
     var engine = new FoodDemand(state);
     var shop = state.Businesses.Single(b => b.Id == target);
-    if (variant == "Higher prices") foreach (var offer in shop.Offers) engine.SetPrice(target, offer.ProductId, Money.Min(Money.FromCents(1000000), offer.Price + Money.FromCents(400)));
+    if (variant == "Higher prices") foreach (var offer in shop.Offers) engine.SetPrice(target, offer.ProductId, Math.Min(1000000, offer.PriceCents + 400));
     if (variant == "Shop closed") engine.Close(target);
     if (variant == "No stock") foreach (var business in state.Businesses)
         foreach (var offer in business.Offers) engine.SetStock(business.Id, offer.ProductId, 0);
@@ -42,17 +42,17 @@ foreach (string variant in new[] { "Baseline", "Higher prices", "Shop closed", "
         unmet = state.Intents.Count(i => i.Status == FoodIntentStatus.Unmet),
         unresolved = state.Intents.Count(i => i.Status == FoodIntentStatus.Unresolved),
         declined = state.Intents.Count(i => i.Status == FoodIntentStatus.DeclinedPurchase),
-        spendingCents = Money.Sum(state.Intents.Select(i => i.Spent)).ApproximateCents(),
+        spendingCents = state.Intents.Sum(i => i.SpentCents),
         businesses = state.Businesses.Select(b => new { id = b.Id, name = b.Name,
             meals = state.Intents.Count(i => i.BusinessId == b.Id && i.Status == FoodIntentStatus.Fulfilled),
-            spendingCents = Money.Sum(state.Intents.Where(i => i.BusinessId == b.Id).Select(i => i.Spent)).ApproximateCents() }),
+            spendingCents = state.Intents.Where(i => i.BusinessId == b.Id).Sum(i => i.SpentCents) }),
         people = state.Intents.Select(i => new { id = i.Id, person = state.Consumers.Single(c => c.Id == i.ConsumerId).Name,
             day = i.Day, business = state.Businesses.FirstOrDefault(b => b.Id == i.BusinessId)?.Name ?? "None",
             origin = i.OriginPlaceId.Length > 0 ? i.OriginPlaceId : state.Consumers.Single(c => c.Id == i.ConsumerId).OriginPlaceId,
             activity = i.OriginActivity.ToString(), context = i.ContextEvidence, requestedAt = i.RequestedAt,
             deadline = i.Deadline, returnBy = i.ReturnBy, eatingMinutes = i.EatingMinutes, maximumQueueMinutes = i.MaximumQueueMinutes,
-            status = i.Status.ToString(), spendingCents = i.Spent, outcome = i.Outcome,
-            allowanceCents = state.Consumers.Single(c => c.Id == i.ConsumerId).DailyAllowance,
+            status = i.Status.ToString(), spendingCents = i.SpentCents, outcome = i.Outcome,
+            allowanceCents = state.Consumers.Single(c => c.Id == i.ConsumerId).DailyAllowanceCents,
             homeDistrict = state.Consumers.Single(c => c.Id == i.ConsumerId).HomeDistrictId,
             budgetEvidence = state.Consumers.Single(c => c.Id == i.ConsumerId).BudgetEvidence,
             outsideOption = i.OutsideOption.ToString(), outsideScoreCents = i.OutsideOptionScoreCents,
@@ -61,7 +61,7 @@ foreach (string variant in new[] { "Baseline", "Higher prices", "Shop closed", "
                 district = state.Businesses.Single(b => b.Id == c.BusinessId).DistrictId,
                 customerServicePercent = c.CustomerServicePercent, districtDemandPercent = c.DistrictDemandPercent,
                 serviceQualityAdjustmentCents = c.ServiceQualityAdjustmentCents, districtAppealAdjustmentCents = c.DistrictAppealAdjustmentCents,
-                product = c.ProductId, priceCents = c.Price, travelMinutes = c.TravelMinutes,
+                product = c.ProductId, priceCents = c.PriceCents, travelMinutes = c.TravelMinutes,
                 waitMinutes = c.AdmissionMinute.HasValue && c.TravelMinutes.HasValue ? c.AdmissionMinute - i.RequestedAt - c.TravelMinutes : null,
                 returnMinutes = c.ReturnMinutes, serviceMinutes = c.ServiceEndsAt - c.AdmissionMinute,
                 scoreCents = c.ScoreCents, reason = c.Reason }) })
@@ -91,15 +91,15 @@ static FoodShadowState Demo()
     var people = Enumerable.Range(0, 24).Select(i => new FoodConsumer
     {
         Id = "sample:" + i.ToString("D2"), Name = "Resident " + (i + 1), OriginPlaceId = "sample:home:" + i,
-        MealMinuteOfDay = 720 + i % 6 * 5, DailyAllowance = Money.FromCents(i % 8 == 0 ? 450 : 1200),
+        MealMinuteOfDay = 720 + i % 6 * 5, DailyAllowanceCents = i % 8 == 0 ? 450 : 1200,
         ValueOfTimeCentsPerMinute = 3 + i % 4 * 4, PreferredProductId = i % 3 == 0 ? "meal-near" : "meal-market"
     }).ToArray();
     var shops = new[]
     {
         new FoodBusiness { Id = "sample:1-corner", Name = "Corner Kitchen", PlaceId = "sample:corner-door",
-            Offers = new() { new FoodOffer { ProductId = "meal-near", Price = Money.FromCents(650), Units = 60 } } },
+            Offers = new() { new FoodOffer { ProductId = "meal-near", PriceCents = 650, Units = 60 } } },
         new FoodBusiness { Id = "sample:2-market", Name = "Market Deli", PlaceId = "sample:market-door",
-            Offers = new() { new FoodOffer { ProductId = "meal-market", Price = Money.FromCents(500), Units = 60 } } }
+            Offers = new() { new FoodOffer { ProductId = "meal-market", PriceCents = 500, Units = 60 } } }
     };
     foreach (var b in shops) b.Hours = Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = 600, ToMinute = 1200 }).ToList();
     var routes = people.SelectMany((c, i) => shops.Select((b, j) => new FoodTravelQuote

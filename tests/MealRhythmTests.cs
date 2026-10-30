@@ -14,7 +14,7 @@ public sealed partial class FoodCommerceTests
     {
         RemoveMenuFields(payload);
         var food = (JObject)payload["Food"]!; food.Remove("MealRhythmVersion");
-        foreach (var meal in food["Residents"]!.Children<JObject>()) { meal.Remove("Kind"); meal.Remove("DayAllowanceUsed"); }
+        foreach (var meal in food["Residents"]!.Children<JObject>()) { meal.Remove("Kind"); meal.Remove("DayAllowanceUsedCents"); }
         foreach (var history in food["History"]!.Children<JObject>()) history.Remove("PurchaseMeals");
     }
 
@@ -60,9 +60,9 @@ public sealed partial class FoodCommerceTests
         }
         var meal = city.State.Food!.Residents.Single(); var b = meal.Budget!;
         Assert.Equal(3, market.Orders.Count); Assert.Equal(3, market.Orders.Distinct().Count());
-        Assert.Equal(97, market.Units); Assert.Equal(Money.FromCents(300), b.PreparedFoodSpent);
-        Assert.Equal(Money.FromCents(b.DailyIncomeCents), b.IncomeReceived); Assert.Equal(Money.FromCents(b.DailyHomeFoodCents), b.HomeFoodPaid);
-        Assert.Equal(b.OpeningBalance + b.IncomeReceived, b.Balance + b.EssentialsPaid + b.HomeFoodPaid + b.PreparedFoodSpent);
+        Assert.Equal(97, market.Units); Assert.Equal(300, b.PreparedFoodSpentCents);
+        Assert.Equal(b.DailyIncomeCents, b.IncomeReceivedCents); Assert.Equal(b.DailyHomeFoodCents, b.HomeFoodPaidCents);
+        Assert.Equal(b.OpeningBalanceCents + b.IncomeReceivedCents, b.BalanceCents + b.EssentialsPaidCents + b.HomeFoodPaidCents + b.PreparedFoodSpentCents);
         Assert.Equal(new long[] { 0, 1, 1, 1 }, city.State.Food.History.Single().PurchaseMeals);
     }
 
@@ -72,20 +72,20 @@ public sealed partial class FoodCommerceTests
         var (city, market, routes) = Ready(threeMeals: true); city.EnableHouseholdFinances();
         Advance(city, city.State.Food!.Residents.Single().DesiredAt - 1);
         var b = city.State.Food.Residents.Single().Budget!;
-        var remaining = Money.FromCents(b.DailyHousingCents + b.DailyEssentialsCents + b.DailyHomeFoodCents + 150);
-        b.EssentialsPaid += b.Balance - remaining; b.Balance = remaining;
+        long remaining = b.DailyHousingCents + b.DailyEssentialsCents + b.DailyHomeFoodCents + 150;
+        b.EssentialsPaidCents += b.BalanceCents - remaining; b.BalanceCents = remaining;
         city = Reload(city, market, routes); Advance(city, 2860);
         Assert.Single(market.Orders); Assert.Contains(":breakfast:", market.Orders.Single());
-        Assert.Equal(Money.FromCents(50), HouseholdFinance.SpendingLimit(city.State.Food!.Residents.Single().Budget!));
+        Assert.Equal(50, HouseholdFinance.SpendingLimit(city.State.Food!.Residents.Single().Budget!));
     }
 
     [Fact]
     public void TemporaryAllowanceAlsoIsSharedAcrossTheThreeMeals()
     {
         var (city, market, _) = Ready(threeMeals: true);
-        city.State.Food!.Residents.Single().Allowance = Money.FromCents(150);
+        city.State.Food!.Residents.Single().AllowanceCents = 150;
         Advance(city, 2860);
-        Assert.Single(market.Orders); Assert.Equal(Money.FromCents(100), city.State.Food.Residents.Single().DayAllowanceUsed);
+        Assert.Single(market.Orders); Assert.Equal(100, city.State.Food.Residents.Single().DayAllowanceUsedCents);
     }
 
     [Fact]
@@ -97,7 +97,7 @@ public sealed partial class FoodCommerceTests
         city = Reload(city, market, routes); Advance(city, 5 * 1440, 1); city = Reload(city, market, routes);
         Assert.Single(market.Orders); var meal = city.State.Food!.Residents.Single();
         Assert.Equal(id, meal.IntentId); Assert.Equal(MealStatus.Uncertain, meal.Status);
-        Assert.Equal(Money.FromCents(100), meal.Budget!.HeldPurchase); Assert.Equal(Money.FromCents(0), meal.Budget.PreparedFoodSpent);
+        Assert.Equal(100, meal.Budget!.HeldPurchaseCents); Assert.Equal(0, meal.Budget.PreparedFoodSpentCents);
     }
 
     [Theory]
@@ -121,7 +121,7 @@ public sealed partial class FoodCommerceTests
         var data = new Dictionary<string, string>();
         foreach (MealKind kind in Enum.GetValues<MealKind>())
         {
-            var meal = new ResidentMeal { ResidentId = "r:breakfast", Kind = kind, Day = 2, Price = Money.FromCents(100), BusinessId = "shop", ProductId = "pastry" };
+            var meal = new ResidentMeal { ResidentId = "r:breakfast", Kind = kind, Day = 2, PriceCents = 100, BusinessId = "shop", ProductId = "pastry" };
             Assert.False(FoodSaleReceipts.AlreadyPaid(data, meal)); FoodSaleReceipts.Begin(data, meal); FoodSaleReceipts.Confirm(data, meal);
             Assert.True(FoodSaleReceipts.AlreadyPaid(data, meal));
         }
@@ -150,12 +150,12 @@ public sealed partial class FoodCommerceTests
         Assert.True(breakfast.ServiceQualityValueCents < dinner.ServiceQualityValueCents);
         FoodIntent Choice(MealKind kind)
         {
-            var c = Make(kind); c.Id = "resident"; c.DailyAllowance = Money.FromCents(2000);
+            var c = Make(kind); c.Id = "resident"; c.DailyAllowanceCents = 2000;
             var intent = new FoodIntent { Id = "trial", ConsumerId = c.Id, OriginPlaceId = "home", Deadline = 1000,
                 EatingMinutes = 15, MaximumQueueMinutes = 15, OutsideOptionScoreCents = 1600 };
             var shops = new[] { new FoodBusiness { Id = "b", PlaceId = "shop", MealsPerHour = 15,
                 Hours = Enumerable.Range(0,7).Select(d => new OpeningWindow { Day = d, FromMinute = 0, ToMinute = 1440 }).ToList(),
-                Offers = new() { new FoodOffer { ProductId = "ba:itemname_croissant", Price = Money.FromCents(800), Units = 10 } } } };
+                Offers = new() { new FoodOffer { ProductId = "ba:itemname_croissant", PriceCents = 800, Units = 10 } } } };
             FoodDemand.ChooseObserved(c, shops, new[] { new FoodTravelQuote { ConsumerId = c.Id, IntentId = intent.Id, BusinessId = "b", Minutes = 5, ReturnMinutes = 5 } }, intent, 700, mealKind: kind);
             return intent;
         }
@@ -168,12 +168,12 @@ public sealed partial class FoodCommerceTests
     {
         string Choose(MealKind kind)
         {
-            var consumer = new FoodConsumer { Id = "r", DailyAllowance = Money.FromCents(2000), ValueOfTimeCentsPerMinute = 10, ServiceQualityValueCents = 300 };
+            var consumer = new FoodConsumer { Id = "r", DailyAllowanceCents = 2000, ValueOfTimeCentsPerMinute = 10, ServiceQualityValueCents = 300 };
             MealRhythm.Apply(consumer, kind);
             var intent = new FoodIntent { Id = "trial", ConsumerId = "r", OriginPlaceId = "home", Deadline = 1000, EatingMinutes = 15, MaximumQueueMinutes = 15 };
             FoodBusiness Shop(string id, int price, int quality) => new() { Id = id, PlaceId = id, CustomerServicePercent = quality, MealsPerHour = 15,
                 Hours = Enumerable.Range(0,7).Select(d => new OpeningWindow { Day = d, FromMinute = 0, ToMinute = 1440 }).ToList(),
-                Offers = new() { new FoodOffer { ProductId = "meal", Price = Money.FromCents(price), Units = 10 } } };
+                Offers = new() { new FoodOffer { ProductId = "meal", PriceCents = price, Units = 10 } } };
             FoodTravelQuote Route(string id, int minutes) => new() { BusinessId = id, ConsumerId = "r", IntentId = intent.Id, Minutes = minutes, ReturnMinutes = minutes };
             FoodDemand.ChooseObserved(consumer, new[] { Shop("quick", 900, 25), Shop("quality", 1000, 100) },
                 new[] { Route("quick", 5), Route("quality", 8) }, intent, 700, mealKind: kind);

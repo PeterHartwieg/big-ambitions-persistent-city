@@ -38,7 +38,7 @@ Snapshot: after the restart fix landed.
 
 ## Round 4: confirmation of the round 3 fixes, the arrival read and the cache guard
 
-Sol and Astra: no blocker; both verified the four fixes by source. Opus: no blocker; ran the suite (1,260) and the road-ceiling harness (69 plus 142 sliced) in a copy, traced the synchronous, inline, stale-at-Begin, lazy-access, station-rescan and workspace-release paths, and noted one spurious restart reachable only by a tool that drives `Begin` without `Prepare` (left as is). Grok (uncapped rerun; its first run ended without a report after its context compacted): no blocker; ran the suite (1,260) and the road-ceiling harness (69 plus 142 sliced) in its copy and traced the same paths. All four reviewers are green on the final tree.
+Sol and Astra: no blocker; both verified the four fixes by source. Opus: no blocker; ran the suite (1,260) and the road-ceiling harness (69 plus 142 sliced) in a copy, traced the synchronous, inline, stale-at-Begin, lazy-access, station-rescan and workspace-release paths, and noted one spurious restart reachable only by a tool that drives `Begin` without `Prepare` (left as is). Grok: see below.
 
 ## Preexisting, outside scope
 

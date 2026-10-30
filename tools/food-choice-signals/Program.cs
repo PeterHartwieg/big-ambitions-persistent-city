@@ -51,7 +51,7 @@ foreach (var s in scenarios)
     int b = state.Intents.Count(i => i.Status == FoodIntentStatus.Fulfilled && i.BusinessId == "b");
     counts.Add((a, b));
     reports.Add(new { s.Name, shopA = a, shopB = b, opportunities = state.Intents.Count,
-        hypotheticalSpendCents = Money.Sum(state.Intents.Select(i => i.Spent)).ApproximateCents(), simulationMs = elapsed });
+        hypotheticalSpendCents = state.Intents.Sum(i => i.SpentCents), simulationMs = elapsed });
 }
 var checks = new Dictionary<string, bool>
 {
@@ -73,6 +73,6 @@ static FoodBusiness Shop(string id, int price, int quality, int demand) => new()
     CustomerServicePercent = quality, CustomerServiceEvidence = "Controlled service rating",
     MealsPerHour = 10000, ServiceEvidence = "Controlled high throughput to isolate choice effects",
     Hours = Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = 0, ToMinute = 1440 }).ToList(),
-    Offers = new() { new FoodOffer { ProductId = "meal", Price = Money.FromCents(price), Units = 50000,
+    Offers = new() { new FoodOffer { ProductId = "meal", PriceCents = price, Units = 50000,
         DistrictDemandPercent = demand, DistrictDemandEvidence = "Controlled district product appeal" } }
 };

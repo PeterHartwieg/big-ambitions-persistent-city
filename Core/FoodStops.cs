@@ -69,7 +69,7 @@ namespace PersistentCity.Core
             var choice = intent.Choices.Single(c => c.BusinessId == intent.BusinessId && c.ProductId == intent.ProductId);
             meal.ExistingStop = true;
             meal.PlaceId = selected.PlaceId; meal.BusinessId = selected.Id; meal.ProductId = intent.ProductId;
-            meal.Price = choice.Price; meal.ServiceMinutes = 60.0 / selected.MealsPerHour!.Value;
+            meal.PriceCents = choice.PriceCents; meal.ServiceMinutes = 60.0 / selected.MealsPerHour!.Value;
             meal.ReturnMinutes = 0; meal.Deadline = intent.Deadline;
             meal.ServiceAt = choice.ServiceEndsAt!.Value;
             state.Shops.Single(s => s.PlaceId == selected.PlaceId).NextServiceAt = meal.ServiceAt;

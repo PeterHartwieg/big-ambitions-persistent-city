@@ -16,8 +16,7 @@ namespace PersistentCity.Persistence
         public const string LegacyPrefix = "persistentcity:food-sale-v1:";
         public static bool IsReceiptKey(string key) => key.StartsWith(Prefix, StringComparison.Ordinal) || key.StartsWith(LegacyPrefix, StringComparison.Ordinal);
         private static string Key(ResidentMeal m) => Prefix + m.IntentId;
-        // Exact canonical cents: the same text the earlier decimal-cents identity wrote for the same amount.
-        private static string Identity(ResidentMeal m) => m.Price.ToCentsText()
+        private static string Identity(ResidentMeal m) => m.PriceCents.ToString("0.############################", CultureInfo.InvariantCulture)
             + "|" + Uri.EscapeDataString(m.BusinessId) + "|" + Uri.EscapeDataString(m.ProductId);
         /// <summary>Missing is absence of evidence, never proof that a native purchase failed.
         /// Only Paid confirms this exact intention, business, product and agreed price.</summary>
@@ -29,7 +28,7 @@ namespace PersistentCity.Persistence
             if (!current && !legacy) return FoodReceiptStatus.Missing;
             if (legacy)
             {
-                if (!meal.Price.IsWholeCents()) return FoodReceiptStatus.Conflict;
+                if (meal.PriceCents != decimal.Truncate(meal.PriceCents)) return FoodReceiptStatus.Conflict;
                 value = oldValue;
             }
             string identity = Identity(meal);

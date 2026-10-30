@@ -100,7 +100,7 @@ static FoodBusiness Shop(string id, string place, int capacity, int price = 800)
     Id = id, PlaceId = place, Name = id == "b" ? "East Corner" : id == "a2" ? "West Corner Annex" : "West Corner",
     MealsPerHour = capacity, ServiceEvidence = "Controlled effective staffed meals/hour, with sufficient stock; not a measured native shop",
     Hours = Enumerable.Range(0, 7).Select(day => new OpeningWindow { Day = day, FromMinute = 420, ToMinute = 1380 }).ToList(),
-    Offers = new() { new FoodOffer { ProductId = "meal", Price = Money.FromCents(price), Units = 50000 } }
+    Offers = new() { new FoodOffer { ProductId = "meal", PriceCents = price, Units = 50000 } }
 };
 
 static CityState Fixture(int count)

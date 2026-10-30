@@ -9,16 +9,16 @@ namespace PersistentCity.Tests;
 public sealed class FoodDemandTests
 {
     private static FoodConsumer Person(string id = "resident:1") => new()
-    { Id = id, Name = id, OriginPlaceId = "home:1", DailyAllowance = Money.FromCents(1000) };
+    { Id = id, Name = id, OriginPlaceId = "home:1", DailyAllowanceCents = 1000 };
 
     private static FoodBusiness Shop(string id, int price, int? stock = 100) => new()
     {
         Id = id, Name = id, PlaceId = id + ":door",
         Hours = Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = 600, ToMinute = 1200 }).ToList(),
-        Offers = new() { new FoodOffer { ProductId = "meal", Price = Money.FromCents(price), Units = stock } }
+        Offers = new() { new FoodOffer { ProductId = "meal", PriceCents = price, Units = stock } }
     };
 
-    internal static FoodShadowState Scenario(int people = 1, int days = 1)
+    private static FoodShadowState Scenario(int people = 1, int days = 1)
     {
         var consumers = Enumerable.Range(1, people).Select(i => Person("resident:" + i)).ToArray();
         var shops = new[] { Shop("near", 600), Shop("far", 500) };
@@ -34,11 +34,11 @@ public sealed class FoodDemandTests
     public void ShadowCodecRetainsFractionalPriceWithoutAnIntermediateDouble()
     {
         var state = Scenario();
-        Money amount = Money.FromNative(10.2528f);
-        state.Businesses[0].Offers[0].Price = amount;
+        decimal amount = FoodMoney.FromNative(10.2528f);
+        state.Businesses[0].Offers[0].PriceCents = amount;
         string source = FoodShadowCodec.Write(state);
         var loaded = FoodShadowCodec.Read(source, state.CityKey);
-        Assert.Equal(amount, loaded.Businesses[0].Offers[0].Price);
+        Assert.Equal(amount, loaded.Businesses[0].Offers[0].PriceCents);
         Assert.Equal(source, FoodShadowCodec.Write(loaded));
     }
 
@@ -47,7 +47,7 @@ public sealed class FoodDemandTests
     {
         Assert.Equal("far", Finish(Scenario()).Intents.Single().BusinessId);
         var changed = new FoodDemand(Scenario());
-        changed.SetPrice("far", "meal", Money.FromCents(800));
+        changed.SetPrice("far", "meal", 800);
         changed.AdvanceTo(changed.State.EndsAt);
         Assert.Equal("near", changed.State.Intents.Single().BusinessId);
     }
@@ -87,7 +87,7 @@ public sealed class FoodDemandTests
         state.TravelQuotes.Single(q => q.BusinessId == "far").Minutes = null;
         Finish(state);
         Assert.All(state.Intents, i => Assert.Equal(FoodIntentStatus.Unresolved, i.Status));
-        Assert.All(state.Intents, i => Assert.Equal(Money.FromCents(0), i.Spent));
+        Assert.All(state.Intents, i => Assert.Equal(0, i.SpentCents));
         Assert.Equal(FoodShadowCodec.Write(state), FoodShadowCodec.Write(FoodShadowCodec.Read(FoodShadowCodec.Write(state), "test-city")));
         Assert.Contains(state.Intents[0].Choices, c => c.Reason == "Route unknown");
         Assert.Contains(state.Intents[1].Choices, c => c.Reason == "Unreachable");
@@ -123,10 +123,10 @@ public sealed class FoodDemandTests
             Assert.Equal(FoodIntentStatus.Travelling, engine.State.Intents.Single().Status);
             if (kind == 0) engine.Close("far");
             if (kind == 1) engine.SetStock("far", "meal", 0);
-            if (kind == 2) engine.SetPrice("far", "meal", Money.FromCents(1001));
+            if (kind == 2) engine.SetPrice("far", "meal", 1001);
             engine.AdvanceTo(engine.State.EndsAt);
             Assert.Equal(FoodIntentStatus.Unmet, engine.State.Intents.Single().Status);
-            Assert.Equal(Money.FromCents(0), engine.State.Intents.Single().Spent);
+            Assert.Equal(0, engine.State.Intents.Single().SpentCents);
         }
     }
 
@@ -138,7 +138,7 @@ public sealed class FoodDemandTests
         Finish(state);
         Assert.Single(state.Intents, i => i.Status == FoodIntentStatus.Fulfilled);
         Assert.Single(state.Intents, i => i.Outcome == "Out of stock on arrival");
-        Assert.Equal(Money.FromCents(500), Money.Sum(state.Intents.Select(i => i.Spent)));
+        Assert.Equal(500, state.Intents.Sum(i => i.SpentCents));
         Assert.Equal(0, state.Businesses.Single(b => b.Id == "far").Offers[0].Units);
     }
 
@@ -149,8 +149,8 @@ public sealed class FoodDemandTests
         var routes = new[] { new FoodTravelQuote { ConsumerId = people[0].Id, BusinessId = "shop", Minutes = 5, Evidence = "fixture" } };
         var state = FoodDemand.Create("test-city", "fixture", 1, 1, people, shops, routes);
         var engine = new FoodDemand(state);
-        engine.SetPrice("shop", "meal", Money.FromCents(600)); engine.AdvanceTo(state.EndsAt);
-        Assert.Equal(Money.FromCents(500), shops[0].Offers[0].Price);
+        engine.SetPrice("shop", "meal", 600); engine.AdvanceTo(state.EndsAt);
+        Assert.Equal(500, shops[0].Offers[0].PriceCents);
         Assert.Equal(2, shops[0].Offers[0].Units);
         Assert.Equal(1, state.Businesses[0].Offers[0].Units);
     }
@@ -181,7 +181,7 @@ public sealed class FoodDemandTests
     [Fact]
     public void AllowancesBoundSpendAndAreNotInventedWages()
     {
-        var state = Scenario(2, 2); state.Consumers[0].DailyAllowance = Money.FromCents(499);
+        var state = Scenario(2, 2); state.Consumers[0].DailyAllowanceCents = 499;
         Finish(state);
         Assert.All(state.Intents.Where(i => i.ConsumerId == "resident:1"), i => Assert.Equal(FoodIntentStatus.Unmet, i.Status));
         Assert.All(state.Intents.Where(i => i.ConsumerId == "resident:2"), i => Assert.Contains("temporary allowance", i.Outcome));
@@ -195,8 +195,8 @@ public sealed class FoodDemandTests
         Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source, "another-city"));
         Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source.Insert(1, "\"NewField\":1,"), "test-city"));
         Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source.Insert(1, "\"Schema\":1,"), "test-city"));
-        Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source.Replace("\"Spent\": 0,", ""), "test-city"));
-        Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source.Replace("\"Spent\": 0,", "\"Spent\": \"0\","), "test-city"));
+        Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source.Replace("\"SpentCents\": 0.0,", ""), "test-city"));
+        Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source.Replace("\"SpentCents\": 0.0", "\"SpentCents\": \"0\""), "test-city"));
         Assert.ThrowsAny<Exception>(() => FoodShadowCodec.Read(source + "{}", "test-city"));
         Assert.Equal(source, FoodShadowCodec.Write(FoodShadowCodec.Read(source, "test-city")));
     }
@@ -218,11 +218,11 @@ public sealed class FoodDemandTests
         var a = Scenario(8); var b = Scenario(8);
         foreach (var state in new[] { a, b })
         {
-            state.Businesses.ForEach(s => s.Offers[0].Price = Money.FromCents(500));
+            state.Businesses.ForEach(s => s.Offers[0].PriceCents = 500);
             state.TravelQuotes.ForEach(r => r.Minutes = 10);
         }
         b.Businesses.Reverse(); b.Consumers.Reverse(); b.TravelQuotes.Reverse();
         Finish(a); Finish(b);
-        Assert.Equal(a.Intents.Select(i => (i.Id, i.BusinessId, i.Spent)), b.Intents.Select(i => (i.Id, i.BusinessId, i.Spent)));
+        Assert.Equal(a.Intents.Select(i => (i.Id, i.BusinessId, i.SpentCents)), b.Intents.Select(i => (i.Id, i.BusinessId, i.SpentCents)));
     }
 }
