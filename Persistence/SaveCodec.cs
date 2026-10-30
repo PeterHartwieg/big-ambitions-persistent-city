@@ -103,7 +103,7 @@ namespace PersistentCity.Persistence
                 {
                     Require(shape.Read(), "Missing state.");
                     int records = 0;
-                    CheckShape(shape, typeof(CityState), serializer.ContractResolver, ref records, new TokenText(source), schema);
+                    CheckShape(shape, typeof(CityState), serializer.ContractResolver, ref records, new TokenText(source), schema, new FieldNameSets());
                     Require(!shape.Read(), "State contains trailing JSON content.");
                 }
                 using var reader = Reader(source);
@@ -136,7 +136,7 @@ namespace PersistentCity.Persistence
             {
                 Require(reader.TokenType == JsonToken.PropertyName, "Expected a field.");
                 string name = (string)reader.Value!;
-                Require(names.Add(name), "Duplicate field: " + name);
+                if (!names.Add(name)) Fail("Duplicate field: " + name);
                 Require(reader.Read(), "Missing field value.");
                 if (name == "Schema")
                 {
@@ -153,7 +153,24 @@ namespace PersistentCity.Persistence
 
         // Validate directly from tokens before deserialization: no full payload DOM, no coercion,
         // and bounded collection allocation even for hostile arrays of otherwise valid records.
-        private static void CheckShape(JsonReader reader, Type type, IContractResolver resolver, ref int records, TokenText text, int schema)
+        // One reusable duplicate-field set per JSON depth for a single read: a set is only in use while its
+        // object is open, so nested objects never share one. Not shared between reads or threads.
+        private sealed class FieldNameSets
+        {
+            private readonly HashSet<string>?[] sets = new HashSet<string>?[64];
+            public HashSet<string> At(int depth)
+            {
+                var set = sets[depth] ??= new HashSet<string>(StringComparer.Ordinal);
+                set.Clear();
+                return set;
+            }
+        }
+
+        // Json.NET reads an integer token as a long, or a BigInteger beyond the long range: the same
+        // acceptance as parsing the token's invariant text, without formatting it first.
+        private static bool IntegerToken(object? value, long min, long max) => value is long number && number >= min && number <= max;
+
+        private static void CheckShape(JsonReader reader, Type type, IContractResolver resolver, ref int records, TokenText text, int schema, FieldNameSets fieldNames)
         {
             var token = reader.TokenType;
             Type? nullable = Nullable.GetUnderlyingType(type);
@@ -161,8 +178,8 @@ namespace PersistentCity.Persistence
             if (nullable != null) type = nullable;
             if (type == typeof(string)) { Require(token == JsonToken.String, "Expected a string."); Require(((string)reader.Value!).Length <= 512, "Oversized string."); return; }
             if (type == typeof(bool)) { Require(token == JsonToken.Boolean, "Expected a boolean."); return; }
-            if (type == typeof(int) || type.IsEnum) { Require(token == JsonToken.Integer, "Expected an integer."); Require(int.TryParse(Convert.ToString(reader.Value, CultureInfo.InvariantCulture), NumberStyles.Integer, CultureInfo.InvariantCulture, out _), "Integer is out of range."); return; }
-            if (type == typeof(long)) { Require(token == JsonToken.Integer, "Expected an integer."); Require(long.TryParse(Convert.ToString(reader.Value, CultureInfo.InvariantCulture), NumberStyles.Integer, CultureInfo.InvariantCulture, out _), "Integer is out of range."); return; }
+            if (type == typeof(int) || type.IsEnum) { Require(token == JsonToken.Integer, "Expected an integer."); Require(IntegerToken(reader.Value, int.MinValue, int.MaxValue), "Integer is out of range."); return; }
+            if (type == typeof(long)) { Require(token == JsonToken.Integer, "Expected an integer."); Require(IntegerToken(reader.Value, long.MinValue, long.MaxValue), "Integer is out of range."); return; }
             if (type == typeof(Money))
             {
                 // Validate the original token: Json.NET reads "010" as octal 8 and rounds fractions.
@@ -173,15 +190,17 @@ namespace PersistentCity.Persistence
             if (type == typeof(Position))
             {
                 Require(token == JsonToken.StartObject, "Expected a position object.");
-                var components = new HashSet<string>(StringComparer.Ordinal);
+                int components = 0;
                 while (reader.Read() && reader.TokenType != JsonToken.EndObject)
                 {
                     Require(reader.TokenType == JsonToken.PropertyName, "Expected position field.");
                     string name = (string)reader.Value!;
-                    Require((name == "X" || name == "Y" || name == "Z") && components.Add(name), "Unknown or duplicate position field.");
+                    int bit = name == "X" ? 1 : name == "Y" ? 2 : name == "Z" ? 4 : 0;
+                    Require(bit != 0 && (components & bit) == 0, "Unknown or duplicate position field.");
+                    components |= bit;
                     Require(reader.Read() && (reader.TokenType == JsonToken.Integer || reader.TokenType == JsonToken.Float), "Invalid position number.");
                 }
-                Require(reader.TokenType == JsonToken.EndObject && components.Count == 3, "Missing position field.");
+                Require(reader.TokenType == JsonToken.EndObject && components == 7, "Missing position field.");
                 return;
             }
             var contract = resolver.ResolveContract(type);
@@ -209,22 +228,22 @@ namespace PersistentCity.Persistence
                         || item == typeof(TrafficLinkState) || item == typeof(TrafficEventState) || item == typeof(int) || item == typeof(string)
                         || item == typeof(MealOutcomeRecord) || item == typeof(FoodDecisionShop) || item == typeof(FoodDecisionOffer))
                         Require(++records <= MaxEmbeddedRecords, "Too many opening, route and visit records.");
-                    CheckShape(reader, item, resolver, ref records, text, schema);
+                    CheckShape(reader, item, resolver, ref records, text, schema, fieldNames);
                 }
                 Require(reader.TokenType == JsonToken.EndArray, "Incomplete array."); return;
             }
             Require(token == JsonToken.StartObject && contract is JsonObjectContract, "Expected an object.");
             var properties = ((JsonObjectContract)contract).Properties;
-            var names = new HashSet<string>(StringComparer.Ordinal);
+            var names = fieldNames.At(reader.Depth);
             while (reader.Read() && reader.TokenType != JsonToken.EndObject)
             {
                 Require(reader.TokenType == JsonToken.PropertyName, "Expected a field.");
                 string name = (string)reader.Value!;
-                Require(names.Add(name), "Duplicate field: " + name);
+                if (!names.Add(name)) Fail("Duplicate field: " + name);
                 var property = properties.GetProperty(name, StringComparison.Ordinal);
-                Require(property != null && !(schema < CityState.CurrentSchema && IntroducedIn(type, name) > schema), "Unknown field: " + name);
+                if (property == null || schema < CityState.CurrentSchema && IntroducedIn(type, name) > schema) Fail("Unknown field: " + name);
                 Require(reader.Read(), "Missing field value.");
-                CheckShape(reader, property.PropertyType!, resolver, ref records, text, schema);
+                CheckShape(reader, property.PropertyType!, resolver, ref records, text, schema, fieldNames);
             }
             Require(reader.TokenType == JsonToken.EndObject && names.Count == properties.Count - Absent(type, schema), "Missing object fields.");
         }
@@ -410,7 +429,7 @@ namespace PersistentCity.Persistence
             {
                 Require(place != null, "Null place.");
                 Text(place.Id, "Place ID", 256); Text(place.Name, "Place name", 512); Text(place.District, "Place district", 256, true);
-                Require(!places.ContainsKey(place.Id), "Duplicate place ID: " + place.Id);
+                if (places.ContainsKey(place.Id)) Fail("Duplicate place ID: " + place.Id);
                 places.Add(place.Id, place); Known(place.Kind, "Place kind"); Point(place.Position);
                 Bounded(place.AttractionWeight, 0.01, 100, "Attraction weight");
                 Require(place.NativeTrafficIndex >= -1 && place.NativeTrafficIndex <= 1000000, "Invalid native traffic index.");
@@ -438,7 +457,7 @@ namespace PersistentCity.Persistence
             {
                 Require(citizen != null && citizen.Identity != null, "Missing citizen identity.");
                 Text(citizen.Identity.Id, "Citizen ID", 256);
-                Require(!citizens.ContainsKey(citizen.Identity.Id), "Duplicate citizen ID: " + citizen.Identity.Id);
+                if (citizens.ContainsKey(citizen.Identity.Id)) Fail("Duplicate citizen ID: " + citizen.Identity.Id);
                 citizens.Add(citizen.Identity.Id, citizen);
             }
             var assigned = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -447,7 +466,7 @@ namespace PersistentCity.Persistence
                 Require(citizen != null && citizen.Identity != null && citizen.Preferences != null, "Missing citizen identity or preferences.");
                 var identity = citizen.Identity;
                 Text(identity.Id, "Citizen ID", 256); Text(identity.Name, "Citizen name", 512); Text(identity.District, "Citizen district", 256, true);
-                Require(ids.Add(identity.Id), "Duplicate citizen ID: " + identity.Id);
+                if (!ids.Add(identity.Id)) Fail("Duplicate citizen ID: " + identity.Id);
                 Require(identity.Age >= 0 && identity.Age <= 130, "Invalid citizen age."); Known(identity.Persona, "Persona");
                 Traits(citizen.Traits, "resident");
                 Reference(places, citizen.HomeId, PlaceKind.Home);
@@ -532,7 +551,7 @@ namespace PersistentCity.Persistence
             void CountAssignment(string id)
             {
                 int count = assigned.TryGetValue(id, out int previous) ? previous + 1 : 1;
-                Require(count <= places[id].Capacity, "Place assignment exceeds capacity: " + id);
+                if (count > places[id].Capacity) Fail("Place assignment exceeds capacity: " + id);
                 assigned[id] = count;
             }
         }
@@ -907,9 +926,9 @@ namespace PersistentCity.Persistence
 
         private static void Traits(ResidentTraits? traits, string owner)
         {
-            Require(traits != null, "Missing " + owner + " traits.");
-            Require(traits!.Version == ResidentTraits.CurrentVersion, "Unknown " + owner + " trait version.");
-            Require(traits.IsValid, "Invalid " + owner + " trait bands.");
+            if (traits == null) Fail("Missing " + owner + " traits.");
+            if (traits!.Version != ResidentTraits.CurrentVersion) Fail("Unknown " + owner + " trait version.");
+            if (!traits.IsValid) Fail("Invalid " + owner + " trait bands.");
         }
 
         private static int ValidateToday(ResidentMeal meal, FoodCommerceState food, int currentDay, double minute)
@@ -1090,20 +1109,23 @@ namespace PersistentCity.Persistence
         private static Place Reference(Dictionary<string, Place> places, string id, params PlaceKind[] kinds)
         {
             Text(id, "Place reference", 256);
-            Require(places.TryGetValue(id, out var place), "Unknown place reference: " + id);
-            Require(kinds.Length == 0 || kinds.Contains(place!.Kind), "Place reference has the wrong role: " + id);
+            if (!places.TryGetValue(id, out var place)) Fail("Unknown place reference: " + id);
+            if (kinds.Length != 0 && Array.IndexOf(kinds, place!.Kind) < 0) Fail("Place reference has the wrong role: " + id);
             return place!;
         }
         private static void OptionalReference(Dictionary<string, Place> places, string id, params PlaceKind[] kinds)
         { Require(id != null, "Null place reference."); if (id != "") Reference(places, id, kinds); }
-        private static void Known<T>(T value, string label) where T : struct => Require(Enum.IsDefined(typeof(T), value), "Unknown " + label + ".");
-        private static void Text(string value, string label, int max, bool emptyAllowed = false) => Require(value != null && value.Length <= max && (emptyAllowed || !string.IsNullOrWhiteSpace(value)), "Invalid " + label + ".");
+        // Messages are built only on failure: these checks run for every field of every save.
+        private static void Known<T>(T value, string label) where T : struct { if (!Enum.IsDefined(typeof(T), value)) Fail("Unknown " + label + "."); }
+        private static void Text(string value, string label, int max, bool emptyAllowed = false)
+        { if (!(value != null && value.Length <= max && (emptyAllowed || !string.IsNullOrWhiteSpace(value)))) Fail("Invalid " + label + "."); }
         private static void Minute(double value, string label) => Bounded(value, 0, MaxMinute, label);
-        private static void Bounded(double value, double min, double max, string label) => Require(Position.Finite(value) && value >= min && value <= max, "Invalid " + label + ".");
+        private static void Bounded(double value, double min, double max, string label) { if (!(Position.Finite(value) && value >= min && value <= max)) Fail("Invalid " + label + "."); }
         private static void Point(Position point) { Bounded(point.X, -MaxCoordinate, MaxCoordinate, "position X"); Bounded(point.Y, -MaxCoordinate, MaxCoordinate, "position Y"); Bounded(point.Z, -MaxCoordinate, MaxCoordinate, "position Z"); }
         private static bool Same(Position a, Position b) => Position.Distance(a, b) <= 0.1;
         private static bool Near(double a, double b) => Math.Abs(a - b) <= 1e-7;
         private static void Require([DoesNotReturnIf(false)] bool condition, string message) { if (!condition) throw new SaveValidationException(message); }
+        [DoesNotReturn] private static void Fail(string message) => throw new SaveValidationException(message);
 
         private sealed class StateContractResolver : DefaultContractResolver
         {
@@ -1127,17 +1149,25 @@ namespace PersistentCity.Persistence
             {
                 writer.WriteStartObject(); writer.WritePropertyName("X"); writer.WriteValue(value.X); writer.WritePropertyName("Y"); writer.WriteValue(value.Y); writer.WritePropertyName("Z"); writer.WriteValue(value.Z); writer.WriteEndObject();
             }
+            // Streams the three components; no JObject per position (two per route leg). The shape check has
+            // already required exactly X, Y and Z numbers, and this repeats those rules on its own.
             public override Position ReadJson(JsonReader reader, Type objectType, Position existingValue, bool hasExistingValue, JsonSerializer serializer)
             {
-                var token = JObject.Load(reader, new JsonLoadSettings { DuplicatePropertyNameHandling = DuplicatePropertyNameHandling.Error });
-                Require(token.Count == 3, "Position requires exactly X, Y and Z.");
-                double Coordinate(string name)
+                Require(reader.TokenType == JsonToken.StartObject, "Position requires exactly X, Y and Z.");
+                double x = 0, y = 0, z = 0; int seen = 0;
+                while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
                 {
-                    var component = token[name];
-                    Require(component != null && (component.Type == JTokenType.Float || component.Type == JTokenType.Integer), "Missing or invalid position " + name + ".");
-                    return component!.Value<double>();
+                    string name = (string)reader.Value!;
+                    int bit = name == "X" ? 1 : name == "Y" ? 2 : name == "Z" ? 4 : 0;
+                    Require(bit != 0 && (seen & bit) == 0, "Position requires exactly X, Y and Z.");
+                    seen |= bit;
+                    if (!reader.Read() || (reader.TokenType != JsonToken.Float && reader.TokenType != JsonToken.Integer)) Fail("Missing or invalid position " + name + ".");
+                    double value = reader.Value is double d ? d : reader.Value is long l ? l
+                        : reader.Value is System.Numerics.BigInteger big ? (double)big : throw new SaveValidationException("Missing or invalid position " + name + ".");
+                    if (bit == 1) x = value; else if (bit == 2) y = value; else z = value;
                 }
-                var point = new Position(Coordinate("X"), Coordinate("Y"), Coordinate("Z")); Point(point); return point;
+                Require(reader.TokenType == JsonToken.EndObject && seen == 7, "Position requires exactly X, Y and Z.");
+                var point = new Position(x, y, z); Point(point); return point;
             }
         }
     }
