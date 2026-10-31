@@ -29,6 +29,8 @@ Later: residents as employees, households.
 
 Implementation plan for B–E: [memory, marketing, rivals and the wider street](plans/steps-b-e.md).
 
+Peter’s [31 October Q1-Q7 decisions](plans/steps-b-e.md#product-decisions-peter-31-oct-2026) specify tiered paid research as a third native-agency option (proven fee or unavailable), local/distant discovery, estimated rivals, food-first products, no anonymous crowds/night multiplier and own-shop regulars; tier contents/fees remain open.
+
 ## Performance gate (Peter, 2026-10-30)
 
 Applies to every step A–E slice re-measure and to the final release:
@@ -48,4 +50,4 @@ Record every taken win with before/after numbers.
 
 | Slice | Change | Before | After |
 |---|---|---|---|
-| - | none yet | - | - |
+| C1 | Cache verified enum/list metadata per bounded shape; replace per-business duplicate hash sets with at most 8 x 8 comparisons (offline .NET, 1,024 businesses x six campaigns, 301 reads) | Warm p50/p95 3.316/5.196 ms; 3,637,080 allocated bytes/read | Warm p50/p95 0.980/2.380 ms; 1,637,960 bytes/read (55% fewer); one-business continuation p50 0.0029 to 0.0008 ms. Cold/read-tail and native limits: [C1 checks](../CHECKS.md#c1-native-campaign-reader---31-october-2026-offline-only). |

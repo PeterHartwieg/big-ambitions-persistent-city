@@ -1,5 +1,7 @@
 # Persistent City
 
+> **C1 campaign reader - 31 October:** on-demand read-only campaign snapshots and bounded continuation are implemented, with six verified native identifiers and honest Unknown lifecycle/targeting fields. No awareness, choice, save or native campaign/payment changes. **1,566 unit tests and all 32 offline checks pass**; the pending 6 Nov fixture checks are in [CHECKS.md](CHECKS.md#c1-native-campaign-reader---31-october-2026-offline-only); [native contract notes](docs/plans/c1-campaign-reader.md). Peter's Q1-Q7 product decisions are recorded in the B-E plan.
+
 > **Base merge — 28 October:** PR #1 and PR #2 are merged into the optional-stop branch. Schemas 15/16 now carry resident money as exact integer units, as schema 14 does. Schemas 13-15 and earlier development `...Cents` saves migrate exactly or are refused and preserved. **1,503 unit tests**, all 21 standalone regressions and the optional-stop/physical harnesses pass. Offline only. [Evidence](CHECKS.md#base-merge-pr-1-and-pr-2-into-pr-3--28-october-2026-offline).
 
 > **PR #3 review round 1 — 28 October:** repaired visible arrival/departure continuity, shared geometry sampling and indexed stop validation; merged the base review fixes normally. **1,366 unit tests and all 21 standalone regressions pass**, with production/helper Steam-DLL builds passing warnings as errors. The approved **25% setting and schema 16** remain unchanged. Offline only; native behavior/performance remain unverified. [Evidence](CHECKS.md#pr-3-independent-review-round-1--28-october-2026-offline).
