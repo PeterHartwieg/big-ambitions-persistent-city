@@ -28,6 +28,7 @@ Then: re-check the same performance gate for the final release, the hands-on ses
 Later: residents as employees, households.
 
 Implementation plan for B–E: [memory, marketing, rivals and the wider street](plans/steps-b-e.md).
+
 ## Performance gate (Peter, 2026-10-30)
 
 Applies to every step A–E slice re-measure and to the final release:
