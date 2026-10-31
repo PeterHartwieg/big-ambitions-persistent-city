@@ -1,5 +1,190 @@
 # Validation status
 
+## Step C2a core bounded awareness ? 31 October 2026 (offline only)
+
+Base **c0af745 (B0b)**; Core/index implementation **b50c756**, final config/refusal
+coverage **0d79664**. Only C2a is implemented. B1/B2, C1, D1 and F0 were not merged
+or copied. The remote B?E plan was read through Git; it is absent in this ancestry.
+[Schema 19 and interface contract](docs/population-schema19.md).
+
+Memory is an empty four-reference provider seam. Neighbourhood/routine uses up to
+four mass-weighted indexed draws each for home, work/study and current origin,
+with nine cells/anchor and no dense-cell scan. Eight positive daily discovery
+slots cover the complete place-backed catalogue irrespective of distance.
+The campaign seam is always unknown and never called, even if a nonempty provider
+is injected. There are **24 C2a / 32 reserved-total source slots**, deterministic
+union/dedup without refill, the same weighted **eight-shop** shortlist, existing
+complete feasibility/trait/offer/outside choice and **<=16 route requests**.
+Plain external-kind metadata can share these slots later without enrollment in
+player authority; C2a supplies no rival reader, journey or settlement.
+
+Indexes rebuild on publication/place change or first use. Steady captures do
+bounded source work and direct generation lookups, without an all-shop predicate,
+per-frame reflection/scan/polling/allocation or resident-by-shop matrix. Native
+capture removes the inherited full controller and routine-hours sweeps; bounded
+sampled eligibility and live winning-shop terms retain factual refusals. The four
+parked hotspots remain parked. New configuration stays flat, clamps/defaults once,
+handles numeric strings and nonfinite endpoints, and changes the next uncaptured
+context. The read-only bridge method `PopulationRuntime.FoodAwareness(id, day?)`
+dumps source slots/union/dedup/proposed shortlist plus the separately labelled
+held image/shortlist; it creates no context, route or native write.
+
+**Validation:** **1,902/1,902 tests**, including **40 C2a cases**, test discovery,
+all **31 requested foreground commands** and the native-candidate/food-choice
+regressions pass (33 gate commands). [Command manifest](docs/reviews/2026-10-31-c2a-offline-checks.json).
+Final game-target DLL SHA-256: `4401ed1512d28a8ea296f2d3a5c22921ac1522cb28c36af43e4f0e34e4932818`.
+All owned test/run processes exited; compiler/build servers shut down.
+Coverage includes permutation, dense-cell last-entry reach, empty/replaced
+catalogues, all source/union/route bounds at 1,024 and 20,000, explicit empty/unknown
+and nonempty campaign injection, empty/four-reference memory, distant discovery,
+local refusal without refill, price/stock/hours/deadline refusal, taste/household
+choice, capture/partial-quote/selected replay, changed cadence/config, read-only
+inspection, 18->19 migration, strict 18 field refusal and malformed-image/source
+preservation. One radius test was corrected to permit a legitimate discovery
+exposure; its original failed attempt is retained. Historical economy remains
+**849 orders / 797 purchases / 107,967,424,757,760 units**, with all three exact
+order/economy/reload digests unchanged. The population-only wire stays 119,083
+characters; its digest changes solely with schema 18->19.
+
+**Offline performance.** [Measurement manifests and reproducible commands](docs/reviews/2026-10-31-c2a-measurements.json),
+`tools/awareness-regression` on Windows .NET 10.0.13 Release, seed 77, one consumer,
+radius 250 m, four draws/anchor, discovery .02 and a four-reference memory double.
+Dense positions are (10,0,0); sparse positions are a 125 m grid, 200 columns; all
+anchors are (0,0,0). Three fresh sequential processes, 300 warmups then 3,000
+measured contexts/layout/process; before/after order alternates per context.
+B0b's metadata rank loop uses the same weights/IDs/positions; native supply,
+routes and scope copies are excluded from both timers. Index cost is separate:
+two startup/JIT warmups, then ten measured builds/process/layout. Table p50/p95
+are medians of three run percentiles; max is the largest observed value. System
+load is uncontrolled; all maxima remain visible.
+
+| Alternatives / layout | B0b rank p50 / p95 / max ms | C2a source+union+rank p50 / p95 / max ms | B0b / C2a bytes per context | Index build/rebuild p50 / p95 / max ms | Build allocated bytes |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 1,024 / dense | 0.1073 / 0.2393 / 5.5627 | 0.0116 / 0.0436 / 0.8222 | 306 / 987 | 2.0451 / 26.4999 / 27.2204 | 275,640 |
+| 20,000 / dense | 3.5486 / 4.5085 / 8.5244 | 0.0290 / 0.0486 / 0.8597 | 280 / 885 | 30.7147 / 41.7452 / 72.9799 | 4,254,290 |
+| 1,024 / sparse | 0.1249 / 0.1613 / 1.0213 | 0.0057 / 0.0120 / 0.1534 | 280 / 827 | 2.3263 / 9.4777 / 10.4809 | 692,054 |
+| 20,000 / sparse | 3.5047 / 4.2679 / 6.2920 | 0.0175 / 0.0322 / 0.7737 | 280 / 827 | 43.2643 / 73.4230 / 78.1916 | 13,475,542 |
+
+Across **36,000 measured C2a contexts**, there are **zero >=30 ms source/rank
+samples**, at most eight shortlisted shops and sixteen logical route slots.
+Production Core tests separately count actual planner requests at both catalogue
+sizes and bound metadata predicates to 24 and detailed captures to eight.
+**All 40 measured index rebuild spikes >=30 ms are flagged:** 16 dense/20k
+(max **72.9799 ms**) and 24 sparse/20k (max **78.1916 ms**). The 1,024 rebuild
+samples have none. These event-only 20k costs are a retained limitation for future
+large catalogues and the combined rig gate; there is no claim that ordinary native
+mod-work p95 <5 ms or the <30 ms spike gate has been established here. Native
+mod-work and whole-frame results remain separate and pending the combined rig.
+The inherited A3-only benchmark (pre-awareness activation) has 1,024/native-ID
+policy p95 **0.2117 ms**, above its 0.20 ms engineering target; its full-decision
+p95 is 0.2960 ms and largest measured decision across cases 10.1772 ms.
+
+Cheap measured wins are logged in the roadmap: prefix reuse/bounded dedup reduce
+the first dense capture prototype's ~4.4?4.6 KB/context to 0.9?1.0 KB here;
+streamed binary catalogue hashing and shared per-scale ordinal arrays reduce
+20k dense/sparse build allocation **17.48/32.00 MB -> 4.25/13.48 MB**. Build wall
+time remains variable and the >=30 ms samples above are not hidden by those wins.
+The actual native-candidate/hours harness verifies **zero** full capture sweeps,
+eight requested detailed reads and cold/reload/cursor-independent sampled refusal.
+Its unbatched eight-read control is 0.1105 ms median versus the new batch's 0.0094 ms;
+this synthetic control is not a matched native B0b frame comparison.
+
+**Save/allocation proof.** Schema **19** adds an activation header and the one held
+source image only. Schema 18's reader is frozen, rejects new fields, validates old
+inputs and activates fresh awareness on the next logical day; an inherited held
+A3 context finishes its original shortlist/quotes without reranking. Malformed or
+future inputs remain preserved. There are no campaign images, daily discovered
+ID lists, extra consumer tuples, memory writes or changed money/menu caps.
+
+| Consumers | Extra persistent bytes per idle consumer/day | One held image incl. field | City total incl. header | Managed image graph (shared IDs) |
+| --- | ---: | ---: | ---: | ---: |
+| Reference: 957 residents / 1,914 consumers | 0 | 3,051 | **3,074** | 1,048 |
+| 2,500 residents / 5,000 consumers | 0 | 3,051 | **3,074** | 1,048 |
+
+These lean fixtures use 24 unique native-format IDs and the same eight-shop held
+terms before/after: **3,038 image + 13 field + 23 city-header bytes**. Managed image
+allocation excludes its holder reference and already-shared identity strings.
+No held image costs only the city header (23 bytes at a one-digit activation day);
+a grandfathered held null adds 17 bytes. Header digit growth is charged normally.
+
+Full-memory/table/visit fixtures below stress sixteen 512-character generation
+IDs alongside the existing eight short held IDs. Every row adds exactly **9,514
+bytes** above B0b and **24 records** to both counters. All old B0 facts remain.
+
+| Full B0 fixture | Schema-19 UTF-8 bytes / characters | Delta from B0b | Streaming / semantic records | Write / read / 17 migration ms |
+| --- | ---: | ---: | ---: | ---: |
+| reference | 5,022,655 | +9,514 | 54,584 / 54,581 | 129.3 / 371.2 / 559.3 |
+| consumers5000 | 9,710,819 | +9,514 | 110,132 / 110,129 | 383.8 / 946.7 / 1944.0 |
+| CF32 | 192,029,621 | +9,514 | 1,920,132 / 1,920,129 | 2,757.4 / 9,066.3 / source refused |
+| CF64 | 230,429,621 | +9,514 | 3,520,132 / 3,520,129 | 3,512.3 / 10,453.1 / source refused |
+
+**Every listed write/read and non-null migration timing is >=30 ms and explicitly
+flagged as separate offline save/startup/reload latency.** These single samples
+are size/regression evidence, not native mod-work p95. CF32/CF64 retain the exact
+B0b future-envelope totals: **220,664,366 bytes / 2,111,867 records (82.204%)** and
+**259,064,366 / 3,711,867 (96.509%)**. Actual C2a consumption is deducted once
+from the existing 64 KiB headers / 1 MiB decision and record reserves. CF32 meets
+the 85% goal; CF64 retains the existing >95% warning and passes the unchanged hard
+caps. No global cap or per-consumer allocation is increased.
+
+No game, test rig, ordinary save, ModsLocal, bridge profile or rig lease was touched.
+Native behavior/accounting, mod-work p95/spikes and visible journeys still require
+rig proof. No push, PR creation or merge was performed.
+
+### In-game checks for 6 Nov rig
+
+Pending: a `rig_test` session must use a named disposable FT fixture and attach
+before/red ? after/green bridge dumps/logs or captures to the PR. The locked-PC
+classification follows [84be71a's feasibility report](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/84be71a/docs/reviews/rig/2026-10-31-locked-session-feasibility/README.md).
+No rig action was performed by this implementation run.
+
+1. **LOCKED-OK ? source/position capture.** On the same seeded disposable checkpoint,
+   call `PopulationRuntime.FoodAwareness(consumerId, day)` for a known resident and
+   represented slot. Join sampled business IDs to saved scopes/places and native
+   shop entrances; verify home/work/current distances, <=9 cells per anchor,
+   <=4 local draws each, raw union/dedup flags, <=24 core slots, eight reserved
+   unknown campaign slots, <=8 shortlist and <=16 actual decision route requests.
+   Repeat without state changes and after reload; attach matching dumps.
+2. **LOCKED-OK ? distant opportunity.** Select a supported player shop beyond every
+   local anchor radius. Derive seeded logical days through the read-only dump in
+   bounded batches until its discovery sample is **eligible**, then show that it
+   shares the ordinary shortlist competition. Record consumer/seed/day/revision
+   and native position. An admission is neither a committed journey nor a sale.
+3. **LOCKED-OK ? refusal after admission.** On matched disposable fixture copies,
+   retain a sampled generation while testing unaffordable price, unavailable
+   stock, closed hours and an insufficient deadline. Record captured eligibility,
+   existing feasibility reasons, zero forbidden purchases and <=16 routes.
+   Compare changed taste/household preferences through recorded choices across
+   seeds; awareness must not guarantee a purchase or bypass outside choice.
+4. **LOCKED-OK ? campaign and memory boundaries.** Verify all eight campaign slots
+   say unknown, no campaign source bit/admission appears, and the production memory
+   source is empty. Native campaigns may exist but must have no C2a provider call,
+   saved mask, discount or capacity effect. Attach the consumer dump and schema.
+5. **LOCKED-OK ? migration/replay/size.** Make a disposable copy of a baseline
+   schema-18 checkpoint; load with candidate, verify schema 19/next-day activation,
+   unchanged IDs/wallets/committed terms, then save/reload at capture, partial quote
+   and selected boundaries. Compare IDs, flags, shortlist, quote cursor, money and
+   purchase identity against uninterrupted replay under different event budgets.
+   Edit tuning only while unloaded: held contexts retain their image and the next
+   fresh context uses new values that same day. Record exact saved-size delta;
+   preserve refused/malformed source copies and leave ordinary saves untouched.
+6. **LOCKED-OK ? matched performance windows.** Interleave candidate and B0b
+   `c0af745` at idle and breakfast/lunch/evening rush, matching checkpoint, seed,
+   shops, population, clock/body/graphics settings, cache warmth and panel state;
+   include a soak and a catalogue-change/rebuild observation. Record mod-work
+   p50/p95/max, **every spike >=30 ms**, route/query counts, allocations/GC,
+   pending meal work and catch-up latency. Require mod-work p95 <5 ms; record
+   whole-frame intervals/stalls **separately**. Record original autosave, disable
+   and verify off before **each** window and after reload. Keep manual saves
+   outside windows; invalidate any window containing save activity. Restore the
+   original autosave/preferences/fixtures during cleanup. No separate save-profile
+   timing run is implied.
+7. **NEEDS-INPUT ? visible journey sanity.** In the unlocked 6 Nov session, select
+   and follow a consumer whose admitted offer survives feasibility through the
+   storefront visit/service/return; visually verify continuous travel and the
+   existing inspector's individual explanation. Repeat a refusal case. Bridge
+   dumps alone do not establish pointer selection or visible continuity.
+
 ## Step B0b held tuning prerequisite — 31 October 2026 (offline only)
 
 Fixes the inherited A3/B0 held-context defect, before B1 resumes on this branch.

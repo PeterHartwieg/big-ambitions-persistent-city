@@ -21,7 +21,7 @@ Replaces the phase order in docs/reviews/2026-10-27-realism-gameplay-roadmap.md 
 0. Performance: the 30 October comprehensive review is done and passes the mod-work gate below. Spock agreed: no optimization work now; re-measure as each slice lands. This isn't a release step.
 A. Inspector, traits and probabilistic choice. Start now (Peter 15:24 JST), with the standing performance gate applied to each slice.
 B. Memory, loyalty and regulars. **B0 is implemented offline:** schema 18, exact old-source migration and history-inclusive capacity; memory remains empty/inactive and the regulars helper is a pure own-shop projection. **B0b is inserted between B0 and B1:** persist the held A3 tuning image and neutral bounded per-candidate contribution; schema 18 is amended before player use. B1 resumes on top of B0b; B2 UI remains pending. [Contract and capacity evidence](population-schema18.md).
-C. Marketing awareness and targeting, plus the market research product.
+C. Marketing awareness and targeting, plus the market research product. **C2a implemented offline on B0b:** bounded source/index interface, empty memory/campaign providers, local/routine and positive daily distant discovery, common eight-slot shortlist, additive schema 19. No C1/B1/B2 dependency; combined 6 Nov rig proof pending. [Contract](population-schema19.md).
 D. Rivals as alternatives.
 E. Weather, street life, bigger menus and more products.
 Then: re-check the same performance gate for the final release, the hands-on session, and one release.
@@ -46,6 +46,9 @@ Record every taken win with before/after numbers.
 
 | Slice | Change | Before | After |
 |---|---|---|---|
+| C2a | Reuse source draw prefixes, use bounded linear dedup and size the one source list | First dense prototype: 4,564 / 4,413 bytes/context (1,024 / 20k) | Final three-process median 987 / 885 bytes/context; keys preserved by independent original-key test. Offline only; [measurements](reviews/2026-10-31-c2a-measurements.json) |
+| C2a | Stream binary catalogue revision through 64 KiB buffer; one indexed ordinal array/ranges per spatial scale | 20k dense / sparse builds allocate 17,479,416 / 31,995,973 bytes | 4,254,290 / 13,475,542 bytes. Wall time variable; **40 measured rebuild spikes >=30 ms**, max78.1916 ms, retained in CHECKS; no native gate claim |
+| C2a | Remove full metadata and routine-hours sweeps from each native decision capture; direct generation/scope lookup | B0b batch: all controllers + one full hours pass per context | Zero full capture sweeps; <=24 sampled eligibility predicates and <=8 detailed captures. Synthetic eight-unbatched-read control 0.1105 ms ->0.0094 ms batch (not a native B0b frame comparison) |
 | B0b | Nonmaterializing streaming shape precheck for the new held tuning image, before full graph decode | Materializing prototype: 136 bytes/check, median 1,375.69 ns | 0 bytes/check, 187.79 ns (three fresh processes, 300k calls/run; offline .NET 10). Continuation allocation unchanged; [raw B0b measurements](reviews/2026-10-31-b0b-measurements.json) |
 | A2 | Save validation builds error text only on failure (`Text`/`Bounded`/`Known`/duplicate/unknown-field checks); runs on every save and load | Validation alloc per save **8.39 MiB** (957 residents with journeys, offline .NET 10) | **1.31 MiB** |
 | A2 | Read shape check: one reusable duplicate-field set per JSON depth, bit flags per position, integer range from the token value; positions streamed instead of one `JObject` each | Read alloc **83.3 MiB**, read median **119.7 ms**; write alloc **26.1 MiB** (same payload) | **38.8 MiB**, **89.2 ms**; **19.1 MiB** |
