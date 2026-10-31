@@ -218,10 +218,35 @@ change equal rather than strictly smaller. No served-count bonus masks disappoin
 Insertion evicts expired first, then least effective affinity, oldest experience,
 then ordinal complete generation ID, independent of slot/list order. Lower capacity
 never trims on load or projection; an ordinary insertion applies the new capacity
-through those normal evictions. No midnight diary/cleanup pass is introduced.
+through those normal evictions. For a **new bad-visit entry**, first preflight every
+required victim in that same eviction order. Forgetting a competing shop must not
+lower its contribution; otherwise a smaller failed-shop multiplier can still raise
+its relative return probability. If a victim would lose a boost, retain the entries,
+increment session-local `ProtectedInsertions` and commit the terminal failed
+watermark once without registering a new reference. Bounded multipliers and probability
+floors make a universal stronger penalty impossible; this conservative capacity case
+keeps return odds equal, rather than increasing them. Free-slot and safe-eviction
+bad experiences still retain their negative entries. This includes lower-capacity
+insertions which would otherwise remove several boosted shops. No midnight diary/cleanup pass is introduced.
 `PopulationRuntime.FoodMemoryDump(consumerId)` / `CitySimulator.DumpFoodMemory`
 returns detached entries, effective affinity, cause and watermark only when called.
 No regular projection/inspector wording or B2 settings are added.
+
+Round 1 capture correction: explicitly verified bag exhaustion (`Out of stock`,
+zero units, zero throughput at a staffed counter) is checked before a generic
+arrival-service refusal. At an existing stop the saved generic service flag is
+revalidated using one on-demand, generation-matched `IFoodFailureMarket` read;
+the native implementation bypasses the decision-supply cache. Missing/throwing or
+unknown-staffing proof stays neutral and does not interrupt the original refusal.
+Failed-stop capture passes the target directly to the store, leaving unchosen
+meal business/place/product fields untouched. Queue capture requires the decision's
+queue reason and a break/opening window which would fit without the wait.
+Physical consumers retain the pre-B1 arrival rule: a growing queue still serves
+when the meal fits the committed break. A queue memory is recorded only when the
+existing break-fit refusal occurs and removing the wait would make it fit. No new
+physical queue-patience refusal is introduced, including before B activation or at
+zero memory weight. These changes do not amend any saved tuple or scalar contract.
+
 
 ## Regulars projection
 

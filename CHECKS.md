@@ -1,5 +1,69 @@
 # Validation status
 
+## B1 review round 1 fixes - 31 October 2026 (offline only)
+
+Addresses Sol-r1-1/2 and Opus-r1-1/2 in `07107d4`, with unavailable-proof handling
+in `6e5988c`. The four reports reproduce at production seams: **14/14 targeted
+cases fail before**, then the corrected multi-shop, arrival/reload, account and
+unchosen-stop assertions pass. [Red evidence](docs/reviews/2026-10-31-b1-r1-red.txt).
+
+- **Eviction and return odds:** preflight the usual expired/affinity/day/ordinal-ID
+  victims before inserting a new bad experience. Forgetting any required victim
+  must not lower that competing shop's contribution. Otherwise keep the entries,
+  increment the session-local `ProtectedInsertions` diagnostic and commit the
+  failed watermark exactly once, without allocating a reference. The reported
+  capacity-one loyal example stays at **33.33%**, rather than rising to 37.29%.
+  With a probability floor or neutral minimum, no stronger bounded penalty can
+  universally compensate for losing a competitor's boost; protected capacity cases
+  therefore retain the terminal failure without a new per-shop entry. Other bad
+  insertions still retain negative memory. Tests cover capacities 1-4, loyal/curious
+  bands, actual positive evictions when safe, lowered capacity, floor-bound offers,
+  reload, and 4,096 matched seeds/configuration: no newly returning seed.
+- **Bag stockout capture:** explicit `Out of stock`/zero-unit evidence is captured
+  before generic zero-throughput arrival refusal. A reached existing stop revalidates
+  the saved generic service flag with one generation-matched, live failure read;
+  native evidence bypasses the decision cache. Unknown staffing and missing/throwing
+  proof stay neutral; the original refusal proceeds. Native-source regression also
+  warms the cache, exhausts bags in the same minute, distinguishes an unstaffed
+  register, refuses a replacement generation and proves no order/receipt is booked.
+- **Physical queue behavior:** restore the original slot>0 patience refusal. Physical
+  consumers still wait and buy when the meal fits their committed break, both before
+  B activation and at weights 0/1. Memory captures Queue only when the existing
+  break-fit refusal occurs and removing the wait would make the break fit.
+- **Unchosen stops:** pass target business/place directly to the memory store; leave
+  meal business/place/product fields untouched. Queue disappointment requires the
+  decision's queue reason and a break/opening window which would fit without waiting.
+  An already-too-short break remains neutral even if a queue is also present.
+
+No schema/scalar/tuple change, extra route, checkout, midnight sweep, or rig work.
+The generation index's new diagnostic counter costs **8 shared managed bytes**;
+lookup and warmed repeat commits still allocate **0 bytes**. Full-memory save growth
+is unchanged: 77,387 bytes at 1,914 consumers and 200,827 at 5,000; maximum extension
+51 inclusive bytes remains within B0's 64. [R1 raw measurements](docs/reviews/2026-10-31-b1-r1-measurements.json).
+
+| Consumers | Lookup p50/p95/max ns | Repeat commit p50/p95/max ns | Retained consumer-state delta |
+| --- | ---: | ---: | ---: |
+| 1,914 | 40.5 /43.2 /48.6 | 36.2 /39.4 /44.1 | 474,024 bytes |
+| 5,000 | 21.0 /41.0 /41.8 | 19.6 /43.2 /45.2 | 1,228,920 bytes |
+
+Forty normalized batch means after five warmups. The shared index allocates 2,056
+bytes in both fixtures; its single GC retained delta is 1,264 /-6,960 bytes, the
+negative value being measurement noise. Do not interpret GC deltas as exact sizes.
+Three interleaved synthetic rush runs retain zero modeled ordinary-budget lag and
+30,624 /80,000 logical routes. Active/weight-zero median Core-loop p50/p95 and largest
+max: **0.771/1.159/11.795 vs 0.775/1.252/6.542 ms** at reference;
+**0.161/0.284/10.378 vs 0.170/0.346/16.869 ms** at 5,000. Throughput active/zero:
+8,465/8,588 and 33,484/27,063 decisions/sec. Ordinary modeled frames: 270-271 and
+704-707. **No feature-loop sample >=30 ms**; these are not combined native mod-work
+or whole-frame results. External CPU/JIT load is uncontrolled; no timing win claimed.
+
+**Validation:** **1,927/1,927 tests (68 B1 cases), discovery, all 31 requested foreground checks and the memory benchmark pass**. [Foreground command manifest](docs/reviews/2026-10-31-b1-r1-offline-checks.json).
+The live PR #17 description now contains the authored implementation results and the same
+eight numbered LOCKED-OK/NEEDS-INPUT checks below (Sol-r1-4), with harness footer
+preserved; the API readback matches the submitted body. All owned test processes
+have exited; another worktree's active tests were left untouched. Native proof remains pending the normal combined 6 Nov session; the
+existing rig checklist remains applicable, including queue-causation and bag cases.
+
 ## Step B1 shop memory and loyalty v2 — 31 October 2026 (offline only)
 
 Implemented on B0b `c0af745`, stacked PR target `codex/pc-b0b-held-tuning`.
