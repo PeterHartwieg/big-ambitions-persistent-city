@@ -79,6 +79,17 @@ namespace PersistentCity.Core
         public long ExistingStopPurchases { get; set; }
         public long Purchases { get; set; }
         public Money Spent { get; set; }
+        /// <summary>Traits of a represented consumer (slot above zero), keyed by its stable consumer ID.
+        /// Null for slot zero, whose traits are its anchor resident's.</summary>
+        public ResidentTraits? RepresentedTraits { get; set; }
+        /// <summary>Current-day outcomes; null until this consumer's first recorded outcome.</summary>
+        public ResidentFoodToday? Today { get; set; }
+        /// <summary>The version-1 policy's in-progress decision for this meal; null under the legacy choice.</summary>
+        public FoodDecisionState? Decision { get; set; }
+        /// <summary>Retry latch for the current meal: the last processed decision context and how many distinct
+        /// contexts this meal has used (at most FoodChoicePolicy.MaximumContextsPerMeal). Same-context polling reuses it.</summary>
+        public string LastContextKey { get; set; } = "";
+        public int ContextAttempts { get; set; }
         public string IntentId => MealRhythm.IntentId(ResidentId, Day, Kind);
     }
     public sealed class FoodCommerceState
@@ -91,6 +102,10 @@ namespace PersistentCity.Core
         public List<FoodScope> Shops { get; set; } = new List<FoodScope>();
         public List<ResidentMeal> Residents { get; set; } = new List<ResidentMeal>();
         public List<FoodDistrictBudgetMix> Districts { get; set; } = new List<FoodDistrictBudgetMix>();
+        /// <summary>Food choice policy header. A new food scope uses version 1 from day 0 (immediately); a city migrated
+        /// to schema 17 activates it on the next in-game day. No runtime setting changes either value.</summary>
+        public int ChoicePolicyVersion { get; set; } = FoodChoicePolicy.Version;
+        public int ChoiceStartsDay { get; set; }
     }
     public readonly struct FoodSale
     {
@@ -146,6 +161,7 @@ namespace PersistentCity.Core
         private readonly Dictionary<string, int> reservations = new Dictionary<string, int>(StringComparer.Ordinal);
         public double NextMinute => Math.Min(NextBudgetMinute, due.Count == 0 ? double.PositiveInfinity : due.Min!.DueAt);
         internal IFoodMarket Market => market;
+        internal ResidentMeal? FindMeal(string consumerId) => records.TryGetValue(consumerId, out var meal) ? meal : null;
         internal FoodCommerce(CitySimulator city, IFoodMarket market, IRoutePlanner routes)
         {
             this.city = city; this.market = market; this.routes = routes;
@@ -183,6 +199,7 @@ namespace PersistentCity.Core
             var meal = new ResidentMeal { ResidentId = id, AnchorId = person.Identity.Id, Slot = slot };
             if (slot > 0)
             {
+                meal.RepresentedTraits = ResidentTraits.Generate(city.State.Seed, id);
                 var products = FoodProducts.Ids.OrderBy(p => p, StringComparer.Ordinal).ToArray();
                 meal.PreferredProductId = products[StableRandom.Hash(id + ":taste", city.State.Seed) % (uint)products.Length];
                 meal.PreferenceBonusCents = 50 + (int)(StableRandom.Hash(id + ":taste-strength", city.State.Seed) % 101);
@@ -203,6 +220,7 @@ namespace PersistentCity.Core
             meal.DueAt = Math.Max(city.State.Minute, meal.DesiredAt);
             meal.Status = MealStatus.Pending; meal.Reason = ""; meal.PlaceId = meal.BusinessId = meal.ProductId = "";
             meal.ExistingStop = false;
+            meal.Decision = null; meal.LastContextKey = ""; meal.ContextAttempts = 0;
             meal.Price = Money.Zero; meal.ServiceAt = meal.ServiceMinutes = meal.ReturnMinutes = meal.Deadline = 0;
         }
         internal void Step()
@@ -342,6 +360,7 @@ namespace PersistentCity.Core
                         else if (!result.Paid) meal.DayAllowanceUsed -= meal.Price;
                         meal.Status = result.Paid ? MealStatus.Paid : MealStatus.Missed; meal.Reason = result.Reason;
                         if (result.Paid) ConfirmPurchase(meal, result.Reason);
+                        else MealOutcomes.Record(meal, now, checkout: true);
                         if (meal.Slot > 0 && meal.Excursion != null) ScheduleReturn(meal);
                     }
                     catch (Exception) { /* Retain uncertain ownership; never issue a second order. */ }
@@ -354,11 +373,13 @@ namespace PersistentCity.Core
             RecordPurchase(meal); meal.Purchases++; meal.Spent += meal.Price;
             if (meal.ExistingStop) meal.ExistingStopPurchases++;
             meal.Status = MealStatus.Paid; meal.Reason = reason;
+            MealOutcomes.Record(meal, city.State.Minute, checkout: true);
         }
-        private void Finish(ResidentMeal meal, MealStatus status, string reason)
+        private void Finish(ResidentMeal meal, MealStatus status, string reason, FoodOutsideOption outside = FoodOutsideOption.None)
         {
             if (Active(meal)) Reserve(meal, -1);
             meal.Status = status; meal.Reason = reason;
+            MealOutcomes.Record(meal, city.State.Minute, checkout: status == MealStatus.Uncertain, outside);
             var person = city.FindCitizen(meal.AnchorId)!;
             NextMeal(meal, out int day, out MealKind kind);
             meal.DueAt = Math.Max(city.State.Minute + .001, MealRhythm.DesiredAt(person, city.State.Seed, day, kind));
@@ -439,7 +460,7 @@ namespace PersistentCity.Core
                 city.ObserveFood(trace);
             }
             if (choice.Status != FoodIntentStatus.Travelling)
-            { Finish(meal, choice.Status == FoodIntentStatus.DeclinedPurchase ? MealStatus.Declined : MealStatus.Missed, choice.Outcome); return; }
+            { Finish(meal, choice.Status == FoodIntentStatus.DeclinedPurchase ? MealStatus.Declined : MealStatus.Missed, choice.Outcome, choice.OutsideOption); return; }
             var selected = businesses.Single(b => b.Id == choice.BusinessId);
             var selectedChoice = choice.Choices.Single(c => c.BusinessId == choice.BusinessId && c.ProductId == choice.ProductId);
             double stay = selectedChoice.ServiceEndsAt!.Value - (now + paths[selected.Id].Minutes) + intent.EatingMinutes;

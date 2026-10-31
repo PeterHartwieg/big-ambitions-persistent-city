@@ -548,7 +548,8 @@ public sealed class ResumablePlanningTests
         PlaceId = "place-" + n, DestinationId = "destination-" + n, DestinationActivity = (Activity)((n + 2) % 5),
         Journey = new Route { Legs = { new RouteLeg { From = new(n, 0, 0), To = new(n + 1, 0, 0), Minutes = n, Mode = TravelMode.Walk, ServiceId = "s" + n } } },
         DepartureMinute = 60 * n, NextEventMinute = 70 * n, ActivityUntilMinute = 80 * n, CompletedJourneys = 4 * n, MissedActivities = 5 * n,
-        RecentVisits = { new VisitRecord { AtMinute = n, PlaceId = "visit-" + n, Activity = (Activity)(n % 5) } }
+        RecentVisits = { new VisitRecord { AtMinute = n, PlaceId = "visit-" + n, Activity = (Activity)(n % 5) } },
+        Traits = ResidentTraits.Generate(n, "traits-" + n)
     };
 
     [Fact]
@@ -567,6 +568,8 @@ public sealed class ResumablePlanningTests
         var working = CitySimulator.CloneForEvent(live);
         Assert.Equal(JsonConvert.SerializeObject(live), JsonConvert.SerializeObject(working));
         Assert.Same(live.Identity, working.Identity); Assert.Same(live.Journey, working.Journey);
+        // Traits are immutable after generation, so the event copy shares them and events never write them back.
+        Assert.Same(live.Traits, working.Traits);
         Assert.NotSame(live.RecentVisits, working.RecentVisits); Assert.NotSame(live.Car, working.Car);
         Assert.NotSame(live.CommutePreparation, working.CommutePreparation); Assert.NotSame(live.MealOuting, working.MealOuting);
         Assert.NotSame(live.Preferences, working.Preferences);
