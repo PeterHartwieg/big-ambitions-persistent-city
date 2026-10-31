@@ -57,7 +57,7 @@ for index, command in enumerate(commands):
     if result.returncode:
         print(output[-12000:], flush=True)
         failed = True
-    if "food-regulars-regression/FoodRegularsRegression.csproj" in command:
+    if any(part.endswith("food-regulars-regression/FoodRegularsRegression.csproj") for part in command):
         (root / "docs/reviews/2026-10-31-b2-measurements.json").write_text(output[output.index("{"):], encoding="utf-8")
 source_paths = sorted(p for folder in ["Core", "Runtime", "Persistence", "tests", "tools/food-regulars-regression", "tools/food-ownership-regression"] for p in (root/folder).glob("*.cs"))
 report["sourceSha256"] = {p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in source_paths}

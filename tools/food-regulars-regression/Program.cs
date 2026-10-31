@@ -40,8 +40,8 @@ static class Program
 
     static object Run(int residents)
     {
-        var places = new List<Place> { new() { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = residents } };
-        places.AddRange(Enumerable.Range(0, 16).Select(i => new Place { Id = "s" + i, Name = "Native fixture bakery", Kind = PlaceKind.Shop, Position = new(i + 1, 0, 0) }));
+        var places = new List<Place> { new() { Id = "address:Maple%20Street:12:home", Name = "Home", Kind = PlaceKind.Home, Capacity = residents } };
+        places.AddRange(Enumerable.Range(0, 16).Select(i => new Place { Id = "address:Market%20Lane:" + (i + 1) + ":shop", Name = "Fixture bakery", Kind = PlaceKind.Shop, Position = new(i + 1, 0, 0) }));
         var state = Population.Create(Enumerable.Range(0, residents).Select(i => new CitizenIdentity { Id = "r" + i, Name = "Resident", Age = 30, Persona = Persona.Foodie }),
             places, "regulars-fixture", "0.40.4", 31, 1440);
         foreach (var person in state.Citizens) person.ActivityUntilMinute = person.NextEventMinute = 2870;
@@ -50,7 +50,7 @@ static class Program
             new FoodScope { PlaceId = p.Id, BusinessId = "generation:" + i, ProductId = FoodProducts.Croissant }).ToList() };
         var setup = new CitySimulator(state, new Paths()); setup.AttachFoodMarket(new Market());
         var food = state.Food;
-        for (int i = 0; i < 16; i++) food.BusinessReferences.Add(new() { Slot = i, BusinessId = food.Shops[i].BusinessId, PlaceId = "s" + i });
+        for (int i = 0; i < 16; i++) food.BusinessReferences.Add(new() { Slot = i, BusinessId = food.Shops[i].BusinessId, PlaceId = food.Shops[i].PlaceId });
         for (int i = 0; i < food.Residents.Count; i++)
             for (int j = 0; j < 4; j++) food.Residents[i].Memory.Entries.Add(new() {
                 BusinessRef = (i % 4) * 4 + j, Day = 1, Served = 35, Affinity = 8, Outcome = ShopExperience.Served });
@@ -79,7 +79,7 @@ static class Program
         var store = new FoodMemoryStore(food); var settings = new FoodMemorySettings(); var meal = food.Residents[0];
         var traits = state.Citizens[0].Traits!; int day = 2;
         var commit = Measure(() => {
-            meal.BusinessId = food.Shops[0].BusinessId; meal.PlaceId = "s0"; meal.Day = day++; meal.ContextAttempts = 1;
+            meal.BusinessId = food.Shops[0].BusinessId; meal.PlaceId = food.Shops[0].PlaceId; meal.Day = day++; meal.ContextAttempts = 1;
             if (!store.CommitStage(meal, ExperienceStage.Committed) || !store.Experience(meal, ShopExperience.Served, meal.Day, traits, settings))
                 throw new Exception("Commit failed");
         }, 1000);

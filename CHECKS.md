@@ -1,5 +1,102 @@
 # Validation status
 
+## Step B2 regulars and inspector words - 31 October 2026 (offline only)
+
+Implemented on B1 PR #17 `f214cd4`, target `codex/pc-b1-memory-loyalty-v2`.
+Source commits `980ff4f` and `69a54dc`; schema stays **18**. Read the remote
+B-E plan and B1 PR/entry without merging siblings. The B-E plan is absent locally,
+so its status is not edited here.
+
+Regulars count stable consumers, including represented slots, once per retained,
+current owned business generation: >=3 served visits, positive trait-aware
+effective affinity, evidence at most fourteen days old (inclusive). Two flat
+projection-only settings clamp/log once: `FoodMemoryRegularServedVisits` 3 (2-10)
+and `FoodMemoryRegularRecentDays` 14 (1-28). One lazy consumer pass covers all shops
+at the open panel's three-second refresh, then cached O(1) lookups. Nothing is
+maintained at commit/midnight/closed UI.
+
+The own-shop panel shows `Regulars: N`; current cached native registration and
+authority identity filter sold/reset/replaced generations without updating
+authority. The old customer-home-district breakdown is removed. The visible
+resident popup adds short own-memory phrases, native shop labels/readable
+addresses and no scores/multipliers/percentages. Existing selection/pool-generation
+checks stay intact. Represented stories have no physical body and remain separate.
+
+Bridge reads: `FoodRegularsDump()`; `FoodMemoryDump(id)` now adds a consumer
+regular flag, per-entry flags, own-shop counts, words and explicit represented
+labels. `FoodEconomyPanelText` / `ResidentPopupText` return cached UI strings,
+never opening/building UI. No rival/city-wide loyalty or trait/catchment data.
+Optional recent-cause totals are omitted because B1 may retain an older decay
+anchor after disappointment; the actual last cause cannot honestly be counted as
+a dated recent-window failure. Protected bad insertions may leave no shop entry;
+B2 invents none.
+
+No saved fields, memory/decay/eviction/watermark contract, choice weights, native
+sales, money, routes or RLO changed.
+
+**Validation: 1,973/1,973 tests (24 new B2 cases), 1,973 discovered tests, all 31 requested
+foreground commands plus the B2 benchmark pass.** The other-worktree wait script
+ran before each dotnet test/run; no game/rig process was started. Native authority
+regression passes **241 checks** against callback doubles, including B2 read-only
+generation/replacement controls. Build DLL SHA-256: `aad4eae65c70bb15883e747a1686f1a311ff3aa38933b01bb4fe2a2057296aa4`.
+[Command manifest and source hashes](docs/reviews/2026-10-31-b2-offline-checks.json).
+No background test/run/testhost remains.
+
+**Offline performance.** [Raw measurements](docs/reviews/2026-10-31-b2-measurements.json), reproducible with
+`dotnet run --project tools/food-regulars-regression/FoodRegularsRegression.csproj --configuration Release`.
+Windows .NET 10 Release, 957 residents /1,914 consumers and 2,500 /5,000, sixteen
+owned shops, four retained memories per consumer. Forty normalized batch means
+after five warmups; percentiles describe batch means, **not individual-call tails**.
+Setup/save/load are outside timers; external CPU/JIT load is uncontrolled.
+Panel timing covers B2 text/projection only; native accounts and Unity layout are
+excluded. Popup timing includes the full production Core capture and text.
+
+| Operation (p50 / p95 / max) | 1,914 consumers | 5,000 consumers | Allocated bytes/call, reference /5k |
+| --- | ---: | ---: | ---: |
+| All-shop projection refresh (ms) | 0.500 / 0.577 / 0.682 | 0.933 / 1.136 / 1.193 | 41,840 / 120,039 |
+| Cached per-shop lookup (ns) | 12.100 / 13.770 / 18.630 | 10.690 / 12.790 / 15.860 | 0 / 0 |
+| Panel B2 text + projection (ms) | 0.254 / 1.025 / 1.034 | 1.015 / 1.078 / 1.110 | 44,496 / 122,852 |
+| Full Core popup capture + text (ms) | 0.006 / 0.009 / 0.009 | 0.007 / 0.012 / 0.014 | 9,104 / 9,104 |
+| Unchanged B1 repeat commit (ns) | 134.300 / 214.200 / 329.300 | 156.000 / 180.100 / 188.900 | 0 / 0 |
+
+B2 adds **zero commit hooks /0 update work per commit**; the unchanged B1 path above
+is measured separately. Closed/hidden projection/text has **zero builds and zero
+added allocation**, established by source call-site gates and lazy-query tests,
+not a native timing window. Open panel refreshes every three seconds, visible
+popup at most once per second. No per-shop population scan or midnight sweep.
+Saved payloads stay **1,503,076 -> 1,503,076 bytes**
+and **3,925,066 -> 3,925,066 bytes**: **zero growth**.
+Exact-byte reload/replay and different projection settings preserve choices,
+weights, money and route counts. **Offline batches >=30 ms flagged:** zero in these measured batches. These are benchmark batches, not mod-work frames.
+
+Low-risk wins: pre-sized transient consumer dedup allocates
+**73,152 -> 38,736 bytes**
+at reference and **322,638 -> 116,932 bytes** at 5k
+(same IDs/counts; raw data retains JIT/accounting noise). Cached count queries use
+one dictionary probe instead of two; the panel reuses the owned snapshot rather
+than validating each generation twice; diagnostics reuse effective affinity for
+the flag; hidden selected popups stop the prior one-build-per-second refresh.
+The roadmap Perf wins log records these measured allocation/work reductions.
+
+Combined **native mod-work p50/p95/max remains pending**, require p95 <5 ms and
+flag every spike >=30 ms. **Whole-frame timing/stalls remain separate**.
+No native timing or accounting claim follows from these headless measurements.
+The four parked hotspots were not changed.
+
+### In-game checks for 6 Nov rig
+
+Pending `rig_test` (Codex Sol, high), on a named disposable FT fixture only. LOCKED-OK means feasible through bridge reads/semantic actions under feasibility report `84be71a`, **not passed**. Pointer/gesture proof remains NEEDS-INPUT. No rig work was run for B2.
+
+1. **LOCKED-OK** - Freeze source/DLL hashes, dependencies, effective projection/memory settings, seed, checkpoint and known slot-zero/represented consumer IDs. Record original autosave, disable it in the isolated profile, verify off before every measured window and again after reload. Save only outside windows; invalidate any window with save activity. Restore original autosave/preferences and fixture files during cleanup.
+2. **LOCKED-OK** - Follow a known slot-zero consumer and one represented slot across confirmed served days using `FoodMemoryDump(id)`: retain served counts 1/2/3, effective affinity, last evidence day, `Entries[].Regular`, `StoryKind` and `Represented`. At the third confirmed visit, positive and recent evidence qualifies. Compare `FoodRegularsDump()` before/after: each stable ID contributes once per current generation, irrespective of offers or decision retries. Check exactly fourteen days versus fifteen, decay to zero and retained-memory eviction.
+3. **NEEDS-INPUT** - Through the player-shop UI induce and visually verify a product/bag stockout after the known consumer commits/reaches service. Retain native stock/receipt evidence and before/after memory dumps. Choose a fixture consumer whose effective affinity will cross zero under the actual penalty: served count remains unchanged, affinity decreases, regular flag becomes false and that shop's count loses one. Also retain a still-positive control if available; disappointment alone does not necessarily end regular status. Wait for unlocked 6 Nov input.
+4. **LOCKED-OK** - After check 3's fixture setup, read `FoodMemoryDump(id)` and `FoodRegularsDump()` without UI: verify the flag/count transition, stockout words, recovery after later confirmed service, and no duplicate experience on repeated reads. No market refresh, route or checkout calls may be caused by these diagnostics.
+5. **LOCKED-OK** - Capture all own-shop counts and selected consumer flags before/after save/reload at the same logical checkpoint, then replay that checkpoint with different continuation budgets. Compare exact counts, memory/watermarks, choices and route counts. Compare population-payload bytes with the matched B1 checkpoint/control: B2 adds zero bytes. After an independently established shop-generation replacement, the replacement starts with zero inherited regulars; the old generation is absent from current-shop feedback.
+6. **NEEDS-INPUT** - Open Ctrl+F8 and compare each player's own shop's `Regulars: N` with `FoodRegularsDump()` at the same refresh/day. Capture the panel visually and through `FoodEconomyPanelText` after its three-second refresh. Verify rival/stale generations have no regular line and no district/trait/catchment breakdown is shown. Close/reopen and verify freshness.
+7. **NEEDS-INPUT** - Hover and click the known physical regular; capture native shop name/readable address and phrases such as `a regular at` and stockout words, with no numeric scores/multipliers/percentages. Move camera/reuse body pool and reopen: stable selection/generation guards still apply. Compare the represented consumer's separately labelled `FoodMemoryDump(id).Words` with the slot-zero popup; represented slots have **no body to hover**, and their stories must never be presented as the selected walker's own visits. Use `ResidentPopupText` to retain the actual cached popup body.
+8. **LOCKED-OK** - In the normal combined session, interleave matched idle/breakfast/lunch/evening windows from the same checkpoint with panel/popup closed versus open, plus warm/cold refreshes and a soak. Bridge semantic open/close may exercise downstream content while locked; it does not prove check 7's hover/gesture path. Record combined **mod-work p50/p95/max**, require p95 <5 ms, flag every spike **>=30 ms** with count/condition/component; record **whole-frame timing/stalls separately**. Include allocations/GC, route/query counts, pending work/lag and saved size. Verify closed/hidden surfaces build no new projection/text, open panel refreshes at most every three seconds and visible popup at most once per second. Manual saves remain outside windows.
+
+
 ## B1 review round 4 fixes - 31 October 2026 (offline only)
 
 Addresses Sol-r4-1/2. **1,949/1,949 unit tests, discovery and all 31 required
