@@ -137,6 +137,11 @@ static partial class Program
             var scope=state.Food.Shops[0];var shop=state.Places.First(p=>p.Id==scope.PlaceId);var home=state.Places.First(p=>p.Id==state.Citizens[0].PlaceId);
             Route Path(Position a,Position b)=>new Route {Legs={new RouteLeg {From=a,To=b,Minutes=1,Mode=TravelMode.Walk}}};
             first.Decision=new FoodDecisionState {IntentId=first.IntentId,ContextKey=first.LastContextKey,Attempt=4,OriginAt=state.Minute,Deadline=state.Minute+90};
+            // B0b amends unshipped schema 18: populate its one tuning image when available.
+            // Reflection here only keeps this historical benchmark compilable against B0.
+            var tuningType = typeof(FoodDecisionState).Assembly.GetType("PersistentCity.Core.FoodDecisionTuning");
+            if (tuningType != null) typeof(FoodDecisionState).GetProperty("Tuning")!.SetValue(first.Decision,
+                tuningType.GetMethod("Capture")!.Invoke(null, new object[] { new FoodChoiceSettings() }));
             for(int i=0;i<8;i++) first.Decision.Shops.Add(new FoodDecisionShop {BusinessId="size-probe:"+i,PlaceId=shop.Id,MealsPerHour=60,
                 NextServiceAt=state.Minute,Hours=Enumerable.Range(0,7).Select(d=>new OpeningWindow {Day=d,FromMinute=0,ToMinute=1440}).ToList(),
                 Offers=FoodProducts.Ids.Select(p=>new FoodDecisionOffer {ProductId=p,Price=Money.FromCents(100),Units=100}).ToList(),
@@ -188,7 +193,7 @@ static partial class Program
         { Console.WriteLine(JsonConvert.SerializeObject(CapacityBench(args[1], args.Length > 2 ? int.Parse(args[2]) : 1))); return; }
         if(args.Length==2 && args[0]=="--interleaved-save-bench")
         { Console.WriteLine(JsonConvert.SerializeObject(InterleavedSaveBench(args[1])));return; }
-        B0ContractChecks();
+        B0ContractChecks(); HeldTuningContractChecks();
         var city = City(120);
         string expected = SaveCodec.Write(city);
         SaveCodec.Read(expected);
@@ -206,7 +211,9 @@ static partial class Program
             var result = SaveCodec.Read(payload);
             refusals.Add(result.Status + ":" + result.Error);
         }
-        // Schema 17 adds fields by design: the save digest is reported, the economy digest must match.
+        // B0b adds only scalar held tuning/memory fields under unshipped schema 18. The
+        // population-only digest below is unchanged (no decision); held fixture sizes/digests
+        // intentionally change. Exact economy/reload digests must still match B0.
         var economy = EconomyScenario.Run(legacyChoice:true);
         object? bench = null, hot = null;
         if (args.Contains("--bench"))
