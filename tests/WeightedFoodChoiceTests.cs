@@ -359,8 +359,59 @@ public sealed class WeightedFoodChoiceTests
     {
         var (city,market,planner)=Ready(12,12);var m=city.State.Food!.Residents[0];planner.Refuse=refused;
         if(closed) foreach(var b in market.Shops)b.Hours.Clear();
-        int units=0;while(!city.IsCaughtUpTo(m.DesiredAt)) {city.AdvanceFrameSlice(m.DesiredAt,1);units++;}
+        int units=0;while(!city.IsCaughtUpTo(m.DesiredAt))
+        {
+            int requests=planner.Out+planner.Back;
+            var result=city.AdvanceFrameSlice(m.DesiredAt,1);
+            Assert.Equal(1,result.Events);Assert.Equal(0,result.TrafficEvents);
+            Assert.Equal(units==0 ? 1 : 0,result.CitizenEvents);
+            Assert.Equal(units==0 ? 0 : 1,result.FoodContinuationEvents);
+            Assert.InRange(planner.Out+planner.Back-requests,0,1);
+            Assert.Equal(m.DesiredAt,city.State.Minute);units++;
+        }
         Assert.Equal(expectedUnits,units);
+    }
+    [Theory]
+    [InlineData(0)] [InlineData(1)] [InlineData(8)] [InlineData(17)]
+    public void FoodDecisionCountsOnceAcrossFrameBatchesAndRealSessionReload(int boundary)
+    {
+        var (city,market,planner)=Ready(12,12);double at=city.State.Food!.Residents[0].DesiredAt;
+        var (control,_,_)=Ready(12,12);
+        var whole=control.AdvanceFrameSlice(at,128);
+        Assert.True(whole.CaughtUp);Assert.Equal(18,whole.Events);
+        Assert.Equal(1,whole.CitizenEvents);Assert.Equal(17,whole.FoodContinuationEvents);Assert.Equal(0,whole.TrafficEvents);
+        int units=0,citizens=0,continuations=0;
+        for(int i=0;i<boundary;i++)
+        {var r=city.AdvanceFrameSlice(at,1);units+=r.Events;citizens+=r.CitizenEvents;continuations+=r.FoodContinuationEvents;}
+        city=Reload(city,market,planner);
+        var remaining=city.AdvanceFrameSlice(at,128);
+        Assert.True(remaining.CaughtUp);
+        Assert.Equal(whole.Events,units+remaining.Events);
+        Assert.Equal(whole.CitizenEvents,citizens+remaining.CitizenEvents);
+        Assert.Equal(whole.FoodContinuationEvents,continuations+remaining.FoodContinuationEvents);
+        Assert.Equal(SaveCodec.Write(control.State),SaveCodec.Write(city.State));
+        Assert.Equal(8,planner.Out);Assert.Equal(8,planner.Back);Assert.Empty(market.Orders);
+    }
+    [Fact]
+    public void FoodContinuationsStillConsumeTheTotalUnitBudget()
+    {
+        var (city,_,planner)=Ready(12,12);double at=city.State.Food!.Residents[0].DesiredAt;
+        var first=city.AdvanceFrameSlice(at,16);
+        Assert.False(first.CaughtUp);Assert.Equal(16,first.Events);
+        Assert.Equal(1,first.CitizenEvents);Assert.Equal(15,first.FoodContinuationEvents);
+        Assert.Equal(15,planner.Out+planner.Back);
+        var last=city.AdvanceFrameSlice(at,16);
+        Assert.True(last.CaughtUp);Assert.Equal(2,last.Events);
+        Assert.Equal(0,last.CitizenEvents);Assert.Equal(2,last.FoodContinuationEvents);
+        Assert.Equal(16,planner.Out+planner.Back);
+    }
+    [Fact]
+    public void LegacyFoodDecisionStillCountsAsOneCitizenEventWithoutContinuationUnits()
+    {
+        var (city,_,_)=Ready(12,12,active:false);double at=city.State.Food!.Residents[0].DesiredAt;
+        var result=city.AdvanceFrameSlice(at,128);
+        Assert.True(result.CaughtUp);Assert.Equal(1,result.Events);
+        Assert.Equal(1,result.CitizenEvents);Assert.Equal(0,result.FoodContinuationEvents);Assert.Equal(0,result.TrafficEvents);
     }
     [Fact]
     public void ExistingShopNeedsOnlyCaptureSelectAndCommitWithoutRouteUnits()

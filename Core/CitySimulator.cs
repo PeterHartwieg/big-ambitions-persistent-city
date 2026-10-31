@@ -8,10 +8,15 @@ namespace PersistentCity.Core
 {
     public readonly struct AdvanceResult
     {
-        public AdvanceResult(int events, bool caughtUp, int trafficEvents = 0, bool planningPending = false)
-        { Events = events; CaughtUp = caughtUp; TrafficEvents = trafficEvents; PlanningPending = planningPending; }
+        public AdvanceResult(int events, bool caughtUp, int trafficEvents = 0, bool planningPending = false, int foodContinuationEvents = 0)
+        { Events = events; CaughtUp = caughtUp; TrafficEvents = trafficEvents; PlanningPending = planningPending; FoodContinuationEvents = foodContinuationEvents; }
+        /// <summary>Total bounded work units, including citizen, traffic and food continuation units.</summary>
         public int Events { get; }
         public int TrafficEvents { get; }
+        /// <summary>Bounded units of an already-started food decision, including its commit.
+        /// The begin unit counts once as a citizen event; continuations still consume the total unit/time budget.</summary>
+        public int FoodContinuationEvents { get; }
+        public int CitizenEvents => Events - TrafficEvents - FoodContinuationEvents;
         public bool CaughtUp { get; }
         /// <summary>A citizen event is waiting for a route answer. The clock stays at that event's minute
         /// until ContinuePlanning reports completion; nothing else advances meanwhile.</summary>
@@ -165,7 +170,7 @@ namespace PersistentCity.Core
             if (State.Food != null && food == null) throw new InvalidOperationException("Saved food economy requires its market before advancing.");
             EnsureTrafficNetwork();
             ValidatePhysicalClock(targetMinute);
-            int count = 0, trafficCount = 0;
+            int count = 0, trafficCount = 0, foodContinuationCount = 0;
             if (pending != null)
             {
                 // The non-frame path finishes an interrupted event inline; a frame slice leaves it to ContinuePlanning.
@@ -186,7 +191,12 @@ namespace PersistentCity.Core
                 if (food?.HasPendingDecision == true || foodMinute < citizenMinute && foodMinute < trafficMinute)
                 {
                     traffic?.AdvanceTo(next, 0);
-                    food!.Step(); count++; continue;
+                    // Charge a decision once at begin. A restored decision has already begun;
+                    // its quote/selection/commit units remain bounded work, not new citizen events.
+                    bool continuation = food!.HasPendingDecision;
+                    food.Step(); count++;
+                    if (continuation) foodContinuationCount++;
+                    continue;
                 }
                 if (trafficMinute <= citizenMinute)
                 {
@@ -208,13 +218,13 @@ namespace PersistentCity.Core
                 bool inline = publishSnapshot;
                 if (!inline && RestartsExhausted(item)) { inline = true; InlineAfterRestarts++; }
                 if (!RunEvent(item, inline))
-                    return new AdvanceResult(count, false, trafficCount, planningPending: true);
+                    return new AdvanceResult(count, false, trafficCount, planningPending: true, foodContinuationEvents: foodContinuationCount);
                 count++;
             }
             bool caughtUp = NoEventsThrough(targetMinute);
             if (caughtUp) { traffic?.AdvanceTo(targetMinute, 0); State.Minute = targetMinute; }
             if (publishSnapshot) SynchronizeSnapshot();
-            return new AdvanceResult(count, caughtUp, trafficCount);
+            return new AdvanceResult(count, caughtUp, trafficCount, foodContinuationEvents: foodContinuationCount);
         }
 
         // One citizen event in flight. The event runs on a working copy of the resident, so the published

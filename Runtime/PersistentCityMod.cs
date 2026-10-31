@@ -406,7 +406,9 @@ namespace PersistentCity.Runtime
                     }
                     var result = active.AdvanceFrameSlice(target, 1);
                     events += result.Events;
-                    citizenEvents += result.Events - result.TrafficEvents;
+                    // Food decisions count once at begin; their bounded continuation units run
+                    // under the time and total-unit caps without spending another citizen slot.
+                    citizenEvents += result.CitizenEvents;
                     elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
                     if (result.PlanningPending) { pendingAtEnd = elapsed >= timeBudget; if (pendingAtEnd) break; continue; }
                     if (result.CaughtUp || citizenEvents >= citizenLimit || elapsed >= timeBudget) break;
