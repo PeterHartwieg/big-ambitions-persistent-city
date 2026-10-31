@@ -79,7 +79,7 @@ namespace PersistentCity.Core
             else text.Append(Number(w.Day, 4)).Append(Number((int)w.Meal, 1)).Append(Number(w.Context, 1)).Append(Number((int)w.Stage, 1));
             foreach (var e in memory.Entries)
                 text.Append(Number(e.BusinessRef, 3)).Append(Number(e.Day, 4)).Append(Number(e.Served, 1))
-                    .Append(Number(e.Affinity + 17, 1)).Append(Number((int)e.Outcome, 1));
+                    .Append(Number(e.Affinity + 8, 1)).Append(Number((int)e.Outcome, 1));
             return text.ToString();
         }
         public static ConsumerMemory Decode(string text)
@@ -91,7 +91,7 @@ namespace PersistentCity.Core
                 Day = Number(text, 1, 4), Meal = (MealKind)Number(text, 5, 1), Context = Number(text, 6, 1), Stage = (ExperienceStage)Number(text, 7, 1) };
             for (int i = 8; i < text.Length; i += 10) memory.Entries.Add(new ShopMemory {
                 BusinessRef = Number(text, i, 3), Day = Number(text, i + 3, 4), Served = Number(text, i + 7, 1),
-                Affinity = Number(text, i + 8, 1) - 17, Outcome = (ShopExperience)Number(text, i + 9, 1) });
+                Affinity = Number(text, i + 8, 1) - 8, Outcome = (ShopExperience)Number(text, i + 9, 1) });
             Check(memory, MaximumDay, null);
             return memory;
         }
@@ -111,7 +111,7 @@ namespace PersistentCity.Core
             {
                 int business = Number(text, i, 3), day = Number(text, i + 3, 4), served = Number(text, i + 7, 1),
                     affinity = Number(text, i + 8, 1), outcome = Number(text, i + 9, 1);
-                if (business <= previous || business >= 20000 || day > MaximumDay || affinity > 34 || outcome < 1 || outcome > 4 || outcome == 1 && served == 0)
+                if (business <= previous || business >= 20000 || day > MaximumDay || affinity > 16 || outcome < 1 || outcome > 4 || outcome == 1 && served == 0)
                     throw new FormatException("Invalid shop memory/reference.");
                 previous = business;
             }
@@ -126,7 +126,7 @@ namespace PersistentCity.Core
             foreach (var e in memory.Entries)
             {
                 if (e == null || e.BusinessRef <= previous || e.BusinessRef >= 20000 || e.Day < 0 || e.Day > day || e.Day > MaximumDay
-                    || e.Served < 0 || e.Served > 35 || e.Affinity < -17 || e.Affinity > 17 || (int)e.Outcome < 1 || (int)e.Outcome > 4
+                    || e.Served < 0 || e.Served > 35 || e.Affinity < -8 || e.Affinity > 8 || (int)e.Outcome < 1 || (int)e.Outcome > 4
                     || e.Outcome == ShopExperience.Served && e.Served == 0 || references != null && !references.Contains(e.BusinessRef))
                     throw new FormatException("Invalid shop memory/reference.");
                 previous = e.BusinessRef;

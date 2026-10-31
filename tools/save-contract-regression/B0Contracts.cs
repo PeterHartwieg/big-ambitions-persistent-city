@@ -33,7 +33,7 @@ static partial class Program
         Check(refused, "One UTF-8 byte over business table was written."); last.BusinessId = id;
         PreserveB0(json.Replace(JsonConvert.ToString(id), JsonConvert.ToString(unicode)), city);
         var maximum = new ConsumerMemory { Watermark = new ExperienceWatermark { Day = MemoryWire.MaximumDay, Meal = MealKind.Dinner, Context = 4, Stage = ExperienceStage.Served },
-            Entries = { new ShopMemory { BusinessRef = 19999, Day = MemoryWire.MaximumDay, Served = 35, Affinity = 17, Outcome = ShopExperience.Served } } };
+            Entries = { new ShopMemory { BusinessRef = 19999, Day = MemoryWire.MaximumDay, Served = 35, Affinity = 8, Outcome = ShopExperience.Served } } };
         Check(MemoryWire.Encode(MemoryWire.Decode(MemoryWire.Encode(maximum))) == MemoryWire.Encode(maximum), "Memory maximum/canonical encoding.");
         Check(MemoryWire.Number(19999, 3) == "FFJ", "Independent base36 slot vector.");
     }

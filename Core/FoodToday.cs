@@ -82,6 +82,29 @@ namespace PersistentCity.Core
             return true;
         }
 
+        /// <summary>Schema-18 streaming precheck. Does not create child records before the enclosing
+        /// rollup's complete arity has passed. The frozen schema-17 reader keeps its original TryParse.</summary>
+        public static bool IsCanonicalWire(string? wire)
+        {
+            if (wire == null || wire.Length > 600) return false;
+            int start = 0;
+            for (int field = 0; field < 8; field++)
+            {
+                int end = wire.IndexOf('|', start), length = end - start;
+                if (length < 1 || length > 10 || length > 1 && wire[start] == '0') return false;
+                long value = 0;
+                for (int i = start; i < end; i++)
+                {
+                    char c = wire[i]; if (c < '0' || c > '9') return false;
+                    value = value * 10 + c - '0';
+                }
+                if (value > int.MaxValue) return false;
+                start = end + 1;
+            }
+            int productEnd = wire.IndexOf('|', start);
+            return productEnd >= start && productEnd - start <= 256 && wire.Length - productEnd - 1 <= 256;
+        }
+
         private static bool Canonical(string text, out int value)
         {
             value = 0;

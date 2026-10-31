@@ -230,7 +230,7 @@ namespace PersistentCity.Persistence
             if (type == typeof(MealOutcomeRecord))
             {
                 Require(token == JsonToken.String && ((string)reader.Value!).Length <= MaxMealOutcomeWire
-                    && MealOutcomeRecord.TryParse((string)reader.Value!, out _), "Invalid meal outcome record.");
+                    && MealOutcomeRecord.IsCanonicalWire((string)reader.Value!), "Invalid meal outcome record.");
                 return;
             }
             if (TupleLayout.For(type) is TupleLayout tuple)

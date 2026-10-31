@@ -64,9 +64,29 @@ public sealed partial class FoodCommerceTests
 
     private static ConsumerMemory B0_Memory() => new ConsumerMemory { Watermark = new ExperienceWatermark { Day = 0, Meal = MealKind.Dinner, Context = 4, Stage = ExperienceStage.Served }, Entries = {
         new ShopMemory { BusinessRef = 0, Day = 0, Served = 3, Affinity = 1, Outcome = ShopExperience.Served },
-        new ShopMemory { BusinessRef = 1, Day = 0, Served = 35, Affinity = 17, Outcome = ShopExperience.Served },
-        new ShopMemory { BusinessRef = 2, Day = 0, Served = 0, Affinity = -17, Outcome = ShopExperience.Closed },
+        new ShopMemory { BusinessRef = 1, Day = 0, Served = 35, Affinity = 8, Outcome = ShopExperience.Served },
+        new ShopMemory { BusinessRef = 2, Day = 0, Served = 0, Affinity = -8, Outcome = ShopExperience.Closed },
         new ShopMemory { BusinessRef = 19999, Day = 0, Served = 1, Affinity = 0, Outcome = ShopExperience.Queue } } };
+
+    [Fact]
+    public void B0_OutcomeShapePrecheckMatchesTheOriginalGrammarWithoutCreatingChildren()
+    {
+        string[] tokens = { "0", "1", "19", "2147483647", "2147483648", "01", "+1", "-1", "1.5", "1e2", "0x10", "", "界" };
+        for (int field = 0; field < 8; field++)
+        foreach (string token in tokens)
+        {
+            string[] fields = { "1", "0", "1", "0", "0", "0", "487", "487", "pastry", "historical|shop" };
+            fields[field] = token; string wire = string.Join("|", fields);
+            Assert.Equal(MealOutcomeRecord.TryParse(wire, out _), MealOutcomeRecord.IsCanonicalWire(wire));
+        }
+        Assert.False(MealOutcomeRecord.IsCanonicalWire("1|0|1|0|0|0|487|487|" + new string('p', 257) + "|shop"));
+        Assert.True(MealOutcomeRecord.IsCanonicalWire("1|0|1|0|0|0|487|487|" + new string('p', 256) + "|" + new string('q', 256)));
+        foreach (int affinity in new[] { -9, 9 })
+        {
+            var memory = B0_Memory(); memory.Entries[0].Affinity = affinity;
+            Assert.Throws<FormatException>(() => MemoryWire.Encode(memory));
+        }
+    }
 
     [Fact]
     public void B0_FullMemoryRoundTripsCanonicallyWithinItsInclusiveBudgetAndCountsAsOne()

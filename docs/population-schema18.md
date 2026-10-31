@@ -51,7 +51,7 @@ No arbitrary extension slots or nested lists are allowed.
 The canonical base-36 alphabet is `0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ`; lowercase,
 signs, whitespace, other alphabets, surplus fields and out-of-range codes refuse.
 A memory is business slot (3), last-experience logical day (4), saturated confirmed
-served count (1, 0–35), affinity plus 17 (1, affinity −17…17; code `Z` forbidden),
+served count (1, 0–35), affinity plus 8 (1, affinity −8…8; codes above `G` forbidden),
 last outcome (1: served=1, closed=2, stockout=3, queue=4). A served outcome needs a
 nonzero served count. Entries have strictly increasing business slots, no duplicates.
 Days are 0…694444 (the existing billion-minute bound). Their actual saved day must
@@ -101,7 +101,7 @@ and last retained visit no more than **14 logical days** ago (inclusive). Memory
 eviction limits what can be observed. Defaults `RegularMinServedVisits=3` and
 `RegularMaxDaysSinceVisit=14` are constants for this pure B0 projection. No config
 keys are needed by active B0 behavior. B1 should expose flat keys in the existing
-`config/persistent-city.json` if tuning is needed: served range 1–35, recency 0–694444,
+`config/persistent-city.json` if tuning is needed: served range 2–10, recency 1–28,
 default 3/14, with normal clamp/log-once handling. City-wide loyalty distributions
 remain a later paid marketing-agency research tier; B0 exposes no such report.
 

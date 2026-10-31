@@ -68,7 +68,7 @@ static partial class Program
         for (int i = 0; i < state.Food!.Residents.Count; i++)
         {
             int first = (i % 5000) * 4;
-            var entries = Enumerable.Range(first, 4).Select(slot => new { BusinessRef = slot, Day = 0, Served = 35, Affinity = 17, Outcome = 1 });
+            var entries = Enumerable.Range(first, 4).Select(slot => new { BusinessRef = slot, Day = 0, Served = 35, Affinity = 8, Outcome = 1 });
             object memory = JsonConvert.DeserializeObject(JsonConvert.SerializeObject(new { Watermark = new { Day = 0, Meal = 3, Context = 4, Stage = 4 }, Entries = entries }), memoryProperty.PropertyType)!;
             memoryProperty.SetValue(state.Food.Residents[i], memory);
         }

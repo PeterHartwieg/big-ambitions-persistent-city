@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using Newtonsoft.Json;
 using PersistentCity.Persistence;
@@ -36,7 +37,7 @@ static partial class Program
                 if (round >= 0) { times[i].Add(ms); allocations[i].Add(GC.GetAllocatedBytesForCurrentThread() - before); }
             }
         // Compare the exact former shape path (Decode) to the new nonmaterializing shape precheck.
-        const string wire = "100003440000000ZY10010000ZY10020000ZY1FFJ0000ZY1";
+        const string wire = "100003440000000ZG10010000ZG10020000ZG1FFJ0000ZG1";
         var oldDecode = (Func<string, object>)Delegate.CreateDelegate(typeof(Func<string, object>), assembly.GetType("PersistentCity.Core.MemoryWire")!.GetMethod("Decode")!);
         var currentCheck = (Action<string>)Delegate.CreateDelegate(typeof(Action<string>), typeof(SaveCodec).Assembly.GetType("PersistentCity.Core.MemoryWire")!.GetMethod("CheckWire")!);
         object Micro(Action action)
@@ -46,6 +47,12 @@ static partial class Program
             for (int i = 0; i < 500000; i++) action();
             return new { ns = Stopwatch.GetElapsedTime(start).TotalNanoseconds / 500000, bytesPerCall = (GC.GetAllocatedBytesForCurrentThread() - before) / 500000.0 };
         }
+        var outcomeType = assembly.GetType("PersistentCity.Core.MealOutcomeRecord")!;
+        var outcomeParameter = Expression.Parameter(typeof(string)); var outcomeResult = Expression.Variable(outcomeType);
+        var oldShape = Expression.Lambda<Func<string, bool>>(Expression.Block(new[] { outcomeResult },
+            Expression.Call(outcomeType.GetMethod("TryParse")!, outcomeParameter, outcomeResult)), outcomeParameter).Compile();
+        var newShape = (Func<string, bool>)Delegate.CreateDelegate(typeof(Func<string, bool>), typeof(SaveCodec).Assembly.GetType("PersistentCity.Core.MealOutcomeRecord")!.GetMethod("IsCanonicalWire")!);
+        const string outcomeWire = "1|0|1|0|0|0|487|487|pastry|address:ba%3Astreet_thirdstreet:128:shop";
         object CountMicro(Type type)
         {
             using var counter = (System.IO.TextWriter)Activator.CreateInstance(type, true)!;
@@ -56,6 +63,8 @@ static partial class Program
         return new { residents, chars = newJson.Length, unchangedBytes = true, samples = 7,
             saves = Enumerable.Range(0, 4).Select(i => new { mode = new[] { "beforeWrite", "afterWrite", "beforeRead", "afterRead" }[i],
                 medianMs = times[i].OrderBy(t => t).ElementAt(3), maxMs = times[i].Max(), allocationBytes = allocations[i].OrderBy(t => t).ElementAt(3) }),
+            outcomeShapeBefore = Micro(() => { if (!oldShape(outcomeWire)) throw new Exception("Bad former shape"); }),
+            outcomeShapeAfter = Micro(() => { if (!newShape(outcomeWire)) throw new Exception("Bad current shape"); }),
             countBefore = CountMicro(codec.GetNestedType("CharacterCountingWriter", BindingFlags.NonPublic)!),
             countAfter = CountMicro(typeof(SaveCodec).GetNestedType("CharacterCountingWriter", BindingFlags.NonPublic)!),
             memoryShapeBefore = Micro(() => GC.KeepAlive(oldDecode(wire))), memoryShapeAfter = Micro(() => currentCheck(wire)) };
