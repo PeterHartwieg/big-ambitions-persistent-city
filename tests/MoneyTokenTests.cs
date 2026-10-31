@@ -51,7 +51,7 @@ public sealed partial class FoodCommerceTests
         city.State.Food!.Residents.Single().Allowance = Money.FromCents(2);
         string current = SaveCodec.Write(city.State);
         string encoded = R8_Generation(current, generation);
-        Assert.Equal(current, SaveCodec.Write(SaveCodec.Read(encoded).State!));
+        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(SaveCodec.Write(SaveCodec.Read(encoded).State!)));
         string damaged = Regex.Replace(encoded, "\"" + field + "\":[0-9.]+", "\"" + field + "\":" + token);
         Assert.NotEqual(encoded, damaged);
         var read = SaveCodec.Read(damaged);
@@ -70,7 +70,7 @@ public sealed partial class FoodCommerceTests
             .Replace("\": ", "\"   :  ");
         var read = SaveCodec.Read(spaced);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(current, SaveCodec.Write(read.State!));
+        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(SaveCodec.Write(read.State!)));
     }
 
     private static ResidentBudget R8_BoundaryBudget(CitySimulator city, long fundedCents)

@@ -19,7 +19,7 @@ public sealed class OptionalStopHandoffTests
     // "shop" offers four window-shopping spots and "park" only two conversation spots; "far" and "otherpark" offer none.
     private sealed class Venues : IOptionalStopEnvironment
     {
-        public bool Raining => false;
+        public bool Raining { get; set; }
         public IReadOnlyList<OptionalStopSpot> Spots(Place place, DwellKind kind)
             => place.Id == "shop" && kind == DwellKind.WindowShopping || place.Id == "park" && kind == DwellKind.ChatOutsideVenue
                 ? (place.Id == "shop" ? new[] { 0, 2, 4, 6 } : new[] { 0, 2 }).Select(x => new OptionalStopSpot { Id = place.Id + ":" + x, TargetId = place.Id,
@@ -69,6 +69,32 @@ public sealed class OptionalStopHandoffTests
     private static double ArrivalOf(Dictionary<string, CitizenState> people, string id) => people[id].NextEventMinute;
     private static void Through(CitySimulator sim, double minute) { sim.AdvanceTo(minute); Assert.True(sim.OptionalStopIndexesMatchState()); }
     private static bool Pending(CitizenState c) => c.OptionalStopChoice == true && c.OptionalStop == null;
+
+    [Theory]
+    [InlineData(false)] [InlineData(true)]
+    public void RainPreservesPendingChanceForADryUndrawnArrivalAcrossReload(bool reload)
+    {
+        var sim = Scene(new[] { new Holder("banker") }, new[] {
+            new Arrival("wet", "shop", 1450, false), new Arrival("dry", "shop", 1490, false) }, out var people, rate: 25);
+        var env = new Venues { Raining = true }; sim.AttachOptionalStops(env, 25);
+        double dryArrival = ArrivalOf(people, "dry");
+        Through(sim, ArrivalOf(people, "wet"));
+        Assert.True(Pending(people["banker"])); Assert.Null(people["wet"].OptionalStop);
+        Assert.Equal(default, sim.OptionalStopChances); // wet admissions do not consume the denominator or stock
+        if (reload)
+        {
+            var read = SaveCodec.Read(SaveCodec.Write(sim.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+            sim = new CitySimulator(read.State!, new Walking()); sim.AttachOptionalStops(env, 25);
+            people = sim.State.Citizens.ToDictionary(c => c.Identity.Id);
+        }
+        env.Raining = false; Through(sim, dryArrival);
+        Assert.False(people["banker"].OptionalStopChoice);
+        Assert.Null(people["wet"].OptionalStop); // rain clearing cannot replay that admission
+        Assert.Equal(DwellKind.WindowShopping, people["dry"].OptionalStop!.Kind);
+        Assert.Equal(new OptionalStopChanceTally { Eligible = 1, Realised = 1, HandedOn = 1 }, sim.OptionalStopChances);
+        Assert.Equal(Until, people["dry"].NextEventMinute);
+        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(sim.State)).Status);
+    }
 
     // The nominal bound is two, but an expired stop record still occupies its resident's slot until departure.
     [Fact]
