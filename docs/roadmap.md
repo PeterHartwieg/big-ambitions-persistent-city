@@ -29,6 +29,8 @@ Later: residents as employees, households.
 
 Implementation plan for B–E: [memory, marketing, rivals and the wider street](plans/steps-b-e.md).
 
+C3 status, 31 October (offline): [agency/payment discovery](plans/c3-agency-payment.md) is **PARTIAL**. DLL-verified recurring fee candidate; durable request identity/third-option integration await proof. Inactive typed contract and read-only dump only; Runtime payment refuses. No schema or A/B-stack dependency. [Offline evidence and 6 Nov checklist](../CHECKS.md#c3-agency-payment-31-october-2026-offline-only). New code does no per-frame work; no existing hot path was changed or optimization claimed. Four parked hotspots remain parked.
+
 Track F (Peter, 31 October): independently authored city view from interiors, F0 spike → F1 shop view/customer entry → F2 upper-floor/penthouse view → F3 polish. [F0 findings and plan](plans/track-f-interior-view.md): default-off runtime eligibility/entrance-anchor experiment; **city drawing is a no-op pending F1**, with no save-format change or A-stack dependency. Separate later E2c owns the third-party detection guard. The same mod-work/whole-frame evidence rules apply to F.
 
 ## Performance gate (Peter, 2026-10-30)
