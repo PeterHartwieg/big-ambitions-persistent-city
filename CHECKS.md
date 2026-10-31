@@ -1,5 +1,28 @@
 # Validation status
 
+## C2a review round 2 - 31 October 2026 (offline only)
+
+Sol-r2-1 and Opus-r2-1 share one cause: stop membership was frozen at food-market
+attachment before awareness activation. Restored the legacy live scope lookup
+when the published awareness index is absent or stale, including a diagnostic
+image built before a late acquisition. A current image still provides indexed
+membership; normal post-activation events retain bounded preparation. Stop lookup
+does not build geometry. Removed the attachment-only dictionary. No wire or
+schema change, native write, game/rig activity or PR metadata edit.
+
+Three new regression cases reproduce a missing held stop decision on the reviewed
+source, while the reloaded checkpoint recognizes the acquired shop. They compare
+uninterrupted/reloaded/inspected decisions and final saved state on day 1 with
+activation on day 2, with no diagnostic, a diagnostic before acquisition, and a
+diagnostic after acquisition. Fix **49158aa** passes all three cases, with identical
+held decisions, final saves and orders and zero route requests. **1,914/1,914 tests**,
+test discovery and **33/33 foreground gate commands** pass (all 31 requested plus
+the native-candidate and food-choice regressions). [Command manifest and embedded
+red/green evidence](docs/reviews/2026-10-31-c2a-r2-offline-checks.json).
+The save-contract regression passes unchanged; no payload bytes were added.
+The existing numbered 6 Nov rig checklist below still applies; native proof remains
+pending.
+
 ## C2a review round 1 — 31 October 2026 (offline only)
 
 Fix commit **19289e3** on submitted **9fa59fa**. Addresses Sol-r1-2/3 and
