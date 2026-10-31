@@ -17,7 +17,7 @@ parser.add_argument("--json-assembly", type=Path, help="Explicit Newtonsoft.Json
 args = parser.parse_args()
 managed = args.game_managed.resolve()
 references = ["mscorlib", "System", "System.Core", "System.Numerics", "System.Runtime.Serialization", "netstandard", "BigAmbitions",
-              "BigAmbitions.ModAPI", "BigAmbitions.AI", "BigAmbitions.Items", "BigAmbitions.Characters", "BigAmbitions.Neighborhoods", "HGExtensions", "HGPlugins",
+              "BigAmbitions.ModAPI", "BigAmbitions.AI", "BigAmbitions.Items", "BigAmbitions.Characters", "BigAmbitions.Neighborhoods", "BigAmbitions.InteriorDesigner", "HGExtensions", "HGPlugins",
               "UnityEngine.CoreModule", "UnityEngine.IMGUIModule", "UnityEngine.UI", "UnityEngine.InputLegacyModule", "BigAmbitions.PlacementSystem", "UnityEngine.TextRenderingModule", "UnityEngine.AIModule", "UnityEngine.PhysicsModule", "UnityEngine.AnimationModule", "ExternalPlugins", "DayNightCycle"]
 for name in references:
     if not (managed / (name + ".dll")).is_file():
@@ -25,12 +25,16 @@ for name in references:
 json_reference = (args.json_assembly or managed / "Newtonsoft.Json.dll").resolve()
 if not json_reference.is_file():
     raise SystemExit("Newtonsoft.Json.dll is missing; supply the game's assembly with --json-assembly")
-# Prefer dotnet on PATH; otherwise use the per-user SDK install the offline gate specifies.
-local_dotnet = Path(os.environ.get("LOCALAPPDATA", "")) / "Microsoft/dotnet/dotnet.exe"
-dotnet = shutil.which("dotnet") or (str(local_dotnet) if os.environ.get("LOCALAPPDATA") and local_dotnet.is_file() else None)
+dotnet = shutil.which("dotnet")
+if dotnet is None and os.name == "nt" and os.environ.get("LOCALAPPDATA"):
+    local_host = Path(os.environ["LOCALAPPDATA"]) / "Microsoft/dotnet/dotnet.exe"
+    if local_host.is_file():
+        dotnet = str(local_host)
 if dotnet is None:
-    raise SystemExit("Cannot locate dotnet: put it on PATH or install the SDK under %LOCALAPPDATA%/Microsoft/dotnet")
+    raise SystemExit("Cannot find dotnet. Add the .NET SDK to PATH; Windows also checks %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe.")
 sdk_lines = subprocess.check_output([dotnet, "--list-sdks"], text=True).splitlines()
+if not sdk_lines:
+    raise SystemExit(f"No .NET SDK is installed for {dotnet}.")
 match = re.fullmatch(r"(\S+) \[(.*)\]", sdk_lines[-1])
 if not match:
     raise SystemExit("Cannot locate the .NET SDK compiler")
