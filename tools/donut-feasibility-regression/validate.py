@@ -6,7 +6,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / "build/e3/gates"
+OUT = ROOT / "build/e3-cupcake/gates"
 OUT.mkdir(parents=True, exist_ok=True)
 DOTNET = str(Path(os.environ["LOCALAPPDATA"]) / "Microsoft/dotnet/dotnet.exe")
 WAIT = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
@@ -44,6 +44,7 @@ gates += [
     ("food-routines", [DOTNET, "run", "--project", "tools/food-routines/FoodRoutines.csproj", "--configuration", "Release", "--", "build/harness-food-routines-demo", "957"]),
     ("food-demand", [DOTNET, "run", "--project", "tools/food-demand/FoodDemand.csproj", "--", "build/harness-food-demand-demo"]),
     ("donut", [DOTNET, "run", "--project", "tools/donut-feasibility-regression/DonutFeasibilityRegression.csproj", "--configuration", "Release"]),
+    ("cupcake", [DOTNET, "run", "--project", "tools/cupcake-feasibility-regression/CupcakeFeasibilityRegression.csproj", "--configuration", "Release"]),
     ("isolation", [sys.executable, "tools/donut-feasibility-regression/source_checks.py"]),
 ]
 results = []

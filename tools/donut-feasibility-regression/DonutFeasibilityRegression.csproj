@@ -5,6 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../Core/PersistentCity.Core.csproj" />
+    <Compile Include="../../Runtime/DirectStockShowcaseReader.cs" Link="DirectStockShowcaseReader.cs" />
     <Compile Include="../../Runtime/DonutFeasibilityReader.cs" Link="DonutFeasibilityReader.cs" />
   </ItemGroup>
 </Project>
