@@ -1,0 +1,479 @@
+{
+  "seamNotGesture": true,
+  "minute": 7720.682834625244,
+  "nativeMinute": 7720.682834625244,
+  "payloadHashBefore": "1a29f218fc319be96411ff6fa0dfdeeb362f32bc52f10cf7ec60feca0c976f3b",
+  "payloadHashAfter": "1a29f218fc319be96411ff6fa0dfdeeb362f32bc52f10cf7ec60feca0c976f3b",
+  "payloadIdentical": true,
+  "entries": [
+    {
+      "id": "c0",
+      "identity": {
+        "Id": "c0",
+        "Name": "Ivo Barlow",
+        "District": "ba:neighborhood_lowermanhattan",
+        "Age": 43,
+        "Female": false,
+        "Persona": 7,
+        "AppearanceSeed": 466195
+      },
+      "homeId": "address:ba%3Astreet_fourthavenue:49:home",
+      "dayPlaceId": "address:ba%3Astreet_fifthavenue:21:work",
+      "destinationId": "",
+      "currentPlaceId": "address:ba%3Astreet_fourthavenue:49:home",
+      "mealPlaceId": "",
+      "insight": {
+        "ResidentId": "c0",
+        "Name": "Ivo Barlow",
+        "Age": 43,
+        "Home": {
+          "PlaceId": "address:ba%3Astreet_fourthavenue:49:home",
+          "Name": "49 4th Avenue",
+          "Street": "ba:street_fourthavenue",
+          "Number": 49,
+          "CanNavigate": true,
+          "AddressText": "49 4th Avenue",
+          "Label": "49 4th Avenue"
+        },
+        "Work": {
+          "PlaceId": "address:ba%3Astreet_fifthavenue:21:work",
+          "Name": "Joko Tech",
+          "Street": "ba:street_fifthavenue",
+          "Number": 21,
+          "CanNavigate": true,
+          "AddressText": "21 5th Avenue",
+          "Label": "Joko Tech, 21 5th Avenue"
+        },
+        "WorkRole": "Works at",
+        "Personality": [
+          "night owl",
+          "works late",
+          "owns a car"
+        ],
+        "Story": "Ivo Barlow, 43, is a night owl. Lives at 49 4th Avenue. Works at Joko Tech, 21 5th Avenue. Right now: at home until 20:31.",
+        "Heading": "Not travelling: at home",
+        "HeadingReason": "stays until 20:31",
+        "Meals": [
+          {
+            "Kind": 1,
+            "State": 0,
+            "Text": "unknown (not decided yet)"
+          },
+          {
+            "Kind": 2,
+            "State": 0,
+            "Text": "unknown"
+          },
+          {
+            "Kind": 3,
+            "State": 0,
+            "Text": "unknown"
+          }
+        ],
+        "MealNote": "",
+        "Minute": 7720.682834625244
+      },
+      "fields": {
+        "header": "Ivo Barlow, 43",
+        "personality": "Personality: night owl · works late · owns a car",
+        "homeLabel": "49 4th Avenue  ↗",
+        "workLabel": "Joko Tech, 21 5th Avenue  ↗",
+        "body": "Ivo Barlow, 43, is a night owl. Lives at 49 4th Avenue. Works at Joko Tech, 21 5th Avenue. Right now: at home until 20:31.\n\nNot travelling: at home (stays until 20:31)\n\nToday's meals\nBreakfast: unknown (not decided yet)\nLunch: unknown\nDinner: unknown\n"
+      },
+      "places": [
+        {
+          "PlaceId": "address:ba%3Astreet_fourthavenue:49:home",
+          "Name": "ba:street_fourthavenue 49",
+          "Street": "ba:street_fourthavenue",
+          "Number": 49,
+          "nativeFormatted": "49 4th Avenue",
+          "nativeRegistrationFound": true
+        },
+        {
+          "PlaceId": "address:ba%3Astreet_fifthavenue:21:work",
+          "Name": "Joko Tech",
+          "Street": "ba:street_fifthavenue",
+          "Number": 21,
+          "nativeFormatted": "21 5th Avenue",
+          "nativeRegistrationFound": true
+        }
+      ]
+    },
+    {
+      "id": "c102",
+      "identity": {
+        "Id": "c102",
+        "Name": "Clara Lane",
+        "District": "ba:neighborhood_lowermanhattan",
+        "Age": 19,
+        "Female": true,
+        "Persona": 3,
+        "AppearanceSeed": 653463
+      },
+      "homeId": "address:ba%3Astreet_ninthstreet:18:home",
+      "dayPlaceId": "address:ba%3Astreet_fourthavenue:7:study",
+      "destinationId": "",
+      "currentPlaceId": "address:ba%3Astreet_ninthstreet:18:home",
+      "mealPlaceId": "",
+      "insight": {
+        "ResidentId": "c102",
+        "Name": "Clara Lane",
+        "Age": 19,
+        "Home": {
+          "PlaceId": "address:ba%3Astreet_ninthstreet:18:home",
+          "Name": "18 9th Street",
+          "Street": "ba:street_ninthstreet",
+          "Number": 18,
+          "CanNavigate": true,
+          "AddressText": "18 9th Street",
+          "Label": "18 9th Street"
+        },
+        "Work": {
+          "PlaceId": "address:ba%3Astreet_fourthavenue:7:study",
+          "Name": "Manhattan Business School",
+          "Street": "ba:street_fourthavenue",
+          "Number": 7,
+          "CanNavigate": true,
+          "AddressText": "7 4th Avenue",
+          "Label": "Manhattan Business School, 7 4th Avenue"
+        },
+        "WorkRole": "Studies at",
+        "Personality": [
+          "on a student budget",
+          "often packs lunch",
+          "minds fares"
+        ],
+        "Story": "Clara Lane, 19, is a student. Lives at 18 9th Street. Studies at Manhattan Business School, 7 4th Avenue. Right now: at home until 10:47.",
+        "Heading": "Not travelling: at home",
+        "HeadingReason": "stays until 10:47",
+        "Meals": [
+          {
+            "Kind": 1,
+            "State": 4,
+            "Text": "chose food from home instead of buying"
+          },
+          {
+            "Kind": 2,
+            "State": 0,
+            "Text": "unknown"
+          },
+          {
+            "Kind": 3,
+            "State": 0,
+            "Text": "unknown"
+          }
+        ],
+        "MealNote": "",
+        "Minute": 7720.682834625244
+      },
+      "fields": {
+        "header": "Clara Lane, 19",
+        "personality": "Personality: on a student budget · often packs lunch · minds fares",
+        "homeLabel": "18 9th Street  ↗",
+        "workLabel": "Manhattan Business School, 7 4th Avenue  ↗",
+        "body": "Clara Lane, 19, is a student. Lives at 18 9th Street. Studies at Manhattan Business School, 7 4th Avenue. Right now: at home until 10:47.\n\nNot travelling: at home (stays until 10:47)\n\nToday's meals\nBreakfast: chose food from home instead of buying\nLunch: unknown\nDinner: unknown\n"
+      },
+      "places": [
+        {
+          "PlaceId": "address:ba%3Astreet_ninthstreet:18:home",
+          "Name": "ba:street_ninthstreet 18",
+          "Street": "ba:street_ninthstreet",
+          "Number": 18,
+          "nativeFormatted": "18 9th Street",
+          "nativeRegistrationFound": true
+        },
+        {
+          "PlaceId": "address:ba%3Astreet_fourthavenue:7:study",
+          "Name": "Manhattan Business School",
+          "Street": "ba:street_fourthavenue",
+          "Number": 7,
+          "nativeFormatted": "7 4th Avenue",
+          "nativeRegistrationFound": true
+        }
+      ]
+    },
+    {
+      "id": "c149",
+      "identity": {
+        "Id": "c149",
+        "Name": "Vera Thorne",
+        "District": "ba:neighborhood_garmentdistrict",
+        "Age": 50,
+        "Female": true,
+        "Persona": 2,
+        "AppearanceSeed": 315693
+      },
+      "homeId": "address:ba%3Astreet_thirdstreet:38:home",
+      "dayPlaceId": "address:ba%3Astreet_sixthavenue:22:work",
+      "destinationId": "address:ba%3Astreet_thirdstreet:30:shop",
+      "currentPlaceId": "address:ba%3Astreet_thirdstreet:38:home",
+      "mealPlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+      "insight": {
+        "ResidentId": "c149",
+        "Name": "Vera Thorne",
+        "Age": 50,
+        "Home": {
+          "PlaceId": "address:ba%3Astreet_thirdstreet:38:home",
+          "Name": "38 3rd Street",
+          "Street": "ba:street_thirdstreet",
+          "Number": 38,
+          "CanNavigate": true,
+          "AddressText": "38 3rd Street",
+          "Label": "38 3rd Street"
+        },
+        "Work": {
+          "PlaceId": "address:ba%3Astreet_sixthavenue:22:work",
+          "Name": "Eagle Eye Law",
+          "Street": "ba:street_sixthavenue",
+          "Number": 22,
+          "CanNavigate": true,
+          "AddressText": "22 6th Avenue",
+          "Label": "Eagle Eye Law, 22 6th Avenue"
+        },
+        "WorkRole": "Works at",
+        "Personality": [
+          "early riser",
+          "often packs lunch",
+          "avoids public transport"
+        ],
+        "Story": "Vera Thorne, 50, is a parent. Lives at 38 3rd Street. Works at Eagle Eye Law, 22 6th Avenue. Right now: walking to Persistent City food routines, 30 3rd Street.",
+        "Heading": "Heading to Persistent City food routines, 30 3rd Street, arriving about 08:40",
+        "HeadingReason": "to buy croissant for breakfast",
+        "Meals": [
+          {
+            "Kind": 1,
+            "State": 2,
+            "Text": "on the way to Persistent City food routines, 30 3rd Street for croissant"
+          },
+          {
+            "Kind": 2,
+            "State": 0,
+            "Text": "unknown"
+          },
+          {
+            "Kind": 3,
+            "State": 0,
+            "Text": "unknown"
+          }
+        ],
+        "MealNote": "",
+        "Minute": 7720.682834625244
+      },
+      "fields": {
+        "header": "Vera Thorne, 50",
+        "personality": "Personality: early riser · often packs lunch · avoids public transport",
+        "homeLabel": "38 3rd Street  ↗",
+        "workLabel": "Eagle Eye Law, 22 6th Avenue  ↗",
+        "body": "Vera Thorne, 50, is a parent. Lives at 38 3rd Street. Works at Eagle Eye Law, 22 6th Avenue. Right now: walking to Persistent City food routines, 30 3rd Street.\n\nHeading to Persistent City food routines, 30 3rd Street, arriving about 08:40 (to buy croissant for breakfast)\n\nToday's meals\nBreakfast: on the way to Persistent City food routines, 30 3rd Street for croissant\nLunch: unknown\nDinner: unknown\n"
+      },
+      "places": [
+        {
+          "PlaceId": "address:ba%3Astreet_thirdstreet:38:home",
+          "Name": "ba:street_thirdstreet 38",
+          "Street": "ba:street_thirdstreet",
+          "Number": 38,
+          "nativeFormatted": "38 3rd Street",
+          "nativeRegistrationFound": true
+        },
+        {
+          "PlaceId": "address:ba%3Astreet_sixthavenue:22:work",
+          "Name": "Eagle Eye Law",
+          "Street": "ba:street_sixthavenue",
+          "Number": 22,
+          "nativeFormatted": "22 6th Avenue",
+          "nativeRegistrationFound": true
+        },
+        {
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "Name": "Persistent City food routines",
+          "Street": "ba:street_thirdstreet",
+          "Number": 30,
+          "nativeFormatted": "30 3rd Street",
+          "nativeRegistrationFound": true
+        }
+      ]
+    },
+    {
+      "id": "c1",
+      "identity": {
+        "Id": "c1",
+        "Name": "Juno Fenwick",
+        "District": "ba:neighborhood_industrycity",
+        "Age": 27,
+        "Female": true,
+        "Persona": 0,
+        "AppearanceSeed": 795378
+      },
+      "homeId": "address:ba%3Astreet_twentyfifthstreet:18:home",
+      "dayPlaceId": "address:ba%3Astreet_ninthavenue:3:work",
+      "destinationId": "",
+      "currentPlaceId": "address:ba%3Astreet_twentyfifthstreet:18:home",
+      "mealPlaceId": "",
+      "insight": {
+        "ResidentId": "c1",
+        "Name": "Juno Fenwick",
+        "Age": 27,
+        "Home": {
+          "PlaceId": "address:ba%3Astreet_twentyfifthstreet:18:home",
+          "Name": "18 25th Street",
+          "Street": "ba:street_twentyfifthstreet",
+          "Number": 18,
+          "CanNavigate": true,
+          "AddressText": "18 25th Street",
+          "Label": "18 25th Street"
+        },
+        "Work": {
+          "PlaceId": "address:ba%3Astreet_ninthavenue:3:work",
+          "Name": "Rise and Grind, NYC",
+          "Street": "ba:street_ninthavenue",
+          "Number": 3,
+          "CanNavigate": true,
+          "AddressText": "3 9th Avenue",
+          "Label": "Rise and Grind, NYC, 3 9th Avenue"
+        },
+        "WorkRole": "Works at",
+        "Personality": [
+          "keeps a regular workday"
+        ],
+        "Story": "Juno Fenwick, 27, is a commuter. Lives at 18 25th Street. Works at Rise and Grind, NYC, 3 9th Avenue. Right now: at home until 13:51.",
+        "Heading": "Not travelling: at home",
+        "HeadingReason": "stays until 13:51",
+        "Meals": [
+          {
+            "Kind": 1,
+            "State": 4,
+            "Text": "chose food from home instead of buying"
+          },
+          {
+            "Kind": 2,
+            "State": 0,
+            "Text": "unknown"
+          },
+          {
+            "Kind": 3,
+            "State": 0,
+            "Text": "unknown"
+          }
+        ],
+        "MealNote": "",
+        "Minute": 7720.682834625244
+      },
+      "fields": {
+        "header": "Juno Fenwick, 27",
+        "personality": "Personality: keeps a regular workday",
+        "homeLabel": "18 25th Street  ↗",
+        "workLabel": "Rise and Grind, NYC, 3 9th Avenue  ↗",
+        "body": "Juno Fenwick, 27, is a commuter. Lives at 18 25th Street. Works at Rise and Grind, NYC, 3 9th Avenue. Right now: at home until 13:51.\n\nNot travelling: at home (stays until 13:51)\n\nToday's meals\nBreakfast: chose food from home instead of buying\nLunch: unknown\nDinner: unknown\n"
+      },
+      "places": [
+        {
+          "PlaceId": "address:ba%3Astreet_twentyfifthstreet:18:home",
+          "Name": "ba:street_twentyfifthstreet 18",
+          "Street": "ba:street_twentyfifthstreet",
+          "Number": 18,
+          "nativeFormatted": "18 25th Street",
+          "nativeRegistrationFound": true
+        },
+        {
+          "PlaceId": "address:ba%3Astreet_ninthavenue:3:work",
+          "Name": "Rise and Grind, NYC",
+          "Street": "ba:street_ninthavenue",
+          "Number": 3,
+          "nativeFormatted": "3 9th Avenue",
+          "nativeRegistrationFound": true
+        }
+      ]
+    },
+    {
+      "id": "c10",
+      "identity": {
+        "Id": "c10",
+        "Name": "Rae Calder",
+        "District": "ba:neighborhood_thehamptons",
+        "Age": 22,
+        "Female": true,
+        "Persona": 6,
+        "AppearanceSeed": 476369
+      },
+      "homeId": "address:ba%3Astreet_ninthstreet:14:home",
+      "dayPlaceId": "address:ba%3Astreet_firststreet:1:work",
+      "destinationId": "",
+      "currentPlaceId": "address:ba%3Astreet_ninthstreet:14:home",
+      "mealPlaceId": "",
+      "insight": {
+        "ResidentId": "c10",
+        "Name": "Rae Calder",
+        "Age": 22,
+        "Home": {
+          "PlaceId": "address:ba%3Astreet_ninthstreet:14:home",
+          "Name": "14 9th Street",
+          "Street": "ba:street_ninthstreet",
+          "Number": 14,
+          "CanNavigate": true,
+          "AddressText": "14 9th Street",
+          "Label": "14 9th Street"
+        },
+        "Work": {
+          "PlaceId": "address:ba%3Astreet_firststreet:1:work",
+          "Name": "1PINE",
+          "Street": "ba:street_firststreet",
+          "Number": 1,
+          "CanNavigate": true,
+          "AddressText": "1 1st Street",
+          "Label": "1PINE, 1 1st Street"
+        },
+        "WorkRole": "Works at",
+        "Personality": [
+          "grumpy"
+        ],
+        "Story": "Rae Calder, 22, is a bit grumpy. Lives at 14 9th Street. Works at 1PINE, 1 1st Street. Right now: at home until 10:59.",
+        "Heading": "Not travelling: at home",
+        "HeadingReason": "stays until 10:59",
+        "Meals": [
+          {
+            "Kind": 1,
+            "State": 0,
+            "Text": "unknown (not decided yet)"
+          },
+          {
+            "Kind": 2,
+            "State": 0,
+            "Text": "unknown"
+          },
+          {
+            "Kind": 3,
+            "State": 0,
+            "Text": "unknown"
+          }
+        ],
+        "MealNote": "",
+        "Minute": 7720.682834625244
+      },
+      "fields": {
+        "header": "Rae Calder, 22",
+        "personality": "Personality: grumpy",
+        "homeLabel": "14 9th Street  ↗",
+        "workLabel": "1PINE, 1 1st Street  ↗",
+        "body": "Rae Calder, 22, is a bit grumpy. Lives at 14 9th Street. Works at 1PINE, 1 1st Street. Right now: at home until 10:59.\n\nNot travelling: at home (stays until 10:59)\n\nToday's meals\nBreakfast: unknown (not decided yet)\nLunch: unknown\nDinner: unknown\n"
+      },
+      "places": [
+        {
+          "PlaceId": "address:ba%3Astreet_ninthstreet:14:home",
+          "Name": "ba:street_ninthstreet 14",
+          "Street": "ba:street_ninthstreet",
+          "Number": 14,
+          "nativeFormatted": "14 9th Street",
+          "nativeRegistrationFound": true
+        },
+        {
+          "PlaceId": "address:ba%3Astreet_firststreet:1:work",
+          "Name": "1PINE",
+          "Street": "ba:street_firststreet",
+          "Number": 1,
+          "nativeFormatted": "1 1st Street",
+          "nativeRegistrationFound": true
+        }
+      ]
+    }
+  ]
+}

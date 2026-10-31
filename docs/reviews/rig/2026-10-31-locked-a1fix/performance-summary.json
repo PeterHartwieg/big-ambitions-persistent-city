@@ -1,0 +1,2350 @@
+{
+  "role": "rig_test",
+  "method": "Update/authority union + same-frame whole PopulationRuntime.OnGUI; nested scopes not added. floor(n*q) percentiles. Existing input guard callbacks outside these primary scopes are not included.",
+  "windows": [
+    {
+      "label": "base1",
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321686,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 180.0007,
+            "z": 0.0
+          }
+        }
+      },
+      "seconds": 60.1115142,
+      "modMs": {
+        "samples": 4664,
+        "p50": 0.35109999999999997,
+        "p95": 0.6385,
+        "maximum": 14.0604
+      },
+      "wholeMs": {
+        "samples": 4665,
+        "p50": 12.3395,
+        "p95": 17.3106,
+        "maximum": 66.6469
+      },
+      "spikesAtLeast30ms": [],
+      "wholeStalls": {
+        "50": 1,
+        "100": 0,
+        "250": 0
+      },
+      "attributionErrors": {
+        "timedExceptions": 0,
+        "crossFrameCalls": 0,
+        "componentTimedExceptions": 0,
+        "componentCrossFrameCalls": 0,
+        "eventMeasurementFailures": 0,
+        "eventCrossFrameCalls": 0,
+        "droppedModFrames": 0,
+        "activeReportCount": 0
+      },
+      "validity": {
+        "clean": true,
+        "autosaveOffBeforeAfter": true,
+        "saveFilesUnchanged": true,
+        "saveActivity": [],
+        "extraInstrumentation": false,
+        "start": {
+          "started": true,
+          "allocationCounter": false,
+          "authorityHookAvailable": true,
+          "components": [
+            "RouteObjectDiscovery.Step",
+            "PhysicalPopulation.BeforeAdvance",
+            "PhysicalPopulation.Update",
+            "PopulationRuntime.AdvancePopulation",
+            "MultimodalRoutes.Prepare",
+            "CitySimulator.RefreshTrafficClosures",
+            "PhysicalVehicles.Update",
+            "PhysicalTrafficHooks.FixedStepPrefix",
+            "PhysicalTrafficHooks.FixedStepPostfix",
+            "PhysicalTrafficHooks.FixedStepFinalizer",
+            "PhysicalVehicles.DeferNativeForce",
+            "PhysicalVehicles.ApplyNativeRotation",
+            "PhysicalIntersections.UpdatePostfix",
+            "ResidentInspector.Update",
+            "PopulationRuntime.OnGUI"
+          ],
+          "environment": {
+            "width": 1920,
+            "height": 1080,
+            "quality": "Low",
+            "vSync": 0,
+            "focused": true,
+            "runInBackground": true,
+            "targetFps": 90,
+            "calendarFactor": 0.3333333333333333,
+            "gpu": "NVIDIA GeForce RTX 4070",
+            "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+            "graphicsApi": "Direct3D11",
+            "timeScale": 1.0,
+            "camera": {
+              "position": {
+                "x": 215.0,
+                "y": 25.8321686,
+                "z": 23.7273273
+              },
+              "eulerAngles": {
+                "x": 47.2700729,
+                "y": 180.000656,
+                "z": 0.0
+              }
+            }
+          }
+        },
+        "after": {
+          "minute": 7691.24836730957,
+          "nativeMinute": 7691.24836730957,
+          "citizens": 957,
+          "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+          "failed": false,
+          "physical": "PersistentCity.Runtime.PhysicalPopulation",
+          "autosave": {
+            "originalPreventAutoSave": false,
+            "preventAutoSave": true,
+            "minutesBetweenAutoSaves": 5,
+            "maxAutoSavesPerGame": 3,
+            "savingGameInProgress": false,
+            "saveLogMessages": 4,
+            "save": "FT Food Routines Locked A1 Fix 20261031",
+            "frame": 43463
+          }
+        }
+      },
+      "clockBefore": 7670.713356018066,
+      "clockAfter": "08:11",
+      "loadWait": {
+        "polls": [
+          {
+            "elapsedSeconds": 0.01600000006146729,
+            "active": [
+              {
+                "pid": 7692,
+                "name": "testhost.exe"
+              },
+              {
+                "pid": 8356,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 20888,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 38680,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 46320,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 52952,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 30.016000000061467,
+            "active": [
+              {
+                "pid": 7692,
+                "name": "testhost.exe"
+              },
+              {
+                "pid": 8356,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 20888,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 38680,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 46320,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 52952,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 60.03100000019185,
+            "active": [
+              {
+                "pid": 7692,
+                "name": "testhost.exe"
+              },
+              {
+                "pid": 8356,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 20888,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 38680,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 46320,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 52952,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 90.03100000019185,
+            "active": [
+              {
+                "pid": 7692,
+                "name": "testhost.exe"
+              },
+              {
+                "pid": 8356,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 20888,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 38680,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 46320,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 52952,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 120.03100000019185,
+            "active": [
+              {
+                "pid": 7692,
+                "name": "testhost.exe"
+              },
+              {
+                "pid": 8356,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 20888,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 38680,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 46320,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 52952,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 150.0470000000205,
+            "active": [
+              {
+                "pid": 7692,
+                "name": "testhost.exe"
+              },
+              {
+                "pid": 8356,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 20888,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 38680,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 46320,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 52952,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 180.0470000000205,
+            "active": [
+              {
+                "pid": 52952,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 210.06300000008196,
+            "active": [
+              {
+                "pid": 52952,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 240.06300000008196,
+            "active": [
+              {
+                "pid": 35520,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 52952,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 270.0779999999795,
+            "active": [
+              {
+                "pid": 18084,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 52952,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 300.0779999999795,
+            "active": [
+              {
+                "pid": 9324,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 52952,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 330.0779999999795,
+            "active": [
+              {
+                "pid": 52952,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 360.094000000041,
+            "active": [
+              {
+                "pid": 52952,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 390.094000000041,
+            "active": []
+          }
+        ],
+        "waitSeconds": 390.094000000041,
+        "underDotnetLoad": false
+      },
+      "loadBefore": {
+        "utc": "2026-10-31T10:02:45Z",
+        "cpuTotalPercent": 72.7,
+        "counts": {
+          "dotnet": 1,
+          "testhost": 0,
+          "codex": 10,
+          "python": 9
+        },
+        "ramAvailableGiB": 20.501598358154297,
+        "ramTotalGiB": 63.83710861206055,
+        "topCpu": [
+          {
+            "pid": 46244,
+            "name": "vmmemWSL",
+            "cpuSecondsDelta": 34.890625,
+            "ramMiB": 9011.5625
+          },
+          {
+            "pid": 0,
+            "name": "System Idle Process",
+            "cpuSecondsDelta": 20.421875,
+            "ramMiB": 0.0078125
+          },
+          {
+            "pid": 41064,
+            "name": "Big Ambitions Agent Tests.exe",
+            "cpuSecondsDelta": 15.703125,
+            "ramMiB": 5304.66796875
+          },
+          {
+            "pid": 35908,
+            "name": "python.exe",
+            "cpuSecondsDelta": 2.984375,
+            "ramMiB": 27.9921875
+          },
+          {
+            "pid": 17952,
+            "name": "chrome.exe",
+            "cpuSecondsDelta": 0.734375,
+            "ramMiB": 482.62109375
+          },
+          {
+            "pid": 4,
+            "name": "System",
+            "cpuSecondsDelta": 0.46875,
+            "ramMiB": 45.48046875
+          },
+          {
+            "pid": 1312,
+            "name": "MsMpEng.exe",
+            "cpuSecondsDelta": 0.328125,
+            "ramMiB": 711.09765625
+          },
+          {
+            "pid": 38932,
+            "name": "audiodg.exe",
+            "cpuSecondsDelta": 0.265625,
+            "ramMiB": 16.80078125
+          },
+          {
+            "pid": 10520,
+            "name": "chrome.exe",
+            "cpuSecondsDelta": 0.203125,
+            "ramMiB": 100.90625
+          },
+          {
+            "pid": 36200,
+            "name": "Discord.exe",
+            "cpuSecondsDelta": 0.09375,
+            "ramMiB": 392.0234375
+          },
+          {
+            "pid": 36744,
+            "name": "dwm.exe",
+            "cpuSecondsDelta": 0.09375,
+            "ramMiB": 154.80859375
+          },
+          {
+            "pid": 6956,
+            "name": "svchost.exe",
+            "cpuSecondsDelta": 0.078125,
+            "ramMiB": 30.33984375
+          }
+        ],
+        "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+      },
+      "loadAfter": {
+        "utc": "2026-10-31T10:04:10Z",
+        "cpuTotalPercent": 29.3,
+        "counts": {
+          "dotnet": 2,
+          "testhost": 1,
+          "codex": 10,
+          "python": 9
+        },
+        "ramAvailableGiB": 21.521163940429688,
+        "ramTotalGiB": 63.83710861206055,
+        "topCpu": [
+          {
+            "pid": 0,
+            "name": "System Idle Process",
+            "cpuSecondsDelta": 38.890625,
+            "ramMiB": 0.0078125
+          },
+          {
+            "pid": 41064,
+            "name": "Big Ambitions Agent Tests.exe",
+            "cpuSecondsDelta": 9.0,
+            "ramMiB": 5367.828125
+          },
+          {
+            "pid": 46244,
+            "name": "vmmemWSL",
+            "cpuSecondsDelta": 4.375,
+            "ramMiB": 7257.6875
+          },
+          {
+            "pid": 48436,
+            "name": "testhost.exe",
+            "cpuSecondsDelta": 2.84375,
+            "ramMiB": 107.81640625
+          },
+          {
+            "pid": 35908,
+            "name": "python.exe",
+            "cpuSecondsDelta": 1.921875,
+            "ramMiB": 29.3984375
+          },
+          {
+            "pid": 3476,
+            "name": "MemCompression",
+            "cpuSecondsDelta": 1.71875,
+            "ramMiB": 674.3515625
+          },
+          {
+            "pid": 4,
+            "name": "System",
+            "cpuSecondsDelta": 0.15625,
+            "ramMiB": 45.484375
+          },
+          {
+            "pid": 45224,
+            "name": "chrome.exe",
+            "cpuSecondsDelta": 0.15625,
+            "ramMiB": 166.4609375
+          },
+          {
+            "pid": 23812,
+            "name": "explorer.exe",
+            "cpuSecondsDelta": 0.125,
+            "ramMiB": 331.40234375
+          },
+          {
+            "pid": 46468,
+            "name": "codex.exe",
+            "cpuSecondsDelta": 0.09375,
+            "ramMiB": 168.828125
+          },
+          {
+            "pid": 1312,
+            "name": "MsMpEng.exe",
+            "cpuSecondsDelta": 0.078125,
+            "ramMiB": 689.0
+          },
+          {
+            "pid": 29904,
+            "name": "claude.exe",
+            "cpuSecondsDelta": 0.078125,
+            "ramMiB": 232.46484375
+          }
+        ],
+        "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+      },
+      "formatCounts": {
+        "frame": 43474,
+        "refreshCalls": 0,
+        "formatCalls": 0,
+        "formatOutsideRefresh": 0,
+        "formatDrawCalls": 0,
+        "formatMilliseconds": 0.0,
+        "formatBytes": 0,
+        "counterKind": "unavailable"
+      },
+      "inspectorTiming": {
+        "update": {
+          "closed": {
+            "calls": 4817,
+            "totalMilliseconds": 24.4972,
+            "maxMilliseconds": 0.0318
+          },
+          "hover": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          },
+          "open": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          }
+        },
+        "draw": {
+          "closed": {
+            "calls": 9634,
+            "totalMilliseconds": 3.4103,
+            "maxMilliseconds": 0.0102
+          },
+          "hover": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          },
+          "open": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          }
+        },
+        "picks": 0,
+        "builds": 0,
+        "buildMilliseconds": 0.0,
+        "buildMaxMilliseconds": 0.0,
+        "hovered": null,
+        "selected": null
+      },
+      "rawFiles": [
+        "frames-mod-work-base1-stop-f5856e.csv.gz",
+        "frames-observations-base1-stop-f5856e.csv.gz"
+      ],
+      "stopwatchFrequency": 10000000
+    },
+    {
+      "label": "cand1",
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321686,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 180.0003,
+            "z": -1.91992863e-11
+          }
+        }
+      },
+      "seconds": 60.0383788,
+      "modMs": {
+        "samples": 5335,
+        "p50": 0.2712,
+        "p95": 0.43,
+        "maximum": 9.7756
+      },
+      "wholeMs": {
+        "samples": 5336,
+        "p50": 11.2431,
+        "p95": 13.0723,
+        "maximum": 52.5879
+      },
+      "spikesAtLeast30ms": [],
+      "wholeStalls": {
+        "50": 1,
+        "100": 0,
+        "250": 0
+      },
+      "attributionErrors": {
+        "timedExceptions": 0,
+        "crossFrameCalls": 0,
+        "componentTimedExceptions": 0,
+        "componentCrossFrameCalls": 0,
+        "eventMeasurementFailures": 0,
+        "eventCrossFrameCalls": 0,
+        "droppedModFrames": 0,
+        "activeReportCount": 0
+      },
+      "validity": {
+        "clean": true,
+        "autosaveOffBeforeAfter": true,
+        "saveFilesUnchanged": true,
+        "saveActivity": [],
+        "extraInstrumentation": false,
+        "start": {
+          "started": true,
+          "allocationCounter": false,
+          "authorityHookAvailable": true,
+          "components": [
+            "RouteObjectDiscovery.Step",
+            "PhysicalPopulation.BeforeAdvance",
+            "PhysicalPopulation.Update",
+            "PopulationRuntime.AdvancePopulation",
+            "MultimodalRoutes.Prepare",
+            "CitySimulator.RefreshTrafficClosures",
+            "PhysicalVehicles.Update",
+            "PhysicalTrafficHooks.FixedStepPrefix",
+            "PhysicalTrafficHooks.FixedStepPostfix",
+            "PhysicalTrafficHooks.FixedStepFinalizer",
+            "PhysicalVehicles.DeferNativeForce",
+            "PhysicalVehicles.ApplyNativeRotation",
+            "PhysicalIntersections.UpdatePostfix",
+            "ResidentInspector.Update",
+            "PopulationRuntime.OnGUI"
+          ],
+          "environment": {
+            "width": 1920,
+            "height": 1080,
+            "quality": "Low",
+            "vSync": 0,
+            "focused": true,
+            "runInBackground": true,
+            "targetFps": 90,
+            "calendarFactor": 0.3333333333333333,
+            "gpu": "NVIDIA GeForce RTX 4070",
+            "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+            "graphicsApi": "Direct3D11",
+            "timeScale": 1.0,
+            "camera": {
+              "position": {
+                "x": 215.0,
+                "y": 25.8321686,
+                "z": 23.7273273
+              },
+              "eulerAngles": {
+                "x": 47.2700729,
+                "y": 180.000168,
+                "z": 0.0
+              }
+            }
+          }
+        },
+        "after": {
+          "minute": 7691.663145065308,
+          "nativeMinute": 7691.663145065308,
+          "citizens": 957,
+          "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+          "failed": false,
+          "physical": "PersistentCity.Runtime.PhysicalPopulation",
+          "autosave": {
+            "originalPreventAutoSave": false,
+            "preventAutoSave": true,
+            "minutesBetweenAutoSaves": 5,
+            "maxAutoSavesPerGame": 3,
+            "savingGameInProgress": false,
+            "saveLogMessages": 9,
+            "save": "FT Food Routines Locked A1 Fix 20261031",
+            "frame": 11156
+          }
+        }
+      },
+      "clockBefore": 7671.116970062256,
+      "clockAfter": "08:11",
+      "loadWait": {
+        "polls": [
+          {
+            "elapsedSeconds": 0.03100000019185245,
+            "active": []
+          }
+        ],
+        "waitSeconds": 0.03100000019185245,
+        "underDotnetLoad": false
+      },
+      "loadBefore": {
+        "utc": "2026-10-31T10:06:52Z",
+        "cpuTotalPercent": 33.0,
+        "counts": {
+          "dotnet": 0,
+          "testhost": 0,
+          "codex": 10,
+          "python": 8
+        },
+        "ramAvailableGiB": 24.282894134521484,
+        "ramTotalGiB": 63.83710861206055,
+        "topCpu": [
+          {
+            "pid": 0,
+            "name": "System Idle Process",
+            "cpuSecondsDelta": 38.3125,
+            "ramMiB": 0.0078125
+          },
+          {
+            "pid": 8168,
+            "name": "Big Ambitions Agent Tests.exe",
+            "cpuSecondsDelta": 9.34375,
+            "ramMiB": 5917.27734375
+          },
+          {
+            "pid": 46244,
+            "name": "vmmemWSL",
+            "cpuSecondsDelta": 5.46875,
+            "ramMiB": 4555.171875
+          },
+          {
+            "pid": 10284,
+            "name": "python.exe",
+            "cpuSecondsDelta": 1.796875,
+            "ramMiB": 27.48828125
+          },
+          {
+            "pid": 1312,
+            "name": "MsMpEng.exe",
+            "cpuSecondsDelta": 0.640625,
+            "ramMiB": 695.0859375
+          },
+          {
+            "pid": 18208,
+            "name": "chrome.exe",
+            "cpuSecondsDelta": 0.3125,
+            "ramMiB": 162.86328125
+          },
+          {
+            "pid": 17952,
+            "name": "chrome.exe",
+            "cpuSecondsDelta": 0.296875,
+            "ramMiB": 507.125
+          },
+          {
+            "pid": 4,
+            "name": "System",
+            "cpuSecondsDelta": 0.25,
+            "ramMiB": 45.5
+          },
+          {
+            "pid": 38932,
+            "name": "audiodg.exe",
+            "cpuSecondsDelta": 0.1875,
+            "ramMiB": 16.82421875
+          },
+          {
+            "pid": 44928,
+            "name": "codex.exe",
+            "cpuSecondsDelta": 0.046875,
+            "ramMiB": 187.00390625
+          },
+          {
+            "pid": 12892,
+            "name": "claude.exe",
+            "cpuSecondsDelta": 0.03125,
+            "ramMiB": 218.453125
+          },
+          {
+            "pid": 36200,
+            "name": "Discord.exe",
+            "cpuSecondsDelta": 0.03125,
+            "ramMiB": 392.62890625
+          }
+        ],
+        "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+      },
+      "loadAfter": {
+        "utc": "2026-10-31T10:08:20Z",
+        "cpuTotalPercent": 76.5,
+        "counts": {
+          "dotnet": 0,
+          "testhost": 0,
+          "codex": 10,
+          "python": 8
+        },
+        "ramAvailableGiB": 19.29620361328125,
+        "ramTotalGiB": 63.83710861206055,
+        "topCpu": [
+          {
+            "pid": 46244,
+            "name": "vmmemWSL",
+            "cpuSecondsDelta": 37.59375,
+            "ramMiB": 9793.109375
+          },
+          {
+            "pid": 0,
+            "name": "System Idle Process",
+            "cpuSecondsDelta": 17.34375,
+            "ramMiB": 0.0078125
+          },
+          {
+            "pid": 8168,
+            "name": "Big Ambitions Agent Tests.exe",
+            "cpuSecondsDelta": 13.84375,
+            "ramMiB": 5963.55078125
+          },
+          {
+            "pid": 10284,
+            "name": "python.exe",
+            "cpuSecondsDelta": 2.8125,
+            "ramMiB": 28.953125
+          },
+          {
+            "pid": 4,
+            "name": "System",
+            "cpuSecondsDelta": 2.765625,
+            "ramMiB": 45.5
+          },
+          {
+            "pid": 1312,
+            "name": "MsMpEng.exe",
+            "cpuSecondsDelta": 0.359375,
+            "ramMiB": 684.59375
+          },
+          {
+            "pid": 38932,
+            "name": "audiodg.exe",
+            "cpuSecondsDelta": 0.265625,
+            "ramMiB": 16.78515625
+          },
+          {
+            "pid": 20076,
+            "name": "Grok Bot.exe",
+            "cpuSecondsDelta": 0.09375,
+            "ramMiB": 68.91015625
+          },
+          {
+            "pid": 17952,
+            "name": "chrome.exe",
+            "cpuSecondsDelta": 0.0625,
+            "ramMiB": 484.328125
+          },
+          {
+            "pid": 40000,
+            "name": "grep.exe",
+            "cpuSecondsDelta": 0.0625,
+            "ramMiB": 4.984375
+          },
+          {
+            "pid": 44928,
+            "name": "codex.exe",
+            "cpuSecondsDelta": 0.0625,
+            "ramMiB": 187.64453125
+          },
+          {
+            "pid": 2700,
+            "name": "tailscale-ipn.exe",
+            "cpuSecondsDelta": 0.046875,
+            "ramMiB": 50.65234375
+          }
+        ],
+        "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+      },
+      "formatCounts": {
+        "frame": 11180,
+        "refreshCalls": 0,
+        "formatCalls": 0,
+        "formatOutsideRefresh": 0,
+        "formatDrawCalls": 0,
+        "formatMilliseconds": 0.0,
+        "formatBytes": 0,
+        "counterKind": "unavailable"
+      },
+      "inspectorTiming": {
+        "update": {
+          "closed": {
+            "calls": 5493,
+            "totalMilliseconds": 21.103,
+            "maxMilliseconds": 0.0943
+          },
+          "hover": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          },
+          "open": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          }
+        },
+        "draw": {
+          "closed": {
+            "calls": 10986,
+            "totalMilliseconds": 2.9545,
+            "maxMilliseconds": 0.0704
+          },
+          "hover": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          },
+          "open": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          }
+        },
+        "picks": 0,
+        "builds": 0,
+        "buildMilliseconds": 0.0,
+        "buildMaxMilliseconds": 0.0,
+        "hovered": null,
+        "selected": null
+      },
+      "rawFiles": [
+        "frames-mod-work-cand1-stop-4f0eeb.csv.gz",
+        "frames-observations-cand1-stop-4f0eeb.csv.gz"
+      ],
+      "stopwatchFrequency": 10000000
+    },
+    {
+      "label": "base2",
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321686,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 180.00029,
+            "z": 0.0
+          }
+        }
+      },
+      "seconds": 60.1306761,
+      "modMs": {
+        "samples": 5353,
+        "p50": 0.298,
+        "p95": 0.43470000000000003,
+        "maximum": 7.3636
+      },
+      "wholeMs": {
+        "samples": 5354,
+        "p50": 11.1416,
+        "p95": 13.4161,
+        "maximum": 51.8859
+      },
+      "spikesAtLeast30ms": [],
+      "wholeStalls": {
+        "50": 1,
+        "100": 0,
+        "250": 0
+      },
+      "attributionErrors": {
+        "timedExceptions": 0,
+        "crossFrameCalls": 0,
+        "componentTimedExceptions": 0,
+        "componentCrossFrameCalls": 0,
+        "eventMeasurementFailures": 0,
+        "eventCrossFrameCalls": 0,
+        "droppedModFrames": 0,
+        "activeReportCount": 0
+      },
+      "validity": {
+        "clean": true,
+        "autosaveOffBeforeAfter": true,
+        "saveFilesUnchanged": true,
+        "saveActivity": [],
+        "extraInstrumentation": false,
+        "start": {
+          "started": true,
+          "allocationCounter": false,
+          "authorityHookAvailable": true,
+          "components": [
+            "RouteObjectDiscovery.Step",
+            "PhysicalPopulation.BeforeAdvance",
+            "PhysicalPopulation.Update",
+            "PopulationRuntime.AdvancePopulation",
+            "MultimodalRoutes.Prepare",
+            "CitySimulator.RefreshTrafficClosures",
+            "PhysicalVehicles.Update",
+            "PhysicalTrafficHooks.FixedStepPrefix",
+            "PhysicalTrafficHooks.FixedStepPostfix",
+            "PhysicalTrafficHooks.FixedStepFinalizer",
+            "PhysicalVehicles.DeferNativeForce",
+            "PhysicalVehicles.ApplyNativeRotation",
+            "PhysicalIntersections.UpdatePostfix",
+            "ResidentInspector.Update",
+            "PopulationRuntime.OnGUI"
+          ],
+          "environment": {
+            "width": 1920,
+            "height": 1080,
+            "quality": "Low",
+            "vSync": 0,
+            "focused": true,
+            "runInBackground": true,
+            "targetFps": 90,
+            "calendarFactor": 0.3333333333333333,
+            "gpu": "NVIDIA GeForce RTX 4070",
+            "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+            "graphicsApi": "Direct3D11",
+            "timeScale": 1.0,
+            "camera": {
+              "position": {
+                "x": 215.0,
+                "y": 25.8321686,
+                "z": 23.7273273
+              },
+              "eulerAngles": {
+                "x": 47.2700729,
+                "y": 180.000168,
+                "z": -9.599643e-12
+              }
+            }
+          }
+        },
+        "after": {
+          "minute": 7691.513547897339,
+          "nativeMinute": 7691.513547897339,
+          "citizens": 957,
+          "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+          "failed": false,
+          "physical": "PersistentCity.Runtime.PhysicalPopulation",
+          "autosave": {
+            "originalPreventAutoSave": false,
+            "preventAutoSave": true,
+            "minutesBetweenAutoSaves": 5,
+            "maxAutoSavesPerGame": 3,
+            "savingGameInProgress": false,
+            "saveLogMessages": 8,
+            "save": "FT Food Routines Locked A1 Fix 20261031",
+            "frame": 10739
+          }
+        }
+      },
+      "clockBefore": 7671.070701599121,
+      "clockAfter": "08:11",
+      "loadWait": {
+        "polls": [
+          {
+            "elapsedSeconds": 0.030999999959021807,
+            "active": []
+          }
+        ],
+        "waitSeconds": 0.030999999959021807,
+        "underDotnetLoad": false
+      },
+      "loadBefore": {
+        "utc": "2026-10-31T10:10:29Z",
+        "cpuTotalPercent": 33.2,
+        "counts": {
+          "dotnet": 0,
+          "testhost": 0,
+          "codex": 10,
+          "python": 7
+        },
+        "ramAvailableGiB": 22.723766326904297,
+        "ramTotalGiB": 63.83710861206055,
+        "topCpu": [
+          {
+            "pid": 0,
+            "name": "System Idle Process",
+            "cpuSecondsDelta": 36.90625,
+            "ramMiB": 0.0078125
+          },
+          {
+            "pid": 46856,
+            "name": "Big Ambitions Agent Tests.exe",
+            "cpuSecondsDelta": 9.015625,
+            "ramMiB": 5881.08203125
+          },
+          {
+            "pid": 46244,
+            "name": "vmmemWSL",
+            "cpuSecondsDelta": 7.234375,
+            "ramMiB": 6486.171875
+          },
+          {
+            "pid": 1312,
+            "name": "MsMpEng.exe",
+            "cpuSecondsDelta": 2.734375,
+            "ramMiB": 697.375
+          },
+          {
+            "pid": 26820,
+            "name": "python.exe",
+            "cpuSecondsDelta": 1.796875,
+            "ramMiB": 27.7421875
+          },
+          {
+            "pid": 3476,
+            "name": "MemCompression",
+            "cpuSecondsDelta": 1.3125,
+            "ramMiB": 528.453125
+          },
+          {
+            "pid": 4,
+            "name": "System",
+            "cpuSecondsDelta": 0.421875,
+            "ramMiB": 45.515625
+          },
+          {
+            "pid": 20076,
+            "name": "Grok Bot.exe",
+            "cpuSecondsDelta": 0.0625,
+            "ramMiB": 67.99609375
+          },
+          {
+            "pid": 38932,
+            "name": "audiodg.exe",
+            "cpuSecondsDelta": 0.0625,
+            "ramMiB": 16.90234375
+          },
+          {
+            "pid": 2700,
+            "name": "tailscale-ipn.exe",
+            "cpuSecondsDelta": 0.046875,
+            "ramMiB": 50.66015625
+          },
+          {
+            "pid": 36200,
+            "name": "Discord.exe",
+            "cpuSecondsDelta": 0.03125,
+            "ramMiB": 391.29296875
+          },
+          {
+            "pid": 44060,
+            "name": "chrome.exe",
+            "cpuSecondsDelta": 0.03125,
+            "ramMiB": 50.51953125
+          }
+        ],
+        "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+      },
+      "loadAfter": {
+        "utc": "2026-10-31T10:11:54Z",
+        "cpuTotalPercent": 32.1,
+        "counts": {
+          "dotnet": 0,
+          "testhost": 0,
+          "codex": 8,
+          "python": 7
+        },
+        "ramAvailableGiB": 22.68935775756836,
+        "ramTotalGiB": 63.83710861206055,
+        "topCpu": [
+          {
+            "pid": 0,
+            "name": "System Idle Process",
+            "cpuSecondsDelta": 37.109375,
+            "ramMiB": 0.0078125
+          },
+          {
+            "pid": 46856,
+            "name": "Big Ambitions Agent Tests.exe",
+            "cpuSecondsDelta": 9.265625,
+            "ramMiB": 5902.46484375
+          },
+          {
+            "pid": 46244,
+            "name": "vmmemWSL",
+            "cpuSecondsDelta": 2.921875,
+            "ramMiB": 5850.359375
+          },
+          {
+            "pid": 26820,
+            "name": "python.exe",
+            "cpuSecondsDelta": 1.640625,
+            "ramMiB": 27.5
+          },
+          {
+            "pid": 3476,
+            "name": "MemCompression",
+            "cpuSecondsDelta": 1.140625,
+            "ramMiB": 1194.109375
+          },
+          {
+            "pid": 4,
+            "name": "System",
+            "cpuSecondsDelta": 0.15625,
+            "ramMiB": 45.51953125
+          },
+          {
+            "pid": 1312,
+            "name": "MsMpEng.exe",
+            "cpuSecondsDelta": 0.0625,
+            "ramMiB": 673.64453125
+          },
+          {
+            "pid": 20076,
+            "name": "Grok Bot.exe",
+            "cpuSecondsDelta": 0.046875,
+            "ramMiB": 68.14453125
+          },
+          {
+            "pid": 36744,
+            "name": "dwm.exe",
+            "cpuSecondsDelta": 0.046875,
+            "ramMiB": 154.859375
+          },
+          {
+            "pid": 38932,
+            "name": "audiodg.exe",
+            "cpuSecondsDelta": 0.03125,
+            "ramMiB": 16.859375
+          },
+          {
+            "pid": 15804,
+            "name": "Grok Bot.exe",
+            "cpuSecondsDelta": 0.015625,
+            "ramMiB": 101.1796875
+          },
+          {
+            "pid": 36200,
+            "name": "Discord.exe",
+            "cpuSecondsDelta": 0.015625,
+            "ramMiB": 391.53125
+          }
+        ],
+        "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+      },
+      "formatCounts": {
+        "frame": 10748,
+        "refreshCalls": 0,
+        "formatCalls": 0,
+        "formatOutsideRefresh": 0,
+        "formatDrawCalls": 0,
+        "formatMilliseconds": 0.0,
+        "formatBytes": 0,
+        "counterKind": "unavailable"
+      },
+      "inspectorTiming": {
+        "update": {
+          "closed": {
+            "calls": 5490,
+            "totalMilliseconds": 21.9659,
+            "maxMilliseconds": 0.0871
+          },
+          "hover": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          },
+          "open": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          }
+        },
+        "draw": {
+          "closed": {
+            "calls": 10980,
+            "totalMilliseconds": 3.3032,
+            "maxMilliseconds": 0.0125
+          },
+          "hover": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          },
+          "open": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          }
+        },
+        "picks": 0,
+        "builds": 0,
+        "buildMilliseconds": 0.0,
+        "buildMaxMilliseconds": 0.0,
+        "hovered": null,
+        "selected": null
+      },
+      "rawFiles": [
+        "frames-mod-work-base2-stop-9b76a5.csv.gz",
+        "frames-observations-base2-stop-9b76a5.csv.gz"
+      ],
+      "stopwatchFrequency": 10000000
+    },
+    {
+      "label": "cand2",
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.83217,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 179.999725,
+            "z": 9.599643e-12
+          }
+        }
+      },
+      "seconds": 60.2116818,
+      "modMs": {
+        "samples": 4737,
+        "p50": 0.3822,
+        "p95": 0.6782,
+        "maximum": 11.688500000000001
+      },
+      "wholeMs": {
+        "samples": 4738,
+        "p50": 12.3003,
+        "p95": 17.2308,
+        "maximum": 65.4768
+      },
+      "spikesAtLeast30ms": [],
+      "wholeStalls": {
+        "50": 3,
+        "100": 0,
+        "250": 0
+      },
+      "attributionErrors": {
+        "timedExceptions": 0,
+        "crossFrameCalls": 0,
+        "componentTimedExceptions": 0,
+        "componentCrossFrameCalls": 0,
+        "eventMeasurementFailures": 0,
+        "eventCrossFrameCalls": 0,
+        "droppedModFrames": 0,
+        "activeReportCount": 0
+      },
+      "validity": {
+        "clean": true,
+        "autosaveOffBeforeAfter": true,
+        "saveFilesUnchanged": true,
+        "saveActivity": [],
+        "extraInstrumentation": false,
+        "start": {
+          "started": true,
+          "allocationCounter": false,
+          "authorityHookAvailable": true,
+          "components": [
+            "RouteObjectDiscovery.Step",
+            "PhysicalPopulation.BeforeAdvance",
+            "PhysicalPopulation.Update",
+            "PopulationRuntime.AdvancePopulation",
+            "MultimodalRoutes.Prepare",
+            "CitySimulator.RefreshTrafficClosures",
+            "PhysicalVehicles.Update",
+            "PhysicalTrafficHooks.FixedStepPrefix",
+            "PhysicalTrafficHooks.FixedStepPostfix",
+            "PhysicalTrafficHooks.FixedStepFinalizer",
+            "PhysicalVehicles.DeferNativeForce",
+            "PhysicalVehicles.ApplyNativeRotation",
+            "PhysicalIntersections.UpdatePostfix",
+            "ResidentInspector.Update",
+            "PopulationRuntime.OnGUI"
+          ],
+          "environment": {
+            "width": 1920,
+            "height": 1080,
+            "quality": "Low",
+            "vSync": 0,
+            "focused": true,
+            "runInBackground": true,
+            "targetFps": 90,
+            "calendarFactor": 0.3333333333333333,
+            "gpu": "NVIDIA GeForce RTX 4070",
+            "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+            "graphicsApi": "Direct3D11",
+            "timeScale": 1.0,
+            "camera": {
+              "position": {
+                "x": 215.0,
+                "y": 25.83217,
+                "z": 23.7273273
+              },
+              "eulerAngles": {
+                "x": 47.2700729,
+                "y": 179.999847,
+                "z": 0.0
+              }
+            }
+          }
+        },
+        "after": {
+          "minute": 7691.745365142822,
+          "nativeMinute": 7691.745365142822,
+          "citizens": 957,
+          "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+          "failed": false,
+          "physical": "PersistentCity.Runtime.PhysicalPopulation",
+          "autosave": {
+            "originalPreventAutoSave": false,
+            "preventAutoSave": true,
+            "minutesBetweenAutoSaves": 5,
+            "maxAutoSavesPerGame": 3,
+            "savingGameInProgress": false,
+            "saveLogMessages": 8,
+            "save": "FT Food Routines Locked A1 Fix 20261031",
+            "frame": 7962
+          }
+        }
+      },
+      "clockBefore": 7671.165828704834,
+      "clockAfter": "08:11",
+      "loadWait": {
+        "polls": [
+          {
+            "elapsedSeconds": 0.030999999959021807,
+            "active": []
+          }
+        ],
+        "waitSeconds": 0.030999999959021807,
+        "underDotnetLoad": false
+      },
+      "loadBefore": {
+        "utc": "2026-10-31T10:12:57Z",
+        "cpuTotalPercent": 68.1,
+        "counts": {
+          "dotnet": 0,
+          "testhost": 0,
+          "codex": 8,
+          "python": 7
+        },
+        "ramAvailableGiB": 19.768692016601562,
+        "ramTotalGiB": 63.83710861206055,
+        "topCpu": [
+          {
+            "pid": 46244,
+            "name": "vmmemWSL",
+            "cpuSecondsDelta": 38.15625,
+            "ramMiB": 9720.859375
+          },
+          {
+            "pid": 0,
+            "name": "System Idle Process",
+            "cpuSecondsDelta": 20.140625,
+            "ramMiB": 0.0078125
+          },
+          {
+            "pid": 24440,
+            "name": "Big Ambitions Agent Tests.exe",
+            "cpuSecondsDelta": 14.140625,
+            "ramMiB": 5347.82421875
+          },
+          {
+            "pid": 50648,
+            "name": "python.exe",
+            "cpuSecondsDelta": 3.015625,
+            "ramMiB": 28.16796875
+          },
+          {
+            "pid": 47256,
+            "name": "chrome.exe",
+            "cpuSecondsDelta": 1.140625,
+            "ramMiB": 214.40625
+          },
+          {
+            "pid": 4,
+            "name": "System",
+            "cpuSecondsDelta": 0.4375,
+            "ramMiB": 45.5234375
+          },
+          {
+            "pid": 38932,
+            "name": "audiodg.exe",
+            "cpuSecondsDelta": 0.28125,
+            "ramMiB": 16.8671875
+          },
+          {
+            "pid": 1312,
+            "name": "MsMpEng.exe",
+            "cpuSecondsDelta": 0.078125,
+            "ramMiB": 674.625
+          },
+          {
+            "pid": 20076,
+            "name": "Grok Bot.exe",
+            "cpuSecondsDelta": 0.078125,
+            "ramMiB": 67.75
+          },
+          {
+            "pid": 36200,
+            "name": "Discord.exe",
+            "cpuSecondsDelta": 0.0625,
+            "ramMiB": 393.0078125
+          },
+          {
+            "pid": 36744,
+            "name": "dwm.exe",
+            "cpuSecondsDelta": 0.0625,
+            "ramMiB": 154.890625
+          },
+          {
+            "pid": 2064,
+            "name": "tailscaled.exe",
+            "cpuSecondsDelta": 0.046875,
+            "ramMiB": 122.015625
+          }
+        ],
+        "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+      },
+      "loadAfter": {
+        "utc": "2026-10-31T10:14:25Z",
+        "cpuTotalPercent": 47.9,
+        "counts": {
+          "dotnet": 5,
+          "testhost": 1,
+          "codex": 8,
+          "python": 8
+        },
+        "ramAvailableGiB": 18.966373443603516,
+        "ramTotalGiB": 63.83710861206055,
+        "topCpu": [
+          {
+            "pid": 0,
+            "name": "System Idle Process",
+            "cpuSecondsDelta": 30.84375,
+            "ramMiB": 0.0078125
+          },
+          {
+            "pid": 24440,
+            "name": "Big Ambitions Agent Tests.exe",
+            "cpuSecondsDelta": 10.375,
+            "ramMiB": 5394.3671875
+          },
+          {
+            "pid": 46244,
+            "name": "vmmemWSL",
+            "cpuSecondsDelta": 9.34375,
+            "ramMiB": 6902.421875
+          },
+          {
+            "pid": 49212,
+            "name": "testhost.exe",
+            "cpuSecondsDelta": 9.0625,
+            "ramMiB": 2615.0625
+          },
+          {
+            "pid": 50648,
+            "name": "python.exe",
+            "cpuSecondsDelta": 1.921875,
+            "ramMiB": 28.47265625
+          },
+          {
+            "pid": 4,
+            "name": "System",
+            "cpuSecondsDelta": 0.28125,
+            "ramMiB": 45.52734375
+          },
+          {
+            "pid": 38932,
+            "name": "audiodg.exe",
+            "cpuSecondsDelta": 0.21875,
+            "ramMiB": 16.88671875
+          },
+          {
+            "pid": 23812,
+            "name": "explorer.exe",
+            "cpuSecondsDelta": 0.09375,
+            "ramMiB": 331.7109375
+          },
+          {
+            "pid": 36744,
+            "name": "dwm.exe",
+            "cpuSecondsDelta": 0.0625,
+            "ramMiB": 154.90625
+          },
+          {
+            "pid": 1312,
+            "name": "MsMpEng.exe",
+            "cpuSecondsDelta": 0.046875,
+            "ramMiB": 711.45703125
+          },
+          {
+            "pid": 3108,
+            "name": "NVDisplay.Container.exe",
+            "cpuSecondsDelta": 0.046875,
+            "ramMiB": 27.18359375
+          },
+          {
+            "pid": 8208,
+            "name": "steam.exe",
+            "cpuSecondsDelta": 0.046875,
+            "ramMiB": 136.640625
+          }
+        ],
+        "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+      },
+      "formatCounts": {
+        "frame": 7969,
+        "refreshCalls": 0,
+        "formatCalls": 0,
+        "formatOutsideRefresh": 0,
+        "formatDrawCalls": 0,
+        "formatMilliseconds": 0.0,
+        "formatBytes": 0,
+        "counterKind": "unavailable"
+      },
+      "inspectorTiming": {
+        "update": {
+          "closed": {
+            "calls": 4873,
+            "totalMilliseconds": 26.0436,
+            "maxMilliseconds": 0.0755
+          },
+          "hover": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          },
+          "open": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          }
+        },
+        "draw": {
+          "closed": {
+            "calls": 9746,
+            "totalMilliseconds": 3.3569,
+            "maxMilliseconds": 0.0649
+          },
+          "hover": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          },
+          "open": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          }
+        },
+        "picks": 0,
+        "builds": 0,
+        "buildMilliseconds": 0.0,
+        "buildMaxMilliseconds": 0.0,
+        "hovered": null,
+        "selected": null
+      },
+      "rawFiles": [
+        "frames-mod-work-cand2-stop-256e39.csv.gz",
+        "frames-observations-cand2-stop-256e39.csv.gz"
+      ],
+      "stopwatchFrequency": 10000000
+    },
+    {
+      "label": "cand2-open",
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321667,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 179.999344,
+            "z": 0.0
+          }
+        }
+      },
+      "seconds": 60.230145,
+      "modMs": {
+        "samples": 5386,
+        "p50": 0.33949999999999997,
+        "p95": 0.4426,
+        "maximum": 5.1694
+      },
+      "wholeMs": {
+        "samples": 5387,
+        "p50": 11.1601,
+        "p95": 12.8413,
+        "maximum": 29.2365
+      },
+      "spikesAtLeast30ms": [],
+      "wholeStalls": {
+        "50": 0,
+        "100": 0,
+        "250": 0
+      },
+      "attributionErrors": {
+        "timedExceptions": 0,
+        "crossFrameCalls": 0,
+        "componentTimedExceptions": 0,
+        "componentCrossFrameCalls": 0,
+        "eventMeasurementFailures": 0,
+        "eventCrossFrameCalls": 0,
+        "droppedModFrames": 0,
+        "activeReportCount": 0
+      },
+      "validity": {
+        "clean": true,
+        "autosaveOffBeforeAfter": true,
+        "saveFilesUnchanged": true,
+        "saveActivity": [],
+        "extraInstrumentation": false,
+        "start": {
+          "started": true,
+          "allocationCounter": false,
+          "authorityHookAvailable": true,
+          "components": [
+            "RouteObjectDiscovery.Step",
+            "PhysicalPopulation.BeforeAdvance",
+            "PhysicalPopulation.Update",
+            "PopulationRuntime.AdvancePopulation",
+            "MultimodalRoutes.Prepare",
+            "CitySimulator.RefreshTrafficClosures",
+            "PhysicalVehicles.Update",
+            "PhysicalTrafficHooks.FixedStepPrefix",
+            "PhysicalTrafficHooks.FixedStepPostfix",
+            "PhysicalTrafficHooks.FixedStepFinalizer",
+            "PhysicalVehicles.DeferNativeForce",
+            "PhysicalVehicles.ApplyNativeRotation",
+            "PhysicalIntersections.UpdatePostfix",
+            "ResidentInspector.Update",
+            "PopulationRuntime.OnGUI"
+          ],
+          "environment": {
+            "width": 1920,
+            "height": 1080,
+            "quality": "Low",
+            "vSync": 0,
+            "focused": true,
+            "runInBackground": true,
+            "targetFps": 90,
+            "calendarFactor": 0.3333333333333333,
+            "gpu": "NVIDIA GeForce RTX 4070",
+            "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+            "graphicsApi": "Direct3D11",
+            "timeScale": 1.0,
+            "camera": {
+              "position": {
+                "x": 215.0,
+                "y": 25.8321667,
+                "z": 23.7273273
+              },
+              "eulerAngles": {
+                "x": 47.2700729,
+                "y": 179.999374,
+                "z": -3.83985725e-11
+              }
+            }
+          }
+        },
+        "after": {
+          "minute": 7691.712685585022,
+          "nativeMinute": 7691.712685585022,
+          "citizens": 957,
+          "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+          "failed": false,
+          "physical": "PersistentCity.Runtime.PhysicalPopulation",
+          "autosave": {
+            "originalPreventAutoSave": false,
+            "preventAutoSave": true,
+            "minutesBetweenAutoSaves": 5,
+            "maxAutoSavesPerGame": 3,
+            "savingGameInProgress": false,
+            "saveLogMessages": 10,
+            "save": "FT Food Routines Locked A1 Fix 20261031",
+            "frame": 46990
+          }
+        }
+      },
+      "clockBefore": 7671.263080596924,
+      "clockAfter": "08:11",
+      "loadWait": {
+        "polls": [
+          {
+            "elapsedSeconds": 0.014999999897554517,
+            "active": [
+              {
+                "pid": 13108,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 29840,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 31088,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 34020,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 45012,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 49212,
+                "name": "testhost.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 30.014999999897555,
+            "active": [
+              {
+                "pid": 13108,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 29840,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 31088,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 34020,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 45012,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 49212,
+                "name": "testhost.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 60.03099999995902,
+            "active": [
+              {
+                "pid": 13108,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 29840,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 31088,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 34020,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 45012,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 49212,
+                "name": "testhost.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 90.03099999995902,
+            "active": [
+              {
+                "pid": 13108,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 29840,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 31088,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 34020,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 45012,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 49212,
+                "name": "testhost.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 120.03099999995902,
+            "active": [
+              {
+                "pid": 13108,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 29840,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 31088,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 34020,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 45012,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 49212,
+                "name": "testhost.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 150.0460000000894,
+            "active": [
+              {
+                "pid": 13904,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 31088,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 180.0460000000894,
+            "active": [
+              {
+                "pid": 2960,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 31088,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 210.0460000000894,
+            "active": [
+              {
+                "pid": 31088,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 52180,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 240.06199999991804,
+            "active": [
+              {
+                "pid": 31088,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 53008,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 270.06199999991804,
+            "active": [
+              {
+                "pid": 16108,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 31088,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 42424,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 300.06199999991804,
+            "active": [
+              {
+                "pid": 31088,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 330.0779999999795,
+            "active": []
+          }
+        ],
+        "waitSeconds": 330.0779999999795,
+        "underDotnetLoad": false
+      },
+      "loadBefore": {
+        "utc": "2026-10-31T10:20:35Z",
+        "cpuTotalPercent": 20.7,
+        "counts": {
+          "dotnet": 0,
+          "testhost": 0,
+          "codex": 8,
+          "python": 6
+        },
+        "ramAvailableGiB": 29.64333724975586,
+        "ramTotalGiB": 63.83710861206055,
+        "topCpu": [
+          {
+            "pid": 0,
+            "name": "System Idle Process",
+            "cpuSecondsDelta": 38.203125,
+            "ramMiB": 0.0078125
+          },
+          {
+            "pid": 24440,
+            "name": "Big Ambitions Agent Tests.exe",
+            "cpuSecondsDelta": 8.109375,
+            "ramMiB": 5755.41015625
+          },
+          {
+            "pid": 36328,
+            "name": "python.exe",
+            "cpuSecondsDelta": 1.609375,
+            "ramMiB": 27.3359375
+          },
+          {
+            "pid": 38932,
+            "name": "audiodg.exe",
+            "cpuSecondsDelta": 0.21875,
+            "ramMiB": 16.85546875
+          },
+          {
+            "pid": 1312,
+            "name": "MsMpEng.exe",
+            "cpuSecondsDelta": 0.140625,
+            "ramMiB": 707.828125
+          },
+          {
+            "pid": 23812,
+            "name": "explorer.exe",
+            "cpuSecondsDelta": 0.125,
+            "ramMiB": 330.4609375
+          },
+          {
+            "pid": 45224,
+            "name": "chrome.exe",
+            "cpuSecondsDelta": 0.09375,
+            "ramMiB": 174.97265625
+          },
+          {
+            "pid": 18348,
+            "name": "codex.exe",
+            "cpuSecondsDelta": 0.078125,
+            "ramMiB": 81.2734375
+          },
+          {
+            "pid": 2064,
+            "name": "tailscaled.exe",
+            "cpuSecondsDelta": 0.0625,
+            "ramMiB": 122.03125
+          },
+          {
+            "pid": 44060,
+            "name": "chrome.exe",
+            "cpuSecondsDelta": 0.0625,
+            "ramMiB": 51.12890625
+          },
+          {
+            "pid": 4,
+            "name": "System",
+            "cpuSecondsDelta": 0.046875,
+            "ramMiB": 45.54296875
+          },
+          {
+            "pid": 6008,
+            "name": "python.exe",
+            "cpuSecondsDelta": 0.046875,
+            "ramMiB": 28.36328125
+          }
+        ],
+        "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+      },
+      "loadAfter": {
+        "utc": "2026-10-31T10:22:02Z",
+        "cpuTotalPercent": 24.8,
+        "counts": {
+          "dotnet": 4,
+          "testhost": 1,
+          "codex": 6,
+          "python": 6
+        },
+        "ramAvailableGiB": 26.07880401611328,
+        "ramTotalGiB": 63.83710861206055,
+        "topCpu": [
+          {
+            "pid": 0,
+            "name": "System Idle Process",
+            "cpuSecondsDelta": 37.9375,
+            "ramMiB": 0.0078125
+          },
+          {
+            "pid": 24440,
+            "name": "Big Ambitions Agent Tests.exe",
+            "cpuSecondsDelta": 7.453125,
+            "ramMiB": 5769.640625
+          },
+          {
+            "pid": 20884,
+            "name": "testhost.exe",
+            "cpuSecondsDelta": 2.609375,
+            "ramMiB": 3164.109375
+          },
+          {
+            "pid": 36328,
+            "name": "python.exe",
+            "cpuSecondsDelta": 1.640625,
+            "ramMiB": 27.70703125
+          },
+          {
+            "pid": 1312,
+            "name": "MsMpEng.exe",
+            "cpuSecondsDelta": 0.671875,
+            "ramMiB": 688.21484375
+          },
+          {
+            "pid": 38932,
+            "name": "audiodg.exe",
+            "cpuSecondsDelta": 0.21875,
+            "ramMiB": 16.8203125
+          },
+          {
+            "pid": 4,
+            "name": "System",
+            "cpuSecondsDelta": 0.09375,
+            "ramMiB": 45.54296875
+          },
+          {
+            "pid": 43032,
+            "name": "SearchProtocolHost.exe",
+            "cpuSecondsDelta": 0.078125,
+            "ramMiB": 24.19921875
+          },
+          {
+            "pid": 4504,
+            "name": "svchost.exe",
+            "cpuSecondsDelta": 0.0625,
+            "ramMiB": 82.9453125
+          },
+          {
+            "pid": 1904,
+            "name": "svchost.exe",
+            "cpuSecondsDelta": 0.03125,
+            "ramMiB": 55.55078125
+          },
+          {
+            "pid": 2064,
+            "name": "tailscaled.exe",
+            "cpuSecondsDelta": 0.03125,
+            "ramMiB": 122.015625
+          },
+          {
+            "pid": 33032,
+            "name": "python.exe",
+            "cpuSecondsDelta": 0.03125,
+            "ramMiB": 60.1328125
+          }
+        ],
+        "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+      },
+      "formatCounts": {
+        "frame": 47010,
+        "refreshCalls": 62,
+        "formatCalls": 248,
+        "formatOutsideRefresh": 0,
+        "formatDrawCalls": 0,
+        "formatMilliseconds": 0.2956,
+        "formatBytes": 0,
+        "counterKind": "unavailable"
+      },
+      "inspectorTiming": {
+        "update": {
+          "closed": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          },
+          "hover": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          },
+          "open": {
+            "calls": 5527,
+            "totalMilliseconds": 21.9907,
+            "maxMilliseconds": 0.1251
+          }
+        },
+        "draw": {
+          "closed": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          },
+          "hover": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          },
+          "open": {
+            "calls": 11054,
+            "totalMilliseconds": 429.683,
+            "maxMilliseconds": 0.2482
+          }
+        },
+        "picks": 0,
+        "builds": 62,
+        "buildMilliseconds": 5.4591,
+        "buildMaxMilliseconds": 0.1186,
+        "hovered": null,
+        "selected": "c0"
+      },
+      "rawFiles": [
+        "frames-mod-work-cand2-open-stop-7f42a1.csv.gz",
+        "frames-observations-cand2-open-stop-7f42a1.csv.gz"
+      ],
+      "stopwatchFrequency": 10000000
+    }
+  ],
+  "allP95Below5ms": true,
+  "allValid": true
+}

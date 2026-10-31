@@ -1,0 +1,31 @@
+{
+  "role": "rig_test",
+  "persistedSourcePayloadIdentical": true,
+  "controlSavedPayloadSha256": "e441591d1f53c1e32b276a8f13cbcbd5eb77c05a25739c0ce627e12c1849c039",
+  "candidateLoadedSourcePayloadSha256": "e441591d1f53c1e32b276a8f13cbcbd5eb77c05a25739c0ce627e12c1849c039",
+  "candidateManualSavePayloadIdenticalAfterReload": true,
+  "selectedResidentIdentityAssignmentsIdentical": true,
+  "selectedLiveDifferences": {
+    "c0": {},
+    "c102": {},
+    "c149": {
+      "DepartureMinute": {
+        "control": 7686.309470453928,
+        "candidate": 7686.309470295888
+      },
+      "NextEventMinute": {
+        "control": 7720.926041197026,
+        "candidate": 7720.926041038986
+      }
+    },
+    "c1": {},
+    "c10": {}
+  },
+  "nativeMinutes": [
+    7720.016170501709,
+    7720.349502563477,
+    7720.349502563477,
+    7720.682834625244
+  ],
+  "candidateAllCitizenValuesIdenticalAcrossItsReload": true
+}

@@ -1,0 +1,10 @@
+{
+  "instance": "agent1",
+  "held": true,
+  "owner": "pc-rig-test-locked-a1fix",
+  "purpose": "31 October A1 address native red-green rig_test",
+  "acquired_utc": "2026-10-31T09:53:11.488881Z",
+  "expires_automatically": false,
+  "pending": 0,
+  "legacy_blocked": false
+}

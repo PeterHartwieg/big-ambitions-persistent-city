@@ -1,0 +1,124 @@
+{
+  "role": "rig_test",
+  "candidateRemoteUnchanged": true,
+  "arms": [
+    {
+      "role": "rig_test",
+      "arm": "control",
+      "sourceSha": "ee9486b17db082aff1f764251568fb4670ffca2a",
+      "dllSha256": "4cb1181f46ec5536ed9922799601c27379c296ddece39b278c4e4f84222b414c",
+      "build": "python tools/build.py --game-managed <agent1 Managed>",
+      "pathPrefix": "LOCALAPPDATA/Microsoft/dotnet",
+      "sourceUnchanged": true
+    },
+    {
+      "role": "rig_test",
+      "arm": "candidate",
+      "sourceSha": "1c242412d9670428719d5eedea7fbb9761d917f2",
+      "dllSha256": "d6de34e7c6a09d86d9ba5aa90ff3e5633ba4807a61d5a86c5240c39cdb13c0b9",
+      "build": "python tools/build.py --game-managed <agent1 Managed>",
+      "pathPrefix": "LOCALAPPDATA/Microsoft/dotnet",
+      "sourceUnchanged": true
+    }
+  ],
+  "offlineTestSuitesRun": 0,
+  "loaded": [
+    {
+      "arm": "base1",
+      "actualLoadedAssembly": {
+        "location": "C:\\BigAmbitions-AgentTests\\<agent1-profile>\\ModsLocal\\PersistentCity\\PersistentCity.dll",
+        "dllSha256": "4cb1181f46ec5536ed9922799601c27379c296ddece39b278c4e4f84222b414c",
+        "assembly": "PersistentCity, Version=0.10.0.0, Culture=neutral, PublicKeyToken=null",
+        "frame": 47014
+      },
+      "observerSha256": {
+        "FoodDemandAuditProbe\\FoodDemandAuditProbe.dll": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+        "PR3RigGuard\\ReviewGuard.dll": "1b30b536a14e4e33c7e811555b9c016429d49a64609664bc5be9bd771dcb7362"
+      },
+      "fixture": {
+        "name": "FT Food Routines Locked A1 Fix 20261031",
+        "sha256": "bb8ac25721dcea825cdf40e462a606e6244fe93668c8940b9688f4ca482d9273",
+        "source": "retained FT morning-base disposable fixture",
+        "sourceSchema": "historical fixture; normal production migration only"
+      }
+    },
+    {
+      "arm": "cand1",
+      "actualLoadedAssembly": {
+        "location": "C:\\BigAmbitions-AgentTests\\<agent1-profile>\\ModsLocal\\PersistentCity\\PersistentCity.dll",
+        "dllSha256": "d6de34e7c6a09d86d9ba5aa90ff3e5633ba4807a61d5a86c5240c39cdb13c0b9",
+        "assembly": "PersistentCity, Version=0.10.0.0, Culture=neutral, PublicKeyToken=null",
+        "frame": 11679
+      },
+      "observerSha256": {
+        "FoodDemandAuditProbe\\FoodDemandAuditProbe.dll": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+        "PR3RigGuard\\ReviewGuard.dll": "1b30b536a14e4e33c7e811555b9c016429d49a64609664bc5be9bd771dcb7362"
+      },
+      "fixture": {
+        "name": "FT Food Routines Locked A1 Fix 20261031",
+        "sha256": "bb8ac25721dcea825cdf40e462a606e6244fe93668c8940b9688f4ca482d9273",
+        "source": "retained FT morning-base disposable fixture",
+        "sourceSchema": "historical fixture; normal production migration only"
+      }
+    },
+    {
+      "arm": "base2",
+      "actualLoadedAssembly": {
+        "location": "C:\\BigAmbitions-AgentTests\\<agent1-profile>\\ModsLocal\\PersistentCity\\PersistentCity.dll",
+        "dllSha256": "4cb1181f46ec5536ed9922799601c27379c296ddece39b278c4e4f84222b414c",
+        "assembly": "PersistentCity, Version=0.10.0.0, Culture=neutral, PublicKeyToken=null",
+        "frame": 11163
+      },
+      "observerSha256": {
+        "FoodDemandAuditProbe\\FoodDemandAuditProbe.dll": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+        "PR3RigGuard\\ReviewGuard.dll": "1b30b536a14e4e33c7e811555b9c016429d49a64609664bc5be9bd771dcb7362"
+      },
+      "fixture": {
+        "name": "FT Food Routines Locked A1 Fix 20261031",
+        "sha256": "bb8ac25721dcea825cdf40e462a606e6244fe93668c8940b9688f4ca482d9273",
+        "source": "retained FT morning-base disposable fixture",
+        "sourceSchema": "historical fixture; normal production migration only"
+      }
+    },
+    {
+      "arm": "cand2",
+      "actualLoadedAssembly": {
+        "location": "C:\\BigAmbitions-AgentTests\\<agent1-profile>\\ModsLocal\\PersistentCity\\PersistentCity.dll",
+        "dllSha256": "d6de34e7c6a09d86d9ba5aa90ff3e5633ba4807a61d5a86c5240c39cdb13c0b9",
+        "assembly": "PersistentCity, Version=0.10.0.0, Culture=neutral, PublicKeyToken=null",
+        "frame": 47613
+      },
+      "observerSha256": {
+        "FoodDemandAuditProbe\\FoodDemandAuditProbe.dll": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+        "PR3RigGuard\\ReviewGuard.dll": "1b30b536a14e4e33c7e811555b9c016429d49a64609664bc5be9bd771dcb7362"
+      },
+      "fixture": {
+        "name": "FT Food Routines Locked A1 Fix 20261031",
+        "sha256": "bb8ac25721dcea825cdf40e462a606e6244fe93668c8940b9688f4ca482d9273",
+        "source": "retained FT morning-base disposable fixture",
+        "sourceSchema": "historical fixture; normal production migration only"
+      }
+    }
+  ],
+  "toolBuild": {
+    "production": "d6de34e7c6a09d86d9ba5aa90ff3e5633ba4807a61d5a86c5240c39cdb13c0b9",
+    "frameHelper": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+    "guard": "1b30b536a14e4e33c7e811555b9c016429d49a64609664bc5be9bd771dcb7362",
+    "sources": {
+      "Probe.cs": "a6a8080dca4c0e31311e981eac2e6ace5c68c3a2760e87d939c705b9688ad780",
+      "Pilot.cs": "e1860b54a6cceccea702d91454a39edd3014e4f102d0aa9138513bf6b35aaad3",
+      "ClockAudit.cs": "d709996057f36e9a258b48d6040c24ac2bb1950ddd853239f1923144e1f1dd8d",
+      "Neighborhood.cs": "35c20714ff41e1ede978a66ccf3b7ce734122a63432fde4667ed39ad18a5e71a",
+      "Frames.cs": "8db081e6a7fbd22fc6125f5aab5a30a7bff2e4137123e0a6112066fc59e25240",
+      "EventMeasurements.cs": "3c6993e5246e633ea215bae932e31250e45d47f574cec71ea6cb14681ae7e8f3",
+      "EventObservations.cs": "405a23d378bc69538313bbd6ad05c09349afee1328438b1811a44dd333f06668",
+      "FrameObservations.cs": "8402e336aff12b1ccea2fb9bc857c45c990462ac786f2b7d2b68da80e4df95f9",
+      "DiagnosticResponses.cs": "11711f2818f8a536a7500c0ddd47408b73b37428446c44022324f9414fded475",
+      "Menus.cs": "e50dafe3c33adf51de1938e8520bd19f325125b3a8197c2981b96578cbf1f629",
+      "Operations.cs": "3b0e2efb18dd402458fbba36b2649d9527867219ae0982fa7ab814666dac2ce7",
+      "ReturnQuotes.cs": "78a8df1d3a82d4403b119c61c1961c285083840f3ff1aa8f9b5578238a3d5363"
+    },
+    "guardSource": "1f904df7f9fa0c6d44ec9db132c4e6bf268836d3e48ba0f612d4d792cea078af"
+  },
+  "arrangement": "Unchanged RLO + Persistent City + bridge-only host + read-only observers; Workshop off; window visible; 1920x1080 Low, D3D11, normal speed, one-third native clock. Not the full modpack."
+}

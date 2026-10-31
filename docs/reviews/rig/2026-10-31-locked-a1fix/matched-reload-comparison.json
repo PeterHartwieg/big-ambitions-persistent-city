@@ -1,0 +1,16 @@
+{
+  "role": "rig_test",
+  "sameNativeMinute": true,
+  "nativeMinute": 7720.349502563477,
+  "allCitizensExactlyEqual": true,
+  "selectedResidentValuesExactlyEqual": true,
+  "selectedDifferences": {
+    "c0": [],
+    "c102": [],
+    "c149": [],
+    "c1": [],
+    "c10": []
+  },
+  "nativeBatchMinutesExactlyEqual": true,
+  "allBaselineDisplayFieldsIdenticalBeforeAndAfterReload": true
+}

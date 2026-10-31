@@ -1,0 +1,352 @@
+{
+  "role": "rig_test",
+  "seamNotGesture": true,
+  "selection": {
+    "ids": [
+      "c0",
+      "c102",
+      "c149",
+      "c1",
+      "c10"
+    ],
+    "roles": {
+      "worker": "c0",
+      "student": "c102",
+      "foodTraveller": "c149",
+      "mealRecord": "c0",
+      "additional3": "c1",
+      "additional4": "c10"
+    }
+  },
+  "batches": {
+    "control-inspector-summary": {
+      "minute": 7720.016170501709,
+      "nativeMinute": 7720.016170501709,
+      "payloadHashBefore": "e441591d1f53c1e32b276a8f13cbcbd5eb77c05a25739c0ce627e12c1849c039",
+      "payloadHashAfter": "e441591d1f53c1e32b276a8f13cbcbd5eb77c05a25739c0ce627e12c1849c039",
+      "payloadIdentical": true
+    },
+    "candidate-inspector-summary": {
+      "minute": 7720.349502563477,
+      "nativeMinute": 7720.349502563477,
+      "payloadHashBefore": "fdd4f311a01785afba972e69559e23d294627884263ea8f56be2a80ab9e9e24f",
+      "payloadHashAfter": "fdd4f311a01785afba972e69559e23d294627884263ea8f56be2a80ab9e9e24f",
+      "payloadIdentical": true
+    },
+    "candidate-reloaded-inspector-summary": {
+      "minute": 7720.682834625244,
+      "nativeMinute": 7720.682834625244,
+      "payloadHashBefore": "1a29f218fc319be96411ff6fa0dfdeeb362f32bc52f10cf7ec60feca0c976f3b",
+      "payloadHashAfter": "1a29f218fc319be96411ff6fa0dfdeeb362f32bc52f10cf7ec60feca0c976f3b",
+      "payloadIdentical": true
+    }
+  },
+  "comparisons": [
+    {
+      "id": "c0",
+      "addresses": [
+        {
+          "field": "Home",
+          "native": "49 4th Avenue",
+          "shown": "49 4th Avenue",
+          "exact": true,
+          "mapArgumentsIdentical": true
+        },
+        {
+          "field": "Work",
+          "native": "21 5th Avenue",
+          "shown": "21 5th Avenue",
+          "exact": true,
+          "mapArgumentsIdentical": true
+        }
+      ],
+      "fields": {
+        "header": {
+          "control": "Ivo Barlow, 43",
+          "candidate": "Ivo Barlow, 43",
+          "nativeSubstitutionExpected": "Ivo Barlow, 43",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        },
+        "personality": {
+          "control": "Personality: night owl · works late · owns a car",
+          "candidate": "Personality: night owl · works late · owns a car",
+          "nativeSubstitutionExpected": "Personality: night owl · works late · owns a car",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        },
+        "homeLabel": {
+          "control": "ba:street_fourthavenue 49  ↗",
+          "candidate": "49 4th Avenue  ↗",
+          "nativeSubstitutionExpected": "49 4th Avenue  ↗",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        },
+        "workLabel": {
+          "control": "Joko Tech, ba:street_fifthavenue 21  ↗",
+          "candidate": "Joko Tech, 21 5th Avenue  ↗",
+          "nativeSubstitutionExpected": "Joko Tech, 21 5th Avenue  ↗",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        },
+        "body": {
+          "control": "Ivo Barlow, 43, is a night owl. Lives at ba:street_fourthavenue 49. Works at Joko Tech, ba:street_fifthavenue 21. Right now: at home until 20:31.\n\nNot travelling: at home (stays until 20:31)\n\nToday's meals\nBreakfast: unknown (not decided yet)\nLunch: unknown\nDinner: unknown\n",
+          "candidate": "Ivo Barlow, 43, is a night owl. Lives at 49 4th Avenue. Works at Joko Tech, 21 5th Avenue. Right now: at home until 20:31.\n\nNot travelling: at home (stays until 20:31)\n\nToday's meals\nBreakfast: unknown (not decided yet)\nLunch: unknown\nDinner: unknown\n",
+          "nativeSubstitutionExpected": "Ivo Barlow, 43, is a night owl. Lives at 49 4th Avenue. Works at Joko Tech, 21 5th Avenue. Right now: at home until 20:31.\n\nNot travelling: at home (stays until 20:31)\n\nToday's meals\nBreakfast: unknown (not decided yet)\nLunch: unknown\nDinner: unknown\n",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        }
+      },
+      "noRawLocalizationKeys": true,
+      "identityIdentical": true,
+      "placeIdsIdentical": true,
+      "nativePlacesIdentical": true
+    },
+    {
+      "id": "c102",
+      "addresses": [
+        {
+          "field": "Home",
+          "native": "18 9th Street",
+          "shown": "18 9th Street",
+          "exact": true,
+          "mapArgumentsIdentical": true
+        },
+        {
+          "field": "Work",
+          "native": "7 4th Avenue",
+          "shown": "7 4th Avenue",
+          "exact": true,
+          "mapArgumentsIdentical": true
+        }
+      ],
+      "fields": {
+        "header": {
+          "control": "Clara Lane, 19",
+          "candidate": "Clara Lane, 19",
+          "nativeSubstitutionExpected": "Clara Lane, 19",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        },
+        "personality": {
+          "control": "Personality: on a student budget · often packs lunch · minds fares",
+          "candidate": "Personality: on a student budget · often packs lunch · minds fares",
+          "nativeSubstitutionExpected": "Personality: on a student budget · often packs lunch · minds fares",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        },
+        "homeLabel": {
+          "control": "ba:street_ninthstreet 18  ↗",
+          "candidate": "18 9th Street  ↗",
+          "nativeSubstitutionExpected": "18 9th Street  ↗",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        },
+        "workLabel": {
+          "control": "Manhattan Business School, ba:street_fourthavenue 7  ↗",
+          "candidate": "Manhattan Business School, 7 4th Avenue  ↗",
+          "nativeSubstitutionExpected": "Manhattan Business School, 7 4th Avenue  ↗",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        },
+        "body": {
+          "control": "Clara Lane, 19, is a student. Lives at ba:street_ninthstreet 18. Studies at Manhattan Business School, ba:street_fourthavenue 7. Right now: at home until 10:47.\n\nNot travelling: at home (stays until 10:47)\n\nToday's meals\nBreakfast: chose food from home instead of buying\nLunch: unknown\nDinner: unknown\n",
+          "candidate": "Clara Lane, 19, is a student. Lives at 18 9th Street. Studies at Manhattan Business School, 7 4th Avenue. Right now: at home until 10:47.\n\nNot travelling: at home (stays until 10:47)\n\nToday's meals\nBreakfast: chose food from home instead of buying\nLunch: unknown\nDinner: unknown\n",
+          "nativeSubstitutionExpected": "Clara Lane, 19, is a student. Lives at 18 9th Street. Studies at Manhattan Business School, 7 4th Avenue. Right now: at home until 10:47.\n\nNot travelling: at home (stays until 10:47)\n\nToday's meals\nBreakfast: chose food from home instead of buying\nLunch: unknown\nDinner: unknown\n",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        }
+      },
+      "noRawLocalizationKeys": true,
+      "identityIdentical": true,
+      "placeIdsIdentical": true,
+      "nativePlacesIdentical": true
+    },
+    {
+      "id": "c149",
+      "addresses": [
+        {
+          "field": "Home",
+          "native": "38 3rd Street",
+          "shown": "38 3rd Street",
+          "exact": true,
+          "mapArgumentsIdentical": true
+        },
+        {
+          "field": "Work",
+          "native": "22 6th Avenue",
+          "shown": "22 6th Avenue",
+          "exact": true,
+          "mapArgumentsIdentical": true
+        }
+      ],
+      "fields": {
+        "header": {
+          "control": "Vera Thorne, 50",
+          "candidate": "Vera Thorne, 50",
+          "nativeSubstitutionExpected": "Vera Thorne, 50",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        },
+        "personality": {
+          "control": "Personality: early riser · often packs lunch · avoids public transport",
+          "candidate": "Personality: early riser · often packs lunch · avoids public transport",
+          "nativeSubstitutionExpected": "Personality: early riser · often packs lunch · avoids public transport",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        },
+        "homeLabel": {
+          "control": "ba:street_thirdstreet 38  ↗",
+          "candidate": "38 3rd Street  ↗",
+          "nativeSubstitutionExpected": "38 3rd Street  ↗",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        },
+        "workLabel": {
+          "control": "Eagle Eye Law, ba:street_sixthavenue 22  ↗",
+          "candidate": "Eagle Eye Law, 22 6th Avenue  ↗",
+          "nativeSubstitutionExpected": "Eagle Eye Law, 22 6th Avenue  ↗",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        },
+        "body": {
+          "control": "Vera Thorne, 50, is a parent. Lives at ba:street_thirdstreet 38. Works at Eagle Eye Law, ba:street_sixthavenue 22. Right now: walking to Persistent City food routines, ba:street_thirdstreet 30.\n\nHeading to Persistent City food routines, ba:street_thirdstreet 30, arriving about 08:40 (to buy croissant for breakfast)\n\nToday's meals\nBreakfast: on the way to Persistent City food routines, ba:street_thirdstreet 30 for croissant\nLunch: unknown\nDinner: unknown\n",
+          "candidate": "Vera Thorne, 50, is a parent. Lives at 38 3rd Street. Works at Eagle Eye Law, 22 6th Avenue. Right now: walking to Persistent City food routines, 30 3rd Street.\n\nHeading to Persistent City food routines, 30 3rd Street, arriving about 08:40 (to buy croissant for breakfast)\n\nToday's meals\nBreakfast: on the way to Persistent City food routines, 30 3rd Street for croissant\nLunch: unknown\nDinner: unknown\n",
+          "nativeSubstitutionExpected": "Vera Thorne, 50, is a parent. Lives at 38 3rd Street. Works at Eagle Eye Law, 22 6th Avenue. Right now: walking to Persistent City food routines, 30 3rd Street.\n\nHeading to Persistent City food routines, 30 3rd Street, arriving about 08:40 (to buy croissant for breakfast)\n\nToday's meals\nBreakfast: on the way to Persistent City food routines, 30 3rd Street for croissant\nLunch: unknown\nDinner: unknown\n",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        }
+      },
+      "noRawLocalizationKeys": true,
+      "identityIdentical": true,
+      "placeIdsIdentical": true,
+      "nativePlacesIdentical": true
+    },
+    {
+      "id": "c1",
+      "addresses": [
+        {
+          "field": "Home",
+          "native": "18 25th Street",
+          "shown": "18 25th Street",
+          "exact": true,
+          "mapArgumentsIdentical": true
+        },
+        {
+          "field": "Work",
+          "native": "3 9th Avenue",
+          "shown": "3 9th Avenue",
+          "exact": true,
+          "mapArgumentsIdentical": true
+        }
+      ],
+      "fields": {
+        "header": {
+          "control": "Juno Fenwick, 27",
+          "candidate": "Juno Fenwick, 27",
+          "nativeSubstitutionExpected": "Juno Fenwick, 27",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        },
+        "personality": {
+          "control": "Personality: keeps a regular workday",
+          "candidate": "Personality: keeps a regular workday",
+          "nativeSubstitutionExpected": "Personality: keeps a regular workday",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        },
+        "homeLabel": {
+          "control": "ba:street_twentyfifthstreet 18  ↗",
+          "candidate": "18 25th Street  ↗",
+          "nativeSubstitutionExpected": "18 25th Street  ↗",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        },
+        "workLabel": {
+          "control": "Rise and Grind, NYC, ba:street_ninthavenue 3  ↗",
+          "candidate": "Rise and Grind, NYC, 3 9th Avenue  ↗",
+          "nativeSubstitutionExpected": "Rise and Grind, NYC, 3 9th Avenue  ↗",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        },
+        "body": {
+          "control": "Juno Fenwick, 27, is a commuter. Lives at ba:street_twentyfifthstreet 18. Works at Rise and Grind, NYC, ba:street_ninthavenue 3. Right now: at home until 13:51.\n\nNot travelling: at home (stays until 13:51)\n\nToday's meals\nBreakfast: chose food from home instead of buying\nLunch: unknown\nDinner: unknown\n",
+          "candidate": "Juno Fenwick, 27, is a commuter. Lives at 18 25th Street. Works at Rise and Grind, NYC, 3 9th Avenue. Right now: at home until 13:51.\n\nNot travelling: at home (stays until 13:51)\n\nToday's meals\nBreakfast: chose food from home instead of buying\nLunch: unknown\nDinner: unknown\n",
+          "nativeSubstitutionExpected": "Juno Fenwick, 27, is a commuter. Lives at 18 25th Street. Works at Rise and Grind, NYC, 3 9th Avenue. Right now: at home until 13:51.\n\nNot travelling: at home (stays until 13:51)\n\nToday's meals\nBreakfast: chose food from home instead of buying\nLunch: unknown\nDinner: unknown\n",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        }
+      },
+      "noRawLocalizationKeys": true,
+      "identityIdentical": true,
+      "placeIdsIdentical": true,
+      "nativePlacesIdentical": true
+    },
+    {
+      "id": "c10",
+      "addresses": [
+        {
+          "field": "Home",
+          "native": "14 9th Street",
+          "shown": "14 9th Street",
+          "exact": true,
+          "mapArgumentsIdentical": true
+        },
+        {
+          "field": "Work",
+          "native": "1 1st Street",
+          "shown": "1 1st Street",
+          "exact": true,
+          "mapArgumentsIdentical": true
+        }
+      ],
+      "fields": {
+        "header": {
+          "control": "Rae Calder, 22",
+          "candidate": "Rae Calder, 22",
+          "nativeSubstitutionExpected": "Rae Calder, 22",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        },
+        "personality": {
+          "control": "Personality: grumpy",
+          "candidate": "Personality: grumpy",
+          "nativeSubstitutionExpected": "Personality: grumpy",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        },
+        "homeLabel": {
+          "control": "ba:street_ninthstreet 14  ↗",
+          "candidate": "14 9th Street  ↗",
+          "nativeSubstitutionExpected": "14 9th Street  ↗",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        },
+        "workLabel": {
+          "control": "1PINE, ba:street_firststreet 1  ↗",
+          "candidate": "1PINE, 1 1st Street  ↗",
+          "nativeSubstitutionExpected": "1PINE, 1 1st Street  ↗",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        },
+        "body": {
+          "control": "Rae Calder, 22, is a bit grumpy. Lives at ba:street_ninthstreet 14. Works at 1PINE, ba:street_firststreet 1. Right now: at home until 10:59.\n\nNot travelling: at home (stays until 10:59)\n\nToday's meals\nBreakfast: unknown (not decided yet)\nLunch: unknown\nDinner: unknown\n",
+          "candidate": "Rae Calder, 22, is a bit grumpy. Lives at 14 9th Street. Works at 1PINE, 1 1st Street. Right now: at home until 10:59.\n\nNot travelling: at home (stays until 10:59)\n\nToday's meals\nBreakfast: unknown (not decided yet)\nLunch: unknown\nDinner: unknown\n",
+          "nativeSubstitutionExpected": "Rae Calder, 22, is a bit grumpy. Lives at 14 9th Street. Works at 1PINE, 1 1st Street. Right now: at home until 10:59.\n\nNot travelling: at home (stays until 10:59)\n\nToday's meals\nBreakfast: unknown (not decided yet)\nLunch: unknown\nDinner: unknown\n",
+          "exactNativeSubstitution": true,
+          "reloadIdentical": true
+        }
+      },
+      "noRawLocalizationKeys": true,
+      "identityIdentical": true,
+      "placeIdsIdentical": true,
+      "nativePlacesIdentical": true
+    }
+  ],
+  "controlRedReproduced": true,
+  "candidateNoRawKeys": true,
+  "addressesExactNative": true,
+  "allTextExactNativeSubstitution": true,
+  "allReloadTextIdentical": true,
+  "identitiesAndArgumentsUnchanged": true
+}
