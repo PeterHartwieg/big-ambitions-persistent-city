@@ -75,7 +75,7 @@ static class Program
             bytes = GC.GetAllocatedBytesForCurrentThread(); long start = Stopwatch.GetTimestamp();
             foreach (var m in residentsList)
                 for (int candidate = 0; candidate < 16; candidate++)
-                    sink += FoodMemoryPolicy.Contribution(m.Memory, store.Find(state.Food.Shops[candidate].BusinessId), 1, Traits, Settings);
+                    sink += FoodMemoryPolicy.Contribution(m.Memory, store.Find(state.Food.Shops[candidate].BusinessId), round + 10, Traits, Settings);
             double elapsed = Stopwatch.GetElapsedTime(start).TotalMilliseconds;
             if (round >= 0) { lookupAllocations += GC.GetAllocatedBytesForCurrentThread() - bytes; lookup.Add(elapsed / (residentsList.Count * 16)); }
             bytes = GC.GetAllocatedBytesForCurrentThread(); start = Stopwatch.GetTimestamp();
