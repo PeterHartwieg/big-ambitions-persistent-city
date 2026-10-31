@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
 """Run exact production command methods with deferred Unity-command test doubles."""
 from pathlib import Path
+import os
+import shutil
 import subprocess
 import tempfile
 import sys
 from xml.sax.saxutils import escape
+dotnet = shutil.which('dotnet')
+if dotnet is None and os.name == 'nt' and os.environ.get('LOCALAPPDATA'):
+    local_host = Path(os.environ['LOCALAPPDATA']) / 'Microsoft/dotnet/dotnet.exe'
+    if local_host.is_file():
+        dotnet = str(local_host)
+if dotnet is None:
+    raise SystemExit('Cannot find dotnet. Add the .NET SDK to PATH; Windows also checks %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe.')
 root = Path(__file__).resolve().parents[2]
 source = (root / 'Runtime/PhysicalVehicles.cs').read_text()
 start = source.index('        internal void BeginNativeFixedStep()')
@@ -21,4 +30,4 @@ with tempfile.TemporaryDirectory(prefix='pc-native-command-') as folder:
     (folder / 'Harness.cs').write_text((Path(__file__).parent / 'Harness.cs').read_text())
     (folder / 'NativeIl.cs').write_text((Path(__file__).parent / 'NativeIl.cs').read_text())
     (folder / 'Harness.csproj').write_text('<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework><OutputType>Exe</OutputType><Nullable>enable</Nullable><TreatWarningsAsErrors>true</TreatWarningsAsErrors></PropertyGroup><ItemGroup><ProjectReference Include="'+ escape(str(root / 'Core/PersistentCity.Core.csproj')) +'" /><Reference Include="0Harmony"><HintPath>'+ escape(str(root / 'build/PersistentCity/Dependencies/0Harmony.dll')) +'</HintPath></Reference></ItemGroup></Project>')
-    subprocess.run(['dotnet', 'run', '--project', str(folder / 'Harness.csproj'), '--configuration', 'Release', '--'] + sys.argv[1:], check=True)
+    subprocess.run([dotnet, 'run', '--project', str(folder / 'Harness.csproj'), '--configuration', 'Release', '--'] + sys.argv[1:], check=True)

@@ -1,5 +1,11 @@
 # Validation status
 
+## F0 local-tests-2-25 native-command host lookup - 31 October 2026 (offline)
+
+Reproduced `python tools/native-command-regression/run.py` failing with `FileNotFoundError: [WinError 2]` because `dotnet` is absent from PATH. This launcher now prefers the PATH host, then checks `%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe` on Windows, with a clear missing-host diagnostic. Harness generation, argument forwarding and subprocess failure handling are unchanged; no runtime/game behavior changed.
+
+**Validation:** the exact command passes with PATH unchanged (**72 checks**). Three mocked probes of the actual launcher pass for fallback, PATH precedence and missing host, also checking argument forwarding and `check=True`. All **31/31 required commands pass**, including **1,595/1,595 unit tests**, test listing, 21 standalone regressions, four Python harnesses and three demos, sequentially in the foreground. Build and native-command checks use the original environment; the other three Python harnesses receive the local SDK directory on their child PATH as in prior gates. DLL SHA-256 remains `293e6e7033d6c69bbd45cc2c8056a702509c1f44722e9d73b39f0a7f9808b309`. Logs: ignored `build/f0-fix2/` (before/after native-command, host probes and gate results). No game, rig, installation or release action.
+
 ## F0 local-tests-1-1 build host lookup - 31 October 2026 (offline)
 
 Reproduced the exact build command with `dotnet` absent from PATH: SDK discovery failed with `FileNotFoundError: [WinError 2]`. `tools/build.py` now prefers a PATH host, then checks `%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe` on Windows, and uses the resolved executable for both SDK discovery and compilation. Missing host/SDK cases report an actionable error. No runtime, configuration or save behavior changed.
