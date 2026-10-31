@@ -22,6 +22,34 @@ namespace PersistentCity.Runtime
         public double FoodChoiceHealthWeight { get => FoodChoice.FoodChoiceHealthWeight; set => FoodChoice.FoodChoiceHealthWeight=value; }
         public double FoodChoiceHouseholdWeight { get => FoodChoice.FoodChoiceHouseholdWeight; set => FoodChoice.FoodChoiceHouseholdWeight=value; }
         public double FoodShortlistTemperature { get => FoodChoice.FoodShortlistTemperature; set => FoodChoice.FoodShortlistTemperature=value; }
+        [JsonIgnore]
+        public FoodMemorySettings FoodMemory { get; } = new FoodMemorySettings();
+        [JsonConverter(typeof(FoodMemoryNumberConverter))]
+        public double FoodMemoryWeight { get => FoodMemory.FoodMemoryWeight; set => FoodMemory.FoodMemoryWeight=value; }
+        [JsonConverter(typeof(FoodMemoryNumberConverter))]
+        public double FoodMemoryLoyalReturnMultiplier { get => FoodMemory.FoodMemoryLoyalReturnMultiplier; set => FoodMemory.FoodMemoryLoyalReturnMultiplier=value; }
+        [JsonConverter(typeof(FoodMemoryNumberConverter))]
+        public double FoodMemoryCuriousNoveltyMultiplier { get => FoodMemory.FoodMemoryCuriousNoveltyMultiplier; set => FoodMemory.FoodMemoryCuriousNoveltyMultiplier=value; }
+        [JsonConverter(typeof(FoodMemoryIntegerConverter), 0, 4)]
+        public int FoodMemoryServedGain { get => FoodMemory.FoodMemoryServedGain; set => FoodMemory.FoodMemoryServedGain=value; }
+        [JsonConverter(typeof(FoodMemoryIntegerConverter), 0, 4)]
+        public int FoodMemoryStockPenalty { get => FoodMemory.FoodMemoryStockPenalty; set => FoodMemory.FoodMemoryStockPenalty=value; }
+        [JsonConverter(typeof(FoodMemoryIntegerConverter), 0, 4)]
+        public int FoodMemoryClosedPenalty { get => FoodMemory.FoodMemoryClosedPenalty; set => FoodMemory.FoodMemoryClosedPenalty=value; }
+        [JsonConverter(typeof(FoodMemoryIntegerConverter), 0, 4)]
+        public int FoodMemoryQueuePenalty { get => FoodMemory.FoodMemoryQueuePenalty; set => FoodMemory.FoodMemoryQueuePenalty=value; }
+        [JsonConverter(typeof(FoodMemoryNumberConverter))]
+        public double FoodMemoryBadVisitTraitWeight { get => FoodMemory.FoodMemoryBadVisitTraitWeight; set => FoodMemory.FoodMemoryBadVisitTraitWeight=value; }
+        [JsonConverter(typeof(FoodMemoryIntegerConverter), 1, 14)]
+        public int FoodMemoryDecayDaysPerPoint { get => FoodMemory.FoodMemoryDecayDaysPerPoint; set => FoodMemory.FoodMemoryDecayDaysPerPoint=value; }
+        [JsonConverter(typeof(FoodMemoryNumberConverter))]
+        public double FoodMemoryMinimumMultiplier { get => FoodMemory.FoodMemoryMinimumMultiplier; set => FoodMemory.FoodMemoryMinimumMultiplier=value; }
+        [JsonConverter(typeof(FoodMemoryNumberConverter))]
+        public double FoodMemoryMaximumMultiplier { get => FoodMemory.FoodMemoryMaximumMultiplier; set => FoodMemory.FoodMemoryMaximumMultiplier=value; }
+        [JsonConverter(typeof(FoodMemoryIntegerConverter), 1, 4)]
+        public int FoodMemoryCapacity { get => FoodMemory.FoodMemoryCapacity; set => FoodMemory.FoodMemoryCapacity=value; }
+        [JsonConverter(typeof(FoodMemoryIntegerConverter), 7, 90)]
+        public int FoodMemoryForgetAfterDays { get => FoodMemory.FoodMemoryForgetAfterDays; set => FoodMemory.FoodMemoryForgetAfterDays=value; }
         // Optional developer overrides; normal installation needs no configuration.
         private int optionalStopChoicePercentage = OptionalStopPolicy.ApprovedChoicePercentage;
         [JsonConverter(typeof(OptionalStopPercentageConverter))]
@@ -36,6 +64,32 @@ namespace PersistentCity.Runtime
         public int MaximumPedestrians { get; set; } = 48;
         public int MaximumVehicles { get; set; } = 24;
         public double PhysicalRadiusMetres { get; set; } = 120;
+    }
+
+    internal sealed class FoodMemoryNumberConverter : JsonConverter<double>
+    {
+        internal static double Number(JsonReader reader)
+        {
+            var token = JToken.Load(reader);
+            return (token.Type == JTokenType.Integer || token.Type == JTokenType.Float || token.Type == JTokenType.String)
+                && double.TryParse(token.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out double value) ? value : double.NaN;
+        }
+        public override double ReadJson(JsonReader reader, Type type, double existing, bool hasExisting, JsonSerializer serializer) => Number(reader);
+        public override void WriteJson(JsonWriter writer, double value, JsonSerializer serializer) => writer.WriteValue(value);
+    }
+    internal sealed class FoodMemoryIntegerConverter : JsonConverter<int>
+    {
+        private readonly int min, max;
+        public FoodMemoryIntegerConverter(int min, int max) { this.min=min; this.max=max; }
+        public override int ReadJson(JsonReader reader, Type type, int existing, bool hasExisting, JsonSerializer serializer)
+        {
+            double value=FoodMemoryNumberConverter.Number(reader);
+            if (double.IsNaN(value)) return int.MinValue;
+            if (value < min) return min-1;
+            if (value > max) return max+1;
+            return value == Math.Truncate(value) ? (int)value : int.MinValue;
+        }
+        public override void WriteJson(JsonWriter writer, int value, JsonSerializer serializer) => writer.WriteValue(value);
     }
 
     // Invalid individual values fall back without discarding unrelated settings.

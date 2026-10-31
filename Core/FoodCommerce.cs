@@ -115,7 +115,8 @@ namespace PersistentCity.Core
     }
     public readonly struct FoodSale
     {
-        public FoodSale(bool paid, string reason) { Paid = paid; Reason = reason; }
+        public FoodSale(bool paid, string reason, ShopExperience? failure = null) { Paid = paid; Reason = reason; Failure = failure; }
+        public ShopExperience? Failure { get; }
         public bool Paid { get; }
         public string Reason { get; }
     }
@@ -177,12 +178,14 @@ namespace PersistentCity.Core
             ?? Math.Min(NextBudgetMinute, due.Count == 0 ? double.PositiveInfinity : due.Min!.DueAt);
         internal IFoodMarket Market => market;
         internal ResidentMeal? FindMeal(string consumerId) => records.TryGetValue(consumerId, out var meal) ? meal : null;
-        internal FoodCommerce(CitySimulator city, IFoodMarket market, IRoutePlanner routes, FoodChoiceSettings? choiceSettings = null)
+        internal FoodCommerce(CitySimulator city, IFoodMarket market, IRoutePlanner routes, FoodChoiceSettings? choiceSettings = null, FoodMemorySettings? memorySettings = null)
         {
             this.city = city; this.market = market; this.routes = routes;
             ChoiceSettings = choiceSettings ?? new FoodChoiceSettings();
             ChoiceSettings.Clamp();
             state = city.State.Food ?? throw new InvalidOperationException("No food state.");
+            MemorySettings = memorySettings ?? new FoodMemorySettings(); MemorySettings.Clamp();
+            memoryStore = new FoodMemoryStore(state);
             if(state.Residents.Count==0) state.ChoiceStartsDay=(int)Math.Floor(city.State.Minute/1440)+1;
             records = state.Residents.ToDictionary(r => r.ResidentId, StringComparer.Ordinal);
             InitializeRepresentation();
@@ -328,8 +331,12 @@ namespace PersistentCity.Core
                     && person.RecentVisits.Any(v => v.PlaceId == meal.PlaceId && v.Activity == Activity.Shop && v.AtMinute >= meal.DesiredAt);
                 if (admitted)
                 {
+                    memoryStore.CommitStage(meal, ExperienceStage.Reached);
                     var available = ReadBusiness(meal.BusinessId, now);
                     if (available?.PlaceId != meal.PlaceId) available = null;
+                    if (city.State.Capabilities.Active && NewChoice(meal) && available != null
+                        && !DailyRoutine.Open(new Place { Kind = PlaceKind.Shop, OpenMinute = 0, CloseMinute = 0, WeeklyHours = available.Hours }, now))
+                    { Finish(meal, MealStatus.Missed, "Shop closed before admission"); return; }
                     if (available?.MealsPerHour == null || available.MealsPerHour <= 0)
                     { Finish(meal, MealStatus.Missed, "Service unavailable on arrival"); return; }
                     double? close = null;
@@ -346,7 +353,8 @@ namespace PersistentCity.Core
                     meal.ServiceMinutes = 60.0 / available.MealsPerHour.Value;
                     var scope = state.Shops.Single(s => s.PlaceId == meal.PlaceId);
                     meal.ServiceAt = Math.Max(now, scope.NextServiceAt) + meal.ServiceMinutes;
-                    if (meal.Slot > 0 && Math.Max(0, scope.NextServiceAt - now) > meal.Excursion!.MaximumQueueMinutes)
+                    if ((meal.Slot > 0 || NewChoice(meal)) && Math.Max(0, scope.NextServiceAt - now) > (meal.Slot > 0 ? meal.Excursion!.MaximumQueueMinutes
+                        : MealRhythm.QueueMinutes(meal.Kind, person.MealOuting!.OriginActivity)))
                         Finish(meal, MealStatus.Missed, "Queue exceeds patience on arrival");
                     else if (meal.Slot > 0 && (!close.HasValue || meal.ServiceAt >= close.Value))
                         Finish(meal, MealStatus.Missed, "Service no longer fits shop opening hours");
@@ -394,7 +402,11 @@ namespace PersistentCity.Core
                         else if (!result.Paid) meal.DayAllowanceUsed -= meal.Price;
                         meal.Status = result.Paid ? MealStatus.Paid : MealStatus.Missed; meal.Reason = result.Reason;
                         if (result.Paid) ConfirmPurchase(meal, result.Reason);
-                        else MealOutcomes.Record(meal, now, checkout: true);
+                        else {
+                            if (result.Failure == ShopExperience.Closed || result.Failure == ShopExperience.Stockout || result.Failure == ShopExperience.Queue)
+                                Experience(meal, result.Failure.Value, now);
+                            MealOutcomes.Record(meal, now, checkout: true);
+                        }
                         if (meal.Slot > 0 && meal.Excursion != null) ScheduleReturn(meal);
                     }
                     catch (Exception) { /* Retain uncertain ownership; never issue a second order. */ }
@@ -403,6 +415,7 @@ namespace PersistentCity.Core
         }
         private void ConfirmPurchase(ResidentMeal meal, string reason)
         {
+            Experience(meal, ShopExperience.Served, meal.ServiceAt);
             RecordPurchase(meal); meal.Purchases++; meal.Spent += meal.Price;
             if (meal.ExistingStop) meal.ExistingStopPurchases++;
             meal.Status = MealStatus.Paid; meal.Reason = reason;
@@ -410,6 +423,7 @@ namespace PersistentCity.Core
         }
         private void Finish(ResidentMeal meal, MealStatus status, string reason, FoodOutsideOption outside = FoodOutsideOption.None)
         {
+            if (status == MealStatus.Missed && Active(meal)) FailedVisit(meal, reason);
             string choiceReason=meal.Reason;
             if (Active(meal)) Reserve(meal, -1);
             meal.Status = status; meal.Reason = reason;

@@ -1,5 +1,132 @@
 # Validation status
 
+## Step B1 shop memory and loyalty v2 — 31 October 2026 (offline only)
+
+Implemented on B0b `c0af745`, stacked PR target `codex/pc-b0b-held-tuning`.
+Production source **`7e43755`**, measurement source **`d896d0b`**; schema stays **18**. Read the B-E plan
+at `origin/codex/persistent-city` and PR #14's contract report/probe without merging
+or reusing its branch. B0b's captured A3 tuning resolves that earlier blocker.
+
+Stable represented consumer IDs now retain at most four generation-keyed compact
+memories (day, saturated served count, affinity, actual cause), an ordered exactly-once
+watermark, lazy trait-scaled decay/expiry and deterministic replacement. Only actual
+commitments/reached shops with named evidence disappoint; generic mixed stock/staff
+refusals, affordability, route/schedule loss and unknown checkout stay neutral. Exact
+late receipts update the original generation/service day once. New B capability
+activates at the first crossed midnight; pre-B commitments stay neutral. Capture
+reduces memory tuning to one bounded scalar/shop before either A3 draw and reuses it
+through held-context reload; new uncaptured contexts use loaded edits immediately.
+Final multipliers clamp after strength, floors/feasibility and route bounds remain.
+All thirteen B1 flat config keys clamp/default and log once. No B2 UI/regular settings.
+
+`PopulationRuntime.FoodMemoryDump(consumerId)` is a read-only bridge-callable detached
+snapshot (entries/effective affinity/cause/watermark/capacity misses), with no cost
+until called. Generation references append within the existing 20k/2 MiB limits;
+no slot reclamation, scans or identity reuse. Saturation counts a skipped memory
+capture and saves its terminal watermark without changing settlement or retrying it.
+Lower capacity never trims on load/read; normal later insertion applies replacement.
+
+**Save safety.** [B1 execution contract](docs/population-schema18.md#b1-execution--31-october-2026).
+B1 deliberately lifts B0b's nonzero-contribution refusal with bounded read/write/replay
+proof; 13-17 resolvers, tuple shapes, reference allocation and record charges stay
+unchanged. The save-contract regression now accepts a full nonzero eight-shop image
+(**525 bytes** including tuning in that vector), asserts **<=589**, and still refuses
+out-of-bound/non-finite values. B0/B0b active-B refusal tests now assert supported B
+revision 1 acceptance and unknown-revision refusal, including the earliest actual
+native authority hook against doubles. Checkout regression now distinguishes verified
+stock/bag exhaustion, unknown staffing and closure rather than matching a generic
+mixed-cause message. The frozen legacy economy remains **849 orders / 797 purchases /
+107,967,424,757,760 spent units**, with all three exact digests unchanged.
+
+**Capacity recheck:** complete B0 full-memory/full-20k-table fixtures remain exactly
+5,013,141 bytes (reference), 9,701,305 (5,000 consumers), 192,020,107 (CF32) and
+230,420,107 (CF64), with unchanged record counts. Reserved future budgets remain
+220,664,366 bytes /2,111,867 records (82.204%) and 259,064,366 /3,711,867 (96.509%).
+The nonzero scalar spends at most another 184 bytes from the *existing* 65,536-byte
+policy allowance; no per-consumer/save cap increases. CF64's >95% headroom warning
+remains. One diagnostic write/read/migration sample each: reference 126.5/379.5/525.6 ms;
+5,000 consumers 388.7/805.8/1,948.4 ms; CF32 write/read 2,859.9/9,133.5 ms;
+CF64 3,683.8/10,600.9 ms. **All are >=30 ms, flagged as separate offline save/load
+latency**, not ordinary-play samples. Oversized schema-17 ceiling sources still
+refuse. These single samples are not latency percentiles or a serialization speedup.
+
+**Offline measurements.** [Reproducible harness/raw data](docs/reviews/2026-10-31-b1-measurements.json),
+`dotnet run --project tools/food-memory-regression --configuration Release`.
+Synthetic .NET 10 paths/markets; setup/save outside timers. Forty normalized batch
+means after five warmups, not individual-call latency percentiles. Retained sizes
+are GC deltas, not Unity measurements. Commit samples are warmed repeat visits to
+a retained generation; insertion/first-use state can allocate within the fixed bounds.
+
+| Saturated consumers | Lookup p50 / p95 / max ns per candidate | Commit p50 / p95 / max ns | Lookup / commit allocation | Retained memory | Save growth |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 1,914 (957 x2) | 41.3 / 46.6 / 57.4 | 57.7 / 79.7 / 136.9 | 0 / 0 bytes | 474,024 bytes | 77,387 bytes |
+| 5,000 (2,500 x2) | 42.5 / 48.0 / 51.2 | 61.5 / 131.0 / 193.4 | 0 / 0 bytes | 1,237,144 bytes | 200,827 bytes |
+
+Each full extension costs **51 inclusive bytes versus B0's 64 allocation**, with
+40 bytes of growth versus empty; the 16-entry synthetic generation table adds 827.
+The population-allocation totals are 475,608 / 1,240,936 bytes. The shared 16-generation
+index adds 1,256 retained /2,048 allocated bytes per city (outside commit timers). One dictionary lookup
+and <=4 entry checks/candidate, no catalogue search; selected candidates reuse the
+same scalar rather than looking up memory again. No per-frame polling/reflection,
+midnight memory sweep, extra routes or ever-growing processed-ID set.
+
+Three interleaved rush samples per weight, 16 citizen /128 total units /2 ms soft
+loop, synthetic simultaneous lunch. Below: medians of run p50/p95 and largest max;
+these are **Core loop costs, not combined native mod-work or whole-frame timing**.
+
+| Consumers / weight | Loop p50 / p95 / max ms | Frames (three samples) | Median decisions/sec | Logical routes |
+| --- | ---: | --- | ---: | ---: |
+| 1,914 / 1 | 0.867 / 1.737 / 13.681 | 272 /272 /271 | 6,922 | 30,624 |
+| 1,914 / 0 | 0.999 / 1.805 / 17.515 | 272 /273 /271 | 6,261 | 30,624 |
+| 5,000 / 1 | 0.337 / 0.588 / 14.128 | 706 /706 /705 | 17,385 | 80,000 |
+| 5,000 / 0 | 0.333 / 0.620 / 20.288 | 706 /706 /707 | 15,959 | 80,000 |
+
+All ordinary modeled loops drain within a 45-minute meal window even at 3 logical
+minutes/sec and 100 FPS: **zero modeled catch-up lag**. The intentionally one-unit
+control takes 34,452 frames (988.56 modeled minutes lag), preserves the exact saved
+choices/memory hash and route counts, and is not a production throughput claim.
+Repeated/interleaved runs also assert identical hashes per population/weight.
+**Zero >=30 ms spikes in these feature/rush samples.** System/JIT load is uncontrolled;
+timing varies between runs, so no end-to-end speedup claim is made.
+Native mod-work p95/max, whole-frame stalls and native saved size remain unmeasured.
+
+**Perf win:** remove enum boxing in the new watermark comparisons: ~120 -> **72**
+bytes/commit (48 bytes saved), then reuse the existing entry and watermark: **0 bytes
+per warmed repeat commit**, also 0 lookup allocation. First-use entries/references
+still allocate bounded state. The preserved
+[before prototype](docs/reviews/2026-10-31-b1-before-measurements.json) includes small
+measurement-list growth noise, removed from the final counter. Reuse of the shortlist
+scalar also removes a second lookup/<=4 entry checks for each of eight selected shops.
+The allocation comparison is valid across the prototype stages; their uncontrolled
+timings are not compared, and the final microbenchmark advances the lookup logical day.
+The roadmap Perf wins log records these; all four parked hotspots stay untouched.
+
+**Validation:** **1,909/1,909 unit tests, discovery and all 31 requested commands pass, plus eight additional checks (B1 memory benchmark, A3 candidate/choice/rush and four capacity fixtures): 39 unique passing commands**. All runs are foreground/sequential and wait for
+other worktrees' dotnet test/run before starting. [Command evidence](docs/reviews/2026-10-31-b1-offline-checks.json).
+The 50 new B1 cases cover monotonic bad visits, loyal/curious curves over 4,096 seeds,
+actual failures versus rejected/unaffordable/unknown/interrupted visits, late receipts
+and turnover, every update/save boundary, saturation/eviction/decay/capacity and held
+replay; inherited frozen-source tests cover pre-B1 empty memory. No game was launched;
+no test install, bridge directory, rig lease or ordinary save was touched.
+The MSBuild server was shut down after the gate; a final process query found no
+remaining dotnet/testhost process.
+
+### In-game checks for 6 Nov rig
+
+Pending `rig_test` (Codex Sol, high), on a disposable FT fixture. The input split
+uses feasibility commit `84be71a` ([report](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/84be71a/docs/reviews/rig/2026-10-31-locked-session-feasibility/README.md)).
+LOCKED-OK marks bridge/state/reload/perf feasibility; it is not a passed check. No
+special performance-only rig run is requested; these join the normal combined session.
+
+1. **LOCKED-OK** - On a named disposable FT fixture, freeze the tested commit/DLL, dependencies, config, consumer IDs/trait bands, seed and checkpoint. Record original autosave; disable and verify it before every measured window and again after every reload. Keep manual saves outside windows; invalidate any window containing save activity, and restore autosave/preferences during cleanup.
+2. **LOCKED-OK** - Use matched loyal and curious consumer cohorts (including represented slots) over several confirmed served days and multiple fixture seeds. Dump each cohort before/after visits; compare return/novelty choice frequencies, per-generation served counts and affinity, four-entry bounds, identical route ceilings and unchanged native checkout authority.
+3. **NEEDS-INPUT** - Through the shop UI, induce and visually confirm separate product/bag stockout, closure and excessive-queue failures at a player shop after consumers commit/reach it. Include rejected distant/unaffordable/unknown controls. Capture before/after native evidence and dumps: only named actual failures penalize; unknown checkout remains neutral. Wait for the unlocked 6 Nov session for these interactions.
+4. **LOCKED-OK** - With those fixture failures established, follow recovery on days 3-6 through bridge reads: served recovery, lazy decay/expiry, loyalty forgiveness without a positive stockout gain, and generation turnover without inherited memory. Retain dumps and matched receipt evidence per logical day.
+5. **LOCKED-OK** - Dump before/after save/reload at evaluating, partial-quote, selected, committed, reached and uncertain-receipt checkpoints. Replay the same checkpoint with different event budgets; compare choices, memory/watermarks, routes and exact money. Edit memory tuning/weight while unloaded: held contributions stay fixed, the next uncaptured context uses the edit that same day. Confirm a late receipt after midnight against its original generation once.
+6. **LOCKED-OK** - Reconcile one full native day: exact resident payments/holds, native receipts, stock/bags, completed orders and daily accounts; no extra or missing transactions, including late confirmation and replay. Keep native evidence separate from offline doubles.
+7. **LOCKED-OK** - Load a pre-B1 save: empty memory, preserved identity/money/committed terms, inactive B until the next logical midnight, then new captures. Repeat a lower-capacity load without trimming; test ordinary subsequent replacement. Verify future/unknown capability refusal preserves its payload.
+8. **LOCKED-OK** - In the normal combined 6 Nov session, interleave matched idle/breakfast/lunch/evening windows from the same checkpoint with memory active versus `FoodMemoryWeight:0`. Report combined **mod-work p50/p95/max**, require p95 <5 ms, flag every spike **>=30 ms** with condition/component, track whole-frame/stalls separately, plus route/query counts, allocations/GC, pending work/catch-up lag and saved byte size. Use bridge-accessible read/perf paths; no mouse/keyboard is required for these windows.
+
 ## Step B0b held tuning prerequisite — 31 October 2026 (offline only)
 
 Fixes the inherited A3/B0 held-context defect, before B1 resumes on this branch.

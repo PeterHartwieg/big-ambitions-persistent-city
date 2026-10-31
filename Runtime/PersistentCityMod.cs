@@ -122,7 +122,7 @@ namespace PersistentCity.Runtime
                 Districts = FoodHouseholdCatalogue.Read(simulation.State.Places.Where(p => p.Kind == PlaceKind.Home)
                     .Select(p => p.District).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct(StringComparer.Ordinal).ToArray()).ToList() };
             var adapter = new NativeFoodMarket(state, simulation.State.Places, enrolling: true);
-            try { simulation.State.Food = state; simulation.AttachFoodMarket(adapter, settings.FoodChoice); foodMarket = adapter; }
+            try { simulation.State.Food = state; simulation.AttachFoodMarket(adapter, settings.FoodChoice, settings.FoodMemory); foodMarket = adapter; }
             catch { simulation.State.Food = null; adapter.Dispose(); throw; }
         }
         public void EnableHouseholdFinances()
@@ -183,6 +183,8 @@ namespace PersistentCity.Runtime
                 string path = Path.Combine(context.ModRootPath, "persistent-city.json");
                 if (File.Exists(path)) settings = JsonConvert.DeserializeObject<PrototypeSettings>(File.ReadAllText(path)) ?? throw new InvalidDataException("Configuration is null.");
                 settings.FoodChoice.Clamp(message => log.Info(message));
+                settings.FoodMemory.Clamp(message => log.Info(message));
+                log.Info("Food memory policy B revision 1; next-boundary activation, captured decision contributions.");
                 if (!Position.Finite(settings.GameClockFactor) || settings.GameClockFactor < .1 || settings.GameClockFactor > 1)
                     throw new InvalidDataException("GameClockFactor must be between 0.1 and 1 (one third gives three times as much travel time per day).");
                 if (settings.MaximumPedestrians < 1 || settings.MaximumPedestrians > 256 || settings.MaximumVehicles < 1 || settings.MaximumVehicles > 64
@@ -574,7 +576,7 @@ namespace PersistentCity.Runtime
             if (state.Food.HouseholdFinanceVersion != HouseholdFinance.PolicyVersion || state.Food.MealRhythmVersion != MealRhythm.PolicyVersion)
                 throw new InvalidDataException("Unsupported experimental food policy; preserve this city and use a fresh development baseline.");
             foodMarket = new NativeFoodMarket(state.Food, state.Places);
-            simulation.AttachFoodMarket(foodMarket, settings.FoodChoice);
+            simulation.AttachFoodMarket(foodMarket, settings.FoodChoice, settings.FoodMemory);
             saveIdentity = save;
             NativeCityClock.Start(save, settings.GameClockFactor, () => simulation?.IsCaughtUpTo(Now()) == true, () => simulation?.State.Food != null, Now);
             NativeTravelPace.ResetReading();

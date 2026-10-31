@@ -20,7 +20,7 @@ Replaces the phase order in docs/reviews/2026-10-27-realism-gameplay-roadmap.md 
 
 0. Performance: the 30 October comprehensive review is done and passes the mod-work gate below. Spock agreed: no optimization work now; re-measure as each slice lands. This isn't a release step.
 A. Inspector, traits and probabilistic choice. Start now (Peter 15:24 JST), with the standing performance gate applied to each slice.
-B. Memory, loyalty and regulars. **B0 is implemented offline:** schema 18, exact old-source migration and history-inclusive capacity; memory remains empty/inactive and the regulars helper is a pure own-shop projection. **B0b is inserted between B0 and B1:** persist the held A3 tuning image and neutral bounded per-candidate contribution; schema 18 is amended before player use. B1 resumes on top of B0b; B2 UI remains pending. [Contract and capacity evidence](population-schema18.md).
+B. Memory, loyalty and regulars. **B0 is implemented offline:** schema 18, exact old-source migration and history-inclusive capacity; memory remains empty/inactive and the regulars helper is a pure own-shop projection. **B0b is inserted between B0 and B1:** persist the held A3 tuning image and neutral bounded per-candidate contribution; schema 18 is amended before player use. B1 is implemented offline on B0b: per-consumer generation memory, atomic experience watermarks and captured bounded loyalty/curiosity weights; 6 Nov native proof remains pending. B2 UI remains pending. [Contract and capacity evidence](population-schema18.md).
 C. Marketing awareness and targeting, plus the market research product.
 D. Rivals as alternatives.
 E. Weather, street life, bigger menus and more products.
@@ -46,6 +46,9 @@ Record every taken win with before/after numbers.
 
 | Slice | Change | Before | After |
 |---|---|---|---|
+| B1 | Compare watermark meal codes as integers, avoiding enum boxing | ~120 bytes/commit in boxed prototype | 72 bytes/commit; 48 bytes removed, 0 lookup allocation (40 measured rounds at 1,914/5,000 consumers; offline .NET 10). [Raw measurements](reviews/2026-10-31-b1-measurements.json) |
+| B1 | Reuse the existing entry and watermark for ordinary repeat-visit commits | 72 allocated bytes/commit after boxing fix | 0 bytes per warmed repeat commit at both populations; first-use state can allocate. Same full suite and canonical replay pass; [final/intermediate measurements](reviews/2026-10-31-b1-measurements.json) |
+| B1 | Reuse each selected shop's captured memory scalar from shortlisting through final choice | Second generation lookup + up to four entry checks for each of eight shortlisted shops | 8 repeated dictionary lookups / up to 32 repeated entry checks removed per full context; exact scalar replay, no wall-time gain claimed |
 | B0b | Nonmaterializing streaming shape precheck for the new held tuning image, before full graph decode | Materializing prototype: 136 bytes/check, median 1,375.69 ns | 0 bytes/check, 187.79 ns (three fresh processes, 300k calls/run; offline .NET 10). Continuation allocation unchanged; [raw B0b measurements](reviews/2026-10-31-b0b-measurements.json) |
 | A2 | Save validation builds error text only on failure (`Text`/`Bounded`/`Known`/duplicate/unknown-field checks); runs on every save and load | Validation alloc per save **8.39 MiB** (957 residents with journeys, offline .NET 10) | **1.31 MiB** |
 | A2 | Read shape check: one reusable duplicate-field set per JSON depth, bit flags per position, integer range from the token value; positions streamed instead of one `JObject` each | Read alloc **83.3 MiB**, read median **119.7 ms**; write alloc **26.1 MiB** (same payload) | **38.8 MiB**, **89.2 ms**; **19.1 MiB** |

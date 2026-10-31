@@ -2,8 +2,8 @@
 
 Allocated from A3 `754c2b6` (population 17). Only `persistentcity:state_v1`
 changes. Detached shadow, native authority and receipt contracts retain their formats.
-B is inactive; this binary refuses an active B capability. There is no capture,
-decay, loyalty weight, paid-research state or UI change.
+B0 allocated the inactive contract. B1 now executes active revision 1 as described
+below; the original tuple/reference allocations and frozen 13-17 readers remain unchanged.
 
 `LegacyPopulationCodec` freezes the source 13/14/15/16/17 contracts, allow-lists,
 exact money conversion, semantic validation and counting. Each version has a
@@ -74,8 +74,8 @@ held meals/decisions, receipts and later report/payment contracts. Table saturat
 must leave existing references and transactions intact; an unremembered experience
 needs a counted capacity diagnostic in B1, never a new checkout or dropped receipt.
 
-Root `Capabilities` has exactly `Code:"B", Revision:1, Active:false`. Missing,
-duplicate, unknown code/revision and active B refuse. The early native authority
+Root `Capabilities` has exactly `Code:"B", Revision:1, Active:boolean`. B0/B0b
+refuse active B; B1 executes it. Missing, duplicate and unknown code/revision refuse. The early native authority
 bootstrap probes this header before releasing any saved managed business. New writes
 place `Schema` then `Capabilities` first so this single-pass probe can stop before
 the graph. Older root ordering remains supported; full startup decoding still checks
@@ -158,6 +158,70 @@ records and the future ledger's conservative context/tuning header reservation.
 The capacity tool populates a real image and updates the resulting size/digests;
 ordinary population-only and economy digests remain unchanged. Reference/5k and
 CF32/CF64 measured totals appear in CHECKS and the B0b measurement manifest.
+
+## B1 execution — 31 October 2026
+
+B1 fills the allocated consumer extension; **no schema bump, new DTO field, tuple
+slot, record charge or older-source resolver change**. The B0b neutral-only
+`MemoryContribution` semantic gate is deliberately lifted; finite -8..8 validation
+is retained. The final effective multiplier, including `FoodMemoryWeight`, clamps
+to the loaded minimum/maximum (0.1..1 / 1..3); zero strength is exactly neutral.
+Every shortlisted shop keeps the contribution computed before shortlisting and
+uses it for all its offers. The A3 tuning image plus eight scalar fields remains
+within **589 bytes**. No B tuning image is needed: its only held-choice effect is
+already reduced to those captured scalars, and the existing B revision identifies
+the algorithm. Committed visits use actual subsequent service evidence.
+
+Migration keeps B inactive and memories empty. The simulator flips `Active` at
+the first crossed logical midnight, in event order, without a population sweep.
+Saving/reloading before that boundary cannot postpone it. This does not change
+A3 activation or tuning-edit semantics. Old held contexts have zero contribution;
+old committed/uncertain meals without a B commitment watermark finish neutrally.
+
+Stable consumer records own the memory. Generation IDs come directly from the
+existing player `FoodAuthority.BusinessId` (including its persisted generation),
+never reconstructed from an address or presentation. The table is indexed once
+on attach; a candidate makes one generation lookup and at most four entry checks.
+New generations append only at actual experiences. Slots never renumber or reclaim
+in B1, avoiding a new city-wide liveness scan. Both 20k slots and the 2 MiB character/
+UTF-8 table budget bound registration. Saturation increments the on-demand
+`CapacityMisses` diagnostic and advances the experience watermark without erasing
+old memory, changing accounts, dropping receipts or retrying checkout. The diagnostic
+counter is session-local; the terminal saved watermark prevents repeat counting
+of the same missed capture after reload.
+
+Commit/reached stages carry no affinity change. A confirmed served event or a named
+actual closed/stockout/queue failure atomically publishes its compact memory and
+terminal watermark. Duplicate/older contexts and all terminal repeats are ignored.
+A failed terminal context cannot later book a served memory. Unknown checkout stays
+at its commitment/reached stage until exact paid evidence resolves; the consumer's
+existing uncertain meal already retains the original generation, intent and service
+minute across midnight. The memory day is the original experience day, not receipt
+reconciliation day. Generic mixed-cause refusal strings remain neutral; native
+checkout now provides a typed cause only for a confirmed zero-unit stockout or closure.
+Rejected candidates, unaffordability, unknown supply, lost routes and interrupted
+personal schedules have no disappointment effect. An already reached shopping stop
+can retain named failure evidence without committing a second journey.
+
+Affinity decays toward zero by whole points lazily from logical elapsed days;
+loyalty scales days/point from 0.5x to 2x. Entries expire only after the configured
+retention age (the endpoint is retained). Update materializes decay only for the
+experienced entry. Served counts saturate at 35; affinity saturates at -8..8.
+Positive affinity raises habit with loyalty; unseen/expired alternatives receive
+curiosity novelty. A bad experience subtracts at least one point, even with a zero
+configured penalty; zero then removes only the extra configured magnitude. Queue
+impatience/other-cause time pressure strengthen penalties, loyalty forgives within
+a negative penalty. Influence is monotone: bad service cannot raise return weight;
+floors, saturation, neutral strength and neutral multiplier endpoints can make the
+change equal rather than strictly smaller. No served-count bonus masks disappointment.
+
+Insertion evicts expired first, then least effective affinity, oldest experience,
+then ordinal complete generation ID, independent of slot/list order. Lower capacity
+never trims on load or projection; an ordinary insertion applies the new capacity
+through those normal evictions. No midnight diary/cleanup pass is introduced.
+`PopulationRuntime.FoodMemoryDump(consumerId)` / `CitySimulator.DumpFoodMemory`
+returns detached entries, effective affinity, cause and watermark only when called.
+No regular projection/inspector wording or B2 settings are added.
 
 ## Regulars projection
 
