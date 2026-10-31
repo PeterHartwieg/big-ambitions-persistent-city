@@ -1,0 +1,4169 @@
+{
+  "role": "rig_test",
+  "method": "Update/authority union plus same-frame whole PopulationRuntime.OnGUI. Nested scopes not added. floor(n*q) percentiles. Input guard callbacks outside those scopes remain unmeasured.",
+  "windows": [
+    {
+      "label": "base1",
+      "seconds": 60.2479305,
+      "fps": 70.5916363384465,
+      "wholeMs": {
+        "samples": 4253,
+        "p50": 13.7965,
+        "p95": 18.7397,
+        "maximum": 74.692,
+        "mean": 14.163690007053845
+      },
+      "modMs": {
+        "samples": 4252,
+        "p50": 0.4364,
+        "p95": 0.7232,
+        "maximum": 16.2061,
+        "mean": 0.488353198494826
+      },
+      "spikesAtLeast30ms": [],
+      "wholeStalls": {
+        "50": 1,
+        "100": 0,
+        "250": 0
+      },
+      "attributionErrors": {
+        "timedExceptions": 0,
+        "crossFrameCalls": 0,
+        "componentTimedExceptions": 0,
+        "componentCrossFrameCalls": 0,
+        "eventMeasurementFailures": 0,
+        "eventCrossFrameCalls": 0,
+        "droppedModFrames": 0,
+        "activeReportCount": 0
+      },
+      "clean": true,
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "saveActivity": [],
+      "loadBefore": {
+        "utc": "2026-10-31T06:24:35Z",
+        "cpuTotalPercent": 73.3,
+        "counts": {
+          "dotnet": 0,
+          "testhost": 0,
+          "codex": 10,
+          "python": 9
+        },
+        "ramAvailableGiB": 21.7666015625,
+        "ramTotalGiB": 63.83710861206055,
+        "topCpu": [
+          {
+            "name": "vmmemWSL",
+            "ramMiB": 9059.3125
+          },
+          {
+            "name": "Big Ambitions Agent Tests.exe",
+            "ramMiB": 5327.16015625
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 27.38671875
+          },
+          {
+            "name": "MsMpEng.exe",
+            "ramMiB": 645.5234375
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 65.14453125
+          },
+          {
+            "name": "System",
+            "ramMiB": 44.5
+          },
+          {
+            "name": "chrome.exe",
+            "ramMiB": 179.63671875
+          },
+          {
+            "name": "SearchIndexer.exe",
+            "ramMiB": 203.5078125
+          },
+          {
+            "name": "svchost.exe",
+            "ramMiB": 24.4140625
+          },
+          {
+            "name": "explorer.exe",
+            "ramMiB": 328.05859375
+          },
+          {
+            "name": "Discord.exe",
+            "ramMiB": 393.8046875
+          }
+        ],
+        "rankingNote": "Top process CPU-delta ranking; no synchronized per-process percentage claim"
+      },
+      "loadAfter": {
+        "utc": "2026-10-31T06:25:45Z",
+        "cpuTotalPercent": 77.0,
+        "counts": {
+          "dotnet": 0,
+          "testhost": 0,
+          "codex": 10,
+          "python": 9
+        },
+        "ramAvailableGiB": 21.73006820678711,
+        "ramTotalGiB": 63.83710861206055,
+        "topCpu": [
+          {
+            "name": "vmmemWSL",
+            "ramMiB": 9168.4375
+          },
+          {
+            "name": "Big Ambitions Agent Tests.exe",
+            "ramMiB": 5307.60546875
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 28.46875
+          },
+          {
+            "name": "MsMpEng.exe",
+            "ramMiB": 553.86328125
+          },
+          {
+            "name": "chrome.exe",
+            "ramMiB": 172.30078125
+          },
+          {
+            "name": "System",
+            "ramMiB": 44.5
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 65.14453125
+          },
+          {
+            "name": "steam.exe",
+            "ramMiB": 138.22265625
+          },
+          {
+            "name": "SearchIndexer.exe",
+            "ramMiB": 203.62109375
+          },
+          {
+            "name": "dwm.exe",
+            "ramMiB": 154.015625
+          },
+          {
+            "name": "codex.exe",
+            "ramMiB": 156.10546875
+          }
+        ],
+        "rankingNote": "Top process CPU-delta ranking; no synchronized per-process percentage claim"
+      },
+      "loadWait": {
+        "polls": [
+          {
+            "elapsedSeconds": 0.015999999828636646,
+            "active": []
+          }
+        ],
+        "waitSeconds": 0.015999999828636646,
+        "underDotnetLoad": false
+      },
+      "clockBefore": 7673.077831268311,
+      "clockAfter": "08:15",
+      "populationLagMinutes": 0.0,
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321667,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 180.000275,
+            "z": -9.599641e-12
+          }
+        }
+      },
+      "components": [
+        {
+          "name": "RouteObjectDiscovery.Step",
+          "calls": 4253,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 197.9399,
+          "inclusiveCallMilliseconds": {
+            "samples": 4253,
+            "mean": 0.04654124147660479,
+            "p50": 0.0443,
+            "p95": 0.0661,
+            "p99": 0.0808,
+            "maximum": 0.1946
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4252,
+            "mean": 0.046544261523988745,
+            "p50": 0.0443,
+            "p95": 0.0661,
+            "p99": 0.0808,
+            "maximum": 0.1946
+          }
+        },
+        {
+          "name": "PhysicalPopulation.BeforeAdvance",
+          "calls": 4253,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 53.09,
+          "inclusiveCallMilliseconds": {
+            "samples": 4253,
+            "mean": 0.01248295320949913,
+            "p50": 0.0114,
+            "p95": 0.0202,
+            "p99": 0.0267,
+            "maximum": 0.1833
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4252,
+            "mean": 0.012483772342427046,
+            "p50": 0.0114,
+            "p95": 0.0202,
+            "p99": 0.0267,
+            "maximum": 0.1833
+          }
+        },
+        {
+          "name": "PhysicalPopulation.Update",
+          "calls": 4253,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 547.8095,
+          "inclusiveCallMilliseconds": {
+            "samples": 4253,
+            "mean": 0.12880543146014553,
+            "p50": 0.1069,
+            "p95": 0.2111,
+            "p99": 0.3502,
+            "maximum": 15.9216
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4252,
+            "mean": 0.12881589840075236,
+            "p50": 0.107,
+            "p95": 0.2111,
+            "p99": 0.3502,
+            "maximum": 15.9216
+          }
+        },
+        {
+          "name": "PopulationRuntime.AdvancePopulation",
+          "calls": 4253,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 136.8108,
+          "inclusiveCallMilliseconds": {
+            "samples": 4253,
+            "mean": 0.03216806959793089,
+            "p50": 0.0216,
+            "p95": 0.0378,
+            "p99": 0.0597,
+            "maximum": 7.1028
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4252,
+            "mean": 0.03217043744120416,
+            "p50": 0.0216,
+            "p95": 0.0378,
+            "p99": 0.0597,
+            "maximum": 7.1028
+          }
+        },
+        {
+          "name": "MultimodalRoutes.Prepare",
+          "calls": 4253,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 179.2485,
+          "inclusiveCallMilliseconds": {
+            "samples": 4253,
+            "mean": 0.04214636727016219,
+            "p50": 0.0349,
+            "p95": 0.056,
+            "p99": 0.1574,
+            "maximum": 1.0551
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4252,
+            "mean": 0.04214978833490117,
+            "p50": 0.0349,
+            "p95": 0.056,
+            "p99": 0.1574,
+            "maximum": 1.0551
+          }
+        },
+        {
+          "name": "CitySimulator.RefreshTrafficClosures",
+          "calls": 4253,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 25.7207,
+          "inclusiveCallMilliseconds": {
+            "samples": 4253,
+            "mean": 0.006047660474958919,
+            "p50": 0.0056,
+            "p95": 0.0092,
+            "p99": 0.012,
+            "maximum": 0.2267
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4252,
+            "mean": 0.006048118532455382,
+            "p50": 0.0056,
+            "p95": 0.0092,
+            "p99": 0.012,
+            "maximum": 0.2267
+          }
+        },
+        {
+          "name": "PhysicalVehicles.Update",
+          "calls": 4253,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 20.5797,
+          "inclusiveCallMilliseconds": {
+            "samples": 4253,
+            "mean": 0.004838866682341836,
+            "p50": 0.0043,
+            "p95": 0.0092,
+            "p99": 0.0134,
+            "maximum": 0.047
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4252,
+            "mean": 0.004839487300094034,
+            "p50": 0.0043,
+            "p95": 0.0092,
+            "p99": 0.0134,
+            "maximum": 0.047
+          }
+        },
+        {
+          "name": "PhysicalTrafficHooks.FixedStepPrefix",
+          "calls": 3022,
+          "outsidePrimaryScopeCalls": 3022,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 5.34,
+          "inclusiveCallMilliseconds": {
+            "samples": 3022,
+            "mean": 0.0017670416942422195,
+            "p50": 0.0017,
+            "p95": 0.0028,
+            "p99": 0.0034,
+            "maximum": 0.0388
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4252,
+            "mean": 0.0012555032925682017,
+            "p50": 0.0014,
+            "p95": 0.0027,
+            "p99": 0.0033,
+            "maximum": 0.0388
+          }
+        },
+        {
+          "name": "PhysicalTrafficHooks.FixedStepPostfix",
+          "calls": 3022,
+          "outsidePrimaryScopeCalls": 3022,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 22.9363,
+          "inclusiveCallMilliseconds": {
+            "samples": 3022,
+            "mean": 0.007589774983454718,
+            "p50": 0.0073,
+            "p95": 0.0104,
+            "p99": 0.0131,
+            "maximum": 0.1726
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4252,
+            "mean": 0.005392638758231453,
+            "p50": 0.0066,
+            "p95": 0.0099,
+            "p99": 0.013,
+            "maximum": 0.1726
+          }
+        },
+        {
+          "name": "PhysicalTrafficHooks.FixedStepFinalizer",
+          "calls": 3022,
+          "outsidePrimaryScopeCalls": 3022,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 0.1698,
+          "inclusiveCallMilliseconds": {
+            "samples": 3022,
+            "mean": 5.618795499669029e-05,
+            "p50": 0.0001,
+            "p95": 0.0001,
+            "p99": 0.0001,
+            "maximum": 0.0007
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4252,
+            "mean": 3.991063029162707e-05,
+            "p50": 0.0,
+            "p95": 0.0001,
+            "p99": 0.0001,
+            "maximum": 0.0013
+          }
+        },
+        {
+          "name": "PhysicalVehicles.DeferNativeForce",
+          "calls": 14556,
+          "outsidePrimaryScopeCalls": 14556,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 2.7992,
+          "inclusiveCallMilliseconds": {
+            "samples": 14556,
+            "mean": 0.0001923055784556052,
+            "p50": 0.0001,
+            "p95": 0.0007,
+            "p99": 0.0013,
+            "maximum": 0.0195
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4252,
+            "mean": 0.0006581608654750602,
+            "p50": 0.0007,
+            "p95": 0.0015,
+            "p99": 0.002,
+            "maximum": 0.0242
+          }
+        },
+        {
+          "name": "PhysicalVehicles.ApplyNativeRotation",
+          "calls": 14556,
+          "outsidePrimaryScopeCalls": 14556,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 1.3158,
+          "inclusiveCallMilliseconds": {
+            "samples": 14556,
+            "mean": 9.039571310798804e-05,
+            "p50": 0.0001,
+            "p95": 0.0002,
+            "p99": 0.0004,
+            "maximum": 0.0155
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4252,
+            "mean": 0.0003093838193790998,
+            "p50": 0.0003,
+            "p95": 0.0007,
+            "p99": 0.001,
+            "maximum": 0.0156
+          }
+        },
+        {
+          "name": "PhysicalIntersections.UpdatePostfix",
+          "calls": 4253,
+          "outsidePrimaryScopeCalls": 4253,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 6.9186,
+          "inclusiveCallMilliseconds": {
+            "samples": 4253,
+            "mean": 0.0016267575828826791,
+            "p50": 0.0015,
+            "p95": 0.0027,
+            "p99": 0.0034,
+            "maximum": 0.0153
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4252,
+            "mean": 0.0016268814675446928,
+            "p50": 0.0015,
+            "p95": 0.0027,
+            "p99": 0.0034,
+            "maximum": 0.0153
+          }
+        },
+        {
+          "name": "PopulationRuntime.OnGUI",
+          "calls": 8506,
+          "outsidePrimaryScopeCalls": 8506,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 17.6916,
+          "inclusiveCallMilliseconds": {
+            "samples": 8506,
+            "mean": 0.002079896543616248,
+            "p50": 0.0019,
+            "p95": 0.0054,
+            "p99": 0.0066,
+            "maximum": 0.175
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4252,
+            "mean": 0.004119543744120413,
+            "p50": 0.0039,
+            "p95": 0.0062,
+            "p99": 0.0074,
+            "maximum": 0.0222
+          }
+        }
+      ],
+      "collections": [
+        2,
+        2,
+        2
+      ],
+      "rawFiles": [
+        "frames-mod-work-base1-stop-d5b99a.csv.gz",
+        "frames-observations-base1-stop-d5b99a.csv.gz"
+      ],
+      "stopwatchFrequency": 10000000,
+      "captureStartedTicks": 878594853,
+      "captureStoppedTicks": 1481074158,
+      "autosaveBefore": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 1,
+        "save": "FT Food Routines Locked A3 Stack 20261031",
+        "frame": 4978
+      },
+      "autosaveAfter": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 3,
+        "save": "FT Food Routines Locked A3 Stack 20261031",
+        "frame": 9271
+      },
+      "inspectorTiming": {
+        "available": false
+      }
+    },
+    {
+      "label": "cand1",
+      "seconds": 60.2387097,
+      "fps": 80.61261644188238,
+      "wholeMs": {
+        "samples": 4856,
+        "p50": 12.2368,
+        "p95": 16.5724,
+        "maximum": 54.2191,
+        "mean": 12.402476523887973
+      },
+      "modMs": {
+        "samples": 4855,
+        "p50": 0.3438,
+        "p95": 0.6141,
+        "maximum": 15.9316,
+        "mean": 0.3936815447991761
+      },
+      "spikesAtLeast30ms": [],
+      "wholeStalls": {
+        "50": 1,
+        "100": 0,
+        "250": 0
+      },
+      "attributionErrors": {
+        "timedExceptions": 0,
+        "crossFrameCalls": 0,
+        "componentTimedExceptions": 0,
+        "componentCrossFrameCalls": 0,
+        "eventMeasurementFailures": 0,
+        "eventCrossFrameCalls": 0,
+        "droppedModFrames": 0,
+        "activeReportCount": 0
+      },
+      "clean": true,
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "saveActivity": [],
+      "loadBefore": {
+        "utc": "2026-10-31T06:27:21Z",
+        "cpuTotalPercent": 55.4,
+        "counts": {
+          "dotnet": 0,
+          "testhost": 0,
+          "codex": 8,
+          "python": 9
+        },
+        "ramAvailableGiB": 24.761478424072266,
+        "ramTotalGiB": 63.83710861206055,
+        "topCpu": [
+          {
+            "name": "vmmemWSL",
+            "ramMiB": 6295.4375
+          },
+          {
+            "name": "Big Ambitions Agent Tests.exe",
+            "ramMiB": 5326.828125
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 26.75390625
+          },
+          {
+            "name": "MsMpEng.exe",
+            "ramMiB": 580.953125
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 65.3359375
+          },
+          {
+            "name": "chrome.exe",
+            "ramMiB": 450.703125
+          },
+          {
+            "name": "System",
+            "ramMiB": 44.50390625
+          },
+          {
+            "name": "tailscale-ipn.exe",
+            "ramMiB": 50.8671875
+          },
+          {
+            "name": "SearchIndexer.exe",
+            "ramMiB": 203.9765625
+          },
+          {
+            "name": "explorer.exe",
+            "ramMiB": 328.27734375
+          },
+          {
+            "name": "steam.exe",
+            "ramMiB": 138.22265625
+          }
+        ],
+        "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample",
+        "rankingNote": "Top process CPU-delta ranking; no synchronized per-process percentage claim"
+      },
+      "loadAfter": {
+        "utc": "2026-10-31T06:28:53Z",
+        "cpuTotalPercent": 77.8,
+        "counts": {
+          "dotnet": 0,
+          "testhost": 0,
+          "codex": 10,
+          "python": 9
+        },
+        "ramAvailableGiB": 21.101612091064453,
+        "ramTotalGiB": 63.83710861206055,
+        "topCpu": [
+          {
+            "name": "vmmemWSL",
+            "ramMiB": 9304.625
+          },
+          {
+            "name": "Big Ambitions Agent Tests.exe",
+            "ramMiB": 5285.9375
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 28.41796875
+          },
+          {
+            "name": "MsMpEng.exe",
+            "ramMiB": 540.3359375
+          },
+          {
+            "name": "chrome.exe",
+            "ramMiB": 460.09375
+          },
+          {
+            "name": "System",
+            "ramMiB": 44.50390625
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 56.0390625
+          },
+          {
+            "name": "csrss.exe",
+            "ramMiB": 11.39453125
+          },
+          {
+            "name": "dwm.exe",
+            "ramMiB": 154.05859375
+          },
+          {
+            "name": "GoogleDriveFS.exe",
+            "ramMiB": 93.8125
+          },
+          {
+            "name": "SearchIndexer.exe",
+            "ramMiB": 204.46484375
+          }
+        ],
+        "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample",
+        "rankingNote": "Top process CPU-delta ranking; no synchronized per-process percentage claim"
+      },
+      "loadWait": {
+        "polls": [
+          {
+            "elapsedSeconds": 0.01600000006146729,
+            "active": []
+          }
+        ],
+        "waitSeconds": 0.01600000006146729,
+        "underDotnetLoad": false
+      },
+      "clockBefore": 7673.45690536499,
+      "clockAfter": "08:16",
+      "populationLagMinutes": 0.0,
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321667,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 179.99971,
+            "z": -9.599641e-12
+          }
+        }
+      },
+      "components": [
+        {
+          "name": "RouteObjectDiscovery.Step",
+          "calls": 4856,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 191.4651,
+          "inclusiveCallMilliseconds": {
+            "samples": 4856,
+            "mean": 0.039428562602965435,
+            "p50": 0.0367,
+            "p95": 0.0608,
+            "p99": 0.0755,
+            "maximum": 0.1984
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4855,
+            "mean": 0.03942966014418129,
+            "p50": 0.0367,
+            "p95": 0.0608,
+            "p99": 0.0755,
+            "maximum": 0.1984
+          }
+        },
+        {
+          "name": "PhysicalPopulation.BeforeAdvance",
+          "calls": 4856,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 50.7406,
+          "inclusiveCallMilliseconds": {
+            "samples": 4856,
+            "mean": 0.01044905271828666,
+            "p50": 0.009,
+            "p95": 0.0189,
+            "p99": 0.0256,
+            "maximum": 0.0844
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4855,
+            "mean": 0.010449824922760045,
+            "p50": 0.009,
+            "p95": 0.0189,
+            "p99": 0.0256,
+            "maximum": 0.0844
+          }
+        },
+        {
+          "name": "PhysicalPopulation.Update",
+          "calls": 4856,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 361.3096,
+          "inclusiveCallMilliseconds": {
+            "samples": 4856,
+            "mean": 0.0744047775947282,
+            "p50": 0.0569,
+            "p95": 0.1207,
+            "p99": 0.2631,
+            "maximum": 15.609
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4855,
+            "mean": 0.07440865087538626,
+            "p50": 0.0569,
+            "p95": 0.1207,
+            "p99": 0.2631,
+            "maximum": 15.609
+          }
+        },
+        {
+          "name": "PopulationRuntime.AdvancePopulation",
+          "calls": 4856,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 128.6444,
+          "inclusiveCallMilliseconds": {
+            "samples": 4856,
+            "mean": 0.026491845140032937,
+            "p50": 0.0182,
+            "p95": 0.0373,
+            "p99": 0.0552,
+            "maximum": 5.3534
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4855,
+            "mean": 0.02649349124613799,
+            "p50": 0.0182,
+            "p95": 0.0373,
+            "p99": 0.0552,
+            "maximum": 5.3534
+          }
+        },
+        {
+          "name": "MultimodalRoutes.Prepare",
+          "calls": 4856,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 174.3557,
+          "inclusiveCallMilliseconds": {
+            "samples": 4856,
+            "mean": 0.035905210049423444,
+            "p50": 0.028,
+            "p95": 0.0517,
+            "p99": 0.0941,
+            "maximum": 1.0557
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4855,
+            "mean": 0.03590745623069006,
+            "p50": 0.028,
+            "p95": 0.0517,
+            "p99": 0.0941,
+            "maximum": 1.0557
+          }
+        },
+        {
+          "name": "CitySimulator.RefreshTrafficClosures",
+          "calls": 4856,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 26.1395,
+          "inclusiveCallMilliseconds": {
+            "samples": 4856,
+            "mean": 0.005382928336079047,
+            "p50": 0.0049,
+            "p95": 0.009,
+            "p99": 0.0115,
+            "maximum": 0.0796
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4855,
+            "mean": 0.005382760041194614,
+            "p50": 0.0049,
+            "p95": 0.009,
+            "p99": 0.0115,
+            "maximum": 0.0796
+          }
+        },
+        {
+          "name": "PhysicalVehicles.Update",
+          "calls": 4856,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 19.1881,
+          "inclusiveCallMilliseconds": {
+            "samples": 4856,
+            "mean": 0.0039514209225700305,
+            "p50": 0.0033,
+            "p95": 0.0077,
+            "p99": 0.0122,
+            "maximum": 0.0353
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4855,
+            "mean": 0.003951575695159644,
+            "p50": 0.0033,
+            "p95": 0.0077,
+            "p99": 0.0122,
+            "maximum": 0.0353
+          }
+        },
+        {
+          "name": "PhysicalTrafficHooks.FixedStepPrefix",
+          "calls": 3020,
+          "outsidePrimaryScopeCalls": 3020,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 4.61,
+          "inclusiveCallMilliseconds": {
+            "samples": 3020,
+            "mean": 0.0015264900662251696,
+            "p50": 0.0014,
+            "p95": 0.0029,
+            "p99": 0.0037,
+            "maximum": 0.0721
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4855,
+            "mean": 0.0009495365602471701,
+            "p50": 0.0007,
+            "p95": 0.0026,
+            "p99": 0.0035,
+            "maximum": 0.0721
+          }
+        },
+        {
+          "name": "PhysicalTrafficHooks.FixedStepPostfix",
+          "calls": 3020,
+          "outsidePrimaryScopeCalls": 3020,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 17.7335,
+          "inclusiveCallMilliseconds": {
+            "samples": 3020,
+            "mean": 0.005872019867549661,
+            "p50": 0.0058,
+            "p95": 0.0099,
+            "p99": 0.0127,
+            "maximum": 0.1787
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4855,
+            "mean": 0.0036526261585993753,
+            "p50": 0.0032,
+            "p95": 0.0091,
+            "p99": 0.0121,
+            "maximum": 0.1787
+          }
+        },
+        {
+          "name": "PhysicalTrafficHooks.FixedStepFinalizer",
+          "calls": 3020,
+          "outsidePrimaryScopeCalls": 3020,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 0.1734,
+          "inclusiveCallMilliseconds": {
+            "samples": 3020,
+            "mean": 5.741721854304603e-05,
+            "p50": 0.0001,
+            "p95": 0.0001,
+            "p99": 0.0002,
+            "maximum": 0.0045
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4855,
+            "mean": 3.571575695159611e-05,
+            "p50": 0.0,
+            "p95": 0.0001,
+            "p99": 0.0001,
+            "maximum": 0.0045
+          }
+        },
+        {
+          "name": "PhysicalVehicles.DeferNativeForce",
+          "calls": 8748,
+          "outsidePrimaryScopeCalls": 8748,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 1.738,
+          "inclusiveCallMilliseconds": {
+            "samples": 8748,
+            "mean": 0.0001986739826245833,
+            "p50": 0.0001,
+            "p95": 0.0007,
+            "p99": 0.0012,
+            "maximum": 0.0128
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4855,
+            "mean": 0.00035798146240988474,
+            "p50": 0.0003,
+            "p95": 0.0011,
+            "p99": 0.0015,
+            "maximum": 0.0139
+          }
+        },
+        {
+          "name": "PhysicalVehicles.ApplyNativeRotation",
+          "calls": 8748,
+          "outsidePrimaryScopeCalls": 8748,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 0.7911,
+          "inclusiveCallMilliseconds": {
+            "samples": 8748,
+            "mean": 9.04320987654249e-05,
+            "p50": 0.0001,
+            "p95": 0.0002,
+            "p99": 0.0004,
+            "maximum": 0.012
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4855,
+            "mean": 0.0001629454170957786,
+            "p50": 0.0001,
+            "p95": 0.0004,
+            "p99": 0.0008,
+            "maximum": 0.0121
+          }
+        },
+        {
+          "name": "PhysicalIntersections.UpdatePostfix",
+          "calls": 4856,
+          "outsidePrimaryScopeCalls": 4856,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 6.4039,
+          "inclusiveCallMilliseconds": {
+            "samples": 4856,
+            "mean": 0.0013187602965403391,
+            "p50": 0.0012,
+            "p95": 0.0024,
+            "p99": 0.0031,
+            "maximum": 0.1035
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4855,
+            "mean": 0.0013187847579814393,
+            "p50": 0.0012,
+            "p95": 0.0024,
+            "p99": 0.0031,
+            "maximum": 0.1035
+          }
+        },
+        {
+          "name": "ResidentInspector.Update",
+          "calls": 4856,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 26.1522,
+          "inclusiveCallMilliseconds": {
+            "samples": 4856,
+            "mean": 0.005385543657331092,
+            "p50": 0.0048,
+            "p95": 0.0095,
+            "p99": 0.012,
+            "maximum": 0.109
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4855,
+            "mean": 0.005385829042224466,
+            "p50": 0.0048,
+            "p95": 0.0095,
+            "p99": 0.012,
+            "maximum": 0.109
+          }
+        },
+        {
+          "name": "PopulationRuntime.OnGUI",
+          "calls": 9712,
+          "outsidePrimaryScopeCalls": 9712,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 26.2712,
+          "inclusiveCallMilliseconds": {
+            "samples": 9712,
+            "mean": 0.0027050247116968697,
+            "p50": 0.0026,
+            "p95": 0.007,
+            "p99": 0.009,
+            "maximum": 0.1659
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 4855,
+            "mean": 0.005376869207003058,
+            "p50": 0.0049,
+            "p95": 0.0083,
+            "p99": 0.0111,
+            "maximum": 0.0981
+          }
+        }
+      ],
+      "collections": [
+        1,
+        1,
+        1
+      ],
+      "rawFiles": [
+        "frames-mod-work-cand1-stop-2428a2.csv.gz",
+        "frames-observations-cand1-stop-2428a2.csv.gz"
+      ],
+      "stopwatchFrequency": 10000000,
+      "captureStartedTicks": 736547998,
+      "captureStoppedTicks": 1338935095,
+      "autosaveBefore": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 12,
+        "save": "FT Food Routines Locked A3 Stack 20261031",
+        "frame": 3971
+      },
+      "autosaveAfter": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 13,
+        "save": "FT Food Routines Locked A3 Stack 20261031",
+        "frame": 8863
+      },
+      "countersBefore": {
+        "frame": 3952,
+        "minute": 7673.249221801758,
+        "nativeMinute": 7673.249221801758,
+        "PlanningPending": false,
+        "runtime": {
+          "advanceFrames": 2139,
+          "advanceEvents": 52,
+          "advanceMilliseconds": 56.06150000000014,
+          "planningSlices": 0,
+          "planningEvents": 0,
+          "planningPendingFrames": 0,
+          "planningRequests": 0,
+          "planningMilliseconds": 0.0
+        },
+        "routes": {
+          "WalkingRequests": 0,
+          "WalkingInvalidInputs": 0,
+          "WalkingDistanceRejects": 0,
+          "WalkingCacheHits": 0,
+          "WalkingNegativeCacheHits": 0,
+          "WalkingCacheMisses": 0,
+          "WalkingCacheEvictions": 0,
+          "WalkingCacheClears": 2,
+          "WalkingCalculations": 0,
+          "WalkingFailedCalculations": 0,
+          "WalkingCalculationMilliseconds": 0.0,
+          "MaximumWalkingCalculationMilliseconds": 0.0,
+          "NavMeshSampleQueries": 0,
+          "NavMeshPathQueries": 0,
+          "NavMeshPathReuses": 0,
+          "NavMeshPathMilliseconds": 0.0,
+          "MaximumNavMeshPathMilliseconds": 0.0,
+          "WalkingQuoteChecks": 0,
+          "WalkingQuoteRejected": 0,
+          "NavMeshRaycastQueries": 0,
+          "WalkingQuoteCheckMilliseconds": 0.0,
+          "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+          "CitizenPlanRequests": 0,
+          "SelectedWalking": 0,
+          "SelectedSubway": 0,
+          "SelectedCar": 0,
+          "NoFeasibleRoute": 0,
+          "SubwayConnectorRequests": 0,
+          "SubwayConnectorCacheHits": 0,
+          "SubwayConnectorCacheMisses": 0,
+          "SubwayCandidates": 0
+        },
+        "physical": "physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+        "bodies": [],
+        "pendingDecisions": 0,
+        "diagnostics": {
+          "active": true,
+          "hourlyCustomerBatchesSuppressed": 0,
+          "nativeDrawsSuppressed": 0,
+          "nativePurchasesThisSession": 0
+        }
+      },
+      "countersAfter": {
+        "frame": 9362,
+        "minute": 7696.226215362549,
+        "nativeMinute": 7696.226215362549,
+        "PlanningPending": false,
+        "runtime": {
+          "advanceFrames": 2893,
+          "advanceEvents": 164,
+          "advanceMilliseconds": 103.14119999999984,
+          "planningSlices": 0,
+          "planningEvents": 0,
+          "planningPendingFrames": 0,
+          "planningRequests": 0,
+          "planningMilliseconds": 0.0
+        },
+        "routes": {
+          "WalkingRequests": 16,
+          "WalkingInvalidInputs": 0,
+          "WalkingDistanceRejects": 0,
+          "WalkingCacheHits": 0,
+          "WalkingNegativeCacheHits": 0,
+          "WalkingCacheMisses": 16,
+          "WalkingCacheEvictions": 0,
+          "WalkingCacheClears": 4,
+          "WalkingCalculations": 16,
+          "WalkingFailedCalculations": 0,
+          "WalkingCalculationMilliseconds": 1.9587,
+          "MaximumWalkingCalculationMilliseconds": 0.8230000000000001,
+          "NavMeshSampleQueries": 72,
+          "NavMeshPathQueries": 36,
+          "NavMeshPathReuses": 16,
+          "NavMeshPathMilliseconds": 1.3833000000000002,
+          "MaximumNavMeshPathMilliseconds": 0.0818,
+          "WalkingQuoteChecks": 36,
+          "WalkingQuoteRejected": 0,
+          "NavMeshRaycastQueries": 0,
+          "WalkingQuoteCheckMilliseconds": 1.8371000000000004,
+          "MaximumWalkingQuoteCheckMilliseconds": 0.48510000000000003,
+          "CitizenPlanRequests": 0,
+          "SelectedWalking": 0,
+          "SelectedSubway": 0,
+          "SelectedCar": 0,
+          "NoFeasibleRoute": 0,
+          "SubwayConnectorRequests": 0,
+          "SubwayConnectorCacheHits": 0,
+          "SubwayConnectorCacheMisses": 0,
+          "SubwayCandidates": 0
+        },
+        "physical": "physical=True, pedestrians=2, cars=0, acquired=3, released=1, blockedSamples=324, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+        "bodies": [
+          {
+            "id": "c252",
+            "identity": {
+              "Id": "c252",
+              "Name": "Orla Walsh",
+              "District": "ba:neighborhood_hellskitchen",
+              "Age": 31,
+              "Female": true,
+              "Persona": 2,
+              "AppearanceSeed": 792034
+            },
+            "home": "address:ba%3Astreet_fourthavenue:12:home",
+            "person": {
+              "identity": "c252",
+              "generation": 3,
+              "character": -1036064
+            }
+          },
+          {
+            "id": "pc:289",
+            "identity": {
+              "Id": "pc:289",
+              "Name": "Gabe Corwin",
+              "District": "ba:neighborhood_midtown",
+              "Age": 29,
+              "Female": false,
+              "Persona": 2,
+              "AppearanceSeed": 795648
+            },
+            "home": "address:ba%3Astreet_thirdstreet:42:home",
+            "person": {
+              "identity": "pc:289",
+              "generation": 4,
+              "character": -1037516
+            }
+          }
+        ],
+        "pendingDecisions": 0,
+        "diagnostics": {
+          "active": true,
+          "hourlyCustomerBatchesSuppressed": 0,
+          "nativeDrawsSuppressed": 0,
+          "nativePurchasesThisSession": 0
+        }
+      },
+      "inspectorTiming": {
+        "update": {
+          "closed": {
+            "calls": 5429,
+            "totalMilliseconds": 28.2478,
+            "maxMilliseconds": 0.1087
+          },
+          "hover": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          },
+          "open": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          }
+        },
+        "draw": {
+          "closed": {
+            "calls": 10858,
+            "totalMilliseconds": 4.0193,
+            "maxMilliseconds": 0.0097
+          },
+          "hover": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          },
+          "open": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          }
+        },
+        "picks": 0,
+        "builds": 0,
+        "buildMilliseconds": 0.0,
+        "buildMaxMilliseconds": 0.0,
+        "hovered": null,
+        "selected": null
+      }
+    },
+    {
+      "label": "base2",
+      "seconds": 60.2933898,
+      "fps": 89.46254337154552,
+      "wholeMs": {
+        "samples": 5394,
+        "p50": 11.1941,
+        "p95": 12.8719,
+        "maximum": 52.9053,
+        "mean": 11.176743548387098
+      },
+      "modMs": {
+        "samples": 5393,
+        "p50": 0.2532,
+        "p95": 0.3507,
+        "maximum": 9.9307,
+        "mean": 0.2790903393287595
+      },
+      "spikesAtLeast30ms": [],
+      "wholeStalls": {
+        "50": 1,
+        "100": 0,
+        "250": 0
+      },
+      "attributionErrors": {
+        "timedExceptions": 0,
+        "crossFrameCalls": 0,
+        "componentTimedExceptions": 0,
+        "componentCrossFrameCalls": 0,
+        "eventMeasurementFailures": 0,
+        "eventCrossFrameCalls": 0,
+        "droppedModFrames": 0,
+        "activeReportCount": 0
+      },
+      "clean": true,
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "saveActivity": [],
+      "loadBefore": {
+        "utc": "2026-10-31T06:46:20Z",
+        "cpuTotalPercent": 32.7,
+        "counts": {
+          "dotnet": 0,
+          "testhost": 0,
+          "codex": 12,
+          "python": 12
+        },
+        "ramAvailableGiB": 28.734848022460938,
+        "ramTotalGiB": 63.83710861206055,
+        "topCpu": [
+          {
+            "name": "Big Ambitions Agent Tests.exe",
+            "ramMiB": 5256.19140625
+          },
+          {
+            "name": "MsMpEng.exe",
+            "ramMiB": 694.234375
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 27.73828125
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 64.11328125
+          },
+          {
+            "name": "System",
+            "ramMiB": 44.5234375
+          },
+          {
+            "name": "SearchIndexer.exe",
+            "ramMiB": 205.8828125
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 64.03515625
+          },
+          {
+            "name": "svchost.exe",
+            "ramMiB": 31.7578125
+          },
+          {
+            "name": "csrss.exe",
+            "ramMiB": 11.42578125
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 44.21484375
+          },
+          {
+            "name": "lsass.exe",
+            "ramMiB": 47.65625
+          }
+        ],
+        "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample",
+        "rankingNote": "Top process CPU-delta ranking; no synchronized per-process percentage claim"
+      },
+      "loadAfter": {
+        "utc": "2026-10-31T06:47:50Z",
+        "cpuTotalPercent": 23.9,
+        "counts": {
+          "dotnet": 0,
+          "testhost": 0,
+          "codex": 16,
+          "python": 13
+        },
+        "ramAvailableGiB": 30.094924926757812,
+        "ramTotalGiB": 63.83710861206055,
+        "topCpu": [
+          {
+            "name": "Big Ambitions Agent Tests.exe",
+            "ramMiB": 5310.83984375
+          },
+          {
+            "name": "MsMpEng.exe",
+            "ramMiB": 702.0390625
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 29.296875
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 44.1484375
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 64.69921875
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 64.75390625
+          },
+          {
+            "name": "System",
+            "ramMiB": 44.52734375
+          },
+          {
+            "name": "chrome.exe",
+            "ramMiB": 99.4375
+          },
+          {
+            "name": "agent-cli.exe",
+            "ramMiB": 260.28125
+          },
+          {
+            "name": "csrss.exe",
+            "ramMiB": 11.46875
+          },
+          {
+            "name": "ChatGPT.exe",
+            "ramMiB": 368.5234375
+          }
+        ],
+        "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample",
+        "rankingNote": "Top process CPU-delta ranking; no synchronized per-process percentage claim"
+      },
+      "loadWait": {
+        "polls": [
+          {
+            "elapsedSeconds": 0.014999999897554517,
+            "active": [
+              {
+                "pid": 2728,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 27080,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 41680,
+                "name": "testhost.exe"
+              },
+              {
+                "pid": 47448,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 50208,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 30.030999999959022,
+            "active": [
+              {
+                "pid": 2728,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 27080,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 41680,
+                "name": "testhost.exe"
+              },
+              {
+                "pid": 47448,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 50208,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 60.03099999995902,
+            "active": [
+              {
+                "pid": 2728,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 27080,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 41680,
+                "name": "testhost.exe"
+              },
+              {
+                "pid": 47448,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 50208,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 90.03099999995902,
+            "active": [
+              {
+                "pid": 2728,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 27080,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 41680,
+                "name": "testhost.exe"
+              },
+              {
+                "pid": 47448,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 50208,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 120.03099999995902,
+            "active": [
+              {
+                "pid": 2728,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 27080,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 41680,
+                "name": "testhost.exe"
+              },
+              {
+                "pid": 47448,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 50208,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 150.0460000000894,
+            "active": [
+              {
+                "pid": 2728,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 27080,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 41680,
+                "name": "testhost.exe"
+              },
+              {
+                "pid": 47448,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 50208,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 180.0460000000894,
+            "active": [
+              {
+                "pid": 2728,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 27080,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 41680,
+                "name": "testhost.exe"
+              },
+              {
+                "pid": 47448,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 50208,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 210.0460000000894,
+            "active": [
+              {
+                "pid": 25876,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 240.06199999991804,
+            "active": [
+              {
+                "pid": 14436,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 16192,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 270.06199999991804,
+            "active": [
+              {
+                "pid": 14436,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 32668,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 300.0779999999795,
+            "active": [
+              {
+                "pid": 14436,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 35040,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 330.0779999999795,
+            "active": [
+              {
+                "pid": 14436,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 51948,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 360.0779999999795,
+            "active": [
+              {
+                "pid": 4988,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 14436,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 390.0779999999795,
+            "active": [
+              {
+                "pid": 14436,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 420.0930000001099,
+            "active": [
+              {
+                "pid": 14436,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 450.0930000001099,
+            "active": [
+              {
+                "pid": 14436,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 480.0930000001099,
+            "active": [
+              {
+                "pid": 14436,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 510.0930000001099,
+            "active": [
+              {
+                "pid": 14436,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 540.0930000001099,
+            "active": [
+              {
+                "pid": 9036,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 14436,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 19904,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 23248,
+                "name": "testhost.exe"
+              },
+              {
+                "pid": 26212,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 53156,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 570.1089999999385,
+            "active": [
+              {
+                "pid": 9036,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 14436,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 19904,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 23248,
+                "name": "testhost.exe"
+              },
+              {
+                "pid": 26212,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 53156,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 600.1089999999385,
+            "active": [
+              {
+                "pid": 9036,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 14436,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 19904,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 23248,
+                "name": "testhost.exe"
+              },
+              {
+                "pid": 26212,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 53156,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 630.125,
+            "active": [
+              {
+                "pid": 9036,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 14436,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 19904,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 23248,
+                "name": "testhost.exe"
+              },
+              {
+                "pid": 26212,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 36176,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 53156,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 660.125,
+            "active": [
+              {
+                "pid": 9036,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 14436,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 19904,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 23248,
+                "name": "testhost.exe"
+              },
+              {
+                "pid": 26212,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 36176,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 53156,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 690.1399999998976,
+            "active": [
+              {
+                "pid": 9036,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 14436,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 19904,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 23248,
+                "name": "testhost.exe"
+              },
+              {
+                "pid": 26212,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 53156,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 720.1399999998976,
+            "active": [
+              {
+                "pid": 9036,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 14436,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 19904,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 23248,
+                "name": "testhost.exe"
+              },
+              {
+                "pid": 26212,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 53156,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 750.155999999959,
+            "active": [
+              {
+                "pid": 14436,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 25088,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 780.155999999959,
+            "active": [
+              {
+                "pid": 14436,
+                "name": "dotnet.exe"
+              },
+              {
+                "pid": 25088,
+                "name": "dotnet.exe"
+              }
+            ]
+          },
+          {
+            "elapsedSeconds": 810.155999999959,
+            "active": []
+          }
+        ],
+        "waitSeconds": 810.155999999959,
+        "underDotnetLoad": false
+      },
+      "clockBefore": 7673.40486907959,
+      "clockAfter": "08:15",
+      "populationLagMinutes": 0.0,
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321667,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 180.000961,
+            "z": 0.0
+          }
+        }
+      },
+      "components": [
+        {
+          "name": "RouteObjectDiscovery.Step",
+          "calls": 5394,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 156.9835,
+          "inclusiveCallMilliseconds": {
+            "samples": 5394,
+            "mean": 0.02910335558027432,
+            "p50": 0.0279,
+            "p95": 0.0354,
+            "p99": 0.0439,
+            "maximum": 0.1535
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5393,
+            "mean": 0.029103504542925956,
+            "p50": 0.0279,
+            "p95": 0.0354,
+            "p99": 0.0439,
+            "maximum": 0.1535
+          }
+        },
+        {
+          "name": "PhysicalPopulation.BeforeAdvance",
+          "calls": 5394,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 37.5345,
+          "inclusiveCallMilliseconds": {
+            "samples": 5394,
+            "mean": 0.0069585650723025215,
+            "p50": 0.0066,
+            "p95": 0.0098,
+            "p99": 0.0128,
+            "maximum": 0.078
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5393,
+            "mean": 0.00695879844242533,
+            "p50": 0.0066,
+            "p95": 0.0098,
+            "p99": 0.0128,
+            "maximum": 0.078
+          }
+        },
+        {
+          "name": "PhysicalPopulation.Update",
+          "calls": 5394,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 244.065,
+          "inclusiveCallMilliseconds": {
+            "samples": 5394,
+            "mean": 0.045247497219132314,
+            "p50": 0.038,
+            "p95": 0.0696,
+            "p99": 0.1423,
+            "maximum": 9.7113
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5393,
+            "mean": 0.04524737622844423,
+            "p50": 0.038,
+            "p95": 0.0696,
+            "p99": 0.1423,
+            "maximum": 9.7113
+          }
+        },
+        {
+          "name": "PopulationRuntime.AdvancePopulation",
+          "calls": 5394,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 102.3641,
+          "inclusiveCallMilliseconds": {
+            "samples": 5394,
+            "mean": 0.018977400815721215,
+            "p50": 0.0142,
+            "p95": 0.0197,
+            "p99": 0.0283,
+            "maximum": 5.1931
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5393,
+            "mean": 0.01897771184869279,
+            "p50": 0.0142,
+            "p95": 0.0197,
+            "p99": 0.0283,
+            "maximum": 5.1931
+          }
+        },
+        {
+          "name": "MultimodalRoutes.Prepare",
+          "calls": 5394,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 143.0262,
+          "inclusiveCallMilliseconds": {
+            "samples": 5394,
+            "mean": 0.02651579532814234,
+            "p50": 0.0227,
+            "p95": 0.0306,
+            "p99": 0.0488,
+            "maximum": 0.6539
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5393,
+            "mean": 0.02651672538475798,
+            "p50": 0.0227,
+            "p95": 0.0306,
+            "p99": 0.0488,
+            "maximum": 0.6539
+          }
+        },
+        {
+          "name": "CitySimulator.RefreshTrafficClosures",
+          "calls": 5394,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 20.2858,
+          "inclusiveCallMilliseconds": {
+            "samples": 5394,
+            "mean": 0.003760808305524661,
+            "p50": 0.0036,
+            "p95": 0.0051,
+            "p99": 0.0067,
+            "maximum": 0.0787
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5393,
+            "mean": 0.003760912293714078,
+            "p50": 0.0036,
+            "p95": 0.0051,
+            "p99": 0.0067,
+            "maximum": 0.0787
+          }
+        },
+        {
+          "name": "PhysicalVehicles.Update",
+          "calls": 5394,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 14.4929,
+          "inclusiveCallMilliseconds": {
+            "samples": 5394,
+            "mean": 0.002686855765665563,
+            "p50": 0.0024,
+            "p95": 0.0044,
+            "p99": 0.0064,
+            "maximum": 0.0626
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5393,
+            "mean": 0.0026867791581680046,
+            "p50": 0.0024,
+            "p95": 0.0044,
+            "p99": 0.0064,
+            "maximum": 0.0626
+          }
+        },
+        {
+          "name": "PhysicalTrafficHooks.FixedStepPrefix",
+          "calls": 3022,
+          "outsidePrimaryScopeCalls": 3022,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 2.3798,
+          "inclusiveCallMilliseconds": {
+            "samples": 3022,
+            "mean": 0.0007874917273328723,
+            "p50": 0.0007,
+            "p95": 0.0013,
+            "p99": 0.0018,
+            "maximum": 0.0235
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5393,
+            "mean": 0.0004411459299091305,
+            "p50": 0.0006,
+            "p95": 0.0012,
+            "p99": 0.0016,
+            "maximum": 0.0235
+          }
+        },
+        {
+          "name": "PhysicalTrafficHooks.FixedStepPostfix",
+          "calls": 3022,
+          "outsidePrimaryScopeCalls": 3022,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 10.366,
+          "inclusiveCallMilliseconds": {
+            "samples": 3022,
+            "mean": 0.0034301786896095187,
+            "p50": 0.0033,
+            "p95": 0.0048,
+            "p99": 0.0065,
+            "maximum": 0.0661
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5393,
+            "mean": 0.001921509363990353,
+            "p50": 0.0026,
+            "p95": 0.0044,
+            "p99": 0.006,
+            "maximum": 0.0661
+          }
+        },
+        {
+          "name": "PhysicalTrafficHooks.FixedStepFinalizer",
+          "calls": 3022,
+          "outsidePrimaryScopeCalls": 3022,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 0.1461,
+          "inclusiveCallMilliseconds": {
+            "samples": 3022,
+            "mean": 4.8345466578424976e-05,
+            "p50": 0.0,
+            "p95": 0.0001,
+            "p99": 0.0001,
+            "maximum": 0.0006
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5393,
+            "mean": 2.707213053958843e-05,
+            "p50": 0.0,
+            "p95": 0.0001,
+            "p99": 0.0001,
+            "maximum": 0.001
+          }
+        },
+        {
+          "name": "PhysicalVehicles.DeferNativeForce",
+          "calls": 14690,
+          "outsidePrimaryScopeCalls": 14690,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 1.1981,
+          "inclusiveCallMilliseconds": {
+            "samples": 14690,
+            "mean": 8.155888359427413e-05,
+            "p50": 0.0001,
+            "p95": 0.0002,
+            "p99": 0.0004,
+            "maximum": 0.0145
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5393,
+            "mean": 0.0002220841832004367,
+            "p50": 0.0002,
+            "p95": 0.0006,
+            "p99": 0.0009,
+            "maximum": 0.0172
+          }
+        },
+        {
+          "name": "PhysicalVehicles.ApplyNativeRotation",
+          "calls": 14690,
+          "outsidePrimaryScopeCalls": 14690,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 0.7529,
+          "inclusiveCallMilliseconds": {
+            "samples": 14690,
+            "mean": 5.125255275697309e-05,
+            "p50": 0.0,
+            "p95": 0.0001,
+            "p99": 0.0002,
+            "maximum": 0.0029
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5393,
+            "mean": 0.00013955127016502847,
+            "p50": 0.0001,
+            "p95": 0.0004,
+            "p99": 0.0005,
+            "maximum": 0.0045
+          }
+        },
+        {
+          "name": "PhysicalIntersections.UpdatePostfix",
+          "calls": 5394,
+          "outsidePrimaryScopeCalls": 5394,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 5.3637,
+          "inclusiveCallMilliseconds": {
+            "samples": 5394,
+            "mean": 0.000994382647385974,
+            "p50": 0.0009,
+            "p95": 0.0016,
+            "p99": 0.0021,
+            "maximum": 0.0095
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5393,
+            "mean": 0.000994381605785267,
+            "p50": 0.0009,
+            "p95": 0.0016,
+            "p99": 0.0021,
+            "maximum": 0.0095
+          }
+        },
+        {
+          "name": "PopulationRuntime.OnGUI",
+          "calls": 10788,
+          "outsidePrimaryScopeCalls": 10788,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 14.6295,
+          "inclusiveCallMilliseconds": {
+            "samples": 10788,
+            "mean": 0.001356090100111264,
+            "p50": 0.0015,
+            "p95": 0.0032,
+            "p99": 0.004,
+            "maximum": 0.2184
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5393,
+            "mean": 0.0026719821991471175,
+            "p50": 0.0026,
+            "p95": 0.0037,
+            "p99": 0.0047,
+            "maximum": 0.0639
+          }
+        }
+      ],
+      "collections": [
+        2,
+        2,
+        2
+      ],
+      "rawFiles": [
+        "frames-mod-work-base2-stop-62badf.csv.gz",
+        "frames-observations-base2-stop-62badf.csv.gz"
+      ],
+      "stopwatchFrequency": 10000000,
+      "captureStartedTicks": 8810425791,
+      "captureStoppedTicks": 9413359689,
+      "autosaveBefore": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 12,
+        "save": "FT Food Routines Locked A3 Stack 20261031",
+        "frame": 73900
+      },
+      "autosaveAfter": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 13,
+        "save": "FT Food Routines Locked A3 Stack 20261031",
+        "frame": 79349
+      },
+      "countersBefore": {
+        "frame": 73899,
+        "minute": 7673.234451293945,
+        "nativeMinute": 7673.234451293945,
+        "PlanningPending": false,
+        "runtime": {
+          "advanceFrames": 5073,
+          "advanceEvents": 52,
+          "advanceMilliseconds": 52.12150000000024,
+          "planningSlices": 0,
+          "planningEvents": 0,
+          "planningPendingFrames": 0,
+          "planningRequests": 0,
+          "planningMilliseconds": 0.0
+        },
+        "routes": {
+          "WalkingRequests": 0,
+          "WalkingInvalidInputs": 0,
+          "WalkingDistanceRejects": 0,
+          "WalkingCacheHits": 0,
+          "WalkingNegativeCacheHits": 0,
+          "WalkingCacheMisses": 0,
+          "WalkingCacheEvictions": 0,
+          "WalkingCacheClears": 29,
+          "WalkingCalculations": 0,
+          "WalkingFailedCalculations": 0,
+          "WalkingCalculationMilliseconds": 0.0,
+          "MaximumWalkingCalculationMilliseconds": 0.0,
+          "NavMeshSampleQueries": 0,
+          "NavMeshPathQueries": 0,
+          "NavMeshPathReuses": 0,
+          "NavMeshPathMilliseconds": 0.0,
+          "MaximumNavMeshPathMilliseconds": 0.0,
+          "WalkingQuoteChecks": 0,
+          "WalkingQuoteRejected": 0,
+          "NavMeshRaycastQueries": 0,
+          "WalkingQuoteCheckMilliseconds": 0.0,
+          "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+          "CitizenPlanRequests": 0,
+          "SelectedWalking": 0,
+          "SelectedSubway": 0,
+          "SelectedCar": 0,
+          "NoFeasibleRoute": 0,
+          "SubwayConnectorRequests": 0,
+          "SubwayConnectorCacheHits": 0,
+          "SubwayConnectorCacheMisses": 0,
+          "SubwayCandidates": 0
+        },
+        "physical": "physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+        "bodies": [],
+        "pendingDecisions": 0,
+        "diagnostics": {
+          "active": true,
+          "hourlyCustomerBatchesSuppressed": 0,
+          "nativeDrawsSuppressed": 0,
+          "nativePurchasesThisSession": 0
+        }
+      },
+      "countersAfter": {
+        "frame": 79763,
+        "minute": 7695.366326332092,
+        "nativeMinute": 7695.366326332092,
+        "PlanningPending": false,
+        "runtime": {
+          "advanceFrames": 479,
+          "advanceEvents": 41,
+          "advanceMilliseconds": 15.3875,
+          "planningSlices": 0,
+          "planningEvents": 0,
+          "planningPendingFrames": 0,
+          "planningRequests": 0,
+          "planningMilliseconds": 0.0
+        },
+        "routes": {
+          "WalkingRequests": 16,
+          "WalkingInvalidInputs": 0,
+          "WalkingDistanceRejects": 0,
+          "WalkingCacheHits": 0,
+          "WalkingNegativeCacheHits": 0,
+          "WalkingCacheMisses": 16,
+          "WalkingCacheEvictions": 0,
+          "WalkingCacheClears": 31,
+          "WalkingCalculations": 16,
+          "WalkingFailedCalculations": 0,
+          "WalkingCalculationMilliseconds": 1.6844999999999999,
+          "MaximumWalkingCalculationMilliseconds": 0.8221,
+          "NavMeshSampleQueries": 72,
+          "NavMeshPathQueries": 36,
+          "NavMeshPathReuses": 16,
+          "NavMeshPathMilliseconds": 1.1344,
+          "MaximumNavMeshPathMilliseconds": 0.067,
+          "WalkingQuoteChecks": 36,
+          "WalkingQuoteRejected": 0,
+          "NavMeshRaycastQueries": 0,
+          "WalkingQuoteCheckMilliseconds": 1.4724000000000002,
+          "MaximumWalkingQuoteCheckMilliseconds": 0.4813,
+          "CitizenPlanRequests": 0,
+          "SelectedWalking": 0,
+          "SelectedSubway": 0,
+          "SelectedCar": 0,
+          "NoFeasibleRoute": 0,
+          "SubwayConnectorRequests": 0,
+          "SubwayConnectorCacheHits": 0,
+          "SubwayConnectorCacheMisses": 0,
+          "SubwayCandidates": 0
+        },
+        "physical": "physical=True, pedestrians=2, cars=0, acquired=3, released=1, blockedSamples=180, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+        "bodies": [
+          {
+            "id": "c252",
+            "identity": {
+              "Id": "c252",
+              "Name": "Orla Walsh",
+              "District": "ba:neighborhood_hellskitchen",
+              "Age": 31,
+              "Female": true,
+              "Persona": 2,
+              "AppearanceSeed": 792034
+            },
+            "home": "address:ba%3Astreet_fourthavenue:12:home",
+            "person": {
+              "identity": "c252",
+              "generation": 3,
+              "character": -1031886
+            }
+          },
+          {
+            "id": "pc:289",
+            "identity": {
+              "Id": "pc:289",
+              "Name": "Gabe Corwin",
+              "District": "ba:neighborhood_midtown",
+              "Age": 29,
+              "Female": false,
+              "Persona": 2,
+              "AppearanceSeed": 795648
+            },
+            "home": "address:ba%3Astreet_thirdstreet:42:home",
+            "person": {
+              "identity": "pc:289",
+              "generation": 4,
+              "character": -1033338
+            }
+          }
+        ],
+        "pendingDecisions": 0,
+        "diagnostics": {
+          "active": true,
+          "hourlyCustomerBatchesSuppressed": 0,
+          "nativeDrawsSuppressed": 0,
+          "nativePurchasesThisSession": 0
+        }
+      },
+      "inspectorTiming": {
+        "available": false
+      }
+    },
+    {
+      "label": "cand2",
+      "seconds": 60.2303209,
+      "fps": 89.2573693725746,
+      "wholeMs": {
+        "samples": 5376,
+        "p50": 11.1653,
+        "p95": 12.8191,
+        "maximum": 52.8042,
+        "mean": 11.202585379464287
+      },
+      "modMs": {
+        "samples": 5375,
+        "p50": 0.3078,
+        "p95": 0.4148,
+        "maximum": 10.5167,
+        "mean": 0.33431218604651164
+      },
+      "spikesAtLeast30ms": [],
+      "wholeStalls": {
+        "50": 2,
+        "100": 0,
+        "250": 0
+      },
+      "attributionErrors": {
+        "timedExceptions": 0,
+        "crossFrameCalls": 0,
+        "componentTimedExceptions": 0,
+        "componentCrossFrameCalls": 0,
+        "eventMeasurementFailures": 0,
+        "eventCrossFrameCalls": 0,
+        "droppedModFrames": 0,
+        "activeReportCount": 0
+      },
+      "clean": true,
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "saveActivity": [],
+      "loadBefore": {
+        "utc": "2026-10-31T06:50:53Z",
+        "cpuTotalPercent": 26.5,
+        "counts": {
+          "dotnet": 0,
+          "testhost": 0,
+          "codex": 16,
+          "python": 14
+        },
+        "ramAvailableGiB": 30.261791229248047,
+        "ramTotalGiB": 63.83710861206055,
+        "topCpu": [
+          {
+            "name": "Big Ambitions Agent Tests.exe",
+            "ramMiB": 5305.828125
+          },
+          {
+            "name": "MsMpEng.exe",
+            "ramMiB": 825.72265625
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 27.421875
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 45.24609375
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 65.15625
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 65.2421875
+          },
+          {
+            "name": "System",
+            "ramMiB": 44.53125
+          },
+          {
+            "name": "SearchIndexer.exe",
+            "ramMiB": 206.8203125
+          },
+          {
+            "name": "audiodg.exe",
+            "ramMiB": 16.890625
+          },
+          {
+            "name": "codex.exe",
+            "ramMiB": 70.12890625
+          },
+          {
+            "name": "Discord.exe",
+            "ramMiB": 392.16796875
+          }
+        ],
+        "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample",
+        "rankingNote": "Top process CPU-delta ranking; no synchronized per-process percentage claim"
+      },
+      "loadAfter": {
+        "utc": "2026-10-31T06:52:24Z",
+        "cpuTotalPercent": 29.4,
+        "counts": {
+          "dotnet": 0,
+          "testhost": 0,
+          "codex": 14,
+          "python": 13
+        },
+        "ramAvailableGiB": 29.986095428466797,
+        "ramTotalGiB": 63.83710861206055,
+        "topCpu": [
+          {
+            "name": "Big Ambitions Agent Tests.exe",
+            "ramMiB": 5288.1328125
+          },
+          {
+            "name": "MsMpEng.exe",
+            "ramMiB": 786.42578125
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 29.03515625
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 45.34375
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 65.18359375
+          },
+          {
+            "name": "System",
+            "ramMiB": 44.53515625
+          },
+          {
+            "name": "chrome.exe",
+            "ramMiB": 451.3203125
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 29.22265625
+          },
+          {
+            "name": "SearchIndexer.exe",
+            "ramMiB": 206.9375
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 65.10546875
+          },
+          {
+            "name": "explorer.exe",
+            "ramMiB": 328.28515625
+          }
+        ],
+        "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample",
+        "rankingNote": "Top process CPU-delta ranking; no synchronized per-process percentage claim"
+      },
+      "loadWait": {
+        "polls": [
+          {
+            "elapsedSeconds": 0.015999999828636646,
+            "active": []
+          }
+        ],
+        "waitSeconds": 0.015999999828636646,
+        "underDotnetLoad": false
+      },
+      "clockBefore": 7673.577869415283,
+      "clockAfter": "08:14",
+      "populationLagMinutes": 0.0,
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321667,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 180.0003,
+            "z": -1.91992828e-11
+          }
+        }
+      },
+      "components": [
+        {
+          "name": "RouteObjectDiscovery.Step",
+          "calls": 5376,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 160.0989,
+          "inclusiveCallMilliseconds": {
+            "samples": 5376,
+            "mean": 0.029780301339285782,
+            "p50": 0.0288,
+            "p95": 0.0353,
+            "p99": 0.0429,
+            "maximum": 0.1179
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5375,
+            "mean": 0.02978111627906983,
+            "p50": 0.0288,
+            "p95": 0.0353,
+            "p99": 0.0429,
+            "maximum": 0.1179
+          }
+        },
+        {
+          "name": "PhysicalPopulation.BeforeAdvance",
+          "calls": 5376,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 38.5607,
+          "inclusiveCallMilliseconds": {
+            "samples": 5376,
+            "mean": 0.0071727492559524745,
+            "p50": 0.0068,
+            "p95": 0.0098,
+            "p99": 0.0136,
+            "maximum": 0.0845
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5375,
+            "mean": 0.007172893023255907,
+            "p50": 0.0068,
+            "p95": 0.0098,
+            "p99": 0.0136,
+            "maximum": 0.0845
+          }
+        },
+        {
+          "name": "PhysicalPopulation.Update",
+          "calls": 5376,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 463.2504,
+          "inclusiveCallMilliseconds": {
+            "samples": 5376,
+            "mean": 0.08617008928571455,
+            "p50": 0.0771,
+            "p95": 0.1222,
+            "p99": 0.1846,
+            "maximum": 10.2776
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5375,
+            "mean": 0.08617185116279096,
+            "p50": 0.0771,
+            "p95": 0.1222,
+            "p99": 0.1846,
+            "maximum": 10.2776
+          }
+        },
+        {
+          "name": "PopulationRuntime.AdvancePopulation",
+          "calls": 5376,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 107.275,
+          "inclusiveCallMilliseconds": {
+            "samples": 5376,
+            "mean": 0.01995442708333334,
+            "p50": 0.0137,
+            "p95": 0.0207,
+            "p99": 0.0283,
+            "maximum": 6.4549
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5375,
+            "mean": 0.01995534883720931,
+            "p50": 0.0137,
+            "p95": 0.0207,
+            "p99": 0.0283,
+            "maximum": 6.4549
+          }
+        },
+        {
+          "name": "MultimodalRoutes.Prepare",
+          "calls": 5376,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 142.6517,
+          "inclusiveCallMilliseconds": {
+            "samples": 5376,
+            "mean": 0.026534914434523705,
+            "p50": 0.0229,
+            "p95": 0.0308,
+            "p99": 0.0506,
+            "maximum": 0.533
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5375,
+            "mean": 0.026535906976744076,
+            "p50": 0.0229,
+            "p95": 0.0308,
+            "p99": 0.0506,
+            "maximum": 0.533
+          }
+        },
+        {
+          "name": "CitySimulator.RefreshTrafficClosures",
+          "calls": 5376,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 21.2859,
+          "inclusiveCallMilliseconds": {
+            "samples": 5376,
+            "mean": 0.00395943080357138,
+            "p50": 0.0038,
+            "p95": 0.0053,
+            "p99": 0.0064,
+            "maximum": 0.0159
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5375,
+            "mean": 0.003959441860465068,
+            "p50": 0.0038,
+            "p95": 0.0053,
+            "p99": 0.0064,
+            "maximum": 0.0159
+          }
+        },
+        {
+          "name": "PhysicalVehicles.Update",
+          "calls": 5376,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 16.3392,
+          "inclusiveCallMilliseconds": {
+            "samples": 5376,
+            "mean": 0.0030392857142857435,
+            "p50": 0.0027,
+            "p95": 0.0051,
+            "p99": 0.0075,
+            "maximum": 0.0297
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5375,
+            "mean": 0.003039423255813983,
+            "p50": 0.0027,
+            "p95": 0.0051,
+            "p99": 0.0075,
+            "maximum": 0.0297
+          }
+        },
+        {
+          "name": "PhysicalTrafficHooks.FixedStepPrefix",
+          "calls": 3018,
+          "outsidePrimaryScopeCalls": 3018,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 2.4653,
+          "inclusiveCallMilliseconds": {
+            "samples": 3018,
+            "mean": 0.000816865473823698,
+            "p50": 0.0007,
+            "p95": 0.0013,
+            "p99": 0.0016,
+            "maximum": 0.0332
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5375,
+            "mean": 0.0004586604651162647,
+            "p50": 0.0006,
+            "p95": 0.0012,
+            "p99": 0.0015,
+            "maximum": 0.0332
+          }
+        },
+        {
+          "name": "PhysicalTrafficHooks.FixedStepPostfix",
+          "calls": 3018,
+          "outsidePrimaryScopeCalls": 3018,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 9.35,
+          "inclusiveCallMilliseconds": {
+            "samples": 3018,
+            "mean": 0.003098078197481761,
+            "p50": 0.0029,
+            "p95": 0.0043,
+            "p99": 0.0062,
+            "maximum": 0.0555
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5375,
+            "mean": 0.0017395348837209233,
+            "p50": 0.0023,
+            "p95": 0.004,
+            "p99": 0.0056,
+            "maximum": 0.0555
+          }
+        },
+        {
+          "name": "PhysicalTrafficHooks.FixedStepFinalizer",
+          "calls": 3018,
+          "outsidePrimaryScopeCalls": 3018,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 0.151,
+          "inclusiveCallMilliseconds": {
+            "samples": 3018,
+            "mean": 5.003313452617624e-05,
+            "p50": 0.0,
+            "p95": 0.0001,
+            "p99": 0.0001,
+            "maximum": 0.0006
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5375,
+            "mean": 2.809302325581394e-05,
+            "p50": 0.0,
+            "p95": 0.0001,
+            "p99": 0.0001,
+            "maximum": 0.0008
+          }
+        },
+        {
+          "name": "PhysicalVehicles.DeferNativeForce",
+          "calls": 11710,
+          "outsidePrimaryScopeCalls": 11710,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 1.0131,
+          "inclusiveCallMilliseconds": {
+            "samples": 11710,
+            "mean": 8.651579846284469e-05,
+            "p50": 0.0001,
+            "p95": 0.0002,
+            "p99": 0.0004,
+            "maximum": 0.0108
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5375,
+            "mean": 0.00018848372093022842,
+            "p50": 0.0002,
+            "p95": 0.0005,
+            "p99": 0.0007,
+            "maximum": 0.0124
+          }
+        },
+        {
+          "name": "PhysicalVehicles.ApplyNativeRotation",
+          "calls": 11710,
+          "outsidePrimaryScopeCalls": 11710,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 0.7092,
+          "inclusiveCallMilliseconds": {
+            "samples": 11710,
+            "mean": 6.056362083688653e-05,
+            "p50": 0.0001,
+            "p95": 0.0001,
+            "p99": 0.0002,
+            "maximum": 0.0116
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5375,
+            "mean": 0.00013194418604651117,
+            "p50": 0.0001,
+            "p95": 0.0004,
+            "p99": 0.0004,
+            "maximum": 0.0119
+          }
+        },
+        {
+          "name": "PhysicalIntersections.UpdatePostfix",
+          "calls": 5376,
+          "outsidePrimaryScopeCalls": 5376,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 5.0633,
+          "inclusiveCallMilliseconds": {
+            "samples": 5376,
+            "mean": 0.0009418340773809533,
+            "p50": 0.0008,
+            "p95": 0.0016,
+            "p99": 0.0019,
+            "maximum": 0.0104
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5375,
+            "mean": 0.0009419348837209312,
+            "p50": 0.0008,
+            "p95": 0.0016,
+            "p99": 0.0019,
+            "maximum": 0.0104
+          }
+        },
+        {
+          "name": "ResidentInspector.Update",
+          "calls": 5376,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 20.4394,
+          "inclusiveCallMilliseconds": {
+            "samples": 5376,
+            "mean": 0.003801971726190457,
+            "p50": 0.0036,
+            "p95": 0.0052,
+            "p99": 0.0068,
+            "maximum": 0.0173
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5375,
+            "mean": 0.003802102325581376,
+            "p50": 0.0036,
+            "p95": 0.0052,
+            "p99": 0.0068,
+            "maximum": 0.0173
+          }
+        },
+        {
+          "name": "PopulationRuntime.OnGUI",
+          "calls": 10752,
+          "outsidePrimaryScopeCalls": 10752,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 20.1319,
+          "inclusiveCallMilliseconds": {
+            "samples": 10752,
+            "mean": 0.0018723865327380806,
+            "p50": 0.0019,
+            "p95": 0.0044,
+            "p99": 0.0054,
+            "maximum": 0.1574
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5375,
+            "mean": 0.003716074418604662,
+            "p50": 0.0036,
+            "p95": 0.005,
+            "p99": 0.0064,
+            "maximum": 0.0233
+          }
+        }
+      ],
+      "collections": [
+        2,
+        2,
+        2
+      ],
+      "rawFiles": [
+        "frames-mod-work-cand2-stop-006783.csv.gz",
+        "frames-observations-cand2-stop-006783.csv.gz"
+      ],
+      "stopwatchFrequency": 10000000,
+      "captureStartedTicks": 1002769832,
+      "captureStoppedTicks": 1605073041,
+      "autosaveBefore": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 12,
+        "save": "FT Food Routines Locked A3 Stack 20261031",
+        "frame": 6763
+      },
+      "autosaveAfter": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 13,
+        "save": "FT Food Routines Locked A3 Stack 20261031",
+        "frame": 12195
+      },
+      "countersBefore": {
+        "frame": 6726,
+        "minute": 7673.2725257873535,
+        "nativeMinute": 7673.2725257873535,
+        "PlanningPending": false,
+        "runtime": {
+          "advanceFrames": 2330,
+          "advanceEvents": 52,
+          "advanceMilliseconds": 37.498799999999946,
+          "planningSlices": 0,
+          "planningEvents": 0,
+          "planningPendingFrames": 0,
+          "planningRequests": 0,
+          "planningMilliseconds": 0.0
+        },
+        "routes": {
+          "WalkingRequests": 0,
+          "WalkingInvalidInputs": 0,
+          "WalkingDistanceRejects": 0,
+          "WalkingCacheHits": 0,
+          "WalkingNegativeCacheHits": 0,
+          "WalkingCacheMisses": 0,
+          "WalkingCacheEvictions": 0,
+          "WalkingCacheClears": 2,
+          "WalkingCalculations": 0,
+          "WalkingFailedCalculations": 0,
+          "WalkingCalculationMilliseconds": 0.0,
+          "MaximumWalkingCalculationMilliseconds": 0.0,
+          "NavMeshSampleQueries": 0,
+          "NavMeshPathQueries": 0,
+          "NavMeshPathReuses": 0,
+          "NavMeshPathMilliseconds": 0.0,
+          "MaximumNavMeshPathMilliseconds": 0.0,
+          "WalkingQuoteChecks": 0,
+          "WalkingQuoteRejected": 0,
+          "NavMeshRaycastQueries": 0,
+          "WalkingQuoteCheckMilliseconds": 0.0,
+          "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+          "CitizenPlanRequests": 0,
+          "SelectedWalking": 0,
+          "SelectedSubway": 0,
+          "SelectedCar": 0,
+          "NoFeasibleRoute": 0,
+          "SubwayConnectorRequests": 0,
+          "SubwayConnectorCacheHits": 0,
+          "SubwayConnectorCacheMisses": 0,
+          "SubwayCandidates": 0
+        },
+        "physical": "physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+        "bodies": [],
+        "pendingDecisions": 0,
+        "diagnostics": {
+          "active": true,
+          "hourlyCustomerBatchesSuppressed": 0,
+          "nativeDrawsSuppressed": 0,
+          "nativePurchasesThisSession": 0
+        }
+      },
+      "countersAfter": {
+        "frame": 12601,
+        "minute": 7694.129140853882,
+        "nativeMinute": 7694.129140853882,
+        "PlanningPending": false,
+        "runtime": {
+          "advanceFrames": 3184,
+          "advanceEvents": 122,
+          "advanceMilliseconds": 66.36030000000022,
+          "planningSlices": 0,
+          "planningEvents": 0,
+          "planningPendingFrames": 0,
+          "planningRequests": 0,
+          "planningMilliseconds": 0.0
+        },
+        "routes": {
+          "WalkingRequests": 16,
+          "WalkingInvalidInputs": 0,
+          "WalkingDistanceRejects": 0,
+          "WalkingCacheHits": 0,
+          "WalkingNegativeCacheHits": 0,
+          "WalkingCacheMisses": 16,
+          "WalkingCacheEvictions": 0,
+          "WalkingCacheClears": 4,
+          "WalkingCalculations": 16,
+          "WalkingFailedCalculations": 0,
+          "WalkingCalculationMilliseconds": 1.9382000000000001,
+          "MaximumWalkingCalculationMilliseconds": 1.0471000000000001,
+          "NavMeshSampleQueries": 72,
+          "NavMeshPathQueries": 36,
+          "NavMeshPathReuses": 16,
+          "NavMeshPathMilliseconds": 1.1629,
+          "MaximumNavMeshPathMilliseconds": 0.0879,
+          "WalkingQuoteChecks": 36,
+          "WalkingQuoteRejected": 0,
+          "NavMeshRaycastQueries": 0,
+          "WalkingQuoteCheckMilliseconds": 1.6289000000000005,
+          "MaximumWalkingQuoteCheckMilliseconds": 0.6253000000000001,
+          "CitizenPlanRequests": 0,
+          "SelectedWalking": 0,
+          "SelectedSubway": 0,
+          "SelectedCar": 0,
+          "NoFeasibleRoute": 0,
+          "SubwayConnectorRequests": 0,
+          "SubwayConnectorCacheHits": 0,
+          "SubwayConnectorCacheMisses": 0,
+          "SubwayCandidates": 0
+        },
+        "physical": "physical=True, pedestrians=3, cars=0, acquired=3, released=0, blockedSamples=1587, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+        "bodies": [
+          {
+            "id": "c149",
+            "identity": {
+              "Id": "c149",
+              "Name": "Vera Thorne",
+              "District": "ba:neighborhood_garmentdistrict",
+              "Age": 50,
+              "Female": true,
+              "Persona": 2,
+              "AppearanceSeed": 315693
+            },
+            "home": "address:ba%3Astreet_thirdstreet:38:home",
+            "person": {
+              "identity": "c149",
+              "generation": 2,
+              "character": -1021350
+            }
+          },
+          {
+            "id": "c252",
+            "identity": {
+              "Id": "c252",
+              "Name": "Orla Walsh",
+              "District": "ba:neighborhood_hellskitchen",
+              "Age": 31,
+              "Female": true,
+              "Persona": 2,
+              "AppearanceSeed": 792034
+            },
+            "home": "address:ba%3Astreet_fourthavenue:12:home",
+            "person": {
+              "identity": "c252",
+              "generation": 3,
+              "character": -1034482
+            }
+          },
+          {
+            "id": "pc:289",
+            "identity": {
+              "Id": "pc:289",
+              "Name": "Gabe Corwin",
+              "District": "ba:neighborhood_midtown",
+              "Age": 29,
+              "Female": false,
+              "Persona": 2,
+              "AppearanceSeed": 795648
+            },
+            "home": "address:ba%3Astreet_thirdstreet:42:home",
+            "person": {
+              "identity": "pc:289",
+              "generation": 4,
+              "character": -1035938
+            }
+          }
+        ],
+        "pendingDecisions": 0,
+        "diagnostics": {
+          "active": true,
+          "hourlyCustomerBatchesSuppressed": 0,
+          "nativeDrawsSuppressed": 0,
+          "nativePurchasesThisSession": 0
+        }
+      },
+      "advanceResultUnitsDelta": {
+        "observedUnits": 200,
+        "observedCitizenUnits": 200,
+        "observedTrafficUnits": 0,
+        "observedFoodContinuationUnits": 0
+      },
+      "inspectorTiming": {
+        "update": {
+          "closed": {
+            "calls": 5914,
+            "totalMilliseconds": 21.398,
+            "maxMilliseconds": 0.0171
+          },
+          "hover": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          },
+          "open": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          }
+        },
+        "draw": {
+          "closed": {
+            "calls": 11828,
+            "totalMilliseconds": 2.8771,
+            "maxMilliseconds": 0.0131
+          },
+          "hover": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          },
+          "open": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          }
+        },
+        "picks": 0,
+        "builds": 0,
+        "buildMilliseconds": 0.0,
+        "buildMaxMilliseconds": 0.0,
+        "hovered": null,
+        "selected": null
+      }
+    },
+    {
+      "label": "cand2-open",
+      "seconds": 60.2550082,
+      "fps": 88.42418512856497,
+      "wholeMs": {
+        "samples": 5328,
+        "p50": 11.3117,
+        "p95": 13.4222,
+        "maximum": 32.019,
+        "mean": 11.30749542042042
+      },
+      "modMs": {
+        "samples": 5327,
+        "p50": 0.5808,
+        "p95": 0.8117,
+        "maximum": 4.6106,
+        "mean": 0.6276291158250422
+      },
+      "spikesAtLeast30ms": [],
+      "wholeStalls": {
+        "50": 0,
+        "100": 0,
+        "250": 0
+      },
+      "attributionErrors": {
+        "timedExceptions": 0,
+        "crossFrameCalls": 0,
+        "componentTimedExceptions": 0,
+        "componentCrossFrameCalls": 0,
+        "eventMeasurementFailures": 0,
+        "eventCrossFrameCalls": 0,
+        "droppedModFrames": 0,
+        "activeReportCount": 0
+      },
+      "clean": true,
+      "autosaveOffBeforeAfter": true,
+      "saveFilesUnchanged": true,
+      "saveActivity": [],
+      "loadBefore": {
+        "utc": "2026-10-31T06:56:23Z",
+        "cpuTotalPercent": 37.7,
+        "counts": {
+          "dotnet": 0,
+          "testhost": 0,
+          "codex": 16,
+          "python": 13
+        },
+        "ramAvailableGiB": 24.703598022460938,
+        "ramTotalGiB": 63.83710861206055,
+        "topCpu": [
+          {
+            "name": "Big Ambitions Agent Tests.exe",
+            "ramMiB": 6032.7578125
+          },
+          {
+            "name": "vmmemWSL",
+            "ramMiB": 3954.0625
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 28.04296875
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 49.03515625
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 65.7421875
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 64.8359375
+          },
+          {
+            "name": "MsMpEng.exe",
+            "ramMiB": 730.43359375
+          },
+          {
+            "name": "WmiPrvSE.exe",
+            "ramMiB": 25.1015625
+          },
+          {
+            "name": "System",
+            "ramMiB": 44.53125
+          },
+          {
+            "name": "csrss.exe",
+            "ramMiB": 11.51171875
+          },
+          {
+            "name": "SearchIndexer.exe",
+            "ramMiB": 207.515625
+          }
+        ],
+        "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample",
+        "rankingNote": "Top process CPU-delta ranking; no synchronized per-process percentage claim"
+      },
+      "loadAfter": {
+        "utc": "2026-10-31T06:57:47Z",
+        "cpuTotalPercent": 40.7,
+        "counts": {
+          "dotnet": 0,
+          "testhost": 0,
+          "codex": 16,
+          "python": 13
+        },
+        "ramAvailableGiB": 24.983928680419922,
+        "ramTotalGiB": 63.83710861206055,
+        "topCpu": [
+          {
+            "name": "Big Ambitions Agent Tests.exe",
+            "ramMiB": 6050.25
+          },
+          {
+            "name": "vmmemWSL",
+            "ramMiB": 4167.8125
+          },
+          {
+            "name": "MsMpEng.exe",
+            "ramMiB": 696.94921875
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 29.5
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 65.08203125
+          },
+          {
+            "name": "python.exe",
+            "ramMiB": 48.8515625
+          },
+          {
+            "name": "System",
+            "ramMiB": 44.53125
+          },
+          {
+            "name": "SearchIndexer.exe",
+            "ramMiB": 207.87890625
+          },
+          {
+            "name": "OneDrive.Sync.Service.exe",
+            "ramMiB": 65.96484375
+          },
+          {
+            "name": "codex.exe",
+            "ramMiB": 68.8125
+          },
+          {
+            "name": "steamwebhelper.exe",
+            "ramMiB": 165.6640625
+          }
+        ],
+        "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample",
+        "rankingNote": "Top process CPU-delta ranking; no synchronized per-process percentage claim"
+      },
+      "loadWait": {
+        "polls": [
+          {
+            "elapsedSeconds": 0.014999999897554517,
+            "active": []
+          }
+        ],
+        "waitSeconds": 0.014999999897554517,
+        "underDotnetLoad": false
+      },
+      "clockBefore": 9080.64577293396,
+      "clockAfter": "07:41",
+      "populationLagMinutes": 0.0,
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321686,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 180.000519,
+            "z": -1.91992828e-11
+          }
+        }
+      },
+      "components": [
+        {
+          "name": "RouteObjectDiscovery.Step",
+          "calls": 5328,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 172.9801,
+          "inclusiveCallMilliseconds": {
+            "samples": 5328,
+            "mean": 0.03246623498498515,
+            "p50": 0.0311,
+            "p95": 0.0405,
+            "p99": 0.0516,
+            "maximum": 1.1544
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5327,
+            "mean": 0.03246433264501613,
+            "p50": 0.0311,
+            "p95": 0.0404,
+            "p99": 0.0516,
+            "maximum": 1.1544
+          }
+        },
+        {
+          "name": "PhysicalPopulation.BeforeAdvance",
+          "calls": 5328,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 42.1796,
+          "inclusiveCallMilliseconds": {
+            "samples": 5328,
+            "mean": 0.007916591591591547,
+            "p50": 0.0075,
+            "p95": 0.0109,
+            "p99": 0.0157,
+            "maximum": 0.0464
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5327,
+            "mean": 0.007916350666416324,
+            "p50": 0.0075,
+            "p95": 0.0109,
+            "p99": 0.0157,
+            "maximum": 0.0464
+          }
+        },
+        {
+          "name": "PhysicalPopulation.Update",
+          "calls": 5328,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 1399.1516,
+          "inclusiveCallMilliseconds": {
+            "samples": 5328,
+            "mean": 0.2626035285285279,
+            "p50": 0.2488,
+            "p95": 0.3742,
+            "p99": 0.4519,
+            "maximum": 4.3076
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5327,
+            "mean": 0.2626084099868588,
+            "p50": 0.2488,
+            "p95": 0.3742,
+            "p99": 0.4519,
+            "maximum": 4.3076
+          }
+        },
+        {
+          "name": "PopulationRuntime.AdvancePopulation",
+          "calls": 5328,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 200.7744,
+          "inclusiveCallMilliseconds": {
+            "samples": 5328,
+            "mean": 0.037682882882883,
+            "p50": 0.0136,
+            "p95": 0.0206,
+            "p99": 1.3791,
+            "maximum": 2.8797
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5327,
+            "mean": 0.037686615355735045,
+            "p50": 0.0136,
+            "p95": 0.0206,
+            "p99": 1.3791,
+            "maximum": 2.8797
+          }
+        },
+        {
+          "name": "MultimodalRoutes.Prepare",
+          "calls": 5328,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 154.8692,
+          "inclusiveCallMilliseconds": {
+            "samples": 5328,
+            "mean": 0.029067042042041916,
+            "p50": 0.0246,
+            "p95": 0.0348,
+            "p99": 0.0554,
+            "maximum": 0.6807
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5327,
+            "mean": 0.029066585320067454,
+            "p50": 0.0246,
+            "p95": 0.0348,
+            "p99": 0.0554,
+            "maximum": 0.6807
+          }
+        },
+        {
+          "name": "CitySimulator.RefreshTrafficClosures",
+          "calls": 5328,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 22.8905,
+          "inclusiveCallMilliseconds": {
+            "samples": 5328,
+            "mean": 0.004296265015014945,
+            "p50": 0.0041,
+            "p95": 0.0061,
+            "p99": 0.0078,
+            "maximum": 0.0182
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5327,
+            "mean": 0.004296170452412169,
+            "p50": 0.0041,
+            "p95": 0.0061,
+            "p99": 0.0078,
+            "maximum": 0.0182
+          }
+        },
+        {
+          "name": "PhysicalVehicles.Update",
+          "calls": 5328,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 26.1758,
+          "inclusiveCallMilliseconds": {
+            "samples": 5328,
+            "mean": 0.004912875375375397,
+            "p50": 0.0045,
+            "p95": 0.0083,
+            "p99": 0.0121,
+            "maximum": 0.0481
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5327,
+            "mean": 0.00491180777172895,
+            "p50": 0.0045,
+            "p95": 0.0083,
+            "p99": 0.0121,
+            "maximum": 0.0481
+          }
+        },
+        {
+          "name": "PhysicalTrafficHooks.FixedStepPrefix",
+          "calls": 3016,
+          "outsidePrimaryScopeCalls": 3016,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 2.4079,
+          "inclusiveCallMilliseconds": {
+            "samples": 3016,
+            "mean": 0.0007983753315649741,
+            "p50": 0.0007,
+            "p95": 0.0015,
+            "p99": 0.0022,
+            "maximum": 0.0045
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5327,
+            "mean": 0.0004520180214004059,
+            "p50": 0.0005,
+            "p95": 0.0013,
+            "p99": 0.0019,
+            "maximum": 0.0053
+          }
+        },
+        {
+          "name": "PhysicalTrafficHooks.FixedStepPostfix",
+          "calls": 3016,
+          "outsidePrimaryScopeCalls": 3016,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 10.492,
+          "inclusiveCallMilliseconds": {
+            "samples": 3016,
+            "mean": 0.0034787798408487643,
+            "p50": 0.0032,
+            "p95": 0.0056,
+            "p99": 0.0078,
+            "maximum": 0.0568
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5327,
+            "mean": 0.0019695888868030546,
+            "p50": 0.0025,
+            "p95": 0.0049,
+            "p99": 0.007,
+            "maximum": 0.0568
+          }
+        },
+        {
+          "name": "PhysicalTrafficHooks.FixedStepFinalizer",
+          "calls": 3016,
+          "outsidePrimaryScopeCalls": 3016,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 0.1437,
+          "inclusiveCallMilliseconds": {
+            "samples": 3016,
+            "mean": 4.76458885941647e-05,
+            "p50": 0.0,
+            "p95": 0.0001,
+            "p99": 0.0001,
+            "maximum": 0.0005
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5327,
+            "mean": 2.6975783743195185e-05,
+            "p50": 0.0,
+            "p95": 0.0001,
+            "p99": 0.0001,
+            "maximum": 0.0005
+          }
+        },
+        {
+          "name": "PhysicalVehicles.DeferNativeForce",
+          "calls": 14809,
+          "outsidePrimaryScopeCalls": 14809,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 1.3077,
+          "inclusiveCallMilliseconds": {
+            "samples": 14809,
+            "mean": 8.830440948071291e-05,
+            "p50": 0.0001,
+            "p95": 0.0003,
+            "p99": 0.0006,
+            "maximum": 0.0163
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5327,
+            "mean": 0.00024548526375069586,
+            "p50": 0.0002,
+            "p95": 0.0007,
+            "p99": 0.001,
+            "maximum": 0.0176
+          }
+        },
+        {
+          "name": "PhysicalVehicles.ApplyNativeRotation",
+          "calls": 14809,
+          "outsidePrimaryScopeCalls": 14809,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 0.8618,
+          "inclusiveCallMilliseconds": {
+            "samples": 14809,
+            "mean": 5.8194341278947037e-05,
+            "p50": 0.0001,
+            "p95": 0.0001,
+            "p99": 0.0002,
+            "maximum": 0.0359
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5327,
+            "mean": 0.00016177961329078203,
+            "p50": 0.0001,
+            "p95": 0.0004,
+            "p99": 0.0006,
+            "maximum": 0.0361
+          }
+        },
+        {
+          "name": "PhysicalIntersections.UpdatePostfix",
+          "calls": 5328,
+          "outsidePrimaryScopeCalls": 5328,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 6.3254,
+          "inclusiveCallMilliseconds": {
+            "samples": 5328,
+            "mean": 0.0011871996996996822,
+            "p50": 0.0011,
+            "p95": 0.0019,
+            "p99": 0.0024,
+            "maximum": 0.0285
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5327,
+            "mean": 0.0011870095738689519,
+            "p50": 0.0011,
+            "p95": 0.0019,
+            "p99": 0.0024,
+            "maximum": 0.0285
+          }
+        },
+        {
+          "name": "ResidentInspector.Update",
+          "calls": 5328,
+          "outsidePrimaryScopeCalls": 0,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 55.6456,
+          "inclusiveCallMilliseconds": {
+            "samples": 5328,
+            "mean": 0.010443993993993931,
+            "p50": 0.0039,
+            "p95": 0.0062,
+            "p99": 0.5153,
+            "maximum": 0.7841
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5327,
+            "mean": 0.010444640510606281,
+            "p50": 0.0039,
+            "p95": 0.0062,
+            "p99": 0.5153,
+            "maximum": 0.7841
+          }
+        },
+        {
+          "name": "PopulationRuntime.OnGUI",
+          "calls": 10656,
+          "outsidePrimaryScopeCalls": 10656,
+          "callSamplesDropped": 0,
+          "totalInclusiveMilliseconds": 432.625,
+          "inclusiveCallMilliseconds": {
+            "samples": 10656,
+            "mean": 0.04059919294294304,
+            "p50": 0.0418,
+            "p95": 0.0599,
+            "p99": 0.0734,
+            "maximum": 0.2013
+          },
+          "inclusivePerUnityFrameMilliseconds": {
+            "samples": 5327,
+            "mean": 0.08119641449220978,
+            "p50": 0.076,
+            "p95": 0.1099,
+            "p99": 0.1313,
+            "maximum": 0.2338
+          }
+        }
+      ],
+      "collections": [
+        1,
+        1,
+        1
+      ],
+      "rawFiles": [
+        "frames-mod-work-cand2-open-stop-e96677.csv.gz",
+        "frames-observations-cand2-open-stop-e96677.csv.gz"
+      ],
+      "stopwatchFrequency": 10000000,
+      "captureStartedTicks": 4235706369,
+      "captureStoppedTicks": 4838256451,
+      "autosaveBefore": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 14,
+        "save": "FT Food Routines Locked A3 Choice Checkpoint 20261031",
+        "frame": 32232
+      },
+      "autosaveAfter": {
+        "originalPreventAutoSave": false,
+        "preventAutoSave": true,
+        "minutesBetweenAutoSaves": 5,
+        "maxAutoSavesPerGame": 3,
+        "savingGameInProgress": false,
+        "saveLogMessages": 17,
+        "save": "FT Food Routines Locked A3 Choice Checkpoint 20261031",
+        "frame": 37595
+      },
+      "countersBefore": {
+        "frame": 32195,
+        "minute": 9080.370756149292,
+        "nativeMinute": 9080.370756149292,
+        "PlanningPending": false,
+        "runtime": {
+          "advanceFrames": 2702,
+          "advanceEvents": 1059,
+          "advanceMilliseconds": 98.69359999999986,
+          "planningSlices": 21,
+          "planningEvents": 15,
+          "planningPendingFrames": 6,
+          "planningRequests": 15,
+          "planningMilliseconds": 25.1791
+        },
+        "routes": {
+          "WalkingRequests": 9,
+          "WalkingInvalidInputs": 0,
+          "WalkingDistanceRejects": 0,
+          "WalkingCacheHits": 0,
+          "WalkingNegativeCacheHits": 0,
+          "WalkingCacheMisses": 9,
+          "WalkingCacheEvictions": 0,
+          "WalkingCacheClears": 2,
+          "WalkingCalculations": 9,
+          "WalkingFailedCalculations": 5,
+          "WalkingCalculationMilliseconds": 5.773500000000001,
+          "MaximumWalkingCalculationMilliseconds": 1.2431,
+          "NavMeshSampleQueries": 18,
+          "NavMeshPathQueries": 9,
+          "NavMeshPathReuses": 0,
+          "NavMeshPathMilliseconds": 5.592,
+          "MaximumNavMeshPathMilliseconds": 1.2202,
+          "WalkingQuoteChecks": 0,
+          "WalkingQuoteRejected": 0,
+          "NavMeshRaycastQueries": 0,
+          "WalkingQuoteCheckMilliseconds": 0.0,
+          "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+          "CitizenPlanRequests": 5,
+          "SelectedWalking": 0,
+          "SelectedSubway": 0,
+          "SelectedCar": 0,
+          "NoFeasibleRoute": 5,
+          "SubwayConnectorRequests": 0,
+          "SubwayConnectorCacheHits": 0,
+          "SubwayConnectorCacheMisses": 0,
+          "SubwayCandidates": 0
+        },
+        "physical": "physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+        "bodies": [],
+        "pendingDecisions": 0,
+        "diagnostics": {
+          "active": true,
+          "hourlyCustomerBatchesSuppressed": 10,
+          "nativeDrawsSuppressed": 0,
+          "nativePurchasesThisSession": 56
+        }
+      },
+      "countersAfter": {
+        "frame": 38017,
+        "minute": 9101.147819519043,
+        "nativeMinute": 9101.147819519043,
+        "PlanningPending": false,
+        "runtime": {
+          "advanceFrames": 3545,
+          "advanceEvents": 208,
+          "advanceMilliseconds": 113.80759999999997,
+          "planningSlices": 10,
+          "planningEvents": 8,
+          "planningPendingFrames": 2,
+          "planningRequests": 8,
+          "planningMilliseconds": 10.8677
+        },
+        "routes": {
+          "WalkingRequests": 38,
+          "WalkingInvalidInputs": 0,
+          "WalkingDistanceRejects": 0,
+          "WalkingCacheHits": 0,
+          "WalkingNegativeCacheHits": 0,
+          "WalkingCacheMisses": 38,
+          "WalkingCacheEvictions": 0,
+          "WalkingCacheClears": 4,
+          "WalkingCalculations": 38,
+          "WalkingFailedCalculations": 24,
+          "WalkingCalculationMilliseconds": 23.705200000000005,
+          "MaximumWalkingCalculationMilliseconds": 1.2431,
+          "NavMeshSampleQueries": 76,
+          "NavMeshPathQueries": 37,
+          "NavMeshPathReuses": 0,
+          "NavMeshPathMilliseconds": 22.854500000000005,
+          "MaximumNavMeshPathMilliseconds": 1.2202,
+          "WalkingQuoteChecks": 0,
+          "WalkingQuoteRejected": 0,
+          "NavMeshRaycastQueries": 0,
+          "WalkingQuoteCheckMilliseconds": 0.0,
+          "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+          "CitizenPlanRequests": 19,
+          "SelectedWalking": 0,
+          "SelectedSubway": 0,
+          "SelectedCar": 0,
+          "NoFeasibleRoute": 19,
+          "SubwayConnectorRequests": 4,
+          "SubwayConnectorCacheHits": 0,
+          "SubwayConnectorCacheMisses": 4,
+          "SubwayCandidates": 0
+        },
+        "physical": "physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+        "bodies": [],
+        "pendingDecisions": 0,
+        "diagnostics": {
+          "active": true,
+          "hourlyCustomerBatchesSuppressed": 10,
+          "nativeDrawsSuppressed": 0,
+          "nativePurchasesThisSession": 56
+        }
+      },
+      "advanceResultUnitsDelta": {
+        "observedUnits": 316,
+        "observedCitizenUnits": 108,
+        "observedTrafficUnits": 0,
+        "observedFoodContinuationUnits": 208
+      },
+      "inspectorTiming": {
+        "update": {
+          "closed": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          },
+          "hover": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          },
+          "open": {
+            "calls": 5868,
+            "totalMilliseconds": 60.5126,
+            "maxMilliseconds": 0.7839
+          }
+        },
+        "draw": {
+          "closed": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          },
+          "hover": {
+            "calls": 0,
+            "totalMilliseconds": 0.0,
+            "maxMilliseconds": 0.0
+          },
+          "open": {
+            "calls": 11736,
+            "totalMilliseconds": 458.8142,
+            "maxMilliseconds": 0.1975
+          }
+        },
+        "picks": 0,
+        "builds": 67,
+        "buildMilliseconds": 37.8439,
+        "buildMaxMilliseconds": 0.7784,
+        "hovered": null,
+        "selected": "c0"
+      }
+    }
+  ],
+  "pooled": {
+    "baseline-closed": {
+      "seconds": 120.5413203,
+      "fps": 80.03064821250345,
+      "wholeMs": {
+        "samples": 9647,
+        "p50": 12.1695,
+        "p95": 16.9771,
+        "maximum": 74.692,
+        "mean": 12.493576065097958
+      },
+      "modMs": {
+        "samples": 9645,
+        "p50": 0.30860000000000004,
+        "p95": 0.6384000000000001,
+        "maximum": 16.2061,
+        "mean": 0.3713439087610161
+      }
+    },
+    "candidate-closed-legacy-day": {
+      "seconds": 120.4690306,
+      "fps": 84.93469192073005,
+      "wholeMs": {
+        "samples": 10232,
+        "p50": 11.917,
+        "p95": 15.3178,
+        "maximum": 54.2191,
+        "mean": 11.772041145426114
+      },
+      "modMs": {
+        "samples": 10230,
+        "p50": 0.3167,
+        "p95": 0.5466,
+        "maximum": 15.9316,
+        "mean": 0.3624879667644184
+      }
+    },
+    "candidate-open-active-choice": {
+      "seconds": 60.2550082,
+      "fps": 88.42418512856497,
+      "wholeMs": {
+        "samples": 5328,
+        "p50": 11.3117,
+        "p95": 13.4222,
+        "maximum": 32.019,
+        "mean": 11.30749542042042
+      },
+      "modMs": {
+        "samples": 5327,
+        "p50": 0.5808,
+        "p95": 0.8117,
+        "maximum": 4.6106,
+        "mean": 0.6276291158250422
+      }
+    }
+  },
+  "gateAllMeasuredWindowsPass": true,
+  "baseline1OwnBuildLoad": "Short stage-helper compilation occurred during baseline1; retained as an under-load sample. No save activity occurred. No performance-only rerun."
+}

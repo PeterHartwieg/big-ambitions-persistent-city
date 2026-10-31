@@ -1,0 +1,270 @@
+{
+  "role": "rig_test",
+  "verdict": "FAIL",
+  "failures": [
+    "A1 localized addresses expose internal street keys"
+  ],
+  "counts": {
+    "A1": {
+      "PASS": 6,
+      "FAIL": 1,
+      "DEFERRED-INPUT": 5
+    },
+    "A2": {
+      "PASS": 9,
+      "NOT-RUN": 2,
+      "PARTIAL": 1
+    },
+    "A3": {
+      "PASS": 7,
+      "NOT-RUN": 4
+    }
+  },
+  "checks": [
+    {
+      "pr": "A1",
+      "check": "Name, personality words, own story, destination/reason and three meal lines",
+      "status": "PASS",
+      "evidence": "inspector-summary.json",
+      "detail": "Native popup content captured through Open/select/Refresh; actual home, commute and food-journey cases."
+    },
+    {
+      "pr": "A1",
+      "check": "Readable localized home/work address text",
+      "status": "FAIL",
+      "evidence": "inspector-summary.json",
+      "detail": "Inspector exposes ba:street_* keys. Native formatter gives 18 9th Street and 7 4th Avenue for those same addresses. Also visible in screenshots."
+    },
+    {
+      "pr": "A1",
+      "check": "Home and work/study map link method",
+      "status": "PASS",
+      "evidence": "inspector-summary.json",
+      "detail": "Both native map calls return success and open the map at the supplied native address; seam, not gesture proof."
+    },
+    {
+      "pr": "A1",
+      "check": "No body, route, market, visit, purchase or save-payload side effects",
+      "status": "PASS",
+      "evidence": "inspector-summary.json",
+      "detail": "Frozen same-dispatch route/market counters, body lists and entire SaveCodec payload remain identical. Six market methods observed."
+    },
+    {
+      "pr": "A1",
+      "check": "Identity/traits across view movement and body-pool reuse",
+      "status": "PASS",
+      "evidence": "a3-summary.json",
+      "detail": "pc:350 uses the same native body, lease generation 2 \u2192 3, with an intervening zero-body view. Entire saved payload remains identical."
+    },
+    {
+      "pr": "A1",
+      "check": "Closed/open picking and inspector timing",
+      "status": "PASS",
+      "evidence": "performance-summary.json",
+      "detail": "Zero pick passes in the measured closed/open stationary-pointer states; Update and whole OnGUI attributed separately. Real hover remains deferred."
+    },
+    {
+      "pr": "A1",
+      "check": "No unexpected mod errors/exceptions",
+      "status": "PASS",
+      "evidence": "log-checks.json",
+      "detail": "No Persistent City exception/error or inspector guard warning across the six owned game processes."
+    },
+    {
+      "pr": "A1",
+      "check": "Hover highlight and clearing off a walker",
+      "status": "DEFERRED-INPUT",
+      "evidence": "inspector-summary.json",
+      "detail": "Locked-session pointer/focus limitation; Peter\u2019s own playtest. No gesture pass/fail inferred from a seam."
+    },
+    {
+      "pr": "A1",
+      "check": "Real click to open/select and click address links",
+      "status": "DEFERRED-INPUT",
+      "evidence": "inspector-summary.json",
+      "detail": "Locked-session pointer/focus limitation; Peter\u2019s own playtest. No gesture pass/fail inferred from a seam."
+    },
+    {
+      "pr": "A1",
+      "check": "Missed clicks passing through; hold/release and right-click routing",
+      "status": "DEFERRED-INPUT",
+      "evidence": "inspector-summary.json",
+      "detail": "Locked-session pointer/focus limitation; Peter\u2019s own playtest. No gesture pass/fail inferred from a seam."
+    },
+    {
+      "pr": "A1",
+      "check": "Popup wheel/scroll versus native camera zoom",
+      "status": "DEFERRED-INPUT",
+      "evidence": "inspector-summary.json",
+      "detail": "Locked-session pointer/focus limitation; Peter\u2019s own playtest. No gesture pass/fail inferred from a seam."
+    },
+    {
+      "pr": "A1",
+      "check": "Native-UI exclusion under the pointer and focus-dependent routing",
+      "status": "DEFERRED-INPUT",
+      "evidence": "inspector-summary.json",
+      "detail": "Locked-session pointer/focus limitation; Peter\u2019s own playtest. No gesture pass/fail inferred from a seam."
+    },
+    {
+      "pr": "A2",
+      "check": "Traits shown as words and stable across reload/reuse",
+      "status": "PASS",
+      "evidence": "inspector-summary.json",
+      "detail": "Word-only personality lines; resident and represented-consumer trait hashes survive both round trips and the body lease change."
+    },
+    {
+      "pr": "A2",
+      "check": "Today: chose household food wording",
+      "status": "PASS",
+      "evidence": "inspector-summary.json",
+      "detail": "Actual day-6 resident c1 shows Breakfast: chose household food; no claim that the alternative was paid or eaten."
+    },
+    {
+      "pr": "A2",
+      "check": "Uncertain/unconfirmed wording",
+      "status": "NOT-RUN",
+      "evidence": "a3-summary.json",
+      "detail": "No natural unconfirmed checkout in the available fixture; no lost-acknowledgement mutation injected."
+    },
+    {
+      "pr": "A2",
+      "check": "Real schema-16 migration and preservation",
+      "status": "PASS",
+      "evidence": "migration-summary.json",
+      "detail": "Baseline-created saves load and write schema 17. All old fields match exact source-payload projections; 957 residents, 1,914 consumers and six in-flight legacy meals retained."
+    },
+    {
+      "pr": "A2",
+      "check": "Earlier meals: not recorded before upgrade",
+      "status": "PASS",
+      "evidence": "migration-summary.json",
+      "detail": "Verified day-5 12:30 baseline: 301 consumers/141 own residents carry earlier-meal markers; Clara\u2019s popup displays the expected breakfast wording."
+    },
+    {
+      "pr": "A2",
+      "check": "ChoiceStartsDay is next day; activation observed",
+      "status": "PASS",
+      "evidence": "migration-summary.json",
+      "detail": "Both migrated fixtures start policy on day 6; day-5 retained traces are legacy, day-6 traces contain weighted decisions."
+    },
+    {
+      "pr": "A2",
+      "check": "Save/reload keeps traits and Today records",
+      "status": "PASS",
+      "evidence": "migration-summary.json",
+      "detail": "Both morning and noon schema-17 round trips retain identical trait/Today hashes; no re-roll."
+    },
+    {
+      "pr": "A2",
+      "check": "Native shop authority and receipts preserved",
+      "status": "PASS",
+      "evidence": "native-save-contract.json",
+      "detail": "Authority hashes match. Noon source and upgraded native saves retain all 27 receipt keys and values exactly."
+    },
+    {
+      "pr": "A2",
+      "check": "Corrupt and future-schema refusal without overwrite",
+      "status": "PASS",
+      "evidence": "migration-summary.json",
+      "detail": "Native loads refuse corrupted and schema-99 copies. Both whole-file hashes remain unchanged; store seam also rejects replacement and preserves its sentinel."
+    },
+    {
+      "pr": "A2",
+      "check": "Save size and save/load/migration timing",
+      "status": "PASS",
+      "evidence": "save-times.json",
+      "detail": "Native/Unity single samples measured outside every performance window; comparison numbers below."
+    },
+    {
+      "pr": "A2",
+      "check": "Same-seed legacy choice before activation",
+      "status": "PARTIAL",
+      "evidence": "a3-summary.json",
+      "detail": "Matched morning spending/purchases agree at zero and no weighted decision is seen before day 6. Full-day legacy observer hits its 5,000-record cap; no full baseline/candidate trace identity claim."
+    },
+    {
+      "pr": "A2",
+      "check": "50,000-resident headroom",
+      "status": "NOT-RUN",
+      "evidence": "migration-summary.json",
+      "detail": "No suitable existing large-city FT fixture identified; only the retained 957-resident fixture used."
+    },
+    {
+      "pr": "A3",
+      "check": "(a) Weighted decisions, shortlist/result/reason/exact price",
+      "status": "PASS",
+      "evidence": "a3-summary.json",
+      "detail": "Each replay observes 878 decisions: 877 household alternatives and one shop selection. At most one captured shop in this one-shop market, within the eight-shop cap."
+    },
+    {
+      "pr": "A3",
+      "check": "(b) Checkpoint replay determinism",
+      "status": "PASS",
+      "evidence": "a3-summary.json",
+      "detail": "878/878 context projections match, including shortlist order, recomputed draw hashes, result, reason and exact quote. All 1,914 end money records match."
+    },
+    {
+      "pr": "A3",
+      "check": "(c) Household alternative: words, no order/stock delta",
+      "status": "PASS",
+      "evidence": "a3-summary.json",
+      "detail": "Actual household wording verified. Replay spans have zero new native purchases/orders/receipts and zero product/bag delta while alternatives resolve; selected shop journey has not checked out yet."
+    },
+    {
+      "pr": "A3",
+      "check": "(d) Accounting sanity over played span",
+      "status": "PASS",
+      "evidence": "a3-summary.json",
+      "detail": "After in-flight reload: exactly one checkout, receipt and resident purchase; 275221504000 units debit equals receipt/order price; one product and bag consumed. All 1,914 budgets conserve cash, no negatives. Native completed order awaits day-6 daily settlement."
+    },
+    {
+      "pr": "A3",
+      "check": "(e) Reload an in-flight journey, checkout and return",
+      "status": "PASS",
+      "evidence": "a3-summary.json",
+      "detail": "pc:350 saved outward, reloads, purchases once and returns to its original home; journey, outing and excursion clear by 10:00."
+    },
+    {
+      "pr": "A3",
+      "check": "(e) Save at each mid-decision quote cursor",
+      "status": "NOT-RUN",
+      "evidence": "a3-summary.json",
+      "detail": "No evaluating decision caught in this small single-shop fixture; journey replay was exercised instead."
+    },
+    {
+      "pr": "A3",
+      "check": "(f) More-than-eight-shop market",
+      "status": "NOT-RUN",
+      "evidence": "a3-summary.json",
+      "detail": "Fixture has one eligible owned shop; no suitable existing 16-shop fixture used."
+    },
+    {
+      "pr": "A3",
+      "check": "(f) Winner outside nearest eight/distant-winner fixture",
+      "status": "NOT-RUN",
+      "evidence": "a3-summary.json",
+      "detail": "Single-shop market cannot establish this case."
+    },
+    {
+      "pr": "A3",
+      "check": "(g) Explanation words with zero route/market requests",
+      "status": "PASS",
+      "evidence": "inspector-summary.json",
+      "detail": "Post-activation household and food-journey words captured with frozen route snapshots and six market-method counters unchanged; entire payload unchanged."
+    },
+    {
+      "pr": "A3",
+      "check": "(g) Queue/deadline/unknown/unconfirmed explanation variants",
+      "status": "NOT-RUN",
+      "evidence": "inspector-summary.json",
+      "detail": "Those specific native situations were not produced by the available fixture."
+    },
+    {
+      "pr": "A3",
+      "check": "(h) Normal-play work/route attribution and backlog",
+      "status": "PASS",
+      "evidence": "performance-summary.json",
+      "detail": "Active-choice open window: 100 observed requests fall within raw logical-minute bounds. Slightly wider counter bracket: 316 total units, 108 citizen units, 208 food continuation units, 29 walking requests; lag/pending decisions end at zero."
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "role": "rig_test",
+  "method": "Read-only exact UTF-16 native string extraction from gzip binary disposable saves; length prefixes and whitelisted authority/receipt shapes validated; no game payload committed.",
+  "comparisons": [
+    {
+      "label": "morning",
+      "sourceHsgSha256": "31b05bc02cdc185901eef99fae6713b9b305b79f014144c88923a631beca9dab",
+      "targetHsgSha256": "a816d76d9d03fd38a0361821160a2a20f426bbec7fa13404e12971c6bbb91268",
+      "authorityHashBefore": "52139e7fdc78238b028751115639a11fb4243f1a5c9424b630978cb71af979c7",
+      "authorityHashAfter": "52139e7fdc78238b028751115639a11fb4243f1a5c9424b630978cb71af979c7",
+      "authorityEqual": true,
+      "sourceReceipts": 0,
+      "targetReceipts": 0,
+      "receiptHashBefore": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "receiptHashAfter": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "receiptDictionaryEqual": true,
+      "allOriginalReceiptsRetainedUnchanged": true,
+      "authorityShops": 1
+    },
+    {
+      "label": "noon",
+      "sourceHsgSha256": "0aac22c8716ecd5cfc1d7f79773ff2464ef18fe197202db5523eec368029dac3",
+      "targetHsgSha256": "eaacb6b6d22f5976d3302137b089fd7de1fab4317053e3305768743d93150950",
+      "authorityHashBefore": "52139e7fdc78238b028751115639a11fb4243f1a5c9424b630978cb71af979c7",
+      "authorityHashAfter": "52139e7fdc78238b028751115639a11fb4243f1a5c9424b630978cb71af979c7",
+      "authorityEqual": true,
+      "sourceReceipts": 27,
+      "targetReceipts": 27,
+      "receiptHashBefore": "18bb84cf9c1a9cf4908578401dc5a429142afca1e8e52d7ccb08d41bcdb199b6",
+      "receiptHashAfter": "18bb84cf9c1a9cf4908578401dc5a429142afca1e8e52d7ccb08d41bcdb199b6",
+      "receiptDictionaryEqual": true,
+      "allOriginalReceiptsRetainedUnchanged": true,
+      "authorityShops": 1
+    }
+  ]
+}

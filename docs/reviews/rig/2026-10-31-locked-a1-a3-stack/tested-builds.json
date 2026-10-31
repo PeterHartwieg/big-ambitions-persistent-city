@@ -1,0 +1,75 @@
+{
+  "role": "rig_test",
+  "artifacts": [
+    {
+      "arm": "candidate",
+      "sourceSha": "754c2b67610e69a42aee65a342b1e2a403530a25",
+      "dllSha256": "29ef76b33deb22f499cd1aff02b8507d26a0f19cf7a16fa38568eb75706e5cdd",
+      "build": "python tools/build.py --game-managed C:/BigAmbitions-AgentTests/Big Ambitions Agent Tests_Data/Managed",
+      "dotnetPathPrefixed": true
+    },
+    {
+      "arm": "baseline",
+      "sourceSha": "6d43276198eba5d0dd016b51bc7fc670bc651762",
+      "dllSha256": "f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c",
+      "build": "python tools/build.py --game-managed C:/BigAmbitions-AgentTests/Big Ambitions Agent Tests_Data/Managed",
+      "dotnetPathPrefixed": true
+    }
+  ],
+  "offlineDotnetTestsRun": false,
+  "loadedArms": [
+    {
+      "arm": "base1",
+      "pid": 35788,
+      "persistentCitySha256": "f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c",
+      "frameObserverSha256": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+      "guardSha256": "488befa7803c9bf11cefb06b29364e774907e51372327d7e7434b283cafb1390",
+      "launcherVerifiedInstallReceiptBeforeLaunch": true
+    },
+    {
+      "arm": "cand1",
+      "pid": 27668,
+      "persistentCitySha256": "29ef76b33deb22f499cd1aff02b8507d26a0f19cf7a16fa38568eb75706e5cdd",
+      "frameObserverSha256": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+      "guardSha256": "af9b54172f90ed63ba57bd21a253b5bab9224a93145596065ee2bbdd6049d8fc",
+      "launcherVerifiedInstallReceiptBeforeLaunch": true
+    },
+    {
+      "arm": "base2",
+      "pid": 33984,
+      "persistentCitySha256": "f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c",
+      "frameObserverSha256": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+      "guardSha256": "f58bef5461656a260b0da47ba2421e5d5fbc665e540ac3a19045e79361a8075e",
+      "launcherVerifiedInstallReceiptBeforeLaunch": true
+    },
+    {
+      "arm": "cand2",
+      "pid": 49852,
+      "persistentCitySha256": "29ef76b33deb22f499cd1aff02b8507d26a0f19cf7a16fa38568eb75706e5cdd",
+      "frameObserverSha256": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+      "guardSha256": "ca449e4bdf9e32be79993fa94c9299a61647afc88493686acf5768c7c413ff9d",
+      "launcherVerifiedInstallReceiptBeforeLaunch": true
+    },
+    {
+      "arm": "base3",
+      "pid": 45552,
+      "persistentCitySha256": "f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c",
+      "frameObserverSha256": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+      "guardSha256": "a333ff5f9d7411f1af09d029a9338f044e57f893241383c70385d90e4d620219",
+      "launcherVerifiedInstallReceiptBeforeLaunch": true
+    },
+    {
+      "arm": "cand3",
+      "pid": 50740,
+      "persistentCitySha256": "29ef76b33deb22f499cd1aff02b8507d26a0f19cf7a16fa38568eb75706e5cdd",
+      "frameObserverSha256": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+      "guardSha256": "a333ff5f9d7411f1af09d029a9338f044e57f893241383c70385d90e4d620219",
+      "launcherVerifiedInstallReceiptBeforeLaunch": true
+    }
+  ],
+  "A1Head": "ee9486b17db082aff1f764251568fb4670ffca2a",
+  "A2Head": "41c870f64f8d5495285026daa99029ea4033bb95",
+  "bothAncestorsOfCandidate": true,
+  "arrangement": "Unchanged RLO + Persistent City + bridge-only host + test observers; workshop disabled; normal visible window; not full modpack.",
+  "productionWorktreesUnchanged": true
+}

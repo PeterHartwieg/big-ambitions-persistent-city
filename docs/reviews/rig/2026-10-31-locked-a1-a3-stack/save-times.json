@@ -1,0 +1,119 @@
+{
+  "saves": [
+    {
+      "label": "schema16-save",
+      "gameSaveSeconds": 0.6720000000204891,
+      "hsgBytes": 1106234,
+      "payloadCharacters": 5732118,
+      "codecWriteMs": 389.0657
+    },
+    {
+      "label": "schema17-save",
+      "gameSaveSeconds": 0.5309999999590218,
+      "hsgBytes": 1134644,
+      "payloadCharacters": 6053491,
+      "codecWriteMs": 273.2899
+    },
+    {
+      "label": "schema16-lunch-save",
+      "gameSaveSeconds": 0.5309999999590218,
+      "hsgBytes": 1112856,
+      "payloadCharacters": 6011535,
+      "codecWriteMs": 300.75780000000003
+    },
+    {
+      "label": "lunch-upgrade-save",
+      "gameSaveSeconds": 0.5470000000204891,
+      "hsgBytes": 1138546,
+      "payloadCharacters": 6344247,
+      "codecWriteMs": 308.5416
+    },
+    {
+      "label": "a3-checkpoint-save",
+      "gameSaveSeconds": 0.5470000000204891,
+      "hsgBytes": 1271614,
+      "payloadCharacters": 6999367,
+      "codecWriteMs": 341.5502
+    },
+    {
+      "label": "inflight-save",
+      "gameSaveSeconds": 0.5,
+      "hsgBytes": 1318079,
+      "payloadCharacters": 6868397,
+      "codecWriteMs": 385.5187
+    },
+    {
+      "label": "noon-schema16-save",
+      "gameSaveSeconds": 0.7029999999795109,
+      "hsgBytes": 1542276,
+      "payloadCharacters": 8048941,
+      "codecWriteMs": 342.99940000000004
+    },
+    {
+      "label": "noon-schema17-save",
+      "gameSaveSeconds": 0.75,
+      "hsgBytes": 1574716,
+      "payloadCharacters": 8392505,
+      "codecWriteMs": 483.4125
+    }
+  ],
+  "loadTimings": {
+    "migration": {
+      "seconds": 43.140000000130385,
+      "ready": true
+    },
+    "schema17-roundtrip": {
+      "seconds": 31.156000000191852,
+      "ready": true
+    },
+    "lunch-migration": {
+      "seconds": 31.344000000040978,
+      "ready": true
+    },
+    "replay1-reload": {
+      "seconds": 31.985000000102445,
+      "ready": true
+    },
+    "replay2-reload": {
+      "seconds": 50.875,
+      "ready": true,
+      "loadingRaceRetries": 1
+    },
+    "inflight-reload": {
+      "seconds": 33.65599999995902,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    "noon-migration": {
+      "seconds": 30.70300000021234,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    "noon-roundtrip": {
+      "seconds": 41.76600000006147,
+      "ready": true,
+      "loadingRaceRetries": 0
+    }
+  },
+  "baselineCodec": {
+    "status": "Loaded",
+    "SourceSchema": 16,
+    "Error": "",
+    "readMs": 672.7314,
+    "sourceCharacters": 6009773,
+    "upgradedCharacters": 6009773,
+    "sourceHash": "320635faa7cecb61c88f8d547633ec4fd6ec7123862eb0fe09eb3e99eefb712f",
+    "upgradedHash": "320635faa7cecb61c88f8d547633ec4fd6ec7123862eb0fe09eb3e99eefb712f"
+  },
+  "noonBaselineCodec": {
+    "status": "Loaded",
+    "SourceSchema": 16,
+    "Error": "",
+    "readMs": 936.1887,
+    "sourceCharacters": 8048931,
+    "upgradedCharacters": 8048931,
+    "sourceHash": "ba4e87d0c874c65ec01ab9ad5d541559790b2d75f35c7fcd372ac2ffb80197ef",
+    "upgradedHash": "ba4e87d0c874c65ec01ab9ad5d541559790b2d75f35c7fcd372ac2ffb80197ef"
+  },
+  "note": "Single native/Unity samples outside performance brackets; codec timing from stage observer; bridge save/load includes transport, loading and readiness. No offline test suite."
+}

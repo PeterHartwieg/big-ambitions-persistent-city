@@ -1,0 +1,175 @@
+{
+  "role": "rig_test",
+  "sourceSchema": 16,
+  "writtenSchema": 17,
+  "citizens": 957,
+  "consumers": 1914,
+  "shops": 1,
+  "legacyProjectionHashBefore": "229d270b2dadd737eca8b91a66d7d799a5130da1cc7c8b8417d71b76c3c210eb",
+  "legacyProjectionHashAfter": "229d270b2dadd737eca8b91a66d7d799a5130da1cc7c8b8417d71b76c3c210eb",
+  "allLegacyFieldsPreservedByMigration": true,
+  "liveAssignmentsUnchanged": true,
+  "liveBudgetsMoneyPurchasesUnchanged": true,
+  "shopScopesUnchanged": true,
+  "activeMealsAtBaseline": 6,
+  "activeLegacyFieldsUnchanged": true,
+  "choiceStartsDay": 6,
+  "expectedNextDay": 6,
+  "traitAndTodayHashBefore": "84c13f8f10dca73789a3c97500f88bd6fcf150c4a3451685d95c4c91d2ea1021",
+  "traitAndTodayHashAfter": "84c13f8f10dca73789a3c97500f88bd6fcf150c4a3451685d95c4c91d2ea1021",
+  "traitsAndTodayRoundtripEqual": true,
+  "migrationCodec": {
+    "status": "Loaded",
+    "SourceSchema": 16,
+    "Error": "",
+    "readMs": 688.7879,
+    "sourceCharacters": 5732118,
+    "upgradedCharacters": 6051558,
+    "sourceHash": "4fcfec060b4b88c9db3ff074a248dfbfe03bdd234ff5618190b132fc1b83bbd0",
+    "upgradedHash": "6a6893937162af41f878cd341a94cc23d31a68cae5d3e57b4cd719b80e1e1a2b"
+  },
+  "schema17Codec": {
+    "status": "Loaded",
+    "SourceSchema": 17,
+    "Error": "",
+    "readMs": 709.7119,
+    "sourceCharacters": 6053491,
+    "upgradedCharacters": 6053491,
+    "sourceHash": "5326647f4d467986b2bf7c65911e821da5d15c3d7fab7615c4ba3fe2c482bb69",
+    "upgradedHash": "5326647f4d467986b2bf7c65911e821da5d15c3d7fab7615c4ba3fe2c482bb69"
+  },
+  "refusalStoreSeam": [
+    {
+      "kind": "corrupt",
+      "status": "Invalid",
+      "SourceSchema": 0,
+      "Error": "Invalid state: Unterminated string. Expected delimiter: \". Path 'TravelClockRate', line 1, position 6053480.",
+      "readMs": 77.6894,
+      "writeAccepted": false,
+      "fileHashBefore": "e99570200578bdfac5f5c626bb7c52ee74dccbb0dc6fafa8a40df719e1b29711",
+      "fileHashAfter": "e99570200578bdfac5f5c626bb7c52ee74dccbb0dc6fafa8a40df719e1b29711",
+      "dictionaryUnchanged": true,
+      "sentinelUnchanged": true
+    },
+    {
+      "kind": "future",
+      "status": "Future",
+      "SourceSchema": 99,
+      "Error": "State uses a newer schema; preserve the original payload.",
+      "readMs": 88.4452,
+      "writeAccepted": false,
+      "fileHashBefore": "a95a36fce4f439a1874c84e3d3f4ca1162bf48f30300f82723c08c5f5e174932",
+      "fileHashAfter": "a95a36fce4f439a1874c84e3d3f4ca1162bf48f30300f82723c08c5f5e174932",
+      "dictionaryUnchanged": true,
+      "sentinelUnchanged": true
+    }
+  ],
+  "nativeRefusals": [
+    {
+      "kind": "corrupt",
+      "integrity": {
+        "before": "79da59abafb3132fd4a53f0a9241af657eaa490d4de6b63fd46c4d2f6ab1801b",
+        "after": "79da59abafb3132fd4a53f0a9241af657eaa490d4de6b63fd46c4d2f6ab1801b",
+        "runtime": {
+          "enabled": true,
+          "failed": true,
+          "status": "Population save refused: Invalid state: Unexpected character encountered while parsing number: !. Path 'TravelTimingVersion', line 1, position 5732117. Original payload retained.",
+          "taskStatus": null,
+          "taskCompleted": null,
+          "taskError": null,
+          "saveMatches": false,
+          "discoveryReady": null,
+          "discoverySweeps": null,
+          "lastDiscoverySeconds": null,
+          "lastDiscoveryWorkMs": null,
+          "maximumDiscoverySliceMs": null,
+          "waitingRoutingFrames": 0,
+          "maximumPreparationMs": 0.0
+        }
+      },
+      "codec": {
+        "status": "Invalid",
+        "SourceSchema": 0,
+        "Error": "Invalid state: Unexpected character encountered while parsing number: !. Path 'TravelTimingVersion', line 1, position 5732117.",
+        "readMs": 137.1174,
+        "sourceCharacters": 5732118,
+        "upgradedCharacters": null,
+        "sourceHash": "4a05a58ed4df5e29b9f179530b92ce461aace3fdcbfd24b6704ad345cc0d3f17",
+        "upgradedHash": null
+      }
+    },
+    {
+      "kind": "future",
+      "integrity": {
+        "before": "c29adb0b6812c1a9497b2de26c66befde402d3c235687e9b69aa29bb1d3e7e23",
+        "after": "c29adb0b6812c1a9497b2de26c66befde402d3c235687e9b69aa29bb1d3e7e23",
+        "runtime": {
+          "enabled": true,
+          "failed": true,
+          "status": "Population save refused: State uses a newer schema; preserve the original payload. Original payload retained.",
+          "taskStatus": null,
+          "taskCompleted": null,
+          "taskError": null,
+          "saveMatches": false,
+          "discoveryReady": null,
+          "discoverySweeps": null,
+          "lastDiscoverySeconds": null,
+          "lastDiscoveryWorkMs": null,
+          "maximumDiscoverySliceMs": null,
+          "waitingRoutingFrames": 0,
+          "maximumPreparationMs": 0.0
+        }
+      },
+      "codec": {
+        "status": "Future",
+        "SourceSchema": 99,
+        "Error": "State uses a newer schema; preserve the original payload.",
+        "readMs": 73.202,
+        "sourceCharacters": 5732118,
+        "upgradedCharacters": null,
+        "sourceHash": "011edb4046c9cdfeb70c4a54b032f9a546c61ecca27509f2f57d35e3ad393df8",
+        "upgradedHash": null
+      }
+    }
+  ],
+  "loadNativeAdvanceMinutes": 0.33333396911621094,
+  "nativeAdvanceNote": "Native clock advances about one third of a minute before the bridge pauses reload; 12 pending legacy meals resolve in that interval. Exact codec migration comparison excludes that subsequent gameplay.",
+  "lunchMigration": {
+    "codec": {
+      "status": "Loaded",
+      "SourceSchema": 16,
+      "Error": "",
+      "readMs": 643.1476,
+      "sourceCharacters": 6009773,
+      "upgradedCharacters": 6330618,
+      "sourceHash": "320635faa7cecb61c88f8d547633ec4fd6ec7123862eb0fe09eb3e99eefb712f",
+      "upgradedHash": "f72bf54e2d5a9ce7ffad72882d9ec9f6361f09bcb4b8d1906e7b2961c6e77205"
+    },
+    "unrecordedEarlierMeals": 0
+  },
+  "noonMigration": {
+    "baselineMinute": 7950.016056060791,
+    "codec": {
+      "status": "Loaded",
+      "SourceSchema": 16,
+      "Error": "",
+      "readMs": 776.3325,
+      "sourceCharacters": 8048931,
+      "upgradedCharacters": 8399342,
+      "sourceHash": "ba4e87d0c874c65ec01ab9ad5d541559790b2d75f35c7fcd372ac2ffb80197ef",
+      "upgradedHash": "10e8c058050a1be095d8b63d5bb1f2c7178cfc5d1af1f746f36733053bc3b7f8"
+    },
+    "allLegacyFieldsPreserved": true,
+    "legacyHashBefore": "33a5f889f92efb9b8945c88387ebc84ece2cc7be59568e17d260c0ca4771aa29",
+    "legacyHashAfter": "33a5f889f92efb9b8945c88387ebc84ece2cc7be59568e17d260c0ca4771aa29",
+    "unrecorded": {
+      "consumers": 301,
+      "ownResidents": 141
+    },
+    "traitsAndTodayRoundtripEqual": true,
+    "traitsTodayHashBefore": "78bc935be7d2ac65cf46abb415d18aef46bba5f3b0febd265349c6c284b40550",
+    "traitsTodayHashAfter": "78bc935be7d2ac65cf46abb415d18aef46bba5f3b0febd265349c6c284b40550",
+    "choiceStartsDay": 6,
+    "activeMeals": 0
+  }
+}

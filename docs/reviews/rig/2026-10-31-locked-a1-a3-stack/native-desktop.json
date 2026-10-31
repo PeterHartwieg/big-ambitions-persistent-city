@@ -1,0 +1,29 @@
+{
+  "pid": 27668,
+  "hwnd": 21698202,
+  "rect": [
+    1913,
+    327,
+    3849,
+    1447
+  ],
+  "desktop": {
+    "openInputDesktopSucceeded": true,
+    "error": 0,
+    "nameRead": true,
+    "name": "Default",
+    "wtsInfoExRead": true,
+    "level": 1,
+    "sessionId": 11,
+    "sessionState": 0,
+    "sessionFlags": 0,
+    "locked": true
+  },
+  "powerThrottling": {
+    "read": true,
+    "error": 0,
+    "controlMask": 0,
+    "stateMask": 0,
+    "executionSpeedThrottleBit": false
+  }
+}
