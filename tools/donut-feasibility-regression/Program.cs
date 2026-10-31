@@ -16,8 +16,8 @@ static class Program
         ItemsGetter.Items = new() {
             [Product] = new() { type = ItemType.RetailProduct },
             ["fixture-shelf"] = new() { type = ItemType.ShowcaseShelf, itemsThatCanShowcase = new[] { Product } },
-            ["fixture-counter"] = new() { Counter = true },
-            ["fixture-bag"] = new() { Bag = true }
+            ["fixture-counter"] = new() { AuthoredTags = { "ba:itemtag_isfullservicecashregister" } },
+            ["fixture-bag"] = new() { AuthoredTags = { "ba:itemtag_isbag" } }
         };
         Helpers.BusinessTypeHelper.Data = new();
         var r = new BuildingRegistration();
@@ -62,7 +62,7 @@ static class Program
         Refusal(x => x.AvailableForRent = true, "player business");
         Refusal(x => Helpers.BusinessTypeHelper.Data.simulator = new object(), "simulator");
         Refusal(x => Helpers.BusinessTypeHelper.Data.hasEntranceFee = true, "entrance fee");
-        Refusal(x => Helpers.BusinessTypeHelper.Data.Bags = false, "bag contract");
+        Refusal(x => Helpers.BusinessTypeHelper.Data.AuthoredTags.Clear(), "bag contract");
         Refusal(x => ItemsGetter.Items[Product].type = ItemType.ServiceProduct, "retail product");
         Refusal(x => x.cachedAvailableProducts.Clear(), "advertised");
         Refusal(x => x.cachedAvailableProducts.Add(Product), "ambiguous");
@@ -88,6 +88,7 @@ static class Program
         Refusal(x => x.itemInstances["s0"].id = "counter", "identity/sharing");
         Refusal(x => x.itemInstances = new(x.itemInstances, StringComparer.OrdinalIgnoreCase), "key comparer");
         Refusal(x => x.itemInstances["s0"].itemName = "missing", "definition");
+        Refusal(x => { for (int i = 0; i < 129; i++) ItemsGetter.Items["fixture-shelf"].AuthoredTags.Add("other"); }, "authoring tags");
         Refusal(x => ItemsGetter.Items.Clear(), "retail product");
         Refusal(x => { for (int i = 0; i < 129; i++) x.cachedAvailableProducts.Add("other"); }, "oversized");
         r = Fixture(2);
@@ -132,10 +133,23 @@ public sealed class BuildingRegistration
 public sealed class RetailPrice { public string itemName = ""; public float price; }
 namespace BigAmbitions.Tags
 {
+    public abstract class TaggedScriptableObject
+    {
+        private List<string> tags = new();
+        public List<string> AuthoredTags => tags;
+        public bool HasTag(int tag) => throw new Exception("Native tag cache refresh reached");
+    }
     public static class TagRef
     {
-        public enum Itemtag { isbag, isfullservicecashregister }
-        public enum Businesstag { customersneedpaperbags }
+        public static class Itemtag
+        {
+            public static int isbag => throw new Exception("Native generated tag getter reached");
+            public static int isfullservicecashregister => throw new Exception("Native generated tag getter reached");
+        }
+        public static class Businesstag
+        {
+            public static int customersneedpaperbags => throw new Exception("Native generated tag getter reached");
+        }
     }
 }
 namespace BigAmbitions.Items
@@ -154,11 +168,10 @@ namespace BigAmbitions.Items
         public Item ItemCached => throw new Exception("Native lazy instance getter reached");
     }
     public sealed class Settings { public bool ResourcesRequired = true; public string[] itemsToProduce = Array.Empty<string>(); }
-    public sealed class Item
+    public sealed class Item : Tags.TaggedScriptableObject
     {
-        public ItemType type; public bool Bag, Counter;
+        public ItemType type; public List<int> tagIndexes = new();
         public Settings producerSettings = new(); public string[] itemsThatCanShowcase = Array.Empty<string>();
-        public bool HasTag(Tags.TagRef.Itemtag tag) => tag == Tags.TagRef.Itemtag.isbag ? Bag : Counter;
     }
     public static class ItemsGetter
     {
@@ -170,11 +183,11 @@ namespace BigAmbitions.Items
 namespace Buildings.Retail.Simulation { public sealed class FullServiceBusinessSimulator { } }
 namespace Helpers
 {
-    public sealed class BusinessType
+    public sealed class BusinessType : BigAmbitions.Tags.TaggedScriptableObject
     {
         public object simulator = new Buildings.Retail.Simulation.FullServiceBusinessSimulator();
-        public bool hasEntranceFee, Bags = true;
-        public bool HasTag(BigAmbitions.Tags.TagRef.Businesstag tag) => Bags;
+        public bool hasEntranceFee;
+        public BusinessType() { AuthoredTags.Add("ba:businesstag_customersneedpaperbags"); }
     }
     public static class BusinessTypeHelper
     {

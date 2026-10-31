@@ -9,10 +9,11 @@ BASE = "00d1321b257e70e57829cfef2ca823b4d0e25060"
 reader = ROOT / "Runtime/DonutFeasibilityReader.cs"
 text = reader.read_text(encoding="utf-8")
 code = re.sub(r"//[^\n]*|/\*.*?\*/", "", text, flags=re.S)
-for forbidden in ("Harmony", "Reflection", "SetUp(", "ProcessCustomer", "CustomerEntry", "OrderEntry",
+for forbidden in ("Harmony", "SetUp(", "ProcessCustomer", "CustomerEntry", "OrderEntry",
                   "SaveGameManager", "ItemCached", "GetStockInstance", "GetBuildingRegistration",
-                  "CreateInstance", "Task.", "Thread", "Update(", "Timer", "FoodSupplyReader"):
+                  "CreateInstance", "Task.", "Thread", "Update(", "Timer", "FoodSupplyReader", ".HasTag(", "TagRef.", ".tagIndexes", "SetValue", ".Invoke("):
     assert forbidden not in code, forbidden
+assert code.count('GetField("tags",') == 1 and code.count('.GetValue(') == 1
 assert not re.search(r"\b(?:registration|instance|item|resource|cargo|type|product|entry)\.\w+\s*=(?!=)", code)
 for directory in ("Core", "Runtime", "Persistence", "Compatibility"):
     for path in (ROOT / directory).glob("*.cs"):

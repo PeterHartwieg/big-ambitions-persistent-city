@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using BigAmbitions.Items;
 using BigAmbitions.Tags;
 using Buildings.Retail.Simulation;
@@ -25,7 +26,7 @@ namespace PersistentCity.Runtime
         public int RawBagUnits { get; }
         public int RawCounters { get; }
         public IReadOnlyList<string> Equipment { get; }
-        public string Eligibility => "Unknown: staffing, furniture requirements and native checkout not evaluated";
+        public string Eligibility => "Unknown: staffing, furniture requirements, native tag-cache agreement and checkout not evaluated";
     }
 
     /// <summary>Explicit main-thread diagnostic only. No simulator, native lazy instance getters,
@@ -34,15 +35,29 @@ namespace PersistentCity.Runtime
     public static class DonutFeasibilityReader
     {
         public const string Product = "ba:itemname_donut";
+        private static readonly FieldInfo? AuthoredTags;
+        // Explicit constructor: metadata is bound only on the first diagnostic call, never eagerly.
+        static DonutFeasibilityReader()
+        {
+            var field = typeof(TaggedScriptableObject).GetField("tags", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (field != null && field.FieldType == typeof(List<string>) && !field.IsStatic) AuthoredTags = field;
+        }
+        private static List<string>? ReadAuthoredTags(TaggedScriptableObject definition)
+        {
+            var tags = AuthoredTags!.GetValue(definition) as List<string>;
+            return tags != null && tags.Count <= 128 ? tags : null;
+        }
         public static DonutFeasibilitySnapshot Read(BuildingRegistration registration)
         {
             DonutFeasibilitySnapshot Refuse(string reason) => new DonutFeasibilitySnapshot(reason);
+            if (AuthoredTags == null) return Refuse("Unsupported native authoring tag field");
             if (registration == null || !registration.RentedByPlayer || !registration.HasEstablishedBusiness
                 || registration.AvailableForRent || registration.temporarilyClosed)
                 return Refuse("Not an established open player business");
             var type = BusinessTypeHelper.GetData(registration.businessTypeName);
+            var businessTags = type == null ? null : ReadAuthoredTags(type);
             if (type?.simulator == null || type.simulator.GetType() != typeof(FullServiceBusinessSimulator)
-                || type.hasEntranceFee || !type.HasTag(TagRef.Businesstag.customersneedpaperbags))
+                || type.hasEntranceFee || businessTags == null || !businessTags.Contains("ba:businesstag_customersneedpaperbags"))
                 return Refuse("Unsupported simulator, entrance fee or bag contract");
             if (ItemsGetter.AllItems == null) return Refuse("Native item catalogue not loaded");
             var product = ItemsGetter.GetByName(Product, true);
@@ -78,8 +93,11 @@ namespace PersistentCity.Runtime
                 // ItemInstance.ItemCached populates a native cache; look up the loaded definition instead.
                 var item = ItemsGetter.GetByName(instance.itemName, true);
                 if (item == null) return Refuse("Missing equipment definition");
+                var itemTags = ReadAuthoredTags(item);
+                if (itemTags == null) return Refuse("Malformed equipment authoring tags");
                 bool shelf = (item.type & ItemType.ShowcaseShelf) != 0;
-                bool counter = item.HasTag(TagRef.Itemtag.isfullservicecashregister);
+                // Both HasTag and TagRef getters can change native caches. Read authoring strings only.
+                bool counter = itemTags.Contains("ba:itemtag_isfullservicecashregister");
                 var outputs = item.producerSettings?.itemsToProduce;
                 if (outputs != null && outputs.Length > 128) return Refuse("Oversized producer contract");
                 bool produces = outputs != null && Array.IndexOf(outputs, Product) >= 0;
@@ -111,7 +129,8 @@ namespace PersistentCity.Runtime
                 if (counter)
                 {
                     var bag = ItemsGetter.GetByName(resource.itemName, true);
-                    if (bag == null || !bag.HasTag(TagRef.Itemtag.isbag)) return Refuse("Counter resource is not a native bag");
+                    var bagTags = bag == null ? null : ReadAuthoredTags(bag);
+                    if (bagTags == null || !bagTags.Contains("ba:itemtag_isbag")) return Refuse("Counter resource is not a native bag");
                     if (resource.amount > int.MaxValue - bags) return Refuse("Bag stock overflow");
                     bags += resource.amount; counters++;
                 }
