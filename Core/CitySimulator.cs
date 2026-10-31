@@ -55,13 +55,13 @@ namespace PersistentCity.Core
         internal Place FindPlace(string id) => places[id];
         /// <summary>Read-only inspector view of one resident from already stored facts, or null if the
         /// ID has left the population. Never changes the city, draws, plans routes or reads a market.</summary>
-        public ResidentInsight? Inspect(string residentId, Func<string, string>? productName = null, Func<string, string>? localize = null)
+        public ResidentInsight? Inspect(string residentId, Func<string, string>? productName = null, Func<string, int, string>? formatAddress = null)
         {
             if (residentId == null) return null;
             var person = FindCitizen(residentId);
             if (person == null) return null;
             ResidentMeal? meal = food != null ? food.FindMeal(residentId) : State.Food?.Residents.Find(m => m.ResidentId == residentId);
-            return ResidentInsight.Capture(State, person, meal, id => places.TryGetValue(id, out var place) ? place : null, productName, localize);
+            return ResidentInsight.Capture(State, person, meal, id => places.TryGetValue(id, out var place) ? place : null, productName, formatAddress);
         }
         public void AttachFoodMarket(IFoodMarket market, FoodChoiceSettings? choiceSettings = null)
         {

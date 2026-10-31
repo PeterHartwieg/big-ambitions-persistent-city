@@ -1,0 +1,78 @@
+E2a offline evidence, 31 October 2026
+Base: 6d43276198eba5d0dd016b51bc7fc670bc651762
+Host: Windows, Intel i5-13600KF; SDK 10.0.402
+Command: python tools/optional-stop-regression/run.py --performance --findings
+Current production source is unchanged from base. No Unity/game/rig execution.
+Production DLL SHA256: f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c
+Read-only BigAmbitions.dll SHA256: 9427561b81aaab2ada09c22a3c98dd9a4017a65225b389513885bf336852e911
+
+Native venue boundaries: 210 checks passed (doubles; no venue enabled).
+Saved facade reload: 9 integration checks passed.
+Saved facade reload: 9 integration checks passed.
+Native door replacement: 6 checks passed.
+Stationary suppression patch scope: 7 checks passed (Harmony/spawner doubles; native special respawn needs rig).
+E2b future-break observation (candidate visibility change, not an acceptance assertion): rain at 100, dry at start 160; desired active=True, actual active=False, cancelled=True; saved start/end=160/165.
+E2b queue-lead contract observation (not an acceptance assertion): id=queue0, seed=17, opening=540; dry start=531.7137, wet start=535.6426; replan at same wait changes lead; no persisted queue commitment.
+E2b ambiguity observation (not an acceptance assertion): expected refuse both; actual club-first=True, cafe-first=False.
+Facade doubles cap-batch=48: cold samples=48 (one/frame), warm queries=9600, new warm samples=0; batch ms p50=0.0544 p95=0.1162 max=0.1763; bytes/query=568.0; spikes>=30ms=0.
+Facade doubles cap-batch=256: cold samples=256 (one/frame), warm queries=51200, new warm samples=0; batch ms p50=0.2430 p95=0.4849 max=3.2762; bytes/query=592.4; spikes>=30ms=0.
+Optional stop physical adapter: 223 checks passed.
+Admission rate=25 residents=48 realised=13: ms p50=0.2186 p95=0.3414 max=0.5208; bytes/sample=73798.3; spikes>=30ms=0.
+  per batch: spot queries=26.0; occupancy calls=23.0; occupancy record visits=140.0
+Admission rate=25 residents=256 realised=64: ms p50=1.6164 p95=2.6128 max=3.1547; bytes/sample=392109.6; spikes>=30ms=0.
+  per batch: spot queries=128.0; occupancy calls=116.0; occupancy record visits=3581.0
+Admission rate=25 residents=957 realised=229: ms p50=5.4349 p95=10.9254 max=16.8860; bytes/sample=1470009.9; spikes>=30ms=0.
+  per batch: spot queries=458.0; occupancy calls=416.0; occupancy record visits=46858.0
+Selector rate=25 cap=48 admitted=48/229: ms p50=0.1570 p95=0.2869 max=1.0474; bytes/sample=64.0; spikes>=30ms=0.
+Selector rate=25 cap=256 admitted=229/229: ms p50=0.0067 p95=0.0081 max=0.0266; bytes/sample=0.0; spikes>=30ms=0.
+Admission rate=100 residents=48 realised=48: ms p50=0.0644 p95=0.2461 max=0.8184; bytes/sample=91470.3; spikes>=30ms=0.
+  per batch: spot queries=96.0; occupancy calls=216.0; occupancy record visits=4992.0
+Admission rate=100 residents=256 realised=256: ms p50=1.1419 p95=1.6736 max=2.0763; bytes/sample=488221.6; spikes>=30ms=0.
+  per batch: spot queries=512.0; occupancy calls=1152.0; occupancy record visits=146432.0
+Admission rate=100 residents=957 realised=957: ms p50=9.7554 p95=14.2531 max=18.9020; bytes/sample=1846520.1; spikes>=30ms=0.
+  per batch: spot queries=1914.0; occupancy calls=4299.0; occupancy record visits=2049686.0
+Selector rate=100 cap=48 admitted=48/957: ms p50=1.3075 p95=1.6869 max=6.3349; bytes/sample=64.0; spikes>=30ms=0.
+Selector rate=100 cap=256 admitted=256/957: ms p50=0.0409 p95=0.0913 max=0.1772; bytes/sample=64.0; spikes>=30ms=0.
+Offline synthetic costs only; instrumented occupancy counters, .NET JIT and geometry/body doubles are not Unity mod-work or whole-frame evidence.
+
+Proof/tool source commit: f982b55 (documentation-only commit follows).
+Exploratory pre-final-instrumentation report: rate=100 residents=957; 2 admission batches >=30 ms; max=32.6453 ms. Second exact duration was not captured by that initial count/max reporter. Final tool prints each flagged duration. These are offline stress batches, not in-game mod-work.
+
+Final gate: 31/31 exit 0. Unit tests: 1606 passed, 0 failed, 0 skipped.
+Save-contract: unchanged digest 6B9097A2A036A7791F118DDFF0A96530AC4A2EBAFFDFA6BF37C51ADBCC52062C; length=113747.
+Production/config diff from base: empty. Open product questions: byte-equivalent text. CHECKS/PR numbered rig lists: identical.
+Commands were sequential foreground children with no timeout. Final unit and list commands were rerun after the six queue tests were added; unaffected build/regressions/demos are from the complete initial 31-command run.
+One earlier overlapping targeted rebuild failed on the active full-suite DLL lock; both finished before sequential reruns. No failing acceptance case retained.
+
+Index | command (dotnet is %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe) | exit | elapsed seconds | SHA256 of ignored build/e2a/gate-NN.log
+1 | python tools/build.py --game-managed C:\Program Files (x86)\Steam\steamapps\common\Big Ambitions\Big Ambitions_Data\Managed | 0 | 1.5 | f1b494fb2a80be22a405907c841faf5cdb2097fc1217382b185aee1096dd2a05
+2 | dotnet test tests/PersistentCity.Tests.csproj | 0 | 177.984 | a7f7c5219f7a9268cc9056f962fcd4672572ec36e1f30dc642253f4ed4d1efa7
+3 | dotnet test tests/PersistentCity.Tests.csproj --no-build --list-tests | 0 | 1.703 | f1931581d8a900edd8e0bc6473de111e23e689a834413086b483fc860341b664
+4 | dotnet run --project tools\core-identity-regression\CoreIdentityRegression.csproj --configuration Release | 0 | 9.109 | f98b266dd67a37910a6a2db811e86cf7702a1c65973add5b6d083a16544c9287
+5 | dotnet run --project tools\diagnostic-response-regression\DiagnosticResponseRegression.csproj --configuration Release | 0 | 4.766 | a89f8e2948c58df6f28f5d0bf439ea876f62fe55dd2f032fb9d77ea4d0a7b103
+6 | dotnet run --project tools\event-observation-regression\EventObservationRegression.csproj --configuration Release | 0 | 6.953 | e3ad91ecad2b3816b62d42c00c2fadbcc5c8c168de15881af507abd103dcfbc5
+7 | dotnet run --project tools\food-catalogue-regression\FoodCatalogueRegression.csproj --configuration Release | 0 | 3.547 | 51296d620bcb87e10702371f4288e2e5da39cbe69adad3dba81bd20c9dc332dd
+8 | dotnet run --project tools\food-checkout-regression\FoodCheckoutRegression.csproj --configuration Release | 0 | 2.906 | 626485385041a389bb403270834bbc781cd73720968862e32075a1871fdf1fe6
+9 | dotnet run --project tools\food-hours-regression\FoodHoursRegression.csproj --configuration Release | 0 | 2.469 | 2410218689a17bf8e5ae868d3025d1a8bd9e449d7fd49d83728819236ce6607c
+10 | dotnet run --project tools\food-household-catalogue-regression\FoodHouseholdCatalogueRegression.csproj --configuration Release | 0 | 1.937 | b0f19cfd0acbbded5af38461d6e0bbe596b236cd83207afa0223100fdcfb8609
+11 | dotnet run --project tools\food-ownership-regression\FoodOwnershipRegression.csproj --configuration Release | 0 | 2.922 | bf1ceea6c56933f96ab9cec1b6c684721f6702b487bdbd5367c8456fe7f51d8e
+12 | dotnet run --project tools\food-supply-regression\FoodSupplyRegression.csproj --configuration Release | 0 | 2.797 | bea33031a003404270de233cbd073eb44deacac65f41be406a1eae3b70385683
+13 | dotnet run --project tools\frame-observation-regression\FrameObservationRegression.csproj --configuration Release | 0 | 2.391 | f6a640b5721b9b7d366f64ad21ca9ccfac1e62ed01e59a78c003b6194d6cae25
+14 | dotnet run --project tools\gate-access-regression\GateAccessRegression.csproj --configuration Release | 0 | 3.594 | 6e9877acee2b84dfcc2de1b4d7d7236ac991a58c1a89fbe420966d127bf4afae
+15 | dotnet run --project tools\road-ceiling-regression\RoadCeilingRegression.csproj --configuration Release | 0 | 2.765 | 895bf78ce78f6cceb24e97e6ac8d4cc6c68fa71cfb5b0e54f707e9bf46369762
+16 | dotnet run --project tools\road-handoff-regression\RoadHandoffRegression.csproj --configuration Release | 0 | 2.875 | 5de54d90bad9b212aac21705900b22ad270fa18365f1284fc4e988bf67a5f23e
+17 | dotnet run --project tools\road-invalidation-regression\RoadInvalidationRegression.csproj --configuration Release | 0 | 4.985 | 11bcbab6bdde92b021b10a41d941aa322629fadbc821906b55ed9aa7d5d7e656
+18 | dotnet run --project tools\road-speed-regression\RoadSpeedRegression.csproj --configuration Release | 0 | 3.218 | 5242c509cd90b21734fe4321b43dcbba531282677f91d66ddc8931b9b07cef19
+19 | dotnet run --project tools\route-discovery-regression\RouteDiscoveryRegression.csproj --configuration Release | 0 | 10.016 | 7c3684eedaa0bea2266b919908de9f88a5bb82d63511f939d1661ee67c9cd95b
+20 | dotnet run --project tools\save-contract-regression\SaveContractRegression.csproj --configuration Release | 0 | 2.844 | 27a43249caa11eee73f76e18031863f9a72bd7b79f22d2e080bed5be73b6ae59
+21 | dotnet run --project tools\startup-clock-regression\StartupClockRegression.csproj --configuration Release | 0 | 2.5 | 755213528a9217097bee9930fdac74384de15db45239f03ab8b7ad9bb870eeef
+22 | dotnet run --project tools\traffic-closure-regression\TrafficClosureRegression.csproj --configuration Release | 0 | 3.218 | 708d6590f5351a9c1adf0b939e6775caa82602e1d6ec261b597977db98e808aa
+23 | dotnet run --project tools\traffic-queue-regression\TrafficQueueRegression.csproj --configuration Release | 0 | 2.875 | 897d1d2e5c92ef25374e61f7da26e9dea2849c91f3495eb8bc65210eb2e4b9c4
+24 | dotnet run --project tools\walking-quote-regression\WalkingQuoteRegression.csproj --configuration Release | 0 | 2.454 | d6a8022ba8234edc9cf7d42fefd4cbb8cc5a47b1e82125df7a4ff2a5fb81cd64
+25 | python tools/native-command-regression/run.py | 0 | 2.718 | bd610e1a32a30f6ad7638fc2a65ae7bf8bea9d44baba81884f821aea4ed0a9aa
+26 | python tools/physical-selection-regression/run.py | 0 | 2.985 | 35eb064fed86f96900a65304259bbcb81d0afa3730b4f8069194280a76037056
+27 | python tools/vehicle-ownership-regression/run.py | 0 | 3.39 | 7539f54a1b778a54ca9bc75f398a40c0491fb40281611c8c8efbbc473dd32e46
+28 | python tools/optional-stop-regression/run.py | 0 | 2.985 | 83169edd57e839615aaf26b1c484d01efb768209811f4538fa4cfd838a767883
+29 | dotnet run --project tools/simulate/Simulate.csproj -- 28 build/harness-demo | 0 | 5.875 | a28e154ce54b91cdd80d6dfc4b7b28167505fe31987bb79b1aa56770f3a88727
+30 | dotnet run --project tools/food-routines/FoodRoutines.csproj --configuration Release -- build/harness-food-routines-demo 957 | 0 | 5.156 | 4bf1294f495210a29746361bad0fdcc4264dcf8e9ed25e156b86a3ebbf1db3d6
+31 | dotnet run --project tools/food-demand/FoodDemand.csproj -- build/harness-food-demand-demo | 0 | 3.094 | 05430cc15bf8f51d7865af5e49537529ccb04f09614c41e7013eb95574604738
