@@ -63,6 +63,9 @@ for target in re.findall(r'\]\(([^)]+)\)',(R/'README.md').read_text()):
  if not target.startswith('https://'):assert (R/target).is_file(),target
 manifest=R/'artifact-manifest.json'
 if manifest.exists():
- for name,expected in get('artifact-manifest')['sha256'].items():assert hashlib.sha256((R/name).read_bytes()).hexdigest()==expected,name
+ for name,expected in get('artifact-manifest')['sha256'].items():
+  data=(R/name).read_bytes()
+  if Path(name).suffix in ['.json','.md','.py','.txt']:data=data.replace(b'\r\n',b'\n')
+  assert hashlib.sha256(data).hexdigest()==expected,name
 assert sum(p.stat().st_size for p in R.rglob('*') if p.is_file())<4*2**20
 print('Evidence integrity PASS: four windows; recorded FAIL at 100% breakfast p95; zero >=30ms mod spikes; exact reload/accounting/zero-control/restore receipts verified.')
