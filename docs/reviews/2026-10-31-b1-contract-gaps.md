@@ -88,8 +88,8 @@ are **not measured**, because a functioning B1 implementation is absent. No
 before/after performance win is claimed and no row is added to the roadmap's
 Perf wins log. The four parked hotspots remain untouched.
 
-The full requested offline gate is recorded in CHECKS and its raw command
-manifest. Passing the inherited baseline does not certify memory behavior or the
+The full requested offline gate is recorded in CHECKS and the [raw command
+manifest/probe output](2026-10-31-b1-offline-checks.json). Passing the inherited baseline does not certify memory behavior or the
 native **mod-work p95 <5 ms / single spikes <30 ms** gate. Whole-frame timing is
 separate and unmeasured. The pending B1 6 Nov checklist appears in CHECKS and the
 PR-description draft; it cannot be marked passed against this behavior-free head.
