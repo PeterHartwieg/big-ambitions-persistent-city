@@ -1,0 +1,66 @@
+{
+  "available": false,
+  "facade": false,
+  "frame": 1611,
+  "loaded": "C:\\BigAmbitions-AgentTests\\profile\\ModsLocal\\PersistentCity\\PersistentCity.dll",
+  "moduleMvid": "fcf35eed-fb7b-44df-8fe0-364a7da9db42",
+  "loadedFileSha256": "f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c",
+  "nativeAssemblies": [
+    {
+      "name": "BigAmbitions",
+      "sha256": "055700fd26a7a6430bbb6a9d79379781909fbc518af760453396947887db5063",
+      "mvid": "fdedeac4-e1ad-4266-8c1e-57f28d2390d6"
+    },
+    {
+      "name": "BigAmbitions.Items",
+      "sha256": "db07038215ea8ab2430fb942b86a19e93b5fb84f70639d87606b194786d5bab1",
+      "mvid": "14196cd7-6b04-458d-a715-b9689055ac19"
+    }
+  ],
+  "campaignFields": [
+    {
+      "name": "agencyAddress",
+      "type": "Address"
+    },
+    {
+      "name": "marketingTypeName",
+      "type": "Entities.MarketingTypeName"
+    },
+    {
+      "name": "enabled",
+      "type": "System.Boolean"
+    }
+  ],
+  "enumValues": [
+    {
+      "name": "SmallInternet",
+      "code": 0
+    },
+    {
+      "name": "MediumInternet",
+      "code": 1
+    },
+    {
+      "name": "LargeInternet",
+      "code": 2
+    },
+    {
+      "name": "SmallBillboard",
+      "code": 3
+    },
+    {
+      "name": "MediumBillboard",
+      "code": 4
+    },
+    {
+      "name": "LargeBillboard",
+      "code": 5
+    },
+    {
+      "name": "None",
+      "code": 6
+    }
+  ],
+  "reviewed": null,
+  "allocationCounterValid": false
+}

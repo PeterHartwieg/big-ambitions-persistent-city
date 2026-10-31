@@ -1,0 +1,743 @@
+{
+  "frames-mod-work-base1-breakfast-idle-stop-7cab7a.csv": {
+    "sourceSha256": "a5ef349a93d724fd62f9e71b7791e7fe97f8609ae59200187bbad690d7563e46",
+    "sourceRows": 5306,
+    "publishedRows": 5306,
+    "publishedColumns": [
+      "unityFrame",
+      "populationCalls",
+      "authorityCalls",
+      "populationMs",
+      "authorityMs",
+      "combinedUnionMs",
+      "PopulationRuntime.OnGUIInclusiveMs",
+      "entryBranch",
+      "firstObservedTicks",
+      "closedAtTicks",
+      "nextObservedUnityFrame"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-observations-base1-breakfast-idle-stop-7cab7a.csv": {
+    "sourceSha256": "a8a83c8878469f3499c6269c064579e8bd84be4e8829510d74025783e5e35761",
+    "sourceRows": 5307,
+    "publishedRows": 5307,
+    "publishedColumns": [
+      "startTicks",
+      "endTicks",
+      "priorUnityFrame",
+      "currentUnityFrame",
+      "gc0Delta",
+      "gc1Delta",
+      "gc2Delta",
+      "allocationBytes",
+      "allocationAvailable",
+      "nativeMinute",
+      "timeScale",
+      "paused"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-mod-work-base1-quiet-idle-stop-7bb37c.csv": {
+    "sourceSha256": "54ffe37bcbeee2d723e67881d32951a6552035e15bcdd6eb201890fbdc531246",
+    "sourceRows": 5341,
+    "publishedRows": 5341,
+    "publishedColumns": [
+      "unityFrame",
+      "populationCalls",
+      "authorityCalls",
+      "populationMs",
+      "authorityMs",
+      "combinedUnionMs",
+      "PopulationRuntime.OnGUIInclusiveMs",
+      "entryBranch",
+      "firstObservedTicks",
+      "closedAtTicks",
+      "nextObservedUnityFrame"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-observations-base1-quiet-idle-stop-7bb37c.csv": {
+    "sourceSha256": "3ca59f97730306f7064aba0f104b9f15c5aa3069a0e0df147bc942058d1c0e41",
+    "sourceRows": 5342,
+    "publishedRows": 5342,
+    "publishedColumns": [
+      "startTicks",
+      "endTicks",
+      "priorUnityFrame",
+      "currentUnityFrame",
+      "gc0Delta",
+      "gc1Delta",
+      "gc2Delta",
+      "allocationBytes",
+      "allocationAvailable",
+      "nativeMinute",
+      "timeScale",
+      "paused"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-mod-work-full-scope-diagnostic-stop-5422cc.csv": {
+    "sourceSha256": "8b8db74c693658fed4452889bee367648de80830f0fe4ecbdab7f6cc6f12d8ae",
+    "sourceRows": 159,
+    "publishedRows": 159,
+    "publishedColumns": [
+      "unityFrame",
+      "populationCalls",
+      "authorityCalls",
+      "populationMs",
+      "authorityMs",
+      "combinedUnionMs",
+      "PopulationRuntime.OnGUIInclusiveMs",
+      "entryBranch",
+      "firstObservedTicks",
+      "closedAtTicks",
+      "nextObservedUnityFrame"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-observations-full-scope-diagnostic-stop-5422cc.csv": {
+    "sourceSha256": "7e39d583ed790ff4684e262954460d4a597387bb18dcf672f1e6031023b1a501",
+    "sourceRows": 160,
+    "publishedRows": 160,
+    "publishedColumns": [
+      "startTicks",
+      "endTicks",
+      "priorUnityFrame",
+      "currentUnityFrame",
+      "gc0Delta",
+      "gc1Delta",
+      "gc2Delta",
+      "allocationBytes",
+      "allocationAvailable",
+      "nativeMinute",
+      "timeScale",
+      "paused"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-mod-work-cand1-quiet-idle-stop-49eb9e.csv": {
+    "sourceSha256": "0e3a3af2575cad7b92ba0820988e96dafd41dead642df7c0ef4f779e73863321",
+    "sourceRows": 5308,
+    "publishedRows": 5308,
+    "publishedColumns": [
+      "unityFrame",
+      "populationCalls",
+      "authorityCalls",
+      "populationMs",
+      "authorityMs",
+      "combinedUnionMs",
+      "PopulationRuntime.OnGUIInclusiveMs",
+      "entryBranch",
+      "firstObservedTicks",
+      "closedAtTicks",
+      "nextObservedUnityFrame"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-observations-cand1-quiet-idle-stop-49eb9e.csv": {
+    "sourceSha256": "dc34d00248f67aee4ec08a8c2e9b0b8103b1c6474ecdc48659d313fde3bec191",
+    "sourceRows": 5309,
+    "publishedRows": 5309,
+    "publishedColumns": [
+      "startTicks",
+      "endTicks",
+      "priorUnityFrame",
+      "currentUnityFrame",
+      "gc0Delta",
+      "gc1Delta",
+      "gc2Delta",
+      "allocationBytes",
+      "allocationAvailable",
+      "nativeMinute",
+      "timeScale",
+      "paused"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-mod-work-cand1-quiet-scope1-stop-fd5d1f.csv": {
+    "sourceSha256": "610ccbbe7175650bfc3e5c9028e51cac2259950266de84444bcd64bf1c392205",
+    "sourceRows": 929,
+    "publishedRows": 929,
+    "publishedColumns": [
+      "unityFrame",
+      "populationCalls",
+      "authorityCalls",
+      "populationMs",
+      "authorityMs",
+      "combinedUnionMs",
+      "PopulationRuntime.OnGUIInclusiveMs",
+      "entryBranch",
+      "firstObservedTicks",
+      "closedAtTicks",
+      "nextObservedUnityFrame"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-observations-cand1-quiet-scope1-stop-fd5d1f.csv": {
+    "sourceSha256": "58d6cec251a6d919bf47751a411bdab48070a158d490e2ce7d2bd26c958b55d0",
+    "sourceRows": 930,
+    "publishedRows": 930,
+    "publishedColumns": [
+      "startTicks",
+      "endTicks",
+      "priorUnityFrame",
+      "currentUnityFrame",
+      "gc0Delta",
+      "gc1Delta",
+      "gc2Delta",
+      "allocationBytes",
+      "allocationAvailable",
+      "nativeMinute",
+      "timeScale",
+      "paused"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-mod-work-full-scope-diagnostic-stop-1636b3.csv": {
+    "sourceSha256": "e3a585327af5e60f2257b65ad6356a9f81900bd64e4e18f6b4fda643ac4afd7a",
+    "sourceRows": 182,
+    "publishedRows": 182,
+    "publishedColumns": [
+      "unityFrame",
+      "populationCalls",
+      "authorityCalls",
+      "populationMs",
+      "authorityMs",
+      "combinedUnionMs",
+      "PopulationRuntime.OnGUIInclusiveMs",
+      "entryBranch",
+      "firstObservedTicks",
+      "closedAtTicks",
+      "nextObservedUnityFrame"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-observations-full-scope-diagnostic-stop-1636b3.csv": {
+    "sourceSha256": "12dd22913cc4e464e5e772f6910ec18d577f06992b0c6e4c92e61f0ef804faac",
+    "sourceRows": 183,
+    "publishedRows": 183,
+    "publishedColumns": [
+      "startTicks",
+      "endTicks",
+      "priorUnityFrame",
+      "currentUnityFrame",
+      "gc0Delta",
+      "gc1Delta",
+      "gc2Delta",
+      "allocationBytes",
+      "allocationAvailable",
+      "nativeMinute",
+      "timeScale",
+      "paused"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-mod-work-cand1-quiet-scope1-stop-d11f70.csv": {
+    "sourceSha256": "8bcfcda312a77cb56ad4b1e21373f1b21ca5ca31c8c1f7fbda5a72daeaad19cb",
+    "sourceRows": 5333,
+    "publishedRows": 5333,
+    "publishedColumns": [
+      "unityFrame",
+      "populationCalls",
+      "authorityCalls",
+      "populationMs",
+      "authorityMs",
+      "combinedUnionMs",
+      "PopulationRuntime.OnGUIInclusiveMs",
+      "entryBranch",
+      "firstObservedTicks",
+      "closedAtTicks",
+      "nextObservedUnityFrame"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-observations-cand1-quiet-scope1-stop-d11f70.csv": {
+    "sourceSha256": "e573315e9f70c6fac46790da933126f59b48d23bba954c6ff8b4cd239909cae8",
+    "sourceRows": 5334,
+    "publishedRows": 5334,
+    "publishedColumns": [
+      "startTicks",
+      "endTicks",
+      "priorUnityFrame",
+      "currentUnityFrame",
+      "gc0Delta",
+      "gc1Delta",
+      "gc2Delta",
+      "allocationBytes",
+      "allocationAvailable",
+      "nativeMinute",
+      "timeScale",
+      "paused"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-mod-work-cand1-quiet-scope8-stop-e2f0a4.csv": {
+    "sourceSha256": "fd9525703a9747302b61387d0aedcbff10634606214a64fd24bcd05ee73d1867",
+    "sourceRows": 5121,
+    "publishedRows": 5121,
+    "publishedColumns": [
+      "unityFrame",
+      "populationCalls",
+      "authorityCalls",
+      "populationMs",
+      "authorityMs",
+      "combinedUnionMs",
+      "PopulationRuntime.OnGUIInclusiveMs",
+      "entryBranch",
+      "firstObservedTicks",
+      "closedAtTicks",
+      "nextObservedUnityFrame"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-observations-cand1-quiet-scope8-stop-e2f0a4.csv": {
+    "sourceSha256": "f07580e006d7128e392ca05d40cd41e1e6ca63fce0da4b1c2f9b2c070fdc6e95",
+    "sourceRows": 5122,
+    "publishedRows": 5122,
+    "publishedColumns": [
+      "startTicks",
+      "endTicks",
+      "priorUnityFrame",
+      "currentUnityFrame",
+      "gc0Delta",
+      "gc1Delta",
+      "gc2Delta",
+      "allocationBytes",
+      "allocationAvailable",
+      "nativeMinute",
+      "timeScale",
+      "paused"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-mod-work-cand1-breakfast-idle-stop-bef0dd.csv": {
+    "sourceSha256": "028b8ffee8546c0303b6e6dc9acf42294821f21a6061c860a8b798ef5a8e9198",
+    "sourceRows": 5346,
+    "publishedRows": 5346,
+    "publishedColumns": [
+      "unityFrame",
+      "populationCalls",
+      "authorityCalls",
+      "populationMs",
+      "authorityMs",
+      "combinedUnionMs",
+      "PopulationRuntime.OnGUIInclusiveMs",
+      "entryBranch",
+      "firstObservedTicks",
+      "closedAtTicks",
+      "nextObservedUnityFrame"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-observations-cand1-breakfast-idle-stop-bef0dd.csv": {
+    "sourceSha256": "522dc7df2aaa70627db5f9aa50b6036ccee0c48d1a69a64569456cc4b12ce2c7",
+    "sourceRows": 5347,
+    "publishedRows": 5347,
+    "publishedColumns": [
+      "startTicks",
+      "endTicks",
+      "priorUnityFrame",
+      "currentUnityFrame",
+      "gc0Delta",
+      "gc1Delta",
+      "gc2Delta",
+      "allocationBytes",
+      "allocationAvailable",
+      "nativeMinute",
+      "timeScale",
+      "paused"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-mod-work-cand1-breakfast-scope1-stop-839225.csv": {
+    "sourceSha256": "9e680f910f6f9620c13c604d77d62eec422de07c1ca81a89f577938f9535630b",
+    "sourceRows": 5159,
+    "publishedRows": 5159,
+    "publishedColumns": [
+      "unityFrame",
+      "populationCalls",
+      "authorityCalls",
+      "populationMs",
+      "authorityMs",
+      "combinedUnionMs",
+      "PopulationRuntime.OnGUIInclusiveMs",
+      "entryBranch",
+      "firstObservedTicks",
+      "closedAtTicks",
+      "nextObservedUnityFrame"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-observations-cand1-breakfast-scope1-stop-839225.csv": {
+    "sourceSha256": "37ff4bc7538a9e4403000a70842924ddf1edd3e7c9ab33b7f60f895c3b758aaa",
+    "sourceRows": 5160,
+    "publishedRows": 5160,
+    "publishedColumns": [
+      "startTicks",
+      "endTicks",
+      "priorUnityFrame",
+      "currentUnityFrame",
+      "gc0Delta",
+      "gc1Delta",
+      "gc2Delta",
+      "allocationBytes",
+      "allocationAvailable",
+      "nativeMinute",
+      "timeScale",
+      "paused"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-mod-work-base2-breakfast-idle-stop-ea288d.csv": {
+    "sourceSha256": "609d3e8f82e752df7993a5d1f3bd3bf6b12236c9c1a73dfc2fe53f17bb1d919b",
+    "sourceRows": 5383,
+    "publishedRows": 5383,
+    "publishedColumns": [
+      "unityFrame",
+      "populationCalls",
+      "authorityCalls",
+      "populationMs",
+      "authorityMs",
+      "combinedUnionMs",
+      "PopulationRuntime.OnGUIInclusiveMs",
+      "entryBranch",
+      "firstObservedTicks",
+      "closedAtTicks",
+      "nextObservedUnityFrame"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-observations-base2-breakfast-idle-stop-ea288d.csv": {
+    "sourceSha256": "b0d01dc2d7f53040fe9592c72dd06d4773262f14248aaec212837548304d9458",
+    "sourceRows": 5384,
+    "publishedRows": 5384,
+    "publishedColumns": [
+      "startTicks",
+      "endTicks",
+      "priorUnityFrame",
+      "currentUnityFrame",
+      "gc0Delta",
+      "gc1Delta",
+      "gc2Delta",
+      "allocationBytes",
+      "allocationAvailable",
+      "nativeMinute",
+      "timeScale",
+      "paused"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-mod-work-base2-quiet-idle-stop-adda31.csv": {
+    "sourceSha256": "f0c4538a91ffa0e49854a55ba9a6c9ae9405941a4a5cb10cbba11f649259b76b",
+    "sourceRows": 5371,
+    "publishedRows": 5371,
+    "publishedColumns": [
+      "unityFrame",
+      "populationCalls",
+      "authorityCalls",
+      "populationMs",
+      "authorityMs",
+      "combinedUnionMs",
+      "PopulationRuntime.OnGUIInclusiveMs",
+      "entryBranch",
+      "firstObservedTicks",
+      "closedAtTicks",
+      "nextObservedUnityFrame"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-observations-base2-quiet-idle-stop-adda31.csv": {
+    "sourceSha256": "accad63a001575244da8106fa321a7f8c8c19ff67132b2836a2b19142631db7b",
+    "sourceRows": 5372,
+    "publishedRows": 5372,
+    "publishedColumns": [
+      "startTicks",
+      "endTicks",
+      "priorUnityFrame",
+      "currentUnityFrame",
+      "gc0Delta",
+      "gc1Delta",
+      "gc2Delta",
+      "allocationBytes",
+      "allocationAvailable",
+      "nativeMinute",
+      "timeScale",
+      "paused"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-mod-work-cand1-breakfast-scope8-stop-28b6e1.csv": {
+    "sourceSha256": "16240a84f27a50bfb28d73b93b065a732ef0c7910624445bc06aefd32e41534b",
+    "sourceRows": 5419,
+    "publishedRows": 5419,
+    "publishedColumns": [
+      "unityFrame",
+      "populationCalls",
+      "authorityCalls",
+      "populationMs",
+      "authorityMs",
+      "combinedUnionMs",
+      "PopulationRuntime.OnGUIInclusiveMs",
+      "entryBranch",
+      "firstObservedTicks",
+      "closedAtTicks",
+      "nextObservedUnityFrame"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-observations-cand1-breakfast-scope8-stop-28b6e1.csv": {
+    "sourceSha256": "92606d797f06a8d3d4d2b73fcceb03394e1884707015e0b04cd0e7c63b1afb34",
+    "sourceRows": 5420,
+    "publishedRows": 5420,
+    "publishedColumns": [
+      "startTicks",
+      "endTicks",
+      "priorUnityFrame",
+      "currentUnityFrame",
+      "gc0Delta",
+      "gc1Delta",
+      "gc2Delta",
+      "allocationBytes",
+      "allocationAvailable",
+      "nativeMinute",
+      "timeScale",
+      "paused"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-mod-work-cand2-quiet-idle-stop-723012.csv": {
+    "sourceSha256": "357d91ea2a6730260f0aa9a20d7f630f87838c95fe70c629b444245f69ef0591",
+    "sourceRows": 5388,
+    "publishedRows": 5388,
+    "publishedColumns": [
+      "unityFrame",
+      "populationCalls",
+      "authorityCalls",
+      "populationMs",
+      "authorityMs",
+      "combinedUnionMs",
+      "PopulationRuntime.OnGUIInclusiveMs",
+      "entryBranch",
+      "firstObservedTicks",
+      "closedAtTicks",
+      "nextObservedUnityFrame"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-observations-cand2-quiet-idle-stop-723012.csv": {
+    "sourceSha256": "acbfb39567c8ad15c391062e87c34b91285e0440019e74a55088a06f6925a7b2",
+    "sourceRows": 5389,
+    "publishedRows": 5389,
+    "publishedColumns": [
+      "startTicks",
+      "endTicks",
+      "priorUnityFrame",
+      "currentUnityFrame",
+      "gc0Delta",
+      "gc1Delta",
+      "gc2Delta",
+      "allocationBytes",
+      "allocationAvailable",
+      "nativeMinute",
+      "timeScale",
+      "paused"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-mod-work-cand2-quiet-scope1-stop-e670e9.csv": {
+    "sourceSha256": "18b6109d64046b3d2497c9c183d3a3ae1d4e0d0ab1efb8ae3bbf55fc7df01008",
+    "sourceRows": 5424,
+    "publishedRows": 5424,
+    "publishedColumns": [
+      "unityFrame",
+      "populationCalls",
+      "authorityCalls",
+      "populationMs",
+      "authorityMs",
+      "combinedUnionMs",
+      "PopulationRuntime.OnGUIInclusiveMs",
+      "entryBranch",
+      "firstObservedTicks",
+      "closedAtTicks",
+      "nextObservedUnityFrame"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-observations-cand2-quiet-scope1-stop-e670e9.csv": {
+    "sourceSha256": "b6f6a513317ce994e025f0feea27a18673dcef0ffe98ae7f23cce6d91e79024b",
+    "sourceRows": 5425,
+    "publishedRows": 5425,
+    "publishedColumns": [
+      "startTicks",
+      "endTicks",
+      "priorUnityFrame",
+      "currentUnityFrame",
+      "gc0Delta",
+      "gc1Delta",
+      "gc2Delta",
+      "allocationBytes",
+      "allocationAvailable",
+      "nativeMinute",
+      "timeScale",
+      "paused"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-mod-work-cand2-breakfast-idle-stop-eaed5b.csv": {
+    "sourceSha256": "2cb5bb6b7df165d7052f0e17832430f7d769948600118b89afcee47a058c657b",
+    "sourceRows": 5395,
+    "publishedRows": 5395,
+    "publishedColumns": [
+      "unityFrame",
+      "populationCalls",
+      "authorityCalls",
+      "populationMs",
+      "authorityMs",
+      "combinedUnionMs",
+      "PopulationRuntime.OnGUIInclusiveMs",
+      "entryBranch",
+      "firstObservedTicks",
+      "closedAtTicks",
+      "nextObservedUnityFrame"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-observations-cand2-breakfast-idle-stop-eaed5b.csv": {
+    "sourceSha256": "a30ff1f84b97d93608718864959fd68efc28ba4604264353801e36ceddf28ee8",
+    "sourceRows": 5396,
+    "publishedRows": 5396,
+    "publishedColumns": [
+      "startTicks",
+      "endTicks",
+      "priorUnityFrame",
+      "currentUnityFrame",
+      "gc0Delta",
+      "gc1Delta",
+      "gc2Delta",
+      "allocationBytes",
+      "allocationAvailable",
+      "nativeMinute",
+      "timeScale",
+      "paused"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-mod-work-cand2-quiet-scope8-stop-8bf6e7.csv": {
+    "sourceSha256": "40e50bbae8ffe355c505ee53951d515770eb2b3f1a11d789b8d22299a9ef4785",
+    "sourceRows": 5375,
+    "publishedRows": 5375,
+    "publishedColumns": [
+      "unityFrame",
+      "populationCalls",
+      "authorityCalls",
+      "populationMs",
+      "authorityMs",
+      "combinedUnionMs",
+      "PopulationRuntime.OnGUIInclusiveMs",
+      "entryBranch",
+      "firstObservedTicks",
+      "closedAtTicks",
+      "nextObservedUnityFrame"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-observations-cand2-quiet-scope8-stop-8bf6e7.csv": {
+    "sourceSha256": "0258787cef615bc90766c736bf33848192ee8451ff472ee763232fb5c3a8f76a",
+    "sourceRows": 5376,
+    "publishedRows": 5376,
+    "publishedColumns": [
+      "startTicks",
+      "endTicks",
+      "priorUnityFrame",
+      "currentUnityFrame",
+      "gc0Delta",
+      "gc1Delta",
+      "gc2Delta",
+      "allocationBytes",
+      "allocationAvailable",
+      "nativeMinute",
+      "timeScale",
+      "paused"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-mod-work-cand2-breakfast-scope1-stop-2db32d.csv": {
+    "sourceSha256": "28d287b788ad8797ec06267c90b28b981029696319219c1a7a68d1e08b7e2bb3",
+    "sourceRows": 5260,
+    "publishedRows": 5260,
+    "publishedColumns": [
+      "unityFrame",
+      "populationCalls",
+      "authorityCalls",
+      "populationMs",
+      "authorityMs",
+      "combinedUnionMs",
+      "PopulationRuntime.OnGUIInclusiveMs",
+      "entryBranch",
+      "firstObservedTicks",
+      "closedAtTicks",
+      "nextObservedUnityFrame"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-observations-cand2-breakfast-scope1-stop-2db32d.csv": {
+    "sourceSha256": "4549cd19d0cfb7e28790826345317143629454811e4ce5cb1e31f87d3254dca9",
+    "sourceRows": 5261,
+    "publishedRows": 5261,
+    "publishedColumns": [
+      "startTicks",
+      "endTicks",
+      "priorUnityFrame",
+      "currentUnityFrame",
+      "gc0Delta",
+      "gc1Delta",
+      "gc2Delta",
+      "allocationBytes",
+      "allocationAvailable",
+      "nativeMinute",
+      "timeScale",
+      "paused"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-mod-work-cand2-breakfast-scope8-stop-c0421c.csv": {
+    "sourceSha256": "bdd0e41eadc4e6df049e5db3e7bf28259789460a7bea6d5a77db7edd4702ee34",
+    "sourceRows": 5418,
+    "publishedRows": 5418,
+    "publishedColumns": [
+      "unityFrame",
+      "populationCalls",
+      "authorityCalls",
+      "populationMs",
+      "authorityMs",
+      "combinedUnionMs",
+      "PopulationRuntime.OnGUIInclusiveMs",
+      "entryBranch",
+      "firstObservedTicks",
+      "closedAtTicks",
+      "nextObservedUnityFrame"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  },
+  "frames-observations-cand2-breakfast-scope8-stop-c0421c.csv": {
+    "sourceSha256": "f4280292b39ebbad9d3fea3728be8b10f5ead9e2be77aae47dfd5684e7712f46",
+    "sourceRows": 5419,
+    "publishedRows": 5419,
+    "publishedColumns": [
+      "startTicks",
+      "endTicks",
+      "priorUnityFrame",
+      "currentUnityFrame",
+      "gc0Delta",
+      "gc1Delta",
+      "gc2Delta",
+      "allocationBytes",
+      "allocationAvailable",
+      "nativeMinute",
+      "timeScale",
+      "paused"
+    ],
+    "note": "Exact column projection, no rows/samples filtered. Full original export retained privately; >=30 ms frame component details are retained in performance summary."
+  }
+}

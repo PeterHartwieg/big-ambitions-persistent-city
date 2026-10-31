@@ -1,0 +1,25 @@
+{
+  "role": "rig_test",
+  "ownedGameProcessesRemaining": [],
+  "ownedCoordinatorLauncherBuildProcessesRemaining": [],
+  "readerHelperErrors": [],
+  "profileFilesVerified": 4828,
+  "installReferencesVerified": 107,
+  "preferencesHashMatches": true,
+  "leaseHeld": false,
+  "leasePending": 0,
+  "originalAutosave": "enabled; five minutes; three slots; exact preference export restored",
+  "gameKillsRequired": false,
+  "toolDriverStops": [
+    {
+      "reason": "Bridge packaging prevented bridge creation",
+      "ownedPythonPid": 28652
+    },
+    {
+      "reason": "Correct measurement timer: scene lookup was included",
+      "ownedPythonPid": 31768
+    }
+  ],
+  "normalQuitEvidence": "WM_CLOSE first packaging attempt; bridge quit for later owned games; all game processes stopped",
+  "otherProcessesControlled": false
+}

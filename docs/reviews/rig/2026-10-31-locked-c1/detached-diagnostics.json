@@ -1,0 +1,353 @@
+[
+  {
+    "name": "duplicate-index",
+    "refused": true,
+    "error": "ArgumentException"
+  },
+  {
+    "name": "missing-index",
+    "refused": true,
+    "error": "ArgumentException"
+  },
+  {
+    "name": "bounded-unit",
+    "cursor": 1,
+    "partialUnpublished": true
+  },
+  {
+    "name": "revision-change",
+    "refused": true,
+    "unpublished": true
+  },
+  {
+    "name": "minute-change",
+    "refused": true,
+    "unpublished": true
+  },
+  {
+    "name": "six",
+    "detached": true,
+    "snapshot": {
+      "AtMinute": 7665.36665725708,
+      "Revision": 0,
+      "Businesses": [
+        {
+          "BusinessId": "double:six",
+          "Status": 0,
+          "Campaigns": [
+            {
+              "TypeCode": 0,
+              "TypeName": "SmallInternet",
+              "Enabled": true,
+              "AgencyId": "address:rig%20agency:7",
+              "Status": 0,
+              "ResidentGroup": 0,
+              "Active": null,
+              "StartMinute": null,
+              "EndMinute": null,
+              "DurationMinutes": null,
+              "NativeTarget": null,
+              "UnknownEvidence": "Active lifecycle, timing and native resident targets are not exposed by the verified fields."
+            },
+            {
+              "TypeCode": 1,
+              "TypeName": "MediumInternet",
+              "Enabled": true,
+              "AgencyId": "address:rig%20agency:7",
+              "Status": 0,
+              "ResidentGroup": 0,
+              "Active": null,
+              "StartMinute": null,
+              "EndMinute": null,
+              "DurationMinutes": null,
+              "NativeTarget": null,
+              "UnknownEvidence": "Active lifecycle, timing and native resident targets are not exposed by the verified fields."
+            },
+            {
+              "TypeCode": 2,
+              "TypeName": "LargeInternet",
+              "Enabled": true,
+              "AgencyId": "address:rig%20agency:7",
+              "Status": 0,
+              "ResidentGroup": 0,
+              "Active": null,
+              "StartMinute": null,
+              "EndMinute": null,
+              "DurationMinutes": null,
+              "NativeTarget": null,
+              "UnknownEvidence": "Active lifecycle, timing and native resident targets are not exposed by the verified fields."
+            },
+            {
+              "TypeCode": 3,
+              "TypeName": "SmallBillboard",
+              "Enabled": true,
+              "AgencyId": "address:rig%20agency:7",
+              "Status": 0,
+              "ResidentGroup": 0,
+              "Active": null,
+              "StartMinute": null,
+              "EndMinute": null,
+              "DurationMinutes": null,
+              "NativeTarget": null,
+              "UnknownEvidence": "Active lifecycle, timing and native resident targets are not exposed by the verified fields."
+            },
+            {
+              "TypeCode": 4,
+              "TypeName": "MediumBillboard",
+              "Enabled": true,
+              "AgencyId": "address:rig%20agency:7",
+              "Status": 0,
+              "ResidentGroup": 0,
+              "Active": null,
+              "StartMinute": null,
+              "EndMinute": null,
+              "DurationMinutes": null,
+              "NativeTarget": null,
+              "UnknownEvidence": "Active lifecycle, timing and native resident targets are not exposed by the verified fields."
+            },
+            {
+              "TypeCode": 5,
+              "TypeName": "LargeBillboard",
+              "Enabled": true,
+              "AgencyId": "address:rig%20agency:7",
+              "Status": 0,
+              "ResidentGroup": 0,
+              "Active": null,
+              "StartMinute": null,
+              "EndMinute": null,
+              "DurationMinutes": null,
+              "NativeTarget": null,
+              "UnknownEvidence": "Active lifecycle, timing and native resident targets are not exposed by the verified fields."
+            }
+          ],
+          "TrafficIndex": 20,
+          "Marketing": 30,
+          "Total": 50,
+          "PromotionEvidence": "Saved native indices only; not customer counts, reach, payment or current campaign effectiveness."
+        }
+      ]
+    }
+  },
+  {
+    "name": "disabled",
+    "detached": true,
+    "snapshot": {
+      "AtMinute": 7665.36665725708,
+      "Revision": 0,
+      "Businesses": [
+        {
+          "BusinessId": "double:disabled",
+          "Status": 1,
+          "Campaigns": [
+            {
+              "TypeCode": 0,
+              "TypeName": "SmallInternet",
+              "Enabled": false,
+              "AgencyId": "address:rig%20agency:7",
+              "Status": 1,
+              "ResidentGroup": 0,
+              "Active": null,
+              "StartMinute": null,
+              "EndMinute": null,
+              "DurationMinutes": null,
+              "NativeTarget": null,
+              "UnknownEvidence": "Active lifecycle, timing and native resident targets are not exposed by the verified fields."
+            }
+          ],
+          "TrafficIndex": 20,
+          "Marketing": 30,
+          "Total": 50,
+          "PromotionEvidence": "Saved native indices only; not customer counts, reach, payment or current campaign effectiveness."
+        }
+      ]
+    }
+  },
+  {
+    "name": "none",
+    "detached": true,
+    "snapshot": {
+      "AtMinute": 7665.36665725708,
+      "Revision": 0,
+      "Businesses": [
+        {
+          "BusinessId": "double:none",
+          "Status": 1,
+          "Campaigns": [
+            {
+              "TypeCode": 6,
+              "TypeName": null,
+              "Enabled": true,
+              "AgencyId": "address:rig%20agency:7",
+              "Status": 1,
+              "ResidentGroup": 0,
+              "Active": null,
+              "StartMinute": null,
+              "EndMinute": null,
+              "DurationMinutes": null,
+              "NativeTarget": null,
+              "UnknownEvidence": "Active lifecycle, timing and native resident targets are not exposed by the verified fields."
+            }
+          ],
+          "TrafficIndex": 20,
+          "Marketing": 30,
+          "Total": 50,
+          "PromotionEvidence": "Saved native indices only; not customer counts, reach, payment or current campaign effectiveness."
+        }
+      ]
+    }
+  },
+  {
+    "name": "unsupported",
+    "detached": true,
+    "snapshot": {
+      "AtMinute": 7665.36665725708,
+      "Revision": 0,
+      "Businesses": [
+        {
+          "BusinessId": "double:unsupported",
+          "Status": 1,
+          "Campaigns": [
+            {
+              "TypeCode": 999,
+              "TypeName": null,
+              "Enabled": true,
+              "AgencyId": "address:rig%20agency:7",
+              "Status": 1,
+              "ResidentGroup": 0,
+              "Active": null,
+              "StartMinute": null,
+              "EndMinute": null,
+              "DurationMinutes": null,
+              "NativeTarget": null,
+              "UnknownEvidence": "Active lifecycle, timing and native resident targets are not exposed by the verified fields."
+            }
+          ],
+          "TrafficIndex": 20,
+          "Marketing": 30,
+          "Total": 50,
+          "PromotionEvidence": "Saved native indices only; not customer counts, reach, payment or current campaign effectiveness."
+        }
+      ]
+    }
+  },
+  {
+    "name": "duplicate",
+    "detached": true,
+    "snapshot": {
+      "AtMinute": 7665.36665725708,
+      "Revision": 0,
+      "Businesses": [
+        {
+          "BusinessId": "double:duplicate",
+          "Status": 1,
+          "Campaigns": [
+            {
+              "TypeCode": 0,
+              "TypeName": "SmallInternet",
+              "Enabled": true,
+              "AgencyId": "address:rig%20agency:7",
+              "Status": 2,
+              "ResidentGroup": 0,
+              "Active": null,
+              "StartMinute": null,
+              "EndMinute": null,
+              "DurationMinutes": null,
+              "NativeTarget": null,
+              "UnknownEvidence": "Active lifecycle, timing and native resident targets are not exposed by the verified fields."
+            },
+            {
+              "TypeCode": 0,
+              "TypeName": "SmallInternet",
+              "Enabled": true,
+              "AgencyId": "address:rig%20agency:7",
+              "Status": 2,
+              "ResidentGroup": 0,
+              "Active": null,
+              "StartMinute": null,
+              "EndMinute": null,
+              "DurationMinutes": null,
+              "NativeTarget": null,
+              "UnknownEvidence": "Active lifecycle, timing and native resident targets are not exposed by the verified fields."
+            }
+          ],
+          "TrafficIndex": 20,
+          "Marketing": 30,
+          "Total": 50,
+          "PromotionEvidence": "Saved native indices only; not customer counts, reach, payment or current campaign effectiveness."
+        }
+      ]
+    }
+  },
+  {
+    "name": "missing",
+    "detached": true,
+    "snapshot": {
+      "AtMinute": 7665.36665725708,
+      "Revision": 0,
+      "Businesses": [
+        {
+          "BusinessId": "double:missing",
+          "Status": 1,
+          "Campaigns": [],
+          "TrafficIndex": null,
+          "Marketing": null,
+          "Total": null,
+          "PromotionEvidence": "Saved native indices only; not customer counts, reach, payment or current campaign effectiveness."
+        }
+      ]
+    }
+  },
+  {
+    "name": "changed",
+    "detached": true,
+    "snapshot": {
+      "AtMinute": 7665.36665725708,
+      "Revision": 0,
+      "Businesses": [
+        {
+          "BusinessId": "double:changed",
+          "Status": 1,
+          "Campaigns": [],
+          "TrafficIndex": null,
+          "Marketing": null,
+          "Total": null,
+          "PromotionEvidence": "Saved native indices only; not customer counts, reach, payment or current campaign effectiveness."
+        }
+      ]
+    }
+  },
+  {
+    "name": "changed-enum",
+    "detached": true,
+    "snapshot": {
+      "AtMinute": 7665.36665725708,
+      "Revision": 0,
+      "Businesses": [
+        {
+          "BusinessId": "double:changed-enum",
+          "Status": 1,
+          "Campaigns": [
+            {
+              "TypeCode": null,
+              "TypeName": null,
+              "Enabled": true,
+              "AgencyId": "address:rig%20agency:7",
+              "Status": 1,
+              "ResidentGroup": 0,
+              "Active": null,
+              "StartMinute": null,
+              "EndMinute": null,
+              "DurationMinutes": null,
+              "NativeTarget": null,
+              "UnknownEvidence": "Active lifecycle, timing and native resident targets are not exposed by the verified fields."
+            }
+          ],
+          "TrafficIndex": 20,
+          "Marketing": 30,
+          "Total": 50,
+          "PromotionEvidence": "Saved native indices only; not customer counts, reach, payment or current campaign effectiveness."
+        }
+      ]
+    }
+  }
+]

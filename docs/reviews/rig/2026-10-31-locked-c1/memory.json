@@ -1,0 +1,29 @@
+{
+  "readings": [
+    {
+      "scope": 1,
+      "images": 32,
+      "before": 735641600,
+      "after": 735625216,
+      "retainedBytesPerImage": 0,
+      "allocationCounterValid": false
+    },
+    {
+      "scope": 8,
+      "images": 32,
+      "before": 735608832,
+      "after": 735608832,
+      "retainedBytesPerImage": 0,
+      "allocationCounterValid": false
+    },
+    {
+      "scope": 885,
+      "images": 32,
+      "before": 735653888,
+      "after": 736567296,
+      "retainedBytesPerImage": 28544,
+      "allocationCounterValid": false
+    }
+  ],
+  "note": "Retained heap delta averaged over 32 simultaneously held detached snapshots; noisy GC.GetTotalMemory estimate. Mono allocated-byte canary failed, so no allocation zero claim."
+}

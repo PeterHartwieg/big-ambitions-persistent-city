@@ -1,0 +1,105 @@
+{
+  "role": "rig_test",
+  "candidate": "7d7ee2a11710988bb60d245eb386f03676adff03",
+  "remoteCandidateAtRead": "7d7ee2a11710988bb60d245eb386f03676adff03",
+  "baseline": "6d43276198eba5d0dd016b51bc7fc670bc651762",
+  "evidenceBranchCreationBase": "7a344a7d9dcfedf950f93f34414bb58620303517",
+  "changedProductionFiles": [
+    "Core/CampaignSnapshot.cs",
+    "Runtime/NativeCampaignDiagnostics.cs",
+    "Runtime/NativeCampaignReader.cs"
+  ],
+  "allProductionChangesAreNewIsolatedC1Files": true,
+  "persistenceSourceHashes": {
+    "FoodAuthorityStore.cs": {
+      "baseline": "9a0b7fb77d00f5bc949ee5cf07028cfe2d4f57b953d0be4b0a4a4859899f249e",
+      "candidate": "9a0b7fb77d00f5bc949ee5cf07028cfe2d4f57b953d0be4b0a4a4859899f249e"
+    },
+    "FoodSaleReceipts.cs": {
+      "baseline": "67799d076176f0dc6023fee8960a9761c56d0c395fde7b74425a8af681ed4a17",
+      "candidate": "67799d076176f0dc6023fee8960a9761c56d0c395fde7b74425a8af681ed4a17"
+    },
+    "FoodShadowCodec.cs": {
+      "baseline": "eaaf1d22ed6338c8a45065bdb5c461a7a98ef1f9b9ad70dc2d04b05d99fc3b2c",
+      "candidate": "eaaf1d22ed6338c8a45065bdb5c461a7a98ef1f9b9ad70dc2d04b05d99fc3b2c"
+    },
+    "MoneyJson.cs": {
+      "baseline": "25487c4b954154a523071d77998b9f70df2457fe2216d0c733dc44342f52833d",
+      "candidate": "25487c4b954154a523071d77998b9f70df2457fe2216d0c733dc44342f52833d"
+    },
+    "SaveCodec.cs": {
+      "baseline": "29f177b0b378575c5bb91e40e4cd34e4e9cf9982d78b5877d8e998d8991826f4",
+      "candidate": "29f177b0b378575c5bb91e40e4cd34e4e9cf9982d78b5877d8e998d8991826f4"
+    },
+    "SaveSession.cs": {
+      "baseline": "644903a731453213838a35be47bba75eb956186409c663001c824d610be25415",
+      "candidate": "644903a731453213838a35be47bba75eb956186409c663001c824d610be25415"
+    },
+    "SaveStore.cs": {
+      "baseline": "e7653f93b7fc4dbbc69f1d9281f13dfa2376312c23c8e791bfbc6c5412fa8f73",
+      "candidate": "e7653f93b7fc4dbbc69f1d9281f13dfa2376312c23c8e791bfbc6c5412fa8f73"
+    }
+  },
+  "persistenceAllUnchanged": true,
+  "newSourceHashes": {
+    "Core/CampaignSnapshot.cs": "3c1517adc0aca66c99f58e79559d9f14c5cadfffa8f82dab551a917d2845293f",
+    "Runtime/NativeCampaignDiagnostics.cs": "e0ea1dbf9ee288ef5fa45464af6b80035ab9453e1a999e8d9264b9ddc69ef787",
+    "Runtime/NativeCampaignReader.cs": "d6cb18de4efd6347e76a3c86b123437ed2bcbd608cb53d4c796755bb52a6d103"
+  },
+  "reviewedMapping": [
+    {
+      "code": 0,
+      "name": "SmallInternet",
+      "residentGroup": "Unknown",
+      "evidence": "Native channel/size identifier only; no verified resident targeting."
+    },
+    {
+      "code": 1,
+      "name": "MediumInternet",
+      "residentGroup": "Unknown",
+      "evidence": "Native channel/size identifier only; no verified resident targeting."
+    },
+    {
+      "code": 2,
+      "name": "LargeInternet",
+      "residentGroup": "Unknown",
+      "evidence": "Native channel/size identifier only; no verified resident targeting."
+    },
+    {
+      "code": 3,
+      "name": "SmallBillboard",
+      "residentGroup": "Unknown",
+      "evidence": "Native channel/size identifier only; no verified resident targeting."
+    },
+    {
+      "code": 4,
+      "name": "MediumBillboard",
+      "residentGroup": "Unknown",
+      "evidence": "Native channel/size identifier only; no verified resident targeting."
+    },
+    {
+      "code": 5,
+      "name": "LargeBillboard",
+      "residentGroup": "Unknown",
+      "evidence": "Native channel/size identifier only; no verified resident targeting."
+    }
+  ],
+  "unknownFallback": [
+    "None",
+    "unsupported numeric code",
+    "changed enum contract"
+  ],
+  "noExposureChoiceOrSchedulerIntegration": "Only the three additive observer/DTO files differ in Core, Runtime, Compatibility and Persistence; no existing consumer, choice, startup, scheduler or save code is changed.",
+  "commands": [
+    "git fetch origin",
+    "git rev-parse origin/codex/pc-c1-campaign-reader",
+    "git merge-base origin/codex/persistent-city 7d7ee2a",
+    "python tools/build.py --game-managed C:/BigAmbitions-AgentTests/Big Ambitions Agent Tests_Data/Managed"
+  ],
+  "sdkPathPrefixedForBuilds": true,
+  "offlineDotnetTestsRun": false,
+  "dllSha256": {
+    "baseline": "f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c",
+    "candidate": "7dc7074408e93c88394ef8c9f56e5f9af4df935d2d0ee8b5b086ee15db722e8f"
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "pid": 15060,
+  "quit": "WM_CLOSE requested",
+  "cause": "Stage fixture double DLL was placed beside the mod entry DLL; mod loader did not start bridge. Correct helper packaging to a non-dll fixture extension. No measurement began; not a mod defect."
+}

@@ -1,0 +1,438 @@
+[
+  {
+    "arm": "base1",
+    "sha256": "b43b14ef9ca5f244b3ea77a48091cbfd2a1781590ac72985bb9be3391fd4474a",
+    "lineCount": 1396,
+    "persistentCityIssues": [],
+    "informationalEligibilityRefusals": [
+      {
+        "line": 298,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      },
+      {
+        "line": 611,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      },
+      {
+        "line": 1021,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      }
+    ],
+    "allErrorExceptionContexts": [
+      {
+        "line": 233,
+        "context": "[Mod:RealLifeOverhaul] People: a female paramedic is 1.70 m as the game builds them (crown 0.221 m above the head joint; the player is not measured); scaled by 1.000 to 1.70 m. (Logged once.)\n[Mod:RealLifeOverhaul] People: character 12 of 12 made ready as Paramedic.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 254,
+        "context": "[Mod:RealLifeOverhaul] Contacts check (picture): 'reallife-business' is a logo, from the game's logo shape 'headquarter1', kept; 24 contact picture(s): 9 face(s), 15 logo(s), 19 drawn: PASS\n[Mod:RealLifeOverhaul] Contacts check (picture): 'reallife-legal' is a logo, from the game's logo shape 'lawfirm1', kept; 24 contact picture(s): 9 face(s), 15 logo(s), 20 drawn: PASS\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 498,
+        "context": "[Mod:RealLifeOverhaul] Meta: self-check: the save has \"reallife:interiors_rules\", which no registered feature claims (kept; \"Prepare this save for removing the mod\" removes it).\n[Mod:RealLifeOverhaul] Meta: self-check: save last written by mod 0.45.0, running 0.45.0: 0 thing(s) put right, 2 unclaimed key(s), 0 unclaimed contact(s).\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 535,
+        "context": "[Mod:RealLifeOverhaul] Economy check (start): 2 bank(s) found, 0 loan(s), file version 2, rating 640 (Fair), 2 bank(s) given the terms for it. Jensen Capital: own 40000 at 20%, in memory 25818 at 24%; Vantander Bank: own 2000000 at 12%, in memory 1290909 at 16%: PASS\n[Mod:RealLifeOverhaul] Gallery: 0 photo(s) of this save.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 959,
+        "context": "[Mod:RealLifeOverhaul] Meta: self-check: the save has \"reallife:interiors_rules\", which no registered feature claims (kept; \"Prepare this save for removing the mod\" removes it).\n[Mod:RealLifeOverhaul] Meta: self-check: save last written by mod 0.45.0, running 0.45.0: 0 thing(s) put right, 2 unclaimed key(s), 0 unclaimed contact(s).\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 973,
+        "context": "[Mod:RealLifeOverhaul] Economy check (start): 2 bank(s) found, 0 loan(s), file version 2, rating 640 (Fair), 2 bank(s) given the terms for it. Jensen Capital: own 40000 at 20%, in memory 25818 at 24%; Vantander Bank: own 2000000 at 12%, in memory 1290909 at 16%: PASS\n[Mod:RealLifeOverhaul] Gallery: 0 photo(s) of this save.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      }
+    ],
+    "loadMarkers": [
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained.",
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained.",
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+    ]
+  },
+  {
+    "arm": "cand1-native-proof",
+    "sha256": "7875d421d719c4679b5e07a125bcfe4f1e0573f137de9616031f42cbb21bbf7e",
+    "lineCount": 2403,
+    "persistentCityIssues": [],
+    "informationalEligibilityRefusals": [
+      {
+        "line": 313,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      },
+      {
+        "line": 597,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      },
+      {
+        "line": 874,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      },
+      {
+        "line": 1331,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      },
+      {
+        "line": 1965,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      }
+    ],
+    "allErrorExceptionContexts": [
+      {
+        "line": 230,
+        "context": "[Mod:RealLifeOverhaul] People: a female paramedic is 1.70 m as the game builds them (crown 0.221 m above the head joint; the player is not measured); scaled by 1.000 to 1.70 m. (Logged once.)\n[Mod:RealLifeOverhaul] People: character 11 of 12 made ready as Paramedic.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 250,
+        "context": "[Mod:RealLifeOverhaul] People: a male paramedic is 1.69 m as the game builds them (crown 0.215 m above the head joint; the player is not measured); scaled by 1.015 to 1.72 m. (Logged once.)\n[Mod:RealLifeOverhaul] People: character 12 of 12 made ready as Paramedic.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 496,
+        "context": "[Mod:RealLifeOverhaul] Meta: self-check: the save has \"reallife:interiors_rules\", which no registered feature claims (kept; \"Prepare this save for removing the mod\" removes it).\n[Mod:RealLifeOverhaul] Meta: self-check: save last written by mod 0.45.0, running 0.45.0: 0 thing(s) put right, 2 unclaimed key(s), 0 unclaimed contact(s).\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 533,
+        "context": "[Mod:RealLifeOverhaul] Rivals: the file is read: tier 0, Space Karen not forward, Bald Luthor not forward, The Zucc not forward; 0 move(s).\n[Mod:RealLifeOverhaul] People: character 12 of 12 made ready as Paramedic.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 814,
+        "context": "[Mod:RealLifeOverhaul] Meta: self-check: the save has \"reallife:interiors_rules\", which no registered feature claims (kept; \"Prepare this save for removing the mod\" removes it).\n[Mod:RealLifeOverhaul] Meta: self-check: save last written by mod 0.45.0, running 0.45.0: 0 thing(s) put right, 2 unclaimed key(s), 0 unclaimed contact(s).\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 829,
+        "context": "[Mod:RealLifeOverhaul] Gallery: 0 photo(s) of this save.\n[Mod:RealLifeOverhaul] People: character 12 of 12 made ready as Paramedic.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 1273,
+        "context": "[Mod:RealLifeOverhaul] Meta: self-check: the save has \"reallife:interiors_rules\", which no registered feature claims (kept; \"Prepare this save for removing the mod\" removes it).\n[Mod:RealLifeOverhaul] Meta: self-check: save last written by mod 0.45.0, running 0.45.0: 0 thing(s) put right, 2 unclaimed key(s), 0 unclaimed contact(s).\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 1287,
+        "context": "[Mod:RealLifeOverhaul] Economy check (start): 2 bank(s) found, 0 loan(s), file version 2, rating 640 (Fair), 2 bank(s) given the terms for it. Jensen Capital: own 40000 at 20%, in memory 25818 at 24%; Vantander Bank: own 2000000 at 12%, in memory 1290909 at 16%: PASS\n[Mod:RealLifeOverhaul] Gallery: 0 photo(s) of this save.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 1910,
+        "context": "[Mod:RealLifeOverhaul] Economy check (start): 2 bank(s) found, 0 loan(s), file version 2, rating 640 (Fair), 2 bank(s) given the terms for it. Jensen Capital: own 40000 at 20%, in memory 25818 at 24%; Vantander Bank: own 2000000 at 12%, in memory 1290909 at 16%: PASS\n[Mod:RealLifeOverhaul] Gallery: 0 photo(s) of this save.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 1919,
+        "context": "\n[Mod:RealLifeOverhaul] Performance: 'stale_lights' on. lamps the game has off whose lights were still enabled: 0 lamps, 0 light components disabled\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 2047,
+        "context": "[Mod:RealLifeOverhaul] Street talk: stopped (the mod is unloading).\n[Mod:RealLifeOverhaul] Utilities: stopped (the mod is unloading).\n<color=#ff7337><color=#0099bc><b>DOTWEEN \u25ba </b></color> SAFE MODE \u25ba</color> DOTween's safe mode captured 2 errors. This is usually ok (it's what safe mode is there for) but if your game is encountering issues you should set Log Behaviour to Default in DOTween Utility Panel in order to get detailed warnings when an error is captured (consider that these errors are always on the user side).\n- 2 missing target or field errors\nInput System module state changed to: ShutdownInProgress.\nInput System polling thread exited.\nInput System module state changed to: Shutdown.\nMemory Statistics:\n[ALLOC_TEMP_TLS] TLS Allocator\n  StackAllocators : "
+      },
+      {
+        "line": 2048,
+        "context": "[Mod:RealLifeOverhaul] Utilities: stopped (the mod is unloading).\n<color=#ff7337><color=#0099bc><b>DOTWEEN \u25ba </b></color> SAFE MODE \u25ba</color> DOTween's safe mode captured 2 errors. This is usually ok (it's what safe mode is there for) but if your game is encountering issues you should set Log Behaviour to Default in DOTween Utility Panel in order to get detailed warnings when an error is captured (consider that these errors are always on the user side).\n- 2 missing target or field errors\nInput System module state changed to: ShutdownInProgress.\nInput System polling thread exited.\nInput System module state changed to: Shutdown.\nMemory Statistics:\n[ALLOC_TEMP_TLS] TLS Allocator\n  StackAllocators : \n    [ALLOC_TEMP_MAIN]"
+      }
+    ],
+    "loadMarkers": [
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained.",
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained.",
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained.",
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained.",
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+    ]
+  },
+  {
+    "arm": "cand1",
+    "sha256": "b9d46e8cb2062720734aad9a9cfafb13b99646f657a0684e3577ca139a1c1cf8",
+    "lineCount": 2458,
+    "persistentCityIssues": [],
+    "informationalEligibilityRefusals": [
+      {
+        "line": 315,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      },
+      {
+        "line": 581,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      },
+      {
+        "line": 1048,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      },
+      {
+        "line": 1416,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      },
+      {
+        "line": 1855,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      },
+      {
+        "line": 2236,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      }
+    ],
+    "allErrorExceptionContexts": [
+      {
+        "line": 230,
+        "context": "[Mod:RealLifeOverhaul] People: a male paramedic is 1.69 m as the game builds them (crown 0.215 m above the head joint; the player is not measured); scaled by 1.015 to 1.72 m. (Logged once.)\n[Mod:RealLifeOverhaul] People: character 11 of 12 made ready as Paramedic.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 252,
+        "context": "[Mod:RealLifeOverhaul] Contacts check (picture): 'reallife-business' is a logo, from the game's logo shape 'headquarter1', kept; 24 contact picture(s): 9 face(s), 15 logo(s), 19 drawn: PASS\n[Mod:RealLifeOverhaul] People: character 12 of 12 made ready as Paramedic.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 486,
+        "context": "[Mod:RealLifeOverhaul] Meta: self-check: the save has \"reallife:interiors_rules\", which no registered feature claims (kept; \"Prepare this save for removing the mod\" removes it).\n[Mod:RealLifeOverhaul] Meta: self-check: save last written by mod 0.45.0, running 0.45.0: 0 thing(s) put right, 2 unclaimed key(s), 0 unclaimed contact(s).\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 523,
+        "context": "[Mod:RealLifeOverhaul] Economy check (start): 2 bank(s) found, 0 loan(s), file version 2, rating 640 (Fair), 2 bank(s) given the terms for it. Jensen Capital: own 40000 at 20%, in memory 25818 at 24%; Vantander Bank: own 2000000 at 12%, in memory 1290909 at 16%: PASS\n[Mod:RealLifeOverhaul] Gallery: 0 photo(s) of this save.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 952,
+        "context": "[Mod:RealLifeOverhaul] Meta: self-check: the save has \"reallife:interiors_rules\", which no registered feature claims (kept; \"Prepare this save for removing the mod\" removes it).\n[Mod:RealLifeOverhaul] Meta: self-check: save last written by mod 0.45.0, running 0.45.0: 0 thing(s) put right, 2 unclaimed key(s), 0 unclaimed contact(s).\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 990,
+        "context": "[Mod:RealLifeOverhaul] Gallery: 0 photo(s) of this save.\n[Mod:RealLifeOverhaul] People: character 12 of 12 made ready as Paramedic.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 1354,
+        "context": "[Mod:RealLifeOverhaul] Meta: self-check: the save has \"reallife:interiors_rules\", which no registered feature claims (kept; \"Prepare this save for removing the mod\" removes it).\n[Mod:RealLifeOverhaul] Meta: self-check: save last written by mod 0.45.0, running 0.45.0: 0 thing(s) put right, 2 unclaimed key(s), 0 unclaimed contact(s).\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 1368,
+        "context": "[Mod:RealLifeOverhaul] Economy check (start): 2 bank(s) found, 0 loan(s), file version 2, rating 640 (Fair), 2 bank(s) given the terms for it. Jensen Capital: own 40000 at 20%, in memory 25818 at 24%; Vantander Bank: own 2000000 at 12%, in memory 1290909 at 16%: PASS\n[Mod:RealLifeOverhaul] Gallery: 0 photo(s) of this save.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 1793,
+        "context": "[Mod:RealLifeOverhaul] Meta: self-check: the save has \"reallife:interiors_rules\", which no registered feature claims (kept; \"Prepare this save for removing the mod\" removes it).\n[Mod:RealLifeOverhaul] Meta: self-check: save last written by mod 0.45.0, running 0.45.0: 0 thing(s) put right, 2 unclaimed key(s), 0 unclaimed contact(s).\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 1807,
+        "context": "[Mod:RealLifeOverhaul] Economy check (start): 2 bank(s) found, 0 loan(s), file version 2, rating 640 (Fair), 2 bank(s) given the terms for it. Jensen Capital: own 40000 at 20%, in memory 25818 at 24%; Vantander Bank: own 2000000 at 12%, in memory 1290909 at 16%: PASS\n[Mod:RealLifeOverhaul] Gallery: 0 photo(s) of this save.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 2177,
+        "context": "[Mod:RealLifeOverhaul] Meta: self-check: the save has \"reallife:interiors_rules\", which no registered feature claims (kept; \"Prepare this save for removing the mod\" removes it).\n[Mod:RealLifeOverhaul] Meta: self-check: save last written by mod 0.45.0, running 0.45.0: 0 thing(s) put right, 2 unclaimed key(s), 0 unclaimed contact(s).\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 2192,
+        "context": "[Mod:RealLifeOverhaul] Gallery: 0 photo(s) of this save.\n[Mod:RealLifeOverhaul] People: character 12 of 12 made ready as Paramedic.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      }
+    ],
+    "loadMarkers": [
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained.",
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained.",
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained.",
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained.",
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained.",
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+    ]
+  },
+  {
+    "arm": "base2",
+    "sha256": "a7552c0d59fce864fa8e7ce5998c3112c1b8879bbba04ee6de1876eeb27b978f",
+    "lineCount": 1103,
+    "persistentCityIssues": [],
+    "informationalEligibilityRefusals": [
+      {
+        "line": 297,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      },
+      {
+        "line": 574,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      },
+      {
+        "line": 929,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      }
+    ],
+    "allErrorExceptionContexts": [
+      {
+        "line": 234,
+        "context": "[Mod:RealLifeOverhaul] People: a male paramedic is 1.69 m as the game builds them (crown 0.215 m above the head joint; the player is not measured); scaled by 1.015 to 1.72 m. (Logged once.)\n[Mod:RealLifeOverhaul] People: character 11 of 12 made ready as Paramedic.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 256,
+        "context": "[Mod:RealLifeOverhaul] Contacts check (picture): 'reallife-guide' is a logo, from the game's logo shape 'bookstore1', kept; 24 contact picture(s): 9 face(s), 15 logo(s), 23 drawn: PASS\n[Mod:RealLifeOverhaul] People: character 12 of 12 made ready as Paramedic.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 479,
+        "context": "[Mod:RealLifeOverhaul] Meta: self-check: the save has \"reallife:interiors_rules\", which no registered feature claims (kept; \"Prepare this save for removing the mod\" removes it).\n[Mod:RealLifeOverhaul] Meta: self-check: save last written by mod 0.45.0, running 0.45.0: 0 thing(s) put right, 2 unclaimed key(s), 0 unclaimed contact(s).\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 516,
+        "context": "[Mod:RealLifeOverhaul] Economy check (start): 2 bank(s) found, 0 loan(s), file version 2, rating 640 (Fair), 2 bank(s) given the terms for it. Jensen Capital: own 40000 at 20%, in memory 25818 at 24%; Vantander Bank: own 2000000 at 12%, in memory 1290909 at 16%: PASS\n[Mod:RealLifeOverhaul] Gallery: 0 photo(s) of this save.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 870,
+        "context": "[Mod:RealLifeOverhaul] Meta: self-check: the save has \"reallife:interiors_rules\", which no registered feature claims (kept; \"Prepare this save for removing the mod\" removes it).\n[Mod:RealLifeOverhaul] Meta: self-check: save last written by mod 0.45.0, running 0.45.0: 0 thing(s) put right, 2 unclaimed key(s), 0 unclaimed contact(s).\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 884,
+        "context": "[Mod:RealLifeOverhaul] Economy check (start): 2 bank(s) found, 0 loan(s), file version 2, rating 640 (Fair), 2 bank(s) given the terms for it. Jensen Capital: own 40000 at 20%, in memory 25818 at 24%; Vantander Bank: own 2000000 at 12%, in memory 1290909 at 16%: PASS\n[Mod:RealLifeOverhaul] Gallery: 0 photo(s) of this save.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      }
+    ],
+    "loadMarkers": [
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained.",
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained.",
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+    ]
+  },
+  {
+    "arm": "cand2",
+    "sha256": "90678eeff084a42af0e423c0d440951690b1cf349ebf8e2ba1529b02c553289d",
+    "lineCount": 3612,
+    "persistentCityIssues": [],
+    "informationalEligibilityRefusals": [
+      {
+        "line": 315,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      },
+      {
+        "line": 575,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      },
+      {
+        "line": 951,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      },
+      {
+        "line": 1542,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      },
+      {
+        "line": 2045,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      },
+      {
+        "line": 2400,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      },
+      {
+        "line": 2851,
+        "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+        "classification": "Informational public-access eligibility rejection; not an error/exception"
+      }
+    ],
+    "allErrorExceptionContexts": [
+      {
+        "line": 231,
+        "context": "[Mod:RealLifeOverhaul] People: a female paramedic is 1.70 m as the game builds them (crown 0.221 m above the head joint; the player is not measured); scaled by 1.000 to 1.70 m. (Logged once.)\n[Mod:RealLifeOverhaul] People: character 11 of 12 made ready as Paramedic.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 252,
+        "context": "[Mod:RealLifeOverhaul] People: a male paramedic is 1.69 m as the game builds them (crown 0.215 m above the head joint; the player is not measured); scaled by 1.015 to 1.72 m. (Logged once.)\n[Mod:RealLifeOverhaul] People: character 12 of 12 made ready as Paramedic.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 479,
+        "context": "[Mod:RealLifeOverhaul] Meta: self-check: the save has \"reallife:interiors_rules\", which no registered feature claims (kept; \"Prepare this save for removing the mod\" removes it).\n[Mod:RealLifeOverhaul] Meta: self-check: save last written by mod 0.45.0, running 0.45.0: 0 thing(s) put right, 2 unclaimed key(s), 0 unclaimed contact(s).\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 517,
+        "context": "[Mod:RealLifeOverhaul] Gallery: 0 photo(s) of this save.\n[Mod:RealLifeOverhaul] People: character 12 of 12 made ready as Paramedic.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 893,
+        "context": "[Mod:RealLifeOverhaul] Meta: self-check: the save has \"reallife:interiors_rules\", which no registered feature claims (kept; \"Prepare this save for removing the mod\" removes it).\n[Mod:RealLifeOverhaul] Meta: self-check: save last written by mod 0.45.0, running 0.45.0: 0 thing(s) put right, 2 unclaimed key(s), 0 unclaimed contact(s).\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 908,
+        "context": "[Mod:RealLifeOverhaul] Economy check (start): 2 bank(s) found, 0 loan(s), file version 2, rating 640 (Fair), 2 bank(s) given the terms for it. Jensen Capital: own 40000 at 20%, in memory 25818 at 24%; Vantander Bank: own 2000000 at 12%, in memory 1290909 at 16%: PASS\n[Mod:RealLifeOverhaul] Gallery: 0 photo(s) of this save.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 1442,
+        "context": "[Mod:RealLifeOverhaul] Meta: self-check: the save has \"reallife:interiors_rules\", which no registered feature claims (kept; \"Prepare this save for removing the mod\" removes it).\n[Mod:RealLifeOverhaul] Meta: self-check: save last written by mod 0.45.0, running 0.45.0: 0 thing(s) put right, 2 unclaimed key(s), 0 unclaimed contact(s).\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 1479,
+        "context": "[Mod:RealLifeOverhaul] Rivals: the file is read: tier 0, Space Karen not forward, Bald Luthor not forward, The Zucc not forward; 0 move(s).\n[Mod:RealLifeOverhaul] People: character 12 of 12 made ready as Paramedic.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 1986,
+        "context": "[Mod:RealLifeOverhaul] Meta: self-check: the save has \"reallife:interiors_rules\", which no registered feature claims (kept; \"Prepare this save for removing the mod\" removes it).\n[Mod:RealLifeOverhaul] Meta: self-check: save last written by mod 0.45.0, running 0.45.0: 0 thing(s) put right, 2 unclaimed key(s), 0 unclaimed contact(s).\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 2000,
+        "context": "[Mod:RealLifeOverhaul] Economy check (start): 2 bank(s) found, 0 loan(s), file version 2, rating 640 (Fair), 2 bank(s) given the terms for it. Jensen Capital: own 40000 at 20%, in memory 25818 at 24%; Vantander Bank: own 2000000 at 12%, in memory 1290909 at 16%: PASS\n[Mod:RealLifeOverhaul] Gallery: 0 photo(s) of this save.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 2337,
+        "context": "[Mod:RealLifeOverhaul] Meta: self-check: the save has \"reallife:interiors_rules\", which no registered feature claims (kept; \"Prepare this save for removing the mod\" removes it).\n[Mod:RealLifeOverhaul] Meta: self-check: save last written by mod 0.45.0, running 0.45.0: 0 thing(s) put right, 2 unclaimed key(s), 0 unclaimed contact(s).\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 2352,
+        "context": "[Mod:RealLifeOverhaul] Gallery: 0 photo(s) of this save.\n[Mod:RealLifeOverhaul] People: character 12 of 12 made ready as Paramedic.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 2789,
+        "context": "[Mod:RealLifeOverhaul] Meta: self-check: the save has \"reallife:interiors_rules\", which no registered feature claims (kept; \"Prepare this save for removing the mod\" removes it).\n[Mod:RealLifeOverhaul] Meta: self-check: save last written by mod 0.45.0, running 0.45.0: 0 thing(s) put right, 2 unclaimed key(s), 0 unclaimed contact(s).\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 2803,
+        "context": "[Mod:RealLifeOverhaul] Economy check (start): 2 bank(s) found, 0 loan(s), file version 2, rating 640 (Fair), 2 bank(s) given the terms for it. Jensen Capital: own 40000 at 20%, in memory 25818 at 24%; Vantander Bank: own 2000000 at 12%, in memory 1290909 at 16%: PASS\n[Mod:RealLifeOverhaul] Gallery: 0 photo(s) of this save.\nNullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+      },
+      {
+        "line": 3256,
+        "context": "[Mod:RealLifeOverhaul] Street talk: stopped (the mod is unloading).\n[Mod:RealLifeOverhaul] Utilities: stopped (the mod is unloading).\n<color=#ff7337><color=#0099bc><b>DOTWEEN \u25ba </b></color> SAFE MODE \u25ba</color> DOTween's safe mode captured 1 errors. This is usually ok (it's what safe mode is there for) but if your game is encountering issues you should set Log Behaviour to Default in DOTween Utility Panel in order to get detailed warnings when an error is captured (consider that these errors are always on the user side).\n- 1 missing target or field errors\nInput System module state changed to: ShutdownInProgress.\nInput System polling thread exited.\nInput System module state changed to: Shutdown.\nMemory Statistics:\n[ALLOC_TEMP_TLS] TLS Allocator\n  StackAllocators : "
+      },
+      {
+        "line": 3257,
+        "context": "[Mod:RealLifeOverhaul] Utilities: stopped (the mod is unloading).\n<color=#ff7337><color=#0099bc><b>DOTWEEN \u25ba </b></color> SAFE MODE \u25ba</color> DOTween's safe mode captured 1 errors. This is usually ok (it's what safe mode is there for) but if your game is encountering issues you should set Log Behaviour to Default in DOTween Utility Panel in order to get detailed warnings when an error is captured (consider that these errors are always on the user side).\n- 1 missing target or field errors\nInput System module state changed to: ShutdownInProgress.\nInput System polling thread exited.\nInput System module state changed to: Shutdown.\nMemory Statistics:\n[ALLOC_TEMP_TLS] TLS Allocator\n  StackAllocators : \n    [ALLOC_TEMP_MAIN]"
+      }
+    ],
+    "loadMarkers": [
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained.",
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained.",
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained.",
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained.",
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained.",
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained.",
+      "[Mod:PersistentCity] Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced; RLO scenes, customers, workers and service vehicles retained."
+    ]
+  }
+]

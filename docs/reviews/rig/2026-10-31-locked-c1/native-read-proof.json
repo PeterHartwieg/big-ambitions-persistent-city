@@ -1,0 +1,458 @@
+{
+  "role": "rig_test",
+  "observations": [
+    {
+      "label": "facts-before-reload",
+      "clockBefore": {
+        "ok": true,
+        "session": "0a996ea0",
+        "mod_version": "0.10.2",
+        "bridge_version": 1,
+        "scene": "city",
+        "save": "FT Food Routines Locked C1 20261031",
+        "day": 5,
+        "time": "07:45",
+        "paused": true,
+        "time_skip": false,
+        "frame": 1111,
+        "load": {
+          "name": "FT Food Routines Locked C1 20261031",
+          "status": "done"
+        },
+        "control_lock": {
+          "instance": "agent1",
+          "held": true,
+          "owner": "pc-rig-locked-c1",
+          "purpose": "rig_test C1 locked native proof",
+          "acquired_utc": "2026-10-31T13:07:24.1671455Z",
+          "expires_automatically": false,
+          "pending": 0,
+          "legacy_blocked": false
+        },
+        "lock_protocol": 1,
+        "control_process_pid": 51944,
+        "agent_instance": {
+          "id": "agent1",
+          "pid": 51944,
+          "mode": "windowed",
+          "port": 18330,
+          "product": "Big Ambitions Agent Tests",
+          "data_path": "C:\\BigAmbitions-AgentTests\\profile",
+          "cache_path": "<private-stage>",
+          "executable": "C:\\BigAmbitions-AgentTests\\Big Ambitions Agent Tests.exe",
+          "test_only": true,
+          "workshop": false,
+          "steam_stats_writes": false,
+          "audio_muted": true,
+          "audio_listener_volume": 0.0,
+          "pump_frame": 1111,
+          "runtime_version": 6,
+          "steam_connected": false,
+          "owned_dlc_snapshot": []
+        }
+      },
+      "clockAfter": {
+        "ok": true,
+        "session": "0a996ea0",
+        "mod_version": "0.10.2",
+        "bridge_version": 1,
+        "scene": "city",
+        "save": "FT Food Routines Locked C1 20261031",
+        "day": 5,
+        "time": "07:45",
+        "paused": true,
+        "time_skip": false,
+        "frame": 1366,
+        "load": {
+          "name": "FT Food Routines Locked C1 20261031",
+          "status": "done"
+        },
+        "control_lock": {
+          "instance": "agent1",
+          "held": true,
+          "owner": "pc-rig-locked-c1",
+          "purpose": "rig_test C1 locked native proof",
+          "acquired_utc": "2026-10-31T13:07:24.1671455Z",
+          "expires_automatically": false,
+          "pending": 0,
+          "legacy_blocked": false
+        },
+        "lock_protocol": 1,
+        "control_process_pid": 51944,
+        "agent_instance": {
+          "id": "agent1",
+          "pid": 51944,
+          "mode": "windowed",
+          "port": 18330,
+          "product": "Big Ambitions Agent Tests",
+          "data_path": "C:\\BigAmbitions-AgentTests\\profile",
+          "cache_path": "<private-stage>",
+          "executable": "C:\\BigAmbitions-AgentTests\\Big Ambitions Agent Tests.exe",
+          "test_only": true,
+          "workshop": false,
+          "steam_stats_writes": false,
+          "audio_muted": true,
+          "audio_listener_volume": 0.0,
+          "pump_frame": 1366,
+          "runtime_version": 6,
+          "steam_connected": false,
+          "owned_dlc_snapshot": []
+        }
+      },
+      "actualCount": 885,
+      "registrationCount": 885,
+      "campaignEntries": 0,
+      "hashes": {
+        "minute": {
+          "before": "7a7947487c640929a68f536a6dffa176acf6ab93a1d4cc47e1bc60c920fb891b",
+          "idleAfter": "7a7947487c640929a68f536a6dffa176acf6ab93a1d4cc47e1bc60c920fb891b",
+          "readsAfter": "7a7947487c640929a68f536a6dffa176acf6ab93a1d4cc47e1bc60c920fb891b",
+          "idleEqual": true,
+          "readsEqual": true
+        },
+        "revision": {
+          "before": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+          "idleAfter": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+          "readsAfter": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+          "idleEqual": true,
+          "readsEqual": true
+        },
+        "selected": {
+          "before": "8f0578fd587765e1cebc8bb7a5ed5199fa1b7f65afb5e252bc1023659201ca90",
+          "idleAfter": "8f0578fd587765e1cebc8bb7a5ed5199fa1b7f65afb5e252bc1023659201ca90",
+          "readsAfter": "8f0578fd587765e1cebc8bb7a5ed5199fa1b7f65afb5e252bc1023659201ca90",
+          "idleEqual": true,
+          "readsEqual": true
+        },
+        "registrationCount": {
+          "before": "3bd625f07792e885b5a4b5f0b9005a5b53a56a610efa2c27cd923aed53a6a4b5",
+          "idleAfter": "3bd625f07792e885b5a4b5f0b9005a5b53a56a610efa2c27cd923aed53a6a4b5",
+          "readsAfter": "3bd625f07792e885b5a4b5f0b9005a5b53a56a610efa2c27cd923aed53a6a4b5",
+          "idleEqual": true,
+          "readsEqual": true
+        },
+        "selectedCount": {
+          "before": "3bd625f07792e885b5a4b5f0b9005a5b53a56a610efa2c27cd923aed53a6a4b5",
+          "idleAfter": "3bd625f07792e885b5a4b5f0b9005a5b53a56a610efa2c27cd923aed53a6a4b5",
+          "readsAfter": "3bd625f07792e885b5a4b5f0b9005a5b53a56a610efa2c27cd923aed53a6a4b5",
+          "idleEqual": true,
+          "readsEqual": true
+        },
+        "campaignEntries": {
+          "before": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+          "idleAfter": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+          "readsAfter": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+          "idleEqual": true,
+          "readsEqual": true
+        },
+        "registrations": {
+          "before": "5ae4872b57c562be92aee471fee5f5a0785dd6a1c8b51b3e1cc8a579c8bd8084",
+          "idleAfter": "5ae4872b57c562be92aee471fee5f5a0785dd6a1c8b51b3e1cc8a579c8bd8084",
+          "readsAfter": "5ae4872b57c562be92aee471fee5f5a0785dd6a1c8b51b3e1cc8a579c8bd8084",
+          "idleEqual": true,
+          "readsEqual": true
+        },
+        "saveFields": {
+          "before": "14e513d98b6d577e0b016fa430511f9027219a0f59ff7f65a1c98fc2d9524cea",
+          "idleAfter": "14e513d98b6d577e0b016fa430511f9027219a0f59ff7f65a1c98fc2d9524cea",
+          "readsAfter": "14e513d98b6d577e0b016fa430511f9027219a0f59ff7f65a1c98fc2d9524cea",
+          "idleEqual": true,
+          "readsEqual": true
+        },
+        "customerStatics": {
+          "before": "bc5f02e44524c3101f33f17ad0ac15f1f9af3832579cc5b2065763c7d9f6341e",
+          "idleAfter": "bc5f02e44524c3101f33f17ad0ac15f1f9af3832579cc5b2065763c7d9f6341e",
+          "readsAfter": "bc5f02e44524c3101f33f17ad0ac15f1f9af3832579cc5b2065763c7d9f6341e",
+          "idleEqual": true,
+          "readsEqual": true
+        }
+      },
+      "allEqual": true,
+      "repeatDumpsIdentical": true,
+      "repeats": [
+        {
+          "count": 100,
+          "scope": 1,
+          "minuteBefore": 7665.36665725708,
+          "minuteAfter": 7665.36665725708,
+          "firstSha256": "b95dae955129400660ff4cc07986ccdc7574edc57058f52fe272474741f60216",
+          "lastSha256": "b95dae955129400660ff4cc07986ccdc7574edc57058f52fe272474741f60216",
+          "allIdentical": true
+        },
+        {
+          "count": 100,
+          "scope": 8,
+          "minuteBefore": 7665.36665725708,
+          "minuteAfter": 7665.36665725708,
+          "firstSha256": "2ff9bf466c64c9f7c0c6412d10ebc84e9f50e9ea22d725c0c64fe0721a457a50",
+          "lastSha256": "2ff9bf466c64c9f7c0c6412d10ebc84e9f50e9ea22d725c0c64fe0721a457a50",
+          "allIdentical": true
+        },
+        {
+          "count": 100,
+          "scope": 885,
+          "minuteBefore": 7665.36665725708,
+          "minuteAfter": 7665.36665725708,
+          "firstSha256": "ad0976617f0f9dd4bcaf5fcc0a49eb9283a8b0bf2d32dd746599249534e02c11",
+          "lastSha256": "ad0976617f0f9dd4bcaf5fcc0a49eb9283a8b0bf2d32dd746599249534e02c11",
+          "allIdentical": true
+        }
+      ],
+      "rawFiles": [
+        "facts-before-reload-idle-before.json.xz",
+        "facts-before-reload-idle-after.json.xz",
+        "facts-before-reload-read-after.json.xz",
+        "facts-before-reload-dumps.json.xz",
+        "facts-before-reload-dumps-repeat.json.xz"
+      ],
+      "saveFields": [
+        "currentTaxPeriodDeductibleExpenses",
+        "CurrentTaxPeriodDeductibleTransactions",
+        "financialSummaries",
+        "midnightBankBalances",
+        "Money",
+        "playerWeeklyIncomeHistory",
+        "Transactions"
+      ],
+      "registrationFieldNames": [
+        "StreetName",
+        "StreetNumber",
+        "businessTypeName",
+        "cachedFulfilledCustomerDemands",
+        "creationDay",
+        "customerCapacity",
+        "dailyIncomes",
+        "marketingCampaigns",
+        "promotion"
+      ]
+    },
+    {
+      "label": "facts-after-reload",
+      "clockBefore": {
+        "ok": true,
+        "session": "0a996ea0",
+        "mod_version": "0.10.2",
+        "bridge_version": 1,
+        "scene": "city",
+        "save": "FT Food Routines Locked C1 Reload 20261031",
+        "day": 5,
+        "time": "07:45",
+        "paused": true,
+        "time_skip": false,
+        "frame": 2556,
+        "load": {
+          "name": "FT Food Routines Locked C1 Reload 20261031",
+          "status": "done"
+        },
+        "control_lock": {
+          "instance": "agent1",
+          "held": true,
+          "owner": "pc-rig-locked-c1",
+          "purpose": "rig_test C1 locked native proof",
+          "acquired_utc": "2026-10-31T13:07:24.1671455Z",
+          "expires_automatically": false,
+          "pending": 0,
+          "legacy_blocked": false
+        },
+        "lock_protocol": 1,
+        "control_process_pid": 51944,
+        "agent_instance": {
+          "id": "agent1",
+          "pid": 51944,
+          "mode": "windowed",
+          "port": 18330,
+          "product": "Big Ambitions Agent Tests",
+          "data_path": "C:\\BigAmbitions-AgentTests\\profile",
+          "cache_path": "<private-stage>",
+          "executable": "C:\\BigAmbitions-AgentTests\\Big Ambitions Agent Tests.exe",
+          "test_only": true,
+          "workshop": false,
+          "steam_stats_writes": false,
+          "audio_muted": true,
+          "audio_listener_volume": 0.0,
+          "pump_frame": 2556,
+          "runtime_version": 6,
+          "steam_connected": false,
+          "owned_dlc_snapshot": []
+        }
+      },
+      "clockAfter": {
+        "ok": true,
+        "session": "0a996ea0",
+        "mod_version": "0.10.2",
+        "bridge_version": 1,
+        "scene": "city",
+        "save": "FT Food Routines Locked C1 Reload 20261031",
+        "day": 5,
+        "time": "07:45",
+        "paused": true,
+        "time_skip": false,
+        "frame": 2850,
+        "load": {
+          "name": "FT Food Routines Locked C1 Reload 20261031",
+          "status": "done"
+        },
+        "control_lock": {
+          "instance": "agent1",
+          "held": true,
+          "owner": "pc-rig-locked-c1",
+          "purpose": "rig_test C1 locked native proof",
+          "acquired_utc": "2026-10-31T13:07:24.1671455Z",
+          "expires_automatically": false,
+          "pending": 0,
+          "legacy_blocked": false
+        },
+        "lock_protocol": 1,
+        "control_process_pid": 51944,
+        "agent_instance": {
+          "id": "agent1",
+          "pid": 51944,
+          "mode": "windowed",
+          "port": 18330,
+          "product": "Big Ambitions Agent Tests",
+          "data_path": "C:\\BigAmbitions-AgentTests\\profile",
+          "cache_path": "<private-stage>",
+          "executable": "C:\\BigAmbitions-AgentTests\\Big Ambitions Agent Tests.exe",
+          "test_only": true,
+          "workshop": false,
+          "steam_stats_writes": false,
+          "audio_muted": true,
+          "audio_listener_volume": 0.0,
+          "pump_frame": 2850,
+          "runtime_version": 6,
+          "steam_connected": false,
+          "owned_dlc_snapshot": []
+        }
+      },
+      "actualCount": 885,
+      "registrationCount": 885,
+      "campaignEntries": 0,
+      "hashes": {
+        "minute": {
+          "before": "189f3be66fd7d1bd90cf99b6ffeec70ec28d04b13d93e0cf92771ec804ebe4f1",
+          "idleAfter": "189f3be66fd7d1bd90cf99b6ffeec70ec28d04b13d93e0cf92771ec804ebe4f1",
+          "readsAfter": "189f3be66fd7d1bd90cf99b6ffeec70ec28d04b13d93e0cf92771ec804ebe4f1",
+          "idleEqual": true,
+          "readsEqual": true
+        },
+        "revision": {
+          "before": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+          "idleAfter": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+          "readsAfter": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+          "idleEqual": true,
+          "readsEqual": true
+        },
+        "selected": {
+          "before": "8f0578fd587765e1cebc8bb7a5ed5199fa1b7f65afb5e252bc1023659201ca90",
+          "idleAfter": "8f0578fd587765e1cebc8bb7a5ed5199fa1b7f65afb5e252bc1023659201ca90",
+          "readsAfter": "8f0578fd587765e1cebc8bb7a5ed5199fa1b7f65afb5e252bc1023659201ca90",
+          "idleEqual": true,
+          "readsEqual": true
+        },
+        "registrationCount": {
+          "before": "3bd625f07792e885b5a4b5f0b9005a5b53a56a610efa2c27cd923aed53a6a4b5",
+          "idleAfter": "3bd625f07792e885b5a4b5f0b9005a5b53a56a610efa2c27cd923aed53a6a4b5",
+          "readsAfter": "3bd625f07792e885b5a4b5f0b9005a5b53a56a610efa2c27cd923aed53a6a4b5",
+          "idleEqual": true,
+          "readsEqual": true
+        },
+        "selectedCount": {
+          "before": "3bd625f07792e885b5a4b5f0b9005a5b53a56a610efa2c27cd923aed53a6a4b5",
+          "idleAfter": "3bd625f07792e885b5a4b5f0b9005a5b53a56a610efa2c27cd923aed53a6a4b5",
+          "readsAfter": "3bd625f07792e885b5a4b5f0b9005a5b53a56a610efa2c27cd923aed53a6a4b5",
+          "idleEqual": true,
+          "readsEqual": true
+        },
+        "campaignEntries": {
+          "before": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+          "idleAfter": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+          "readsAfter": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+          "idleEqual": true,
+          "readsEqual": true
+        },
+        "registrations": {
+          "before": "5ae4872b57c562be92aee471fee5f5a0785dd6a1c8b51b3e1cc8a579c8bd8084",
+          "idleAfter": "5ae4872b57c562be92aee471fee5f5a0785dd6a1c8b51b3e1cc8a579c8bd8084",
+          "readsAfter": "5ae4872b57c562be92aee471fee5f5a0785dd6a1c8b51b3e1cc8a579c8bd8084",
+          "idleEqual": true,
+          "readsEqual": true
+        },
+        "saveFields": {
+          "before": "14e513d98b6d577e0b016fa430511f9027219a0f59ff7f65a1c98fc2d9524cea",
+          "idleAfter": "14e513d98b6d577e0b016fa430511f9027219a0f59ff7f65a1c98fc2d9524cea",
+          "readsAfter": "14e513d98b6d577e0b016fa430511f9027219a0f59ff7f65a1c98fc2d9524cea",
+          "idleEqual": true,
+          "readsEqual": true
+        },
+        "customerStatics": {
+          "before": "bc5f02e44524c3101f33f17ad0ac15f1f9af3832579cc5b2065763c7d9f6341e",
+          "idleAfter": "bc5f02e44524c3101f33f17ad0ac15f1f9af3832579cc5b2065763c7d9f6341e",
+          "readsAfter": "bc5f02e44524c3101f33f17ad0ac15f1f9af3832579cc5b2065763c7d9f6341e",
+          "idleEqual": true,
+          "readsEqual": true
+        }
+      },
+      "allEqual": true,
+      "repeatDumpsIdentical": true,
+      "repeats": [
+        {
+          "count": 100,
+          "scope": 1,
+          "minuteBefore": 7665.699989318848,
+          "minuteAfter": 7665.699989318848,
+          "firstSha256": "698aecf17eed38818c71dee3707c18ef50ac18272b175828660284208d4e6d1c",
+          "lastSha256": "698aecf17eed38818c71dee3707c18ef50ac18272b175828660284208d4e6d1c",
+          "allIdentical": true
+        },
+        {
+          "count": 100,
+          "scope": 8,
+          "minuteBefore": 7665.699989318848,
+          "minuteAfter": 7665.699989318848,
+          "firstSha256": "5d95e6cdea3234f85670a505160befd052e331e4d7f3eb42d443a05ff036ea5b",
+          "lastSha256": "5d95e6cdea3234f85670a505160befd052e331e4d7f3eb42d443a05ff036ea5b",
+          "allIdentical": true
+        },
+        {
+          "count": 100,
+          "scope": 885,
+          "minuteBefore": 7665.699989318848,
+          "minuteAfter": 7665.699989318848,
+          "firstSha256": "25433fb4f33f99fff185c1626cd8fcae6648a59387bc3a9157e1ee55fdb0f12f",
+          "lastSha256": "25433fb4f33f99fff185c1626cd8fcae6648a59387bc3a9157e1ee55fdb0f12f",
+          "allIdentical": true
+        }
+      ],
+      "rawFiles": [
+        "facts-after-reload-idle-before.json.xz",
+        "facts-after-reload-idle-after.json.xz",
+        "facts-after-reload-read-after.json.xz",
+        "facts-after-reload-dumps.json.xz",
+        "facts-after-reload-dumps-repeat.json.xz"
+      ],
+      "saveFields": [
+        "currentTaxPeriodDeductibleExpenses",
+        "CurrentTaxPeriodDeductibleTransactions",
+        "financialSummaries",
+        "midnightBankBalances",
+        "Money",
+        "playerWeeklyIncomeHistory",
+        "Transactions"
+      ],
+      "registrationFieldNames": [
+        "StreetName",
+        "StreetNumber",
+        "businessTypeName",
+        "cachedFulfilledCustomerDemands",
+        "creationDay",
+        "customerCapacity",
+        "dailyIncomes",
+        "marketingCampaigns",
+        "promotion"
+      ]
+    }
+  ],
+  "afterReloadBusinessesEqual": true,
+  "afterReloadExactDtosEqual": false,
+  "nativeRawMethod": "Independent recursive field copy only; no native helpers, setters or financial mutations. Clock/minute frozen within each control. Customer-related registration fields, static customer cache and saved financial summaries/cash/transactions captured. Unity objects use type/instance ID; depth-truncation markers audited separately. Observation minute may differ across reload and is never reconstructed as campaign timing."
+}

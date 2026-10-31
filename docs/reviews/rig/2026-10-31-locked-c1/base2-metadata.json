@@ -1,0 +1,715 @@
+{
+  "available": false,
+  "facade": false,
+  "frame": 1113,
+  "loaded": "C:\\BigAmbitions-AgentTests\\profile\\ModsLocal\\PersistentCity\\PersistentCity.dll",
+  "moduleMvid": "fcf35eed-fb7b-44df-8fe0-364a7da9db42",
+  "loadedFileSha256": "f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c",
+  "nativeAssemblies": [
+    {
+      "name": "BigAmbitions",
+      "sha256": "055700fd26a7a6430bbb6a9d79379781909fbc518af760453396947887db5063",
+      "mvid": "fdedeac4-e1ad-4266-8c1e-57f28d2390d6"
+    },
+    {
+      "name": "BigAmbitions.Items",
+      "sha256": "db07038215ea8ab2430fb942b86a19e93b5fb84f70639d87606b194786d5bab1",
+      "mvid": "14196cd7-6b04-458d-a715-b9689055ac19"
+    }
+  ],
+  "registrationFields": [
+    {
+      "name": "StreetName",
+      "type": "System.String"
+    },
+    {
+      "name": "StreetNumber",
+      "type": "System.Int32"
+    },
+    {
+      "name": "AvailableForRent",
+      "type": "System.Boolean"
+    },
+    {
+      "name": "RentedByPlayer",
+      "type": "System.Boolean"
+    },
+    {
+      "name": "RentPerDay",
+      "type": "System.Single"
+    },
+    {
+      "name": "scheduleDays",
+      "type": "System.Collections.Generic.List`1[[ScheduleDay, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "temporarilyClosed",
+      "type": "System.Boolean"
+    },
+    {
+      "name": "BusinessName",
+      "type": "System.String"
+    },
+    {
+      "name": "BusinessDescription",
+      "type": "System.String"
+    },
+    {
+      "name": "businessTypeName",
+      "type": "System.String"
+    },
+    {
+      "name": "Layout",
+      "type": "System.String"
+    },
+    {
+      "name": "itemInstances",
+      "type": "System.Collections.Generic.Dictionary`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[BigAmbitions.Items.ItemInstance, BigAmbitions.Items, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "unprocessedCompletedOrders",
+      "type": "System.Collections.Generic.List`1[[Order, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "orderHistory",
+      "type": "System.Collections.Generic.List`1[[Entities.OrderHistoryEntry, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "dirtSpots",
+      "type": "System.Collections.Generic.List`1[[Entities.DirtSpot, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "shouldUpdateDirtSpotsThatAffects",
+      "type": "System.Nullable`1[[System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "retailPrices",
+      "type": "System.Collections.Generic.List`1[[RetailPrice, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "storedRetailPrices",
+      "type": "System.Collections.Generic.List`1[[RetailPrice, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "lastDeposit",
+      "type": "System.Single"
+    },
+    {
+      "name": "satisfaction",
+      "type": "Satisfaction"
+    },
+    {
+      "name": "promotion",
+      "type": "Promotion"
+    },
+    {
+      "name": "signAppearanceSettings",
+      "type": "SignAppearanceSettings"
+    },
+    {
+      "name": "interiorDesigns",
+      "type": "System.Collections.Generic.List`1[[SerializedInteriorDesign, BigAmbitions.InteriorDesigner, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "marketingCampaigns",
+      "type": "System.Collections.Generic.List`1[[Entities.MarketingCampaign, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "customerCapacity",
+      "type": "System.Int32"
+    },
+    {
+      "name": "logoSettings",
+      "type": "LogoSettings"
+    },
+    {
+      "name": "takeoverOfferAcceptRate",
+      "type": "System.Single"
+    },
+    {
+      "name": "takenOver",
+      "type": "System.Boolean"
+    },
+    {
+      "name": "cachedAvailableProducts",
+      "type": "System.Collections.Generic.List`1[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "cachedFulfilledCustomerDemands",
+      "type": "System.Collections.Generic.List`1[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "creationDay",
+      "type": "System.Int32"
+    },
+    {
+      "name": "lastDayOnSale",
+      "type": "System.Int32"
+    },
+    {
+      "name": "stolenItemsCost",
+      "type": "System.Single"
+    },
+    {
+      "name": "securityLevelPercentage",
+      "type": "System.Single"
+    },
+    {
+      "name": "radioStation",
+      "type": "RadioStation"
+    },
+    {
+      "name": "warnedLastHourAboutNoEmployee",
+      "type": "System.Boolean"
+    },
+    {
+      "name": "radioVolume",
+      "type": "System.Single"
+    },
+    {
+      "name": "blueprintName",
+      "type": "System.String"
+    },
+    {
+      "name": "buildingOwnerRivalId",
+      "type": "System.String"
+    },
+    {
+      "name": "businessOwnerRivalId",
+      "type": "System.String"
+    },
+    {
+      "name": "aiEmployees",
+      "type": "System.Collections.Generic.List`1[[Buildings.BuildingTypes.Shared.AiBusinessEmployeeData, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "poachedEmployees",
+      "type": "System.Collections.Generic.List`1[[Entities.EmployeeInstance, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "dailyIncomes",
+      "type": "System.Collections.Generic.List`1[[System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "uniformsBySkill",
+      "type": "System.Collections.Generic.Dictionary`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "factoryExports",
+      "type": "System.Collections.Generic.List`1[[Buildings.Factory.FactoryExport, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "_buildingCached",
+      "type": "Buildings.Building"
+    },
+    {
+      "name": "_cleanliness",
+      "type": "Buildings.BuildingTypes.Shared.Dirtiness.BuildingCleanliness"
+    },
+    {
+      "name": "deliveredItems",
+      "type": "System.Collections.Generic.List`1[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "itemsInBuilding",
+      "type": "System.Collections.Generic.List`1[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "handTruckSpawnerData",
+      "type": "HandTruckSpawnerData"
+    },
+    {
+      "name": "_interiorLookup",
+      "type": "System.Collections.Generic.Dictionary`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[SerializedInteriorDesign, BigAmbitions.InteriorDesigner, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    }
+  ],
+  "saveFields": [
+    {
+      "name": "Day",
+      "type": "System.Int32"
+    },
+    {
+      "name": "Hour",
+      "type": "System.Int32"
+    },
+    {
+      "name": "Minute",
+      "type": "System.Single"
+    },
+    {
+      "name": "seed",
+      "type": "System.String"
+    },
+    {
+      "name": "Money",
+      "type": "System.Single"
+    },
+    {
+      "name": "midnightBankBalances",
+      "type": "System.Collections.Generic.List`1[[System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "Energy",
+      "type": "System.Single"
+    },
+    {
+      "name": "EnergyGeneratedFromConsumables",
+      "type": "System.Single"
+    },
+    {
+      "name": "Hunger",
+      "type": "System.Single"
+    },
+    {
+      "name": "Happiness",
+      "type": "System.Single"
+    },
+    {
+      "name": "timeEnteredTemporalBoost",
+      "type": "BigAmbitions.DayNightCycle.Timestamp"
+    },
+    {
+      "name": "currentActivityHappinessPerHour",
+      "type": "System.Single"
+    },
+    {
+      "name": "nextRainStartTime",
+      "type": "BigAmbitions.DayNightCycle.Timestamp"
+    },
+    {
+      "name": "accessoriesData",
+      "type": "UI.Topbar.Accessories.AccessoriesData"
+    },
+    {
+      "name": "characterId",
+      "type": "System.String"
+    },
+    {
+      "name": "numberOfDoctorOperations",
+      "type": "System.Int32"
+    },
+    {
+      "name": "CurrentStreetName",
+      "type": "System.String"
+    },
+    {
+      "name": "CurrentStreetNumber",
+      "type": "System.Int32"
+    },
+    {
+      "name": "ActiveVehicleId",
+      "type": "System.String"
+    },
+    {
+      "name": "CityInitialized",
+      "type": "System.Boolean"
+    },
+    {
+      "name": "LastPlayerPosition",
+      "type": "SerializableVector3"
+    },
+    {
+      "name": "LastPlayerRotation",
+      "type": "SerializableQuaternion"
+    },
+    {
+      "name": "LastPlayerPause",
+      "type": "System.Boolean"
+    },
+    {
+      "name": "BuildingRegistrations",
+      "type": "System.Collections.Generic.List`1[[BuildingRegistration, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "JobInstances",
+      "type": "System.Collections.Generic.List`1[[JobInstance, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "Contacts",
+      "type": "System.Collections.Generic.List`1[[Entities.Contact, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "VehicleInstances",
+      "type": "System.Collections.Generic.List`1[[VehicleInstance, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "NeighbourhoodStats",
+      "type": "System.Collections.Generic.List`1[[BigAmbitions.Neighborhoods.NeighbourhoodStats, BigAmbitions.Neighborhoods, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "EmployeeInstances",
+      "type": "System.Collections.Generic.List`1[[Entities.EmployeeInstance, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "CandidateEmployeeInstances",
+      "type": "System.Collections.Generic.List`1[[Entities.EmployeeInstance, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "Loans",
+      "type": "System.Collections.Generic.List`1[[Loan, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "SaveGameName",
+      "type": "System.String"
+    },
+    {
+      "name": "currentAutoSaveNumber",
+      "type": "System.Int32"
+    },
+    {
+      "name": "Transactions",
+      "type": "System.Collections.Generic.Queue`1[[Transaction, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "CurrentTaxPeriodDeductibleTransactions",
+      "type": "System.Collections.Generic.List`1[[System.ValueTuple`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "currentTaxPeriodDeductibleExpenses",
+      "type": "System.Collections.Generic.List`1[[Entities.TaxDeductibleExpense, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "CurrentTaxPeriodGamblingWinnings",
+      "type": "System.Single"
+    },
+    {
+      "name": "CurrentTaxPeriodGamblingLosses",
+      "type": "System.Single"
+    },
+    {
+      "name": "CompletedQuestEntries",
+      "type": "System.Collections.Generic.List`1[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "completedSideQuestEntries",
+      "type": "System.Collections.Generic.List`1[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "activeSideQuestEntries",
+      "type": "System.Collections.Generic.List`1[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "customDestination",
+      "type": "Address"
+    },
+    {
+      "name": "RecruitmentCampaigns",
+      "type": "System.Collections.Generic.List`1[[Entities.RecruitmentCampaign, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "DeliveryContracts",
+      "type": "System.Collections.Generic.List`1[[Entities.DeliveryContract, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "FurnitureDeliveryContracts",
+      "type": "System.Collections.Generic.List`1[[Entities.FurnitureDeliveryContract, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "FoodDeliveryContracts",
+      "type": "System.Collections.Generic.List`1[[Entities.FoodDeliveryContract, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "PlayerDiplomas",
+      "type": "System.Collections.Generic.List`1[[Diploma, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "TodoTasks",
+      "type": "System.Collections.Generic.List`1[[Entities.TodoTask, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "SelectedCitymapFilters",
+      "type": "System.Collections.Generic.List`1[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "CollapsedCitymapFilterCategories",
+      "type": "System.Collections.Generic.List`1[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "PlayerDefaults",
+      "type": "PlayerDefaults"
+    },
+    {
+      "name": "buildNumberAtStart",
+      "type": "System.Int32"
+    },
+    {
+      "name": "buildNumberAtLastSave",
+      "type": "System.Int32"
+    },
+    {
+      "name": "marketEvents",
+      "type": "System.Collections.Generic.List`1[[Entities.MarketEvent, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "financialSummaries",
+      "type": "System.Collections.Generic.List`1[[Entities.FinancialSummary, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "completedPersonalGoals",
+      "type": "System.Collections.Generic.List`1[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "hasEverUsedMods",
+      "type": "System.Boolean"
+    },
+    {
+      "name": "charactersData",
+      "type": "System.Collections.Generic.List`1[[CharacterData, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "cityMapZoom",
+      "type": "System.Single"
+    },
+    {
+      "name": "placementCameraZoom",
+      "type": "System.Single"
+    },
+    {
+      "name": "currentUnpaidTaxes",
+      "type": "Entities.Taxes"
+    },
+    {
+      "name": "currentBackTaxes",
+      "type": "System.Single"
+    },
+    {
+      "name": "productMarketEntries",
+      "type": "System.Collections.Generic.List`1[[Entities.ProductMarketEntry, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "buildingsForSale",
+      "type": "System.Collections.Generic.List`1[[BuildingForSale, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "realEstate",
+      "type": "System.Collections.Generic.List`1[[Entities.RealEstate, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "happinessModifiers",
+      "type": "System.Collections.Generic.List`1[[Helpers.HappinessModifierData, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "usedHappinessModifiers",
+      "type": "System.Collections.Generic.List`1[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "gameVariables",
+      "type": "GameVariables"
+    },
+    {
+      "name": "uiVariables",
+      "type": "UIVariables"
+    },
+    {
+      "name": "notifications",
+      "type": "System.Collections.Generic.Queue`1[[UI.Notification.Notification, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "investmentFunds",
+      "type": "System.Collections.Generic.List`1[[Entities.InvestmentFund, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "employeePresets",
+      "type": "System.Collections.Generic.List`1[[EmployeePreset, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "achievementsData",
+      "type": "AchievementsData"
+    },
+    {
+      "name": "playerBoats",
+      "type": "System.Collections.Generic.List`1[[Boats.BoatData, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "healthInsurancePlanOffers",
+      "type": "System.Collections.Generic.List`1[[Entities.HealthInsurancePlanOffer, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "candidateSalaryNegotiations",
+      "type": "System.Collections.Generic.List`1[[AI.Employees.SalaryNegotiation.CandidateSalaryNegotiation, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "interiorInstallationFirmContracts",
+      "type": "System.Collections.Generic.List`1[[Entities.InteriorInstallationFirmContract, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "movingServiceContracts",
+      "type": "System.Collections.Generic.List`1[[Entities.MovingServiceContract, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "acquiredSpecialItems",
+      "type": "System.Collections.Generic.List`1[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "acquiredSpecialItemAddons",
+      "type": "System.Collections.Generic.List`1[[Seasons.ItemWithSeasonalVisualsController+SpecialAddon, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "specialRivalStates",
+      "type": "System.Collections.Generic.List`1[[BigAmbitions.Rivals.SpecialRivalState, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "rivalStates",
+      "type": "System.Collections.Generic.List`1[[BigAmbitions.Rivals.RivalState, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "wholesaleRivalIds",
+      "type": "System.String[]"
+    },
+    {
+      "name": "importRivalIds",
+      "type": "System.String[]"
+    },
+    {
+      "name": "daysWithComplaints",
+      "type": "System.Collections.Generic.Queue`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "playerWeeklyIncomeHistory",
+      "type": "System.Collections.Generic.List`1[[System.Tuple`2[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "playerNumberOfBusinessesHistory",
+      "type": "System.Collections.Generic.List`1[[System.Tuple`2[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "currentWorkoutPlan",
+      "type": "PlayerActivity.WorkoutPlan"
+    },
+    {
+      "name": "importPartnerships",
+      "type": "System.Collections.Generic.List`1[[Entities.ImportPartnership, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "itemsOrderedThisWeekByImporter",
+      "type": "System.Collections.Generic.Dictionary`2[[Address, BigAmbitions.Items, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[System.Collections.Generic.List`1[[BigAmbitions.Items.ItemAmountTarget, BigAmbitions.Items, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "logisticsManagerPlans",
+      "type": "System.Collections.Generic.List`1[[Buildings.Office.Headquarters.LogisticsManagerPlan, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "headhunterPlans",
+      "type": "System.Collections.Generic.List`1[[Buildings.Office.Headquarters.HeadhunterPlan, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "hrManagerPlans",
+      "type": "System.Collections.Generic.List`1[[Buildings.Office.Headquarters.HrManagerPlan, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "pricingManagerPlans",
+      "type": "System.Collections.Generic.List`1[[Buildings.Office.Headquarters.PricingManagerPlan, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "wallsVisibility",
+      "type": "BigAmbitions.InteriorDesigner.WallsVisibility"
+    },
+    {
+      "name": "currentPlayerMission",
+      "type": "Player.PlayerMissions.PlayerMission"
+    },
+    {
+      "name": "foodDeliveryOffers",
+      "type": "System.Collections.Generic.List`1[[Player.FoodDeliveryJob.FoodDeliveryOffer, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "deliveryJobLocationsDoneToday",
+      "type": "System.Collections.Generic.List`1[[Address, BigAmbitions.Items, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "hasCinemaTheaterTicket",
+      "type": "System.Boolean"
+    },
+    {
+      "name": "vehicleDeliveryContracts",
+      "type": "System.Collections.Generic.List`1[[Vehicles.VehicleDeliveryContract, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "activePrivateDriverContract",
+      "type": "System.String"
+    },
+    {
+      "name": "activePrivateDriverContractUnpaid",
+      "type": "System.Boolean"
+    },
+    {
+      "name": "privateDriverVehicleInstances",
+      "type": "System.Collections.Generic.List`1[[VehicleInstance, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "disabledLicensingFees",
+      "type": "System.Collections.Generic.List`1[[GameInstance+DisabledLicensingFee, BigAmbitions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "paidLicensingFeesToday",
+      "type": "System.Collections.Generic.List`1[[System.ValueTuple`2[[Address, BigAmbitions.Items, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "modData",
+      "type": "System.Collections.Generic.Dictionary`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "minigameMusicDisabled",
+      "type": "System.Boolean"
+    },
+    {
+      "name": "WorldItemsHashSet",
+      "type": "System.Collections.Generic.HashSet`1[[BigAmbitions.Items.ItemInstance, BigAmbitions.Items, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "InventoryItemInstanceId",
+      "type": "System.String"
+    },
+    {
+      "name": "playerColors",
+      "type": "System.Collections.Generic.List`1[[SerializableColor, HGExtensions, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+    }
+  ],
+  "campaignFields": [
+    {
+      "name": "agencyAddress",
+      "type": "Address"
+    },
+    {
+      "name": "marketingTypeName",
+      "type": "Entities.MarketingTypeName"
+    },
+    {
+      "name": "enabled",
+      "type": "System.Boolean"
+    }
+  ],
+  "enumUnderlying": "System.Int32",
+  "enumValues": [
+    {
+      "name": "SmallInternet",
+      "code": 0
+    },
+    {
+      "name": "MediumInternet",
+      "code": 1
+    },
+    {
+      "name": "LargeInternet",
+      "code": 2
+    },
+    {
+      "name": "SmallBillboard",
+      "code": 3
+    },
+    {
+      "name": "MediumBillboard",
+      "code": 4
+    },
+    {
+      "name": "LargeBillboard",
+      "code": 5
+    },
+    {
+      "name": "None",
+      "code": 6
+    }
+  ],
+  "reviewed": null,
+  "allocationCounterValid": false
+}

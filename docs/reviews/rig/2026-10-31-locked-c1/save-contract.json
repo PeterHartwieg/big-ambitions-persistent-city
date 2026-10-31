@@ -1,0 +1,50 @@
+{
+  "role": "rig_test",
+  "observations": {
+    "baseline-save-contract": {
+      "status": "Loaded",
+      "SourceSchema": 13,
+      "Error": "",
+      "readMs": 970.2701000000001,
+      "sourceCharacters": 5665995,
+      "upgradedCharacters": 5690816,
+      "sourceHash": "918f305936c011a425fe34060ae7d66f0576c3c608679455d6a0283307c4f086",
+      "upgradedHash": "f932269246a5234f7b9928c4fb93e481bf1e4eabcde1d7c1d1590a9c1537af34"
+    },
+    "baseline-written-contract": {
+      "status": "Loaded",
+      "SourceSchema": 16,
+      "Error": "",
+      "readMs": 674.9273000000001,
+      "sourceCharacters": 5690810,
+      "upgradedCharacters": 5690810,
+      "sourceHash": "b41cfffb13e035474a7c4a8245a889936aa5304c060eb16c397d327e45a2d309",
+      "upgradedHash": "b41cfffb13e035474a7c4a8245a889936aa5304c060eb16c397d327e45a2d309"
+    },
+    "candidate-save-contract": {
+      "status": "Loaded",
+      "SourceSchema": 13,
+      "Error": "",
+      "readMs": 713.7858,
+      "sourceCharacters": 5665995,
+      "upgradedCharacters": 5690816,
+      "sourceHash": "918f305936c011a425fe34060ae7d66f0576c3c608679455d6a0283307c4f086",
+      "upgradedHash": "f932269246a5234f7b9928c4fb93e481bf1e4eabcde1d7c1d1590a9c1537af34"
+    },
+    "candidate-written-contract": {
+      "status": "Loaded",
+      "SourceSchema": 16,
+      "Error": "",
+      "readMs": 666.0974,
+      "sourceCharacters": 5690810,
+      "upgradedCharacters": 5690810,
+      "sourceHash": "b41cfffb13e035474a7c4a8245a889936aa5304c060eb16c397d327e45a2d309",
+      "upgradedHash": "b41cfffb13e035474a7c4a8245a889936aa5304c060eb16c397d327e45a2d309"
+    }
+  },
+  "inputPayloadEqual": true,
+  "migrationResultEqual": true,
+  "writtenPayloadByteIdentical": true,
+  "writtenRoundTripsExact": true,
+  "note": "Hashes cover the exact Persistent City JSON string encoded UTF-8. Whole native save containers have different disposable names and are not claimed byte-identical. All manual saves/reload occurred outside measured windows. Native campaign/business images before/after reload are compared independently."
+}

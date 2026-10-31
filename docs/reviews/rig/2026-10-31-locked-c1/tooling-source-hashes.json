@@ -1,0 +1,12 @@
+{
+  "role": "rig_test",
+  "files": {
+    "C1Rig.cs": "82c4d760473dec0cb5553b0379e0a0d52d1dcbc3fbb235ae9be86d526ad27586",
+    "C1Doubles.cs": "6545cb48ebe62e9861096dfc6c3e4a9bbdf891e9987f728614ce58fde52dce48",
+    "ReviewGuard.cs": "6791e0bbe81d6f05cb990b9c20d2617bacffcb9b8093bdef3add721f6247a258",
+    "FoodDemandAuditProbe.dll": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+    "ReviewGuard.dll": "16e76f71d4f3f8b7b3f53372fff77b61cf343afbfe3bc7d7d1e8a3cc5835126c",
+    "C1Doubles.dll": "d417751871ff5f3849ff2c5b9e17f1496c0936b3c4c5ef42fd628b858fc7fc97"
+  },
+  "note": "Final stage-only helper sources/binaries; installed per-arm receipts and loaded PC metadata provide runtime provenance. Native game/RLO binaries are not published."
+}

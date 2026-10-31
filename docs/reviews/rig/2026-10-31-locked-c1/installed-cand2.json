@@ -1,0 +1,234 @@
+{
+  "order": "cand2",
+  "files": [
+    {
+      "file": "FoodDemandAuditProbe\\FoodDemandAuditProbe.dll",
+      "sha256": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353"
+    },
+    {
+      "file": "PersistentCity\\persistent-city.json",
+      "sha256": "a81a64ff028acd500f44dcb7d3b955e81a4ce291cac0fee14bdbfec61a550c44"
+    },
+    {
+      "file": "PersistentCity\\PersistentCity.dll",
+      "sha256": "7dc7074408e93c88394ef8c9f56e5f9af4df935d2d0ee8b5b086ee15db722e8f"
+    },
+    {
+      "file": "PersistentCity\\README.md",
+      "sha256": "dc7f4a4268bb566835c9473cff1a794e28ae1258e431270768e622091871f39b"
+    },
+    {
+      "file": "PR3RigGuard\\bridge-link.private",
+      "sha256": "95da672114091bf36c537b839c41b3177e1f0c941a6933d9ef016a3d722746f7"
+    },
+    {
+      "file": "PR3RigGuard\\C1Doubles.fixture",
+      "sha256": "d417751871ff5f3849ff2c5b9e17f1496c0936b3c4c5ef42fd628b858fc7fc97"
+    },
+    {
+      "file": "PR3RigGuard\\ReviewGuard.dll",
+      "sha256": "16e76f71d4f3f8b7b3f53372fff77b61cf343afbfe3bc7d7d1e8a3cc5835126c"
+    },
+    {
+      "file": "RealLifeOverhaul\\RealLifeOverhaul.dll",
+      "sha256": "2f360a365cf7915f012cd62f4fd06214ef5cdaa0498331e05a7c831a3c20ab32"
+    },
+    {
+      "file": "RealLifeOverhaul\\thumbnail.jpg",
+      "sha256": "f711731e8bddd16befa2182f0544e3d2bf731d2e7fb26bb56eb8784c1967aae4"
+    },
+    {
+      "file": "PersistentCity\\Dependencies\\0Harmony.dll",
+      "sha256": "7b9e756306fa3d7620e02a857c8927a6ab04973f9bd8a77d3866700a6deac55c"
+    },
+    {
+      "file": "PersistentCity\\Dependencies\\Harmony-LICENSE.txt",
+      "sha256": "407ddd98200c9f17f49942b5a7791e288a2bd553b59bf2f462db87dbb21c50bc"
+    },
+    {
+      "file": "RealLifeOverhaul\\Bundles\\reallife_anim",
+      "sha256": "d8c8e95cba530293961d2185d26251029f595d8391f77740683c0dc4afc4cdcd"
+    },
+    {
+      "file": "RealLifeOverhaul\\Bundles\\reallife_character",
+      "sha256": "a439a42129c0e269cdc92a1e43c6e8429e2134ba1e2f6bff7806502b6a924432"
+    },
+    {
+      "file": "RealLifeOverhaul\\Bundles\\reallife_props",
+      "sha256": "b36e365f627dbbeb2469eef4591ddb31a3f16fcb06c669dc2b65b25268aa3731"
+    },
+    {
+      "file": "RealLifeOverhaul\\Locales\\de.json",
+      "sha256": "ac6176a37118bef04d74d5cc81da4a9e05260232abdca081546c6ddbb147b0ea"
+    },
+    {
+      "file": "RealLifeOverhaul\\Locales\\en.json",
+      "sha256": "cdaef4d2a15568d3bc1051cae7395dcd71782bfcb6f98a9ba97c6f5833957c20"
+    },
+    {
+      "file": "RealLifeOverhaul\\Locales\\es.json",
+      "sha256": "c689179463f5554c81dcaa911e0722d201c22e13be405e35efd43e4c38602192"
+    },
+    {
+      "file": "RealLifeOverhaul\\Locales\\fr.json",
+      "sha256": "0473f38a3e6022160eb3c4416dee80ed404a0350ddd720020d401dcdee43885c"
+    },
+    {
+      "file": "RealLifeOverhaul\\Locales\\nl.json",
+      "sha256": "b790e969d6e86015df235505b27b96087e24e5e6b4e21a39854a116f8610ef0c"
+    },
+    {
+      "file": "RealLifeOverhaul\\Locales\\pt.json",
+      "sha256": "1fe35b26930fb83bda83747f36080eb4c5482d911712153ba87309703d55fd00"
+    },
+    {
+      "file": "RealLifeOverhaul\\Locales\\ru.json",
+      "sha256": "08d2b9a04a1fb0fafe23dd61e7db91902578636042c007d770b849a0feba072c"
+    },
+    {
+      "file": "RealLifeOverhaul\\Locales\\tr.json",
+      "sha256": "fe049109ff7f79066631e1235608d82bae0d429a148852b48ed04fa2de093d86"
+    },
+    {
+      "file": "RealLifeOverhaul\\Locales\\zh-cn.json",
+      "sha256": "10d1f623f6bc2ac0144f7dc70000a15c61815877e0512b1f18567fd825baf101"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\diesel_high.ogg",
+      "sha256": "d08e6f1cfae864d0a7a5d3b4f741a8e6b54f8d010edef83c037f6e7eb2d3c0be"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\diesel_high_off.ogg",
+      "sha256": "7ca1dc61ef18968050b84dffc7d9d7915123c3a9ce98e5ac8e40aff05bf0b993"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\diesel_idle.ogg",
+      "sha256": "2b62467cb2666ae8294f283907d46a05a791f3738c3b018b478a69acabd93a8c"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\diesel_low.ogg",
+      "sha256": "1ab04de7d2cd064be9a5fc4b94c96d1a7ec2580a10ced8aecab12dd70d77896f"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\diesel_low_off.ogg",
+      "sha256": "388f8b0085a2fe70cb13a6a49a605852aa237daaa084dd0539a312955b654cd3"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\diesel_mid.ogg",
+      "sha256": "26689ddca5b9261f4f55df91d5a96c84e980cda144530dd03806e091b58b0b72"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\diesel_mid_off.ogg",
+      "sha256": "7f3ab5e8472b97470d8326309daaaf4a90b414d1545e1a2206fac19a550412dd"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\petrol_high.ogg",
+      "sha256": "7571d16eb35b2cceca357dd27811e97ea8eb5f2c04b7332dc664d247e54a64f5"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\petrol_high_off.ogg",
+      "sha256": "0558280f7a2e75892d3958f02f1e229ed6a8a0053cc1e4c1b8187713ae81d433"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\petrol_idle.ogg",
+      "sha256": "689df336596bb26800812fcc26ca5ae79f69d85f6941419bbd9b47ab51044ee3"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\petrol_low.ogg",
+      "sha256": "513eb43883888c6400e0005ead558aeacac396dd63b6b027373a750a9b150048"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\petrol_low_off.ogg",
+      "sha256": "18bf0b63102448b14920ef26ad62b1097ae592e5a2d836e0227d1a9732928f2f"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\pop_1.ogg",
+      "sha256": "7a9762da28005c1603e1c37a5c913702277ba12b275ef264741e9d2b04e4ef2e"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\pop_2.ogg",
+      "sha256": "76cd027d698b3cde24fe2f4cda28d280b41ed6c9ad5b69990d08f0aa63a89994"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\pop_3.ogg",
+      "sha256": "78c85a7e22aa59325c649adbfc0020f7dc58ca32c227bdddc2672b1915256409"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\pop_4.ogg",
+      "sha256": "dd463f2c1fcecec265f7052fad1332704f208681132aa3a7b2bf0717d59127cd"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\SOURCES.md",
+      "sha256": "bcf64df825d6ed8622100520cd88acff727ccad1decc649ea0fe359e068939c2"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\sport_high.ogg",
+      "sha256": "5596f12b150268af1a008927b0f4e822916488fca7c77e9f25b22d3b827796be"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\sport_high_off.ogg",
+      "sha256": "07cccb6d0c15cddc6c50cf12e829f509e92ae60bb801e33bfc1179466209f196"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\sport_idle.ogg",
+      "sha256": "b687a91ad7019829a5684d9f7bd94ee615932bcfd11bfacb881fe4527a50269d"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\sport_low.ogg",
+      "sha256": "fca28d39b0e9c6eee5874b56fd775a4bcd55f4356565b79d7e4ea45264427bcb"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\sport_low_off.ogg",
+      "sha256": "ae5510df895a4b212f9f3c6136cebc32c74da215c01b1a22d252255b5d2d69b2"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\sport_mid.ogg",
+      "sha256": "1b504db4bcf4d56e5f294c61bb9f6836c08dfac8275e24eb09a6dd39940d85c8"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\sport_mid_off.ogg",
+      "sha256": "43893a45c1898ecdc7f6228cb675369bf49bd0838609a24f4979057f97576078"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\turbo_flutter.ogg",
+      "sha256": "7c7123bd342225c5c1cc7655a382f9f316bc8f1e241520b37224994bb1b21735"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\turbo_whistle.ogg",
+      "sha256": "9371f0ff214e66a383c718004bab442ca639a8958fb20ddc285c890f227c574e"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\tyre_squeal.ogg",
+      "sha256": "6054b9d5719c3092857c00dcd206d266c41cb558caf45ef05c0ca44834770575"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\v8_high.ogg",
+      "sha256": "c17cce4932255456cb68227657e4b8df611aaa20cfbf54437d9946f81c35d66f"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\v8_high_off.ogg",
+      "sha256": "b4c8b79906d7319d9969cee55057826ac4689266088938754193649c83c1bac5"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\v8_idle.ogg",
+      "sha256": "1fa0777613cd5e5f204db3681f1fb731bd6b2cc7d2ef0433a0df184b5224a689"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\v8_low.ogg",
+      "sha256": "c96a76593e25a1e8f14063e6b5f09b0b38c18d0e4b8d308084a8263f6418a34b"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\v8_low_off.ogg",
+      "sha256": "fcdb833b766df59d42d0aed61928be1eb00e574c567712c28a96d17623aef2b3"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\v8_mid.ogg",
+      "sha256": "0a2d396e8361304518afe7755d2e9534a93fff3a18ec5197ee2ec5763eaff56e"
+    },
+    {
+      "file": "RealLifeOverhaul\\Sounds\\v8_mid_off.ogg",
+      "sha256": "fb601ab76883fca709069661dc1ca62613f814556f854727c7038fce0c5cb001"
+    }
+  ],
+  "note": "Directory ordering is a request; actual patch/load chronology must be verified."
+}

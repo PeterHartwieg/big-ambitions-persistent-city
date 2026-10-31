@@ -1,0 +1,52 @@
+{
+  "role": "rig_test",
+  "registrationCount": 885,
+  "largestScope": 885,
+  "nativeCampaignEntries": 0,
+  "campaignState": "No campaigns registered in the tested morning or quiet fixture states; native enabled/on/off lifecycle not fabricated. Existing stage tooling has no campaign-control seam. Agency UI deferred.",
+  "nativeCustomerCacheEntries": 0,
+  "registrationsWithFulfilledCustomerDemands": 1,
+  "registrationsWithDailyIncomes": 348,
+  "transactions": 8,
+  "financialSummaries": 4,
+  "marketingExpenses": [
+    {
+      "day": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "day": 2,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "day": 3,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "day": 4,
+      "values": [
+        0.0
+      ]
+    }
+  ],
+  "truncatedPaths": [],
+  "detachedObservationCount": 12,
+  "allDetachedGroupsLifecycleTimingTargetsUnknown": true,
+  "enumLegend": {
+    "CampaignReadStatus": {
+      "0": "Observed",
+      "1": "Unknown",
+      "2": "Refused"
+    },
+    "CampaignResidentGroup": {
+      "0": "Unknown"
+    }
+  },
+  "evidenceLimits": "Native field noninterference is proved for this captured state, including the observed empty customer cache. Six enabled-type doubles, one disabled-type double and unsupported-data doubles are detached diagnostic doubles, not native lifecycle or gesture proof."
+}
