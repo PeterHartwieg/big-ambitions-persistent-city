@@ -116,7 +116,12 @@ namespace PersistentCity.Core
             {
                 ShopMemory? previous = index < 0 || FoodMemoryPolicy.Expired(entries[index], experienceDay, settings) ? null : entries[index];
                 int affinity = previous == null ? 0 : FoodMemoryPolicy.EffectiveAffinity(previous, experienceDay, traits, settings);
-                affinity = Math.Max(-8, Math.Min(8, affinity + (cause == ShopExperience.Served ? settings.FoodMemoryServedGain : -FoodMemoryPolicy.Penalty(cause, traits, settings))));
+                int change = cause == ShopExperience.Served ? settings.FoodMemoryServedGain : -FoodMemoryPolicy.Penalty(cause, traits, settings);
+                affinity = Math.Max(-8, Math.Min(8, affinity + change));
+                // A failure must not refresh a still-positive habit's decay or expiry clock:
+                // otherwise it can outlive the same memory without that failure.
+                bool keepAge = cause != ShopExperience.Served && previous != null && affinity > 0;
+                if (keepAge) affinity = Math.Max(-8, Math.Min(8, previous!.Affinity + change));
                 int served = Math.Min(35, (previous?.Served ?? 0) + (cause == ShopExperience.Served ? 1 : 0));
                 // Prepare all values before publishing. Existing slot order cannot change on an update.
                 var replacement = index >= 0 ? entries[index] : new ShopMemory { BusinessRef = slot };
@@ -128,7 +133,8 @@ namespace PersistentCity.Core
                             if (FoodMemoryPolicy.CompareEviction(entries[i], Identity(entries[i].BusinessRef), entries[victim], Identity(entries[victim].BusinessRef), experienceDay, traits, settings) < 0) victim = i;
                         entries.RemoveAt(victim);
                     }
-                replacement.Day = experienceDay; replacement.Served = served; replacement.Affinity = affinity; replacement.Outcome = cause;
+                replacement.Day = keepAge ? previous!.Day : experienceDay;
+                replacement.Served = served; replacement.Affinity = affinity; replacement.Outcome = cause;
                 if (index < 0)
                 {
                     int insert = 0;

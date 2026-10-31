@@ -46,15 +46,21 @@ namespace PersistentCity.Core
             var shop = decision.Shops[0];
             if (!shop.Offers.Any(o => o.Price > Money.Zero && o.Price <= AvailableForMeal(meal))) return;
             var business = CapturedBusiness(shop);
-            var hours = new Place { Kind = PlaceKind.Shop, WeeklyHours = business.Hours, OpenMinute = 0, CloseMinute = 0 };
-            bool stockout = !shop.ServiceUnavailable && shop.MealsPerHour > 0 && shop.Offers.Count > 0 && shop.Offers.All(o => o.Units == 0);
-            if (!stockout && shop.ServiceUnavailable && shop.MealsPerHour == 0 && shop.Offers.Count > 0 && shop.Offers.All(o => o.Units == 0))
+            var hours = business.OpeningPlace;
+            var allowance = AvailableForMeal(meal);
+            bool affordableStockout = AffordableStockout(business, allowance);
+            double finish = Math.Max(decision.OriginAt, shop.NextServiceAt) + (shop.MealsPerHour > 0 ? 60 / shop.MealsPerHour : 0);
+            bool stockout = !shop.ServiceUnavailable && shop.MealsPerHour > 0 && affordableStockout
+                && Math.Max(0, shop.NextServiceAt - decision.OriginAt) <= MealRhythm.QueueMinutes(meal.Kind, Activity.Shop)
+                && finish + MealRhythm.EatingMinutes(meal.Kind) <= decision.Deadline
+                && finish < (DailyRoutine.NextClose(hours, decision.OriginAt) ?? double.NegativeInfinity);
+            if (!stockout && shop.ServiceUnavailable && shop.MealsPerHour == 0 && affordableStockout)
             {
                 // Held images intentionally retain only a generic service flag. Revalidate the
                 // named bag-stockout evidence at this reached shop; no routes or checkout.
                 var live = FailureEvidence(shop.BusinessId, shop.PlaceId, decision.OriginAt);
                 stockout = live?.Id == shop.BusinessId && live.PlaceId == shop.PlaceId && live.ServiceUnavailableReason == "Out of stock"
-                    && live.Offers.Any(o => o.Units == 0 && o.Price > Money.Zero && o.Price <= AvailableForMeal(meal));
+                    && AffordableStockout(live, allowance);
             }
             ShopExperience? cause = !DailyRoutine.Open(hours, decision.OriginAt) ? ShopExperience.Closed
                 : stockout ? ShopExperience.Stockout
@@ -66,6 +72,18 @@ namespace PersistentCity.Core
             memoryStore.CommitStage(meal, ExperienceStage.Committed, shop.BusinessId);
             memoryStore.CommitStage(meal, ExperienceStage.Reached, shop.BusinessId);
             memoryStore.Experience(meal, cause.Value, (int)(decision.OriginAt / 1440), Traits(meal, person), MemorySettings, shop.BusinessId, shop.PlaceId);
+        }
+
+        private static bool AffordableStockout(FoodBusiness business, Money allowance)
+        {
+            bool affordable = false;
+            foreach (var offer in business.Offers)
+                if (offer.Price > Money.Zero && offer.Price <= allowance)
+                {
+                    affordable = true;
+                    if (offer.Units != 0) return false; // Unknown stock is not proof of exhaustion.
+                }
+            return affordable;
         }
 
         internal object? DumpMemory(string consumerId)

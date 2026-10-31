@@ -1,5 +1,40 @@
 # Validation status
 
+## B1 review round 3 fixes - 31 October 2026 (offline only)
+
+Addresses Sol-r3-1/2 and Opus-r3-1. **1,941/1,941 unit tests, discovery and all
+31 required foreground commands pass**, including the standalone regressions and
+three demos. The other-worktree dotnet wait runs before each command.
+[Command results and tested source hashes](docs/reviews/2026-10-31-b1-r3-offline-checks.json).
+
+- Reached-stop stockout checks now consider affordable offers: confirmed zero stock
+  for the $4 hot dog is captured with $5 available even when a $9 burger remains
+  stocked. Wholly unaffordable menus and affordable unknown stock stay neutral;
+  known service, queue, opening hours and time must otherwise fit the visit.
+  Tests cover captured-image reload, terminal watermark replay, unchanged meal
+  identity fields, zero routes and zero checkout calls. The earlier identity test's
+  stockout fixture now uses a queue within patience so stockout is causal.
+- A failure leaving effective affinity positive subtracts from stored affinity
+  and preserves the old decay/expiry day. It cannot keep that habit alive after
+  the no-failure comparison expires. Tests compare actual two-shop probabilities
+  through day 65 (including the forget threshold), default/max decay and loyalty
+  bands 2/4, before/after memory reload; served counts and exactly-once remain intact.
+  The schema note explains the retained day anchor; no saved fields change.
+- Arrival closure, represented admission and reached-stop checks reuse the existing
+  mutation-validated `FoodBusiness.OpeningPlace`. In an offline .NET 10 comparison,
+  **10,000 warmed batches across the three sites allocate 32,160,000 -> 0 bytes
+  (3,216 -> 0 bytes/batch)**, with identical results. The regression checks both
+  replacement and in-place hours mutation. Thread/setup/first-use allocation is
+  outside that window. The roadmap Perf wins log records the reduction; no native
+  timing or mod-work gate claim is made.
+
+Five correctness reproductions fail against the prior production code; all pass
+with the fixes. The new tests add 14 cases, including the hours-cache comparison.
+[Focused red evidence and allocation comparison](docs/reviews/2026-10-31-b1-r3-focused-evidence.txt).
+Game-target DLL SHA-256: `ae7bb352957b03398db81c18aa6586c9fcef75a01c11d513d4e28daf988abc98`.
+No game or rig work. Existing numbered 6 Nov rig checks below remain pending.
+
+
 ## B1 review round 1 fixes - 31 October 2026 (offline only)
 
 Addresses Sol-r1-1/2 and Opus-r1-1/2 in `07107d4`, with unavailable-proof handling

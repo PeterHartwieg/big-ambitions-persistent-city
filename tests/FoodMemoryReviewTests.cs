@@ -9,6 +9,81 @@ namespace PersistentCity.Tests;
 public sealed partial class FoodMemoryTests
 {
     [Theory]
+    [InlineData(false, "stockout")] [InlineData(true, "stockout")]
+    [InlineData(false, "unaffordable")] [InlineData(true, "unaffordable")]
+    [InlineData(false, "unknown")] [InlineData(true, "unknown")]
+    [InlineData(false, "time")] [InlineData(true, "time")]
+    [InlineData(false, "queue")] [InlineData(true, "queue")]
+    public void ReachedMixedPriceMenuCapturesOnlyOtherwiseFeasibleAffordableStockout(bool reload, string evidence)
+    {
+        var (city, market, paths, _) = Ready();
+        var meal = city.State.Food!.Residents[0]; double at = meal.DesiredAt;
+        var person = city.State.Citizens[0]; person.PlaceId = "s0"; person.Activity = Activity.Shop;
+        meal.Allowance = Money.FromCents(500);
+        var shop = market.Source.Shops[0];
+        city.State.Food.Shops[0].ProductId = FoodProducts.HotDog;
+        city.State.Food.Shops[0].AdditionalProductIds.Add(FoodProducts.Burger);
+        shop.Offers.Clear();
+        shop.Offers.Add(new() { ProductId = FoodProducts.HotDog, Price = Money.FromCents(evidence == "unaffordable" ? 600 : 400),
+            Units = evidence == "unknown" ? null : 0 });
+        shop.Offers.Add(new() { ProductId = FoodProducts.Burger, Price = Money.FromCents(900), Units = 10 });
+        if (evidence == "time") person.NextEventMinute = person.ActivityUntilMinute = at + .5;
+        if (evidence == "queue") city.State.Food.Shops[0].NextServiceAt = at + 20;
+        city = new CitySimulator(city.State, paths); city.AttachFoodMarket(market);
+        city.AdvanceFrameSlice(at, 1); // Save the captured mixed menu before evaluation.
+        Assert.NotNull(city.State.Food!.Residents[0].Decision);
+        if (reload) city = Reload(city, market, paths);
+        Advance(city, at + .1, 1); meal = city.State.Food!.Residents[0];
+        Assert.Equal(MealStatus.Missed, meal.Status);
+        if (evidence == "stockout")
+        {
+            var entry = Assert.Single(meal.Memory.Entries);
+            Assert.Equal(ShopExperience.Stockout, entry.Outcome); Assert.True(entry.Affinity < 0);
+            Assert.Equal(0, entry.Served); Assert.Equal(ExperienceStage.Failed, meal.Memory.Watermark!.Stage);
+        }
+        else Assert.Empty(meal.Memory.Entries);
+        string wire = MemoryWire.Encode(meal.Memory);
+        city = Reload(city, market, paths); Advance(city, at + .2, 1);
+        Assert.Equal(wire, MemoryWire.Encode(city.State.Food!.Residents[0].Memory));
+        Assert.Equal("", meal.BusinessId); Assert.Equal(0, paths.Out); Assert.Equal(0, paths.Back); Assert.Equal(0, market.Calls);
+    }
+
+    [Theory]
+    [InlineData(4, 2)] [InlineData(4, 14)] [InlineData(2, 14)]
+    public void FailedPositiveMemoryCannotImproveFutureReturnProbabilityOrExtendExpiry(int loyalty, int decayDays)
+    {
+        var settings = new FoodMemorySettings { FoodMemoryDecayDaysPerPoint = decayDays };
+        var traits = Traits(loyalty, 4); var food = new FoodCommerceState(); var store = new FoodMemoryStore(food);
+        var meal = Meal(day: 28); const int slot = 0;
+        food.BusinessReferences.Add(new() { Slot = slot, BusinessId = meal.BusinessId, PlaceId = meal.PlaceId });
+        store = new FoodMemoryStore(food);
+        meal.Memory.Entries.Add(new() { BusinessRef = slot, Day = 1, Affinity = 8, Served = 8, Outcome = ShopExperience.Served });
+        string before = MemoryWire.Encode(meal.Memory);
+        Visit(store, meal, ShopExperience.Queue, 28, settings, traits);
+        for (int reload = 0; reload < 2; reload++)
+        {
+            if (reload == 1) meal.Memory = MemoryWire.Decode(MemoryWire.Encode(meal.Memory));
+            for (int day = 28; day <= 65; day++)
+            {
+                double Probability(ConsumerMemory memory)
+                {
+                    var offers = new[] {
+                        new EvaluatedFoodOffer(meal.BusinessId, FoodProducts.Croissant, Money.FromCents(100), 1, 0, 5, 100, null, null, MealKind.Lunch,
+                            FoodMemoryPolicy.Contribution(memory, slot, day, traits, settings)),
+                        new EvaluatedFoodOffer("alternative", FoodProducts.Croissant, Money.FromCents(100), 1, 0, 5, 100, null, null, MealKind.Lunch, 0) };
+                    return FoodChoicePolicy.Weight(offers[0], traits, Money.FromCents(500), new()) /
+                        offers.Sum(o => FoodChoicePolicy.Weight(o, traits, Money.FromCents(500), new()));
+                }
+                Assert.True(Probability(meal.Memory) <= Probability(MemoryWire.Decode(before)), $"loyalty={loyalty}, decay={decayDays}, day={day}");
+            }
+            var entry = Assert.Single(meal.Memory.Entries);
+            Assert.Equal(1, entry.Day); Assert.Equal(8, entry.Served); Assert.Equal(ShopExperience.Queue, entry.Outcome);
+            Assert.True(FoodMemoryPolicy.Expired(entry, 30, settings));
+            Assert.False(store.Experience(meal, ShopExperience.Queue, 28, traits, settings));
+        }
+    }
+
+    [Theory]
     [InlineData(1)] [InlineData(2)] [InlineData(3)] [InlineData(4)]
     public void BadInsertionNeverWinsNewSeedsByEvictingAnotherShopsPositiveMemory(int capacity)
     {
@@ -138,7 +213,7 @@ public sealed partial class FoodMemoryTests
         var p = city.State.Citizens[0]; p.PlaceId = "s0"; p.Activity = Activity.Shop;
         if (breakAlreadyTooShort) p.NextEventMinute = p.ActivityUntilMinute = at + 2;
         else market.Source.Shops[0].Offers[0].Units = 0;
-        city.State.Food.Shops[0].NextServiceAt = at + 20;
+        city.State.Food.Shops[0].NextServiceAt = at + (breakAlreadyTooShort ? 20 : 10);
         city = new CitySimulator(city.State, paths); city.AttachFoodMarket(market);
         Advance(city, at + .1); meal = city.State.Food!.Residents[0];
         Assert.Equal("", meal.BusinessId); Assert.Equal("", meal.PlaceId); Assert.Equal("", meal.ProductId);

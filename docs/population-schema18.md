@@ -206,7 +206,13 @@ can retain named failure evidence without committing a second journey.
 Affinity decays toward zero by whole points lazily from logical elapsed days;
 loyalty scales days/point from 0.5x to 2x. Entries expire only after the configured
 retention age (the endpoint is retained). Update materializes decay only for the
-experienced entry. Served counts saturate at 35; affinity saturates at -8..8.
+experienced entry, except a failure whose effective result remains positive: it
+subtracts the penalty from stored affinity and preserves the previous day as the
+decay/expiry anchor. Re-dating that positive habit could otherwise outlive the
+pre-failure entry and raise future return chance. The cause still records the
+actual failure; this case's day is not the date of that failure. Served visits and
+nonpositive results use the experience day. Served counts saturate at 35; affinity
+saturates at -8..8.
 Positive affinity raises habit with loyalty; unseen/expired alternatives receive
 curiosity novelty. A bad experience subtracts at least one point, even with a zero
 configured penalty; zero then removes only the extra configured magnitude. Queue
@@ -243,7 +249,11 @@ No regular projection/inspector wording or B2 settings are added.
 
 Round 1 capture correction: explicitly verified bag exhaustion (`Out of stock`,
 zero units, zero throughput at a staffed counter) is checked before a generic
-arrival-service refusal. At an existing stop the saved generic service flag is
+arrival-service refusal. At a reached stop, product stockout requires every
+affordable offer to have confirmed zero units, with known service, queue and time
+otherwise fitting the visit; stocked unaffordable alternatives do not mask it.
+Wholly unaffordable menus, affordable unknown stock and visits already impossible
+from queue/time stay neutral. The saved generic service flag is
 revalidated using one on-demand, generation-matched `IFoodFailureMarket` read;
 the native implementation bypasses the decision-supply cache. Missing/throwing or
 unknown-staffing proof stays neutral and does not interrupt the original refusal.

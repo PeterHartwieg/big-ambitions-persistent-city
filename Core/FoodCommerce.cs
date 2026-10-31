@@ -335,7 +335,7 @@ namespace PersistentCity.Core
                     var available = ReadBusiness(meal.BusinessId, now);
                     if (available?.PlaceId != meal.PlaceId) available = null;
                     if (city.State.Capabilities.Active && NewChoice(meal) && available != null
-                        && !DailyRoutine.Open(new Place { Kind = PlaceKind.Shop, OpenMinute = 0, CloseMinute = 0, WeeklyHours = available.Hours }, now))
+                        && !DailyRoutine.Open(available.OpeningPlace, now))
                     { Finish(meal, MealStatus.Missed, "Shop closed before admission"); return; }
                     if (available?.MealsPerHour == null || available.MealsPerHour <= 0)
                     {
@@ -351,7 +351,7 @@ namespace PersistentCity.Core
                     double? close = null;
                     if (meal.Slot > 0)
                     {
-                        var hours = new Place { Id = available.PlaceId, Kind = PlaceKind.Shop, OpenMinute = 0, CloseMinute = 0, WeeklyHours = available.Hours };
+                        var hours = available.OpeningPlace;
                         var open = DailyRoutine.NextOpen(hours, now, meal.Deadline);
                         if (!open.HasValue)
                         { Finish(meal, MealStatus.Missed, "Shop closed before admission"); return; }
