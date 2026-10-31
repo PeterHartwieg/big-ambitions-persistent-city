@@ -59,7 +59,10 @@ Index work uses the existing total-unit/time caps and food-continuation counter.
 Input changes discard/restart the private image before publication; save/reload
 restarts that uncaptured event with the same ordering. Held decisions continue
 with captured inputs, and stop membership/commit bookkeeping cannot trigger a
-geometry build. Explicit on-demand diagnostics may finish preparation themselves.
+geometry build. Before activation, or while the published image is stale, stop
+membership retains the live legacy scope lookup, so late authority acquisition
+is visible without reload; a diagnostic-built image cannot freeze membership.
+Explicit on-demand diagnostics may finish preparation themselves.
 Unchanged consumers do O(1) publication checks and bounded draws. Native discovery uses its existing 64-controller ring and initial
 startup pass, increments the geometry revision for scope identity/place/menu,
 withdrawal or scope-list changes, and rechecks sampled native eligibility directly.

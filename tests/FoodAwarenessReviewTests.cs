@@ -103,6 +103,48 @@ public sealed class FoodAwarenessReviewTests
         Assert.Equal(SaveCodec.Write(a.State),SaveCodec.Write(b.State));Assert.Equal(ma.Orders,mb.Orders);Assert.Equal(pa.Out,pb.Out);
     }
 
+    [Theory] [InlineData(0)] [InlineData(1)] [InlineData(2)]
+    public void LatePreActivationScopeHasIdenticalStopDecisionAcrossReloadAndInspection(int inspection)
+    {
+        (CitySimulator city,WeightedFoodChoiceTests.Market market,WeightedFoodChoiceTests.Planner planner) LateScope(bool inspect)
+        {
+            var (prepared,market,planner)=WeightedFoodChoiceTests.Ready(79,2);
+            var state=prepared.State;var food=state.Food!;food.AwarenessStartsDay=2;
+            var acquired=food.Shops[1];food.Shops.RemoveAt(1);
+            var person=state.Citizens[0];var meal=food.Residents[0];
+            person.PlaceId="s1";person.Activity=Activity.Shop;person.Phase=CitizenPhase.AtPlace;
+            person.NextEventMinute=person.ActivityUntilMinute=meal.DesiredAt+90;
+            person.RecentVisits.Add(new VisitRecord {AtMinute=state.Minute,PlaceId=person.PlaceId,Activity=Activity.Shop});
+            var city=new CitySimulator(state,planner);city.AttachFoodMarket(market);
+            if(inspect && inspection==1) city.InspectFoodAwareness("r");
+            food.Shops.Add(acquired); // authority acquired after attachment, on the migration/load day
+            if(inspect && inspection==2) city.InspectFoodAwareness("r");
+            return (city,market,planner);
+        }
+        var (continuous,mc,pc)=LateScope(false);
+        var (reloaded,mr,pr)=LateScope(false);
+        var (inspected,mi,pi)=LateScope(true);
+        var read=SaveCodec.Read(SaveCodec.Write(reloaded.State));Assert.Equal(SaveReadStatus.Loaded,read.Status);
+        reloaded=new CitySimulator(read.State!,pr);reloaded.AttachFoodMarket(mr);
+        double at=continuous.State.Food!.Residents[0].DesiredAt;
+        foreach(var city in new[]{reloaded,inspected,continuous})
+        {
+            city.AdvanceTo(at,1);
+            var meal=city.State.Food!.Residents[0];Assert.NotNull(meal.Decision);
+            Assert.StartsWith("stop:",meal.Decision!.ContextKey);
+            Assert.Equal("b1",Assert.Single(meal.Decision.Shops).BusinessId);
+            Assert.Null(meal.Decision.Awareness); // still the pre-activation policy
+        }
+        Assert.Equal(SaveCodec.Write(continuous.State),SaveCodec.Write(reloaded.State));
+        Assert.Equal(SaveCodec.Write(continuous.State),SaveCodec.Write(inspected.State));
+        foreach(var city in new[]{continuous,reloaded,inspected})
+            while(!city.AdvanceTo(at+20,1).CaughtUp) {}
+        Assert.Equal(SaveCodec.Write(continuous.State),SaveCodec.Write(reloaded.State));
+        Assert.Equal(SaveCodec.Write(continuous.State),SaveCodec.Write(inspected.State));
+        Assert.Equal(mc.Orders,mr.Orders);Assert.Equal(mc.Orders,mi.Orders);
+        Assert.Equal(0,pc.Out+pc.Back+pr.Out+pr.Back+pi.Out+pi.Back);
+    }
+
     [Fact]
     public void MissingPlacesStillConsumeBoundedCollectorOperations()
     {

@@ -18,7 +18,6 @@ namespace PersistentCity.Core
         private long awarenessRevision=-1,awarenessInvalidation,buildingRevision,buildingInvalidation;
         private List<FoodScope>? awarenessScopes,buildingScopes;
         private int awarenessCount=-1,buildingCount;
-        private readonly Dictionary<string,FoodScope> initialScopesByPlace=new Dictionary<string,FoodScope>(StringComparer.Ordinal);
         internal void InvalidateAwareness() { awarenessInvalidation++; }
         private long CurrentAwarenessRevision => (market as IFoodAwarenessRevision)?.AwarenessRevision ?? 0;
         private bool AwarenessReady => awarenessCatalogue!=null && awarenessRevision==CurrentAwarenessRevision
@@ -44,9 +43,12 @@ namespace PersistentCity.Core
         }
         private FoodAwarenessCatalogue AwarenessCatalogue() => AwarenessReady ? awarenessCatalogue!
             : throw new InvalidOperationException("Awareness image must finish bounded preparation before capture.");
+        // Before activation no index is prepared by normal advancement. Retain the live
+        // existing-stop lookup until the published index is current, including after an
+        // on-demand diagnostic followed by a late scope acquisition.
         private FoodScope? ScopeAtPlace(string place)
-            => awarenessCatalogue!=null ? awarenessCatalogue.ScopeAtPlace(place)
-                : initialScopesByPlace.TryGetValue(place,out var scope) ? scope : null;
+            => AwarenessReady ? awarenessCatalogue!.ScopeAtPlace(place)
+                : state.Shops.FirstOrDefault(scope=>scope.PlaceId==place);
         private Position? Anchor(string id) => id.Length==0 ? (Position?)null : city.FindPlace(id).Position;
         private FoodAwarenessImage AwarenessSample(ResidentMeal meal,CitizenState person,FoodRoutineStop stop,int day,bool atStop,FoodAwarenessDump? dump=null)
         {
