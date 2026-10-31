@@ -68,7 +68,11 @@ static class Program
         long allocations = GC.GetAllocatedBytesForCurrentThread() - bytes, retained = GC.GetTotalMemory(true) - before;
         string saturated = SaveCodec.Write(state);
         if (SaveCodec.Read(saturated).Status != SaveReadStatus.Loaded) throw new Exception("Saturated checkpoint refused");
-        var store = new FoodMemoryStore(state.Food!); var residentsList = state.Food!.Residents;
+        long indexBefore = GC.GetTotalMemory(true), indexAllocatedBefore = GC.GetAllocatedBytesForCurrentThread();
+        var store = new FoodMemoryStore(state.Food!);
+        long indexAllocatedBytes = GC.GetAllocatedBytesForCurrentThread() - indexAllocatedBefore;
+        long indexRetainedBytes = GC.GetTotalMemory(true) - indexBefore;
+        var residentsList = state.Food!.Residents;
         double sink = 0; var lookup = new List<double>(); var updates = new List<double>(); long lookupAllocations = 0, updateAllocations = 0;
         for (int round = -5; round < 40; round++)
         {
@@ -89,6 +93,7 @@ static class Program
         }
         return new { residents, consumers = residentsList.Count, saturatedEntries = residentsList.Count * 4,
             retainedMemoryBytes = retained, populationAllocatedBytes = allocations,
+            sharedIndexRetainedBytes = indexRetainedBytes, sharedIndexAllocatedBytes = indexAllocatedBytes,
             emptySavedBytes = Encoding.UTF8.GetByteCount(empty), saturatedSavedBytes = Encoding.UTF8.GetByteCount(saturated),
             savedByteGrowth = saturated.Length - empty.Length, perConsumerMemoryGrowth = 40,
             consumerExtensionInclusiveCeiling = 51, b0PerConsumerAllocation = 64,
