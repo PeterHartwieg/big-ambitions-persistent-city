@@ -8,9 +8,10 @@ namespace PersistentCity.Runtime
     sealed class CityBuildingController
     {
         public bool Destroyed;
+        public bool Accessible = true, HasEntrance = true;
         public Position Entrance;
         public GameObject gameObject = new GameObject();
-        public Registration buildingRegistration = new Registration();
+        public Registration? buildingRegistration = new Registration();
         public static bool operator ==(CityBuildingController? a, CityBuildingController? b)
             => ReferenceEquals(a,b) || (ReferenceEquals(a,null) || a.Destroyed) && (ReferenceEquals(b,null) || b.Destroyed);
         public static bool operator !=(CityBuildingController? a, CityBuildingController? b) => !(a==b);
@@ -31,8 +32,8 @@ namespace PersistentCity.Runtime
     }
     static class GamePlaces
     {
-        public static bool TryEntrance(CityBuildingController c, out Position p) { p=c.Entrance; return true; }
-        public static bool BuildingAccessible(CityBuildingController c) => true;
+        public static bool TryEntrance(CityBuildingController c, out Position p) { p=c.Entrance; return c.HasEntrance; }
+        public static bool BuildingAccessible(CityBuildingController c) => c.Accessible;
     }
     sealed class NativeDoorHarness : IOptionalStopEnvironment
     {
@@ -104,6 +105,7 @@ namespace PersistentCity.Runtime
 
         public static void Run()
         {
+            VenueBoundaries();
             ReloadMultipleEntrances(false);
             ReloadMultipleEntrances(true);
             var h=new NativeDoorHarness(); var p=new Place {Id="shop", Position=new Position(1,0,1)};
@@ -125,6 +127,75 @@ namespace PersistentCity.Runtime
             CityManager.Instance.cityBuildingControllers.Add(new CityBuildingController {Entrance=p.Position});
             if (!h.NativeDoorPresent(p,DwellKind.WindowShopping)) throw new Exception("Later replacement must remain discoverable");
             Console.WriteLine("Native door replacement: 6 checks passed.");
+        }
+
+        static void VenueBoundaries()
+        {
+            int checks=0;
+            // Native identifier evidence is documented separately. These doubles test only
+            // the unchanged predicate, not asset availability or new chat eligibility.
+            foreach(string type in new[] {"nightclub","coffeeshop","fastfoodrestaurant","gym","cinema","theater","school","lawfirm","warehouse","unknown"})
+            {
+                var p=new Place {Id="venue:"+type,Position=new Position(40,0,0)};
+                var b=new CityBuildingController {Entrance=p.Position};
+                b.buildingRegistration!.businessTypeName="ba:businesstype_"+type;
+                CityManager.Instance.cityBuildingControllers.Clear(); CityManager.Instance.cityBuildingControllers.Add(b);
+                var h=new NativeDoorHarness();
+                if(!h.NativeDoorPresent(p,DwellKind.Break) || !h.NativeDoorPresent(p,DwellKind.WindowShopping)
+                    || h.NativeDoorPresent(p,DwellKind.ChatOutsideVenue)!=(type=="nightclub")) throw new Exception("Venue predicate changed: "+type);
+                checks+=3;
+                foreach(Action<CityBuildingController> damage in new Action<CityBuildingController>[] {
+                    x=>x.gameObject.activeInHierarchy=false, x=>x.Accessible=false, x=>x.HasEntrance=false,
+                    x=>x.buildingRegistration=null, x=>x.buildingRegistration!.HasEstablishedBusiness=false,
+                    x=>x.buildingRegistration!.temporarilyClosed=true })
+                {
+                    var bad=new CityBuildingController {Entrance=p.Position}; damage(bad);
+                    CityManager.Instance.cityBuildingControllers.Clear(); CityManager.Instance.cityBuildingControllers.Add(bad);
+                    var missing=new NativeDoorHarness();
+                    foreach(var kind in new[] {DwellKind.Break,DwellKind.WindowShopping,DwellKind.ChatOutsideVenue})
+                    { if(missing.NativeDoorPresent(p,kind)) throw new Exception("Missing venue fact accepted"); checks++; }
+                }
+            }
+            CityManager.Instance.cityBuildingControllers.Clear();
+            Console.WriteLine($"Native venue boundaries: {checks} checks passed (doubles; no venue enabled).");
+        }
+
+        public static void Findings()
+        {
+            var p=new Place {Id="ambiguous",Position=new Position(40,0,0)};
+            var club=new CityBuildingController {Entrance=p.Position};
+            var cafe=new CityBuildingController {Entrance=p.Position}; cafe.buildingRegistration!.businessTypeName="ba:businesstype_coffeeshop";
+            CityManager.Instance.cityBuildingControllers.Clear(); CityManager.Instance.cityBuildingControllers.AddRange(new[] {club,cafe});
+            bool clubFirst=new NativeDoorHarness().NativeDoorPresent(p,DwellKind.ChatOutsideVenue);
+            CityManager.Instance.cityBuildingControllers.Reverse();
+            bool cafeFirst=new NativeDoorHarness().NativeDoorPresent(p,DwellKind.ChatOutsideVenue);
+            Console.WriteLine($"E2b ambiguity observation (not an acceptance assertion): expected refuse both; actual club-first={clubFirst}, cafe-first={cafeFirst}.");
+            CityManager.Instance.cityBuildingControllers.Clear();
+        }
+
+        public static void Performance()
+        {
+            foreach(int count in new[] {48,256})
+            {
+                CityManager.Instance.cityBuildingControllers.Clear();
+                var h=new NativeDoorHarness();
+                var venues=Enumerable.Range(0,count).Select(i=>new Place {Id="perf:"+i,Position=new Position(i*10,0,0)}).ToArray();
+                foreach(var p in venues) CityManager.Instance.cityBuildingControllers.Add(new CityBuildingController {Entrance=p.Position});
+                int before=DwellSpots.SampleCalls;
+                foreach(var p in venues) { Time.frameCount++; h.Spots(p,DwellKind.Break); }
+                int cold=DwellSpots.SampleCalls-before;
+                var times=new double[200]; long alloc=GC.GetAllocatedBytesForCurrentThread();
+                for(int n=0;n<times.Length;n++)
+                {
+                    long start=System.Diagnostics.Stopwatch.GetTimestamp();
+                    foreach(var p in venues) h.Spots(p,DwellKind.Break);
+                    times[n]=System.Diagnostics.Stopwatch.GetElapsedTime(start).TotalMilliseconds;
+                }
+                alloc=GC.GetAllocatedBytesForCurrentThread()-alloc; Array.Sort(times);
+                if(cold!=count || DwellSpots.SampleCalls-before!=count) throw new Exception("Facade cache sampling bound changed");
+                foreach(double t in times.Where(t=>t>=30)) Console.WriteLine(FormattableString.Invariant($"FLAG >=30ms: facade doubles cap-batch={count}; ms={t:F4}"));
+                Console.WriteLine(FormattableString.Invariant($"Facade doubles cap-batch={count}: cold samples={cold} (one/frame), warm queries={count*200}, new warm samples=0; batch ms p50={times[99]:F4} p95={times[189]:F4} max={times[199]:F4}; bytes/query={alloc/(double)(count*200):F1}; spikes>=30ms={times.Count(t=>t>=30)}."));
+            }
         }
     }
 }
