@@ -12,6 +12,7 @@ namespace PersistentCity.Core
         internal FoodChoiceSettings ChoiceSettings { get; }
         private ResidentMeal? pendingDecision;
         private FoodRoutineStop? capturedStop;
+        private double? choiceMilliseconds;
         internal bool HasPendingDecision => pendingDecision != null;
         private bool NewChoice(ResidentMeal meal) => meal.Day>=state.ChoiceStartsDay && state.ChoicePolicyVersion==FoodChoicePolicy.Version;
         private ResidentTraits Traits(ResidentMeal meal,CitizenState person) => meal.RepresentedTraits ?? person.Traits!;
@@ -77,8 +78,10 @@ namespace PersistentCity.Core
                 Math.Min(stop.DepartureAt,now+(meal.Slot==0 ? MealRhythm.BreakMinutes(person,city.State.Seed,meal.Kind) : RepresentedBreak(person,stop,meal.Kind))));
             var d=new FoodDecisionState {IntentId=meal.IntentId,ContextKey=context,Attempt=meal.ContextAttempts+1,OriginAt=now,Deadline=deadline};
             // Capture into a private image first. Exceptions cannot publish a partial sample or consume an attempt.
+            long choiceStarted=city.ObservingFood ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             var scopes=atStop ? state.Shops.Where(s=>s.PlaceId==stop.PlaceId).Select(FreezeScope).ToArray()
                 : Shortlist(meal,person,stop,Draw(meal,d));
+            choiceMilliseconds=city.ObservingFood ? (System.Diagnostics.Stopwatch.GetTimestamp()-choiceStarted)*1000.0/System.Diagnostics.Stopwatch.Frequency : (double?)null;
             foreach(var scope in scopes)
             {
                 var b=market is IFoodCandidateMarket capture ? capture.CaptureBusiness(scope.BusinessId,now) : ReadBusiness(scope.BusinessId,now);
@@ -109,12 +112,13 @@ namespace PersistentCity.Core
             var ranks=new double[FoodChoicePolicy.MaximumShortlist];int count=0;
             var origin=city.FindPlace(stop.PlaceId);
             var traits=Traits(meal,person);
+            var distancePreference=new FoodChoicePolicy.DistancePreference(traits,ChoiceSettings);
             double pace=routes is IFoodWalkingPace walking ? walking.WalkingMetresPerMinute : 120;
             foreach(var scope in state.Shops)
             {
                 if(market is IFoodCandidateMarket candidates && !candidates.IsCandidate(scope)) continue;
                 double minutes=Position.Distance(origin.Position,city.FindPlace(scope.PlaceId).Position)/pace;
-                double rank=FoodDrawContext.Rank(draw.ShopHash(scope.BusinessId),FoodChoicePolicy.DistanceWeight(minutes,traits,ChoiceSettings,true));
+                double rank=FoodDrawContext.Rank(draw.ShopHash(scope.BusinessId),distancePreference.Weight(minutes,true));
                 int insert=0;
                 while(insert<count && (ranks[insert]<rank || ranks[insert]==rank
                     && StringComparer.Ordinal.Compare(selected[insert].BusinessId,scope.BusinessId)<0)) insert++;
@@ -194,7 +198,9 @@ namespace PersistentCity.Core
                     c.ServiceEndsAt!.Value-d.OriginAt+c.ReturnMinutes!.Value+intent.EatingMinutes,d.Deadline-d.OriginAt,
                     c.CustomerServicePercent,c.DistrictDemandPercent,meal.Kind));
             }
+            long choiceStarted=city.ObservingFood ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             var pick=FoodChoicePolicy.Select(evaluated,Traits(meal,person),meal.Allowance,Draw(meal,d),ChoiceSettings,intent.OutsideOption!=FoodOutsideOption.None);
+            if(choiceMilliseconds.HasValue) choiceMilliseconds+=(System.Diagnostics.Stopwatch.GetTimestamp()-choiceStarted)*1000.0/System.Diagnostics.Stopwatch.Frequency;
             d.Result=pick.Outside ? FoodDecisionResult.Outside : pick.Index>=0 ? FoodDecisionResult.Selected : FoodDecisionResult.NoFeasible;
             d.Reason=pick.Reason;d.Factor1=pick.Factor1;d.Factor2=pick.Factor2;
             if(pick.Index>=0) {d.BusinessId=evaluated[pick.Index].BusinessId;d.ProductId=evaluated[pick.Index].ProductId;}
@@ -311,7 +317,7 @@ namespace PersistentCity.Core
             EndDecision(meal);
             RecordChoices(intent,businesses);
             if(city.ObservingFood) city.ObserveFood(new FoodDecisionTrace {Consumer=Consumer(person,meal.Allowance,meal),
-                Intent=intent,Businesses=businesses,Quotes=quotes,MealKind=meal.Kind,Decision=d,
+                Intent=intent,Businesses=businesses,Quotes=quotes,MealKind=meal.Kind,Decision=d,ChoiceMilliseconds=choiceMilliseconds,
                 RouteCalls=atStop ? 0 : d.Shops.Sum(s=>(s.OutwardQuote==FoodQuoteState.Answered || s.OutwardQuote==FoodQuoteState.Refused ? 1 : 0)
                     +(s.ReturnQuote==FoodQuoteState.Answered || s.ReturnQuote==FoodQuoteState.Refused ? 1 : 0))});
             // A compact choice explanation lives in the existing Reason field until checkout; outcomes preserve factors.

@@ -28,6 +28,9 @@ namespace PersistentCity.Core
         public int RouteCalls { get; set; }
         public double ElapsedMilliseconds { get; set; }
         public FoodDecisionState? Decision { get; set; }
+        /// <summary>Shortlist/hash/traits/sampling work only, excluding supply capture, feasibility and routes.
+        /// Null if this diagnostic did not observe the initial capture (for example after reload).</summary>
+        public double? ChoiceMilliseconds { get; set; }
     }
     public enum MealStatus { Pending, Travelling, Serving, Paid, Declined, Missed, Uncertain }
     public sealed class MealOuting

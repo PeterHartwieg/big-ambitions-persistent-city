@@ -62,6 +62,21 @@ namespace PersistentCity.Core
     public static partial class FoodChoicePolicy
     {
         private static readonly double[] TasteRatios={.5,.75,1,1.5,2};
+        internal readonly struct DistancePreference
+        {
+            private readonly double weight,scale,divisor,floor,temperature;
+            internal DistancePreference(ResidentTraits traits,FoodChoiceSettings settings)
+            {
+                weight=settings.FoodChoiceDistanceWeight;scale=settings.FoodChoiceDistanceScaleMinutes;
+                divisor=1+traits.Band(ResidentTrait.TravelWillingness)/2.0;
+                floor=settings.FoodChoiceWeightFloor;temperature=settings.FoodShortlistTemperature;
+            }
+            internal double Weight(double minutes,bool shortlist)
+            {
+                double w=1/(1+weight*Math.Max(0,minutes)/scale*2/divisor);
+                return shortlist ? Positive(w,floor,temperature) : w;
+            }
+        }
         public static int Taste(ResidentTraits t,string product) => t.Band(product==FoodProducts.Croissant ? ResidentTrait.CroissantTaste
             : product==FoodProducts.Burger ? ResidentTrait.BurgerTaste : ResidentTrait.HotDogTaste);
 
@@ -83,11 +98,7 @@ namespace PersistentCity.Core
             return Positive(w,s.FoodChoiceWeightFloor,s.FoodChoiceTemperature);
         }
         public static double DistanceWeight(double minutes,ResidentTraits t,FoodChoiceSettings s,bool shortlist)
-        {
-            double w=1/(1+s.FoodChoiceDistanceWeight*Math.Max(0,minutes)/s.FoodChoiceDistanceScaleMinutes
-                *2/(1+t.Band(ResidentTrait.TravelWillingness)/2.0));
-            return shortlist ? Positive(w,s.FoodChoiceWeightFloor,s.FoodShortlistTemperature) : w;
-        }
+            => new DistancePreference(t,s).Weight(minutes,shortlist);
         private static double Positive(double w,double floor,double temperature)
         {
             if(!Position.Finite(w)) w=floor;

@@ -44,11 +44,12 @@ static class Program
     }
     static object Bench(int shops,bool nativeIds=false)
     {
-        var totals=new List<double>();var units=new List<double>();var allocations=new List<long>();var policyCosts=new List<double>();int calls=0;
+        var totals=new List<double>();var units=new List<double>();var allocations=new List<long>();var policyCosts=new List<double>();var exactPolicyCosts=new List<double>();int calls=0;
         var evaluated=Enumerable.Range(0,8).SelectMany(i=>FoodProducts.Ids.Select(id=>new EvaluatedFoodOffer("b"+i,id,Money.FromCents(100),1,0,12,90,75,60,MealKind.Lunch))).ToArray();
         for(int i=0;i<600;i++)
         {
             var (city,paths)=Ready(i,shops,nativeIds);double at=city.State.Food!.Residents[0].DesiredAt;
+            double? exact=null;city.FoodDecisionObserved+=t=>exact=t.ChoiceMilliseconds;
             long before=GC.GetAllocatedBytesForCurrentThread();long start=Stopwatch.GetTimestamp();
             bool caught;int step=0;double captureMs=0;
             do
@@ -67,11 +68,11 @@ static class Program
             var settings=new FoodChoiceSettings();long pick=Stopwatch.GetTimestamp();
             FoodChoicePolicy.Select(evaluated,city.State.Citizens[0].Traits!,m.Allowance,draw,settings,false);
             double pickMs=Stopwatch.GetElapsedTime(pick).TotalMilliseconds;
-            if(i>=88) {totals.Add(elapsed);allocations.Add(bytes);policyCosts.Add(captureMs+pickMs);}
+            if(i>=88) {totals.Add(elapsed);allocations.Add(bytes);policyCosts.Add(captureMs+pickMs);exactPolicyCosts.Add(exact ?? throw new Exception("No policy timing"));}
         }
-        totals.Sort();units.Sort();allocations.Sort();policyCosts.Sort();
+        totals.Sort();units.Sort();allocations.Sort();policyCosts.Sort();exactPolicyCosts.Sort();
         return new {shops,nativeIds,samples=totals.Count,fullMs=new {p50=totals[totals.Count/2],p95=totals[(int)(totals.Count*.95)],max=totals[^1]},
-            continuationUnitMs=new {p95=units[(int)(units.Count*.95)],max=units[^1]},shortlistCapturePlusPureSamplingMs=new {p95=policyCosts[(int)(policyCosts.Count*.95)],max=policyCosts[^1]},bytesPerDecision=allocations[allocations.Count/2],logicalRoutes=calls};
+            continuationUnitMs=new {p95=units[(int)(units.Count*.95)],max=units[^1]},shortlistCapturePlusPureSamplingMs=new {p95=policyCosts[(int)(policyCosts.Count*.95)],max=policyCosts[^1]},exactShortlistTraitsSamplingMs=new {p50=exactPolicyCosts[exactPolicyCosts.Count/2],p95=exactPolicyCosts[(int)(exactPolicyCosts.Count*.95)],max=exactPolicyCosts[^1]},bytesPerDecision=allocations[allocations.Count/2],logicalRoutes=calls};
     }
     static void Main()
     {
