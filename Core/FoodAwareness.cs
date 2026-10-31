@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -98,7 +99,7 @@ namespace PersistentCity.Core
         private readonly Entry[] entries;
         private readonly Dictionary<string,Entry> byId;
         private readonly Dictionary<string,Entry> byPlace;
-        private readonly Dictionary<(int,int),int[]>[] levels;
+        private readonly SpatialLevel[] levels;
         private static readonly int[] Scales={32,64,128,256,512,1024};
         public string Revision { get; }
         public int Count => entries.Length;
@@ -125,26 +126,61 @@ namespace PersistentCity.Core
             entries=list.OrderBy(e=>e.BusinessId,StringComparer.Ordinal).ToArray();
             byId=entries.ToDictionary(e=>e.BusinessId,StringComparer.Ordinal);
             byPlace=entries.ToDictionary(e=>e.PlaceId,StringComparer.Ordinal);
-            var text=new StringBuilder("pc:awareness-catalogue:1");
-            foreach(var e in entries)
-                text.Append('|').Append(e.BusinessId.Length).Append(':').Append(e.BusinessId)
-                    .Append('|').Append(e.PlaceId.Length).Append(':').Append(e.PlaceId)
-                    .Append('|').Append((int)e.Kind).Append('|').Append(e.Position.X.ToString("R",CultureInfo.InvariantCulture))
-                    .Append('|').Append(e.Position.Y.ToString("R",CultureInfo.InvariantCulture))
-                    .Append('|').Append(e.Position.Z.ToString("R",CultureInfo.InvariantCulture));
-            using(var sha=SHA256.Create()) Revision=Convert.ToBase64String(sha.ComputeHash(Encoding.UTF8.GetBytes(text.ToString())));
-            levels=new Dictionary<(int,int),int[]>[Scales.Length];
+            // Stream canonical binary metadata through a bounded buffer instead of formatting and
+            // retaining a catalogue-sized text/string/UTF-8 triplicate. BinaryWriter is little-endian;
+            // strings use its explicit UTF-8 length prefix, coordinates retain exact binary64 bits.
+            using(var sha=SHA256.Create())
+            using(var crypto=new CryptoStream(Stream.Null,sha,CryptoStreamMode.Write))
+            using(var buffer=new BufferedStream(crypto,65536))
+            using(var writer=new BinaryWriter(buffer,Encoding.UTF8,true))
+            {
+                writer.Write("pc:awareness-catalogue:1");
+                foreach(var e in entries)
+                {
+                    writer.Write(e.BusinessId);writer.Write(e.PlaceId);writer.Write((int)e.Kind);
+                    writer.Write(e.Position.X);writer.Write(e.Position.Y);writer.Write(e.Position.Z);
+                }
+                writer.Flush();buffer.Flush();crypto.FlushFinalBlock();
+                Revision=Convert.ToBase64String(sha.Hash!);
+            }
+            levels=new SpatialLevel[Scales.Length];
             for(int level=0;level<Scales.Length;level++)
             {
-                var buckets=new Dictionary<(int,int),List<int>>();
+                var counts=new Dictionary<(int,int),int>();
                 for(int i=0;i<entries.Length;i++)
                 {
                     var cell=Cell(entries[i].Position,Scales[level]);
-                    if(!buckets.TryGetValue(cell,out var bucket)) buckets.Add(cell,bucket=new List<int>());
-                    bucket.Add(i);
+                    counts.TryGetValue(cell,out int count);counts[cell]=count+1;
                 }
-                levels[level]=buckets.ToDictionary(p=>p.Key,p=>p.Value.ToArray());
+                // One ordinal array per scale, rather than one array/object for each dense or sparse
+                // cell. Ranges still expose bucket mass and direct indexed slots, never a cell walk.
+                var ranges=new Dictionary<(int,int),Bucket>(counts.Count);
+                int start=0,ordinal=0;
+                foreach(var pair in counts)
+                {
+                    ranges.Add(pair.Key,new Bucket(start,pair.Value,ordinal++));start+=pair.Value;
+                }
+                var next=new int[counts.Count];var slots=new int[entries.Length];
+                for(int i=0;i<entries.Length;i++)
+                {
+                    var bucket=ranges[Cell(entries[i].Position,Scales[level])];
+                    slots[bucket.Start+next[bucket.Ordinal]++]=i;
+                }
+                levels[level]=new SpatialLevel(ranges,slots);
             }
+        }
+        private readonly struct Bucket
+        {
+            internal Bucket(int start,int count,int ordinal) {Start=start;Count=count;Ordinal=ordinal;}
+            internal int Start { get; }
+            internal int Count { get; }
+            internal int Ordinal { get; }
+        }
+        private sealed class SpatialLevel
+        {
+            internal SpatialLevel(Dictionary<(int,int),Bucket> cells,int[] slots) {Cells=cells;Slots=slots;}
+            internal Dictionary<(int,int),Bucket> Cells { get; }
+            internal int[] Slots { get; }
         }
         private static (int,int) Cell(Position p,int scale) => ((int)Math.Floor(p.X/scale),(int)Math.Floor(p.Z/scale));
         public bool ContainsPlace(string id) => byPlace.ContainsKey(id);
@@ -187,12 +223,12 @@ namespace PersistentCity.Core
             {
                 uint prefix=Prefix(seed,consumer,day,source,false);
                 int level=0;while(level<Scales.Length-1 && Scales[level]<settings.RadiusMetres) level++;
-                var buckets=new int[9][];int mass=0,n=0;
+                var buckets=new Bucket[9];int mass=0,n=0;
                 if(anchor.HasValue && anchor.Value.IsFinite)
                 {
                     var cell=Cell(anchor.Value,Scales[level]);
                     for(int x=-1;x<=1;x++) for(int z=-1;z<=1;z++)
-                        if(levels[level].TryGetValue((cell.Item1+x,cell.Item2+z),out var bucket)) {buckets[n++]=bucket;mass+=bucket.Length;}
+                        if(levels[level].Cells.TryGetValue((cell.Item1+x,cell.Item2+z),out var bucket)) {buckets[n++]=bucket;mass+=bucket.Count;}
                 }
                 for(int i=0;i<Math.Max(0,Math.Min(4,settings.DrawsPerAnchor));i++)
                 {
@@ -200,7 +236,7 @@ namespace PersistentCity.Core
                     if(mass>0)
                     {
                         int draw=(int)(Key(prefix,i)%(uint)mass);
-                        for(int b=0;b<n;b++) {if(draw<buckets[b].Length) {entry=entries[buckets[b][draw]];break;}draw-=buckets[b].Length;}
+                        for(int b=0;b<n;b++) {if(draw<buckets[b].Count) {entry=entries[levels[level].Slots[buckets[b].Start+draw]];break;}draw-=buckets[b].Count;}
                     }
                     bool inside=entry!=null && Position.Distance(anchor!.Value,entry.Position)<=settings.RadiusMetres;
                     Add(entry,source,i,inside,"outside radius, missing or ineligible");

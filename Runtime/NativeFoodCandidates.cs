@@ -28,7 +28,9 @@ namespace PersistentCity.Runtime
         private int indexedScopeCount=-1;
         private bool captureBatch;
         private double captureMinute;
-        public long CaptureMetadataPasses { get; private set; }
+        /// <summary>Retained diagnostic name: C2a performs zero full metadata passes per capture.</summary>
+        public long CaptureMetadataPasses => 0;
+        public long CaptureBatches { get; private set; }
         private sealed class CaptureBatch : IDisposable
         {
             private NativeFoodMarket? owner;
@@ -41,7 +43,7 @@ namespace PersistentCity.Runtime
             if(!ReferenceEquals(save,SaveGameManager.Current)) throw new InvalidOperationException("Food market save changed.");
             // Discovery/ownership publishes changes through the existing 64-controller ring.
             // Captures read only the bounded sampled identities; never scan controllers per meal.
-            CaptureMetadataPasses++;
+            CaptureBatches++;
             captureMinute=minute;captureBatch=true;
             return new CaptureBatch(this);
         }

@@ -40,6 +40,7 @@ static class Program
                 Require(!eligible.Any(id=>id.EndsWith(":129:shop",StringComparison.Ordinal)||id.EndsWith(":128:shop",StringComparison.Ordinal)),"withdrawn shops cannot consume sample slots");
                 Require(eligible.Contains(last.PlaceId),"newly acquired distant controller remains eligible");
                 Require(market.DetailedReads==0,"preparation must not read detailed supply");
+                Require(market.CaptureMetadataPasses==0 && market.CaptureBatches>0,"no all-controller metadata pass per capture");
             }
         }
         // Exercise the actual capture/hours implementation, with only the native detailed reader stubbed.

@@ -20,8 +20,8 @@ metadata. External metadata can enter the same catalogue without enrollment in
 D2 can supply external entries and its own feasibility/settlement contract through
 the same Sample/Rank interface. Both kinds compete for the same eight positions.
 
-The immutable index sorts complete generation IDs ordinally and hashes IDs,
-places, positions and alternative kind into a canonical SHA-256 revision. Six cell
+The immutable index sorts complete generation IDs ordinally and hashes length-prefixed UTF-8 IDs/places, little-endian kind and exact
+binary64 positions through a 64 KiB buffer into a canonical SHA-256 revision. Six cell
 scales (32, 64, 128, 256, 512, 1,024 metres) select the smallest side at least as
 large as the radius. Each anchor examines a fixed 3?3 cell neighbourhood. A draw
 selects from the sum of bucket masses, then indexes one slot in that bucket. Dense

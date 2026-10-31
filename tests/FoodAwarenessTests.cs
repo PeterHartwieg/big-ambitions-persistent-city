@@ -132,6 +132,16 @@ public sealed class FoodAwarenessTests
         var dense=Catalogue(1,true);var duplicates=Sample(dense);Assert.Single(duplicates.Union);Assert.True(duplicates.Union[0].Eligible);
     }
     [Fact]
+    public void EvenNonemptyCampaignProviderCannotFabricateC2aAdmissions()
+    {
+        var c=Catalogue(8,true);var campaign=new Four();var dump=new FoodAwarenessDump();
+        var image=c.Sample(77,"consumer",1,null,null,null,new FoodAwarenessSettings {DrawsPerAnchor=0},_=>true,
+            campaign:campaign,diagnostic:dump);
+        Assert.Equal(0,campaign.Calls);Assert.DoesNotContain(image.Union,x=>(x.Sources & FoodAwarenessSource.Campaign)!=0);
+        Assert.Equal(8,dump.Samples.Count(x=>x.Source==FoodAwarenessSource.Campaign && x.Result=="unknown"));
+        Assert.Equal(Image(image),Image(c.Sample(77,"consumer",1,null,null,null,new FoodAwarenessSettings {DrawsPerAnchor=0},_=>true,campaign:EmptyFoodAwarenessProvider.Instance)));
+    }
+    [Fact]
     public void MemorySeamUsesExactlyFourDirectGenerationLookupsAndCampaignIsAlwaysUnknown()
     {
         var c=Catalogue(8);var settings=new FoodAwarenessSettings {DrawsPerAnchor=0,DiscoveryProbability=.001};
@@ -197,6 +207,21 @@ public sealed class FoodAwarenessTests
         Assert.Equal(JsonConvert.SerializeObject(a),JsonConvert.SerializeObject(b));Assert.Equal(checkpoint,SaveCodec.Write(city.State));Assert.Equal(0,planner.Out+planner.Back);
         city.State.Food.Shops[0].BusinessId="replacement";city.InvalidateFoodAwareness();
         Assert.NotEqual(a!.Image.CatalogueRevision,city.InspectFoodAwareness("r")!.Image.CatalogueRevision);
+    }
+    [Fact]
+    public void SelectedAwarenessContextNeverConsultsProvidersAgainAfterReload()
+    {
+        var (control,mc,pc)=WeightedFoodChoiceTests.Ready(79,24);control.State.Food!.AwarenessStartsDay=1;
+        var (changed,mm,pm)=WeightedFoodChoiceTests.Ready(79,24);changed.State.Food!.AwarenessStartsDay=1;
+        double at=changed.State.Food.Residents.Single().DesiredAt;changed.AdvanceTo(at,1);
+        var selected=changed.State.Food.Residents.Single().Decision!;
+        while(selected.Result==FoodDecisionResult.Evaluating) changed.AdvanceTo(at,1);
+        Assert.Equal(FoodDecisionResult.Selected,selected.Result);Assert.NotNull(selected.Awareness);
+        var read=SaveCodec.Read(SaveCodec.Write(changed.State));Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
+        changed=new CitySimulator(read.State!,pm);changed.AttachFoodMarket(mm,awarenessSettings:new FoodAwarenessSettings {DrawsPerAnchor=0},memory:new Unknown(),campaign:new Unknown());
+        while(!control.AdvanceTo(at+20,128).CaughtUp) {}
+        while(!changed.AdvanceTo(at+20,1).CaughtUp) {}
+        Assert.Equal(SaveCodec.Write(control.State),SaveCodec.Write(changed.State));Assert.Equal(mc.Orders,mm.Orders);Assert.Equal(pc.Out,pm.Out);
     }
     private static JObject Held()
     {
