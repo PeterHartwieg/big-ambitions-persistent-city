@@ -18,6 +18,8 @@ namespace PersistentCity.Core
         public double FoodChoiceHouseholdWeight { get; set; }=1;
         public double FoodShortlistTemperature { get; set; }=1;
 
+        internal FoodChoiceSettings Copy() => (FoodChoiceSettings)MemberwiseClone();
+
         public void Clamp(Action<string>? log=null)
         {
             double C(double v,double min,double max,double fallback,string key)

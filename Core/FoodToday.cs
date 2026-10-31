@@ -161,6 +161,9 @@ namespace PersistentCity.Core
     /// is present exactly when its slot is Answered.</summary>
     public sealed class FoodDecisionShop
     {
+        /// <summary>Reserved B1 effective per-shop log-weight contribution, bounded -8..8.
+        /// Empty/neutral is zero. B0b never populates or applies it.</summary>
+        public double MemoryContribution { get; set; }
         public string BusinessId { get; set; } = "";
         public string PlaceId { get; set; } = "";
         public double MealsPerHour { get; set; } = -1;
@@ -183,6 +186,8 @@ namespace PersistentCity.Core
     /// </summary>
     public sealed class FoodDecisionState
     {
+        /// <summary>Null only for a migrated/pre-image context; capture live once on first continuation.</summary>
+        public FoodDecisionTuning? Tuning { get; set; }
         public string IntentId { get; set; } = "";
         public int PolicyVersion { get; set; } = FoodChoicePolicy.Version;
         public string ContextKey { get; set; } = "";

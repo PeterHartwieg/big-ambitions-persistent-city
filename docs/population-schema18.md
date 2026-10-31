@@ -94,6 +94,71 @@ Schema 18 also bounds the complete payload's UTF-8 bytes at 268,435,456 alongsid
 its unchanged character limit. Old sources retain their original limits and must
 pass the complete new preflight before conversion can be published.
 
+## B0b amendment — 31 October 2026
+
+Schema 18 is amended in place before any player save has used it. This is the
+B0b prerequisite between B0 and B1, fixing inherited A3 held-context tuning.
+It adds no B activation, memory update, loyalty policy or settings keys.
+
+`FoodDecisionState.Tuning` is a nullable **scalar string**, revision `1` followed
+by twelve uppercase hexadecimal binary64 words (16 digits each), exactly **193
+ASCII characters**. The words preserve the exact effective coefficients, in order:
+`FoodChoiceTemperature`, `FoodChoiceWeightFloor`, `FoodChoiceTasteWeight`,
+`FoodChoicePriceWeight`, `FoodChoiceDistanceWeight`, `FoodChoiceDistanceScaleMinutes`,
+`FoodChoiceQueueWeight`, `FoodChoiceQualityWeight`, `FoodChoiceTimePressureWeight`,
+`FoodChoiceHealthWeight`, `FoodChoiceHouseholdWeight`, `FoodShortlistTemperature`.
+Each value must be finite and inside its existing A3 clamp range. Unknown image
+versions, wrong arity/length/alphabet, non-finite and out-of-range values refuse;
+read never clamps a malformed saved image. The immutable in-memory image owns a
+copy of the effective settings. Capture clamps live values once, before any
+shortlist weight is drawn. Shortlisting and final selection use this same copy.
+Continuation/commit never consult live tuning after capture. Context and draw
+keys are unchanged and tuning-independent; the image is discarded with the decision.
+
+`FoodDecisionShop.MemoryContribution` reserves **one binary64 effective log-weight
+contribution per candidate**, not per memory entry or offer. Its structural bound
+is finite **-8..8**; zero is neutral. This can hold B1's aggregate lookup result from
+its four-entry memory, including configured strength and loyal/curious effects,
+without retaining a second memory diary. For the plan's bounded 0.1..3 multiplier
+and strength 0..2, the log contribution lies within -4.606..2.198. B1 must capture
+its final bounded contribution before its first affected draw and retain it for
+all offers of the selected candidate. **B0b always writes zero, never applies it,
+and refuses nonzero saved contributions until B1 support exists.** It reserves
+no StartsDay or watermark behavior.
+
+Missing `Tuning` or explicit null means **capture live values at first continuation**;
+missing `MemoryContribution` means zero. These two omissions alone are allowed
+for pre-image schema-18 fixtures. All other required fields, duplicate/unknown
+fields and bounds retain strict validation. Schema 17 and older pass their frozen
+readers first and migrate with the same null/zero defaults; earlier captures cannot
+be reconstructed. An already selected old context keeps its saved winner and quote
+progress. Once resumed, even a legacy context saves the new image before further
+work. The frozen 13-17 resolvers explicitly exclude both new fields, retaining
+all previous required fields, counting and unknown-field refusals. Older binaries
+continue to reject a new image as an unknown field; no fallback strips state.
+
+The current validator now bounds **all held decisions to one**, including empty
+shortlists, matching the simulator's one-decision scheduler. This prevents empty
+contexts from becoming a population-wide tuning history. No existing valid
+simulator save needs more. Source validation/refusal remains atomic.
+
+**Byte/record ledger.** Canonical writes add **205 characters/UTF-8 bytes** for the
+image including its named field, quotes and separator, plus **25 per shortlisted
+shop** for neutral `MemoryContribution:0.0` including field/separator: **405 bytes
+at eight shops**, independent of population. Null migration images cost 14 bytes
+instead of 205 until continuation. In-memory additions are one reference per
+held decision, one immutable wrapper/settings copy, and **8 bytes per candidate**;
+measured managed sizes are recorded in CHECKS. For B1 allow **48 bytes per
+candidate** for full-precision signed scalar text, so this reservation is at most
+**589 bytes** including A3 tuning. Both are deducted from the existing **65,536-byte
+aggregate policy/header/held-tuning allowance**, not the 64-byte per-consumer
+memory allocation. Neither scalar charges a collection record: streaming and
+semantic counts remain unchanged, including the 104 existing fixture image
+records and the future ledger's conservative context/tuning header reservation.
+The capacity tool populates a real image and updates the resulting size/digests;
+ordinary population-only and economy digests remain unchanged. Reference/5k and
+CF32/CF64 measured totals appear in CHECKS and the B0b measurement manifest.
+
 ## Regulars projection
 
 `RegularsProjection` builds a transient index lazily once per coherent snapshot/day.
@@ -114,7 +179,7 @@ remain a later paid marketing-agency research tier; B0 exposes no such report.
 
 ## Reproduction and evidence
 
-`tools/save-contract-regression --capacity <reference|5000|ceiling2|ceiling|CF32|CF64>`
+`tools/save-contract-regression --capacity <reference|consumers5000|5000|ceiling2|ceiling|CF32|CF64>`
 emits exact synthetic manifests and offline save timings/memory. Run each in a
 fresh process. CF32 and CF64 have 50,000 residents ×3, all three outcomes, four
 memories/consumer, a full 20,000-entry/2 Mi-character reference table and 20,000
