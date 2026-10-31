@@ -1,3 +1,4 @@
+using System.Globalization;
 using Newtonsoft.Json;
 using PersistentCity.Core;
 using PersistentCity.Runtime;
@@ -61,6 +62,52 @@ public sealed class OptionalStopSettingsTests
         var direct = new PrototypeSettings(); property.SetValue(direct, -1); Assert.Equal(minimum, direct.StopTiming().Maximum(kind));
         property.SetValue(direct, int.MaxValue); Assert.Equal(maximum, direct.StopTiming().Maximum(kind));
     }
+    [Theory]
+    [MemberData(nameof(TimingKeys))]
+    public void TimingNumericTokensAndInvariantStringsClampIndependentlyOfCurrentCulture(string key, DwellKind kind)
+    {
+        var previous = CultureInfo.CurrentCulture;
+        try
+        {
+            double minimum = OptionalStopPolicy.Minimum(kind), maximum = DwellRules.For(kind).MaximumMinutes;
+            foreach (string culture in new[] { "en-US", "de-DE" })
+            {
+                CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(culture);
+                foreach (bool quoted in new[] { false, true })
+                    foreach (var sample in new[] { (Input: minimum - 0.5, Expected: minimum),
+                        (Input: maximum + 0.5, Expected: maximum), (Input: minimum + 0.5, Expected: maximum) })
+                    {
+                        string number = sample.Input.ToString(CultureInfo.InvariantCulture);
+                        string value = quoted ? "\"" + number + "\"" : number;
+                        var settings = JsonConvert.DeserializeObject<PrototypeSettings>("{\"Enabled\":false,\"" + key + "\":" + value + "}")!;
+                        Assert.Equal(sample.Expected, settings.StopTiming().Maximum(kind)); Assert.False(settings.Enabled);
+                        var messages = new System.Collections.Generic.List<string>();
+                        settings.ReportStreetLifeSettings(messages.Add); settings.ReportStreetLifeSettings(messages.Add);
+                        Assert.Equal(2, messages.Count); Assert.Contains(key, messages[0]);
+                    }
+                // Numeric strings keep the invariant format even under a comma-decimal culture.
+                var localized = JsonConvert.DeserializeObject<PrototypeSettings>("{\"" + key + "\":\"" + (minimum - 0.5).ToString(CultureInfo.GetCultureInfo("de-DE")) + "\"}")!;
+                Assert.Equal(maximum, localized.StopTiming().Maximum(kind));
+            }
+        }
+        finally { CultureInfo.CurrentCulture = previous; }
+    }
+
+    [Theory]
+    [MemberData(nameof(TimingKeys))]
+    public void TimingRecognizedKeySpellingsUseTheirOwnBounds(string key, DwellKind kind)
+    {
+        double minimum = OptionalStopPolicy.Minimum(kind), maximum = DwellRules.For(kind).MaximumMinutes;
+        foreach (string spelling in new[] { key, char.ToLowerInvariant(key[0]) + key.Substring(1), key.ToUpperInvariant() })
+            foreach (double endpoint in new[] { minimum, maximum })
+            {
+                var settings = JsonConvert.DeserializeObject<PrototypeSettings>("{\"Enabled\":false,\"" + spelling + "\":" + endpoint.ToString(CultureInfo.InvariantCulture) + "}")!;
+                Assert.Equal(endpoint, settings.StopTiming().Maximum(kind)); Assert.False(settings.Enabled);
+                var messages = new System.Collections.Generic.List<string>(); settings.ReportStreetLifeSettings(messages.Add);
+                Assert.Single(messages); // A valid endpoint requires no adjustment diagnostic.
+            }
+    }
+
     [Fact]
     public void MalformedJsonKeepsExistingFileLevelFailure()
         => Assert.ThrowsAny<JsonException>(() => JsonConvert.DeserializeObject<PrototypeSettings>("{\"StreetLifeBreakMaximumMinutes\":5,"));

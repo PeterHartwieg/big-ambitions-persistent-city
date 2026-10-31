@@ -19,35 +19,35 @@ namespace PersistentCity.Runtime
         private readonly bool[] timingAdjusted = new bool[5];
         private bool timingReported;
         private int breakMaximum = 10;
-        [JsonConverter(typeof(StreetLifeMinutesConverter))]
+        [JsonConverter(typeof(StreetLifeMinutesConverter), 5, 10)]
         public int StreetLifeBreakMaximumMinutes
         {
             get => breakMaximum;
             set { int effective = value == int.MinValue ? 10 : Math.Max(5, Math.Min(10, value)); timingAdjusted[0] |= effective != value; breakMaximum = effective; }
         }
         private int chatMaximum = 30;
-        [JsonConverter(typeof(StreetLifeMinutesConverter))]
+        [JsonConverter(typeof(StreetLifeMinutesConverter), 10, 30)]
         public int StreetLifeChatMaximumMinutes
         {
             get => chatMaximum;
             set { int effective = value == int.MinValue ? 30 : Math.Max(10, Math.Min(30, value)); timingAdjusted[1] |= effective != value; chatMaximum = effective; }
         }
         private int windowShoppingMaximum = 3;
-        [JsonConverter(typeof(StreetLifeMinutesConverter))]
+        [JsonConverter(typeof(StreetLifeMinutesConverter), 1, 3)]
         public int StreetLifeWindowShoppingMaximumMinutes
         {
             get => windowShoppingMaximum;
             set { int effective = value == int.MinValue ? 3 : Math.Max(1, Math.Min(3, value)); timingAdjusted[2] |= effective != value; windowShoppingMaximum = effective; }
         }
         private int audienceMaximum = 8;
-        [JsonConverter(typeof(StreetLifeMinutesConverter))]
+        [JsonConverter(typeof(StreetLifeMinutesConverter), 2, 8)]
         public int StreetLifeAudienceMaximumMinutes
         {
             get => audienceMaximum;
             set { int effective = value == int.MinValue ? 8 : Math.Max(2, Math.Min(8, value)); timingAdjusted[3] |= effective != value; audienceMaximum = effective; }
         }
         private int restingMaximum = 40;
-        [JsonConverter(typeof(StreetLifeMinutesConverter))]
+        [JsonConverter(typeof(StreetLifeMinutesConverter), 10, 40)]
         public int StreetLifeRestingMaximumMinutes
         {
             get => restingMaximum;
@@ -119,22 +119,21 @@ namespace PersistentCity.Runtime
 
     internal sealed class StreetLifeMinutesConverter : JsonConverter<int>
     {
+        private readonly int minimum, maximum;
+        public StreetLifeMinutesConverter(int minimum, int maximum)
+        { this.minimum = minimum; this.maximum = maximum; }
         public override int ReadJson(JsonReader reader, Type objectType, int existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
             var token = JToken.Load(reader);
-            if ((token.Type == JTokenType.Integer || token.Type == JTokenType.Float || token.Type == JTokenType.String)
-                && double.TryParse(token.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out double value)
-                && !double.IsNaN(value))
+            double value;
+            // Numeric tokens already hold a number. Formatting them as localized text before
+            // invariant parsing changes endpoint clamps under comma-decimal cultures.
+            if (token.Type == JTokenType.Integer || token.Type == JTokenType.Float) value = (double)token;
+            else if (token.Type != JTokenType.String || !double.TryParse(token.ToString(), NumberStyles.Float,
+                CultureInfo.InvariantCulture, out value)) return int.MinValue;
+            if (!double.IsNaN(value))
             {
-                int minimum, maximum;
-                switch (reader.Path)
-                {
-                    case nameof(PrototypeSettings.StreetLifeBreakMaximumMinutes): minimum = 5; maximum = 10; break;
-                    case nameof(PrototypeSettings.StreetLifeChatMaximumMinutes): minimum = 10; maximum = 30; break;
-                    case nameof(PrototypeSettings.StreetLifeWindowShoppingMaximumMinutes): minimum = 1; maximum = 3; break;
-                    case nameof(PrototypeSettings.StreetLifeAudienceMaximumMinutes): minimum = 2; maximum = 8; break;
-                    default: minimum = 10; maximum = 40; break;
-                }
+                // Bounds belong to the property, independent of accepted JSON key spelling.
                 // Keep out-of-range values distinguishable for the once-only adjustment report.
                 if (value < minimum) return minimum - 1;
                 if (value > maximum) return maximum + 1;
