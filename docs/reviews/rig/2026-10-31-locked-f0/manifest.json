@@ -1,4 +1,8 @@
 {
+  ".gitattributes": {
+    "bytes": 80,
+    "sha256": "092c195b37622af70ba5aac7644e677cad69e18354c54140e13ea6278bab2be8"
+  },
   "backup-receipt.json": {
     "bytes": 221,
     "sha256": "191580977cde0725ef24c32a3d34aa7b9acf7880b7df974629d21eba9789c52c"
