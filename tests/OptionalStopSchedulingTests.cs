@@ -48,6 +48,29 @@ public sealed class OptionalStopSchedulingTests
         return (sim, env);
     }
     [Theory]
+    [InlineData(false)] [InlineData(true)]
+    public void E1ToggleCannotDisableNativeRainSafetyOrChangeWorkAndPairedContinuations(bool enabled)
+    {
+        foreach(var kind in new[] {DwellKind.Break,DwellKind.ChatOutsideVenue})
+        {
+            var (sim,env)=Ready(kind,kind==DwellKind.ChatOutsideVenue ? 2 : 1);
+            long frame=1;
+            sim.AttachWeather(new FrameWeatherSource(()=>frame,()=>env.Raining),new WeatherSettings {Enabled=enabled,RainOptionalOutingMultiplier=0});
+            sim.AdvanceTo(1450);
+            var people=sim.State.Citizens.ToArray();var ids=people.Select(c=>c.Identity.Id).ToArray();
+            var ends=people.Select(c=>c.OptionalStop!.EndMinute).ToArray();var events=people.Select(c=>c.NextEventMinute).ToArray();
+            Assert.All(people,c=>Assert.NotNull(c.OptionalStop));
+            env.Raining=true;frame++;sim.RefreshOptionalStops();
+            Assert.All(people,c=>Assert.True(c.OptionalStop!.Cancelled));
+            sim.AdvanceTo(1451);
+            Assert.Equal(ids,people.Select(c=>c.Identity.Id));Assert.Equal(ends,people.Select(c=>c.OptionalStop!.EndMinute));
+            Assert.Equal(events,people.Select(c=>c.NextEventMinute));Assert.All(people,c=>Assert.Equal(1,c.CompletedJourneys));
+            if(kind==DwellKind.Break) Assert.All(people,c=>Assert.Equal(Activity.Work,c.Activity));
+            string wire=SaveCodec.Write(sim.State);var read=SaveCodec.Read(wire);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
+            Assert.Equal(wire,SaveCodec.Write(read.State!));
+        }
+    }
+    [Theory]
     [InlineData(0, 100, false)]
     [InlineData(100, 0, true)]
     public void ChangedRateOnlyAffectsNewChancesAndNeverRerollsSavedVisits(int oldRate, int newRate, bool chosen)

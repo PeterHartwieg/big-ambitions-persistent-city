@@ -100,9 +100,9 @@ public sealed partial class FoodCommerceTests
         {
             case "tuple-octal": broken = source.Replace("\"Residents\":[[1,", "\"Residents\":[[01,"); break;
             case "tuple-hex": broken = source.Replace("\"Residents\":[[1,", "\"Residents\":[[0x1,"); break;
-            case "schema-hex": broken = source.Replace("\"Schema\":19,", "\"Schema\":0x13,"); break;
+            case "schema-hex": broken = source.Replace("\"Schema\":20,", "\"Schema\":0x14,"); break;
             case "revision-octal": broken = source.Replace("\"Revision\":1", "\"Revision\":01"); break;
-            case "memory-escaped": broken = source.Replace("\"1-------\"", "\"\\u0031-------\""); break;
+            case "memory-escaped": broken = source.Replace("\"1-------|0\"", "\"\\u0031-------|0\""); break;
             case "visit-escaped": broken = source.Replace("\"RecentVisits\":[\"1", "\"RecentVisits\":[\"\\u0031"); break;
         }
         Assert.NotEqual(source, broken); B0_Preserve(broken, city.State);

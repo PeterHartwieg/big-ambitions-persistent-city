@@ -84,7 +84,7 @@ namespace PersistentCity.Core
         /// minutes before it opens. Earlier, and for anyone waiting elsewhere, the wait is indoors.
         /// In rain fewer queue and for less time.
         /// </summary>
-        public static Dwell? QueueAtOpening(CitizenState person, Place place, int citySeed, double minute, bool raining)
+        public static Dwell? QueueAtOpening(CitizenState person, Place place, int citySeed, double minute, bool raining, double rainLeadMinutes = RainQueueLeadMinutes)
         {
             if (person == null) throw new ArgumentNullException(nameof(person));
             if (place == null) throw new ArgumentNullException(nameof(place));
@@ -98,7 +98,7 @@ namespace PersistentCity.Core
             string key = person.Identity.Id + ":queue:" + place.Id + ":" + Day(opening.Value);
             uint dice = StableRandom.Hash(key, citySeed);
             if (raining && (dice & 1) == 0) return null;
-            double maximum = raining ? RainQueueLeadMinutes : MaximumQueueLeadMinutes;
+            double maximum = raining ? Math.Max(MinimumQueueLeadMinutes,Math.Min(MaximumQueueLeadMinutes,rainLeadMinutes)) : MaximumQueueLeadMinutes;
             double lead = MinimumQueueLeadMinutes + (dice >> 1) % 1000 / 999.0 * (maximum - MinimumQueueLeadMinutes);
             return new Dwell(person.Identity.Id, DwellKind.QueueAtOpening, place.Id, opening.Value - lead, opening.Value, place.Id);
         }

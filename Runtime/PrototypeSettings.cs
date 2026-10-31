@@ -30,6 +30,15 @@ namespace PersistentCity.Runtime
         public double FoodMarketingDiscoveryDailyProbability { get => Awareness.DiscoveryProbability; set => Awareness.DiscoveryProbability=value; }
         [JsonConverter(typeof(AwarenessNumberConverter))]
         public int FoodMarketingNeighbourhoodDrawsPerAnchor { get => Awareness.DrawsPerAnchor; set => Awareness.DrawsPerAnchor=value; }
+        [JsonIgnore]
+        public WeatherSettings Weather { get; } = new WeatherSettings();
+        public bool WeatherEnabled { get => Weather.Enabled; set => Weather.Enabled=value; }
+        [JsonConverter(typeof(AwarenessNumberConverter))]
+        public double WeatherRainOptionalOutingMultiplier { get => Weather.RainOptionalOutingMultiplier; set => Weather.RainOptionalOutingMultiplier=value; }
+        [JsonConverter(typeof(AwarenessNumberConverter))]
+        public double WeatherRainTravelWeightMultiplier { get => Weather.RainTravelWeightMultiplier; set => Weather.RainTravelWeightMultiplier=value; }
+        [JsonConverter(typeof(WeatherLeadConverter))]
+        public int WeatherQueueRainLeadMinutes { get => Weather.QueueRainLeadMinutes; set => Weather.QueueRainLeadMinutes=value; }
         // Optional developer overrides; normal installation needs no configuration.
         private int optionalStopChoicePercentage = OptionalStopPolicy.ApprovedChoicePercentage;
         [JsonConverter(typeof(OptionalStopPercentageConverter))]
@@ -68,6 +77,23 @@ namespace PersistentCity.Runtime
             return value==Math.Truncate(value) ? (int)value : int.MinValue;
         }
         public override void WriteJson(JsonWriter writer,object? value,JsonSerializer serializer) => writer.WriteValue(value);
+    }
+
+    internal sealed class WeatherLeadConverter : JsonConverter<int>
+    {
+        public override int ReadJson(JsonReader reader, Type type, int old, bool exists, JsonSerializer serializer)
+        {
+            var token=JToken.Load(reader);
+            if((token.Type==JTokenType.Integer || token.Type==JTokenType.Float || token.Type==JTokenType.String)
+                && double.TryParse(token.ToString(),NumberStyles.Float,CultureInfo.InvariantCulture,out double value) && !double.IsNaN(value))
+            {
+                if(value<2) return 1;
+                if(value>10) return 11;
+                if(value==Math.Truncate(value)) return (int)value;
+            }
+            return int.MinValue;
+        }
+        public override void WriteJson(JsonWriter writer,int value,JsonSerializer serializer) => writer.WriteValue(value);
     }
 
     // Invalid individual values fall back without discarding unrelated settings.

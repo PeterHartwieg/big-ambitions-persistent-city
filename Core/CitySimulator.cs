@@ -123,6 +123,7 @@ namespace PersistentCity.Core
             AbortPending();
             var replacement = new CitySimulator(State, replacementRoutes);
             replacement.activityObservers = activityObservers;
+            replacement.weatherSource=weatherSource;replacement.weatherSettings=weatherSettings;
             if (stopEnvironment != null) replacement.AttachOptionalStops(stopEnvironment, stopPercentage);
             if (food != null) replacement.AttachFoodMarket(food.Market, food.ChoiceSettings, food.AwarenessSettings, food.MemoryProvider, food.CampaignProvider);
             return replacement;
@@ -411,6 +412,7 @@ namespace PersistentCity.Core
             CommutePreparation = CopyPreparation(live.CommutePreparation),
             MealOuting = live.MealOuting == null ? null : CopyOuting(live.MealOuting),
             OptionalStop = live.OptionalStop?.Copy(),
+            W = live.W,
             OptionalStopChoice = live.OptionalStopChoice,
             Car = live.Car == null ? null : CopyCar(live.Car),
             JoinedMinute = live.JoinedMinute, LastEmploymentCheckDay = live.LastEmploymentCheckDay, JobChanges = live.JobChanges,
@@ -441,6 +443,7 @@ namespace PersistentCity.Core
         internal static void CommitEvent(CitizenState live, CitizenState working)
         {
             live.OptionalStop = working.OptionalStop;
+            live.W = working.W;
             live.OptionalStopChoice = working.OptionalStopChoice;
             live.Traits = working.Traits;
             live.HomeId = working.HomeId; live.DayPlaceId = working.DayPlaceId; live.ShopId = working.ShopId; live.LeisureId = working.LeisureId;

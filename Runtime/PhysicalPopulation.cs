@@ -281,13 +281,12 @@ namespace PersistentCity.Runtime
         {
             queuers.Clear();
             double now = simulation.State.Minute;
-            bool raining = RainHelper.isRaining;
             var planned = new Dictionary<string, (Place Place, List<Dwell> Dwells)>(StringComparer.Ordinal);
             foreach (var citizen in simulation.State.Citizens)
             {
                 if (citizen.Phase != CitizenPhase.WaitingForOpening || !places.TryGetValue(citizen.PlaceId, out var place)
                     || Position.Distance(place.Position, focus) > radius) continue;
-                var dwell = DwellPlanner.QueueAtOpening(citizen, place, simulation.State.Seed, now, raining);
+                var dwell = simulation.QueueAtOpening(citizen, place, now);
                 if (!dwell.HasValue || !dwell.Value.ActiveAt(now) || GaveUp(dwell.Value)) continue;
                 string key = DwellSpots.KeyOf(place);
                 if (!planned.TryGetValue(key, out var line)) planned.Add(key, line = (place, new List<Dwell>()));
@@ -394,7 +393,7 @@ namespace PersistentCity.Runtime
         {
             var person = binding.Person!; var citizen = binding.Citizen;
             if (citizen.Phase != CitizenPhase.WaitingForOpening || !places.TryGetValue(citizen.PlaceId, out var place)) return false;
-            var dwell = DwellPlanner.QueueAtOpening(citizen, place, simulation.State.Seed, simulation.State.Minute, RainHelper.isRaining);
+            var dwell = simulation.QueueAtOpening(citizen, place, simulation.State.Minute);
             if (!dwell.HasValue || !dwell.Value.ActiveAt(simulation.State.Minute) || GaveUp(dwell.Value) || !TryLine(place, out var line)) return false;
             var reserved = Standing(line).Concat(queuers.Where(q => q.Key != citizen.Identity.Id && q.Value.Line.Key == line.Key
                 && !bindings.ContainsKey(q.Key)).Select(q => new KeyValuePair<string, int>(q.Key, q.Value.Slot)));

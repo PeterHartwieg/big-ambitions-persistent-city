@@ -185,6 +185,8 @@ namespace PersistentCity.Runtime
                 if (File.Exists(path)) settings = JsonConvert.DeserializeObject<PrototypeSettings>(File.ReadAllText(path)) ?? throw new InvalidDataException("Configuration is null.");
                 settings.FoodChoice.Clamp(message => log.Info(message));
                 settings.Awareness.Clamp(message => log.Info(message));
+                settings.Weather.Clamp(message => log.Info(message));
+                log.Info("E1 weather revision 1; missing/failed source is unknown (neutral).");
                 log.Info("Food awareness v1: radius="+settings.Awareness.RadiusMetres.ToString(System.Globalization.CultureInfo.InvariantCulture)
                     +", draws/anchor="+settings.Awareness.DrawsPerAnchor+", discovery="+settings.Awareness.DiscoveryProbability.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 if (!Position.Finite(settings.GameClockFactor) || settings.GameClockFactor < .1 || settings.GameClockFactor > 1)
@@ -568,7 +570,9 @@ namespace PersistentCity.Runtime
             routes = new MultimodalRoutes(state.Places, NativeTravelPace.WalkingMetresPerSecond / state.TravelClockRate, state.TravelClockRate, dependency, routeObjects);
             simulation = new CitySimulator(state, routes);
             dwellSpots = new DwellSpots();
-            simulation.AttachOptionalStops(new OptionalStopEnvironment(state.Places, dwellSpots), settings.OptionalStopChoicePercentage);
+            var stopEnvironment=new OptionalStopEnvironment(state.Places,dwellSpots);
+            simulation.AttachOptionalStops(stopEnvironment, settings.OptionalStopChoicePercentage);
+            simulation.AttachWeather(new FrameWeatherSource(()=>UnityEngine.Time.frameCount,()=>stopEnvironment.Raining),settings.Weather);
             seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
             if (state.Food == null)
                 state.Food = new FoodCommerceState { MealRhythmVersion = MealRhythm.PolicyVersion, HouseholdFinanceVersion = HouseholdFinance.PolicyVersion,

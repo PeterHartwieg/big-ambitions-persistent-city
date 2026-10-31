@@ -42,6 +42,7 @@ namespace PersistentCity.Core
     }
     public sealed class ConsumerMemory
     {
+        public WeatherSample Weather { get; set; }
         public ExperienceWatermark? Watermark { get; set; }
         public List<ShopMemory> Entries { get; set; } = new List<ShopMemory>();
     }
