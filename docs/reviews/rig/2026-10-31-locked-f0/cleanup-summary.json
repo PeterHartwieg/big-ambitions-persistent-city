@@ -1,0 +1,39 @@
+{
+  "role": "rig_test",
+  "restored": true,
+  "profileFilesVerified": 4828,
+  "installReferencesVerified": 107,
+  "rootHashesMatchBackupManifest": true,
+  "preferencesHashMatches": true,
+  "originalAutosave": {
+    "preventAutoSave": false,
+    "minutesBetweenAutoSaves": 5,
+    "maxAutoSaves": 3
+  },
+  "autosaveRestoredByOriginalPreferenceExportAndProfileHashes": true,
+  "configSha256Original": "abfecb215a3c3ea89e6a1137c7445726dde66947c06d361adb2be1337cf78c66",
+  "configSha256Restored": "abfecb215a3c3ea89e6a1137c7445726dde66947c06d361adb2be1337cf78c66",
+  "leaseHeld": false,
+  "leasePending": 0,
+  "ownedGamesOrDriversRunning": [],
+  "ownedGamePids": [
+    52132,
+    40708,
+    18788,
+    20884,
+    36464,
+    51020,
+    37384,
+    10136,
+    26576
+  ],
+  "gameExit": "9 normal exits, exit 0; no game killed",
+  "toolingDriverCorrection": "One owned Python driver stopped for confirmed readiness-loop bug; no other process controlled",
+  "sessionStillLockedAtFinalNativeCheck": true,
+  "normalProfileControlled": false,
+  "windowsSettingsChanged": false,
+  "steamOrWorkshopChanged": false,
+  "rloSourceChanged": false,
+  "productionCodeChanged": false,
+  "offlineTestSuiteRun": false
+}

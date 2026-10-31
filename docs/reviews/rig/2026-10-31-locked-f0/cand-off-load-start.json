@@ -1,0 +1,91 @@
+{
+  "utc": "2026-10-31T08:15:58Z",
+  "cpuTotalPercent": 31.6,
+  "logicalProcessors": 20,
+  "counts": {
+    "dotnet": 1,
+    "testhost": 0,
+    "codex": 14
+  },
+  "ram": {
+    "total": 68544573440,
+    "available": 30401982464,
+    "percent": 55.6,
+    "used": 38142590976,
+    "free": 30401982464
+  },
+  "top": [
+    {
+      "pid": 0,
+      "name": "System Idle Process",
+      "cpuPercentMachine": 188.125,
+      "rss": 8192
+    },
+    {
+      "pid": 1312,
+      "name": "MsMpEng.exe",
+      "cpuPercentMachine": 20.36467995888287,
+      "rss": 857411584
+    },
+    {
+      "pid": 18788,
+      "name": "Big Ambitions Agent Tests.exe",
+      "cpuPercentMachine": 18.25863246137479,
+      "rss": 6509920256
+    },
+    {
+      "pid": 35096,
+      "name": "python.exe",
+      "cpuPercentMachine": 3.536632062528983,
+      "rss": 32444416
+    },
+    {
+      "pid": 4,
+      "name": "System",
+      "cpuPercentMachine": 1.15342027552077,
+      "rss": 47112192
+    },
+    {
+      "pid": 52016,
+      "name": "python.exe",
+      "cpuPercentMachine": 0.8375974658291565,
+      "rss": 45355008
+    },
+    {
+      "pid": 47184,
+      "name": "ChatGPT.exe",
+      "cpuPercentMachine": 0.8161932745455788,
+      "rss": 485490688
+    },
+    {
+      "pid": 22028,
+      "name": "ChatGPT.exe",
+      "cpuPercentMachine": 0.6177051957385135,
+      "rss": 148799488
+    },
+    {
+      "pid": 8156,
+      "name": "SearchIndexer.exe",
+      "cpuPercentMachine": 0.40531776911663703,
+      "rss": 220012544
+    },
+    {
+      "pid": 23776,
+      "name": "python.exe",
+      "cpuPercentMachine": 0.31793377725952254,
+      "rss": 58662912
+    },
+    {
+      "pid": 21232,
+      "name": "codex.exe",
+      "cpuPercentMachine": 0.26473079817364864,
+      "rss": 182030336
+    },
+    {
+      "pid": 45004,
+      "name": "python.exe",
+      "cpuPercentMachine": 0.2040483186363947,
+      "rss": 59920384
+    }
+  ]
+}

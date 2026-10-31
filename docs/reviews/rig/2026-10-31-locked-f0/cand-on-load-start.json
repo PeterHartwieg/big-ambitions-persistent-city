@@ -1,0 +1,91 @@
+{
+  "utc": "2026-10-31T08:46:06Z",
+  "cpuTotalPercent": 27.3,
+  "logicalProcessors": 20,
+  "counts": {
+    "dotnet": 0,
+    "testhost": 0,
+    "codex": 12
+  },
+  "ram": {
+    "total": 68544573440,
+    "available": 31838330880,
+    "percent": 53.6,
+    "used": 36706242560,
+    "free": 31838330880
+  },
+  "top": [
+    {
+      "pid": 0,
+      "name": "System Idle Process",
+      "cpuPercentMachine": 208.00012301891218,
+      "rss": 8192
+    },
+    {
+      "pid": 36464,
+      "name": "Big Ambitions Agent Tests.exe",
+      "cpuPercentMachine": 13.936253934106974,
+      "rss": 6018195456
+    },
+    {
+      "pid": 1312,
+      "name": "MsMpEng.exe",
+      "cpuPercentMachine": 9.348910018730566,
+      "rss": 881999872
+    },
+    {
+      "pid": 48424,
+      "name": "python.exe",
+      "cpuPercentMachine": 3.3070182865112625,
+      "rss": 34160640
+    },
+    {
+      "pid": 1904,
+      "name": "svchost.exe",
+      "cpuPercentMachine": 1.597222222222222,
+      "rss": 58171392
+    },
+    {
+      "pid": 23776,
+      "name": "python.exe",
+      "cpuPercentMachine": 1.5625,
+      "rss": 68087808
+    },
+    {
+      "pid": 52016,
+      "name": "python.exe",
+      "cpuPercentMachine": 1.322807314604505,
+      "rss": 51253248
+    },
+    {
+      "pid": 4,
+      "name": "System",
+      "cpuPercentMachine": 0.8458415353818981,
+      "rss": 47128576
+    },
+    {
+      "pid": 45004,
+      "name": "python.exe",
+      "cpuPercentMachine": 0.555579072133892,
+      "rss": 68059136
+    },
+    {
+      "pid": 8156,
+      "name": "SearchIndexer.exe",
+      "cpuPercentMachine": 0.3786960736640637,
+      "rss": 222875648
+    },
+    {
+      "pid": 34820,
+      "name": "WmiPrvSE.exe",
+      "cpuPercentMachine": 0.3021712376890357,
+      "rss": 23801856
+    },
+    {
+      "pid": 10044,
+      "name": "svchost.exe",
+      "cpuPercentMachine": 0.23975230160193026,
+      "rss": 33284096
+    }
+  ]
+}

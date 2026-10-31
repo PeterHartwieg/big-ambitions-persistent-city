@@ -1,0 +1,410 @@
+{
+  "role": "rig_test",
+  "before": {
+    "schema": 16,
+    "residents": 957,
+    "uniqueResidents": 957,
+    "residentIdsSha256": "20e917890faad9447cbe170b83ed9e709921bd5cde325ef88e19eb4e319b511c",
+    "cars": 188,
+    "uniqueCarIds": 188,
+    "carOwnershipSha256": "8e9ec2dc5d298241663e4882838f35f616d30d7baadd12e558093f4519219371",
+    "carOwnershipSamples": [
+      [
+        "c111",
+        "c111:car"
+      ],
+      [
+        "c115",
+        "c115:car"
+      ],
+      [
+        "c116",
+        "c116:car"
+      ],
+      [
+        "c12",
+        "c12:car"
+      ],
+      [
+        "c120",
+        "c120:car"
+      ],
+      [
+        "c121",
+        "c121:car"
+      ],
+      [
+        "c133",
+        "c133:car"
+      ],
+      [
+        "c139",
+        "c139:car"
+      ]
+    ],
+    "minute": 7914.841869354248,
+    "completedJourneys": 480,
+    "trafficProgressSamples": [
+      {
+        "VehicleId": "pc:6",
+        "RouteIndex": 64,
+        "EnqueuedAt": 7897.166698964889,
+        "EnteredAt": 7914.606293696976,
+        "ReadyAt": 7914.8562529708515,
+        "MotionStartedAt": 7914.606293696976,
+        "MotionStartFraction": 0.0,
+        "PhysicalControl": false
+      },
+      {
+        "VehicleId": "pc:557",
+        "RouteIndex": 55,
+        "EnqueuedAt": 7900.186450029338,
+        "EnteredAt": 7914.516226390761,
+        "ReadyAt": 7914.902585706084,
+        "MotionStartedAt": 7914.516226390761,
+        "MotionStartFraction": 0.0,
+        "PhysicalControl": false
+      },
+      {
+        "VehicleId": "pc:362",
+        "RouteIndex": 38,
+        "EnqueuedAt": 7900.772009657061,
+        "EnteredAt": 7914.743717194462,
+        "ReadyAt": 7915.321105863968,
+        "MotionStartedAt": 7914.743717194462,
+        "MotionStartFraction": 0.0,
+        "PhysicalControl": false
+      },
+      {
+        "VehicleId": "pc:170",
+        "RouteIndex": 9,
+        "EnqueuedAt": 7910.145526295571,
+        "EnteredAt": 7912.98617871019,
+        "ReadyAt": 7914.262414279266,
+        "MotionStartedAt": 7912.98617871019,
+        "MotionStartFraction": 0.0,
+        "PhysicalControl": false
+      },
+      {
+        "VehicleId": "c399",
+        "RouteIndex": 2,
+        "EnqueuedAt": 7910.718066776102,
+        "EnteredAt": 7914.204756674102,
+        "ReadyAt": 7914.968850609613,
+        "MotionStartedAt": 7914.204756674102,
+        "MotionStartFraction": 0.0,
+        "PhysicalControl": false
+      },
+      {
+        "VehicleId": "pc:203",
+        "RouteIndex": 12,
+        "EnqueuedAt": 7911.251026814191,
+        "EnteredAt": 7914.636918296716,
+        "ReadyAt": 7914.868579674155,
+        "MotionStartedAt": 7914.636918296716,
+        "MotionStartFraction": 0.0,
+        "PhysicalControl": false
+      },
+      {
+        "VehicleId": "c201",
+        "RouteIndex": 4,
+        "EnqueuedAt": 7911.746677955887,
+        "EnteredAt": 7914.129356743252,
+        "ReadyAt": 7916.034516622916,
+        "MotionStartedAt": 7914.129356743252,
+        "MotionStartFraction": 0.0,
+        "PhysicalControl": false
+      },
+      {
+        "VehicleId": "pc:372",
+        "RouteIndex": 7,
+        "EnqueuedAt": 7911.756190180689,
+        "EnteredAt": 7914.631415237504,
+        "ReadyAt": 7915.275500188313,
+        "MotionStartedAt": 7914.631415237504,
+        "MotionStartFraction": 0.0,
+        "PhysicalControl": false
+      }
+    ],
+    "travelling": 277,
+    "sampleJourneys": [
+      {
+        "resident": "c100",
+        "carId": null,
+        "phase": 1,
+        "departureMinute": 7912.0,
+        "elapsedSinceDeparture": 2.841869354248047,
+        "routeMinutes": 29.626694613600066,
+        "nextEventMinute": 7941.6266946136
+      },
+      {
+        "resident": "c102",
+        "carId": null,
+        "phase": 1,
+        "departureMinute": 7892.0,
+        "elapsedSinceDeparture": 22.841869354248047,
+        "routeMinutes": 37.13556928296907,
+        "nextEventMinute": 7929.135569282969
+      },
+      {
+        "resident": "c105",
+        "carId": null,
+        "phase": 1,
+        "departureMinute": 7913.0,
+        "elapsedSinceDeparture": 1.8418693542480469,
+        "routeMinutes": 35.840579573335894,
+        "nextEventMinute": 7948.840579573336
+      },
+      {
+        "resident": "c111",
+        "carId": "c111:car",
+        "phase": 1,
+        "departureMinute": 7907.0,
+        "elapsedSinceDeparture": 7.841869354248047,
+        "routeMinutes": 35.42015152553922,
+        "nextEventMinute": 7942.420151525539
+      },
+      {
+        "resident": "c113",
+        "carId": null,
+        "phase": 1,
+        "departureMinute": 7901.0,
+        "elapsedSinceDeparture": 13.841869354248047,
+        "routeMinutes": 39.8155632435514,
+        "nextEventMinute": 7940.815563243551
+      },
+      {
+        "resident": "c114",
+        "carId": null,
+        "phase": 1,
+        "departureMinute": 7912.0,
+        "elapsedSinceDeparture": 2.841869354248047,
+        "routeMinutes": 38.012445611889454,
+        "nextEventMinute": 7950.012445611889
+      },
+      {
+        "resident": "c132",
+        "carId": null,
+        "phase": 1,
+        "departureMinute": 7908.0,
+        "elapsedSinceDeparture": 6.841869354248047,
+        "routeMinutes": 32.789902547234874,
+        "nextEventMinute": 7940.789902547235
+      },
+      {
+        "resident": "c133",
+        "carId": "c133:car",
+        "phase": 1,
+        "departureMinute": 7891.0,
+        "elapsedSinceDeparture": 23.841869354248047,
+        "routeMinutes": 28.32786208953382,
+        "nextEventMinute": 7919.3278620895335
+      }
+    ]
+  },
+  "after": {
+    "schema": 16,
+    "residents": 957,
+    "uniqueResidents": 957,
+    "residentIdsSha256": "20e917890faad9447cbe170b83ed9e709921bd5cde325ef88e19eb4e319b511c",
+    "cars": 188,
+    "uniqueCarIds": 188,
+    "carOwnershipSha256": "8e9ec2dc5d298241663e4882838f35f616d30d7baadd12e558093f4519219371",
+    "carOwnershipSamples": [
+      [
+        "c111",
+        "c111:car"
+      ],
+      [
+        "c115",
+        "c115:car"
+      ],
+      [
+        "c116",
+        "c116:car"
+      ],
+      [
+        "c12",
+        "c12:car"
+      ],
+      [
+        "c120",
+        "c120:car"
+      ],
+      [
+        "c121",
+        "c121:car"
+      ],
+      [
+        "c133",
+        "c133:car"
+      ],
+      [
+        "c139",
+        "c139:car"
+      ]
+    ],
+    "minute": 7923.807045459747,
+    "completedJourneys": 543,
+    "trafficProgressSamples": [
+      {
+        "VehicleId": "pc:6",
+        "RouteIndex": 87,
+        "EnqueuedAt": 7897.166698964889,
+        "EnteredAt": 7923.534360292419,
+        "ReadyAt": 7924.089473635862,
+        "MotionStartedAt": 7923.534360292419,
+        "MotionStartFraction": 0.0,
+        "PhysicalControl": false
+      },
+      {
+        "VehicleId": "pc:557",
+        "RouteIndex": 61,
+        "EnqueuedAt": 7900.186450029338,
+        "EnteredAt": 7923.388589607873,
+        "ReadyAt": 7924.178994236206,
+        "MotionStartedAt": 7923.388589607873,
+        "MotionStartFraction": 0.0,
+        "PhysicalControl": false
+      },
+      {
+        "VehicleId": "pc:170",
+        "RouteIndex": 45,
+        "EnqueuedAt": 7910.145526295571,
+        "EnteredAt": 7923.806789405543,
+        "ReadyAt": 7923.941973432678,
+        "MotionStartedAt": 7923.806789405543,
+        "MotionStartFraction": 0.0,
+        "PhysicalControl": false
+      },
+      {
+        "VehicleId": "c399",
+        "RouteIndex": 11,
+        "EnqueuedAt": 7910.718066776102,
+        "EnteredAt": 7923.757375278289,
+        "ReadyAt": 7923.988589607873,
+        "MotionStartedAt": 7923.757375278289,
+        "MotionStartFraction": 0.0,
+        "PhysicalControl": false
+      },
+      {
+        "VehicleId": "pc:203",
+        "RouteIndex": 39,
+        "EnqueuedAt": 7911.251026814191,
+        "EnteredAt": 7923.800727705569,
+        "ReadyAt": 7923.941975403077,
+        "MotionStartedAt": 7923.800727705569,
+        "MotionStartFraction": 0.0,
+        "PhysicalControl": false
+      },
+      {
+        "VehicleId": "c201",
+        "RouteIndex": 21,
+        "EnqueuedAt": 7911.746677955887,
+        "EnteredAt": 7923.184397255852,
+        "ReadyAt": 7923.975575445753,
+        "MotionStartedAt": 7923.184397255852,
+        "MotionStartFraction": 0.0,
+        "PhysicalControl": false
+      },
+      {
+        "VehicleId": "pc:372",
+        "RouteIndex": 31,
+        "EnqueuedAt": 7911.756190180689,
+        "EnteredAt": 7923.505493245408,
+        "ReadyAt": 7923.895569813614,
+        "MotionStartedAt": 7923.505493245408,
+        "MotionStartFraction": 0.0,
+        "PhysicalControl": false
+      },
+      {
+        "VehicleId": "pc:438",
+        "RouteIndex": 22,
+        "EnqueuedAt": 7920.064333202673,
+        "EnteredAt": 7923.630400428974,
+        "ReadyAt": 7923.831669193124,
+        "MotionStartedAt": 7923.630400428974,
+        "MotionStartFraction": 0.0,
+        "PhysicalControl": false
+      }
+    ],
+    "travelling": 287,
+    "sampleJourneys": [
+      {
+        "resident": "c100",
+        "carId": null,
+        "phase": 1,
+        "departureMinute": 7912.0,
+        "elapsedSinceDeparture": 11.807045459747314,
+        "routeMinutes": 29.626694613600066,
+        "nextEventMinute": 7941.6266946136
+      },
+      {
+        "resident": "c102",
+        "carId": null,
+        "phase": 1,
+        "departureMinute": 7892.0,
+        "elapsedSinceDeparture": 31.807045459747314,
+        "routeMinutes": 37.13556928296907,
+        "nextEventMinute": 7929.135569282969
+      },
+      {
+        "resident": "c105",
+        "carId": null,
+        "phase": 1,
+        "departureMinute": 7913.0,
+        "elapsedSinceDeparture": 10.807045459747314,
+        "routeMinutes": 35.840579573335894,
+        "nextEventMinute": 7948.840579573336
+      },
+      {
+        "resident": "c111",
+        "carId": "c111:car",
+        "phase": 1,
+        "departureMinute": 7907.0,
+        "elapsedSinceDeparture": 16.807045459747314,
+        "routeMinutes": 35.42015152553922,
+        "nextEventMinute": 7942.420151525539
+      },
+      {
+        "resident": "c113",
+        "carId": null,
+        "phase": 1,
+        "departureMinute": 7901.0,
+        "elapsedSinceDeparture": 22.807045459747314,
+        "routeMinutes": 39.8155632435514,
+        "nextEventMinute": 7940.815563243551
+      },
+      {
+        "resident": "c114",
+        "carId": null,
+        "phase": 1,
+        "departureMinute": 7912.0,
+        "elapsedSinceDeparture": 11.807045459747314,
+        "routeMinutes": 38.012445611889454,
+        "nextEventMinute": 7950.012445611889
+      },
+      {
+        "resident": "c121",
+        "carId": "c121:car",
+        "phase": 1,
+        "departureMinute": 7916.0,
+        "elapsedSinceDeparture": 7.8070454597473145,
+        "routeMinutes": 35.72178654499704,
+        "nextEventMinute": 7951.7217865449975
+      },
+      {
+        "resident": "c124",
+        "carId": null,
+        "phase": 1,
+        "departureMinute": 7920.0,
+        "elapsedSinceDeparture": 3.8070454597473145,
+        "routeMinutes": 24.872124021837337,
+        "nextEventMinute": 7944.872124021837
+      }
+    ]
+  },
+  "residentIdsPreserved": true,
+  "carOwnershipPreserved": true,
+  "method": "Native inside load, export owned logical state via existing audit seam, exit/re-enter, native inside save, reload, export. Exports private; only digests and small ID samples published. No performance window or save profiling."
+}

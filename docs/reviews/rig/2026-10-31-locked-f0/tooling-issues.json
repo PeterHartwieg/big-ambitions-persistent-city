@@ -1,0 +1,36 @@
+{
+  "role": "rig_test",
+  "issues": [
+    {
+      "kind": "diagnostic overhead",
+      "phase": "functional setup before any primary perf",
+      "details": "Initial transition observer repeatedly parsed multi-megabyte payload and scanned volumes. Rebuilt stage-only helper with payload/IDs/volume scans omitted from transition tracking. Primary frame observer unchanged; transition tracking always stopped before perf."
+    },
+    {
+      "kind": "bridge readiness race",
+      "phase": "base-A setup before frames-start",
+      "details": "Bridge briefly returned previous city and done status during asynchronous reload; time call correctly refused while loading. Tightened wait to actual requested save name, done city and drained operation. Resumed setup after load, retaining completed 15-minute load wait; no measured sample was discarded or rerun."
+    },
+    {
+      "kind": "supplied expected hash is from prior revision",
+      "details": "Candidate hash d442b8...97e9 matches final-head CHECKS.md r1/r2, differs from supplied 293e6e...b309. No source edits or substitutions."
+    },
+    {
+      "kind": "overstrict bridge pending check",
+      "phase": "inside reload after all four primary windows",
+      "details": "Native city and background population loaded successfully inside; bridge lifecycle pending count remained one. Driver incorrectly waited for pending=0. Stopped only the owned Python driver (not the game), replaced pending condition with three stable actual-city/save observations, resumed functional checks at the loaded interior. No primary sample rerun."
+    },
+    {
+      "kind": "native second-shop interaction refusal",
+      "details": "Daily Bread native use returned handled=true but no entry or screen. Driver attempted an exit despite inside=false and correctly received not-inside refusal. Stopped transition tracking; continued with a standard supermarket and remaining checks. No mod error."
+    },
+    {
+      "kind": "lifecycle protection refusal",
+      "details": "Configuration change correctly refused while owned bridge lifecycle remained pending after inside load. Clean quit drained pending to zero; remaining setting checks use fresh foreground game processes, no repeated perf window."
+    },
+    {
+      "kind": "office walk-exit unsupported",
+      "details": "Morning office entry succeeded with NotShop hidden fallback. Bridge walk exit found no despawner; native BuildingManager.ExitFromBuilding(0,false) exited successfully. No pointer or fabricated interior state."
+    }
+  ]
+}

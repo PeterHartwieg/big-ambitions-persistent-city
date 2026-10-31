@@ -1,0 +1,183 @@
+[
+  {
+    "method": "GameManager.RunMainGameTick",
+    "owners": [
+      "persistentcity.rig_test.bridge",
+      "persistentcity.food-authority"
+    ],
+    "prefix": [
+      {
+        "owner": "persistentcity.rig_test.bridge",
+        "priority": 800,
+        "method": "FoodTrucks.TestBridgeCommands.ClampTickPrefix"
+      }
+    ],
+    "postfix": [
+      "persistentcity.food-authority"
+    ],
+    "finalizers": []
+  },
+  {
+    "method": "Buildings.Retail.Simulation.RetailBusinessSimulator.ProcessAllCustomersFromThisHour",
+    "owners": [
+      "persistentcity.food-authority"
+    ],
+    "prefix": [
+      {
+        "owner": "persistentcity.food-authority",
+        "priority": 800,
+        "method": "PersistentCity.Runtime.NativeFoodOwnership.HourlyCustomers"
+      }
+    ],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "Buildings.Retail.Simulation.RetailBusinessSimulator.ProcessCustomer",
+    "owners": [
+      "persistentcity.food-authority"
+    ],
+    "prefix": [
+      {
+        "owner": "persistentcity.food-authority",
+        "priority": 800,
+        "method": "PersistentCity.Runtime.NativeFoodOwnership.CustomerSale"
+      }
+    ],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "AI.Customers.CustomerEntries.CustomerEntriesHelper.GetEntriesByAddress",
+    "owners": [
+      "persistentcity.food-authority"
+    ],
+    "prefix": [
+      {
+        "owner": "persistentcity.food-authority",
+        "priority": 800,
+        "method": "PersistentCity.Runtime.NativeFoodOwnership.CustomerDraw"
+      }
+    ],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "AI.Customers.CustomerEntries.CustomerEntriesHelper.UpdateCustomerEntriesForPlayerBusiness",
+    "owners": [
+      "persistentcity.food-authority"
+    ],
+    "prefix": [
+      {
+        "owner": "persistentcity.food-authority",
+        "priority": 800,
+        "method": "PersistentCity.Runtime.NativeFoodOwnership.GenerateCustomers"
+      }
+    ],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "BuildingRegistration.Reset",
+    "owners": [
+      "persistentcity.food-authority"
+    ],
+    "prefix": [
+      {
+        "owner": "persistentcity.food-authority",
+        "priority": 800,
+        "method": "PersistentCity.Runtime.NativeFoodOwnership.ResetRegistration"
+      }
+    ],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "SaveGameSerializationHelper.SerializeJsonData",
+    "owners": [
+      "persistentcity.rig_test.bridge"
+    ],
+    "prefix": [],
+    "postfix": [],
+    "finalizers": [
+      "persistentcity.rig_test.bridge"
+    ]
+  },
+  {
+    "method": "SaveGameSerializationHelper.SerializeBinaryData",
+    "owners": [
+      "persistentcity.rig_test.bridge"
+    ],
+    "prefix": [],
+    "postfix": [],
+    "finalizers": [
+      "persistentcity.rig_test.bridge"
+    ]
+  },
+  {
+    "method": "SaveGameSerializationHelper.CompressBinaryData",
+    "owners": [
+      "persistentcity.rig_test.bridge"
+    ],
+    "prefix": [],
+    "postfix": [],
+    "finalizers": [
+      "persistentcity.rig_test.bridge"
+    ]
+  },
+  {
+    "method": "UI.Load.LoadingScreen.StartLoading",
+    "owners": [
+      "persistentcity.rig_test.bridge"
+    ],
+    "prefix": [],
+    "postfix": [
+      "persistentcity.rig_test.bridge"
+    ],
+    "finalizers": []
+  },
+  {
+    "method": "NWH.VehiclePhysics2.VehicleController.OnCollisionEnter",
+    "owners": [
+      "persistentcity.rig_test.bridge"
+    ],
+    "prefix": [],
+    "postfix": [
+      "persistentcity.rig_test.bridge"
+    ],
+    "finalizers": []
+  },
+  {
+    "method": "Buildings.Retail.Simulation.RetailBusinessSimulator.RestockShelvesIfItsTime",
+    "owners": [
+      "persistentcity.food-routine-test.housekeeping"
+    ],
+    "prefix": [],
+    "postfix": [
+      "persistentcity.food-routine-test.housekeeping"
+    ],
+    "finalizers": []
+  },
+  {
+    "method": "Buildings.Retail.Simulation.RetailBusinessSimulator.RestockShelves",
+    "owners": [
+      "persistentcity.food-routine-test.housekeeping"
+    ],
+    "prefix": [],
+    "postfix": [
+      "persistentcity.food-routine-test.housekeeping"
+    ],
+    "finalizers": []
+  },
+  {
+    "method": "Buildings.Retail.Simulation.RetailBusinessSimulator.UpdateStockTasksFromFurniture",
+    "owners": [
+      "persistentcity.food-routine-test.housekeeping"
+    ],
+    "prefix": [],
+    "postfix": [
+      "persistentcity.food-routine-test.housekeeping"
+    ],
+    "finalizers": []
+  }
+]

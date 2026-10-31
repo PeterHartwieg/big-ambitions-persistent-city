@@ -1,0 +1,150 @@
+{
+  "source": "existing BA_GAME_MANAGED environment; read-only references",
+  "allMatchAgent1": false,
+  "references": [
+    {
+      "name": "mscorlib.dll",
+      "buildReferenceSha256": "98c9b62133db5dd33b22bc6aab6f28e4f04f5b5be6559b28ba5c2738241434d0",
+      "agent1ReferenceSha256": "98c9b62133db5dd33b22bc6aab6f28e4f04f5b5be6559b28ba5c2738241434d0",
+      "match": true
+    },
+    {
+      "name": "System.dll",
+      "buildReferenceSha256": "ace2dd6a7d534b581bf4a9d316e743d64508ca2135db73dbff0ddb9365fc454e",
+      "agent1ReferenceSha256": "ace2dd6a7d534b581bf4a9d316e743d64508ca2135db73dbff0ddb9365fc454e",
+      "match": true
+    },
+    {
+      "name": "System.Core.dll",
+      "buildReferenceSha256": "f1b33eb1ae8522edcf9ba4c2b85f532d4bab68bfa2a51527264bb61619bed4ea",
+      "agent1ReferenceSha256": "f1b33eb1ae8522edcf9ba4c2b85f532d4bab68bfa2a51527264bb61619bed4ea",
+      "match": true
+    },
+    {
+      "name": "System.Numerics.dll",
+      "buildReferenceSha256": "55eda0fb467f9356d8f63933fb4b237732f1b215cb8eb0380398f05d3e8a3461",
+      "agent1ReferenceSha256": "55eda0fb467f9356d8f63933fb4b237732f1b215cb8eb0380398f05d3e8a3461",
+      "match": true
+    },
+    {
+      "name": "System.Runtime.Serialization.dll",
+      "buildReferenceSha256": "c1058a78e3828052b92d535d8fb27f9f3c9eb9cbfcdee1904898611b44d7cdb7",
+      "agent1ReferenceSha256": "c1058a78e3828052b92d535d8fb27f9f3c9eb9cbfcdee1904898611b44d7cdb7",
+      "match": true
+    },
+    {
+      "name": "netstandard.dll",
+      "buildReferenceSha256": "6ae62e082dc494a2433984177f60ca4db5fae69b1f360a8b33754172b310b8c5",
+      "agent1ReferenceSha256": "6ae62e082dc494a2433984177f60ca4db5fae69b1f360a8b33754172b310b8c5",
+      "match": true
+    },
+    {
+      "name": "BigAmbitions.dll",
+      "buildReferenceSha256": "9427561b81aaab2ada09c22a3c98dd9a4017a65225b389513885bf336852e911",
+      "agent1ReferenceSha256": "055700fd26a7a6430bbb6a9d79379781909fbc518af760453396947887db5063",
+      "match": false
+    },
+    {
+      "name": "BigAmbitions.ModAPI.dll",
+      "buildReferenceSha256": "0ab90c0473684ce43cbe22c4049eb509373ab0d8a80216bf882a07d50c876983",
+      "agent1ReferenceSha256": "0ab90c0473684ce43cbe22c4049eb509373ab0d8a80216bf882a07d50c876983",
+      "match": true
+    },
+    {
+      "name": "BigAmbitions.AI.dll",
+      "buildReferenceSha256": "ec4baf862047ef8bcc474f7789e3e2ae42206f8c24db144813932030195c4216",
+      "agent1ReferenceSha256": "ec4baf862047ef8bcc474f7789e3e2ae42206f8c24db144813932030195c4216",
+      "match": true
+    },
+    {
+      "name": "BigAmbitions.Items.dll",
+      "buildReferenceSha256": "db07038215ea8ab2430fb942b86a19e93b5fb84f70639d87606b194786d5bab1",
+      "agent1ReferenceSha256": "db07038215ea8ab2430fb942b86a19e93b5fb84f70639d87606b194786d5bab1",
+      "match": true
+    },
+    {
+      "name": "BigAmbitions.Characters.dll",
+      "buildReferenceSha256": "82864add2ff57fbb68d2933b1abebca89154430e012c224b7ebe37925a306ad8",
+      "agent1ReferenceSha256": "82864add2ff57fbb68d2933b1abebca89154430e012c224b7ebe37925a306ad8",
+      "match": true
+    },
+    {
+      "name": "BigAmbitions.Neighborhoods.dll",
+      "buildReferenceSha256": "867cb792e3295f9c67cf0a5ec04464546c9bd337fa47a578d30409e03eeb7205",
+      "agent1ReferenceSha256": "867cb792e3295f9c67cf0a5ec04464546c9bd337fa47a578d30409e03eeb7205",
+      "match": true
+    },
+    {
+      "name": "BigAmbitions.InteriorDesigner.dll",
+      "buildReferenceSha256": "04bab0df97d0bf7eb4c04b299e1b59bd81c254b5f57e8edca82f661b3ef50c5c",
+      "agent1ReferenceSha256": "04bab0df97d0bf7eb4c04b299e1b59bd81c254b5f57e8edca82f661b3ef50c5c",
+      "match": true
+    },
+    {
+      "name": "HGExtensions.dll",
+      "buildReferenceSha256": "fafddfadf7aca598343b4679d14bc4e1381153be9a54bf94f35daa6b49b27b38",
+      "agent1ReferenceSha256": "fafddfadf7aca598343b4679d14bc4e1381153be9a54bf94f35daa6b49b27b38",
+      "match": true
+    },
+    {
+      "name": "HGPlugins.dll",
+      "buildReferenceSha256": "7c0d57b839d03cd385efd1ff675fff64999050e27a5866e8882be4977400fb96",
+      "agent1ReferenceSha256": "205583fd359cc3d00ddee628fd43928c443b5c54acf5ccdf2013fa0782e249e8",
+      "match": false
+    },
+    {
+      "name": "UnityEngine.CoreModule.dll",
+      "buildReferenceSha256": "5afc743d350e95dc30379a6d2bafa2293b63259acf196fe3f7370f03644ef6f4",
+      "agent1ReferenceSha256": "5afc743d350e95dc30379a6d2bafa2293b63259acf196fe3f7370f03644ef6f4",
+      "match": true
+    },
+    {
+      "name": "UnityEngine.IMGUIModule.dll",
+      "buildReferenceSha256": "b9720d33d0709863fcc8b10a4f327e3bbf082486e4b544917393f7ac8a78e460",
+      "agent1ReferenceSha256": "b9720d33d0709863fcc8b10a4f327e3bbf082486e4b544917393f7ac8a78e460",
+      "match": true
+    },
+    {
+      "name": "UnityEngine.TextRenderingModule.dll",
+      "buildReferenceSha256": "a829aae9dc1953efb38e2102284a30a9a8c05891aa4dc6afabbf3a4abef6af1c",
+      "agent1ReferenceSha256": "a829aae9dc1953efb38e2102284a30a9a8c05891aa4dc6afabbf3a4abef6af1c",
+      "match": true
+    },
+    {
+      "name": "UnityEngine.AIModule.dll",
+      "buildReferenceSha256": "111bbf88581785d6d9f03a33ce8d3d41588ae93b2f3a6f96a08a391c69558f9c",
+      "agent1ReferenceSha256": "111bbf88581785d6d9f03a33ce8d3d41588ae93b2f3a6f96a08a391c69558f9c",
+      "match": true
+    },
+    {
+      "name": "UnityEngine.PhysicsModule.dll",
+      "buildReferenceSha256": "c6b1ca3c3f4352ea6069726ec4b2c54e5ad637ccc891729299b03d2b398312be",
+      "agent1ReferenceSha256": "c6b1ca3c3f4352ea6069726ec4b2c54e5ad637ccc891729299b03d2b398312be",
+      "match": true
+    },
+    {
+      "name": "UnityEngine.AnimationModule.dll",
+      "buildReferenceSha256": "a3a74a5bc04bb9e5038a6fbf5bd09322df2565059f0ac269cb2bd7155d2f66d2",
+      "agent1ReferenceSha256": "a3a74a5bc04bb9e5038a6fbf5bd09322df2565059f0ac269cb2bd7155d2f66d2",
+      "match": true
+    },
+    {
+      "name": "ExternalPlugins.dll",
+      "buildReferenceSha256": "7d43e9d42d2f464674cff045bcb048c48e0f87aec0a987baa34122ac6e3415d1",
+      "agent1ReferenceSha256": "7d43e9d42d2f464674cff045bcb048c48e0f87aec0a987baa34122ac6e3415d1",
+      "match": true
+    },
+    {
+      "name": "DayNightCycle.dll",
+      "buildReferenceSha256": "28a354809e8c3fdfe24ac601d31afe061816b1bd7c50f4aaa604dd442aa4fd28",
+      "agent1ReferenceSha256": "28a354809e8c3fdfe24ac601d31afe061816b1bd7c50f4aaa604dd442aa4fd28",
+      "match": true
+    },
+    {
+      "name": "Newtonsoft.Json.dll",
+      "buildReferenceSha256": "a56146202232958f46bd6a28b5a7da166aea123ee0d646735a46e5c341dfbf1f",
+      "agent1ReferenceSha256": "a56146202232958f46bd6a28b5a7da166aea123ee0d646735a46e5c341dfbf1f",
+      "match": true
+    }
+  ]
+}

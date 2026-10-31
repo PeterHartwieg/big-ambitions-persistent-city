@@ -1,0 +1,17 @@
+{
+    "rig_running":  false,
+    "original_preferences_verified":  true,
+    "profile_files_verified":  4828,
+    "references_verified":  107,
+    "lease":  {
+                  "instance":  "agent1",
+                  "held":  false,
+                  "owner":  null,
+                  "purpose":  null,
+                  "acquired_utc":  null,
+                  "expires_automatically":  false,
+                  "pending":  0,
+                  "legacy_blocked":  false
+              },
+    "utc":  "2026-10-31T09:33:42.3770782Z"
+}

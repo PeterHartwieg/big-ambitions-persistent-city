@@ -1,0 +1,58 @@
+[
+  {
+    "file": "raw/frames-mod-work-base-A-stop-d3abed.csv.gz",
+    "originalSha256": "4f228898ae9443962957ffce3c2bbec65e1a7d3a94c40b39d58c51a1f45a2327",
+    "publishedPlainSha256": "4f228898ae9443962957ffce3c2bbec65e1a7d3a94c40b39d58c51a1f45a2327",
+    "originalBytes": 1351346,
+    "publishedBytes": 1351346
+  },
+  {
+    "file": "raw/frames-observations-base-A-stop-d3abed.csv.gz",
+    "originalSha256": "2e1c540c16414d71ab4e0d3758b6189a7f5355d694a1a08157bd6b82e321ed9f",
+    "publishedPlainSha256": "2e1c540c16414d71ab4e0d3758b6189a7f5355d694a1a08157bd6b82e321ed9f",
+    "originalBytes": 452102,
+    "publishedBytes": 452102
+  },
+  {
+    "file": "raw/frames-mod-work-cand-off-stop-27270b.csv.gz",
+    "originalSha256": "cb9002c30849078f804f979e71ae04a96389b234e96b57c0e27a7d33ddb00c9f",
+    "publishedPlainSha256": "cb9002c30849078f804f979e71ae04a96389b234e96b57c0e27a7d33ddb00c9f",
+    "originalBytes": 1351677,
+    "publishedBytes": 1351677
+  },
+  {
+    "file": "raw/frames-observations-cand-off-stop-27270b.csv.gz",
+    "originalSha256": "08797bdac293248f1e8844697803f8aa794f0ff83e9fbec9359534fad0102fa0",
+    "publishedPlainSha256": "08797bdac293248f1e8844697803f8aa794f0ff83e9fbec9359534fad0102fa0",
+    "originalBytes": 452060,
+    "publishedBytes": 452060
+  },
+  {
+    "file": "raw/frames-mod-work-base-B-stop-5da332.csv.gz",
+    "originalSha256": "08501c5475674263e2cee54b4632407ca0d7d28ad0d9701925c96385f17133b4",
+    "publishedPlainSha256": "08501c5475674263e2cee54b4632407ca0d7d28ad0d9701925c96385f17133b4",
+    "originalBytes": 1331283,
+    "publishedBytes": 1331283
+  },
+  {
+    "file": "raw/frames-observations-base-B-stop-5da332.csv.gz",
+    "originalSha256": "5febe13d9e6097b5994aefb90d50a0c25a0da39deb4e8389b875fc24b1412ca6",
+    "publishedPlainSha256": "5febe13d9e6097b5994aefb90d50a0c25a0da39deb4e8389b875fc24b1412ca6",
+    "originalBytes": 438240,
+    "publishedBytes": 438240
+  },
+  {
+    "file": "raw/frames-mod-work-cand-on-stop-97b075.csv.gz",
+    "originalSha256": "e0b04f65d4e15f710d64af0dbea9ca2820e6d6bae77c576f518289515fbb167a",
+    "publishedPlainSha256": "e0b04f65d4e15f710d64af0dbea9ca2820e6d6bae77c576f518289515fbb167a",
+    "originalBytes": 1346567,
+    "publishedBytes": 1346567
+  },
+  {
+    "file": "raw/frames-observations-cand-on-stop-97b075.csv.gz",
+    "originalSha256": "79e7cd7985c59d3c8a0fb6b27df15fde5918e56b799a190fdb7e1c99d6925037",
+    "publishedPlainSha256": "79e7cd7985c59d3c8a0fb6b27df15fde5918e56b799a190fdb7e1c99d6925037",
+    "originalBytes": 445219,
+    "publishedBytes": 445219
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "clicked": "Henry and Sons: Family Law",
+  "kind": "CityBuildingController",
+  "click": null,
+  "handled": true,
+  "why": "This business is currently closed. Tip: You can rest on benches",
+  "placing_cancelled": false,
+  "still_walking": false,
+  "still_entering": false,
+  "inside": null,
+  "inside_before": null,
+  "open": [],
+  "notices": [
+    "This business is currently closed. Tip: You can rest on benches"
+  ],
+  "x": 2.35,
+  "z": 477.84
+}

@@ -1,0 +1,14 @@
+{
+  "role": "rig_test",
+  "candidate": "1bdd51c548462ba72e5dc38a7bb3306106a21606",
+  "baseline": "6d43276198eba5d0dd016b51bc7fc670bc651762",
+  "suppliedExpectedCandidateDll": "293e6e7033d6c69bbd45cc2c8056a702509c1f44722e9d73b39f0a7f9808b309",
+  "actual": {
+    "candidate": "d442b8cea2754dd0c2e7736653f06791dcdd1a5d8916d0769dfc77386dea97e9",
+    "baseline": "f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c"
+  },
+  "hashMismatchReason": "Supplied expected hash belongs to earlier F0 revision; final-head CHECKS.md r1 and r2 records d442b8cea2754dd0c2e7736653f06791dcdd1a5d8916d0769dfc77386dea97e9.",
+  "build": "python tools/build.py --game-managed BA_GAME_MANAGED; package/archive output redirected to private stage; original source and compiler flags unchanged",
+  "offlineTestsRun": false,
+  "referencesMatchAgent1": false
+}

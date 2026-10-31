@@ -1,0 +1,16 @@
+{
+  "clicked": "Henry and Sons: Family Law",
+  "kind": "CityBuildingController",
+  "click": null,
+  "handled": true,
+  "why": null,
+  "placing_cancelled": false,
+  "still_walking": false,
+  "still_entering": false,
+  "inside": "ba:street_firstavenue#28",
+  "inside_before": null,
+  "open": [],
+  "notices": [],
+  "x": 1096.5,
+  "z": -106.45
+}
