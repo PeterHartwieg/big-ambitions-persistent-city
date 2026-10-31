@@ -46,6 +46,7 @@ namespace PersistentCity.Persistence
         public const int MaxTrafficLinkCapacity = 1024;
         // Schema 17 current-day outcomes per consumer; decision bounds come from FoodChoicePolicy.
         public const int MaxMealOutcomes = 3;
+        private const int Schema18MaximumOffersPerShop = 4;
         // A compact outcome record that validation accepts is at most 553 characters: six enum fields of at most two
         // digits, two whole minutes of at most ten, nine separators and two 256-character IDs. The reader's cap
         // must not be tighter, or a save Write accepted could not be read back.
@@ -289,7 +290,7 @@ namespace PersistentCity.Persistence
                 Require(token == JsonToken.StartArray, "Expected an array.");
                 var item = array.CollectionItemType!;
                 int limit = item == typeof(BusinessReference) ? MaxPlaces : item == typeof(MealOutcomeRecord) ? MaxMealOutcomes : item == typeof(FoodDecisionShop) ? FoodChoicePolicy.MaximumShortlist
-                    : item == typeof(FoodDecisionOffer) ? FoodChoicePolicy.MaximumOffersPerShop
+                    : item == typeof(FoodDecisionOffer) ? Schema18MaximumOffersPerShop
                     : item == typeof(FoodProductSales) ? 4 : item == typeof(FoodBuyerDistrict) ? 100 : item == typeof(long) ? 24 : item == typeof(FoodShopDay) ? 14 * MaxPlaces : item == typeof(ResidentMeal) ? MaxCitizens * 3 : item == typeof(FoodScope) ? 1024
                     : item == typeof(FoodRoutineStop) ? MaxCitizens
                     : item == typeof(FoodDistrictBudgetMix) ? 100 : item == typeof(CitizenState) ? MaxCitizens
@@ -1038,7 +1039,7 @@ namespace PersistentCity.Persistence
                 Require(shop.Hours != null && shop.Hours.Count <= MaxOpeningWindows, "Invalid decision opening evidence.");
                 foreach (var window in shop.Hours!) OpeningWindowRules(window);
                 records += shop.Hours.Count;
-                Require(shop.Offers != null && shop.Offers.Count <= FoodChoicePolicy.MaximumOffersPerShop, "Oversized decision menu.");
+                Require(shop.Offers != null && shop.Offers.Count <= Schema18MaximumOffersPerShop, "Oversized decision menu.");
                 var products = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var offer in shop.Offers!)
                 {

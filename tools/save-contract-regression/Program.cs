@@ -109,7 +109,7 @@ static partial class Program
         bool candidate = TodayProperty != null;
         // Schema-16 image of the same city without outcomes: what an upgrade actually reads.
         var fresh = FoodCity(residents, steady: false, representation);
-        string old = candidate ? AsSchema16(SaveCodec.Write(fresh)) : SaveCodec.Write(fresh);
+        string old = candidate ? AsSchema16(Legacy17(fresh)) : SaveCodec.Write(fresh);
         var migrated = SaveCodec.Read(old);
         if (migrated.Status != SaveReadStatus.Loaded) throw new Exception("Schema-16 image did not load: " + migrated.Error);
         migrated = null!;
@@ -177,8 +177,16 @@ static partial class Program
 
     static void Main(string[] args)
     {
+        if(args.Length == 1 && args[0] == "--input-boundary") { Console.WriteLine(JsonConvert.SerializeObject(InputBoundary())); return; }
+        if(args.Length == 1 && args[0] == "--record-boundary") { Console.WriteLine(JsonConvert.SerializeObject(RecordBoundary())); return; }
+        if(args.Length == 1 && args[0] == "--base-recovery") { Console.WriteLine(JsonConvert.SerializeObject(BaseRecovery())); return; }
+        if(args.Length == 3 && args[0] == "--wire-perf")
+        { Console.WriteLine(JsonConvert.SerializeObject(WirePerf(args[1], int.Parse(args[2])))); return; }
+        if(args.Length >= 2 && args[0] == "--capacity")
+        { Console.WriteLine(JsonConvert.SerializeObject(CapacityBench(args[1], args.Length > 2 ? int.Parse(args[2]) : 1))); return; }
         if(args.Length==2 && args[0]=="--interleaved-save-bench")
         { Console.WriteLine(JsonConvert.SerializeObject(InterleavedSaveBench(args[1])));return; }
+        B0ContractChecks();
         var city = City(120);
         string expected = SaveCodec.Write(city);
         SaveCodec.Read(expected);
