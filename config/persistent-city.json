@@ -18,6 +18,8 @@
   "FoodChoiceHealthWeight": 0.0,
   "FoodChoiceHouseholdWeight": 1.0,
   "FoodShortlistTemperature": 1.0,
+  "FoodMemoryRegularServedVisits": 3,
+  "FoodMemoryRegularRecentDays": 14,
   "FoodMemoryWeight": 1,
   "FoodMemoryLoyalReturnMultiplier": 2,
   "FoodMemoryCuriousNoveltyMultiplier": 1.3,

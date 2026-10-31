@@ -50,6 +50,10 @@ namespace PersistentCity.Runtime
         public int FoodMemoryCapacity { get => FoodMemory.FoodMemoryCapacity; set => FoodMemory.FoodMemoryCapacity=value; }
         [JsonConverter(typeof(FoodMemoryIntegerConverter), 7, 90)]
         public int FoodMemoryForgetAfterDays { get => FoodMemory.FoodMemoryForgetAfterDays; set => FoodMemory.FoodMemoryForgetAfterDays=value; }
+        [JsonConverter(typeof(FoodMemoryIntegerConverter), 2, 10)]
+        public int FoodMemoryRegularServedVisits { get => FoodMemory.FoodMemoryRegularServedVisits; set => FoodMemory.FoodMemoryRegularServedVisits=value; }
+        [JsonConverter(typeof(FoodMemoryIntegerConverter), 1, 28)]
+        public int FoodMemoryRegularRecentDays { get => FoodMemory.FoodMemoryRegularRecentDays; set => FoodMemory.FoodMemoryRegularRecentDays=value; }
         // Optional developer overrides; normal installation needs no configuration.
         private int optionalStopChoicePercentage = OptionalStopPolicy.ApprovedChoicePercentage;
         [JsonConverter(typeof(OptionalStopPercentageConverter))]

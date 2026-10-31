@@ -88,23 +88,49 @@ namespace PersistentCity.Core
             return affordable;
         }
 
-        internal object? DumpMemory(string consumerId)
+        internal BusinessReference? MemoryReference(int slot) => memoryStore.Reference(slot);
+        internal RegularsProjection Regulars(Func<FoodScope, bool>? currentOwnShop = null)
+            => new RegularsProjection(state, (int)(city.State.Minute / 1440), (m, e, day) =>
+            {
+                var traits = m.RepresentedTraits ?? city.FindCitizen(m.AnchorId)?.Traits;
+                return traits == null ? 0 : FoodMemoryPolicy.EffectiveAffinity(e, day, traits, MemorySettings);
+            }, MemorySettings, currentOwnShop);
+
+        internal object[] DumpRegulars(Func<FoodScope, bool>? currentOwnShop = null)
+        {
+            var projection = Regulars(currentOwnShop);
+            return state.Shops.Where(s => currentOwnShop == null || currentOwnShop(s))
+                .Select(s => (object)new { s.BusinessId, s.PlaceId, Regulars = projection.CountOwnShop(s.BusinessId) }).ToArray();
+        }
+
+        internal object? DumpMemory(string consumerId, Func<FoodScope, bool>? currentOwnShop = null)
         {
             if (!records.TryGetValue(consumerId, out var meal)) return null;
             int day = (int)(city.State.Minute / 1440);
             var traits = Traits(meal, city.FindCitizen(meal.AnchorId)!);
+            var projection = Regulars(currentOwnShop);
+            var own = state.Shops.Where(s => currentOwnShop == null || currentOwnShop(s)).ToDictionary(s => s.BusinessId, StringComparer.Ordinal);
             return new { ConsumerId = consumerId, Day = day, Active = city.State.Capabilities.Active,
+                Represented = meal.Slot > 0,
+                StoryKind = meal.Slot > 0 ? "Represented consumer; no physical body" : "Resident's own consumer",
+                Words = ResidentMemoryWords.Capture(state, meal, traits, day, MemorySettings, memoryStore.Reference,
+                    id => ResidentAddress.From(city.FindPlace(id)).Label, currentOwnShop),
+                OwnShopRegulars = own.Values.Select(s => new { s.BusinessId, s.PlaceId, Regulars = projection.CountOwnShop(s.BusinessId) }).ToArray(),
                 PolicyRevision = 1, memoryStore.CapacityMisses, memoryStore.ProtectedInsertions,
                 Watermark = meal.Memory.Watermark == null ? null : new ExperienceWatermark { Day = meal.Memory.Watermark.Day,
                     Meal = meal.Memory.Watermark.Meal, Context = meal.Memory.Watermark.Context, Stage = meal.Memory.Watermark.Stage },
-                Entries = meal.Memory.Entries.Select(e => new { BusinessId = memoryStore.Identity(e.BusinessRef), e.BusinessRef,
+                Entries = meal.Memory.Entries.Where(e => own.ContainsKey(memoryStore.Identity(e.BusinessRef))).Select(e => new { BusinessId = memoryStore.Identity(e.BusinessRef), e.BusinessRef,
                     e.Day, e.Served, e.Affinity, e.Outcome, EffectiveAffinity = FoodMemoryPolicy.EffectiveAffinity(e, day, traits, MemorySettings),
+                    Regular = RegularsProjection.IsRegular(e, day, FoodMemoryPolicy.EffectiveAffinity(e, day, traits, MemorySettings), MemorySettings),
                     Expired = FoodMemoryPolicy.Expired(e, day, MemorySettings) }).ToArray() };
         }
     }
     public sealed partial class CitySimulator
     {
         /// <summary>Detached read-only diagnostic, allocating only when called; no market, route or UI work.</summary>
-        public object? DumpFoodMemory(string consumerId) => food?.DumpMemory(consumerId);
+        public object? DumpFoodMemory(string consumerId, Func<FoodScope, bool>? currentOwnShop = null) => food?.DumpMemory(consumerId, currentOwnShop);
+        public object[] DumpFoodRegulars(Func<FoodScope, bool>? currentOwnShop = null)
+            => food?.DumpRegulars(currentOwnShop) ?? Array.Empty<object>();
+        public RegularsProjection? ProjectRegulars(Func<FoodScope, bool>? currentOwnShop = null) => food?.Regulars(currentOwnShop);
     }
 }

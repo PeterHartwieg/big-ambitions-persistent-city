@@ -70,6 +70,7 @@ namespace PersistentCity.Core
         public ResidentAddress? Work { get; private set; }
         public string WorkRole { get; private set; } = "";
         public IReadOnlyList<string> Personality { get; private set; } = Array.Empty<string>();
+        public IReadOnlyList<string> MemoryWords { get; private set; } = Array.Empty<string>();
         public string Story { get; private set; } = "";
         public string Heading { get; private set; } = "";
         public string HeadingReason { get; private set; } = "";
@@ -84,7 +85,9 @@ namespace PersistentCity.Core
             : productId.Length == 0 ? "food" : productId;
 
         public static ResidentInsight Capture(CityState city, CitizenState person, ResidentMeal? meal,
-            Func<string, Place?> findPlace, Func<string, string>? productName = null, Func<string, string>? localize = null)
+            Func<string, Place?> findPlace, Func<string, string>? productName = null, Func<string, string>? localize = null,
+            FoodMemorySettings? memorySettings = null, Func<int, BusinessReference?>? memoryReference = null,
+            Func<string, string?>? shopName = null, Func<FoodScope, bool>? currentOwnShop = null)
         {
             if (city == null) throw new ArgumentNullException(nameof(city));
             if (person == null) throw new ArgumentNullException(nameof(person));
@@ -105,6 +108,11 @@ namespace PersistentCity.Core
                 : day.Kind == PlaceKind.Study ? "Studies at" : "Works at";
             insight.Personality = DescribePersonality(person, meal, productName);
             var mealToday = meal != null && meal.Slot == 0 && meal.ResidentId == person.Identity.Id ? meal : null;
+            if (mealToday != null && city.Food != null)
+                insight.MemoryWords = ResidentMemoryWords.Capture(city.Food, mealToday, person.Traits, (int)(now / 1440),
+                    memorySettings ?? new FoodMemorySettings(),
+                    memoryReference ?? (slot => city.Food.BusinessReferences.Find(r => r.Slot == slot)),
+                    id => shopName?.Invoke(id) ?? label(id), currentOwnShop);
             insight.Story = TellStory(person, insight, Doing(person, mealToday, label, productName, now));
             DescribeHeading(person, mealToday, label, productName, now, out string heading, out string reason);
             insight.Heading = heading; insight.HeadingReason = reason;
@@ -119,6 +127,8 @@ namespace PersistentCity.Core
         {
             var text = new StringBuilder(512);
             text.Append(Story).Append('\n').Append('\n');
+            foreach (string words in MemoryWords) text.Append(words).Append('.').Append('\n');
+            if (MemoryWords.Count > 0) text.Append('\n');
             text.Append(Heading);
             if (HeadingReason.Length > 0) text.Append(" (").Append(HeadingReason).Append(')');
             text.Append('\n').Append('\n').Append("Today's meals").Append('\n');

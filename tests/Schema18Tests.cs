@@ -231,7 +231,7 @@ public sealed partial class FoodCommerceTests
         var food = new FoodCommerceState { Shops = { new FoodScope { BusinessId = "own" } }, BusinessReferences = {
             new BusinessReference { Slot = 0, BusinessId = "own" }, new BusinessReference { Slot = 1, BusinessId = "rival" } } };
         foreach (var (served, affinity, day) in new[] { (3, 1, 6), (2, 1, 20), (35, 0, 20), (3, -1, 20), (3, 1, 5), (3, 1, 20) })
-            food.Residents.Add(new ResidentMeal { Memory = new ConsumerMemory { Entries = { new ShopMemory { BusinessRef = 0, Served = served, Affinity = affinity, Day = day } } } });
+            food.Residents.Add(new ResidentMeal { ResidentId = "r" + food.Residents.Count, Memory = new ConsumerMemory { Entries = { new ShopMemory { BusinessRef = 0, Served = served, Affinity = affinity, Day = day } } } });
         int calls = 0;
         var index = new RegularsProjection(food, 20, (m, d) => { calls++; return m.Affinity; });
         Assert.Equal(0, calls); Assert.Equal(0, index.CountOwnShop("rival")); Assert.Equal(0, calls);

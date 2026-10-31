@@ -30,6 +30,8 @@ namespace PersistentCity.Core
             if (food.BusinessReferences.Count != 0) { tableCharacters--; tableBytes--; }
         }
 
+        public BusinessReference? Reference(int slot) => bySlot.TryGetValue(slot, out var reference) ? reference : null;
+
         public int Find(string businessId) => byId.TryGetValue(businessId, out var reference) ? reference.Slot : -1;
         public string Identity(int slot) => bySlot[slot].BusinessId;
 

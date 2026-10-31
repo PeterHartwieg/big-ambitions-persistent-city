@@ -182,8 +182,12 @@ namespace PersistentCity.Runtime
                 if (NativeFoodOwnership.Error.Length > 0) throw new InvalidDataException(NativeFoodOwnership.Error);
                 string path = Path.Combine(context.ModRootPath, "persistent-city.json");
                 if (File.Exists(path)) settings = JsonConvert.DeserializeObject<PrototypeSettings>(File.ReadAllText(path)) ?? throw new InvalidDataException("Configuration is null.");
+                inspector.ShopName = place => foodMarket?.NameOf(place);
+                inspector.CurrentOwnShop = ObservedOwnShop;
                 settings.FoodChoice.Clamp(message => log.Info(message));
                 settings.FoodMemory.Clamp(message => log.Info(message));
+                log.Info("Regulars projection: served visits=" + settings.FoodMemoryRegularServedVisits
+                    + ", recent days=" + settings.FoodMemoryRegularRecentDays + "; read-only observed feedback.");
                 log.Info("Food memory policy B revision 1; next-boundary activation, captured decision contributions.");
                 if (!Position.Finite(settings.GameClockFactor) || settings.GameClockFactor < .1 || settings.GameClockFactor > 1)
                     throw new InvalidDataException("GameClockFactor must be between 0.1 and 1 (one third gives three times as much travel time per day).");

@@ -93,11 +93,15 @@ namespace PersistentCity.Runtime
                 foreach (string explanation in foodMarket.UnmanagedShopStatuses()) text.AppendLine(explanation);
             text.AppendLine();
             var nativeAccounts = foodMarket?.ReadAccounts() ?? Array.Empty<NativeFoodAccount>();
+            var regulars = simulation.ProjectRegulars(ObservedOwnShop);
             foreach (var scope in food.Shops)
             {
+                if (!ObservedOwnShop(scope)) continue;
                 var place = city.Places.First(p => p.Id == scope.PlaceId);
                 var observed = food.History.Where(h => h.PlaceId == scope.PlaceId && h.BusinessId == scope.BusinessId).OrderByDescending(h => h.Day).FirstOrDefault();
                 text.AppendLine(foodMarket?.NameOf(scope.PlaceId) ?? (place.Name.Length > 0 ? place.Name : scope.PlaceId));
+                string? regularText = regulars?.OwnShopText(scope.BusinessId);
+                if (regularText != null) text.AppendLine(regularText);
                 var excluded = foodMarket?.ScopeStatus(scope.PlaceId) ?? "Waiting for business ownership";
                 if (excluded.Length > 0) text.AppendLine(excluded + ". Resident sales are paused for this shop.");
                 if (observed == null) text.AppendLine("No evaluated food offers recorded yet.");
@@ -112,8 +116,6 @@ namespace PersistentCity.Runtime
                     text.AppendLine("Observed offer outcomes: " + observed.PriceRejections + " unaffordable, " + observed.AccessRejections + " travel/time, "
                         + observed.ClosedRejections + " closed/late, " + observed.StockRejections + " stock unavailable, " + observed.StaffRejections + " no staffed counter, " + observed.ServiceRejections + " service/queue, "
                         + observed.PreferredAlternatives + " preferred another option, " + observed.UnknownEvidence + " unknown.");
-                    text.AppendLine("Customer home districts: " + string.Join(", ", observed.BuyerDistricts.OrderByDescending(d => d.Purchases)
-                        .Select(d => LocalizedName(d.DistrictId) + " " + d.Purchases)));
                     text.AppendLine("Purchase hours: " + string.Join(", ", observed.PurchaseHours.Select((n, h) => new { n, h })
                         .Where(p => p.n > 0).Select(p => p.h.ToString("00") + ":00 " + p.n)));
                 }
