@@ -3,6 +3,8 @@
   <ItemGroup>
     <Compile Include="$(SourceRoot)/Core/*.cs" />
     <Compile Include="$(SourceRoot)/Persistence/*.cs" />
+    <Compile Include="$(SourceRoot)/Runtime/PrototypeSettings.cs" />
+    <Compile Include="$(SourceRoot)/Runtime/InteriorViewState.cs" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
   </ItemGroup>
 </Project>
