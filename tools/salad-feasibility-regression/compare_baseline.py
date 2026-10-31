@@ -5,6 +5,7 @@ Generated source stays ignored. No native assembly, game, profile or rig access.
 """
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 
@@ -29,8 +30,9 @@ for candidate in ("Donut", "Cupcake"):
         body = source(f"Runtime/{name}.cs")
         if mode == "differential":
             for symbol in ("DirectStockFeasibilitySnapshot", "DirectStockShowcaseReader", "DirectStockCandidate",
-                           "DirectStockFields", "DonutFeasibility", "CupcakeFeasibility"):
-                body = body.replace(symbol, "Baseline" + symbol)
+                           "DirectStockFields", "DonutFeasibilityReader", "DonutFeasibilitySnapshot",
+                           "CupcakeFeasibilityReader", "CupcakeFeasibilitySnapshot"):
+                body = re.sub(r"\b" + symbol + r"\b", "Baseline" + symbol, body)
             compile_current += f'<Compile Include="../../../../Runtime/{name}.cs" />'
         (out / f"{name}.cs").write_text(body, encoding="utf-8")
     if mode == "differential":
