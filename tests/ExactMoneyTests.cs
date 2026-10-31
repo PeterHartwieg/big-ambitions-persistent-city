@@ -108,7 +108,7 @@ public sealed partial class FoodCommerceTests
         var person = city.State.Citizens.Single(); person.PlaceId = "shop"; person.Activity = Activity.Shop;
         city = city.RebuildRoutes(routes); city.EnableHouseholdFinances();
         var row = new FoodShopDay { Day = 1, PlaceId = "shop", BusinessId = "b", Purchases = 8, Revenue = Money.FromCents(8000000), PurchaseMeals = new long[] { 8, 0, 0, 0 },
-            ProductSales = new() { new FoodProductSales { ProductId = "pastry", Purchases = 8, Revenue = Money.FromCents(8000000), PurchaseMeals = new long[] { 8, 0, 0, 0 } } },
+            ProductSales = new() { new FoodProductSales { ProductId = FoodProducts.Croissant, Purchases = 8, Revenue = Money.FromCents(8000000), PurchaseMeals = new long[] { 8, 0, 0, 0 } } },
             BuyerDistricts = new() { new FoodBuyerDistrict { DistrictId = "", Purchases = 8 } } };
         row.PurchaseHours[0] = 8; city.State.Food!.History.Add(row);
         Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(city.State)).Status);
@@ -190,7 +190,7 @@ public sealed partial class FoodCommerceTests
         var full = Money.FromUnits(long.MaxValue - 10);
         int day = (int)(meal.DesiredAt / 1440);
         var row = new FoodShopDay { Day = day, PlaceId = "shop", BusinessId = "b",
-            ProductSales = new() { new FoodProductSales { ProductId = "pastry" } } };
+            ProductSales = new() { new FoodProductSales { ProductId = FoodProducts.Croissant } } };
         if (ledger == "spent") meal.Spent = full;
         if (ledger == "history") row.Revenue = full;
         if (ledger == "product") row.ProductSales[0].Revenue = full;

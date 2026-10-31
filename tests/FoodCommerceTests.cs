@@ -36,7 +36,7 @@ public sealed partial class FoodCommerceTests
         public Money Price = Money.FromCents(100);
         public string BusinessId = "b";
         public string UnavailableReason = "";
-        public string[] Products = new[] { "pastry" };
+        public string[] Products = new[] { FoodProducts.Croissant };
         public bool ThrowAfterSale;
         public string ThrowForResident = "";
         public bool ConfirmEvidence;
@@ -71,7 +71,7 @@ public sealed partial class FoodCommerceTests
             c.Activity = atWork ? Activity.Work : Activity.Home;
             c.NextEventMinute = c.ActivityUntilMinute = 2870;
         }
-        state.Food = new FoodCommerceState { RepresentationFactor = representation, MealRhythmVersion = threeMeals ? MealRhythm.PolicyVersion : 0, Shops = new() { new FoodScope { PlaceId = "shop", BusinessId = "b", ProductId = "pastry" } } };
+        state.Food = new FoodCommerceState { RepresentationFactor = representation, MealRhythmVersion = threeMeals ? MealRhythm.PolicyVersion : 0, Shops = new() { new FoodScope { PlaceId = "shop", BusinessId = "b", ProductId = FoodProducts.Croissant } } };
         var market = new Market(); var routes = new Walking(); var city = new CitySimulator(state, routes); city.AttachFoodMarket(market);
         return (city, market, routes);
     }
@@ -236,7 +236,7 @@ public sealed partial class FoodCommerceTests
     [Fact]
     public void UncertainNativeReceiptCannotExpireIntoASecondPurchase()
     {
-        var (_, _, _) = Ready(); var meal = new ResidentMeal { ResidentId="r", Day=1, Price=Money.FromCents(900), BusinessId="b", ProductId="pastry" };
+        var (_, _, _) = Ready(); var meal = new ResidentMeal { ResidentId="r", Day=1, Price=Money.FromCents(900), BusinessId="b", ProductId=FoodProducts.Croissant };
         var nativeData = new Dictionary<string,string> { ["rlo:data"]="keep" };
         FoodSaleReceipts.Begin(nativeData,meal);
         Assert.Throws<InvalidOperationException>(() => FoodSaleReceipts.AlreadyPaid(nativeData,meal));
