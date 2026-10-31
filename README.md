@@ -1,5 +1,7 @@
 # Persistent City
 
+> **D1 - 31 October (offline):** isolated read-only rival food catalogue and pure detached observation DTOs; exact advertised prices/hours/access/rating, unknown stock and explicitly estimated availability evidence. Bounded metadata/shortlist reads and conservative identity refusals; no gameplay consumer or save changes. All 31 offline commands and 1,551 unit tests pass. [Evidence and 6 Nov rig checks](CHECKS.md#d1-rival-food-catalogue-31-october-2026-offline-only) / [Reader/PR handoff](docs/reviews/2026-10-31-d1-rival-reader.md).
+
 > **Base merge — 28 October:** PR #1 and PR #2 are merged into the optional-stop branch. Schemas 15/16 now carry resident money as exact integer units, as schema 14 does. Schemas 13-15 and earlier development `...Cents` saves migrate exactly or are refused and preserved. **1,503 unit tests**, all 21 standalone regressions and the optional-stop/physical harnesses pass. Offline only. [Evidence](CHECKS.md#base-merge-pr-1-and-pr-2-into-pr-3--28-october-2026-offline).
 
 > **PR #3 review round 1 — 28 October:** repaired visible arrival/departure continuity, shared geometry sampling and indexed stop validation; merged the base review fixes normally. **1,366 unit tests and all 21 standalone regressions pass**, with production/helper Steam-DLL builds passing warnings as errors. The approved **25% setting and schema 16** remain unchanged. Offline only; native behavior/performance remain unverified. [Evidence](CHECKS.md#pr-3-independent-review-round-1--28-october-2026-offline).
