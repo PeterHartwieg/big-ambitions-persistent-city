@@ -116,10 +116,12 @@ static class Program
         var entries=Enumerable.Range(0,count).Select(i=>new FoodAwarenessCatalogue.Entry(
             "business:ba%3Astreet_thirdstreet:"+i+":1:ba%3Abusiness_fastfoodrestaurant:player","p"+i,
             dense ? new Position(10,0,0) : new Position(i%200*125,0,i/200*125))).ToArray();
+        var scopes=entries.Select(e=>new FoodScope {BusinessId=e.BusinessId,PlaceId=e.PlaceId}).ToArray();
+        var positions=entries.ToDictionary(e=>e.PlaceId,e=>e.Position);
         var units=new List<double>();var totals=new List<double>();var spikes=new List<object>();int unitCount=0,maxItems=0;
         for(int iteration=0;iteration<6;iteration++)
         {
-            long first=Stopwatch.GetTimestamp();using var builder=FoodAwarenessCatalogue.BeginBuild(entries);
+            long first=Stopwatch.GetTimestamp();using var builder=FoodAwarenessCatalogue.BeginBuild(scopes,id=>positions[id]);
             double total=0;bool complete;
             do
             {
