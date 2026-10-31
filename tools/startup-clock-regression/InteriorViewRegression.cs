@@ -86,12 +86,12 @@ internal static class InteriorViewRegression
         Check(restored == restoredBeforeMachine + 1 && !NativeInteriorCityView.State.Active, "time machine start must restore synchronously before first tick");
         InstanceBehavior<UI.UIs>.Instance.timeMachine.isRunning = false;
         Time.frameCount++; Check(NativeInteriorCityView.Active, "time machine resume failed");
-        foreach (int cause in new[] { 0, 1, 2, 3, 4 })
+        foreach (int cause in new[] { 0, 1, 2, 3, 4, 5 })
         {
             // A successful query already populated this exact frame's cache.
             Check(NativeInteriorCityView.Active, "same-frame blocker fixture not active");
-            PhysicalTrafficHooks.CurrentFastForward = cause == 0;
-            Time.timeScale = cause == 1 ? 6 : 1;
+            PhysicalTrafficHooks.CurrentFastForward = cause == 0 || cause == 5;
+            Time.timeScale = cause == 1 ? 6 : cause == 0 ? 0 : 1;
             UI.Load.LoadScene.isLoading = cause == 2;
             Parking.UndergroundParking.UndergroundParkingManager.IsInsideParking = cause == 3;
             InstanceBehavior<UI.UIs>.Instance.timeMachine.isRunning = cause == 4;
