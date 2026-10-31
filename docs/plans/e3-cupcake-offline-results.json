@@ -1,0 +1,533 @@
+{
+  "scope": "E3 cupcake discovery only; no native/game/rig execution",
+  "sourceBefore": "462a99d8313968a2a1760ac88806b3aed47a0003",
+  "sourceAfter": "ce612c19d2cbb73839ef4a898424a30b722432e0",
+  "method": {
+    "runtime": "Windows .NET 10, Release, native field doubles",
+    "cold": "one first-process call per reader including JIT, descriptor and tag-field metadata binding; no cold percentile or causal time-win claim",
+    "warm": "30 warmups then 1001 individually timed valid reads per furniture size; fixture construction excluded",
+    "beforeReproducer": "python tools/cupcake-feasibility-regression/measure_before.py",
+    "afterReproducer": "donut/cupcake projects in gates below",
+    "uncalled": "zero work/allocations by isolated source reachability, not native frame measurement",
+    "perfReview": "existing once-bound metadata, bounded explicit scans and removed redundant identity set retained; no additional measured optimization claimed"
+  },
+  "readerDonutBefore": {
+    "checks": 2082,
+    "cold": {
+      "samples": 1,
+      "coldMs": 1.5581,
+      "coldBytes": 968
+    },
+    "warm": [
+      {
+        "furniture": 2,
+        "p50Ms": 0.0006,
+        "p95Ms": 0.0009,
+        "maxMs": 0.012,
+        "bytesPerCall": 200,
+        "spikesAtLeast30Ms": 0
+      },
+      {
+        "furniture": 2000,
+        "p50Ms": 0.0988,
+        "p95Ms": 0.1786,
+        "maxMs": 1.8302,
+        "bytesPerCall": 49104,
+        "spikesAtLeast30Ms": 0
+      }
+    ]
+  },
+  "readerDonutShared": {
+    "checks": 2082,
+    "cold": {
+      "samples": 1,
+      "coldMs": 1.7038,
+      "coldBytes": 1016
+    },
+    "warm": [
+      {
+        "furniture": 2,
+        "p50Ms": 0.0005,
+        "p95Ms": 0.0006,
+        "maxMs": 0.0279,
+        "bytesPerCall": 200,
+        "spikesAtLeast30Ms": 0
+      },
+      {
+        "furniture": 2000,
+        "p50Ms": 0.1006,
+        "p95Ms": 0.1677,
+        "maxMs": 1.3946,
+        "bytesPerCall": 49104,
+        "spikesAtLeast30Ms": 0
+      }
+    ]
+  },
+  "readerCupcakeShared": {
+    "checks": 2098,
+    "cold": {
+      "samples": 1,
+      "coldMs": 2.6141,
+      "coldBytes": 1016
+    },
+    "warm": [
+      {
+        "furniture": 2,
+        "p50Ms": 0.0005,
+        "p95Ms": 0.0005,
+        "maxMs": 0.0089,
+        "bytesPerCall": 200,
+        "spikesAtLeast30Ms": 0
+      },
+      {
+        "furniture": 2000,
+        "p50Ms": 0.0959,
+        "p95Ms": 0.1531,
+        "maxMs": 1.9054,
+        "bytesPerCall": 49104,
+        "spikesAtLeast30Ms": 0
+      }
+    ]
+  },
+  "gates": [
+    {
+      "name": "build",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/build.py",
+        "--game-managed",
+        "C:/Program Files (x86)/Steam/steamapps/common/Big Ambitions/Big Ambitions_Data/Managed"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "unit",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "list",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--no-build",
+        "--list-tests"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "core-identity",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/core-identity-regression/CoreIdentityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "diagnostic-response",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/diagnostic-response-regression/DiagnosticResponseRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "event-observation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/event-observation-regression/EventObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "food-catalogue",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-catalogue-regression/FoodCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "food-checkout",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-checkout-regression/FoodCheckoutRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "food-hours",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-hours-regression/FoodHoursRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "food-household-catalogue",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-household-catalogue-regression/FoodHouseholdCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "food-ownership",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-ownership-regression/FoodOwnershipRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "food-supply",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-supply-regression/FoodSupplyRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "frame-observation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/frame-observation-regression/FrameObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "gate-access",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/gate-access-regression/GateAccessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "road-ceiling",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-ceiling-regression/RoadCeilingRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "road-handoff",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-handoff-regression/RoadHandoffRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "road-invalidation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-invalidation-regression/RoadInvalidationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "road-speed",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-speed-regression/RoadSpeedRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "route-discovery",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/route-discovery-regression/RouteDiscoveryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "save-contract",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "startup-clock",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/startup-clock-regression/StartupClockRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "traffic-closure",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-closure-regression/TrafficClosureRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "traffic-queue",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-queue-regression/TrafficQueueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "walking-quote",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/walking-quote-regression/WalkingQuoteRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "campaign-reader",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/campaign-reader-regression/CampaignReaderRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "native-command",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/native-command-regression/run.py"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "physical-selection",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/physical-selection-regression/run.py"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "vehicle-ownership",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/vehicle-ownership-regression/run.py"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "optional-stop",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/optional-stop-regression/run.py"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "simulate",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/simulate/Simulate.csproj",
+        "--",
+        "28",
+        "build/harness-demo"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "food-routines",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-routines/FoodRoutines.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "build/harness-food-routines-demo",
+        "957"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "food-demand",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-demand/FoodDemand.csproj",
+        "--",
+        "build/harness-food-demand-demo"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "donut",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/donut-feasibility-regression/DonutFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "cupcake",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/cupcake-feasibility-regression/CupcakeFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "isolation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/donut-feasibility-regression/source_checks.py"
+      ],
+      "exit": 0
+    }
+  ],
+  "finalProductionDllSha256": "19f891a6ad659535ec8a5ca9d9d3525662a20d3919413f4beb903b17c31fa73b",
+  "saveContract": {
+    "sha256": "6B9097A2A036A7791F118DDFF0A96530AC4A2EBAFFDFA6BF37C51ADBCC52062C",
+    "characters": 113747,
+    "f0Transitions": 12
+  },
+  "otherDiagnosticFlags": [
+    {
+      "component": "unchanged D1 20000-place aggregate cold build",
+      "ms": 41.1507,
+      "atLeast30Ms": true,
+      "nativeFrameOrE3Sample": false,
+      "observedAggregateSamplesAtLeast30Ms": 1
+    },
+    {
+      "component": "unchanged C1 1024-business synchronous cold read",
+      "p95Ms": 7.016,
+      "atLeast5Ms": true,
+      "nativeFrameOrE3Sample": false
+    }
+  ],
+  "differentialDonut": {
+    "result": "PASS byte-identical JSON outputs against original 462a99d for all original functional/timed cases",
+    "checks": 2082,
+    "reproducer": "python tools/cupcake-feasibility-regression/compare_donut.py",
+    "timingExcludedFromReaderBenchmarks": true,
+    "instrumentedFirstCallMs": 32.0904,
+    "instrumentedFirstCallAtLeast30Ms": true,
+    "timingScope": "both readers plus JSON serialization/comparison/JIT; not a single-reader or native frame sample"
+  },
+  "nativeEvidence": "Unknown loaded cupcake data, eligibility, checkout, settlement and native performance; 6 Nov checklist in CHECKS and prepared PR description",
+  "nativeAssemblyHashesUnchanged": {
+    "BigAmbitions.dll": "9427561b81aaab2ada09c22a3c98dd9a4017a65225b389513885bf336852e911",
+    "BigAmbitions.Items.dll": "db07038215ea8ab2430fb942b86a19e93b5fb84f70639d87606b194786d5bab1",
+    "HGPlugins.dll": "7c0d57b839d03cd385efd1ff675fff64999050e27a5866e8882be4977400fb96"
+  },
+  "processAudit": {
+    "taskOwnedDotnetTesthostCompilerWorkers": 0,
+    "preexistingSharedMsbuildWorkerLeftUntouched": 45652,
+    "noDetachedTests": true
+  }
+}

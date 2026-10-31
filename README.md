@@ -1,5 +1,7 @@
 # Persistent City
 
+> **E3 cupcake - 31 October (offline):** [cupcake evidence record](docs/plans/e3-cupcake.md) and pinned facade share the isolated direct-stock reader with donut. All 35 offline gates pass, with 1,611 unit tests and 2,082/2,098 donut/cupcake reader assertions. Loaded assets and natural checkout/settlement remain unproven; no product enabled or gameplay/save changes. [Offline proof and numbered 6 Nov checks](CHECKS.md#e3-cupcake-feasibility---31-october-2026-offline-only).
+
 > **E3 donut - 31 October (offline):** isolated diagnostic field reader and [candidate inventory/evidence](docs/plans/e3-donut.md); no additional product certified or enabled. All 32 requested offline gates plus 2 new checks pass; 1,611 unit tests and final 2,082 reader assertions. Equipment/checkout/settlement proof remains pending. No gameplay or save changes. [Offline results and numbered 6 Nov checks](CHECKS.md#e3-donut-feasibility---31-october-2026-offline-only).
 
 > **C1 campaign reader - 31 October:** on-demand read-only campaign snapshots and bounded continuation are implemented, with six verified native identifiers and honest Unknown lifecycle/targeting fields. No awareness, choice, save or native campaign/payment changes. **1,566 unit tests and all 32 offline checks pass**; the pending 6 Nov fixture checks are in [CHECKS.md](CHECKS.md#c1-native-campaign-reader---31-october-2026-offline-only); [native contract notes](docs/plans/c1-campaign-reader.md). Peter's Q1-Q7 product decisions are recorded in the B-E plan.

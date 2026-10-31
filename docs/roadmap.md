@@ -29,7 +29,7 @@ Later: residents as employees, households.
 
 Implementation plan for B–E: [memory, marketing, rivals and the wider street](plans/steps-b-e.md).
 
-E3 status, 31 October (offline): [donut feasibility discovery](plans/e3-donut.md) adds an isolated raw-field reader only. Loaded equipment and natural checkout/settlement proof remain pending; no additional product certified or enabled.
+E3 status, 31 October (offline): [donut](plans/e3-donut.md) and [cupcake feasibility discovery](plans/e3-cupcake.md) share one isolated on-demand raw-field reader with pinned candidates. Loaded equipment and natural checkout/settlement proof remain pending; no additional product certified or enabled.
 
 Peter’s [31 October Q1-Q7 decisions](plans/steps-b-e.md#product-decisions-peter-31-oct-2026) specify tiered paid research as a third native-agency option (proven fee or unavailable), local/distant discovery, estimated rivals, food-first products, no anonymous crowds/night multiplier and own-shop regulars; tier contents/fees remain open.
 
