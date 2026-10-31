@@ -201,9 +201,90 @@ public sealed class ResidentInsightTests
         Assert.Equal(new[] { "keeps a regular workday", "happy to walk far" }, words);
         Assert.DoesNotContain(words, w => w.Any(char.IsDigit));
         person.Identity.Persona = Persona.Student; person.Preferences = new TravelPreferences { WalkingToleranceMetres = 700, AllowTransit = false, FareWeightMinutes = 5 };
+        // A represented consumer's legacy taste is not the clicked person's; only the resident's own traits are described.
         var meal = Meal(MealKind.Lunch, MealStatus.Pending); meal.PreferredProductId = FoodProducts.Burger;
-        Assert.Equal(new[] { "on a student budget", "often packs lunch", "prefers short walks", "avoids public transport", "minds fares", "likes burgers" },
+        Assert.Equal(new[] { "on a student budget", "often packs lunch", "prefers short walks", "avoids public transport", "minds fares" },
             Capture(city, person, meal, places).Personality);
+    }
+
+    private static MealOutcomeRecord Outcome(MealKind kind, MealOutcomeStatus status, MealReasonCode reason = MealReasonCode.Other,
+        FoodOutsideOption outside = FoodOutsideOption.None, string place = ShopId) => new MealOutcomeRecord
+    { Kind = kind, Status = status, Reason = reason, Outside = outside, At = 1440 + 600,
+      PlaceId = status == MealOutcomeStatus.ChoseAlternative ? "" : place, ProductId = status == MealOutcomeStatus.ChoseAlternative ? "" : FoodProducts.Croissant };
+
+    [Fact]
+    public void TodaysMealsComeFromRecordedOutcomesAndNeverClaimConsumption()
+    {
+        var (city, person, places) = Fixture(1440 + 1200);
+        var meal = Meal(MealKind.Dinner, MealStatus.Uncertain);
+        meal.Today = new ResidentFoodToday { Day = 1, Meals = {
+            Outcome(MealKind.Breakfast, MealOutcomeStatus.ChoseAlternative, MealReasonCode.PrefersAlternative, FoodOutsideOption.FundedHouseholdFood),
+            Outcome(MealKind.Lunch, MealOutcomeStatus.Skipped, MealReasonCode.QueueTooLong),
+            Outcome(MealKind.Dinner, MealOutcomeStatus.Unconfirmed, MealReasonCode.CheckoutUnconfirmed) } };
+        string before = Newtonsoft.Json.JsonConvert.SerializeObject(new { city, meal });
+        var insight = Capture(city, person, meal, places);
+        Assert.Equal(new[] { ResidentMealState.HouseholdFood, ResidentMealState.Skipped, ResidentMealState.Unconfirmed }, insight.Meals.Select(m => m.State));
+        Assert.Equal("chose household food", insight.Meals[0].Text);
+        Assert.Equal("skipped: the queue was too long", insight.Meals[1].Text);
+        Assert.Equal("purchase of croissant at Corner Bakery, Market Lane 3 not yet confirmed", insight.Meals[2].Text);
+        Assert.DoesNotContain(insight.Meals, m => m.Text.Contains("ate") || m.Text.Contains("eaten"));
+        Assert.DoesNotContain("paid", insight.Meals[2].Text); Assert.DoesNotContain("skipped", insight.Meals[2].Text);
+        // Opening the inspector reads only: no outcome, meal or city field changes.
+        Assert.Equal(before, Newtonsoft.Json.JsonConvert.SerializeObject(new { city, meal }));
+    }
+
+    [Fact]
+    public void UpgradedEarlierMealsAreNotRecordedAndAMealUnderWayIsShownLive()
+    {
+        var (city, person, places) = Fixture();
+        var meal = Meal(MealKind.Lunch, MealStatus.Travelling);
+        // Upgraded at lunch: breakfast ended before schema 17; a skipped lunch was revived and is under way again.
+        meal.Today = new ResidentFoodToday { Day = 1, Unrecorded = 1, Meals = { Outcome(MealKind.Lunch, MealOutcomeStatus.Skipped, MealReasonCode.NoSuitableStop) } };
+        var insight = Capture(city, person, meal, places);
+        Assert.Equal((ResidentMealState.NotRecorded, "not recorded (before the upgrade)"), (insight.Meals[0].State, insight.Meals[0].Text));
+        Assert.Equal(ResidentMealState.InProgress, insight.Meals[1].State);
+        Assert.Equal("on the way to Corner Bakery, Market Lane 3 for croissant", insight.Meals[1].Text);
+        Assert.Equal((ResidentMealState.Unknown, "unknown"), (insight.Meals[2].State, insight.Meals[2].Text));
+        // A finished meal is read from its record, including a shop that has since left the catalogue.
+        meal.Status = MealStatus.Paid;
+        meal.Today.Meals[0] = Outcome(MealKind.Lunch, MealOutcomeStatus.Bought, MealReasonCode.Bought, place: "address:Gone%20Street:1:shop");
+        Assert.Equal("bought croissant at a shop no longer available", Capture(city, person, meal, places).Meals[1].Text);
+    }
+
+    [Fact]
+    public void OutcomesOfAnEarlierDayAreNotShownAsTodaysAndMissingFoodSaysUnavailable()
+    {
+        var (city, person, places) = Fixture(2 * 1440 + 300);
+        var meal = Meal(MealKind.Dinner, MealStatus.Paid);
+        meal.Today = new ResidentFoodToday { Day = 1, Meals = { Outcome(MealKind.Dinner, MealOutcomeStatus.Bought, MealReasonCode.Bought) } };
+        var insight = Capture(city, person, meal, places);
+        Assert.All(insight.Meals, m => Assert.Equal(ResidentMealState.Unknown, m.State));
+        Assert.Equal(1, meal.Today.Day);
+        city.Food = null;
+        var none = Capture(city, person, meal, places);
+        Assert.Contains("Meal data is unavailable", none.MealNote);
+        Assert.Null(city.Food);
+        // The legacy single daily meal is read from its own record.
+        city.Food = new FoodCommerceState();
+        var legacy = Meal(MealKind.Legacy, MealStatus.Declined, day: 2);
+        legacy.Today = new ResidentFoodToday { Day = 2, Meals = { Outcome(MealKind.Legacy, MealOutcomeStatus.ChoseAlternative, MealReasonCode.PrefersAlternative, FoodOutsideOption.PackedMeal) } };
+        Assert.Equal("This city uses the earlier single daily meal: chose a packed meal.", Capture(city, person, legacy, places).MealNote);
+    }
+
+    [Fact]
+    public void TraitsAreDescribedInWordsWithoutNumbersAndNeutralOrInactiveTraitsStaySilent()
+    {
+        var (city, person, places) = Fixture();
+        // Croissant 4, burger 0, hot dog 2, price 3, queue 1, loyalty 4, travel 4, health 3, quality 3, time pressure 0.
+        person.Traits = new ResidentTraits { Version = 1, Bands = "4023144330" };
+        var words = Capture(city, person, null, places).Personality;
+        Assert.Equal(new[] { "keeps a regular workday", "happy to walk far", "loves croissants", "dislikes burgers", "watches prices",
+            "dislikes queues", "happy to travel far for food", "prefers lighter food", "values quality", "takes their time over meals" }, words);
+        Assert.DoesNotContain(words, w => w.Any(char.IsDigit));
+        // Loyalty has no effect until shop memory exists, so it is never described.
+        Assert.DoesNotContain(words, w => w.Contains("loyal") || w.Contains("curious"));
+        person.Traits = new ResidentTraits { Version = 1, Bands = "2222222222" };
+        Assert.Equal(new[] { "keeps a regular workday", "happy to walk far" }, Capture(city, person, null, places).Personality);
     }
 
     [Fact]
@@ -225,6 +306,31 @@ public sealed class ResidentInsightTests
         Assert.Equal(4, throttle.Picks);
         Assert.Throws<ArgumentOutOfRangeException>(() => new ResidentPickThrottle(-1));
         Assert.Throws<ArgumentOutOfRangeException>(() => new ResidentPickThrottle(0.05, 0));
+    }
+
+    [Fact]
+    public void NativeStreetKeysAreLocalizedForDisplayButKeptRawForTheMap()
+    {
+        // Retain A2's street-key case using A1's corrected complete-address callback.
+        const string home = "address:ba%3Astreet_thirdstreet:30:home", work = "address:ba%3Astreet_pier:7:work";
+        var (city, person, places) = Fixture();
+        places[home] = new Place { Id = home, Name = "ba:street_thirdstreet 30", Kind = PlaceKind.Home };
+        places[work] = new Place { Id = work, Name = "ba:street_pier 7", Kind = PlaceKind.Work };
+        person.HomeId = home; person.DayPlaceId = work; person.PlaceId = home;
+        person.Activity = Activity.Home; person.Phase = CitizenPhase.AtPlace;
+        var names = new Dictionary<string, string> { ["ba:street_thirdstreet"] = "Third Street", ["ba:street_pier"] = "Pier Road" };
+        var insight = ResidentInsight.Capture(city, person, null, id => places.GetValueOrDefault(id),
+            formatAddress: (key, number) => number + " " + names[key]);
+        Assert.Equal("30 Third Street", insight.Home!.Label);
+        Assert.Equal("7 Pier Road", insight.Work!.Label);
+        Assert.Equal(("ba:street_thirdstreet", 30), (insight.Home.Street, insight.Home.Number));
+        Assert.Contains("Lives at 30 Third Street.", insight.Story);
+        Assert.Contains("Works at 7 Pier Road.", insight.Story);
+        Assert.Contains("at home", insight.Story);
+        Assert.DoesNotContain("ba:street", insight.Text());
+        Assert.DoesNotContain("ba:street", insight.Story);
+        Assert.Equal("30 Third Street", ResidentAddress.From(places[home]).Label);
+        Assert.Equal("7 Pier", ResidentAddress.From(places[work], (_, _) => " ").Label);
     }
 
     [Fact]

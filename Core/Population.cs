@@ -168,6 +168,7 @@ namespace PersistentCity.Core
                         * (0.75 + StableRandom.Hash(identity.Id + ":fare", city.Seed) % 51 / 100.0)
                 }
             };
+            person.Traits = ResidentTraits.Generate(city.Seed, person.Identity.Id);
             ResidentLifecycle.Initialize(person, city.Seed, minute);
             return person;
         }

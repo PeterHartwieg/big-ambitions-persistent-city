@@ -78,8 +78,8 @@ namespace PersistentCity.Core
     /// <summary>
     /// Read-only view of one resident for the inspector, built from facts the city already stores.
     /// Capture never changes the city, draws no random number, plans no route and reads no market.
-    /// Only the latest meal record is stored before schema 17, so earlier meals today are reported
-    /// as not recorded rather than inferred.
+    /// Today's meals come from the recorded current-day outcomes plus the live meal in progress; a meal
+    /// with no record is "unknown", and meals that ended before the schema-17 upgrade are "not recorded".
     /// </summary>
     public sealed class ResidentInsight
     {
@@ -97,6 +97,8 @@ namespace PersistentCity.Core
         public string MealNote { get; private set; } = "";
         public double Minute { get; private set; }
 
+        private const string UnknownPlace = "an unknown place";
+
         public static string DefaultProductName(string productId) => productId == FoodProducts.Croissant ? "croissant"
             : productId == FoodProducts.Burger ? "burger" : productId == FoodProducts.HotDog ? "hot dog"
             : productId.Length == 0 ? "food" : productId;
@@ -111,7 +113,7 @@ namespace PersistentCity.Core
             Func<string, string> label = id =>
             {
                 var place = Find(findPlace, id);
-                return place == null ? "an unknown place" : ResidentAddress.From(place, formatAddress).Label;
+                return place == null ? UnknownPlace : ResidentAddress.From(place, formatAddress).Label;
             };
             double now = city.Minute;
             var insight = new ResidentInsight { ResidentId = person.Identity.Id, Name = person.Identity.Name, Age = person.Identity.Age, Minute = now };
@@ -160,9 +162,8 @@ namespace PersistentCity.Core
 
         private static IReadOnlyList<string> DescribePersonality(CitizenState person, ResidentMeal? meal, Func<string, string> productName)
         {
-            // Words for facts that already change behaviour: persona rules, travel preferences and,
-            // where a consumer has one, a food preference. No new traits are generated here.
-            var words = new List<string>(6);
+            // Words for persona rules, travel preferences and the saved lifestyle traits; never numbers.
+            var words = new List<string>(12);
             switch (person.Identity.Persona)
             {
                 case Persona.Commuter: words.Add("keeps a regular workday"); break;
@@ -180,7 +181,7 @@ namespace PersistentCity.Core
             if (person.Preferences.OwnsCar) words.Add("owns a car");
             else if (!person.Preferences.AllowTransit) words.Add("avoids public transport");
             if (person.Preferences.FareWeightMinutes >= 4) words.Add("minds fares");
-            if (meal != null && meal.PreferredProductId.Length > 0) words.Add("likes " + productName(meal.PreferredProductId) + "s");
+            if (person.Traits != null) words.AddRange(ResidentTraits.Words(person.Traits, productName));
             return words;
         }
 
@@ -315,22 +316,80 @@ namespace PersistentCity.Core
             int today = (int)Math.Floor(now / 1440);
             if (city.Food == null) { note = "Meal data is unavailable: resident food demand is not active in this city."; return meals; }
             if (meal == null) { note = "No meal record for this resident yet."; return meals; }
+            // A record of an earlier day is not today's: the view is empty until this consumer's next outcome.
+            var recorded = meal.Today != null && meal.Today.Day == today ? meal.Today : null;
             if (meal.Kind == MealKind.Legacy)
             {
-                note = "This city uses the earlier single daily meal: " + (meal.Day == today ? Describe(meal, label, productName, now) : "unknown") + ".";
+                var single = new ResidentMealInsight { Kind = MealKind.Legacy, State = ResidentMealState.Unknown, Text = "unknown" };
+                Fill(single, meal, recorded, today, label, productName, now);
+                note = "This city uses the earlier single daily meal: " + single.Text + ".";
                 return meals;
             }
-            if (meal.Day > today)
-            {
-                for (int i = 0; i < 3; i++) { meals[i].State = ResidentMealState.NotRecorded; meals[i].Text = "not recorded"; }
-                return meals;
-            }
-            if (meal.Day < today) return meals;
-            int current = meal.Kind - MealKind.Breakfast;
-            for (int i = 0; i < current; i++) { meals[i].State = ResidentMealState.NotRecorded; meals[i].Text = "not recorded (only the latest meal is stored)"; }
-            meals[current].State = State(meal.Status);
-            meals[current].Text = Describe(meal, label, productName, now);
+            foreach (var slot in meals) Fill(slot, meal, recorded, today, label, productName, now);
             return meals;
+        }
+
+        // Precedence: a meal under way now, then its recorded outcome, then what the live record shows.
+        private static void Fill(ResidentMealInsight slot, ResidentMeal meal, ResidentFoodToday? recorded, int today,
+            Func<string, string> label, Func<string, string> productName, double now)
+        {
+            bool current = meal.Day == today && meal.Kind == slot.Kind;
+            var outcome = recorded?.Find(slot.Kind);
+            if (current && (meal.Status == MealStatus.Travelling || meal.Status == MealStatus.Serving || meal.Status == MealStatus.Pending && outcome == null))
+            { slot.State = State(meal.Status); slot.Text = Describe(meal, label, productName, now); return; }
+            if (outcome != null) { slot.State = State(outcome.Status); slot.Text = Describe(outcome, label, productName); return; }
+            if (recorded != null && MealOutcomes.Index(slot.Kind) < recorded.Unrecorded)
+            { slot.State = ResidentMealState.NotRecorded; slot.Text = "not recorded (before the upgrade)"; return; }
+            if (current) { slot.State = State(meal.Status); slot.Text = Describe(meal, label, productName, now); return; }
+            // Without a record, a meal that ended earlier today cannot be reconstructed.
+            if (meal.Today == null && (meal.Day > today || meal.Day == today && slot.Kind < meal.Kind))
+            { slot.State = ResidentMealState.NotRecorded; slot.Text = "not recorded"; }
+        }
+
+        private static ResidentMealState State(MealOutcomeStatus status) => status == MealOutcomeStatus.Bought ? ResidentMealState.Bought
+            : status == MealOutcomeStatus.ChoseAlternative ? ResidentMealState.HouseholdFood
+            : status == MealOutcomeStatus.Skipped ? ResidentMealState.Skipped : ResidentMealState.Unconfirmed;
+
+        private static string Describe(MealOutcomeRecord outcome, Func<string, string> label, Func<string, string> productName)
+        {
+            string shop = outcome.PlaceId.Length == 0 ? "a shop" : label(outcome.PlaceId);
+            if (shop == UnknownPlace) shop = "a shop no longer available";
+            string product = productName(outcome.ProductId);
+            switch (outcome.Status)
+            {
+                case MealOutcomeStatus.Bought: return "bought " + product + " at " + shop;
+                // A choice, never a claim that the food was eaten.
+                case MealOutcomeStatus.ChoseAlternative: return Alternative(outcome.Outside);
+                case MealOutcomeStatus.Unconfirmed: return "purchase of " + product + " at " + shop + " not yet confirmed";
+                default: return "skipped: " + ReasonWords(outcome.Reason);
+            }
+        }
+
+        public static string Alternative(FoodOutsideOption outside) => outside == FoodOutsideOption.FundedHouseholdFood ? "chose household food"
+            : outside == FoodOutsideOption.HomePreparation ? "chose to prepare food at home"
+            : outside == FoodOutsideOption.PackedMeal ? "chose a packed meal" : "chose food from home instead of buying";
+
+        public static string ReasonWords(MealReasonCode reason)
+        {
+            switch (reason)
+            {
+                case MealReasonCode.NoSuitableStop: return "no suitable stop in the meal window";
+                case MealReasonCode.NoFeasibleOffer: return "no shop could serve in time or within budget";
+                case MealReasonCode.InsufficientEvidence: return "not enough stock, service or route information";
+                case MealReasonCode.ServiceUnavailable: return "service unavailable on arrival";
+                case MealReasonCode.ShopClosed: return "the shop was closed";
+                case MealReasonCode.QueueTooLong: return "the queue was too long";
+                case MealReasonCode.NoLongerFits: return "the queue no longer fit the break";
+                case MealReasonCode.Interrupted: return "the visit was interrupted";
+                case MealReasonCode.LeftBeforeService: return "left before being served";
+                case MealReasonCode.ScheduleChanged: return "the schedule changed before leaving";
+                case MealReasonCode.BusinessWithdrew: return "the shop no longer accepted the order";
+                case MealReasonCode.NativeClockPassed: return "the game clock passed the meal window";
+                case MealReasonCode.MoneyRange: return "the purchase exceeded the money range";
+                case MealReasonCode.FundsUnavailable: return "not enough money at checkout";
+                case MealReasonCode.CheckoutRefused: return "the shop refused the checkout";
+                default: return "no reason recorded";
+            }
         }
 
         private static ResidentMealState State(MealStatus status) => status == MealStatus.Travelling || status == MealStatus.Serving ? ResidentMealState.InProgress
@@ -347,7 +406,7 @@ namespace PersistentCity.Core
                 case MealStatus.Travelling: return "on the way to " + shop + " for " + product;
                 case MealStatus.Serving: return "waiting for " + product + " at " + shop;
                 case MealStatus.Paid: return "bought " + product + " at " + shop;
-                case MealStatus.Declined: return "chose food from home instead of buying";
+                case MealStatus.Declined: return Alternative(meal.Today?.Day == meal.Day ? meal.Today.Find(meal.Kind)?.Outside ?? FoodOutsideOption.None : FoodOutsideOption.None);
                 case MealStatus.Missed: return "skipped: " + Sentence(meal.Reason);
                 case MealStatus.Uncertain: return "purchase of " + product + " at " + shop + " not yet confirmed";
                 default: return now < meal.DesiredAt ? "unknown (not decided yet)" : "unknown (deciding)";
