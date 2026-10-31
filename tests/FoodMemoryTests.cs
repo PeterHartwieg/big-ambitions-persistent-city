@@ -10,7 +10,7 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-public sealed class FoodMemoryTests
+public sealed partial class FoodMemoryTests
 {
     private static ResidentTraits Traits(int loyalty = 2, int patience = 2, int pressure = 2)
         => new() { Bands = "2222" + patience + loyalty + "222" + pressure };

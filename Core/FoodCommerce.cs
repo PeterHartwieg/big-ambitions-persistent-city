@@ -338,7 +338,17 @@ namespace PersistentCity.Core
                         && !DailyRoutine.Open(new Place { Kind = PlaceKind.Shop, OpenMinute = 0, CloseMinute = 0, WeeklyHours = available.Hours }, now))
                     { Finish(meal, MealStatus.Missed, "Shop closed before admission"); return; }
                     if (available?.MealsPerHour == null || available.MealsPerHour <= 0)
-                    { Finish(meal, MealStatus.Missed, "Service unavailable on arrival"); return; }
+                    {
+                        if (city.State.Capabilities.Active && available?.ServiceUnavailableReason == "Out of stock")
+                        {
+                            var live = market is IFoodFailureMarket evidence
+                                ? evidence.ReadFailureBusiness(meal.BusinessId, meal.PlaceId, now) : available;
+                            if (live?.Id == meal.BusinessId && live.PlaceId == meal.PlaceId && live.ServiceUnavailableReason == "Out of stock"
+                                && live.Offers.Any(o => o.ProductId == meal.ProductId && o.Units == 0))
+                                Experience(meal, ShopExperience.Stockout, now);
+                        }
+                        Finish(meal, MealStatus.Missed, "Service unavailable on arrival"); return;
+                    }
                     double? close = null;
                     if (meal.Slot > 0)
                     {
@@ -353,13 +363,18 @@ namespace PersistentCity.Core
                     meal.ServiceMinutes = 60.0 / available.MealsPerHour.Value;
                     var scope = state.Shops.Single(s => s.PlaceId == meal.PlaceId);
                     meal.ServiceAt = Math.Max(now, scope.NextServiceAt) + meal.ServiceMinutes;
-                    if ((meal.Slot > 0 || NewChoice(meal)) && Math.Max(0, scope.NextServiceAt - now) > (meal.Slot > 0 ? meal.Excursion!.MaximumQueueMinutes
-                        : MealRhythm.QueueMinutes(meal.Kind, person.MealOuting!.OriginActivity)))
+                    if (meal.Slot > 0 && Math.Max(0, scope.NextServiceAt - now) > meal.Excursion!.MaximumQueueMinutes)
                         Finish(meal, MealStatus.Missed, "Queue exceeds patience on arrival");
                     else if (meal.Slot > 0 && (!close.HasValue || meal.ServiceAt >= close.Value))
                         Finish(meal, MealStatus.Missed, "Service no longer fits shop opening hours");
                     else if (meal.ServiceAt + MealRhythm.EatingMinutes(meal.Kind) + meal.ReturnMinutes > meal.Deadline)
+                    {
+                        // Preserve the existing refusal and accounts. Attribute queue disappointment
+                        // only when removing the observed wait would have made this break fit.
+                        if (scope.NextServiceAt > now && now + meal.ServiceMinutes + MealRhythm.EatingMinutes(meal.Kind) + meal.ReturnMinutes <= meal.Deadline)
+                            Experience(meal, ShopExperience.Queue, now);
                         Finish(meal, MealStatus.Missed, "Arrival or queue no longer fits the break");
+                    }
                     else
                     {
                         if (meal.Slot == 0) city.ExtendMealStay(person, meal.ServiceAt + MealRhythm.EatingMinutes(meal.Kind));

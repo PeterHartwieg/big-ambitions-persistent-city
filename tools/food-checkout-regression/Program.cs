@@ -161,11 +161,31 @@ static partial class Program
         RefusalsAndRepeatsMakeNoSale();
         DecisionReadsInOneMinuteShareOneImage();
         DecisionImageNeverReachesCheckout();
+        FailureEvidenceBypassesDecisionCacheWithoutBookingAnything();
         DecisionImageInvalidation();
         DecisionWorkload();
         DiscoveryWalksTheWholeRingWithoutRebuildingPlaceIds();
         Check(UnityEngine.Object.Destroyed == UnityEngine.ScriptableObject.Created, "every temporary simulator destroyed");
         Console.WriteLine(checks + " actual NativeFoodMarket checkout checks passed (synthetic native surfaces, not game execution).");
+    }
+
+    static void FailureEvidenceBypassesDecisionCacheWithoutBookingAnything()
+    {
+        using var f = new Fixture();
+        var original = f.Market.Read(Minute).Single();
+        Check(original.MealsPerHour > 0, "warm decision cache has a staffed stocked counter");
+        f.Reg.Registers[0].instance.cargoInstances![0].amount = 0;
+        Check(f.Market.Read(Minute).Single().MealsPerHour > 0, "ordinary decision cache retains its earlier image");
+        IFoodFailureMarket evidence = f.Market;
+        var emptyBags = evidence.ReadFailureBusiness(original.Id, original.PlaceId, Minute)!;
+        Check(emptyBags.MealsPerHour == 0 && emptyBags.ServiceUnavailableReason == "Out of stock"
+            && emptyBags.Offers.All(o => o.Units == 0), "failure evidence proves bag exhaustion in the same minute");
+        f.Reg.Registers.Clear();
+        var unstaffed = evidence.ReadFailureBusiness(original.Id, original.PlaceId, Minute)!;
+        Check(unstaffed.ServiceUnavailableReason == "No staffed counter", "unknown staffing is distinct from bag exhaustion");
+        Check(evidence.ReadFailureBusiness("replaced-generation", original.PlaceId, Minute) == null, "failure proof cannot transfer generations");
+        Check(f.Market.NativePurchases == 0 && f.Reg.unprocessedCompletedOrders.Count == 0
+            && f.Receipt(f.Meal("failure-read")) == FoodReceiptStatus.Missing, "failure evidence makes no order or receipt");
     }
 
     static void SuccessfulCheckoutUsesOnePreSaleRead()

@@ -18,7 +18,7 @@ namespace PersistentCity.Runtime
 {
     /// <summary>Automatic whole-business food authority. Saves use the same native snapshot
     /// as population/meal records. Native code owns inventory, orders and daily accounting.</summary>
-    public sealed partial class NativeFoodMarket : IFoodMarket, IFoodSaleEvidence, IFoodBusinessAuthority, ILocalFoodMarket, IFoodCandidateMarket, IDisposable
+    public sealed partial class NativeFoodMarket : IFoodMarket, IFoodSaleEvidence, IFoodBusinessAuthority, ILocalFoodMarket, IFoodCandidateMarket, IFoodFailureMarket, IDisposable
     {
         public const string Product = "ba:itemname_croissant";
         private const string PatchId = "persistentcity.food-routines";
@@ -161,6 +161,8 @@ namespace PersistentCity.Runtime
             var scope = state.Shops.SingleOrDefault(s => s.BusinessId == businessId);
             return scope == null ? null : ReadSelected(minute, new[] { scope.PlaceId }).SingleOrDefault(b => b.Id == businessId);
         }
+        public FoodBusiness? ReadFailureBusiness(string businessId, string placeId, double minute)
+            => ReadSelected(minute, new[] { placeId }, capture: true).SingleOrDefault(b => b.Id == businessId && b.PlaceId == placeId);
         public IReadOnlyList<FoodBusiness> ReadLocal(Place origin, double minute, double walkingToleranceMetres, int maximumCandidates)
         {
             if (maximumCandidates < 1 || maximumCandidates > 8 || !Position.Finite(walkingToleranceMetres) || walkingToleranceMetres < 0)

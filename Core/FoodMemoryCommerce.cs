@@ -3,6 +3,13 @@ using System.Linq;
 
 namespace PersistentCity.Core
 {
+    /// <summary>On-demand current evidence at a reached shop. Never books sales or routes;
+    /// native implementations bypass any stale decision-supply cache.</summary>
+    public interface IFoodFailureMarket
+    {
+        FoodBusiness? ReadFailureBusiness(string businessId, string placeId, double minute);
+    }
+
     public sealed partial class FoodCommerce
     {
         internal FoodMemorySettings MemorySettings { get; }
@@ -33,15 +40,27 @@ namespace PersistentCity.Core
             if (!shop.Offers.Any(o => o.Price > Money.Zero && o.Price <= AvailableForMeal(meal))) return;
             var business = CapturedBusiness(shop);
             var hours = new Place { Kind = PlaceKind.Shop, WeeklyHours = business.Hours, OpenMinute = 0, CloseMinute = 0 };
+            bool stockout = !shop.ServiceUnavailable && shop.MealsPerHour > 0 && shop.Offers.Count > 0 && shop.Offers.All(o => o.Units == 0);
+            if (!stockout && shop.ServiceUnavailable && shop.MealsPerHour == 0 && shop.Offers.Count > 0 && shop.Offers.All(o => o.Units == 0))
+            {
+                // Held images intentionally retain only a generic service flag. Revalidate the
+                // named bag-stockout evidence at this reached shop; no routes or checkout.
+                var live = market is IFoodFailureMarket evidence
+                    ? evidence.ReadFailureBusiness(shop.BusinessId, shop.PlaceId, decision.OriginAt)
+                    : ReadBusiness(shop.BusinessId, decision.OriginAt);
+                stockout = live?.Id == shop.BusinessId && live.PlaceId == shop.PlaceId && live.ServiceUnavailableReason == "Out of stock"
+                    && live.Offers.Any(o => o.Units == 0 && o.Price > Money.Zero && o.Price <= AvailableForMeal(meal));
+            }
             ShopExperience? cause = !DailyRoutine.Open(hours, decision.OriginAt) ? ShopExperience.Closed
-                : !shop.ServiceUnavailable && shop.MealsPerHour > 0 && shop.Offers.Count > 0 && shop.Offers.All(o => o.Units == 0) ? ShopExperience.Stockout
-                : !shop.ServiceUnavailable && shop.MealsPerHour > 0 && shop.NextServiceAt - decision.OriginAt > MealRhythm.QueueMinutes(meal.Kind, Activity.Shop) ? ShopExperience.Queue : (ShopExperience?)null;
+                : stockout ? ShopExperience.Stockout
+                : decision.Reason == MealReasonCode.QueueTooLong && !shop.ServiceUnavailable && shop.MealsPerHour > 0
+                    && decision.OriginAt + 60 / shop.MealsPerHour + MealRhythm.EatingMinutes(meal.Kind) <= decision.Deadline
+                    && decision.OriginAt + 60 / shop.MealsPerHour < (DailyRoutine.NextClose(hours, decision.OriginAt) ?? double.NegativeInfinity)
+                    ? ShopExperience.Queue : (ShopExperience?)null;
             if (!cause.HasValue) return;
-            meal.BusinessId = shop.BusinessId; meal.PlaceId = shop.PlaceId;
-            meal.ProductId = shop.Offers.Count > 0 ? shop.Offers[0].ProductId : state.Shops.First(s => s.BusinessId == shop.BusinessId).ProductId;
-            memoryStore.CommitStage(meal, ExperienceStage.Committed);
-            memoryStore.CommitStage(meal, ExperienceStage.Reached);
-            Experience(meal, cause.Value, decision.OriginAt);
+            memoryStore.CommitStage(meal, ExperienceStage.Committed, shop.BusinessId);
+            memoryStore.CommitStage(meal, ExperienceStage.Reached, shop.BusinessId);
+            memoryStore.Experience(meal, cause.Value, (int)(decision.OriginAt / 1440), Traits(meal, person), MemorySettings, shop.BusinessId, shop.PlaceId);
         }
 
         internal object? DumpMemory(string consumerId)
@@ -50,7 +69,7 @@ namespace PersistentCity.Core
             int day = (int)(city.State.Minute / 1440);
             var traits = Traits(meal, city.FindCitizen(meal.AnchorId)!);
             return new { ConsumerId = consumerId, Day = day, Active = city.State.Capabilities.Active,
-                PolicyRevision = 1, memoryStore.CapacityMisses,
+                PolicyRevision = 1, memoryStore.CapacityMisses, memoryStore.ProtectedInsertions,
                 Watermark = meal.Memory.Watermark == null ? null : new ExperienceWatermark { Day = meal.Memory.Watermark.Day,
                     Meal = meal.Memory.Watermark.Meal, Context = meal.Memory.Watermark.Context, Stage = meal.Memory.Watermark.Stage },
                 Entries = meal.Memory.Entries.Select(e => new { BusinessId = memoryStore.Identity(e.BusinessRef), e.BusinessRef,

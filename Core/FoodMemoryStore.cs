@@ -15,6 +15,7 @@ namespace PersistentCity.Core
         private readonly Dictionary<int, BusinessReference> bySlot = new Dictionary<int, BusinessReference>();
         private int nextSlot, tableCharacters = 2, tableBytes = 2;
         public long CapacityMisses { get; private set; }
+        public long ProtectedInsertions { get; private set; }
 
         public FoodMemoryStore(FoodCommerceState food)
         {
@@ -71,11 +72,11 @@ namespace PersistentCity.Core
             return order == 0 ? w.Context.CompareTo(meal.ContextAttempts) : order;
         }
 
-        public bool CommitStage(ResidentMeal meal, ExperienceStage stage)
+        public bool CommitStage(ResidentMeal meal, ExperienceStage stage, string? businessId = null)
         {
             if (stage != ExperienceStage.Committed && stage != ExperienceStage.Reached)
                 throw new ArgumentOutOfRangeException(nameof(stage), "Terminal stages require an atomic experience commit.");
-            if (meal.ContextAttempts < 1 || meal.ContextAttempts > 4 || meal.BusinessId.Length == 0) return false;
+            if (meal.ContextAttempts < 1 || meal.ContextAttempts > 4 || (businessId ?? meal.BusinessId).Length == 0) return false;
             var watermark = meal.Memory.Watermark;
             int order = watermark == null ? -1 : Compare(watermark, meal);
             if (order > 0 || order == 0 && watermark!.Stage >= stage) return false;
@@ -91,16 +92,28 @@ namespace PersistentCity.Core
 
         /// <summary>One main-thread commit: validate the watermark, prepare the bounded update, then publish
         /// memory and watermark together without yielding, callbacks, routes, accounts or native calls.</summary>
-        public bool Experience(ResidentMeal meal, ShopExperience cause, int experienceDay, ResidentTraits traits, FoodMemorySettings settings)
+        public bool Experience(ResidentMeal meal, ShopExperience cause, int experienceDay, ResidentTraits traits, FoodMemorySettings settings,
+            string? businessId = null, string? placeId = null)
         {
             var w = meal.Memory.Watermark;
             if (w == null || Compare(w, meal) != 0 || w.Stage >= ExperienceStage.Failed) return false;
-            int slot = Register(meal.BusinessId, meal.PlaceId);
             var entries = meal.Memory.Entries;
+            string business = businessId ?? meal.BusinessId;
+            byId.TryGetValue(business, out var reference);
+            int slot = reference?.Slot ?? -1, index = -1;
+            for (int i = 0; i < entries.Count; i++) if (entries[i].BusinessRef == slot) { index = i; break; }
+            if (cause != ShopExperience.Served && index < 0 && !SafeBadInsertion(meal.Memory, experienceDay, traits, settings))
+            {
+                // Removing a rival's boost can increase this shop's return odds even if its own
+                // multiplier falls. Floors/bounds prevent a universal compensating penalty.
+                // Retain the bounded collection and commit the failure once, without a new slot.
+                ProtectedInsertions++; w.Stage = ExperienceStage.Failed; return true;
+            }
+            if (reference != null && reference.PlaceId != (placeId ?? meal.PlaceId))
+                throw new InvalidOperationException("Business generation changed its place.");
+            if (slot < 0) slot = Register(business, placeId ?? meal.PlaceId);
             if (slot >= 0)
             {
-                int index = -1;
-                for (int i = 0; i < entries.Count; i++) if (entries[i].BusinessRef == slot) { index = i; break; }
                 ShopMemory? previous = index < 0 || FoodMemoryPolicy.Expired(entries[index], experienceDay, settings) ? null : entries[index];
                 int affinity = previous == null ? 0 : FoodMemoryPolicy.EffectiveAffinity(previous, experienceDay, traits, settings);
                 affinity = Math.Max(-8, Math.Min(8, affinity + (cause == ShopExperience.Served ? settings.FoodMemoryServedGain : -FoodMemoryPolicy.Penalty(cause, traits, settings))));
@@ -124,6 +137,23 @@ namespace PersistentCity.Core
                 }
             }
             w!.Stage = cause == ShopExperience.Served ? ExperienceStage.Served : ExperienceStage.Failed;
+            return true;
+        }
+
+        private bool SafeBadInsertion(ConsumerMemory memory, int day, ResidentTraits traits, FoodMemorySettings settings)
+        {
+            if (memory.Entries.Count < settings.FoodMemoryCapacity) return true;
+            int removed = 0, count = memory.Entries.Count;
+            double forgotten = FoodMemoryPolicy.Contribution(memory, -1, day, traits, settings);
+            while (count >= settings.FoodMemoryCapacity)
+            {
+                int victim = -1;
+                for (int i = 0; i < memory.Entries.Count; i++)
+                    if ((removed & (1 << i)) == 0 && (victim < 0 || FoodMemoryPolicy.CompareEviction(memory.Entries[i], Identity(memory.Entries[i].BusinessRef),
+                        memory.Entries[victim], Identity(memory.Entries[victim].BusinessRef), day, traits, settings) < 0)) victim = i;
+                if (FoodMemoryPolicy.Contribution(memory, memory.Entries[victim].BusinessRef, day, traits, settings) > forgotten) return false;
+                removed |= 1 << victim; count--;
+            }
             return true;
         }
     }
