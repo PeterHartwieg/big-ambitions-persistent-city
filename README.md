@@ -1,5 +1,7 @@
 # Persistent City
 
+> **E3 salad - 1 November (offline):** [salad feasibility stop record](docs/plans/e3-salad.md) and pinned probe reuse the isolated direct-stock reader. Salad's ID is verified; its shipped holder remains Unknown. All 38 offline gates and 1,611 unit tests pass. No holder broadening, product enabled, gameplay or save change. [Offline proof and numbered 6 Nov checks](CHECKS.md#e3-salad-feasibility---1-november-2026-offline-only).
+
 > **E3 cupcake - 31 October (offline):** [cupcake evidence record](docs/plans/e3-cupcake.md) and pinned facade share the isolated direct-stock reader with donut. All 35 offline gates pass, with 1,611 unit tests and 2,082/2,098 donut/cupcake reader assertions. Loaded assets and natural checkout/settlement remain unproven; no product enabled or gameplay/save changes. [Offline proof and numbered 6 Nov checks](CHECKS.md#e3-cupcake-feasibility---31-october-2026-offline-only).
 
 > **E3 donut - 31 October (offline):** isolated diagnostic field reader and [candidate inventory/evidence](docs/plans/e3-donut.md); no additional product certified or enabled. All 32 requested offline gates plus 2 new checks pass; 1,611 unit tests and final 2,082 reader assertions. Equipment/checkout/settlement proof remains pending. No gameplay or save changes. [Offline results and numbered 6 Nov checks](CHECKS.md#e3-donut-feasibility---31-october-2026-offline-only).
