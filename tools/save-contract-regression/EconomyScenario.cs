@@ -104,7 +104,7 @@ public static class EconomyScenario
     };
 
     /// <summary>Run the fixed scenario and return the order log and economy digests.</summary>
-    public static object Run(int residents = 60, int seed = 23)
+    public static object Run(int residents = 60, int seed = 23, bool legacyChoice = false)
     {
         var state = Create(residents, seed);
         state.Food = Food();
@@ -113,6 +113,9 @@ public static class EconomyScenario
         string? reloaded = null;
         for (double at = state.Minute + 60; at <= 4 * 1440; at += 60)
         {
+            // Historical differential probe stays before policy activation. Reflection also lets the
+            // same fixture compile against the schema-16 baseline, which had no choice header.
+            if(legacyChoice) typeof(FoodCommerceState).GetProperty("ChoiceStartsDay")?.SetValue(city.State.Food,(int)(at/1440)+1);
             while (!city.AdvanceTo(at, 64).CaughtUp) { }
             if (reloaded == null && at >= 2 * 1440 + 750)
             {

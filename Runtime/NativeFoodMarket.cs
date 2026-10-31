@@ -18,7 +18,7 @@ namespace PersistentCity.Runtime
 {
     /// <summary>Automatic whole-business food authority. Saves use the same native snapshot
     /// as population/meal records. Native code owns inventory, orders and daily accounting.</summary>
-    public sealed partial class NativeFoodMarket : IFoodMarket, IFoodSaleEvidence, IFoodBusinessAuthority, ILocalFoodMarket, IDisposable
+    public sealed partial class NativeFoodMarket : IFoodMarket, IFoodSaleEvidence, IFoodBusinessAuthority, ILocalFoodMarket, IFoodCandidateMarket, IDisposable
     {
         public const string Product = "ba:itemname_croissant";
         private const string PatchId = "persistentcity.food-routines";
@@ -27,6 +27,15 @@ namespace PersistentCity.Runtime
         private readonly FoodCommerceState state;
         private readonly Dictionary<string, BuildingRegistration> registrations = new Dictionary<string, BuildingRegistration>(StringComparer.Ordinal);
         private readonly Dictionary<string, CityBuildingController> shopControllers = new Dictionary<string, CityBuildingController>(StringComparer.Ordinal);
+        private readonly HashSet<string> candidateBusinesses = new HashSet<string>(StringComparer.Ordinal);
+        public bool IsCandidate(FoodScope scope) => candidateBusinesses.Contains(scope.BusinessId);
+        public FoodBusiness? CaptureBusiness(string businessId,double minute)
+        {
+            var scope=state.Shops.SingleOrDefault(s=>s.BusinessId==businessId);
+            // A persisted capture must match a cold read of the saved native world. A per-minute
+            // cache alone cannot detect a player's delivery/stock edit earlier in this minute.
+            return scope==null ? null : ReadSelected(minute,new[] {scope.PlaceId},capture:true).SingleOrDefault(b=>b.Id==businessId);
+        }
         private int discoveryCursor;
         private long lastOwnershipRefresh = -1;
         private readonly CityBuildingController[] controllers;
@@ -179,7 +188,8 @@ namespace PersistentCity.Runtime
                 if (!reg.RentedByPlayer && !registrations.ContainsKey(place)) continue;
                 registrations[place] = reg; shopControllers[place] = controller;
                 var authority = NativeFoodOwnership.Observe(reg, Supported(reg));
-                if (authority.CanServe) ActivateScope(authority, reg);
+                if (authority.CanServe) { ActivateScope(authority, reg); candidateBusinesses.Add(authority.BusinessId); }
+                else candidateBusinesses.Remove(authority.BusinessId);
             }
         }
         private string DiscoveryPlaceId(int slot, BuildingRegistration reg)
@@ -194,6 +204,7 @@ namespace PersistentCity.Runtime
         }
         internal void RefreshKnownOwnership()
         {
+            candidateBusinesses.Clear();
             foreach (var pair in shopControllers)
             {
                 decisionSupply.Remove(pair.Key);
@@ -201,7 +212,7 @@ namespace PersistentCity.Runtime
                 if (reg == null) { NativeFoodOwnership.Retire(pair.Key); registrations.Remove(pair.Key); continue; }
                 registrations[pair.Key] = reg;
                 var authority = NativeFoodOwnership.Observe(reg, Supported(reg) && GamePlaces.BuildingAccessible(pair.Value));
-                if (authority.CanServe) ActivateScope(authority, reg);
+                if (authority.CanServe) { ActivateScope(authority, reg); candidateBusinesses.Add(authority.BusinessId); }
             }
         }
         internal void ActivateScope(FoodAuthority authority, BuildingRegistration reg)
@@ -239,7 +250,7 @@ namespace PersistentCity.Runtime
             return ReadSelected(minute, selected);
         }
         private IReadOnlyList<FoodBusiness> ReadSelected(double minute, string[] selectedPlaces,
-            Dictionary<string, SupplyObservation>? observed = null)
+            Dictionary<string, SupplyObservation>? observed = null, bool capture = false)
         {
             if (!ReferenceEquals(save, SaveGameManager.Current)) throw new InvalidOperationException("Food market save changed.");
             long observationMinute = (long)(SaveGameManager.Current.Day * 1440.0 + SaveGameManager.Current.Hour * 60.0 + SaveGameManager.Current.Minute);
@@ -260,11 +271,14 @@ namespace PersistentCity.Runtime
                 b.Offers.RemoveAll(o => !scope.ContainsProduct(o.ProductId));
                 var products = scope.Products().ToArray();
                 // Checkout (observed != null) always reads live, exactly as before this cache existed.
-                var supply = observed != null ? FoodSupplyReader.ReadMenu(reg, products)
+                var supply = observed != null || capture ? FoodSupplyReader.ReadMenu(reg, products)
                     : DecisionMenu(observationMinute, b.PlaceId, reg, b.Id, products);
                 if (supply.Values.Any(s => !s.Units.HasValue))
-                { supplyExclusions[b.PlaceId] = "Excluded: menu stock contract is unverified"; continue; }
-                supplyExclusions.Remove(b.PlaceId);
+                {
+                    supplyExclusions[b.PlaceId] = "Excluded: menu stock contract is unverified";
+                    if(!capture) continue;
+                }
+                else supplyExclusions.Remove(b.PlaceId);
                 if (observed != null) observed[b.PlaceId] = new SupplyObservation(reg, products, supply);
                 b.MealsPerHour = supply[scope.ProductId].MealsPerHour; b.ServiceEvidence = supply[scope.ProductId].Evidence;
                 b.ServiceUnavailableReason = supply[scope.ProductId].AvailabilityReason;

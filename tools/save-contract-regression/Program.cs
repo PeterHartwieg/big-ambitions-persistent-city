@@ -96,9 +96,24 @@ static class Program
         return Math.Round(samples[samples.Count / 2], 1);
     }
 
-    private static object Bench(int residents, int runs, int representation = 2)
+    private static object Bench(int residents, int runs, int representation = 2, bool decisions = false)
     {
         var state = FoodCity(residents, steady: true, representation);
+        int a2Chars=SaveCodec.Write(state).Length;
+        if(decisions)
+        {
+            foreach(var meal in state.Food!.Residents)
+            {meal.LastContextKey="trip:"+new string('x',44);meal.ContextAttempts=4;}
+            var first=state.Food.Residents[0];state.Food.ChoiceStartsDay=first.Day;
+            var scope=state.Food.Shops[0];var shop=state.Places.First(p=>p.Id==scope.PlaceId);var home=state.Places.First(p=>p.Id==state.Citizens[0].PlaceId);
+            Route Path(Position a,Position b)=>new Route {Legs={new RouteLeg {From=a,To=b,Minutes=1,Mode=TravelMode.Walk}}};
+            first.Decision=new FoodDecisionState {IntentId=first.IntentId,ContextKey=first.LastContextKey,Attempt=4,OriginAt=state.Minute,Deadline=state.Minute+90};
+            for(int i=0;i<8;i++) first.Decision.Shops.Add(new FoodDecisionShop {BusinessId="size-probe:"+i,PlaceId=shop.Id,MealsPerHour=60,
+                NextServiceAt=state.Minute,Hours=Enumerable.Range(0,7).Select(d=>new OpeningWindow {Day=d,FromMinute=0,ToMinute=1440}).ToList(),
+                Offers=FoodProducts.Ids.Select(p=>new FoodDecisionOffer {ProductId=p,Price=Money.FromCents(100),Units=100}).ToList(),
+                OutwardQuote=FoodQuoteState.Answered,ReturnQuote=FoodQuoteState.Answered,Outward=Path(home.Position,shop.Position),Return=Path(shop.Position,home.Position)});
+            first.Decision.QuotesDone=16;
+        }
         string json;
         // The codec refuses a payload above its input cap; report that bound instead of timing it.
         try { json = SaveCodec.Write(state); }
@@ -121,7 +136,7 @@ static class Program
         GC.KeepAlive(retained);
         return new
         {
-            residents, representation, consumers = state.Food!.Residents.Count, chars = json.Length, capShare = Math.Round(json.Length / (double)SaveCodec.MaxInputCharacters, 3), utf8Bytes = Encoding.UTF8.GetByteCount(json),
+            residents, representation, decisions, a2Chars, decisionDelta=json.Length-a2Chars, consumers = state.Food!.Residents.Count, chars = json.Length, capShare = Math.Round(json.Length / (double)SaveCodec.MaxInputCharacters, 3), utf8Bytes = Encoding.UTF8.GetByteCount(json),
             schema16Chars = old.Length, writeMs = write, readMs = read, upgradeFrom16Ms = upgrade,
             retainedMiB = Math.Round((after - before) / 1048576.0, 1)
         };
@@ -178,13 +193,14 @@ static class Program
             refusals.Add(result.Status + ":" + result.Error);
         }
         // Schema 17 adds fields by design: the save digest is reported, the economy digest must match.
-        var economy = EconomyScenario.Run();
+        var economy = EconomyScenario.Run(legacyChoice:true);
         object? bench = null, hot = null;
         if (args.Contains("--bench"))
         {
             bool ceiling = args.Contains("--ceiling");
-            var sizes = new List<object> { Bench(957, 5), Bench(5000, 3) };
-            if (ceiling) { sizes.Add(Bench(50000, 3)); sizes.Add(Bench(50000, 1, representation: 3)); }
+            bool decisions=args.Contains("--decisions");
+            var sizes = new List<object> { Bench(957, 5, decisions:decisions), Bench(5000, 3, decisions:decisions) };
+            if (ceiling) { sizes.Add(Bench(50000, 3,decisions:decisions)); sizes.Add(Bench(50000, 1, representation: 3,decisions:decisions)); }
             bench = sizes; hot = Hot();
         }
         Console.WriteLine(JsonConvert.SerializeObject(new { schema = CityState.CurrentSchema, digest = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(expected))),

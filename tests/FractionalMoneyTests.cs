@@ -331,7 +331,7 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(SaveCodec.Write(read.State!)));
         // A native v2 receipt written before the unit change still identifies this intention.
         var meal = read.State!.Food!.Residents.Single();
-        var receipt = new Dictionary<string, string> { [FoodSaleReceipts.Prefix + meal.IntentId] = "paid|1025.279998779296875|b|pastry" };
+        var receipt = new Dictionary<string, string> { [FoodSaleReceipts.Prefix + meal.IntentId] = "paid|1025.279998779296875|b|" + Uri.EscapeDataString(FoodProducts.Croissant) };
         Assert.Equal(FoodReceiptStatus.Paid, FoodSaleReceipts.ReadStatus(receipt, meal));
         // Mixing both field generations is refused rather than guessed.
         string mixed = legacy.Replace("\"ArrearsCents\":0.0", "\"Arrears\":0");
