@@ -6,7 +6,7 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Runtime
 {
-    internal sealed class PrototypeSettings
+    internal sealed partial class PrototypeSettings
     {
         // Optional developer overrides; normal installation needs no configuration.
         private int optionalStopChoicePercentage = OptionalStopPolicy.ApprovedChoicePercentage;
