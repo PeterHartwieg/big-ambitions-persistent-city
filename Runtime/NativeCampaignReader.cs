@@ -144,7 +144,7 @@ namespace PersistentCity.Runtime
                     campaigns, traffic, marketing, total);
             }
             catch (Exception error) when (error is ArgumentException || error is InvalidOperationException
-                || error is MemberAccessException || error is TargetException || error is AmbiguousMatchException)
+                || error is MemberAccessException || error is TargetException || error is AmbiguousMatchException || error is FormatException)
             { return UnknownBusiness(id); }
         }
 
@@ -165,11 +165,22 @@ namespace PersistentCity.Runtime
             object? address = Field(campaign, "agencyAddress");
             string? agency = null;
             if (address != null && Field(address, "streetName", typeof(string)) is string street
-                && !string.IsNullOrWhiteSpace(street) && street.Length <= 256
+                && ValidStreet(street)
                 && Field(address, "streetNumber", typeof(int)) is int number && number > 0)
                 agency = "address:" + Uri.EscapeDataString(street) + ":" + number.ToString(CultureInfo.InvariantCulture);
             return new CampaignObservation(code, name, enabled, agency,
                 name != null && enabled == true && agency != null ? CampaignReadStatus.Observed : CampaignReadStatus.Unknown);
+        }
+        private static bool ValidStreet(string street)
+        {
+            if (string.IsNullOrWhiteSpace(street) || street.Length > 256) return false;
+            for (int i = 0; i < street.Length; i++)
+            {
+                if (char.IsControl(street[i])) return false;
+                if (!char.IsSurrogate(street[i])) continue;
+                if (!char.IsHighSurrogate(street[i]) || i + 1 >= street.Length || !char.IsLowSurrogate(street[++i])) return false;
+            }
+            return true;
         }
         private static bool VerifiedEnum(Type type)
         {

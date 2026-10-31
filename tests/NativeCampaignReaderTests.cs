@@ -129,6 +129,12 @@ namespace PersistentCity.Tests
             reg.marketingCampaigns[0]!.enabled = true;
             reg.marketingCampaigns[0]!.agencyAddress.streetName = "";
             Assert.Null(Read(reg).Businesses[0].Campaigns[0].AgencyId);
+            foreach (string malformed in new[] { "\ud800", "\udc00", "bad\naddress", new string('x', 257) })
+            {
+                reg.marketingCampaigns[0]!.agencyAddress.streetName = malformed;
+                Assert.Null(Read(reg).Businesses[0].Campaigns[0].AgencyId);
+                Assert.Equal(CampaignReadStatus.Unknown, Read(reg).Businesses[0].Campaigns[0].Status);
+            }
             reg.marketingCampaigns[0]!.marketingTypeName = (Entities.MarketingTypeName)99;
             var unsupported = Read(reg).Businesses[0].Campaigns[0];
             Assert.Equal(99, unsupported.TypeCode); Assert.Null(unsupported.TypeName);
