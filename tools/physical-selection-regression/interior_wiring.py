@@ -10,7 +10,6 @@ def generate(root: Path, between):
     pedestrians = (root / 'Runtime/PhysicalPedestrians.cs').read_text()
     vehicles = (root / 'Runtime/PhysicalVehicles.cs').read_text()
     mod = (root / 'Runtime/PersistentCityMod.cs').read_text()
-    clock = (root / 'Runtime/NativeCityClock.cs').read_text()
     hooks = (root / 'Runtime/PhysicalTrafficHooks.cs').read_text()
     hidden = between(travel, '        public static bool HiddenTravel =>', '        public static Position Focus')
     ready = between(vehicles, '        private static bool NativeReady =>', '        internal PhysicalVehicleBody? Owned(').replace('private static', 'public static')
@@ -18,12 +17,14 @@ def generate(root: Path, between):
     construct = between(mod, 'if (settings.PhysicalEnabled &&', '\n                {')
     release = between(population, '        public void BeforeAdvance()', '        public void Update()')
     bodies = between(population, '            if (NativeTravelPace.HiddenTravel) {', '            if (Time.unscaledTime < nextSelection')
-    tick = between(clock, '        private static void TickPrefix(', '        private static void RidePrefix(').replace('private static', 'public static')
     speed = between(hooks, '        private static void SpeedChangingPrefix(', '        private static void CrashPostfix(').replace('private static', 'public static')
     # Wiring assertions supplement executable seam tests: the real entry points must still use them.
     assert 'RunPhysical(() => physical?.BeforeAdvance());' in mod
     assert 'RunPhysical(() => physical?.BeforeSave());' in mod
-    assert 'NativeInteriorCityView.Configured ? RestoreInterior : (Action?)null' in mod
+    adapter = (root / 'Runtime/NativeInteriorCityView.cs').read_text()
+    assert 'GlobalEvents.onTimeMachineStarted += OnTimeMachineStarted;' in adapter
+    assert 'GlobalEvents.onTimeMachineStarted -= OnTimeMachineStarted;' in adapter
+    assert 'try { restoreBodies?.Invoke(); }' in between(adapter, '        private static void OnTimeMachineStarted()', '        private static void OnBuildingChanged(')
     assert 'finally { NativeInteriorCityView.Suspend(); }' in mod
     assert 'NativeInteriorCityView.Stop();' in between(mod, '        private void Detach()', '        public void Shutdown()')
     assert 'physical = new PhysicalPopulation' in mod
@@ -90,14 +91,6 @@ class Fixture {
 ''' + bodies + ''' }
 }
 enum TimeSpeed { Normal, FastForward }
-static class ClockFixture {
- public static Action? beforeHiddenTravel;
- public static bool Active=true, ProcessingEconomySkip=false, OrdinaryTick=true;
- public static Func<bool>? populationCaughtUp=()=>true;
- public static Func<double>? nativeClock=()=>0;
- public static long HeldEconomySkipTicks;
- public static double Factor=1;
-''' + tick + '''}
 static class SpeedFixture {
  public static Fixture? current;
  public static bool CurrentFastForward => PhysicalTrafficHooks.CurrentFastForward;

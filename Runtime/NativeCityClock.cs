@@ -15,7 +15,6 @@ namespace PersistentCity.Runtime
         private static object? save;
         private static Func<double>? nativeClock;
         private static Func<bool>? populationCaughtUp, economyActive;
-        private static Action? beforeHiddenTravel;
         public static long HeldEconomySkipTicks { get; private set; }
         public static double Factor { get; private set; } = 1;
         public static bool CoordinatesDrivenRides { get; private set; }
@@ -26,7 +25,7 @@ namespace PersistentCity.Runtime
             && InstanceBehavior<UIs>.Instance?.timeMachine != null && !InstanceBehavior<UIs>.Instance.timeMachine.isRunning;
 
         public static void Start(object currentSave, double factor) => Start(currentSave, factor, null, null, null);
-        public static void Start(object currentSave, double factor, Func<bool>? readPopulationReady, Func<bool>? ownsEconomy, Func<double>? readNative, Action? beforeHidden = null)
+        public static void Start(object currentSave, double factor, Func<bool>? readPopulationReady, Func<bool>? ownsEconomy, Func<double>? readNative)
         {
             if (double.IsNaN(factor) || double.IsInfinity(factor) || factor < .1 || factor > 1)
                 throw new ArgumentOutOfRangeException(nameof(factor), "GameClockFactor must be between 0.1 and 1.");
@@ -56,17 +55,12 @@ namespace PersistentCity.Runtime
                 }
                 Factor = factor; save = currentSave; patches = installing;
                 populationCaughtUp = readPopulationReady; economyActive = ownsEconomy; nativeClock = readNative; HeldEconomySkipTicks = 0;
-                beforeHiddenTravel = beforeHidden;
             }
             catch { installing.UnpatchAll(Owner); CoordinatesDrivenRides = false; throw; }
         }
 
         private static void TickPrefix(ref float deltaTimeWithMultiplier)
         {
-            // F0 callback is absent when off. Observe/release before a time-machine tick can
-            // advance native time, regardless of MonoBehaviour Update ordering.
-            if (beforeHiddenTravel != null && InstanceBehavior<UIs>.Instance?.timeMachine?.isRunning == true)
-                beforeHiddenTravel();
             if (!Active || LoadScene.isLoading || deltaTimeWithMultiplier <= 0 || float.IsInfinity(deltaTimeWithMultiplier)) return;
             if (ProcessingEconomySkip && populationCaughtUp != null && nativeClock != null)
             {
@@ -85,7 +79,7 @@ namespace PersistentCity.Runtime
         {
             save = null;
             try { patches?.UnpatchAll(Owner); }
-            finally { patches = null; Factor = 1; CoordinatesDrivenRides = false; nativeClock = null; populationCaughtUp = economyActive = null; beforeHiddenTravel = null; HeldEconomySkipTicks = 0; }
+            finally { patches = null; Factor = 1; CoordinatesDrivenRides = false; nativeClock = null; populationCaughtUp = economyActive = null; HeldEconomySkipTicks = 0; }
         }
     }
 }

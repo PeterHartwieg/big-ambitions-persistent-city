@@ -39,10 +39,21 @@ public sealed class ExitZone { public bool isElevator; }
 public static class GlobalEvents
 {
     public static event Action<Entities.Address>? onEnterBuilding, onExitBuilding;
+    public static event Action? onTimeMachineStarted;
     public static void Enter() => onEnterBuilding?.Invoke(default);
     public static void Exit() => onExitBuilding?.Invoke(default);
+    public static void TimeMachineStarted() => onTimeMachineStarted?.Invoke();
 }
 namespace Entities { public struct Address { } }
+namespace UnityEngine.SceneManagement
+{
+    public struct Scene { }
+    public static class SceneManager
+    {
+        public static event Action<Scene>? sceneUnloaded;
+        public static void Unload() => sceneUnloaded?.Invoke(default);
+    }
+}
 namespace BAModAPI { public interface IModLogger { void Info(string text); void Warn(string text); } }
 namespace BigAmbitions.InteriorDesigner.InteriorElements
 {

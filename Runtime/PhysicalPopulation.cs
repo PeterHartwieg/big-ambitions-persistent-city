@@ -133,10 +133,13 @@ namespace PersistentCity.Runtime
         }
         public void BeforeSave()
         {
-            if (NativeInteriorCityView.Active) SuspendBeforeNativeFastForward();
+            // A blocker may already have cleared the view predicate before this callback,
+            // while its bodies still await BeforeAdvance. Saving must release those too.
+            if (NativeInteriorCityView.Configured && BuildingManager.IsInsideBuilding) SuspendBeforeNativeFastForward();
             else ObserveForSave();
         }
         public void RestoreInterior() { if (bindings.Count != 0) SuspendBeforeNativeFastForward(); }
+        public bool HasBodies => bindings.Count != 0;
         public void Suspend()
         {
             Exception? failure = null;

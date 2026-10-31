@@ -562,8 +562,7 @@ namespace PersistentCity.Runtime
             simulation.AttachFoodMarket(foodMarket);
             saveIdentity = save;
             NativeInteriorCityView.Start(settings, log!, RestoreInterior);
-            NativeCityClock.Start(save, settings.GameClockFactor, () => simulation?.IsCaughtUpTo(Now()) == true, () => simulation?.State.Food != null, Now,
-                NativeInteriorCityView.Configured ? RestoreInterior : (Action?)null);
+            NativeCityClock.Start(save, settings.GameClockFactor, () => simulation?.IsCaughtUpTo(Now()) == true, () => simulation?.State.Food != null, Now);
             NativeTravelPace.ResetReading();
             log?.Info("City clock factor=" + settings.GameClockFactor.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
                 + "; Driven Rides coordinated=" + NativeCityClock.CoordinatesDrivenRides + ". Movement speed unchanged.");
@@ -616,7 +615,12 @@ namespace PersistentCity.Runtime
 
         private void RestoreInterior()
         {
-            try { RunPhysical(() => physical?.RestoreInterior()); }
+            try
+            {
+                if (NativeInteriorCityView.State.Active || physical?.HasBodies == true)
+                    RunPhysical(() => physical?.RestoreInterior());
+            }
+            catch (Exception error) { Fail("Interior view restoration failed: " + error.Message); }
             finally { NativeInteriorCityView.Suspend(); }
         }
 

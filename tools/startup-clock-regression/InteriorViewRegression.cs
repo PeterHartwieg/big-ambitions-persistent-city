@@ -39,7 +39,8 @@ internal static class InteriorViewRegression
         NativeInteriorCityView.Start(off, logger, () => restored++);
         Check(NativeTravelPace.HiddenTravel && !NativeInteriorCityView.Active, "default must stay hidden inside");
         Check(NativeTravelPace.Focus.X == 900, "off focus changed");
-        GlobalEvents.Enter(); GlobalEvents.Exit(); Check(restored == 0 && logger.Lines.Count == 0, "off subscribed or logged discovery");
+        GlobalEvents.Enter(); GlobalEvents.Exit(); GlobalEvents.TimeMachineStarted(); UnityEngine.SceneManagement.SceneManager.Unload();
+        Check(restored == 0 && logger.Lines.Count == 0, "off subscribed or logged discovery");
         var on = new PrototypeSettings { InteriorCityView = "on" };
         NativeInteriorCityView.Start(on, logger, () => restored++);
         Time.frameCount++; Check(!NativeTravelPace.HiddenTravel, "ground floor shop stayed hidden");
@@ -63,6 +64,12 @@ internal static class InteriorViewRegression
         Check(NativeInteriorCityView.Active && NativeTravelPace.Focus.X == 50, "second shop retained first anchor");
         NativeInteriorCityView.Suspend(); Check(!NativeInteriorCityView.Active, "save/skip suspension reactivated in same frame");
         Time.frameCount++; Check(NativeInteriorCityView.Active, "save resume failed");
+        int restoredBeforeMachine = restored;
+        InstanceBehavior<UI.UIs>.Instance.timeMachine.isRunning = true;
+        GlobalEvents.TimeMachineStarted();
+        Check(restored == restoredBeforeMachine + 1 && !NativeInteriorCityView.State.Active, "time machine start must restore synchronously before first tick");
+        InstanceBehavior<UI.UIs>.Instance.timeMachine.isRunning = false;
+        Time.frameCount++; Check(NativeInteriorCityView.Active, "time machine resume failed");
         foreach (int cause in new[] { 0, 1, 2, 3, 4 })
         {
             PhysicalTrafficHooks.CurrentFastForward = cause == 0;
@@ -87,6 +94,10 @@ internal static class InteriorViewRegression
         manager = Shop(); manager.enteringBuilding = true; Time.frameCount++;
         Check(!NativeInteriorCityView.Active, "incomplete load was eligible");
         manager.enteringBuilding = false; Check(NativeInteriorCityView.Active, "completed load did not inspect");
+        int restoredBeforeScene = restored;
+        UnityEngine.SceneManagement.SceneManager.Unload();
+        Check(restored == restoredBeforeScene + 1 && !NativeInteriorCityView.Active, "scene unload did not restore/suspend");
+        Time.frameCount++; Check(NativeInteriorCityView.Active, "new scene did not recheck eligibility");
         Bench();
         NativeInteriorCityView.Stop(); Check(!NativeInteriorCityView.Active && NativeTravelPace.HiddenTravel, "disable/load cleanup failed");
         BuildingManager.IsInsideBuilding = false; InstanceBehavior<BuildingManager>.Instance = null;
@@ -94,7 +105,7 @@ internal static class InteriorViewRegression
     }
     private static void Measure(string name, Action action, int batch = 1000)
     {
-        for (int i = 0; i < 10000; i++) action();
+        for (int i = 0; i < Math.Min(10000, batch * 10); i++) action();
         var times = new double[300]; long bytes = GC.GetAllocatedBytesForCurrentThread();
         for (int i = 0; i < times.Length; i++)
         {
@@ -110,5 +121,13 @@ internal static class InteriorViewRegression
         Measure("cached active predicate", () => { if (!NativeInteriorCityView.Active) throw new Exception(); });
         Measure("anchor/focus", () => { if (NativeTravelPace.Focus.X != 10) throw new Exception(); });
         Measure("eligibility refresh (cached floor/anchor)", () => { Time.unscaledTime += 2; if (!NativeInteriorCityView.Active) throw new Exception(); });
+        var floor = InteriorElementsHelper.InteriorElementsCache["floor"];
+        InteriorElementsHelper.InteriorElementsCache.Clear();
+        for (int i = 0; i < 511; i++) InteriorElementsHelper.InteriorElementsCache.Add(i.ToString(), new InteriorElement { IsFloor = false });
+        InteriorElementsHelper.InteriorElementsCache.Add("floor", floor);
+        // Reflection is confined to harness setup, never the production/frame loop.
+        var reset = (Action)Delegate.CreateDelegate(typeof(Action), typeof(NativeInteriorCityView).GetMethod("ResetEntry",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!);
+        Measure("entry eligibility 512 cached elements + lifecycle log", () => { reset(); if (!NativeInteriorCityView.Active) throw new Exception(); }, 1);
     }
 }

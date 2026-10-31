@@ -4,6 +4,7 @@ using BigAmbitions.InteriorDesigner.InteriorElements;
 using Entities;
 using PersistentCity.Core;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace PersistentCity.Runtime
 {
@@ -30,6 +31,19 @@ namespace PersistentCity.Runtime
             if (!Configured) return;
             GlobalEvents.onEnterBuilding += OnBuildingChanged;
             GlobalEvents.onExitBuilding += OnBuildingChanged;
+            GlobalEvents.onTimeMachineStarted += OnTimeMachineStarted;
+            SceneManager.sceneUnloaded += OnSceneUnloaded;
+        }
+        private static void OnSceneUnloaded(Scene scene)
+        {
+            try { restoreBodies?.Invoke(); }
+            finally { ResetEntry(); Suspend(); }
+        }
+        private static void OnTimeMachineStarted()
+        {
+            // Vanilla raises this synchronously in StartTimeMachine, before its first Update tick.
+            try { restoreBodies?.Invoke(); }
+            finally { Suspend(); }
         }
         private static void OnBuildingChanged(Address address)
         {
@@ -45,6 +59,8 @@ namespace PersistentCity.Runtime
         {
             GlobalEvents.onEnterBuilding -= OnBuildingChanged;
             GlobalEvents.onExitBuilding -= OnBuildingChanged;
+            GlobalEvents.onTimeMachineStarted -= OnTimeMachineStarted;
+            SceneManager.sceneUnloaded -= OnSceneUnloaded;
             ResetEntry(); settings = null; log = null; restoreBodies = null; suspendedFrame = -1;
         }
         public static void Suspend() { State.Suspend(); suspendedFrame = Time.frameCount; }

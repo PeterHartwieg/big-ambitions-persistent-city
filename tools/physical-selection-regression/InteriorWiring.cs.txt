@@ -37,6 +37,8 @@ static class Tests {
   }
   Flags(8); NativeInteriorCityView.Configured=false;var save=new Fixture();save.Add(1,1);save.BeforeSave();
   Check(save.bindings.Count==2,"save off released bodies (legacy only observed)");
+  On();NativeInteriorCityView.State.Suspend();save=new Fixture();save.Add(1,1);save.BeforeSave();
+  Check(save.bindings.Count==0,"save retained interior bodies after hidden predicate already closed");
   On(); var caps=new Fixture(); caps.Add(48,24); caps.UpdateBodies();
   Check(caps.bindings.Values.Count(b=>b.Person!=null)==24&&caps.bindings.Values.Count(b=>b.Car!=null)==12,"existing street bindings exceed interior caps");
   Check(Gates.Construct(new PrototypeSettings(),false,null),"construction on inside blocked");
@@ -54,10 +56,7 @@ static class Tests {
   On();save=new Fixture();save.Add(1,1);SpeedFixture.current=save;
   SpeedFixture.SpeedChangingPrefix(TimeSpeed.FastForward);
   Check(save.bindings.Count==0&&!NativeInteriorCityView.State.Active,"6x must restore before native speed change");
-  On();save=new Fixture();save.Add(1,1);ClockFixture.beforeHiddenTravel=()=>{save.RestoreInterior();NativeInteriorCityView.Suspend();};
-  InstanceBehavior<UIs>.Instance.timeMachine.isRunning=true;float delta=6;ClockFixture.TickPrefix(ref delta);
-  Check(save.bindings.Count==0&&!NativeInteriorCityView.State.Active&&delta==6,"time machine restore before native tick");
-  ClockFixture.beforeHiddenTravel=null; Flags(0);delta=1;ClockFixture.TickPrefix(ref delta);Check(delta==1,"clock off callback changed tick");
+  Flags(0);
   NativeInteriorCityView.State.Reset();NativeInteriorCityView.Configured=false;
   var street=new Fixture();street.Add(48,24);Measure("street body-retention loop 48/24",street.UpdateBodies);
   On();var inside=new Fixture();inside.Add(24,12);Measure("interior body-retention loop 24/12",inside.UpdateBodies);
