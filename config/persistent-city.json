@@ -5,5 +5,9 @@
   "PhysicalEnabled": true,
   "MaximumPedestrians": 48,
   "MaximumVehicles": 24,
-  "PhysicalRadiusMetres": 120
+  "PhysicalRadiusMetres": 120,
+  "InteriorCityView": "off",
+  "InteriorViewRadiusMetres": 60,
+  "InteriorMaximumPedestrians": 24,
+  "InteriorMaximumVehicles": 12
 }
