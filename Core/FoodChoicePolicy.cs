@@ -69,7 +69,8 @@ namespace PersistentCity.Core
         // Meal suitability retains the verified MealRhythm table, scaled by the taste coefficient.
         public static double Weight(EvaluatedFoodOffer o, ResidentTraits t, Money allowance, FoodChoiceSettings s)
         {
-            double w=Math.Pow(TasteRatios[Taste(t,o.ProductId)],s.FoodChoiceTasteWeight);
+            double taste=TasteRatios[Taste(t,o.ProductId)];
+            double w=s.FoodChoiceTasteWeight==1 ? taste : Math.Pow(taste,s.FoodChoiceTasteWeight);
             w/=1+s.FoodChoicePriceWeight*(.5+.25*t.Band(ResidentTrait.PriceSensitivity))
                 *o.Price.ApproximateCents()/Math.Max(1,allowance.ApproximateCents());
             w*=DistanceWeight(o.Travel,t,s,false);
@@ -90,7 +91,8 @@ namespace PersistentCity.Core
         private static double Positive(double w,double floor,double temperature)
         {
             if(!Position.Finite(w)) w=floor;
-            double result=Math.Pow(Math.Max(floor,w),1/temperature);
+            double bounded=Math.Max(floor,w);
+            double result=temperature==1 ? bounded : Math.Pow(bounded,1/temperature);
             return Position.Finite(result) ? Math.Max(floor,Math.Min(64,result)) : floor;
         }
 

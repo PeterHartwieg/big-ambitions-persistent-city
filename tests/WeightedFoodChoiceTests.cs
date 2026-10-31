@@ -301,5 +301,38 @@ public sealed class WeightedFoodChoiceTests
         while(!city.AdvanceTo(at+20,128).CaughtUp) {}
         Assert.Single(market.Orders);Assert.Equal(8,planner.Out);
     }
+
+    private sealed class ReplacingMarket : IFoodMarket, ILocalFoodMarket
+    {
+        private readonly Market source;
+        private readonly FoodCommerceState scopes;
+        private bool replaced;
+        public ReplacingMarket(Market source,FoodCommerceState scopes) {this.source=source;this.scopes=scopes;}
+        public double EarliestMinute=>0;
+        public IReadOnlyList<FoodBusiness> Read(double at)=>throw new Exception("Unexpected whole-market read");
+        public IReadOnlyList<FoodBusiness> ReadLocal(Place p,double at,double tolerance,int max)=>throw new Exception("Unexpected legacy read");
+        public FoodBusiness? ReadBusiness(string id,double at)
+        {
+            if(!replaced)
+            {
+                replaced=true;
+                foreach(var s in scopes.Shops) s.BusinessId="replacement:"+s.BusinessId;
+                foreach(var b in source.Shops) b.Id="replacement:"+b.Id;
+            }
+            return source.Shops.SingleOrDefault(b=>b.Id==id);
+        }
+        public FoodSale Buy(ResidentMeal m,double at)=>throw new Exception("A replacement was never sampled");
+    }
+    [Fact]
+    public void BusinessReplacementDuringCaptureCannotInheritAnotherIdentitysShortlistSlot()
+    {
+        var (city,market,planner)=Ready(12,12);var m=city.State.Food!.Residents[0];double at=m.DesiredAt;
+        var replacement=new ReplacingMarket(market,city.State.Food);
+        city=new CitySimulator(city.State,planner);city.AttachFoodMarket(replacement);
+        FoodDecisionState? d=null;city.FoodDecisionObserved+=t=>d=t.Decision;
+        while(!city.AdvanceTo(at,1).CaughtUp) {}
+        Assert.Equal(MealStatus.Missed,m.Status);Assert.Empty(d!.Shops);Assert.Equal(0,planner.Out+planner.Back);
+        Assert.Equal(1,m.ContextAttempts);
+    }
 }
 

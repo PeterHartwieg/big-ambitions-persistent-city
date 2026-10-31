@@ -26,13 +26,14 @@ sealed class Market : IFoodMarket, ILocalFoodMarket, IFoodCandidateMarket
 }
 static class Program
 {
-    static (CitySimulator city,Paths paths) Ready(int seed,int count)
+    static (CitySimulator city,Paths paths) Ready(int seed,int count,bool nativeIds)
     {
         var places=new List<Place> {new() {Id="home",Name="Home",Kind=PlaceKind.Home,Capacity=1}};
         places.AddRange(Enumerable.Range(0,count).Select(i=>new Place {Id="s"+i,Name="Shop",Kind=PlaceKind.Shop,Position=new(1+i,0,0)}));
         var state=Population.Create(new[]{new CitizenIdentity {Id="r",Name="Resident",Age=30,Persona=Persona.Foodie}},places,"choice-regression","0.40.4",seed,1440);
         var p=state.Citizens[0];p.NextEventMinute=p.ActivityUntilMinute=2870;
-        state.Food=new FoodCommerceState {Shops=places.Skip(1).Select((s,i)=>new FoodScope {PlaceId=s.Id,BusinessId="b"+i,ProductId=FoodProducts.Croissant,
+        state.Food=new FoodCommerceState {Shops=places.Skip(1).Select((s,i)=>new FoodScope {PlaceId=s.Id,
+            BusinessId=nativeIds ? "business:ba%3Astreet_martinlutherkingjrblvd:"+i+":1:ba%3Abusiness_fastfoodrestaurant:player" : "b"+i,ProductId=FoodProducts.Croissant,
             AdditionalProductIds=new() {FoodProducts.Burger,FoodProducts.HotDog}}).ToList()};
         var market=new Market();
         foreach(var s in state.Food.Shops) market.Shops.Add(s.BusinessId,new FoodBusiness {Id=s.BusinessId,PlaceId=s.PlaceId,MealsPerHour=60,
@@ -41,13 +42,13 @@ static class Program
         var paths=new Paths();var city=new CitySimulator(state,paths);city.AttachFoodMarket(market);state.Food.ChoiceStartsDay=1;
         return (city,paths);
     }
-    static object Bench(int shops)
+    static object Bench(int shops,bool nativeIds=false)
     {
         var totals=new List<double>();var units=new List<double>();var allocations=new List<long>();var policyCosts=new List<double>();int calls=0;
         var evaluated=Enumerable.Range(0,8).SelectMany(i=>FoodProducts.Ids.Select(id=>new EvaluatedFoodOffer("b"+i,id,Money.FromCents(100),1,0,12,90,75,60,MealKind.Lunch))).ToArray();
         for(int i=0;i<600;i++)
         {
-            var (city,paths)=Ready(i,shops);double at=city.State.Food!.Residents[0].DesiredAt;
+            var (city,paths)=Ready(i,shops,nativeIds);double at=city.State.Food!.Residents[0].DesiredAt;
             long before=GC.GetAllocatedBytesForCurrentThread();long start=Stopwatch.GetTimestamp();
             bool caught;int step=0;double captureMs=0;
             do
@@ -69,7 +70,7 @@ static class Program
             if(i>=88) {totals.Add(elapsed);allocations.Add(bytes);policyCosts.Add(captureMs+pickMs);}
         }
         totals.Sort();units.Sort();allocations.Sort();policyCosts.Sort();
-        return new {shops,samples=totals.Count,fullMs=new {p50=totals[totals.Count/2],p95=totals[(int)(totals.Count*.95)],max=totals[^1]},
+        return new {shops,nativeIds,samples=totals.Count,fullMs=new {p50=totals[totals.Count/2],p95=totals[(int)(totals.Count*.95)],max=totals[^1]},
             continuationUnitMs=new {p95=units[(int)(units.Count*.95)],max=units[^1]},shortlistCapturePlusPureSamplingMs=new {p95=policyCosts[(int)(policyCosts.Count*.95)],max=policyCosts[^1]},bytesPerDecision=allocations[allocations.Count/2],logicalRoutes=calls};
     }
     static void Main()
@@ -77,6 +78,6 @@ static class Program
         var d=new FoodDrawContext(123,"r|:42",7,MealKind.Lunch,"trip:abc",3);
         if(d.ShopHash("b:9")!=2746120566u || d.OfferHash("b:9",FoodProducts.Burger)!=360816019u || d.OfferHash("","")!=3912922371u)
             throw new Exception("Version-1 draw vectors changed");
-        Console.WriteLine(JsonSerializer.Serialize(new {bench=new[]{Bench(8),Bench(64),Bench(1024)}}));
+        Console.WriteLine(JsonSerializer.Serialize(new {bench=new[]{Bench(8),Bench(64),Bench(1024)},nativeIdBench=new[]{Bench(8,true),Bench(64,true),Bench(1024,true)}}));
     }
 }

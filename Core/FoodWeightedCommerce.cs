@@ -37,6 +37,8 @@ namespace PersistentCity.Core
         }
         private FoodDrawContext Draw(ResidentMeal meal,FoodDecisionState d) => new FoodDrawContext(city.State.Seed,meal.ResidentId,meal.Day,meal.Kind,d.ContextKey,d.Attempt);
         private static FoodRoutineStop CopyStop(FoodRoutineStop s) => new FoodRoutineStop {PlaceId=s.PlaceId,Activity=s.Activity,CapturedAt=s.CapturedAt,DepartureAt=s.DepartureAt};
+        private static FoodScope FreezeScope(FoodScope s) => new FoodScope {BusinessId=s.BusinessId,PlaceId=s.PlaceId,
+            ProductId=s.ProductId,AdditionalProductIds=new List<string>(s.AdditionalProductIds),NextServiceAt=s.NextServiceAt};
         private bool MatchesStop(FoodRoutineStop stop,FoodDecisionState d,bool atStop)
         {
             if(capturedStop==null)
@@ -75,12 +77,12 @@ namespace PersistentCity.Core
                 Math.Min(stop.DepartureAt,now+(meal.Slot==0 ? MealRhythm.BreakMinutes(person,city.State.Seed,meal.Kind) : RepresentedBreak(person,stop,meal.Kind))));
             var d=new FoodDecisionState {IntentId=meal.IntentId,ContextKey=context,Attempt=meal.ContextAttempts+1,OriginAt=now,Deadline=deadline};
             // Capture into a private image first. Exceptions cannot publish a partial sample or consume an attempt.
-            var scopes=atStop ? state.Shops.Where(s=>s.PlaceId==stop.PlaceId).ToArray()
+            var scopes=atStop ? state.Shops.Where(s=>s.PlaceId==stop.PlaceId).Select(FreezeScope).ToArray()
                 : Shortlist(meal,person,stop,Draw(meal,d));
             foreach(var scope in scopes)
             {
                 var b=market is IFoodCandidateMarket capture ? capture.CaptureBusiness(scope.BusinessId,now) : ReadBusiness(scope.BusinessId,now);
-                if(b==null || b.PlaceId!=scope.PlaceId) continue; // no refill
+                if(b==null || b.Id!=scope.BusinessId || b.PlaceId!=scope.PlaceId) continue; // no refill or replacement identity
                 // Market inputs belong to the provider: capture before subtracting reservations.
                 var shop=new FoodDecisionShop {BusinessId=b.Id,PlaceId=b.PlaceId,MealsPerHour=b.MealsPerHour ?? -1,
                     NextServiceAt=Math.Max(now,scope.NextServiceAt),ServiceUnavailable=b.ServiceUnavailableReason.Length>0,
@@ -106,12 +108,13 @@ namespace PersistentCity.Core
             var selected=new FoodScope[FoodChoicePolicy.MaximumShortlist];
             var ranks=new double[FoodChoicePolicy.MaximumShortlist];int count=0;
             var origin=city.FindPlace(stop.PlaceId);
+            var traits=Traits(meal,person);
             double pace=routes is IFoodWalkingPace walking ? walking.WalkingMetresPerMinute : 120;
             foreach(var scope in state.Shops)
             {
                 if(market is IFoodCandidateMarket candidates && !candidates.IsCandidate(scope)) continue;
                 double minutes=Position.Distance(origin.Position,city.FindPlace(scope.PlaceId).Position)/pace;
-                double rank=FoodDrawContext.Rank(draw.ShopHash(scope.BusinessId),FoodChoicePolicy.DistanceWeight(minutes,Traits(meal,person),ChoiceSettings,true));
+                double rank=FoodDrawContext.Rank(draw.ShopHash(scope.BusinessId),FoodChoicePolicy.DistanceWeight(minutes,traits,ChoiceSettings,true));
                 int insert=0;
                 while(insert<count && (ranks[insert]<rank || ranks[insert]==rank
                     && StringComparer.Ordinal.Compare(selected[insert].BusinessId,scope.BusinessId)<0)) insert++;
@@ -120,8 +123,11 @@ namespace PersistentCity.Core
                 for(int j=last;j>insert;j--) {selected[j]=selected[j-1];ranks[j]=ranks[j-1];}
                 selected[insert]=scope;ranks[insert]=rank;count=Math.Min(count+1,selected.Length);
             }
-            if(count==selected.Length) return selected;
-            Array.Resize(ref selected,count);return selected;
+            if(count!=selected.Length) Array.Resize(ref selected,count);
+            // Supply observation may refresh a mutable native scope catalogue. Sampled identities/menu
+            // bounds must stay the ones that actually won the metadata draw, even if a shop is replaced.
+            for(int i=0;i<selected.Length;i++) selected[i]=FreezeScope(selected[i]);
+            return selected;
         }
 
         private static FoodBusiness Materialize(FoodDecisionShop s) => new FoodBusiness {Id=s.BusinessId,PlaceId=s.PlaceId,Name=s.PlaceId,
