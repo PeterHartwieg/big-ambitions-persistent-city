@@ -244,9 +244,12 @@ namespace PersistentCity.Runtime
                     for(int n=0;n<times.Length;n++)
                     {
                         var current=new NativeDoorHarness(); var baseline=new E2aDoorHarness();
+                        // Both production constructors already own the place roster before the
+                        // cache publication/rebind being measured. Keep fixture roster setup out.
+                        foreach(var p in venues) current.places[p.Id]=p;
                         if(rebind)
                         {
-                            if(after) current.Publish(venues); else baseline.Publish(venues);
+                            if(after) current.PublishFrontages(venues); else baseline.Publish(venues);
                             foreach(var b in CityManager.Instance.cityBuildingControllers) b.Destroyed=true;
                             CityManager.Instance.cityBuildingControllers.Clear();
                             foreach(var p in venues)
@@ -260,7 +263,7 @@ namespace PersistentCity.Runtime
                         if(after)
                         {
                             if(rebind) foreach(var p in venues) current.NativeDoorPresent(p,DwellKind.Break);
-                            else current.Publish(venues);
+                            else current.PublishFrontages(venues);
                         }
                         else baseline.Publish(venues);
                         times[n]=System.Diagnostics.Stopwatch.GetElapsedTime(start).TotalMilliseconds;
