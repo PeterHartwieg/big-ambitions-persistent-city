@@ -94,10 +94,12 @@ namespace PersistentCity.Core
         /// contexts this meal has used (at most FoodChoicePolicy.MaximumContextsPerMeal). Same-context polling reuses it.</summary>
         public string LastContextKey { get; set; } = "";
         public int ContextAttempts { get; set; }
+        public ConsumerMemory Memory { get; set; } = new ConsumerMemory();
         public string IntentId => MealRhythm.IntentId(ResidentId, Day, Kind);
     }
     public sealed class FoodCommerceState
     {
+        public List<BusinessReference> BusinessReferences { get; set; } = new List<BusinessReference>();
         public int RepresentationFactor { get; set; } = 1;
         public List<FoodRoutineStop> RoutineStops { get; set; } = new List<FoodRoutineStop>();
         public List<FoodShopDay> History { get; set; } = new List<FoodShopDay>();
