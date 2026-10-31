@@ -29,6 +29,8 @@ Later: residents as employees, households.
 
 Implementation plan for B–E: [memory, marketing, rivals and the wider street](plans/steps-b-e.md).
 
+Peter’s [31 October Q1-Q7 decisions](plans/steps-b-e.md#product-decisions-peter-31-oct-2026) specify tiered paid research as a third native-agency option (proven fee or unavailable), local/distant discovery, estimated rivals, food-first products, no anonymous crowds/night multiplier and own-shop regulars; tier contents/fees remain open.
+
 Track F (Peter, 31 October): independently authored city view from interiors, F0 spike → F1 shop view/customer entry → F2 upper-floor/penthouse view → F3 polish. [F0 findings and plan](plans/track-f-interior-view.md): default-off runtime eligibility/entrance-anchor experiment; **city drawing is a no-op pending F1**, with no save-format change or A-stack dependency. Separate later E2c owns the third-party detection guard. The same mod-work/whole-frame evidence rules apply to F.
 
 ## Performance gate (Peter, 2026-10-30)
@@ -50,6 +52,7 @@ Record every taken win with before/after numbers.
 
 | Slice | Change | Before | After |
 |---|---|---|---|
+| C1 | Cache verified enum/list metadata per bounded shape; replace per-business duplicate hash sets with at most 8 x 8 comparisons (offline .NET, 1,024 businesses x six campaigns, 301 reads) | Warm p50/p95 3.316/5.196 ms; 3,637,080 allocated bytes/read | Warm p50/p95 0.980/2.380 ms; 1,637,960 bytes/read (55% fewer); one-business continuation p50 0.0029 to 0.0008 ms. Cold/read-tail and native limits: [C1 checks](../CHECKS.md#c1-native-campaign-reader---31-october-2026-offline-only). |
 | D1 (31 Oct, offline) | Reuse address-tuple metadata index; no escaped address strings on warm refresh. Zero work when not called. | Warm refresh allocation 227,200 / 4,629,632 B at 1,024 / 20,000 places (0.2286 / 1.9294 ms). | 32 / 32 B (0.1061 / 1.4670 ms); 16-read units 0 B. Retention trade-off: 422,208 / 8,500,600 to 491,848 / 9,838,136 B. [Method, cold/detail costs and limits](reviews/2026-10-31-d1-rival-reader.md#offline-validation-and-performance). No native timing claim. |
 | F0 review r1, 31 Oct | Cache configured bool/full context per frame and use a validated native speed delegate. Frozen pre-r1 adapter versus fixed adapter, actual `FieldInfo.GetValue` before / actual typed accessor after, 36 queries per emulated frame, 300 × 100 batches; native doubles. | p50/p95/max batch means **0.000975/0.001576/0.002240 ms/frame**, **0 B/frame** | **0.000690/0.000941/0.001080 ms/frame**, **0 B/frame**. Same-frame blockers still invalidate immediately; full-context reads 1 per frame rather than per body. `build/f0-review-r1/accessor-verified.txt`; .NET-only partial timings, not Unity/full-mod clearance. |
 | F0, 31 Oct | Skip candidate scan when both body pools are full, after observations and queue movement; same extracted selector with/without this one break, 957 residents, 300 single calls, native doubles. | p50/p95/max **0.1885/0.3179/4.2312 ms**, **96 B/call** | **0.0001/0.0001/0.0022 ms**, **32 B/call** (harness result list); zero candidate position reads versus 957 per full-pool call. No acquisition/cooldown difference in differential fixtures. Unity/full-mod benefit unmeasured. [F0 limits](plans/track-f-interior-view.md). |
