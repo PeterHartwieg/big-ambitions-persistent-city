@@ -228,6 +228,15 @@ floors make a universal stronger penalty impossible; this conservative capacity 
 keeps return odds equal, rather than increasing them. Free-slot and safe-eviction
 bad experiences still retain their negative entries. This includes lower-capacity
 insertions which would otherwise remove several boosted shops. No midnight diary/cleanup pass is introduced.
+
+**Protected insertion is an explicit exception to the brief's strict "bad visits
+always lower return chance" rule:** return chance stays equal, never higher, and
+the failed shop keeps its pre-visit novelty contribution. No negative per-shop
+entry or failure cause is retained in this case; only the terminal failed watermark
+is saved. B2 must not infer that every confirmed failure has a negative entry, or
+interpret a missing entry as proof that no failure occurred. `ProtectedInsertions`
+counts these cases only for the current session and is not a persisted failure history.
+
 `PopulationRuntime.FoodMemoryDump(consumerId)` / `CitySimulator.DumpFoodMemory`
 returns detached entries, effective affinity, cause and watermark only when called.
 No regular projection/inspector wording or B2 settings are added.
