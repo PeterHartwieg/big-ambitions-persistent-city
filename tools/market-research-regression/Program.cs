@@ -69,19 +69,20 @@ internal static class Program
             prototypeObjectValidationBytesPerRow=beforeBytes,finalDirectValidationBytesPerRow=afterBytes,
             prototypeMedianNs=before[5],finalMedianNs=after[5] };
     }
-    private static object Bench(int count)
+    private static object Bench(int count, bool catchment)
     {
         long heapBefore=GC.GetTotalMemory(true); var source=new ResearchFixture(count);
         long inputRetained=Math.Max(0,GC.GetTotalMemory(true)-heapBefore);
+        var queryScope=catchment ? new MarketResearchScope("fixture-address",new Position(0,0,0),2000) : new MarketResearchScope();
         // Warm JIT/paths separately. Frozen input construction is not continuation work.
-        for(int i=0;i<10;i++) ResearchFixture.Finish(source);
+        for(int i=0;i<10;i++) ResearchFixture.Finish(source,scope:queryScope);
         var units=new List<double>(30*((count+255)/256)); var totals=new List<double>(30); var allocations=new List<long>(30);
         var requests=new List<double>(30);
         long unitAlloc=0, completionAlloc=0; int spikes=0;
         for(int run=0;run<30;run++)
         {
             long requestStart=Stopwatch.GetTimestamp();
-            var job=new MarketResearchEngine(source,new MarketResearchScope(),MarketResearchTier.InDepth);
+            var job=new MarketResearchEngine(source,queryScope,MarketResearchTier.InDepth);
             requests.Add(Milliseconds(Stopwatch.GetTimestamp()-requestStart));
             long totalStart=Stopwatch.GetTimestamp(), allocationStart=GC.GetAllocatedBytesForCurrentThread();
             while(job.Completed==null)
@@ -96,11 +97,11 @@ internal static class Program
             allocations.Add(GC.GetAllocatedBytesForCurrentThread()-allocationStart); totals.Add(Milliseconds(Stopwatch.GetTimestamp()-totalStart));
         }
         units.Sort(); totals.Sort(); requests.Sort();
-        long allocStart=GC.GetAllocatedBytesForCurrentThread(); var retainedJob=new MarketResearchEngine(source,new MarketResearchScope(),MarketResearchTier.InDepth);
+        long allocStart=GC.GetAllocatedBytesForCurrentThread(); var retainedJob=new MarketResearchEngine(source,queryScope,MarketResearchTier.InDepth);
         long jobAllocation=GC.GetAllocatedBytesForCurrentThread()-allocStart;
-        var held = new MarketResearchEngine[1000]; var scope=new MarketResearchScope();
+        var held = new MarketResearchEngine[1000];
         long retainedBefore=GC.GetTotalMemory(true);
-        for(int i=0;i<held.Length;i++) held[i]=new MarketResearchEngine(source,scope,MarketResearchTier.InDepth);
+        for(int i=0;i<held.Length;i++) held[i]=new MarketResearchEngine(source,queryScope,MarketResearchTier.InDepth);
         double engineRetained=(GC.GetTotalMemory(true)-retainedBefore)/(double)held.Length;
         int reads=source.Reads; long idleStart=GC.GetAllocatedBytesForCurrentThread();
         // Closed/no request means no caller/hook. Holding a dormant source performs no work.
@@ -108,7 +109,7 @@ internal static class Program
         long idleAlloc=GC.GetAllocatedBytesForCurrentThread()-idleStart;
         Require(source.Reads==reads && idleAlloc==0,"Idle work");
         GC.KeepAlive(retainedJob); GC.KeepAlive(held);
-        return new { consumers=count,unitSize=256,runs=30,unitSamples=units.Count,
+        return new { consumers=count,coverage=catchment ? "address catchment, 2000m, all rows eligible" : "city",unitSize=256,runs=30,unitSamples=units.Count,
             requestConstructionMs=new { p50=requests[15],p95=requests[28],max=requests[^1] },
             unitMs=new { p50=units[units.Count/2],p95=units[(int)(units.Count*.95)],max=units[^1],spikesAtLeast30ms=spikes },
             completionMs=new { p50=totals[15],p95=totals[28],max=totals[^1] },
@@ -141,7 +142,8 @@ internal static class Program
         string root=Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,"../../../../../")); SourceGuard(root);
         var result=new { runtime=System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription,
             os=System.Runtime.InteropServices.RuntimeInformation.OSDescription,configuration="Release",fixture="seed-independent frozen ordinal rows, logical day 3",
-            proof=Proof(),traitValidationWin=TraitValidationWin(),benchmarks=new[]{Bench(957),Bench(5000),Bench(50000)} };
+            proof=Proof(),traitValidationWin=TraitValidationWin(),
+            benchmarks=new[]{Bench(957,false),Bench(5000,false),Bench(50000,false),Bench(957,true),Bench(5000,true),Bench(50000,true)} };
         string json=JsonConvert.SerializeObject(result,Formatting.Indented);
         if(args.Length>0) File.WriteAllText(args[0],json+Environment.NewLine);
         Console.WriteLine(json);
