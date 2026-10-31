@@ -2,6 +2,7 @@
 """Compile the Persistent City prototype against an explicitly supplied local game Managed directory."""
 import argparse
 import hashlib
+import os
 from pathlib import Path
 import re
 import shutil
@@ -17,14 +18,19 @@ args = parser.parse_args()
 managed = args.game_managed.resolve()
 references = ["mscorlib", "System", "System.Core", "System.Numerics", "System.Runtime.Serialization", "netstandard", "BigAmbitions",
               "BigAmbitions.ModAPI", "BigAmbitions.AI", "BigAmbitions.Items", "BigAmbitions.Characters", "BigAmbitions.Neighborhoods", "HGExtensions", "HGPlugins",
-              "UnityEngine.CoreModule", "UnityEngine.IMGUIModule", "UnityEngine.TextRenderingModule", "UnityEngine.AIModule", "UnityEngine.PhysicsModule", "UnityEngine.AnimationModule", "ExternalPlugins", "DayNightCycle"]
+              "UnityEngine.CoreModule", "UnityEngine.IMGUIModule", "UnityEngine.UI", "UnityEngine.InputLegacyModule", "BigAmbitions.PlacementSystem", "UnityEngine.TextRenderingModule", "UnityEngine.AIModule", "UnityEngine.PhysicsModule", "UnityEngine.AnimationModule", "ExternalPlugins", "DayNightCycle"]
 for name in references:
     if not (managed / (name + ".dll")).is_file():
         raise SystemExit(f"Required game assembly is missing: {name}.dll")
 json_reference = (args.json_assembly or managed / "Newtonsoft.Json.dll").resolve()
 if not json_reference.is_file():
     raise SystemExit("Newtonsoft.Json.dll is missing; supply the game's assembly with --json-assembly")
-sdk_lines = subprocess.check_output(["dotnet", "--list-sdks"], text=True).splitlines()
+# Prefer dotnet on PATH; otherwise use the per-user SDK install the offline gate specifies.
+local_dotnet = Path(os.environ.get("LOCALAPPDATA", "")) / "Microsoft/dotnet/dotnet.exe"
+dotnet = shutil.which("dotnet") or (str(local_dotnet) if os.environ.get("LOCALAPPDATA") and local_dotnet.is_file() else None)
+if dotnet is None:
+    raise SystemExit("Cannot locate dotnet: put it on PATH or install the SDK under %LOCALAPPDATA%/Microsoft/dotnet")
+sdk_lines = subprocess.check_output([dotnet, "--list-sdks"], text=True).splitlines()
 match = re.fullmatch(r"(\S+) \[(.*)\]", sdk_lines[-1])
 if not match:
     raise SystemExit("Cannot locate the .NET SDK compiler")
@@ -47,7 +53,7 @@ if not harmony.exists() or not (dependency / "Harmony-LICENSE.txt").exists():
 if hashlib.sha256(harmony.read_bytes()).hexdigest() != harmony_hash:
     raise SystemExit("Harmony DLL does not match its pinned checksum")
 sources = sorted(str(p) for folder in ("Core", "Compatibility", "Persistence", "Runtime") for p in (root / folder).glob("*.cs"))
-command = ["dotnet", str(csc), "-nologo", "-noconfig", "-nostdlib+", "-target:library", "-langversion:9",
+command = [dotnet, str(csc), "-nologo", "-noconfig", "-nostdlib+", "-target:library", "-langversion:9",
            "-nullable:enable", "-optimize+", "-warn:4", "-warnaserror+", "-deterministic+", "-out:" + str(output / "PersistentCity.dll")]
 command += ["-reference:" + str(managed / (name + ".dll")) for name in references]
 command += ["-reference:" + str(json_reference)]

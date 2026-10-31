@@ -66,6 +66,9 @@ namespace PersistentCity.Runtime
         private PhysicalPopulation? physical;
         private DwellSpots dwellSpots = new DwellSpots();
         private bool physicalFailed;
+        private readonly ResidentInspector inspector = new ResidentInspector();
+        private bool inspectorFailed;
+        private Action<string>? inspectorWarning;
         private object? saveIdentity;
         private object? initializingSave;
         private sealed class PreparedCity
@@ -203,6 +206,7 @@ namespace PersistentCity.Runtime
                 if (saveIdentity != null && !ReferenceEquals(saveIdentity, save))
                 {
                     physical?.Dispose(); physical = null; physicalFailed = false;
+                    inspector.Reset(); inspectorFailed = false;
                     Detach();
                     simulation = null;
                     saveSession = null;
@@ -286,7 +290,7 @@ namespace PersistentCity.Runtime
                         + ", scene searches in this planner=" + routes.RoadSceneSearches + ".");
                 }
                 seenRoadSnapshots = snapshots;
-                if (!prepared) { RecordRoutingFrame(prepareElapsed, 0, false); waitingFrames++; RunPhysical(() => physical?.Update()); return; }
+                if (!prepared) { RecordRoutingFrame(prepareElapsed, 0, false); waitingFrames++; RunPhysical(() => physical?.Update()); inspector.Suspend(); return; }
                 long closureStarted = Stopwatch.GetTimestamp();
                 simulation.RefreshTrafficClosures();
                 double closureElapsed = (Stopwatch.GetTimestamp() - closureStarted) * MillisecondsPerTimestamp;
@@ -304,6 +308,7 @@ namespace PersistentCity.Runtime
                     }
                 }
                 RunPhysical(() => physical?.Update());
+                UpdateInspector();
                 if (Time.unscaledTime >= nextSummary)
                 {
                     nextSummary = Time.unscaledTime + 60;
@@ -420,6 +425,18 @@ namespace PersistentCity.Runtime
             long restarts = active.EventRestarts, inline = active.InlineAfterRestarts;
             eventRestarts += restarts - seenEventRestarts; inlineRestarts += inline - seenInlineRestarts;
             seenEventRestarts = restarts; seenInlineRestarts = inline;
+        }
+
+        private void UpdateInspector()
+        {
+            if (inspectorFailed || simulation == null) return;
+            try { inspector.Attach(inspectorWarning ??= message => log?.Warn(message)); inspector.Update(simulation, physical, economyRect); }
+            catch (Exception error)
+            {
+                // The inspector is read-only; its failure must not stop the population.
+                inspectorFailed = true; inspector.Reset();
+                log?.Warn("Resident inspector stopped; the city continues unchanged: " + error);
+            }
         }
 
         private void RunPhysical(Action action)
@@ -625,6 +642,7 @@ namespace PersistentCity.Runtime
         private void Detach()
         {
             foodMarket?.Dispose(); foodMarket = null;
+            inspector.Detach();
             try { physical?.Dispose(); }
             finally { physical = null; routeObjects?.Dispose(); routeObjects = null; NativeCityClock.Stop(); NativeTravelPace.StopObservation(); }
             if (!subscribed) return;

@@ -3,6 +3,9 @@
 from pathlib import Path
 import subprocess, tempfile
 from xml.sax.saxutils import escape
+import os, shutil
+# Prefer dotnet on PATH; otherwise use the per-user SDK install the offline gate specifies.
+dotnet = shutil.which('dotnet') or str(Path(os.environ.get('LOCALAPPDATA', '')) / 'Microsoft/dotnet/dotnet.exe')
 root=Path(__file__).resolve().parents[2]
 source=(root/'Runtime/PhysicalPopulation.cs').read_text()
 methods=source[source.index('        private void OnOptionalDeparture('):source.index('        private bool MotionPermission(')]
@@ -22,4 +25,4 @@ with tempfile.TemporaryDirectory(prefix='pc-optional-stop-') as folder:
     (folder/'DwellCache.cs').write_text('using System; using System.Collections.Generic; using PersistentCity.Core;\n'+dwell)
     (folder/'Harness.cs').write_text((Path(__file__).parent/'Harness.cs.txt').read_text())
     (folder/'Harness.csproj').write_text('<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework><OutputType>Exe</OutputType><Nullable>enable</Nullable><TreatWarningsAsErrors>true</TreatWarningsAsErrors></PropertyGroup><ItemGroup><ProjectReference Include="'+escape(str(root/'Persistence/PersistentCity.Persistence.csproj'))+'" /></ItemGroup></Project>')
-    subprocess.run(['dotnet','run','--project',str(folder/'Harness.csproj'),'-c','Release'],check=True)
+    subprocess.run([dotnet,'run','--project',str(folder/'Harness.csproj'),'-c','Release'],check=True)

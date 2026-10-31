@@ -134,6 +134,11 @@ namespace FoodDemandAuditProbe
                 PatchComponent(patches, "PersistentCity.Runtime.PhysicalVehicles", "DeferNativeForce", typeof(Rigidbody), typeof(Vector3), typeof(ForceMode));
                 PatchComponent(patches, "PersistentCity.Runtime.PhysicalVehicles", "ApplyNativeRotation", typeof(Rigidbody), typeof(Quaternion));
                 PatchComponent(patches, "PersistentCity.Runtime.PhysicalIntersections", "UpdatePostfix", typeof(GleyTrafficSystem.IntersectionManager));
+                // Resident inspector: picking/refresh inside Update, and the whole OnGUI (outside the primary scope).
+                PatchComponent(patches, "PersistentCity.Runtime.ResidentInspector", "Update", typeof(CitySimulator),
+                    typeof(PopulationRuntime).Assembly.GetType("PersistentCity.Runtime.PhysicalPopulation")
+                        ?? throw new InvalidOperationException("Inspector timing parameter type unavailable."), typeof(Rect));
+                PatchComponent(patches, "PersistentCity.Runtime.PopulationRuntime", "OnGUI");
                 StartEventMeasurements(patches);
                 foreach (var component in componentTimings) component.CallTimes.Capacity = FrameSampleLimit;
                 workFrame = NewWorkFrame(currentWorkFrame);

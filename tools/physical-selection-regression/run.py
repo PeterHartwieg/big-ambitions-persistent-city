@@ -5,6 +5,9 @@ Baseline files freeze the pre-change implementation. No handwritten optimized se
 from pathlib import Path
 import subprocess
 import json
+import os, shutil
+# Prefer dotnet on PATH; otherwise use the per-user SDK install the offline gate specifies.
+dotnet = shutil.which('dotnet') or str(Path(os.environ.get('LOCALAPPDATA', '')) / 'Microsoft/dotnet/dotnet.exe')
 here = Path(__file__).resolve().parent
 root = here.parent.parent
 
@@ -73,4 +76,4 @@ ET.SubElement(items, 'Compile', Include='Program.cs')
 ET.SubElement(items, 'Compile', Include='Model.cs')
 ET.SubElement(items, 'Compile', Include=str(root / 'Core' / '*.cs'), Exclude=str(root / 'Core' / 'Model.cs'))
 ET.ElementTree(project).write(build / 'Regression.csproj', encoding='unicode')
-subprocess.run(['dotnet', 'run', '--project', str(build / 'Regression.csproj'), '--configuration', 'Release'], check=True)
+subprocess.run([dotnet, 'run', '--project', str(build / 'Regression.csproj'), '--configuration', 'Release'], check=True)
