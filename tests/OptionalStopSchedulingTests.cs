@@ -52,6 +52,30 @@ public sealed class OptionalStopSchedulingTests
         var sim = new CitySimulator(state, new Walking()); sim.AttachOptionalStops(env, percentage);
         return (sim, env);
     }
+    [Theory]
+    [MemberData(nameof(StreetLifeArms))]
+    public void DefaultTimingKeepsEntireSaveAndTunedReloadKeepsCommittedTerms(DwellKind kind, int rate)
+    {
+        var (baseline, _) = Ready(kind, count: 48, percentage: rate);
+        var (defaults, defaultEnv) = Ready(kind, count: 48, percentage: rate);
+        defaults.AttachOptionalStops(defaultEnv, rate, new OptionalStopTiming());
+        baseline.AdvanceTo(1450); defaults.AdvanceTo(1450);
+        Assert.Equal(SaveCodec.Write(baseline.State), SaveCodec.Write(defaults.State));
+        string saved = SaveCodec.Write(defaults.State);
+        var loaded = new CitySimulator(SaveCodec.Read(saved).State!, new Walking());
+        var minimum = new OptionalStopTiming(5, 10, 1, 2, 10);
+        loaded.AttachOptionalStops(defaultEnv, rate, minimum);
+        Assert.Equal(saved, SaveCodec.Write(loaded.State)); // no saved stop shortened or restarted
+        var rebuilt = loaded.RebuildRoutes(new Walking());
+        Assert.Equal(saved, SaveCodec.Write(rebuilt.State));
+        var (tuned, env) = Ready(kind, count: 48, percentage: rate);
+        tuned.AttachOptionalStops(env, rate, minimum); tuned.AdvanceTo(1450);
+        Assert.All(tuned.State.Citizens.Where(c => c.OptionalStop != null), c =>
+            Assert.Equal(OptionalStopPolicy.Minimum(kind), c.OptionalStop!.EndMinute - c.OptionalStop.StartMinute));
+        Assert.Equal(baseline.OptionalStopChances.Drawn, tuned.OptionalStopChances.Drawn);
+        Assert.Equal(baseline.OptionalStopChances.Realised, tuned.OptionalStopChances.Realised);
+    }
+
     public static IEnumerable<object[]> StreetLifeArms()
     {
         foreach (var kind in new[] { DwellKind.Break, DwellKind.ChatOutsideVenue, DwellKind.WindowShopping, DwellKind.Resting, DwellKind.Audience })

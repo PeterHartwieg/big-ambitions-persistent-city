@@ -316,7 +316,7 @@ namespace PersistentCity.Runtime
             {
                 if (citizen.Phase != CitizenPhase.WaitingForOpening || !places.TryGetValue(citizen.PlaceId, out var place)
                     || Position.Distance(place.Position, focus) > radius) continue;
-                var dwell = DwellPlanner.QueueAtOpening(citizen, place, simulation.State.Seed, now, raining);
+                var dwell = QueueDwell(citizen, place, now, raining);
                 if (!dwell.HasValue || !dwell.Value.ActiveAt(now) || GaveUp(dwell.Value)) continue;
                 string key = DwellSpots.KeyOf(place);
                 if (!planned.TryGetValue(key, out var line)) planned.Add(key, line = (place, new List<Dwell>()));
@@ -343,6 +343,14 @@ namespace PersistentCity.Runtime
                     if (slots.TryGetValue(dwell.CitizenId, out int slot))
                         queuers[dwell.CitizenId] = new QueuePlanEntry { Dwell = dwell, Line = found, Slot = slot };
             }
+        }
+
+        private Dwell? QueueDwell(CitizenState citizen, Place place, double now, bool raining)
+        {
+            Dwell? committed = bindings.TryGetValue(citizen.Identity.Id, out var bound)
+                && bound.Person != null && bound.Person.Valid && bound.Line != null && bound.Step != QueueStep.Entering
+                ? bound.Queue : null;
+            return DwellPlanner.QueueAtOpening(citizen, place, simulation.State.Seed, now, raining, committed);
         }
 
         private bool GaveUp(Dwell dwell)

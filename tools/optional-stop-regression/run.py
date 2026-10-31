@@ -17,13 +17,19 @@ dwell=dwell[dwell.index('namespace PersistentCity.Runtime'):dwell.index('       
 dwell += '        public static int SampleCalls;\n        private static DoorQueue? Sample(string key, Place place)\n        { SampleCalls++; return new DoorQueue(key, place.Position, place.Position, new[] { place.Position }); }\n    }\n}\n'
 with tempfile.TemporaryDirectory(prefix='pc-optional-stop-') as folder:
     folder=Path(folder)
-    (folder/'Methods.cs').write_text('using System; using System.Linq; using System.Collections.Generic; using PersistentCity.Core; partial class Harness {\n'+methods+arrival+standing+'\n}')
-    (folder/'NativeDoor.cs').write_text((Path(__file__).parent/'NativeDoor.cs.txt').read_text().replace('/* PRODUCTION METHOD */',native+discovery+geometry))
+    (folder/'Methods.cs').write_text('using System; using System.Linq; using System.Collections.Generic; using PersistentCity.Core; partial class Harness {\n'+methods+arrival+standing+source[source.index('        private Dwell? QueueDwell('):source.index('        private bool GaveUp(')]+'\n}')
+    legacy = ''
+    if '--performance' in sys.argv:
+        # Comparison-only source: ordinary regression runs do not require Git history.
+        legacy_source=subprocess.check_output(['git','show','9b1b89ce0ab889cbb7ff5481a2d630c348ddbb0e:Runtime/OptionalStopEnvironment.cs'],cwd=root,text=True)
+        legacy=legacy_source[legacy_source.index('        private bool NativeDoorPresent('):legacy_source.index('        private IReadOnlyList<OptionalStopSpot> ParkEdge(')]
+        legacy+=legacy_source[legacy_source.index('        public IReadOnlyList<OptionalStopSpot> Spots('):legacy_source.index('        private bool NativeDoorPresent(')]
+    (folder/'NativeDoor.cs').write_text((Path(__file__).parent/'NativeDoor.cs.txt').read_text().replace('/* PRODUCTION METHOD */',native+discovery+geometry).replace('/* E2A METHOD */',legacy))
     (folder/'DwellCache.cs').write_text('using System; using System.Collections.Generic; using PersistentCity.Core;\n'+dwell)
     (folder/'Harness.cs').write_text((Path(__file__).parent/'Harness.cs.txt').read_text())
     (folder/'StationaryCrowds.cs').write_text((root/'Runtime/StationaryCrowds.cs').read_text())
     (folder/'StationaryScope.cs').write_text((Path(__file__).parent/'StationaryScope.cs.txt').read_text())
-    (folder/'Harness.csproj').write_text('<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework><OutputType>Exe</OutputType><Nullable>enable</Nullable><TreatWarningsAsErrors>true</TreatWarningsAsErrors></PropertyGroup><ItemGroup><ProjectReference Include="'+escape(str(root/'Persistence/PersistentCity.Persistence.csproj'))+'" /></ItemGroup></Project>')
+    (folder/'Harness.csproj').write_text('<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework><OutputType>Exe</OutputType><DefineConstants>'+('PERFORMANCE' if '--performance' in sys.argv else '')+'</DefineConstants><Nullable>enable</Nullable><TreatWarningsAsErrors>true</TreatWarningsAsErrors></PropertyGroup><ItemGroup><ProjectReference Include="'+escape(str(root/'Persistence/PersistentCity.Persistence.csproj'))+'" /></ItemGroup></Project>')
     subprocess.run(['dotnet','run','--project',str(folder/'Harness.csproj'),'-c','Release','--']+sys.argv[1:],check=True)
     if '--performance' in sys.argv:
         perf=folder/'perf'
