@@ -23,7 +23,7 @@ The on-demand bridge seam is `new RivalFoodCatalogue()`, `BeginRefresh()`, bound
 
 ### In-game checks for 6 Nov rig
 
-Run on a named disposable FT fixture with at least one established rival advertising a reviewed food product. Preserve original fixture/profile settings. This list is also in the dated CHECKS entry.
+Run on a named disposable FT fixture with at least one established rival advertising a reviewed food product. Preserve original fixture/profile settings. This list is also in the PR description and reader handoff.
 
 1. **LOCKED-OK:** Through bridge state/dumps, identify a rival and player shop independently of D1. Keep one diagnostic reader instance, complete its refresh in bounded units, then dump both place IDs. Compare owner split, native identity fields, exact binary32 price/unit amounts, hours, explicit temporary closure, access/door facts and saved service rating against native state. Assert rival stock `Unknown`, availability evidence `EstimatedFromPriceAndHours`, and absence of fabricated stock, service-time or capacity fields. Save/reload outside timing windows and verify the old reader refuses the changed save; a new reader must reproduce the readable facts without claiming generation continuity.
 2. **LOCKED-OK:** Capture/hash the rival registration, advertised prices, native stock and finances through independent read-only bridge captures before and after at least 100 repeated D1 refresh/shortlist dumps. Compare native-field captures exactly; ignore only independently explained game-clock/economy changes, or pause the fixture for an exact comparison. D1 must cause zero native changes. Record unsupported advertised counts and refusal reasons where present.
