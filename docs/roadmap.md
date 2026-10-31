@@ -29,6 +29,8 @@ Later: residents as employees, households.
 
 Implementation plan for B–E: [memory, marketing, rivals and the wider street](plans/steps-b-e.md).
 
+E2a offline street-life proof and read-only venue findings: [coverage and E2b cases](plans/e2-street-life.md), including Peter's 31 October Q6 decision (existing identified residents/caps and 25% semantics; no new anonymous crowds or night multiplier). Native evidence remains on the combined 6 Nov checklist.
+
 Peter’s [31 October Q1-Q7 decisions](plans/steps-b-e.md#product-decisions-peter-31-oct-2026) specify tiered paid research as a third native-agency option (proven fee or unavailable), local/distant discovery, estimated rivals, food-first products, no anonymous crowds/night multiplier and own-shop regulars; tier contents/fees remain open.
 
 Track F (Peter, 31 October): independently authored city view from interiors, F0 spike → F1 shop view/customer entry → F2 upper-floor/penthouse view → F3 polish. [F0 findings and plan](plans/track-f-interior-view.md): default-off runtime eligibility/entrance-anchor experiment; **city drawing is a no-op pending F1**, with no save-format change or A-stack dependency. Separate later E2c owns the third-party detection guard. The same mod-work/whole-frame evidence rules apply to F.

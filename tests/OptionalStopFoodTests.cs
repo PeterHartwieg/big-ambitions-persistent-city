@@ -15,11 +15,12 @@ public sealed partial class FoodCommerceTests
             Id="spot",TargetId=p.Id,Position=p.Position,Facing=p.Position}};
         public OptionalStopAvailability Available(OptionalStopState stop) => OptionalStopAvailability.Ready;
     }
-    [Fact]
-    public void OptionalStopsCannotOccupyFoodServiceOrChangeItsPurchases()
+    [Theory]
+    [InlineData(0)] [InlineData(25)] [InlineData(100)]
+    public void OptionalStopsCannotOccupyFoodServiceOrChangeItsPurchases(int rate)
     {
         var (plain, a, _) = Ready(); var (stops, b, _) = Ready();
-        stops.AttachOptionalStops(new StopEnvironment(),100);
+        stops.AttachOptionalStops(new StopEnvironment(),rate);
         Advance(plain,1800); Advance(stops,1800);
         Assert.Equal(a.Orders,b.Orders); Assert.Equal(a.Units,b.Units);
         Assert.Equal(SaveCodec.Write(plain.State),SaveCodec.Write(stops.State));

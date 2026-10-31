@@ -1,5 +1,7 @@
 # Persistent City
 
+> **E2a — 31 October (offline):** expanded existing street-life proofs and read-only venue discovery; production DLL and save contracts unchanged. [Coverage, costs and 6 Nov rig checks](CHECKS.md#e2a-street-life-proof--31-october-2026-offline-only) · [Findings and E2b cases](docs/plans/e2-street-life.md).
+
 > **C1 campaign reader - 31 October:** on-demand read-only campaign snapshots and bounded continuation are implemented, with six verified native identifiers and honest Unknown lifecycle/targeting fields. No awareness, choice, save or native campaign/payment changes. **1,566 unit tests and all 32 offline checks pass**; the pending 6 Nov fixture checks are in [CHECKS.md](CHECKS.md#c1-native-campaign-reader---31-october-2026-offline-only); [native contract notes](docs/plans/c1-campaign-reader.md). Peter's Q1-Q7 product decisions are recorded in the B-E plan.
 
 > **D1 - 31 October (offline):** isolated read-only rival food catalogue and pure detached observation DTOs; exact advertised prices/hours/access/rating, unknown stock and explicitly estimated availability evidence. Bounded metadata/shortlist reads and conservative identity refusals; no gameplay consumer or save changes. All 31 offline commands and 1,551 unit tests pass. [Evidence and 6 Nov rig checks](CHECKS.md#d1-rival-food-catalogue-31-october-2026-offline-only) / [Reader/PR handoff](docs/reviews/2026-10-31-d1-rival-reader.md).
