@@ -40,7 +40,8 @@ namespace PersistentCity.Core
         {
             if(!records.TryGetValue(consumerId,out var meal)) return null;
             var person=city.FindCitizen(meal.AnchorId);if(person==null) return null;
-            var stop=ChoiceStop(meal,person);var dump=new FoodAwarenessDump();
+            var stop=ChoiceStop(meal,person);var dump=new FoodAwarenessDump {ConsumerId=consumerId,Day=day ?? meal.Day,
+                HeldImage=meal.Decision?.Awareness,HeldShortlist=meal.Decision?.Shops.Select(s=>s.BusinessId).ToArray() ?? Array.Empty<string>()};
             var image=AwarenessSample(meal,person,stop,day ?? meal.Day,false,dump);
             var context=meal.Decision?.ContextKey ?? Context(stop,false);
             dump.Shortlist=AwarenessCatalogue().Rank(image,city.FindPlace(stop.PlaceId).Position,Traits(meal,person),ChoiceSettings,

@@ -56,7 +56,7 @@ namespace PersistentCity.Core
     public sealed class FoodAwarenessImage
     {
         public string CatalogueRevision { get; set; } = "";
-        public List<FoodAwarenessCandidate> Union { get; set; } = new List<FoodAwarenessCandidate>();
+        public List<FoodAwarenessCandidate> Union { get; set; } = new List<FoodAwarenessCandidate>(24);
     }
     public sealed class FoodAwarenessSample
     {
@@ -67,6 +67,12 @@ namespace PersistentCity.Core
     }
     public sealed class FoodAwarenessDump
     {
+        public string ConsumerId { get; set; } = "";
+        public int Day { get; set; }
+        public FoodAwarenessImage? HeldImage { get; set; }
+        public string[] HeldShortlist { get; set; } = Array.Empty<string>();
+        public IEnumerable<FoodAwarenessSample> Union => Samples.Where(s=>s.BusinessId.Length>0);
+        public IReadOnlyList<FoodAwarenessCandidate> Deduplicated => Image.Union;
         public FoodAwarenessImage Image { get; set; } = new FoodAwarenessImage();
         public List<FoodAwarenessSample> Samples { get; } = new List<FoodAwarenessSample>();
         public string[] Shortlist { get; set; } = Array.Empty<string>();
@@ -143,13 +149,17 @@ namespace PersistentCity.Core
         private static (int,int) Cell(Position p,int scale) => ((int)Math.Floor(p.X/scale),(int)Math.Floor(p.Z/scale));
         public bool ContainsPlace(string id) => byPlace.ContainsKey(id);
         public Entry? Find(string id) => byId.TryGetValue(id,out var e) ? e : null;
-        private uint Key(int seed,string consumer,int day,FoodAwarenessSource source,int slot,string domain)
+        private static uint Prefix(int seed,string consumer,int day,FoodAwarenessSource source,bool gate)
         {
-            uint h=StableRandom.Append(StableRandom.Begin(seed),"pc:awareness:v1:"+domain);
+            uint h=StableRandom.Append(StableRandom.Begin(seed),gate ? "pc:awareness:v1:gate" : "pc:awareness:v1:slot");
             h=StableRandom.AppendDecimal(StableRandom.Append(h,'|'),consumer.Length);h=StableRandom.Append(StableRandom.Append(h,':'),consumer);
             h=StableRandom.AppendDecimal(StableRandom.Append(h,'|'),day);
             h=StableRandom.AppendDecimal(StableRandom.Append(h,'|'),(int)source);
-            h=StableRandom.AppendDecimal(StableRandom.Append(h,'|'),slot);
+            return h;
+        }
+        private uint Key(uint prefix,int slot)
+        {
+            uint h=StableRandom.AppendDecimal(StableRandom.Append(prefix,'|'),slot);
             return StableRandom.Finish(StableRandom.Append(StableRandom.Append(h,'|'),Revision));
         }
         /// <summary>At most 24 draws here; campaign's eight reserved slots always return unknown in C2a.
@@ -164,8 +174,8 @@ namespace PersistentCity.Core
                 bool admitted=entry!=null && exposed && eligible(entry);
                 if(diagnostic!=null) diagnostic.Samples.Add(new FoodAwarenessSample {Source=source,Slot=slot,BusinessId=entry?.BusinessId ?? "",Result=admitted ? "eligible" : reason});
                 if(entry==null) return;
-                var old=image.Union.Find(x=>x.BusinessId==entry.BusinessId);
-                if(old!=null) {old.Sources|=source;old.Eligible|=admitted;return;}
+                foreach(var old in image.Union)
+                    if(old.BusinessId==entry.BusinessId) {old.Sources|=source;old.Eligible|=admitted;return;}
                 image.Union.Add(new FoodAwarenessCandidate {BusinessId=entry.BusinessId,Sources=source,Eligible=admitted});
             }
             for(int i=0;i<4;i++)
@@ -175,6 +185,7 @@ namespace PersistentCity.Core
             }
             void Local(Position? anchor,FoodAwarenessSource source)
             {
+                uint prefix=Prefix(seed,consumer,day,source,false);
                 int level=0;while(level<Scales.Length-1 && Scales[level]<settings.RadiusMetres) level++;
                 var buckets=new int[9][];int mass=0,n=0;
                 if(anchor.HasValue && anchor.Value.IsFinite)
@@ -188,7 +199,7 @@ namespace PersistentCity.Core
                     Entry? entry=null;
                     if(mass>0)
                     {
-                        int draw=(int)(Key(seed,consumer,day,source,i,"slot")%(uint)mass);
+                        int draw=(int)(Key(prefix,i)%(uint)mass);
                         for(int b=0;b<n;b++) {if(draw<buckets[b].Length) {entry=entries[buckets[b][draw]];break;}draw-=buckets[b].Length;}
                     }
                     bool inside=entry!=null && Position.Distance(anchor!.Value,entry.Position)<=settings.RadiusMetres;
@@ -196,10 +207,12 @@ namespace PersistentCity.Core
                 }
             }
             Local(home,FoodAwarenessSource.Home);Local(routine,FoodAwarenessSource.Routine);Local(origin,FoodAwarenessSource.Origin);
+            uint discoveryGate=Prefix(seed,consumer,day,FoodAwarenessSource.Discovery,true);
+            uint discoverySlot=Prefix(seed,consumer,day,FoodAwarenessSource.Discovery,false);
             for(int i=0;i<8;i++)
             {
-                bool exposed=(Key(seed,consumer,day,FoodAwarenessSource.Discovery,i,"gate")+.5)/4294967296.0<settings.DiscoveryProbability;
-                Entry? entry=entries.Length==0 ? null : entries[Key(seed,consumer,day,FoodAwarenessSource.Discovery,i,"slot")%(uint)entries.Length];
+                bool exposed=(Key(discoveryGate,i)+.5)/4294967296.0<settings.DiscoveryProbability;
+                Entry? entry=entries.Length==0 ? null : entries[Key(discoverySlot,i)%(uint)entries.Length];
                 // Failed exposure does not create awareness or a saved candidate identity.
                 Add(exposed ? entry : null,FoodAwarenessSource.Discovery,i,exposed,"not discovered");
                 if(diagnostic!=null && !exposed) diagnostic.Samples[diagnostic.Samples.Count-1].BusinessId=entry?.BusinessId ?? "";

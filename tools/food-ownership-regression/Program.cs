@@ -265,7 +265,7 @@ foreach (string damage in new[] { "active", "revision", "code", "future" })
     string unsupportedPopulation = damage == "active" ? supported.Replace("\"Active\":false", "\"Active\":true")
         : damage == "revision" ? supported.Replace("\"Revision\":1", "\"Revision\":2")
         : damage == "code" ? supported.Replace("\"Code\":\"B\"", "\"Code\":\"C\"")
-        : supported.Replace("\"Schema\":18", "\"Schema\":999");
+        : supported.Replace("\"Schema\":"+CityState.CurrentSchema, "\"Schema\":999");
     reg = Fresh(9, saved, populationPayload: unsupportedPopulation);
     Check(NativeFoodOwnership.Error.Length > 0, "unsupported " + damage + " capability stops earliest native authority bootstrap");
     Check(CustomerEntriesHelper.GetEntriesByAddress(reg.Address).Count == 0, "unsupported capability cannot release native demand");

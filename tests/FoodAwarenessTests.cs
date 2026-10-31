@@ -85,6 +85,22 @@ public sealed class FoodAwarenessTests
         Assert.True(external && managed);
     }
     [Fact]
+    public void CachedPrefixOptimizationPreservesOriginalSourceDrawKeys()
+    {
+        var c=Catalogue(1024,true);var dump=new FoodAwarenessDump();Sample(c,7,dump:dump);
+        uint Original(FoodAwarenessSource source,int slot,string domain)
+        {
+            uint h=StableRandom.Append(StableRandom.Begin(77),"pc:awareness:v1:"+domain);
+            h=StableRandom.AppendDecimal(StableRandom.Append(h,'|'),8);h=StableRandom.Append(StableRandom.Append(h,':'),"consumer");
+            h=StableRandom.AppendDecimal(StableRandom.Append(h,'|'),7);
+            h=StableRandom.AppendDecimal(StableRandom.Append(h,'|'),(int)source);
+            h=StableRandom.AppendDecimal(StableRandom.Append(h,'|'),slot);
+            return StableRandom.Finish(StableRandom.Append(StableRandom.Append(h,'|'),c.Revision));
+        }
+        foreach(var sample in dump.Samples.Where(s=>s.Source!=FoodAwarenessSource.Campaign && s.Source!=FoodAwarenessSource.Memory))
+            Assert.Equal("generation:"+(Original(sample.Source,sample.Slot,"slot")%1024).ToString("D5"),sample.BusinessId);
+    }
+    [Fact]
     public void DenseBucketsReachLastEntriesWithoutFirstEntryBias()
     {
         var c=Catalogue(1024,true);var seen=new HashSet<string>();

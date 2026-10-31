@@ -49,9 +49,10 @@ namespace PersistentCity.Runtime
         {
             if(!candidateBusinesses.Contains(scope.BusinessId) || !shopControllers.TryGetValue(scope.PlaceId,out var controller)) return false;
             var reg=controller.buildingRegistration;
-            return reg!=null && registrations.TryGetValue(scope.PlaceId,out var observed) && ReferenceEquals(reg,observed)
-                && Supported(reg) && GamePlaces.BuildingAccessible(controller)
-                && NativeFoodOwnership.Find(reg)?.BusinessId==scope.BusinessId && NativeFoodOwnership.Find(reg)?.CanServe==true;
+            if(reg==null || !registrations.TryGetValue(scope.PlaceId,out var observed) || !ReferenceEquals(reg,observed)
+                || !Supported(reg) || !GamePlaces.BuildingAccessible(controller)) return false;
+            var authority=NativeFoodOwnership.Find(reg);
+            return authority?.BusinessId==scope.BusinessId && authority.CanServe;
         }
         private void RefreshReadMetadata(double minute)
         {
