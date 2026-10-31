@@ -27,7 +27,6 @@ namespace PersistentCity.Persistence
             Require(source != null && source.Length <= MaxInputCharacters, "Invalid population payload.");
             int schema = ReadSchema(source);
             Require(schema >= 13 && schema <= 18, "Unsupported population schema; preserve the payload.");
-            if (schema < 18) return;
             using var reader = Reader(source);
             reader.Read(); bool found = false;
             while (reader.Read() && reader.TokenType != JsonToken.EndObject)
@@ -36,13 +35,15 @@ namespace PersistentCity.Persistence
                 Require(reader.Read(), "Missing field value.");
                 if (name == "Capabilities")
                 {
+                    Require(schema == 18, "Unknown capability header in a legacy population schema.");
                     int count = 0;
                     CheckShape(reader, typeof(PopulationCapabilities), StateContracts, ref count, new TokenText(source), 18, new FieldNameSets());
                     found = true;
                 }
                 else reader.Skip();
             }
-            Require(found, "Missing population capabilities.");
+            Require(found || schema < 18, "Missing population capabilities.");
+            if (!found) return;
             // Re-read just the bounded header after shape validation (required/unknown/duplicate fields).
             using var header = Reader(source);
             header.Read();

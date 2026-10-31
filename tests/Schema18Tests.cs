@@ -194,6 +194,21 @@ public sealed partial class FoodCommerceTests
         Assert.Throws<SaveValidationException>(() => SaveCodec.Write(city.State));
     }
 
+    [Theory]
+    [InlineData(13)] [InlineData(14)] [InlineData(15)] [InlineData(16)] [InlineData(17)]
+    public void B0_LegacySchemaCannotSmuggleAnInactiveOrActiveCapabilityHeader(int schema)
+    {
+        var (city, source) = S17_Full();
+        var old = JObject.Parse(S17_Old(source, schema));
+        foreach (bool active in new[] { false, true })
+        {
+            old["Capabilities"] = new JObject { ["Code"] = "B", ["Revision"] = 1, ["Active"] = active };
+            string wire = old.ToString(Formatting.None);
+            Assert.Throws<SaveValidationException>(() => SaveCodec.RequireExecutableCapabilities(wire));
+            B0_Preserve(wire, city.State);
+        }
+    }
+
     [Fact]
     public void B0_FrozenReaderRefuses18AndBothContractsKeepFourCapturedOffers()
     {
