@@ -1,0 +1,187 @@
+{
+  "role": "rig_test",
+  "candidateSha": "487f2e9f02906e060494e76d7ca311f1ff6b9af4",
+  "baselineSha": "6d43276198eba5d0dd016b51bc7fc670bc651762",
+  "actualMergeBase": "6d43276198eba5d0dd016b51bc7fc670bc651762",
+  "requestedCandidate": "487f2e9",
+  "headMovedAtInitialFetch": false,
+  "baselineDllSha256": "f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c",
+  "candidateDllSha256": "843b078085cbcdb5603ee4d082cbabdfd5c0cba3996203c2b3f2c74b73478336",
+  "managedReferences": "C:\\BigAmbitions-AgentTests\\Big Ambitions Agent Tests_Data\\Managed",
+  "sdk": "10.0.402",
+  "pathPrefixAppliedToAllDotnetBuildCommands": true,
+  "offlineDotnetTestSuitesRun": 0,
+  "sourceWorktreesClean": {
+    "candidate": true,
+    "baseline": true
+  },
+  "buildCommands": [
+    "python tools/build.py --game-managed <agent1 Managed>"
+  ],
+  "base1Loaded": {
+    "loaded_location_observed_by": "baseline-native-metadata.json",
+    "frame_helper_sha256": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+    "guard_sha256": "94180f18d08b9f5091bad3939aaeef5efbf79f3cb78d3571cf611b6e4099d6ca",
+    "pid": 38632,
+    "arm": "base1",
+    "launch_verified_install_receipt": true,
+    "installed_sha256": "f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c"
+  },
+  "nativeLoadedMetadata": {
+    "cand1": {
+      "available": true,
+      "loaded": "<user>\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions Agent Tests\\ModsLocal\\PersistentCity\\PersistentCity.dll",
+      "moduleMvid": "d547f44a-82d2-45d9-b329-aef74ff9f55e",
+      "loadedFileSha256": "843b078085cbcdb5603ee4d082cbabdfd5c0cba3996203c2b3f2c74b73478336"
+    },
+    "base2": {
+      "available": false,
+      "loaded": "<user>\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions Agent Tests\\ModsLocal\\PersistentCity\\PersistentCity.dll",
+      "moduleMvid": "fcf35eed-fb7b-44df-8fe0-364a7da9db42",
+      "loadedFileSha256": "f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c"
+    },
+    "cand2": {
+      "available": true,
+      "loaded": "<user>\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions Agent Tests\\ModsLocal\\PersistentCity\\PersistentCity.dll",
+      "moduleMvid": "d547f44a-82d2-45d9-b329-aef74ff9f55e",
+      "loadedFileSha256": "843b078085cbcdb5603ee4d082cbabdfd5c0cba3996203c2b3f2c74b73478336"
+    }
+  },
+  "frameHelperSha256": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+  "frameHelperIdenticalAcrossBuilds": true,
+  "guardSha256": "c57835fa6731d76eee3917f0a81ecf4b853e350bdacd764e608d579e5a68077a",
+  "checkpointHashesBefore": [
+    {
+      "name": "FT Food Routines Locked D1 20261031.hsg",
+      "sha256": "bb8ac25721dcea825cdf40e462a606e6244fe93668c8940b9688f4ca482d9273",
+      "bytes": 1032800,
+      "lastWriteUtc": "2026-10-27T03:55:10.098180+00:00"
+    },
+    {
+      "name": "FT Food Routines Locked D1 Quiet 20261031.hsg",
+      "sha256": "9b64f9471b15a4cebfa70f65f9fd710402c0cdb41f8e01085a99de5201df4dca",
+      "bytes": 1343537,
+      "lastWriteUtc": "2026-10-31T10:33:02.794914+00:00"
+    }
+  ],
+  "checkpointHashesAfter": [
+    {
+      "name": "FT Food Routines Locked D1 20261031.hsg",
+      "sha256": "bb8ac25721dcea825cdf40e462a606e6244fe93668c8940b9688f4ca482d9273",
+      "bytes": 1032800,
+      "lastWriteUtc": "2026-10-27T03:55:10.098180+00:00"
+    },
+    {
+      "name": "FT Food Routines Locked D1 Quiet 20261031.hsg",
+      "sha256": "9b64f9471b15a4cebfa70f65f9fd710402c0cdb41f8e01085a99de5201df4dca",
+      "bytes": 1343537,
+      "lastWriteUtc": "2026-10-31T10:33:02.794914+00:00"
+    },
+    {
+      "name": "FT Food Routines Locked D1 Quiet Safe 20261031.hsg",
+      "sha256": "c90a56fb38975cb45effe64953ad2c05ff8a524d2474c22082dfc5f62af09375",
+      "bytes": 1343871,
+      "lastWriteUtc": "2026-10-31T12:01:19.039877+00:00"
+    }
+  ],
+  "safeQuietProof": {
+    "name": "FT Food Routines Locked D1 Quiet Safe 20261031",
+    "nativeMinuteBefore": 8685.700988769531,
+    "nativeMinuteAfter": 8686.729377746582,
+    "nativeAdvance": 1.0283889770507812,
+    "playerNeedsBeforeSave": {
+      "energy": 73.7,
+      "hunger": 71.2,
+      "happiness": 0.0,
+      "max": 100.0,
+      "collapse_at": -20.0,
+      "energy_off": false,
+      "going_to_hospital": false,
+      "kept_up": true,
+      "warnings": []
+    },
+    "returnedTo": "FT Food Routines Locked D1 20261031",
+    "outsidePerformanceWindows": true,
+    "energySettingRestoredBeforeSave": true
+  },
+  "installedPackages": {
+    "base1": [
+      {
+        "file": "FoodDemandAuditProbe\\FoodDemandAuditProbe.dll",
+        "sha256": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353"
+      },
+      {
+        "file": "PersistentCity\\PersistentCity.dll",
+        "sha256": "f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c"
+      },
+      {
+        "file": "PR3RigGuard\\ReviewGuard.dll",
+        "sha256": "94180f18d08b9f5091bad3939aaeef5efbf79f3cb78d3571cf611b6e4099d6ca"
+      }
+    ],
+    "cand1": [
+      {
+        "file": "FoodDemandAuditProbe\\FoodDemandAuditProbe.dll",
+        "sha256": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353"
+      },
+      {
+        "file": "PersistentCity\\PersistentCity.dll",
+        "sha256": "843b078085cbcdb5603ee4d082cbabdfd5c0cba3996203c2b3f2c74b73478336"
+      },
+      {
+        "file": "PR3RigGuard\\ReviewGuard.dll",
+        "sha256": "c57835fa6731d76eee3917f0a81ecf4b853e350bdacd764e608d579e5a68077a"
+      },
+      {
+        "file": "PR3RigGuard\\shortlist.json",
+        "sha256": "a99c9ff6417218f2265d434e861dc8a8f64abc59c273bc4ad586f141ad2b5ed3"
+      }
+    ],
+    "base2": [
+      {
+        "file": "FoodDemandAuditProbe\\FoodDemandAuditProbe.dll",
+        "sha256": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353"
+      },
+      {
+        "file": "PersistentCity\\PersistentCity.dll",
+        "sha256": "f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c"
+      },
+      {
+        "file": "PR3RigGuard\\ReviewGuard.dll",
+        "sha256": "c57835fa6731d76eee3917f0a81ecf4b853e350bdacd764e608d579e5a68077a"
+      },
+      {
+        "file": "PR3RigGuard\\shortlist.json",
+        "sha256": "a99c9ff6417218f2265d434e861dc8a8f64abc59c273bc4ad586f141ad2b5ed3"
+      }
+    ],
+    "cand2": [
+      {
+        "file": "FoodDemandAuditProbe\\FoodDemandAuditProbe.dll",
+        "sha256": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353"
+      },
+      {
+        "file": "PersistentCity\\PersistentCity.dll",
+        "sha256": "843b078085cbcdb5603ee4d082cbabdfd5c0cba3996203c2b3f2c74b73478336"
+      },
+      {
+        "file": "PR3RigGuard\\ReviewGuard.dll",
+        "sha256": "c57835fa6731d76eee3917f0a81ecf4b853e350bdacd764e608d579e5a68077a"
+      },
+      {
+        "file": "PR3RigGuard\\shortlist.json",
+        "sha256": "a99c9ff6417218f2265d434e861dc8a8f64abc59c273bc4ad586f141ad2b5ed3"
+      }
+    ]
+  },
+  "safeCheckpointHashBefore": {
+    "name": "FT Food Routines Locked D1 Quiet Safe 20261031.hsg",
+    "sha256": "c90a56fb38975cb45effe64953ad2c05ff8a524d2474c22082dfc5f62af09375",
+    "bytes": 1343871,
+    "lastWriteUtc": "2026-10-31T12:01:19.039877+00:00"
+  },
+  "checkpointHashesUnchanged": true,
+  "d1ObserverCompiledSourceSha256": "e9928b7358162336efde5ea87b20740eb6981e7c9b86b3a7cba5d6061ea77012",
+  "d1ObserverPublicSourceSha256": "1c09391ae152e3cf7b0146a7fb35385260784d63d4b25a060a3a643904adc0a5",
+  "publicSourceNormalization": "Only trailing blank lines normalized in the documentation copy; original compiled source hash retained separately."
+}

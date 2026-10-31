@@ -1,0 +1,2148 @@
+{
+  "role": "rig_test",
+  "controllers": 883,
+  "registered": 883,
+  "foodShops": 38,
+  "eligibleRivalFood": 36,
+  "selected": [
+    "address:ba%3Astreet_fifthavenue:6:shop",
+    "address:ba%3Astreet_thirdstreet:30:shop",
+    "address:ba%3Astreet_ninthavenue:26:shop",
+    "address:ba%3Astreet_fourthstreet:4:shop",
+    "address:ba%3Astreet_ninthstreet:5:shop",
+    "address:ba%3Astreet_ninthavenue:18:shop",
+    "address:ba%3Astreet_seventhavenue:30:shop",
+    "address:ba%3Astreet_tenthavenue:7:shop"
+  ],
+  "nativeFacts": [
+    {
+      "place": "address:ba%3Astreet_fifthavenue:6:shop",
+      "street": "ba:street_fifthavenue",
+      "number": 6,
+      "creationDay": 1,
+      "businessType": "ba:businesstype_coffeeshop",
+      "businessName": "Donut Days",
+      "player": false,
+      "owner": "gQUmbL6t1UWwQeG6QZwgFw==",
+      "established": true,
+      "available": false,
+      "temporaryClosure": false,
+      "rating": 50,
+      "accessible": true,
+      "door": true,
+      "prices": [
+        {
+          "product": "ba:itemname_cupofcoffee",
+          "price": 5.0076,
+          "bits": 1084243522
+        },
+        {
+          "product": "ba:itemname_donut",
+          "price": 4.8791995,
+          "bits": 1083974247
+        },
+        {
+          "product": "ba:itemname_croissant",
+          "price": 9.2448,
+          "bits": 1091824307
+        },
+        {
+          "product": "ba:itemname_cupcake",
+          "price": 6.6767993,
+          "bits": 1087744087
+        },
+        {
+          "product": "ba:itemname_cupoftea",
+          "price": 5.0076,
+          "bits": 1084243522
+        }
+      ],
+      "hours": [
+        {
+          "day": 0,
+          "from": 300,
+          "to": 1200
+        },
+        {
+          "day": 1,
+          "from": 300,
+          "to": 1200
+        },
+        {
+          "day": 2,
+          "from": 300,
+          "to": 1200
+        },
+        {
+          "day": 3,
+          "from": 300,
+          "to": 1200
+        },
+        {
+          "day": 4,
+          "from": 300,
+          "to": 1200
+        },
+        {
+          "day": 5,
+          "from": 300,
+          "to": 1200
+        },
+        {
+          "day": 6,
+          "from": 300,
+          "to": 1200
+        }
+      ]
+    },
+    {
+      "place": "address:ba%3Astreet_thirdstreet:30:shop",
+      "street": "ba:street_thirdstreet",
+      "number": 30,
+      "creationDay": 1,
+      "businessType": "ba:businesstype_coffeeshop",
+      "businessName": "Persistent City food routines",
+      "player": true,
+      "owner": "player",
+      "established": true,
+      "available": false,
+      "temporaryClosure": false,
+      "rating": 30,
+      "accessible": true,
+      "door": true,
+      "prices": [
+        {
+          "product": "ba:itemname_croissant",
+          "price": 10.2528,
+          "bits": 1092881272
+        }
+      ],
+      "hours": [
+        {
+          "day": 0,
+          "from": 480,
+          "to": 1080
+        },
+        {
+          "day": 1,
+          "from": 480,
+          "to": 1080
+        },
+        {
+          "day": 2,
+          "from": 480,
+          "to": 1080
+        },
+        {
+          "day": 3,
+          "from": 480,
+          "to": 1080
+        },
+        {
+          "day": 4,
+          "from": 480,
+          "to": 1080
+        },
+        {
+          "day": 5,
+          "from": 480,
+          "to": 1080
+        },
+        {
+          "day": 6,
+          "from": 480,
+          "to": 1080
+        }
+      ]
+    },
+    {
+      "place": "address:ba%3Astreet_ninthavenue:26:shop",
+      "street": "ba:street_ninthavenue",
+      "number": 26,
+      "creationDay": 1,
+      "businessType": "ba:businesstype_giftshop",
+      "businessName": "Gift Wrap the Big Apple",
+      "player": false,
+      "owner": "C9ee0FSQkUSDmD90kgPa+Q==",
+      "established": true,
+      "available": false,
+      "temporaryClosure": false,
+      "rating": 50,
+      "accessible": true,
+      "door": true,
+      "prices": [
+        {
+          "product": "ba:itemname_umbrella",
+          "price": 29.904,
+          "bits": 1106197348
+        },
+        {
+          "product": "ba:itemname_sodacan",
+          "price": 3.738,
+          "bits": 1081031524
+        },
+        {
+          "product": "ba:itemname_cheapgift",
+          "price": 22.428,
+          "bits": 1102277771
+        },
+        {
+          "product": "ba:itemname_cheapflower",
+          "price": 31.1499977,
+          "bits": 1106850610
+        }
+      ],
+      "hours": [
+        {
+          "day": 0,
+          "from": 540,
+          "to": 1260
+        },
+        {
+          "day": 1,
+          "from": 540,
+          "to": 1260
+        },
+        {
+          "day": 2,
+          "from": 540,
+          "to": 1260
+        },
+        {
+          "day": 3,
+          "from": 540,
+          "to": 1260
+        },
+        {
+          "day": 4,
+          "from": 540,
+          "to": 1260
+        },
+        {
+          "day": 5,
+          "from": 540,
+          "to": 1260
+        },
+        {
+          "day": 6,
+          "from": 540,
+          "to": 1260
+        }
+      ]
+    },
+    {
+      "place": "address:ba%3Astreet_fourthstreet:4:shop",
+      "street": "ba:street_fourthstreet",
+      "number": 4,
+      "creationDay": 1,
+      "businessType": "ba:businesstype_giftshop",
+      "businessName": "Dreams of New York",
+      "player": false,
+      "owner": "HJFtA8Jq+kOZ6KHWfS8PQ==",
+      "established": true,
+      "available": false,
+      "temporaryClosure": false,
+      "rating": 50,
+      "accessible": true,
+      "door": true,
+      "prices": [
+        {
+          "product": "ba:itemname_expensiveflower",
+          "price": 56.96,
+          "bits": 1113839370
+        },
+        {
+          "product": "ba:itemname_cheapflower",
+          "price": 35.6000023,
+          "bits": 1108239975
+        },
+        {
+          "product": "ba:itemname_umbrella",
+          "price": 34.1760025,
+          "bits": 1107866682
+        },
+        {
+          "product": "ba:itemname_cheapgift",
+          "price": 25.632,
+          "bits": 1103957590
+        },
+        {
+          "product": "ba:itemname_sodacan",
+          "price": 4.27200031,
+          "bits": 1082700858
+        },
+        {
+          "product": "ba:itemname_headphones01",
+          "price": 496.976,
+          "bits": 1140358382
+        },
+        {
+          "product": "ba:itemname_expensivegift",
+          "price": 45.568,
+          "bits": 1110853026
+        }
+      ],
+      "hours": [
+        {
+          "day": 0,
+          "from": 660,
+          "to": 1140
+        },
+        {
+          "day": 1,
+          "from": 660,
+          "to": 1140
+        },
+        {
+          "day": 2,
+          "from": 660,
+          "to": 1140
+        },
+        {
+          "day": 3,
+          "from": 660,
+          "to": 1140
+        },
+        {
+          "day": 4,
+          "from": 660,
+          "to": 1140
+        },
+        {
+          "day": 5,
+          "from": 660,
+          "to": 1140
+        },
+        {
+          "day": 6,
+          "from": 660,
+          "to": 1140
+        }
+      ]
+    },
+    {
+      "place": "address:ba%3Astreet_ninthstreet:5:shop",
+      "street": "ba:street_ninthstreet",
+      "number": 5,
+      "creationDay": 1,
+      "businessType": "ba:businesstype_travelagency",
+      "businessName": "Best Destinations",
+      "player": false,
+      "owner": "Oi0RvhdBU02+QP9HAn5atQ==",
+      "established": true,
+      "available": false,
+      "temporaryClosure": false,
+      "rating": 50,
+      "accessible": true,
+      "door": true,
+      "prices": [
+        {
+          "product": "ba:itemname_hourlytravelconsultantfee",
+          "price": 243.889984,
+          "bits": 1131668438
+        }
+      ],
+      "hours": [
+        {
+          "day": 0,
+          "from": 540,
+          "to": 1080
+        },
+        {
+          "day": 1,
+          "from": 540,
+          "to": 1080
+        },
+        {
+          "day": 2,
+          "from": 540,
+          "to": 1080
+        },
+        {
+          "day": 3,
+          "from": 540,
+          "to": 1080
+        },
+        {
+          "day": 4,
+          "from": 540,
+          "to": 1080
+        },
+        {
+          "day": 5,
+          "from": 600,
+          "to": 960
+        },
+        {
+          "day": 6,
+          "from": 600,
+          "to": 960
+        }
+      ]
+    },
+    {
+      "place": "address:ba%3Astreet_ninthavenue:18:shop",
+      "street": "ba:street_ninthavenue",
+      "number": 18,
+      "creationDay": 1,
+      "businessType": "ba:businesstype_hairdresser",
+      "businessName": "The Hair Haven",
+      "player": false,
+      "owner": "EU+uDKJcnUaAVB95hp8Tg==",
+      "established": true,
+      "available": false,
+      "temporaryClosure": false,
+      "rating": 50,
+      "accessible": true,
+      "door": true,
+      "prices": [
+        {
+          "product": "ba:itemname_hairshampooingfee",
+          "price": 74.7599945,
+          "bits": 1117095198
+        },
+        {
+          "product": "ba:itemname_haircareproduct",
+          "price": 23.6739979,
+          "bits": 1102931033
+        },
+        {
+          "product": "ba:itemname_hairchemicalfee",
+          "price": 186.9,
+          "bits": 1127933542
+        },
+        {
+          "product": "ba:itemname_haircuttingfee",
+          "price": 99.67999,
+          "bits": 1120361512
+        },
+        {
+          "product": "ba:itemname_hairstylingfee",
+          "price": 130.829987,
+          "bits": 1124258938
+        }
+      ],
+      "hours": [
+        {
+          "day": 0,
+          "from": 660,
+          "to": 1200
+        },
+        {
+          "day": 1,
+          "from": 660,
+          "to": 1200
+        },
+        {
+          "day": 2,
+          "from": 660,
+          "to": 1200
+        },
+        {
+          "day": 3,
+          "from": 660,
+          "to": 1200
+        },
+        {
+          "day": 4,
+          "from": 660,
+          "to": 1200
+        },
+        {
+          "day": 5,
+          "from": 660,
+          "to": 1200
+        },
+        {
+          "day": 6,
+          "from": 660,
+          "to": 1200
+        }
+      ]
+    },
+    {
+      "place": "address:ba%3Astreet_seventhavenue:30:shop",
+      "street": "ba:street_seventhavenue",
+      "number": 30,
+      "creationDay": 1,
+      "businessType": "Bakery",
+      "businessName": "Daily Bread",
+      "player": false,
+      "owner": "gQUmbL6t1UWwQeG6QZwgFw==",
+      "established": true,
+      "available": false,
+      "temporaryClosure": false,
+      "rating": 50,
+      "accessible": true,
+      "door": true,
+      "prices": [
+        {
+          "product": "bakeryxx:itemname_latte",
+          "price": 7.36199951,
+          "bits": 1089181056
+        },
+        {
+          "product": "bakeryxx:itemname_bread",
+          "price": 12.2699995,
+          "bits": 1094996459
+        },
+        {
+          "product": "bakeryxx:itemname_bun",
+          "price": 8.179999,
+          "bits": 1090707783
+        },
+        {
+          "product": "bakeryxx:itemname_chocolatecookie",
+          "price": 6.21679974,
+          "bits": 1086779398
+        },
+        {
+          "product": "bakeryxx:itemname_americano",
+          "price": 6.3803997,
+          "bits": 1087122492
+        }
+      ],
+      "hours": [
+        {
+          "day": 0,
+          "from": 480,
+          "to": 1200
+        },
+        {
+          "day": 1,
+          "from": 480,
+          "to": 1200
+        },
+        {
+          "day": 2,
+          "from": 480,
+          "to": 1200
+        },
+        {
+          "day": 3,
+          "from": 480,
+          "to": 1200
+        },
+        {
+          "day": 4,
+          "from": 480,
+          "to": 1200
+        },
+        {
+          "day": 5,
+          "from": 480,
+          "to": 1200
+        },
+        {
+          "day": 6,
+          "from": 480,
+          "to": 1200
+        }
+      ]
+    },
+    {
+      "place": "address:ba%3Astreet_tenthavenue:7:shop",
+      "street": "ba:street_tenthavenue",
+      "number": 7,
+      "creationDay": 1,
+      "businessType": "Bakery",
+      "businessName": "Flour & Co.",
+      "player": false,
+      "owner": "0rwLbOxbEkOotd8aCkZ2Og==",
+      "established": true,
+      "available": false,
+      "temporaryClosure": false,
+      "rating": 50,
+      "accessible": true,
+      "door": true,
+      "prices": [
+        {
+          "product": "ba:itemname_icecream",
+          "price": 14.3289995,
+          "bits": 1097155477
+        },
+        {
+          "product": "bakeryxx:itemname_latte",
+          "price": 5.607,
+          "bits": 1085500555
+        },
+        {
+          "product": "bakeryxx:itemname_bread",
+          "price": 9.344999,
+          "bits": 1091929374
+        },
+        {
+          "product": "bakeryxx:itemname_americano",
+          "price": 4.8594,
+          "bits": 1083932724
+        },
+        {
+          "product": "bakeryxx:itemname_bun",
+          "price": 6.22999954,
+          "bits": 1086807080
+        },
+        {
+          "product": "ba:itemname_sodacan",
+          "price": 3.738,
+          "bits": 1081031524
+        },
+        {
+          "product": "bakeryxx:itemname_chocolatecookie",
+          "price": 4.7348,
+          "bits": 1083671419
+        }
+      ],
+      "hours": [
+        {
+          "day": 0,
+          "from": 480,
+          "to": 1200
+        },
+        {
+          "day": 1,
+          "from": 480,
+          "to": 1200
+        },
+        {
+          "day": 2,
+          "from": 480,
+          "to": 1200
+        },
+        {
+          "day": 3,
+          "from": 480,
+          "to": 1200
+        },
+        {
+          "day": 4,
+          "from": 480,
+          "to": 1200
+        },
+        {
+          "day": 5,
+          "from": 480,
+          "to": 1200
+        },
+        {
+          "day": 6,
+          "from": 480,
+          "to": 1200
+        }
+      ]
+    }
+  ],
+  "catalogue": {
+    "refusedSession": false,
+    "read": {
+      "AtMinute": 8685.700988769531,
+      "Businesses": [
+        {
+          "Id": "business:ba%3Astreet_fifthavenue:6:1:ba%3Abusinesstype_coffeeshop:gQUmbL6t1UWwQeG6QZwgFw%3D%3D",
+          "PlaceId": "address:ba%3Astreet_fifthavenue:6:shop",
+          "StreetName": "ba:street_fifthavenue",
+          "StreetNumber": 6,
+          "CreationDay": 1,
+          "BusinessType": "ba:businesstype_coffeeshop",
+          "OwnerId": "gQUmbL6t1UWwQeG6QZwgFw==",
+          "Kind": 1,
+          "AvailabilityEvidence": 2,
+          "Stock": 0,
+          "Accessible": true,
+          "HasReadableDoor": true,
+          "TemporarilyClosed": false,
+          "CustomerServicePercent": 50,
+          "UnsupportedProductCount": 4,
+          "Offers": [
+            {
+              "ProductId": "ba:itemname_croissant",
+              "Price": {
+                "Units": 248163200000
+              },
+              "Stock": 0
+            }
+          ],
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 300,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 1,
+              "FromMinute": 300,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 2,
+              "FromMinute": 300,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 3,
+              "FromMinute": 300,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 4,
+              "FromMinute": 300,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 5,
+              "FromMinute": 300,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 6,
+              "FromMinute": 300,
+              "ToMinute": 1200
+            }
+          ]
+        },
+        {
+          "Id": "business:ba%3Astreet_fourthstreet:4:1:ba%3Abusinesstype_giftshop:HJFtA8Jq%2BkOZ6KHWfS8PQ%3D%3D",
+          "PlaceId": "address:ba%3Astreet_fourthstreet:4:shop",
+          "StreetName": "ba:street_fourthstreet",
+          "StreetNumber": 4,
+          "CreationDay": 1,
+          "BusinessType": "ba:businesstype_giftshop",
+          "OwnerId": "HJFtA8Jq+kOZ6KHWfS8PQ==",
+          "Kind": 1,
+          "AvailabilityEvidence": 2,
+          "Stock": 0,
+          "Accessible": true,
+          "HasReadableDoor": true,
+          "TemporarilyClosed": false,
+          "CustomerServicePercent": 50,
+          "UnsupportedProductCount": 7,
+          "Offers": [],
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 660,
+              "ToMinute": 1140
+            },
+            {
+              "Day": 1,
+              "FromMinute": 660,
+              "ToMinute": 1140
+            },
+            {
+              "Day": 2,
+              "FromMinute": 660,
+              "ToMinute": 1140
+            },
+            {
+              "Day": 3,
+              "FromMinute": 660,
+              "ToMinute": 1140
+            },
+            {
+              "Day": 4,
+              "FromMinute": 660,
+              "ToMinute": 1140
+            },
+            {
+              "Day": 5,
+              "FromMinute": 660,
+              "ToMinute": 1140
+            },
+            {
+              "Day": 6,
+              "FromMinute": 660,
+              "ToMinute": 1140
+            }
+          ]
+        },
+        {
+          "Id": "business:ba%3Astreet_ninthavenue:18:1:ba%3Abusinesstype_hairdresser:EU%2BuDKJcnUaAVB95hp8Tg%3D%3D",
+          "PlaceId": "address:ba%3Astreet_ninthavenue:18:shop",
+          "StreetName": "ba:street_ninthavenue",
+          "StreetNumber": 18,
+          "CreationDay": 1,
+          "BusinessType": "ba:businesstype_hairdresser",
+          "OwnerId": "EU+uDKJcnUaAVB95hp8Tg==",
+          "Kind": 1,
+          "AvailabilityEvidence": 2,
+          "Stock": 0,
+          "Accessible": true,
+          "HasReadableDoor": true,
+          "TemporarilyClosed": false,
+          "CustomerServicePercent": 50,
+          "UnsupportedProductCount": 5,
+          "Offers": [],
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 660,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 1,
+              "FromMinute": 660,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 2,
+              "FromMinute": 660,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 3,
+              "FromMinute": 660,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 4,
+              "FromMinute": 660,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 5,
+              "FromMinute": 660,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 6,
+              "FromMinute": 660,
+              "ToMinute": 1200
+            }
+          ]
+        },
+        {
+          "Id": "business:ba%3Astreet_ninthavenue:26:1:ba%3Abusinesstype_giftshop:C9ee0FSQkUSDmD90kgPa%2BQ%3D%3D",
+          "PlaceId": "address:ba%3Astreet_ninthavenue:26:shop",
+          "StreetName": "ba:street_ninthavenue",
+          "StreetNumber": 26,
+          "CreationDay": 1,
+          "BusinessType": "ba:businesstype_giftshop",
+          "OwnerId": "C9ee0FSQkUSDmD90kgPa+Q==",
+          "Kind": 1,
+          "AvailabilityEvidence": 2,
+          "Stock": 0,
+          "Accessible": true,
+          "HasReadableDoor": true,
+          "TemporarilyClosed": false,
+          "CustomerServicePercent": 50,
+          "UnsupportedProductCount": 4,
+          "Offers": [],
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 540,
+              "ToMinute": 1260
+            },
+            {
+              "Day": 1,
+              "FromMinute": 540,
+              "ToMinute": 1260
+            },
+            {
+              "Day": 2,
+              "FromMinute": 540,
+              "ToMinute": 1260
+            },
+            {
+              "Day": 3,
+              "FromMinute": 540,
+              "ToMinute": 1260
+            },
+            {
+              "Day": 4,
+              "FromMinute": 540,
+              "ToMinute": 1260
+            },
+            {
+              "Day": 5,
+              "FromMinute": 540,
+              "ToMinute": 1260
+            },
+            {
+              "Day": 6,
+              "FromMinute": 540,
+              "ToMinute": 1260
+            }
+          ]
+        },
+        {
+          "Id": "business:ba%3Astreet_ninthstreet:5:1:ba%3Abusinesstype_travelagency:Oi0RvhdBU02%2BQP9HAn5atQ%3D%3D",
+          "PlaceId": "address:ba%3Astreet_ninthstreet:5:shop",
+          "StreetName": "ba:street_ninthstreet",
+          "StreetNumber": 5,
+          "CreationDay": 1,
+          "BusinessType": "ba:businesstype_travelagency",
+          "OwnerId": "Oi0RvhdBU02+QP9HAn5atQ==",
+          "Kind": 1,
+          "AvailabilityEvidence": 2,
+          "Stock": 0,
+          "Accessible": true,
+          "HasReadableDoor": true,
+          "TemporarilyClosed": false,
+          "CustomerServicePercent": 50,
+          "UnsupportedProductCount": 1,
+          "Offers": [],
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 540,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 1,
+              "FromMinute": 540,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 2,
+              "FromMinute": 540,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 3,
+              "FromMinute": 540,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 4,
+              "FromMinute": 540,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 5,
+              "FromMinute": 600,
+              "ToMinute": 960
+            },
+            {
+              "Day": 6,
+              "FromMinute": 600,
+              "ToMinute": 960
+            }
+          ]
+        },
+        {
+          "Id": "business:ba%3Astreet_seventhavenue:30:1:Bakery:gQUmbL6t1UWwQeG6QZwgFw%3D%3D",
+          "PlaceId": "address:ba%3Astreet_seventhavenue:30:shop",
+          "StreetName": "ba:street_seventhavenue",
+          "StreetNumber": 30,
+          "CreationDay": 1,
+          "BusinessType": "Bakery",
+          "OwnerId": "gQUmbL6t1UWwQeG6QZwgFw==",
+          "Kind": 1,
+          "AvailabilityEvidence": 2,
+          "Stock": 0,
+          "Accessible": true,
+          "HasReadableDoor": true,
+          "TemporarilyClosed": false,
+          "CustomerServicePercent": 50,
+          "UnsupportedProductCount": 5,
+          "Offers": [],
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 1,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 2,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 3,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 4,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 5,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 6,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            }
+          ]
+        },
+        {
+          "Id": "business:ba%3Astreet_tenthavenue:7:1:Bakery:0rwLbOxbEkOotd8aCkZ2Og%3D%3D",
+          "PlaceId": "address:ba%3Astreet_tenthavenue:7:shop",
+          "StreetName": "ba:street_tenthavenue",
+          "StreetNumber": 7,
+          "CreationDay": 1,
+          "BusinessType": "Bakery",
+          "OwnerId": "0rwLbOxbEkOotd8aCkZ2Og==",
+          "Kind": 1,
+          "AvailabilityEvidence": 2,
+          "Stock": 0,
+          "Accessible": true,
+          "HasReadableDoor": true,
+          "TemporarilyClosed": false,
+          "CustomerServicePercent": 50,
+          "UnsupportedProductCount": 7,
+          "Offers": [],
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 1,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 2,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 3,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 4,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 5,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 6,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            }
+          ]
+        },
+        {
+          "Id": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player",
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "StreetName": "ba:street_thirdstreet",
+          "StreetNumber": 30,
+          "CreationDay": 1,
+          "BusinessType": "ba:businesstype_coffeeshop",
+          "OwnerId": "player",
+          "Kind": 0,
+          "AvailabilityEvidence": 0,
+          "Stock": 0,
+          "Accessible": true,
+          "HasReadableDoor": true,
+          "TemporarilyClosed": false,
+          "CustomerServicePercent": 30,
+          "UnsupportedProductCount": 0,
+          "Offers": [
+            {
+              "ProductId": "ba:itemname_croissant",
+              "Price": {
+                "Units": 275221504000
+              },
+              "Stock": 0
+            }
+          ],
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 1,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 2,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 3,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 4,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 5,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 6,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            }
+          ]
+        }
+      ],
+      "Refused": {}
+    }
+  },
+  "beforeComparisons": [
+    {
+      "place": "address:ba%3Astreet_fifthavenue:6:shop",
+      "checks": {
+        "identity": true,
+        "street": true,
+        "number": true,
+        "creationDay": true,
+        "businessType": true,
+        "owner": true,
+        "kind": true,
+        "accessible": true,
+        "door": true,
+        "temporaryClosure": true,
+        "rating": true,
+        "hours": true,
+        "offers": true,
+        "exactPrices": true,
+        "unsupported": true,
+        "stockUnknown": true,
+        "evidence": true,
+        "noFabricatedFields": true
+      },
+      "allMatch": true,
+      "prices": [
+        {
+          "product": "ba:itemname_croissant",
+          "nativeBinary32Bits": 1091824307,
+          "nativePrice": 9.244799613952637,
+          "expectedUnits": 248163200000,
+          "observedUnits": 248163200000,
+          "exact": true,
+          "stockUnknown": true
+        }
+      ],
+      "kind": "Rival",
+      "unsupportedProductCount": 4,
+      "hoursCount": 7
+    },
+    {
+      "place": "address:ba%3Astreet_fourthstreet:4:shop",
+      "checks": {
+        "identity": true,
+        "street": true,
+        "number": true,
+        "creationDay": true,
+        "businessType": true,
+        "owner": true,
+        "kind": true,
+        "accessible": true,
+        "door": true,
+        "temporaryClosure": true,
+        "rating": true,
+        "hours": true,
+        "offers": true,
+        "exactPrices": true,
+        "unsupported": true,
+        "stockUnknown": true,
+        "evidence": true,
+        "noFabricatedFields": true
+      },
+      "allMatch": true,
+      "prices": [],
+      "kind": "Rival",
+      "unsupportedProductCount": 7,
+      "hoursCount": 7
+    },
+    {
+      "place": "address:ba%3Astreet_ninthavenue:18:shop",
+      "checks": {
+        "identity": true,
+        "street": true,
+        "number": true,
+        "creationDay": true,
+        "businessType": true,
+        "owner": true,
+        "kind": true,
+        "accessible": true,
+        "door": true,
+        "temporaryClosure": true,
+        "rating": true,
+        "hours": true,
+        "offers": true,
+        "exactPrices": true,
+        "unsupported": true,
+        "stockUnknown": true,
+        "evidence": true,
+        "noFabricatedFields": true
+      },
+      "allMatch": true,
+      "prices": [],
+      "kind": "Rival",
+      "unsupportedProductCount": 5,
+      "hoursCount": 7
+    },
+    {
+      "place": "address:ba%3Astreet_ninthavenue:26:shop",
+      "checks": {
+        "identity": true,
+        "street": true,
+        "number": true,
+        "creationDay": true,
+        "businessType": true,
+        "owner": true,
+        "kind": true,
+        "accessible": true,
+        "door": true,
+        "temporaryClosure": true,
+        "rating": true,
+        "hours": true,
+        "offers": true,
+        "exactPrices": true,
+        "unsupported": true,
+        "stockUnknown": true,
+        "evidence": true,
+        "noFabricatedFields": true
+      },
+      "allMatch": true,
+      "prices": [],
+      "kind": "Rival",
+      "unsupportedProductCount": 4,
+      "hoursCount": 7
+    },
+    {
+      "place": "address:ba%3Astreet_ninthstreet:5:shop",
+      "checks": {
+        "identity": true,
+        "street": true,
+        "number": true,
+        "creationDay": true,
+        "businessType": true,
+        "owner": true,
+        "kind": true,
+        "accessible": true,
+        "door": true,
+        "temporaryClosure": true,
+        "rating": true,
+        "hours": true,
+        "offers": true,
+        "exactPrices": true,
+        "unsupported": true,
+        "stockUnknown": true,
+        "evidence": true,
+        "noFabricatedFields": true
+      },
+      "allMatch": true,
+      "prices": [],
+      "kind": "Rival",
+      "unsupportedProductCount": 1,
+      "hoursCount": 7
+    },
+    {
+      "place": "address:ba%3Astreet_seventhavenue:30:shop",
+      "checks": {
+        "identity": true,
+        "street": true,
+        "number": true,
+        "creationDay": true,
+        "businessType": true,
+        "owner": true,
+        "kind": true,
+        "accessible": true,
+        "door": true,
+        "temporaryClosure": true,
+        "rating": true,
+        "hours": true,
+        "offers": true,
+        "exactPrices": true,
+        "unsupported": true,
+        "stockUnknown": true,
+        "evidence": true,
+        "noFabricatedFields": true
+      },
+      "allMatch": true,
+      "prices": [],
+      "kind": "Rival",
+      "unsupportedProductCount": 5,
+      "hoursCount": 7
+    },
+    {
+      "place": "address:ba%3Astreet_tenthavenue:7:shop",
+      "checks": {
+        "identity": true,
+        "street": true,
+        "number": true,
+        "creationDay": true,
+        "businessType": true,
+        "owner": true,
+        "kind": true,
+        "accessible": true,
+        "door": true,
+        "temporaryClosure": true,
+        "rating": true,
+        "hours": true,
+        "offers": true,
+        "exactPrices": true,
+        "unsupported": true,
+        "stockUnknown": true,
+        "evidence": true,
+        "noFabricatedFields": true
+      },
+      "allMatch": true,
+      "prices": [],
+      "kind": "Rival",
+      "unsupportedProductCount": 7,
+      "hoursCount": 7
+    },
+    {
+      "place": "address:ba%3Astreet_thirdstreet:30:shop",
+      "checks": {
+        "identity": true,
+        "street": true,
+        "number": true,
+        "creationDay": true,
+        "businessType": true,
+        "owner": true,
+        "kind": true,
+        "accessible": true,
+        "door": true,
+        "temporaryClosure": true,
+        "rating": true,
+        "hours": true,
+        "offers": true,
+        "exactPrices": true,
+        "unsupported": true,
+        "stockUnknown": true,
+        "evidence": true,
+        "noFabricatedFields": true
+      },
+      "allMatch": true,
+      "prices": [
+        {
+          "product": "ba:itemname_croissant",
+          "nativeBinary32Bits": 1092881272,
+          "nativePrice": 10.252799987792969,
+          "expectedUnits": 275221504000,
+          "observedUnits": 275221504000,
+          "exact": true,
+          "stockUnknown": true
+        }
+      ],
+      "kind": "Player",
+      "unsupportedProductCount": 0,
+      "hoursCount": 7
+    }
+  ],
+  "afterReloadComparisons": [
+    {
+      "place": "address:ba%3Astreet_fifthavenue:6:shop",
+      "checks": {
+        "identity": true,
+        "street": true,
+        "number": true,
+        "creationDay": true,
+        "businessType": true,
+        "owner": true,
+        "kind": true,
+        "accessible": true,
+        "door": true,
+        "temporaryClosure": true,
+        "rating": true,
+        "hours": true,
+        "offers": true,
+        "exactPrices": true,
+        "unsupported": true,
+        "stockUnknown": true,
+        "evidence": true,
+        "noFabricatedFields": true
+      },
+      "allMatch": true,
+      "prices": [
+        {
+          "product": "ba:itemname_croissant",
+          "nativeBinary32Bits": 1091824307,
+          "nativePrice": 9.244799613952637,
+          "expectedUnits": 248163200000,
+          "observedUnits": 248163200000,
+          "exact": true,
+          "stockUnknown": true
+        }
+      ],
+      "kind": "Rival",
+      "unsupportedProductCount": 4,
+      "hoursCount": 7
+    },
+    {
+      "place": "address:ba%3Astreet_fourthstreet:4:shop",
+      "checks": {
+        "identity": true,
+        "street": true,
+        "number": true,
+        "creationDay": true,
+        "businessType": true,
+        "owner": true,
+        "kind": true,
+        "accessible": true,
+        "door": true,
+        "temporaryClosure": true,
+        "rating": true,
+        "hours": true,
+        "offers": true,
+        "exactPrices": true,
+        "unsupported": true,
+        "stockUnknown": true,
+        "evidence": true,
+        "noFabricatedFields": true
+      },
+      "allMatch": true,
+      "prices": [],
+      "kind": "Rival",
+      "unsupportedProductCount": 7,
+      "hoursCount": 7
+    },
+    {
+      "place": "address:ba%3Astreet_ninthavenue:18:shop",
+      "checks": {
+        "identity": true,
+        "street": true,
+        "number": true,
+        "creationDay": true,
+        "businessType": true,
+        "owner": true,
+        "kind": true,
+        "accessible": true,
+        "door": true,
+        "temporaryClosure": true,
+        "rating": true,
+        "hours": true,
+        "offers": true,
+        "exactPrices": true,
+        "unsupported": true,
+        "stockUnknown": true,
+        "evidence": true,
+        "noFabricatedFields": true
+      },
+      "allMatch": true,
+      "prices": [],
+      "kind": "Rival",
+      "unsupportedProductCount": 5,
+      "hoursCount": 7
+    },
+    {
+      "place": "address:ba%3Astreet_ninthavenue:26:shop",
+      "checks": {
+        "identity": true,
+        "street": true,
+        "number": true,
+        "creationDay": true,
+        "businessType": true,
+        "owner": true,
+        "kind": true,
+        "accessible": true,
+        "door": true,
+        "temporaryClosure": true,
+        "rating": true,
+        "hours": true,
+        "offers": true,
+        "exactPrices": true,
+        "unsupported": true,
+        "stockUnknown": true,
+        "evidence": true,
+        "noFabricatedFields": true
+      },
+      "allMatch": true,
+      "prices": [],
+      "kind": "Rival",
+      "unsupportedProductCount": 4,
+      "hoursCount": 7
+    },
+    {
+      "place": "address:ba%3Astreet_ninthstreet:5:shop",
+      "checks": {
+        "identity": true,
+        "street": true,
+        "number": true,
+        "creationDay": true,
+        "businessType": true,
+        "owner": true,
+        "kind": true,
+        "accessible": true,
+        "door": true,
+        "temporaryClosure": true,
+        "rating": true,
+        "hours": true,
+        "offers": true,
+        "exactPrices": true,
+        "unsupported": true,
+        "stockUnknown": true,
+        "evidence": true,
+        "noFabricatedFields": true
+      },
+      "allMatch": true,
+      "prices": [],
+      "kind": "Rival",
+      "unsupportedProductCount": 1,
+      "hoursCount": 7
+    },
+    {
+      "place": "address:ba%3Astreet_seventhavenue:30:shop",
+      "checks": {
+        "identity": true,
+        "street": true,
+        "number": true,
+        "creationDay": true,
+        "businessType": true,
+        "owner": true,
+        "kind": true,
+        "accessible": true,
+        "door": true,
+        "temporaryClosure": true,
+        "rating": true,
+        "hours": true,
+        "offers": true,
+        "exactPrices": true,
+        "unsupported": true,
+        "stockUnknown": true,
+        "evidence": true,
+        "noFabricatedFields": true
+      },
+      "allMatch": true,
+      "prices": [],
+      "kind": "Rival",
+      "unsupportedProductCount": 5,
+      "hoursCount": 7
+    },
+    {
+      "place": "address:ba%3Astreet_tenthavenue:7:shop",
+      "checks": {
+        "identity": true,
+        "street": true,
+        "number": true,
+        "creationDay": true,
+        "businessType": true,
+        "owner": true,
+        "kind": true,
+        "accessible": true,
+        "door": true,
+        "temporaryClosure": true,
+        "rating": true,
+        "hours": true,
+        "offers": true,
+        "exactPrices": true,
+        "unsupported": true,
+        "stockUnknown": true,
+        "evidence": true,
+        "noFabricatedFields": true
+      },
+      "allMatch": true,
+      "prices": [],
+      "kind": "Rival",
+      "unsupportedProductCount": 7,
+      "hoursCount": 7
+    },
+    {
+      "place": "address:ba%3Astreet_thirdstreet:30:shop",
+      "checks": {
+        "identity": true,
+        "street": true,
+        "number": true,
+        "creationDay": true,
+        "businessType": true,
+        "owner": true,
+        "kind": true,
+        "accessible": true,
+        "door": true,
+        "temporaryClosure": true,
+        "rating": true,
+        "hours": true,
+        "offers": true,
+        "exactPrices": true,
+        "unsupported": true,
+        "stockUnknown": true,
+        "evidence": true,
+        "noFabricatedFields": true
+      },
+      "allMatch": true,
+      "prices": [
+        {
+          "product": "ba:itemname_croissant",
+          "nativeBinary32Bits": 1092881272,
+          "nativePrice": 10.252799987792969,
+          "expectedUnits": 275221504000,
+          "observedUnits": 275221504000,
+          "exact": true,
+          "stockUnknown": true
+        }
+      ],
+      "kind": "Player",
+      "unsupportedProductCount": 0,
+      "hoursCount": 7
+    }
+  ],
+  "allReadableFactsMatch": true,
+  "oldReader": {
+    "refusedSession": true,
+    "error": "Catalogue city changed; dispose and create a new diagnostic session."
+  },
+  "newReader": {
+    "refusedSession": false,
+    "read": {
+      "AtMinute": 8686.034320831299,
+      "Businesses": [
+        {
+          "Id": "business:ba%3Astreet_fifthavenue:6:1:ba%3Abusinesstype_coffeeshop:gQUmbL6t1UWwQeG6QZwgFw%3D%3D",
+          "PlaceId": "address:ba%3Astreet_fifthavenue:6:shop",
+          "StreetName": "ba:street_fifthavenue",
+          "StreetNumber": 6,
+          "CreationDay": 1,
+          "BusinessType": "ba:businesstype_coffeeshop",
+          "OwnerId": "gQUmbL6t1UWwQeG6QZwgFw==",
+          "Kind": 1,
+          "AvailabilityEvidence": 2,
+          "Stock": 0,
+          "Accessible": true,
+          "HasReadableDoor": true,
+          "TemporarilyClosed": false,
+          "CustomerServicePercent": 50,
+          "UnsupportedProductCount": 4,
+          "Offers": [
+            {
+              "ProductId": "ba:itemname_croissant",
+              "Price": {
+                "Units": 248163200000
+              },
+              "Stock": 0
+            }
+          ],
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 300,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 1,
+              "FromMinute": 300,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 2,
+              "FromMinute": 300,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 3,
+              "FromMinute": 300,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 4,
+              "FromMinute": 300,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 5,
+              "FromMinute": 300,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 6,
+              "FromMinute": 300,
+              "ToMinute": 1200
+            }
+          ]
+        },
+        {
+          "Id": "business:ba%3Astreet_fourthstreet:4:1:ba%3Abusinesstype_giftshop:HJFtA8Jq%2BkOZ6KHWfS8PQ%3D%3D",
+          "PlaceId": "address:ba%3Astreet_fourthstreet:4:shop",
+          "StreetName": "ba:street_fourthstreet",
+          "StreetNumber": 4,
+          "CreationDay": 1,
+          "BusinessType": "ba:businesstype_giftshop",
+          "OwnerId": "HJFtA8Jq+kOZ6KHWfS8PQ==",
+          "Kind": 1,
+          "AvailabilityEvidence": 2,
+          "Stock": 0,
+          "Accessible": true,
+          "HasReadableDoor": true,
+          "TemporarilyClosed": false,
+          "CustomerServicePercent": 50,
+          "UnsupportedProductCount": 7,
+          "Offers": [],
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 660,
+              "ToMinute": 1140
+            },
+            {
+              "Day": 1,
+              "FromMinute": 660,
+              "ToMinute": 1140
+            },
+            {
+              "Day": 2,
+              "FromMinute": 660,
+              "ToMinute": 1140
+            },
+            {
+              "Day": 3,
+              "FromMinute": 660,
+              "ToMinute": 1140
+            },
+            {
+              "Day": 4,
+              "FromMinute": 660,
+              "ToMinute": 1140
+            },
+            {
+              "Day": 5,
+              "FromMinute": 660,
+              "ToMinute": 1140
+            },
+            {
+              "Day": 6,
+              "FromMinute": 660,
+              "ToMinute": 1140
+            }
+          ]
+        },
+        {
+          "Id": "business:ba%3Astreet_ninthavenue:18:1:ba%3Abusinesstype_hairdresser:EU%2BuDKJcnUaAVB95hp8Tg%3D%3D",
+          "PlaceId": "address:ba%3Astreet_ninthavenue:18:shop",
+          "StreetName": "ba:street_ninthavenue",
+          "StreetNumber": 18,
+          "CreationDay": 1,
+          "BusinessType": "ba:businesstype_hairdresser",
+          "OwnerId": "EU+uDKJcnUaAVB95hp8Tg==",
+          "Kind": 1,
+          "AvailabilityEvidence": 2,
+          "Stock": 0,
+          "Accessible": true,
+          "HasReadableDoor": true,
+          "TemporarilyClosed": false,
+          "CustomerServicePercent": 50,
+          "UnsupportedProductCount": 5,
+          "Offers": [],
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 660,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 1,
+              "FromMinute": 660,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 2,
+              "FromMinute": 660,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 3,
+              "FromMinute": 660,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 4,
+              "FromMinute": 660,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 5,
+              "FromMinute": 660,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 6,
+              "FromMinute": 660,
+              "ToMinute": 1200
+            }
+          ]
+        },
+        {
+          "Id": "business:ba%3Astreet_ninthavenue:26:1:ba%3Abusinesstype_giftshop:C9ee0FSQkUSDmD90kgPa%2BQ%3D%3D",
+          "PlaceId": "address:ba%3Astreet_ninthavenue:26:shop",
+          "StreetName": "ba:street_ninthavenue",
+          "StreetNumber": 26,
+          "CreationDay": 1,
+          "BusinessType": "ba:businesstype_giftshop",
+          "OwnerId": "C9ee0FSQkUSDmD90kgPa+Q==",
+          "Kind": 1,
+          "AvailabilityEvidence": 2,
+          "Stock": 0,
+          "Accessible": true,
+          "HasReadableDoor": true,
+          "TemporarilyClosed": false,
+          "CustomerServicePercent": 50,
+          "UnsupportedProductCount": 4,
+          "Offers": [],
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 540,
+              "ToMinute": 1260
+            },
+            {
+              "Day": 1,
+              "FromMinute": 540,
+              "ToMinute": 1260
+            },
+            {
+              "Day": 2,
+              "FromMinute": 540,
+              "ToMinute": 1260
+            },
+            {
+              "Day": 3,
+              "FromMinute": 540,
+              "ToMinute": 1260
+            },
+            {
+              "Day": 4,
+              "FromMinute": 540,
+              "ToMinute": 1260
+            },
+            {
+              "Day": 5,
+              "FromMinute": 540,
+              "ToMinute": 1260
+            },
+            {
+              "Day": 6,
+              "FromMinute": 540,
+              "ToMinute": 1260
+            }
+          ]
+        },
+        {
+          "Id": "business:ba%3Astreet_ninthstreet:5:1:ba%3Abusinesstype_travelagency:Oi0RvhdBU02%2BQP9HAn5atQ%3D%3D",
+          "PlaceId": "address:ba%3Astreet_ninthstreet:5:shop",
+          "StreetName": "ba:street_ninthstreet",
+          "StreetNumber": 5,
+          "CreationDay": 1,
+          "BusinessType": "ba:businesstype_travelagency",
+          "OwnerId": "Oi0RvhdBU02+QP9HAn5atQ==",
+          "Kind": 1,
+          "AvailabilityEvidence": 2,
+          "Stock": 0,
+          "Accessible": true,
+          "HasReadableDoor": true,
+          "TemporarilyClosed": false,
+          "CustomerServicePercent": 50,
+          "UnsupportedProductCount": 1,
+          "Offers": [],
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 540,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 1,
+              "FromMinute": 540,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 2,
+              "FromMinute": 540,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 3,
+              "FromMinute": 540,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 4,
+              "FromMinute": 540,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 5,
+              "FromMinute": 600,
+              "ToMinute": 960
+            },
+            {
+              "Day": 6,
+              "FromMinute": 600,
+              "ToMinute": 960
+            }
+          ]
+        },
+        {
+          "Id": "business:ba%3Astreet_seventhavenue:30:1:Bakery:gQUmbL6t1UWwQeG6QZwgFw%3D%3D",
+          "PlaceId": "address:ba%3Astreet_seventhavenue:30:shop",
+          "StreetName": "ba:street_seventhavenue",
+          "StreetNumber": 30,
+          "CreationDay": 1,
+          "BusinessType": "Bakery",
+          "OwnerId": "gQUmbL6t1UWwQeG6QZwgFw==",
+          "Kind": 1,
+          "AvailabilityEvidence": 2,
+          "Stock": 0,
+          "Accessible": true,
+          "HasReadableDoor": true,
+          "TemporarilyClosed": false,
+          "CustomerServicePercent": 50,
+          "UnsupportedProductCount": 5,
+          "Offers": [],
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 1,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 2,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 3,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 4,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 5,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 6,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            }
+          ]
+        },
+        {
+          "Id": "business:ba%3Astreet_tenthavenue:7:1:Bakery:0rwLbOxbEkOotd8aCkZ2Og%3D%3D",
+          "PlaceId": "address:ba%3Astreet_tenthavenue:7:shop",
+          "StreetName": "ba:street_tenthavenue",
+          "StreetNumber": 7,
+          "CreationDay": 1,
+          "BusinessType": "Bakery",
+          "OwnerId": "0rwLbOxbEkOotd8aCkZ2Og==",
+          "Kind": 1,
+          "AvailabilityEvidence": 2,
+          "Stock": 0,
+          "Accessible": true,
+          "HasReadableDoor": true,
+          "TemporarilyClosed": false,
+          "CustomerServicePercent": 50,
+          "UnsupportedProductCount": 7,
+          "Offers": [],
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 1,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 2,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 3,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 4,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 5,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 6,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            }
+          ]
+        },
+        {
+          "Id": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player",
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "StreetName": "ba:street_thirdstreet",
+          "StreetNumber": 30,
+          "CreationDay": 1,
+          "BusinessType": "ba:businesstype_coffeeshop",
+          "OwnerId": "player",
+          "Kind": 0,
+          "AvailabilityEvidence": 0,
+          "Stock": 0,
+          "Accessible": true,
+          "HasReadableDoor": true,
+          "TemporarilyClosed": false,
+          "CustomerServicePercent": 30,
+          "UnsupportedProductCount": 0,
+          "Offers": [
+            {
+              "ProductId": "ba:itemname_croissant",
+              "Price": {
+                "Units": 275221504000
+              },
+              "Stock": 0
+            }
+          ],
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 1,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 2,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 3,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 4,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 5,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 6,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            }
+          ]
+        }
+      ],
+      "Refused": {}
+    }
+  },
+  "sameShopFactsAfterReload": true,
+  "noGenerationContinuityClaim": true,
+  "refusalExample": {
+    "native": {
+      "place": "address:ba%3Astreet_seventhavenue:14:shop",
+      "street": "ba:street_seventhavenue",
+      "number": 14,
+      "creationDay": -1,
+      "businessType": "ba:businesstype_gasstation",
+      "businessName": "Beacon Point Petrol",
+      "player": false,
+      "owner": "",
+      "established": true,
+      "available": false,
+      "temporaryClosure": false,
+      "rating": 50,
+      "accessible": true,
+      "door": true,
+      "prices": [],
+      "hours": [
+        {
+          "day": 0,
+          "from": 0,
+          "to": 1440
+        },
+        {
+          "day": 1,
+          "from": 0,
+          "to": 1440
+        },
+        {
+          "day": 2,
+          "from": 0,
+          "to": 1440
+        },
+        {
+          "day": 3,
+          "from": 0,
+          "to": 1440
+        },
+        {
+          "day": 4,
+          "from": 0,
+          "to": 1440
+        },
+        {
+          "day": 5,
+          "from": 0,
+          "to": 1440
+        },
+        {
+          "day": 6,
+          "from": 0,
+          "to": 1440
+        }
+      ]
+    },
+    "read": {
+      "AtMinute": 8685.700988769531,
+      "Businesses": [],
+      "Refused": {
+        "address:ba%3Astreet_seventhavenue:14:shop": 0
+      }
+    }
+  },
+  "enumLegend": {
+    "Kind": {
+      "0": "Player",
+      "1": "Rival"
+    },
+    "Stock": {
+      "0": "Unknown"
+    },
+    "AvailabilityEvidence": {
+      "0": "Unknown",
+      "1": "ObservedPlayerSupply",
+      "2": "EstimatedFromPriceAndHours"
+    },
+    "Refusal": {
+      "0": "Missing",
+      "1": "AmbiguousIdentity",
+      "2": "InvalidPrice",
+      "3": "InvalidHours",
+      "4": "InvalidRating",
+      "5": "UnknownOwner"
+    }
+  }
+}

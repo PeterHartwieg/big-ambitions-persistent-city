@@ -1,0 +1,2784 @@
+{
+  "role": "rig_test",
+  "note": "Selected native registration and saved finance fields, independently captured in the named disposable FT city. This is a bridge field snapshot, not a raw save file.",
+  "before": {
+    "rivalRegistration": {
+      "_buildingCached": {
+        "unityType": "Buildings.Building",
+        "id": 68714
+      },
+      "_cleanliness": null,
+      "_interiorLookup": null,
+      "aiEmployees": [
+        {
+          "_fullName": null,
+          "aiAddress": {
+            "streetName": "ba:street_fifthavenue",
+            "streetNumber": 6
+          },
+          "hoursPerWeekDemandName": "ba:jobdemand_parttime",
+          "id": "RIiBHIdWrkKW2c5dHpCKEQ==",
+          "isNegotiationFinished": false,
+          "isPoached": false,
+          "primarySkillName": "ba:skill_cleaning",
+          "primarySkillValue": 38.0,
+          "reenableNegotiationAtDay": 0
+        },
+        {
+          "_fullName": null,
+          "aiAddress": {
+            "streetName": "ba:street_fifthavenue",
+            "streetNumber": 6
+          },
+          "hoursPerWeekDemandName": "ba:jobdemand_parttime",
+          "id": "QhqpC6idwUy6riXojpDahA==",
+          "isNegotiationFinished": false,
+          "isPoached": false,
+          "primarySkillName": "ba:skill_cleaning",
+          "primarySkillValue": 83.0,
+          "reenableNegotiationAtDay": 0
+        },
+        {
+          "_fullName": null,
+          "aiAddress": {
+            "streetName": "ba:street_fifthavenue",
+            "streetNumber": 6
+          },
+          "hoursPerWeekDemandName": "ba:jobdemand_fulltime",
+          "id": "6C5lyRILKEilMo7j6VnpQ==",
+          "isNegotiationFinished": false,
+          "isPoached": false,
+          "primarySkillName": "ba:skill_cleaning",
+          "primarySkillValue": 78.0,
+          "reenableNegotiationAtDay": 0
+        },
+        {
+          "_fullName": null,
+          "aiAddress": {
+            "streetName": "ba:street_fifthavenue",
+            "streetNumber": 6
+          },
+          "hoursPerWeekDemandName": "ba:jobdemand_fulltime",
+          "id": "Eaddj9h3tU2loqfFBYg23w==",
+          "isNegotiationFinished": false,
+          "isPoached": false,
+          "primarySkillName": "ba:skill_cleaning",
+          "primarySkillValue": 30.0,
+          "reenableNegotiationAtDay": 0
+        },
+        {
+          "_fullName": null,
+          "aiAddress": {
+            "streetName": "ba:street_fifthavenue",
+            "streetNumber": 6
+          },
+          "hoursPerWeekDemandName": "ba:jobdemand_parttime",
+          "id": "p3ltIDFlzUGMPQo2QFf3WQ==",
+          "isNegotiationFinished": false,
+          "isPoached": false,
+          "primarySkillName": "ba:skill_customerservice",
+          "primarySkillValue": 50.0,
+          "reenableNegotiationAtDay": 0
+        },
+        {
+          "_fullName": null,
+          "aiAddress": {
+            "streetName": "ba:street_fifthavenue",
+            "streetNumber": 6
+          },
+          "hoursPerWeekDemandName": "ba:jobdemand_fulltime",
+          "id": "x+BQm1mKukSIjDqDG3YeOw==",
+          "isNegotiationFinished": false,
+          "isPoached": false,
+          "primarySkillName": "ba:skill_customerservice",
+          "primarySkillValue": 31.0,
+          "reenableNegotiationAtDay": 0
+        },
+        {
+          "_fullName": null,
+          "aiAddress": {
+            "streetName": "ba:street_fifthavenue",
+            "streetNumber": 6
+          },
+          "hoursPerWeekDemandName": "ba:jobdemand_parttime",
+          "id": "HJoY+CjONkKDDbSu9iOJPA==",
+          "isNegotiationFinished": false,
+          "isPoached": false,
+          "primarySkillName": "ba:skill_customerservice",
+          "primarySkillValue": 49.0,
+          "reenableNegotiationAtDay": 0
+        },
+        {
+          "_fullName": null,
+          "aiAddress": {
+            "streetName": "ba:street_fifthavenue",
+            "streetNumber": 6
+          },
+          "hoursPerWeekDemandName": "ba:jobdemand_fulltime",
+          "id": "Kf32dUPnf0iilx7ExznZbQ==",
+          "isNegotiationFinished": false,
+          "isPoached": false,
+          "primarySkillName": "ba:skill_customerservice",
+          "primarySkillValue": 38.0,
+          "reenableNegotiationAtDay": 0
+        }
+      ],
+      "AvailableForRent": false,
+      "blueprintName": null,
+      "buildingOwnerRivalId": "HJFtA8Jq+kOZ6KHWfS8PQ==",
+      "BusinessDescription": null,
+      "BusinessName": "Donut Days",
+      "businessOwnerRivalId": "gQUmbL6t1UWwQeG6QZwgFw==",
+      "businessTypeName": "ba:businesstype_coffeeshop",
+      "cachedAvailableProducts": [
+        "ba:itemname_cupofcoffee",
+        "ba:itemname_donut",
+        "ba:itemname_croissant",
+        "ba:itemname_cupcake",
+        "ba:itemname_cupoftea"
+      ],
+      "cachedFulfilledCustomerDemands": [],
+      "creationDay": 1,
+      "customerCapacity": 10,
+      "dailyIncomes": [
+        5430.199,
+        1547.13208,
+        1488.28882,
+        1553.74121,
+        1537.07715,
+        1354.09021
+      ],
+      "deliveredItems": null,
+      "dirtSpots": [],
+      "factoryExports": [],
+      "handTruckSpawnerData": null,
+      "interiorDesigns": [],
+      "itemInstances": {},
+      "itemsInBuilding": null,
+      "lastDayOnSale": 0,
+      "lastDeposit": 0.0,
+      "Layout": "CoffeeWholesalers",
+      "logoSettings": {
+        "backgroundColor": {
+          "color": -438842625
+        },
+        "font": 0,
+        "fontColor": {
+          "color": -23643137
+        },
+        "logoColor": {
+          "color": 749587199
+        },
+        "logoShape": "coffee1"
+      },
+      "marketingCampaigns": [],
+      "orderHistory": [],
+      "poachedEmployees": null,
+      "promotion": {
+        "marketing": 0,
+        "total": 0,
+        "trafficIndex": 0
+      },
+      "radioStation": 0,
+      "radioVolume": 1.0,
+      "RentedByPlayer": false,
+      "RentPerDay": 0.0,
+      "retailPrices": [
+        {
+          "itemName": "ba:itemname_cupofcoffee",
+          "price": 5.0076
+        },
+        {
+          "itemName": "ba:itemname_donut",
+          "price": 4.8791995
+        },
+        {
+          "itemName": "ba:itemname_croissant",
+          "price": 9.2448
+        },
+        {
+          "itemName": "ba:itemname_cupcake",
+          "price": 6.6767993
+        },
+        {
+          "itemName": "ba:itemname_cupoftea",
+          "price": 5.0076
+        }
+      ],
+      "satisfaction": {
+        "cleanliness": 50,
+        "customerService": 50,
+        "facility": 50,
+        "overall": 50,
+        "pricing": 50
+      },
+      "scheduleDays": [
+        {
+          "day": 1,
+          "isOpen": true,
+          "openingHourSlots": [
+            {
+              "endingHour": 20,
+              "startingHour": 5
+            }
+          ],
+          "workShifts": []
+        },
+        {
+          "day": 2,
+          "isOpen": true,
+          "openingHourSlots": [
+            {
+              "endingHour": 20,
+              "startingHour": 5
+            }
+          ],
+          "workShifts": []
+        },
+        {
+          "day": 3,
+          "isOpen": true,
+          "openingHourSlots": [
+            {
+              "endingHour": 20,
+              "startingHour": 5
+            }
+          ],
+          "workShifts": []
+        },
+        {
+          "day": 4,
+          "isOpen": true,
+          "openingHourSlots": [
+            {
+              "endingHour": 20,
+              "startingHour": 5
+            }
+          ],
+          "workShifts": []
+        },
+        {
+          "day": 5,
+          "isOpen": true,
+          "openingHourSlots": [
+            {
+              "endingHour": 20,
+              "startingHour": 5
+            }
+          ],
+          "workShifts": []
+        },
+        {
+          "day": 6,
+          "isOpen": true,
+          "openingHourSlots": [
+            {
+              "endingHour": 20,
+              "startingHour": 5
+            }
+          ],
+          "workShifts": []
+        },
+        {
+          "day": 7,
+          "isOpen": true,
+          "openingHourSlots": [
+            {
+              "endingHour": 20,
+              "startingHour": 5
+            }
+          ],
+          "workShifts": []
+        }
+      ],
+      "securityLevelPercentage": 0.0,
+      "shouldUpdateDirtSpotsThatAffects": true,
+      "signAppearanceSettings": {
+        "lamp": {
+          "color": -1
+        },
+        "lampColor": null,
+        "signLight": {
+          "color": -1
+        },
+        "signLightColor": null,
+        "signType": 0
+      },
+      "stolenItemsCost": 0.0,
+      "storedRetailPrices": [],
+      "StreetName": "ba:street_fifthavenue",
+      "StreetNumber": 6,
+      "takenOver": false,
+      "takeoverOfferAcceptRate": 0.0,
+      "temporarilyClosed": false,
+      "uniformsBySkill": {},
+      "unprocessedCompletedOrders": [],
+      "warnedLastHourAboutNoEmployee": false
+    },
+    "saveFinanceFields": {
+      "Money": 10160.5107,
+      "midnightBankBalances": [
+        9887.407,
+        9753.19,
+        9618.974,
+        9792.341,
+        10160.5107
+      ],
+      "financialSummaries": [
+        {
+          "businessIncomeStatements": [
+            {
+              "Address": {
+                "streetName": "ba:street_thirdstreet",
+                "streetNumber": 30
+              },
+              "LicensingFees": 0.0,
+              "MarketingExpenses": 0.0,
+              "RentExpenses": 0.0,
+              "Resources": [
+                {
+                  "Amount": 8.0,
+                  "ItemName": "ba:itemname_croissant"
+                },
+                {
+                  "Amount": 8.0,
+                  "ItemName": "ba:itemname_paperbag"
+                }
+              ],
+              "SalaryExpenses": 194.61554,
+              "Sales": [
+                {
+                  "Amount": 82.0224,
+                  "ItemName": "ba:itemname_croissant"
+                },
+                {
+                  "Amount": 0.0,
+                  "ItemName": "ba:itemname_paperbag"
+                }
+              ],
+              "Theft": 0.0,
+              "TotalOngoing": 194.61554,
+              "TotalProfit": -128.59314,
+              "TotalResources": 16.0,
+              "TotalSales": 82.0224
+            }
+          ],
+          "dayNumber": 1,
+          "negativeInterestRates": 0.0,
+          "parkingFees": 0.0,
+          "realEstateStatements": [],
+          "residentialStatements": [],
+          "salaryIncome": 0.0,
+          "totalBusinessProfit": -128.59314,
+          "totalHeadhunterReplacementFees": 0.0,
+          "totalHealthInsuranceExpenses": 0.0,
+          "totalLoanExpenses": 0.0,
+          "totalProfit": -128.59314,
+          "totalRealEstate": 0.0,
+          "totalResidentialExpenses": 0.0,
+          "totalUnassignedStaffWages": 0.0
+        },
+        {
+          "businessIncomeStatements": [
+            {
+              "Address": {
+                "streetName": "ba:street_thirdstreet",
+                "streetNumber": 30
+              },
+              "LicensingFees": 0.0,
+              "MarketingExpenses": 0.0,
+              "RentExpenses": 0.0,
+              "Resources": [
+                {
+                  "Amount": 8.0,
+                  "ItemName": "ba:itemname_croissant"
+                },
+                {
+                  "Amount": 8.0,
+                  "ItemName": "ba:itemname_paperbag"
+                }
+              ],
+              "SalaryExpenses": 216.239487,
+              "Sales": [
+                {
+                  "Amount": 82.0224,
+                  "ItemName": "ba:itemname_croissant"
+                },
+                {
+                  "Amount": 0.0,
+                  "ItemName": "ba:itemname_paperbag"
+                }
+              ],
+              "Theft": 0.0,
+              "TotalOngoing": 216.239487,
+              "TotalProfit": -150.217087,
+              "TotalResources": 16.0,
+              "TotalSales": 82.0224
+            }
+          ],
+          "dayNumber": 2,
+          "negativeInterestRates": 0.0,
+          "parkingFees": 0.0,
+          "realEstateStatements": [],
+          "residentialStatements": [],
+          "salaryIncome": 0.0,
+          "totalBusinessProfit": -150.217087,
+          "totalHeadhunterReplacementFees": 0.0,
+          "totalHealthInsuranceExpenses": 0.0,
+          "totalLoanExpenses": 0.0,
+          "totalProfit": -150.217087,
+          "totalRealEstate": 0.0,
+          "totalResidentialExpenses": 0.0,
+          "totalUnassignedStaffWages": 0.0
+        },
+        {
+          "businessIncomeStatements": [
+            {
+              "Address": {
+                "streetName": "ba:street_thirdstreet",
+                "streetNumber": 30
+              },
+              "LicensingFees": 0.0,
+              "MarketingExpenses": 0.0,
+              "RentExpenses": 0.0,
+              "Resources": [
+                {
+                  "Amount": 8.0,
+                  "ItemName": "ba:itemname_croissant"
+                },
+                {
+                  "Amount": 8.0,
+                  "ItemName": "ba:itemname_paperbag"
+                }
+              ],
+              "SalaryExpenses": 216.239487,
+              "Sales": [
+                {
+                  "Amount": 82.0224,
+                  "ItemName": "ba:itemname_croissant"
+                },
+                {
+                  "Amount": 0.0,
+                  "ItemName": "ba:itemname_paperbag"
+                }
+              ],
+              "Theft": 0.0,
+              "TotalOngoing": 216.239487,
+              "TotalProfit": -150.217087,
+              "TotalResources": 16.0,
+              "TotalSales": 82.0224
+            }
+          ],
+          "dayNumber": 3,
+          "negativeInterestRates": 0.0,
+          "parkingFees": 0.0,
+          "realEstateStatements": [],
+          "residentialStatements": [],
+          "salaryIncome": 0.0,
+          "totalBusinessProfit": -150.217087,
+          "totalHeadhunterReplacementFees": 0.0,
+          "totalHealthInsuranceExpenses": 0.0,
+          "totalLoanExpenses": 0.0,
+          "totalProfit": -150.217087,
+          "totalRealEstate": 0.0,
+          "totalResidentialExpenses": 0.0,
+          "totalUnassignedStaffWages": 0.0
+        },
+        {
+          "businessIncomeStatements": [
+            {
+              "Address": {
+                "streetName": "ba:street_thirdstreet",
+                "streetNumber": 30
+              },
+              "LicensingFees": 0.0,
+              "MarketingExpenses": 0.0,
+              "RentExpenses": 0.0,
+              "Resources": [
+                {
+                  "Amount": 38.0,
+                  "ItemName": "ba:itemname_croissant"
+                },
+                {
+                  "Amount": 38.0,
+                  "ItemName": "ba:itemname_paperbag"
+                }
+              ],
+              "SalaryExpenses": 216.239487,
+              "Sales": [
+                {
+                  "Amount": 389.606384,
+                  "ItemName": "ba:itemname_croissant"
+                },
+                {
+                  "Amount": 0.0,
+                  "ItemName": "ba:itemname_paperbag"
+                }
+              ],
+              "Theft": 0.0,
+              "TotalOngoing": 216.239487,
+              "TotalProfit": 97.3669,
+              "TotalResources": 76.0,
+              "TotalSales": 389.606384
+            }
+          ],
+          "dayNumber": 4,
+          "negativeInterestRates": 0.0,
+          "parkingFees": 0.0,
+          "realEstateStatements": [],
+          "residentialStatements": [],
+          "salaryIncome": 0.0,
+          "totalBusinessProfit": 97.3669,
+          "totalHeadhunterReplacementFees": 0.0,
+          "totalHealthInsuranceExpenses": 0.0,
+          "totalLoanExpenses": 0.0,
+          "totalProfit": 97.3669,
+          "totalRealEstate": 0.0,
+          "totalResidentialExpenses": 0.0,
+          "totalUnassignedStaffWages": 0.0
+        },
+        {
+          "businessIncomeStatements": [
+            {
+              "Address": {
+                "streetName": "ba:street_thirdstreet",
+                "streetNumber": 30
+              },
+              "LicensingFees": 0.0,
+              "MarketingExpenses": 0.0,
+              "RentExpenses": 0.0,
+              "Resources": [
+                {
+                  "Amount": 57.0,
+                  "ItemName": "ba:itemname_croissant"
+                },
+                {
+                  "Amount": 57.0,
+                  "ItemName": "ba:itemname_paperbag"
+                }
+              ],
+              "SalaryExpenses": 216.239487,
+              "Sales": [
+                {
+                  "Amount": 584.4096,
+                  "ItemName": "ba:itemname_croissant"
+                },
+                {
+                  "Amount": 0.0,
+                  "ItemName": "ba:itemname_paperbag"
+                }
+              ],
+              "Theft": 0.0,
+              "TotalOngoing": 216.239487,
+              "TotalProfit": 254.17012,
+              "TotalResources": 114.0,
+              "TotalSales": 584.4096
+            }
+          ],
+          "dayNumber": 5,
+          "negativeInterestRates": 0.0,
+          "parkingFees": 0.0,
+          "realEstateStatements": [],
+          "residentialStatements": [],
+          "salaryIncome": 0.0,
+          "totalBusinessProfit": 254.17012,
+          "totalHeadhunterReplacementFees": 0.0,
+          "totalHealthInsuranceExpenses": 0.0,
+          "totalLoanExpenses": 0.0,
+          "totalProfit": 254.17012,
+          "totalRealEstate": 0.0,
+          "totalResidentialExpenses": 0.0,
+          "totalUnassignedStaffWages": 0.0
+        }
+      ],
+      "specialRivalStates": [
+        {
+          "completedTimelineEntryIds": [],
+          "defenseStates": null,
+          "isActive": false,
+          "isDefeated": false,
+          "rivalId": "yXNH9hTIv0KhI5OI8be0A==",
+          "sentMessageKeys": null
+        },
+        {
+          "completedTimelineEntryIds": [],
+          "defenseStates": null,
+          "isActive": false,
+          "isDefeated": false,
+          "rivalId": "jTnQhoNwhkuGDTnL6K0Sxw==",
+          "sentMessageKeys": null
+        },
+        {
+          "completedTimelineEntryIds": [],
+          "defenseStates": null,
+          "isActive": false,
+          "isDefeated": false,
+          "rivalId": "HJFtA8Jq+kOZ6KHWfS8PQ==",
+          "sentMessageKeys": [
+            "rivals_jessica_johnson_entrance"
+          ]
+        },
+        {
+          "completedTimelineEntryIds": [],
+          "defenseStates": null,
+          "isActive": false,
+          "isDefeated": false,
+          "rivalId": "ju1yVbREcE2B5ymg6q5tyA==",
+          "sentMessageKeys": null
+        }
+      ],
+      "rivalStates": [
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 28
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 28
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 28
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 28
+            }
+          ],
+          "rivalId": "yXNH9hTIv0KhI5OI8be0A==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 3666117.0
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 4559037.0
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 5481520.5
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 6380573.0
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 28
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 28
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 28
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 28
+            }
+          ],
+          "rivalId": "jTnQhoNwhkuGDTnL6K0Sxw==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 1186955.25
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 1526350.13
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 1870697.0
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 2214384.5
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 22
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 22
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 22
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 22
+            }
+          ],
+          "rivalId": "HJFtA8Jq+kOZ6KHWfS8PQ==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 1085239.0
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 1421682.25
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 1761536.63
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 2097596.75
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 24
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 24
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 24
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 24
+            }
+          ],
+          "rivalId": "ju1yVbREcE2B5ymg6q5tyA==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 2501712.0
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 3173513.5
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 3865877.0
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 4550973.5
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 25
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 25
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 25
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 25
+            }
+          ],
+          "rivalId": "0rwLbOxbEkOotd8aCkZ2Og==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 135403.234
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 169233.078
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 203289.063
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 236601.2
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 16
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 16
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 16
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 16
+            }
+          ],
+          "rivalId": "6htl+dSjtkCoY5U4Frkig==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 139133.75
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 169217.063
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 198800.688
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 228565.969
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 21
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 21
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 21
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 21
+            }
+          ],
+          "rivalId": "l4dEdW6Cv0ujkWYG6vtbmw==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 111344.547
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 136588.422
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 161826.0
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 186698.688
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 26
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 26
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 26
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 26
+            }
+          ],
+          "rivalId": "gQUmbL6t1UWwQeG6QZwgFw==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 172152.5
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 214655.953
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 256692.734
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 298298.344
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 21
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 21
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 21
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 21
+            }
+          ],
+          "rivalId": "2kGuGDxokCnO0q88w+xUw==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 108696.086
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 135020.969
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 161290.563
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 187470.109
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 18
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 18
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 18
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 18
+            }
+          ],
+          "rivalId": "CpxNOfbGGkyz9AW40KoH+w==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 101013.641
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 123726.875
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 146565.078
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 169366.1
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 20
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 20
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 20
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 20
+            }
+          ],
+          "rivalId": "C9ee0FSQkUSDmD90kgPa+Q==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 117480.2
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 145145.5
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 172938.766
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 200371.188
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 14
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 14
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 14
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 14
+            }
+          ],
+          "rivalId": "EU+uDKJcnUaAVB95hp8Tg==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 234473.078
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 286911.3
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 340781.781
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 393762.281
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 16
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 16
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 16
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 16
+            }
+          ],
+          "rivalId": "4LvmLpMq3Eey6AO+YAHjCw==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 293259.875
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 381272.063
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 469342.5
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 558470.1
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 6
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 6
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 6
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 6
+            }
+          ],
+          "rivalId": "nkpk7Zx35Einlh12ymPNXw==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 90569.83
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 114051.875
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 137683.422
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 161138.281
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 9
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 9
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 9
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 9
+            }
+          ],
+          "rivalId": "NTFW7Pd0y7rB9aNdfswQ==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 189328.969
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 229669.813
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 270438.031
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 310548.8
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 15
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 15
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 15
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 15
+            }
+          ],
+          "rivalId": "0GTUgSg2IECpobDIqWrWQ==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 299803.5
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 372520.469
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 444876.9
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 517403.125
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 12
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 12
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 12
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 12
+            }
+          ],
+          "rivalId": "Oi0RvhdBU02+QP9HAn5atQ==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 235575.922
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 295928.219
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 355694.469
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 415419.7
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 18
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 18
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 18
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 18
+            }
+          ],
+          "rivalId": "OWnstBBx4ku22KVIBLmcPg==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 470954.375
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 590626.938
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 708249.25
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 825266.7
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 12
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 12
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 12
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 12
+            }
+          ],
+          "rivalId": "1mrLUhR5rE+LcNYfFKmTTg==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 248486.391
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 306062.7
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 361266.156
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 417765.5
+            }
+          ]
+        }
+      ],
+      "wholesaleRivalIds": [
+        "0rwLbOxbEkOotd8aCkZ2Og==",
+        "6htl+dSjtkCoY5U4Frkig==",
+        "l4dEdW6Cv0ujkWYG6vtbmw==",
+        "gQUmbL6t1UWwQeG6QZwgFw==",
+        "2kGuGDxokCnO0q88w+xUw==",
+        "CpxNOfbGGkyz9AW40KoH+w==",
+        "C9ee0FSQkUSDmD90kgPa+Q=="
+      ],
+      "importRivalIds": [
+        "EU+uDKJcnUaAVB95hp8Tg==",
+        "4LvmLpMq3Eey6AO+YAHjCw==",
+        "nkpk7Zx35Einlh12ymPNXw==",
+        "NTFW7Pd0y7rB9aNdfswQ==",
+        "0GTUgSg2IECpobDIqWrWQ==",
+        "Oi0RvhdBU02+QP9HAn5atQ==",
+        "OWnstBBx4ku22KVIBLmcPg==",
+        "1mrLUhR5rE+LcNYfFKmTTg=="
+      ]
+    }
+  },
+  "after": {
+    "rivalRegistration": {
+      "_buildingCached": {
+        "unityType": "Buildings.Building",
+        "id": 68714
+      },
+      "_cleanliness": null,
+      "_interiorLookup": null,
+      "aiEmployees": [
+        {
+          "_fullName": null,
+          "aiAddress": {
+            "streetName": "ba:street_fifthavenue",
+            "streetNumber": 6
+          },
+          "hoursPerWeekDemandName": "ba:jobdemand_parttime",
+          "id": "RIiBHIdWrkKW2c5dHpCKEQ==",
+          "isNegotiationFinished": false,
+          "isPoached": false,
+          "primarySkillName": "ba:skill_cleaning",
+          "primarySkillValue": 38.0,
+          "reenableNegotiationAtDay": 0
+        },
+        {
+          "_fullName": null,
+          "aiAddress": {
+            "streetName": "ba:street_fifthavenue",
+            "streetNumber": 6
+          },
+          "hoursPerWeekDemandName": "ba:jobdemand_parttime",
+          "id": "QhqpC6idwUy6riXojpDahA==",
+          "isNegotiationFinished": false,
+          "isPoached": false,
+          "primarySkillName": "ba:skill_cleaning",
+          "primarySkillValue": 83.0,
+          "reenableNegotiationAtDay": 0
+        },
+        {
+          "_fullName": null,
+          "aiAddress": {
+            "streetName": "ba:street_fifthavenue",
+            "streetNumber": 6
+          },
+          "hoursPerWeekDemandName": "ba:jobdemand_fulltime",
+          "id": "6C5lyRILKEilMo7j6VnpQ==",
+          "isNegotiationFinished": false,
+          "isPoached": false,
+          "primarySkillName": "ba:skill_cleaning",
+          "primarySkillValue": 78.0,
+          "reenableNegotiationAtDay": 0
+        },
+        {
+          "_fullName": null,
+          "aiAddress": {
+            "streetName": "ba:street_fifthavenue",
+            "streetNumber": 6
+          },
+          "hoursPerWeekDemandName": "ba:jobdemand_fulltime",
+          "id": "Eaddj9h3tU2loqfFBYg23w==",
+          "isNegotiationFinished": false,
+          "isPoached": false,
+          "primarySkillName": "ba:skill_cleaning",
+          "primarySkillValue": 30.0,
+          "reenableNegotiationAtDay": 0
+        },
+        {
+          "_fullName": null,
+          "aiAddress": {
+            "streetName": "ba:street_fifthavenue",
+            "streetNumber": 6
+          },
+          "hoursPerWeekDemandName": "ba:jobdemand_parttime",
+          "id": "p3ltIDFlzUGMPQo2QFf3WQ==",
+          "isNegotiationFinished": false,
+          "isPoached": false,
+          "primarySkillName": "ba:skill_customerservice",
+          "primarySkillValue": 50.0,
+          "reenableNegotiationAtDay": 0
+        },
+        {
+          "_fullName": null,
+          "aiAddress": {
+            "streetName": "ba:street_fifthavenue",
+            "streetNumber": 6
+          },
+          "hoursPerWeekDemandName": "ba:jobdemand_fulltime",
+          "id": "x+BQm1mKukSIjDqDG3YeOw==",
+          "isNegotiationFinished": false,
+          "isPoached": false,
+          "primarySkillName": "ba:skill_customerservice",
+          "primarySkillValue": 31.0,
+          "reenableNegotiationAtDay": 0
+        },
+        {
+          "_fullName": null,
+          "aiAddress": {
+            "streetName": "ba:street_fifthavenue",
+            "streetNumber": 6
+          },
+          "hoursPerWeekDemandName": "ba:jobdemand_parttime",
+          "id": "HJoY+CjONkKDDbSu9iOJPA==",
+          "isNegotiationFinished": false,
+          "isPoached": false,
+          "primarySkillName": "ba:skill_customerservice",
+          "primarySkillValue": 49.0,
+          "reenableNegotiationAtDay": 0
+        },
+        {
+          "_fullName": null,
+          "aiAddress": {
+            "streetName": "ba:street_fifthavenue",
+            "streetNumber": 6
+          },
+          "hoursPerWeekDemandName": "ba:jobdemand_fulltime",
+          "id": "Kf32dUPnf0iilx7ExznZbQ==",
+          "isNegotiationFinished": false,
+          "isPoached": false,
+          "primarySkillName": "ba:skill_customerservice",
+          "primarySkillValue": 38.0,
+          "reenableNegotiationAtDay": 0
+        }
+      ],
+      "AvailableForRent": false,
+      "blueprintName": null,
+      "buildingOwnerRivalId": "HJFtA8Jq+kOZ6KHWfS8PQ==",
+      "BusinessDescription": null,
+      "BusinessName": "Donut Days",
+      "businessOwnerRivalId": "gQUmbL6t1UWwQeG6QZwgFw==",
+      "businessTypeName": "ba:businesstype_coffeeshop",
+      "cachedAvailableProducts": [
+        "ba:itemname_cupofcoffee",
+        "ba:itemname_donut",
+        "ba:itemname_croissant",
+        "ba:itemname_cupcake",
+        "ba:itemname_cupoftea"
+      ],
+      "cachedFulfilledCustomerDemands": [],
+      "creationDay": 1,
+      "customerCapacity": 10,
+      "dailyIncomes": [
+        5430.199,
+        1547.13208,
+        1488.28882,
+        1553.74121,
+        1537.07715,
+        1354.09021
+      ],
+      "deliveredItems": null,
+      "dirtSpots": [],
+      "factoryExports": [],
+      "handTruckSpawnerData": null,
+      "interiorDesigns": [],
+      "itemInstances": {},
+      "itemsInBuilding": null,
+      "lastDayOnSale": 0,
+      "lastDeposit": 0.0,
+      "Layout": "CoffeeWholesalers",
+      "logoSettings": {
+        "backgroundColor": {
+          "color": -438842625
+        },
+        "font": 0,
+        "fontColor": {
+          "color": -23643137
+        },
+        "logoColor": {
+          "color": 749587199
+        },
+        "logoShape": "coffee1"
+      },
+      "marketingCampaigns": [],
+      "orderHistory": [],
+      "poachedEmployees": null,
+      "promotion": {
+        "marketing": 0,
+        "total": 0,
+        "trafficIndex": 0
+      },
+      "radioStation": 0,
+      "radioVolume": 1.0,
+      "RentedByPlayer": false,
+      "RentPerDay": 0.0,
+      "retailPrices": [
+        {
+          "itemName": "ba:itemname_cupofcoffee",
+          "price": 5.0076
+        },
+        {
+          "itemName": "ba:itemname_donut",
+          "price": 4.8791995
+        },
+        {
+          "itemName": "ba:itemname_croissant",
+          "price": 9.2448
+        },
+        {
+          "itemName": "ba:itemname_cupcake",
+          "price": 6.6767993
+        },
+        {
+          "itemName": "ba:itemname_cupoftea",
+          "price": 5.0076
+        }
+      ],
+      "satisfaction": {
+        "cleanliness": 50,
+        "customerService": 50,
+        "facility": 50,
+        "overall": 50,
+        "pricing": 50
+      },
+      "scheduleDays": [
+        {
+          "day": 1,
+          "isOpen": true,
+          "openingHourSlots": [
+            {
+              "endingHour": 20,
+              "startingHour": 5
+            }
+          ],
+          "workShifts": []
+        },
+        {
+          "day": 2,
+          "isOpen": true,
+          "openingHourSlots": [
+            {
+              "endingHour": 20,
+              "startingHour": 5
+            }
+          ],
+          "workShifts": []
+        },
+        {
+          "day": 3,
+          "isOpen": true,
+          "openingHourSlots": [
+            {
+              "endingHour": 20,
+              "startingHour": 5
+            }
+          ],
+          "workShifts": []
+        },
+        {
+          "day": 4,
+          "isOpen": true,
+          "openingHourSlots": [
+            {
+              "endingHour": 20,
+              "startingHour": 5
+            }
+          ],
+          "workShifts": []
+        },
+        {
+          "day": 5,
+          "isOpen": true,
+          "openingHourSlots": [
+            {
+              "endingHour": 20,
+              "startingHour": 5
+            }
+          ],
+          "workShifts": []
+        },
+        {
+          "day": 6,
+          "isOpen": true,
+          "openingHourSlots": [
+            {
+              "endingHour": 20,
+              "startingHour": 5
+            }
+          ],
+          "workShifts": []
+        },
+        {
+          "day": 7,
+          "isOpen": true,
+          "openingHourSlots": [
+            {
+              "endingHour": 20,
+              "startingHour": 5
+            }
+          ],
+          "workShifts": []
+        }
+      ],
+      "securityLevelPercentage": 0.0,
+      "shouldUpdateDirtSpotsThatAffects": true,
+      "signAppearanceSettings": {
+        "lamp": {
+          "color": -1
+        },
+        "lampColor": null,
+        "signLight": {
+          "color": -1
+        },
+        "signLightColor": null,
+        "signType": 0
+      },
+      "stolenItemsCost": 0.0,
+      "storedRetailPrices": [],
+      "StreetName": "ba:street_fifthavenue",
+      "StreetNumber": 6,
+      "takenOver": false,
+      "takeoverOfferAcceptRate": 0.0,
+      "temporarilyClosed": false,
+      "uniformsBySkill": {},
+      "unprocessedCompletedOrders": [],
+      "warnedLastHourAboutNoEmployee": false
+    },
+    "saveFinanceFields": {
+      "Money": 10160.5107,
+      "midnightBankBalances": [
+        9887.407,
+        9753.19,
+        9618.974,
+        9792.341,
+        10160.5107
+      ],
+      "financialSummaries": [
+        {
+          "businessIncomeStatements": [
+            {
+              "Address": {
+                "streetName": "ba:street_thirdstreet",
+                "streetNumber": 30
+              },
+              "LicensingFees": 0.0,
+              "MarketingExpenses": 0.0,
+              "RentExpenses": 0.0,
+              "Resources": [
+                {
+                  "Amount": 8.0,
+                  "ItemName": "ba:itemname_croissant"
+                },
+                {
+                  "Amount": 8.0,
+                  "ItemName": "ba:itemname_paperbag"
+                }
+              ],
+              "SalaryExpenses": 194.61554,
+              "Sales": [
+                {
+                  "Amount": 82.0224,
+                  "ItemName": "ba:itemname_croissant"
+                },
+                {
+                  "Amount": 0.0,
+                  "ItemName": "ba:itemname_paperbag"
+                }
+              ],
+              "Theft": 0.0,
+              "TotalOngoing": 194.61554,
+              "TotalProfit": -128.59314,
+              "TotalResources": 16.0,
+              "TotalSales": 82.0224
+            }
+          ],
+          "dayNumber": 1,
+          "negativeInterestRates": 0.0,
+          "parkingFees": 0.0,
+          "realEstateStatements": [],
+          "residentialStatements": [],
+          "salaryIncome": 0.0,
+          "totalBusinessProfit": -128.59314,
+          "totalHeadhunterReplacementFees": 0.0,
+          "totalHealthInsuranceExpenses": 0.0,
+          "totalLoanExpenses": 0.0,
+          "totalProfit": -128.59314,
+          "totalRealEstate": 0.0,
+          "totalResidentialExpenses": 0.0,
+          "totalUnassignedStaffWages": 0.0
+        },
+        {
+          "businessIncomeStatements": [
+            {
+              "Address": {
+                "streetName": "ba:street_thirdstreet",
+                "streetNumber": 30
+              },
+              "LicensingFees": 0.0,
+              "MarketingExpenses": 0.0,
+              "RentExpenses": 0.0,
+              "Resources": [
+                {
+                  "Amount": 8.0,
+                  "ItemName": "ba:itemname_croissant"
+                },
+                {
+                  "Amount": 8.0,
+                  "ItemName": "ba:itemname_paperbag"
+                }
+              ],
+              "SalaryExpenses": 216.239487,
+              "Sales": [
+                {
+                  "Amount": 82.0224,
+                  "ItemName": "ba:itemname_croissant"
+                },
+                {
+                  "Amount": 0.0,
+                  "ItemName": "ba:itemname_paperbag"
+                }
+              ],
+              "Theft": 0.0,
+              "TotalOngoing": 216.239487,
+              "TotalProfit": -150.217087,
+              "TotalResources": 16.0,
+              "TotalSales": 82.0224
+            }
+          ],
+          "dayNumber": 2,
+          "negativeInterestRates": 0.0,
+          "parkingFees": 0.0,
+          "realEstateStatements": [],
+          "residentialStatements": [],
+          "salaryIncome": 0.0,
+          "totalBusinessProfit": -150.217087,
+          "totalHeadhunterReplacementFees": 0.0,
+          "totalHealthInsuranceExpenses": 0.0,
+          "totalLoanExpenses": 0.0,
+          "totalProfit": -150.217087,
+          "totalRealEstate": 0.0,
+          "totalResidentialExpenses": 0.0,
+          "totalUnassignedStaffWages": 0.0
+        },
+        {
+          "businessIncomeStatements": [
+            {
+              "Address": {
+                "streetName": "ba:street_thirdstreet",
+                "streetNumber": 30
+              },
+              "LicensingFees": 0.0,
+              "MarketingExpenses": 0.0,
+              "RentExpenses": 0.0,
+              "Resources": [
+                {
+                  "Amount": 8.0,
+                  "ItemName": "ba:itemname_croissant"
+                },
+                {
+                  "Amount": 8.0,
+                  "ItemName": "ba:itemname_paperbag"
+                }
+              ],
+              "SalaryExpenses": 216.239487,
+              "Sales": [
+                {
+                  "Amount": 82.0224,
+                  "ItemName": "ba:itemname_croissant"
+                },
+                {
+                  "Amount": 0.0,
+                  "ItemName": "ba:itemname_paperbag"
+                }
+              ],
+              "Theft": 0.0,
+              "TotalOngoing": 216.239487,
+              "TotalProfit": -150.217087,
+              "TotalResources": 16.0,
+              "TotalSales": 82.0224
+            }
+          ],
+          "dayNumber": 3,
+          "negativeInterestRates": 0.0,
+          "parkingFees": 0.0,
+          "realEstateStatements": [],
+          "residentialStatements": [],
+          "salaryIncome": 0.0,
+          "totalBusinessProfit": -150.217087,
+          "totalHeadhunterReplacementFees": 0.0,
+          "totalHealthInsuranceExpenses": 0.0,
+          "totalLoanExpenses": 0.0,
+          "totalProfit": -150.217087,
+          "totalRealEstate": 0.0,
+          "totalResidentialExpenses": 0.0,
+          "totalUnassignedStaffWages": 0.0
+        },
+        {
+          "businessIncomeStatements": [
+            {
+              "Address": {
+                "streetName": "ba:street_thirdstreet",
+                "streetNumber": 30
+              },
+              "LicensingFees": 0.0,
+              "MarketingExpenses": 0.0,
+              "RentExpenses": 0.0,
+              "Resources": [
+                {
+                  "Amount": 38.0,
+                  "ItemName": "ba:itemname_croissant"
+                },
+                {
+                  "Amount": 38.0,
+                  "ItemName": "ba:itemname_paperbag"
+                }
+              ],
+              "SalaryExpenses": 216.239487,
+              "Sales": [
+                {
+                  "Amount": 389.606384,
+                  "ItemName": "ba:itemname_croissant"
+                },
+                {
+                  "Amount": 0.0,
+                  "ItemName": "ba:itemname_paperbag"
+                }
+              ],
+              "Theft": 0.0,
+              "TotalOngoing": 216.239487,
+              "TotalProfit": 97.3669,
+              "TotalResources": 76.0,
+              "TotalSales": 389.606384
+            }
+          ],
+          "dayNumber": 4,
+          "negativeInterestRates": 0.0,
+          "parkingFees": 0.0,
+          "realEstateStatements": [],
+          "residentialStatements": [],
+          "salaryIncome": 0.0,
+          "totalBusinessProfit": 97.3669,
+          "totalHeadhunterReplacementFees": 0.0,
+          "totalHealthInsuranceExpenses": 0.0,
+          "totalLoanExpenses": 0.0,
+          "totalProfit": 97.3669,
+          "totalRealEstate": 0.0,
+          "totalResidentialExpenses": 0.0,
+          "totalUnassignedStaffWages": 0.0
+        },
+        {
+          "businessIncomeStatements": [
+            {
+              "Address": {
+                "streetName": "ba:street_thirdstreet",
+                "streetNumber": 30
+              },
+              "LicensingFees": 0.0,
+              "MarketingExpenses": 0.0,
+              "RentExpenses": 0.0,
+              "Resources": [
+                {
+                  "Amount": 57.0,
+                  "ItemName": "ba:itemname_croissant"
+                },
+                {
+                  "Amount": 57.0,
+                  "ItemName": "ba:itemname_paperbag"
+                }
+              ],
+              "SalaryExpenses": 216.239487,
+              "Sales": [
+                {
+                  "Amount": 584.4096,
+                  "ItemName": "ba:itemname_croissant"
+                },
+                {
+                  "Amount": 0.0,
+                  "ItemName": "ba:itemname_paperbag"
+                }
+              ],
+              "Theft": 0.0,
+              "TotalOngoing": 216.239487,
+              "TotalProfit": 254.17012,
+              "TotalResources": 114.0,
+              "TotalSales": 584.4096
+            }
+          ],
+          "dayNumber": 5,
+          "negativeInterestRates": 0.0,
+          "parkingFees": 0.0,
+          "realEstateStatements": [],
+          "residentialStatements": [],
+          "salaryIncome": 0.0,
+          "totalBusinessProfit": 254.17012,
+          "totalHeadhunterReplacementFees": 0.0,
+          "totalHealthInsuranceExpenses": 0.0,
+          "totalLoanExpenses": 0.0,
+          "totalProfit": 254.17012,
+          "totalRealEstate": 0.0,
+          "totalResidentialExpenses": 0.0,
+          "totalUnassignedStaffWages": 0.0
+        }
+      ],
+      "specialRivalStates": [
+        {
+          "completedTimelineEntryIds": [],
+          "defenseStates": null,
+          "isActive": false,
+          "isDefeated": false,
+          "rivalId": "yXNH9hTIv0KhI5OI8be0A==",
+          "sentMessageKeys": null
+        },
+        {
+          "completedTimelineEntryIds": [],
+          "defenseStates": null,
+          "isActive": false,
+          "isDefeated": false,
+          "rivalId": "jTnQhoNwhkuGDTnL6K0Sxw==",
+          "sentMessageKeys": null
+        },
+        {
+          "completedTimelineEntryIds": [],
+          "defenseStates": null,
+          "isActive": false,
+          "isDefeated": false,
+          "rivalId": "HJFtA8Jq+kOZ6KHWfS8PQ==",
+          "sentMessageKeys": [
+            "rivals_jessica_johnson_entrance"
+          ]
+        },
+        {
+          "completedTimelineEntryIds": [],
+          "defenseStates": null,
+          "isActive": false,
+          "isDefeated": false,
+          "rivalId": "ju1yVbREcE2B5ymg6q5tyA==",
+          "sentMessageKeys": null
+        }
+      ],
+      "rivalStates": [
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 28
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 28
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 28
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 28
+            }
+          ],
+          "rivalId": "yXNH9hTIv0KhI5OI8be0A==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 3666117.0
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 4559037.0
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 5481520.5
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 6380573.0
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 28
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 28
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 28
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 28
+            }
+          ],
+          "rivalId": "jTnQhoNwhkuGDTnL6K0Sxw==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 1186955.25
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 1526350.13
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 1870697.0
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 2214384.5
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 22
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 22
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 22
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 22
+            }
+          ],
+          "rivalId": "HJFtA8Jq+kOZ6KHWfS8PQ==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 1085239.0
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 1421682.25
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 1761536.63
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 2097596.75
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 24
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 24
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 24
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 24
+            }
+          ],
+          "rivalId": "ju1yVbREcE2B5ymg6q5tyA==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 2501712.0
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 3173513.5
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 3865877.0
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 4550973.5
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 25
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 25
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 25
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 25
+            }
+          ],
+          "rivalId": "0rwLbOxbEkOotd8aCkZ2Og==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 135403.234
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 169233.078
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 203289.063
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 236601.2
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 16
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 16
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 16
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 16
+            }
+          ],
+          "rivalId": "6htl+dSjtkCoY5U4Frkig==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 139133.75
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 169217.063
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 198800.688
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 228565.969
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 21
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 21
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 21
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 21
+            }
+          ],
+          "rivalId": "l4dEdW6Cv0ujkWYG6vtbmw==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 111344.547
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 136588.422
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 161826.0
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 186698.688
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 26
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 26
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 26
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 26
+            }
+          ],
+          "rivalId": "gQUmbL6t1UWwQeG6QZwgFw==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 172152.5
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 214655.953
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 256692.734
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 298298.344
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 21
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 21
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 21
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 21
+            }
+          ],
+          "rivalId": "2kGuGDxokCnO0q88w+xUw==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 108696.086
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 135020.969
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 161290.563
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 187470.109
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 18
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 18
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 18
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 18
+            }
+          ],
+          "rivalId": "CpxNOfbGGkyz9AW40KoH+w==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 101013.641
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 123726.875
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 146565.078
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 169366.1
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 20
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 20
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 20
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 20
+            }
+          ],
+          "rivalId": "C9ee0FSQkUSDmD90kgPa+Q==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 117480.2
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 145145.5
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 172938.766
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 200371.188
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 14
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 14
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 14
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 14
+            }
+          ],
+          "rivalId": "EU+uDKJcnUaAVB95hp8Tg==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 234473.078
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 286911.3
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 340781.781
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 393762.281
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 16
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 16
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 16
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 16
+            }
+          ],
+          "rivalId": "4LvmLpMq3Eey6AO+YAHjCw==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 293259.875
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 381272.063
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 469342.5
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 558470.1
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 6
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 6
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 6
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 6
+            }
+          ],
+          "rivalId": "nkpk7Zx35Einlh12ymPNXw==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 90569.83
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 114051.875
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 137683.422
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 161138.281
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 9
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 9
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 9
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 9
+            }
+          ],
+          "rivalId": "NTFW7Pd0y7rB9aNdfswQ==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 189328.969
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 229669.813
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 270438.031
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 310548.8
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 15
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 15
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 15
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 15
+            }
+          ],
+          "rivalId": "0GTUgSg2IECpobDIqWrWQ==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 299803.5
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 372520.469
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 444876.9
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 517403.125
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 12
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 12
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 12
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 12
+            }
+          ],
+          "rivalId": "Oi0RvhdBU02+QP9HAn5atQ==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 235575.922
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 295928.219
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 355694.469
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 415419.7
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 18
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 18
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 18
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 18
+            }
+          ],
+          "rivalId": "OWnstBBx4ku22KVIBLmcPg==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 470954.375
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 590626.938
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 708249.25
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 825266.7
+            }
+          ]
+        },
+        {
+          "numberOfBusinessesHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 12
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 12
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 12
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 12
+            }
+          ],
+          "rivalId": "1mrLUhR5rE+LcNYfFKmTTg==",
+          "weeklyIncomeHistory": [
+            {
+              "m_Item1": 2,
+              "m_Item2": 248486.391
+            },
+            {
+              "m_Item1": 3,
+              "m_Item2": 306062.7
+            },
+            {
+              "m_Item1": 4,
+              "m_Item2": 361266.156
+            },
+            {
+              "m_Item1": 5,
+              "m_Item2": 417765.5
+            }
+          ]
+        }
+      ],
+      "wholesaleRivalIds": [
+        "0rwLbOxbEkOotd8aCkZ2Og==",
+        "6htl+dSjtkCoY5U4Frkig==",
+        "l4dEdW6Cv0ujkWYG6vtbmw==",
+        "gQUmbL6t1UWwQeG6QZwgFw==",
+        "2kGuGDxokCnO0q88w+xUw==",
+        "CpxNOfbGGkyz9AW40KoH+w==",
+        "C9ee0FSQkUSDmD90kgPa+Q=="
+      ],
+      "importRivalIds": [
+        "EU+uDKJcnUaAVB95hp8Tg==",
+        "4LvmLpMq3Eey6AO+YAHjCw==",
+        "nkpk7Zx35Einlh12ymPNXw==",
+        "NTFW7Pd0y7rB9aNdfswQ==",
+        "0GTUgSg2IECpobDIqWrWQ==",
+        "Oi0RvhdBU02+QP9HAn5atQ==",
+        "OWnstBBx4ku22KVIBLmcPg==",
+        "1mrLUhR5rE+LcNYfFKmTTg=="
+      ]
+    }
+  }
+}

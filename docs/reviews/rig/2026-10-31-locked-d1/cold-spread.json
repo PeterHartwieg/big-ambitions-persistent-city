@@ -1,0 +1,436 @@
+{
+  "role": "rig_test",
+  "actualControllers": 883,
+  "registered": 883,
+  "retained": 883,
+  "repeatCount": 100,
+  "perPhase": {
+    "cold-begin": {
+      "costMs": {
+        "samples": 1,
+        "p50": 0.0362,
+        "p95": 0.0362,
+        "maximum": 0.0362,
+        "mean": 0.0362
+      },
+      "allocatedBytes": null,
+      "rawUnvalidatedCounterSum": 0
+    },
+    "cold-unit16": {
+      "costMs": {
+        "samples": 56,
+        "p50": 0.1237,
+        "p95": 0.1406,
+        "maximum": 0.154,
+        "mean": 0.124075
+      },
+      "allocatedBytes": null,
+      "rawUnvalidatedCounterSum": 0
+    },
+    "dump8": {
+      "costMs": {
+        "samples": 100,
+        "p50": 0.1344,
+        "p95": 0.172,
+        "maximum": 0.2143,
+        "mean": 0.139323
+      },
+      "allocatedBytes": null,
+      "rawUnvalidatedCounterSum": 0
+    },
+    "warm-begin": {
+      "costMs": {
+        "samples": 99,
+        "p50": 0.0322,
+        "p95": 0.0446,
+        "maximum": 0.0537,
+        "mean": 0.03338686868686869
+      },
+      "allocatedBytes": null,
+      "rawUnvalidatedCounterSum": 0
+    },
+    "warm-unit16": {
+      "costMs": {
+        "samples": 5544,
+        "p50": 0.0515,
+        "p95": 0.0649,
+        "maximum": 0.147,
+        "mean": 0.05305409451659451
+      },
+      "allocatedBytes": null,
+      "rawUnvalidatedCounterSum": 0
+    }
+  },
+  "atMostOneOperationPerFrame": true,
+  "continuationBound": 16,
+  "firstRefreshFrames": [
+    {
+      "frame": 10012,
+      "phase": "cold-begin",
+      "ms": 0.0362,
+      "retained": 0
+    },
+    {
+      "frame": 10013,
+      "phase": "cold-unit16",
+      "ms": 0.1363,
+      "retained": 16
+    },
+    {
+      "frame": 10014,
+      "phase": "cold-unit16",
+      "ms": 0.133,
+      "retained": 32
+    },
+    {
+      "frame": 10015,
+      "phase": "cold-unit16",
+      "ms": 0.1218,
+      "retained": 48
+    },
+    {
+      "frame": 10016,
+      "phase": "cold-unit16",
+      "ms": 0.1143,
+      "retained": 64
+    },
+    {
+      "frame": 10017,
+      "phase": "cold-unit16",
+      "ms": 0.1225,
+      "retained": 80
+    },
+    {
+      "frame": 10018,
+      "phase": "cold-unit16",
+      "ms": 0.1221,
+      "retained": 96
+    },
+    {
+      "frame": 10019,
+      "phase": "cold-unit16",
+      "ms": 0.1227,
+      "retained": 112
+    },
+    {
+      "frame": 10020,
+      "phase": "cold-unit16",
+      "ms": 0.1156,
+      "retained": 128
+    },
+    {
+      "frame": 10021,
+      "phase": "cold-unit16",
+      "ms": 0.136,
+      "retained": 144
+    },
+    {
+      "frame": 10022,
+      "phase": "cold-unit16",
+      "ms": 0.117,
+      "retained": 160
+    },
+    {
+      "frame": 10023,
+      "phase": "cold-unit16",
+      "ms": 0.1206,
+      "retained": 176
+    },
+    {
+      "frame": 10024,
+      "phase": "cold-unit16",
+      "ms": 0.1286,
+      "retained": 192
+    },
+    {
+      "frame": 10025,
+      "phase": "cold-unit16",
+      "ms": 0.129,
+      "retained": 208
+    },
+    {
+      "frame": 10026,
+      "phase": "cold-unit16",
+      "ms": 0.1248,
+      "retained": 224
+    },
+    {
+      "frame": 10027,
+      "phase": "cold-unit16",
+      "ms": 0.1338,
+      "retained": 240
+    },
+    {
+      "frame": 10028,
+      "phase": "cold-unit16",
+      "ms": 0.1158,
+      "retained": 256
+    },
+    {
+      "frame": 10029,
+      "phase": "cold-unit16",
+      "ms": 0.1117,
+      "retained": 272
+    },
+    {
+      "frame": 10030,
+      "phase": "cold-unit16",
+      "ms": 0.1267,
+      "retained": 288
+    },
+    {
+      "frame": 10031,
+      "phase": "cold-unit16",
+      "ms": 0.1411,
+      "retained": 304
+    },
+    {
+      "frame": 10032,
+      "phase": "cold-unit16",
+      "ms": 0.1272,
+      "retained": 320
+    },
+    {
+      "frame": 10033,
+      "phase": "cold-unit16",
+      "ms": 0.116,
+      "retained": 336
+    },
+    {
+      "frame": 10034,
+      "phase": "cold-unit16",
+      "ms": 0.1284,
+      "retained": 352
+    },
+    {
+      "frame": 10035,
+      "phase": "cold-unit16",
+      "ms": 0.1319,
+      "retained": 368
+    },
+    {
+      "frame": 10036,
+      "phase": "cold-unit16",
+      "ms": 0.123,
+      "retained": 384
+    },
+    {
+      "frame": 10037,
+      "phase": "cold-unit16",
+      "ms": 0.1195,
+      "retained": 400
+    },
+    {
+      "frame": 10038,
+      "phase": "cold-unit16",
+      "ms": 0.1213,
+      "retained": 416
+    },
+    {
+      "frame": 10039,
+      "phase": "cold-unit16",
+      "ms": 0.1302,
+      "retained": 432
+    },
+    {
+      "frame": 10040,
+      "phase": "cold-unit16",
+      "ms": 0.1334,
+      "retained": 448
+    },
+    {
+      "frame": 10041,
+      "phase": "cold-unit16",
+      "ms": 0.1205,
+      "retained": 464
+    },
+    {
+      "frame": 10042,
+      "phase": "cold-unit16",
+      "ms": 0.1197,
+      "retained": 480
+    },
+    {
+      "frame": 10043,
+      "phase": "cold-unit16",
+      "ms": 0.1174,
+      "retained": 496
+    },
+    {
+      "frame": 10044,
+      "phase": "cold-unit16",
+      "ms": 0.1187,
+      "retained": 512
+    },
+    {
+      "frame": 10045,
+      "phase": "cold-unit16",
+      "ms": 0.1345,
+      "retained": 528
+    },
+    {
+      "frame": 10046,
+      "phase": "cold-unit16",
+      "ms": 0.1218,
+      "retained": 544
+    },
+    {
+      "frame": 10047,
+      "phase": "cold-unit16",
+      "ms": 0.1316,
+      "retained": 560
+    },
+    {
+      "frame": 10048,
+      "phase": "cold-unit16",
+      "ms": 0.1298,
+      "retained": 576
+    },
+    {
+      "frame": 10049,
+      "phase": "cold-unit16",
+      "ms": 0.1167,
+      "retained": 592
+    },
+    {
+      "frame": 10050,
+      "phase": "cold-unit16",
+      "ms": 0.1175,
+      "retained": 608
+    },
+    {
+      "frame": 10051,
+      "phase": "cold-unit16",
+      "ms": 0.1252,
+      "retained": 624
+    },
+    {
+      "frame": 10052,
+      "phase": "cold-unit16",
+      "ms": 0.1261,
+      "retained": 640
+    },
+    {
+      "frame": 10053,
+      "phase": "cold-unit16",
+      "ms": 0.1237,
+      "retained": 656
+    },
+    {
+      "frame": 10054,
+      "phase": "cold-unit16",
+      "ms": 0.1223,
+      "retained": 672
+    },
+    {
+      "frame": 10055,
+      "phase": "cold-unit16",
+      "ms": 0.1242,
+      "retained": 688
+    },
+    {
+      "frame": 10056,
+      "phase": "cold-unit16",
+      "ms": 0.1191,
+      "retained": 704
+    },
+    {
+      "frame": 10057,
+      "phase": "cold-unit16",
+      "ms": 0.1198,
+      "retained": 720
+    },
+    {
+      "frame": 10058,
+      "phase": "cold-unit16",
+      "ms": 0.1278,
+      "retained": 736
+    },
+    {
+      "frame": 10059,
+      "phase": "cold-unit16",
+      "ms": 0.1231,
+      "retained": 752
+    },
+    {
+      "frame": 10060,
+      "phase": "cold-unit16",
+      "ms": 0.1316,
+      "retained": 768
+    },
+    {
+      "frame": 10061,
+      "phase": "cold-unit16",
+      "ms": 0.154,
+      "retained": 784
+    },
+    {
+      "frame": 10062,
+      "phase": "cold-unit16",
+      "ms": 0.1247,
+      "retained": 800
+    },
+    {
+      "frame": 10063,
+      "phase": "cold-unit16",
+      "ms": 0.1195,
+      "retained": 816
+    },
+    {
+      "frame": 10064,
+      "phase": "cold-unit16",
+      "ms": 0.124,
+      "retained": 832
+    },
+    {
+      "frame": 10065,
+      "phase": "cold-unit16",
+      "ms": 0.1334,
+      "retained": 848
+    },
+    {
+      "frame": 10066,
+      "phase": "cold-unit16",
+      "ms": 0.1406,
+      "retained": 864
+    },
+    {
+      "frame": 10067,
+      "phase": "cold-unit16",
+      "ms": 0.1155,
+      "retained": 880
+    },
+    {
+      "frame": 10068,
+      "phase": "cold-unit16",
+      "ms": 0.0611,
+      "retained": 883
+    }
+  ],
+  "spikesAtLeast30ms": [],
+  "rawFile": "d1-repeat-stop-cf5067.csv.xz",
+  "startupCold": {
+    "rawFile": "startup-cold.csv.xz",
+    "operations": 58,
+    "distinctFrames": 58,
+    "maximumMs": 6.8161,
+    "source": "Initial native process: first reader, first metadata refresh, same original eight shops. Before shortlist pinning; no reload within this capture."
+  },
+  "twentyThousandNotAvailable": true,
+  "offlineTwentyThousandAggregateMs": 40.9646,
+  "offlineFigureIsNotSingleFrameEvidence": true,
+  "memory": {
+    "retained": 883,
+    "before": 935858176,
+    "after": 935829504,
+    "releasedBytes": 28672,
+    "includesWeakHandles": false
+  },
+  "allocationBytesStatus": "NOT-RUN: Unity frame counter unavailable; independently validated Mono thread counter is unavailable; raw zero bytes must not be read as zero allocation",
+  "allocationCounterCheck": {
+    "rows": 0,
+    "errors": 0,
+    "counterKind": "unavailable",
+    "seconds": 391.2498513
+  }
+}

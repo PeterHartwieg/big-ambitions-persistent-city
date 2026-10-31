@@ -1,0 +1,10 @@
+{
+  "instance": "agent1",
+  "held": true,
+  "owner": "pc-rig-locked-d1",
+  "purpose": "D1 locked-session merge-gating proof",
+  "acquired_utc": "2026-10-31T10:27:57.5725967Z",
+  "expires_automatically": false,
+  "pending": 0,
+  "legacy_blocked": false
+}

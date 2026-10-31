@@ -1,0 +1,120 @@
+{
+  "role": "rig_test",
+  "paused": true,
+  "clockBefore": {
+    "day": 6,
+    "time": "00:45",
+    "paused": true,
+    "frame": 9956
+  },
+  "clockAfter": {
+    "day": 6,
+    "time": "00:45",
+    "paused": true,
+    "frame": 16516
+  },
+  "repeats": 100,
+  "hashes": {
+    "rivalRegistration": {
+      "before": "99a8362c36ff70cd68405b57af39c6a6082bf0fcc59e562bac95a4db2abda47e",
+      "after": "99a8362c36ff70cd68405b57af39c6a6082bf0fcc59e562bac95a4db2abda47e",
+      "equal": true
+    },
+    "saveFinanceFields": {
+      "before": "c4c8d6e41d41ff5f284d55149d3793ca6afb233ffd434d49cbaf046a136f6576",
+      "after": "c4c8d6e41d41ff5f284d55149d3793ca6afb233ffd434d49cbaf046a136f6576",
+      "equal": true
+    },
+    "facts": {
+      "before": "dc80067c63c937c3cd46b8001b77eb22fc3d5913c02a817849b01de555e2dd28",
+      "after": "dc80067c63c937c3cd46b8001b77eb22fc3d5913c02a817849b01de555e2dd28",
+      "equal": true
+    }
+  },
+  "registrationFieldNames": [
+    "_buildingCached",
+    "_cleanliness",
+    "_interiorLookup",
+    "aiEmployees",
+    "AvailableForRent",
+    "blueprintName",
+    "buildingOwnerRivalId",
+    "BusinessDescription",
+    "BusinessName",
+    "businessOwnerRivalId",
+    "businessTypeName",
+    "cachedAvailableProducts",
+    "cachedFulfilledCustomerDemands",
+    "creationDay",
+    "customerCapacity",
+    "dailyIncomes",
+    "deliveredItems",
+    "dirtSpots",
+    "factoryExports",
+    "handTruckSpawnerData",
+    "interiorDesigns",
+    "itemInstances",
+    "itemsInBuilding",
+    "lastDayOnSale",
+    "lastDeposit",
+    "Layout",
+    "logoSettings",
+    "marketingCampaigns",
+    "orderHistory",
+    "poachedEmployees",
+    "promotion",
+    "radioStation",
+    "radioVolume",
+    "RentedByPlayer",
+    "RentPerDay",
+    "retailPrices",
+    "satisfaction",
+    "scheduleDays",
+    "securityLevelPercentage",
+    "shouldUpdateDirtSpotsThatAffects",
+    "signAppearanceSettings",
+    "stolenItemsCost",
+    "storedRetailPrices",
+    "StreetName",
+    "StreetNumber",
+    "takenOver",
+    "takeoverOfferAcceptRate",
+    "temporarilyClosed",
+    "uniformsBySkill",
+    "unprocessedCompletedOrders",
+    "warnedLastHourAboutNoEmployee"
+  ],
+  "stockAndFinanceFieldHashes": {
+    "prices": {
+      "retailPrices": "95897ea861ea414e111312cfdaf99122ad19c78aace61983d99efb29eb8bcfe7",
+      "storedRetailPrices": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "stock": {
+      "itemInstances": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "unprocessedCompletedOrders": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "orderHistory": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "cachedAvailableProducts": "d62ce37974b671e18cbf4062e02da2950eaa3e46cfb81e8505794026a5be50eb",
+      "deliveredItems": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "itemsInBuilding": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+    },
+    "finance": {
+      "dailyIncomes": "e25f55f9ce6b4ea564e344a34033d4103b8f14f7bf8cb004cafa2205cc20fd65",
+      "lastDeposit": "8aed642bf5118b9d3c859bd4be35ecac75b6e873cce34e7b6f554b06f75550d7",
+      "stolenItemsCost": "8aed642bf5118b9d3c859bd4be35ecac75b6e873cce34e7b6f554b06f75550d7"
+    }
+  },
+  "saveFinanceFields": [
+    "Money",
+    "midnightBankBalances",
+    "financialSummaries",
+    "specialRivalStates",
+    "rivalStates",
+    "wholesaleRivalIds",
+    "importRivalIds"
+  ],
+  "rivalStockItemInstances": 0,
+  "rivalDailyIncomeEntries": 6,
+  "truncatedPaths": [],
+  "allEqual": true,
+  "observer": "Independent reflection field-only copy: existing registration fields recursively copied; no native setters or stock/setup/sale methods. Unity objects represented by type and instance ID. Canonical JSON SHA-256. Paused game clock; exact comparison. Full private captures retained in stage; no raw save published."
+}
