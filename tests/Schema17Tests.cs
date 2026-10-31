@@ -135,7 +135,7 @@ public sealed partial class FoodCommerceTests
         int today = (int)(migrated.Minute / 1440);
         Assert.Equal(FoodChoicePolicy.Version, migrated.Food!.ChoicePolicyVersion);
         Assert.Equal(today + 1, migrated.Food.ChoiceStartsDay);
-        Assert.Equal(0, city.State.Food.ChoiceStartsDay);
+        Assert.Equal(today + 1, city.State.Food.ChoiceStartsDay);
         foreach (var person in migrated.Citizens) Assert.Equal(ResidentTraits.Generate(migrated.Seed, person.Identity.Id).Bands, person.Traits!.Bands);
         foreach (var meal in migrated.Food.Residents)
         {
@@ -189,6 +189,7 @@ public sealed partial class FoodCommerceTests
     {
         var (city, _, _) = Ready(count: 2, threeMeals: true, representation: 2);
         var food = city.State.Food!;
+        food.ChoiceStartsDay=0; // This fixture deliberately constructs an already active decision.
         var first = food.Residents.First(m => m.Slot == 0);
         first.Today = new ResidentFoodToday { Day = 0, Meals = {
             new MealOutcomeRecord { Kind = MealKind.Breakfast, Status = MealOutcomeStatus.ChoseAlternative, Reason = MealReasonCode.PrefersAlternative, Outside = FoodOutsideOption.FundedHouseholdFood, At = 500 },
@@ -604,7 +605,7 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(meal.Purchases, bought);
         foreach (var record in today.Meals.Where(m => m.Status == MealOutcomeStatus.Bought))
         {
-            Assert.Equal("shop", record.PlaceId); Assert.Equal("pastry", record.ProductId);
+            Assert.Equal("shop", record.PlaceId); Assert.Equal(FoodProducts.Croissant, record.ProductId);
             Assert.True(record.CheckoutAt >= 1440 && record.CheckoutAt <= record.At);
         }
         // Reload keeps the records exactly and does not add any.
@@ -689,7 +690,7 @@ public sealed partial class FoodCommerceTests
     [Fact]
     public void S17_EconomyScenarioMatchesThePreSchema17Baseline()
     {
-        var result = JObject.FromObject(EconomyScenario.Run());
+        var result = JObject.FromObject(EconomyScenario.Run(legacyChoice:true));
         Assert.Equal(849, (int)result["orders"]!);
         Assert.Equal(797, (int)result["purchases"]!);
         Assert.Equal(107967424757760L, (long)result["spentUnits"]!);

@@ -176,6 +176,12 @@ namespace PersistentCity.Core
         double MinimumWalkingMinutes(Place from, Place to);
     }
 
+    /// <summary>Current planner pace, used only to bound food searches by a finite meal window.</summary>
+    public interface IFoodWalkingPace
+    {
+        double WalkingMetresPerMinute { get; }
+    }
+
     public interface ICitizenRoutePlanner : IRoutePlanner
     {
         Route? Plan(Place from, Place to, double departureMinute, CitizenState citizen);

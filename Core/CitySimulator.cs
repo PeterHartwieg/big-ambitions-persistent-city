@@ -8,10 +8,15 @@ namespace PersistentCity.Core
 {
     public readonly struct AdvanceResult
     {
-        public AdvanceResult(int events, bool caughtUp, int trafficEvents = 0, bool planningPending = false)
-        { Events = events; CaughtUp = caughtUp; TrafficEvents = trafficEvents; PlanningPending = planningPending; }
+        public AdvanceResult(int events, bool caughtUp, int trafficEvents = 0, bool planningPending = false, int foodContinuationEvents = 0)
+        { Events = events; CaughtUp = caughtUp; TrafficEvents = trafficEvents; PlanningPending = planningPending; FoodContinuationEvents = foodContinuationEvents; }
+        /// <summary>Total bounded work units, including citizen, traffic and food continuation units.</summary>
         public int Events { get; }
         public int TrafficEvents { get; }
+        /// <summary>Bounded units of an already-started food decision, including its commit.
+        /// The begin unit counts once as a citizen event; continuations still consume the total unit/time budget.</summary>
+        public int FoodContinuationEvents { get; }
+        public int CitizenEvents => Events - TrafficEvents - FoodContinuationEvents;
         public bool CaughtUp { get; }
         /// <summary>A citizen event is waiting for a route answer. The clock stays at that event's minute
         /// until ContinuePlanning reports completion; nothing else advances meanwhile.</summary>
@@ -58,10 +63,10 @@ namespace PersistentCity.Core
             ResidentMeal? meal = food != null ? food.FindMeal(residentId) : State.Food?.Residents.Find(m => m.ResidentId == residentId);
             return ResidentInsight.Capture(State, person, meal, id => places.TryGetValue(id, out var place) ? place : null, productName, localize);
         }
-        public void AttachFoodMarket(IFoodMarket market)
+        public void AttachFoodMarket(IFoodMarket market, FoodChoiceSettings? choiceSettings = null)
         {
             if (food != null) throw new InvalidOperationException("Food market already attached.");
-            food = new FoodCommerce(this, market, routes);
+            food = new FoodCommerce(this, market, routes, choiceSettings);
         }
 
         private sealed class ActivityObservers
@@ -112,7 +117,7 @@ namespace PersistentCity.Core
             var replacement = new CitySimulator(State, replacementRoutes);
             replacement.activityObservers = activityObservers;
             if (stopEnvironment != null) replacement.AttachOptionalStops(stopEnvironment, stopPercentage);
-            if (food != null) replacement.AttachFoodMarket(food.Market);
+            if (food != null) replacement.AttachFoodMarket(food.Market, food.ChoiceSettings);
             return replacement;
         }
 
@@ -152,7 +157,7 @@ namespace PersistentCity.Core
         public bool IsCaughtUpTo(double targetMinute) => Position.Finite(targetMinute)
             && State.Minute >= targetMinute && NoEventsThrough(targetMinute);
 
-        private bool NoEventsThrough(double targetMinute) => pending == null
+        private bool NoEventsThrough(double targetMinute) => pending == null && food?.HasPendingDecision != true
             && (due.Count == 0 || due.Min!.Minute > targetMinute)
             && (traffic == null || traffic.NextEventMinute > targetMinute)
             && (State.Food == null || (food != null && food.NextMinute > targetMinute));
@@ -165,7 +170,7 @@ namespace PersistentCity.Core
             if (State.Food != null && food == null) throw new InvalidOperationException("Saved food economy requires its market before advancing.");
             EnsureTrafficNetwork();
             ValidatePhysicalClock(targetMinute);
-            int count = 0, trafficCount = 0;
+            int count = 0, trafficCount = 0, foodContinuationCount = 0;
             if (pending != null)
             {
                 // The non-frame path finishes an interrupted event inline; a frame slice leaves it to ContinuePlanning.
@@ -183,10 +188,15 @@ namespace PersistentCity.Core
                 double next = Math.Min(foodMinute, Math.Min(citizenMinute, trafficMinute));
                 if (next > targetMinute) break;
                 State.Minute = next;
-                if (foodMinute < citizenMinute && foodMinute < trafficMinute)
+                if (food?.HasPendingDecision == true || foodMinute < citizenMinute && foodMinute < trafficMinute)
                 {
                     traffic?.AdvanceTo(next, 0);
-                    food!.Step(); count++; continue;
+                    // Charge a decision once at begin. A restored decision has already begun;
+                    // its quote/selection/commit units remain bounded work, not new citizen events.
+                    bool continuation = food!.HasPendingDecision;
+                    food.Step(); count++;
+                    if (continuation) foodContinuationCount++;
+                    continue;
                 }
                 if (trafficMinute <= citizenMinute)
                 {
@@ -208,13 +218,13 @@ namespace PersistentCity.Core
                 bool inline = publishSnapshot;
                 if (!inline && RestartsExhausted(item)) { inline = true; InlineAfterRestarts++; }
                 if (!RunEvent(item, inline))
-                    return new AdvanceResult(count, false, trafficCount, planningPending: true);
+                    return new AdvanceResult(count, false, trafficCount, planningPending: true, foodContinuationEvents: foodContinuationCount);
                 count++;
             }
             bool caughtUp = NoEventsThrough(targetMinute);
             if (caughtUp) { traffic?.AdvanceTo(targetMinute, 0); State.Minute = targetMinute; }
             if (publishSnapshot) SynchronizeSnapshot();
-            return new AdvanceResult(count, caughtUp, trafficCount);
+            return new AdvanceResult(count, caughtUp, trafficCount, foodContinuationEvents: foodContinuationCount);
         }
 
         // One citizen event in flight. The event runs on a working copy of the resident, so the published
@@ -519,7 +529,7 @@ namespace PersistentCity.Core
             if (outing == MealOutingStep.NeedsReturnRoute)
             {
                 var returnRequest = new RouteRequest(places[person.PlaceId], places[person.MealOuting!.OriginId], now, null,
-                    new TravelPreferences { OwnsCar = false, AllowTransit = false, WalkingToleranceMetres = person.Preferences.WalkingToleranceMetres });
+                    food?.ReturnPreferences(person) ?? new TravelPreferences { OwnsCar = false, AllowTransit = false, WalkingToleranceMetres = person.Preferences.WalkingToleranceMetres });
                 yield return returnRequest;
                 FinishMealReturn(person, now, returnRequest.Result);
                 yield break;

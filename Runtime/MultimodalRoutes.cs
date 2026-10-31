@@ -21,7 +21,7 @@ namespace PersistentCity.Runtime
         void RequestSweep();
     }
     /// <summary>Background routes only. Native geometry, explicit simulation timing, no actors or economy writes.</summary>
-    internal sealed class MultimodalRoutes : ICitizenRoutePlanner, ICommuteTimingPlanner, ITrafficRoutePlanner, ITrafficEntryRoutePlanner, ITrafficClosureBatchPlanner, IWalkingTimeBound, IWalkingQuoteValidity, IWalkingQuoteOperation, IResumableRoutePlanner
+    internal sealed class MultimodalRoutes : ICitizenRoutePlanner, ICommuteTimingPlanner, ITrafficRoutePlanner, ITrafficEntryRoutePlanner, ITrafficClosureBatchPlanner, IWalkingTimeBound, IFoodWalkingPace, IWalkingQuoteValidity, IWalkingQuoteOperation, IResumableRoutePlanner
     {
         private readonly double subwayMetresPerMinute;
         private readonly double clockRate;
@@ -32,6 +32,7 @@ namespace PersistentCity.Runtime
         private readonly WalkingRoutes walking;
         public NativeRouteMetrics Metrics => walking.Metrics;
         private readonly double walkingSpeed;
+        public double WalkingMetresPerMinute => walkingSpeed;
         private readonly Dictionary<string, Place> places = new Dictionary<string, Place>(StringComparer.Ordinal);
         private List<Station>? stations;
         private SubwaySystem? subway;
