@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using PersistentCity.Core;
+using PersistentCity.Persistence;
 using Xunit;
 
 namespace PersistentCity.Tests;
@@ -265,5 +266,47 @@ public sealed class DwellPlannerTests
     private sealed class NoRoutes : IRoutePlanner
     {
         public Route? Plan(Place from, Place to, double departureMinute, TravelPreferences preferences) => null;
+    }
+
+    private sealed class NoOptionalGeometry : IOptionalStopEnvironment
+    {
+        public bool Raining { get; set; }
+        public IReadOnlyList<OptionalStopSpot> Spots(Place place, DwellKind kind) => Array.Empty<OptionalStopSpot>();
+        public OptionalStopAvailability Available(OptionalStopState stop) => OptionalStopAvailability.Ready;
+    }
+
+    [Theory]
+    [InlineData(0, false)] [InlineData(25, false)] [InlineData(100, false)]
+    [InlineData(0, true)] [InlineData(25, true)] [InlineData(100, true)]
+    public void OpeningQueueReloadAndAdmissionAreIndependentOfOptionalStopRate(int rate, bool raining)
+    {
+        // Both ordinary morning opening and a night opening, under the same waiting-state contract.
+        foreach (int hour in new[] { 9, 3 })
+        {
+            double opening = Day + hour * 60;
+            var shop = new Place { Id = "shop", Name = "Shop", Kind = PlaceKind.Shop, Capacity = 1,
+                Position = new(10, 0, 0), OpenMinute = hour * 60, CloseMinute = (hour + 4) * 60 };
+            var home = new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 1 };
+            var state = Population.Create(new[] { new CitizenIdentity { Id = "queue0", Name = "Queue visitor", Age = 30, Persona = Persona.Commuter } },
+                new[] { home, shop }, "e2a-queue", "0.40.4", 17, opening - 1);
+            var c = state.Citizens.Single();
+            c.Phase = CitizenPhase.WaitingForOpening; c.PlaceId = c.DestinationId = shop.Id;
+            c.DestinationActivity = c.Activity = Activity.Shop; c.NextEventMinute = opening; c.ActivityUntilMinute = opening + 60;
+            var env = new NoOptionalGeometry { Raining = raining };
+            var sim = new CitySimulator(state, new NoRoutes()); sim.AttachOptionalStops(env, rate);
+            var original = DwellPlanner.QueueAtOpening(c, shop, state.Seed, state.Minute, raining);
+            Assert.NotNull(original);
+            Assert.InRange(opening - original!.Value.StartMinute, 2, raining ? 5 : 10);
+            string saved = SaveCodec.Write(state);
+            var read = SaveCodec.Read(saved); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+            var loaded = new CitySimulator(read.State!, new NoRoutes()); loaded.AttachOptionalStops(env, rate);
+            var restored = DwellPlanner.QueueAtOpening(loaded.State.Citizens.Single(), shop, state.Seed, state.Minute, raining);
+            Assert.Equal(original, restored); Assert.Equal(saved, SaveCodec.Write(loaded.State));
+            sim.AdvanceTo(opening); loaded.AdvanceTo(opening);
+            Assert.Equal(SaveCodec.Write(sim.State), SaveCodec.Write(loaded.State));
+            Assert.Equal(CitizenPhase.AtPlace, loaded.State.Citizens.Single().Phase);
+            Assert.Single(loaded.State.Citizens.Single().RecentVisits);
+            Assert.Null(DwellPlanner.QueueAtOpening(loaded.State.Citizens.Single(), shop, state.Seed, opening, raining));
+        }
     }
 }

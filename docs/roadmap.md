@@ -29,6 +29,8 @@ Later: residents as employees, households.
 
 Implementation plan for B–E: [memory, marketing, rivals and the wider street](plans/steps-b-e.md).
 
+E2a offline street-life proof and read-only venue findings: [coverage and E2b cases](plans/e2-street-life.md), including Peter's 31 October Q6 decision (existing identified residents/caps and 25% semantics; no new anonymous crowds or night multiplier). Native evidence remains on the combined 6 Nov checklist.
+
 ## Performance gate (Peter, 2026-10-30)
 
 Applies to every step A–E slice re-measure and to the final release:
