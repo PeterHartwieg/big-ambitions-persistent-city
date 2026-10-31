@@ -1,0 +1,46 @@
+{
+  "role": "rig_test",
+  "restored": true,
+  "profileFilesVerified": 4828,
+  "installReferencesVerified": 107,
+  "preferencesHashMatches": true,
+  "preferencesSha256": "66fccbcc5f63bc492e36ba7f342d9d2480adb2b87404a650a8607094d207381d",
+  "rootFileHashes": {
+    "run.json": "54ee71b80b390cb8ef67e3f32465ad74eb1319f06b0e67d2ed8d2ec3935faec3",
+    "Player-agent.log": "9d9a6335b6f9b6feb1d9a437554cb4f380467ab341c348294667dc0d686a1248",
+    "agent-install.json": "9785d1de5c7360875b2a2a47f511815660dd98a38d6f64ab4ecff8c20627b949"
+  },
+  "originalAutosave": {
+    "preventAutoSave": false,
+    "minutesBetweenAutoSaves": 5,
+    "maxAutoSavesPerGame": 3
+  },
+  "autosaveAndPreferencesRestored": true,
+  "leaseHeld": false,
+  "leasePending": 0,
+  "leaseReleasedUtc": "2026-10-31T20:56:07.3347609Z",
+  "ownedProcessesRemaining": [],
+  "ownedGamePids": [
+    9268,
+    47812,
+    46140,
+    3052,
+    51020,
+    38108,
+    45116
+  ],
+  "allOwnedGamesExitedNormally": true,
+  "gameKillRequired": false,
+  "sessionLockedAfter": true,
+  "normalProfileTouched": false,
+  "windowsSettingsChanged": false,
+  "productionSourceChanged": false,
+  "otherHarnessWorktreesModified": false,
+  "backup": {
+    "verified": true,
+    "utc": "2026-10-31T18:35:47.4418229Z",
+    "profile_files": 4828,
+    "receipt_references": 107,
+    "receipt_sha256": "9785d1de5c7360875b2a2a47f511815660dd98a38d6f64ab4ecff8c20627b949"
+  }
+}

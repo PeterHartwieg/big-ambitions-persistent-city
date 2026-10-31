@@ -1,0 +1,78 @@
+{
+  "role": "rig_test",
+  "checks": [
+    {
+      "kind": "future",
+      "result": "PASS",
+      "nativeSaveSha256Before": "23d87b619f479c300268ad10b7bc64a8ddef8d100600feaa1f028f5ecd71442d",
+      "nativeSaveSha256After": "23d87b619f479c300268ad10b7bc64a8ddef8d100600feaa1f028f5ecd71442d",
+      "payloadSha256": "06e9ac9b619e5bd2128cd47d75faa5a4a521ea7d85b1aa4618ab6f5a2848387c",
+      "bytesPreserved": true,
+      "runtimeFailed": true,
+      "runtimeStatus": "Food ownership suspended: Unsupported population schema; preserve the payload.",
+      "codecStatus": "Future",
+      "codecError": "State uses a newer schema; preserve the original payload.",
+      "ownershipError": "Food ownership suspended: Unsupported population schema; preserve the payload.",
+      "awaitingPopulation": false,
+      "clockBefore": {
+        "day": 6,
+        "time": "05:46"
+      },
+      "clockAfter": {
+        "day": 6,
+        "time": "06:04"
+      },
+      "nativeOrdersStockAndCashUnchanged": true,
+      "marketCalls": {}
+    },
+    {
+      "kind": "active",
+      "result": "PASS",
+      "nativeSaveSha256Before": "4b3513a3955a3d28d37caba13f92d91a5701e73ccf54649e759cb54546dda022",
+      "nativeSaveSha256After": "4b3513a3955a3d28d37caba13f92d91a5701e73ccf54649e759cb54546dda022",
+      "payloadSha256": "82812efb39d41f06df9c062c411afaf20008510e9edeb9c50b903cb5c6647ad6",
+      "bytesPreserved": true,
+      "runtimeFailed": true,
+      "runtimeStatus": "Food ownership suspended: Unsupported active population capability or revision; preserve the payload and suspend simulation.",
+      "codecStatus": "Invalid",
+      "codecError": "Invalid state: Unsupported active population capability or revision; preserve the payload and suspend simulation.",
+      "ownershipError": "Food ownership suspended: Unsupported active population capability or revision; preserve the payload and suspend simulation.",
+      "awaitingPopulation": false,
+      "clockBefore": {
+        "day": 6,
+        "time": "05:46"
+      },
+      "clockAfter": {
+        "day": 6,
+        "time": "06:04"
+      },
+      "nativeOrdersStockAndCashUnchanged": true,
+      "marketCalls": {}
+    },
+    {
+      "kind": "tuning",
+      "result": "PASS",
+      "nativeSaveSha256Before": "64ffd84caeba1783c37b66e6176852463632554730257ab4d5e1aa3867c50762",
+      "nativeSaveSha256After": "64ffd84caeba1783c37b66e6176852463632554730257ab4d5e1aa3867c50762",
+      "payloadSha256": "5c9153398b105d2d6af30e42363bbba32dd0b35176f8ff01a58181f7201924bc",
+      "bytesPreserved": true,
+      "runtimeFailed": true,
+      "runtimeStatus": "Population save refused: Invalid state: Invalid held tuning image. Original payload retained.",
+      "codecStatus": "Invalid",
+      "codecError": "Invalid state: Invalid held tuning image.",
+      "ownershipError": "",
+      "awaitingPopulation": false,
+      "clockBefore": {
+        "day": 6,
+        "time": "08:47"
+      },
+      "clockAfter": {
+        "day": 6,
+        "time": "09:05"
+      },
+      "nativeOrdersStockAndCashUnchanged": true,
+      "marketCalls": {}
+    }
+  ],
+  "method": "Copied disposable binary saves; exact same-length UTF-16 population replacement, coordinated native load, decoder refusal, normal bridge clock advancement across the next native hour, observed native stock/order/cash invariance, read-only codec/source-hash and native file-hash verification. No refused source was saved over."
+}

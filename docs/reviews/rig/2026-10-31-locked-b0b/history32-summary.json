@@ -1,0 +1,90 @@
+{
+  "role": "rig_test",
+  "maxRetainedVisits": 32,
+  "minRetainedVisits": 0,
+  "residentsAt32": 2,
+  "residents": 957,
+  "consumers": 1914,
+  "visitCountDistribution": {
+    "0": 1,
+    "6": 9,
+    "7": 2,
+    "8": 20,
+    "9": 2,
+    "10": 39,
+    "11": 5,
+    "12": 53,
+    "13": 14,
+    "14": 89,
+    "15": 14,
+    "16": 110,
+    "17": 12,
+    "18": 151,
+    "19": 11,
+    "20": 139,
+    "21": 13,
+    "22": 107,
+    "23": 7,
+    "24": 72,
+    "25": 10,
+    "26": 36,
+    "27": 7,
+    "28": 23,
+    "30": 9,
+    "32": 2
+  },
+  "residentsWithFractionalVisitTimes": 956,
+  "allIdentitiesAndTraitsStableAcrossSoak": true,
+  "storedRoundtripExact": {
+    "normalizedEqual": true,
+    "beforeSha256": "b4b8bd18ae37dda3999e7760b18c5da82b525bd3400db4bde06304aa2845ea66",
+    "afterSha256": "b4b8bd18ae37dda3999e7760b18c5da82b525bd3400db4bde06304aa2845ea66",
+    "differenceCount": 0,
+    "differences": []
+  },
+  "capabilities": {
+    "Code": "B",
+    "Revision": 1,
+    "Active": false
+  },
+  "allConsumerMemoryEmpty": true,
+  "payloadCharacters": 5626029,
+  "payloadUtf8Bytes": 5626030,
+  "characterAndUtf8Cap": 268435456,
+  "payloadPercentOfCap": 2.0958594977855682,
+  "warning95PercentBytes": 255013683.2,
+  "records": {
+    "Item1": 48078,
+    "Item2": 48078
+  },
+  "recordCap": 4000000,
+  "warning95PercentRecords": 3800000,
+  "warningThresholdReached": false,
+  "progress": [
+    {
+      "realSeconds": 68.5930000001099,
+      "day": 10,
+      "minute": 14430.351062774658,
+      "maxVisits": 29,
+      "minVisits": 0,
+      "at32": 0,
+      "residents": 957,
+      "consumers": 1914
+    },
+    {
+      "realSeconds": 92.31199999991804,
+      "day": 11,
+      "minute": 15870.352062225342,
+      "maxVisits": 32,
+      "minVisits": 0,
+      "at32": 2,
+      "residents": 957,
+      "consumers": 1914
+    }
+  ],
+  "run": {
+    "realSeconds": 135.26499999989755,
+    "method": "Ordinary retained history from genuine coordinated native time-machine skips; no history, resident or consumer record was injected. No primary performance window runs here."
+  },
+  "limits": "Only two residents reached 32; no 5,000-consumer, ceiling, 64-visit or actual 95%-warning fixture was available. Represented consumers have their saved food state; the RecentVisits list belongs to resident anchors."
+}

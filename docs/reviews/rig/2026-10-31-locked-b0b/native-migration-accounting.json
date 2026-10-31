@@ -1,0 +1,32 @@
+{
+  "role": "rig_test",
+  "comparisons": [
+    {
+      "label": "candidate-native-after-save",
+      "allNativeObservedFieldsEqual": true,
+      "beforeSha256": "357f9353be7378b03003118e53fb15b465f05741c618b79d5ea24b86e3219c20",
+      "afterSha256": "357f9353be7378b03003118e53fb15b465f05741c618b79d5ea24b86e3219c20",
+      "cashBits": "0BC21E46",
+      "receiptCount": 57,
+      "shops": 1
+    },
+    {
+      "label": "candidate-native-reload1",
+      "allNativeObservedFieldsEqual": true,
+      "beforeSha256": "357f9353be7378b03003118e53fb15b465f05741c618b79d5ea24b86e3219c20",
+      "afterSha256": "357f9353be7378b03003118e53fb15b465f05741c618b79d5ea24b86e3219c20",
+      "cashBits": "0BC21E46",
+      "receiptCount": 57,
+      "shops": 1
+    },
+    {
+      "label": "candidate-native-reload2",
+      "allNativeObservedFieldsEqual": true,
+      "beforeSha256": "357f9353be7378b03003118e53fb15b465f05741c618b79d5ea24b86e3219c20",
+      "afterSha256": "357f9353be7378b03003118e53fb15b465f05741c618b79d5ea24b86e3219c20",
+      "cashBits": "0BC21E46",
+      "receiptCount": 57,
+      "shops": 1
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "role": "rig_test",
+  "sourceSchema": 17,
+  "targetSchema": 18,
+  "residents": 957,
+  "consumers": 1914,
+  "places": 1059,
+  "seed": -1903163055,
+  "nextResidentSequence": 558,
+  "capabilities": {
+    "Code": "B",
+    "Revision": 1,
+    "Active": false
+  },
+  "businessReferences": [],
+  "allConsumerMemoriesEmpty": true,
+  "maxRetainedVisits": 6,
+  "storedPayloadComparisonsExact": true,
+  "livePostReloadNote": "Three live loads advance the native clock by ~1 minute in total; one ordinary due event renews a resident NextEventMinute by 30 minutes. Stored-source decode comparisons above have zero field differences.",
+  "records": {
+    "Item1": 32274,
+    "Item2": 32274
+  }
+}

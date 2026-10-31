@@ -1,0 +1,173 @@
+{
+  "role": "rig_test",
+  "method": "Complete retained Player.log text scan for Persistent City stops/suspensions/unreadable/exception messages; exception stacks classified by actual first stack frame. Ordinary discovery rejection counts are not errors. Deliberately rejected save fixtures are expected and separately listed.",
+  "logs": [
+    {
+      "log": "base1-Player.private.log",
+      "expectedRefusalMessages": [],
+      "unexpectedPersistentCityMessages": [],
+      "nativeExceptionGroups": [
+        {
+          "type": "NullReferenceException",
+          "firstStackFrame": "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+          "count": 2
+        },
+        {
+          "type": "NullReferenceException",
+          "firstStackFrame": "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+          "count": 2
+        }
+      ],
+      "exceptionBlocksContainingPersistentCity": []
+    },
+    {
+      "log": "base2-final-Player.private.log",
+      "expectedRefusalMessages": [],
+      "unexpectedPersistentCityMessages": [],
+      "nativeExceptionGroups": [
+        {
+          "type": "NullReferenceException",
+          "firstStackFrame": "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+          "count": 3
+        },
+        {
+          "type": "NullReferenceException",
+          "firstStackFrame": "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+          "count": 3
+        }
+      ],
+      "exceptionBlocksContainingPersistentCity": []
+    },
+    {
+      "log": "basefinal-Player.private.log",
+      "expectedRefusalMessages": [],
+      "unexpectedPersistentCityMessages": [],
+      "nativeExceptionGroups": [
+        {
+          "type": "NullReferenceException",
+          "firstStackFrame": "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+          "count": 9
+        },
+        {
+          "type": "NullReferenceException",
+          "firstStackFrame": "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+          "count": 9
+        }
+      ],
+      "exceptionBlocksContainingPersistentCity": []
+    },
+    {
+      "log": "baseprep-Player.private.log",
+      "expectedRefusalMessages": [],
+      "unexpectedPersistentCityMessages": [],
+      "nativeExceptionGroups": [
+        {
+          "type": "NullReferenceException",
+          "firstStackFrame": "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+          "count": 5
+        },
+        {
+          "type": "NullReferenceException",
+          "firstStackFrame": "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+          "count": 5
+        }
+      ],
+      "exceptionBlocksContainingPersistentCity": []
+    },
+    {
+      "log": "baseprep2-Player.private.log",
+      "expectedRefusalMessages": [],
+      "unexpectedPersistentCityMessages": [],
+      "nativeExceptionGroups": [
+        {
+          "type": "NullReferenceException",
+          "firstStackFrame": "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+          "count": 6
+        },
+        {
+          "type": "NullReferenceException",
+          "firstStackFrame": "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+          "count": 6
+        }
+      ],
+      "exceptionBlocksContainingPersistentCity": []
+    },
+    {
+      "log": "cand1-final-Player.private.log",
+      "expectedRefusalMessages": [
+        "[Persistent City] Food ownership suspended: Unsupported population schema; preserve the payload.",
+        "[Mod:PersistentCity] Persistent City stopped: Food ownership suspended: Unsupported population schema; preserve the payload.",
+        "[Persistent City] Food ownership suspended: Unsupported population schema; preserve the payload.",
+        "[Mod:PersistentCity] Persistent City stopped: Food ownership suspended: Unsupported population schema; preserve the payload.",
+        "[Persistent City] Food ownership suspended: Unsupported active population capability or revision; preserve the payload and suspend simulation.",
+        "[Mod:PersistentCity] Persistent City stopped: Food ownership suspended: Unsupported active population capability or revision; preserve the payload and suspend simulation.",
+        "[Mod:PersistentCity] Persistent City stopped: Population save refused: Invalid state: Invalid held tuning image. Original payload retained."
+      ],
+      "unexpectedPersistentCityMessages": [],
+      "nativeExceptionGroups": [
+        {
+          "type": "NullReferenceException",
+          "firstStackFrame": "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+          "count": 20
+        },
+        {
+          "type": "NullReferenceException",
+          "firstStackFrame": "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+          "count": 20
+        },
+        {
+          "type": "NullReferenceException",
+          "firstStackFrame": "at StreetLamp+<ChangeLightSetting>d__34.MoveNext () [0x00058] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+          "count": 14
+        }
+      ],
+      "exceptionBlocksContainingPersistentCity": []
+    },
+    {
+      "log": "cand2-final-Player.private.log",
+      "expectedRefusalMessages": [],
+      "unexpectedPersistentCityMessages": [],
+      "nativeExceptionGroups": [
+        {
+          "type": "NullReferenceException",
+          "firstStackFrame": "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+          "count": 3
+        },
+        {
+          "type": "NullReferenceException",
+          "firstStackFrame": "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+          "count": 3
+        }
+      ],
+      "exceptionBlocksContainingPersistentCity": []
+    },
+    {
+      "log": "candidate-refusals-Player.private.log",
+      "expectedRefusalMessages": [
+        "[Persistent City] Food ownership suspended: Unsupported population schema; preserve the payload.",
+        "[Mod:PersistentCity] Persistent City stopped: Food ownership suspended: Unsupported population schema; preserve the payload.",
+        "[Persistent City] Food ownership suspended: Unsupported population schema; preserve the payload.",
+        "[Mod:PersistentCity] Persistent City stopped: Food ownership suspended: Unsupported population schema; preserve the payload.",
+        "[Persistent City] Food ownership suspended: Unsupported active population capability or revision; preserve the payload and suspend simulation.",
+        "[Mod:PersistentCity] Persistent City stopped: Food ownership suspended: Unsupported active population capability or revision; preserve the payload and suspend simulation.",
+        "[Mod:PersistentCity] Persistent City stopped: Population save refused: Invalid state: Invalid held tuning image. Original payload retained."
+      ],
+      "unexpectedPersistentCityMessages": [],
+      "nativeExceptionGroups": [
+        {
+          "type": "NullReferenceException",
+          "firstStackFrame": "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+          "count": 18
+        },
+        {
+          "type": "NullReferenceException",
+          "firstStackFrame": "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+          "count": 18
+        }
+      ],
+      "exceptionBlocksContainingPersistentCity": []
+    }
+  ],
+  "unexpectedPersistentCityMessageCount": 0,
+  "exceptionBlocksContainingPersistentCity": 0
+}

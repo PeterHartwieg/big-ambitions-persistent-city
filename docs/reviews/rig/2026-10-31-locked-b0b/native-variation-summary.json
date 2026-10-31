@@ -1,0 +1,373 @@
+{
+  "role": "rig_test",
+  "reason": "One additional A3 native replay after the second control frame window checks whether live counter drift is also present without a candidate change. No additional performance window was run.",
+  "rows": [
+    {
+      "label": "control-midnight-save-export",
+      "clockRate": 0.33333335140706144,
+      "minute": 10110.009708404541,
+      "day6": {
+        "OffersConsidered": 5640,
+        "ChosenOffers": 55,
+        "ServiceRejections": 3694,
+        "PreferredAlternatives": 25,
+        "Purchases": 42,
+        "Revenue": {
+          "Units": 11559303168000
+        }
+      },
+      "foodHistorySha256": "6c8327a66a5f0ba8f042f1863ec137661430ee1825c5cd13b3c1b0eecdde3bad",
+      "identityAndTraitsSha256": "f02d9a3bf774c0ad7bda6f6cc48e7e74b0aa0ee55bce031ca2de106d35f8bdbe",
+      "consumerMoneySha256": "f0fd8fbe5639bafafca19ffdc157a6b397ecd97e64d2029c8d0a14916ee29ee4"
+    },
+    {
+      "label": "base-repeat-save-export",
+      "clockRate": 0.33333334015568383,
+      "minute": 10110.01220703125,
+      "day6": {
+        "OffersConsidered": 5642,
+        "ChosenOffers": 55,
+        "ServiceRejections": 3696,
+        "PreferredAlternatives": 25,
+        "Purchases": 42,
+        "Revenue": {
+          "Units": 11559303168000
+        }
+      },
+      "foodHistorySha256": "415e346efb155ba451951b0d1af8d482313c33d16011af8423ce42a319a73094",
+      "identityAndTraitsSha256": "f02d9a3bf774c0ad7bda6f6cc48e7e74b0aa0ee55bce031ca2de106d35f8bdbe",
+      "consumerMoneySha256": "f0fd8fbe5639bafafca19ffdc157a6b397ecd97e64d2029c8d0a14916ee29ee4"
+    },
+    {
+      "label": "candidate-midnight-save-export",
+      "clockRate": 0.3333333421049806,
+      "minute": 10110.016729354858,
+      "day6": {
+        "OffersConsidered": 5642,
+        "ChosenOffers": 54,
+        "ServiceRejections": 3696,
+        "PreferredAlternatives": 26,
+        "Purchases": 42,
+        "Revenue": {
+          "Units": 11559303168000
+        }
+      },
+      "foodHistorySha256": "7410fffe8d632ef374e0f8fe0baf086bcf456b2c3024736e09a5202f87197b79",
+      "identityAndTraitsSha256": "f02d9a3bf774c0ad7bda6f6cc48e7e74b0aa0ee55bce031ca2de106d35f8bdbe",
+      "consumerMoneySha256": "f0fd8fbe5639bafafca19ffdc157a6b397ecd97e64d2029c8d0a14916ee29ee4"
+    }
+  ],
+  "nativeObservationsAllEqual": true,
+  "consumerMoneyAllEqual": true,
+  "identityAndTraitsAllEqual": true,
+  "a3HistoryChangesWithoutCodeChange": true,
+  "fullStateA3RepeatComparison": {
+    "normalizedEqual": false,
+    "beforeSha256": "eb73ca5993b4cf3447bec06e51618a1b0c9bbb70538bb3f88085a662ea795125",
+    "afterSha256": "f7aa359369b8c500724ee68fdece2660fa64728f1865f86825a6c75e3474f726",
+    "differenceCount": 35381,
+    "differences": [
+      {
+        "path": "/Citizens/0/Journey/EstimatedMinutes",
+        "before": 80.29657821626809,
+        "after": 80.30113554919697
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/3/Minutes",
+        "before": 8.687881372341089,
+        "after": 8.693351648219995
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/3/To/X",
+        "before": -423.4003971889672,
+        "after": -423.39878697669036
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/3/To/Y",
+        "before": -0.43180113270924503,
+        "after": -0.43116002901106487
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/3/To/Z",
+        "before": -236.09340723367762,
+        "after": -236.08821877334114
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/4/From/X",
+        "before": -423.4003971889672,
+        "after": -423.39878697669036
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/4/From/Y",
+        "before": -0.43180113270924503,
+        "after": -0.43116002901106487
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/4/From/Z",
+        "before": -236.09340723367762,
+        "after": -236.08821877334114
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/4/Minutes",
+        "before": 0.6922796617316531,
+        "after": 0.6913679256992104
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/5/Minutes",
+        "before": 0.049495463309359986,
+        "after": 0.04949546163868363
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/6/Minutes",
+        "before": 1.1528184511048247,
+        "after": 1.1528184121924396
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/7/Minutes",
+        "before": 0.04949905997128734,
+        "after": 0.04949905830048958
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/8/Minutes",
+        "before": 0.05833231925244633,
+        "after": 0.05833231728348958
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/9/Minutes",
+        "before": 0.06599634876665861,
+        "after": 0.0659963465390092
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/10/Minutes",
+        "before": 1.6019043069745103,
+        "after": 1.6019042529036225
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/12/Minutes",
+        "before": 0.09366638978512225,
+        "after": 0.09366638662349465
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/13/Minutes",
+        "before": 8.83657983465963,
+        "after": 8.836579536388557
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/14/Minutes",
+        "before": 0.09363520111716955,
+        "after": 0.09363519795659471
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/15/Minutes",
+        "before": 0.20881940459113355,
+        "after": 0.208819397542616
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/16/Minutes",
+        "before": 0.049500408590890846,
+        "after": 0.04950040692004757
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/17/Minutes",
+        "before": 0.6883240119311161,
+        "after": 0.6883239886973372
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/18/Minutes",
+        "before": 0.422587945734707,
+        "after": 0.42258793147061813
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/19/Minutes",
+        "before": 2.4383900995751264,
+        "after": 2.4383900172693873
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/20/Minutes",
+        "before": 7.6766857146514225,
+        "after": 7.676685454565312
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/20/To/Y",
+        "before": 0.01999664306640625,
+        "after": 0.020000457763671875
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/21/From/Y",
+        "before": 0.01999664306640625,
+        "after": 0.020000457763671875
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/21/Minutes",
+        "before": 4.0065804809936205,
+        "after": 4.006580345754978
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/21/To/Y",
+        "before": 0.01999664306640625,
+        "after": 0.020000457763671875
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/22/From/Y",
+        "before": 0.01999664306640625,
+        "after": 0.020000457763671875
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/22/Minutes",
+        "before": 0.06599634876665861,
+        "after": 0.0659963465390092
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/22/To/Y",
+        "before": 0.01999664306640625,
+        "after": 0.020000457763671875
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/23/From/Y",
+        "before": 0.01999664306640625,
+        "after": 0.020000457763671875
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/23/Minutes",
+        "before": 3.382348284622731,
+        "after": 3.3823481660682972
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/23/To/Y",
+        "before": 0.09000396728515625,
+        "after": 0.09000015258789062
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/24/From/Y",
+        "before": 0.09000396728515625,
+        "after": 0.09000015258789062
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/24/Minutes",
+        "before": 0.06599634876665861,
+        "after": 0.0659963465390092
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/24/To/Y",
+        "before": 0.09000396728515625,
+        "after": 0.09000015258789062
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/25/From/Y",
+        "before": 0.09000396728515625,
+        "after": 0.09000015258789062
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/25/Minutes",
+        "before": 0.9044462496118604,
+        "after": 0.9044462190830632
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/25/To/Y",
+        "before": 0.09000396728515625,
+        "after": 0.09000015258789062
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/26/From/Y",
+        "before": 0.09000396728515625,
+        "after": 0.09000015258789062
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/26/Minutes",
+        "before": 1.4429954190734695,
+        "after": 1.4429953703664131
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/26/To/Y",
+        "before": 0.09000015258789062,
+        "after": 0.09000396728515625
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/27/From/Y",
+        "before": 0.09000015258789062,
+        "after": 0.09000396728515625
+      },
+      {
+        "path": "/Citizens/0/Journey/Legs/27/Minutes",
+        "before": 2.2429770587553555,
+        "after": 2.242976983045704
+      },
+      {
+        "path": "/Citizens/0/Journey/Minutes",
+        "before": 80.29657821626809,
+        "after": 80.30113554919697
+      },
+      {
+        "path": "/Citizens/0/NextEventMinute",
+        "before": 10149.296578216268,
+        "after": 10149.301135549196
+      },
+      {
+        "path": "/Citizens/0/OptionalStopChoice",
+        "before": null,
+        "after": true
+      },
+      {
+        "path": "/Citizens/0/RecentVisits/2/AtMinute",
+        "before": 10006.901698949401,
+        "after": 10006.90169894405
+      },
+      {
+        "path": "/Citizens/3/RecentVisits/4/AtMinute",
+        "before": 9692.188466113379,
+        "after": 9692.18846611338
+      },
+      {
+        "path": "/Citizens/5/RecentVisits/4/AtMinute",
+        "before": 9324.135571270377,
+        "after": 9324.135571270388
+      },
+      {
+        "path": "/Citizens/5/RecentVisits/5/AtMinute",
+        "before": 9369.135571270377,
+        "after": 9369.135571270388
+      },
+      {
+        "path": "/Citizens/9/Journey/EstimatedMinutes",
+        "before": 71.62344795830992,
+        "after": 71.62800511678736
+      },
+      {
+        "path": "/Citizens/9/Journey/Legs/1/Minutes",
+        "before": 11.76521122228666,
+        "after": 11.765211222287277
+      },
+      {
+        "path": "/Citizens/9/Journey/Legs/1/To/Y",
+        "before": 0.09000015258789062,
+        "after": 0.09000396728515625
+      },
+      {
+        "path": "/Citizens/9/Journey/Legs/2/From/Y",
+        "before": 0.09000015258789062,
+        "after": 0.09000396728515625
+      },
+      {
+        "path": "/Citizens/9/Journey/Legs/2/To/Y",
+        "before": 0.09000015258789062,
+        "after": 0.09000396728515625
+      },
+      {
+        "path": "/Citizens/9/Journey/Legs/3/From/Y",
+        "before": 0.09000015258789062,
+        "after": 0.09000396728515625
+      },
+      {
+        "path": "/Citizens/9/Journey/Legs/3/Minutes",
+        "before": 10.68635544418945,
+        "after": 10.691825720067738
+      },
+      {
+        "path": "/Citizens/9/Journey/Legs/3/To/X",
+        "before": 126.57363987812417,
+        "after": 126.5743674616156
+      }
+    ]
+  },
+  "interpretation": "The unchanged A3 repeat also differs in live nonfinancial history counters and geometry/timing. Native observations, all consumer money, identities and traits agree across all three runs. The cause of every live choice/counter difference is not isolated; full live bitwise determinism is not claimed. Stored migration/reload comparisons and frozen held inputs are exact."
+}

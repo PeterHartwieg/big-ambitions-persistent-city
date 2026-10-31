@@ -1,0 +1,51 @@
+{
+  "role": "rig_test",
+  "method": "Actual completed native compressed hsg files, observed outside primary performance windows. No native save binary is committed.",
+  "files": [
+    {
+      "name": "Control17",
+      "nativeFileBytes": 1271599,
+      "sha256": "f247b4a0885dd08ae726e9a40dd3dbfabd5442c50fd4d8bfc819a533c68f46a2"
+    },
+    {
+      "name": "Schema18",
+      "nativeFileBytes": 1197682,
+      "sha256": "45169098dc4756215290a14fc1cc0f9de7465440f695da27f451c4ac6d8f68ee"
+    },
+    {
+      "name": "Schema18 Roundtrip",
+      "nativeFileBytes": 1197694,
+      "sha256": "ca57d0abaac337945b2dc025302155edcdff70825d671359b159aec6953554ea"
+    },
+    {
+      "name": "Schema18 Twice",
+      "nativeFileBytes": 1197691,
+      "sha256": "c63dfc987e6aa84f448f460d5e6fcb08b7462fa34acae6e939fda4fb575a19bf"
+    },
+    {
+      "name": "Candidate18 Partial",
+      "nativeFileBytes": 1241019,
+      "sha256": "efde5aa182e7b2ccf84c07d994e06e8ea93510b21dc10ebf8ca3c87ab32a2c2c"
+    },
+    {
+      "name": "History32",
+      "nativeFileBytes": 1536708,
+      "sha256": "fda22c907c8e4046e7b99d89406c84e5537e50c143d0586d22eebbd3053300f3"
+    },
+    {
+      "name": "History32 Roundtrip",
+      "nativeFileBytes": 1536743,
+      "sha256": "14481ac3fca3272c4588c5624249b7fe84dc7fb71c4a7c77733d449bdc4bf829"
+    },
+    {
+      "name": "FinalControl17",
+      "nativeFileBytes": 1271604,
+      "sha256": "c0b8ebdfa046adadab7020a67a8f25d022902b468453fe177fec9f73459266c6"
+    },
+    {
+      "name": "FinalSchema18",
+      "nativeFileBytes": 1197685,
+      "sha256": "af9decb71b23d0bd1ae5d269aa45f8b38193f539f39bc92a5fd8639ed380c2da"
+    }
+  ]
+}

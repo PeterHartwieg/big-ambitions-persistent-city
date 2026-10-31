@@ -1,0 +1,1424 @@
+{
+  "role": "rig_test",
+  "scope": "Same-frame Update/native-authority union plus whole PopulationRuntime.OnGUI, including inspector. Nested component times are not summed. Other hook bodies outside those scopes remain outside this gate measurement.",
+  "percentile": "floor(n*q), raw distributions verified against the bridge report before adding GUI",
+  "windows": [
+    {
+      "window": "base1",
+      "seconds": 60.1144505,
+      "modWork": {
+        "samples": 5034,
+        "p50": 0.3703,
+        "p95": 0.5765,
+        "maximum": 18.485699999999998
+      },
+      "updateAuthorityUnion": {
+        "samples": 5034,
+        "p50": 0.3657,
+        "p95": 0.5694,
+        "maximum": 18.479
+      },
+      "wholeFrame": {
+        "samples": 5035,
+        "p50": 11.7584,
+        "p95": 16.8455,
+        "maximum": 93.3824
+      },
+      "wholeFrameStalls": {
+        "framesOver50ms": 1,
+        "framesOver100ms": 0,
+        "framesOver250ms": 0
+      },
+      "modSpikesGe30ms": [],
+      "p95GatePass": true,
+      "cleanNoSave": true,
+      "autosaveOffBeforeAfter": true,
+      "nativeMinutes": 20.08523464202881,
+      "populationLag": 0.0,
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321686,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 179.999725,
+            "z": 9.599641e-12
+          }
+        }
+      },
+      "gcCollections": [
+        2,
+        2,
+        2
+      ],
+      "rawObservations": {
+        "Count": 5035,
+        "Capacity": 65536,
+        "MarshaledStorageEstimateBytes": 7864320,
+        "Dropped": 0,
+        "Duplicates": 0,
+        "InvalidOrder": 0,
+        "SkippedUnityFrames": 0,
+        "stopwatchFrequency": 10000000,
+        "terminationObservedTicks": 9797261308,
+        "discardedLifecycleTailTicks": 0,
+        "unobservedTailTicks": 80445,
+        "initialIntervalPartial": true,
+        "currentModFrameExcluded": true,
+        "outstandingPrimaryScopes": 0
+      },
+      "evidence": {
+        "mod-work": {
+          "file": "frames-mod-work-base1-stop-a55267.csv.gz",
+          "sha256": "625c706f343ca8436e8418321ba25fe092dd40e1e37723b2b68c6bd7e974e53e"
+        },
+        "observations": {
+          "file": "frames-observations-base1-stop-a55267.csv.gz",
+          "sha256": "150b28cac92339a138efd2b4cf0d694923f16a043b6f8f110968a45d09f159f3"
+        }
+      },
+      "systemLoad": {
+        "load-before": {
+          "utc": "2026-10-31T18:51:07Z",
+          "cpuTotalPercent": 82.0,
+          "counts": {
+            "dotnet": 2,
+            "testhost": 0,
+            "codex": 8,
+            "python": 9
+          },
+          "ramAvailableGiB": 23.33102798461914,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 52124,
+              "name": "vmmemWSL",
+              "cpuSecondsDelta": 36.78125,
+              "ramMiB": 9956.3125
+            },
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 14.625,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 9268,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 12.21875,
+              "ramMiB": 1194.05078125
+            },
+            {
+              "pid": 18260,
+              "name": "python.exe",
+              "cpuSecondsDelta": 2.8125,
+              "ramMiB": 26.05078125
+            },
+            {
+              "pid": 3476,
+              "name": "MemCompression",
+              "cpuSecondsDelta": 1.890625,
+              "ramMiB": 746.546875
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.796875,
+              "ramMiB": 41.75390625
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.609375,
+              "ramMiB": 388.94140625
+            },
+            {
+              "pid": 17952,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.328125,
+              "ramMiB": 891.48828125
+            },
+            {
+              "pid": 13356,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.265625,
+              "ramMiB": 16.8359375
+            },
+            {
+              "pid": 8156,
+              "name": "SearchIndexer.exe",
+              "cpuSecondsDelta": 0.125,
+              "ramMiB": 205.37890625
+            },
+            {
+              "pid": 44060,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 51.07421875
+            },
+            {
+              "pid": 36200,
+              "name": "Discord.exe",
+              "cpuSecondsDelta": 0.078125,
+              "ramMiB": 402.7890625
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-during": {
+          "utc": "2026-10-31T18:53:15Z",
+          "cpuTotalPercent": 60.1,
+          "counts": {
+            "dotnet": 4,
+            "testhost": 1,
+            "codex": 6,
+            "python": 9
+          },
+          "ramAvailableGiB": 22.473541259765625,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 24.046875,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 9268,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 11.671875,
+              "ramMiB": 4037.50390625
+            },
+            {
+              "pid": 28240,
+              "name": "testhost.exe",
+              "cpuSecondsDelta": 2.890625,
+              "ramMiB": 4142.4296875
+            },
+            {
+              "pid": 17952,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 2.25,
+              "ramMiB": 877.4296875
+            },
+            {
+              "pid": 45368,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.875,
+              "ramMiB": 26.203125
+            },
+            {
+              "pid": 18260,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.8125,
+              "ramMiB": 27.55859375
+            },
+            {
+              "pid": 3476,
+              "name": "MemCompression",
+              "cpuSecondsDelta": 1.359375,
+              "ramMiB": 2290.90234375
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.375,
+              "ramMiB": 415.5390625
+            },
+            {
+              "pid": 44396,
+              "name": "WmiPrvSE.exe",
+              "cpuSecondsDelta": 0.296875,
+              "ramMiB": 17.58984375
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.15625,
+              "ramMiB": 41.7578125
+            },
+            {
+              "pid": 52124,
+              "name": "vmmemWSL",
+              "cpuSecondsDelta": 0.109375,
+              "ramMiB": 1957.38671875
+            },
+            {
+              "pid": 13356,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 16.796875
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-after": {
+          "utc": "2026-10-31T18:53:15Z",
+          "cpuTotalPercent": 59.2,
+          "counts": {
+            "dotnet": 4,
+            "testhost": 1,
+            "codex": 6,
+            "python": 9
+          },
+          "ramAvailableGiB": 22.473628997802734,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 24.8125,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 9268,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 11.921875,
+              "ramMiB": 4037.50390625
+            },
+            {
+              "pid": 28240,
+              "name": "testhost.exe",
+              "cpuSecondsDelta": 3.0,
+              "ramMiB": 4142.4296875
+            },
+            {
+              "pid": 17952,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 2.3125,
+              "ramMiB": 877.625
+            },
+            {
+              "pid": 45368,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.9375,
+              "ramMiB": 26.203125
+            },
+            {
+              "pid": 18260,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.890625,
+              "ramMiB": 27.55859375
+            },
+            {
+              "pid": 3476,
+              "name": "MemCompression",
+              "cpuSecondsDelta": 1.390625,
+              "ramMiB": 2292.77734375
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.40625,
+              "ramMiB": 415.5234375
+            },
+            {
+              "pid": 44396,
+              "name": "WmiPrvSE.exe",
+              "cpuSecondsDelta": 0.296875,
+              "ramMiB": 17.58984375
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.15625,
+              "ramMiB": 41.7578125
+            },
+            {
+              "pid": 52124,
+              "name": "vmmemWSL",
+              "cpuSecondsDelta": 0.109375,
+              "ramMiB": 1957.38671875
+            },
+            {
+              "pid": 13356,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 16.796875
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        }
+      },
+      "underDotnetOrTesthostLoad": true
+    },
+    {
+      "window": "cand1",
+      "seconds": 60.2489233,
+      "modWork": {
+        "samples": 5352,
+        "p50": 0.4932,
+        "p95": 0.6364,
+        "maximum": 4.1086
+      },
+      "updateAuthorityUnion": {
+        "samples": 5352,
+        "p50": 0.489,
+        "p95": 0.632,
+        "maximum": 4.1035
+      },
+      "wholeFrame": {
+        "samples": 5353,
+        "p50": 11.1796,
+        "p95": 12.7619,
+        "maximum": 64.6662
+      },
+      "wholeFrameStalls": {
+        "framesOver50ms": 1,
+        "framesOver100ms": 0,
+        "framesOver250ms": 0
+      },
+      "modSpikesGe30ms": [],
+      "p95GatePass": true,
+      "cleanNoSave": true,
+      "autosaveOffBeforeAfter": true,
+      "nativeMinutes": 20.139741897583008,
+      "populationLag": 0.0,
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321686,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 179.9997,
+            "z": 0.0
+          }
+        }
+      },
+      "gcCollections": [
+        2,
+        2,
+        2
+      ],
+      "rawObservations": {
+        "Count": 5353,
+        "Capacity": 65536,
+        "MarshaledStorageEstimateBytes": 7864320,
+        "Dropped": 0,
+        "Duplicates": 0,
+        "InvalidOrder": 0,
+        "SkippedUnityFrames": 0,
+        "stopwatchFrequency": 10000000,
+        "terminationObservedTicks": 12053904808,
+        "discardedLifecycleTailTicks": 0,
+        "unobservedTailTicks": 78779,
+        "initialIntervalPartial": true,
+        "currentModFrameExcluded": true,
+        "outstandingPrimaryScopes": 0
+      },
+      "evidence": {
+        "mod-work": {
+          "file": "frames-mod-work-cand1-stop-7330a0.csv.gz",
+          "sha256": "f63178006b6641f17efeecc2206cc8d5d243ea00683defaa45fab4e950059054"
+        },
+        "observations": {
+          "file": "frames-observations-cand1-stop-7330a0.csv.gz",
+          "sha256": "7de4f9961bf0366bdf0f48213b4eb21ea28b455d318dc7a5823babd96d4ebe00"
+        }
+      },
+      "systemLoad": {
+        "load-before": {
+          "utc": "2026-10-31T19:44:20Z",
+          "cpuTotalPercent": 29.4,
+          "counts": {
+            "dotnet": 2,
+            "testhost": 0,
+            "codex": 12,
+            "python": 10
+          },
+          "ramAvailableGiB": 33.26551055908203,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 40.28125,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 51020,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 12.109375,
+              "ramMiB": 1031.37890625
+            },
+            {
+              "pid": 50376,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.78125,
+              "ramMiB": 26.578125
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.875,
+              "ramMiB": 461.12890625
+            },
+            {
+              "pid": 17952,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.40625,
+              "ramMiB": 956.46875
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.15625,
+              "ramMiB": 41.94921875
+            },
+            {
+              "pid": 45224,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 177.31640625
+            },
+            {
+              "pid": 49876,
+              "name": "codex.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 134.0234375
+            },
+            {
+              "pid": 1704,
+              "name": "lsass.exe",
+              "cpuSecondsDelta": 0.015625,
+              "ramMiB": 47.78515625
+            },
+            {
+              "pid": 2064,
+              "name": "tailscaled.exe",
+              "cpuSecondsDelta": 0.015625,
+              "ramMiB": 122.14453125
+            },
+            {
+              "pid": 2700,
+              "name": "tailscale-ipn.exe",
+              "cpuSecondsDelta": 0.015625,
+              "ramMiB": 51.4296875
+            },
+            {
+              "pid": 3108,
+              "name": "NVDisplay.Container.exe",
+              "cpuSecondsDelta": 0.015625,
+              "ramMiB": 27.18359375
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-window-start": {
+          "utc": "2026-10-31T19:45:20Z",
+          "cpuTotalPercent": 33.8,
+          "counts": {
+            "dotnet": 6,
+            "testhost": 1,
+            "codex": 12,
+            "python": 11
+          },
+          "ramAvailableGiB": 27.11066436767578,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 35.34375,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 51020,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 17.15625,
+              "ramMiB": 4345.1328125
+            },
+            {
+              "pid": 41548,
+              "name": "testhost.exe",
+              "cpuSecondsDelta": 8.296875,
+              "ramMiB": 2612.89453125
+            },
+            {
+              "pid": 50376,
+              "name": "python.exe",
+              "cpuSecondsDelta": 2.53125,
+              "ramMiB": 28.59375
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.109375,
+              "ramMiB": 41.94921875
+            },
+            {
+              "pid": 17952,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 928.984375
+            },
+            {
+              "pid": 45224,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 176.58984375
+            },
+            {
+              "pid": 8020,
+              "name": "codex.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 81.31640625
+            },
+            {
+              "pid": 36200,
+              "name": "Discord.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 401.71875
+            },
+            {
+              "pid": 41940,
+              "name": "OneDrive.Sync.Service.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 62.77734375
+            },
+            {
+              "pid": 49876,
+              "name": "codex.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 106.86328125
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.015625,
+              "ramMiB": 447.3203125
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-after": {
+          "utc": "2026-10-31T19:46:27Z",
+          "cpuTotalPercent": 28.8,
+          "counts": {
+            "dotnet": 6,
+            "testhost": 1,
+            "codex": 12,
+            "python": 10
+          },
+          "ramAvailableGiB": 26.007610321044922,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 38.84375,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 51020,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 10.875,
+              "ramMiB": 4363.08984375
+            },
+            {
+              "pid": 41548,
+              "name": "testhost.exe",
+              "cpuSecondsDelta": 2.734375,
+              "ramMiB": 3847.1875
+            },
+            {
+              "pid": 50376,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.71875,
+              "ramMiB": 28.1484375
+            },
+            {
+              "pid": 17952,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.1875,
+              "ramMiB": 962.5859375
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.109375,
+              "ramMiB": 41.94921875
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 512.8125
+            },
+            {
+              "pid": 1920,
+              "name": "ChatGPT.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 305.4453125
+            },
+            {
+              "pid": 2064,
+              "name": "tailscaled.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 122.16015625
+            },
+            {
+              "pid": 3108,
+              "name": "NVDisplay.Container.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 27.18359375
+            },
+            {
+              "pid": 2700,
+              "name": "tailscale-ipn.exe",
+              "cpuSecondsDelta": 0.015625,
+              "ramMiB": 51.4296875
+            },
+            {
+              "pid": 3172,
+              "name": "svchost.exe",
+              "cpuSecondsDelta": 0.015625,
+              "ramMiB": 9.2109375
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        }
+      },
+      "underDotnetOrTesthostLoad": true
+    },
+    {
+      "window": "base2",
+      "seconds": 60.2438346,
+      "modWork": {
+        "samples": 5325,
+        "p50": 0.5770000000000001,
+        "p95": 0.7472,
+        "maximum": 19.569799999999997
+      },
+      "updateAuthorityUnion": {
+        "samples": 5325,
+        "p50": 0.5732,
+        "p95": 0.7429,
+        "maximum": 19.5663
+      },
+      "wholeFrame": {
+        "samples": 5326,
+        "p50": 11.2865,
+        "p95": 13.2324,
+        "maximum": 46.3265
+      },
+      "wholeFrameStalls": {
+        "framesOver50ms": 0,
+        "framesOver100ms": 0,
+        "framesOver250ms": 0
+      },
+      "modSpikesGe30ms": [],
+      "p95GatePass": true,
+      "cleanNoSave": true,
+      "autosaveOffBeforeAfter": true,
+      "nativeMinutes": 20.125768423080444,
+      "populationLag": 0.0,
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321686,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 179.999619,
+            "z": 1.91992863e-11
+          }
+        }
+      },
+      "gcCollections": [
+        2,
+        2,
+        2
+      ],
+      "rawObservations": {
+        "Count": 5326,
+        "Capacity": 65536,
+        "MarshaledStorageEstimateBytes": 7864320,
+        "Dropped": 0,
+        "Duplicates": 0,
+        "InvalidOrder": 0,
+        "SkippedUnityFrames": 0,
+        "stopwatchFrequency": 10000000,
+        "terminationObservedTicks": 12105132174,
+        "discardedLifecycleTailTicks": 0,
+        "unobservedTailTicks": 72440,
+        "initialIntervalPartial": true,
+        "currentModFrameExcluded": true,
+        "outstandingPrimaryScopes": 0
+      },
+      "evidence": {
+        "mod-work": {
+          "file": "frames-mod-work-base2-stop-422395.csv.gz",
+          "sha256": "839c46f347f4792ff1afe1ec613ad1b4936e48892253704206198ae921491fb1"
+        },
+        "observations": {
+          "file": "frames-observations-base2-stop-422395.csv.gz",
+          "sha256": "2c9f4ba412c2c463c4c175f185cafc0051a327beee427997ac69cd91350295d6"
+        }
+      },
+      "systemLoad": {
+        "load-before": {
+          "utc": "2026-10-31T20:26:23Z",
+          "cpuTotalPercent": 80.3,
+          "counts": {
+            "dotnet": 1,
+            "testhost": 0,
+            "codex": 10,
+            "python": 9
+          },
+          "ramAvailableGiB": 22.56772232055664,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 34124,
+              "name": "vmmemWSL",
+              "cpuSecondsDelta": 41.90625,
+              "ramMiB": 9844.87890625
+            },
+            {
+              "pid": 38108,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 19.640625,
+              "ramMiB": 1228.546875
+            },
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 12.5,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 10656,
+              "name": "python.exe",
+              "cpuSecondsDelta": 2.984375,
+              "ramMiB": 26.953125
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 1.171875,
+              "ramMiB": 473.83203125
+            },
+            {
+              "pid": 17952,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.84375,
+              "ramMiB": 1022.1796875
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.375,
+              "ramMiB": 41.9765625
+            },
+            {
+              "pid": 51236,
+              "name": "WmiPrvSE.exe",
+              "cpuSecondsDelta": 0.28125,
+              "ramMiB": 18.94921875
+            },
+            {
+              "pid": 13356,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.21875,
+              "ramMiB": 16.96875
+            },
+            {
+              "pid": 45224,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.109375,
+              "ramMiB": 181.78125
+            },
+            {
+              "pid": 23812,
+              "name": "explorer.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 340.49609375
+            },
+            {
+              "pid": 33032,
+              "name": "python.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 60.375
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-window-start": {
+          "utc": "2026-10-31T20:28:41Z",
+          "cpuTotalPercent": 35.6,
+          "counts": {
+            "dotnet": 5,
+            "testhost": 1,
+            "codex": 12,
+            "python": 9
+          },
+          "ramAvailableGiB": 22.023639678955078,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 36.546875,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 38108,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 14.328125,
+              "ramMiB": 4138.48046875
+            },
+            {
+              "pid": 51144,
+              "name": "testhost.exe",
+              "cpuSecondsDelta": 3.546875,
+              "ramMiB": 1676.71484375
+            },
+            {
+              "pid": 10656,
+              "name": "python.exe",
+              "cpuSecondsDelta": 2.40625,
+              "ramMiB": 28.359375
+            },
+            {
+              "pid": 3476,
+              "name": "MemCompression",
+              "cpuSecondsDelta": 2.359375,
+              "ramMiB": 1668.0859375
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 1.03125,
+              "ramMiB": 487.50390625
+            },
+            {
+              "pid": 9752,
+              "name": "agent-cli.exe",
+              "cpuSecondsDelta": 0.625,
+              "ramMiB": 231.203125
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.515625,
+              "ramMiB": 41.98046875
+            },
+            {
+              "pid": 34124,
+              "name": "vmmemWSL",
+              "cpuSecondsDelta": 0.1875,
+              "ramMiB": 4214.703125
+            },
+            {
+              "pid": 17952,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 1019.69140625
+            },
+            {
+              "pid": 14136,
+              "name": "codex.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 81.9765625
+            },
+            {
+              "pid": 31888,
+              "name": "csrss.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 11.48046875
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-after": {
+          "utc": "2026-10-31T20:29:49Z",
+          "cpuTotalPercent": 46.2,
+          "counts": {
+            "dotnet": 5,
+            "testhost": 1,
+            "codex": 12,
+            "python": 10
+          },
+          "ramAvailableGiB": 23.984264373779297,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 33.625,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 38108,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 15.046875,
+              "ramMiB": 3562.83984375
+            },
+            {
+              "pid": 51144,
+              "name": "testhost.exe",
+              "cpuSecondsDelta": 3.3125,
+              "ramMiB": 1675.8125
+            },
+            {
+              "pid": 21460,
+              "name": "vmmemWSL",
+              "cpuSecondsDelta": 2.96875,
+              "ramMiB": 3446.94140625
+            },
+            {
+              "pid": 10656,
+              "name": "python.exe",
+              "cpuSecondsDelta": 2.15625,
+              "ramMiB": 29.859375
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 1.140625,
+              "ramMiB": 658.8828125
+            },
+            {
+              "pid": 16980,
+              "name": "bash.exe",
+              "cpuSecondsDelta": 0.75,
+              "ramMiB": 10.17578125
+            },
+            {
+              "pid": 17952,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.390625,
+              "ramMiB": 1047.52734375
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.375,
+              "ramMiB": 41.98046875
+            },
+            {
+              "pid": 23240,
+              "name": "python.exe",
+              "cpuSecondsDelta": 0.203125,
+              "ramMiB": 17.29296875
+            },
+            {
+              "pid": 13356,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.109375,
+              "ramMiB": 17.046875
+            },
+            {
+              "pid": 6956,
+              "name": "svchost.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 30.265625
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        }
+      },
+      "underDotnetOrTesthostLoad": true
+    },
+    {
+      "window": "cand2",
+      "seconds": 60.2411347,
+      "modWork": {
+        "samples": 5298,
+        "p50": 0.6611,
+        "p95": 0.855,
+        "maximum": 22.4806
+      },
+      "updateAuthorityUnion": {
+        "samples": 5298,
+        "p50": 0.6571,
+        "p95": 0.8511,
+        "maximum": 22.4762
+      },
+      "wholeFrame": {
+        "samples": 5299,
+        "p50": 11.1792,
+        "p95": 13.2341,
+        "maximum": 63.9286
+      },
+      "wholeFrameStalls": {
+        "framesOver50ms": 2,
+        "framesOver100ms": 0,
+        "framesOver250ms": 0
+      },
+      "modSpikesGe30ms": [],
+      "p95GatePass": true,
+      "cleanNoSave": true,
+      "autosaveOffBeforeAfter": true,
+      "nativeMinutes": 20.119832396507263,
+      "populationLag": 0.0,
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321686,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 180.0004,
+            "z": -1.91992863e-11
+          }
+        }
+      },
+      "gcCollections": [
+        2,
+        2,
+        2
+      ],
+      "rawObservations": {
+        "Count": 5299,
+        "Capacity": 65536,
+        "MarshaledStorageEstimateBytes": 7864320,
+        "Dropped": 0,
+        "Duplicates": 0,
+        "InvalidOrder": 0,
+        "SkippedUnityFrames": 0,
+        "stopwatchFrequency": 10000000,
+        "terminationObservedTicks": 11749023816,
+        "discardedLifecycleTailTicks": 0,
+        "unobservedTailTicks": 79769,
+        "initialIntervalPartial": true,
+        "currentModFrameExcluded": true,
+        "outstandingPrimaryScopes": 0
+      },
+      "evidence": {
+        "mod-work": {
+          "file": "frames-mod-work-cand2-stop-ca6dcf.csv.gz",
+          "sha256": "21d989926b858688f5cbf9708d1ec0fe97a9936e093ad5d86275a2ebda5541ac"
+        },
+        "observations": {
+          "file": "frames-observations-cand2-stop-ca6dcf.csv.gz",
+          "sha256": "d25a29eff65d9689de4350fc338f0639d80bd8fe50b3d3c9a98049bc07c2f5ef"
+        }
+      },
+      "systemLoad": {
+        "load-before": {
+          "utc": "2026-10-31T20:51:29Z",
+          "cpuTotalPercent": 30.0,
+          "counts": {
+            "dotnet": 5,
+            "testhost": 1,
+            "codex": 8,
+            "python": 8
+          },
+          "ramAvailableGiB": 29.144081115722656,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 41.390625,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 45116,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 11.75,
+              "ramMiB": 1012.02734375
+            },
+            {
+              "pid": 39116,
+              "name": "testhost.exe",
+              "cpuSecondsDelta": 2.734375,
+              "ramMiB": 3707.45703125
+            },
+            {
+              "pid": 35332,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.53125,
+              "ramMiB": 27.72265625
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.84375,
+              "ramMiB": 475.15234375
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.1875,
+              "ramMiB": 41.9921875
+            },
+            {
+              "pid": 23812,
+              "name": "explorer.exe",
+              "cpuSecondsDelta": 0.171875,
+              "ramMiB": 340.96484375
+            },
+            {
+              "pid": 17952,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 1007.7421875
+            },
+            {
+              "pid": 36200,
+              "name": "Discord.exe",
+              "cpuSecondsDelta": 0.078125,
+              "ramMiB": 399.07421875
+            },
+            {
+              "pid": 8208,
+              "name": "steam.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 177.88671875
+            },
+            {
+              "pid": 36744,
+              "name": "dwm.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 154.984375
+            },
+            {
+              "pid": 42980,
+              "name": "agent-cli.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 254.82421875
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-window-start": {
+          "utc": "2026-10-31T20:53:30Z",
+          "cpuTotalPercent": 27.9,
+          "counts": {
+            "dotnet": 1,
+            "testhost": 0,
+            "codex": 8,
+            "python": 8
+          },
+          "ramAvailableGiB": 29.908214569091797,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 38.40625,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 45116,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 12.6875,
+              "ramMiB": 4256.953125
+            },
+            {
+              "pid": 35332,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.90625,
+              "ramMiB": 28.16015625
+            },
+            {
+              "pid": 45884,
+              "name": "WmiPrvSE.exe",
+              "cpuSecondsDelta": 0.1875,
+              "ramMiB": 17.11328125
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.140625,
+              "ramMiB": 468.109375
+            },
+            {
+              "pid": 17952,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 1004.1015625
+            },
+            {
+              "pid": 23812,
+              "name": "explorer.exe",
+              "cpuSecondsDelta": 0.078125,
+              "ramMiB": 340.96484375
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 41.99609375
+            },
+            {
+              "pid": 5596,
+              "name": "ChatGPT.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 113.14453125
+            },
+            {
+              "pid": 8208,
+              "name": "steam.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 177.88671875
+            },
+            {
+              "pid": 8656,
+              "name": "WindowsTerminal.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 139.46875
+            },
+            {
+              "pid": 2064,
+              "name": "tailscaled.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 122.0546875
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-after": {
+          "utc": "2026-10-31T20:54:37Z",
+          "cpuTotalPercent": 24.0,
+          "counts": {
+            "dotnet": 2,
+            "testhost": 0,
+            "codex": 8,
+            "python": 8
+          },
+          "ramAvailableGiB": 29.824554443359375,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 39.421875,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 45116,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 11.78125,
+              "ramMiB": 4025.23046875
+            },
+            {
+              "pid": 35332,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.890625,
+              "ramMiB": 29.44921875
+            },
+            {
+              "pid": 31764,
+              "name": "python.exe",
+              "cpuSecondsDelta": 0.34375,
+              "ramMiB": 32.37890625
+            },
+            {
+              "pid": 17952,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.1875,
+              "ramMiB": 1012.90625
+            },
+            {
+              "pid": 8156,
+              "name": "SearchIndexer.exe",
+              "cpuSecondsDelta": 0.140625,
+              "ramMiB": 211.921875
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.109375,
+              "ramMiB": 41.99609375
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 488.03515625
+            },
+            {
+              "pid": 23812,
+              "name": "explorer.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 340.94140625
+            },
+            {
+              "pid": 43032,
+              "name": "SearchProtocolHost.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 28.25390625
+            },
+            {
+              "pid": 45224,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 189.23828125
+            },
+            {
+              "pid": 48284,
+              "name": "ChatGPT.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 371.19921875
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        }
+      },
+      "underDotnetOrTesthostLoad": true
+    }
+  ],
+  "processNameNote": "AI CLI process names outside the specifically requested codex count are shown using the agent-cli role label; dotnet/testhost counts and process CPU/RAM observations are retained."
+}

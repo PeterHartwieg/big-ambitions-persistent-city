@@ -1,0 +1,314 @@
+[
+  {
+    "label": "base-reference-profile",
+    "method": "Three in-game codec samples; no forced GC. External Windows memory sampled every 50 ms. Managed process working-set values are zero/unavailable.",
+    "samples": [
+      {
+        "startedUtc": "2026-10-31T18:54:44.9475554Z",
+        "finishedUtc": "2026-10-31T18:54:45.9411753Z",
+        "sample": 0,
+        "writeMs": 306.1204,
+        "readMs": 687.0922,
+        "status": "Loaded",
+        "SourceSchema": 17,
+        "characters": 6999361,
+        "utf8Bytes": 6999362,
+        "sourceCharacters": 6999367,
+        "sourceUtf8Bytes": 6999368,
+        "managedBefore": 941629440,
+        "managedAfter": 1081147392,
+        "workingSet": 0,
+        "peakWorkingSet": 0,
+        "gcBefore": [
+          214,
+          214,
+          214
+        ],
+        "gcAfter": [
+          214,
+          214,
+          214
+        ],
+        "sampledPeakRssBytes": 5890875392,
+        "observedWindowsPeakWorkingSetBytes": 6126292992,
+        "memorySamples": 15,
+        "writeFlagGe30ms": true,
+        "readFlagGe30ms": true
+      },
+      {
+        "startedUtc": "2026-10-31T18:54:45.9441752Z",
+        "finishedUtc": "2026-10-31T18:54:46.9883524Z",
+        "sample": 1,
+        "writeMs": 353.0027,
+        "readMs": 691.3307,
+        "status": "Loaded",
+        "SourceSchema": 17,
+        "characters": 6999361,
+        "utf8Bytes": 6999362,
+        "sourceCharacters": 6999367,
+        "sourceUtf8Bytes": 6999368,
+        "managedBefore": 1081147392,
+        "managedAfter": 1090879488,
+        "workingSet": 0,
+        "peakWorkingSet": 0,
+        "gcBefore": [
+          214,
+          214,
+          214
+        ],
+        "gcAfter": [
+          215,
+          215,
+          215
+        ],
+        "sampledPeakRssBytes": 5891567616,
+        "observedWindowsPeakWorkingSetBytes": 6126292992,
+        "memorySamples": 17,
+        "writeFlagGe30ms": true,
+        "readFlagGe30ms": true
+      },
+      {
+        "startedUtc": "2026-10-31T18:54:46.9903516Z",
+        "finishedUtc": "2026-10-31T18:54:48.0317667Z",
+        "sample": 2,
+        "writeMs": 353.8091,
+        "readMs": 687.1751,
+        "status": "Loaded",
+        "SourceSchema": 17,
+        "characters": 6999361,
+        "utf8Bytes": 6999362,
+        "sourceCharacters": 6999367,
+        "sourceUtf8Bytes": 6999368,
+        "managedBefore": 1090879488,
+        "managedAfter": 1098870784,
+        "workingSet": 0,
+        "peakWorkingSet": 0,
+        "gcBefore": [
+          215,
+          215,
+          215
+        ],
+        "gcAfter": [
+          216,
+          216,
+          216
+        ],
+        "sampledPeakRssBytes": 5904994304,
+        "observedWindowsPeakWorkingSetBytes": 6126292992,
+        "memorySamples": 17,
+        "writeFlagGe30ms": true,
+        "readFlagGe30ms": true
+      }
+    ],
+    "medianWriteMs": 353.0027,
+    "medianReadMs": 687.1751
+  },
+  {
+    "label": "candidate-migration-profile",
+    "method": "Three in-game codec samples; no forced GC. External Windows memory sampled every 50 ms. Managed process working-set values are zero/unavailable.",
+    "samples": [
+      {
+        "startedUtc": "2026-10-31T19:27:19.5664075Z",
+        "finishedUtc": "2026-10-31T19:27:20.8843107Z",
+        "sample": 0,
+        "writeMs": 330.641,
+        "readMs": 987.5225,
+        "status": "Loaded",
+        "SourceSchema": 17,
+        "characters": 5322114,
+        "utf8Bytes": 5322115,
+        "sourceCharacters": 6999367,
+        "sourceUtf8Bytes": 6999368,
+        "managedBefore": 877318144,
+        "managedAfter": 845856768,
+        "workingSet": 0,
+        "peakWorkingSet": 0,
+        "gcBefore": [
+          172,
+          172,
+          172
+        ],
+        "gcAfter": [
+          174,
+          174,
+          174
+        ],
+        "sampledPeakRssBytes": 5687107584,
+        "observedWindowsPeakWorkingSetBytes": 5721329664,
+        "memorySamples": 22,
+        "writeFlagGe30ms": true,
+        "readFlagGe30ms": true
+      },
+      {
+        "startedUtc": "2026-10-31T19:27:20.8873109Z",
+        "finishedUtc": "2026-10-31T19:27:22.1419111Z",
+        "sample": 1,
+        "writeMs": 291.2518,
+        "readMs": 963.7934,
+        "status": "Loaded",
+        "SourceSchema": 17,
+        "characters": 5322114,
+        "utf8Bytes": 5322115,
+        "sourceCharacters": 6999367,
+        "sourceUtf8Bytes": 6999368,
+        "managedBefore": 845860864,
+        "managedAfter": 918683648,
+        "workingSet": 0,
+        "peakWorkingSet": 0,
+        "gcBefore": [
+          174,
+          174,
+          174
+        ],
+        "gcAfter": [
+          175,
+          175,
+          175
+        ],
+        "sampledPeakRssBytes": 5687099392,
+        "observedWindowsPeakWorkingSetBytes": 5721329664,
+        "memorySamples": 20,
+        "writeFlagGe30ms": true,
+        "readFlagGe30ms": true
+      },
+      {
+        "startedUtc": "2026-10-31T19:27:22.1439219Z",
+        "finishedUtc": "2026-10-31T19:27:23.4380746Z",
+        "sample": 2,
+        "writeMs": 287.07460000000003,
+        "readMs": 1007.3827,
+        "status": "Loaded",
+        "SourceSchema": 17,
+        "characters": 5322114,
+        "utf8Bytes": 5322115,
+        "sourceCharacters": 6999367,
+        "sourceUtf8Bytes": 6999368,
+        "managedBefore": 918683648,
+        "managedAfter": 997175296,
+        "workingSet": 0,
+        "peakWorkingSet": 0,
+        "gcBefore": [
+          175,
+          175,
+          175
+        ],
+        "gcAfter": [
+          176,
+          176,
+          176
+        ],
+        "sampledPeakRssBytes": 5696610304,
+        "observedWindowsPeakWorkingSetBytes": 5721329664,
+        "memorySamples": 20,
+        "writeFlagGe30ms": true,
+        "readFlagGe30ms": true
+      }
+    ],
+    "medianWriteMs": 291.2518,
+    "medianReadMs": 987.5225
+  },
+  {
+    "label": "candidate18-profile",
+    "method": "Three in-game codec samples; no forced GC. External Windows memory sampled every 50 ms. Managed process working-set values are zero/unavailable.",
+    "samples": [
+      {
+        "startedUtc": "2026-10-31T19:27:27.0629113Z",
+        "finishedUtc": "2026-10-31T19:27:28.0139293Z",
+        "sample": 0,
+        "writeMs": 323.0609,
+        "readMs": 627.6588,
+        "status": "Loaded",
+        "SourceSchema": 18,
+        "characters": 5322114,
+        "utf8Bytes": 5322115,
+        "sourceCharacters": 5322114,
+        "sourceUtf8Bytes": 5322115,
+        "managedBefore": 1145950208,
+        "managedAfter": 828899328,
+        "workingSet": 0,
+        "peakWorkingSet": 0,
+        "gcBefore": [
+          178,
+          178,
+          178
+        ],
+        "gcAfter": [
+          180,
+          180,
+          180
+        ],
+        "sampledPeakRssBytes": 5841117184,
+        "observedWindowsPeakWorkingSetBytes": 5943349248,
+        "memorySamples": 15,
+        "writeFlagGe30ms": true,
+        "readFlagGe30ms": true
+      },
+      {
+        "startedUtc": "2026-10-31T19:27:28.0148872Z",
+        "finishedUtc": "2026-10-31T19:27:28.9288315Z",
+        "sample": 1,
+        "writeMs": 305.9918,
+        "readMs": 607.7236,
+        "status": "Loaded",
+        "SourceSchema": 18,
+        "characters": 5322114,
+        "utf8Bytes": 5322115,
+        "sourceCharacters": 5322114,
+        "sourceUtf8Bytes": 5322115,
+        "managedBefore": 828899328,
+        "managedAfter": 859799552,
+        "workingSet": 0,
+        "peakWorkingSet": 0,
+        "gcBefore": [
+          180,
+          180,
+          180
+        ],
+        "gcAfter": [
+          181,
+          181,
+          181
+        ],
+        "sampledPeakRssBytes": 5825314816,
+        "observedWindowsPeakWorkingSetBytes": 5943349248,
+        "memorySamples": 15,
+        "writeFlagGe30ms": true,
+        "readFlagGe30ms": true
+      },
+      {
+        "startedUtc": "2026-10-31T19:27:28.9313365Z",
+        "finishedUtc": "2026-10-31T19:27:29.8394417Z",
+        "sample": 2,
+        "writeMs": 304.9755,
+        "readMs": 603.0942,
+        "status": "Loaded",
+        "SourceSchema": 18,
+        "characters": 5322114,
+        "utf8Bytes": 5322115,
+        "sourceCharacters": 5322114,
+        "sourceUtf8Bytes": 5322115,
+        "managedBefore": 859799552,
+        "managedAfter": 975974400,
+        "workingSet": 0,
+        "peakWorkingSet": 0,
+        "gcBefore": [
+          181,
+          181,
+          181
+        ],
+        "gcAfter": [
+          181,
+          181,
+          181
+        ],
+        "sampledPeakRssBytes": 5820100608,
+        "observedWindowsPeakWorkingSetBytes": 5943349248,
+        "memorySamples": 14,
+        "writeFlagGe30ms": true,
+        "readFlagGe30ms": true
+      }
+    ],
+    "medianWriteMs": 305.9918,
+    "medianReadMs": 607.7236
+  }
+]

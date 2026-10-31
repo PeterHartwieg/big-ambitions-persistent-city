@@ -1,0 +1,32 @@
+{
+  "role": "rig_test",
+  "productionSourceChanged": false,
+  "offlineDotnetSuitesRun": false,
+  "toolingOnly": [
+    {
+      "problem": "A boundary observer repeatedly looked up Unity runtime state per simulation unit and produced artificial backlog.",
+      "resolution": "Excluded that attempt; clean owned game restart; observer uses the actual CitySimulator instance from the patched unit boundary and caches the target meal. No primary performance window includes this observer."
+    },
+    {
+      "problem": "Independent diagnostic clients initially shared a single request.json mailbox; unsupported spaces in request identifiers were also ignored by one observer.",
+      "resolution": "Foreground observer calls now use an OS file mutex and identifiers restricted to the accepted ASCII grammar. Only the affected owned diagnostic commands were interrupted for tooling faults; no game was killed."
+    },
+    {
+      "problem": "Bridge speed6 changes the native calendar multiplier, yielding travel-clock rate2.0. Reloading a held context at normal rate can safely invalidate its schedule.",
+      "resolution": "Those accelerated-clock decision attempts are excluded. The gating control/candidate held saves and reloads use normal clock throughout, with persisted rates approximately one third."
+    },
+    {
+      "problem": "A refusal snapshot exposes an error string as expected result data.",
+      "resolution": "Client accepts that documented snapshot shape; ordinary tool error objects still fail."
+    },
+    {
+      "problem": "Time-machine completion and clock overlays can briefly reject a following time command.",
+      "resolution": "Wait for target/skip completion and use the bridge UI escape/collapse seams before retry; no pointer or focus proof claimed."
+    },
+    {
+      "problem": "Managed process working-set values are zero on the game runtime.",
+      "resolution": "Use read-only external Windows memory sampling every50ms; retain managed heap/GC observations separately."
+    }
+  ],
+  "provenance": "Reused/adapted previous locked A3 rig bridge/frame/native-save tooling and the locked-session feasibility workflow. Test-only sources, raw data, backups and native saves remain private in the stage. Portable public verifier checks the sanitized artifacts without game DLLs."
+}

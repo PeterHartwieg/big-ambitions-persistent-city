@@ -1,0 +1,22 @@
+{
+  "role": "rig_test",
+  "before": {
+    "role": "rig_test",
+    "file": "FT Food Routines Locked B0b FinalControl17 20261031.hsg",
+    "nativeFileBytes": 1271604,
+    "nativeSha256": "c0b8ebdfa046adadab7020a67a8f25d022902b468453fe177fec9f73459266c6",
+    "payloadSha256": "6c9c336de780e75faf2c614e8bfb7b50f2f54ab8c37c05009f9eba9ff3df3ede",
+    "schema": 17,
+    "note": "Fresh coordinated A3 control save, hashed before the candidate is installed or loads it."
+  },
+  "nativeSha256After": "c0b8ebdfa046adadab7020a67a8f25d022902b468453fe177fec9f73459266c6",
+  "nativeSourceBytesUnchanged": true,
+  "payloadSourceBytesUnchanged": true,
+  "decodedMigrationExact": {
+    "normalizedEqual": true,
+    "beforeSha256": "bdf5c3f88380170632698d47599ce4cca793c814b7705b2bf47b22b9066358e8",
+    "afterSha256": "bdf5c3f88380170632698d47599ce4cca793c814b7705b2bf47b22b9066358e8",
+    "differenceCount": 0,
+    "differences": []
+  }
+}

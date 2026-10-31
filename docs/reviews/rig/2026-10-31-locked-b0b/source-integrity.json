@@ -1,0 +1,26 @@
+{
+  "role": "rig_test",
+  "originalRetainedA3Sources": [
+    {
+      "file": "FT Food Routines Locked A3 Choice Checkpoint 20261031.hsg",
+      "bytes": 1271614,
+      "sha256Before": "f01b8fd97b3a47d1ee0d23a7081909d33b960ff9d90eb09b28ad714c195954f9",
+      "sha256After": "f01b8fd97b3a47d1ee0d23a7081909d33b960ff9d90eb09b28ad714c195954f9",
+      "unchanged": true
+    },
+    {
+      "file": "saved-a3-checkpoint-save-export.json",
+      "bytes": 6999368,
+      "sha256Before": "1ef6320fef082cce0e4a08cfbf776f0b1ef34d5dccee0d12afe9d25f573deb29",
+      "sha256After": "1ef6320fef082cce0e4a08cfbf776f0b1ef34d5dccee0d12afe9d25f573deb29",
+      "unchanged": true
+    }
+  ],
+  "freshControlCheckpoint": "See supplement-source-preservation.json for a fresh in-session A3 native checkpoint and its payload, hashed before candidate installation/load and verified afterward.",
+  "trackedWorktreesClean": {
+    "main": true,
+    "control": true,
+    "candidate": true
+  },
+  "evidenceBranch": "codex/pc-rig-locked-b0b"
+}

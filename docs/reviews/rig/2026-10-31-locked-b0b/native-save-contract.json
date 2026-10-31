@@ -1,0 +1,50 @@
+{
+  "role": "rig_test",
+  "comparisons": [
+    {
+      "label": "migration",
+      "sourceHsgSha256": "f247b4a0885dd08ae726e9a40dd3dbfabd5442c50fd4d8bfc819a533c68f46a2",
+      "targetHsgSha256": "45169098dc4756215290a14fc1cc0f9de7465440f695da27f451c4ac6d8f68ee",
+      "authorityHashBefore": "52139e7fdc78238b028751115639a11fb4243f1a5c9424b630978cb71af979c7",
+      "authorityHashAfter": "52139e7fdc78238b028751115639a11fb4243f1a5c9424b630978cb71af979c7",
+      "authorityEqual": true,
+      "sourceReceipts": 57,
+      "targetReceipts": 57,
+      "receiptHashBefore": "541501b8d990298a1e96c3257b2da8edc910b2e8ad98c1a14b755a05ef140cb0",
+      "receiptHashAfter": "541501b8d990298a1e96c3257b2da8edc910b2e8ad98c1a14b755a05ef140cb0",
+      "receiptDictionaryEqual": true,
+      "allOriginalReceiptsRetainedUnchanged": true,
+      "authorityShops": 1
+    },
+    {
+      "label": "reload1",
+      "sourceHsgSha256": "45169098dc4756215290a14fc1cc0f9de7465440f695da27f451c4ac6d8f68ee",
+      "targetHsgSha256": "ca57d0abaac337945b2dc025302155edcdff70825d671359b159aec6953554ea",
+      "authorityHashBefore": "52139e7fdc78238b028751115639a11fb4243f1a5c9424b630978cb71af979c7",
+      "authorityHashAfter": "52139e7fdc78238b028751115639a11fb4243f1a5c9424b630978cb71af979c7",
+      "authorityEqual": true,
+      "sourceReceipts": 57,
+      "targetReceipts": 57,
+      "receiptHashBefore": "541501b8d990298a1e96c3257b2da8edc910b2e8ad98c1a14b755a05ef140cb0",
+      "receiptHashAfter": "541501b8d990298a1e96c3257b2da8edc910b2e8ad98c1a14b755a05ef140cb0",
+      "receiptDictionaryEqual": true,
+      "allOriginalReceiptsRetainedUnchanged": true,
+      "authorityShops": 1
+    },
+    {
+      "label": "reload2",
+      "sourceHsgSha256": "ca57d0abaac337945b2dc025302155edcdff70825d671359b159aec6953554ea",
+      "targetHsgSha256": "c63dfc987e6aa84f448f460d5e6fcb08b7462fa34acae6e939fda4fb575a19bf",
+      "authorityHashBefore": "52139e7fdc78238b028751115639a11fb4243f1a5c9424b630978cb71af979c7",
+      "authorityHashAfter": "52139e7fdc78238b028751115639a11fb4243f1a5c9424b630978cb71af979c7",
+      "authorityEqual": true,
+      "sourceReceipts": 57,
+      "targetReceipts": 57,
+      "receiptHashBefore": "541501b8d990298a1e96c3257b2da8edc910b2e8ad98c1a14b755a05ef140cb0",
+      "receiptHashAfter": "541501b8d990298a1e96c3257b2da8edc910b2e8ad98c1a14b755a05ef140cb0",
+      "receiptDictionaryEqual": true,
+      "allOriginalReceiptsRetainedUnchanged": true,
+      "authorityShops": 1
+    }
+  ]
+}

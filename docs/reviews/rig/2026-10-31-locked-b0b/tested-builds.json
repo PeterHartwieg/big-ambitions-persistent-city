@@ -1,0 +1,24 @@
+{
+  "role": "rig_test",
+  "candidate": "c0af745b044d9c53d6e0b59f9fd12da0b61fc4fd",
+  "originCandidateHead": "c0af745b044d9c53d6e0b59f9fd12da0b61fc4fd",
+  "control": "754c2b67610e69a42aee65a342b1e2a403530a25",
+  "candidateDllSha256": "34bbcf02fded476c79b58e84e3a005af38b979694435994e4f9220d2ce73a246",
+  "controlDllSha256": "29ef76b33deb22f499cd1aff02b8507d26a0f19cf7a16fa38568eb75706e5cdd",
+  "managed": "C:\\BigAmbitions-AgentTests\\Big Ambitions Agent Tests_Data\\Managed",
+  "fixtureSeed": -1903163055,
+  "residents": 957,
+  "consumers": 1914,
+  "sourceFiles": [
+    {
+      "file": "FT Food Routines Locked A3 Choice Checkpoint 20261031.hsg",
+      "sha256": "f01b8fd97b3a47d1ee0d23a7081909d33b960ff9d90eb09b28ad714c195954f9",
+      "bytes": 1271614
+    },
+    {
+      "file": "saved-a3-checkpoint-save-export.json",
+      "sha256": "1ef6320fef082cce0e4a08cfbf776f0b1ef34d5dccee0d12afe9d25f573deb29",
+      "bytes": 6999368
+    }
+  ]
+}

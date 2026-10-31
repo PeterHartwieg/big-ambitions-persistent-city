@@ -1,0 +1,636 @@
+{
+  "role": "rig_test",
+  "method": "Observed coordinated native save/load wall durations and separately timed diagnostic encoding operations. These are save/startup/reload latency, never normal-play frame samples. All recorded operations >=30ms explicitly flagged; abandoned tooling attempts retained by their labels.",
+  "operations": [
+    {
+      "operation": "base-profile-ref",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 29936.999999918044,
+      "flagGe30ms": true,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "base-repeat-save",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 750.0,
+      "flagGe30ms": true,
+      "ready": null,
+      "loadingRaceRetries": null
+    },
+    {
+      "operation": "base-repeat-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 32015.999999828637,
+      "flagGe30ms": true,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "base1-matched",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 44797.00000002049,
+      "flagGe30ms": true,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "base2-matched",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 46485.000000102445,
+      "flagGe30ms": true,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "cand1-matched",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 35719.00000004098,
+      "flagGe30ms": true,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "cand2-matched",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 30983.999999938533,
+      "flagGe30ms": true,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "candidate-midnight-reload",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 31922.00000002049,
+      "flagGe30ms": true,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "candidate-midnight-save",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 547.0000000204891,
+      "flagGe30ms": true,
+      "ready": null,
+      "loadingRaceRetries": null
+    },
+    {
+      "operation": "candidate-migration",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 27296.000000089407,
+      "flagGe30ms": true,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "candidate-return-end",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 469.0000000409782,
+      "flagGe30ms": true,
+      "ready": null,
+      "loadingRaceRetries": null
+    },
+    {
+      "operation": "candidate-return-reload",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 31547.00000002049,
+      "flagGe30ms": true,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "candidate-settle-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 30968.999999808148,
+      "flagGe30ms": true,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "Candidate18 Edited-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 27640.999999828637,
+      "flagGe30ms": true,
+      "ready": false,
+      "loadingRaceRetries": 1
+    },
+    {
+      "operation": "Candidate18 Old-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 28577.99999997951,
+      "flagGe30ms": true,
+      "ready": false,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "Candidate18 Outward-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 28594.00000004098,
+      "flagGe30ms": true,
+      "ready": false,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "Candidate18 Paid-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 30672.00000002049,
+      "flagGe30ms": true,
+      "ready": false,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "Candidate18 Partial-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 28844.00000004098,
+      "flagGe30ms": true,
+      "ready": false,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "Candidate18 Returning-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 28625.0,
+      "flagGe30ms": true,
+      "ready": false,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "Candidate18 Serving-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 28640.000000130385,
+      "flagGe30ms": true,
+      "ready": false,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "candidate18-reload1",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 29016.000000061467,
+      "flagGe30ms": true,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "candidate18-reload2",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 29608.999999938533,
+      "flagGe30ms": true,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "candidate18-save",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 640.0000001303852,
+      "flagGe30ms": true,
+      "ready": null,
+      "loadingRaceRetries": null
+    },
+    {
+      "operation": "candidate18-save2",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 500.0,
+      "flagGe30ms": true,
+      "ready": null,
+      "loadingRaceRetries": null
+    },
+    {
+      "operation": "candidate18-save3",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 453.99999991059303,
+      "flagGe30ms": true,
+      "ready": null,
+      "loadingRaceRetries": null
+    },
+    {
+      "operation": "control-day6-end-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 45015.000000130385,
+      "flagGe30ms": true,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "control-midnight-save",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 843.0000001098961,
+      "flagGe30ms": true,
+      "ready": null,
+      "loadingRaceRetries": null
+    },
+    {
+      "operation": "control-old-settlement-save",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 797.0000000204891,
+      "flagGe30ms": true,
+      "ready": null,
+      "loadingRaceRetries": null
+    },
+    {
+      "operation": "control-taste0-reload",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 31155.99999995902,
+      "flagGe30ms": true,
+      "ready": true,
+      "loadingRaceRetries": 1
+    },
+    {
+      "operation": "control-taste3-reload",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 32655.99999995902,
+      "flagGe30ms": true,
+      "ready": true,
+      "loadingRaceRetries": 1
+    },
+    {
+      "operation": "Control17 Edited Clean-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 27719.00000004098,
+      "flagGe30ms": true,
+      "ready": false,
+      "loadingRaceRetries": 1
+    },
+    {
+      "operation": "Control17 Eval v2-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 26514.999999897555,
+      "flagGe30ms": true,
+      "ready": false,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "Control17 Evaluating-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 27672.00000002049,
+      "flagGe30ms": true,
+      "ready": false,
+      "loadingRaceRetries": 1
+    },
+    {
+      "operation": "Control17 Outward-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 38594.00000004098,
+      "flagGe30ms": true,
+      "ready": false,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "Control17 Partial-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 26577.99999997951,
+      "flagGe30ms": true,
+      "ready": false,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "Control17 Resolved Edited-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 30140.000000130385,
+      "flagGe30ms": true,
+      "ready": false,
+      "loadingRaceRetries": 1
+    },
+    {
+      "operation": "Control17 Resolved Old-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 27656.000000191852,
+      "flagGe30ms": true,
+      "ready": false,
+      "loadingRaceRetries": 1
+    },
+    {
+      "operation": "control17-save",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 625.0,
+      "flagGe30ms": true,
+      "ready": null,
+      "loadingRaceRetries": null
+    },
+    {
+      "operation": "history-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 35984.999999869615,
+      "flagGe30ms": true,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "history32-reload",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 33968.99999980815,
+      "flagGe30ms": true,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "history32-roundtrip",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 686.9999999180436,
+      "flagGe30ms": true,
+      "ready": null,
+      "loadingRaceRetries": null
+    },
+    {
+      "operation": "history32-save",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 547.0000000204891,
+      "flagGe30ms": true,
+      "ready": null,
+      "loadingRaceRetries": null
+    },
+    {
+      "operation": "normal-control-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 31577.99999997951,
+      "flagGe30ms": true,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "Normal17 Edited-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 27780.99999995902,
+      "flagGe30ms": true,
+      "ready": false,
+      "loadingRaceRetries": 1
+    },
+    {
+      "operation": "Normal17 Old-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 26500.0,
+      "flagGe30ms": true,
+      "ready": false,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "Normal17 Outward-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 28702.99999997951,
+      "flagGe30ms": true,
+      "ready": false,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "Normal17 Partial-source",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 28625.0,
+      "flagGe30ms": true,
+      "ready": false,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "refuse-active",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 32547.00000002049,
+      "flagGe30ms": true,
+      "ready": false,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "refuse-future",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 29608.999999938533,
+      "flagGe30ms": true,
+      "ready": false,
+      "loadingRaceRetries": 1
+    },
+    {
+      "operation": "refuse-tuning",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 28547.00000002049,
+      "flagGe30ms": true,
+      "ready": false,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "supplement-migration",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 29172.00000002049,
+      "flagGe30ms": true,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "supplement17-save",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 1108.9999999385327,
+      "flagGe30ms": true,
+      "ready": null,
+      "loadingRaceRetries": null
+    },
+    {
+      "operation": "supplement18-reload",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 29594.00000004098,
+      "flagGe30ms": true,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    {
+      "operation": "supplement18-save",
+      "kind": "native-save-or-load-wall",
+      "milliseconds": 609.9999998696148,
+      "flagGe30ms": true,
+      "ready": null,
+      "loadingRaceRetries": null
+    },
+    {
+      "operation": "base-profile-ref-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 299.7099,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "base-repeat-save-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 452.21630000000005,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "base-repeat-source-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 306.4141,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "base1-matched-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 302.8306,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "base2-matched-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 327.3414,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "cand1-matched-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 334.9447,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "cand2-matched-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 289.3256,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "candidate-midnight-reload-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 327.01800000000003,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "candidate-midnight-save-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 319.7437,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "candidate-migration-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 366.9008,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "candidate-return-end-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 377.20120000000003,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "candidate-return-reload-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 299.5711,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "candidate-settle-source-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 353.30100000000004,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "candidate18-reload1-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 338.321,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "candidate18-reload2-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 291.5418,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "candidate18-save-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 392.27930000000003,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "candidate18-save2-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 340.4075,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "candidate18-save3-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 293.1046,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "control-day6-end-source-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 291.884,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "control-midnight-save-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 422.7302,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "control-old-settlement-save-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 414.63570000000004,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "control-taste0-reload-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 374.0085,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "control-taste3-reload-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 296.1653,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "control17-save-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 300.2928,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "history-source-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 333.5649,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "history32-reload-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 541.1798,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "history32-roundtrip-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 351.5095,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "history32-save-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 372.5835,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "normal-control-source-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 300.69350000000003,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "supplement-migration-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 292.8181,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "supplement17-save-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 462.5042,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "supplement18-reload-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 286.09590000000003,
+      "flagGe30ms": true
+    },
+    {
+      "operation": "supplement18-save-export",
+      "kind": "diagnostic-serialization-outside-primary-windows",
+      "milliseconds": 325.26210000000003,
+      "flagGe30ms": true
+    }
+  ]
+}
