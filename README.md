@@ -1,5 +1,7 @@
 # Persistent City
 
+> **E2a — 31 October (offline):** expanded existing street-life proofs and read-only venue discovery; production DLL and save contracts unchanged. [Coverage, costs and 6 Nov rig checks](CHECKS.md#e2a-street-life-proof--31-october-2026-offline-only) · [Findings and E2b cases](docs/plans/e2-street-life.md).
+
 > **Base merge — 28 October:** PR #1 and PR #2 are merged into the optional-stop branch. Schemas 15/16 now carry resident money as exact integer units, as schema 14 does. Schemas 13-15 and earlier development `...Cents` saves migrate exactly or are refused and preserved. **1,503 unit tests**, all 21 standalone regressions and the optional-stop/physical harnesses pass. Offline only. [Evidence](CHECKS.md#base-merge-pr-1-and-pr-2-into-pr-3--28-october-2026-offline).
 
 > **PR #3 review round 1 — 28 October:** repaired visible arrival/departure continuity, shared geometry sampling and indexed stop validation; merged the base review fixes normally. **1,366 unit tests and all 21 standalone regressions pass**, with production/helper Steam-DLL builds passing warnings as errors. The approved **25% setting and schema 16** remain unchanged. Offline only; native behavior/performance remain unverified. [Evidence](CHECKS.md#pr-3-independent-review-round-1--28-october-2026-offline).
