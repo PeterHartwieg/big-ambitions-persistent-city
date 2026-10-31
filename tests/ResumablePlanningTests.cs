@@ -537,7 +537,7 @@ public sealed class ResumablePlanningTests
 
     private static CitizenState Filled(int n, CitizenIdentity identity) => new()
     {
-        W = new WeatherCommitment(n,WeatherSample.Unknown,n%2==1),
+        W = new WeatherCommitment(n,WeatherSample.Rain,n%2==1),
         OptionalStopChoice = n % 2 == 1,
         OptionalStop = new OptionalStopState { SpotId = "spot-" + n, Members = { "member-" + n } },
         Identity = identity, HomeId = "home-" + n, DayPlaceId = "work-" + n, ShopId = "shop-" + n, LeisureId = "leisure-" + n,

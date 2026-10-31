@@ -64,6 +64,7 @@ public sealed class WeatherTests
         city.AttachWeather(rain,new WeatherSettings {RainOptionalOutingMultiplier=0});city.AdvanceTo(state.Minute);
         Assert.Equal(WeatherSample.Unknown,read.Citizens[0].W!.Weather);Assert.Equal(0,rain.Calls);
         Assert.Equal(SaveCodec.Write(read),SaveCodec.Write(Read(SaveCodec.Write(read))));
+        city.AdvanceTo(state.Minute+1440);Assert.Equal(WeatherSample.Rain,read.Citizens[0].W!.Weather);Assert.True(rain.Calls>0);
         var forbidden=JObject.Parse(old);forbidden["WeatherStartsDay"]=0;
         Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(forbidden.ToString()).Status);
         forbidden=JObject.Parse(old);forbidden["Schema"]=21;Assert.Equal(SaveReadStatus.Future,SaveCodec.Read(forbidden.ToString()).Status);
@@ -103,6 +104,13 @@ public sealed class WeatherTests
         frame++;raining=true;Assert.Equal(WeatherSample.Rain,source.ReadWeather());
         frame++;fail=true;for(int i=0;i<100;i++) Assert.Equal(WeatherSample.Unknown,source.ReadWeather());Assert.Equal(3,calls);
         frame++;fail=false;raining=null;Assert.Equal(WeatherSample.Unknown,source.ReadWeather());
+    }
+    [Fact]
+    public void AdmissionKeyOptimizationPreservesTheOriginalIndependentDraw()
+    {
+        for(int seed=0;seed<200;seed++)
+            foreach(string key in new[] {"resident:optional:Shop:1234.5","resident:optional:Leisure:2880","resident:\u263A"})
+                Assert.Equal(StableRandom.Hash(key+":weather-admission",seed),WeatherPolicy.AdmissionDraw(key,seed));
     }
     [Fact]
     public void AdmissionIsNestedAcrossSeedsAndEndpointsAndDoesNotPollAfterRejection()
@@ -162,6 +170,45 @@ public sealed class WeatherTests
         }
         Assert.Equal(Finish(WeatherSample.Dry,1),Finish(WeatherSample.Rain,128));
     }
+    [Theory]
+    [InlineData(WeatherSample.Dry,false,true,false)]
+    [InlineData(WeatherSample.Rain,false,true,true)]
+    [InlineData(WeatherSample.Unknown,false,true,true)]
+    [InlineData(WeatherSample.Rain,true,true,false)]
+    [InlineData(WeatherSample.Rain,false,false,true)]
+    public void FoodCapturesNeutralAndRainInputsBeforeEitherShortlistWithoutExtraAttempts(WeatherSample weather,bool failure,bool enabled,bool awareness)
+    {
+        var (city,_,planner)=WeightedFoodChoiceTests.Ready(79,12);
+        city.State.Food!.AwarenessStartsDay=awareness ? 1 : 2;
+        var source=new Source {Value=weather,Throw=failure};city.AttachWeather(source,new WeatherSettings {Enabled=enabled});
+        var meal=city.State.Food.Residents.Single();double at=meal.DesiredAt;
+        while(meal.Decision==null) city.AdvanceFrameSlice(at,1);
+        var expected=enabled && !failure ? weather : WeatherSample.Unknown;
+        Assert.Equal(expected,meal.Decision!.Weather);Assert.Equal(expected,meal.Memory.Weather);
+        Assert.Equal(expected==WeatherSample.Rain ? 1.3 : 1,meal.Decision.WeatherTravelMultiplier);
+        Assert.Equal(enabled ? 1 : 0,source.Calls);Assert.Equal(1,meal.ContextAttempts);Assert.Equal(0,planner.Out);
+        source.Value=WeatherSample.Rain;source.Throw=true;
+        while(!city.AdvanceFrameSlice(at,1).CaughtUp) { }
+        Assert.Equal(enabled ? 1 : 0,source.Calls);Assert.Equal(1,meal.ContextAttempts);
+        Assert.InRange(planner.Out+planner.Back,1,16);
+    }
+    [Theory]
+    [InlineData("code")] [InlineData("low")] [InlineData("high")] [InlineData("nonneutral")]
+    [InlineData("missing")] [InlineData("consumer")]
+    public void BadSchema20FoodWeatherRefusesAndPreservesSource(string damage)
+    {
+        var (city,_,_)=WeightedFoodChoiceTests.Ready(79,2);city.AttachWeather(new Source {Value=WeatherSample.Rain});
+        city.AdvanceFrameSlice(city.State.Food!.Residents.Single().DesiredAt,1);
+        var root=JObject.Parse(SaveCodec.Write(city.State));var meal=(JArray)root["Food"]!["Residents"]![0]!;var d=(JObject)meal[9]!;
+        if(damage=="code") d["Weather"]=3;
+        if(damage=="low") d["WeatherTravelMultiplier"]=0;
+        if(damage=="high") d["WeatherTravelMultiplier"]=3;
+        if(damage=="nonneutral") d["Weather"]=0;
+        if(damage=="missing") d.Remove("Weather");
+        if(damage=="consumer") meal[35]=((string)meal[35]!)[..^1]+"3";
+        string payload=root.ToString(Formatting.None);var store=new Dictionary<string,string> {[SaveStore.StateKey]=payload};
+        Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(payload).Status);Assert.False(SaveStore.WriteTo(store,city.State).Success);Assert.Same(payload,store[SaveStore.StateKey]);
+    }
     [Fact]
     public void QueueCaptureRetainsLeadAcrossRainConfigAndReload()
     {
@@ -175,10 +222,31 @@ public sealed class WeatherTests
         Assert.Equal(dry,resumed.QueueAtOpening(loaded.Citizens[0],loaded.Places[1],now+1));Assert.Equal(1,source.Calls);
     }
     [Fact]
+    public void RainQueueEndpointIsFrozenAndOnlyNewOpeningUsesChangedLead()
+    {
+        CityState? state=null;
+        for(int seed=1;seed<100;seed++)
+        {
+            var trial=State(seed);var p=trial.Citizens[0];var shop=trial.Places[1];double now=trial.Minute;
+            shop.OpenMinute=(int)(now%1440)+8;p.PlaceId=p.DestinationId="shop";p.DestinationActivity=Activity.Shop;
+            p.Activity=Activity.Shop;p.Phase=CitizenPhase.WaitingForOpening;p.NextEventMinute=now+8;p.ActivityUntilMinute=now+45;
+            if(DwellPlanner.QueueAtOpening(p,shop,seed,now,true)!=null) { state=trial;break; }
+        }
+        Assert.NotNull(state);var person=state!.Citizens[0];var source=new Source {Value=WeatherSample.Rain};
+        var settings=new WeatherSettings {QueueRainLeadMinutes=2};var sim=new CitySimulator(state,new Paths());sim.AttachWeather(source,settings);
+        var first=sim.QueueAtOpening(person,state.Places[1],state.Minute);Assert.NotNull(first);Assert.Equal(2,first!.Value.EndMinute-first.Value.StartMinute);
+        settings.QueueRainLeadMinutes=10;source.Value=WeatherSample.Dry;
+        Assert.Equal(first,sim.QueueAtOpening(person,state.Places[1],state.Minute+1));Assert.Equal(1,source.Calls);
+        person.NextEventMinute+=1440;person.ActivityUntilMinute+=1440;state.Minute+=1440;
+        sim.QueueAtOpening(person,state.Places[1],state.Minute);Assert.Equal(2,source.Calls);Assert.Equal(10,person.W!.Value);
+    }
+    [Fact]
     public void SettingsClampOnceAndKeepFlatDefaults()
     {
-        var settings=JsonConvert.DeserializeObject<PrototypeSettings>("{\"WeatherRainOptionalOutingMultiplier\":\"Infinity\",\"WeatherRainTravelWeightMultiplier\":false,\"WeatherQueueRainLeadMinutes\":4.5}")!;
-        var logs=new List<string>();settings.Weather.Clamp(logs.Add);Assert.Equal(3,logs.Count);settings.Weather.Clamp(logs.Add);Assert.Equal(3,logs.Count);
+        var settings=JsonConvert.DeserializeObject<PrototypeSettings>("{\"WeatherEnabled\":{},\"WeatherRainOptionalOutingMultiplier\":\"Infinity\",\"WeatherRainTravelWeightMultiplier\":false,\"WeatherQueueRainLeadMinutes\":4.5}")!;
+        var logs=new List<string>();settings.Weather.Clamp(logs.Add);Assert.Equal(4,logs.Count);settings.Weather.Clamp(logs.Add);Assert.Equal(4,logs.Count);
+        Assert.True(settings.WeatherEnabled);
+        Assert.False(JsonConvert.DeserializeObject<PrototypeSettings>("{\"WeatherEnabled\":false}")!.WeatherEnabled);
         Assert.Equal(1,settings.WeatherRainOptionalOutingMultiplier);Assert.Equal(1.3,settings.WeatherRainTravelWeightMultiplier);Assert.Equal(5,settings.WeatherQueueRainLeadMinutes);
         settings.Weather.QueueRainLeadMinutes=100;settings.Weather.RainOptionalOutingMultiplier=-1;settings.Weather.RainTravelWeightMultiplier=99;settings.Weather.Clamp();
         Assert.Equal(10,settings.WeatherQueueRainLeadMinutes);Assert.Equal(0,settings.WeatherRainOptionalOutingMultiplier);Assert.Equal(2,settings.WeatherRainTravelWeightMultiplier);
@@ -191,7 +259,7 @@ public sealed class WeatherTests
         Assert.Equal(13,after.Length-before.Length); // 15-char value replaces null (2 quotes + 15 - 4)
         Assert.Equal(22,"\"W\":\"".Length+state.Citizens[0].W!.ToWire().Length+2);
         var charged=SaveCodec.CountRecords(state,after);Assert.Equal(count.Streaming+1,charged.Streaming);Assert.Equal(count.Semantic+1,charged.Semantic);
-        foreach(string damage in new[] {"2O21AAAAAAAAAAA","1O91AAAAAAAAAAA","1O22AAAAAAAAAAA","1Q21AAAAAAAAAAA","1O21AAAAAAAAAA/"})
+        foreach(string damage in new[] {"1O00AAAAAAAAAAA","2O21AAAAAAAAAAA","1O91AAAAAAAAAAA","1O22AAAAAAAAAAA","1Q21AAAAAAAAAAA","1O21AAAAAAAAAA/"})
         {var token=JObject.Parse(after);token["Citizens"]![0]!["W"]=damage;Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(token.ToString()).Status);}
         Assert.Equal(after,SaveCodec.Write(Read(after)));
     }

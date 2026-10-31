@@ -32,7 +32,8 @@ namespace PersistentCity.Runtime
         public int FoodMarketingNeighbourhoodDrawsPerAnchor { get => Awareness.DrawsPerAnchor; set => Awareness.DrawsPerAnchor=value; }
         [JsonIgnore]
         public WeatherSettings Weather { get; } = new WeatherSettings();
-        public bool WeatherEnabled { get => Weather.Enabled; set => Weather.Enabled=value; }
+        [JsonConverter(typeof(WeatherBooleanConverter))]
+        public bool? WeatherEnabled { get => Weather.Enabled; set => Weather.SetEnabled(value); }
         [JsonConverter(typeof(AwarenessNumberConverter))]
         public double WeatherRainOptionalOutingMultiplier { get => Weather.RainOptionalOutingMultiplier; set => Weather.RainOptionalOutingMultiplier=value; }
         [JsonConverter(typeof(AwarenessNumberConverter))]
@@ -77,6 +78,18 @@ namespace PersistentCity.Runtime
             return value==Math.Truncate(value) ? (int)value : int.MinValue;
         }
         public override void WriteJson(JsonWriter writer,object? value,JsonSerializer serializer) => writer.WriteValue(value);
+    }
+
+    internal sealed class WeatherBooleanConverter : JsonConverter<bool?>
+    {
+        public override bool? ReadJson(JsonReader reader,Type type,bool? old,bool exists,JsonSerializer serializer)
+        {
+            var token=JToken.Load(reader);
+            if(token.Type==JTokenType.Boolean) return (bool)token;
+            if(token.Type==JTokenType.String && bool.TryParse((string)token!,out bool value)) return value;
+            return null;
+        }
+        public override void WriteJson(JsonWriter writer,bool? value,JsonSerializer serializer) => writer.WriteValue(value);
     }
 
     internal sealed class WeatherLeadConverter : JsonConverter<int>

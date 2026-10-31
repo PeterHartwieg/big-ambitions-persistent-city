@@ -154,8 +154,12 @@ namespace PersistentCity.Persistence
                     state!.Schema=CityState.CurrentSchema;
                     if(state.Food!=null) state.Food.AwarenessStartsDay=(int)(state.Minute/1440)+1;
                 }
-                if(schema<20) { state!.Schema=CityState.CurrentSchema;state.WeatherStartsDay=(int)(state.Minute/1440)+1; }
-                Validate(state!);
+                if(schema<20)
+                {
+                    state!.Schema=CityState.CurrentSchema;state.WeatherStartsDay=(int)(state.Minute/1440)+1;
+                    ValidateForActivation(state); // new required weather bytes must fit before publishing an upgrade
+                }
+                else Validate(state!);
                 return new SaveReadResult(SaveReadStatus.Loaded, state, "", schema);
             }
             catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)
@@ -485,6 +489,7 @@ namespace PersistentCity.Persistence
                 {
                     Minute(citizen.W.Boundary,"Weather boundary");Dense((int)citizen.W.Weather,2,"resident weather");
                     Require(citizen.W.Queue ? citizen.W.Value>=2 && citizen.W.Value<=10 : citizen.W.Value==0 || citizen.W.Value==1,"Invalid weather commitment value.");
+                    Require(citizen.W.Queue || citizen.W.Weather==WeatherSample.Rain || citizen.W.Value==1,"Nonneutral dry/unknown outing capture.");
                     Require(citizen.W.Queue ? citizen.W.Boundary<=citizen.ActivityUntilMinute : citizen.W.Boundary<=state.Minute,"Invalid resident weather boundary.");
                     Charge(ref embeddedRecords);
                 }

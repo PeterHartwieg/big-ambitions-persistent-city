@@ -29,11 +29,14 @@ namespace PersistentCity.Core
     public sealed class WeatherSettings
     {
         public bool Enabled { get; set; }=true;
+        private bool invalidEnabled;
+        public void SetEnabled(bool? value) { Enabled=value ?? true;invalidEnabled=!value.HasValue; }
         public double RainOptionalOutingMultiplier { get; set; }=.7;
         public double RainTravelWeightMultiplier { get; set; }=1.3;
         public int QueueRainLeadMinutes { get; set; }=5;
         public void Clamp(Action<string>? log=null)
         {
+            if(invalidEnabled) { log?.Invoke("WeatherEnabled defaulted to true");invalidEnabled=false; }
             double C(double v,double min,double max,double fallback,string name)
             {
                 double result=double.IsNaN(v) ? fallback : Math.Max(min,Math.Min(max,v));
@@ -54,6 +57,7 @@ namespace PersistentCity.Core
             try { var value=source?.ReadWeather() ?? WeatherSample.Unknown;return (uint)value<=2 ? value : WeatherSample.Unknown; }
             catch(Exception) { return WeatherSample.Unknown; }
         }
+        internal static uint AdmissionDraw(string key,int seed) => StableRandom.Finish(StableRandom.Append(StableRandom.Append(StableRandom.Begin(seed),key),":weather-admission"));
         public static bool Admit(uint draw,WeatherSample weather,double rainMultiplier)
             => weather!=WeatherSample.Rain || (draw+.5)/4294967296.0<rainMultiplier;
     }
@@ -77,6 +81,7 @@ namespace PersistentCity.Core
             if(wire.Length!=15 || wire[0]!='1' || (wire[1]!='O' && wire[1]!='Q') || wire[2]<'0' || wire[2]>'2') throw new FormatException("Invalid weather capture.");
             int value=MemoryWire.Alphabet.IndexOf(wire[3]);bool queue=wire[1]=='Q';
             if(value<0 || (queue ? value<2 || value>10 : value>1)) throw new FormatException("Invalid weather commitment.");
+            if(!queue && wire[2]!='2' && value!=1) throw new FormatException("Nonneutral dry/unknown outing capture.");
             double at=BitConverter.ToDouble(Convert.FromBase64String(wire.Substring(4)+"="),0);
             if(!Position.Finite(at) || at<0 || at>1e9) throw new FormatException("Invalid weather boundary.");
             var capture=queue ? new WeatherCommitment(at,(WeatherSample)(wire[2]-'0'),value) : new WeatherCommitment(at,(WeatherSample)(wire[2]-'0'),value==1);
@@ -100,7 +105,7 @@ namespace PersistentCity.Core
             if(capture==null || capture.Queue || capture.Boundary!=now)
             {
                 var sample=CaptureWeather(now);
-                capture=new WeatherCommitment(now,sample,sample!=WeatherSample.Rain || WeatherPolicy.Admit(StableRandom.Append(StableRandom.Hash(key,State.Seed),":weather-admission"),sample,weatherSettings.RainOptionalOutingMultiplier));
+                capture=new WeatherCommitment(now,sample,sample!=WeatherSample.Rain || WeatherPolicy.Admit(WeatherPolicy.AdmissionDraw(key,State.Seed),sample,weatherSettings.RainOptionalOutingMultiplier));
                 // Events work on copies; publish the input before the first route yield so interrupted/reloaded events reuse it.
                 citizenEvents[person.Identity.Id].Citizen.W=capture;
                 person.W=capture;
