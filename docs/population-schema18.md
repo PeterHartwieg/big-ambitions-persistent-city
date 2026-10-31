@@ -257,6 +257,10 @@ from queue/time stay neutral. The saved generic service flag is
 revalidated using one on-demand, generation-matched `IFoodFailureMarket` read;
 the native implementation bypasses the decision-supply cache. Missing/throwing or
 unknown-staffing proof stays neutral and does not interrupt the original refusal.
+Revalidated bag exhaustion also requires the captured queue, deadline and opening
+bounds to fit. With its zero throughput hiding service duration, queue plus eating
+must leave strictly positive time for service; a short personal stop, excessive
+queue or no remaining service time stays neutral. No service rate is invented.
 Failed-stop capture passes the target directly to the store, leaving unchosen
 meal business/place/product fields untouched. Queue capture requires the decision's
 queue reason and a break/opening window which would fit without the wait.

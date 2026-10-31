@@ -1,5 +1,36 @@
 # Validation status
 
+## B1 review round 4 fixes - 31 October 2026 (offline only)
+
+Addresses Sol-r4-1/2. **1,949/1,949 unit tests, discovery and all 31 required
+foreground commands pass**, including standalone regressions and all three demos.
+The other-worktree dotnet wait runs before each command.
+[Command results and tested source hashes](docs/reviews/2026-10-31-b1-r4-offline-checks.json).
+
+- Bag-stockout revalidation now shares the product-stockout necessary queue,
+  deadline and opening bounds. Zero throughput hides service duration, so queue
+  plus eating must leave strictly positive time for service. Ten-minute stops,
+  excessive queues and eating-only remaining time stay neutral. Fresh named bag
+  evidence is still required, and valid longer stops retain exactly-once capture.
+  Eight new cases cover these controls with/without held-image reload, then
+  save/reload again to verify unchanged memory/watermark, zero routes and zero
+  checkout calls. The six invalid-stop cases fail before the fix; both valid-stop
+  controls pass before and after. All **90 focused memory/cache tests pass**.
+- The physical returning-door closure path now reuses `business.OpeningPlace`.
+  The existing mutation-safe cache comparison covers all four B1 sites and
+  matches their open/admission/close results. Over **10,000 warmed batches**,
+  round-3 behavior allocates **10,720,000 -> 0 bytes (1,072 -> 0 per batch)**
+  after this final reuse. All-temporary four-site behavior allocates 42,880,000
+  bytes (4,288/batch). Thread/setup/first-use allocation is excluded. The roadmap
+  Perf wins log records this offline .NET 10 allocation reduction; no native
+  timing/mod-work gate inference is made.
+
+[Pre-fix failures and cache comparison](docs/reviews/2026-10-31-b1-r4-focused-evidence.txt).
+Game-target DLL SHA-256: `ce13dd20a574e46986438b8684350feee6335150aa468e9c311a9054585a4ecd`.
+No game or rig work; no saved fields changed. Existing numbered 6 Nov rig checks
+below remain pending.
+
+
 ## B1 review round 3 fixes - 31 October 2026 (offline only)
 
 Addresses Sol-r3-1/2 and Opus-r3-1. **1,941/1,941 unit tests, discovery and all

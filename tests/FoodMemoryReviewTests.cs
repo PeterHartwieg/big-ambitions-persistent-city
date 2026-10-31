@@ -9,6 +9,41 @@ namespace PersistentCity.Tests;
 public sealed partial class FoodMemoryTests
 {
     [Theory]
+    [InlineData(false, "short")] [InlineData(true, "short")]
+    [InlineData(false, "queue")] [InlineData(true, "queue")]
+    [InlineData(false, "no-service-time")] [InlineData(true, "no-service-time")]
+    [InlineData(false, "fits")] [InlineData(true, "fits")]
+    public void ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(bool reload, string window)
+    {
+        var (city, market, paths, _) = Ready();
+        var meal = city.State.Food!.Residents[0]; double at = meal.DesiredAt;
+        var person = city.State.Citizens[0]; person.PlaceId = "s0"; person.Activity = Activity.Shop;
+        if (window == "short") person.NextEventMinute = person.ActivityUntilMinute = at + 10;
+        if (window == "no-service-time") person.NextEventMinute = person.ActivityUntilMinute = at + MealRhythm.EatingMinutes(meal.Kind);
+        if (window == "queue") city.State.Food.Shops[0].NextServiceAt = at + 20;
+        market.Source.Shops[0].MealsPerHour = 0;
+        market.Source.Shops[0].ServiceUnavailableReason = "Out of stock";
+        market.Source.Shops[0].Offers[0].Units = 0;
+        city = new CitySimulator(city.State, paths); city.AttachFoodMarket(market);
+        city.AdvanceFrameSlice(at, 1);
+        Assert.NotNull(city.State.Food!.Residents[0].Decision);
+        if (reload) city = Reload(city, market, paths);
+        Advance(city, at + .1, 1); meal = city.State.Food!.Residents[0];
+        Assert.Equal(MealStatus.Missed, meal.Status);
+        if (window == "fits")
+        {
+            var entry = Assert.Single(meal.Memory.Entries);
+            Assert.Equal(ShopExperience.Stockout, entry.Outcome); Assert.True(entry.Affinity < 0);
+            Assert.Equal(0, entry.Served); Assert.Equal(ExperienceStage.Failed, meal.Memory.Watermark!.Stage);
+        }
+        else { Assert.Empty(meal.Memory.Entries); Assert.Null(meal.Memory.Watermark); }
+        string wire = MemoryWire.Encode(meal.Memory);
+        city = Reload(city, market, paths); Advance(city, at + .2, 1);
+        Assert.Equal(wire, MemoryWire.Encode(city.State.Food!.Residents[0].Memory));
+        Assert.Equal(0, paths.Out); Assert.Equal(0, paths.Back); Assert.Equal(0, market.Calls);
+    }
+
+    [Theory]
     [InlineData(false, "stockout")] [InlineData(true, "stockout")]
     [InlineData(false, "unaffordable")] [InlineData(true, "unaffordable")]
     [InlineData(false, "unknown")] [InlineData(true, "unknown")]

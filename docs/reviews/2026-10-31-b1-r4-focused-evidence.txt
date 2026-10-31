@@ -1,0 +1,158 @@
+OFFLINE ONLY: pre-fix bag-stockout controls (6 fail, 2 valid-stop controls pass)
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  PersistentCity.Core -> C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\Core\bin\Debug\netstandard2.1\PersistentCity.Core.dll
+  PersistentCity.Persistence -> C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\Persistence\bin\Debug\netstandard2.1\PersistentCity.Persistence.dll
+  PersistentCity.Compatibility -> C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\Compatibility\bin\Debug\netstandard2.1\PersistentCity.Compatibility.dll
+  PersistentCity.Tests -> C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\bin\Debug\net10.0\PersistentCity.Tests.dll
+Test run for C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\bin\Debug\net10.0\PersistentCity.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 10.0.13)
+[xUnit.net 00:00:00.06]   Discovering: PersistentCity.Tests
+[xUnit.net 00:00:00.20]   Discovered:  PersistentCity.Tests
+[xUnit.net 00:00:00.21]   Starting:    PersistentCity.Tests
+dotnet.exe : [xUnit.net 00:00:00.29]     
+PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(reload: False, window: 
+"queue") [FAIL]
+At line:42 char:1
++ & "$env:LOCALAPPDATA\Microsoft\dotnet\dotnet.exe" test tests/Persiste ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([xUnit.net 00:0..."queue") [FAIL]:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[xUnit.net 00:00:00.29]       Assert.Empty() Failure: Collection was not empty
+[xUnit.net 00:00:00.29]       Collection: [ShopMemory { Affinity = -5, BusinessRef = 0, Day = 1, Outcome = Stockout, Served = 0 }]
+[xUnit.net 00:00:00.29]       Stack Trace:
+[xUnit.net 00:00:00.29]         C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs(39,0): at PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Boolean reload, String window)
+[xUnit.net 00:00:00.30]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+[xUnit.net 00:00:00.30]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+[xUnit.net 00:00:00.30]     
+PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(reload: False, window: 
+"short") [FAIL]
+[xUnit.net 00:00:00.30]       Assert.Empty() Failure: Collection was not empty
+[xUnit.net 00:00:00.30]       Collection: [ShopMemory { Affinity = -5, BusinessRef = 0, Day = 1, Outcome = Stockout, Served = 0 }]
+[xUnit.net 00:00:00.30]       Stack Trace:
+[xUnit.net 00:00:00.30]         C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs(39,0): at PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Boolean reload, String window)
+[xUnit.net 00:00:00.30]            at InvokeStub_FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Object, Span`1)
+[xUnit.net 00:00:00.30]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:00:00.38]     
+PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(reload: True, window: 
+"no-service-time") [FAIL]
+[xUnit.net 00:00:00.38]       Assert.Empty() Failure: Collection was not empty
+[xUnit.net 00:00:00.38]       Collection: [ShopMemory { Affinity = -5, BusinessRef = 0, Day = 1, Outcome = Stockout, Served = 0 }]
+[xUnit.net 00:00:00.38]       Stack Trace:
+[xUnit.net 00:00:00.38]         C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs(39,0): at PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Boolean reload, String window)
+[xUnit.net 00:00:00.38]            at InvokeStub_FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Object, Span`1)
+[xUnit.net 00:00:00.38]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:00:00.38]     
+PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(reload: True, window: 
+"queue") [FAIL]
+[xUnit.net 00:00:00.38]       Assert.Empty() Failure: Collection was not empty
+[xUnit.net 00:00:00.38]       Collection: [ShopMemory { Affinity = -5, BusinessRef = 0, Day = 1, Outcome = Stockout, Served = 0 }]
+[xUnit.net 00:00:00.38]       Stack Trace:
+[xUnit.net 00:00:00.38]         C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs(39,0): at PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Boolean reload, String window)
+[xUnit.net 00:00:00.38]            at InvokeStub_FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Object, Span`1)
+[xUnit.net 00:00:00.38]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:00:00.40]     
+PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(reload: True, window: 
+"short") [FAIL]
+[xUnit.net 00:00:00.40]       Assert.Empty() Failure: Collection was not empty
+[xUnit.net 00:00:00.40]       Collection: [ShopMemory { Affinity = -5, BusinessRef = 0, Day = 1, Outcome = Stockout, Served = 0 }]
+[xUnit.net 00:00:00.40]       Stack Trace:
+[xUnit.net 00:00:00.40]         C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs(39,0): at PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Boolean reload, String window)
+[xUnit.net 00:00:00.40]            at InvokeStub_FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Object, Span`1)
+[xUnit.net 00:00:00.40]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:00:00.40]     
+PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(reload: False, window: 
+"no-service-time") [FAIL]
+[xUnit.net 00:00:00.40]       Assert.Empty() Failure: Collection was not empty
+[xUnit.net 00:00:00.40]       Collection: [ShopMemory { Affinity = -5, BusinessRef = 0, Day = 1, Outcome = Stockout, Served = 0 }]
+[xUnit.net 00:00:00.40]       Stack Trace:
+[xUnit.net 00:00:00.40]         C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs(39,0): at PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Boolean reload, String window)
+[xUnit.net 00:00:00.40]            at InvokeStub_FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Object, Span`1)
+[xUnit.net 00:00:00.40]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:00:00.40]   Finished:    PersistentCity.Tests
+  Failed PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(reload: False, window: "queue") [52 ms]
+  Error Message:
+   Assert.Empty() Failure: Collection was not empty
+Collection: [ShopMemory { Affinity = -5, BusinessRef = 0, Day = 1, Outcome = Stockout, Served = 0 }]
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Boolean reload, String window) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs:line 39
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+  Failed PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(reload: False, window: "short") [1 ms]
+  Error Message:
+   Assert.Empty() Failure: Collection was not empty
+Collection: [ShopMemory { Affinity = -5, BusinessRef = 0, Day = 1, Outcome = Stockout, Served = 0 }]
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Boolean reload, String window) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs:line 39
+   at InvokeStub_FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+  Failed PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(reload: True, window: "no-service-time") [82 ms]
+  Error Message:
+   Assert.Empty() Failure: Collection was not empty
+Collection: [ShopMemory { Affinity = -5, BusinessRef = 0, Day = 1, Outcome = Stockout, Served = 0 }]
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Boolean reload, String window) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs:line 39
+   at InvokeStub_FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+  Failed PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(reload: True, window: "queue") [1 ms]
+  Error Message:
+   Assert.Empty() Failure: Collection was not empty
+Collection: [ShopMemory { Affinity = -5, BusinessRef = 0, Day = 1, Outcome = Stockout, Served = 0 }]
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Boolean reload, String window) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs:line 39
+   at InvokeStub_FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+  Passed PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(reload: True, window: "fits") [20 ms]
+  Failed PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(reload: True, window: "short") [1 ms]
+  Error Message:
+   Assert.Empty() Failure: Collection was not empty
+Collection: [ShopMemory { Affinity = -5, BusinessRef = 0, Day = 1, Outcome = Stockout, Served = 0 }]
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Boolean reload, String window) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs:line 39
+   at InvokeStub_FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+  Failed PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(reload: False, window: "no-service-time") [< 1 ms]
+  Error Message:
+   Assert.Empty() Failure: Collection was not empty
+Collection: [ShopMemory { Affinity = -5, BusinessRef = 0, Day = 1, Outcome = Stockout, Served = 0 }]
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Boolean reload, String window) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs:line 39
+   at InvokeStub_FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+  Passed PersistentCity.Tests.FoodMemoryTests.ReachedBagStockoutRequiresRemainingTimeAndQueueFeasibility(reload: False, window: "fits") [1 ms]
+
+Test Run Failed.
+Total tests: 8
+     Passed: 2
+     Failed: 6
+ Total time: 0,7650 Seconds
+
+POST-FIX FOUR-SITE CACHE COMPARISON
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  PersistentCity.Core -> C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\Core\bin\Debug\netstandard2.1\PersistentCity.Core.dll
+  PersistentCity.Compatibility -> C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\Compatibility\bin\Debug\netstandard2.1\PersistentCity.Compatibility.dll
+  PersistentCity.Persistence -> C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\Persistence\bin\Debug\netstandard2.1\PersistentCity.Persistence.dll
+  PersistentCity.Tests -> C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\bin\Debug\net10.0\PersistentCity.Tests.dll
+Test run for C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\bin\Debug\net10.0\PersistentCity.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\bin\Debug\net10.0\PersistentCity.Tests.dll
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 10.0.13)
+[xUnit.net 00:00:00.07]   Discovering: PersistentCity.Tests
+[xUnit.net 00:00:00.22]   Discovered:  PersistentCity.Tests
+[xUnit.net 00:00:00.23]   Starting:    PersistentCity.Tests
+[xUnit.net 00:00:00.36]   Finished:    PersistentCity.Tests
+  Passed PersistentCity.Tests.FoodMemoryOpeningCacheTests.ReusedHoursCacheMatchesTemporaryPlacesAndValidatesMutations [97 ms]
+  Standard Output Messages:
+ Hours checks, 10000 batches (4 sites): temporary=42880000 bytes (4288/batch), round3=10720000 bytes (1072/batch), cached=0 bytes (0/batch).
+
+
+
+Test Run Successful.
+Total tests: 1
+     Passed: 1
+ Total time: 0,7525 Seconds

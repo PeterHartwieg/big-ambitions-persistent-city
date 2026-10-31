@@ -24,7 +24,7 @@ namespace PersistentCity.Core
                 // Reaching the committed door plus named closed hours is evidence; a lost route is not.
                 var business = ReadBusiness(arriving.BusinessId, city.State.Minute);
                 if (business != null && business.PlaceId == arriving.PlaceId && business.Id == arriving.BusinessId
-                    && !DailyRoutine.Open(new Place { Kind=PlaceKind.Shop, OpenMinute=0, CloseMinute=0, WeeklyHours=business.Hours }, city.State.Minute))
+                    && !DailyRoutine.Open(business.OpeningPlace, city.State.Minute))
                 {
                     due.Remove(arriving);
                     try { Finish(arriving, MealStatus.Missed, "Shop closed before admission"); }

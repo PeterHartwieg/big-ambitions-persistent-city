@@ -50,14 +50,16 @@ namespace PersistentCity.Core
             var allowance = AvailableForMeal(meal);
             bool affordableStockout = AffordableStockout(business, allowance);
             double finish = Math.Max(decision.OriginAt, shop.NextServiceAt) + (shop.MealsPerHour > 0 ? 60 / shop.MealsPerHour : 0);
-            bool stockout = !shop.ServiceUnavailable && shop.MealsPerHour > 0 && affordableStockout
-                && Math.Max(0, shop.NextServiceAt - decision.OriginAt) <= MealRhythm.QueueMinutes(meal.Kind, Activity.Shop)
+            bool fitsVisit = Math.Max(0, shop.NextServiceAt - decision.OriginAt) <= MealRhythm.QueueMinutes(meal.Kind, Activity.Shop)
                 && finish + MealRhythm.EatingMinutes(meal.Kind) <= decision.Deadline
                 && finish < (DailyRoutine.NextClose(hours, decision.OriginAt) ?? double.NegativeInfinity);
-            if (!stockout && shop.ServiceUnavailable && shop.MealsPerHour == 0 && affordableStockout)
+            bool stockout = !shop.ServiceUnavailable && shop.MealsPerHour > 0 && affordableStockout && fitsVisit;
+            if (!stockout && shop.ServiceUnavailable && shop.MealsPerHour == 0 && affordableStockout && fitsVisit
+                && finish + MealRhythm.EatingMinutes(meal.Kind) < decision.Deadline)
             {
                 // Held images intentionally retain only a generic service flag. Revalidate the
-                // named bag-stockout evidence at this reached shop; no routes or checkout.
+                // named bag-stockout evidence only if the necessary time/queue bounds fit.
+                // Zero throughput hides service duration, so eating alone must leave spare time.
                 var live = FailureEvidence(shop.BusinessId, shop.PlaceId, decision.OriginAt);
                 stockout = live?.Id == shop.BusinessId && live.PlaceId == shop.PlaceId && live.ServiceUnavailableReason == "Out of stock"
                     && AffordableStockout(live, allowance);
