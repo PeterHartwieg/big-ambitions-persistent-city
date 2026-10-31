@@ -1,0 +1,108 @@
+using System;
+using System.Collections.Generic;
+using Stopwatch = System.Diagnostics.Stopwatch;
+using System.Linq;
+using PersistentCity.Core;
+namespace PersistentCity.Core
+{
+    // Counters referenced only by the generated, instrumented offline copy.
+    public sealed partial class CitySimulator { public static long OccupancyCalls, OccupancyVisits; }
+}
+static class StreetLifePerformance
+{
+    sealed class Walking : IRoutePlanner
+    {
+        public Route Plan(Place a,Place b,double at,TravelPreferences p) => new() {Legs={new RouteLeg {From=a.Position,To=b.Position,Minutes=10,Mode=TravelMode.Walk}}};
+    }
+    sealed class SpotEnvironment : IOptionalStopEnvironment
+    {
+        public bool Raining => false;
+        public long Queries;
+        readonly Dictionary<string,OptionalStopSpot[]> cached=new();
+        public SpotEnvironment(IEnumerable<Place> places)
+        {
+            foreach(var p in places) cached[p.Id]=Enumerable.Range(0,8).Select(i=>new OptionalStopSpot {
+                Id=p.Id+":"+i,TargetId=p.Id,Position=new(p.Position.X+i,0,1),Facing=p.Position}).ToArray();
+        }
+        public IReadOnlyList<OptionalStopSpot> Spots(Place p,DwellKind k) { Queries++; return k==DwellKind.WindowShopping?cached[p.Id]:Array.Empty<OptionalStopSpot>(); }
+        public OptionalStopAvailability Available(OptionalStopState stop) => OptionalStopAvailability.Ready;
+    }
+    static (CitySimulator Sim,SpotEnvironment Env) Ready(int rate,int count)
+    {
+        var home=new Place {Id="home",Name="Home",Kind=PlaceKind.Home,Capacity=count};
+        var shops=Enumerable.Range(0,(count+7)/8).Select(i=>new Place {Id="shop:"+i,Name="Shop",Kind=PlaceKind.Shop,Capacity=8,Position=new(i*1000,0,0)}).ToArray();
+        var state=Population.Create(Enumerable.Range(0,count).Select(i=>new CitizenIdentity {Id=i.ToString(),Name="Resident "+i,Age=30,Persona=Persona.Commuter}),
+            new[]{home}.Concat(shops),"e2a-perf","0.40.4",17,1440);
+        for(int i=0;i<count;i++)
+        {
+            var c=state.Citizens[i]; var p=shops[i/8];
+            c.Phase=CitizenPhase.Travelling; c.PlaceId="home"; c.Activity=Activity.Home;
+            c.DestinationId=p.Id; c.DestinationActivity=Activity.Shop; c.DepartureMinute=1440;
+            c.NextEventMinute=1450; c.ActivityUntilMinute=1570;
+            c.Journey=new Walking().Plan(home,p,1440,c.Preferences);
+        }
+        var env=new SpotEnvironment(shops); var sim=new CitySimulator(state,new Walking()); sim.AttachOptionalStops(env,rate);
+        return (sim,env);
+    }
+    static void Check(bool value,string message) { if(!value) throw new Exception(message); }
+    static void Report(string label,double[] times,long bytes)
+    {
+        for(int i=0;i<times.Length;i++)
+            if(times[i]>=30) Console.WriteLine(FormattableString.Invariant($"FLAG >=30ms: {label}; sample={i}; ms={times[i]:F4}"));
+        Array.Sort(times);
+        Console.WriteLine(FormattableString.Invariant($"{label}: ms p50={times[(times.Length-1)/2]:F4} p95={times[(int)Math.Ceiling(times.Length*.95)-1]:F4} max={times[^1]:F4}; bytes/sample={bytes/(double)times.Length:F1}; spikes>=30ms={times.Count(t=>t>=30)}."));
+    }
+    static void Caps(CitySimulator sim,int rate)
+    {
+        foreach(int cap in new[]{48,256})
+        {
+            var f=new CapSelection {pedestrianLimit=cap,radius=1000000};
+            f.simulation.State.Minute=1450;
+            foreach(var p in sim.State.Places) f.places[p.Id]=p;
+            foreach(var c in sim.State.Citizens.Where(c=>c.OptionalStop!=null)) f.simulation.State.Citizens.Add(c);
+            int realised=f.simulation.State.Citizens.Count;
+            while(true)
+            {
+                int admitted=f.Select(); Check(admitted<=4,"native attempt budget changed");
+                if(admitted==0) break;
+            }
+            Check(f.InitialPeople==Math.Min(cap,realised),"actor cap or optional eligibility changed");
+            // Full/candidate-exhausted selection, same population and active stops; no native calls.
+            var times=new double[200]; long bytes=0;
+            for(int n=0;n<times.Length;n++)
+            {
+                long before=GC.GetAllocatedBytesForCurrentThread(), start=Stopwatch.GetTimestamp();
+                Check(f.Select()==0,"cap leaked a body");
+                times[n]=Stopwatch.GetElapsedTime(start).TotalMilliseconds; bytes+=GC.GetAllocatedBytesForCurrentThread()-before;
+            }
+            Report($"Selector rate={rate} cap={cap} admitted={f.InitialPeople}/{realised}",times,bytes);
+        }
+    }
+    public static void Main()
+    {
+        // Warm JIT independently of measured setup/admission windows.
+        for(int i=0;i<5;i++) Ready(100,256).Sim.AdvanceTo(1450);
+        foreach(int rate in new[]{25,100})
+            foreach(int count in new[]{48,256,957})
+            {
+                var times=new double[60]; long bytes=0,queries=0,scans=0,visits=0; CitySimulator? last=null;
+                for(int n=0;n<times.Length;n++)
+                {
+                    var (sim,env)=Ready(rate,count); // fixture and spot allocation excluded
+                    CitySimulator.OccupancyCalls=CitySimulator.OccupancyVisits=0;
+                    long before=GC.GetAllocatedBytesForCurrentThread(),start=Stopwatch.GetTimestamp();
+                    sim.AdvanceTo(1450);
+                    times[n]=Stopwatch.GetElapsedTime(start).TotalMilliseconds; bytes+=GC.GetAllocatedBytesForCurrentThread()-before;
+                    queries+=env.Queries; scans+=CitySimulator.OccupancyCalls; visits+=CitySimulator.OccupancyVisits;
+                    var tally=sim.OptionalStopChances;
+                    Check(tally.Eligible==count,"wrong denominator");
+                    Check(tally.Drawn==tally.Realised+sim.State.Citizens.Count(c=>c.OptionalStopChoice==true&&c.OptionalStop==null)+tally.Dropped,"chance accounting changed");
+                    last=sim;
+                }
+                Report($"Admission rate={rate} residents={count} realised={last!.OptionalStopChances.Realised}",times,bytes);
+                Console.WriteLine(FormattableString.Invariant($"  per batch: spot queries={queries/60.0:F1}; occupancy calls={scans/60.0:F1}; occupancy record visits={visits/60.0:F1}"));
+                if(count==957) Caps(last,rate);
+            }
+        Console.WriteLine("Offline synthetic costs only; instrumented occupancy counters, .NET JIT and geometry/body doubles are not Unity mod-work or whole-frame evidence.");
+    }
+}
