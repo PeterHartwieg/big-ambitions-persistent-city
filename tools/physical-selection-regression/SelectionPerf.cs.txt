@@ -1,0 +1,26 @@
+static class SelectionPerf {
+ static void Measure(string name,Action action) {
+  for(int i=0;i<100;i++)action();
+  var times=new double[300]; long bytes=GC.GetAllocatedBytesForCurrentThread(); int spikes=0;
+  for(int i=0;i<times.Length;i++) {
+   long start=System.Diagnostics.Stopwatch.GetTimestamp();action();
+   times[i]=(System.Diagnostics.Stopwatch.GetTimestamp()-start)*1000.0/System.Diagnostics.Stopwatch.Frequency;
+   if(times[i]>=30)spikes++;
+  }
+  bytes=GC.GetAllocatedBytesForCurrentThread()-bytes;Array.Sort(times);
+  Console.WriteLine($"F0 offline {name}: ms/update p50={times[150]:F6} p95={times[285]:F6} max={times[299]:F6}; bytes/update={bytes/300.0:F1}; spikes>=30ms={spikes}; 300 single calls (native doubles).");
+ }
+ public static void Run() {
+  var before=new BeforeF0();var after=new After();
+  foreach(Fixture f in new Fixture[]{before,after}) {
+   f.InitialPeople=f.pedestrianLimit=48;f.InitialCars=f.vehicleLimit=24;
+   for(int i=0;i<957;i++) {
+    var leg=new RouteLeg {Mode=TravelMode.Walk,From=new Position(i%50,0,0),To=new Position(i%50+5,0,0),Minutes=1};
+    var c=new CitizenState {Identity=new CitizenIdentity{Id=i.ToString()},Phase=CitizenPhase.Travelling,Journey=new Route{Legs=new(){leg}},NextEventMinute=200};
+    f.simulation.State.Citizens.Add(c);f.simulation.Samples[c.Identity.Id]=new PhysicalJourneySample(0,1,0,0,leg,leg.From,null,null);
+   }
+  }
+  Measure("957-resident full-pool selection BEFORE F0 cheap break",()=>before.Select());
+  Measure("957-resident full-pool selection AFTER F0 cheap break",()=>after.Select());
+ }
+}

@@ -1,0 +1,77 @@
+static class Tests {
+ static int checks;
+ static void Check(bool value,string message) { checks++; if(!value)throw new Exception(message); }
+ static void Flags(int bits) {
+  PhysicalTrafficHooks.CurrentFastForward=(bits&1)!=0; Time.timeScale=(bits&2)!=0?6:1;
+  LoadScene.isLoading=(bits&4)!=0; BuildingManager.IsInsideBuilding=(bits&8)!=0;
+  UndergroundParkingManager.IsInsideParking=(bits&16)!=0; InstanceBehavior<UIs>.Instance.timeMachine.isRunning=(bits&32)!=0;
+ }
+ static void On() {
+  Flags(8); NativeInteriorCityView.Configured=true; NativeInteriorCityView.State.Reset();
+  NativeInteriorCityView.State.Refresh(true,new(false,false,false,true,false,false),new object(),0,
+   ()=>InteriorViewEligibility.Check(true,false,default,0));
+  NativeInteriorCityView.Events.Clear();
+ }
+ public static void Run() {
+  for(int bits=0;bits<64;bits++) {
+   Flags(bits); NativeInteriorCityView.Configured=false; NativeInteriorCityView.State.Reset();
+   Check(NativeTravelPace.HiddenTravel==(bits!=0),"actual HiddenTravel off differs");
+   for(int p=0;p<2;p++) {
+    InstanceBehavior<UIs>.Instance.gameSpeed.Paused=p!=0;
+    Check(Gates.PedestrianPause()==((bits&12)!=0||p!=0),"actual pedestrian stop off differs");
+   }
+   for(int v=0;v<16;v++) {
+    TrafficManager.IsInitialized=(v&1)!=0;TrafficManager.HasInstance=(v&2)!=0;TrafficManager.Instance.enabled=(v&4)!=0;
+    Time.timeScale=(v&8)!=0?0:1;
+    Check(Gates.NativeReady==(v==7&&(bits&8)==0),"actual NativeReady off differs");
+   }
+   Flags(bits);
+   for(int setting=0;setting<2;setting++)for(int fail=0;fail<2;fail++)for(int body=0;body<2;body++)
+    Check(Gates.Construct(new PrototypeSettings{PhysicalEnabled=setting!=0},fail!=0,body!=0?new object():null)
+     ==(setting!=0&&fail==0&&body==0&&bits==0),"actual construction gate off differs");
+   var f=new Fixture();f.Add(2,1);NativeInteriorCityView.Events.Clear();f.BeforeAdvance();
+   Check(f.bindings.Count==(bits==0?3:0),"BeforeAdvance off release differs");
+   Check(NativeInteriorCityView.Events.SequenceEqual(bits==0?Array.Empty<string>():new[]{"observe","release","release","release"}),"off observation/release order differs");
+   f=new Fixture();f.Add(2,1);NativeInteriorCityView.Events.Clear();f.UpdateBodies();
+   Check(f.bindings.Count==(bits==0?3:0),"Update off hidden release differs");
+  }
+  Flags(8); NativeInteriorCityView.Configured=false;var save=new Fixture();save.Add(1,1);save.BeforeSave();
+  Check(save.bindings.Count==2,"save off released bodies (legacy only observed)");
+  On(); var caps=new Fixture(); caps.Add(48,24); caps.UpdateBodies();
+  Check(caps.bindings.Values.Count(b=>b.Person!=null)==24&&caps.bindings.Values.Count(b=>b.Car!=null)==12,"existing street bindings exceed interior caps");
+  Check(Gates.Construct(new PrototypeSettings(),false,null),"construction on inside blocked");
+  caps=new Fixture();caps.Add(1,1,61);caps.UpdateBodies();Check(caps.bindings.Count==0,"interior retained radius hysteresis beyond 60m");
+  On(); caps=new Fixture();caps.Add(1,1,59);caps.UpdateBodies();Check(caps.bindings.Count==2,"near entrance bodies were released");
+  foreach(bool fail in new[]{false,true}) {
+   On();save=new Fixture{ThrowObserve=fail};save.Add(1,1);
+   bool threw=false;try{save.BeforeSave();}catch{threw=true;}
+   Check(threw==fail&&save.bindings.Count==0&&!NativeInteriorCityView.State.Active,"save exception failed closed/release");
+   Check(NativeInteriorCityView.Events.SequenceEqual(new[]{"observe","restore","release","release"}),"ObserveForSave must precede restore and all releases");
+  }
+  On();save=new Fixture{ThrowRelease="0"};save.Add(2,1);bool releaseThrew=false;
+  try{save.BeforeSave();}catch{releaseThrew=true;}
+  Check(releaseThrew&&save.bindings.Count==0&&!NativeInteriorCityView.State.Active,"one release exception skipped cleanup of other bodies");
+  On();save=new Fixture();save.Add(1,1);SpeedFixture.current=save;
+  SpeedFixture.SpeedChangingPrefix(TimeSpeed.FastForward);
+  Check(save.bindings.Count==0&&!NativeInteriorCityView.State.Active,"6x must restore before native speed change");
+  On();save=new Fixture();save.Add(1,1);ClockFixture.beforeHiddenTravel=()=>{save.RestoreInterior();NativeInteriorCityView.Suspend();};
+  InstanceBehavior<UIs>.Instance.timeMachine.isRunning=true;float delta=6;ClockFixture.TickPrefix(ref delta);
+  Check(save.bindings.Count==0&&!NativeInteriorCityView.State.Active&&delta==6,"time machine restore before native tick");
+  ClockFixture.beforeHiddenTravel=null; Flags(0);delta=1;ClockFixture.TickPrefix(ref delta);Check(delta==1,"clock off callback changed tick");
+  NativeInteriorCityView.State.Reset();NativeInteriorCityView.Configured=false;
+  var street=new Fixture();street.Add(48,24);Measure("street body-retention loop 48/24",street.UpdateBodies);
+  On();var inside=new Fixture();inside.Add(24,12);Measure("interior body-retention loop 24/12",inside.UpdateBodies);
+  Console.WriteLine($"PASS {checks} F0 source-extracted hidden/pedestrian/vehicle/construction/release/cap/save/6x/time-machine checks.");
+ }
+ static void Measure(string name,Action action) {
+  for(int i=0;i<1000;i++)action();
+  var times=new double[1000];long bytes=GC.GetAllocatedBytesForCurrentThread();int spikes=0;
+  for(int i=0;i<times.Length;i++) {
+   long start=System.Diagnostics.Stopwatch.GetTimestamp();action();
+   times[i]=(System.Diagnostics.Stopwatch.GetTimestamp()-start)*1000.0/System.Diagnostics.Stopwatch.Frequency;
+   if(times[i]>=30)spikes++;
+  }
+  bytes=GC.GetAllocatedBytesForCurrentThread()-bytes;Array.Sort(times);
+  Console.WriteLine($"F0 offline {name}: ms/update p50={times[500]:F6} p95={times[950]:F6} max={times[999]:F6}; bytes/update={bytes/1000.0:F1}; spikes>=30ms={spikes}; 1000 single calls (native doubles).");
+ }
+}

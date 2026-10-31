@@ -250,7 +250,7 @@ namespace PersistentCity.Runtime
                 if (!crossing.Permitted && crossing.Link.redTrafficLight != null) redForPedestrian = true;
             }
             foreach (var collider in departedCrossings) crossings.Remove(collider);
-            bool pause = LoadScene.isLoading || BuildingManager.IsInsideBuilding
+            bool pause = LoadScene.isLoading || (BuildingManager.IsInsideBuilding && !NativeInteriorCityView.Active)
                 || (InstanceBehavior<UIs>.Instance != null && InstanceBehavior<UIs>.Instance.gameSpeed.Paused);
             Agent.isStopped = stopped || redForPedestrian || pause;
         }

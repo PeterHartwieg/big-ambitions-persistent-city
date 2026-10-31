@@ -103,12 +103,17 @@ namespace PersistentCity.Runtime
                 return NativeClockRate(NativeCityClock.Active ? NativeCityClock.Factor : 1);
             }
         }
-        public static bool HiddenTravel => PhysicalTrafficHooks.CurrentFastForward || Time.timeScale > 1 || LoadScene.isLoading || BuildingManager.IsInsideBuilding || UndergroundParkingManager.IsInsideParking
+        public static TravelVisibility Visibility => new TravelVisibility(PhysicalTrafficHooks.CurrentFastForward, Time.timeScale > 1,
+            LoadScene.isLoading, BuildingManager.IsInsideBuilding, UndergroundParkingManager.IsInsideParking,
+            InstanceBehavior<UIs>.Instance != null && InstanceBehavior<UIs>.Instance.timeMachine.isRunning);
+        public static bool HiddenTravel => PhysicalTrafficHooks.CurrentFastForward || Time.timeScale > 1 || LoadScene.isLoading
+            || (BuildingManager.IsInsideBuilding && !NativeInteriorCityView.Active) || UndergroundParkingManager.IsInsideParking
             || (InstanceBehavior<UIs>.Instance != null && InstanceBehavior<UIs>.Instance.timeMachine.isRunning);
         public static Position Focus
         {
             get
             {
+                if (NativeInteriorCityView.Active) return NativeInteriorCityView.State.Anchor;
                 var player = InstanceBehavior<GameManager>.Instance?.playerController;
                 if (player == null) return new Position(double.NaN, double.NaN, double.NaN);
                 Vector3 p = player.transform.position;

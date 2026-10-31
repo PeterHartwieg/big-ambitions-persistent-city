@@ -125,8 +125,18 @@ namespace PersistentCity.Runtime
         {
             if (!active || disposed) return;
             try { ObserveForSave(); }
-            finally { Suspend(); }
+            finally
+            {
+                if (NativeInteriorCityView.Configured) NativeInteriorCityView.Suspend();
+                Suspend();
+            }
         }
+        public void BeforeSave()
+        {
+            if (NativeInteriorCityView.Active) SuspendBeforeNativeFastForward();
+            else ObserveForSave();
+        }
+        public void RestoreInterior() { if (bindings.Count != 0) SuspendBeforeNativeFastForward(); }
         public void Suspend()
         {
             Exception? failure = null;
@@ -143,17 +153,24 @@ namespace PersistentCity.Runtime
             if (NativeTravelPace.HiddenTravel) { SuspendBeforeNativeFastForward(); return; }
             Position focus = NativeTravelPace.Focus;
             if (!focus.IsFinite) { Suspend(); return; }
+            double radius = NativeInteriorCityView.Radius(this.radius);
+            double releaseRadius = NativeInteriorCityView.ReleaseRadius(this.radius);
+            int pedestrianLimit = NativeInteriorCityView.Pedestrians(this.pedestrianLimit);
+            int vehicleLimit = NativeInteriorCityView.Vehicles(this.vehicleLimit);
+            bool interior = NativeInteriorCityView.State.Active;
             var snapshot = bindingSnapshot ?? new List<Binding>(bindings.Count);
             bindingSnapshot = null;
             try
             {
                 snapshot.AddRange(bindings.Values);
+                int keptPeople = 0, keptCars = 0;
                 foreach (var binding in snapshot)
                 {
                     if (ambient.IsReserved(binding.Citizen.Identity.Id)) { Release(binding); continue; }
                     if (!Observe(binding)) { if (!TryAwaitArrival(binding)) Release(binding); continue; }
                     Position position = binding.Person?.Position ?? binding.Car!.Position;
-                    if (Position.Distance(position, focus) > radius * 1.4) Release(binding);
+                    if (Position.Distance(position, focus) > releaseRadius) { Release(binding); continue; }
+                    if (interior && (binding.Person != null ? ++keptPeople > pedestrianLimit : ++keptCars > vehicleLimit)) Release(binding);
                 }
             }
             finally { snapshot.Clear(); bindingSnapshot = snapshot; }
@@ -162,12 +179,15 @@ namespace PersistentCity.Runtime
             // The bounded view is selected deterministically. No filler identities or unrelated trips are created.
             int people = personBindings, cars = bindings.Count - people;
             int attempts = 0;
-            PlanQueues(focus);
+            PlanQueues(focus, radius);
             // Candidate selection. tools/physical-selection-regression extracts the text from this line
             // to the road sample below and compares it with the frozen LINQ selection.
             candidates.Clear();
             foreach (var c in simulation.State.Citizens)
             {
+                // Both pools are full: observations and queue movement above still ran; no
+                // candidate can acquire a body until a later update frees a slot.
+                if (people >= pedestrianLimit && cars >= vehicleLimit) break;
                 if (!(c.NextEventMinute > simulation.State.Minute) || bindings.ContainsKey(c.Identity.Id) || ambient.IsReserved(c.Identity.Id)) continue;
                 bool tried = attempted.TryGetValue(c.Identity.Id, out float lastAttempt);
                 if (tried && !(Time.unscaledTime - lastAttempt >= 2)) continue;
@@ -277,7 +297,7 @@ namespace PersistentCity.Runtime
         /// line per door: places sharing an entrance share it. A body already in a line keeps its
         /// spot until it leaves (DwellPlanner.AssignQueueSlots). A full line leaves the rest indoors.
         /// </summary>
-        private void PlanQueues(Position focus)
+        private void PlanQueues(Position focus, double radius)
         {
             queuers.Clear();
             double now = simulation.State.Minute;
