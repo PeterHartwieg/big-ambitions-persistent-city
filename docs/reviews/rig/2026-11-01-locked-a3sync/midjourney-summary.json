@@ -1,0 +1,46 @@
+{
+  "role": "rig_test",
+  "savedPayloadIdenticalAcrossReload": true,
+  "savedPayloadHashes": [
+    "373d8bb95d113f7882ffe6875e4744264db5e39fc139bfeaebf134c5dbc40e0a",
+    "373d8bb95d113f7882ffe6875e4744264db5e39fc139bfeaebf134c5dbc40e0a"
+  ],
+  "sourceMinute": 9165.018440246582,
+  "liveMinute": 9165.35177230835,
+  "activeMeals": [
+    {
+      "resident": "pc:350",
+      "statusBefore": 1,
+      "statusAfter": 1,
+      "intentTermsIdentical": true,
+      "beforeHash": "415727eceb83aa122f8685552be85a07789f664a0d87e06de0f76873a330780c",
+      "afterHash": "415727eceb83aa122f8685552be85a07789f664a0d87e06de0f76873a330780c",
+      "terms": {
+        "ResidentId": "pc:350",
+        "AnchorId": "pc:350",
+        "Slot": 0,
+        "Day": 6,
+        "Kind": 1,
+        "DesiredAt": 9165.0,
+        "ExpiresAt": 9255.0,
+        "Deadline": 9210.0,
+        "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+        "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+        "ProductId": "ba:itemname_croissant",
+        "Price": 275221504000,
+        "ServiceAt": 0.0,
+        "ServiceMinutes": 4.0,
+        "ReturnMinutes": 1.6817436236953551,
+        "Allowance": 45230837465088,
+        "LastContextKey": "trip:8tVqXi7AmHZTjtpwZyImetUsstybaAW2SI+dKffge0k=",
+        "ContextAttempts": 1,
+        "ExistingStop": false,
+        "PreferredProductId": "",
+        "PreferenceBonusCents": 0,
+        "Reason": "Chose food",
+        "Decision": null
+      }
+    }
+  ],
+  "note": "Saved source is compared exactly. Native live clock advances a fraction of a minute before bridge pause; route progress may advance normally."
+}

@@ -1,0 +1,212 @@
+{
+  "role": "rig_test",
+  "citizens": 957,
+  "consumers": 1914,
+  "sourceSchema": 16,
+  "schemaAfterUpgrade": 17,
+  "schemasSavedReload1Reload2": [
+    17,
+    17,
+    17,
+    17,
+    17
+  ],
+  "sourceMinute": 7695.968780517578,
+  "activationDay": 6,
+  "expectedActivationDay": 6,
+  "allLegacyFieldsExact": true,
+  "legacyHashes": [
+    "229d270b2dadd737eca8b91a66d7d799a5130da1cc7c8b8417d71b76c3c210eb",
+    "229d270b2dadd737eca8b91a66d7d799a5130da1cc7c8b8417d71b76c3c210eb"
+  ],
+  "liveAssignmentsUnchanged": true,
+  "liveMoneyUnchanged": true,
+  "activeMealCount": 6,
+  "mealsWithExcursions": 3,
+  "citizenReturns": 3,
+  "optionalChanceCount": 0,
+  "optionalChancesPreservedByMigration": true,
+  "shopScopePreserved": true,
+  "sourceSavedAgainExact": true,
+  "traitHashes": [
+    "c32f673887e79df4125a8b6d537bfd4c0d649b8d179abbebdf5ac6bed3b11926",
+    "c32f673887e79df4125a8b6d537bfd4c0d649b8d179abbebdf5ac6bed3b11926",
+    "c32f673887e79df4125a8b6d537bfd4c0d649b8d179abbebdf5ac6bed3b11926",
+    "c32f673887e79df4125a8b6d537bfd4c0d649b8d179abbebdf5ac6bed3b11926"
+  ],
+  "traitsIdenticalAcrossReloads": true,
+  "moneyIdenticalAcrossReloads": true,
+  "noon": {
+    "allLegacyFieldsExact": true,
+    "hashes": [
+      "33a5f889f92efb9b8945c88387ebc84ece2cc7be59568e17d260c0ca4771aa29",
+      "33a5f889f92efb9b8945c88387ebc84ece2cc7be59568e17d260c0ca4771aa29"
+    ],
+    "unrecorded": {
+      "consumers": 301,
+      "own": 141
+    },
+    "activationDay": 6,
+    "sourceMinute": 7950.016056060791,
+    "returningJourneys": 1,
+    "pendingOptionalChances": 0
+  },
+  "nativeSaveContracts": [
+    {
+      "label": "morning",
+      "sourceHsgSha256": "31b05bc02cdc185901eef99fae6713b9b305b79f014144c88923a631beca9dab",
+      "targetHsgSha256": "7c19a128c2341c266f7cf99cfacfef522ca62b0f26f67ae341f51d94652eecb0",
+      "authorityHashBefore": "52139e7fdc78238b028751115639a11fb4243f1a5c9424b630978cb71af979c7",
+      "authorityHashAfter": "52139e7fdc78238b028751115639a11fb4243f1a5c9424b630978cb71af979c7",
+      "authorityEqual": true,
+      "sourceReceipts": 0,
+      "targetReceipts": 0,
+      "receiptHashBefore": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "receiptHashAfter": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "receiptDictionaryEqual": true,
+      "allOriginalReceiptsRetainedUnchanged": true,
+      "authorityShops": 1
+    },
+    {
+      "label": "noon",
+      "sourceHsgSha256": "0aac22c8716ecd5cfc1d7f79773ff2464ef18fe197202db5523eec368029dac3",
+      "targetHsgSha256": "fcd8e3b16e8cf13cd60de39a85e3a0bb734a044c0d2ea63f3a615928f4f2154c",
+      "authorityHashBefore": "52139e7fdc78238b028751115639a11fb4243f1a5c9424b630978cb71af979c7",
+      "authorityHashAfter": "52139e7fdc78238b028751115639a11fb4243f1a5c9424b630978cb71af979c7",
+      "authorityEqual": true,
+      "sourceReceipts": 27,
+      "targetReceipts": 27,
+      "receiptHashBefore": "18bb84cf9c1a9cf4908578401dc5a429142afca1e8e52d7ccb08d41bcdb199b6",
+      "receiptHashAfter": "18bb84cf9c1a9cf4908578401dc5a429142afca1e8e52d7ccb08d41bcdb199b6",
+      "receiptDictionaryEqual": true,
+      "allOriginalReceiptsRetainedUnchanged": true,
+      "authorityShops": 1
+    }
+  ],
+  "refusals": [
+    {
+      "kind": "corrupt",
+      "name": "FT Food Routines Locked A3 Sync Refuse corrupt 20261101",
+      "file": "FT Food Routines Locked A3 Sync Refuse corrupt 20261101.hsg",
+      "before": "79da59abafb3132fd4a53f0a9241af657eaa490d4de6b63fd46c4d2f6ab1801b",
+      "after": "79da59abafb3132fd4a53f0a9241af657eaa490d4de6b63fd46c4d2f6ab1801b",
+      "runtime": {
+        "enabled": true,
+        "failed": true,
+        "status": "Population save refused: Invalid state: Unexpected character encountered while parsing number: !. Path 'TravelTimingVersion', line 1, position 5732117. Original payload retained.",
+        "taskStatus": null,
+        "taskCompleted": null,
+        "taskError": null,
+        "saveMatches": false,
+        "discoveryReady": null,
+        "discoverySweeps": null,
+        "lastDiscoverySeconds": null,
+        "lastDiscoveryWorkMs": null,
+        "maximumDiscoverySliceMs": null,
+        "waitingRoutingFrames": 0,
+        "maximumPreparationMs": 0.0
+      }
+    },
+    {
+      "kind": "future",
+      "name": "FT Food Routines Locked A3 Sync Refuse future 20261101",
+      "file": "FT Food Routines Locked A3 Sync Refuse future 20261101.hsg",
+      "before": "c29adb0b6812c1a9497b2de26c66befde402d3c235687e9b69aa29bb1d3e7e23",
+      "after": "c29adb0b6812c1a9497b2de26c66befde402d3c235687e9b69aa29bb1d3e7e23",
+      "runtime": {
+        "enabled": true,
+        "failed": true,
+        "status": "Population save refused: State uses a newer schema; preserve the original payload. Original payload retained.",
+        "taskStatus": null,
+        "taskCompleted": null,
+        "taskError": null,
+        "saveMatches": false,
+        "discoveryReady": null,
+        "discoverySweeps": null,
+        "lastDiscoverySeconds": null,
+        "lastDiscoveryWorkMs": null,
+        "maximumDiscoverySliceMs": null,
+        "waitingRoutingFrames": 0,
+        "maximumPreparationMs": 0.0
+      }
+    }
+  ],
+  "refusalStoreSeam": [
+    {
+      "kind": "corrupt",
+      "status": "Invalid",
+      "SourceSchema": 0,
+      "Error": "Invalid state: Unterminated string. Expected delimiter: \". Path 'TravelClockRate', line 1, position 6053478.",
+      "readMs": 135.2332,
+      "writeAccepted": false,
+      "fileHashBefore": "b90d4586dac1a55b846a2a636e33ba7119c2a6f40634a1c948b9ef009b129554",
+      "fileHashAfter": "b90d4586dac1a55b846a2a636e33ba7119c2a6f40634a1c948b9ef009b129554",
+      "dictionaryUnchanged": true,
+      "sentinelUnchanged": true
+    },
+    {
+      "kind": "future",
+      "status": "Future",
+      "SourceSchema": 99,
+      "Error": "State uses a newer schema; preserve the original payload.",
+      "readMs": 148.9247,
+      "writeAccepted": false,
+      "fileHashBefore": "5482180ca6e43d668b753b6005c1e82e9f6b23a2bce280886e19f74e3ab1f7f0",
+      "fileHashAfter": "5482180ca6e43d668b753b6005c1e82e9f6b23a2bce280886e19f74e3ab1f7f0",
+      "dictionaryUnchanged": true,
+      "sentinelUnchanged": true
+    }
+  ],
+  "migrationCodec": {
+    "status": "Loaded",
+    "SourceSchema": 16,
+    "Error": "",
+    "readMs": 574.7638000000001,
+    "sourceCharacters": 5732118,
+    "upgradedCharacters": 6051558,
+    "sourceHash": "4fcfec060b4b88c9db3ff074a248dfbfe03bdd234ff5618190b132fc1b83bbd0",
+    "upgradedHash": "6a6893937162af41f878cd341a94cc23d31a68cae5d3e57b4cd719b80e1e1a2b"
+  },
+  "codecReload1": {
+    "status": "Loaded",
+    "SourceSchema": 17,
+    "Error": "",
+    "readMs": 604.6367,
+    "sourceCharacters": 6053489,
+    "upgradedCharacters": 6053489,
+    "sourceHash": "578520caff1c167f11125870d71a79f37fda3064a8b635c48264763d38486e2b",
+    "upgradedHash": "578520caff1c167f11125870d71a79f37fda3064a8b635c48264763d38486e2b"
+  },
+  "codecReload2": {
+    "status": "Loaded",
+    "SourceSchema": 17,
+    "Error": "",
+    "readMs": 830.4486,
+    "sourceCharacters": 6053489,
+    "upgradedCharacters": 6053489,
+    "sourceHash": "578520caff1c167f11125870d71a79f37fda3064a8b635c48264763d38486e2b",
+    "upgradedHash": "578520caff1c167f11125870d71a79f37fda3064a8b635c48264763d38486e2b"
+  },
+  "loadTimings": {
+    "migration": {
+      "seconds": 29.546000000089407,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    "schema17-reload1": {
+      "seconds": 28.54700000002049,
+      "ready": true,
+      "loadingRaceRetries": 0
+    },
+    "schema17-reload2": {
+      "seconds": 31.07799999997951,
+      "ready": true,
+      "loadingRaceRetries": 1
+    },
+    "noon-migration": {
+      "seconds": 30.765999999828637,
+      "ready": true,
+      "loadingRaceRetries": 0
+    }
+  }
+}

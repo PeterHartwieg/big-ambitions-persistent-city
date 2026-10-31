@@ -1,0 +1,1840 @@
+{
+  "role": "rig_test",
+  "loggedComponentFlags": [
+    {
+      "arm": "base1",
+      "unityFrame": 1403,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 101.549
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=1403, realtime=34.754, prepared=False, preparation_ms=101.549, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "base1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 30.478
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.388 reads=20 totalMs=30.478 maxMs=2.813",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 31.831
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.354 reads=21 totalMs=31.831 maxMs=2.813",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 33.228
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.397 reads=22 totalMs=33.228 maxMs=2.813",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 34.637
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.409 reads=23 totalMs=34.637 maxMs=2.813",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 36.019
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.383 reads=24 totalMs=36.019 maxMs=2.813",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 37.615
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.596 reads=25 totalMs=37.615 maxMs=2.813",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 38.974
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.359 reads=26 totalMs=38.974 maxMs=2.813",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 40.361
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.387 reads=27 totalMs=40.361 maxMs=2.813",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 41.763
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.402 reads=28 totalMs=41.763 maxMs=2.813",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base1",
+      "unityFrame": 65202,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 84.767
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=65202, realtime=788.106, prepared=False, preparation_ms=84.767, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "base1",
+      "unityFrame": 87916,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 87.958
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=87916, realtime=1064.070, prepared=False, preparation_ms=87.958, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "base1",
+      "unityFrame": 88102,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 30.527
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=88102, realtime=1068.866, prepared=False, preparation_ms=30.527, closure_ms=0.000, last_rebuild=clock-rate index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "base1",
+      "unityFrame": 100739,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 101.186
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=100739, realtime=1235.211, prepared=False, preparation_ms=101.186, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": 1178,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 93.026
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=1178, realtime=31.567, prepared=False, preparation_ms=93.026, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 30.134
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.392 reads=20 totalMs=30.134 maxMs=2.751",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 31.517
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.383 reads=21 totalMs=31.517 maxMs=2.751",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 32.912
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.395 reads=22 totalMs=32.912 maxMs=2.751",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 35.131
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=2.219 reads=23 totalMs=35.131 maxMs=2.751",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 36.553
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.422 reads=24 totalMs=36.553 maxMs=2.751",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 37.925
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.372 reads=25 totalMs=37.925 maxMs=2.751",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 39.382
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.457 reads=26 totalMs=39.382 maxMs=2.751",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 40.859
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.477 reads=27 totalMs=40.859 maxMs=2.751",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 42.397
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.538 reads=28 totalMs=42.397 maxMs=2.751",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 43.766
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.369 reads=29 totalMs=43.766 maxMs=2.751",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 45.137
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.371 reads=30 totalMs=45.137 maxMs=2.751",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 46.565
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.429 reads=31 totalMs=46.565 maxMs=2.751",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 48.058
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.493 reads=32 totalMs=48.058 maxMs=2.751",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 49.424
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.365 reads=33 totalMs=49.424 maxMs=2.751",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 50.835
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.412 reads=34 totalMs=50.835 maxMs=2.751",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 52.257
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.422 reads=35 totalMs=52.257 maxMs=2.751",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 53.649
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.391 reads=36 totalMs=53.649 maxMs=2.751",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 55.047
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.399 reads=37 totalMs=55.047 maxMs=2.751",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 56.439
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.392 reads=38 totalMs=56.439 maxMs=2.751",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": 92336,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 87.466
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=92336, realtime=1093.370, prepared=False, preparation_ms=87.466, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 31.161
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.392 reads=24 totalMs=31.161 maxMs=1.476",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 32.645
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.484 reads=25 totalMs=32.645 maxMs=1.484",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 34.067
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.423 reads=26 totalMs=34.067 maxMs=1.484",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 35.503
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.436 reads=27 totalMs=35.503 maxMs=1.484",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 36.884
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.380 reads=28 totalMs=36.884 maxMs=1.484",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 38.301
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.418 reads=29 totalMs=38.301 maxMs=1.484",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 39.689
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.387 reads=30 totalMs=39.689 maxMs=1.484",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 41.117
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.429 reads=31 totalMs=41.117 maxMs=1.484",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 42.492
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.375 reads=32 totalMs=42.492 maxMs=1.484",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 43.958
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.465 reads=33 totalMs=43.958 maxMs=1.484",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 45.62
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.663 reads=34 totalMs=45.620 maxMs=1.663",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 47.061
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.441 reads=35 totalMs=47.061 maxMs=1.663",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 49.752
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=2.690 reads=36 totalMs=49.752 maxMs=2.690",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 51.198
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.446 reads=37 totalMs=51.198 maxMs=2.690",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": 182092,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 91.346
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=182092, realtime=2121.601, prepared=False, preparation_ms=91.346, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "cand1",
+      "unityFrame": 195068,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 91.158
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=195068, realtime=2290.165, prepared=False, preparation_ms=91.158, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": 1453,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 96.725
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=1453, realtime=35.599, prepared=False, preparation_ms=96.725, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 30.23
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.383 reads=21 totalMs=30.230 maxMs=3.695",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 31.61
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.380 reads=22 totalMs=31.610 maxMs=3.695",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 33.017
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.406 reads=23 totalMs=33.017 maxMs=3.695",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 34.419
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.402 reads=24 totalMs=34.419 maxMs=3.695",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 35.814
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.395 reads=25 totalMs=35.814 maxMs=3.695",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 38.079
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=2.265 reads=26 totalMs=38.079 maxMs=3.695",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 39.588
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.509 reads=27 totalMs=39.588 maxMs=3.695",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 40.992
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.404 reads=28 totalMs=40.992 maxMs=3.695",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 42.375
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.383 reads=29 totalMs=42.375 maxMs=3.695",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 43.781
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.406 reads=30 totalMs=43.781 maxMs=3.695",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 45.166
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.385 reads=31 totalMs=45.166 maxMs=3.695",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 46.572
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.406 reads=32 totalMs=46.572 maxMs=3.695",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 47.986
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.414 reads=33 totalMs=47.986 maxMs=3.695",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 49.354
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.368 reads=34 totalMs=49.354 maxMs=3.695",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 50.768
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.414 reads=35 totalMs=50.768 maxMs=3.695",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 52.186
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.418 reads=36 totalMs=52.186 maxMs=3.695",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 53.598
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.413 reads=37 totalMs=53.598 maxMs=3.695",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 54.991
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.393 reads=38 totalMs=54.991 maxMs=3.695",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 56.363
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.372 reads=39 totalMs=56.363 maxMs=3.695",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": 92476,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 85.178
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=92476, realtime=1097.740, prepared=False, preparation_ms=85.178, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 31.075
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.510 reads=21 totalMs=31.075 maxMs=2.429",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 32.582
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.507 reads=22 totalMs=32.582 maxMs=2.429",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 34.056
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.474 reads=23 totalMs=34.056 maxMs=2.429",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 35.585
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.530 reads=24 totalMs=35.585 maxMs=2.429",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 37.097
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.512 reads=25 totalMs=37.097 maxMs=2.429",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 38.806
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.709 reads=26 totalMs=38.806 maxMs=2.429",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 40.355
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.548 reads=27 totalMs=40.355 maxMs=2.429",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 41.863
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.508 reads=28 totalMs=41.863 maxMs=2.429",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 43.376
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.514 reads=29 totalMs=43.376 maxMs=2.429",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 44.888
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.511 reads=30 totalMs=44.888 maxMs=2.429",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 46.447
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.559 reads=31 totalMs=46.447 maxMs=2.429",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 47.942
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.496 reads=32 totalMs=47.942 maxMs=2.429",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 49.484
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.542 reads=33 totalMs=49.484 maxMs=2.429",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 51.002
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.517 reads=34 totalMs=51.002 maxMs=2.429",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 52.523
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.521 reads=35 totalMs=52.523 maxMs=2.429",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 54.099
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.577 reads=36 totalMs=54.099 maxMs=2.429",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 55.611
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.512 reads=37 totalMs=55.611 maxMs=2.429",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": 182171,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 95.17
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=182171, realtime=2124.604, prepared=False, preparation_ms=95.170, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "base2",
+      "unityFrame": 182198,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 33.05
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=182198, realtime=2125.069, prepared=False, preparation_ms=33.050, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": 1494,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 91.296
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=1494, realtime=34.874, prepared=False, preparation_ms=91.296, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 30.863
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=2.139 reads=20 totalMs=30.863 maxMs=2.827",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 32.243
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.380 reads=21 totalMs=32.243 maxMs=2.827",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 33.662
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.419 reads=22 totalMs=33.662 maxMs=2.827",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 35.048
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.386 reads=23 totalMs=35.048 maxMs=2.827",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 36.821
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.773 reads=24 totalMs=36.821 maxMs=2.827",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 38.186
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.365 reads=25 totalMs=38.186 maxMs=2.827",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 39.585
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.399 reads=26 totalMs=39.585 maxMs=2.827",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 40.963
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.378 reads=27 totalMs=40.963 maxMs=2.827",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 42.344
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.381 reads=28 totalMs=42.344 maxMs=2.827",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 43.721
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.377 reads=29 totalMs=43.721 maxMs=2.827",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 45.111
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.389 reads=30 totalMs=45.111 maxMs=2.827",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 46.487
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.376 reads=31 totalMs=46.487 maxMs=2.827",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 47.914
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.427 reads=32 totalMs=47.914 maxMs=2.827",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 49.329
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.415 reads=33 totalMs=49.329 maxMs=2.827",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 50.724
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.395 reads=34 totalMs=50.724 maxMs=2.827",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": 83482,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 85.492
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=83482, realtime=969.531, prepared=False, preparation_ms=85.492, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 30.617
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.431 reads=23 totalMs=30.617 maxMs=1.761",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 32.053
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.436 reads=24 totalMs=32.053 maxMs=1.761",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 33.486
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.433 reads=25 totalMs=33.486 maxMs=1.761",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 34.938
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.451 reads=26 totalMs=34.938 maxMs=1.761",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 36.362
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.425 reads=27 totalMs=36.362 maxMs=1.761",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 37.798
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.436 reads=28 totalMs=37.798 maxMs=1.761",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 39.301
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.503 reads=29 totalMs=39.301 maxMs=1.761",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 40.756
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.455 reads=30 totalMs=40.756 maxMs=1.761",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 42.159
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.403 reads=31 totalMs=42.159 maxMs=1.761",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 43.618
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.460 reads=32 totalMs=43.618 maxMs=1.761",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 45.034
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.415 reads=33 totalMs=45.034 maxMs=1.761",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 46.536
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.502 reads=34 totalMs=46.536 maxMs=1.761",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 48.089
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.553 reads=35 totalMs=48.089 maxMs=1.761",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 49.525
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.436 reads=36 totalMs=49.525 maxMs=1.761",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": null,
+      "phase": "logged component diagnostic; scope as stated",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "totalMs",
+          "milliseconds": 51.266
+        }
+      ],
+      "line": "[Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=1.741 reads=37 totalMs=51.266 maxMs=1.761",
+      "alignment": "Unaligned component/aggregate diagnostic; no per-frame total claim"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": 173300,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 86.604
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=173300, realtime=1995.180, prepared=False, preparation_ms=86.604, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": 186734,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 90.827
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=186734, realtime=2170.010, prepared=False, preparation_ms=90.827, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": 187844,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 88.574
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=187844, realtime=2204.476, prepared=False, preparation_ms=88.574, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": 188868,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 90.831
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=188868, realtime=2236.719, prepared=False, preparation_ms=90.831, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": 189990,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 89.058
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=189990, realtime=2275.964, prepared=False, preparation_ms=89.058, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": 192943,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 90.841
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=192943, realtime=2368.042, prepared=False, preparation_ms=90.841, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": 202043,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 87.83
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=202043, realtime=2493.783, prepared=False, preparation_ms=87.830, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    },
+    {
+      "arm": "cand2",
+      "unityFrame": 211390,
+      "phase": "routing/preparation",
+      "captureWindows": [],
+      "values": [
+        {
+          "field": "preparation_ms",
+          "milliseconds": 89.796
+        }
+      ],
+      "line": "[Mod:PersistentCity] Slow routing frame=211390, realtime=2622.360, prepared=False, preparation_ms=89.796, closure_ms=0.000, last_rebuild=initial index=-1.",
+      "alignment": "Explicit logged frame"
+    }
+  ],
+  "note": "Measured combined-mod >=30 ms frames are enumerated independently from raw CSV in performance-summary.json. These logged component/startup/load/skip flags are not combined-mod samples; aggregated maxima are not treated as individual frame spikes."
+}

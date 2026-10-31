@@ -1,0 +1,52 @@
+{
+  "role": "rig_test",
+  "samples": [
+    {
+      "arm": "control",
+      "residents": 957,
+      "consumers": 1914,
+      "nativeSaveBytes": 1129416,
+      "payloadCharacters": 6004486,
+      "payloadUtf8Bytes": 6004487,
+      "payloadUtf16Bytes": 12008972,
+      "nativeSaveWallSeconds": 0.48400000017136335,
+      "codecWriteMs": 310.105,
+      "codecRead": {
+        "status": "Loaded",
+        "SourceSchema": 13,
+        "Error": "",
+        "readMs": 720.238,
+        "sourceCharacters": 5665995,
+        "upgradedCharacters": 6004492,
+        "sourceHash": "918f305936c011a425fe34060ae7d66f0576c3c608679455d6a0283307c4f086",
+        "upgradedHash": "6f7fced14ebb94d6f48dd673146e9bdb96b58a71a0871e7d69a41842befc3679"
+      },
+      "nativeLoadMigrationSeconds": 33.937999999849126,
+      "schema": 17
+    },
+    {
+      "arm": "candidate",
+      "residents": 957,
+      "consumers": 1914,
+      "nativeSaveBytes": 1129414,
+      "payloadCharacters": 6004486,
+      "payloadUtf8Bytes": 6004487,
+      "payloadUtf16Bytes": 12008972,
+      "nativeSaveWallSeconds": 0.45300000021234155,
+      "codecWriteMs": 285.904,
+      "codecRead": {
+        "status": "Loaded",
+        "SourceSchema": 13,
+        "Error": "",
+        "readMs": 712.5937,
+        "sourceCharacters": 5665995,
+        "upgradedCharacters": 6004492,
+        "sourceHash": "918f305936c011a425fe34060ae7d66f0576c3c608679455d6a0283307c4f086",
+        "upgradedHash": "6f7fced14ebb94d6f48dd673146e9bdb96b58a71a0871e7d69a41842befc3679"
+      },
+      "nativeLoadMigrationSeconds": 31.75,
+      "schema": 17
+    }
+  ],
+  "note": "Single native samples outside timing windows; source checkpoint and settings match. Transport/readiness is included in wall durations. Small clock drift and system load preclude a causal save-time claim."
+}

@@ -1,0 +1,127 @@
+{
+  "control": {
+    "source": "8b05227d80e150404669d6d8243537a8acfb688b",
+    "dllSha256": "9b820a695480e842b09a4876a8466077163a6dca27850744b9cefe48ad723e30",
+    "command": "python tools/build.py --game-managed \"C:\\BigAmbitions-AgentTests\\Big Ambitions Agent Tests_Data\\Managed\"",
+    "pathPrefix": "%LOCALAPPDATA%\\Microsoft\\dotnet",
+    "offlineDotnetTestsRun": false
+  },
+  "candidate": {
+    "source": "322e4ef13de6572d034d0e0b122bcf7f0ca1edb2",
+    "dllSha256": "b10eefbcec69518c6ae17a6085521774ae0ba7107d95fffac1e9ad19b3461fb5",
+    "command": "python tools/build.py --game-managed \"C:\\BigAmbitions-AgentTests\\Big Ambitions Agent Tests_Data\\Managed\"",
+    "pathPrefix": "%LOCALAPPDATA%\\Microsoft\\dotnet",
+    "offlineDotnetTestsRun": false
+  },
+  "helperBeforeStaticObserverFix": {
+    "production": "b10eefbcec69518c6ae17a6085521774ae0ba7107d95fffac1e9ad19b3461fb5",
+    "frameHelper": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+    "guard": "6664e5c03ef7c08edc468cd2ef85c28f5d71bba680f09ea6efe6d27de3336373",
+    "sources": {
+      "Probe.cs": "a6a8080dca4c0e31311e981eac2e6ace5c68c3a2760e87d939c705b9688ad780",
+      "Pilot.cs": "e1860b54a6cceccea702d91454a39edd3014e4f102d0aa9138513bf6b35aaad3",
+      "ClockAudit.cs": "d709996057f36e9a258b48d6040c24ac2bb1950ddd853239f1923144e1f1dd8d",
+      "Neighborhood.cs": "35c20714ff41e1ede978a66ccf3b7ce734122a63432fde4667ed39ad18a5e71a",
+      "Frames.cs": "8db081e6a7fbd22fc6125f5aab5a30a7bff2e4137123e0a6112066fc59e25240",
+      "EventMeasurements.cs": "3c6993e5246e633ea215bae932e31250e45d47f574cec71ea6cb14681ae7e8f3",
+      "EventObservations.cs": "405a23d378bc69538313bbd6ad05c09349afee1328438b1811a44dd333f06668",
+      "FrameObservations.cs": "8402e336aff12b1ccea2fb9bc857c45c990462ac786f2b7d2b68da80e4df95f9",
+      "DiagnosticResponses.cs": "11711f2818f8a536a7500c0ddd47408b73b37428446c44022324f9414fded475",
+      "Menus.cs": "e50dafe3c33adf51de1938e8520bd19f325125b3a8197c2981b96578cbf1f629",
+      "Operations.cs": "3b0e2efb18dd402458fbba36b2649d9527867219ae0982fa7ab814666dac2ce7",
+      "ReturnQuotes.cs": "78a8df1d3a82d4403b119c61c1961c285083840f3ff1aa8f9b5578238a3d5363"
+    },
+    "guardSource": "df6318622bb7a36c426555159087d5e414b2c179b928d2b84add46b426b0b830"
+  },
+  "helperAfterStaticObserverFix": {
+    "production": "b10eefbcec69518c6ae17a6085521774ae0ba7107d95fffac1e9ad19b3461fb5",
+    "frameHelper": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+    "guard": "5dbba149f12cb08aeaeccb4464ebd2594e8290d2dfb3f2bc679325b0d59f9edb",
+    "sources": {
+      "Probe.cs": "a6a8080dca4c0e31311e981eac2e6ace5c68c3a2760e87d939c705b9688ad780",
+      "Pilot.cs": "e1860b54a6cceccea702d91454a39edd3014e4f102d0aa9138513bf6b35aaad3",
+      "ClockAudit.cs": "d709996057f36e9a258b48d6040c24ac2bb1950ddd853239f1923144e1f1dd8d",
+      "Neighborhood.cs": "35c20714ff41e1ede978a66ccf3b7ce734122a63432fde4667ed39ad18a5e71a",
+      "Frames.cs": "8db081e6a7fbd22fc6125f5aab5a30a7bff2e4137123e0a6112066fc59e25240",
+      "EventMeasurements.cs": "3c6993e5246e633ea215bae932e31250e45d47f574cec71ea6cb14681ae7e8f3",
+      "EventObservations.cs": "405a23d378bc69538313bbd6ad05c09349afee1328438b1811a44dd333f06668",
+      "FrameObservations.cs": "8402e336aff12b1ccea2fb9bc857c45c990462ac786f2b7d2b68da80e4df95f9",
+      "DiagnosticResponses.cs": "11711f2818f8a536a7500c0ddd47408b73b37428446c44022324f9414fded475",
+      "Menus.cs": "e50dafe3c33adf51de1938e8520bd19f325125b3a8197c2981b96578cbf1f629",
+      "Operations.cs": "3b0e2efb18dd402458fbba36b2649d9527867219ae0982fa7ab814666dac2ce7",
+      "ReturnQuotes.cs": "78a8df1d3a82d4403b119c61c1961c285083840f3ff1aa8f9b5578238a3d5363"
+    },
+    "guardSource": "df6318622bb7a36c426555159087d5e414b2c179b928d2b84add46b426b0b830"
+  },
+  "helperFinal": {
+    "production": "b10eefbcec69518c6ae17a6085521774ae0ba7107d95fffac1e9ad19b3461fb5",
+    "frameHelper": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+    "guard": "ece2900afd7b03f3a4908b643f06ca11b18a0df57121bfe76647e2620b0db6cf",
+    "sources": {
+      "Probe.cs": "a6a8080dca4c0e31311e981eac2e6ace5c68c3a2760e87d939c705b9688ad780",
+      "Pilot.cs": "e1860b54a6cceccea702d91454a39edd3014e4f102d0aa9138513bf6b35aaad3",
+      "ClockAudit.cs": "d709996057f36e9a258b48d6040c24ac2bb1950ddd853239f1923144e1f1dd8d",
+      "Neighborhood.cs": "35c20714ff41e1ede978a66ccf3b7ce734122a63432fde4667ed39ad18a5e71a",
+      "Frames.cs": "8db081e6a7fbd22fc6125f5aab5a30a7bff2e4137123e0a6112066fc59e25240",
+      "EventMeasurements.cs": "3c6993e5246e633ea215bae932e31250e45d47f574cec71ea6cb14681ae7e8f3",
+      "EventObservations.cs": "405a23d378bc69538313bbd6ad05c09349afee1328438b1811a44dd333f06668",
+      "FrameObservations.cs": "8402e336aff12b1ccea2fb9bc857c45c990462ac786f2b7d2b68da80e4df95f9",
+      "DiagnosticResponses.cs": "11711f2818f8a536a7500c0ddd47408b73b37428446c44022324f9414fded475",
+      "Menus.cs": "e50dafe3c33adf51de1938e8520bd19f325125b3a8197c2981b96578cbf1f629",
+      "Operations.cs": "3b0e2efb18dd402458fbba36b2649d9527867219ae0982fa7ab814666dac2ce7",
+      "ReturnQuotes.cs": "78a8df1d3a82d4403b119c61c1961c285083840f3ff1aa8f9b5578238a3d5363"
+    },
+    "guardSource": "5834c7dd79662e988eefd2b4db7b53f033ee1c8e7b38f567824eac499aba568e"
+  },
+  "arrangement": "Unchanged RLO + Persistent City + bridge-only host + passive stage observers; Workshop disabled. Not full modpack certification.",
+  "toolingCorrections": [
+    "Pre-timing setup read requested an empty rival shortlist and was refused. Corrected to the existing owned shop; setup game quit normally.",
+    "Copied F0 static-field reader initially omitted Static flags. Corrected, and busy-clock default-off evidence is collected in candidate round 1 and control round 2. Passive frame observer remains byte-identical.",
+    "E2a static diagnostic reads added after control round 1, outside captures; no E2 watcher component is attached."
+  ],
+  "loadedArms": [
+    {
+      "arm": "base1",
+      "pid": 29452,
+      "actuallyLoadedPersistentCity": "9b820a695480e842b09a4876a8466077163a6dca27850744b9cefe48ad723e30",
+      "installedPersistentCity": "9b820a695480e842b09a4876a8466077163a6dca27850744b9cefe48ad723e30",
+      "frameObserver": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+      "guard": "6664e5c03ef7c08edc468cd2ef85c28f5d71bba680f09ea6efe6d27de3336373",
+      "configSha256": "edd3f5d2a228e0b841be9810b9058765e5e6bdefa7a686ba3b4060a548fc5a24",
+      "launcherVerifiedReceipt": true
+    },
+    {
+      "arm": "cand1",
+      "pid": 49220,
+      "actuallyLoadedPersistentCity": "b10eefbcec69518c6ae17a6085521774ae0ba7107d95fffac1e9ad19b3461fb5",
+      "installedPersistentCity": "b10eefbcec69518c6ae17a6085521774ae0ba7107d95fffac1e9ad19b3461fb5",
+      "frameObserver": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+      "guard": "ece2900afd7b03f3a4908b643f06ca11b18a0df57121bfe76647e2620b0db6cf",
+      "configSha256": "c2a552aafac4b327c15c07b1051f3237d0ae7f087172be64076b913c6f990881",
+      "launcherVerifiedReceipt": true
+    },
+    {
+      "arm": "base2",
+      "pid": 28056,
+      "actuallyLoadedPersistentCity": "9b820a695480e842b09a4876a8466077163a6dca27850744b9cefe48ad723e30",
+      "installedPersistentCity": "9b820a695480e842b09a4876a8466077163a6dca27850744b9cefe48ad723e30",
+      "frameObserver": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+      "guard": "ece2900afd7b03f3a4908b643f06ca11b18a0df57121bfe76647e2620b0db6cf",
+      "configSha256": "edd3f5d2a228e0b841be9810b9058765e5e6bdefa7a686ba3b4060a548fc5a24",
+      "launcherVerifiedReceipt": true
+    },
+    {
+      "arm": "cand2",
+      "pid": 38956,
+      "actuallyLoadedPersistentCity": "b10eefbcec69518c6ae17a6085521774ae0ba7107d95fffac1e9ad19b3461fb5",
+      "installedPersistentCity": "b10eefbcec69518c6ae17a6085521774ae0ba7107d95fffac1e9ad19b3461fb5",
+      "frameObserver": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+      "guard": "ece2900afd7b03f3a4908b643f06ca11b18a0df57121bfe76647e2620b0db6cf",
+      "configSha256": "c2a552aafac4b327c15c07b1051f3237d0ae7f087172be64076b913c6f990881",
+      "launcherVerifiedReceipt": true
+    }
+  ],
+  "oneFrameObserverBinaryAllWindows": true,
+  "sourceTreesUnchanged": true,
+  "evidenceBranchBase": "8b05227d80e150404669d6d8243537a8acfb688b"
+}

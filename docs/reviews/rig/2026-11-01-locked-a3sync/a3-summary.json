@@ -1,0 +1,1640 @@
+{
+  "role": "rig_test",
+  "seed": -1903163055,
+  "drawNote": "Draw hashes recomputed from observed seed/consumer/day/kind/context/attempt using the version-1 StableRandom key contract; decision results and captured prices are native observer records.",
+  "runs": {
+    "replay1": {
+      "decisions": 878,
+      "weightedDecisions": 878,
+      "uniqueContexts": 878,
+      "maximumCapturedShops": 1,
+      "results": {
+        "2": 877,
+        "1": 1
+      },
+      "capture": {
+        "recording": false,
+        "decisionsRetained": 878,
+        "decisionLimit": 5000,
+        "droppedDecisions": 0,
+        "routineDiagnosticsRetained": 126,
+        "routineDiagnosticLimit": 100000,
+        "droppedRoutineDiagnostics": 0,
+        "truncated": false,
+        "note": "Bounded diagnostic traces only; dropped records do not stop simulation or alter authoritative saved ledgers."
+      },
+      "examples": [
+        {
+          "consumer": "pc:350",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:8tVqXi7AmHZTjtpwZyImetUsstybaAW2SI+dKffge0k=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 4274912822,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 4008653485
+                }
+              ]
+            }
+          ],
+          "householdDraw": 2531498936,
+          "result": 1,
+          "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "product": "ba:itemname_croissant",
+          "outside": 0,
+          "reason": 1,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": "275221504000",
+          "factors": [
+            0,
+            0
+          ]
+        },
+        {
+          "consumer": "consumer:pc%3A47:1",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:aDxuS3Jme/JBrLfY+nfL10IOxiipzt7nk0qa4jtHqSI=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 1155717432,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 1638592922
+                }
+              ]
+            }
+          ],
+          "householdDraw": 943340167,
+          "result": 2,
+          "business": "",
+          "product": "",
+          "outside": 3,
+          "reason": 3,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": null,
+          "factors": [
+            8,
+            0
+          ]
+        },
+        {
+          "consumer": "pc:47",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:aDxuS3Jme/JBrLfY+nfL10IOxiipzt7nk0qa4jtHqSI=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 1107069605,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 2832694984
+                }
+              ]
+            }
+          ],
+          "householdDraw": 4071678792,
+          "result": 2,
+          "business": "",
+          "product": "",
+          "outside": 3,
+          "reason": 3,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": null,
+          "factors": [
+            8,
+            0
+          ]
+        },
+        {
+          "consumer": "consumer:pc%3A47:1",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:aDxuS3Jme/JBrLfY+nfL10IOxiipzt7nk0qa4jtHqSI=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 1155717432,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 1638592922
+                }
+              ]
+            }
+          ],
+          "householdDraw": 943340167,
+          "result": 2,
+          "business": "",
+          "product": "",
+          "outside": 3,
+          "reason": 3,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": null,
+          "factors": [
+            8,
+            0
+          ]
+        }
+      ],
+      "projectionHash": "76af775a13bcc02f13199430bc900001060047a3f5281e497cea441027b23328",
+      "accounting": {
+        "startMinute": 8985.347206115723,
+        "endMinute": 9165.0171585083,
+        "before": {
+          "consumers": 1914,
+          "conservationFailures": [],
+          "negativeBalancesOrHolds": [],
+          "balancesUnits": "78768311065911296",
+          "spentUnits": "15687625728000",
+          "purchases": 57
+        },
+        "after": {
+          "consumers": 1914,
+          "conservationFailures": [],
+          "negativeBalancesOrHolds": [],
+          "balancesUnits": "78768311065911296",
+          "spentUnits": "15687625728000",
+          "purchases": 57
+        },
+        "newReceiptCount": 0,
+        "newPaidReceipts": 0,
+        "newReceiptStatuses": {},
+        "residentPurchaseDelta": 0,
+        "residentSpentDeltaUnits": "0",
+        "newPaidReceiptUnits": "0",
+        "receiptAndResidentMoneyEqual": true,
+        "receiptAndResidentCountEqual": true,
+        "foodHistoryRevenueDeltaUnits": "0",
+        "historyAndSpendEqual": true,
+        "nativePurchasesDelta": 0,
+        "producerStockDelta": 0,
+        "bagStockDelta": 0,
+        "physicalBagStockBefore": 181,
+        "physicalBagStockAfter": 181,
+        "availabilityBagUnitsBefore": 0,
+        "availabilityBagUnitsAfter": 181,
+        "availabilityBagUnitsDelta": 181,
+        "physicalNativeItemsUnchanged": true,
+        "nativeItemsHashBefore": "1485d8cb84fa157371f4907bf80491edaaaf98ca2e3bc734507aca3458fa2e0b",
+        "nativeItemsHashAfter": "1485d8cb84fa157371f4907bf80491edaaaf98ca2e3bc734507aca3458fa2e0b",
+        "nativeItemInventoryBefore": [
+          {
+            "id": "e5g2cWeEPEqUK4pKpiNtwg==",
+            "itemName": "ba:itemname_cashregister",
+            "parentId": "J7+jLg7I3UyODyam2SNiNQ==",
+            "stackedItems": [],
+            "cargoInstances": [
+              {
+                "itemName": "ba:itemname_paperbag",
+                "amount": 181,
+                "pricePerUnit": 1.0,
+                "paid": true,
+                "customColors": null,
+                "nestedCargoInstances": [],
+                "IsSealed": false
+              }
+            ],
+            "requirements": []
+          },
+          {
+            "id": "J7+jLg7I3UyODyam2SNiNQ==",
+            "itemName": "ba:itemname_angledwoodendisplaystand",
+            "parentId": null,
+            "stackedItems": [
+              {
+                "childId": "e5g2cWeEPEqUK4pKpiNtwg==",
+                "childItemName": "ba:itemname_cashregister",
+                "attachmentIndex": 0
+              }
+            ],
+            "cargoInstances": [],
+            "requirements": []
+          },
+          {
+            "id": "yD3CJiiGrEiw8ar47cqu5A==",
+            "itemName": "ba:itemname_bakeryshowcase",
+            "parentId": null,
+            "stackedItems": [],
+            "cargoInstances": [
+              {
+                "itemName": "ba:itemname_croissant",
+                "amount": 181,
+                "pricePerUnit": 1.0,
+                "paid": true,
+                "customColors": null,
+                "nestedCargoInstances": [],
+                "IsSealed": false
+              }
+            ],
+            "requirements": []
+          }
+        ],
+        "nativeItemInventoryAfter": [
+          {
+            "id": "e5g2cWeEPEqUK4pKpiNtwg==",
+            "itemName": "ba:itemname_cashregister",
+            "parentId": "J7+jLg7I3UyODyam2SNiNQ==",
+            "stackedItems": [],
+            "cargoInstances": [
+              {
+                "itemName": "ba:itemname_paperbag",
+                "amount": 181,
+                "pricePerUnit": 1.0,
+                "paid": true,
+                "customColors": null,
+                "nestedCargoInstances": [],
+                "IsSealed": false
+              }
+            ],
+            "requirements": []
+          },
+          {
+            "id": "J7+jLg7I3UyODyam2SNiNQ==",
+            "itemName": "ba:itemname_angledwoodendisplaystand",
+            "parentId": null,
+            "stackedItems": [
+              {
+                "childId": "e5g2cWeEPEqUK4pKpiNtwg==",
+                "childItemName": "ba:itemname_cashregister",
+                "attachmentIndex": 0
+              }
+            ],
+            "cargoInstances": [],
+            "requirements": []
+          },
+          {
+            "id": "yD3CJiiGrEiw8ar47cqu5A==",
+            "itemName": "ba:itemname_bakeryshowcase",
+            "parentId": null,
+            "stackedItems": [],
+            "cargoInstances": [
+              {
+                "itemName": "ba:itemname_croissant",
+                "amount": 181,
+                "pricePerUnit": 1.0,
+                "paid": true,
+                "customColors": null,
+                "nestedCargoInstances": [],
+                "IsSealed": false
+              }
+            ],
+            "requirements": []
+          }
+        ],
+        "bagMeasurementNote": "Physical stock uses native cash-register cargo, not FoodSupplyReader BagUnits availability. Before staffing, available BagUnits is 0 even when native cargo has bags; staffing changes availability without a stock mutation.",
+        "nativeAccounts": [
+          {
+            "Day": 1,
+            "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+            "Name": "Persistent City food routines",
+            "Revenue": 82.0224,
+            "Resources": 16.0,
+            "Wages": 194.61554,
+            "Rent": 0.0,
+            "OtherOperatingCosts": 0.0,
+            "OperatingProfit": -128.59314
+          },
+          {
+            "Day": 2,
+            "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+            "Name": "Persistent City food routines",
+            "Revenue": 82.0224,
+            "Resources": 16.0,
+            "Wages": 216.239487,
+            "Rent": 0.0,
+            "OtherOperatingCosts": 0.0,
+            "OperatingProfit": -150.217087
+          },
+          {
+            "Day": 3,
+            "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+            "Name": "Persistent City food routines",
+            "Revenue": 82.0224,
+            "Resources": 16.0,
+            "Wages": 216.239487,
+            "Rent": 0.0,
+            "OtherOperatingCosts": 0.0,
+            "OperatingProfit": -150.217087
+          },
+          {
+            "Day": 4,
+            "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+            "Name": "Persistent City food routines",
+            "Revenue": 389.606384,
+            "Resources": 76.0,
+            "Wages": 216.239487,
+            "Rent": 0.0,
+            "OtherOperatingCosts": 0.0,
+            "OperatingProfit": 97.3669
+          },
+          {
+            "Day": 5,
+            "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+            "Name": "Persistent City food routines",
+            "Revenue": 584.4096,
+            "Resources": 114.0,
+            "Wages": 216.239487,
+            "Rent": 0.0,
+            "OtherOperatingCosts": 0.0,
+            "OperatingProfit": 254.17012
+          }
+        ],
+        "nativeOrderCountStart": 0,
+        "nativeOrderCountEnd": 0,
+        "nativeOrdersExample": [],
+        "capture": {
+          "recording": false,
+          "decisionsRetained": 878,
+          "decisionLimit": 5000,
+          "droppedDecisions": 0,
+          "routineDiagnosticsRetained": 126,
+          "routineDiagnosticLimit": 100000,
+          "droppedRoutineDiagnostics": 0,
+          "truncated": false,
+          "note": "Bounded diagnostic traces only; dropped records do not stop simulation or alter authoritative saved ledgers."
+        },
+        "receiptHashBefore": "541501b8d990298a1e96c3257b2da8edc910b2e8ad98c1a14b755a05ef140cb0",
+        "receiptHashAfter": "541501b8d990298a1e96c3257b2da8edc910b2e8ad98c1a14b755a05ef140cb0"
+      }
+    },
+    "replay2": {
+      "decisions": 878,
+      "weightedDecisions": 878,
+      "uniqueContexts": 878,
+      "maximumCapturedShops": 1,
+      "results": {
+        "2": 877,
+        "1": 1
+      },
+      "capture": {
+        "recording": false,
+        "decisionsRetained": 878,
+        "decisionLimit": 5000,
+        "droppedDecisions": 0,
+        "routineDiagnosticsRetained": 126,
+        "routineDiagnosticLimit": 100000,
+        "droppedRoutineDiagnostics": 0,
+        "truncated": false,
+        "note": "Bounded diagnostic traces only; dropped records do not stop simulation or alter authoritative saved ledgers."
+      },
+      "examples": [
+        {
+          "consumer": "pc:350",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:8tVqXi7AmHZTjtpwZyImetUsstybaAW2SI+dKffge0k=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 4274912822,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 4008653485
+                }
+              ]
+            }
+          ],
+          "householdDraw": 2531498936,
+          "result": 1,
+          "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "product": "ba:itemname_croissant",
+          "outside": 0,
+          "reason": 1,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": "275221504000",
+          "factors": [
+            0,
+            0
+          ]
+        },
+        {
+          "consumer": "consumer:pc%3A47:1",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:aDxuS3Jme/JBrLfY+nfL10IOxiipzt7nk0qa4jtHqSI=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 1155717432,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 1638592922
+                }
+              ]
+            }
+          ],
+          "householdDraw": 943340167,
+          "result": 2,
+          "business": "",
+          "product": "",
+          "outside": 3,
+          "reason": 3,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": null,
+          "factors": [
+            8,
+            0
+          ]
+        },
+        {
+          "consumer": "pc:47",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:aDxuS3Jme/JBrLfY+nfL10IOxiipzt7nk0qa4jtHqSI=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 1107069605,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 2832694984
+                }
+              ]
+            }
+          ],
+          "householdDraw": 4071678792,
+          "result": 2,
+          "business": "",
+          "product": "",
+          "outside": 3,
+          "reason": 3,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": null,
+          "factors": [
+            8,
+            0
+          ]
+        },
+        {
+          "consumer": "consumer:pc%3A47:1",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:aDxuS3Jme/JBrLfY+nfL10IOxiipzt7nk0qa4jtHqSI=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 1155717432,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 1638592922
+                }
+              ]
+            }
+          ],
+          "householdDraw": 943340167,
+          "result": 2,
+          "business": "",
+          "product": "",
+          "outside": 3,
+          "reason": 3,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": null,
+          "factors": [
+            8,
+            0
+          ]
+        }
+      ],
+      "projectionHash": "76af775a13bcc02f13199430bc900001060047a3f5281e497cea441027b23328",
+      "accounting": {
+        "startMinute": 8985.347206115723,
+        "endMinute": 9165.018440246582,
+        "before": {
+          "consumers": 1914,
+          "conservationFailures": [],
+          "negativeBalancesOrHolds": [],
+          "balancesUnits": "78768311065911296",
+          "spentUnits": "15687625728000",
+          "purchases": 57
+        },
+        "after": {
+          "consumers": 1914,
+          "conservationFailures": [],
+          "negativeBalancesOrHolds": [],
+          "balancesUnits": "78768311065911296",
+          "spentUnits": "15687625728000",
+          "purchases": 57
+        },
+        "newReceiptCount": 0,
+        "newPaidReceipts": 0,
+        "newReceiptStatuses": {},
+        "residentPurchaseDelta": 0,
+        "residentSpentDeltaUnits": "0",
+        "newPaidReceiptUnits": "0",
+        "receiptAndResidentMoneyEqual": true,
+        "receiptAndResidentCountEqual": true,
+        "foodHistoryRevenueDeltaUnits": "0",
+        "historyAndSpendEqual": true,
+        "nativePurchasesDelta": 0,
+        "producerStockDelta": 0,
+        "bagStockDelta": 0,
+        "physicalBagStockBefore": 181,
+        "physicalBagStockAfter": 181,
+        "availabilityBagUnitsBefore": 0,
+        "availabilityBagUnitsAfter": 181,
+        "availabilityBagUnitsDelta": 181,
+        "physicalNativeItemsUnchanged": true,
+        "nativeItemsHashBefore": "1485d8cb84fa157371f4907bf80491edaaaf98ca2e3bc734507aca3458fa2e0b",
+        "nativeItemsHashAfter": "1485d8cb84fa157371f4907bf80491edaaaf98ca2e3bc734507aca3458fa2e0b",
+        "nativeItemInventoryBefore": [
+          {
+            "id": "e5g2cWeEPEqUK4pKpiNtwg==",
+            "itemName": "ba:itemname_cashregister",
+            "parentId": "J7+jLg7I3UyODyam2SNiNQ==",
+            "stackedItems": [],
+            "cargoInstances": [
+              {
+                "itemName": "ba:itemname_paperbag",
+                "amount": 181,
+                "pricePerUnit": 1.0,
+                "paid": true,
+                "customColors": null,
+                "nestedCargoInstances": [],
+                "IsSealed": false
+              }
+            ],
+            "requirements": []
+          },
+          {
+            "id": "J7+jLg7I3UyODyam2SNiNQ==",
+            "itemName": "ba:itemname_angledwoodendisplaystand",
+            "parentId": null,
+            "stackedItems": [
+              {
+                "childId": "e5g2cWeEPEqUK4pKpiNtwg==",
+                "childItemName": "ba:itemname_cashregister",
+                "attachmentIndex": 0
+              }
+            ],
+            "cargoInstances": [],
+            "requirements": []
+          },
+          {
+            "id": "yD3CJiiGrEiw8ar47cqu5A==",
+            "itemName": "ba:itemname_bakeryshowcase",
+            "parentId": null,
+            "stackedItems": [],
+            "cargoInstances": [
+              {
+                "itemName": "ba:itemname_croissant",
+                "amount": 181,
+                "pricePerUnit": 1.0,
+                "paid": true,
+                "customColors": null,
+                "nestedCargoInstances": [],
+                "IsSealed": false
+              }
+            ],
+            "requirements": []
+          }
+        ],
+        "nativeItemInventoryAfter": [
+          {
+            "id": "e5g2cWeEPEqUK4pKpiNtwg==",
+            "itemName": "ba:itemname_cashregister",
+            "parentId": "J7+jLg7I3UyODyam2SNiNQ==",
+            "stackedItems": [],
+            "cargoInstances": [
+              {
+                "itemName": "ba:itemname_paperbag",
+                "amount": 181,
+                "pricePerUnit": 1.0,
+                "paid": true,
+                "customColors": null,
+                "nestedCargoInstances": [],
+                "IsSealed": false
+              }
+            ],
+            "requirements": []
+          },
+          {
+            "id": "J7+jLg7I3UyODyam2SNiNQ==",
+            "itemName": "ba:itemname_angledwoodendisplaystand",
+            "parentId": null,
+            "stackedItems": [
+              {
+                "childId": "e5g2cWeEPEqUK4pKpiNtwg==",
+                "childItemName": "ba:itemname_cashregister",
+                "attachmentIndex": 0
+              }
+            ],
+            "cargoInstances": [],
+            "requirements": []
+          },
+          {
+            "id": "yD3CJiiGrEiw8ar47cqu5A==",
+            "itemName": "ba:itemname_bakeryshowcase",
+            "parentId": null,
+            "stackedItems": [],
+            "cargoInstances": [
+              {
+                "itemName": "ba:itemname_croissant",
+                "amount": 181,
+                "pricePerUnit": 1.0,
+                "paid": true,
+                "customColors": null,
+                "nestedCargoInstances": [],
+                "IsSealed": false
+              }
+            ],
+            "requirements": []
+          }
+        ],
+        "bagMeasurementNote": "Physical stock uses native cash-register cargo, not FoodSupplyReader BagUnits availability. Before staffing, available BagUnits is 0 even when native cargo has bags; staffing changes availability without a stock mutation.",
+        "nativeAccounts": [
+          {
+            "Day": 1,
+            "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+            "Name": "Persistent City food routines",
+            "Revenue": 82.0224,
+            "Resources": 16.0,
+            "Wages": 194.61554,
+            "Rent": 0.0,
+            "OtherOperatingCosts": 0.0,
+            "OperatingProfit": -128.59314
+          },
+          {
+            "Day": 2,
+            "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+            "Name": "Persistent City food routines",
+            "Revenue": 82.0224,
+            "Resources": 16.0,
+            "Wages": 216.239487,
+            "Rent": 0.0,
+            "OtherOperatingCosts": 0.0,
+            "OperatingProfit": -150.217087
+          },
+          {
+            "Day": 3,
+            "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+            "Name": "Persistent City food routines",
+            "Revenue": 82.0224,
+            "Resources": 16.0,
+            "Wages": 216.239487,
+            "Rent": 0.0,
+            "OtherOperatingCosts": 0.0,
+            "OperatingProfit": -150.217087
+          },
+          {
+            "Day": 4,
+            "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+            "Name": "Persistent City food routines",
+            "Revenue": 389.606384,
+            "Resources": 76.0,
+            "Wages": 216.239487,
+            "Rent": 0.0,
+            "OtherOperatingCosts": 0.0,
+            "OperatingProfit": 97.3669
+          },
+          {
+            "Day": 5,
+            "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+            "Name": "Persistent City food routines",
+            "Revenue": 584.4096,
+            "Resources": 114.0,
+            "Wages": 216.239487,
+            "Rent": 0.0,
+            "OtherOperatingCosts": 0.0,
+            "OperatingProfit": 254.17012
+          }
+        ],
+        "nativeOrderCountStart": 0,
+        "nativeOrderCountEnd": 0,
+        "nativeOrdersExample": [],
+        "capture": {
+          "recording": false,
+          "decisionsRetained": 878,
+          "decisionLimit": 5000,
+          "droppedDecisions": 0,
+          "routineDiagnosticsRetained": 126,
+          "routineDiagnosticLimit": 100000,
+          "droppedRoutineDiagnostics": 0,
+          "truncated": false,
+          "note": "Bounded diagnostic traces only; dropped records do not stop simulation or alter authoritative saved ledgers."
+        },
+        "receiptHashBefore": "541501b8d990298a1e96c3257b2da8edc910b2e8ad98c1a14b755a05ef140cb0",
+        "receiptHashAfter": "541501b8d990298a1e96c3257b2da8edc910b2e8ad98c1a14b755a05ef140cb0"
+      }
+    },
+    "inflight": {
+      "decisions": 794,
+      "weightedDecisions": 794,
+      "uniqueContexts": 794,
+      "maximumCapturedShops": 1,
+      "results": {
+        "2": 794
+      },
+      "capture": {
+        "recording": false,
+        "decisionsRetained": 794,
+        "decisionLimit": 5000,
+        "droppedDecisions": 0,
+        "routineDiagnosticsRetained": 54,
+        "routineDiagnosticLimit": 100000,
+        "droppedRoutineDiagnostics": 0,
+        "truncated": false,
+        "note": "Bounded diagnostic traces only; dropped records do not stop simulation or alter authoritative saved ledgers."
+      },
+      "examples": [
+        {
+          "consumer": "c144",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:POkmzbdVEbCWYTE9lPbV+l05xKjqKTcDObTI6kVGiwA=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 2365459694,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 75949062
+                }
+              ]
+            }
+          ],
+          "householdDraw": 4157497197,
+          "result": 2,
+          "business": "",
+          "product": "",
+          "outside": 3,
+          "reason": 3,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": null,
+          "factors": [
+            8,
+            0
+          ]
+        },
+        {
+          "consumer": "c3",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:sRxBJtfQDFWt5FxAZDMncoXoEdcMl8qc2t2XC5z7Dzo=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 289619739,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 3146005691
+                }
+              ]
+            }
+          ],
+          "householdDraw": 1684680396,
+          "result": 2,
+          "business": "",
+          "product": "",
+          "outside": 3,
+          "reason": 3,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": null,
+          "factors": [
+            8,
+            0
+          ]
+        },
+        {
+          "consumer": "c144",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:POkmzbdVEbCWYTE9lPbV+l05xKjqKTcDObTI6kVGiwA=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 2365459694,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 75949062
+                }
+              ]
+            }
+          ],
+          "householdDraw": 4157497197,
+          "result": 2,
+          "business": "",
+          "product": "",
+          "outside": 3,
+          "reason": 3,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": null,
+          "factors": [
+            8,
+            0
+          ]
+        }
+      ],
+      "projectionHash": "7a350076f57a2750ec11c4777cdeac59d1c8a26a1e0a14bcd7a5940bf18b8a0a",
+      "accounting": {
+        "startMinute": 9165.35177230835,
+        "endMinute": 9240.01016363781,
+        "before": {
+          "consumers": 1914,
+          "conservationFailures": [],
+          "negativeBalancesOrHolds": [],
+          "balancesUnits": "78768311065911296",
+          "spentUnits": "15687625728000",
+          "purchases": 57
+        },
+        "after": {
+          "consumers": 1914,
+          "conservationFailures": [],
+          "negativeBalancesOrHolds": [],
+          "balancesUnits": "78768035844407296",
+          "spentUnits": "15962847232000",
+          "purchases": 58
+        },
+        "newReceiptCount": 1,
+        "newPaidReceipts": 1,
+        "newReceiptStatuses": {
+          "paid": 1
+        },
+        "residentPurchaseDelta": 1,
+        "residentSpentDeltaUnits": "275221504000",
+        "newPaidReceiptUnits": "275221504000",
+        "receiptAndResidentMoneyEqual": true,
+        "receiptAndResidentCountEqual": true,
+        "foodHistoryRevenueDeltaUnits": "275221504000",
+        "historyAndSpendEqual": true,
+        "nativePurchasesDelta": 1,
+        "producerStockDelta": -1,
+        "bagStockDelta": -1,
+        "physicalBagStockBefore": 181,
+        "physicalBagStockAfter": 180,
+        "availabilityBagUnitsBefore": 181,
+        "availabilityBagUnitsAfter": 180,
+        "availabilityBagUnitsDelta": -1,
+        "physicalNativeItemsUnchanged": false,
+        "nativeItemsHashBefore": "1485d8cb84fa157371f4907bf80491edaaaf98ca2e3bc734507aca3458fa2e0b",
+        "nativeItemsHashAfter": "86fedd7c13a9f86972f9a96e2a0dba99a20e10126ddcc92460c70b51d0159761",
+        "nativeItemInventoryBefore": [
+          {
+            "id": "e5g2cWeEPEqUK4pKpiNtwg==",
+            "itemName": "ba:itemname_cashregister",
+            "parentId": "J7+jLg7I3UyODyam2SNiNQ==",
+            "stackedItems": [],
+            "cargoInstances": [
+              {
+                "itemName": "ba:itemname_paperbag",
+                "amount": 181,
+                "pricePerUnit": 1.0,
+                "paid": true,
+                "customColors": null,
+                "nestedCargoInstances": [],
+                "IsSealed": false
+              }
+            ],
+            "requirements": []
+          },
+          {
+            "id": "J7+jLg7I3UyODyam2SNiNQ==",
+            "itemName": "ba:itemname_angledwoodendisplaystand",
+            "parentId": null,
+            "stackedItems": [
+              {
+                "childId": "e5g2cWeEPEqUK4pKpiNtwg==",
+                "childItemName": "ba:itemname_cashregister",
+                "attachmentIndex": 0
+              }
+            ],
+            "cargoInstances": [],
+            "requirements": []
+          },
+          {
+            "id": "yD3CJiiGrEiw8ar47cqu5A==",
+            "itemName": "ba:itemname_bakeryshowcase",
+            "parentId": null,
+            "stackedItems": [],
+            "cargoInstances": [
+              {
+                "itemName": "ba:itemname_croissant",
+                "amount": 181,
+                "pricePerUnit": 1.0,
+                "paid": true,
+                "customColors": null,
+                "nestedCargoInstances": [],
+                "IsSealed": false
+              }
+            ],
+            "requirements": []
+          }
+        ],
+        "nativeItemInventoryAfter": [
+          {
+            "id": "e5g2cWeEPEqUK4pKpiNtwg==",
+            "itemName": "ba:itemname_cashregister",
+            "parentId": "J7+jLg7I3UyODyam2SNiNQ==",
+            "stackedItems": [],
+            "cargoInstances": [
+              {
+                "itemName": "ba:itemname_paperbag",
+                "amount": 180,
+                "pricePerUnit": 1.0,
+                "paid": true,
+                "customColors": null,
+                "nestedCargoInstances": [],
+                "IsSealed": false
+              }
+            ],
+            "requirements": []
+          },
+          {
+            "id": "J7+jLg7I3UyODyam2SNiNQ==",
+            "itemName": "ba:itemname_angledwoodendisplaystand",
+            "parentId": null,
+            "stackedItems": [
+              {
+                "childId": "e5g2cWeEPEqUK4pKpiNtwg==",
+                "childItemName": "ba:itemname_cashregister",
+                "attachmentIndex": 0
+              }
+            ],
+            "cargoInstances": [],
+            "requirements": []
+          },
+          {
+            "id": "yD3CJiiGrEiw8ar47cqu5A==",
+            "itemName": "ba:itemname_bakeryshowcase",
+            "parentId": null,
+            "stackedItems": [],
+            "cargoInstances": [
+              {
+                "itemName": "ba:itemname_croissant",
+                "amount": 180,
+                "pricePerUnit": 1.0,
+                "paid": true,
+                "customColors": null,
+                "nestedCargoInstances": [],
+                "IsSealed": false
+              }
+            ],
+            "requirements": []
+          }
+        ],
+        "bagMeasurementNote": "Physical stock uses native cash-register cargo, not FoodSupplyReader BagUnits availability. Before staffing, available BagUnits is 0 even when native cargo has bags; staffing changes availability without a stock mutation.",
+        "nativeAccounts": [
+          {
+            "Day": 1,
+            "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+            "Name": "Persistent City food routines",
+            "Revenue": 82.0224,
+            "Resources": 16.0,
+            "Wages": 194.61554,
+            "Rent": 0.0,
+            "OtherOperatingCosts": 0.0,
+            "OperatingProfit": -128.59314
+          },
+          {
+            "Day": 2,
+            "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+            "Name": "Persistent City food routines",
+            "Revenue": 82.0224,
+            "Resources": 16.0,
+            "Wages": 216.239487,
+            "Rent": 0.0,
+            "OtherOperatingCosts": 0.0,
+            "OperatingProfit": -150.217087
+          },
+          {
+            "Day": 3,
+            "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+            "Name": "Persistent City food routines",
+            "Revenue": 82.0224,
+            "Resources": 16.0,
+            "Wages": 216.239487,
+            "Rent": 0.0,
+            "OtherOperatingCosts": 0.0,
+            "OperatingProfit": -150.217087
+          },
+          {
+            "Day": 4,
+            "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+            "Name": "Persistent City food routines",
+            "Revenue": 389.606384,
+            "Resources": 76.0,
+            "Wages": 216.239487,
+            "Rent": 0.0,
+            "OtherOperatingCosts": 0.0,
+            "OperatingProfit": 97.3669
+          },
+          {
+            "Day": 5,
+            "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+            "Name": "Persistent City food routines",
+            "Revenue": 584.4096,
+            "Resources": 114.0,
+            "Wages": 216.239487,
+            "Rent": 0.0,
+            "OtherOperatingCosts": 0.0,
+            "OperatingProfit": 254.17012
+          }
+        ],
+        "nativeOrderCountStart": 0,
+        "nativeOrderCountEnd": 1,
+        "nativeOrdersExample": [
+          {
+            "entries": [
+              {
+                "itemName": "ba:itemname_croissant",
+                "price": 10.2528,
+                "available": true,
+                "priceAccceptable": true,
+                "paid": true,
+                "processed": true,
+                "wholesalePrice": 1.0
+              },
+              {
+                "itemName": "ba:itemname_paperbag",
+                "price": 0.0,
+                "available": true,
+                "priceAccceptable": true,
+                "paid": true,
+                "processed": false,
+                "wholesalePrice": 1.0
+              }
+            ],
+            "timestamp": {
+              "Day": 6,
+              "Hour": 8,
+              "Minute": 0.0
+            },
+            "completed": true,
+            "customerServiceSkill": 21.0001278,
+            "cleanliness": 100.0,
+            "customerDemandTypes": [],
+            "customerDemandScore": 100.0
+          }
+        ],
+        "capture": {
+          "recording": false,
+          "decisionsRetained": 794,
+          "decisionLimit": 5000,
+          "droppedDecisions": 0,
+          "routineDiagnosticsRetained": 54,
+          "routineDiagnosticLimit": 100000,
+          "droppedRoutineDiagnostics": 0,
+          "truncated": false,
+          "note": "Bounded diagnostic traces only; dropped records do not stop simulation or alter authoritative saved ledgers."
+        },
+        "receiptHashBefore": "541501b8d990298a1e96c3257b2da8edc910b2e8ad98c1a14b755a05ef140cb0",
+        "receiptHashAfter": "7fcaca73d9af4dc3e76008dd1872e0c3530dac4b496fb01606a2807e8c3ff37d"
+      }
+    }
+  },
+  "replay": {
+    "sharedContexts": 878,
+    "matchingContexts": 878,
+    "mismatchingContexts": 0,
+    "onlyFirst": 0,
+    "onlySecond": 0,
+    "examples": [
+      {
+        "decision": {
+          "consumer": "pc:350",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:8tVqXi7AmHZTjtpwZyImetUsstybaAW2SI+dKffge0k=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 4274912822,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 4008653485
+                }
+              ]
+            }
+          ],
+          "householdDraw": 2531498936,
+          "result": 1,
+          "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "product": "ba:itemname_croissant",
+          "outside": 0,
+          "reason": 1,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": "275221504000",
+          "factors": [
+            0,
+            0
+          ]
+        },
+        "sameEndMoney": true,
+        "moneyHashFirst": "a51c349f4364ef70ad0ab69a6da3b31ea0bb9e02d09dfaa0e63de9b926395756",
+        "moneyHashSecond": "a51c349f4364ef70ad0ab69a6da3b31ea0bb9e02d09dfaa0e63de9b926395756"
+      },
+      {
+        "decision": {
+          "consumer": "c1",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:OdbtDoMxesI84Ty3mGSjGUE/LApDCE6DWs52fjZXpqU=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 3918050022,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 3199671944
+                }
+              ]
+            }
+          ],
+          "householdDraw": 3203024217,
+          "result": 2,
+          "business": "",
+          "product": "",
+          "outside": 3,
+          "reason": 3,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": null,
+          "factors": [
+            8,
+            0
+          ]
+        },
+        "sameEndMoney": true,
+        "moneyHashFirst": "4f184fe180e5449ea1e258e1651b19f735d7c4571f1d14dcd9324b3e55f7b2f9",
+        "moneyHashSecond": "4f184fe180e5449ea1e258e1651b19f735d7c4571f1d14dcd9324b3e55f7b2f9"
+      },
+      {
+        "decision": {
+          "consumer": "c101",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:Ad3EU2+2N/ZhYeshVYZcL8Aa8yokIlXSVcz+yI1MIuQ=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 892617112,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 511264471
+                }
+              ]
+            }
+          ],
+          "householdDraw": 3788974098,
+          "result": 2,
+          "business": "",
+          "product": "",
+          "outside": 3,
+          "reason": 3,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": null,
+          "factors": [
+            8,
+            0
+          ]
+        },
+        "sameEndMoney": true,
+        "moneyHashFirst": "8e24e202bc45fd2ab9507718ece156e2f3ea3ff1f5c870a6258575b737d29d52",
+        "moneyHashSecond": "8e24e202bc45fd2ab9507718ece156e2f3ea3ff1f5c870a6258575b737d29d52"
+      },
+      {
+        "decision": {
+          "consumer": "c102",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:az7khsWISpiIWuOnX83fPFoAZqiBeXaVcFTba+3485I=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 3033104952,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 647856661
+                }
+              ]
+            }
+          ],
+          "householdDraw": 1307937181,
+          "result": 2,
+          "business": "",
+          "product": "",
+          "outside": 3,
+          "reason": 3,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": null,
+          "factors": [
+            8,
+            0
+          ]
+        },
+        "sameEndMoney": true,
+        "moneyHashFirst": "a21a384dbd52f2c862a6a4348e8d5195352eab3b7fd43bc25d8ba214bb9ac848",
+        "moneyHashSecond": "a21a384dbd52f2c862a6a4348e8d5195352eab3b7fd43bc25d8ba214bb9ac848"
+      },
+      {
+        "decision": {
+          "consumer": "c103",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:pOriCMG+roOQZ3NePatn0pgrpHiRCG1mux/NpKXuCvs=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 2314362412,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 1099291393
+                }
+              ]
+            }
+          ],
+          "householdDraw": 456430647,
+          "result": 2,
+          "business": "",
+          "product": "",
+          "outside": 3,
+          "reason": 3,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": null,
+          "factors": [
+            8,
+            0
+          ]
+        },
+        "sameEndMoney": true,
+        "moneyHashFirst": "b1ed6d17d6b767b4440547ec369137809537241f39baeda1ff2e80f813c14fb7",
+        "moneyHashSecond": "b1ed6d17d6b767b4440547ec369137809537241f39baeda1ff2e80f813c14fb7"
+      },
+      {
+        "decision": {
+          "consumer": "c104",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:FJG/qcCRP1Zxiwfget3PWSOEkr64YSHRE5KCoutclkM=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 2528964937,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 1344404483
+                }
+              ]
+            }
+          ],
+          "householdDraw": 1019377860,
+          "result": 2,
+          "business": "",
+          "product": "",
+          "outside": 3,
+          "reason": 3,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": null,
+          "factors": [
+            8,
+            0
+          ]
+        },
+        "sameEndMoney": true,
+        "moneyHashFirst": "7584c81a5ffcab2b00156a05ed948206a791fc0751a9a0d62b0b870c2171fc32",
+        "moneyHashSecond": "7584c81a5ffcab2b00156a05ed948206a791fc0751a9a0d62b0b870c2171fc32"
+      },
+      {
+        "decision": {
+          "consumer": "c107",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:/MMVPBOa2acVWGCO21Ly/oKJTRikopqcsCLoEouvSPY=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 452752909,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 2434413829
+                }
+              ]
+            }
+          ],
+          "householdDraw": 1961131418,
+          "result": 2,
+          "business": "",
+          "product": "",
+          "outside": 3,
+          "reason": 3,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": null,
+          "factors": [
+            8,
+            0
+          ]
+        },
+        "sameEndMoney": true,
+        "moneyHashFirst": "64b03a46ea08f7e8cb44620af1bd687b1936b42dd032d4856f90fdbd20008791",
+        "moneyHashSecond": "64b03a46ea08f7e8cb44620af1bd687b1936b42dd032d4856f90fdbd20008791"
+      },
+      {
+        "decision": {
+          "consumer": "c108",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:J3pRMRp9otZ1z0j59w20+MDUhAc85/xc4T72SC4gFY4=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 853784880,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 2691786687
+                }
+              ]
+            }
+          ],
+          "householdDraw": 751574654,
+          "result": 2,
+          "business": "",
+          "product": "",
+          "outside": 3,
+          "reason": 3,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": null,
+          "factors": [
+            8,
+            0
+          ]
+        },
+        "sameEndMoney": true,
+        "moneyHashFirst": "18e68550908fff9cd20093f68ffe5dbe55b0b590594eca4ff2bc138783261d5f",
+        "moneyHashSecond": "18e68550908fff9cd20093f68ffe5dbe55b0b590594eca4ff2bc138783261d5f"
+      },
+      {
+        "decision": {
+          "consumer": "c114",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:/bpyrMsbfYxai6H4KhY2Rbz7pM+L9rxUy0r5A2vUAdE=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 2991817650,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 691750920
+                }
+              ]
+            }
+          ],
+          "householdDraw": 2942869845,
+          "result": 2,
+          "business": "",
+          "product": "",
+          "outside": 3,
+          "reason": 3,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": null,
+          "factors": [
+            8,
+            0
+          ]
+        },
+        "sameEndMoney": true,
+        "moneyHashFirst": "92d50c48046631a80df9e8b2f70770bd4958262fa36f16ede71c81e3c334bd5d",
+        "moneyHashSecond": "92d50c48046631a80df9e8b2f70770bd4958262fa36f16ede71c81e3c334bd5d"
+      },
+      {
+        "decision": {
+          "consumer": "c115",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:pq0X5N5kVpNINJdktb53hhp/zXsHhuiBIzpqO6INJqA=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 3048914877,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 4219107325
+                }
+              ]
+            }
+          ],
+          "householdDraw": 1792423343,
+          "result": 2,
+          "business": "",
+          "product": "",
+          "outside": 3,
+          "reason": 3,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": null,
+          "factors": [
+            8,
+            0
+          ]
+        },
+        "sameEndMoney": true,
+        "moneyHashFirst": "35b07028835dacb71757437a03f80e0987a664a3475f772214597f8f7ecadd6d",
+        "moneyHashSecond": "35b07028835dacb71757437a03f80e0987a664a3475f772214597f8f7ecadd6d"
+      },
+      {
+        "decision": {
+          "consumer": "c117",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:wEakqX+931gI7JZk8d/1ZYE9Zpz4LR9jeZEgji1En8c=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 2639031986,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 3011533506
+                }
+              ]
+            }
+          ],
+          "householdDraw": 4225892414,
+          "result": 2,
+          "business": "",
+          "product": "",
+          "outside": 3,
+          "reason": 3,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": null,
+          "factors": [
+            8,
+            0
+          ]
+        },
+        "sameEndMoney": true,
+        "moneyHashFirst": "caf9bf8030fc69b59fbe4ff06e45d718fa96451b8b75d345181243629ba42dff",
+        "moneyHashSecond": "caf9bf8030fc69b59fbe4ff06e45d718fa96451b8b75d345181243629ba42dff"
+      },
+      {
+        "decision": {
+          "consumer": "c12",
+          "day": 6,
+          "mealKind": 1,
+          "context": "trip:E/xHGrkLgfsYYFSrz19nJBXvneMJR4UCS8Nu7iSDxl0=",
+          "attempt": 1,
+          "shortlist": [
+            {
+              "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+              "place": "address:ba%3Astreet_thirdstreet:30:shop",
+              "shortlistHash": 1499530659,
+              "offers": [
+                {
+                  "product": "ba:itemname_croissant",
+                  "priceUnits": "275221504000",
+                  "draw": 3235727621
+                }
+              ]
+            }
+          ],
+          "householdDraw": 499496521,
+          "result": 2,
+          "business": "",
+          "product": "",
+          "outside": 3,
+          "reason": 3,
+          "intentSpentUnits": "0",
+          "selectedQuotedPriceUnits": null,
+          "factors": [
+            8,
+            0
+          ]
+        },
+        "sameEndMoney": true,
+        "moneyHashFirst": "56d6a30d9dc157dede73bb3b571a796288f841e6622d965b938d123c44e64396",
+        "moneyHashSecond": "56d6a30d9dc157dede73bb3b571a796288f841e6622d965b938d123c44e64396"
+      }
+    ],
+    "mismatches": [],
+    "allSharedProjectionsEqual": true,
+    "endConsumerMoneyCompared": 1914,
+    "endConsumerMoneyMismatches": []
+  },
+  "inflightCheckpoint": {
+    "activeMealIds": [
+      "pc:350"
+    ],
+    "outings": [
+      {
+        "id": "pc:350",
+        "outing": {
+          "OriginActivity": 0,
+          "OriginId": "address:ba%3Astreet_thirdstreet:34:home",
+          "ResumeEvent": 9292.0,
+          "ResumeUntil": 9292.0,
+          "Returning": false
+        }
+      }
+    ]
+  },
+  "completedReturn": {
+    "resident": "pc:350",
+    "minute": 9240.01016363781,
+    "atOriginalHome": true,
+    "journeyCleared": true,
+    "outingCleared": true,
+    "excursionCleared": true,
+    "purchases": 1,
+    "spentUnits": "275221504000"
+  },
+  "legacyDaySettlement": {
+    "day": 5,
+    "purchases": 57,
+    "exactResidentAndFoodRevenueUnits": "15687625728000",
+    "nativeRevenue": 584.4096,
+    "expectedNativeFloatBits": "371a1244",
+    "observedNativeFloatBits": "371a1244",
+    "nativeFloatMatchesExactSumRoundedOnce": true,
+    "weightedDay6Note": "One weighted checkout remains in the native completed-order queue; the played span ends before native day-6 daily settlement."
+  },
+  "replayProjectionFile": "replay-projections.json.gz"
+}

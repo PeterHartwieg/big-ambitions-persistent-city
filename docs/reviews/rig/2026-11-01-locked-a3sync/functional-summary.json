@@ -1,0 +1,694 @@
+{
+  "role": "rig_test",
+  "initialControl": {
+    "frame": 1528,
+    "minute": 7665.36665725708,
+    "beforeHash": "a7cb29b6b8b8e129909927b63c92b3c6b892892e06000fd8fe5a49b72071dd3f",
+    "afterHash": "a7cb29b6b8b8e129909927b63c92b3c6b892892e06000fd8fe5a49b72071dd3f",
+    "unchanged": true,
+    "campaign": {
+      "AtMinute": 7665.36665725708,
+      "Revision": 0,
+      "Businesses": [
+        {
+          "BusinessId": "business:ba%3Astreet_broadwaystreet:5:-1:ba%3Abusinesstype_recruitmentagency:",
+          "Status": 0,
+          "Campaigns": [],
+          "TrafficIndex": 0,
+          "Marketing": 0,
+          "Total": 0,
+          "PromotionEvidence": "Saved native indices only; not customer counts, reach, payment or current campaign effectiveness."
+        },
+        {
+          "BusinessId": "business:ba%3Astreet_fourthavenue:28:1:ba%3Abusinesstype_fruitandvegetablestore:yXNH9hTIv0KhI5OI8be0A%3D%3D",
+          "Status": 0,
+          "Campaigns": [],
+          "TrafficIndex": 0,
+          "Marketing": 0,
+          "Total": 0,
+          "PromotionEvidence": "Saved native indices only; not customer counts, reach, payment or current campaign effectiveness."
+        },
+        {
+          "BusinessId": "business:ba%3Astreet_fifthavenue:54:1:ba%3Abusinesstype_electronicsstore:ju1yVbREcE2B5ymg6q5tyA%3D%3D",
+          "Status": 0,
+          "Campaigns": [],
+          "TrafficIndex": 0,
+          "Marketing": 0,
+          "Total": 0,
+          "PromotionEvidence": "Saved native indices only; not customer counts, reach, payment or current campaign effectiveness."
+        },
+        {
+          "BusinessId": "business:ba%3Astreet_eighthstreet:3:1:ba%3Abusinesstype_travelagency:4LvmLpMq3Eey6AO%2BYAHjCw%3D%3D",
+          "Status": 0,
+          "Campaigns": [],
+          "TrafficIndex": 0,
+          "Marketing": 0,
+          "Total": 0,
+          "PromotionEvidence": "Saved native indices only; not customer counts, reach, payment or current campaign effectiveness."
+        }
+      ]
+    },
+    "rival": {
+      "retained": 883,
+      "units": 55,
+      "read": {
+        "AtMinute": 7665.36665725708,
+        "Businesses": [
+          {
+            "Id": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player",
+            "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+            "StreetName": "ba:street_thirdstreet",
+            "StreetNumber": 30,
+            "CreationDay": 1,
+            "BusinessType": "ba:businesstype_coffeeshop",
+            "OwnerId": "player",
+            "Kind": 0,
+            "AvailabilityEvidence": 0,
+            "Stock": 0,
+            "Accessible": true,
+            "HasReadableDoor": true,
+            "TemporarilyClosed": false,
+            "CustomerServicePercent": 41,
+            "UnsupportedProductCount": 0,
+            "Offers": [
+              {
+                "ProductId": "ba:itemname_croissant",
+                "Price": {
+                  "Units": 275221504000
+                },
+                "Stock": 0
+              }
+            ],
+            "Hours": [
+              {
+                "Day": 0,
+                "FromMinute": 480,
+                "ToMinute": 1080
+              },
+              {
+                "Day": 1,
+                "FromMinute": 480,
+                "ToMinute": 1080
+              },
+              {
+                "Day": 2,
+                "FromMinute": 480,
+                "ToMinute": 1080
+              },
+              {
+                "Day": 3,
+                "FromMinute": 480,
+                "ToMinute": 1080
+              },
+              {
+                "Day": 4,
+                "FromMinute": 480,
+                "ToMinute": 1080
+              },
+              {
+                "Day": 5,
+                "FromMinute": 480,
+                "ToMinute": 1080
+              },
+              {
+                "Day": 6,
+                "FromMinute": 480,
+                "ToMinute": 1080
+              }
+            ]
+          }
+        ],
+        "Refused": {}
+      }
+    },
+    "addresses": [
+      {
+        "id": "c0",
+        "home": {
+          "place": "address:ba%3Astreet_fourthavenue:49:home",
+          "formatted": "49 4th Avenue"
+        },
+        "work": {
+          "place": "address:ba%3Astreet_fifthavenue:21:work",
+          "formatted": "21 5th Avenue"
+        }
+      },
+      {
+        "id": "c102",
+        "home": {
+          "place": "address:ba%3Astreet_ninthstreet:18:home",
+          "formatted": "18 9th Street"
+        },
+        "work": {
+          "place": "address:ba%3Astreet_fourthavenue:7:study",
+          "formatted": "7 4th Avenue"
+        }
+      },
+      {
+        "id": "c149",
+        "home": {
+          "place": "address:ba%3Astreet_thirdstreet:38:home",
+          "formatted": "38 3rd Street"
+        },
+        "work": {
+          "place": "address:ba%3Astreet_sixthavenue:22:work",
+          "formatted": "22 6th Avenue"
+        }
+      },
+      {
+        "id": "pc:350",
+        "home": {
+          "place": "address:ba%3Astreet_thirdstreet:34:home",
+          "formatted": "34 3rd Street"
+        },
+        "work": {
+          "place": "address:ba%3Astreet_fourthavenue:15:work",
+          "formatted": "15 4th Avenue"
+        }
+      }
+    ],
+    "types": [
+      {
+        "name": "NativeInteriorCityView",
+        "present": true
+      },
+      {
+        "name": "RivalFoodCatalogue",
+        "present": true
+      },
+      {
+        "name": "NativeCampaignReader",
+        "present": true
+      },
+      {
+        "name": "OptionalStopEnvironment",
+        "present": true
+      }
+    ],
+    "foodDiagnostics": {
+      "active": true,
+      "hourlyCustomerBatchesSuppressed": 0,
+      "nativeDrawsSuppressed": 0,
+      "nativePurchasesThisSession": 0
+    },
+    "physical": "physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+    "optionalFields": []
+  },
+  "initialCandidate": {
+    "frame": 1371,
+    "minute": 7665.36665725708,
+    "beforeHash": "a7cb29b6b8b8e129909927b63c92b3c6b892892e06000fd8fe5a49b72071dd3f",
+    "afterHash": "a7cb29b6b8b8e129909927b63c92b3c6b892892e06000fd8fe5a49b72071dd3f",
+    "unchanged": true,
+    "campaign": {
+      "AtMinute": 7665.36665725708,
+      "Revision": 0,
+      "Businesses": [
+        {
+          "BusinessId": "business:ba%3Astreet_broadwaystreet:5:-1:ba%3Abusinesstype_recruitmentagency:",
+          "Status": 0,
+          "Campaigns": [],
+          "TrafficIndex": 0,
+          "Marketing": 0,
+          "Total": 0,
+          "PromotionEvidence": "Saved native indices only; not customer counts, reach, payment or current campaign effectiveness."
+        },
+        {
+          "BusinessId": "business:ba%3Astreet_fourthavenue:28:1:ba%3Abusinesstype_fruitandvegetablestore:yXNH9hTIv0KhI5OI8be0A%3D%3D",
+          "Status": 0,
+          "Campaigns": [],
+          "TrafficIndex": 0,
+          "Marketing": 0,
+          "Total": 0,
+          "PromotionEvidence": "Saved native indices only; not customer counts, reach, payment or current campaign effectiveness."
+        },
+        {
+          "BusinessId": "business:ba%3Astreet_fifthavenue:54:1:ba%3Abusinesstype_electronicsstore:ju1yVbREcE2B5ymg6q5tyA%3D%3D",
+          "Status": 0,
+          "Campaigns": [],
+          "TrafficIndex": 0,
+          "Marketing": 0,
+          "Total": 0,
+          "PromotionEvidence": "Saved native indices only; not customer counts, reach, payment or current campaign effectiveness."
+        },
+        {
+          "BusinessId": "business:ba%3Astreet_eighthstreet:3:1:ba%3Abusinesstype_travelagency:4LvmLpMq3Eey6AO%2BYAHjCw%3D%3D",
+          "Status": 0,
+          "Campaigns": [],
+          "TrafficIndex": 0,
+          "Marketing": 0,
+          "Total": 0,
+          "PromotionEvidence": "Saved native indices only; not customer counts, reach, payment or current campaign effectiveness."
+        }
+      ]
+    },
+    "rival": {
+      "retained": 883,
+      "units": 55,
+      "read": {
+        "AtMinute": 7665.36665725708,
+        "Businesses": [
+          {
+            "Id": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player",
+            "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+            "StreetName": "ba:street_thirdstreet",
+            "StreetNumber": 30,
+            "CreationDay": 1,
+            "BusinessType": "ba:businesstype_coffeeshop",
+            "OwnerId": "player",
+            "Kind": 0,
+            "AvailabilityEvidence": 0,
+            "Stock": 0,
+            "Accessible": true,
+            "HasReadableDoor": true,
+            "TemporarilyClosed": false,
+            "CustomerServicePercent": 41,
+            "UnsupportedProductCount": 0,
+            "Offers": [
+              {
+                "ProductId": "ba:itemname_croissant",
+                "Price": {
+                  "Units": 275221504000
+                },
+                "Stock": 0
+              }
+            ],
+            "Hours": [
+              {
+                "Day": 0,
+                "FromMinute": 480,
+                "ToMinute": 1080
+              },
+              {
+                "Day": 1,
+                "FromMinute": 480,
+                "ToMinute": 1080
+              },
+              {
+                "Day": 2,
+                "FromMinute": 480,
+                "ToMinute": 1080
+              },
+              {
+                "Day": 3,
+                "FromMinute": 480,
+                "ToMinute": 1080
+              },
+              {
+                "Day": 4,
+                "FromMinute": 480,
+                "ToMinute": 1080
+              },
+              {
+                "Day": 5,
+                "FromMinute": 480,
+                "ToMinute": 1080
+              },
+              {
+                "Day": 6,
+                "FromMinute": 480,
+                "ToMinute": 1080
+              }
+            ]
+          }
+        ],
+        "Refused": {}
+      }
+    },
+    "addresses": [
+      {
+        "id": "c0",
+        "home": {
+          "place": "address:ba%3Astreet_fourthavenue:49:home",
+          "formatted": "49 4th Avenue"
+        },
+        "work": {
+          "place": "address:ba%3Astreet_fifthavenue:21:work",
+          "formatted": "21 5th Avenue"
+        }
+      },
+      {
+        "id": "c102",
+        "home": {
+          "place": "address:ba%3Astreet_ninthstreet:18:home",
+          "formatted": "18 9th Street"
+        },
+        "work": {
+          "place": "address:ba%3Astreet_fourthavenue:7:study",
+          "formatted": "7 4th Avenue"
+        }
+      },
+      {
+        "id": "c149",
+        "home": {
+          "place": "address:ba%3Astreet_thirdstreet:38:home",
+          "formatted": "38 3rd Street"
+        },
+        "work": {
+          "place": "address:ba%3Astreet_sixthavenue:22:work",
+          "formatted": "22 6th Avenue"
+        }
+      },
+      {
+        "id": "pc:350",
+        "home": {
+          "place": "address:ba%3Astreet_thirdstreet:34:home",
+          "formatted": "34 3rd Street"
+        },
+        "work": {
+          "place": "address:ba%3Astreet_fourthavenue:15:work",
+          "formatted": "15 4th Avenue"
+        }
+      }
+    ],
+    "types": [
+      {
+        "name": "NativeInteriorCityView",
+        "present": true
+      },
+      {
+        "name": "RivalFoodCatalogue",
+        "present": true
+      },
+      {
+        "name": "NativeCampaignReader",
+        "present": true
+      },
+      {
+        "name": "OptionalStopEnvironment",
+        "present": true
+      }
+    ],
+    "foodDiagnostics": {
+      "active": true,
+      "hourlyCustomerBatchesSuppressed": 0,
+      "nativeDrawsSuppressed": 0,
+      "nativePurchasesThisSession": 0
+    },
+    "physical": "physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+    "optionalFields": []
+  },
+  "initialLegacyPopulationPayloadIdentical": true,
+  "campaignSnapshotIdentical": true,
+  "rivalSnapshotIdentical": true,
+  "nativeAddressesIdentical": true,
+  "defaultFeatureSamples": [
+    {
+      "arm": "cand1",
+      "loaded": {
+        "assembly": "PersistentCity",
+        "version": "0.10.0.0",
+        "sha256": "b10eefbcec69518c6ae17a6085521774ae0ba7107d95fffac1e9ad19b3461fb5",
+        "frame": 1354
+      },
+      "f0": {
+        "default": {
+          "frame": 1419,
+          "day": 5,
+          "hour": 7,
+          "minute": 45.3666573,
+          "inside": false,
+          "entering": false,
+          "hidden": false,
+          "configured": false,
+          "viewActive": false,
+          "failed": false,
+          "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+          "diagnostics": "physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+          "acquired": 0,
+          "released": 0,
+          "citizens": 957,
+          "ownedBodyCount": 0,
+          "uniqueOwnedIds": 0,
+          "identityListCount": 957,
+          "identityListHash": "93438ed9f174cb7559dd1c2f1ac6aaa552091a80bd8a99738689cabfb24906fa"
+        },
+        "off-before-entry": {
+          "frame": 10216,
+          "day": 5,
+          "hour": 10,
+          "minute": 51.1932945,
+          "inside": false,
+          "entering": false,
+          "hidden": false,
+          "configured": false,
+          "viewActive": false,
+          "failed": false,
+          "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+          "diagnostics": "physical=True, pedestrians=6, cars=0, acquired=7, released=1, blockedSamples=936, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+          "acquired": 7,
+          "released": 1,
+          "citizens": 957,
+          "ownedBodyCount": 6,
+          "uniqueOwnedIds": 6,
+          "identityListCount": 957,
+          "identityListHash": "93438ed9f174cb7559dd1c2f1ac6aaa552091a80bd8a99738689cabfb24906fa"
+        },
+        "off-inside": {
+          "frame": 10249,
+          "day": 5,
+          "hour": 10,
+          "minute": 54.5097771,
+          "inside": true,
+          "entering": false,
+          "hidden": true,
+          "configured": false,
+          "viewActive": false,
+          "failed": false,
+          "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+          "diagnostics": "physical=True, pedestrians=0, cars=0, acquired=8, released=8, blockedSamples=942, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+          "acquired": 8,
+          "released": 8,
+          "citizens": 957,
+          "ownedBodyCount": 0,
+          "uniqueOwnedIds": 0,
+          "identityListCount": 957,
+          "identityListHash": "93438ed9f174cb7559dd1c2f1ac6aaa552091a80bd8a99738689cabfb24906fa"
+        },
+        "off-outside": {
+          "frame": 10272,
+          "day": 5,
+          "hour": 10,
+          "minute": 56.24161,
+          "inside": false,
+          "entering": false,
+          "hidden": false,
+          "configured": false,
+          "viewActive": false,
+          "failed": false,
+          "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+          "diagnostics": "physical=True, pedestrians=7, cars=0, acquired=15, released=8, blockedSamples=957, unavailable=2, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+          "acquired": 15,
+          "released": 8,
+          "citizens": 957,
+          "ownedBodyCount": 7,
+          "uniqueOwnedIds": 7,
+          "identityListCount": 957,
+          "identityListHash": "93438ed9f174cb7559dd1c2f1ac6aaa552091a80bd8a99738689cabfb24906fa"
+        },
+        "reacquired": {
+          "frame": 10529,
+          "day": 5,
+          "hour": 10,
+          "minute": 57.4308357,
+          "inside": false,
+          "entering": false,
+          "hidden": false,
+          "configured": false,
+          "viewActive": false,
+          "failed": false,
+          "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+          "diagnostics": "physical=True, pedestrians=23, cars=1, acquired=33, released=9, blockedSamples=1141, unavailable=3, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=pc:489:inactive model slot:",
+          "acquired": 33,
+          "released": 9,
+          "citizens": 957,
+          "ownedBodyCount": 24,
+          "uniqueOwnedIds": 24,
+          "identityListCount": 957,
+          "identityListHash": "93438ed9f174cb7559dd1c2f1ac6aaa552091a80bd8a99738689cabfb24906fa"
+        }
+      },
+      "e2": {
+        "schema": 17,
+        "population": 957,
+        "identityDigest": "20e917890faad9447cbe170b83ed9e709921bd5cde325ef88e19eb4e319b511c",
+        "pending": 0,
+        "tally": {
+          "Eligible": 0,
+          "Drawn": 0,
+          "Realised": 0,
+          "HandedOn": 0,
+          "PassedOn": 0,
+          "Dropped": 0
+        },
+        "stops": 0,
+        "queues": 0,
+        "pedestrianLimit": 48,
+        "vehicleLimit": 24,
+        "venues": 101,
+        "catalogEntries": 51,
+        "requestedTypes": [
+          "coffeeshop",
+          "fastfoodrestaurant",
+          "nightclub",
+          "gym",
+          "cinema",
+          "theater",
+          "lawfirm",
+          "school",
+          "warehouse"
+        ],
+        "readOnly": true
+      }
+    },
+    {
+      "arm": "base2",
+      "loaded": {
+        "assembly": "PersistentCity",
+        "version": "0.10.0.0",
+        "sha256": "9b820a695480e842b09a4876a8466077163a6dca27850744b9cefe48ad723e30",
+        "frame": 1598
+      },
+      "f0": {
+        "default": {
+          "frame": 1663,
+          "day": 5,
+          "hour": 7,
+          "minute": 45.3666573,
+          "inside": false,
+          "entering": false,
+          "hidden": false,
+          "configured": false,
+          "viewActive": false,
+          "failed": false,
+          "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+          "diagnostics": "physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+          "acquired": 0,
+          "released": 0,
+          "citizens": 957,
+          "ownedBodyCount": 0,
+          "uniqueOwnedIds": 0,
+          "identityListCount": 957,
+          "identityListHash": "93438ed9f174cb7559dd1c2f1ac6aaa552091a80bd8a99738689cabfb24906fa"
+        },
+        "off-before-entry": {
+          "frame": 10348,
+          "day": 5,
+          "hour": 10,
+          "minute": 51.2473068,
+          "inside": false,
+          "entering": false,
+          "hidden": false,
+          "configured": false,
+          "viewActive": false,
+          "failed": false,
+          "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+          "diagnostics": "physical=True, pedestrians=6, cars=0, acquired=7, released=1, blockedSamples=633, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+          "acquired": 7,
+          "released": 1,
+          "citizens": 957,
+          "ownedBodyCount": 6,
+          "uniqueOwnedIds": 6,
+          "identityListCount": 957,
+          "identityListHash": "93438ed9f174cb7559dd1c2f1ac6aaa552091a80bd8a99738689cabfb24906fa"
+        },
+        "off-inside": {
+          "frame": 10381,
+          "day": 5,
+          "hour": 10,
+          "minute": 54.6283,
+          "inside": true,
+          "entering": false,
+          "hidden": true,
+          "configured": false,
+          "viewActive": false,
+          "failed": false,
+          "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+          "diagnostics": "physical=True, pedestrians=0, cars=0, acquired=7, released=7, blockedSamples=636, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+          "acquired": 7,
+          "released": 7,
+          "citizens": 957,
+          "ownedBodyCount": 0,
+          "uniqueOwnedIds": 0,
+          "identityListCount": 957,
+          "identityListHash": "93438ed9f174cb7559dd1c2f1ac6aaa552091a80bd8a99738689cabfb24906fa"
+        },
+        "off-outside": {
+          "frame": 10404,
+          "day": 5,
+          "hour": 10,
+          "minute": 56.39967,
+          "inside": false,
+          "entering": false,
+          "hidden": false,
+          "configured": false,
+          "viewActive": false,
+          "failed": false,
+          "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+          "diagnostics": "physical=True, pedestrians=6, cars=0, acquired=13, released=7, blockedSamples=647, unavailable=2, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+          "acquired": 13,
+          "released": 7,
+          "citizens": 957,
+          "ownedBodyCount": 6,
+          "uniqueOwnedIds": 6,
+          "identityListCount": 957,
+          "identityListHash": "93438ed9f174cb7559dd1c2f1ac6aaa552091a80bd8a99738689cabfb24906fa"
+        },
+        "reacquired": {
+          "frame": 10670,
+          "day": 5,
+          "hour": 10,
+          "minute": 57.571537,
+          "inside": false,
+          "entering": false,
+          "hidden": false,
+          "configured": false,
+          "viewActive": false,
+          "failed": false,
+          "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+          "diagnostics": "physical=True, pedestrians=24, cars=1, acquired=32, released=7, blockedSamples=809, unavailable=3, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=pc:489:inactive model slot:",
+          "acquired": 32,
+          "released": 7,
+          "citizens": 957,
+          "ownedBodyCount": 25,
+          "uniqueOwnedIds": 25,
+          "identityListCount": 957,
+          "identityListHash": "93438ed9f174cb7559dd1c2f1ac6aaa552091a80bd8a99738689cabfb24906fa"
+        }
+      },
+      "e2": {
+        "schema": 17,
+        "population": 957,
+        "identityDigest": "20e917890faad9447cbe170b83ed9e709921bd5cde325ef88e19eb4e319b511c",
+        "pending": 0,
+        "tally": {
+          "Eligible": 0,
+          "Drawn": 0,
+          "Realised": 0,
+          "HandedOn": 0,
+          "PassedOn": 0,
+          "Dropped": 0
+        },
+        "stops": 0,
+        "queues": 0,
+        "pedestrianLimit": 48,
+        "vehicleLimit": 24,
+        "venues": 101,
+        "catalogEntries": 51,
+        "requestedTypes": [
+          "coffeeshop",
+          "fastfoodrestaurant",
+          "nightclub",
+          "gym",
+          "cinema",
+          "theater",
+          "lawfirm",
+          "school",
+          "warehouse"
+        ],
+        "readOnly": true
+      }
+    }
+  ],
+  "note": "Default-off F0 is rechecked with live outside bodies in candidate round 1 and control round 2. Initial control round 1 static flags were unavailable because of a corrected stage reflection mask. All reads/native entry/exit are bridge seams, not pointer proofs."
+}

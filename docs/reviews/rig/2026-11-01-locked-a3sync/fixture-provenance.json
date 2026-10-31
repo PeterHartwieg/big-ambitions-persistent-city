@@ -1,0 +1,41 @@
+[
+  {
+    "name": "FT Food Routines Locked A3 Schema16 20261031",
+    "source": "prior disposable FT rig native save",
+    "hsgSha256": "31b05bc02cdc185901eef99fae6713b9b305b79f014144c88923a631beca9dab",
+    "hsgBytes": 1106234,
+    "sourcePayloadSha256": "4fcfec060b4b88c9db3ff074a248dfbfe03bdd234ff5618190b132fc1b83bbd0",
+    "payloadSchema": 16,
+    "payloadOccursExactlyOnceInNativeSave": true,
+    "minute": 7695.968780517578,
+    "citizens": 957,
+    "consumers": 1914,
+    "seed": -1903163055
+  },
+  {
+    "name": "FT Food Routines Locked A3 Noon Schema16 20261031",
+    "source": "prior disposable FT rig native save",
+    "hsgSha256": "0aac22c8716ecd5cfc1d7f79773ff2464ef18fe197202db5523eec368029dac3",
+    "hsgBytes": 1542276,
+    "sourcePayloadSha256": "ba4e87d0c874c65ec01ab9ad5d541559790b2d75f35c7fcd372ac2ffb80197ef",
+    "payloadSchema": 16,
+    "payloadOccursExactlyOnceInNativeSave": true,
+    "minute": 7950.016056060791,
+    "citizens": 957,
+    "consumers": 1914,
+    "seed": -1903163055
+  },
+  {
+    "name": "FT Food Routines Locked A3 Choice Checkpoint 20261031",
+    "source": "prior disposable FT rig native save",
+    "hsgSha256": "f01b8fd97b3a47d1ee0d23a7081909d33b960ff9d90eb09b28ad714c195954f9",
+    "hsgBytes": 1271614,
+    "sourcePayloadSha256": "1ef6320fef082cce0e4a08cfbf776f0b1ef34d5dccee0d12afe9d25f573deb29",
+    "payloadSchema": 17,
+    "payloadOccursExactlyOnceInNativeSave": true,
+    "minute": 8985.013874053955,
+    "citizens": 957,
+    "consumers": 1914,
+    "seed": -1903163055
+  }
+]
