@@ -49,6 +49,7 @@ internal static class Program
     }
     private static void Main(string[] args)
     {
+        InteriorViewRegression.Run();
         NativeCityClock.Active = false; GameManager.SetMultiplier(1); NativeTravelPace.ResetReading();
         var tracker = (ClockRateTracker)typeof(NativeTravelPace).GetField("tracker", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
         for (int i = 0; i < 4; i++) tracker.Observe(i, 1, 1);

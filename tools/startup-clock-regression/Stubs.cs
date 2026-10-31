@@ -2,9 +2,20 @@ using System;
 using System.Reflection;
 namespace UnityEngine
 {
-    public static class Time { public static int frameCount; public static float deltaTime = 1, timeScale = 1; }
+    public static class Time
+    {
+        public static int frameCount, UnscaledTimeReads;
+        private static float unscaled;
+        public static float unscaledTime { get { UnscaledTimeReads++; return unscaled; } set { unscaled=value; } }
+        public static float deltaTime = 1, timeScale = 1;
+    }
     public struct Vector3 { public float x, y, z; }
-    public sealed class Transform { public Vector3 position; }
+    public sealed class Transform
+    {
+        public Vector3 position;
+        public Transform? parent;
+        public bool IsChildOf(Transform ancestor) => ReferenceEquals(this, ancestor) || parent?.IsChildOf(ancestor) == true;
+    }
 }
 public class InstanceBehavior<T> where T : class { public static T? Instance; }
 public sealed class PlayerController { public UnityEngine.Transform transform = new UnityEngine.Transform(); }
@@ -15,14 +26,75 @@ public sealed class GameManager
     public PlayerController playerController = new PlayerController();
     public void RunMainGameTick(float value) { _ = MinutesMultiplier * value; }
 }
-public static class BuildingManager { public static bool IsInsideBuilding; }
-namespace UI { public sealed class UIs { public TimeMachine timeMachine = new TimeMachine(); } public sealed class TimeMachine { public bool isRunning; } }
+public sealed class BuildingManager
+{
+    public static bool IsInsideBuilding;
+    public bool enteringBuilding, exitingBuilding;
+    public Building? building;
+    public BuildingRegistration? buildingRegistration;
+    public CityBuildingController? cityBuildingController;
+    public UnityEngine.Transform? currentBuildingVersion;
+    public object? multipleHeightsBuildingController;
+    public System.Collections.Generic.List<ExitZone>? exitZones;
+}
+public sealed class Building { public string BuildingType = "ba:buildingtype_retail"; public Entities.Address Address; }
+public sealed class BuildingRegistration { public bool HasEstablishedBusiness = true; public string businessTypeName = "food"; }
+public sealed class CityBuildingController { public Building? building; public BuildingEntranceDoor[]? entranceDoors; }
+public sealed class BuildingEntranceDoor { public UnityEngine.Transform? doorTransform; }
+public sealed class ExitZone { public bool isElevator; }
+public static class GlobalEvents
+{
+    public static event Action<Entities.Address>? onEnterBuilding, onExitBuilding;
+    public static event Action? onTimeMachineStarted;
+    public static void Enter() => onEnterBuilding?.Invoke(default);
+    public static void Exit() => onExitBuilding?.Invoke(default);
+    public static void TimeMachineStarted() => onTimeMachineStarted?.Invoke();
+}
+namespace Entities { public struct Address { } }
+namespace UnityEngine.SceneManagement
+{
+    public struct Scene { }
+    public static class SceneManager
+    {
+        public static event Action<Scene>? sceneUnloaded;
+        public static void Unload() => sceneUnloaded?.Invoke(default);
+    }
+}
+namespace BAModAPI { public interface IModLogger { void Info(string text); void Warn(string text); } }
+namespace BigAmbitions.InteriorDesigner.InteriorElements
+{
+    public sealed class InteriorElement { public bool IsFloor = true; public UnityEngine.Transform transform = new UnityEngine.Transform(); }
+    public static class InteriorElementsHelper
+    {
+        public static readonly System.Collections.Generic.Dictionary<string, InteriorElement> InteriorElementsCache = new System.Collections.Generic.Dictionary<string, InteriorElement>();
+    }
+}
+namespace UI
+{
+    public enum TimeSpeed { Normal, Pause, FastForward }
+    public sealed class GameSpeed { public TimeSpeed speed; }
+    public sealed class GameSpeedController
+    {
+        private GameSpeed currentGameSpeed = new GameSpeed();
+        public void SetForTest(TimeSpeed speed) { currentGameSpeed = new GameSpeed { speed=speed }; }
+    }
+    public sealed class UIs { public TimeMachine timeMachine = new TimeMachine(); public GameSpeedController gameSpeed = new GameSpeedController(); }
+    public sealed class TimeMachine { public bool isRunning; }
+}
 namespace UI.Load { public static class LoadScene { public static bool isLoading; } }
 namespace Parking.UndergroundParking { public static class UndergroundParkingManager { public static bool IsInsideParking; } }
 namespace PersistentCity.Runtime
 {
     internal static class NativeCityClock { public static bool Active; public static double Factor = 1; }
-    internal static class PhysicalTrafficHooks { public static bool CurrentFastForward = false; }
+    internal static class PhysicalTrafficHooks
+    {
+        public static bool CurrentFastForward
+        {
+            get => NativeGameSpeed.LegacyFastForward;
+            set => InstanceBehavior<UI.UIs>.Instance!.gameSpeed.SetForTest(value ? UI.TimeSpeed.FastForward : UI.TimeSpeed.Normal);
+        }
+    }
+    internal static class GamePlaces { public static bool IsRetailShopActivity(string type) => type != "school"; }
 }
 namespace HarmonyLib
 {
@@ -36,6 +108,7 @@ namespace HarmonyLib
     public sealed class HarmonyMethod { public HarmonyMethod(Type type, string name) { } }
     public static class AccessTools
     {
+        public static FieldInfo? Field(Type type, string name) => type.GetField(name, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
         public static MethodInfo? Method(Type type, string name, Type[] parameters) => type.GetMethod(name, parameters);
     }
 }

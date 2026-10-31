@@ -4,6 +4,8 @@ Planning record, 31 October 2026. Documentation only. Inspected development head
 
 ## Scope and decisions carried forward
 
+Track F is an independent, separately approved presentation track with no B0/A-stack or save-format dependency. Its default-off F0 discovery and drawing no-op limits are recorded in [city view from interiors](track-f-interior-view.md); the later E2c compatibility guard remains separate from E2a/E2b.
+
 [Peter's roadmap](../roadmap.md) governs product decisions 1–8, order **A → B → C → D → E**, standing performance practice and the single release after the complete roadmap. Its later decisions supersede the phase order, obsolete schema numbers, inspect-mode suggestion and rival scope question in the [27 October review](../reviews/2026-10-27-realism-gameplay-roadmap.md). README and CHECKS describe evidence for particular candidates; older opt-in, menu and schema statements in design/food documents are historical, not new requirements.
 
 - **B:** loyalty-driven memory, curious exploration and regulars; stockout, closure and queue disappointment lower return probability according to traits. About four remembered shops **per consumer**, including represented slots, not four per physical anchor.
