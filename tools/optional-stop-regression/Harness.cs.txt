@@ -47,11 +47,11 @@ partial class Harness
     private sealed class FakeSpots { public bool SampledThisFrame => false; public bool Unsampled(Place p) => false; }
     private bool TryJoinQueue(Binding b) => false;
     private sealed class Walking : IRoutePlanner { public Route? Plan(Place a,Place b,double t,TravelPreferences p) => null; }
-    private Harness()
+    private Harness(int count=1)
     {
-        var state = Population.Create(new[] {new CitizenIdentity { Id="c",Name="Citizen",Persona=Persona.Retiree }},
-            new[] {new Place { Id="home",Name="Home",Kind=PlaceKind.Home }}, "test","0.40.4",17,100);
-        var c=state.Citizens[0]; c.NextEventMinute=c.ActivityUntilMinute=1000;
+        var state = Population.Create(Enumerable.Range(0,count).Select(i=>new CitizenIdentity { Id=i==0?"c":"c"+i,Name="Citizen",Persona=Persona.Retiree }),
+            new[] {new Place { Id="home",Name="Home",Kind=PlaceKind.Home,Capacity=count }}, "test","0.40.4",17,100);
+        foreach(var c in state.Citizens) c.NextEventMinute=c.ActivityUntilMinute=1000;
         simulation=new CitySimulator(state,new Walking());
         simulation.ActivityObserved += OnOptionalDeparture;
     }
@@ -66,7 +66,7 @@ partial class Harness
     private static void Check(bool ok,string message) { checks++; if(!ok) throw new Exception(message); }
     private sealed class Environment : IOptionalStopEnvironment
     {
-        public bool Raining => false;
+        public bool Raining { get; set; }
         public IReadOnlyList<OptionalStopSpot> Spots(Place p,DwellKind k) => k==DwellKind.WindowShopping
             ? new[] {new OptionalStopSpot {Id="shop-spot",TargetId=p.Id,Position=new(12,0,0),Facing=new(13,0,0)}} : Array.Empty<OptionalStopSpot>();
         public OptionalStopAvailability Available(OptionalStopState s) => OptionalStopAvailability.Ready;
@@ -147,11 +147,61 @@ partial class Harness
         Check(spots.TryQueue(first,out var replaced) && !ReferenceEquals(original,replaced), "invalidated facade rebuilt instead of stale reuse");
         Check(PersistentCity.Runtime.DwellSpots.SampleCalls==3, "exact sampling count after invalidation");
     }
-    public static void Main()
+    private static void PairedReturn()
+    {
+        var h=new Harness(2); var a=h.New(); var c=h.simulation.State.Citizens[1];
+        a.Citizen.OptionalStop!.Kind=DwellKind.ChatOutsideVenue;
+        a.Citizen.OptionalStop.Members.AddRange(new[]{"c","c1"});
+        c.OptionalStop=a.Citizen.OptionalStop.Copy(); c.OptionalStop.Position=new(3,0,0); c.OptionalStop.SpotId="partner";
+        var b=new Binding {Citizen=c,Person=new Body()}; var first=a.Person; var second=b.Person;
+        Check(h.TryJoinOptional(a)&&h.TryJoinOptional(b),"both persistent partners approach");
+        a.Person!.Position=a.Optional!.Position; b.Person!.Position=b.Optional!.Position;
+        Check(h.ObserveOptional(a)&&h.ObserveOptional(b),"both partners reach spots");
+        RainHelper.isRaining=true;
+        Check(h.ObserveOptional(a)&&a.OptionalReturning,"first partner walks back");
+        Check(c.OptionalStop!.Cancelled,"first cancellation cancels actual partner");
+        b.Person.Refuse=true;
+        Check(h.ObserveOptional(b)&&b.OptionalReturning,"blocked partner retains body on return");
+        RainHelper.isRaining=false;
+        a.Person.Position=a.Optional.ReturnPosition;
+        Check(!h.ObserveOptional(a),"first releases at original entrance");
+        Check(h.ObserveOptional(b)&&ReferenceEquals(second,b.Person),"other partner remains until its own return");
+        b.Person.Refuse=false; b.Person.Position=b.Optional!.ReturnPosition;
+        Check(!h.ObserveOptional(b),"second releases only at original entrance");
+        Check(ReferenceEquals(first,a.Person)&&ReferenceEquals(second,b.Person),"partners keep original bodies");
+        Check(a.Citizen.NextEventMinute==1000&&c.NextEventMinute==1000,"paired return does not extend activities");
+    }
+    private static void Findings()
+    {
+        // Observations for E2b triage, deliberately separate from acceptance assertions.
+        var h=new Harness(); var b=h.New(); var c=b.Citizen;
+        c.Phase=CitizenPhase.AtPlace; c.Activity=Activity.Work;
+        c.OptionalStop!.StartMinute=160; c.OptionalStop.EndMinute=165;
+        var env=new Environment(); h.simulation.AttachOptionalStops(env,25);
+        env.Raining=true; h.simulation.RefreshOptionalStops();
+        env.Raining=false; h.simulation.State.Minute=160; h.simulation.RefreshOptionalStops();
+        Console.WriteLine($"E2b future-break observation (candidate visibility change, not an acceptance assertion): rain at 100, dry at start 160; desired active=True, actual active={c.OptionalStop.ActiveAt(160)}, cancelled={c.OptionalStop.Cancelled}; saved start/end={c.OptionalStop.StartMinute}/{c.OptionalStop.EndMinute}.");
+        var shop=new Place {Id="shop",Kind=PlaceKind.Shop,OpenMinute=540,CloseMinute=1080};
+        for(int i=0;i<1000;i++)
+        {
+            var waiting=new CitizenState {Identity=new CitizenIdentity {Id="queue"+i},Phase=CitizenPhase.WaitingForOpening,
+                PlaceId="shop",DestinationId="shop",DestinationActivity=Activity.Shop,ActivityUntilMinute=900};
+            var dry=DwellPlanner.QueueAtOpening(waiting,shop,17,530,false)!.Value;
+            var wet=DwellPlanner.QueueAtOpening(waiting,shop,17,530,true);
+            if(!wet.HasValue||dry.StartMinute>=535) continue;
+            Console.WriteLine(FormattableString.Invariant($"E2b queue-lead contract observation (not an acceptance assertion): id=queue{i}, seed=17, opening=540; dry start={dry.StartMinute:F4}, wet start={wet.Value.StartMinute:F4}; replan at same wait changes lead; no persisted queue commitment."));
+            break;
+        }
+    }
+    public static void Main(string[] args)
     {
         SharedSamplingBudget();
         PersistentCity.Runtime.NativeDoorHarness.Run();
         ArrivalSequence(); DepartureSequence(true); DepartureSequence(false);
+        PairedReturn();
+        PersistentCity.Runtime.StationaryScopeHarness.Run();
+        if(args.Contains("--findings")) { Findings(); PersistentCity.Runtime.NativeDoorHarness.Findings(); }
+        if(args.Contains("--performance")) PersistentCity.Runtime.NativeDoorHarness.Performance();
         var h=new Harness(); var b=h.New(); var identity=b.Citizen.Identity; var body=b.Person!;
         Check(h.TryJoinOptional(b),"start walk"); Check(body.Target.Equals(new Position(2,0,0)),"target spot");
         Check(h.ObserveOptional(b),"approaching retained"); body.Position=b.Optional!.Position;
