@@ -1,0 +1,645 @@
+{
+  "reviewRound": 1,
+  "sourceCommit": "87abf3a4b035b6ce443c95f035d47e450ab7138a",
+  "baseline": "c0af745",
+  "red": {
+    "failed": 15,
+    "passed": 0,
+    "coverage": "13 research-setting token cases; changed Next and LastId cursor cases",
+    "log": "build/c4/review-r1-red.log",
+    "sha256": "bd23efc39d2c0df3625f3f99ff3a760dabb9b7fbebddb16e39597e6619d4df99"
+  },
+  "green": {
+    "c4Passed": 44,
+    "totalPassed": 1906,
+    "failed": 0,
+    "skipped": 0,
+    "targetedLog": "build/c4/review-r1-green.log",
+    "suiteLog": "build/c4/gates/03.log",
+    "listingLog": "build/c4/gates/04.log"
+  },
+  "buildDllSha256": "d92120eba459ecff346310f03dc2f5f25a5e93a8f98cac287232f200565b9d16",
+  "checks": [
+    {
+      "command": [
+        "<python>",
+        "tools/build.py",
+        "--game-managed",
+        "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/01.log"
+    },
+    {
+      "command": [
+        "powershell",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Users\\Peter\\Coding_Projects\\.agent-logs\\wait-other-dotnet.ps1",
+        "-Repo",
+        "<repo>"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/02.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "test",
+        "tests/PersistentCity.Tests.csproj"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/03.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--no-build",
+        "--list-tests"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/04.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/core-identity-regression/CoreIdentityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/05.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/diagnostic-response-regression/DiagnosticResponseRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/06.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/event-observation-regression/EventObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/07.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-catalogue-regression/FoodCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/08.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-checkout-regression/FoodCheckoutRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/09.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-hours-regression/FoodHoursRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/10.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-household-catalogue-regression/FoodHouseholdCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/11.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-ownership-regression/FoodOwnershipRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/12.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-supply-regression/FoodSupplyRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/13.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/frame-observation-regression/FrameObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/14.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/gate-access-regression/GateAccessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/15.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/road-ceiling-regression/RoadCeilingRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/16.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/road-handoff-regression/RoadHandoffRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/17.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/road-invalidation-regression/RoadInvalidationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/18.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/road-speed-regression/RoadSpeedRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/19.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/route-discovery-regression/RouteDiscoveryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/20.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/21.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/startup-clock-regression/StartupClockRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/22.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/traffic-closure-regression/TrafficClosureRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/23.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/traffic-queue-regression/TrafficQueueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/24.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/walking-quote-regression/WalkingQuoteRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/25.log"
+    },
+    {
+      "command": [
+        "<python>",
+        "tools/native-command-regression/run.py"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/26.log"
+    },
+    {
+      "command": [
+        "<python>",
+        "tools/physical-selection-regression/run.py"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/27.log"
+    },
+    {
+      "command": [
+        "<python>",
+        "tools/vehicle-ownership-regression/run.py"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/28.log"
+    },
+    {
+      "command": [
+        "<python>",
+        "tools/optional-stop-regression/run.py"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/29.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/simulate/Simulate.csproj",
+        "--",
+        "28",
+        "build/harness-demo"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/30.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-routines/FoodRoutines.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "build/harness-food-routines-demo",
+        "957"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/31.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-demand/FoodDemand.csproj",
+        "--",
+        "build/harness-food-demand-demo"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/32.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/market-research-regression/MarketResearchRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "build/c4/measurements.json"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/33.log"
+    },
+    {
+      "command": [
+        "<python>",
+        "tools/market-research-regression/compare_save_baseline.py"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/34.log"
+    }
+  ],
+  "saveComparison": {
+    "baseline": "c0af745",
+    "candidateCoreCommit": "87abf3a4b035b6ce443c95f035d47e450ab7138a",
+    "fixtures": [
+      {
+        "fixture": "population.json",
+        "baselineBytes": 41406,
+        "candidateBytes": 41406,
+        "delta": 0,
+        "identicalBytes": true,
+        "sha256": "8bf9e8ea0b35d5ef27a8d950724e8061548bedfdc9dace655566dbf84d5e326f"
+      },
+      {
+        "fixture": "food.json",
+        "baselineBytes": 65696,
+        "candidateBytes": 65696,
+        "delta": 0,
+        "identicalBytes": true,
+        "sha256": "4b000bc0f85c4ac241690a7263bb50753ae93746fc20197d3c8c49c08a944e1f"
+      }
+    ]
+  },
+  "benchmarks": [
+    {
+      "consumers": 957,
+      "coverage": "city",
+      "unitSize": 256,
+      "runs": 30,
+      "unitSamples": 120,
+      "requestConstructionMs": {
+        "p50": 0.0024,
+        "p95": 0.0152,
+        "max": 0.023
+      },
+      "unitMs": {
+        "p50": 0.0367,
+        "p95": 0.0599,
+        "max": 0.1538,
+        "spikesAtLeast30ms": 0
+      },
+      "completionMs": {
+        "p50": 0.1496,
+        "p95": 0.2475,
+        "max": 0.2796
+      },
+      "nonfinalUnitAllocatedBytes": 0,
+      "finalUnitAllocatedBytes": 2664,
+      "completionAllocatedBytesMedian": 2664,
+      "engineConstructionAllocatedBytes": 1416,
+      "engineCounterPayloadBytes": 256,
+      "engineRetainedBytesMean": 520.0,
+      "borrowedFrozenFixtureRetainedBytes": 152032,
+      "idleReads": 0,
+      "idleAllocatedBytes": 0,
+      "routeRequests": 0
+    },
+    {
+      "consumers": 5000,
+      "coverage": "city",
+      "unitSize": 256,
+      "runs": 30,
+      "unitSamples": 600,
+      "requestConstructionMs": {
+        "p50": 0.0034,
+        "p95": 0.0347,
+        "max": 0.0378
+      },
+      "unitMs": {
+        "p50": 0.0309,
+        "p95": 0.05,
+        "max": 0.1223,
+        "spikesAtLeast30ms": 0
+      },
+      "completionMs": {
+        "p50": 0.6125,
+        "p95": 0.8765,
+        "max": 0.9769
+      },
+      "nonfinalUnitAllocatedBytes": 0,
+      "finalUnitAllocatedBytes": 2664,
+      "completionAllocatedBytesMedian": 2664,
+      "engineConstructionAllocatedBytes": 1424,
+      "engineCounterPayloadBytes": 256,
+      "engineRetainedBytesMean": 520.0,
+      "borrowedFrozenFixtureRetainedBytes": 800208,
+      "idleReads": 0,
+      "idleAllocatedBytes": 0,
+      "routeRequests": 0
+    },
+    {
+      "consumers": 50000,
+      "coverage": "city",
+      "unitSize": 256,
+      "runs": 30,
+      "unitSamples": 5880,
+      "requestConstructionMs": {
+        "p50": 0.0377,
+        "p95": 0.0443,
+        "max": 0.0488
+      },
+      "unitMs": {
+        "p50": 0.0313,
+        "p95": 0.0547,
+        "max": 1.3619,
+        "spikesAtLeast30ms": 0
+      },
+      "completionMs": {
+        "p50": 6.6321,
+        "p95": 7.9431,
+        "max": 8.9731
+      },
+      "nonfinalUnitAllocatedBytes": 0,
+      "finalUnitAllocatedBytes": 2664,
+      "completionAllocatedBytesMedian": 2664,
+      "engineConstructionAllocatedBytes": 1432,
+      "engineCounterPayloadBytes": 256,
+      "engineRetainedBytesMean": 520.096,
+      "borrowedFrozenFixtureRetainedBytes": 8000208,
+      "idleReads": 0,
+      "idleAllocatedBytes": 0,
+      "routeRequests": 0
+    },
+    {
+      "consumers": 957,
+      "coverage": "address catchment, 2000m, all rows eligible",
+      "unitSize": 256,
+      "runs": 30,
+      "unitSamples": 120,
+      "requestConstructionMs": {
+        "p50": 0.0014,
+        "p95": 0.0044,
+        "max": 0.0076
+      },
+      "unitMs": {
+        "p50": 0.0361,
+        "p95": 0.0381,
+        "max": 0.0469,
+        "spikesAtLeast30ms": 0
+      },
+      "completionMs": {
+        "p50": 0.1369,
+        "p95": 0.1461,
+        "max": 0.1498
+      },
+      "nonfinalUnitAllocatedBytes": 0,
+      "finalUnitAllocatedBytes": 2664,
+      "completionAllocatedBytesMedian": 2664,
+      "engineConstructionAllocatedBytes": 1504,
+      "engineCounterPayloadBytes": 256,
+      "engineRetainedBytesMean": 520.0,
+      "borrowedFrozenFixtureRetainedBytes": 152032,
+      "idleReads": 0,
+      "idleAllocatedBytes": 0,
+      "routeRequests": 0
+    },
+    {
+      "consumers": 5000,
+      "coverage": "address catchment, 2000m, all rows eligible",
+      "unitSize": 256,
+      "runs": 30,
+      "unitSamples": 600,
+      "requestConstructionMs": {
+        "p50": 0.0051,
+        "p95": 0.0189,
+        "max": 0.023
+      },
+      "unitMs": {
+        "p50": 0.0363,
+        "p95": 0.0595,
+        "max": 0.1301,
+        "spikesAtLeast30ms": 0
+      },
+      "completionMs": {
+        "p50": 0.7409,
+        "p95": 0.9885,
+        "max": 1.0696
+      },
+      "nonfinalUnitAllocatedBytes": 0,
+      "finalUnitAllocatedBytes": 2664,
+      "completionAllocatedBytesMedian": 2664,
+      "engineConstructionAllocatedBytes": 1504,
+      "engineCounterPayloadBytes": 256,
+      "engineRetainedBytesMean": 520.0,
+      "borrowedFrozenFixtureRetainedBytes": 800208,
+      "idleReads": 0,
+      "idleAllocatedBytes": 0,
+      "routeRequests": 0
+    },
+    {
+      "consumers": 50000,
+      "coverage": "address catchment, 2000m, all rows eligible",
+      "unitSize": 256,
+      "runs": 30,
+      "unitSamples": 5880,
+      "requestConstructionMs": {
+        "p50": 0.0331,
+        "p95": 0.0443,
+        "max": 0.0457
+      },
+      "unitMs": {
+        "p50": 0.0374,
+        "p95": 0.0646,
+        "max": 0.1455,
+        "spikesAtLeast30ms": 0
+      },
+      "completionMs": {
+        "p50": 7.9048,
+        "p95": 11.1199,
+        "max": 13.3515
+      },
+      "nonfinalUnitAllocatedBytes": 0,
+      "finalUnitAllocatedBytes": 2664,
+      "completionAllocatedBytesMedian": 2664,
+      "engineConstructionAllocatedBytes": 1504,
+      "engineCounterPayloadBytes": 256,
+      "engineRetainedBytesMean": 520.048,
+      "borrowedFrozenFixtureRetainedBytes": 8000208,
+      "idleReads": 0,
+      "idleAllocatedBytes": 0,
+      "routeRequests": 0
+    }
+  ],
+  "sourceSha256": {
+    "Runtime/PrototypeSettings.cs": "8c04b451b1aa66dee770b795061c05e978814ba86904b24219b80722d7c5a37a",
+    "Core/MarketResearchSettings.cs": "d7898a2329f41132ab220a3383183c56a14c1c8bc2c880be28f9851dea64e581",
+    "Core/MarketResearchEngine.cs": "1b76a5e19d59df1023e58e526c377be40102ed4996aee8d4ed79d640e3d88480",
+    "tests/MarketResearchTests.cs": "f1e7e70acff8d0458b98c0ce4f787d9828d8634867c321cb0c57127715fe99d1",
+    "tools/market-research-regression/Program.cs": "663aa3d592c984c31543f00a952a588ff85901ffeb993d1dfab49570e1799792"
+  },
+  "protocol": "All 34 command entries passed sequentially in the foreground, with the required other-worktree dotnet guard. No game, rig or profile access. Original C4 measurements remain labelled as initial evidence; this file records the rerun.",
+  "nativeEvidence": "Not run; unchanged 6 Nov checklist remains pending. Research is inactive and NoPaymentPath always denies."
+}
