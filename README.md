@@ -1,5 +1,7 @@
 # Persistent City
 
+> **E2c interior guard - 31 October (offline):** once-per-city-load assembly-name/optional Harmony-owner detection forces F0 off on a match or error. Flat auto/off setting and cached read-only bridge line; no foreign implementation, interop, patches or save changes. **1,637 unit tests and all 33 offline gates pass**; native proof remains pending. [Evidence and 6 Nov checks](CHECKS.md#e2c-third-party-interior-guard---31-october-2026-offline-only).
+
 > **C1 campaign reader - 31 October:** on-demand read-only campaign snapshots and bounded continuation are implemented, with six verified native identifiers and honest Unknown lifecycle/targeting fields. No awareness, choice, save or native campaign/payment changes. **1,566 unit tests and all 32 offline checks pass**; the pending 6 Nov fixture checks are in [CHECKS.md](CHECKS.md#c1-native-campaign-reader---31-october-2026-offline-only); [native contract notes](docs/plans/c1-campaign-reader.md). Peter's Q1-Q7 product decisions are recorded in the B-E plan.
 
 > **D1 - 31 October (offline):** isolated read-only rival food catalogue and pure detached observation DTOs; exact advertised prices/hours/access/rating, unknown stock and explicitly estimated availability evidence. Bounded metadata/shortlist reads and conservative identity refusals; no gameplay consumer or save changes. All 31 offline commands and 1,551 unit tests pass. [Evidence and 6 Nov rig checks](CHECKS.md#d1-rival-food-catalogue-31-october-2026-offline-only) / [Reader/PR handoff](docs/reviews/2026-10-31-d1-rival-reader.md).
