@@ -1,5 +1,20 @@
 # Validation status
 
+## A1 address text follow-up - 31 October 2026 (offline only)
+
+The locked-PC report at `03bc7d2` confirms that A1's earlier direct-localizer fix still displayed raw street identifiers. Read-only Managed assembly inspection identifies `Streets.AddressHelper.ToFormattedString(Address)`, used by `BizManBuildingInfo.ShowInfo`, as the correct native source: it reads `StreetData.streetLocalization`, rather than passing the stored street identifier to Localizor. The inspector now uses the complete formatted address, preserving native number/street order, for home/work/study labels, story, current activity, destination and meals. Blank, unresolved or throwing formatters fall back to readable words; no failure logging. Only popup build/refresh invokes formatting; closed-path picking and drawing are unchanged. [Method signatures, cost and failure modes](docs/plans/step-a-inspector-traits-choice.md#a1-address-text-correction-31-october-2026).
+
+Regression evidence: the new missing-translation test first failed on `ba:street_ninthstreet 18`; all **22 focused inspector cases** then pass. Coverage includes the native complete-format seam, native and alternate address order, missing/blank/unresolved/throwing formatters, all three meal kinds and travelling/serving/paid/unconfirmed states, named study places, raw map-link Street/Number and PlaceId, and unchanged source place names. The existing two-day differential now supplies a complete address formatter while inspecting and still compares byte-identical save payloads and native order lists. Red and focused-green logs: ignored `build/address-inspection/`.
+
+Full unit suite: **1,573/1,573**, zero failed/skipped. Production build passes warnings as errors against the installed Managed references; DLL SHA-256 `d6de34e7c6a09d86d9ba5aa90ff3e5633ba4807a61d5a86c5240c39cdb13c0b9`. Gate logs: ignored `build/address-gate/`.
+
+Required separate native rig_test check before merge:
+
+- [ ] inspector address labels and story/destination text show native readable addresses (no ba:street_ keys).
+- [ ] Meal shop addresses also match the native formatter; map links still focus the same buildings. Attach baseline-red/candidate-green proof and matched popup/closed-path performance evidence.
+
+No game launched, rig/profile/lease accessed, deployment or native-green claim in this implementation session.
+
 ## Step A1 resident inspector - 30 October 2026 (offline only)
 
 Implements slice A1 of the [step A plan](docs/plans/step-a-inspector-traits-choice.md), updated first with Peter's 15:46 JST decisions. In the normal view, hovering an own walking resident highlights them and a click opens a small popup with name, home and work addresses (links that open the native map through `CityMap.FocusOnBuilding`, the game's own "show on map" call), personality in words from existing facts (persona rules, walking tolerance, car/transit/fare preferences, an existing food preference), the resident's own story, current destination with the reason, and today's breakfast, lunch and dinner. Only the latest meal record exists before schema 17, so earlier meals today read "not recorded" and later or undecided ones "unknown"; uncertain receipts read "not yet confirmed". Read-only: no schema, economy, choice, schedule, rival or RLO change.
