@@ -17,17 +17,8 @@ namespace PersistentCity.Runtime
         private bool disposed;
         private bool ownsRegistration;
         private static readonly FieldInfo? IdleVehicles = AccessTools.Field(typeof(TrafficVehicles), "idleVehicles");
-        private static readonly FieldInfo? CurrentSpeed = AccessTools.Field(typeof(GameSpeedController), "currentGameSpeed");
-        internal static bool CurrentFastForward
-        {
-            get
-            {
-                var ui = InstanceBehavior<UIs>.Instance;
-                var controller = ui == null ? null : ui.gameSpeed;
-                var speed = controller == null ? null : CurrentSpeed?.GetValue(controller) as GameSpeed;
-                return speed != null && speed.speed == TimeSpeed.FastForward;
-            }
-        }
+        private static readonly FieldInfo? CurrentSpeed = NativeGameSpeed.SpeedField;
+        internal static bool CurrentFastForward => NativeGameSpeed.LegacyFastForward;
         internal static readonly FieldInfo? DrivingAiField = AccessTools.Field(typeof(TrafficManager), "drivingAI");
         internal static readonly MethodInfo? RemoveAction = AccessTools.Method(typeof(DrivingAI), "NewDriveActionArrived",
             new[] { typeof(int), typeof(SpecialDriveActionTypes), typeof(bool) });
