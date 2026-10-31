@@ -39,7 +39,7 @@ internal static class Program
             var saved=JsonConvert.DeserializeObject<MarketResearchCursor>(JsonConvert.SerializeObject(job.Checkpoint()))!;
             job=new MarketResearchEngine(src,new MarketResearchScope(),MarketResearchTier.InDepth,saved);
             while(job.Completed==null) job.Continue(src,size);
-            Require(src.Reads==2501,"Duplicate consumer");
+            Require(src.Reads==2502,"Expected one cursor-validation read plus each consumer once");
             Require(job.Completed.FixtureCells.Select(c=>c.Value).SequenceEqual(ResearchFixture.Finish(new ResearchFixture(2501)).FixtureCells.Select(c=>c.Value)),"Paging/restart mismatch");
         }
         Require(SaveCodec.Write(state)==before,"Research changed saved bytes"); Require(trap.Calls==0,"Native call");

@@ -127,6 +127,8 @@ namespace PersistentCity.Core
                 || resume.LastId == null || resume.LastId.Length > 256 || (resume.Next == 0) != (resume.LastId.Length == 0)
                 || resume.Missing < 0 || resume.Missing > 3 || resume.Counters == null || resume.Counters.Length != MaximumCells)
                 throw new ArgumentException("Invalid research cursor.");
+            if (resume.Next > 0 && source.Read(resume.Next - 1).Id != resume.LastId)
+                throw new ArgumentException("Invalid research cursor.");
             foreach (int value in resume.Counters) if (value < 0 || value > resume.Next) throw new ArgumentException("Invalid counter.");
             var c = resume.Counters;
             if (c[1] > c[0] || c[2] > c[0] || c[3] > c[0] || c[4] > c[0]

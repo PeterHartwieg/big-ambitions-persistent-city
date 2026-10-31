@@ -12,7 +12,9 @@ namespace PersistentCity.Runtime
         public FoodChoiceSettings FoodChoice { get; } = new FoodChoiceSettings();
         [JsonIgnore]
         public MarketResearchSettings MarketResearch { get; } = new MarketResearchSettings();
+        [JsonConverter(typeof(ResearchCatchmentSettingConverter))]
         public int MarketResearchCatchmentMetres { get => MarketResearch.MarketResearchCatchmentMetres; set => MarketResearch.MarketResearchCatchmentMetres=value; }
+        [JsonConverter(typeof(ResearchUnitSettingConverter))]
         public int MarketResearchConsumersPerUnit { get => MarketResearch.MarketResearchConsumersPerUnit; set => MarketResearch.MarketResearchConsumersPerUnit=value; }
         public double FoodChoiceTemperature { get => FoodChoice.FoodChoiceTemperature; set => FoodChoice.FoodChoiceTemperature=value; }
         public double FoodChoiceWeightFloor { get => FoodChoice.FoodChoiceWeightFloor; set => FoodChoice.FoodChoiceWeightFloor=value; }
@@ -40,6 +42,39 @@ namespace PersistentCity.Runtime
         public int MaximumPedestrians { get; set; } = 48;
         public int MaximumVehicles { get; set; } = 24;
         public double PhysicalRadiusMetres { get; set; } = 120;
+    }
+
+    // Normalize the token before Int32 conversion, preserving unrelated settings even for
+    // null, structured or malformed individual values. Diagnostics use effective values only.
+    internal abstract class ResearchIntegerSettingConverter : JsonConverter<int>
+    {
+        private readonly int minimum, maximum, fallback;
+        protected ResearchIntegerSettingConverter(int minimum, int maximum, int fallback)
+        { this.minimum=minimum; this.maximum=maximum; this.fallback=fallback; }
+
+        public override int ReadJson(JsonReader reader, Type objectType, int existingValue, bool hasExistingValue, JsonSerializer serializer)
+        {
+            if (reader.TokenType != JsonToken.Integer && reader.TokenType != JsonToken.Float && reader.TokenType != JsonToken.String)
+            { reader.Skip(); return fallback; }
+            if (double.TryParse(Convert.ToString(reader.Value, CultureInfo.InvariantCulture), NumberStyles.Float,
+                CultureInfo.InvariantCulture, out double value) && !double.IsNaN(value))
+            {
+                if (value <= minimum) return minimum;
+                if (value >= maximum) return maximum;
+                if (value == Math.Truncate(value)) return (int)value;
+            }
+            return fallback;
+        }
+        public override void WriteJson(JsonWriter writer, int value, JsonSerializer serializer) => writer.WriteValue(value);
+    }
+
+    internal sealed class ResearchCatchmentSettingConverter : ResearchIntegerSettingConverter
+    {
+        public ResearchCatchmentSettingConverter() : base(50, 2000, 500) { }
+    }
+    internal sealed class ResearchUnitSettingConverter : ResearchIntegerSettingConverter
+    {
+        public ResearchUnitSettingConverter() : base(16, 1024, 256) { }
     }
 
     // Invalid individual values fall back without discarding unrelated settings.

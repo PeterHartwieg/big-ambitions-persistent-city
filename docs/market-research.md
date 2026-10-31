@@ -7,7 +7,12 @@ found no safe native fee/evidence path. Paid research remains unavailable.
 The only production entitlement provider, `NoPaymentPath`, always denies.
 There is no setting to enable research. Only two flat future work settings are
 loaded and clamped once: `MarketResearchCatchmentMetres` 500 (50–2,000) and
-`MarketResearchConsumersPerUnit` 256 (16–1,024). No tier prices are introduced.
+`MarketResearchConsumersPerUnit` 256 (16–1,024). Numeric strings (including
+exponents) and integral floats are accepted. Numeric endpoints clamp before
+Int32 conversion; null, malformed/structured values, NaN and in-range fractions
+use that key's default without rejecting unrelated settings. Only two bounded
+effective-value messages are logged once per settings load, with no raw input
+tokens. No tier prices are introduced.
 
 `MarketResearchEngine`, its source interface, cursor and input types are internal
 to Core. Only `PersistentCity.Tests` and the standalone offline
@@ -42,7 +47,8 @@ the source has a 150,000-consumer cap. No cache eviction policy is needed.
 
 The transient offline cursor is independently JSON round-tripped by tests. It
 contains a version, query identity, total/index, last ID, flags and exactly 64
-counters. Restore validates lengths, scalar bounds and group sums before cloning
+counters. Restore also binds `Next`/`LastId` to the frozen source by checking the
+last processed row once, without counting it again. It validates lengths, scalar bounds and group sums before cloning
 the fixed accumulator. Source identity, scope, tier or roster-size mismatch starts
 again at zero. Revisions are checked before and after each unit; a mid-unit
 replacement discards that whole partial image. No numeric report exists until

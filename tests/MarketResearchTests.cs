@@ -49,7 +49,8 @@ public sealed class MarketResearchTests
         // Mutating a previously exported checkpoint cannot alter the job.
         checkpoint.Counters[0] = 9999;
         while (job.Completed == null) Assert.InRange(job.Continue(source,unit), 1,unit);
-        Assert.Equal(2501, source.Reads); Assert.Equal(Values(expected),Values(job.Completed));
+        // Restore reads the last processed row once to validate the cursor; it does not count it again.
+        Assert.Equal(2502, source.Reads); Assert.Equal(Values(expected),Values(job.Completed));
         Assert.Equal(expected.Id,job.Completed.Id); Assert.Equal(0,job.Continue(source));
     }
 
@@ -195,6 +196,46 @@ public sealed class MarketResearchTests
         Assert.Equal(2,logs.Count); Assert.False(settings.MarketResearch.Available);
         Assert.False(typeof(MarketResearchSettings).GetProperty("Available")!.CanWrite);
         settings=new PrototypeSettings(); Assert.Equal(500,settings.MarketResearchCatchmentMetres); Assert.Equal(256,settings.MarketResearchConsumersPerUnit);
+    }
+
+    [Theory]
+    [InlineData("500.0",500,500)]
+    [InlineData("\"5e2\"",500,500)]
+    [InlineData("null",500,256)]
+    [InlineData("2147483648",2000,1024)]
+    [InlineData("-2147483649",50,16)]
+    [InlineData("\"1e300\"",2000,1024)]
+    [InlineData("\"-1e300\"",50,16)]
+    [InlineData("500.5",500,256)]
+    [InlineData("\"NaN\"",500,256)]
+    [InlineData("\"invalid\"",500,256)]
+    [InlineData("true",500,256)]
+    [InlineData("{}",500,256)]
+    [InlineData("[1,2]",500,256)]
+    public void ResearchSettingTokensNormalizeWithoutRejectingUnrelatedSettings(string token,int radius,int unit)
+    {
+        string json="{\"MarketResearchCatchmentMetres\":"+token+",\"MarketResearchConsumersPerUnit\":"+token
+            +",\"Enabled\":false,\"MaximumVehicles\":7}";
+        var settings=JsonConvert.DeserializeObject<PrototypeSettings>(json)!;
+        var logs=new List<string>(); settings.MarketResearch.Clamp(logs.Add); settings.MarketResearch.Clamp(logs.Add);
+        Assert.Equal(radius,settings.MarketResearchCatchmentMetres); Assert.Equal(unit,settings.MarketResearchConsumersPerUnit);
+        Assert.False(settings.Enabled); Assert.Equal(7,settings.MaximumVehicles); Assert.False(settings.MarketResearch.Available);
+        Assert.Equal(2,logs.Count); Assert.All(logs,line=>Assert.InRange(line.Length,1,128));
+        var roundTrip=JsonConvert.DeserializeObject<PrototypeSettings>(JsonConvert.SerializeObject(settings))!;
+        Assert.Equal(radius,roundTrip.MarketResearchCatchmentMetres); Assert.Equal(unit,roundTrip.MarketResearchConsumersPerUnit);
+    }
+
+    [Theory]
+    [InlineData(false)] [InlineData(true)]
+    public void RestoredCursorRejectsNextOrLastIdThatDoesNotMatchTheFrozenSource(bool changeNext)
+    {
+        var source=new ResearchFixture(40);
+        var job=new MarketResearchEngine(source,new MarketResearchScope(),MarketResearchTier.InDepth);
+        job.Continue(source,16);
+        var cursor=JsonConvert.DeserializeObject<MarketResearchCursor>(JsonConvert.SerializeObject(job.Checkpoint()))!;
+        if(changeNext) cursor.Next++; else cursor.LastId="consumer:000005";
+        var error=Assert.Throws<ArgumentException>(()=>new MarketResearchEngine(source,new MarketResearchScope(),MarketResearchTier.InDepth,cursor));
+        Assert.Equal("Invalid research cursor.",error.Message);
     }
 
     [Fact]
