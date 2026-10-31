@@ -264,12 +264,13 @@ namespace PersistentCity.Runtime
             string exclusion = ScopeStatus(meal.PlaceId);
             if (exclusion.Length > 0) return new FoodSale(false, exclusion);
             if (offer != null && offer.Price != meal.Price) return new FoodSale(false, "Approved price changed");
+            if (offer != null && offer.Units == 0) return new FoodSale(false, "Confirmed stockout before service", ShopExperience.Stockout);
             if (offer == null || !offer.Units.HasValue || offer.Units <= 0 || !business!.MealsPerHour.HasValue || business.MealsPerHour <= 0
                 || offer.Price != meal.Price || meal.Price > meal.Allowance
                 || meal.ServiceMinutes + 1e-7 < 60.0 / business.MealsPerHour.Value)
                 return new FoodSale(false, "Stock or staffing changed");
             var reg = registrations[meal.PlaceId];
-            if (!BusinessHelper.IsBusinessOpen(reg)) return new FoodSale(false, "Shop closed before service");
+            if (!BusinessHelper.IsBusinessOpen(reg)) return new FoodSale(false, "Shop closed before service", ShopExperience.Closed);
             var scope = state.Shops.Single(s => s.PlaceId == meal.PlaceId);
             var products = scope.Products().ToArray();
             // The pre-sale image is the supply ReadSelected read above, in this same call, for this registration and
