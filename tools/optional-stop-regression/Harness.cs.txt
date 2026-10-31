@@ -208,7 +208,7 @@ partial class Harness
             h.bindings.Clear(); Check(!h.QueueDwell(c,p,original.StartMinute+0.01,true).HasValue,"rain still thins new admissions");
             break;
         }
-        Console.WriteLine("R4 physical binding: approaching/standing commitment and new-admission checks passed.");
+        Console.WriteLine("R4 queue-plan selection: approaching/standing commitment and new-admission checks passed; visible retention pre-existed.");
     }
     private static void Findings()
     {
