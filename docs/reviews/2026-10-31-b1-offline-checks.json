@@ -1,0 +1,509 @@
+{
+  "date": "2026-10-31",
+  "base": "192037b",
+  "probe_commit": "8603dd8",
+  "b1_implemented": false,
+  "production_dll_sha256": "b91e6029e59c56b2031bdbab3bff9d32ee2fe690097cf84b3c53cee2ece47a1e",
+  "production_dll_identical_to_b0": true,
+  "unit_tests": {
+    "passed": 1832,
+    "failed": 0,
+    "skipped": 0,
+    "discovered": 1832
+  },
+  "execution": "Sequential foreground subprocess.run; no execution timeouts; wait-other-dotnet before direct dotnet test/run commands.",
+  "timing_scope": "Command wall duration only. No B1 microbenchmark, mod-work frames, whole-frame, or in-game performance measurements.",
+  "requested_commands_passed": 31,
+  "additional_probe_passed": true,
+  "commands": [
+    {
+      "name": "build",
+      "command": [
+        "python",
+        "tools/build.py",
+        "--game-managed",
+        "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed"
+      ],
+      "exit_code": 0,
+      "seconds": 2.336,
+      "output_sha256": "22bc507afb7759a8473c33f2d61a764fce877258be3d11537b312a62d06a1a58",
+      "output": "Package: <repo>\\build\\PersistentCity\nDLL SHA256: b91e6029e59c56b2031bdbab3bff9d32ee2fe690097cf84b3c53cee2ece47a1e\nGame assemblies and RLO are referenced externally; neither is copied into this package.\n"
+    },
+    {
+      "name": "tests",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj"
+      ],
+      "exit_code": 0,
+      "seconds": 197.928,
+      "output_sha256": "07f434af18ef81e7027533ae57d581b49b43d2cf832ee4332c1caa14ef73309e",
+      "output": "  Determining projects to restore...\n  Restored <repo>\\Compatibility\\PersistentCity.Compatibility.csproj (in 70 ms).\n  Restored <repo>\\tests\\PersistentCity.Tests.csproj (in 178 ms).\n  2 of 4 projects are up-to-date for restore.\n  PersistentCity.Core -> <repo>\\Core\\bin\\Debug\\netstandard2.1\\PersistentCity.Core.dll\n  PersistentCity.Compatibility -> <repo>\\Compatibility\\bin\\Debug\\netstandard2.1\\PersistentCity.Compatibility.dll\n  PersistentCity.Persistence -> <repo>\\Persistence\\bin\\Debug\\netstandard2.1\\PersistentCity.Persistence.dll\n  PersistentCity.Tests -> <repo>\\tests\\bin\\Debug\\net10.0\\PersistentCity.Tests.dll\nTest run for <repo>\\tests\\bin\\Debug\\net10.0\\PersistentCity.Tests.dll (.NETCoreApp,Version=v10.0)\nA total of 1 test files matched the specified pattern.\n\nPassed!  - Failed:     0, Passed:  1832, Skipped:     0, Total:  1832, Duration: 3 m 6 s - PersistentCity.Tests.dll (net10.0)\n"
+    },
+    {
+      "name": "discovery",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--no-build",
+        "--list-tests"
+      ],
+      "exit_code": 0,
+      "seconds": 1.28,
+      "output_sha256": "07cc960d6fd3b0e102f5797475d6a2815e7ad241fe1fd5e991198da8580c2710"
+    },
+    {
+      "name": "core-identity",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/core-identity-regression/CoreIdentityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 8.689,
+      "output_sha256": "f8eda2e85d67335fcef914c15ccbd113526b618a7d6c48c0db4275e686983486",
+      "output": "{\"residents\":600,\"places\":1011,\"days\":6,\"events\":38924,\"eventDigest\":\"d5337f2a6c665cb1\",\"advanceEvents\":101968,\"frames\":35438,\"residentsWithCars\":186,\"trafficEvents\":63044,\"routeRequests\":16452,\"carRoutes\":3293,\"trafficVehiclesAtSaves\":[0,0,3,0,0,0,0],\"saves\":[\"c48c341aa73009e8408cda2704be5950bf4e9ab3563b0f3023bb4fdefb7b750a\",\"1b3832591171decb1532a7bcb5b85ddc797b74e4b7043041d536a08c409ad313\",\"1ec7628af4a5f2f62dfe005b5e9c8670dc90d5ad42a5598ad22cee163c490d19\",\"aca9b40c107634eba23dbd2c41fe3db7f061eea97be7e68de380e43af0eb4507\",\"25938633348013a6bfafa6170a6013df888eab459873befc1bf239233a4361a8\",\"73b9f92e0424bbc04f24688387028f3547a5df329d42864a822ff7245d315d09\",\"99dfcc12f1369a53bcd374e3364dcc10299507de166312dd3efb3e8b32c081dd\"],\"routineDigest\":\"0631e52806483d91\",\"openingDigest\":\"7104ba65ac720db5\",\"choiceDigest\":\"4cfd8693c5de0c00\",\"mappingDigest\":\"6dc5adecf1d31d33\",\"bytes\":{\"advance\":121871632,\"planner\":31022224,\"routine\":107720,\"opening\":1627592,\"choice\":705600,\"mapping\":1146608},\"simulateMs\":2841}\n"
+    },
+    {
+      "name": "diagnostic-response",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/diagnostic-response-regression/DiagnosticResponseRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 3.195,
+      "output_sha256": "a89f8e2948c58df6f28f5d0bf439ea876f62fe55dd2f032fb9d77ea4d0a7b103",
+      "output": "14 diagnostic response invariants passed.\n"
+    },
+    {
+      "name": "event-observation",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/event-observation-regression/EventObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 7.197,
+      "output_sha256": "82b58b06f198ca7c7cce6e7e2762d4b9dd0b65dc6236280d7f2492451c3b241a",
+      "output": "fail=False;events=680;save=700657A8796333E2162F9A41A398BC89445B81677ADC9283BF9642B747F52918\nfail=True;events=680;save=700657A8796333E2162F9A41A398BC89445B81677ADC9283BF9642B747F52918\nobserverFault=event-prefix;nativeFailure=False;events=680;outputs=identical\nobserverFault=event-prefix;nativeFailure=True;events=680;outputs=identical\nobserverFault=event-finalizer;nativeFailure=False;events=680;outputs=identical\nobserverFault=event-finalizer;nativeFailure=True;events=680;outputs=identical\nobserverFault=query-prefix;nativeFailure=False;events=680;outputs=identical\nobserverFault=query-prefix;nativeFailure=True;events=680;outputs=identical\nobserverFault=query-finalizer;nativeFailure=False;events=680;outputs=identical\nobserverFault=query-finalizer;nativeFailure=True;events=680;outputs=identical\nBoth diagnostic finalizers preserve the exact original exception on observer failure.\n"
+    },
+    {
+      "name": "food-catalogue",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-catalogue-regression/FoodCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 5.357,
+      "output_sha256": "51296d620bcb87e10702371f4288e2e5da39cbe69adad3dba81bd20c9dc332dd",
+      "output": "29 actual catalogue-adapter checks passed against native field doubles. No Unity/game execution.\n"
+    },
+    {
+      "name": "food-checkout",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-checkout-regression/FoodCheckoutRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 6.992,
+      "output_sha256": "626485385041a389bb403270834bbc781cd73720968862e32075a1871fdf1fe6",
+      "output": "Decision workload: 123 reads over 8 shops, 3 checkouts; decision cache 957 hits / 27 misses; supply-reader setups 33 (uncached: 990)\n330 actual NativeFoodMarket checkout checks passed (synthetic native surfaces, not game execution).\n"
+    },
+    {
+      "name": "food-hours",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-hours-regression/FoodHoursRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 3.721,
+      "output_sha256": "2410218689a17bf8e5ae868d3025d1a8bd9e449d7fd49d83728819236ce6607c",
+      "output": "PASS live enrolled-shop hours: extension, closure, reopening, stable identity, unchanged schedule allocation and save ownership.\nPASS actual GamePlaces + NativeFoodHours: five retail study/leisure roles stay dormant, convert in place, return dormant; vacant retail has no fake Work role.\n"
+    },
+    {
+      "name": "food-household-catalogue",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-household-catalogue-regression/FoodHouseholdCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 3.425,
+      "output_sha256": "b0f19cfd0acbbded5af38461d6e0bbe596b236cd83207afa0223100fdcfb8609",
+      "output": "11 actual native household-reader checks passed against field doubles; no game execution.\n"
+    },
+    {
+      "name": "food-ownership",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-ownership-regression/FoodOwnershipRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 5.384,
+      "output_sha256": "56c5c7195031985612e50f09a118926a8cebe0e7e8f48e10163c331dbeb02525",
+      "output": "PASS 138 actual ownership-hook checks against native field/callback doubles. No Unity/game execution.\n"
+    },
+    {
+      "name": "food-supply",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-supply-regression/FoodSupplyRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 3.537,
+      "output_sha256": "bea33031a003404270de233cbd073eb44deacac65f41be406a1eae3b70385683",
+      "output": "19 actual FoodSupplyReader checks passed (synthetic native surfaces, not game execution).\n"
+    },
+    {
+      "name": "frame-observation",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/frame-observation-regression/FrameObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 3.188,
+      "output_sha256": "7e5da72d80f98e71b464d3c9f918cf9457b5350bfcafc294e80e823b646b2d02",
+      "output": "40 checks passed; marshaled row estimate bytes=120; default marshaled storage estimate=7864320\n"
+    },
+    {
+      "name": "gate-access",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/gate-access-regression/GateAccessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 5.228,
+      "output_sha256": "6e9877acee2b84dfcc2de1b4d7d7236ac991a58c1a89fbe420966d127bf4afae",
+      "output": "PASS 213884 gate-access checks against actual Runtime PublicRoadAccess; offline only.\n"
+    },
+    {
+      "name": "road-ceiling",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-ceiling-regression/RoadCeilingRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 4.939,
+      "output_sha256": "895bf78ce78f6cceb24e97e6ac8d4cc6c68fa71cfb5b0e54f707e9bf46369762",
+      "output": "{\"checks\":69,\"results\":[{\"name\":\"car-wins-0.01\",\"fingerprint\":\"7E7B6DAC833F16432F174694D1B38198775B5542213138E2E4BD2A718C211955\",\"minutes\":4.364999999999994,\"estimate\":4.364999999999994,\"nativeReads\":498},{\"name\":\"congestion-walk-0.01\",\"fingerprint\":\"4576B1B83D2F83B1FBF58D6530EE6D177365521C5CA1CFA074EEE30AFC55E06C\",\"minutes\":20,\"estimate\":20,\"nativeReads\":150},{\"name\":\"congestion-subway-0.01\",\"fingerprint\":\"96BD5E1FDB9E52A097B9232A15AE4E95D605890DD771EDD1B64F119BF7AF575C\",\"minutes\":3.3200016666620367,\"estimate\":3.3200016666620367,\"nativeReads\":0},{\"name\":\"drained-car-0.01\",\"fingerprint\":\"7E7B6DAC833F16432F174694D1B38198775B5542213138E2E4BD2A718C211955\",\"minutes\":4.364999999999994,\"estimate\":4.364999999999994,\"nativeReads\":498},{\"name\":\"no-alternative-0.01\",\"fingerprint\":\"87FEFA5253672BF90376C87E3C6886F597EB79E6838E15967522F2BD5B19376A\",\"minutes\":4.364999999999994,\"estimate\":404.36499999999995,\"nativeReads\":498},{\"name\":\"closed-0.01\",\"fingerprint\":\"null\",\"minutes\":null,\"estimate\":null,\"nativeReads\":498},{\"name\":\"no-egress-0.01\",\"fingerprint\":\"null\",\"minutes\":null,\"estimate\":null,\"nativeReads\":126},{\"name\":\"car-wins-1\",\"fingerprint\":\"008ACB53FCAFCE2FB91BE081DAE5666C92C5B666411B05573D226ACCBE093612\",\"minutes\":40.5,\"estimate\":40.5,\"nativeReads\":498},{\"name\":\"congestion-walk-1\",\"fingerprint\":\"EC34423C728DFF1F53D904BFCA1796F95BD328DC8C9E842D83BB65488ABA8912\",\"minutes\":2000,\"estimate\":2000,\"nativeReads\":150},{\"name\":\"congestion-subway-1\",\"fingerprint\":\"0CDBEDCB31B5F75FA007803C83C1A6E1800840ADC5BBC70463E9B36F79726905\",\"minutes\":33.0201666662037,\"estimate\":33.0201666662037,\"nativeReads\":126},{\"name\":\"drained-car-1\",\"fingerprint\":\"008ACB53FCAFCE2FB91BE081DAE5666C92C5B666411B05573D226ACCBE093612\",\"minutes\":40.5,\"estimate\":40.5,\"nativeReads\":498},{\"name\":\"no-alternative-1\",\"fingerprint\":\"B88FEC45EFDC051B883D2FE3474EAEDBD52FE8715B32F4D277D27FD717435AA7\",\"minutes\":40.5,\"estimate\":40040.49999999999,\"nativeReads\":498},{\"name\":\"closed-1\",\"fingerprint\":\"null\",\"minutes\":null,\"estimate\":null,\"nativeReads\":498},{\"name\":\"no-egress-1\",\"fingerprint\":\"null\",\"minutes\":null,\"estimate\":null,\"nativeReads\":126},{\"name\":\"car-wins-2\",\"fingerprint\":\"A55AD96D0007F90B2A5D0BF6AA4B3DE4D0E08DA7893CED1DE133956AA091A61E\",\"minutes\":77,\"estimate\":77,\"nativeReads\":498},{\"name\":\"congestion-walk-2\",\"fingerprint\":\"100AE0F6C926A619D1DD2382DC167DEA47EF5239AF2DEE3F66AA07E40C3D1AD4\",\"minutes\":4000,\"estimate\":4000,\"nativeReads\":150},{\"name\":\"congestion-subway-2\",\"fingerprint\":\"43900D432B3B90DB998472A87C32A4FE6121099C7169DB83F01ED3069A645B51\",\"minutes\":63.020333332407404,\"estimate\":63.020333332407404,\"nativeReads\":126},{\"name\":\"drained-car-2\",\"fingerprint\":\"A55AD96D0007F90B2A5D0BF6AA4B3DE4D0E08DA7893CED1DE133956AA091A61E\",\"minutes\":77,\"estimate\":77,\"nativeReads\":498},{\"name\":\"no-alternative-2\",\"fingerprint\":\"C66BFEA200704B0BCA26ACD69F5FB0C6B0D03176569DF8E9FB0DD4E3F696C646\",\"minutes\":77,\"estimate\":80076.99999999999,\"nativeReads\":498},{\"name\":\"closed-2\",\"fingerprint\":\"null\",\"minutes\":null,\"estimate\":null,\"nativeReads\":498},{\"name\":\"no-egress-2\",\"fingerprint\":\"null\",\"minutes\":null,\"estimate\":null,\"nativeReads\":126},{\"name\":\"car-wins-1000\",\"fingerprint\":\"D02094454604EAA65E57F4C457DF91BFC55315FE2284E8F2BA3D58CEDEA6772C\",\"minutes\":36504,\"estimate\":36504,\"nativeReads\":498},{\"name\":\"congestion-walk-1000\",\"fingerprint\":\"D2EE1E8117DC14CCDFF7AE20E8114B8E3C1662E80AE5B67182EEB35B6D9CAA43\",\"minutes\":2000000,\"estimate\":2000000,\"nativeReads\":150},{\"name\":\"congestion-subway-1000\",\"fingerprint\":\"6CD6C2934DA1F1AFDA75B1D4D55A841CE3216AFF69C607CB1BA50F56B6EBE27B\",\"minutes\":30003.186666203703,\"estimate\":30003.186666203703,\"nativeReads\":126},{\"name\":\"drained-car-1000\",\"fingerprint\":\"D02094454604EAA65E57F4C457DF91BFC55315FE2284E8F2BA3D58CEDEA6772C\",\"minutes\":36504,\"estimate\":36504,\"nativeReads\":498},{\"name\":\"no-alternative-1000\",\"fingerprint\":\"EDD1A36934FE58EBFCF24AF16610E39254D04DFE24E69D7A916F179A302C330C\",\"minutes\":36504,\"estimate\":40036503.99999999,\"nativeReads\":498},{\"name\":\"closed-1000\",\"fingerprint\":\"null\",\"minutes\":null,\"estimate\":null,\"nativeReads\":498},{\"name\":\"no-egress-1000\",\"fingerprint\":\"null\",\"minutes\":null,\"estimate\":null,\"nativeReads\":126},{\"name\":\"tie\",\"fingerprint\":\"5BBA7835CA8A9DE7FD4B691F125FF0DB2745DDA16683390511C6A94CE5053AA4\",\"minutes\":11,\"estimate\":11,\"nativeReads\":72},{\"name\":\"ulp-car-win\",\"fingerprint\":\"13543B40ED91C893EFC0B4E23793D1B4F25425D371393C27E565FA6B572EBDF0\",\"minutes\":7,\"estimate\":11,\"nativeReads\":72},{\"name\":\"ulp-walk-win\",\"fingerprint\":\"3A48571431FA3A267699F8AC2A708BB9319E4F0718C129F5E38C95729FEBE752\",\"minutes\":10.999999999999998,\"estimate\":10.999999999999998,\"nativeReads\":72},{\"name\":\"connectors-tie\",\"fingerprint\":\"A28642D9237ACB684F9FE4B1D01677ED08C1AF1592359F37E41DB9570B24C05F\",\"minutes\":15.5,\"estimate\":15.5,\"nativeReads\":72},{\"name\":\"connectors-ulp-car-win\",\"fingerprint\":\"6BE1A547F86240D68B41D18A5629F713CB909CE3FD851089EE5FDC546E427B0B\",\"minutes\":11.5,\"estimate\":15.5,\"nativeReads\":72},{\"name\":\"connectors-ulp-walk-win\",\"fingerprint\":\"D63B1A8F7BFC764EB38ADD2D8D63C60916AED0FAE1F90D1961D78042DE358E12\",\"minutes\":15.499999999999998,\"estimate\":15.499999999999998,\"nativeReads\":72},{\"name\":\"second-curb-car-wins\",\"fingerprint\":\"2F697DDC4E70CED20AE8E44B77B4DB6577A198E3AC6380729984C9381BCF485A\",\"minutes\":18.5,\"estimate\":18.5,\"nativeReads\":348},{\"name\":\"subway-ceiling-during-car-search\",\"fingerprint\":\"D75E50D29AC6BE3AABFFA651EA8D7886ACFCB407E868DE66CF8FA354CB76570A\",\"minutes\":43.02066665925942,\"estimate\":43.02066665925942,\"nativeReads\":144},{\"name\":\"unreachable-walk\",\"fingerprint\":\"AB52E139F6E42376969341E53C805DB122692D8130F2312583F18346F780059A\",\"minutes\":30,\"estimate\":30,\"nativeReads\":252},{\"name\":\"unreachable-no-alternative\",\"fingerprint\":\"null\",\"minutes\":null,\"estimate\":null,\"nativeReads\":7362}],\"slicedChecks\":142,\"sliced\":[{\"name\":\"car-wins-0.01\",\"fingerprint\":\"7E7B6DAC833F16432F174694D1B38198775B5542213138E2E4BD2A718C211955\",\"slices\":16,\"nativeReads\":498},{\"name\":\"congestion-walk-0.01\",\"fingerprint\":\"4576B1B83D2F83B1FBF58D6530EE6D177365521C5CA1CFA074EEE30AFC55E06C\",\"slices\":16,\"nativeReads\":150},{\"name\":\"congestion-subway-0.01\",\"fingerprint\":\"96BD5E1FDB9E52A097B9232A15AE4E95D605890DD771EDD1B64F119BF7AF575C\",\"slices\":9,\"nativeReads\":0},{\"name\":\"drained-car-0.01\",\"fingerprint\":\"7E7B6DAC833F16432F174694D1B38198775B5542213138E2E4BD2A718C211955\",\"slices\":16,\"nativeReads\":498},{\"name\":\"no-alternative-0.01\",\"fingerprint\":\"87FEFA5253672BF90376C87E3C6886F597EB79E6838E15967522F2BD5B19376A\",\"slices\":16,\"nativeReads\":498},{\"name\":\"closed-0.01\",\"fingerprint\":\"null\",\"slices\":16,\"nativeReads\":498},{\"name\":\"no-egress-0.01\",\"fingerprint\":\"null\",\"slices\":14,\"nativeReads\":126},{\"name\":\"car-wins-1\",\"fingerprint\":\"008ACB53FCAFCE2FB91BE081DAE5666C92C5B666411B05573D226ACCBE093612\",\"slices\":16,\"nativeReads\":498},{\"name\":\"congestion-walk-1\",\"fingerprint\":\"EC34423C728DFF1F53D904BFCA1796F95BD328DC8C9E842D83BB65488ABA8912\",\"slices\":16,\"nativeReads\":150},{\"name\":\"congestion-subway-1\",\"fingerprint\":\"0CDBEDCB31B5F75FA007803C83C1A6E1800840ADC5BBC70463E9B36F79726905\",\"slices\":14,\"nativeReads\":126},{\"name\":\"drained-car-1\",\"fingerprint\":\"008ACB53FCAFCE2FB91BE081DAE5666C92C5B666411B05573D226ACCBE093612\",\"slices\":16,\"nativeReads\":498},{\"name\":\"no-alternative-1\",\"fingerprint\":\"B88FEC45EFDC051B883D2FE3474EAEDBD52FE8715B32F4D277D27FD717435AA7\",\"slices\":16,\"nativeReads\":498},{\"name\":\"closed-1\",\"fingerprint\":\"null\",\"slices\":16,\"nativeReads\":498},{\"name\":\"no-egress-1\",\"fingerprint\":\"null\",\"slices\":14,\"nativeReads\":126},{\"name\":\"car-wins-2\",\"fingerprint\":\"A55AD96D0007F90B2A5D0BF6AA4B3DE4D0E08DA7893CED1DE133956AA091A61E\",\"slices\":16,\"nativeReads\":498},{\"name\":\"congestion-walk-2\",\"fingerprint\":\"100AE0F6C926A619D1DD2382DC167DEA47EF5239AF2DEE3F66AA07E40C3D1AD4\",\"slices\":16,\"nativeReads\":150},{\"name\":\"congestion-subway-2\",\"fingerprint\":\"43900D432B3B90DB998472A87C32A4FE6121099C7169DB83F01ED3069A645B51\",\"slices\":14,\"nativeReads\":126},{\"name\":\"drained-car-2\",\"fingerprint\":\"A55AD96D0007F90B2A5D0BF6AA4B3DE4D0E08DA7893CED1DE133956AA091A61E\",\"slices\":16,\"nativeReads\":498},{\"name\":\"no-alternative-2\",\"fingerprint\":\"C66BFEA200704B0BCA26ACD69F5FB0C6B0D03176569DF8E9FB0DD4E3F696C646\",\"slices\":16,\"nativeReads\":498},{\"name\":\"closed-2\",\"fingerprint\":\"null\",\"slices\":16,\"nativeReads\":498},{\"name\":\"no-egress-2\",\"fingerprint\":\"null\",\"slices\":14,\"nativeReads\":126},{\"name\":\"car-wins-1000\",\"fingerprint\":\"D02094454604EAA65E57F4C457DF91BFC55315FE2284E8F2BA3D58CEDEA6772C\",\"slices\":16,\"nativeReads\":498},{\"name\":\"congestion-walk-1000\",\"fingerprint\":\"D2EE1E8117DC14CCDFF7AE20E8114B8E3C1662E80AE5B67182EEB35B6D9CAA43\",\"slices\":16,\"nativeReads\":150},{\"name\":\"congestion-subway-1000\",\"fingerprint\":\"6CD6C2934DA1F1AFDA75B1D4D55A841CE3216AFF69C607CB1BA50F56B6EBE27B\",\"slices\":14,\"nativeReads\":126},{\"name\":\"drained-car-1000\",\"fingerprint\":\"D02094454604EAA65E57F4C457DF91BFC55315FE2284E8F2BA3D58CEDEA6772C\",\"slices\":16,\"nativeReads\":498},{\"name\":\"no-alternative-1000\",\"fingerprint\":\"EDD1A36934FE58EBFCF24AF16610E39254D04DFE24E69D7A916F179A302C330C\",\"slices\":16,\"nativeReads\":498},{\"name\":\"closed-1000\",\"fingerprint\":\"null\",\"slices\":16,\"nativeReads\":498},{\"name\":\"no-egress-1000\",\"fingerprint\":\"null\",\"slices\":14,\"nativeReads\":126},{\"name\":\"tie\",\"fingerprint\":\"5BBA7835CA8A9DE7FD4B691F125FF0DB2745DDA16683390511C6A94CE5053AA4\",\"slices\":16,\"nativeReads\":72},{\"name\":\"ulp-car-win\",\"fingerprint\":\"13543B40ED91C893EFC0B4E23793D1B4F25425D371393C27E565FA6B572EBDF0\",\"slices\":16,\"nativeReads\":72},{\"name\":\"ulp-walk-win\",\"fingerprint\":\"3A48571431FA3A267699F8AC2A708BB9319E4F0718C129F5E38C95729FEBE752\",\"slices\":16,\"nativeReads\":72},{\"name\":\"connectors-tie\",\"fingerprint\":\"A28642D9237ACB684F9FE4B1D01677ED08C1AF1592359F37E41DB9570B24C05F\",\"slices\":16,\"nativeReads\":72},{\"name\":\"connectors-ulp-car-win\",\"fingerprint\":\"6BE1A547F86240D68B41D18A5629F713CB909CE3FD851089EE5FDC546E427B0B\",\"slices\":16,\"nativeReads\":72},{\"name\":\"connectors-ulp-walk-win\",\"fingerprint\":\"D63B1A8F7BFC764EB38ADD2D8D63C60916AED0FAE1F90D1961D78042DE358E12\",\"slices\":16,\"nativeReads\":72},{\"name\":\"second-curb-car-wins\",\"fingerprint\":\"2F697DDC4E70CED20AE8E44B77B4DB6577A198E3AC6380729984C9381BCF485A\",\"slices\":18,\"nativeReads\":348},{\"name\":\"subway-ceiling-during-car-search\",\"fingerprint\":\"D75E50D29AC6BE3AABFFA651EA8D7886ACFCB407E868DE66CF8FA354CB76570A\",\"slices\":16,\"nativeReads\":144},{\"name\":\"unreachable-walk\",\"fingerprint\":\"AB52E139F6E42376969341E53C805DB122692D8130F2312583F18346F780059A\",\"slices\":16,\"nativeReads\":252},{\"name\":\"unreachable-no-alternative\",\"fingerprint\":\"null\",\"slices\":34,\"nativeReads\":7362},{\"name\":\"search-generation-restart\",\"fingerprint\":\"125B7B2452E59A6229C9F811636A4E5FC7CD9B158043C12E117DC2BCA3220526\",\"slices\":20,\"nativeReads\":0},{\"name\":\"snapshot-replacement-restart\",\"fingerprint\":\"7D32A79462F6F6B67DB14E9C419B3AC7CD224E3BF527B64CDBF04441809C6C51\",\"slices\":16,\"nativeReads\":0},{\"name\":\"snapshot-replacement-before-first-slice\",\"fingerprint\":\"7D32A79462F6F6B67DB14E9C419B3AC7CD224E3BF527B64CDBF04441809C6C51\",\"slices\":16,\"nativeReads\":0},{\"name\":\"home-car-snapshot-restart\",\"fingerprint\":\"F89850F0256F83B8BEF00AB7895F11473E09413BEF6B7DFB4F6D20AB96C771C8\",\"slices\":18,\"nativeReads\":0}]}\n"
+    },
+    {
+      "name": "road-handoff",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-handoff-regression/RoadHandoffRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 4.037,
+      "output_sha256": "5de54d90bad9b212aac21705900b22ad270fa18365f1284fc4e988bf67a5f23e",
+      "output": "PASS staged snapshot sweep: unchanged snapshot kept; excluded node, interrupted sweep, neighbour nullness and stop flag detected.\nPASS public gates: leaf poses neither open a road nor repeat a change; replaced doors are recorded; a moved frame is a change.\nPASS sample scope: each node/junction validated once per sample; public resolve live; same-frame closures, contract changes, reentrancy, exceptions and generation wrap detected.\nPASS actual RoadRoutes: current fragments rejected; later full run sampled; malformed/unknown history rejected; future fragment bounded; junction identities/history/admission preserved.\n"
+    },
+    {
+      "name": "road-invalidation",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-invalidation-regression/RoadInvalidationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 6.39,
+      "output_sha256": "11bcbab6bdde92b021b10a41d941aa322629fadbc821906b55ed9aa7d5d7e656",
+      "output": "PASS 265 road invalidation checks; 40 signal cycles preserve network; 20 genuine rebuilds perform zero additional global road-scene searches.\n"
+    },
+    {
+      "name": "road-speed",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-speed-regression/RoadSpeedRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 4.956,
+      "output_sha256": "5242c509cd90b21734fe4321b43dcbba531282677f91d66ddc8931b9b07cef19",
+      "output": "PASS slowdown during staged preflight on both sides of the copied-node cursor\nPASS unexplained raw/original/observed speed mutations fail closed\nPASS canonical topology, initial-active overlay, old queue immutability, SaveCodec/rebind/restoration: native=824bd5ba73d50953231f3c2a14ba83b2feb08004df74b2abc0cb6f47c41f4409, traffic=88b88ec4817e749052ed4d49e16ea1f8cfd8089ce99eeabb4e48fc412427af41, links=1, capacity=13, baseline=9.6, slowed=10.200000000000001, partial40m=5.1\nPASS actual Runtime mapping preserves 6m FIFO storage spacing with heterogeneous native speed overlay\nPASS 602 offline assertions using actual Runtime/Core/Persistence and synthetic Unity/native surfaces; no rig or RLO mutation.\n"
+    },
+    {
+      "name": "route-discovery",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/route-discovery-regression/RouteDiscoveryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 11.744,
+      "output_sha256": "7c3684eedaa0bea2266b919908de9f88a5bb82d63511f939d1661ee67c9cd95b",
+      "output": "PASS 675 discovery assertions, including zero steady-state hierarchy queries, load/reset discovery, explicit invalidation, mutation, persistent/additive scenes, bounded initialization and disposal.\n"
+    },
+    {
+      "name": "save-contract",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 5.786,
+      "output_sha256": "8ce78fdbda271eccd8a78ff0cf4a23f5e92567893f6e94005e69a8af1883ffac",
+      "output": "{\"schema\":18,\"digest\":\"018FC26676937FEEF88B7D06AE32B522CCE93A1CC265BCDD87A08C7DD91FBB56\",\"length\":119083,\"refusals\":[\"Invalid:Invalid state: Missing state schema.\",\"Future:State uses a newer schema; preserve the original payload.\",\"Invalid:Invalid state: Incomplete or trailing JSON content.\",\"Invalid:Invalid state: Unknown field: UnknownCitizens\"],\"economy\":{\"orders\":849,\"ordersDigest\":\"1B94987B3158044594B9C4D6A5473BA22BE0D4F3488D769CBBEE23318BB33B91\",\"purchases\":797,\"spentUnits\":107967424757760,\"uncertain\":2,\"economyDigest\":\"74D0FE8081EA795D4D56A11B4B955DC6E777E3822C702D3C09BC9477E6679AF9\",\"reloadDigest\":\"59B6F14D44CA0F996C5A828E2E538B52C5426347FCFA40767527B72D77F1D4FA\"},\"writeBytes\":14446152,\"readBytes\":38767000,\"bench\":null,\"hot\":null}\n"
+    },
+    {
+      "name": "startup-clock",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/startup-clock-regression/StartupClockRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 4.64,
+      "output_sha256": "755213528a9217097bee9930fdac74384de15db45239f03ab8b7ad9bb870eeef",
+      "output": "PASS 17 actual startup-clock source checks; native clock/UI doubles, no Unity execution.\n"
+    },
+    {
+      "name": "traffic-closure",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-closure-regression/TrafficClosureRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 4.315,
+      "output_sha256": "708d6590f5351a9c1adf0b939e6775caa82602e1d6ec261b597977db98e808aa",
+      "output": "{\"checks\":35,\"results\":[{\"name\":\"initial\",\"fingerprint\":\"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D\",\"nativeReads\":255},{\"name\":\"repeat\",\"fingerprint\":\"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D\",\"nativeReads\":255},{\"name\":\"temporary-close\",\"fingerprint\":\"996D9E7FB8A0E65E10407CAD5F45A3B445F397DFD5B87D5079E66A772595E3C9\",\"nativeReads\":255},{\"name\":\"same-frame-reopen\",\"fingerprint\":\"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D\",\"nativeReads\":255},{\"name\":\"after-boundary\",\"fingerprint\":\"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D\",\"nativeReads\":255},{\"name\":\"generation-wrap\",\"fingerprint\":\"F0BF59C5C985A05CE5E4E603292864414543DDEDC0B99B27C21E06BC89ED2A2A\",\"nativeReads\":255},{\"name\":\"after-wrap\",\"fingerprint\":\"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D\",\"nativeReads\":255},{\"name\":\"new-gate-snapshot\",\"fingerprint\":\"98E62076064D5251192C219A89CD0317949315F97CE67CFEFCBDBE15BCD86E34\",\"nativeReads\":255},{\"name\":\"gate-removed\",\"fingerprint\":\"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D\",\"nativeReads\":255},{\"name\":\"after-read-exception\",\"fingerprint\":\"4642CBB939E2E9A03D8AE5F833AECDD12FF4D7F3EA8730C898C74D6256B2D190\",\"nativeReads\":255},{\"name\":\"exception-reopened\",\"fingerprint\":\"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D\",\"nativeReads\":255},{\"name\":\"agents\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":25},{\"name\":\"cars\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":25},{\"name\":\"neighbours\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":25},{\"name\":\"position\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":26},{\"name\":\"flags\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":29},{\"name\":\"road-id\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":31},{\"name\":\"association\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":29},{\"name\":\"lanes\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":31},{\"name\":\"junction-group\",\"fingerprint\":\"E7AC5253D23F99A544FBC74509CF1D0E057A0926A274B8B4FC0DE9190A6AA968\",\"nativeReads\":7},{\"name\":\"junction-name\",\"fingerprint\":\"E7AC5253D23F99A544FBC74509CF1D0E057A0926A274B8B4FC0DE9190A6AA968\",\"nativeReads\":6},{\"name\":\"junction-array\",\"fingerprint\":\"E7AC5253D23F99A544FBC74509CF1D0E057A0926A274B8B4FC0DE9190A6AA968\",\"nativeReads\":0},{\"name\":\"waypoint-array\",\"fingerprint\":\"E7AC5253D23F99A544FBC74509CF1D0E057A0926A274B8B4FC0DE9190A6AA968\",\"nativeReads\":0},{\"name\":\"empty-closed-reopened\",\"fingerprint\":\"A1472043595E769929FCBD6110FDB92A22D96208FCC97C32EC271FF018702B9E\",\"nativeReads\":13}]}\n"
+    },
+    {
+      "name": "traffic-queue",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-queue-regression/TrafficQueueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 4.642,
+      "output_sha256": "897d1d2e5c92ef25374e61f7da26e9dea2849c91f3495eb8bc65210eb2e4b9c4",
+      "output": "32414 observations; SHA256=D328799A130E4BF1834A448B46765F4D5BC1750A21DF86B879B42B97307ABAFE\n"
+    },
+    {
+      "name": "walking-quote",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/walking-quote-regression/WalkingQuoteRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 4.917,
+      "output_sha256": "b20b2938933dcf089ca5390b756d89a587ca9d5f003c7440677ccda69bf0d405",
+      "output": "Walking quote regression: 28 checks passed (actual Runtime source; native calls replaced by controlled doubles).\nIntegrated K=2 walking requests: native path queries 488 unscoped, 448 scoped (40 reused); quote checks 454, rejected 16; purchases identical.\nWalking quote operation: 48 checks passed (actual Core FoodCommerce and Runtime WalkingRoutes; native calls replaced by controlled doubles).\n"
+    },
+    {
+      "name": "native-command",
+      "command": [
+        "python",
+        "tools/native-command-regression/run.py"
+      ],
+      "exit_code": 0,
+      "seconds": 3.525,
+      "output_sha256": "bd610e1a32a30f6ad7638fc2a65ae7bf8bea9d44baba81884f821aea4ed0a9aa",
+      "output": "PASS 72 native command/step checks; actual production method source, deferred physics test doubles (not game evidence).\n"
+    },
+    {
+      "name": "physical-selection",
+      "command": [
+        "python",
+        "tools/physical-selection-regression/run.py"
+      ],
+      "exit_code": 0,
+      "seconds": 4.547,
+      "output_sha256": "35eb064fed86f96900a65304259bbcb81d0afa3730b4f8069194280a76037056",
+      "output": "PASS 27567 checks; positions 93665->55737; hierarchy 88308->33300\n"
+    },
+    {
+      "name": "vehicle-ownership",
+      "command": [
+        "python",
+        "tools/vehicle-ownership-regression/run.py"
+      ],
+      "exit_code": 0,
+      "seconds": 3.622,
+      "output_sha256": "7539f54a1b778a54ca9bc75f398a40c0491fb40281611c8c8efbbc473dd32e46",
+      "output": "PASS 361 actual Runtime vehicle ownership assertions\nPASS epoch call sites: Update, BeginNativeFixedStep and Release advance first; 5 native mutation wrappers advance in finally; no raw native mutation elsewhere\n"
+    },
+    {
+      "name": "optional-stop",
+      "command": [
+        "python",
+        "tools/optional-stop-regression/run.py"
+      ],
+      "exit_code": 0,
+      "seconds": 4.853,
+      "output_sha256": "af65cd7994111ae0092bdd1b4abce3f5ca6ca63814e91d722f69943533dd99c7",
+      "output": "Saved facade reload: 9 integration checks passed.\nSaved facade reload: 9 integration checks passed.\nNative door replacement: 6 checks passed.\nOptional stop physical adapter: 213 checks passed.\n"
+    },
+    {
+      "name": "simulate",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/simulate/Simulate.csproj",
+        "--",
+        "28",
+        "build/harness-demo"
+      ],
+      "exit_code": 0,
+      "seconds": 10.105,
+      "output_sha256": "a23b527f3467160059390d156a70cf6f03f98996bbe144330b7940062937452d",
+      "output": "{\n  \"Scenario\": \"Synthetic connected grid, not game performance or RLO population evidence\",\n  \"Citizens\": 400,\n  \"Days\": 28,\n  \"Events\": 97156,\n  \"BoundedBatches\": 486,\n  \"ElapsedMilliseconds\": 2682.9938,\n  \"CompletedJourneys\": 44266,\n  \"MissedActivities\": 88,\n  \"RouteRequests\": 45205,\n  \"Unreachable\": 916,\n  \"PlannedModeCounts\": {\n    \"Walk\": 39630,\n    \"Bus\": 4659\n  },\n  \"SnapshotBytes\": 732516,\n  \"SaveRoundTrip\": \"Exact\",\n  \"EconomyTransactions\": \"Not implemented in this project\"\n}\n"
+    },
+    {
+      "name": "food-routines",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-routines/FoodRoutines.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "build/harness-food-routines-demo",
+        "957"
+      ],
+      "exit_code": 0,
+      "seconds": 7.127,
+      "output_sha256": "07bc07b961b59caa047bc72441f0104ecc792c96b910525eb822532df01b7fd8",
+      "output": "{\n  \"evidence\": \"Synthetic two-neighborhood city replayed through the actual population/routine engine. Connected fixture paths, controlled prices/stock/staffed hourly throughput and temporary allowances. No native sales or measured profitability.\",\n  \"residents\": 957,\n  \"days\": 7,\n  \"purchasedMealOpportunities\": 6699,\n  \"actualObservedSpans\": 27231,\n  \"opportunityOrigins\": {\n    \"Home\": 2872,\n    \"Work\": 3630,\n    \"Shop\": 130,\n    \"Leisure\": 67\n  },\n  \"distinctDailyMealTimes\": 6.83594566353187,\n  \"populationReplayMs\": 245.0126,\n  \"opportunityMs\": 32.6251,\n  \"invariants\": {\n    \"Second neighborhood serves additional needs\": true,\n    \"First shop retains its customers when second covers another neighborhood\": true,\n    \"Two local shops reach more needs than one larger distant shop in this fixture\": true,\n    \"Unavailable service makes no sale\": true,\n    \"No extra needs or purchasing power created by adding shops\": true,\n    \"Quote work never exceeds two route calls per batch\": true\n  },\n  \"scenarios\": [\n    {\n      \"Name\": \"one-small\",\n      \"Fulfilled\": 535,\n      \"Unmet\": 6164,\n      \"Unresolved\": 0,\n      \"ShopMeals\": {\n        \"a\": 535\n      },\n      \"MeanOutingMinutes\": 36.78355140186918,\n      \"MeanQueueMinutes\": 12.95102803738317,\n      \"RouteCalls\": 6692,\n      \"MaximumRouteCallsPerBatch\": 2,\n      \"QuoteMs\": 28.4568,\n      \"SimulationMs\": 40.5522,\n      \"Maximum16EventBatchMs\": 9.0965,\n      \"Batches\": 542\n    },\n    {\n      \"Name\": \"two-neighborhoods\",\n      \"Fulfilled\": 1045,\n      \"Unmet\": 5654,\n      \"Unresolved\": 0,\n      \"ShopMeals\": {\n        \"a\": 535,\n        \"b\": 510\n      },\n      \"MeanOutingMinutes\": 36.76513875598104,\n      \"MeanQueueMinutes\": 12.93564593301436,\n      \"RouteCalls\": 13398,\n      \"MaximumRouteCallsPerBatch\": 2,\n      \"QuoteMs\": 42.9732,\n      \"SimulationMs\": 34.1739,\n      \"Maximum16EventBatchMs\": 4.9765,\n      \"Batches\": 664\n    },\n    {\n      \"Name\": \"one-larger\",\n      \"Fulfilled\": 959,\n      \"Unmet\": 5740,\n      \"Unresolved\": 0,\n      \"ShopMeals\": {\n        \"a\": 959\n      },\n      \"MeanOutingMinutes\": 33.699572471324764,\n      \"MeanQueueMinutes\": 11.906141814390034,\n      \"RouteCalls\": 6692,\n      \"MaximumRouteCallsPerBatch\": 2,\n      \"QuoteMs\": 13.2902,\n      \"SimulationMs\": 23.6667,\n      \"Maximum16EventBatchMs\": 8.5227,\n      \"Batches\": 610\n    },\n    {\n      \"Name\": \"two-same-location\",\n      \"Fulfilled\": 952,\n      \"Unmet\": 5747,\n      \"Unresolved\": 0,\n      \"ShopMeals\": {\n        \"a\": 506,\n        \"a2\": 446\n      },\n      \"MeanOutingMinutes\": 34.97413865546264,\n      \"MeanQueueMinutes\": 11.173865546218535,\n      \"RouteCalls\": 13384,\n      \"MaximumRouteCallsPerBatch\": 2,\n      \"QuoteMs\": 24.9428,\n      \"SimulationMs\": 34.2024,\n      \"Maximum16EventBatchMs\": 10.2997,\n      \"Batches\": 644\n    },\n    {\n      \"Name\": \"second-unavailable\",\n      \"Fulfilled\": 535,\n      \"Unmet\": 6164,\n      \"Unresolved\": 0,\n      \"ShopMeals\": {\n        \"a\": 535,\n        \"b\": 0\n      },\n      \"MeanOutingMinutes\": 36.78355140186918,\n      \"MeanQueueMinutes\": 12.95102803738317,\n      \"RouteCalls\": 13398,\n      \"MaximumRouteCallsPerBatch\": 2,\n      \"QuoteMs\": 45.1879,\n      \"SimulationMs\": 34.9265,\n      \"Maximum16EventBatchMs\": 4.6966,\n      \"Batches\": 542\n    },\n    {\n      \"Name\": \"second-price-plus-25pct\",\n      \"Fulfilled\": 1045,\n      \"Unmet\": 5654,\n      \"Unresolved\": 0,\n      \"ShopMeals\": {\n        \"a\": 535,\n        \"b\": 510\n      },\n      \"MeanOutingMinutes\": 36.76513875598104,\n      \"MeanQueueMinutes\": 12.93564593301436,\n      \"RouteCalls\": 13398,\n      \"MaximumRouteCallsPerBatch\": 2,\n      \"QuoteMs\": 59.4803,\n      \"SimulationMs\": 51.0916,\n      \"Maximum16EventBatchMs\": 9.6355,\n      \"Batches\": 664\n    }\n  ],\n  \"limitations\": \"One purchased meal/day; provisional lunch breaks; hourly service smoothing; walking outings; no home food, wages, operating costs or live native stock/service validation. Timings are offline .NET measurements, not Unity frame-time evidence.\"\n}\n"
+    },
+    {
+      "name": "food-demand",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-demand/FoodDemand.csproj",
+        "--",
+        "build/harness-food-demand-demo"
+      ],
+      "exit_code": 0,
+      "seconds": 4.882,
+      "output_sha256": "43117e74feaee0c16d42790bae367dd97020ea0e4b4e30d996cfc2b7cf6169c3",
+      "output": "{\n  \"Evidence\": \"Synthetic demonstration: 24 fictional residents and two fictional shops. No live city was read.\",\n  \"Consumers\": 24,\n  \"Days\": 2,\n  \"Comparisons\": 4,\n  \"NativeSalesChanged\": 0\n}\nComparison and saved intentions: <repo>\\build\\harness-food-demand-demo\n"
+    },
+    {
+      "name": "b1-contract-probe",
+      "command": [
+        "%LOCALAPPDATA%\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/b1-contract-probe/B1ContractProbe.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit_code": 0,
+      "seconds": 4.272,
+      "output_sha256": "c52eaf7f6081dcbf74f7e2eeacb7ac7f91a3759cfb3ba961f2f0521f62bfa03a"
+    }
+  ],
+  "probe": {
+    "baseline": "192037b",
+    "schema": 18,
+    "b1Implemented": false,
+    "heldContextCounterexample": {
+      "seed": 2,
+      "captureTasteWeight": 0,
+      "resumeTasteWeight": 3,
+      "unchangedProduct": "ba:itemname_burger",
+      "editedProduct": "ba:itemname_croissant",
+      "routesPerResume": 2,
+      "nativeCheckoutCalls": 0,
+      "unchangedConfigReplayMatches": true
+    },
+    "extensionRefusals": [
+      {
+        "name": "held memory/config input",
+        "status": "Invalid",
+        "error": "Invalid state: Unknown field: MemoryInputs",
+        "sourceReferencePreserved": true
+      },
+      {
+        "name": "B activation day",
+        "status": "Invalid",
+        "error": "Invalid state: Unknown field: StartsDay",
+        "sourceReferencePreserved": true
+      }
+    ]
+  }
+}

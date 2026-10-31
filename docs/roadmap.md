@@ -20,7 +20,7 @@ Replaces the phase order in docs/reviews/2026-10-27-realism-gameplay-roadmap.md 
 
 0. Performance: the 30 October comprehensive review is done and passes the mod-work gate below. Spock agreed: no optimization work now; re-measure as each slice lands. This isn't a release step.
 A. Inspector, traits and probabilistic choice. Start now (Peter 15:24 JST), with the standing performance gate applied to each slice.
-B. Memory, loyalty and regulars. **B0 is implemented offline:** schema 18, exact old-source migration and history-inclusive capacity; memory remains empty/inactive and the regulars helper is a pure own-shop projection. B1 capture/choice and B2 UI remain pending. [Contract and capacity evidence](population-schema18.md).
+B. Memory, loyalty and regulars. **B0 is implemented offline:** schema 18, exact old-source migration and history-inclusive capacity; memory remains empty/inactive and the regulars helper is a pure own-shop projection. B1 capture/choice is stopped at the schema-18 held tuning/memory image gap (31 October). The probe exposes an inherited A3/B0 held-context config re-roll: the A3 choice-policy owner, coordinated with the B0 schema owner, must fix captured tuning independently of B1; that fix also unblocks B1. Activation can use the existing Active flag at the first logical-day boundary, without a StartsDay field; B2 UI remains pending. [B1 probe and report](reviews/2026-10-31-b1-contract-gaps.md). [Contract and capacity evidence](population-schema18.md).
 C. Marketing awareness and targeting, plus the market research product.
 D. Rivals as alternatives.
 E. Weather, street life, bigger menus and more products.
