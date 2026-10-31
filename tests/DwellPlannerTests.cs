@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
 using Xunit;
@@ -307,6 +308,30 @@ public sealed class DwellPlannerTests
             Assert.Equal(CitizenPhase.AtPlace, loaded.State.Citizens.Single().Phase);
             Assert.Single(loaded.State.Citizens.Single().RecentVisits);
             Assert.Null(DwellPlanner.QueueAtOpening(loaded.State.Citizens.Single(), shop, state.Seed, opening, raining));
+            if (rate == 0)
+            {
+                string admitted = SaveCodec.Write(loaded.State);
+                foreach (int otherRate in new[] { 25, 100 })
+                {
+                    // Replay the identical waiting state under the other rates, comparing
+                    // both the queue commitment and the admitted save image.
+                    var other = SaveCodec.Read(saved); Assert.True(other.Status == SaveReadStatus.Loaded, other.Error);
+                    var otherSim = new CitySimulator(other.State!, new NoRoutes()); otherSim.AttachOptionalStops(env, otherRate);
+                    Assert.Equal(original, DwellPlanner.QueueAtOpening(other.State!.Citizens.Single(), shop, state.Seed, opening - 1, raining));
+                    otherSim.AdvanceTo(opening);
+                    string otherAdmitted = SaveCodec.Write(otherSim.State);
+                    if (raining) Assert.Equal(admitted, otherAdmitted);
+                    else
+                    {
+                        // Dry admission also draws an optional-stop chance. That banked
+                        // choice may differ by rate; every other persisted fact must agree.
+                        var baseline = JObject.Parse(admitted); var variant = JObject.Parse(otherAdmitted);
+                        ((JObject)baseline["Citizens"]![0]!).Remove("OptionalStopChoice");
+                        ((JObject)variant["Citizens"]![0]!).Remove("OptionalStopChoice");
+                        Assert.True(JToken.DeepEquals(baseline, variant), "Queue admission changed across optional-stop rates.");
+                    }
+                }
+            }
         }
     }
 }

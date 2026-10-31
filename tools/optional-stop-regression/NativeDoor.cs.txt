@@ -149,7 +149,9 @@ namespace PersistentCity.Runtime
                     x=>x.buildingRegistration=null, x=>x.buildingRegistration!.HasEstablishedBusiness=false,
                     x=>x.buildingRegistration!.temporarilyClosed=true })
                 {
-                    var bad=new CityBuildingController {Entrance=p.Position}; damage(bad);
+                    var bad=new CityBuildingController {Entrance=p.Position};
+                    bad.buildingRegistration!.businessTypeName="ba:businesstype_"+type;
+                    damage(bad);
                     CityManager.Instance.cityBuildingControllers.Clear(); CityManager.Instance.cityBuildingControllers.Add(bad);
                     var missing=new NativeDoorHarness();
                     foreach(var kind in new[] {DwellKind.Break,DwellKind.WindowShopping,DwellKind.ChatOutsideVenue})

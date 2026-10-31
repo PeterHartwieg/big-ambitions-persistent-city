@@ -1,5 +1,11 @@
 # Validation status
 
+## E2a review round 1 — 31 October 2026 (offline only)
+
+The missing-fact venue fixtures now set the loop's business type before applying damage, so the 210 assertions exercise each listed type rather than repeating nightclub refusals. The queue test now directly compares 0/25/100 from the same saved waiting state: identical queue commitments and full post-admission saves in rain; dry post-admission saves differ only in the legitimate rate-dependent `OptionalStopChoice` field, which is excluded explicitly from that comparison. Morning/night and reload assertions remain intact.
+
+Validation: **31/31** requested foreground checks pass, including **1,606/1,606** unit tests with zero failures/skips, test enumeration, all standalone regressions, Python harnesses and demos. Logs: ignored `build/e2a-r1/`. Production sources and save contracts are unchanged; DLL SHA-256 remains `f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c`. No game or rig work.
+
 ## E2a street-life proof — 31 October 2026 (offline only)
 
 Base `6d43276`; task `pc-e2a-street-life`. Added offline gap coverage in the existing dwell/optional-stop tests and regression tool, read-only DLL venue discovery, and [E2a findings / E2b red cases](docs/plans/e2-street-life.md). No production, settings, chance/timing policy, population, schema or save-contract change. No A3/sibling implementation dependency. No game, rig, lease, test profile or installation was touched. The DLL SHA-256 remains `f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c`, identical to the base.
