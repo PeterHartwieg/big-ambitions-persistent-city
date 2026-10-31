@@ -48,6 +48,16 @@ namespace PersistentCity.Core
         private FoodCommerce? food;
         internal CitizenState? FindCitizen(string id) => citizenEvents.TryGetValue(id, out var entry) ? entry.Citizen : null;
         internal Place FindPlace(string id) => places[id];
+        /// <summary>Read-only inspector view of one resident from already stored facts, or null if the
+        /// ID has left the population. Never changes the city, draws, plans routes or reads a market.</summary>
+        public ResidentInsight? Inspect(string residentId, Func<string, string>? productName = null, Func<string, int, string>? formatAddress = null)
+        {
+            if (residentId == null) return null;
+            var person = FindCitizen(residentId);
+            if (person == null) return null;
+            ResidentMeal? meal = food != null ? food.FindMeal(residentId) : State.Food?.Residents.Find(m => m.ResidentId == residentId);
+            return ResidentInsight.Capture(State, person, meal, id => places.TryGetValue(id, out var place) ? place : null, productName, formatAddress);
+        }
         public void AttachFoodMarket(IFoodMarket market)
         {
             if (food != null) throw new InvalidOperationException("Food market already attached.");
@@ -384,6 +394,8 @@ namespace PersistentCity.Core
             NextEventMinute = live.NextEventMinute, ActivityUntilMinute = live.ActivityUntilMinute,
             CompletedJourneys = live.CompletedJourneys, MissedActivities = live.MissedActivities,
             RecentVisits = new List<VisitRecord>(live.RecentVisits),
+            // Immutable once generated, so the copy shares it; events never change traits.
+            Traits = live.Traits,
             // Derived from the shared identity and the seed, so the copy may share it.
             RoutineKeys = live.RoutineKeys
         };
@@ -405,6 +417,7 @@ namespace PersistentCity.Core
         {
             live.OptionalStop = working.OptionalStop;
             live.OptionalStopChoice = working.OptionalStopChoice;
+            live.Traits = working.Traits;
             live.HomeId = working.HomeId; live.DayPlaceId = working.DayPlaceId; live.ShopId = working.ShopId; live.LeisureId = working.LeisureId;
             live.Preferences.OwnsCar = working.Preferences.OwnsCar; live.Preferences.AllowTransit = working.Preferences.AllowTransit;
             live.Preferences.WalkingToleranceMetres = working.Preferences.WalkingToleranceMetres;

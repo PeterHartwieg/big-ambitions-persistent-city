@@ -5,7 +5,10 @@ import re
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
-BASE = "00d1321b257e70e57829cfef2ca823b4d0e25060"
+# The sync imports approved A1/A2/E2a changes. Pin that incoming tree rather
+# than rejecting those changes against E3's older schema-16 ancestor.
+BASE = "8b05227d80e150404669d6d8243537a8acfb688b"
+E3_BASE = "462a99d8313968a2a1760ac88806b3aed47a0003"
 reader = ROOT / "Runtime/DonutFeasibilityReader.cs"
 text = reader.read_text(encoding="utf-8")
 code = re.sub(r"//[^\n]*|/\*.*?\*/", "", text, flags=re.S)
@@ -33,3 +36,13 @@ for path in paths:
         assert current == expected, f"Existing source/contract changed: {path}"
         preserved.append(path)
 print(f"PASS isolation/no native field assignments; {len(preserved)} existing blobs byte-identical to {BASE}")
+
+# The imported base has no donut reader: independently retain E3's approved
+# runtime and harness blobs, so updating BASE cannot hide a reader change.
+for path in ("Runtime/DonutFeasibilityReader.cs",
+             "tools/donut-feasibility-regression/Program.cs",
+             "tools/donut-feasibility-regression/DonutFeasibilityRegression.csproj"):
+    expected = subprocess.check_output(["git", "rev-parse", f"{E3_BASE}:{path}"], cwd=ROOT, text=True).strip()
+    current = subprocess.check_output(["git", "hash-object", path], cwd=ROOT, text=True).strip()
+    assert current == expected, f"Approved E3 source/harness changed: {path}"
+print(f"PASS approved E3 reader and harness blobs byte-identical to {E3_BASE}")

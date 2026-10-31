@@ -65,7 +65,7 @@ namespace PersistentCity.Core
             if (city.ObservingFood) city.ObserveFood(new FoodDecisionTrace {
                 MealKind = meal.Kind, Consumer = consumer, Intent = intent, Businesses = businesses, Quotes = quotes });
             if (intent.Status != FoodIntentStatus.Travelling)
-            { Finish(meal, intent.Status == FoodIntentStatus.DeclinedPurchase ? MealStatus.Declined : MealStatus.Missed, "Existing stop: " + intent.Outcome); return; }
+            { Finish(meal, intent.Status == FoodIntentStatus.DeclinedPurchase ? MealStatus.Declined : MealStatus.Missed, "Existing stop: " + intent.Outcome, intent.OutsideOption); return; }
             var selected = businesses.Single(b => b.Id == intent.BusinessId);
             var choice = intent.Choices.Single(c => c.BusinessId == intent.BusinessId && c.ProductId == intent.ProductId);
             meal.ExistingStop = true;

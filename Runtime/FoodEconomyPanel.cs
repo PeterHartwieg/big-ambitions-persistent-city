@@ -15,6 +15,10 @@ namespace PersistentCity.Runtime
         private string economyText = "";
         private Vector2 economyScroll;
         private GUIStyle? economyLabel;
+        private Rect economyRect;
+        /// <summary>Rig diagnostic: inspector cost by mode (closed / hover / open), picks and popup builds.</summary>
+        public object InspectorTiming => inspector.Timing;
+        public void ResetInspectorTiming() => inspector.ResetTiming();
         private static string LocalizedName(string id) => string.IsNullOrWhiteSpace(id) ? "Unspecified"
             : LocalizorManager.Localize(id, (object?)null).ToString();
         public object EconomyOverview => simulation == null || simulation.State.Food == null
@@ -44,10 +48,15 @@ namespace PersistentCity.Runtime
             var input = Event.current;
             if (input.type == EventType.KeyDown && input.control && input.keyCode == KeyCode.F8)
             { showEconomy = !showEconomy; nextEconomyText = 0; input.Use(); }
-            if (!showEconomy) return;
+            GUI.depth = -10000;
+            if (showEconomy) DrawEconomy(); else economyRect = default;
+            if (!inspectorFailed) inspector.Draw();
+        }
+        private void DrawEconomy()
+        {
             float width = Math.Min(760, Screen.width - 40), height = Math.Min(620, Screen.height - 40);
             var panel = new Rect(20, 20, width, height);
-            GUI.depth = -10000;
+            economyRect = panel;
             var previousColor = GUI.color;
             GUI.color = new Color(.075f, .085f, .105f, 1);
             GUI.DrawTexture(panel, Texture2D.whiteTexture);
@@ -57,7 +66,7 @@ namespace PersistentCity.Runtime
             if (GUILayout.Button("Close · Ctrl+F8", GUILayout.Width(140))) showEconomy = false;
             GUILayout.EndHorizontal();
             economyLabel ??= new GUIStyle(GUI.skin.label) { wordWrap = true, fontSize = 16 };
-            if (simulation.State.Food == null)
+            if (simulation!.State.Food == null)
             {
                 GUILayout.Label("Preparing resident food demand. Eligible player businesses are managed automatically once the city is ready.", economyLabel);
                 GUILayout.EndArea(); return;
