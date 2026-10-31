@@ -1,5 +1,11 @@
 # Validation status
 
+## F0 local-tests-1-1 build host lookup - 31 October 2026 (offline)
+
+Reproduced the exact build command with `dotnet` absent from PATH: SDK discovery failed with `FileNotFoundError: [WinError 2]`. `tools/build.py` now prefers a PATH host, then checks `%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe` on Windows, and uses the resolved executable for both SDK discovery and compilation. Missing host/SDK cases report an actionable error. No runtime, configuration or save behavior changed.
+
+**Validation:** the original command now exits 0 with PATH unchanged. Four mocked probes of the actual build script pass: local fallback, PATH precedence, no SDK and no host. All **31/31 required checks pass**, including **1,595/1,595 unit tests**, test listing, 21 standalone regressions, four Python harnesses and three demos, run sequentially in the foreground. The remaining Python harnesses use the local SDK directory on their child PATH, as in the prior gate; the build check explicitly retains the original environment. DLL SHA-256 remains `293e6e7033d6c69bbd45cc2c8056a702509c1f44722e9d73b39f0a7f9808b309`. Logs: ignored `build/f0-fix/` (before/after build, host probes and gate results). No game, rig, installation or release action.
+
 ## Track F F0 interior-view spike - 31 October 2026 (offline only)
 
 Implemented on `codex/pc-f0-interior-view-spike`, directly from the development branch, independently of A1/A2/A3. Default-off flat settings add radius 60 m (30–120), 24 pedestrians (0–48) and 12 vehicles (0–24), with numeric fallback/clamp and bounded load diagnostics. Eligible established ground-floor retail uses vanilla's first entrance as focus, a strict min(street, interior) radius and sub-caps inside global caps. Floor/anchor metadata is cached; geometry checks are at most every 2 s. Elevators, >3 m height mismatch, missing/uncertain data and exceptions stay hidden. **City drawing is an explicit no-op; street visibility is not delivered by F0.** [Discovery, limits, F1–F3 and risks](docs/plans/track-f-interior-view.md).

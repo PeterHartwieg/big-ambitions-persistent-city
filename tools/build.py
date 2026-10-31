@@ -2,6 +2,7 @@
 """Compile the Persistent City prototype against an explicitly supplied local game Managed directory."""
 import argparse
 import hashlib
+import os
 from pathlib import Path
 import re
 import shutil
@@ -24,7 +25,16 @@ for name in references:
 json_reference = (args.json_assembly or managed / "Newtonsoft.Json.dll").resolve()
 if not json_reference.is_file():
     raise SystemExit("Newtonsoft.Json.dll is missing; supply the game's assembly with --json-assembly")
-sdk_lines = subprocess.check_output(["dotnet", "--list-sdks"], text=True).splitlines()
+dotnet = shutil.which("dotnet")
+if dotnet is None and os.name == "nt" and os.environ.get("LOCALAPPDATA"):
+    local_host = Path(os.environ["LOCALAPPDATA"]) / "Microsoft/dotnet/dotnet.exe"
+    if local_host.is_file():
+        dotnet = str(local_host)
+if dotnet is None:
+    raise SystemExit("Cannot find dotnet. Add the .NET SDK to PATH; Windows also checks %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe.")
+sdk_lines = subprocess.check_output([dotnet, "--list-sdks"], text=True).splitlines()
+if not sdk_lines:
+    raise SystemExit(f"No .NET SDK is installed for {dotnet}.")
 match = re.fullmatch(r"(\S+) \[(.*)\]", sdk_lines[-1])
 if not match:
     raise SystemExit("Cannot locate the .NET SDK compiler")
@@ -47,7 +57,7 @@ if not harmony.exists() or not (dependency / "Harmony-LICENSE.txt").exists():
 if hashlib.sha256(harmony.read_bytes()).hexdigest() != harmony_hash:
     raise SystemExit("Harmony DLL does not match its pinned checksum")
 sources = sorted(str(p) for folder in ("Core", "Compatibility", "Persistence", "Runtime") for p in (root / folder).glob("*.cs"))
-command = ["dotnet", str(csc), "-nologo", "-noconfig", "-nostdlib+", "-target:library", "-langversion:9",
+command = [dotnet, str(csc), "-nologo", "-noconfig", "-nostdlib+", "-target:library", "-langversion:9",
            "-nullable:enable", "-optimize+", "-warn:4", "-warnaserror+", "-deterministic+", "-out:" + str(output / "PersistentCity.dll")]
 command += ["-reference:" + str(managed / (name + ".dll")) for name in references]
 command += ["-reference:" + str(json_reference)]
