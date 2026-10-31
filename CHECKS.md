@@ -1,5 +1,11 @@
 # Validation status
 
+## F0 local-tests-3-26 physical-selection host lookup - 31 October 2026 (offline)
+
+Reproduced `python tools/physical-selection-regression/run.py` failing with `FileNotFoundError: [WinError 2]` because `dotnet` is absent from PATH. This launcher now prefers the PATH host, then checks `%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe` on Windows, and reports a clear error if neither exists. Source extraction, generated project, Release configuration and subprocess failure handling are unchanged; no runtime/game behavior changed.
+
+**Validation:** the exact command passes with PATH unchanged (**1,932 F0 wiring checks and 27,567 physical differential checks**). Three mocked probes of the actual launcher pass for fallback, PATH precedence and missing host, also checking the project/configuration and `check=True`. All **31/31 required commands pass**, including **1,595/1,595 unit tests**, test listing, 21 standalone regressions, four Python harnesses and three demos, sequentially in the foreground. Build, native-command and physical-selection checks use the original environment; vehicle-ownership and optional-stop receive the local SDK directory on their child PATH as in prior gates. DLL SHA-256 remains `293e6e7033d6c69bbd45cc2c8056a702509c1f44722e9d73b39f0a7f9808b309`. Logs: ignored `build/f0-fix3/` (before/after physical-selection, host probes and gate results). No game, rig, installation or release action.
+
 ## F0 local-tests-2-25 native-command host lookup - 31 October 2026 (offline)
 
 Reproduced `python tools/native-command-regression/run.py` failing with `FileNotFoundError: [WinError 2]` because `dotnet` is absent from PATH. This launcher now prefers the PATH host, then checks `%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe` on Windows, with a clear missing-host diagnostic. Harness generation, argument forwarding and subprocess failure handling are unchanged; no runtime/game behavior changed.

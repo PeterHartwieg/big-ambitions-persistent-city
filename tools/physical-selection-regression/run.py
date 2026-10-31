@@ -4,8 +4,17 @@ Baseline files freeze the pre-change implementation. No handwritten optimized se
 """
 from pathlib import Path
 from interior_wiring import generate
+import os
+import shutil
 import subprocess
 import json
+dotnet = shutil.which('dotnet')
+if dotnet is None and os.name == 'nt' and os.environ.get('LOCALAPPDATA'):
+    local_host = Path(os.environ['LOCALAPPDATA']) / 'Microsoft/dotnet/dotnet.exe'
+    if local_host.is_file():
+        dotnet = str(local_host)
+if dotnet is None:
+    raise SystemExit('Cannot find dotnet. Add the .NET SDK to PATH; Windows also checks %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe.')
 here = Path(__file__).resolve().parent
 root = here.parent.parent
 
@@ -87,4 +96,4 @@ ET.SubElement(items, 'Compile', Include=str(root / 'Runtime' / 'PrototypeSetting
 ET.SubElement(items, 'PackageReference', Include='Newtonsoft.Json', Version='13.0.2')
 ET.SubElement(items, 'Compile', Include=str(root / 'Core' / '*.cs'), Exclude=str(root / 'Core' / 'Model.cs'))
 ET.ElementTree(project).write(build / 'Regression.csproj', encoding='unicode')
-subprocess.run(['dotnet', 'run', '--project', str(build / 'Regression.csproj'), '--configuration', 'Release'], check=True)
+subprocess.run([dotnet, 'run', '--project', str(build / 'Regression.csproj'), '--configuration', 'Release'], check=True)
