@@ -1,5 +1,7 @@
 # Persistent City
 
+> **C2a review r1:** shared geometry rebuilds now yield in bounded units; eligibility-only flips reuse the index. Existing-stop admission/diagnostics and post-activation null refusal are fixed. **1,911 tests and 33 foreground checks pass**; native rig proof remains pending. [Review evidence](CHECKS.md#c2a-review-round-1--31-october-2026-offline-only).
+
 > **Step C2a core awareness ? 31 October:** bounded memory seam (empty), neighbourhood/routine and daily distant discovery feed the existing eight-shop choice and sixteen-route ceiling. Schema **19** adds only one held source image and an activation header; campaign source remains unknown. **1,902 tests pass**, with offline regressions/capacity measurements recorded in [CHECKS](CHECKS.md#step-c2a-core-bounded-awareness--31-october-2026-offline-only). Combined 6 Nov rig proof remains pending. [Contract](docs/population-schema19.md).
 
 > **Step B0b held tuning — 31 October:** held A3 decisions now persist their captured coefficients across config edits/reload; fresh contexts use current values the same day. Schema 18 is amended in place with a neutral bounded B1 contribution slot. **1,862 tests and all 34 foreground checks pass**. Eight-candidate overhead: 405 saved bytes / 208 managed bytes. Offline only; combined 6 Nov rig checks remain pending. [Evidence](CHECKS.md#step-b0b-held-tuning-prerequisite--31-october-2026-offline-only) · [Contract](docs/population-schema18.md#b0b-amendment--31-october-2026).

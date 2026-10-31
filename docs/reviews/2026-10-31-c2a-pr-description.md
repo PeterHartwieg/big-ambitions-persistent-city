@@ -1,64 +1,67 @@
-# C2a: bounded Core food awareness before the existing eight-shop choice
+# C2a: bounded Core awareness — review r1 fixes
 
-Targets `codex/pc-b0b-held-tuning` (base c0af745). Adds bounded memory (empty seam),
-neighbourhood/routine and positive daily distant discovery; dedup/capture feeds
-A3's same eight slots, full feasibility and <=16 routes. An optional campaign
-provider remains unknown/unused. Generic external metadata can share those slots
-later without native enrollment. No B1/B2/C1/D1/F0 dependency, campaign evidence,
-research, rival behavior, UI or native write is included.
+Targets `codex/pc-b0b-held-tuning` (B0b c0af745). Memory remains an empty seam,
+local/routine plus positive daily discovery feed the same eight-shop shortlist,
+and campaigns remain unknown/unused. Full feasibility, trait/offer/outside choice
+and <=16 routes remain authoritative. No B1/B2/C1/D1/F0 dependency, research, rival
+behavior, UI or native write is introduced.
 
-Schema 19 freezes the small additive held source image and activation header,
-strict 18 migration/refusal, captured continuation and next-day capability
-activation. New flat tuning applies at the next uncaptured context. The diagnostic
-bridge dumps one consumer's slots, union/dedup and proposed/held shortlist.
+Review fixes in **19289e3**:
 
-Validation: **1,902 tests (40 C2a)**, discovery and **all 33 foreground gate commands**
-(31 requested plus native-candidate and choice). The same-checkpoint tests cover
-capture, partial quotes and selected reload, settings/cadence changes, malformed
-source preservation and generation replacement. Historical economy/digests remain
-exact. [Command evidence](2026-10-31-c2a-offline-checks.json),
-[performance/size manifests](2026-10-31-c2a-measurements.json),
-[contract](../population-schema19.md).
+- **Sol-r1-2:** index replacement now yields through private 64-item collection,
+  merge-sort, hash and cell phases. It pins the next unconsumed event until atomic
+  publication; replacement/reload preserve event order without consuming a context.
+- **Sol-r1-3 / Opus-r1-4:** schema 19 refuses null awareness on/after activation;
+  pre-activation/schema-18 held decisions retain their captured terms.
+- **Opus-r1-1:** the present shop uses Origin slot 0 deterministically inside the
+  existing bounds, including random draws 0; feasibility can still refuse it.
+- **Opus-r1-2:** candidacy flips no longer invalidate geometry.
+- **Opus-r1-3:** proposed diagnostic sampling/ranking uses the held/current stop
+  mode and captured coefficients.
 
-| Alternatives / layout | B0b rank p50 / p95 / max ms | C2a source+union+rank p50 / p95 / max ms | B0b / C2a bytes per context | Index build/rebuild p50 / p95 / max ms | Build allocated bytes |
+**Validation:** **1,911 tests**, including **49 awareness cases**; test discovery
+and **33/33 foreground gate commands** pass (31 requested plus native-candidate
+and choice). Five red regression cases are now green; additional tests cover
+partial publication, 1,024/20k work bounds, restart/reload/cadence and unchanged
+eligibility-only revisions. Exact historical economy/reload digests are retained.
+[Command evidence](2026-10-31-c2a-r1-offline-checks.json),
+[rebuild measurements](2026-10-31-c2a-r1-rebuild.json),
+[wire/interface contract](../population-schema19.md).
+
+Six complete builds/layout/process in three fresh sequential .NET 10 Release
+processes, including cold/JIT work. Unit timers include builder creation, managed-scope projection and place lookup. Total
+CPU is the sum across yielded units, never a frame/spike statistic.
+
+| Alternatives / layout | Work unit p50 / p95 / max ms | Measured units | Max items/unit | Whole build summed CPU p50 / max ms |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| 1,024 / dense | 0.1073 / 0.2393 / 5.5627 | 0.0116 / 0.0436 / 0.8222 | 306 / 987 | 2.0451 / 26.4999 / 27.2204 | 275,640 |
-| 20,000 / dense | 3.5486 / 4.5085 / 8.5244 | 0.0290 / 0.0486 / 0.8597 | 280 / 885 | 30.7147 / 41.7452 / 72.9799 | 4,254,290 |
-| 1,024 / sparse | 0.1249 / 0.1613 / 1.0213 | 0.0057 / 0.0120 / 0.1534 | 280 / 827 | 2.3263 / 9.4777 / 10.4809 | 692,054 |
-| 20,000 / sparse | 3.5047 / 4.2679 / 6.2920 | 0.0175 / 0.0322 / 0.7737 | 280 / 827 | 43.2643 / 73.4230 / 78.1916 | 13,475,542 |
+| 1,024 / dense | 0.0033 / 0.0121 / 5.5345 | 7,362 | 64 | 1.9222 / 16.0049 |
+| 20,000 / dense | 0.0027 / 0.0090 / 3.7794 | 169,020 | 64 | 36.3103 / 42.2991 |
+| 1,024 / sparse | 0.0035 / 0.0123 / 0.3889 | 8,172 | 64 | 2.1441 / 2.6267 |
+| 20,000 / sparse | 0.0021 / 0.0095 / 11.8403 | 187,344 | 64 | 41.1984 / 53.3200 |
 
-Measurements: three fresh Windows .NET 10.0.13 Release processes, 300 warmups /
-3,000 measured source+rank contexts per layout/process, alternating B0b-loop/C2a
-order; ten warmed builds/process. Median run percentiles and largest max shown.
-Seed 77; radius 250, four draws/anchor, discovery .02, four-reference memory double;
-dense (10,0,0), sparse 125 m grid. Setup/native reads/routes excluded from context
-timers. No measured source/rank sample >=30 ms; routes <=16 in production tests.
-**40 rebuild samples >=30 ms flagged: dense20k 16 (max72.9799), sparse20k 24
-(max78.1916).** Event-only large-catalogue rebuilding remains a measured limitation;
-combined native p95 <5 ms / spike <30 ms proof is pending. Whole-frame is separate.
+Across **371,898 work units**, **0 units >=30 ms**, largest **11.8403 ms**.
+The old normal-frame synchronous rebuild path had 40 >=30 ms samples, max78.1916 ms;
+those whole-build costs are now split into bounded continuations. Six full builds
+per case/process give 409 /9,390 /454 /10,408 units per dense1k/dense20k/sparse1k/
+sparse20k build: at the unchanged 128-unit cap, 4 /74 /4 /82 budget-only frames,
+with the existing time cap potentially yielding sooner. These totals expose
+completion/catch-up cost; yielding does not consume meals or advance event order.
+Eligibility-only changes incur **zero geometry rebuilds**, covered by native-source
+cursor/reload tests. Source-slot/shortlist/route limits and persisted bytes stay fixed.
+The native combined p95 <5 ms / spike <30 ms gate is pending the combined rig;
+whole-frame timing stays separate. The four parked hotspots remain parked.
 
-Retained wire addition with 24 native-format IDs is **3,074 bytes/city**, including
-3,038 image +13 field +23 header, at 1,914 and 5,000 consumers; **zero recurring
-per-consumer/day bytes**. Managed image graph: 1,048 bytes with shared IDs. Saturated
-B0 fixtures add **9,514 bytes and 24 records**, deducted once from existing reserves:
+Schema **19** wire and allocation are unchanged by r1. The held addition remains
+**3,074 bytes/city** (3,038 image +13 field +23 header) at 1,914 and 5,000 consumers,
+with **zero recurring per-consumer/day bytes**. Saturated B0 fixtures add 9,514 bytes
+and 24 records, charged once against existing reserves. CF32/CF64 full future
+budgets remain 220,664,366 /259,064,366 bytes and 2,111,867 /3,711,867 records;
+CF64 retains its existing >95% warning. [Original capacity/admission measurements](2026-10-31-c2a-measurements.json)
+retain before/after source sampling/rank and allocation results; r1 replaces their
+synchronous runtime rebuild path. Ordinary trip source/rank semantics and the
+24/32/8/16 bounds remain unchanged; existing-stop admission is restored.
 
-| Full B0 fixture | Schema-19 UTF-8 bytes / characters | Delta from B0b | Streaming / semantic records | Write / read / 17 migration ms |
-| --- | ---: | ---: | ---: | ---: |
-| reference | 5,022,655 | +9,514 | 54,584 / 54,581 | 129.3 / 371.2 / 559.3 |
-| consumers5000 | 9,710,819 | +9,514 | 110,132 / 110,129 | 383.8 / 946.7 / 1944.0 |
-| CF32 | 192,029,621 | +9,514 | 1,920,132 / 1,920,129 | 2,757.4 / 9,066.3 / source refused |
-| CF64 | 230,429,621 | +9,514 | 3,520,132 / 3,520,129 | 3,512.3 / 10,453.1 / source refused |
-
-All displayed save/read/migration timings >=30 ms are flagged separate startup/
-reload/save latency. The complete CF32/CF64 future budgets stay 220,664,366 /
-259,064,366 bytes and 2,111,867 /3,711,867 records; CF64's existing >95% warning
-remains. Streaming/semantic charge and global caps are unchanged.
-
-Measured low-risk wins: prefix/dedup capture allocation ~4.4?4.6 KB ->0.9?1.0 KB;
-20k dense/sparse index build allocation 17.48/32.00 MB ->4.25/13.48 MB. Native
-capture full controller/hours sweeps go to zero; exact sampled native terms still
-revalidate. The four parked hotspots remain parked. Timing noise and rebuild
-spikes are retained. No native gate is inferred from offline measurements.
+No game/rig work, push or merge was performed by this fixer.
 
 ### In-game checks for 6 Nov rig
 
@@ -73,7 +76,9 @@ No rig action was performed by this implementation run.
    shop entrances; verify home/work/current distances, <=9 cells per anchor,
    <=4 local draws each, raw union/dedup flags, <=24 core slots, eight reserved
    unknown campaign slots, <=8 shortlist and <=16 actual decision route requests.
-   Repeat without state changes and after reload; attach matching dumps.
+   Repeat without state changes and after reload; attach matching dumps. Include
+   at-stop contexts in a dense catalogue with random draws 0 and 4: the present
+   eligible shop must occupy Origin slot 0 inside the existing bounds.
 2. **LOCKED-OK ? distant opportunity.** Select a supported player shop beyond every
    local anchor radius. Derive seeded logical days through the read-only dump in
    bounded batches until its discovery sample is **eligible**, then show that it
@@ -100,7 +105,9 @@ No rig action was performed by this implementation run.
 6. **LOCKED-OK ? matched performance windows.** Interleave candidate and B0b
    `c0af745` at idle and breakfast/lunch/evening rush, matching checkpoint, seed,
    shops, population, clock/body/graphics settings, cache warmth and panel state;
-   include a soak and a catalogue-change/rebuild observation. Record mod-work
+   include a soak and a catalogue-change/rebuild observation. Verify rebuild
+   work yields between units, blocks publication until complete and restarts
+   coherently on replacement; eligibility-only flips must perform zero rebuilds. Record mod-work
    p50/p95/max, **every spike >=30 ms**, route/query counts, allocations/GC,
    pending meal work and catch-up latency. Require mod-work p95 <5 ms; record
    whole-frame intervals/stalls **separately**. Record original autosave, disable

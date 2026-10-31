@@ -12,7 +12,10 @@ After activation, the one logical capture samples memory (four direct complete
 generation references), home/work-or-study/current origin (up to four draws each),
 and eight daily discovery slots. The optional campaign provider is unknown and
 is never called: its eight reserved slots admit nothing. Memory defaults to empty;
-there is no B1 experience, decay or loyalty implementation here.
+there is no B1 experience, decay or loyalty implementation here. For an existing
+shop stop, direct observation occupies Origin slot 0 deterministically (including
+when random draws are zero), replacing one of the four origin slots rather than
+adding slots. The same eligibility and complete feasibility checks still apply.
 
 `FoodAwarenessCatalogue.Entry` is pure business-generation/place/position/kind
 metadata. External metadata can enter the same catalogue without enrollment in
@@ -45,12 +48,22 @@ outside choice still apply. No duplicate, missing capture or infeasible offer
 adds another slot or route request. Existing continuation remains <=16 logical
 route requests, one held context city-wide, four contexts per meal.
 
-Core rebuilds the index only at startup/first use, catalogue publication revision,
-list replacement/count change, or explicit `InvalidateFoodAwareness()` after a
-place/in-place catalogue edit. Unchanged consumers do O(1) publication checks and
-bounded draws. Native discovery uses its existing 64-controller ring and initial
-startup pass, increments a revision only on changes, and rechecks sampled native
-eligibility directly. Capture no longer scans all controllers or refreshes every
+Core prepares the index through bounded continuation after first use, geometry/
+identity/menu publication, list replacement/count change, or explicit
+`InvalidateFoodAwareness()` after a place/in-place catalogue edit. Each work unit
+handles at most 64 source entries, merge-sort writes, hash entries or cell entries.
+There is no whole-catalogue sort, conversion, copy or hidden missing-place scan
+inside a unit. Private six-level data publish only after completion; the next
+logical event stays unprocessed at its minute, with no context attempt consumed.
+Index work uses the existing total-unit/time caps and food-continuation counter.
+Input changes discard/restart the private image before publication; save/reload
+restarts that uncaptured event with the same ordering. Held decisions continue
+with captured inputs, and stop membership/commit bookkeeping cannot trigger a
+geometry build. Explicit on-demand diagnostics may finish preparation themselves.
+Unchanged consumers do O(1) publication checks and bounded draws. Native discovery uses its existing 64-controller ring and initial
+startup pass, increments the geometry revision for scope identity/place/menu,
+withdrawal or scope-list changes, and rechecks sampled native eligibility directly.
+Candidacy add/remove alone never invalidates the geometry index. Capture no longer scans all controllers or refreshes every
 shop's routine hours per meal. Detailed supply/hours are still captured live for
 only the winning identities. Retired scope slots may be sampled and refused until
 the next publication; they never authorize a sale. The existing hourly ownership
@@ -78,7 +91,10 @@ inherited held decision finishes without reranking. New contexts capture once;
 continuation and reload never resample or rerank live awareness settings, memory,
 catalogue or sources for that decision. Schemas 13?17 still use their frozen reader.
 Unknown/future schemas and malformed images refuse without source replacement.
-Old binaries also refuse schema 19 at the early authority bootstrap.
+A null held image is accepted only when the owning meal predates
+`AwarenessStartsDay`; null after activation refuses on both read and write, so it
+cannot bypass shortlist-to-admission validation. Old binaries also refuse schema
+19 at the early authority bootstrap.
 
 The existing fixed consumer tuples are unchanged. Only one held image adds
 records: one charge per union entry in both streaming and semantic counters,
@@ -106,7 +122,9 @@ clamping/defaulting is logged once. No watcher or file rewrite is added.
 `PopulationRuntime.FoodAwareness(consumerId, day?)` delegates to pure
 `CitySimulator.InspectFoodAwareness`. It returns raw source slots, their union,
 deduplicated flags, catalogue revision and proposed shortlist, plus the separately
-labelled held image/shortlist when one exists. Join complete IDs to saved scopes
+labelled held image/shortlist when one exists. Proposed sampling/ranking uses the held
+stop/trip mode (or the current stop mode before capture), matching its admission
+filter and fixed Origin slot. Join complete IDs to saved scopes
 and places for positions. This diagnostic builds text/data only when called,
 creates no meal context or route, reads no campaigns/supply, and writes no state.
 A day override derives a hypothetical day's sources; it is not a journey or sale.

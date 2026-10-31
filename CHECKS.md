@@ -1,5 +1,128 @@
 # Validation status
 
+## C2a review round 1 — 31 October 2026 (offline only)
+
+Fix commit **19289e3** on submitted **9fa59fa**. Addresses Sol-r1-2/3 and
+Opus-r1-1/2/3/4. The actual PR #24 body is updated separately for Sol-r1-4,
+preserving its harness footer. No other slice, schema allocation or native writer
+is added. [Updated contract](docs/population-schema19.md).
+
+Five targeted red cases reproduce both dense at-stop failures (draws 0/4), the
+mismatched diagnostic, post-activation null acceptance and inline rebuild/capture.
+All turn green. Geometry construction now has a private resumable collector,
+merge sort, canonical hash and cell passes, with **64 items maximum per unit**.
+Even invalid/missing places consume collector work instead of hiding a scan in an
+iterator. The next logical event and minute stay pinned until coherent publication;
+no meal context is consumed. Changed input discards/restarts the partial image;
+reload replays the unconsumed event. Work shares the existing total-unit/time caps
+and continuation counters. Normal stop/decision/commit paths never synchronously
+construct an index. Candidacy-only changes retain the geometry revision.
+
+At a shop stop, its supported generation takes **Origin slot 0** even when random
+draws are disabled. It replaces an origin draw within the existing 24/32/8/16
+bounds; price/stock/hours/deadline/outside choice still apply. The diagnostic uses
+the same held/current stop mode and captured shortlist coefficients. Schema 19's
+unchanged wire now refuses a null awareness image on/after the meal's activation
+day; pre-activation/schema-18 held decisions still replay without reranking.
+
+**Validation:** **1,911/1,911 tests**, **49 awareness cases** (nine new review cases),
+discovery, all 31 requested foreground commands and native-candidate/choice
+regressions pass: **33/33 gate commands**.
+[Command manifest](docs/reviews/2026-10-31-c2a-r1-offline-checks.json).
+The native-source harness asserts eligibility changes leave the revision unchanged
+across discovery cursor positions and reload. Other tests cover coherent partial
+publication, 1,024/20k work bounds, replacement restart, reload/cadence identity,
+dense at-stop admission and diagnostic equality. The save-contract regression
+retains all exact historical economy/order/reload digests. No payload field or
+byte/record allocation changes; schema 18 migration remains valid.
+
+**Rebuild work-unit measurement:** six complete builds/layout/process, three fresh
+sequential .NET 10 Release processes, including initial/cold/JIT work. Sizes 1,024
+and 20,000; dense (10,0,0) and 125 m sparse grid, matching the original benchmark.
+Unit timers include initial builder creation, the managed-scope entry projection
+and place lookup; counters/stats are outside.
+Total CPU is the sum across all yielded units, not a single frame or spike.
+[Red symptom and repeatable measurements](docs/reviews/2026-10-31-c2a-r1-rebuild.json).
+
+| Alternatives / layout | Work unit p50 / p95 / max ms | Measured units | Max items/unit | Whole build summed CPU p50 / max ms |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 1,024 / dense | 0.0033 / 0.0121 / 5.5345 | 7,362 | 64 | 1.9222 / 16.0049 |
+| 20,000 / dense | 0.0027 / 0.0090 / 3.7794 | 169,020 | 64 | 36.3103 / 42.2991 |
+| 1,024 / sparse | 0.0035 / 0.0123 / 0.3889 | 8,172 | 64 | 2.1441 / 2.6267 |
+| 20,000 / sparse | 0.0021 / 0.0095 / 11.8403 | 187,344 | 64 | 41.1984 / 53.3200 |
+
+Across **371,898 work units**, **0 units >=30 ms**, largest **11.8403 ms**.
+The old normal-frame synchronous rebuild path had 40 >=30 ms samples, max78.1916 ms;
+those whole-build costs are now split into bounded continuations. Six full builds
+per case/process give 409 /9,390 /454 /10,408 units per dense1k/dense20k/sparse1k/
+sparse20k build: at the unchanged 128-unit cap, 4 /74 /4 /82 budget-only frames,
+with the existing time cap potentially yielding sooner. These totals expose
+completion/catch-up cost; yielding does not consume meals or advance event order.
+Eligibility-only changes incur **zero geometry rebuilds**, covered by native-source
+cursor/reload tests. Source-slot/shortlist/route limits and persisted bytes stay fixed.
+Native combined mod-work p95 <5 ms and <30 ms spikes remain subject to the combined
+rig session; whole-frame timing remains separate. The four parked hotspots are
+untouched. No game, rig, ordinary save, ModsLocal, bridge profile or lease was
+touched, and no push or merge occurred.
+
+### In-game checks for 6 Nov rig
+
+Pending: a `rig_test` session must use a named disposable FT fixture and attach
+before/red ? after/green bridge dumps/logs or captures to the PR. The locked-PC
+classification follows [84be71a's feasibility report](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/84be71a/docs/reviews/rig/2026-10-31-locked-session-feasibility/README.md).
+No rig action was performed by this implementation run.
+
+1. **LOCKED-OK ? source/position capture.** On the same seeded disposable checkpoint,
+   call `PopulationRuntime.FoodAwareness(consumerId, day)` for a known resident and
+   represented slot. Join sampled business IDs to saved scopes/places and native
+   shop entrances; verify home/work/current distances, <=9 cells per anchor,
+   <=4 local draws each, raw union/dedup flags, <=24 core slots, eight reserved
+   unknown campaign slots, <=8 shortlist and <=16 actual decision route requests.
+   Repeat without state changes and after reload; attach matching dumps. Include
+   at-stop contexts in a dense catalogue with random draws 0 and 4: the present
+   eligible shop must occupy Origin slot 0 inside the existing bounds.
+2. **LOCKED-OK ? distant opportunity.** Select a supported player shop beyond every
+   local anchor radius. Derive seeded logical days through the read-only dump in
+   bounded batches until its discovery sample is **eligible**, then show that it
+   shares the ordinary shortlist competition. Record consumer/seed/day/revision
+   and native position. An admission is neither a committed journey nor a sale.
+3. **LOCKED-OK ? refusal after admission.** On matched disposable fixture copies,
+   retain a sampled generation while testing unaffordable price, unavailable
+   stock, closed hours and an insufficient deadline. Record captured eligibility,
+   existing feasibility reasons, zero forbidden purchases and <=16 routes.
+   Compare changed taste/household preferences through recorded choices across
+   seeds; awareness must not guarantee a purchase or bypass outside choice.
+4. **LOCKED-OK ? campaign and memory boundaries.** Verify all eight campaign slots
+   say unknown, no campaign source bit/admission appears, and the production memory
+   source is empty. Native campaigns may exist but must have no C2a provider call,
+   saved mask, discount or capacity effect. Attach the consumer dump and schema.
+5. **LOCKED-OK ? migration/replay/size.** Make a disposable copy of a baseline
+   schema-18 checkpoint; load with candidate, verify schema 19/next-day activation,
+   unchanged IDs/wallets/committed terms, then save/reload at capture, partial quote
+   and selected boundaries. Compare IDs, flags, shortlist, quote cursor, money and
+   purchase identity against uninterrupted replay under different event budgets.
+   Edit tuning only while unloaded: held contexts retain their image and the next
+   fresh context uses new values that same day. Record exact saved-size delta;
+   preserve refused/malformed source copies and leave ordinary saves untouched.
+6. **LOCKED-OK ? matched performance windows.** Interleave candidate and B0b
+   `c0af745` at idle and breakfast/lunch/evening rush, matching checkpoint, seed,
+   shops, population, clock/body/graphics settings, cache warmth and panel state;
+   include a soak and a catalogue-change/rebuild observation. Verify rebuild
+   work yields between units, blocks publication until complete and restarts
+   coherently on replacement; eligibility-only flips must perform zero rebuilds. Record mod-work
+   p50/p95/max, **every spike >=30 ms**, route/query counts, allocations/GC,
+   pending meal work and catch-up latency. Require mod-work p95 <5 ms; record
+   whole-frame intervals/stalls **separately**. Record original autosave, disable
+   and verify off before **each** window and after reload. Keep manual saves
+   outside windows; invalidate any window containing save activity. Restore the
+   original autosave/preferences/fixtures during cleanup. No separate save-profile
+   timing run is implied.
+7. **NEEDS-INPUT ? visible journey sanity.** In the unlocked 6 Nov session, select
+   and follow a consumer whose admitted offer survives feasibility through the
+   storefront visit/service/return; visually verify continuous travel and the
+   existing inspector's individual explanation. Repeat a refusal case. Bridge
+   dumps alone do not establish pointer selection or visible continuity.
+
 ## Step C2a core bounded awareness ? 31 October 2026 (offline only)
 
 Base **c0af745 (B0b)**; Core/index implementation **b50c756**, final config/refusal
