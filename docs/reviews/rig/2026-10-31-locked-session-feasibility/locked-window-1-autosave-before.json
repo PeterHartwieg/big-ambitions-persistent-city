@@ -1,0 +1,10 @@
+{
+  "originalPreventAutoSave": false,
+  "preventAutoSave": true,
+  "minutesBetweenAutoSaves": 5,
+  "maxAutoSavesPerGame": 3,
+  "savingGameInProgress": false,
+  "saveLogMessages": 1,
+  "save": "FT Food Routines Locked Feasibility 20261031",
+  "frame": 2644
+}

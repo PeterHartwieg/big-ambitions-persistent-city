@@ -1,0 +1,64 @@
+[
+  {
+    "method": "PrintWindow",
+    "apiReturned": true,
+    "lastErrorNonAuthoritative": 0,
+    "dibRows": 1120,
+    "meanRgb": [
+      58.785869953554844,
+      50.159251319915846,
+      50.745706800047635
+    ],
+    "stdRgb": [
+      53.218098870724,
+      51.63133330331588,
+      52.96453283140448
+    ],
+    "extrema": [
+      [
+        0,
+        255
+      ],
+      [
+        0,
+        255
+      ],
+      [
+        0,
+        255
+      ]
+    ],
+    "file": "PrintWindow.jpg"
+  },
+  {
+    "method": "BitBlt",
+    "apiReturned": true,
+    "lastErrorNonAuthoritative": 0,
+    "dibRows": 1120,
+    "meanRgb": [
+      1.8011492199595094,
+      1.8234428962724782,
+      1.8354809257274423
+    ],
+    "stdRgb": [
+      19.81625656685371,
+      19.903395849977635,
+      19.967388229750554
+    ],
+    "extrema": [
+      [
+        0,
+        255
+      ],
+      [
+        0,
+        255
+      ],
+      [
+        0,
+        255
+      ]
+    ],
+    "file": "BitBlt.jpg"
+  }
+]

@@ -1,0 +1,535 @@
+{
+  "role": "diagnose",
+  "method": "Update/authority union plus same-frame whole PopulationRuntime.OnGUI; nested scopes not added; floor(n*q) percentiles; initial partial wall interval retained, initial/current partial mod frame excluded. Input guard callbacks outside these scopes remain unmeasured.",
+  "windows": [
+    {
+      "label": "locked-window-1",
+      "realSeconds": 60.2780096,
+      "fps": 79.87987712188824,
+      "clockBefore": {
+        "day": 5,
+        "time": "07:50"
+      },
+      "clockAfter": {
+        "day": 5,
+        "time": "08:11"
+      },
+      "nativeGameMinutes": 20.148611068725586,
+      "wholeFrameMs": {
+        "samples": 4815,
+        "mean": 12.516502242990654,
+        "p50": 12.0283,
+        "p95": 18.4853,
+        "maximum": 69.2323
+      },
+      "modWorkIncludingGuiMs": {
+        "samples": 4814,
+        "mean": 0.39120770668882426,
+        "p50": 0.3033,
+        "p95": 0.7415999999999999,
+        "maximum": 26.602800000000002
+      },
+      "modWorkPrimaryUnionMs": {
+        "samples": 4814,
+        "mean": 0.3876372870793514,
+        "p50": 0.3,
+        "p95": 0.7381,
+        "p99": 1.2414,
+        "maximum": 26.5958
+      },
+      "modSpikesAtLeast30ms": [],
+      "wholeStallsOver50ms": 6,
+      "wholeStallsOver100ms": 0,
+      "wholeStallsOver250ms": 0,
+      "validity": {
+        "clean": true,
+        "autosaveOffBeforeAfter": true,
+        "saveFilesUnchanged": true,
+        "saveActivity": [],
+        "extraInstrumentation": false,
+        "start": {
+          "started": true,
+          "allocationCounter": false,
+          "authorityHookAvailable": true,
+          "components": [
+            "RouteObjectDiscovery.Step",
+            "PhysicalPopulation.BeforeAdvance",
+            "PhysicalPopulation.Update",
+            "PopulationRuntime.AdvancePopulation",
+            "MultimodalRoutes.Prepare",
+            "CitySimulator.RefreshTrafficClosures",
+            "PhysicalVehicles.Update",
+            "PhysicalTrafficHooks.FixedStepPrefix",
+            "PhysicalTrafficHooks.FixedStepPostfix",
+            "PhysicalTrafficHooks.FixedStepFinalizer",
+            "PhysicalVehicles.DeferNativeForce",
+            "PhysicalVehicles.ApplyNativeRotation",
+            "PhysicalIntersections.UpdatePostfix",
+            "PopulationRuntime.OnGUI"
+          ],
+          "environment": {
+            "width": 1920,
+            "height": 1080,
+            "quality": "Low",
+            "vSync": 0,
+            "focused": true,
+            "runInBackground": true,
+            "targetFps": 90,
+            "calendarFactor": 0.3333333333333333,
+            "gpu": "NVIDIA GeForce RTX 4070",
+            "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+            "graphicsApi": "Direct3D11",
+            "timeScale": 1.0,
+            "camera": {
+              "position": {
+                "x": 215.0,
+                "y": 25.8321648,
+                "z": 23.7273273
+              },
+              "eulerAngles": {
+                "x": 47.2700729,
+                "y": 179.999863,
+                "z": -4.7998207e-12
+              }
+            }
+          }
+        },
+        "after": {
+          "minute": 7691.140882492065,
+          "nativeMinute": 7691.140882492065,
+          "citizens": 957,
+          "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+          "failed": false,
+          "physical": "PersistentCity.Runtime.PhysicalPopulation",
+          "autosave": {
+            "originalPreventAutoSave": false,
+            "preventAutoSave": true,
+            "minutesBetweenAutoSaves": 5,
+            "maxAutoSavesPerGame": 3,
+            "savingGameInProgress": false,
+            "saveLogMessages": 4,
+            "save": "FT Food Routines Locked Feasibility 20261031",
+            "frame": 7553
+          }
+        }
+      },
+      "attributionErrors": {
+        "timedExceptions": 0,
+        "crossFrameCalls": 0,
+        "componentTimedExceptions": 0,
+        "componentCrossFrameCalls": 0,
+        "eventMeasurementFailures": 0,
+        "eventCrossFrameCalls": 0,
+        "droppedModFrames": 0,
+        "activeReportCount": 0
+      },
+      "rawObservations": {
+        "Count": 4815,
+        "Capacity": 65536,
+        "MarshaledStorageEstimateBytes": 7864320,
+        "Dropped": 0,
+        "Duplicates": 0,
+        "InvalidOrder": 0,
+        "SkippedUnityFrames": 0,
+        "stopwatchFrequency": 10000000,
+        "terminationObservedTicks": 1403865145,
+        "discardedLifecycleTailTicks": 0,
+        "unobservedTailTicks": 110513,
+        "initialIntervalPartial": true,
+        "currentModFrameExcluded": true,
+        "outstandingPrimaryScopes": 0
+      },
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321648,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 179.999725,
+            "z": 0.0
+          }
+        }
+      },
+      "rawFiles": [
+        "frames-mod-work-locked-window-1-stop-b72952.csv",
+        "frames-observations-locked-window-1-stop-b72952.csv"
+      ]
+    },
+    {
+      "label": "locked-window-2",
+      "realSeconds": 60.2578051,
+      "fps": 79.25944186108431,
+      "clockBefore": {
+        "day": 5,
+        "time": "08:11"
+      },
+      "clockAfter": {
+        "day": 5,
+        "time": "08:32"
+      },
+      "nativeGameMinutes": 20.150957107543945,
+      "wholeFrameMs": {
+        "samples": 4776,
+        "mean": 12.614731051088777,
+        "p50": 12.1224,
+        "p95": 18.6876,
+        "maximum": 100.2457
+      },
+      "modWorkIncludingGuiMs": {
+        "samples": 4775,
+        "mean": 0.3915845445026178,
+        "p50": 0.3231,
+        "p95": 0.6149,
+        "maximum": 30.6135
+      },
+      "modWorkPrimaryUnionMs": {
+        "samples": 4775,
+        "mean": 0.3879547643979064,
+        "p50": 0.3195,
+        "p95": 0.61,
+        "p99": 1.0761,
+        "maximum": 30.6097
+      },
+      "modSpikesAtLeast30ms": [
+        {
+          "unityFrame": 9097,
+          "modMs": 30.6135,
+          "entryBranch": "traffic-advance"
+        }
+      ],
+      "wholeStallsOver50ms": 4,
+      "wholeStallsOver100ms": 1,
+      "wholeStallsOver250ms": 0,
+      "validity": {
+        "clean": true,
+        "autosaveOffBeforeAfter": true,
+        "saveFilesUnchanged": true,
+        "saveActivity": [],
+        "extraInstrumentation": false,
+        "start": {
+          "started": true,
+          "allocationCounter": false,
+          "authorityHookAvailable": true,
+          "components": [
+            "RouteObjectDiscovery.Step",
+            "PhysicalPopulation.BeforeAdvance",
+            "PhysicalPopulation.Update",
+            "PopulationRuntime.AdvancePopulation",
+            "MultimodalRoutes.Prepare",
+            "CitySimulator.RefreshTrafficClosures",
+            "PhysicalVehicles.Update",
+            "PhysicalTrafficHooks.FixedStepPrefix",
+            "PhysicalTrafficHooks.FixedStepPostfix",
+            "PhysicalTrafficHooks.FixedStepFinalizer",
+            "PhysicalVehicles.DeferNativeForce",
+            "PhysicalVehicles.ApplyNativeRotation",
+            "PhysicalIntersections.UpdatePostfix",
+            "PopulationRuntime.OnGUI"
+          ],
+          "environment": {
+            "width": 1920,
+            "height": 1080,
+            "quality": "Low",
+            "vSync": 0,
+            "focused": true,
+            "runInBackground": true,
+            "targetFps": 90,
+            "calendarFactor": 0.3333333333333333,
+            "gpu": "NVIDIA GeForce RTX 4070",
+            "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+            "graphicsApi": "Direct3D11",
+            "timeScale": 1.0,
+            "camera": {
+              "position": {
+                "x": 215.0,
+                "y": 25.8321648,
+                "z": 23.7273273
+              },
+              "eulerAngles": {
+                "x": 47.2700729,
+                "y": 179.999725,
+                "z": 0.0
+              }
+            }
+          }
+        },
+        "after": {
+          "minute": 7712.123359680176,
+          "nativeMinute": 7712.123359680176,
+          "citizens": 957,
+          "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+          "failed": false,
+          "physical": "PersistentCity.Runtime.PhysicalPopulation",
+          "autosave": {
+            "originalPreventAutoSave": false,
+            "preventAutoSave": true,
+            "minutesBetweenAutoSaves": 5,
+            "maxAutoSavesPerGame": 3,
+            "savingGameInProgress": false,
+            "saveLogMessages": 9,
+            "save": "FT Food Routines Locked Feasibility 20261031",
+            "frame": 12405
+          }
+        }
+      },
+      "attributionErrors": {
+        "timedExceptions": 0,
+        "crossFrameCalls": 0,
+        "componentTimedExceptions": 0,
+        "componentCrossFrameCalls": 0,
+        "eventMeasurementFailures": 0,
+        "eventCrossFrameCalls": 0,
+        "droppedModFrames": 0,
+        "activeReportCount": 0
+      },
+      "rawObservations": {
+        "Count": 4776,
+        "Capacity": 65536,
+        "MarshaledStorageEstimateBytes": 7864320,
+        "Dropped": 0,
+        "Duplicates": 0,
+        "InvalidOrder": 0,
+        "SkippedUnityFrames": 0,
+        "stopwatchFrequency": 10000000,
+        "terminationObservedTicks": 2037403753,
+        "discardedLifecycleTailTicks": 0,
+        "unobservedTailTicks": 98496,
+        "initialIntervalPartial": true,
+        "currentModFrameExcluded": true,
+        "outstandingPrimaryScopes": 0
+      },
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321648,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 179.999634,
+            "z": 1.91992828e-11
+          }
+        }
+      },
+      "rawFiles": [
+        "frames-mod-work-locked-window-2-stop-cdd966.csv",
+        "frames-observations-locked-window-2-stop-cdd966.csv"
+      ]
+    },
+    {
+      "label": "locked-window-3",
+      "realSeconds": 60.2949885,
+      "fps": 64.00200242180989,
+      "clockBefore": {
+        "day": 5,
+        "time": "08:32"
+      },
+      "clockAfter": {
+        "day": 5,
+        "time": "08:53"
+      },
+      "nativeGameMinutes": 20.163619995117188,
+      "wholeFrameMs": {
+        "samples": 3859,
+        "mean": 15.62190536408396,
+        "p50": 15.2929,
+        "p95": 20.8105,
+        "maximum": 59.4652
+      },
+      "modWorkIncludingGuiMs": {
+        "samples": 3858,
+        "mean": 0.5632862363919129,
+        "p50": 0.4807,
+        "p95": 0.8106,
+        "maximum": 18.5243
+      },
+      "modWorkPrimaryUnionMs": {
+        "samples": 3858,
+        "mean": 0.5585074909279427,
+        "p50": 0.4757,
+        "p95": 0.8077,
+        "p99": 2.1945,
+        "maximum": 18.5193
+      },
+      "modSpikesAtLeast30ms": [],
+      "wholeStallsOver50ms": 2,
+      "wholeStallsOver100ms": 0,
+      "wholeStallsOver250ms": 0,
+      "validity": {
+        "clean": true,
+        "autosaveOffBeforeAfter": true,
+        "saveFilesUnchanged": true,
+        "saveActivity": [],
+        "extraInstrumentation": false,
+        "start": {
+          "started": true,
+          "allocationCounter": false,
+          "authorityHookAvailable": true,
+          "components": [
+            "RouteObjectDiscovery.Step",
+            "PhysicalPopulation.BeforeAdvance",
+            "PhysicalPopulation.Update",
+            "PopulationRuntime.AdvancePopulation",
+            "MultimodalRoutes.Prepare",
+            "CitySimulator.RefreshTrafficClosures",
+            "PhysicalVehicles.Update",
+            "PhysicalTrafficHooks.FixedStepPrefix",
+            "PhysicalTrafficHooks.FixedStepPostfix",
+            "PhysicalTrafficHooks.FixedStepFinalizer",
+            "PhysicalVehicles.DeferNativeForce",
+            "PhysicalVehicles.ApplyNativeRotation",
+            "PhysicalIntersections.UpdatePostfix",
+            "PopulationRuntime.OnGUI"
+          ],
+          "environment": {
+            "width": 1920,
+            "height": 1080,
+            "quality": "Low",
+            "vSync": 0,
+            "focused": true,
+            "runInBackground": true,
+            "targetFps": 90,
+            "calendarFactor": 0.3333333333333333,
+            "gpu": "NVIDIA GeForce RTX 4070",
+            "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+            "graphicsApi": "Direct3D11",
+            "timeScale": 1.0,
+            "camera": {
+              "position": {
+                "x": 215.0,
+                "y": 25.8321648,
+                "z": 23.7273273
+              },
+              "eulerAngles": {
+                "x": 47.2700729,
+                "y": 179.999634,
+                "z": 0.0
+              }
+            }
+          }
+        },
+        "after": {
+          "minute": 7733.0,
+          "nativeMinute": 7733.002265930176,
+          "citizens": 957,
+          "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+          "failed": false,
+          "physical": "PersistentCity.Runtime.PhysicalPopulation",
+          "autosave": {
+            "originalPreventAutoSave": false,
+            "preventAutoSave": true,
+            "minutesBetweenAutoSaves": 5,
+            "maxAutoSavesPerGame": 3,
+            "savingGameInProgress": false,
+            "saveLogMessages": 13,
+            "save": "FT Food Routines Locked Feasibility 20261031",
+            "frame": 16334
+          }
+        }
+      },
+      "attributionErrors": {
+        "timedExceptions": 0,
+        "crossFrameCalls": 0,
+        "componentTimedExceptions": 0,
+        "componentCrossFrameCalls": 0,
+        "eventMeasurementFailures": 0,
+        "eventCrossFrameCalls": 0,
+        "droppedModFrames": 0,
+        "activeReportCount": 0
+      },
+      "rawObservations": {
+        "Count": 3859,
+        "Capacity": 65536,
+        "MarshaledStorageEstimateBytes": 7864320,
+        "Dropped": 0,
+        "Duplicates": 0,
+        "InvalidOrder": 0,
+        "SkippedUnityFrames": 0,
+        "stopwatchFrequency": 10000000,
+        "terminationObservedTicks": 2669626826,
+        "discardedLifecycleTailTicks": 0,
+        "unobservedTailTicks": 100557,
+        "initialIntervalPartial": true,
+        "currentModFrameExcluded": true,
+        "outstandingPrimaryScopes": 0
+      },
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321648,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 179.999588,
+            "z": 0.0
+          }
+        }
+      },
+      "rawFiles": [
+        "frames-mod-work-locked-window-3-stop-a845e8.csv",
+        "frames-observations-locked-window-3-stop-a845e8.csv"
+      ]
+    }
+  ],
+  "pooled": {
+    "wholeFrameMs": {
+      "samples": 13450,
+      "mean": 13.442367776951672,
+      "p50": 12.5077,
+      "p95": 19.6712,
+      "maximum": 100.2457
+    },
+    "modWorkIncludingGuiMs": {
+      "samples": 13447,
+      "mean": 0.44071156391760247,
+      "p50": 0.3597,
+      "p95": 0.7223999999999999,
+      "maximum": 30.6135
+    },
+    "fps": 74.37892085854541,
+    "modSpikesAtLeast30ms": 1
+  },
+  "sourceBuild": "6d43276198eba5d0dd016b51bc7fc670bc651762"
+}

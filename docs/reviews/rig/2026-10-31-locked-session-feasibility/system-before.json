@@ -1,0 +1,113 @@
+{
+  "logicalCpus": 20,
+  "counts": [
+    {
+      "Name": "codex",
+      "Count": 8
+    },
+    {
+      "Name": "dotnet",
+      "Count": 1
+    },
+    {
+      "Name": "python",
+      "Count": 15
+    }
+  ],
+  "top": [
+    {
+      "Name": "MsMpEng",
+      "IDProcess": 1312,
+      "PercentProcessorTime": 120,
+      "WorkingSetPrivate": 1050140672
+    },
+    {
+      "Name": "git#3",
+      "IDProcess": 16700,
+      "PercentProcessorTime": 57,
+      "WorkingSetPrivate": 1445888
+    },
+    {
+      "Name": "svchost#60",
+      "IDProcess": 10044,
+      "PercentProcessorTime": 33,
+      "WorkingSetPrivate": 18243584
+    },
+    {
+      "Name": "python#7",
+      "IDProcess": 2444,
+      "PercentProcessorTime": 24,
+      "WorkingSetPrivate": 54247424
+    },
+    {
+      "Name": "gh",
+      "IDProcess": 34752,
+      "PercentProcessorTime": 14,
+      "WorkingSetPrivate": 15745024
+    },
+    {
+      "Name": "svchost#42",
+      "IDProcess": 4504,
+      "PercentProcessorTime": 14,
+      "WorkingSetPrivate": 84467712
+    },
+    {
+      "Name": "powershell#19",
+      "IDProcess": 32936,
+      "PercentProcessorTime": 14,
+      "WorkingSetPrivate": 55484416
+    },
+    {
+      "Name": "WmiPrvSE#2",
+      "IDProcess": 46528,
+      "PercentProcessorTime": 14,
+      "WorkingSetPrivate": 7630848
+    },
+    {
+      "Name": "svchost",
+      "IDProcess": 1904,
+      "PercentProcessorTime": 9,
+      "WorkingSetPrivate": 46325760
+    },
+    {
+      "Name": "svchost#19",
+      "IDProcess": 3220,
+      "PercentProcessorTime": 9,
+      "WorkingSetPrivate": 14848000
+    },
+    {
+      "Name": "SearchIndexer",
+      "IDProcess": 8156,
+      "PercentProcessorTime": 9,
+      "WorkingSetPrivate": 220753920
+    },
+    {
+      "Name": "services",
+      "IDProcess": 1676,
+      "PercentProcessorTime": 4,
+      "WorkingSetPrivate": 6623232
+    },
+    {
+      "Name": "System",
+      "IDProcess": 4,
+      "PercentProcessorTime": 4,
+      "WorkingSetPrivate": 12288
+    },
+    {
+      "Name": "other-agent-cli",
+      "IDProcess": 29564,
+      "PercentProcessorTime": 4,
+      "WorkingSetPrivate": 168947712
+    },
+    {
+      "Name": "codex#7",
+      "IDProcess": 45980,
+      "PercentProcessorTime": 4,
+      "WorkingSetPrivate": 75259904
+    }
+  ],
+  "ramTotalKB": 66938060,
+  "totalCpuPercent": 16,
+  "utc": "2026-10-31T02:36:00.3318911Z",
+  "ramFreeKB": 31777120
+}

@@ -1,0 +1,72 @@
+{
+  "clean": true,
+  "autosaveOffBeforeAfter": true,
+  "saveFilesUnchanged": true,
+  "saveActivity": [],
+  "extraInstrumentation": false,
+  "start": {
+    "started": true,
+    "allocationCounter": false,
+    "authorityHookAvailable": true,
+    "components": [
+      "RouteObjectDiscovery.Step",
+      "PhysicalPopulation.BeforeAdvance",
+      "PhysicalPopulation.Update",
+      "PopulationRuntime.AdvancePopulation",
+      "MultimodalRoutes.Prepare",
+      "CitySimulator.RefreshTrafficClosures",
+      "PhysicalVehicles.Update",
+      "PhysicalTrafficHooks.FixedStepPrefix",
+      "PhysicalTrafficHooks.FixedStepPostfix",
+      "PhysicalTrafficHooks.FixedStepFinalizer",
+      "PhysicalVehicles.DeferNativeForce",
+      "PhysicalVehicles.ApplyNativeRotation",
+      "PhysicalIntersections.UpdatePostfix",
+      "PopulationRuntime.OnGUI"
+    ],
+    "environment": {
+      "width": 1920,
+      "height": 1080,
+      "quality": "Low",
+      "vSync": 0,
+      "focused": true,
+      "runInBackground": true,
+      "targetFps": 90,
+      "calendarFactor": 0.3333333333333333,
+      "gpu": "NVIDIA GeForce RTX 4070",
+      "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+      "graphicsApi": "Direct3D11",
+      "timeScale": 1.0,
+      "camera": {
+        "position": {
+          "x": 215.0,
+          "y": 25.8321648,
+          "z": 23.7273273
+        },
+        "eulerAngles": {
+          "x": 47.2700729,
+          "y": 179.999634,
+          "z": 0.0
+        }
+      }
+    }
+  },
+  "after": {
+    "minute": 7733.0,
+    "nativeMinute": 7733.002265930176,
+    "citizens": 957,
+    "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+    "failed": false,
+    "physical": "PersistentCity.Runtime.PhysicalPopulation",
+    "autosave": {
+      "originalPreventAutoSave": false,
+      "preventAutoSave": true,
+      "minutesBetweenAutoSaves": 5,
+      "maxAutoSavesPerGame": 3,
+      "savingGameInProgress": false,
+      "saveLogMessages": 13,
+      "save": "FT Food Routines Locked Feasibility 20261031",
+      "frame": 16334
+    }
+  }
+}

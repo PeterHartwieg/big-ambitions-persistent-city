@@ -1,0 +1,32 @@
+[
+  {
+    "instance": "pid_8808_luid_0x00000000_0x000121c7_phys_0_eng_0_engtype_3d",
+    "utc": "2026-10-31T02:43:06.2916543Z",
+    "percent": 18.143767738590068
+  },
+  {
+    "instance": "pid_8808_luid_0x00000000_0x000121c7_phys_0_eng_4_engtype_copy",
+    "utc": "2026-10-31T02:43:06.2916543Z",
+    "percent": 0.006708304782814446
+  },
+  {
+    "instance": "pid_8808_luid_0x00000000_0x000121c7_phys_0_eng_0_engtype_3d",
+    "utc": "2026-10-31T02:43:07.3023800Z",
+    "percent": 27.335240411913936
+  },
+  {
+    "instance": "pid_8808_luid_0x00000000_0x000121c7_phys_0_eng_4_engtype_copy",
+    "utc": "2026-10-31T02:43:07.3023800Z",
+    "percent": 0.00683667190811513
+  },
+  {
+    "instance": "pid_8808_luid_0x00000000_0x000121c7_phys_0_eng_0_engtype_3d",
+    "utc": "2026-10-31T02:43:08.3141715Z",
+    "percent": 30.79180839135336
+  },
+  {
+    "instance": "pid_8808_luid_0x00000000_0x000121c7_phys_0_eng_4_engtype_copy",
+    "utc": "2026-10-31T02:43:08.3141715Z",
+    "percent": 0.007699214709749983
+  }
+]

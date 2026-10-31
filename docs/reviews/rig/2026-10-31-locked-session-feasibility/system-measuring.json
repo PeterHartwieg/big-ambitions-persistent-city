@@ -1,0 +1,99 @@
+{
+  "logicalCpus": 20,
+  "counts": [
+    {
+      "Name": "codex",
+      "Count": 9
+    },
+    {
+      "Name": "dotnet",
+      "Count": 5
+    },
+    {
+      "Name": "python",
+      "Count": 17
+    },
+    {
+      "Name": "testhost",
+      "Count": 1
+    }
+  ],
+  "top": [
+    {
+      "Name": "Big Ambitions Agent Tests",
+      "IDProcess": 49252,
+      "PercentProcessorTime": 507,
+      "WorkingSetPrivate": 4715958272
+    },
+    {
+      "Name": "vmmemWSL",
+      "IDProcess": 19840,
+      "PercentProcessorTime": 239,
+      "WorkingSetPrivate": 10435936256
+    },
+    {
+      "Name": "testhost",
+      "IDProcess": 17680,
+      "PercentProcessorTime": 101,
+      "WorkingSetPrivate": 3253276672
+    },
+    {
+      "Name": "python#7",
+      "IDProcess": 2444,
+      "PercentProcessorTime": 101,
+      "WorkingSetPrivate": 54231040
+    },
+    {
+      "Name": "powershell#26",
+      "IDProcess": 13488,
+      "PercentProcessorTime": 59,
+      "WorkingSetPrivate": 30306304
+    },
+    {
+      "Name": "WmiPrvSE",
+      "IDProcess": 44040,
+      "PercentProcessorTime": 41,
+      "WorkingSetPrivate": 19886080
+    },
+    {
+      "Name": "MsMpEng",
+      "IDProcess": 1312,
+      "PercentProcessorTime": 41,
+      "WorkingSetPrivate": 753381376
+    },
+    {
+      "Name": "WmiPrvSE#2",
+      "IDProcess": 33772,
+      "PercentProcessorTime": 27,
+      "WorkingSetPrivate": 7852032
+    },
+    {
+      "Name": "other-agent-ui",
+      "IDProcess": 15804,
+      "PercentProcessorTime": 18,
+      "WorkingSetPrivate": 261484544
+    },
+    {
+      "Name": "tailscaled#1",
+      "IDProcess": 2064,
+      "PercentProcessorTime": 9,
+      "WorkingSetPrivate": 84578304
+    },
+    {
+      "Name": "other-agent-ui",
+      "IDProcess": 17540,
+      "PercentProcessorTime": 9,
+      "WorkingSetPrivate": 46850048
+    },
+    {
+      "Name": "other-agent-ui",
+      "IDProcess": 28848,
+      "PercentProcessorTime": 9,
+      "WorkingSetPrivate": 52789248
+    }
+  ],
+  "ramTotalKB": 66938060,
+  "totalCpuPercent": 63,
+  "utc": "2026-10-31T02:40:14.3159477Z",
+  "ramFreeKB": 15534352
+}

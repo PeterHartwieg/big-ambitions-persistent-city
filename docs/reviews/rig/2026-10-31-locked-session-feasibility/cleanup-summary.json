@@ -1,0 +1,26 @@
+{
+  "role": "diagnose",
+  "normalQuit": true,
+  "forcedTermination": false,
+  "gameProcessesStarted": [
+    49252,
+    8808
+  ],
+  "gameExitCodes": [
+    0,
+    0
+  ],
+  "ownedGameProcessesRemaining": 0,
+  "foregroundMeasurementAndSamplerCommandsCompleted": true,
+  "profileFilesVerified": 4828,
+  "installReferencesVerified": 107,
+  "rootFilesVerified": [
+    "agent-install.json",
+    "run.json",
+    "Player-agent.log"
+  ],
+  "preferencesExportSha256Matches": true,
+  "originalAutosaveRestored": true,
+  "leaseHeld": false,
+  "pending": 0
+}

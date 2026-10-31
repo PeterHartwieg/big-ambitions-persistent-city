@@ -1,0 +1,66 @@
+[
+  {
+    "method": "ScreenCapture.CaptureScreenshot after showing owned window",
+    "originalSize": [
+      1920,
+      1080
+    ],
+    "meanRgb": [
+      57.283730709876544,
+      44.82401041666667,
+      45.25445794753087
+    ],
+    "stdRgb": [
+      47.98156641899132,
+      40.40802916825117,
+      42.41197008847448
+    ],
+    "extrema": [
+      [
+        0,
+        255
+      ],
+      [
+        0,
+        255
+      ],
+      [
+        0,
+        255
+      ]
+    ],
+    "file": "screen-capture-visible.jpg"
+  },
+  {
+    "method": "bridge game view",
+    "originalSize": [
+      1920,
+      1080
+    ],
+    "meanRgb": [
+      57.53856481481481,
+      44.77380208333334,
+      45.167945601851855
+    ],
+    "stdRgb": [
+      48.55245220767449,
+      40.41946956694859,
+      42.45123889298768
+    ],
+    "extrema": [
+      [
+        0,
+        255
+      ],
+      [
+        0,
+        255
+      ],
+      [
+        0,
+        255
+      ]
+    ],
+    "file": "bridge-game-view-visible.jpg"
+  }
+]

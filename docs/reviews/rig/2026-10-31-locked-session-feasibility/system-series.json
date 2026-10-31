@@ -1,0 +1,492 @@
+[
+  {
+    "ramFreeKB": 19515064,
+    "gpu": "NVIDIA GeForce RTX 4070, 0 %, 0 %, 3670 MiB, 19.26 W, 585 MHz, 41",
+    "top": [
+      {
+        "Name": "vmmemWSL",
+        "IDProcess": 19840,
+        "PercentProcessorTime": 826,
+        "WorkingSetPrivate": 9985830912
+      },
+      {
+        "Name": "Big Ambitions Agent Tests",
+        "IDProcess": 8808,
+        "PercentProcessorTime": 328,
+        "WorkingSetPrivate": 5297790976
+      },
+      {
+        "Name": "python#7",
+        "IDProcess": 2444,
+        "PercentProcessorTime": 59,
+        "WorkingSetPrivate": 52920320
+      },
+      {
+        "Name": "other-agent-cli",
+        "IDProcess": 45004,
+        "PercentProcessorTime": 45,
+        "WorkingSetPrivate": 171266048
+      },
+      {
+        "Name": "System",
+        "IDProcess": 4,
+        "PercentProcessorTime": 22,
+        "WorkingSetPrivate": 12288
+      },
+      {
+        "Name": "WmiPrvSE#2",
+        "IDProcess": 28060,
+        "PercentProcessorTime": 22,
+        "WorkingSetPrivate": 7868416
+      },
+      {
+        "Name": "MsMpEng",
+        "IDProcess": 1312,
+        "PercentProcessorTime": 18,
+        "WorkingSetPrivate": 760893440
+      },
+      {
+        "Name": "csrss#1",
+        "IDProcess": 31888,
+        "PercentProcessorTime": 13,
+        "WorkingSetPrivate": 2027520
+      }
+    ],
+    "totalCpuPercent": 71,
+    "utc": "2026-10-31T02:42:30.0966297Z",
+    "counts": [
+      {
+        "Name": "codex",
+        "Count": 9
+      },
+      {
+        "Name": "dotnet",
+        "Count": 1
+      },
+      {
+        "Name": "python",
+        "Count": 15
+      }
+    ]
+  },
+  {
+    "ramFreeKB": 20311672,
+    "gpu": "NVIDIA GeForce RTX 4070, 35 %, 7 %, 3672 MiB, 36.10 W, 900 MHz, 44",
+    "top": [
+      {
+        "Name": "Big Ambitions Agent Tests",
+        "IDProcess": 8808,
+        "PercentProcessorTime": 456,
+        "WorkingSetPrivate": 5316681728
+      },
+      {
+        "Name": "MsMpEng",
+        "IDProcess": 1312,
+        "PercentProcessorTime": 176,
+        "WorkingSetPrivate": 796975104
+      },
+      {
+        "Name": "dotnet#1",
+        "IDProcess": 3796,
+        "PercentProcessorTime": 83,
+        "WorkingSetPrivate": 63832064
+      },
+      {
+        "Name": "python#12",
+        "IDProcess": 28272,
+        "PercentProcessorTime": 69,
+        "WorkingSetPrivate": 32759808
+      },
+      {
+        "Name": "vmmemWSL",
+        "IDProcess": 19840,
+        "PercentProcessorTime": 60,
+        "WorkingSetPrivate": 8880435200
+      },
+      {
+        "Name": "System",
+        "IDProcess": 4,
+        "PercentProcessorTime": 41,
+        "WorkingSetPrivate": 12288
+      },
+      {
+        "Name": "WmiPrvSE#2",
+        "IDProcess": 28060,
+        "PercentProcessorTime": 23,
+        "WorkingSetPrivate": 8155136
+      },
+      {
+        "Name": "python#8",
+        "IDProcess": 35968,
+        "PercentProcessorTime": 9,
+        "WorkingSetPrivate": 53055488
+      }
+    ],
+    "totalCpuPercent": 66,
+    "utc": "2026-10-31T02:42:56.8135253Z",
+    "counts": [
+      {
+        "Name": "codex",
+        "Count": 9
+      },
+      {
+        "Name": "dotnet",
+        "Count": 2
+      },
+      {
+        "Name": "python",
+        "Count": 15
+      }
+    ]
+  },
+  {
+    "ramFreeKB": 21543560,
+    "gpu": "NVIDIA GeForce RTX 4070, 55 %, 45 %, 3665 MiB, 33.95 W, 2775 MHz, 46",
+    "top": [
+      {
+        "Name": "vmmemWSL",
+        "IDProcess": 19840,
+        "PercentProcessorTime": 409,
+        "WorkingSetPrivate": 7981412352
+      },
+      {
+        "Name": "Big Ambitions Agent Tests",
+        "IDProcess": 8808,
+        "PercentProcessorTime": 382,
+        "WorkingSetPrivate": 5295042560
+      },
+      {
+        "Name": "MsMpEng",
+        "IDProcess": 1312,
+        "PercentProcessorTime": 181,
+        "WorkingSetPrivate": 826093568
+      },
+      {
+        "Name": "System",
+        "IDProcess": 4,
+        "PercentProcessorTime": 50,
+        "WorkingSetPrivate": 12288
+      },
+      {
+        "Name": "bash#11",
+        "IDProcess": 31772,
+        "PercentProcessorTime": 40,
+        "WorkingSetPrivate": 1941504
+      },
+      {
+        "Name": "gh",
+        "IDProcess": 49352,
+        "PercentProcessorTime": 22,
+        "WorkingSetPrivate": 16162816
+      },
+      {
+        "Name": "WmiPrvSE#2",
+        "IDProcess": 28060,
+        "PercentProcessorTime": 22,
+        "WorkingSetPrivate": 8126464
+      },
+      {
+        "Name": "svchost#63",
+        "IDProcess": 9844,
+        "PercentProcessorTime": 13,
+        "WorkingSetPrivate": 10981376
+      }
+    ],
+    "totalCpuPercent": 61,
+    "utc": "2026-10-31T02:43:23.2169780Z",
+    "counts": [
+      {
+        "Name": "codex",
+        "Count": 9
+      },
+      {
+        "Name": "dotnet",
+        "Count": 2
+      },
+      {
+        "Name": "python",
+        "Count": 15
+      }
+    ]
+  },
+  {
+    "ramFreeKB": 18704988,
+    "gpu": "NVIDIA GeForce RTX 4070, 31 %, 19 %, 3672 MiB, 22.95 W, 510 MHz, 45",
+    "top": [
+      {
+        "Name": "vmmemWSL",
+        "IDProcess": 19840,
+        "PercentProcessorTime": 690,
+        "WorkingSetPrivate": 11299565568
+      },
+      {
+        "Name": "VBCSCompiler",
+        "IDProcess": 24620,
+        "PercentProcessorTime": 542,
+        "WorkingSetPrivate": 420229120
+      },
+      {
+        "Name": "Big Ambitions Agent Tests",
+        "IDProcess": 8808,
+        "PercentProcessorTime": 269,
+        "WorkingSetPrivate": 5350297600
+      },
+      {
+        "Name": "MsMpEng",
+        "IDProcess": 1312,
+        "PercentProcessorTime": 121,
+        "WorkingSetPrivate": 775733248
+      },
+      {
+        "Name": "git",
+        "IDProcess": 41180,
+        "PercentProcessorTime": 35,
+        "WorkingSetPrivate": 1560576
+      },
+      {
+        "Name": "dotnet#1",
+        "IDProcess": 34668,
+        "PercentProcessorTime": 31,
+        "WorkingSetPrivate": 51335168
+      },
+      {
+        "Name": "WmiPrvSE#2",
+        "IDProcess": 28060,
+        "PercentProcessorTime": 22,
+        "WorkingSetPrivate": 8036352
+      },
+      {
+        "Name": "System",
+        "IDProcess": 4,
+        "PercentProcessorTime": 17,
+        "WorkingSetPrivate": 12288
+      }
+    ],
+    "totalCpuPercent": 96,
+    "utc": "2026-10-31T02:43:50.1998043Z",
+    "counts": [
+      {
+        "Name": "codex",
+        "Count": 9
+      },
+      {
+        "Name": "dotnet",
+        "Count": 2
+      },
+      {
+        "Name": "python",
+        "Count": 15
+      }
+    ]
+  },
+  {
+    "ramFreeKB": 17859720,
+    "gpu": "NVIDIA GeForce RTX 4070, 38 %, 7 %, 3675 MiB, 37.38 W, 855 MHz, 47",
+    "top": [
+      {
+        "Name": "Big Ambitions Agent Tests",
+        "IDProcess": 8808,
+        "PercentProcessorTime": 378,
+        "WorkingSetPrivate": 5334749184
+      },
+      {
+        "Name": "vmmemWSL",
+        "IDProcess": 19840,
+        "PercentProcessorTime": 136,
+        "WorkingSetPrivate": 10716884992
+      },
+      {
+        "Name": "MsMpEng",
+        "IDProcess": 1312,
+        "PercentProcessorTime": 118,
+        "WorkingSetPrivate": 855728128
+      },
+      {
+        "Name": "FoodChoiceRegression",
+        "IDProcess": 29732,
+        "PercentProcessorTime": 109,
+        "WorkingSetPrivate": 25821184
+      },
+      {
+        "Name": "dotnet#1",
+        "IDProcess": 51476,
+        "PercentProcessorTime": 91,
+        "WorkingSetPrivate": 76853248
+      },
+      {
+        "Name": "python#8",
+        "IDProcess": 35968,
+        "PercentProcessorTime": 86,
+        "WorkingSetPrivate": 54042624
+      },
+      {
+        "Name": "WmiPrvSE#2",
+        "IDProcess": 28060,
+        "PercentProcessorTime": 22,
+        "WorkingSetPrivate": 8110080
+      },
+      {
+        "Name": "System",
+        "IDProcess": 4,
+        "PercentProcessorTime": 18,
+        "WorkingSetPrivate": 12288
+      }
+    ],
+    "totalCpuPercent": 48,
+    "utc": "2026-10-31T02:44:17.2741313Z",
+    "counts": [
+      {
+        "Name": "codex",
+        "Count": 9
+      },
+      {
+        "Name": "dotnet",
+        "Count": 2
+      },
+      {
+        "Name": "python",
+        "Count": 15
+      }
+    ]
+  },
+  {
+    "ramFreeKB": 19540100,
+    "gpu": "NVIDIA GeForce RTX 4070, 56 %, 39 %, 3674 MiB, 28.21 W, 930 MHz, 47",
+    "top": [
+      {
+        "Name": "vmmemWSL",
+        "IDProcess": 19840,
+        "PercentProcessorTime": 721,
+        "WorkingSetPrivate": 9987076096
+      },
+      {
+        "Name": "Big Ambitions Agent Tests",
+        "IDProcess": 8808,
+        "PercentProcessorTime": 390,
+        "WorkingSetPrivate": 5306089472
+      },
+      {
+        "Name": "MsMpEng",
+        "IDProcess": 1312,
+        "PercentProcessorTime": 167,
+        "WorkingSetPrivate": 872153088
+      },
+      {
+        "Name": "dotnet#1",
+        "IDProcess": 12252,
+        "PercentProcessorTime": 79,
+        "WorkingSetPrivate": 58331136
+      },
+      {
+        "Name": "dotnet#2",
+        "IDProcess": 50564,
+        "PercentProcessorTime": 69,
+        "WorkingSetPrivate": 46485504
+      },
+      {
+        "Name": "SearchIndexer",
+        "IDProcess": 8156,
+        "PercentProcessorTime": 41,
+        "WorkingSetPrivate": 222572544
+      },
+      {
+        "Name": "System",
+        "IDProcess": 4,
+        "PercentProcessorTime": 37,
+        "WorkingSetPrivate": 12288
+      },
+      {
+        "Name": "WmiPrvSE#2",
+        "IDProcess": 28060,
+        "PercentProcessorTime": 27,
+        "WorkingSetPrivate": 8073216
+      }
+    ],
+    "totalCpuPercent": 76,
+    "utc": "2026-10-31T02:44:44.0882996Z",
+    "counts": [
+      {
+        "Name": "codex",
+        "Count": 8
+      },
+      {
+        "Name": "dotnet",
+        "Count": 3
+      },
+      {
+        "Name": "python",
+        "Count": 15
+      }
+    ]
+  },
+  {
+    "ramFreeKB": 19852008,
+    "gpu": "NVIDIA GeForce RTX 4070, 52 %, 32 %, 3676 MiB, 26.39 W, 630 MHz, 46",
+    "top": [
+      {
+        "Name": "vmmemWSL",
+        "IDProcess": 19840,
+        "PercentProcessorTime": 827,
+        "WorkingSetPrivate": 10086494208
+      },
+      {
+        "Name": "Big Ambitions Agent Tests",
+        "IDProcess": 8808,
+        "PercentProcessorTime": 397,
+        "WorkingSetPrivate": 5314596864
+      },
+      {
+        "Name": "MsMpEng",
+        "IDProcess": 1312,
+        "PercentProcessorTime": 189,
+        "WorkingSetPrivate": 764276736
+      },
+      {
+        "Name": "dotnet#1",
+        "IDProcess": 30384,
+        "PercentProcessorTime": 92,
+        "WorkingSetPrivate": 47845376
+      },
+      {
+        "Name": "dotnet#2",
+        "IDProcess": 48916,
+        "PercentProcessorTime": 55,
+        "WorkingSetPrivate": 36872192
+      },
+      {
+        "Name": "other-agent-cli",
+        "IDProcess": 2848,
+        "PercentProcessorTime": 27,
+        "WorkingSetPrivate": 161501184
+      },
+      {
+        "Name": "WmiPrvSE#2",
+        "IDProcess": 28060,
+        "PercentProcessorTime": 27,
+        "WorkingSetPrivate": 8126464
+      },
+      {
+        "Name": "python#11",
+        "IDProcess": 28272,
+        "PercentProcessorTime": 18,
+        "WorkingSetPrivate": 32251904
+      }
+    ],
+    "totalCpuPercent": 76,
+    "utc": "2026-10-31T02:45:10.5968326Z",
+    "counts": [
+      {
+        "Name": "codex",
+        "Count": 8
+      },
+      {
+        "Name": "dotnet",
+        "Count": 3
+      },
+      {
+        "Name": "python",
+        "Count": 14
+      }
+    ]
+  }
+]

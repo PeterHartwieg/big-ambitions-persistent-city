@@ -1,0 +1,23 @@
+{
+  "sourceSha": "6d43276198eba5d0dd016b51bc7fc670bc651762",
+  "dllSha256": "f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c",
+  "assemblyLoaded": true,
+  "nativePatchPresence": 29,
+  "pid": 8808,
+  "sessionId": 11,
+  "commandLine": "\"C:\\BigAmbitions-AgentTests\\Big Ambitions Agent Tests.exe\" -agent-tests -disable-force-steam -console -foodtrucks-test -drivenrides-test -screen-fullscreen 0 -screen-width 1920 -screen-height 1080 -logFile \"C:\\BigAmbitions-AgentTests\\Player-agent.log\"",
+  "buildCommand": "python tools/build.py --game-managed \"C:\\BigAmbitions-AgentTests\\Big Ambitions Agent Tests_Data\\Managed\"",
+  "renderLogLines": [
+    "[PhysX] Initialized MultithreadedTaskDispatcher with 20 workers.",
+    "Initialize engine version: 2022.3.62f2 (7670c08855a9)",
+    "[Subsystems] Discovering subsystems at path C:/BigAmbitions-AgentTests/Big Ambitions Agent Tests_Data/UnitySubsystems",
+    "GfxDevice: creating device client; threaded=1; jobified=1",
+    "Direct3D:",
+    "    Version:  Direct3D 11.0 [level 11.1]",
+    "    Renderer: NVIDIA GeForce RTX 4070 (ID=0x2786)",
+    "    Vendor:   NVIDIA",
+    "    VRAM:     12010 MB",
+    "    Driver:   32.0.16.1088",
+    "Begin MonoManager ReloadAssembly"
+  ]
+}

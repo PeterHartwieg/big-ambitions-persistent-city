@@ -1,0 +1,10 @@
+{
+  "instance": "agent1",
+  "held": true,
+  "owner": "pc-diagnose-locked-feasibility",
+  "purpose": "Locked-session feasibility test only",
+  "acquired_utc": "2026-10-31T02:34:06.6932232Z",
+  "expires_automatically": false,
+  "pending": 0,
+  "legacy_blocked": false
+}

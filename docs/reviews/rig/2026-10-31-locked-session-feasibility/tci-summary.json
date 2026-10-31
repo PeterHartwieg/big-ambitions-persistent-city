@@ -1,0 +1,24 @@
+{
+  "steamConfiguredLibraries": [
+    {
+      "library": 1,
+      "steamappsExists": true,
+      "workshopAppFolderExists": true,
+      "target3826623232Exists": false
+    }
+  ],
+  "preexistingAgent1ModNameMatches": [],
+  "originalModsLocalFiles": 364,
+  "query": "Steam libraryfolders.vdf -> each steamapps/workshop/content/1331550/3826623232; names in preexisting and installed agent1 ModsLocal",
+  "loadedAssemblyCount": 182,
+  "loadedAssemblyMatches": [],
+  "playerLogMatches": [],
+  "activeMods": [
+    "FoodDemandAuditProbe",
+    "PersistentCity",
+    "PR3RigGuard",
+    "RealLifeOverhaul"
+  ],
+  "workshopDisabled": true,
+  "passed": true
+}
