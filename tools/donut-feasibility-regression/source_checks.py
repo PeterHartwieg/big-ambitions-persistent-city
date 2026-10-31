@@ -7,7 +7,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "00d1321b257e70e57829cfef2ca823b4d0e25060"
 readers = {ROOT / ("Runtime/" + name + ".cs") for name in
-           ("DonutFeasibilityReader", "CupcakeFeasibilityReader", "DirectStockShowcaseReader")}
+           ("DonutFeasibilityReader", "CupcakeFeasibilityReader", "SaladFeasibilityReader", "DirectStockShowcaseReader")}
 text = "\n".join(path.read_text(encoding="utf-8") for path in sorted(readers))
 code = re.sub(r"//[^\n]*|/\*.*?\*/", "", text, flags=re.S)
 for forbidden in ("Harmony", "SetUp(", "ProcessCustomer", "CustomerEntry", "OrderEntry",
@@ -20,7 +20,7 @@ for directory in ("Core", "Runtime", "Persistence", "Compatibility"):
     for path in (ROOT / directory).glob("*.cs"):
         if path not in readers:
             source = path.read_text(encoding="utf-8-sig")
-            for symbol in ("DonutFeasibility", "CupcakeFeasibility", "DirectStockShowcase", "DirectStockCandidate"):
+            for symbol in ("DonutFeasibility", "CupcakeFeasibility", "SaladFeasibility", "DirectStockShowcase", "DirectStockCandidate"):
                 assert symbol not in source, str(path)
 
 paths = subprocess.check_output(["git", "ls-tree", "-r", "--name-only", BASE], cwd=ROOT, text=True).splitlines()
@@ -47,5 +47,6 @@ assert new_body.replace("new DirectStockFields(", "new DonutFeasibilitySnapshot(
 original_tests = subprocess.check_output(["git", "show", f"{DONUT_HEAD}:tools/donut-feasibility-regression/Program.cs"], cwd=ROOT, text=True)
 current_tests = (ROOT / "tools/donut-feasibility-regression/Program.cs").read_text()
 current_tests = re.sub(r"#if CUPCAKE\n.*?#endif\n", "", current_tests, flags=re.S)
+current_tests = re.sub(r"#if SALAD\n.*?#endif\n", "", current_tests, flags=re.S)
 assert current_tests.replace("CandidateReader", "DonutFeasibilityReader") == original_tests
 print("PASS original donut read body and cases unchanged after mechanical refactor/reader alias")
