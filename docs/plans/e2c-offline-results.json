@@ -61,11 +61,6 @@
   "startupAdapterChecks": 3064,
   "otherDotnetWaitBeforeEachGate": true,
   "foregroundOnly": true,
-  "finalProcessInventory": {
-    "dotnet": 0,
-    "testhost": 0,
-    "compilerServer": 0
-  },
   "initialFailuresCorrected": [
     "Overbroad source assertion matched cached State.Active; narrowed before full test pass.",
     "Startup-clock source harness omitted new Runtime file links; updated links, doubles and required log assertion; final run passes."
@@ -203,5 +198,16 @@
       "command": "dotnet run --project tools/food-demand/FoodDemand.csproj -- build/harness-food-demand-demo",
       "exit": 0
     }
-  ]
+  ],
+  "cleanupProcessInventory": {
+    "dotnet": 0,
+    "testhost": 0,
+    "compilerServer": 0
+  },
+  "finalOwnProcessInventory": {
+    "dotnet": 0,
+    "testhost": 0,
+    "compilerServer": 0
+  },
+  "subsequentOtherWorktreeTestsObserved": "e3-first-product; test run/compiler server began after our empty cleanup inventory, left untouched"
 }
