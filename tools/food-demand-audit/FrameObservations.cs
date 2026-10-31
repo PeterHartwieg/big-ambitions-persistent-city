@@ -8,9 +8,9 @@ namespace FoodDemandAuditProbe
     // Fixed value storage: retained frames cannot alias mutable component arrays.
     public struct ComponentSlots
     {
-        public const int Capacity = 13;
-        private long t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12;
-        private int c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12;
+        public const int Capacity = 15;
+        private long t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13,t14;
+        private int c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14;
         public void Add(int i, long ticks) { switch(i) {
             case 0: t0 += ticks; c0++; break;
             case 1: t1 += ticks; c1++; break;
@@ -25,12 +25,14 @@ namespace FoodDemandAuditProbe
             case 10: t10 += ticks; c10++; break;
             case 11: t11 += ticks; c11++; break;
             case 12: t12 += ticks; c12++; break;
+            case 13: t13 += ticks; c13++; break;
+            case 14: t14 += ticks; c14++; break;
             default: throw new ArgumentOutOfRangeException(nameof(i)); } }
         public long Ticks(int i) { switch(i) {
-            case 0: return t0; case 1: return t1; case 2: return t2; case 3: return t3; case 4: return t4; case 5: return t5; case 6: return t6; case 7: return t7; case 8: return t8; case 9: return t9; case 10: return t10; case 11: return t11; case 12: return t12;
+            case 0: return t0; case 1: return t1; case 2: return t2; case 3: return t3; case 4: return t4; case 5: return t5; case 6: return t6; case 7: return t7; case 8: return t8; case 9: return t9; case 10: return t10; case 11: return t11; case 12: return t12; case 13: return t13; case 14: return t14;
             default: throw new ArgumentOutOfRangeException(nameof(i)); } }
         public int Calls(int i) { switch(i) {
-            case 0: return c0; case 1: return c1; case 2: return c2; case 3: return c3; case 4: return c4; case 5: return c5; case 6: return c6; case 7: return c7; case 8: return c8; case 9: return c9; case 10: return c10; case 11: return c11; case 12: return c12;
+            case 0: return c0; case 1: return c1; case 2: return c2; case 3: return c3; case 4: return c4; case 5: return c5; case 6: return c6; case 7: return c7; case 8: return c8; case 9: return c9; case 10: return c10; case 11: return c11; case 12: return c12; case 13: return c13; case 14: return c14;
             default: throw new ArgumentOutOfRangeException(nameof(i)); } }
     }
     public struct DiagnosticDispatchObservation
