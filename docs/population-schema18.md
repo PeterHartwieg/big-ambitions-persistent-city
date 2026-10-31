@@ -94,7 +94,7 @@ Schema 18 also bounds the complete payload's UTF-8 bytes at 268,435,456 alongsid
 its unchanged character limit. Old sources retain their original limits and must
 pass the complete new preflight before conversion can be published.
 
-## B0b amendment ? 31 October 2026
+## B0b amendment — 31 October 2026
 
 Schema 18 is amended in place before any player save has used it. This is the
 B0b prerequisite between B0 and B1, fixing inherited A3 held-context tuning.
@@ -117,10 +117,10 @@ keys are unchanged and tuning-independent; the image is discarded with the decis
 
 `FoodDecisionShop.MemoryContribution` reserves **one binary64 effective log-weight
 contribution per candidate**, not per memory entry or offer. Its structural bound
-is finite **?8?8**; zero is neutral. This can hold B1's aggregate lookup result from
+is finite **-8..8**; zero is neutral. This can hold B1's aggregate lookup result from
 its four-entry memory, including configured strength and loyal/curious effects,
-without retaining a second memory diary. For the plan's bounded 0.1?3 multiplier
-and strength 0?2, the log contribution lies within ?4.606?2.198. B1 must capture
+without retaining a second memory diary. For the plan's bounded 0.1..3 multiplier
+and strength 0..2, the log contribution lies within -4.606..2.198. B1 must capture
 its final bounded contribution before its first affected draw and retain it for
 all offers of the selected candidate. **B0b always writes zero, never applies it,
 and refuses nonzero saved contributions until B1 support exists.** It reserves
@@ -133,7 +133,7 @@ fields and bounds retain strict validation. Schema 17 and older pass their froze
 readers first and migrate with the same null/zero defaults; earlier captures cannot
 be reconstructed. An already selected old context keeps its saved winner and quote
 progress. Once resumed, even a legacy context saves the new image before further
-work. The frozen 13?17 resolvers explicitly exclude both new fields, retaining
+work. The frozen 13-17 resolvers explicitly exclude both new fields, retaining
 all previous required fields, counting and unknown-field refusals. Older binaries
 continue to reject a new image as an unknown field; no fallback strips state.
 
