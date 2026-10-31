@@ -1,6 +1,6 @@
 # Persistent City
 
-> **E2b — 31 October (offline):** unique fail-closed optional frontage ownership, live queue commitment through rain and default-preserving per-kind dwell maxima. R1/R3 and wider venues remain deferred; queue reload limits and numbered 6 Nov checks are explicit. [Evidence and rig handoff](CHECKS.md#e2b-bounded-street-life--31-october-2026-offline-only) · [Implementation](docs/plans/e2-street-life.md#e2b-implementation--31-october-2026-offline).
+> **E2b — 31 October (offline):** indexed, fail-closed optional frontage ownership, bound-line planning and move-up through rain (visible retention pre-existed) and default-preserving per-kind dwell maxima. R1/R3 and wider venues remain deferred; queue reload limits and numbered 6 Nov checks are explicit. [Evidence and rig handoff](CHECKS.md#e2b-review-round-1--31-october-2026-offline-only) · [Implementation](docs/plans/e2-street-life.md#e2b-implementation--31-october-2026-offline).
 
 > **E2a — 31 October (offline):** expanded existing street-life proofs and read-only venue discovery; production DLL and save contracts unchanged. [Coverage, costs and 6 Nov rig checks](CHECKS.md#e2a-street-life-proof--31-october-2026-offline-only) · [Findings and E2b cases](docs/plans/e2-street-life.md).
 
