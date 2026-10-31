@@ -1,10 +1,25 @@
 # Validation status
 
+## Step B1 review corrections - 31 October 2026 (offline only)
+
+**Opus-r1-1 / Opus-r1-2:** narrowed the prerequisite to the held tuning/memory
+image. A B1-capable binary can use the existing revision-1 Active flag at its
+first logical-day boundary; no StartsDay field is requested. The report, README
+and roadmap now route the inherited A3/B0 config re-roll to the A3 choice-policy
+owner with the B0 schema owner. That fix is required independently of B1 and
+also unblocks B1. Production code, the probe and save contracts are unchanged.
+
+**Validation:** review rerun passed **1,832/1,832 unit tests**, **1,832 discovered
+cases**, and **all 31 requested sequential foreground commands plus the contract
+probe**. The seed-2 inherited re-roll still reproduces. The production DLL hash
+remains `b91e6029e59c56b2031bdbab3bff9d32ee2fe690097cf84b3c53cee2ece47a1e`,
+identical to B0. Both numbered rig lists match; no game or rig work was performed.
+
 ## Step B1 contract prerequisite - 31 October 2026 (offline only)
 
 **STOPPED at scope item 1; B1 behavior is not implemented.** Base `192037b` has
 the four-entry memory/watermark/reference contract, but lacks saved held-decision
-memory/config inputs and an independent B migration activation day. The task
+memory/config inputs. The task
 requires stopping when required state is missing rather than silently amending
 schema 18. No production source, settings, schema, save-contract regression,
 native authority or economic behavior was changed. [Contract gap report and
@@ -14,10 +29,14 @@ reproduction](docs/reviews/2026-10-31-b1-contract-gaps.md).
 context before routes. Seed **2**, captured taste weight **0**, resumes as
 **burger** with unchanged config (two identical replays) but **croissant** after
 reload with taste weight **3**. Both paths make **2 route calls / 0 checkouts**.
-Adding held `MemoryInputs` or capability `StartsDay` is rejected as an unknown
-field and preserves the source dictionary string reference. The probe's success
-means the documented gap reproduces, not B1 acceptance. The inherited unchanged-
-config replay works; it does not supply B1's missing captured-input mechanism.
+Adding held `MemoryInputs` is rejected as an unknown field and preserves the
+source dictionary string reference. `StartsDay` refusal is only a shape check;
+activation needs no new field: a B1-capable binary can flip the existing Active
+flag at its first logical-day boundary and persist that flag across reloads.
+The probe's success means the documented gap reproduces, not B1 acceptance. The inherited unchanged-
+config replay works. This is an inherited A3/B0 held-context tuning defect,
+owned by the A3 choice-policy owner with the B0 schema owner for the persisted
+held tuning image. That fix is needed independently of B1 and unblocks B1.
 
 **Validation:** **1,832/1,832 unit tests**, **1,832 discovered cases** and **all 31 requested foreground commands plus the contract probe pass**. The production DLL SHA-256 is `b91e6029e59c56b2031bdbab3bff9d32ee2fe690097cf84b3c53cee2ece47a1e`, identical to B0. [Command manifest and probe output](docs/reviews/2026-10-31-b1-offline-checks.json).
 
@@ -44,7 +63,7 @@ prove arbitrary pointer input. No rig activity was performed in this task.
 1. **LOCKED-OK:** On a prepared disposable FT fixture, select matched loyal/curious cohorts by saved trait bands, including represented consumer slots. Observe several served days with the same eligible shops/prices. Dump each stable consumer's generation references, last experience day, served count, effective/raw affinity, actual cause and watermark; compare return/novelty rates over multiple seeded checkpoint trials, without forcing winners or extra route requests.
 2. **NEEDS-INPUT:** Prepare/visually verify an induced stockout, closure and excessive queue at a player shop using the unlocked 6 Nov session. Record actual commitment/admission and the named failure evidence. Verify that distant candidate rejection, unaffordability, unknown supply, lost routes and schedule interruption do not create bad-service memory. This item waits for unlocked input unless a separately verified bridge fixture action becomes available.
 3. **LOCKED-OK:** From those prepared failure checkpoints, dump committed memory and run recovery over days 3–6. Compare matched loyal/curious and patient/impatient/time-pressed consumers; stockout must never produce a positive gain, bad visits must lower return weight relative to the same pre-visit image, confirmed recovery applies once, and logical-day decay/expiry is lazy.
-4. **LOCKED-OK:** Dump before/after coordinated save/reload at captured/evaluating, selected, committed, reached and uncertain-receipt boundaries, including a late confirmation after midnight. Replay the same checkpoint with different event budgets and unchanged config; require identical choices/memory, original business generation, watermark progression and no duplicate served count. Repeat with edited config: held contexts retain captured inputs; the next uncaptured decision uses the new values that same day. Migration activation remains on the saved next-day boundary after repeated reloads.
+4. **LOCKED-OK:** Dump before/after coordinated save/reload at captured/evaluating, selected, committed, reached and uncertain-receipt boundaries, including a late confirmation after midnight. Replay the same checkpoint with different event budgets and unchanged config; require identical choices/memory, original business generation, watermark progression and no duplicate served count. Repeat with edited config: held contexts retain captured inputs; the next uncaptured decision uses the new values that same day. Verify inactive B stays false across repeated reloads before the first logical-day boundary, flips true when that boundary is crossed, and stays true after save/reload.
 5. **LOCKED-OK:** Reconcile a full native day, including refusal/uncertain/late receipt cases: native orders, stock/bags, resident exact spending/holds, business cash/accounts, wages/expenses and receipt counts. Require no extra or missing native transactions, no retry of an uncertain checkout, unchanged ownership boundaries and no B1-added route requests.
 6. **LOCKED-OK:** Load untouched pre-B1 disposable saves through normal migration, preserving their originals; confirm empty memory, IDs/traits/accounts/journeys unchanged, migration activation on the next logical day, old commitments finishing their captured terms and reload continuity. Lower capacity on a saved four-entry consumer and verify loading does not trim it; normal insertion/expiry handles replacement with the documented tie order.
 7. **LOCKED-OK:** Interleave matched ordinary-play idle and breakfast/lunch/evening rush windows with memory active versus `FoodMemoryWeight=0`, including warm/cold inputs and a soak. Record original autosave, disable it and verify off before every window and after each reload; keep all saves outside measured windows and invalidate any window with save activity. Report combined mod-work p50/p95/max, sample count, every spike >=30 ms with condition/component, route/query counts, allocations/GC, pending work, throughput and catch-up lag. Require mod-work p95 <5 ms and single spikes <30 ms; report whole-frame p50/p95/max/stalls separately. Record matched saved characters/UTF-8 bytes and B0 allocation headroom outside the timing windows. Restore original autosave/profile files/preferences and fixture changes during cleanup; attach before/red -> after/green logs/dumps/captures.

@@ -16,13 +16,34 @@ contract changes accompany this report.
 | B1 requirement | Published contract at `192037b` | Consequence |
 | --- | --- | --- |
 | Capture memory inputs and effective coefficients/revision before drawing weights; held contexts keep those inputs after config reload | `Core/FoodToday.cs`'s `FoodDecisionState` has policy version, logical context, shortlist, quote progress and result, but no coefficient/revision image. `FoodDecisionShop` has only factual business/route inputs. `ContinueFoodDecision` in `Core/FoodWeightedCommerce.cs` selects with the currently attached `ChoiceSettings`. | There is no place to persist B1's bounded per-shop memory contribution or the held policy/config image. Adding a public property makes it a required schema-18 field; old 18 payloads lack it. An in-memory cache would disappear on reload. |
-| New capability activation on migration starts on the next logical day, survives reload, and does not postpone ordinary same-day config edits | `PopulationCapabilities` in `Core/ShopMemory.cs` contains exactly `Code`, `Revision`, `Active`. `FoodCommerceState.ChoiceStartsDay` is already A3's activation boundary. | B has no independent saved scheduled activation day. Resetting A3's boundary would change an inherited contract; recomputing tomorrow on each reload could postpone B indefinitely. |
 
 The replay counterexample uses an **existing A3 coefficient** because B's
-coefficients do not yet exist. It demonstrates that inherited held contexts do
-not already provide the capture mechanism B1 needs; it is not a claim that memory
-behavior was run or failed. B1 must supply that mechanism before its behavior can
-meet the task, including evaluating checkpoints under edited config.
+coefficients do not yet exist. This is an **inherited A3/B0 contract defect**:
+the B–E plan's tuning contract (lines 53 and 316 at `6d43276`) requires A3's own
+keys, as well as B–E keys, to retain captured coefficients in held contexts.
+**Follow-up owner: the A3 choice-policy owner (`pc-a3-weighted-choice`, PR #7),
+coordinated with the B0 schema owner (`pc-b0-schema18`, PR #9) for the persisted
+held tuning image.** That fix is needed regardless of
+whether B1 lands; extending the image with B1's bounded memory contribution
+unblocks B1. The probe does not run memory behavior, and this report does not
+implement the inherited defect's fix.
+
+## Activation fits the existing capability header
+
+An independent `StartsDay` field is **not a prerequisite**. A B1-capable binary
+can retain `Capabilities {Code:"B", Revision:1, Active:false}` on migration/load
+and atomically flip `Active` to true when the simulator first crosses a logical-day
+boundary. A save before that boundary retains false; reloading before midnight
+still reaches the same next midnight. A save after activation retains true.
+Catch-up must process the first crossed boundary in logical order before new B
+decisions, while older held/committed decisions finish with their captured terms.
+This neither changes A3's `ChoiceStartsDay` nor delays ordinary tuning edits.
+
+That option requires a B1 implementation of active revision 1 and its capability
+bootstrap support; B0 correctly refuses active B. It does not require another
+saved field. The earlier claim that reload could indefinitely postpone activation
+was overstated and is withdrawn. The held tuning/memory image is the remaining
+missing state.
 
 The [B0 wire contract](../population-schema18.md) explicitly states exact
 consumer-extension lengths **8/18/28/38/48**, ten characters per memory, seven
@@ -34,7 +55,7 @@ The early authority probe also requires exactly the three capability fields.
 Changing readers/writers under 18 would silently change the published shape.
 
 Reusing `Reason`, context hashes, affinity/cause codes, watermark stages or
-business IDs to hide config/activation state would change their documented
+business IDs to hide captured tuning/memory state would change their documented
 meaning. In particular, putting tuning into the logical draw key would violate
 the tuning-independent draw contract. No such encoding is proposed here.
 
@@ -56,7 +77,8 @@ first counterexample among seeds 0–127 and requires:
   taste weight **3** resume **croissant**; unchanged-config repeats match.
 - Exactly **2 route calls per resume**, **0 checkout calls**.
 - Adding `MemoryInputs` to the held decision is **Invalid: Unknown field**.
-- Adding `StartsDay` to capabilities is **Invalid: Unknown field**.
+- Adding `StartsDay` to capabilities is **Invalid: Unknown field**. This is only
+  a shape-refusal observation; it does not establish that such a field is needed.
 - Both refusals leave the source dictionary's string reference intact.
 
 The probe exits successfully only when this documented limitation reproduces;
@@ -66,14 +88,15 @@ unit tests asserting that the limitation is desired behavior.
 
 ## Contract work needed before continuing
 
-The schema owner needs to publish a contract that can retain a bounded held
-decision's effective policy/config inputs and memory contribution, and B's
-independent migration activation boundary. Specify defaults for previously
-published saves, strict validation/refusal, immutable older readers, capability
-bootstrap support, counting and size allocation. Then repeat the changed-config
+The A3 choice-policy owner and B0 schema owner need to resolve the inherited
+held-context tuning defect with a published contract for a bounded held
+decision's effective policy/config inputs, extended with B1's memory contribution.
+Specify defaults for previously published saves, strict validation/refusal,
+immutable older readers, counting and size allocation. Then repeat the changed-config
 evaluating/selected replay proof and the combined save-size budget before B1
 capture/choice activation. This report allocates no replacement schema number
-and does not amend schema 18.
+and does not amend schema 18. No `StartsDay` field is requested; activation can
+use the existing flag at the first logical-day boundary as described above.
 
 The four-entry memory, business-reference and watermark allocation itself is
 present. This report does not request a larger diary, more route slots, B2 UI,
