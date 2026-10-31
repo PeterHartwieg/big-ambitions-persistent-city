@@ -57,7 +57,10 @@ namespace PersistentCity.Runtime
             string raw=token.Type==JTokenType.String ? (string)token! : token.ToString(Formatting.None);
             bool valid=(token.Type==JTokenType.Integer || token.Type==JTokenType.Float || token.Type==JTokenType.String)
                 && double.TryParse(raw,NumberStyles.Float,CultureInfo.InvariantCulture,out _);
-            double value=valid ? double.Parse(raw,NumberStyles.Float,CultureInfo.InvariantCulture) : double.NaN;
+            // Json.NET quotes nonfinite floats when formatting JSON. Read a numeric float directly
+            // so infinities clamp to endpoints and finite radius precision is retained.
+            double value=token.Type==JTokenType.Float ? (double)token
+                : valid ? double.Parse(raw,NumberStyles.Float,CultureInfo.InvariantCulture) : double.NaN;
             if(type==typeof(double)) return value;
             if(double.IsNaN(value)) return int.MinValue;
             if(value<=0) return value==0 ? 0 : int.MinValue+1;

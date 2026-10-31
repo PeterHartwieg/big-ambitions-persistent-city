@@ -127,8 +127,10 @@ public sealed class FoodAwarenessTests
         var dump=new FoodAwarenessDump();var image=Sample(c,dump:dump);
         Assert.Equal(12,dump.Samples.Count(x=>x.Source==FoodAwarenessSource.Home || x.Source==FoodAwarenessSource.Routine || x.Source==FoodAwarenessSource.Origin));
         Assert.All(dump.Samples.Where(x=>x.Source==FoodAwarenessSource.Home),x=>Assert.Equal("far",x.BusinessId));
-        var entry=Assert.Single(image.Union);Assert.False(entry.Eligible);
-        Assert.Empty(c.Rank(image,new(0,0,0),new ResidentTraits {Bands="2222222222"},new(),new(1,"c",1,MealKind.Lunch,"x",1),120));
+        var entry=Assert.Single(image.Union);
+        // Discovery is allowed to expose this far shop; the rejected local draws cannot.
+        Assert.Equal((entry.Sources & FoodAwarenessSource.Discovery)!=0,entry.Eligible);
+        Assert.Equal(entry.Eligible ? 1 : 0,c.Rank(image,new(0,0,0),new ResidentTraits {Bands="2222222222"},new(),new(1,"c",1,MealKind.Lunch,"x",1),120).Length);
         var dense=Catalogue(1,true);var duplicates=Sample(dense);Assert.Single(duplicates.Union);Assert.True(duplicates.Union[0].Eligible);
     }
     [Fact]
@@ -156,7 +158,7 @@ public sealed class FoodAwarenessTests
     [Fact]
     public void RefusalAfterAdmissionStillEnforcesPriceStockAndDeadline()
     {
-        foreach(int refusal in new[]{0,1,2})
+        foreach(int refusal in new[]{0,1,2,3})
         {
             var (city,market,planner)=WeightedFoodChoiceTests.Ready(79,24);city.State.Food!.AwarenessStartsDay=1;
             foreach(var b in market.Shops)
@@ -164,12 +166,33 @@ public sealed class FoodAwarenessTests
                 if(refusal==0) b.Offers[0].Price=Money.FromCents(20000);
                 if(refusal==1) b.Offers[0].Units=0;
                 if(refusal==2) b.MealsPerHour=1;
+                if(refusal==3) b.Hours.Clear();
             }
             var meal=city.State.Food.Residents.Single();FoodDecisionState? captured=null;city.FoodDecisionObserved+=x=>captured=x.Decision;
             while(!city.AdvanceTo(meal.DesiredAt,1).CaughtUp) {}
             Assert.NotNull(captured!.Awareness);Assert.Contains(captured.Awareness!.Union,x=>x.Eligible);
             Assert.Equal(FoodDecisionResult.NoFeasible,captured.Result);Assert.Empty(market.Orders);Assert.InRange(planner.Out+planner.Back,0,16);
         }
+    }
+    [Fact]
+    public void AdmittedOffersStillUseTasteAndCanLoseToTheFundedHouseholdAlternative()
+    {
+        var catalogue=Catalogue(2,true);var image=Sample(catalogue,memory:new Four());
+        var neutral=new ResidentTraits {Bands="2222222222"};var taste=new ResidentTraits {Bands="2422222222"};
+        int neutralBurgers=0,tasteBurgers=0,outside=0;
+        for(int seed=0;seed<4096;seed++)
+        {
+            var draw=new FoodDrawContext(seed,"consumer",1,MealKind.Lunch,"stay",1);
+            var admitted=catalogue.Rank(image,new(0,0,0),neutral,new(),draw,120);
+            Assert.Equal(2,admitted.Length);
+            var offers=admitted.Select(e=>new EvaluatedFoodOffer(e.BusinessId,e.BusinessId=="generation:00000" ? FoodProducts.Burger : FoodProducts.Croissant,
+                Money.FromCents(100),1,0,12,90,null,null,MealKind.Lunch)).ToArray();
+            var a=FoodChoicePolicy.Select(offers,neutral,Money.FromCents(1000),draw,new(),true);
+            var b=FoodChoicePolicy.Select(offers,taste,Money.FromCents(1000),draw,new(),true);
+            if(a.Outside) outside++;else if(offers[a.Index].ProductId==FoodProducts.Burger) neutralBurgers++;
+            if(!b.Outside && offers[b.Index].ProductId==FoodProducts.Burger) tasteBurgers++;
+        }
+        Assert.InRange(outside,1,4095);Assert.True(tasteBurgers>neutralBurgers);
     }
     [Theory] [InlineData(1)] [InlineData(2)] [InlineData(6)] [InlineData(10)]
     public void HeldAwarenessReloadAndCadenceRetainIdentityWithChangedLiveSettingsAndCatalogue(int units)
@@ -190,6 +213,8 @@ public sealed class FoodAwarenessTests
     [InlineData("null",250,.02,4)] [InlineData("true",250,.02,4)]
     [InlineData("{}",250,.02,4)] [InlineData("[]",250,.02,4)]
     [InlineData("\"NaN\"",250,.02,4)] [InlineData("1e100",1000,.20,4)]
+    [InlineData("Infinity",1000,.20,4)] [InlineData("-Infinity",25,.001,0)]
+    [InlineData("\"Infinity\"",1000,.20,4)] [InlineData("\"-Infinity\"",25,.001,0)] [InlineData("NaN",250,.02,4)]
     [InlineData("-1e100",25,.001,0)] [InlineData("2.5",25,.20,4)]
     public void FlatSettingsClampOrDefaultOnceWithoutDiscardingOtherKeys(string value,double radius,double probability,int draws)
     {
