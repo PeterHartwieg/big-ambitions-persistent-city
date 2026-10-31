@@ -11,7 +11,12 @@ static class Program
     static void Main()
     {
         var settings = new PrototypeSettings { InteriorCityView = "on" };
+        long coldBytes = GC.GetAllocatedBytesForCurrentThread();
+        long coldStart = Stopwatch.GetTimestamp();
         NativeInteriorGuard.Start(settings);
+        long coldTicks = Stopwatch.GetTimestamp() - coldStart;
+        coldBytes = GC.GetAllocatedBytesForCurrentThread() - coldBytes;
+        double coldMs = coldTicks * 1000.0 / Stopwatch.Frequency;
         Require(!NativeInteriorGuard.Verdict.Detected && Harmony.Reads == 0, "absent + no owner metadata scan");
         settings.ThirdPartyInteriorHarmonyOwnerIds = new[] { "persistentcity.harmless.fixture" };
         NativeInteriorGuard.Start(settings);
@@ -62,7 +67,7 @@ static class Program
         settings.ThirdPartyInteriorGuard = "off"; NativeInteriorGuard.Start(settings);
         Require(NativeInteriorGuard.Verdict.AllowsView(true), "off bypasses detection only");
         Console.WriteLine("PASS actual Runtime adapter: assembly/owner/error/off, cached session and on-demand bridge; own emitted stand-in only.");
-        Console.WriteLine(JsonSerializer.Serialize(new { samples, assemblies, scanP50Ms = times[samples / 2],
+        Console.WriteLine(JsonSerializer.Serialize(new { coldMs, coldAllocatedBytes = coldBytes, samples, assemblies, scanP50Ms = times[samples / 2],
             scanP95Ms = times[(int)(samples * .95)], scanMaxMs = times[^1], scanAllocatedBytes = bytes,
             spikesAtLeast30Ms = spikes, cachedReads = 1000000, cachedMeanMs = frameMs, cachedAllocatedBytes = frameBytes,
             perFrameDetectionCalls = 0 }));
