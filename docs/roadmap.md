@@ -21,7 +21,7 @@ Replaces the phase order in docs/reviews/2026-10-27-realism-gameplay-roadmap.md 
 0. Performance: the 30 October comprehensive review is done and passes the mod-work gate below. Spock agreed: no optimization work now; re-measure as each slice lands. This isn't a release step.
 A. Inspector, traits and probabilistic choice. Start now (Peter 15:24 JST), with the standing performance gate applied to each slice.
 B. Memory, loyalty and regulars. **B0 is implemented offline:** schema 18, exact old-source migration and history-inclusive capacity; memory remains empty/inactive and the regulars helper is a pure own-shop projection. **B0b is inserted between B0 and B1:** persist the held A3 tuning image and neutral bounded per-candidate contribution; schema 18 is amended before player use. B1 resumes on top of B0b; B2 UI remains pending. [Contract and capacity evidence](population-schema18.md).
-C. Marketing awareness and targeting, plus the market research product.
+C. Marketing awareness and targeting, plus the market research product. **C4 landed inactive:** bounded pure research engine/access contract only; paid research stays off until a safe native fee path exists (C3 / PR #20). No UI, normal-play computation or saved fields. [Contract and offline proof](market-research.md).
 D. Rivals as alternatives.
 E. Weather, street life, bigger menus and more products.
 Then: re-check the same performance gate for the final release, the hands-on session, and one release.
@@ -46,6 +46,7 @@ Record every taken win with before/after numbers.
 
 | Slice | Change | Before | After |
 |---|---|---|---|
+| C4 | Validate frozen A2 trait bands directly instead of allocating a temporary trait object per input row | Prototype: 32 B/row, median 7.160 ns | 0 B/row, 3.946 ns; ten interleaved 100k-call samples, valid/invalid parity asserted. Offline input setup only; [measurements](reviews/2026-10-31-c4-measurements.json) |
 | B0b | Nonmaterializing streaming shape precheck for the new held tuning image, before full graph decode | Materializing prototype: 136 bytes/check, median 1,375.69 ns | 0 bytes/check, 187.79 ns (three fresh processes, 300k calls/run; offline .NET 10). Continuation allocation unchanged; [raw B0b measurements](reviews/2026-10-31-b0b-measurements.json) |
 | A2 | Save validation builds error text only on failure (`Text`/`Bounded`/`Known`/duplicate/unknown-field checks); runs on every save and load | Validation alloc per save **8.39 MiB** (957 residents with journeys, offline .NET 10) | **1.31 MiB** |
 | A2 | Read shape check: one reusable duplicate-field set per JSON depth, bit flags per position, integer range from the token value; positions streamed instead of one `JObject` each | Read alloc **83.3 MiB**, read median **119.7 ms**; write alloc **26.1 MiB** (same payload) | **38.8 MiB**, **89.2 ms**; **19.1 MiB** |
