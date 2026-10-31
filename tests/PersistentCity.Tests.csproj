@@ -8,6 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Runtime/PrototypeSettings.cs" Link="PrototypeSettings.cs" />
+    <Compile Include="../Runtime/InteriorViewState.cs" Link="InteriorViewState.cs" />
     <Compile Include="../Runtime/AudienceGeometryCache.cs" Link="AudienceGeometryCache.cs" />
     <Compile Include="../tools/food-demand-audit/EventObservations.cs" Link="EventObservations.cs" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
