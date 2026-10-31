@@ -24,9 +24,11 @@ static class Program
             }
             var last=state.Shops.Single(s=>s.PlaceId.EndsWith(":130:shop",StringComparison.Ordinal));
             Require(market.IsCandidate(last),"acquisition must publish eligibility without another discovery frame");
+            long geometryVersion=market.AwarenessRevision;
             controllers[129].Accessible=false;
             controllers[128].buildingRegistration!.Eligible=false;
             for(int f=0;f<frames;f++) market.RefreshDiscovery();
+            Require(market.AwarenessRevision==geometryVersion,"eligibility-only changes must not rebuild geometry");
             if(reload)
             {
                 NativeFoodOwnership.Reload();

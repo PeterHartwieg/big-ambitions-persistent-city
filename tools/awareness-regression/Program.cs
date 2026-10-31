@@ -111,8 +111,35 @@ static class Program
         // Equal held image exists once even at the 150k-consumer ceiling. No per-consumer delta.
         return new {residents,consumers=state.Food.Residents.Count,baselineBytes,candidateBytes=bytes,addedBytes=bytes-baselineBytes,managedGraphBytesSharedStrings=managedGraphBytes,heldImageBytes=System.Text.Encoding.UTF8.GetByteCount(JsonConvert.SerializeObject(image)),counts.Streaming,counts.Semantic};
     }
-    static void Main()
+    static object ReviewRebuildUnits(int count,bool dense)
     {
+        var entries=Enumerable.Range(0,count).Select(i=>new FoodAwarenessCatalogue.Entry(
+            "business:ba%3Astreet_thirdstreet:"+i+":1:ba%3Abusiness_fastfoodrestaurant:player","p"+i,
+            dense ? new Position(10,0,0) : new Position(i%200*125,0,i/200*125))).ToArray();
+        var units=new List<double>();var totals=new List<double>();var spikes=new List<object>();int unitCount=0,maxItems=0;
+        for(int iteration=0;iteration<6;iteration++)
+        {
+            long first=Stopwatch.GetTimestamp();using var builder=FoodAwarenessCatalogue.BeginBuild(entries);
+            double total=0;bool complete;
+            do
+            {
+                var stage=builder.Stage;long started=unitCount==0 || total==0 ? first : Stopwatch.GetTimestamp();
+                complete=builder.Continue();double ms=Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+                units.Add(ms);total+=ms;unitCount++;maxItems=Math.Max(maxItems,builder.LastWorkItems);
+                if(ms>=30) spikes.Add(new {iteration,stage,ms});
+                if(builder.LastWorkItems>FoodAwarenessCatalogue.Builder.MaximumWorkPerUnit) throw new Exception("Rebuild unit exceeded work bound");
+            }while(!complete);
+            totals.Add(total);
+        }
+        return new {alternatives=count,dense,iterations=6,includesColdJit=true,unitCount,maxItems,unitMs=Stats(units.ToArray()),totalCpuMs=Stats(totals.ToArray()),spikes};
+    }
+    static void Main(string[] args)
+    {
+        if(args.Contains("--review-rebuild"))
+        {
+            Console.WriteLine(JsonConvert.SerializeObject(new {workPerUnit=FoodAwarenessCatalogue.Builder.MaximumWorkPerUnit,
+                cases=new[]{ReviewRebuildUnits(1024,true),ReviewRebuildUnits(20000,true),ReviewRebuildUnits(1024,false),ReviewRebuildUnits(20000,false)}},Formatting.Indented));return;
+        }
         Console.WriteLine(JsonConvert.SerializeObject(new {schema=CityState.CurrentSchema,runtime=System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription,
             baseline="c0af745 A3/B0b metadata rank loop; native reads/routes excluded",policy=new {radiusMetres=250,drawsPerAnchor=4,discoveryDailyProbability=.02},
             stages=new[]{Bench(1024),Bench(20000),Bench(1024,false),Bench(20000,false)},saved=new[]{Saved(957),Saved(2500)}},Formatting.Indented));

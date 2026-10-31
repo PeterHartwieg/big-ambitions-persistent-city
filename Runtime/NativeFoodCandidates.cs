@@ -13,8 +13,8 @@ namespace PersistentCity.Runtime
         private readonly Dictionary<string,FoodScope> scopesByBusiness = new Dictionary<string,FoodScope>(StringComparer.Ordinal);
         private void Candidate(string id,bool admit)
         {
-            bool changed=admit ? candidateBusinesses.Add(id) : candidateBusinesses.Remove(id);
-            if(changed) AwarenessRevision++;
+            // Eligibility is sampled live; it does not alter the geometry/identity index.
+            if(admit) candidateBusinesses.Add(id);else candidateBusinesses.Remove(id);
         }
         private readonly CityBuildingController[] controllers;
         // Escaped place IDs are memoized until a controller registration/address changes.
@@ -113,7 +113,8 @@ namespace PersistentCity.Runtime
                 if(authority!=null) Candidate(authority.BusinessId,false);
                 NativeFoodOwnership.Retire(place);
             }
-            registrations.Remove(place);shopControllers.Remove(place);decisionSupply.Remove(place);
+            bool changed=registrations.Remove(place) | shopControllers.Remove(place);
+            decisionSupply.Remove(place);if(changed) AwarenessRevision++;
         }
         private string DiscoveryPlaceId(int slot, BuildingRegistration reg)
         {
@@ -148,6 +149,7 @@ namespace PersistentCity.Runtime
             // This adapter owns the live list; scopes persist in place when a business/menu changes.
             if(!ReferenceEquals(scopeList,state.Shops) || indexedScopeCount!=state.Shops.Count)
             {
+                AwarenessRevision++;
                 scopesByPlace.Clear();scopesByBusiness.Clear();foreach(var entry in state.Shops) {scopesByPlace.Add(entry.PlaceId,entry);scopesByBusiness[entry.BusinessId]=entry;}
                 scopeList=state.Shops;indexedScopeCount=state.Shops.Count;
             }

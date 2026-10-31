@@ -187,6 +187,7 @@ namespace PersistentCity.Core
             MemoryProvider=memory;CampaignProvider=campaign;
             state = city.State.Food ?? throw new InvalidOperationException("No food state.");
             if(state.Residents.Count==0) { state.ChoiceStartsDay=(int)Math.Floor(city.State.Minute/1440)+1; state.AwarenessStartsDay=state.ChoiceStartsDay; }
+            foreach(var scope in state.Shops) initialScopesByPlace.Add(scope.PlaceId,scope);
             records = state.Residents.ToDictionary(r => r.ResidentId, StringComparer.Ordinal);
             InitializeRepresentation();
             foreach (var entry in state.Residents)

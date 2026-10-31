@@ -24,7 +24,7 @@ namespace PersistentCity.Core
         public static readonly EmptyFoodAwarenessProvider Instance = new EmptyFoodAwarenessProvider();
         public string? Reference(string consumer, int day, int slot) => null;
     }
-    /// <summary>Publication version changes only when supported identities/places/eligibility change.
+    /// <summary>Publication version changes only when supported identities/places/menu change (not eligibility alone).
     /// The native adapter's existing bounded discovery ring publishes these changes.</summary>
     public interface IFoodAwarenessRevision { long AwarenessRevision { get; } }
 
@@ -105,69 +105,166 @@ namespace PersistentCity.Core
         public int Count => entries.Length;
         private static IEnumerable<Entry> Project(IEnumerable<FoodScope> scopes,Func<string,Position?> position)
         {
+            int count=0;
             foreach(var scope in scopes)
             {
+                if(++count>MaximumAlternatives) throw new ArgumentException("Awareness catalogue exceeds place bound.");
                 var point=position(scope.PlaceId);
-                if(point.HasValue && point.Value.IsFinite) yield return new Entry(scope,point.Value);
+                // Yield once even for a missing place: an iterator must not hide a full invalid
+                // catalogue scan inside one MoveNext of the bounded collector.
+                yield return point.HasValue && point.Value.IsFinite ? new Entry(scope,point.Value) : null!;
             }
         }
-        public FoodAwarenessCatalogue(IEnumerable<FoodScope> scopes,Func<string,Position?> position) : this(Project(scopes,position)) { }
-        public FoodAwarenessCatalogue(IEnumerable<Entry> alternatives)
+        // Synchronous construction is for explicit offline/on-demand callers only. Simulation drives
+        // BeginBuild/Continue: no scan, sort, hash or cell-level pass is hidden in a normal event.
+        public FoodAwarenessCatalogue(IEnumerable<FoodScope> scopes,Func<string,Position?> position) : this(BuildAll(BeginBuild(scopes,position))) { }
+        public FoodAwarenessCatalogue(IEnumerable<Entry> alternatives) : this(BuildAll(alternatives)) { }
+        private FoodAwarenessCatalogue(FoodAwarenessCatalogue other)
+        {entries=other.entries;byId=other.byId;byPlace=other.byPlace;levels=other.levels;Revision=other.Revision;}
+        private FoodAwarenessCatalogue(Entry[] ordered,Dictionary<string,Entry> ids,Dictionary<string,Entry> places,SpatialLevel[] spatial,string revision)
+        {entries=ordered;byId=ids;byPlace=places;levels=spatial;Revision=revision;}
+        private static FoodAwarenessCatalogue BuildAll(IEnumerable<Entry> alternatives)
         {
-            var list=new List<Entry>();
-            foreach(var entry in alternatives)
+            return BuildAll(BeginBuild(alternatives));
+        }
+        private static FoodAwarenessCatalogue BuildAll(Builder builder)
+        {using(builder) {while(!builder.Continue()) {} return builder.Result;}}
+        public static Builder BeginBuild(IEnumerable<Entry> alternatives) => new Builder(alternatives);
+        public static Builder BeginBuild(IEnumerable<FoodScope> scopes,Func<string,Position?> position) => new Builder(Project(scopes,position),true);
+        public enum BuildStage { Collect, Copy, Sort, Hash, CountCells, Ranges, Fill, Publish, Complete }
+        /// <summary>Private coherent build. Each Continue performs at most 64 input/merge/hash/cell
+        /// operations. Array allocations are bounded by 20k; no Array.Sort, ToDictionary or final
+        /// whole-list copy occurs. Result is unavailable until the complete six-level image publishes.</summary>
+        public sealed class Builder : IDisposable
+        {
+            public const int MaximumWorkPerUnit=64;
+            private readonly IEnumerator<Entry> input;
+            private readonly bool skipMissing;
+            private readonly List<Entry> collected=new List<Entry>();
+            private readonly Dictionary<string,Entry> ids=new Dictionary<string,Entry>(StringComparer.Ordinal);
+            private readonly Dictionary<string,Entry> places=new Dictionary<string,Entry>(StringComparer.Ordinal);
+            private Entry[] ordered=Array.Empty<Entry>(),scratch=Array.Empty<Entry>();
+            private readonly SpatialLevel[] spatial=new SpatialLevel[Scales.Length];
+            private int cursor,width=1,mergeStart,left,right,leftEnd,rightEnd,write,level,start,ordinal;
+            private bool merging;
+            private SHA256? sha;
+            private CryptoStream? crypto;
+            private BufferedStream? buffer;
+            private BinaryWriter? writer;
+            private string revision="";
+            private Dictionary<(int,int),int>? counts;
+            private Dictionary<(int,int),Bucket>? ranges;
+            private IEnumerator<KeyValuePair<(int,int),int>>? cells;
+            private int[] slots=Array.Empty<int>(),next=Array.Empty<int>();
+            private FoodAwarenessCatalogue? result;
+            public BuildStage Stage { get; private set; }
+            public int LastWorkItems { get; private set; }
+            public FoodAwarenessCatalogue Result => result ?? throw new InvalidOperationException("Awareness image is not published.");
+            internal Builder(IEnumerable<Entry> alternatives,bool skipMissing=false) {input=alternatives.GetEnumerator();this.skipMissing=skipMissing;}
+            public bool Continue()
             {
-                if(list.Count==MaximumAlternatives) throw new ArgumentException("Awareness catalogue exceeds place bound.");
-                if(entry==null || string.IsNullOrWhiteSpace(entry.BusinessId) || entry.BusinessId.Length>512
-                    || string.IsNullOrWhiteSpace(entry.PlaceId) || entry.PlaceId.Length>256 || !entry.Position.IsFinite
-                    || (uint)entry.Kind>1) throw new ArgumentException("Invalid awareness alternative.");
-                list.Add(entry);
+                LastWorkItems=0;
+                switch(Stage)
+                {
+                    case BuildStage.Collect:
+                        while(LastWorkItems<MaximumWorkPerUnit)
+                        {
+                            if(!input.MoveNext())
+                            {
+                                input.Dispose();ordered=new Entry[collected.Count];scratch=new Entry[collected.Count];
+                                cursor=0;Stage=BuildStage.Copy;break;
+                            }
+                            LastWorkItems++;var e=input.Current;
+                            if(e==null && skipMissing) continue;
+                            if(collected.Count==MaximumAlternatives) throw new ArgumentException("Awareness catalogue exceeds place bound.");
+                            if(e==null || string.IsNullOrWhiteSpace(e.BusinessId) || e.BusinessId.Length>512
+                                || string.IsNullOrWhiteSpace(e.PlaceId) || e.PlaceId.Length>256 || !e.Position.IsFinite || (uint)e.Kind>1)
+                                throw new ArgumentException("Invalid awareness alternative.");
+                            ids.Add(e.BusinessId,e);places.Add(e.PlaceId,e);collected.Add(e);
+                        }
+                        break;
+                    case BuildStage.Copy:
+                        while(cursor<ordered.Length && LastWorkItems<MaximumWorkPerUnit) {ordered[cursor]=collected[cursor];cursor++;LastWorkItems++;}
+                        if(cursor==ordered.Length) Stage=BuildStage.Sort;
+                        break;
+                    case BuildStage.Sort:
+                        while(LastWorkItems<MaximumWorkPerUnit && width<ordered.Length)
+                        {
+                            if(mergeStart>=ordered.Length)
+                            {var swap=ordered;ordered=scratch;scratch=swap;width*=2;mergeStart=0;merging=false;continue;}
+                            if(!merging)
+                            {
+                                left=mergeStart;leftEnd=Math.Min(left+width,ordered.Length);right=leftEnd;
+                                rightEnd=Math.Min(right+width,ordered.Length);write=mergeStart;merging=true;
+                            }
+                            if(left<leftEnd && (right>=rightEnd || StringComparer.Ordinal.Compare(ordered[left].BusinessId,ordered[right].BusinessId)<=0))
+                                scratch[write++]=ordered[left++];
+                            else scratch[write++]=ordered[right++];
+                            LastWorkItems++;
+                            if(write==rightEnd) {mergeStart=rightEnd;merging=false;}
+                        }
+                        if(width>=ordered.Length)
+                        {
+                            sha=SHA256.Create();crypto=new CryptoStream(Stream.Null,sha,CryptoStreamMode.Write);
+                            buffer=new BufferedStream(crypto,65536);writer=new BinaryWriter(buffer,Encoding.UTF8,true);
+                            writer.Write("pc:awareness-catalogue:1");cursor=0;Stage=BuildStage.Hash;
+                        }
+                        break;
+                    case BuildStage.Hash:
+                        while(cursor<ordered.Length && LastWorkItems<MaximumWorkPerUnit)
+                        {
+                            var e=ordered[cursor++];LastWorkItems++;
+                            writer!.Write(e.BusinessId);writer.Write(e.PlaceId);writer.Write((int)e.Kind);
+                            writer.Write(e.Position.X);writer.Write(e.Position.Y);writer.Write(e.Position.Z);
+                        }
+                        if(cursor==ordered.Length)
+                        {
+                            writer!.Flush();buffer!.Flush();crypto!.FlushFinalBlock();revision=Convert.ToBase64String(sha!.Hash!);
+                            CloseHash();counts=new Dictionary<(int,int),int>();cursor=0;Stage=BuildStage.CountCells;
+                        }
+                        break;
+                    case BuildStage.CountCells:
+                        while(cursor<ordered.Length && LastWorkItems<MaximumWorkPerUnit)
+                        {
+                            var cell=Cell(ordered[cursor++].Position,Scales[level]);LastWorkItems++;
+                            counts!.TryGetValue(cell,out int count);counts[cell]=count+1;
+                        }
+                        if(cursor==ordered.Length)
+                        {
+                            ranges=new Dictionary<(int,int),Bucket>(counts!.Count);cells=counts.GetEnumerator();
+                            start=ordinal=0;Stage=BuildStage.Ranges;
+                        }
+                        break;
+                    case BuildStage.Ranges:
+                        while(LastWorkItems<MaximumWorkPerUnit && cells!.MoveNext())
+                        {
+                            var pair=cells.Current;LastWorkItems++;
+                            ranges!.Add(pair.Key,new Bucket(start,pair.Value,ordinal++));start+=pair.Value;
+                        }
+                        if(ordinal==counts!.Count)
+                        {cells!.Dispose();cells=null;next=new int[counts.Count];slots=new int[ordered.Length];cursor=0;Stage=BuildStage.Fill;}
+                        break;
+                    case BuildStage.Fill:
+                        while(cursor<ordered.Length && LastWorkItems<MaximumWorkPerUnit)
+                        {
+                            var bucket=ranges![Cell(ordered[cursor].Position,Scales[level])];LastWorkItems++;
+                            slots[bucket.Start+next[bucket.Ordinal]++]=cursor++;
+                        }
+                        if(cursor==ordered.Length)
+                        {
+                            spatial[level]=new SpatialLevel(ranges!,slots);level++;cursor=0;counts=null;ranges=null;
+                            if(level==Scales.Length) Stage=BuildStage.Publish;
+                            else {counts=new Dictionary<(int,int),int>();Stage=BuildStage.CountCells;}
+                        }
+                        break;
+                    case BuildStage.Publish:
+                        result=new FoodAwarenessCatalogue(ordered,ids,places,spatial,revision);Stage=BuildStage.Complete;break;
+                }
+                return Stage==BuildStage.Complete;
             }
-            entries=list.OrderBy(e=>e.BusinessId,StringComparer.Ordinal).ToArray();
-            byId=entries.ToDictionary(e=>e.BusinessId,StringComparer.Ordinal);
-            byPlace=entries.ToDictionary(e=>e.PlaceId,StringComparer.Ordinal);
-            // Stream canonical binary metadata through a bounded buffer instead of formatting and
-            // retaining a catalogue-sized text/string/UTF-8 triplicate. BinaryWriter is little-endian;
-            // strings use its explicit UTF-8 length prefix, coordinates retain exact binary64 bits.
-            using(var sha=SHA256.Create())
-            using(var crypto=new CryptoStream(Stream.Null,sha,CryptoStreamMode.Write))
-            using(var buffer=new BufferedStream(crypto,65536))
-            using(var writer=new BinaryWriter(buffer,Encoding.UTF8,true))
-            {
-                writer.Write("pc:awareness-catalogue:1");
-                foreach(var e in entries)
-                {
-                    writer.Write(e.BusinessId);writer.Write(e.PlaceId);writer.Write((int)e.Kind);
-                    writer.Write(e.Position.X);writer.Write(e.Position.Y);writer.Write(e.Position.Z);
-                }
-                writer.Flush();buffer.Flush();crypto.FlushFinalBlock();
-                Revision=Convert.ToBase64String(sha.Hash!);
-            }
-            levels=new SpatialLevel[Scales.Length];
-            for(int level=0;level<Scales.Length;level++)
-            {
-                var counts=new Dictionary<(int,int),int>();
-                for(int i=0;i<entries.Length;i++)
-                {
-                    var cell=Cell(entries[i].Position,Scales[level]);
-                    counts.TryGetValue(cell,out int count);counts[cell]=count+1;
-                }
-                // One ordinal array per scale, rather than one array/object for each dense or sparse
-                // cell. Ranges still expose bucket mass and direct indexed slots, never a cell walk.
-                var ranges=new Dictionary<(int,int),Bucket>(counts.Count);
-                int start=0,ordinal=0;
-                foreach(var pair in counts)
-                {
-                    ranges.Add(pair.Key,new Bucket(start,pair.Value,ordinal++));start+=pair.Value;
-                }
-                var next=new int[counts.Count];var slots=new int[entries.Length];
-                for(int i=0;i<entries.Length;i++)
-                {
-                    var bucket=ranges[Cell(entries[i].Position,Scales[level])];
-                    slots[bucket.Start+next[bucket.Ordinal]++]=i;
-                }
-                levels[level]=new SpatialLevel(ranges,slots);
-            }
+            private void CloseHash()
+            {writer?.Dispose();buffer?.Dispose();crypto?.Dispose();sha?.Dispose();writer=null;buffer=null;crypto=null;sha=null;}
+            public void Dispose() {input.Dispose();cells?.Dispose();CloseHash();}
         }
         private readonly struct Bucket
         {
@@ -184,6 +281,7 @@ namespace PersistentCity.Core
         }
         private static (int,int) Cell(Position p,int scale) => ((int)Math.Floor(p.X/scale),(int)Math.Floor(p.Z/scale));
         public bool ContainsPlace(string id) => byPlace.ContainsKey(id);
+        internal FoodScope? ScopeAtPlace(string id) => byPlace.TryGetValue(id,out var entry) ? entry.Scope : null;
         public Entry? Find(string id) => byId.TryGetValue(id,out var e) ? e : null;
         private static uint Prefix(int seed,string consumer,int day,FoodAwarenessSource source,bool gate)
         {
@@ -202,7 +300,7 @@ namespace PersistentCity.Core
         /// Rejection/duplicates consume slots. The optional diagnostic is populated only when requested.</summary>
         public FoodAwarenessImage Sample(int seed,string consumer,int day,Position? home,Position? routine,Position? origin,
             FoodAwarenessSettings settings,Func<Entry,bool> eligible,IFoodAwarenessProvider? memory=null,
-            IFoodAwarenessProvider? campaign=null,FoodAwarenessDump? diagnostic=null)
+            IFoodAwarenessProvider? campaign=null,FoodAwarenessDump? diagnostic=null,string? presentPlace=null)
         {
             var image=new FoodAwarenessImage {CatalogueRevision=Revision};
             void Add(Entry? entry,FoodAwarenessSource source,int slot,bool exposed,string reason)
@@ -230,7 +328,13 @@ namespace PersistentCity.Core
                     for(int x=-1;x<=1;x++) for(int z=-1;z<=1;z++)
                         if(levels[level].Cells.TryGetValue((cell.Item1+x,cell.Item2+z),out var bucket)) {buckets[n++]=bucket;mass+=bucket.Count;}
                 }
-                for(int i=0;i<Math.Max(0,Math.Min(4,settings.DrawsPerAnchor));i++)
+                bool present=source==FoodAwarenessSource.Origin && presentPlace!=null;
+                if(present)
+                {
+                    byPlace.TryGetValue(presentPlace!,out var shop);
+                    Add(shop,source,0,true,"present shop missing or ineligible");
+                }
+                for(int i=present ? 1 : 0;i<Math.Max(0,Math.Min(4,settings.DrawsPerAnchor));i++)
                 {
                     Entry? entry=null;
                     if(mass>0)

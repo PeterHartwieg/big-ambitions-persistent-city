@@ -6,10 +6,14 @@ namespace PersistentCity.Persistence
 {
     public static partial class SaveCodec
     {
-        private static int ValidateAwareness(FoodDecisionState decision)
+        private static int ValidateAwareness(FoodDecisionState decision,ResidentMeal meal,FoodCommerceState food)
         {
             var image=decision.Awareness;
-            if(image==null) return 0; // migrated held contexts retain their original shortlist
+            if(image==null)
+            {
+                Require(meal.Day<food.AwarenessStartsDay,"Missing post-activation awareness image.");
+                return 0; // only pre-activation/migrated held contexts retain the original shortlist
+            }
             Require(image.CatalogueRevision!=null && image.CatalogueRevision.Length==44,"Invalid awareness catalogue revision.");
             byte[] hash=Convert.FromBase64String(image.CatalogueRevision);
             Require(hash.Length==32 && Convert.ToBase64String(hash)==image.CatalogueRevision,"Noncanonical catalogue revision.");

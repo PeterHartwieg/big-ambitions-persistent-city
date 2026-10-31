@@ -14,37 +14,59 @@ namespace PersistentCity.Core
         internal IFoodAwarenessProvider? MemoryProvider { get; }
         internal IFoodAwarenessProvider? CampaignProvider { get; }
         private FoodAwarenessCatalogue? awarenessCatalogue;
-        private long awarenessRevision=-1;
-        private List<FoodScope>? awarenessScopes;
-        private int awarenessCount=-1;
-        internal void InvalidateAwareness() { awarenessCatalogue=null; }
-        private FoodAwarenessCatalogue AwarenessCatalogue()
+        private FoodAwarenessCatalogue.Builder? awarenessBuilder;
+        private long awarenessRevision=-1,awarenessInvalidation,buildingRevision,buildingInvalidation;
+        private List<FoodScope>? awarenessScopes,buildingScopes;
+        private int awarenessCount=-1,buildingCount;
+        private readonly Dictionary<string,FoodScope> initialScopesByPlace=new Dictionary<string,FoodScope>(StringComparer.Ordinal);
+        internal void InvalidateAwareness() { awarenessInvalidation++; }
+        private long CurrentAwarenessRevision => (market as IFoodAwarenessRevision)?.AwarenessRevision ?? 0;
+        private bool AwarenessReady => awarenessCatalogue!=null && awarenessRevision==CurrentAwarenessRevision
+            && awarenessInvalidation==publishedInvalidation && ReferenceEquals(awarenessScopes,state.Shops) && awarenessCount==state.Shops.Count;
+        private long publishedInvalidation=-1;
+        // The next logical event stays unprocessed while the shared image builds. A held decision
+        // already owns its inputs and is never delayed/rerolled by a later catalogue publication.
+        internal bool NeedsAwarenessPreparation(double minute) => pendingDecision==null && state.ChoicePolicyVersion==FoodChoicePolicy.Version
+            && (int)(minute/1440)>=state.ChoiceStartsDay && (int)(minute/1440)>=state.AwarenessStartsDay && !AwarenessReady;
+        internal void ContinueAwarenessPreparation()
         {
-            long revision=(market as IFoodAwarenessRevision)?.AwarenessRevision ?? 0;
-            if(awarenessCatalogue==null || revision!=awarenessRevision || !ReferenceEquals(awarenessScopes,state.Shops) || awarenessCount!=state.Shops.Count)
+            long revision=CurrentAwarenessRevision;
+            if(awarenessBuilder==null || buildingRevision!=revision || buildingInvalidation!=awarenessInvalidation
+                || !ReferenceEquals(buildingScopes,state.Shops) || buildingCount!=state.Shops.Count)
             {
-                awarenessCatalogue=new FoodAwarenessCatalogue(state.Shops,
-                    city.FindPosition);
-                awarenessRevision=revision;awarenessScopes=state.Shops;awarenessCount=state.Shops.Count;
+                awarenessBuilder?.Dispose();buildingRevision=revision;buildingInvalidation=awarenessInvalidation;
+                buildingScopes=state.Shops;buildingCount=state.Shops.Count;
+                awarenessBuilder=FoodAwarenessCatalogue.BeginBuild(state.Shops,city.FindPosition);
             }
-            return awarenessCatalogue;
+            if(!awarenessBuilder.Continue()) return;
+            awarenessCatalogue=awarenessBuilder.Result;awarenessBuilder.Dispose();awarenessBuilder=null;
+            awarenessRevision=buildingRevision;publishedInvalidation=buildingInvalidation;awarenessScopes=buildingScopes;awarenessCount=buildingCount;
         }
+        private FoodAwarenessCatalogue AwarenessCatalogue() => AwarenessReady ? awarenessCatalogue!
+            : throw new InvalidOperationException("Awareness image must finish bounded preparation before capture.");
+        private FoodScope? ScopeAtPlace(string place)
+            => awarenessCatalogue!=null ? awarenessCatalogue.ScopeAtPlace(place)
+                : initialScopesByPlace.TryGetValue(place,out var scope) ? scope : null;
         private Position? Anchor(string id) => id.Length==0 ? (Position?)null : city.FindPlace(id).Position;
         private FoodAwarenessImage AwarenessSample(ResidentMeal meal,CitizenState person,FoodRoutineStop stop,int day,bool atStop,FoodAwarenessDump? dump=null)
         {
             return AwarenessCatalogue().Sample(city.State.Seed,meal.ResidentId,day,Anchor(person.HomeId),Anchor(person.DayPlaceId),Anchor(stop.PlaceId),
                 AwarenessSettings,e=>(!atStop || e.PlaceId==stop.PlaceId) && e.Scope!.BusinessId==e.BusinessId
-                    && (!(market is IFoodCandidateMarket m) || m.IsCandidate(e.Scope!)),MemoryProvider,CampaignProvider,dump);
+                    && (!(market is IFoodCandidateMarket m) || m.IsCandidate(e.Scope!)),MemoryProvider,CampaignProvider,dump,atStop ? stop.PlaceId : null);
         }
         internal FoodAwarenessDump? InspectAwareness(string consumerId,int? day)
         {
             if(!records.TryGetValue(consumerId,out var meal)) return null;
             var person=city.FindCitizen(meal.AnchorId);if(person==null) return null;
-            var stop=ChoiceStop(meal,person);var dump=new FoodAwarenessDump {ConsumerId=consumerId,Day=day ?? meal.Day,
+            // Explicit on-demand inspection may finish the transient index; normal events never drain it inline.
+            while(!AwarenessReady) ContinueAwarenessPreparation();
+            var stop=ChoiceStop(meal,person);bool atStop=meal.Decision!=null
+                ? meal.Decision.ContextKey.StartsWith("stop:",StringComparison.Ordinal) : AtFoodStop(person);
+            var dump=new FoodAwarenessDump {ConsumerId=consumerId,Day=day ?? meal.Day,
                 HeldImage=meal.Decision?.Awareness,HeldShortlist=meal.Decision?.Shops.Select(s=>s.BusinessId).ToArray() ?? Array.Empty<string>()};
-            var image=AwarenessSample(meal,person,stop,day ?? meal.Day,false,dump);
-            var context=meal.Decision?.ContextKey ?? Context(stop,false);
-            dump.Shortlist=AwarenessCatalogue().Rank(image,city.FindPlace(stop.PlaceId).Position,Traits(meal,person),ChoiceSettings,
+            var image=AwarenessSample(meal,person,stop,day ?? meal.Day,atStop,dump);
+            var context=meal.Decision?.ContextKey ?? Context(stop,atStop);
+            dump.Shortlist=AwarenessCatalogue().Rank(image,city.FindPlace(stop.PlaceId).Position,Traits(meal,person),meal.Decision?.Tuning?.Settings ?? ChoiceSettings,
                 new FoodDrawContext(city.State.Seed,meal.ResidentId,day ?? meal.Day,meal.Kind,context,meal.Decision?.Attempt ?? meal.ContextAttempts+1),
                 routes is IFoodWalkingPace walking ? walking.WalkingMetresPerMinute : 120).Select(e=>e.BusinessId).ToArray();
             return dump;
@@ -126,6 +148,9 @@ namespace PersistentCity.Core
             // Capture into a private image first. Exceptions cannot publish a partial sample or consume an attempt.
             using(var captureBatch=(market as IFoodCandidateMarket)?.BeginCapture(now))
             {
+            // A provider may publish replacement metadata at its capture boundary. Retry this
+            // unconsumed event after bounded preparation; never sample a stale/partial image.
+            if(meal.Day>=state.AwarenessStartsDay && !AwarenessReady) return;
             long choiceStarted=city.ObservingFood ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             var scopes=meal.Day>=state.AwarenessStartsDay ? AwareShortlist(meal,person,stop,d,atStop)
                 : atStop ? state.Shops.Where(s=>s.PlaceId==stop.PlaceId).Select(FreezeScope).ToArray()
@@ -359,7 +384,7 @@ namespace PersistentCity.Core
                 if(atStop)
                 {
                     meal.ServiceAt=choice.ServiceEndsAt.Value;meal.Status=MealStatus.Serving;meal.DueAt=meal.ServiceAt;
-                    AwarenessCatalogue().Find(shop.BusinessId)!.Scope!.NextServiceAt=meal.ServiceAt;
+                    ScopeAtPlace(shop.PlaceId)!.NextServiceAt=meal.ServiceAt;
                 }
                 else
                 {

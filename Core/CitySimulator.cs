@@ -13,8 +13,8 @@ namespace PersistentCity.Core
         /// <summary>Total bounded work units, including citizen, traffic and food continuation units.</summary>
         public int Events { get; }
         public int TrafficEvents { get; }
-        /// <summary>Bounded units of an already-started food decision, including its commit.
-        /// The begin unit counts once as a citizen event; continuations still consume the total unit/time budget.</summary>
+        /// <summary>Bounded shared awareness-index preparation and already-started food decision units,
+        /// including commit. Begin counts once as a citizen event; these units use the same work/time caps.</summary>
         public int FoodContinuationEvents { get; }
         public int CitizenEvents => Events - TrafficEvents - FoodContinuationEvents;
         public bool CaughtUp { get; }
@@ -197,6 +197,12 @@ namespace PersistentCity.Core
                 double next = Math.Min(foodMinute, Math.Min(citizenMinute, trafficMinute));
                 if (next > targetMinute) break;
                 State.Minute = next;
+                if(food?.NeedsAwarenessPreparation(next)==true)
+                {
+                    // One bounded shared-index unit. Keep this event/due ordering unchanged until
+                    // atomic publication; reload restarts this transient build at the same event.
+                    food.ContinueAwarenessPreparation();count++;foodContinuationCount++;continue;
+                }
                 if (food?.HasPendingDecision == true || foodMinute < citizenMinute && foodMinute < trafficMinute)
                 {
                     traffic?.AdvanceTo(next, 0);

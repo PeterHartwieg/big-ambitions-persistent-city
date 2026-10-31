@@ -1038,8 +1038,8 @@ namespace PersistentCity.Persistence
             // The simulator holds one decision, including an empty-shortlist decision. Bound the tuning
             // header as well as routes; otherwise empty images could spend a city-wide tuning history.
             Require(++routeBearing <= FoodChoicePolicy.MaximumRouteBearingDecisions, "More than one held food decision.");
-            if (decision.Shops.Count == 0) return ValidateAwareness(decision);
-            int records = ValidateAwareness(decision);
+            if (decision.Shops.Count == 0) return ValidateAwareness(decision,meal,food);
+            int records = ValidateAwareness(decision,meal,food);
             var businesses = new HashSet<string>(StringComparer.Ordinal);
             bool selected = decision.Result != FoodDecisionResult.Selected;
             int slot = 0;

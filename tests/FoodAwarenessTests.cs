@@ -160,7 +160,7 @@ public sealed class FoodAwarenessTests
     {
         foreach(int refusal in new[]{0,1,2,3})
         {
-            var (city,market,planner)=WeightedFoodChoiceTests.Ready(79,24);city.State.Food!.AwarenessStartsDay=1;
+            var (city,market,planner)=WeightedFoodChoiceTests.Ready(79,24);city.State.Food!.AwarenessStartsDay=1;city.InspectFoodAwareness("r");
             foreach(var b in market.Shops)
             {
                 if(refusal==0) b.Offers[0].Price=Money.FromCents(20000);
@@ -197,8 +197,8 @@ public sealed class FoodAwarenessTests
     [Theory] [InlineData(1)] [InlineData(2)] [InlineData(6)] [InlineData(10)]
     public void HeldAwarenessReloadAndCadenceRetainIdentityWithChangedLiveSettingsAndCatalogue(int units)
     {
-        var (control,mc,pc)=WeightedFoodChoiceTests.Ready(79,24);control.State.Food!.AwarenessStartsDay=1;
-        var (changed,mm,pm)=WeightedFoodChoiceTests.Ready(79,24);changed.State.Food!.AwarenessStartsDay=1;
+        var (control,mc,pc)=WeightedFoodChoiceTests.Ready(79,24);control.State.Food!.AwarenessStartsDay=1;control.InspectFoodAwareness("r");
+        var (changed,mm,pm)=WeightedFoodChoiceTests.Ready(79,24);changed.State.Food!.AwarenessStartsDay=1;changed.InspectFoodAwareness("r");
         double at=changed.State.Food.Residents.Single().DesiredAt;
         for(int i=0;i<units;i++) changed.AdvanceTo(at,1);
         var held=changed.State.Food.Residents.Single().Decision;Assert.NotNull(held!.Awareness);
@@ -226,7 +226,7 @@ public sealed class FoodAwarenessTests
     [Fact]
     public void DiagnosticIsReadOnlyAndUnchangedPublicationReusesIndex()
     {
-        var (city,_,planner)=WeightedFoodChoiceTests.Ready(79,24);city.State.Food!.AwarenessStartsDay=1;
+        var (city,_,planner)=WeightedFoodChoiceTests.Ready(79,24);city.State.Food!.AwarenessStartsDay=1;city.InspectFoodAwareness("r");
         string checkpoint=SaveCodec.Write(city.State);
         var a=city.InspectFoodAwareness("r");var b=city.InspectFoodAwareness("r");
         Assert.Equal(JsonConvert.SerializeObject(a),JsonConvert.SerializeObject(b));Assert.Equal(checkpoint,SaveCodec.Write(city.State));Assert.Equal(0,planner.Out+planner.Back);
@@ -236,8 +236,8 @@ public sealed class FoodAwarenessTests
     [Fact]
     public void SelectedAwarenessContextNeverConsultsProvidersAgainAfterReload()
     {
-        var (control,mc,pc)=WeightedFoodChoiceTests.Ready(79,24);control.State.Food!.AwarenessStartsDay=1;
-        var (changed,mm,pm)=WeightedFoodChoiceTests.Ready(79,24);changed.State.Food!.AwarenessStartsDay=1;
+        var (control,mc,pc)=WeightedFoodChoiceTests.Ready(79,24);control.State.Food!.AwarenessStartsDay=1;control.InspectFoodAwareness("r");
+        var (changed,mm,pm)=WeightedFoodChoiceTests.Ready(79,24);changed.State.Food!.AwarenessStartsDay=1;changed.InspectFoodAwareness("r");
         double at=changed.State.Food.Residents.Single().DesiredAt;changed.AdvanceTo(at,1);
         var selected=changed.State.Food.Residents.Single().Decision!;
         while(selected.Result==FoodDecisionResult.Evaluating) changed.AdvanceTo(at,1);
@@ -250,7 +250,7 @@ public sealed class FoodAwarenessTests
     }
     private static JObject Held()
     {
-        var (city,_,_)=WeightedFoodChoiceTests.Ready(79,24);city.State.Food!.AwarenessStartsDay=1;
+        var (city,_,_)=WeightedFoodChoiceTests.Ready(79,24);city.State.Food!.AwarenessStartsDay=1;city.InspectFoodAwareness("r");
         city.AdvanceTo(city.State.Food.Residents.Single().DesiredAt,1);return JObject.Parse(SaveCodec.Write(city.State));
     }
     [Fact]

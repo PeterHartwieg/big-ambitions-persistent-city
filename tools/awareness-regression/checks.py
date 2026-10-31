@@ -25,10 +25,11 @@ commands += [[dotnet,"run","--project","tools/simulate/Simulate.csproj","--","28
              [dotnet,"run","--project","tools/food-demand/FoodDemand.csproj","--","build/harness-food-demand-demo"],
              [dotnet,"run","--project","tools/food-candidate-regression/FoodCandidateRegression.csproj","--configuration","Release"],
              [dotnet,"run","--project","tools/food-choice-regression/FoodChoiceRegression.csproj","--configuration","Release"]]
-logroot = root / "build/c2a-checks"
+suffix = "-r1" if "--review-r1" in sys.argv else ""
+logroot = root / ("build/c2a-checks" + suffix)
 logroot.mkdir(exist_ok=True)
 manifest = {"source": subprocess.check_output(["git","rev-parse","HEAD"],cwd=root,text=True).strip(), "startedUtc":datetime.datetime.now(datetime.timezone.utc).isoformat(),"commands":[]}
-manifest_path=root / "docs/reviews/2026-10-31-c2a-offline-checks.json"
+manifest_path=root / ("docs/reviews/2026-10-31-c2a" + suffix + "-offline-checks.json")
 for index,command in enumerate(commands):
     path=logroot / f"{index+1:02}.log"
     start=time.perf_counter()
