@@ -53,7 +53,7 @@ static class Program
         string oldEvidence=JsonConvert.SerializeObject(oldImage);
         before=sample.HoursRefreshPasses;FoodBusiness?[] image;
         using(sample.BeginCapture(2160)) image=ids.Select(id=>sample.CaptureBusiness(id,2160)).ToArray();
-        Require(oldPasses==8 && sample.HoursRefreshPasses-before==1,"one hours pass per batch, formerly eight");
+        Require(oldPasses==8 && sample.HoursRefreshPasses-before==0,"captured native hours need no catalogue-wide refresh");
         Require(oldEvidence==JsonConvert.SerializeObject(image),"batch must preserve captured evidence");
         int reads=sample.DetailedReads;
         try {using(sample.BeginCapture(2160)) {sample.ThrowRead=true;sample.CaptureBusiness(ids[0],2160);}} catch(InvalidOperationException) {}
@@ -73,7 +73,7 @@ static class Program
             if(i%2==0) {Run(false,oldTimes);Run(true,newTimes);} else {Run(true,newTimes);Run(false,oldTimes);}
         }
         oldTimes.Sort();newTimes.Sort();
-        Console.WriteLine(JsonConvert.SerializeObject(new {checks="actual NativeFoodCandidates + NativeFoodHours, synthetic native surfaces",controllers=131,discoveryFrames=new[]{0,1,2,5},reload=true,oldHoursPasses=oldPasses,newHoursPasses=1,oldMedianMs=oldTimes[oldTimes.Count/2],newMedianMs=newTimes[newTimes.Count/2]}));
+        Console.WriteLine(JsonConvert.SerializeObject(new {checks="actual NativeFoodCandidates + NativeFoodHours, synthetic native surfaces",controllers=131,discoveryFrames=new[]{0,1,2,5},reload=true,oldHoursPasses=oldPasses,newHoursPasses=0,oldMedianMs=oldTimes[oldTimes.Count/2],newMedianMs=newTimes[newTimes.Count/2]}));
     }
 }
 

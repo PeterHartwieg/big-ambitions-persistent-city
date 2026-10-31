@@ -141,14 +141,11 @@ namespace PersistentCity.Runtime
         public bool CanServe(string businessId)
         {
             if (!ReferenceEquals(save, SaveGameManager.Current)) return false;
-            foreach (var reg in registrations.Values)
-            {
-                var authority = NativeFoodOwnership.Find(reg);
-                if (authority?.BusinessId != businessId) continue;
-                if (!Supported(reg)) { NativeFoodOwnership.Observe(reg, false); return false; }
-                return authority.CanServe;
-            }
-            return false;
+            if(!scopesByBusiness.TryGetValue(businessId,out var scope) || !registrations.TryGetValue(scope.PlaceId,out var reg)) return false;
+            var authority=NativeFoodOwnership.Find(reg);
+            if(authority?.BusinessId!=businessId) return false;
+            if(!Supported(reg)) { NativeFoodOwnership.Observe(reg,false);return false; }
+            return authority.CanServe;
         }
         private static bool ResidentPrice(string itemName, float price, ref bool __result)
         {
@@ -158,7 +155,7 @@ namespace PersistentCity.Runtime
         public IReadOnlyList<FoodBusiness> Read(double minute) => ReadSelected(minute, state.Shops.Select(s => s.PlaceId).ToArray());
         public FoodBusiness? ReadBusiness(string businessId, double minute)
         {
-            var scope = state.Shops.SingleOrDefault(s => s.BusinessId == businessId);
+            scopesByBusiness.TryGetValue(businessId,out var scope);
             return scope == null ? null : ReadSelected(minute, new[] { scope.PlaceId }).SingleOrDefault(b => b.Id == businessId);
         }
         public IReadOnlyList<FoodBusiness> ReadLocal(Place origin, double minute, double walkingToleranceMetres, int maximumCandidates)
@@ -190,8 +187,7 @@ namespace PersistentCity.Runtime
             foreach (var b in catalogue.Businesses)
             {
                 if (!registrations.TryGetValue(b.PlaceId, out var reg) || MenuStatus(b.PlaceId).Length > 0
-                    || !state.Shops.Any(s => s.PlaceId == b.PlaceId && s.BusinessId == b.Id)) continue;
-                var scope = state.Shops.Single(s => s.PlaceId == b.PlaceId);
+                    || !scopesByPlace.TryGetValue(b.PlaceId,out var scope) || scope.BusinessId!=b.Id) continue;
                 b.Offers.RemoveAll(o => !scope.ContainsProduct(o.ProductId));
                 var products = scope.Products().ToArray();
                 // Checkout (observed != null) always reads live, exactly as before this cache existed.

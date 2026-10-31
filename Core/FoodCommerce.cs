@@ -112,6 +112,7 @@ namespace PersistentCity.Core
         /// No runtime setting changes either value; committed legacy meals retain their own terms.</summary>
         public int ChoicePolicyVersion { get; set; } = FoodChoicePolicy.Version;
         public int ChoiceStartsDay { get; set; }
+        public int AwarenessStartsDay { get; set; }
     }
     public readonly struct FoodSale
     {
@@ -177,13 +178,15 @@ namespace PersistentCity.Core
             ?? Math.Min(NextBudgetMinute, due.Count == 0 ? double.PositiveInfinity : due.Min!.DueAt);
         internal IFoodMarket Market => market;
         internal ResidentMeal? FindMeal(string consumerId) => records.TryGetValue(consumerId, out var meal) ? meal : null;
-        internal FoodCommerce(CitySimulator city, IFoodMarket market, IRoutePlanner routes, FoodChoiceSettings? choiceSettings = null)
+        internal FoodCommerce(CitySimulator city, IFoodMarket market, IRoutePlanner routes, FoodChoiceSettings? choiceSettings = null, FoodAwarenessSettings? awarenessSettings = null, IFoodAwarenessProvider? memory = null, IFoodAwarenessProvider? campaign = null)
         {
             this.city = city; this.market = market; this.routes = routes;
             ChoiceSettings = choiceSettings ?? new FoodChoiceSettings();
             ChoiceSettings.Clamp();
+            AwarenessSettings=awarenessSettings ?? new FoodAwarenessSettings(); AwarenessSettings.Clamp();
+            MemoryProvider=memory;CampaignProvider=campaign;
             state = city.State.Food ?? throw new InvalidOperationException("No food state.");
-            if(state.Residents.Count==0) state.ChoiceStartsDay=(int)Math.Floor(city.State.Minute/1440)+1;
+            if(state.Residents.Count==0) { state.ChoiceStartsDay=(int)Math.Floor(city.State.Minute/1440)+1; state.AwarenessStartsDay=state.ChoiceStartsDay; }
             records = state.Residents.ToDictionary(r => r.ResidentId, StringComparer.Ordinal);
             InitializeRepresentation();
             foreach (var entry in state.Residents)

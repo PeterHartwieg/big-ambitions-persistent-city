@@ -31,12 +31,12 @@ public sealed partial class FoodCommerceTests
         string source = schema == 17 ? LegacyWire.Write(city.State) : S17_Old(LegacyWire.Write(city.State), schema);
         var original = LegacyPopulationCodec.Read(source); Assert.True(original.Status == SaveReadStatus.Loaded, original.Error);
         var read = SaveCodec.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(schema, read.SourceSchema); Assert.Equal(18, read.State!.Schema);
+        Assert.Equal(schema, read.SourceSchema); Assert.Equal(CityState.CurrentSchema, read.State!.Schema);
         Assert.Equal(LegacyWire.Write(original.State!), LegacyWire.Write(read.State));
         Assert.All(read.State.Food!.Residents, m => { Assert.Empty(m.Memory.Entries); Assert.Null(m.Memory.Watermark); });
         Assert.Empty(read.State.Food.BusinessReferences); Assert.False(read.State.Capabilities.Active);
         string next = SaveCodec.Write(read.State);
-        Assert.Equal(18, SaveCodec.Read(next).SourceSchema);
+        Assert.Equal(CityState.CurrentSchema, SaveCodec.Read(next).SourceSchema);
         Assert.Equal(next, SaveCodec.Write(SaveCodec.Read(next).State!));
         for (int i = 0; i < 2; i++) Assert.Equal(BitConverter.DoubleToInt64Bits(person.RecentVisits[i].AtMinute), BitConverter.DoubleToInt64Bits(read.State.Citizens[0].RecentVisits[i].AtMinute));
         if (schema == 17) Assert.NotNull(read.State.Food.Residents.Single(m => m.Decision != null).Decision);
@@ -100,7 +100,7 @@ public sealed partial class FoodCommerceTests
         {
             case "tuple-octal": broken = source.Replace("\"Residents\":[[1,", "\"Residents\":[[01,"); break;
             case "tuple-hex": broken = source.Replace("\"Residents\":[[1,", "\"Residents\":[[0x1,"); break;
-            case "schema-hex": broken = source.Replace("\"Schema\":18,", "\"Schema\":0x12,"); break;
+            case "schema-hex": broken = source.Replace("\"Schema\":19,", "\"Schema\":0x13,"); break;
             case "revision-octal": broken = source.Replace("\"Revision\":1", "\"Revision\":01"); break;
             case "memory-escaped": broken = source.Replace("\"1-------\"", "\"\\u0031-------\""); break;
             case "visit-escaped": broken = source.Replace("\"RecentVisits\":[\"1", "\"RecentVisits\":[\"\\u0031"); break;
