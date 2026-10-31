@@ -340,7 +340,7 @@ static partial class Program
         Check(Units(f.Market) == 1 && f.Market.DecisionSupplyHits == 1, "within the minute the decision image is still the cached one");
         long native = RetailBusinessSimulator.Setups, reader = FoodSupplyReader.Setups;
         var refused = f.Market.Buy(f.Meal("r1"), Minute);
-        Check(!refused.Paid && refused.Reason == "Stock or staffing changed", "checkout reads live and refuses the stale stock: " + refused.Reason);
+        Check(!refused.Paid && refused.Failure == ShopExperience.Stockout && refused.Reason == "Confirmed stockout before service", "checkout reads live and refuses the stale stock: " + refused.Reason);
         Check(f.Receipt(f.Meal("r1")) == FoodReceiptStatus.Missing && f.Market.NativePurchases == 0 && f.Bags == 3, "no receipt, sale or bag");
         Check(FoodSupplyReader.Setups - reader == 1 && RetailBusinessSimulator.Setups - native == 1, "the refused checkout made its own live read");
         Check(Units(f.Market) == 0 && f.Market.DecisionSupplyMisses == 2, "a checkout attempt drops the cached image");

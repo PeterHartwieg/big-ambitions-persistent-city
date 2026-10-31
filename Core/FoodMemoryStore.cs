@@ -82,7 +82,10 @@ namespace PersistentCity.Core
             // Only commitment can establish a new context. Old/pre-B trips remain neutral.
             if (order < 0 && stage != ExperienceStage.Committed) return false;
             if (order == 0 && watermark!.Stage >= ExperienceStage.Failed) return false;
-            meal.Memory.Watermark = new ExperienceWatermark { Day = meal.Day, Meal = meal.Kind, Context = meal.ContextAttempts, Stage = stage };
+            // These mutable DTOs are simulator-owned; no callback/yield can observe a partial stage.
+            // Reuse the one compact watermark after its first allocation.
+            if (watermark == null) meal.Memory.Watermark = watermark = new ExperienceWatermark();
+            watermark.Day = meal.Day; watermark.Meal = meal.Kind; watermark.Context = meal.ContextAttempts; watermark.Stage = stage;
             return true;
         }
 
@@ -101,8 +104,9 @@ namespace PersistentCity.Core
                 ShopMemory? previous = index < 0 || FoodMemoryPolicy.Expired(entries[index], experienceDay, settings) ? null : entries[index];
                 int affinity = previous == null ? 0 : FoodMemoryPolicy.EffectiveAffinity(previous, experienceDay, traits, settings);
                 affinity = Math.Max(-8, Math.Min(8, affinity + (cause == ShopExperience.Served ? settings.FoodMemoryServedGain : -FoodMemoryPolicy.Penalty(cause, traits, settings))));
-                var replacement = new ShopMemory { BusinessRef = slot, Day = experienceDay,
-                    Served = Math.Min(35, (previous?.Served ?? 0) + (cause == ShopExperience.Served ? 1 : 0)), Affinity = affinity, Outcome = cause };
+                int served = Math.Min(35, (previous?.Served ?? 0) + (cause == ShopExperience.Served ? 1 : 0));
+                // Prepare all values before publishing. Existing slot order cannot change on an update.
+                var replacement = index >= 0 ? entries[index] : new ShopMemory { BusinessRef = slot };
                 if (index < 0)
                     while (entries.Count >= settings.FoodMemoryCapacity)
                     {
@@ -111,10 +115,13 @@ namespace PersistentCity.Core
                             if (FoodMemoryPolicy.CompareEviction(entries[i], Identity(entries[i].BusinessRef), entries[victim], Identity(entries[victim].BusinessRef), experienceDay, traits, settings) < 0) victim = i;
                         entries.RemoveAt(victim);
                     }
-                if (index >= 0) entries.RemoveAt(index);
-                int insert = 0;
-                while (insert < entries.Count && entries[insert].BusinessRef < slot) insert++;
-                entries.Insert(insert, replacement);
+                replacement.Day = experienceDay; replacement.Served = served; replacement.Affinity = affinity; replacement.Outcome = cause;
+                if (index < 0)
+                {
+                    int insert = 0;
+                    while (insert < entries.Count && entries[insert].BusinessRef < slot) insert++;
+                    entries.Insert(insert, replacement);
+                }
             }
             w!.Stage = cause == ShopExperience.Served ? ExperienceStage.Served : ExperienceStage.Failed;
             return true;
