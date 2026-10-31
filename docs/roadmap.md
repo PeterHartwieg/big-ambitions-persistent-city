@@ -23,7 +23,7 @@ A. Inspector, traits and probabilistic choice. Start now (Peter 15:24 JST), with
 B. Memory, loyalty and regulars. **B0 is implemented offline:** schema 18, exact old-source migration and history-inclusive capacity; memory remains empty/inactive and the regulars helper is a pure own-shop projection. **B0b is inserted between B0 and B1:** persist the held A3 tuning image and neutral bounded per-candidate contribution; schema 18 is amended before player use. B1 resumes on top of B0b; B2 UI remains pending. [Contract and capacity evidence](population-schema18.md).
 C. Marketing awareness and targeting, plus the market research product. **C2a implemented offline on B0b:** bounded source/index interface, empty memory/campaign providers, local/routine and positive daily distant discovery, common eight-slot shortlist, additive schema 19. No C1/B1/B2 dependency; r1 bounds rebuild continuations and restores at-stop observation/diagnostics and strict held-image validation. Combined 6 Nov rig proof pending. [Contract](population-schema19.md).
 D. Rivals as alternatives.
-E. Weather, street life, bigger menus and more products.
+E. Weather, street life, bigger menus and more products. **E1 implemented offline on C2a `9b13698`:** new-context weather capture, soft rain effects, queue commitment replay and additive schema 20; no E2b timing keys or menu changes. Combined 6 Nov rig checks remain pending. [Contract/budget](population-schema20.md).
 Then: re-check the same performance gate for the final release, the hands-on session, and one release.
 Later: residents as employees, households.
 
@@ -46,6 +46,9 @@ Record every taken win with before/after numbers.
 
 | Slice | Change | Before | After |
 |---|---|---|---|
+| E1 | Lazy verified-rain frame cache, called only by new boundaries | Uncached E1 control: 50,000 reads/sweep; 6,000,000 over 120 capture sweeps | 1 read/sweep; 120 reads, cached failures/unknown too. Resident capture 40 bytes/boundary, held food fields 0 bytes; no new per-resident per-frame rain read |
+| E1 | Incremental admission-key hash with the original finalizer; skip hash for neutral weather | Concatenation control: 127.84 bytes/rain admission, median 43.07 ns at 50k | 0 bytes, 33.63 ns; exact original-key equality asserted across all measured keys and independent seeded/Unicode tests. Same draw domain |
+| E1 | Direct schema-20 consumer-prefix shape check without substring | 120 bytes/check; median 326.82 ns | 0 bytes/check; 301.58 ns. Frozen 18/19 memory wire unchanged; [raw E1 measurements](reviews/2026-11-01-e1-measurements.json) |
 | C2a r1 | Bound geometry publication with 64-item continuation; keep eligibility-only changes out of geometry revision | Synchronous 20k rebuild: 40 measured >=30 ms samples, max78.1916 ms; eligibility flips could rebuild identical geometry | 371,898 measured units incl. cold/JIT: p95 <=0.0123 ms, max11.8403 ms, zero >=30 ms; eligibility flips perform zero builds. 20k complete build uses 9,390–10,408 units with clock/event ordering held. [r1 evidence](reviews/2026-10-31-c2a-r1-rebuild.json) |
 | C2a | Reuse source draw prefixes, use bounded linear dedup and size the one source list | First dense prototype: 4,564 / 4,413 bytes/context (1,024 / 20k) | Final three-process median 987 / 885 bytes/context; keys preserved by independent original-key test. Offline only; [measurements](reviews/2026-10-31-c2a-measurements.json) |
 | C2a | Stream binary catalogue revision through 64 KiB buffer; one indexed ordinal array/ranges per spatial scale | 20k dense / sparse builds allocate 17,479,416 / 31,995,973 bytes | 4,254,290 / 13,475,542 bytes. Wall time variable; **40 measured rebuild spikes >=30 ms**, max78.1916 ms, retained in CHECKS; no native gate claim |

@@ -1,5 +1,7 @@
 # Persistent City
 
+> **E1 development status - 1 November 2026 (offline only):** captured dry/rain/unknown inputs for new discretionary outings and food contexts, soft rain travel preference and frozen new-queue leads; additive schema 20 on C2a. [Contract and byte ledger](docs/population-schema20.md). Offline measurements and the numbered 6 Nov rig handoff are in [CHECKS](CHECKS.md#e1-rain---1-november-2026-offline-only). Native combined performance/behavior proof remains pending.
+
 > **C2a review r1:** shared geometry rebuilds now yield in bounded units; eligibility-only flips reuse the index. Existing-stop admission/diagnostics and post-activation null refusal are fixed. **1,911 tests and 33 foreground checks pass**; native rig proof remains pending. [Review evidence](CHECKS.md#c2a-review-round-1--31-october-2026-offline-only).
 
 > **Step C2a core awareness ? 31 October:** bounded memory seam (empty), neighbourhood/routine and daily distant discovery feed the existing eight-shop choice and sixteen-route ceiling. Schema **19** adds only one held source image and an activation header; campaign source remains unknown. **1,902 tests pass**, with offline regressions/capacity measurements recorded in [CHECKS](CHECKS.md#step-c2a-core-bounded-awareness--31-october-2026-offline-only). Combined 6 Nov rig proof remains pending. [Contract](docs/population-schema19.md).
