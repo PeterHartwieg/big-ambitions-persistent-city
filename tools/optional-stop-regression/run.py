@@ -3,6 +3,9 @@
 from pathlib import Path
 import subprocess, tempfile, sys
 from xml.sax.saxutils import escape
+import os, shutil
+# Prefer dotnet on PATH; otherwise use the per-user SDK install the offline gate specifies.
+dotnet = shutil.which('dotnet') or str(Path(os.environ.get('LOCALAPPDATA', '')) / 'Microsoft/dotnet/dotnet.exe')
 root=Path(__file__).resolve().parents[2]
 source=(root/'Runtime/PhysicalPopulation.cs').read_text()
 methods=source[source.index('        private void OnOptionalDeparture('):source.index('        private bool MotionPermission(')]
@@ -24,7 +27,7 @@ with tempfile.TemporaryDirectory(prefix='pc-optional-stop-') as folder:
     (folder/'StationaryCrowds.cs').write_text((root/'Runtime/StationaryCrowds.cs').read_text())
     (folder/'StationaryScope.cs').write_text((Path(__file__).parent/'StationaryScope.cs.txt').read_text())
     (folder/'Harness.csproj').write_text('<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework><OutputType>Exe</OutputType><Nullable>enable</Nullable><TreatWarningsAsErrors>true</TreatWarningsAsErrors></PropertyGroup><ItemGroup><ProjectReference Include="'+escape(str(root/'Persistence/PersistentCity.Persistence.csproj'))+'" /></ItemGroup></Project>')
-    subprocess.run(['dotnet','run','--project',str(folder/'Harness.csproj'),'-c','Release','--']+sys.argv[1:],check=True)
+    subprocess.run([dotnet,'run','--project',str(folder/'Harness.csproj'),'-c','Release','--']+sys.argv[1:],check=True)
     if '--performance' in sys.argv:
         perf=folder/'perf'
         perf.mkdir()
@@ -65,4 +68,4 @@ with tempfile.TemporaryDirectory(prefix='pc-optional-stop-') as folder:
         assert 'MaximumPedestrians { get; set; } = 48;' in (root/'Runtime/PrototypeSettings.cs').read_text()
         assert 'settings.MaximumPedestrians > 256' in (root/'Runtime/PersistentCityMod.cs').read_text()
         (perf/'Perf.csproj').write_text('<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework><OutputType>Exe</OutputType><Nullable>enable</Nullable><TreatWarningsAsErrors>true</TreatWarningsAsErrors></PropertyGroup><ItemGroup><Compile Include="'+escape(str(root/'Core/*.cs'))+'" Exclude="'+escape(str(root/'Core/OptionalStopScheduling.cs'))+'" /></ItemGroup></Project>')
-        subprocess.run(['dotnet','run','--project',str(perf/'Perf.csproj'),'-c','Release'],check=True)
+        subprocess.run([dotnet,'run','--project',str(perf/'Perf.csproj'),'-c','Release'],check=True)

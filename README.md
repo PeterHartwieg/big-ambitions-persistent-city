@@ -1,5 +1,7 @@
 # Persistent City
 
+> **Step A1 resident inspector - 30 October:** hover an own walking resident in the normal view to highlight them; click for a small popup with name, home/work addresses that open the game's map, personality in words, their story, where they are heading and why, and today's three meals ("unknown" or "not recorded" where nothing is stored). Read-only; no schema or economy change. **1,567 tests and the 31-command offline gate pass**; offline only, native rig proof required before merge. [Evidence](CHECKS.md#step-a1-resident-inspector---30-october-2026-offline-only) · [Plan and decisions](docs/plans/step-a-inspector-traits-choice.md).
+
 > **E2a — 31 October (offline):** expanded existing street-life proofs and read-only venue discovery; production DLL and save contracts unchanged. [Coverage, costs and 6 Nov rig checks](CHECKS.md#e2a-street-life-proof--31-october-2026-offline-only) · [Findings and E2b cases](docs/plans/e2-street-life.md).
 
 > **C1 campaign reader - 31 October:** on-demand read-only campaign snapshots and bounded continuation are implemented, with six verified native identifiers and honest Unknown lifecycle/targeting fields. No awareness, choice, save or native campaign/payment changes. **1,566 unit tests and all 32 offline checks pass**; the pending 6 Nov fixture checks are in [CHECKS.md](CHECKS.md#c1-native-campaign-reader---31-october-2026-offline-only); [native contract notes](docs/plans/c1-campaign-reader.md). Peter's Q1-Q7 product decisions are recorded in the B-E plan.
