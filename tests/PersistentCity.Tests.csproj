@@ -7,6 +7,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../tools/market-research-regression/ResearchFixture.cs" Link="ResearchFixture.cs" />
     <Compile Include="../Runtime/PrototypeSettings.cs" Link="PrototypeSettings.cs" />
     <Compile Include="../Runtime/AudienceGeometryCache.cs" Link="AudienceGeometryCache.cs" />
     <Compile Include="../tools/food-demand-audit/EventObservations.cs" Link="EventObservations.cs" />
