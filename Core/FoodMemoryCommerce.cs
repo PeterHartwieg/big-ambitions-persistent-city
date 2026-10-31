@@ -110,11 +110,14 @@ namespace PersistentCity.Core
             var traits = Traits(meal, city.FindCitizen(meal.AnchorId)!);
             var projection = Regulars(currentOwnShop);
             var own = state.Shops.Where(s => currentOwnShop == null || currentOwnShop(s)).ToDictionary(s => s.BusinessId, StringComparer.Ordinal);
-            var entries = meal.Memory.Entries.Where(e => own.ContainsKey(memoryStore.Identity(e.BusinessRef))).Select(e =>
+            var entries = meal.Memory.Entries.Select(e =>
             {
+                var reference = memoryStore.Reference(e.BusinessRef)!;
+                bool ownCurrent = own.TryGetValue(reference.BusinessId, out var scope) && scope.PlaceId == reference.PlaceId;
                 int effective = FoodMemoryPolicy.EffectiveAffinity(e, day, traits, MemorySettings);
-                return new { BusinessId = memoryStore.Identity(e.BusinessRef), e.BusinessRef, e.Day, e.Served, e.Affinity, e.Outcome,
-                    EffectiveAffinity = effective, Regular = RegularsProjection.IsRegular(e, day, effective, MemorySettings),
+                return new { BusinessId = reference.BusinessId, e.BusinessRef, e.Day, e.Served, e.Affinity, e.Outcome,
+                    EffectiveAffinity = effective, OwnCurrent = ownCurrent,
+                    Regular = ownCurrent && RegularsProjection.IsRegular(e, day, effective, MemorySettings),
                     Expired = FoodMemoryPolicy.Expired(e, day, MemorySettings) };
             }).ToArray();
             return new { ConsumerId = consumerId, Day = day, Active = city.State.Capabilities.Active,

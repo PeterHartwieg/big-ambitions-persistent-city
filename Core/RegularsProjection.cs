@@ -45,19 +45,16 @@ namespace PersistentCity.Core
         {
             if (!counts.TryGetValue(businessId, out int cached)) return 0;
             if (built) return cached;
-            if (!built)
+            var seen = new HashSet<string>(food.Residents.Count, StringComparer.Ordinal);
+            foreach (var consumer in food.Residents)
             {
-                var seen = new HashSet<string>(food.Residents.Count, StringComparer.Ordinal);
-                foreach (var consumer in food.Residents)
-                {
-                    if (!seen.Add(consumer.ResidentId)) continue;
-                    foreach (var entry in consumer.Memory.Entries)
-                        if (entry.Served >= visits && entry.Day <= day && day - entry.Day <= recentDays
-                            && ownReferences.TryGetValue(entry.BusinessRef, out var id)
-                            && effectiveAffinity(consumer, entry, day) > 0) counts[id]++;
-                }
-                built = true;
+                if (!seen.Add(consumer.ResidentId)) continue;
+                foreach (var entry in consumer.Memory.Entries)
+                    if (entry.Served >= visits && entry.Day <= day && day - entry.Day <= recentDays
+                        && ownReferences.TryGetValue(entry.BusinessRef, out var id)
+                        && effectiveAffinity(consumer, entry, day) > 0) counts[id]++;
             }
+            built = true;
             return counts[businessId];
         }
 

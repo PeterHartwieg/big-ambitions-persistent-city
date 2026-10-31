@@ -166,8 +166,50 @@ public sealed partial class FoodMemoryTests
         Assert.True((bool)dump["Regular"]!); Assert.True((bool)dump["Represented"]!); Assert.True((bool)dump["Entries"]![0]!["Regular"]!);
         Assert.Equal(1, (int)dump["OwnShopRegulars"]![0]!["Regulars"]!);
         var refused = JObject.FromObject(city.DumpFoodMemory(meal.ResidentId, _ => false)!);
-        Assert.False((bool)refused["Regular"]!); Assert.Empty((JArray)refused["Entries"]!); Assert.Empty((JArray)refused["OwnShopRegulars"]!);
+        Assert.False((bool)refused["Regular"]!);
+        var retained = Assert.Single((JArray)refused["Entries"]!);
+        Assert.False((bool)retained["OwnCurrent"]!); Assert.False((bool)retained["Regular"]!);
+        Assert.Empty((JArray)refused["OwnShopRegulars"]!);
         Assert.Equal(before, SaveCodec.Write(city.State)); Assert.Equal(0, market.Calls); Assert.Equal(0, paths.Out + paths.Back);
+    }
+
+    [Theory]
+    [InlineData("unobserved")] [InlineData("replaced")] [InlineData("withdrawn")]
+    public void DiagnosticRetainsHistoricalEvidenceWithoutCountingNoncurrentGenerations(string state)
+    {
+        var (city, market, paths, _) = Ready(2, 2);
+        var meal = city.State.Food!.Residents[1];
+        var store = new FoodMemoryStore(city.State.Food);
+        meal.Day = 0; meal.ContextAttempts = 1; meal.BusinessId = "b0"; meal.PlaceId = "s0";
+        Visit(store, meal, ShopExperience.Served, 0);
+        meal.ContextAttempts = 2; meal.BusinessId = "b1"; meal.PlaceId = "s1";
+        Visit(store, meal, ShopExperience.Served, 0);
+        foreach (var entry in meal.Memory.Entries) { entry.Served = 3; entry.Affinity = 8; }
+        meal.Day = 1; meal.ContextAttempts = 0; meal.BusinessId = meal.PlaceId = "";
+        city = Reload(city, market, paths);
+
+        if (state == "replaced") city.State.Food!.Shops[0].BusinessId = "replacement";
+        if (state == "withdrawn") city.State.Food!.Shops.RemoveAt(0);
+        Func<FoodScope, bool> observed = _ => state != "unobserved";
+        string before = SaveCodec.Write(city.State);
+        var dump = JObject.FromObject(city.DumpFoodMemory(meal.ResidentId, observed)!);
+        var entries = (JArray)dump["Entries"]!;
+        Assert.Equal(2, entries.Count);
+        var historical = entries.Single(e => (string)e["BusinessId"]! == "b0");
+        Assert.False((bool)historical["OwnCurrent"]!);
+        Assert.False((bool)historical["Regular"]!);
+        Assert.Equal(3, (int)historical["Served"]!);
+        Assert.Equal(8, (int)historical["Affinity"]!);
+        Assert.Equal(0, (int)historical["Day"]!);
+        var current = entries.Single(e => (string)e["BusinessId"]! == "b1");
+        Assert.Equal(state != "unobserved", (bool)current["OwnCurrent"]!);
+        Assert.Equal(state != "unobserved", (bool)current["Regular"]!);
+        Assert.Equal(state != "unobserved", (bool)dump["Regular"]!);
+        Assert.DoesNotContain((JArray)dump["OwnShopRegulars"]!, e => (string)e["BusinessId"]! == "b0");
+        Assert.Equal(before, SaveCodec.Write(city.State));
+        city = Reload(city, market, paths);
+        Assert.Equal(dump.ToString(), JObject.FromObject(city.DumpFoodMemory(meal.ResidentId, observed)!).ToString());
+        Assert.Equal(0, market.Calls); Assert.Equal(0, paths.Out + paths.Back);
     }
 
     [Fact]
@@ -199,7 +241,11 @@ public sealed partial class FoodMemoryTests
         Assert.Contains("if (showEconomy) DrawEconomy();", panel);
         Assert.Contains("Time.unscaledTime >= nextEconomyText", panel);
         Assert.Contains("nextEconomyText = Time.unscaledTime + 3", panel);
-        Assert.Contains("if (regularText == null) continue;", panel);
+        Assert.DoesNotContain("if (regularText == null) continue;", panel);
+        Assert.Contains("if (regularText != null) text.AppendLine(regularText);", panel);
+        Assert.Contains("?? \"Waiting for business ownership\"", panel);
+        Assert.Contains("Resident sales are paused for this shop.", panel);
+        Assert.Contains("Address accounts, day ", panel);
         Assert.DoesNotContain("Customer home districts:", panel);
         Assert.Contains("if (visible && selectedId != null && Time.unscaledTime >= nextRefresh) Refresh(simulation);", popup);
         Assert.DoesNotContain("ResidentMemoryWords", Read("Runtime/PersistentCityMod.cs"));
