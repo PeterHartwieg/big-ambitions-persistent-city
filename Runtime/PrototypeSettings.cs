@@ -10,6 +10,10 @@ namespace PersistentCity.Runtime
     {
         [JsonIgnore]
         public FoodChoiceSettings FoodChoice { get; } = new FoodChoiceSettings();
+        [JsonIgnore]
+        public MarketResearchSettings MarketResearch { get; } = new MarketResearchSettings();
+        public int MarketResearchCatchmentMetres { get => MarketResearch.MarketResearchCatchmentMetres; set => MarketResearch.MarketResearchCatchmentMetres=value; }
+        public int MarketResearchConsumersPerUnit { get => MarketResearch.MarketResearchConsumersPerUnit; set => MarketResearch.MarketResearchConsumersPerUnit=value; }
         public double FoodChoiceTemperature { get => FoodChoice.FoodChoiceTemperature; set => FoodChoice.FoodChoiceTemperature=value; }
         public double FoodChoiceWeightFloor { get => FoodChoice.FoodChoiceWeightFloor; set => FoodChoice.FoodChoiceWeightFloor=value; }
         public double FoodChoiceTasteWeight { get => FoodChoice.FoodChoiceTasteWeight; set => FoodChoice.FoodChoiceTasteWeight=value; }

@@ -17,5 +17,7 @@
   "FoodChoiceTimePressureWeight": 1.0,
   "FoodChoiceHealthWeight": 0.0,
   "FoodChoiceHouseholdWeight": 1.0,
-  "FoodShortlistTemperature": 1.0
+  "FoodShortlistTemperature": 1.0,
+  "MarketResearchCatchmentMetres": 500,
+  "MarketResearchConsumersPerUnit": 256
 }
