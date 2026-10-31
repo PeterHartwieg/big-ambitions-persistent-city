@@ -118,6 +118,22 @@ public sealed class FoodMemoryTests
         s.FoodMemoryStockPenalty = 0; Assert.True(FoodMemoryPolicy.Penalty(ShopExperience.Stockout, Traits(4), s) > 0);
     }
 
+    [Theory]
+    [InlineData(0)] [InlineData(.5)] [InlineData(1)] [InlineData(2)]
+    public void FinalEffectiveMultiplierHonorsBoundsAfterStrengthAndKeepsProbabilityFloor(double strength)
+    {
+        var settings = new FoodMemorySettings { FoodMemoryWeight = strength, FoodMemoryMinimumMultiplier = .1, FoodMemoryMaximumMultiplier = 1.5 };
+        foreach (int affinity in new[] { -8, -4, 0, 4, 8 })
+        {
+            var m = new ConsumerMemory { Entries = { new() { BusinessRef = 0, Day = 1, Affinity = affinity } } };
+            double contribution = FoodMemoryPolicy.Contribution(m, 0, 1, Traits(4), settings);
+            Assert.InRange(Math.Exp(contribution), .1 - 1e-15, 1.5);
+            var offer = new EvaluatedFoodOffer("b", FoodProducts.Croissant, Money.FromCents(100), 999999, 999999, 999999, 1, null, null, MealKind.Lunch, contribution);
+            Assert.True(FoodChoicePolicy.Weight(offer, Traits(4), Money.FromCents(100), new()) >= .02);
+            if (strength == 0) Assert.Equal(0, contribution);
+        }
+    }
+
     [Fact]
     public void LoyalAndCuriousCurvesAcrossSeedsAndNeutralWeightRetainsMemory()
     {
@@ -245,6 +261,19 @@ public sealed class FoodMemoryTests
         Assert.Equal(0, paths.Out); Assert.Equal(0, market.Calls);
         city = Reload(city, market, paths); Advance(city, meal.DesiredAt + 20);
         Assert.Equal(0, city.State.Food!.Residents[0].Memory.Entries.Single().Served);
+    }
+
+    [Fact]
+    public void UnaffordableExistingStopDoesNotAttributeUnrelatedStockoutToService()
+    {
+        var (city, market, paths, _) = Ready();
+        var person = city.State.Citizens[0]; person.PlaceId = "s0"; person.Activity = Activity.Shop;
+        market.Source.Shops[0].Offers[0].Units = 0;
+        market.Source.Shops[0].Offers[0].Price = city.State.Food!.Residents[0].Allowance + Money.FromCents(1);
+        city = new CitySimulator(city.State, paths); city.AttachFoodMarket(market);
+        Advance(city, city.State.Food!.Residents[0].DesiredAt + 10);
+        Assert.Empty(city.State.Food.Residents[0].Memory.Entries); Assert.Null(city.State.Food.Residents[0].Memory.Watermark);
+        Assert.Equal(0, paths.Out); Assert.Equal(0, market.Calls);
     }
 
     [Fact]

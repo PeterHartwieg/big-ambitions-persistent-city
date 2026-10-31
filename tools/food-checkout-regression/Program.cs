@@ -193,21 +193,24 @@ static partial class Program
         Check(f.Market.Buy(f.Meal("r1"), Minute).Paid, "first checkout takes the last croissant");
         long native = RetailBusinessSimulator.Setups;
         var second = f.Market.Buy(f.Meal("r2"), Minute);
-        Check(!second.Paid && second.Reason == "Stock or staffing changed", "same-minute second checkout sees the sale: " + second.Reason);
+        Check(!second.Paid && second.Failure == ShopExperience.Stockout && second.Reason == "Confirmed stockout before service", "same-minute second checkout sees the sale: " + second.Reason);
         Check(f.Receipt(f.Meal("r2")) == FoodReceiptStatus.Missing && f.Stock(Croissant) == 0 && f.Bags == 2, "refusal makes no receipt or sale");
         Check(RetailBusinessSimulator.Setups - native == 1, "a refused checkout makes only its selected read");
         Check(f.Market.Buy(f.Meal("r3", Burger, Money.FromCents(600)), Minute).Paid, "another menu product is still sold");
 
         // Native changes between checkouts in the same frame are read live.
         f.Reg.Registers.Clear();
-        Check(f.Market.Buy(f.Meal("r4", Burger, Money.FromCents(600)), Minute).Reason == "Stock or staffing changed", "unstaffed register refuses");
+        var unstaffed = f.Market.Buy(f.Meal("r4", Burger, Money.FromCents(600)), Minute);
+        Check(!unstaffed.Paid && unstaffed.Reason == "Stock or staffing changed" && !unstaffed.Failure.HasValue, "unstaffed register refuses without invented stockout");
         f.Reg.Registers.Add(new PointOfSale { instance = Shelf("register", "bag", 0) });
-        Check(f.Market.Buy(f.Meal("r5", Burger, Money.FromCents(600)), Minute).Reason == "Stock or staffing changed", "empty bag pool refuses");
+        var noBags = f.Market.Buy(f.Meal("r5", Burger, Money.FromCents(600)), Minute);
+        Check(!noBags.Paid && noBags.Failure == ShopExperience.Stockout, "empty bag pool at staffed counter proves stockout");
         f.Reg.Registers[0].instance.cargoInstances![0].amount = 2;
         f.Reg.Shelves[0].cargoInstances![0].amount = 3;
         Check(f.Market.Buy(f.Meal("r6"), Minute).Paid && f.Stock(Croissant) == 2 && f.Bags == 1, "restocked shelf and bags sell again");
         f.Reg.Open = false;
-        Check(f.Market.Buy(f.Meal("r7"), Minute).Reason == "Shop closed before service", "closed shop refuses before any receipt");
+        var closed = f.Market.Buy(f.Meal("r7"), Minute);
+        Check(!closed.Paid && closed.Failure == ShopExperience.Closed && closed.Reason == "Shop closed before service", "closed shop refuses before any receipt");
         Check(f.Receipt(f.Meal("r7")) == FoodReceiptStatus.Missing, "closed refusal leaves no receipt");
         f.Reg.Open = true;
         f.Reg.retailPrices[0].price = 3.5f;

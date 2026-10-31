@@ -30,11 +30,12 @@ namespace PersistentCity.Core
         {
             if (!city.State.Capabilities.Active || decision.Shops.Count != 1 || person.PlaceId != decision.Shops[0].PlaceId) return;
             var shop = decision.Shops[0];
+            if (!shop.Offers.Any(o => o.Price > Money.Zero && o.Price <= AvailableForMeal(meal))) return;
             var business = CapturedBusiness(shop);
             var hours = new Place { Kind = PlaceKind.Shop, WeeklyHours = business.Hours, OpenMinute = 0, CloseMinute = 0 };
             ShopExperience? cause = !DailyRoutine.Open(hours, decision.OriginAt) ? ShopExperience.Closed
-                : shop.Offers.Count > 0 && shop.Offers.All(o => o.Units == 0) ? ShopExperience.Stockout
-                : shop.NextServiceAt - decision.OriginAt > MealRhythm.QueueMinutes(meal.Kind, Activity.Shop) ? ShopExperience.Queue : (ShopExperience?)null;
+                : !shop.ServiceUnavailable && shop.MealsPerHour > 0 && shop.Offers.Count > 0 && shop.Offers.All(o => o.Units == 0) ? ShopExperience.Stockout
+                : !shop.ServiceUnavailable && shop.MealsPerHour > 0 && shop.NextServiceAt - decision.OriginAt > MealRhythm.QueueMinutes(meal.Kind, Activity.Shop) ? ShopExperience.Queue : (ShopExperience?)null;
             if (!cause.HasValue) return;
             meal.BusinessId = shop.BusinessId; meal.PlaceId = shop.PlaceId;
             meal.ProductId = shop.Offers.Count > 0 ? shop.Offers[0].ProductId : state.Shops.First(s => s.BusinessId == shop.BusinessId).ProductId;

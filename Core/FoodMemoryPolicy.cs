@@ -36,7 +36,8 @@ namespace PersistentCity.Core
                     : 1 + affinity / 8.0 * (.1 + .9 * loyalty) * (settings.FoodMemoryLoyalReturnMultiplier - 1);
             }
             multiplier = Math.Max(settings.FoodMemoryMinimumMultiplier, Math.Min(settings.FoodMemoryMaximumMultiplier, multiplier));
-            return settings.FoodMemoryWeight * Math.Log(multiplier);
+            double weighted = settings.FoodMemoryWeight == 1 ? multiplier : Math.Pow(multiplier, settings.FoodMemoryWeight);
+            return Math.Log(Math.Max(settings.FoodMemoryMinimumMultiplier, Math.Min(settings.FoodMemoryMaximumMultiplier, weighted)));
         }
 
         public static int Penalty(ShopExperience cause, ResidentTraits traits, FoodMemorySettings settings)
