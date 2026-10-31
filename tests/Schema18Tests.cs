@@ -88,6 +88,26 @@ public sealed partial class FoodCommerceTests
         }
     }
 
+    [Theory]
+    [InlineData("tuple-octal")] [InlineData("tuple-hex")] [InlineData("schema-hex")]
+    [InlineData("revision-octal")] [InlineData("memory-escaped")] [InlineData("visit-escaped")]
+    public void B0_NoncanonicalRawTokensRefuseBeforeTypedMaterialization(string damage)
+    {
+        var (city, _) = S17_Full();
+        city.State.Citizens[0].RecentVisits.Add(new VisitRecord { PlaceId = city.State.Citizens[0].HomeId });
+        string source = SaveCodec.Write(city.State), broken = source;
+        switch (damage)
+        {
+            case "tuple-octal": broken = source.Replace("\"Residents\":[[1,", "\"Residents\":[[01,"); break;
+            case "tuple-hex": broken = source.Replace("\"Residents\":[[1,", "\"Residents\":[[0x1,"); break;
+            case "schema-hex": broken = source.Replace("\"Schema\":18,", "\"Schema\":0x12,"); break;
+            case "revision-octal": broken = source.Replace("\"Revision\":1", "\"Revision\":01"); break;
+            case "memory-escaped": broken = source.Replace("\"1-------\"", "\"\\u0031-------\""); break;
+            case "visit-escaped": broken = source.Replace("\"RecentVisits\":[\"1", "\"RecentVisits\":[\"\\u0031"); break;
+        }
+        Assert.NotEqual(source, broken); B0_Preserve(broken, city.State);
+    }
+
     [Fact]
     public void B0_FullMemoryRoundTripsCanonicallyWithinItsInclusiveBudgetAndCountsAsOne()
     {

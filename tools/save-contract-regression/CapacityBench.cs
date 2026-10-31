@@ -45,6 +45,17 @@ static partial class Program
         for (int i = state.Places.Count; i < 20000; i++) state.Places.Add(new Place {
             Id = "address:ba%3Astreet_thirdstreet:" + i + ":shop", Name = "Historical shop " + i,
             District = "a", Kind = PlaceKind.Shop, Position = new Position(i, 0, 0) });
+        // Fill the plan's complete 12 Mi-character existing-state allowance. Added places cost
+        // exactly 6,343,907 chars; remaining ASCII name text adds no hidden record collection.
+        var own = state.Citizens.Where(c => c.Identity.Id.StartsWith("pc:", StringComparison.Ordinal)).ToArray();
+        int remaining = 12582912 - 6343907;
+        Check(own.Length > 0, "Expected stable expanded residents in the ceiling fixture.");
+        for (int i = 0; i < own.Length; i++)
+        {
+            int extra = remaining / (own.Length - i); remaining -= extra;
+            own[i].Identity.Name += new string('X', extra);
+            Check(own[i].Identity.Name.Length <= 512, "Name padding exceeds the existing string cap.");
+        }
     }
     private static void FullMemoryAndTable(CityState state)
     {
@@ -142,6 +153,8 @@ static partial class Program
             visitsPerResident = visits, visits = residents * visits, placeCount = state.Places.Count,
             extraExistingPlaces = cf ? 19991 : 0,
             extraExistingPlaceChars = cf ? 6343907 : 0,
+            extraExistingNameChars = cf ? 6239005 : 0,
+            actualExistingGrowthChars = cf ? 12582912 : 0,
             existingGrowthAllowanceChars = cf ? 12582912 : 0,
             memoryEntries = SchemaVersion >= 18 ? state.Food.Residents.Count * 4 : 0,
             businessReferences = SchemaVersion >= 18 ? 20000 : 0,

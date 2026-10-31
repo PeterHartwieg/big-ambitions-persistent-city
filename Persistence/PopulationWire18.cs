@@ -271,12 +271,12 @@ namespace PersistentCity.Persistence
         {
             private readonly WireContext context;
             public BusinessReferenceConverter(WireContext context) { this.context = context; }
-            public static void Check(JsonReader reader)
+            public static void Check(JsonReader reader, TokenText text)
             {
-                Require(reader.TokenType == JsonToken.StartArray && reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 1, 1), "Invalid business reference version.");
-                Require(reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 0, MaxPlaces - 1), "Invalid business reference slot.");
+                Require(reader.TokenType == JsonToken.StartArray && reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 1, 1) && text.CanonicalInteger((IJsonLineInfo)reader), "Invalid business reference version.");
+                Require(reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 0, MaxPlaces - 1) && text.CanonicalInteger((IJsonLineInfo)reader), "Invalid business reference slot.");
                 Require(reader.Read() && reader.TokenType == JsonToken.String && ((string)reader.Value!).Length <= 512, "Invalid business reference identity.");
-                Require(reader.Read() && reader.TokenType == JsonToken.String && ((string)reader.Value!).Length == 3 && MemoryWire.Number((string)reader.Value!, 0, 3) < MaxPlaces, "Invalid business place reference.");
+                Require(reader.Read() && reader.TokenType == JsonToken.String && ((string)reader.Value!).Length == 3 && MemoryWire.Number((string)reader.Value!, 0, 3) < MaxPlaces && text.LiteralAsciiString((IJsonLineInfo)reader, (string)reader.Value!), "Invalid business place reference.");
                 Require(reader.Read() && reader.TokenType == JsonToken.EndArray, "Surplus business reference slot.");
             }
             public override void WriteJson(JsonWriter writer, BusinessReference? value, JsonSerializer serializer)

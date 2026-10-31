@@ -218,15 +218,15 @@ namespace PersistentCity.Persistence
             if (nullable != null) type = nullable;
             if (type == typeof(string)) { Require(token == JsonToken.String, "Expected a string."); Require(((string)reader.Value!).Length <= 512, "Oversized string."); return; }
             if (type == typeof(bool)) { Require(token == JsonToken.Boolean, "Expected a boolean."); return; }
-            if (type == typeof(int) || type.IsEnum) { Require(token == JsonToken.Integer, "Expected an integer."); Require(IntegerToken(reader.Value, int.MinValue, int.MaxValue), "Integer is out of range."); return; }
-            if (type == typeof(long)) { Require(token == JsonToken.Integer, "Expected an integer."); Require(IntegerToken(reader.Value, long.MinValue, long.MaxValue), "Integer is out of range."); return; }
+            if (type == typeof(int) || type.IsEnum) { Require(token == JsonToken.Integer, "Expected an integer."); Require(IntegerToken(reader.Value, int.MinValue, int.MaxValue) && text.CanonicalInteger((IJsonLineInfo)reader), "Integer is out of range or noncanonical."); return; }
+            if (type == typeof(long)) { Require(token == JsonToken.Integer, "Expected an integer."); Require(IntegerToken(reader.Value, long.MinValue, long.MaxValue) && text.CanonicalInteger((IJsonLineInfo)reader), "Integer is out of range or noncanonical."); return; }
             if (type == typeof(Money))
             {
                 // Validate the original token: Json.NET reads "010" as octal 8 and rounds fractions.
                 Require(token == JsonToken.Integer && TokenText.CanonicalUnits(text.Number((IJsonLineInfo)reader)), "Money must be a canonical whole number of units.");
                 return;
             }
-            if (type == typeof(double)) { Require(token == JsonToken.Integer || token == JsonToken.Float, "Expected a number."); return; }
+            if (type == typeof(double)) { Require(token == JsonToken.Float || token == JsonToken.Integer && text.CanonicalInteger((IJsonLineInfo)reader), "Expected a canonical number."); return; }
             if (type == typeof(MealOutcomeRecord))
             {
                 Require(token == JsonToken.String && ((string)reader.Value!).Length <= MaxMealOutcomeWire
@@ -235,7 +235,7 @@ namespace PersistentCity.Persistence
             }
             if (TupleLayout.For(type) is TupleLayout tuple)
             {
-                Require(token == JsonToken.StartArray && reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 1, 1), "Invalid tuple version.");
+                Require(token == JsonToken.StartArray && reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 1, 1) && text.CanonicalInteger((IJsonLineInfo)reader), "Invalid tuple version.");
                 foreach (var slot in tuple.Properties)
                 {
                     Require(reader.Read() && reader.TokenType != JsonToken.EndArray, "Missing tuple slot.");
@@ -246,7 +246,7 @@ namespace PersistentCity.Persistence
             }
             if (type == typeof(ResidentFoodToday))
             {
-                Require(token == JsonToken.StartArray && reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 1, 1), "Invalid rollup version.");
+                Require(token == JsonToken.StartArray && reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 1, 1) && text.CanonicalInteger((IJsonLineInfo)reader), "Invalid rollup version.");
                 for (int i = 0; i < 2; i++) { Require(reader.Read(), "Missing rollup header."); CheckShape(reader, typeof(int), resolver, ref records, text, schema, fieldNames); }
                 int count = 0;
                 while (reader.Read() && reader.TokenType != JsonToken.EndArray)
@@ -260,13 +260,13 @@ namespace PersistentCity.Persistence
             }
             if (type == typeof(ConsumerMemory))
             {
-                Require(token == JsonToken.String && ((string)reader.Value!).Length <= 48, "Invalid memory length.");
+                Require(token == JsonToken.String && ((string)reader.Value!).Length <= 48 && text.LiteralAsciiString((IJsonLineInfo)reader, (string)reader.Value!), "Invalid memory length/encoding.");
                 MemoryWire.CheckWire((string)reader.Value!);
                 Charge(ref records); // four fixed memories + watermark are ONE extension
                 return;
             }
-            if (type == typeof(VisitRecord)) { VisitConverter.Check(reader); return; }
-            if (type == typeof(BusinessReference)) { BusinessReferenceConverter.Check(reader); return; }
+            if (type == typeof(VisitRecord)) { VisitConverter.Check(reader); Require(text.LiteralAsciiString((IJsonLineInfo)reader, (string)reader.Value!), "Noncanonical visit encoding."); return; }
+            if (type == typeof(BusinessReference)) { BusinessReferenceConverter.Check(reader, text); return; }
             if (type == typeof(PopulationCapabilities)) Charge(ref records);
             if (type == typeof(Position))
             {
@@ -279,7 +279,7 @@ namespace PersistentCity.Persistence
                     int bit = name == "X" ? 1 : name == "Y" ? 2 : name == "Z" ? 4 : 0;
                     Require(bit != 0 && (components & bit) == 0, "Unknown or duplicate position field.");
                     components |= bit;
-                    Require(reader.Read() && (reader.TokenType == JsonToken.Integer || reader.TokenType == JsonToken.Float), "Invalid position number.");
+                    Require(reader.Read() && (reader.TokenType == JsonToken.Float || reader.TokenType == JsonToken.Integer && text.CanonicalInteger((IJsonLineInfo)reader)), "Invalid position number.");
                 }
                 Require(reader.TokenType == JsonToken.EndObject && components == 7, "Missing position field.");
                 return;
