@@ -25,6 +25,13 @@ namespace PersistentCity.Core
                 memoryStore.Experience(meal, cause, (int)(at / 1440), Traits(meal, city.FindCitizen(meal.AnchorId)!), MemorySettings);
         }
 
+        private FoodBusiness? FailureEvidence(string businessId, string placeId, double minute, FoodBusiness? observed = null)
+        {
+            try { return market is IFoodFailureMarket evidence ? evidence.ReadFailureBusiness(businessId, placeId, minute)
+                : observed ?? ReadBusiness(businessId, minute); }
+            catch (Exception) { return null; } // Unavailable extra proof stays neutral; keep the original refusal.
+        }
+
         // Only exact, causal arrival evidence. Generic "unavailable", interrupted breaks and routes stay neutral.
         private void FailedVisit(ResidentMeal meal, string reason)
         {
@@ -45,9 +52,7 @@ namespace PersistentCity.Core
             {
                 // Held images intentionally retain only a generic service flag. Revalidate the
                 // named bag-stockout evidence at this reached shop; no routes or checkout.
-                var live = market is IFoodFailureMarket evidence
-                    ? evidence.ReadFailureBusiness(shop.BusinessId, shop.PlaceId, decision.OriginAt)
-                    : ReadBusiness(shop.BusinessId, decision.OriginAt);
+                var live = FailureEvidence(shop.BusinessId, shop.PlaceId, decision.OriginAt);
                 stockout = live?.Id == shop.BusinessId && live.PlaceId == shop.PlaceId && live.ServiceUnavailableReason == "Out of stock"
                     && live.Offers.Any(o => o.Units == 0 && o.Price > Money.Zero && o.Price <= AvailableForMeal(meal));
             }

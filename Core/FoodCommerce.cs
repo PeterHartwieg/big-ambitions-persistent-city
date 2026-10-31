@@ -341,8 +341,7 @@ namespace PersistentCity.Core
                     {
                         if (city.State.Capabilities.Active && available?.ServiceUnavailableReason == "Out of stock")
                         {
-                            var live = market is IFoodFailureMarket evidence
-                                ? evidence.ReadFailureBusiness(meal.BusinessId, meal.PlaceId, now) : available;
+                            var live = FailureEvidence(meal.BusinessId, meal.PlaceId, now, available);
                             if (live?.Id == meal.BusinessId && live.PlaceId == meal.PlaceId && live.ServiceUnavailableReason == "Out of stock"
                                 && live.Offers.Any(o => o.ProductId == meal.ProductId && o.Units == 0))
                                 Experience(meal, ShopExperience.Stockout, now);

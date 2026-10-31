@@ -100,6 +100,24 @@ public sealed partial class FoodMemoryTests
     }
 
     [Theory]
+    [InlineData(false)] [InlineData(true)]
+    public void UnavailableFailureProofKeepsTheOriginalRefusalAndNeutralMemory(bool existingStop)
+    {
+        var (city, market, paths, _) = Ready(); var meal = city.State.Food!.Residents[0]; double at = meal.DesiredAt;
+        if (existingStop)
+        {
+            var person = city.State.Citizens[0]; person.PlaceId = "s0"; person.Activity = Activity.Shop;
+        }
+        else Advance(city, at);
+        market.Source.Shops[0].MealsPerHour = 0; market.Source.Shops[0].ServiceUnavailableReason = "Out of stock";
+        market.Source.Shops[0].Offers[0].Units = 0; market.ThrowOnFailureEvidence = true;
+        if (existingStop) { city = new CitySimulator(city.State, paths); city.AttachFoodMarket(market); }
+        Advance(city, at + 10);
+        Assert.Equal(MealStatus.Missed, city.State.Food!.Residents[0].Status);
+        Assert.Empty(city.State.Food.Residents[0].Memory.Entries); Assert.Equal(0, market.Calls);
+    }
+
+    [Theory]
     [InlineData(false, 0)] [InlineData(false, 1)] [InlineData(true, 0)] [InlineData(true, 1)]
     public void PhysicalQueueGrowthStillServesWhenItFitsThePreviouslyCommittedBreak(bool active, double weight)
     {

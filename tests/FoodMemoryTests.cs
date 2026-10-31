@@ -154,10 +154,11 @@ public sealed partial class FoodMemoryTests
         s.FoodMemoryWeight = 0; Assert.Equal(0, FoodMemoryPolicy.Contribution(m, 0, 1, Traits(4), s)); Assert.Single(m.Entries);
     }
 
-    private sealed class Market : IFoodMarket, IFoodSaleEvidence
+    private sealed class Market : IFoodMarket, IFoodSaleEvidence, IFoodFailureMarket
     {
         public WeightedFoodChoiceTests.Market Source = new();
         public bool Unknown, Confirmed;
+        public bool ThrowOnFailureEvidence;
         public ShopExperience? Refusal;
         public int Calls;
         public double EarliestMinute => 0;
@@ -169,6 +170,9 @@ public sealed partial class FoodMemoryTests
             return Refusal.HasValue ? new(false, "Named actual failure", Refusal) : new(true, "Confirmed");
         }
         public bool IsConfirmedPaid(ResidentMeal meal) => Confirmed;
+        public FoodBusiness? ReadFailureBusiness(string businessId, string placeId, double at)
+            => ThrowOnFailureEvidence ? throw new InvalidOperationException("Failure proof unavailable")
+                : Source.Shops.SingleOrDefault(b => b.Id == businessId && b.PlaceId == placeId);
     }
     private static (CitySimulator city, Market market, WeightedFoodChoiceTests.Planner paths, FoodMemorySettings settings) Ready(int factor = 1, int shops = 1)
     {
