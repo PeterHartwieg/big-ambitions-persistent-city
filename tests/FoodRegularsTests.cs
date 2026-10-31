@@ -163,10 +163,10 @@ public sealed partial class FoodMemoryTests
         city = Reload(city, market, paths);
         string before = SaveCodec.Write(city.State);
         var dump = JObject.FromObject(city.DumpFoodMemory(meal.ResidentId)!);
-        Assert.True((bool)dump["Represented"]!); Assert.True((bool)dump["Entries"]![0]!["Regular"]!);
+        Assert.True((bool)dump["Regular"]!); Assert.True((bool)dump["Represented"]!); Assert.True((bool)dump["Entries"]![0]!["Regular"]!);
         Assert.Equal(1, (int)dump["OwnShopRegulars"]![0]!["Regulars"]!);
         var refused = JObject.FromObject(city.DumpFoodMemory(meal.ResidentId, _ => false)!);
-        Assert.Empty((JArray)refused["Entries"]!); Assert.Empty((JArray)refused["OwnShopRegulars"]!);
+        Assert.False((bool)refused["Regular"]!); Assert.Empty((JArray)refused["Entries"]!); Assert.Empty((JArray)refused["OwnShopRegulars"]!);
         Assert.Equal(before, SaveCodec.Write(city.State)); Assert.Equal(0, market.Calls); Assert.Equal(0, paths.Out + paths.Back);
     }
 
@@ -199,7 +199,7 @@ public sealed partial class FoodMemoryTests
         Assert.Contains("if (showEconomy) DrawEconomy();", panel);
         Assert.Contains("Time.unscaledTime >= nextEconomyText", panel);
         Assert.Contains("nextEconomyText = Time.unscaledTime + 3", panel);
-        Assert.Contains("if (!ObservedOwnShop(scope)) continue;", panel);
+        Assert.Contains("if (regularText == null) continue;", panel);
         Assert.DoesNotContain("Customer home districts:", panel);
         Assert.Contains("if (visible && selectedId != null && Time.unscaledTime >= nextRefresh) Refresh(simulation);", popup);
         Assert.DoesNotContain("ResidentMemoryWords", Read("Runtime/PersistentCityMod.cs"));

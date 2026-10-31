@@ -110,6 +110,13 @@ namespace PersistentCity.Core
             var traits = Traits(meal, city.FindCitizen(meal.AnchorId)!);
             var projection = Regulars(currentOwnShop);
             var own = state.Shops.Where(s => currentOwnShop == null || currentOwnShop(s)).ToDictionary(s => s.BusinessId, StringComparer.Ordinal);
+            var entries = meal.Memory.Entries.Where(e => own.ContainsKey(memoryStore.Identity(e.BusinessRef))).Select(e =>
+            {
+                int effective = FoodMemoryPolicy.EffectiveAffinity(e, day, traits, MemorySettings);
+                return new { BusinessId = memoryStore.Identity(e.BusinessRef), e.BusinessRef, e.Day, e.Served, e.Affinity, e.Outcome,
+                    EffectiveAffinity = effective, Regular = RegularsProjection.IsRegular(e, day, effective, MemorySettings),
+                    Expired = FoodMemoryPolicy.Expired(e, day, MemorySettings) };
+            }).ToArray();
             return new { ConsumerId = consumerId, Day = day, Active = city.State.Capabilities.Active,
                 Represented = meal.Slot > 0,
                 StoryKind = meal.Slot > 0 ? "Represented consumer; no physical body" : "Resident's own consumer",
@@ -119,10 +126,7 @@ namespace PersistentCity.Core
                 PolicyRevision = 1, memoryStore.CapacityMisses, memoryStore.ProtectedInsertions,
                 Watermark = meal.Memory.Watermark == null ? null : new ExperienceWatermark { Day = meal.Memory.Watermark.Day,
                     Meal = meal.Memory.Watermark.Meal, Context = meal.Memory.Watermark.Context, Stage = meal.Memory.Watermark.Stage },
-                Entries = meal.Memory.Entries.Where(e => own.ContainsKey(memoryStore.Identity(e.BusinessRef))).Select(e => new { BusinessId = memoryStore.Identity(e.BusinessRef), e.BusinessRef,
-                    e.Day, e.Served, e.Affinity, e.Outcome, EffectiveAffinity = FoodMemoryPolicy.EffectiveAffinity(e, day, traits, MemorySettings),
-                    Regular = RegularsProjection.IsRegular(e, day, FoodMemoryPolicy.EffectiveAffinity(e, day, traits, MemorySettings), MemorySettings),
-                    Expired = FoodMemoryPolicy.Expired(e, day, MemorySettings) }).ToArray() };
+                Regular = entries.Any(e => e.Regular), Entries = entries };
         }
     }
     public sealed partial class CitySimulator

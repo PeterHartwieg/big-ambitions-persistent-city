@@ -96,12 +96,12 @@ namespace PersistentCity.Runtime
             var regulars = simulation.ProjectRegulars(ObservedOwnShop);
             foreach (var scope in food.Shops)
             {
-                if (!ObservedOwnShop(scope)) continue;
+                string? regularText = regulars?.OwnShopText(scope.BusinessId);
+                if (regularText == null) continue;
                 var place = city.Places.First(p => p.Id == scope.PlaceId);
                 var observed = food.History.Where(h => h.PlaceId == scope.PlaceId && h.BusinessId == scope.BusinessId).OrderByDescending(h => h.Day).FirstOrDefault();
                 text.AppendLine(foodMarket?.NameOf(scope.PlaceId) ?? (place.Name.Length > 0 ? place.Name : scope.PlaceId));
-                string? regularText = regulars?.OwnShopText(scope.BusinessId);
-                if (regularText != null) text.AppendLine(regularText);
+                text.AppendLine(regularText);
                 var excluded = foodMarket?.ScopeStatus(scope.PlaceId) ?? "Waiting for business ownership";
                 if (excluded.Length > 0) text.AppendLine(excluded + ". Resident sales are paused for this shop.");
                 if (observed == null) text.AppendLine("No evaluated food offers recorded yet.");
