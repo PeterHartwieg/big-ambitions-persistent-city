@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace PersistentCity.Core
 {
@@ -22,12 +23,11 @@ namespace PersistentCity.Core
         public string Name { get; set; } = "";
         /// <summary>The native street key exactly as in the place ID (e.g. "ba:street_thirdstreet"), used to find the building on the map.</summary>
         public string Street { get; set; } = "";
-        /// <summary>The street as shown to the player; the localized key when a localizer is supplied.</summary>
-        public string DisplayStreet { get; set; } = "";
         public int Number { get; set; }
         public bool CanNavigate => Street.Length > 0;
-        public string AddressText => CanNavigate ? (DisplayStreet.Length > 0 ? DisplayStreet : Street) + " " + Number.ToString(CultureInfo.InvariantCulture) : "";
-        public string Label => !CanNavigate ? Name : Name.Length == 0 || Name == AddressText ? AddressText : Name + ", " + AddressText;
+        public string AddressText { get; private set; } = "";
+        public string Label => !CanNavigate ? Name : Name.Length == 0 || Name == AddressText ? AddressText
+            : Name.EndsWith(", " + AddressText, StringComparison.Ordinal) ? Name : Name + ", " + AddressText;
 
         /// <summary>Decode GamePlaces' "address:&lt;escaped street&gt;:&lt;number&gt;:&lt;kind&gt;" form.</summary>
         public static bool TryParse(string placeId, out string street, out int number)
@@ -41,17 +41,37 @@ namespace PersistentCity.Core
             return street.Trim().Length > 0;
         }
 
-        /// <param name="localize">Maps a native street key to display text; identity when null.</param>
-        public static ResidentAddress From(Place place, Func<string, string>? localize = null)
+        /// <param name="formatAddress">Formats the complete native address, including number/street order. Display only.</param>
+        public static ResidentAddress From(Place place, Func<string, int, string>? formatAddress = null)
         {
-            var address = new ResidentAddress { PlaceId = place.Id, Name = place.Name };
+            var address = new ResidentAddress { PlaceId = place.Id, Name = Readable(place.Name) };
             if (!TryParse(place.Id, out string street, out int number)) return address;
             address.Street = street; address.Number = number;
-            string shown = localize == null ? street : localize(street);
-            address.DisplayStreet = string.IsNullOrWhiteSpace(shown) ? street : shown;
-            // Homes and unnamed businesses are named by their raw native address; show it localized.
-            if (place.Name == street + " " + number.ToString(CultureInfo.InvariantCulture)) address.Name = address.AddressText;
+            string? shown = null;
+            // Native street data can be absent during loading or unknown to this game version.
+            // A failed display callback must never break a popup or change its map arguments.
+            try { shown = formatAddress?.Invoke(street, number); }
+            catch (Exception) { }
+            string digits = number.ToString(CultureInfo.InvariantCulture);
+            address.AddressText = !string.IsNullOrWhiteSpace(shown) && !HasStreetKey(shown!) ? shown!
+                : HasStreetKey(street) ? digits + " " + Readable(street) : street + " " + digits;
+            // Homes and unnamed businesses are named by their raw native address.
+            address.Name = Readable(place.Name.Replace(street + " " + digits, address.AddressText));
             return address;
+        }
+
+        private static bool HasStreetKey(string text) => text.IndexOf("ba:street_", StringComparison.OrdinalIgnoreCase) >= 0;
+
+        private static string Readable(string text)
+        {
+            if (!HasStreetKey(text)) return text;
+            return Regex.Replace(text, @"ba:street_([\w]*)", match =>
+            {
+                string words = match.Groups[1].Value.Replace('_', ' ');
+                words = Regex.Replace(words, @"(?<=\w)(street|avenue|road|lane|drive|boulevard)$", " $1", RegexOptions.IgnoreCase);
+                words = words.Trim();
+                return words.Length == 0 ? "Unknown street" : CultureInfo.InvariantCulture.TextInfo.ToTitleCase(words);
+            }, RegexOptions.IgnoreCase);
         }
     }
 
@@ -84,7 +104,7 @@ namespace PersistentCity.Core
             : productId.Length == 0 ? "food" : productId;
 
         public static ResidentInsight Capture(CityState city, CitizenState person, ResidentMeal? meal,
-            Func<string, Place?> findPlace, Func<string, string>? productName = null, Func<string, string>? localize = null)
+            Func<string, Place?> findPlace, Func<string, string>? productName = null, Func<string, int, string>? formatAddress = null)
         {
             if (city == null) throw new ArgumentNullException(nameof(city));
             if (person == null) throw new ArgumentNullException(nameof(person));
@@ -93,14 +113,14 @@ namespace PersistentCity.Core
             Func<string, string> label = id =>
             {
                 var place = Find(findPlace, id);
-                return place == null ? UnknownPlace : ResidentAddress.From(place, localize).Label;
+                return place == null ? UnknownPlace : ResidentAddress.From(place, formatAddress).Label;
             };
             double now = city.Minute;
             var insight = new ResidentInsight { ResidentId = person.Identity.Id, Name = person.Identity.Name, Age = person.Identity.Age, Minute = now };
             var home = Find(findPlace, person.HomeId);
-            insight.Home = home == null ? null : ResidentAddress.From(home, localize);
+            insight.Home = home == null ? null : ResidentAddress.From(home, formatAddress);
             var day = Find(findPlace, person.DayPlaceId);
-            insight.Work = day == null ? null : ResidentAddress.From(day, localize);
+            insight.Work = day == null ? null : ResidentAddress.From(day, formatAddress);
             insight.WorkRole = day == null ? person.Identity.Persona == Persona.Retiree ? "Retired" : "No regular workplace"
                 : day.Kind == PlaceKind.Study ? "Studies at" : "Works at";
             insight.Personality = DescribePersonality(person, meal, productName);
