@@ -19,6 +19,8 @@ All tuples start with integer version `1`. Arity is exact. Scalars are checked b
 the streaming shape pass before deserialization, including canonical integer money
 tokens. These scalar slots do not enter the generic array record counter.
 No arbitrary extension slots or nested lists are allowed.
+Schema-18 integer slots also reject octal/hex coercions. Memory, visit and compact
+place-reference strings use literal canonical ASCII; escaped spellings refuse.
 
 * Budget: 19 slots (version plus 18 fields), zero collection charges. Field order:
   `Arrears Balance BaseIncomeCents DailyEssentialsCents DailyHomeFoodCents
@@ -114,3 +116,7 @@ memories/consumer, a full 20,000-entry/2 Mi-character reference table and 20,000
 places. They differ only in 32 versus 64 visits. Future contract allocations appear
 only as explicit manifest reservations; no speculative C/D/E DTOs are persisted.
 The byte/record ledger and native acceptance limitations are recorded in CHECKS.
+The full 12 Mi-character existing-state allowance uses 6,343,907 characters for
+19,991 added places and 6,239,005 ASCII characters in existing pc: resident names,
+each within its unchanged string limit. `--record-boundary`, `--input-boundary`,
+`--history-churn` and `--base-recovery` reproduce the independent cap/refusal proofs.

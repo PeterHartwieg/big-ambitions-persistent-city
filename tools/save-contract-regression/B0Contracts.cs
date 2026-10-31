@@ -99,4 +99,33 @@ static partial class Program
         }
         return new { exactCharactersAndUtf8 = SaveCodec.MaxInputCharacters, oneCharacterOver = "read/store/session preserved", oneUtf8ByteOver = "read/store/session preserved", oversizedSources = new[] {13,14,15,16,17} };
     }
+
+    private static object HistoryChurn()
+    {
+        var state = FoodCity(1, false); var food = state.Food!;
+        var hours = new long[24]; hours[12] = 1;
+        var meals = new long[] { 1, 0, 0, 0 };
+        var products = new List<FoodProductSales> { new FoodProductSales { ProductId = FoodProducts.Croissant, Purchases = 1, Revenue = Money.FromCents(100), PurchaseMeals = meals } };
+        var districts = new List<FoodBuyerDistrict> { new FoodBuyerDistrict { DistrictId = "a", Purchases = 1 } };
+        // Deliberately exceed the 1,024-generation/day planning estimate while retaining the
+        // existing 14*20,000 row allowance. No new historical-generation limit or lossy fallback.
+        for (int i = 0; i < 14 * 20000; i++)
+        {
+            string identity = "historical-generation:" + i.ToString("D6") + ":";
+            food.History.Add(new FoodShopDay { Day = 0, PlaceId = "shop-1", BusinessId = identity + new string('X', 512 - identity.Length),
+                OffersConsidered = 1, ChosenOffers = 1, Purchases = 1, Revenue = Money.FromCents(100),
+                PurchaseHours = hours, PurchaseMeals = meals, ProductSales = products, BuyerDistricts = districts });
+        }
+        bool refused = false; try { SaveCodec.Write(state); } catch (SaveValidationException e) { refused = e.Message.Contains("size limit"); }
+        Check(refused, "Oversized historical churn must refuse rather than truncate.");
+        var replacement = FoodCity(1, false); string original = SaveCodec.Write(replacement);
+        var data = new Dictionary<string, string> { [SaveStore.StateKey] = original };
+        Check(!SaveStore.WriteTo(data, state).Success, "Oversized churn store write accepted.");
+        Check(!SaveSession.Open(data, replacement.PopulationKey).WriteTo(data, state).Success, "Oversized churn session write accepted.");
+        Check(ReferenceEquals(original, data[SaveStore.StateKey]), "Churn refusal replaced the original payload.");
+        Check(food.History.Count == 280000 && food.History.All(h => h.ProductSales.Count == 1 && h.Purchases == 1 && h.Revenue == Money.FromCents(100)), "Churn refusal erased history/product totals.");
+        return new { generationsOnOneDay = food.History.Count, purchasesRetained = food.History.Sum(h => h.Purchases),
+            revenueUnitsRetained = Money.Sum(food.History.Select(h => h.Revenue)).Units,
+            result = "global size refusal; store/session source reference, all history and exact product totals preserved" };
+    }
 }

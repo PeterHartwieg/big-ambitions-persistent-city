@@ -177,6 +177,7 @@ static partial class Program
 
     static void Main(string[] args)
     {
+        if(args.Length == 1 && args[0] == "--history-churn") { Console.WriteLine(JsonConvert.SerializeObject(HistoryChurn())); return; }
         if(args.Length == 1 && args[0] == "--input-boundary") { Console.WriteLine(JsonConvert.SerializeObject(InputBoundary())); return; }
         if(args.Length == 1 && args[0] == "--record-boundary") { Console.WriteLine(JsonConvert.SerializeObject(RecordBoundary())); return; }
         if(args.Length == 1 && args[0] == "--base-recovery") { Console.WriteLine(JsonConvert.SerializeObject(BaseRecovery())); return; }
