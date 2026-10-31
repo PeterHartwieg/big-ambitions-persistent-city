@@ -141,6 +141,13 @@ public static class EconomyScenario
 
     public static string WithoutSchema17(string payload)
     {
+        if (typeof(CityState).GetProperty("Capabilities") != null && (int)JObject.Parse(payload)["Schema"]! == 18)
+        {
+            var state = SaveCodec.Read(payload).State!;
+            state.Schema = 17;
+            payload = (string)typeof(SaveCodec).Assembly.GetType("PersistentCity.Persistence.LegacyPopulationCodec")!
+                .GetMethod("Write")!.Invoke(null, new object[] {state})!;
+        }
         var token = JObject.Parse(payload);
         token.Remove("Schema");
         foreach (var property in token.Descendants().OfType<JProperty>().Where(p => Schema17Fields.Contains(p.Name)).ToList()) property.Remove();
