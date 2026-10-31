@@ -1,0 +1,2077 @@
+{
+  "seamNotGesture": true,
+  "minute": 7872.0,
+  "nativeMinute": 7873.053922653198,
+  "payloadHashBefore": "cdb00954b15987db9881e1f8cd63fb3ab893be95db08c0c07b125b55cea583ec",
+  "payloadHashAfter": "cdb00954b15987db9881e1f8cd63fb3ab893be95db08c0c07b125b55cea583ec",
+  "payloadIdentical": true,
+  "countersBefore": {
+    "frame": 108537,
+    "minute": 7872.0,
+    "nativeMinute": 7873.053922653198,
+    "PlanningPending": true,
+    "runtime": {
+      "advanceFrames": 576,
+      "advanceEvents": 1126,
+      "advanceMilliseconds": 874.8028000000002,
+      "planningSlices": 626,
+      "planningEvents": 190,
+      "planningPendingFrames": 340,
+      "planningRequests": 294,
+      "planningMilliseconds": 745.4271999999992
+    },
+    "routes": {
+      "WalkingRequests": 4667,
+      "WalkingInvalidInputs": 0,
+      "WalkingDistanceRejects": 65,
+      "WalkingCacheHits": 1613,
+      "WalkingNegativeCacheHits": 26,
+      "WalkingCacheMisses": 2989,
+      "WalkingCacheEvictions": 0,
+      "WalkingCacheClears": 4,
+      "WalkingCalculations": 2989,
+      "WalkingFailedCalculations": 249,
+      "WalkingCalculationMilliseconds": 792.0707999999992,
+      "MaximumWalkingCalculationMilliseconds": 1.5093,
+      "NavMeshSampleQueries": 6400,
+      "NavMeshPathQueries": 3199,
+      "NavMeshPathReuses": 76,
+      "NavMeshPathMilliseconds": 735.0944999999999,
+      "MaximumNavMeshPathMilliseconds": 1.4232,
+      "WalkingQuoteChecks": 287,
+      "WalkingQuoteRejected": 0,
+      "NavMeshRaycastQueries": 0,
+      "WalkingQuoteCheckMilliseconds": 12.5556,
+      "MaximumWalkingQuoteCheckMilliseconds": 0.437,
+      "CitizenPlanRequests": 814,
+      "SelectedWalking": 359,
+      "SelectedSubway": 382,
+      "SelectedCar": 63,
+      "NoFeasibleRoute": 8,
+      "SubwayConnectorRequests": 3008,
+      "SubwayConnectorCacheHits": 1299,
+      "SubwayConnectorCacheMisses": 1705,
+      "SubwayCandidates": 2381
+    },
+    "marketCalls": {},
+    "marketObserverMethods": 0,
+    "physical": "physical=True, pedestrians=39, cars=2, acquired=184, released=143, blockedSamples=2946, unavailable=48, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=pc:557:inactive model slot:",
+    "bodies": [
+      {
+        "id": "c173",
+        "identity": {
+          "Id": "c173",
+          "Name": "Felix Darby",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 60,
+          "Female": false,
+          "Persona": 5,
+          "AppearanceSeed": 983151
+        },
+        "home": "address:ba%3Astreet_thirdstreet:21:home",
+        "person": {
+          "identity": "c173",
+          "generation": 174,
+          "character": -4214456
+        }
+      },
+      {
+        "id": "pc:169",
+        "identity": {
+          "Id": "pc:169",
+          "Name": "Orla Ward",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 31,
+          "Female": true,
+          "Persona": 6,
+          "AppearanceSeed": 792034
+        },
+        "home": "address:ba%3Astreet_thirdstreet:17:home",
+        "person": {
+          "identity": "pc:169",
+          "generation": 173,
+          "character": -4216024
+        }
+      },
+      {
+        "id": "c252",
+        "identity": {
+          "Id": "c252",
+          "Name": "Orla Walsh",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 31,
+          "Female": true,
+          "Persona": 2,
+          "AppearanceSeed": 792034
+        },
+        "home": "address:ba%3Astreet_fourthavenue:12:home",
+        "person": {
+          "identity": "c252",
+          "generation": 172,
+          "character": -4217456
+        }
+      },
+      {
+        "id": "c347",
+        "identity": {
+          "Id": "c347",
+          "Name": "Isaac Whitcombe",
+          "District": "ba:neighborhood_thehamptons",
+          "Age": 77,
+          "Female": false,
+          "Persona": 4,
+          "AppearanceSeed": 915213
+        },
+        "home": "address:ba%3Astreet_thirdstreet:9:home",
+        "person": {
+          "identity": "c347",
+          "generation": 171,
+          "character": -4218974
+        }
+      },
+      {
+        "id": "pc:349",
+        "identity": {
+          "Id": "pc:349",
+          "Name": "Nina Oakes",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 25,
+          "Female": true,
+          "Persona": 1,
+          "AppearanceSeed": 997940
+        },
+        "home": "address:ba%3Astreet_firststreet:58:home",
+        "person": {
+          "identity": "pc:349",
+          "generation": 170,
+          "character": -4220402
+        }
+      },
+      {
+        "id": "pc:513",
+        "identity": {
+          "Id": "pc:513",
+          "Name": "Maya Easton",
+          "District": "ba:neighborhood_murrayhill",
+          "Age": 28,
+          "Female": true,
+          "Persona": 5,
+          "AppearanceSeed": 363208
+        },
+        "home": "address:ba%3Astreet_secondstreet:14:home",
+        "person": {
+          "identity": "pc:513",
+          "generation": 169,
+          "character": -4221836
+        }
+      },
+      {
+        "id": "c291",
+        "identity": {
+          "Id": "c291",
+          "Name": "Maya Nolan",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 51,
+          "Female": true,
+          "Persona": 6,
+          "AppearanceSeed": 240010
+        },
+        "home": "address:ba%3Astreet_fourthstreet:16:home",
+        "person": {
+          "identity": "c291",
+          "generation": 168,
+          "character": -4236486
+        }
+      },
+      {
+        "id": "pc:418",
+        "identity": {
+          "Id": "pc:418",
+          "Name": "Lena Fairfax",
+          "District": "ba:neighborhood_thehamptons",
+          "Age": 61,
+          "Female": true,
+          "Persona": 5,
+          "AppearanceSeed": 68559
+        },
+        "home": "address:ba%3Astreet_secondstreet:32:home",
+        "person": {
+          "identity": "pc:418",
+          "generation": 167,
+          "character": -4237914
+        }
+      },
+      {
+        "id": "pc:196",
+        "identity": {
+          "Id": "pc:196",
+          "Name": "Carl Ellis",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 39,
+          "Female": false,
+          "Persona": 1,
+          "AppearanceSeed": 593086
+        },
+        "home": "address:ba%3Astreet_fourthstreet:18:home",
+        "person": {
+          "identity": "pc:196",
+          "generation": 166,
+          "character": -4239354
+        }
+      },
+      {
+        "id": "pc:120",
+        "identity": {
+          "Id": "pc:120",
+          "Name": "Frank Abbott",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 31,
+          "Female": false,
+          "Persona": 2,
+          "AppearanceSeed": 271834
+        },
+        "home": "address:ba%3Astreet_fourthstreet:28:home",
+        "person": {
+          "identity": "pc:120",
+          "generation": 165,
+          "character": -4240790
+        }
+      },
+      {
+        "id": "c220",
+        "identity": {
+          "Id": "c220",
+          "Name": "Ruby Oakes",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 24,
+          "Female": true,
+          "Persona": 3,
+          "AppearanceSeed": 284406
+        },
+        "home": "address:ba%3Astreet_secondstreet:24:home",
+        "person": {
+          "identity": "c220",
+          "generation": 164,
+          "character": -4242230
+        }
+      },
+      {
+        "id": "c348",
+        "identity": {
+          "Id": "c348",
+          "Name": "Amara Harlow",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 58,
+          "Female": true,
+          "Persona": 1,
+          "AppearanceSeed": 589776
+        },
+        "home": "address:ba%3Astreet_fourthavenue:6:home",
+        "person": {
+          "identity": "c348",
+          "generation": 163,
+          "character": -4243668
+        }
+      },
+      {
+        "id": "pc:394",
+        "identity": {
+          "Id": "pc:394",
+          "Name": "Vera Jensen",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 50,
+          "Female": true,
+          "Persona": 0,
+          "AppearanceSeed": 315693
+        },
+        "home": "address:ba%3Astreet_fourthstreet:30:home",
+        "person": {
+          "identity": "pc:394",
+          "generation": 162,
+          "character": -4245096
+        }
+      },
+      {
+        "id": "c193",
+        "identity": {
+          "Id": "c193",
+          "Name": "Arlo Dunmore",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 79,
+          "Female": false,
+          "Persona": 4,
+          "AppearanceSeed": 706225
+        },
+        "home": "address:ba%3Astreet_fourthstreet:36:home",
+        "person": {
+          "identity": "c193",
+          "generation": 161,
+          "character": -4246528
+        }
+      },
+      {
+        "id": "c176",
+        "identity": {
+          "Id": "c176",
+          "Name": "Tara Oakes",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 35,
+          "Female": true,
+          "Persona": 1,
+          "AppearanceSeed": 30109
+        },
+        "home": "address:ba%3Astreet_fourthavenue:1:home",
+        "person": {
+          "identity": "c176",
+          "generation": 160,
+          "character": -4247970
+        }
+      },
+      {
+        "id": "c23",
+        "identity": {
+          "Id": "c23",
+          "Name": "Otto Jarvis",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 47,
+          "Female": false,
+          "Persona": 6,
+          "AppearanceSeed": 467863
+        },
+        "home": "address:ba%3Astreet_secondstreet:19:home",
+        "person": {
+          "identity": "c23",
+          "generation": 159,
+          "character": -4249398
+        }
+      },
+      {
+        "id": "c334",
+        "identity": {
+          "Id": "c334",
+          "Name": "Alba Flynn",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 32,
+          "Female": true,
+          "Persona": 0,
+          "AppearanceSeed": 117792
+        },
+        "home": "address:ba%3Astreet_secondstreet:18:home",
+        "person": {
+          "identity": "c334",
+          "generation": 158,
+          "character": -4252274
+        }
+      },
+      {
+        "id": "pc:284",
+        "identity": {
+          "Id": "pc:284",
+          "Name": "Ivo Nguyen",
+          "District": "ba:neighborhood_thehamptons",
+          "Age": 23,
+          "Female": false,
+          "Persona": 6,
+          "AppearanceSeed": 973170
+        },
+        "home": "address:ba%3Astreet_fourthstreet:13:home",
+        "person": {
+          "identity": "pc:284",
+          "generation": 157,
+          "character": -4224788
+        }
+      },
+      {
+        "id": "c325",
+        "identity": {
+          "Id": "c325",
+          "Name": "Zoe Dalton",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 70,
+          "Female": true,
+          "Persona": 4,
+          "AppearanceSeed": 713794
+        },
+        "home": "address:ba%3Astreet_fourthavenue:3:home",
+        "person": {
+          "identity": "c325",
+          "generation": 156,
+          "character": -4253710
+        }
+      },
+      {
+        "id": "pc:460",
+        "identity": {
+          "Id": "pc:460",
+          "Name": "Bea Oakes",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 36,
+          "Female": true,
+          "Persona": 2,
+          "AppearanceSeed": 321036
+        },
+        "home": "address:ba%3Astreet_secondstreet:20:home",
+        "person": {
+          "identity": "pc:460",
+          "generation": 155,
+          "character": -4255148
+        }
+      },
+      {
+        "id": "pc:82",
+        "identity": {
+          "Id": "pc:82",
+          "Name": "Sadie Upton",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 28,
+          "Female": true,
+          "Persona": 0,
+          "AppearanceSeed": 916686
+        },
+        "home": "address:ba%3Astreet_thirdstreet:45:home",
+        "person": {
+          "identity": "pc:82",
+          "generation": 154,
+          "character": -4250842
+        }
+      },
+      {
+        "id": "pc:239",
+        "identity": {
+          "Id": "pc:239",
+          "Name": "Greta Oakes",
+          "District": "ba:neighborhood_midtown",
+          "Age": 33,
+          "Female": true,
+          "Persona": 1,
+          "AppearanceSeed": 240611
+        },
+        "home": "address:ba%3Astreet_secondstreet:33:home",
+        "person": {
+          "identity": "pc:239",
+          "generation": 153,
+          "character": -4259458
+        }
+      },
+      {
+        "id": "c92",
+        "identity": {
+          "Id": "c92",
+          "Name": "Vince Ramsey",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 28,
+          "Female": false,
+          "Persona": 6,
+          "AppearanceSeed": 902840
+        },
+        "home": "address:ba%3Astreet_secondstreet:35:home",
+        "person": {
+          "identity": "c92",
+          "generation": 152,
+          "character": -4260886
+        }
+      },
+      {
+        "id": "pc:411",
+        "identity": {
+          "Id": "pc:411",
+          "Name": "Uma Yardley",
+          "District": "ba:neighborhood_midtown",
+          "Age": 45,
+          "Female": true,
+          "Persona": 1,
+          "AppearanceSeed": 155091
+        },
+        "home": "address:ba%3Astreet_secondstreet:29:home",
+        "person": {
+          "identity": "pc:411",
+          "generation": 151,
+          "character": -4262346
+        }
+      },
+      {
+        "id": "pc:336",
+        "identity": {
+          "Id": "pc:336",
+          "Name": "Gus Frost",
+          "District": "ba:neighborhood_midtown",
+          "Age": 59,
+          "Female": false,
+          "Persona": 5,
+          "AppearanceSeed": 222628
+        },
+        "home": "address:ba%3Astreet_secondstreet:32:home",
+        "person": {
+          "identity": "pc:336",
+          "generation": 150,
+          "character": -4263790
+        }
+      },
+      {
+        "id": "pc:102",
+        "identity": {
+          "Id": "pc:102",
+          "Name": "Adam Upton",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 53,
+          "Female": false,
+          "Persona": 6,
+          "AppearanceSeed": 443744
+        },
+        "home": "address:ba%3Astreet_secondstreet:11:home",
+        "person": {
+          "identity": "pc:102",
+          "generation": 149,
+          "character": -4265230
+        }
+      },
+      {
+        "id": "c327",
+        "identity": {
+          "Id": "c327",
+          "Name": "Ada Imber",
+          "District": "ba:neighborhood_murrayhill",
+          "Age": 50,
+          "Female": true,
+          "Persona": 2,
+          "AppearanceSeed": 462975
+        },
+        "home": "address:ba%3Astreet_fourthstreet:9:home",
+        "person": {
+          "identity": "c327",
+          "generation": 148,
+          "character": -4266662
+        }
+      },
+      {
+        "id": "pc:493",
+        "identity": {
+          "Id": "pc:493",
+          "Name": "Otto Yardley",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 47,
+          "Female": false,
+          "Persona": 6,
+          "AppearanceSeed": 467863
+        },
+        "home": "address:ba%3Astreet_fourthstreet:8:home",
+        "person": {
+          "identity": "pc:493",
+          "generation": 147,
+          "character": -4268102
+        }
+      },
+      {
+        "id": "pc:130",
+        "identity": {
+          "Id": "pc:130",
+          "Name": "Orla Chen",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 38,
+          "Female": true,
+          "Persona": 1,
+          "AppearanceSeed": 861201
+        },
+        "home": "address:ba%3Astreet_secondstreet:28:home",
+        "person": null
+      },
+      {
+        "id": "c313",
+        "identity": {
+          "Id": "c313",
+          "Name": "Sadie Chen",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 28,
+          "Female": true,
+          "Persona": 0,
+          "AppearanceSeed": 916686
+        },
+        "home": "address:ba%3Astreet_firststreet:46:home",
+        "person": null
+      },
+      {
+        "id": "c177",
+        "identity": {
+          "Id": "c177",
+          "Name": "Mina Lambert",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 77,
+          "Female": true,
+          "Persona": 4,
+          "AppearanceSeed": 649311
+        },
+        "home": "address:ba%3Astreet_firststreet:17:home",
+        "person": {
+          "identity": "c177",
+          "generation": 146,
+          "character": -4256590
+        }
+      },
+      {
+        "id": "c261",
+        "identity": {
+          "Id": "c261",
+          "Name": "Luis Goldberg",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 58,
+          "Female": false,
+          "Persona": 6,
+          "AppearanceSeed": 731498
+        },
+        "home": "address:ba%3Astreet_secondstreet:22:home",
+        "person": {
+          "identity": "c261",
+          "generation": 145,
+          "character": -4278282
+        }
+      },
+      {
+        "id": "c84",
+        "identity": {
+          "Id": "c84",
+          "Name": "Tara Easton",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 25,
+          "Female": true,
+          "Persona": 3,
+          "AppearanceSeed": 60255
+        },
+        "home": "address:ba%3Astreet_secondstreet:27:home",
+        "person": {
+          "identity": "c84",
+          "generation": 144,
+          "character": -4279706
+        }
+      },
+      {
+        "id": "pc:331",
+        "identity": {
+          "Id": "pc:331",
+          "Name": "Pia Calder",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 70,
+          "Female": true,
+          "Persona": 4,
+          "AppearanceSeed": 618604
+        },
+        "home": "address:ba%3Astreet_thirdstreet:58:home",
+        "person": {
+          "identity": "pc:331",
+          "generation": 143,
+          "character": -4281138
+        }
+      },
+      {
+        "id": "pc:469",
+        "identity": {
+          "Id": "pc:469",
+          "Name": "Liv Iqbal",
+          "District": "ba:neighborhood_thehamptons",
+          "Age": 77,
+          "Female": true,
+          "Persona": 4,
+          "AppearanceSeed": 984985
+        },
+        "home": "address:ba%3Astreet_fourthstreet:22:home",
+        "person": {
+          "identity": "pc:469",
+          "generation": 142,
+          "character": -4282570
+        }
+      },
+      {
+        "id": "pc:157",
+        "identity": {
+          "Id": "pc:157",
+          "Name": "Theo Varley",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 32,
+          "Female": false,
+          "Persona": 0,
+          "AppearanceSeed": 744028
+        },
+        "home": "address:ba%3Astreet_secondstreet:21:home",
+        "person": {
+          "identity": "pc:157",
+          "generation": 141,
+          "character": -4284052
+        }
+      },
+      {
+        "id": "c355",
+        "identity": {
+          "Id": "c355",
+          "Name": "Noah Ramsey",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 22,
+          "Female": false,
+          "Persona": 3,
+          "AppearanceSeed": 635371
+        },
+        "home": "address:ba%3Astreet_thirdstreet:42:home",
+        "person": {
+          "identity": "c355",
+          "generation": 140,
+          "character": -4285484
+        }
+      },
+      {
+        "id": "c354",
+        "identity": {
+          "Id": "c354",
+          "Name": "Clara Torres",
+          "District": "ba:neighborhood_thehamptons",
+          "Age": 43,
+          "Female": true,
+          "Persona": 1,
+          "AppearanceSeed": 484841
+        },
+        "home": "address:ba%3Astreet_secondstreet:23:home",
+        "person": {
+          "identity": "c354",
+          "generation": 139,
+          "character": -4286916
+        }
+      },
+      {
+        "id": "pc:511",
+        "identity": {
+          "Id": "pc:511",
+          "Name": "Juno Corwin",
+          "District": "ba:neighborhood_midtown",
+          "Age": 48,
+          "Female": true,
+          "Persona": 1,
+          "AppearanceSeed": 260754
+        },
+        "home": "address:ba%3Astreet_thirdstreet:39:home",
+        "person": {
+          "identity": "pc:511",
+          "generation": 138,
+          "character": -4288366
+        }
+      },
+      {
+        "id": "pc:414",
+        "identity": {
+          "Id": "pc:414",
+          "Name": "Bella Jensen",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 24,
+          "Female": true,
+          "Persona": 5,
+          "AppearanceSeed": 898027
+        },
+        "home": "address:ba%3Astreet_fourthstreet:10:home",
+        "person": {
+          "identity": "pc:414",
+          "generation": 137,
+          "character": -4289800
+        }
+      },
+      {
+        "id": "c267",
+        "identity": {
+          "Id": "c267",
+          "Name": "Frank Tilney",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 31,
+          "Female": false,
+          "Persona": 1,
+          "AppearanceSeed": 271834
+        },
+        "home": "address:ba%3Astreet_thirdstreet:33:home",
+        "person": {
+          "identity": "c267",
+          "generation": 136,
+          "character": -4291230
+        }
+      }
+    ],
+    "pendingDecisions": 0,
+    "diagnostics": {
+      "active": true,
+      "hourlyCustomerBatchesSuppressed": 6,
+      "nativeDrawsSuppressed": 45,
+      "nativePurchasesThisSession": 24
+    }
+  },
+  "countersAfter": {
+    "frame": 108537,
+    "minute": 7872.0,
+    "nativeMinute": 7873.053922653198,
+    "PlanningPending": true,
+    "runtime": {
+      "advanceFrames": 576,
+      "advanceEvents": 1126,
+      "advanceMilliseconds": 874.8028000000002,
+      "planningSlices": 626,
+      "planningEvents": 190,
+      "planningPendingFrames": 340,
+      "planningRequests": 294,
+      "planningMilliseconds": 745.4271999999992
+    },
+    "routes": {
+      "WalkingRequests": 4667,
+      "WalkingInvalidInputs": 0,
+      "WalkingDistanceRejects": 65,
+      "WalkingCacheHits": 1613,
+      "WalkingNegativeCacheHits": 26,
+      "WalkingCacheMisses": 2989,
+      "WalkingCacheEvictions": 0,
+      "WalkingCacheClears": 4,
+      "WalkingCalculations": 2989,
+      "WalkingFailedCalculations": 249,
+      "WalkingCalculationMilliseconds": 792.0707999999992,
+      "MaximumWalkingCalculationMilliseconds": 1.5093,
+      "NavMeshSampleQueries": 6400,
+      "NavMeshPathQueries": 3199,
+      "NavMeshPathReuses": 76,
+      "NavMeshPathMilliseconds": 735.0944999999999,
+      "MaximumNavMeshPathMilliseconds": 1.4232,
+      "WalkingQuoteChecks": 287,
+      "WalkingQuoteRejected": 0,
+      "NavMeshRaycastQueries": 0,
+      "WalkingQuoteCheckMilliseconds": 12.5556,
+      "MaximumWalkingQuoteCheckMilliseconds": 0.437,
+      "CitizenPlanRequests": 814,
+      "SelectedWalking": 359,
+      "SelectedSubway": 382,
+      "SelectedCar": 63,
+      "NoFeasibleRoute": 8,
+      "SubwayConnectorRequests": 3008,
+      "SubwayConnectorCacheHits": 1299,
+      "SubwayConnectorCacheMisses": 1705,
+      "SubwayCandidates": 2381
+    },
+    "marketCalls": {},
+    "marketObserverMethods": 0,
+    "physical": "physical=True, pedestrians=39, cars=2, acquired=184, released=143, blockedSamples=2946, unavailable=48, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=pc:557:inactive model slot:",
+    "bodies": [
+      {
+        "id": "c173",
+        "identity": {
+          "Id": "c173",
+          "Name": "Felix Darby",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 60,
+          "Female": false,
+          "Persona": 5,
+          "AppearanceSeed": 983151
+        },
+        "home": "address:ba%3Astreet_thirdstreet:21:home",
+        "person": {
+          "identity": "c173",
+          "generation": 174,
+          "character": -4214456
+        }
+      },
+      {
+        "id": "pc:169",
+        "identity": {
+          "Id": "pc:169",
+          "Name": "Orla Ward",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 31,
+          "Female": true,
+          "Persona": 6,
+          "AppearanceSeed": 792034
+        },
+        "home": "address:ba%3Astreet_thirdstreet:17:home",
+        "person": {
+          "identity": "pc:169",
+          "generation": 173,
+          "character": -4216024
+        }
+      },
+      {
+        "id": "c252",
+        "identity": {
+          "Id": "c252",
+          "Name": "Orla Walsh",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 31,
+          "Female": true,
+          "Persona": 2,
+          "AppearanceSeed": 792034
+        },
+        "home": "address:ba%3Astreet_fourthavenue:12:home",
+        "person": {
+          "identity": "c252",
+          "generation": 172,
+          "character": -4217456
+        }
+      },
+      {
+        "id": "c347",
+        "identity": {
+          "Id": "c347",
+          "Name": "Isaac Whitcombe",
+          "District": "ba:neighborhood_thehamptons",
+          "Age": 77,
+          "Female": false,
+          "Persona": 4,
+          "AppearanceSeed": 915213
+        },
+        "home": "address:ba%3Astreet_thirdstreet:9:home",
+        "person": {
+          "identity": "c347",
+          "generation": 171,
+          "character": -4218974
+        }
+      },
+      {
+        "id": "pc:349",
+        "identity": {
+          "Id": "pc:349",
+          "Name": "Nina Oakes",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 25,
+          "Female": true,
+          "Persona": 1,
+          "AppearanceSeed": 997940
+        },
+        "home": "address:ba%3Astreet_firststreet:58:home",
+        "person": {
+          "identity": "pc:349",
+          "generation": 170,
+          "character": -4220402
+        }
+      },
+      {
+        "id": "pc:513",
+        "identity": {
+          "Id": "pc:513",
+          "Name": "Maya Easton",
+          "District": "ba:neighborhood_murrayhill",
+          "Age": 28,
+          "Female": true,
+          "Persona": 5,
+          "AppearanceSeed": 363208
+        },
+        "home": "address:ba%3Astreet_secondstreet:14:home",
+        "person": {
+          "identity": "pc:513",
+          "generation": 169,
+          "character": -4221836
+        }
+      },
+      {
+        "id": "c291",
+        "identity": {
+          "Id": "c291",
+          "Name": "Maya Nolan",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 51,
+          "Female": true,
+          "Persona": 6,
+          "AppearanceSeed": 240010
+        },
+        "home": "address:ba%3Astreet_fourthstreet:16:home",
+        "person": {
+          "identity": "c291",
+          "generation": 168,
+          "character": -4236486
+        }
+      },
+      {
+        "id": "pc:418",
+        "identity": {
+          "Id": "pc:418",
+          "Name": "Lena Fairfax",
+          "District": "ba:neighborhood_thehamptons",
+          "Age": 61,
+          "Female": true,
+          "Persona": 5,
+          "AppearanceSeed": 68559
+        },
+        "home": "address:ba%3Astreet_secondstreet:32:home",
+        "person": {
+          "identity": "pc:418",
+          "generation": 167,
+          "character": -4237914
+        }
+      },
+      {
+        "id": "pc:196",
+        "identity": {
+          "Id": "pc:196",
+          "Name": "Carl Ellis",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 39,
+          "Female": false,
+          "Persona": 1,
+          "AppearanceSeed": 593086
+        },
+        "home": "address:ba%3Astreet_fourthstreet:18:home",
+        "person": {
+          "identity": "pc:196",
+          "generation": 166,
+          "character": -4239354
+        }
+      },
+      {
+        "id": "pc:120",
+        "identity": {
+          "Id": "pc:120",
+          "Name": "Frank Abbott",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 31,
+          "Female": false,
+          "Persona": 2,
+          "AppearanceSeed": 271834
+        },
+        "home": "address:ba%3Astreet_fourthstreet:28:home",
+        "person": {
+          "identity": "pc:120",
+          "generation": 165,
+          "character": -4240790
+        }
+      },
+      {
+        "id": "c220",
+        "identity": {
+          "Id": "c220",
+          "Name": "Ruby Oakes",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 24,
+          "Female": true,
+          "Persona": 3,
+          "AppearanceSeed": 284406
+        },
+        "home": "address:ba%3Astreet_secondstreet:24:home",
+        "person": {
+          "identity": "c220",
+          "generation": 164,
+          "character": -4242230
+        }
+      },
+      {
+        "id": "c348",
+        "identity": {
+          "Id": "c348",
+          "Name": "Amara Harlow",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 58,
+          "Female": true,
+          "Persona": 1,
+          "AppearanceSeed": 589776
+        },
+        "home": "address:ba%3Astreet_fourthavenue:6:home",
+        "person": {
+          "identity": "c348",
+          "generation": 163,
+          "character": -4243668
+        }
+      },
+      {
+        "id": "pc:394",
+        "identity": {
+          "Id": "pc:394",
+          "Name": "Vera Jensen",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 50,
+          "Female": true,
+          "Persona": 0,
+          "AppearanceSeed": 315693
+        },
+        "home": "address:ba%3Astreet_fourthstreet:30:home",
+        "person": {
+          "identity": "pc:394",
+          "generation": 162,
+          "character": -4245096
+        }
+      },
+      {
+        "id": "c193",
+        "identity": {
+          "Id": "c193",
+          "Name": "Arlo Dunmore",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 79,
+          "Female": false,
+          "Persona": 4,
+          "AppearanceSeed": 706225
+        },
+        "home": "address:ba%3Astreet_fourthstreet:36:home",
+        "person": {
+          "identity": "c193",
+          "generation": 161,
+          "character": -4246528
+        }
+      },
+      {
+        "id": "c176",
+        "identity": {
+          "Id": "c176",
+          "Name": "Tara Oakes",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 35,
+          "Female": true,
+          "Persona": 1,
+          "AppearanceSeed": 30109
+        },
+        "home": "address:ba%3Astreet_fourthavenue:1:home",
+        "person": {
+          "identity": "c176",
+          "generation": 160,
+          "character": -4247970
+        }
+      },
+      {
+        "id": "c23",
+        "identity": {
+          "Id": "c23",
+          "Name": "Otto Jarvis",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 47,
+          "Female": false,
+          "Persona": 6,
+          "AppearanceSeed": 467863
+        },
+        "home": "address:ba%3Astreet_secondstreet:19:home",
+        "person": {
+          "identity": "c23",
+          "generation": 159,
+          "character": -4249398
+        }
+      },
+      {
+        "id": "c334",
+        "identity": {
+          "Id": "c334",
+          "Name": "Alba Flynn",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 32,
+          "Female": true,
+          "Persona": 0,
+          "AppearanceSeed": 117792
+        },
+        "home": "address:ba%3Astreet_secondstreet:18:home",
+        "person": {
+          "identity": "c334",
+          "generation": 158,
+          "character": -4252274
+        }
+      },
+      {
+        "id": "pc:284",
+        "identity": {
+          "Id": "pc:284",
+          "Name": "Ivo Nguyen",
+          "District": "ba:neighborhood_thehamptons",
+          "Age": 23,
+          "Female": false,
+          "Persona": 6,
+          "AppearanceSeed": 973170
+        },
+        "home": "address:ba%3Astreet_fourthstreet:13:home",
+        "person": {
+          "identity": "pc:284",
+          "generation": 157,
+          "character": -4224788
+        }
+      },
+      {
+        "id": "c325",
+        "identity": {
+          "Id": "c325",
+          "Name": "Zoe Dalton",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 70,
+          "Female": true,
+          "Persona": 4,
+          "AppearanceSeed": 713794
+        },
+        "home": "address:ba%3Astreet_fourthavenue:3:home",
+        "person": {
+          "identity": "c325",
+          "generation": 156,
+          "character": -4253710
+        }
+      },
+      {
+        "id": "pc:460",
+        "identity": {
+          "Id": "pc:460",
+          "Name": "Bea Oakes",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 36,
+          "Female": true,
+          "Persona": 2,
+          "AppearanceSeed": 321036
+        },
+        "home": "address:ba%3Astreet_secondstreet:20:home",
+        "person": {
+          "identity": "pc:460",
+          "generation": 155,
+          "character": -4255148
+        }
+      },
+      {
+        "id": "pc:82",
+        "identity": {
+          "Id": "pc:82",
+          "Name": "Sadie Upton",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 28,
+          "Female": true,
+          "Persona": 0,
+          "AppearanceSeed": 916686
+        },
+        "home": "address:ba%3Astreet_thirdstreet:45:home",
+        "person": {
+          "identity": "pc:82",
+          "generation": 154,
+          "character": -4250842
+        }
+      },
+      {
+        "id": "pc:239",
+        "identity": {
+          "Id": "pc:239",
+          "Name": "Greta Oakes",
+          "District": "ba:neighborhood_midtown",
+          "Age": 33,
+          "Female": true,
+          "Persona": 1,
+          "AppearanceSeed": 240611
+        },
+        "home": "address:ba%3Astreet_secondstreet:33:home",
+        "person": {
+          "identity": "pc:239",
+          "generation": 153,
+          "character": -4259458
+        }
+      },
+      {
+        "id": "c92",
+        "identity": {
+          "Id": "c92",
+          "Name": "Vince Ramsey",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 28,
+          "Female": false,
+          "Persona": 6,
+          "AppearanceSeed": 902840
+        },
+        "home": "address:ba%3Astreet_secondstreet:35:home",
+        "person": {
+          "identity": "c92",
+          "generation": 152,
+          "character": -4260886
+        }
+      },
+      {
+        "id": "pc:411",
+        "identity": {
+          "Id": "pc:411",
+          "Name": "Uma Yardley",
+          "District": "ba:neighborhood_midtown",
+          "Age": 45,
+          "Female": true,
+          "Persona": 1,
+          "AppearanceSeed": 155091
+        },
+        "home": "address:ba%3Astreet_secondstreet:29:home",
+        "person": {
+          "identity": "pc:411",
+          "generation": 151,
+          "character": -4262346
+        }
+      },
+      {
+        "id": "pc:336",
+        "identity": {
+          "Id": "pc:336",
+          "Name": "Gus Frost",
+          "District": "ba:neighborhood_midtown",
+          "Age": 59,
+          "Female": false,
+          "Persona": 5,
+          "AppearanceSeed": 222628
+        },
+        "home": "address:ba%3Astreet_secondstreet:32:home",
+        "person": {
+          "identity": "pc:336",
+          "generation": 150,
+          "character": -4263790
+        }
+      },
+      {
+        "id": "pc:102",
+        "identity": {
+          "Id": "pc:102",
+          "Name": "Adam Upton",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 53,
+          "Female": false,
+          "Persona": 6,
+          "AppearanceSeed": 443744
+        },
+        "home": "address:ba%3Astreet_secondstreet:11:home",
+        "person": {
+          "identity": "pc:102",
+          "generation": 149,
+          "character": -4265230
+        }
+      },
+      {
+        "id": "c327",
+        "identity": {
+          "Id": "c327",
+          "Name": "Ada Imber",
+          "District": "ba:neighborhood_murrayhill",
+          "Age": 50,
+          "Female": true,
+          "Persona": 2,
+          "AppearanceSeed": 462975
+        },
+        "home": "address:ba%3Astreet_fourthstreet:9:home",
+        "person": {
+          "identity": "c327",
+          "generation": 148,
+          "character": -4266662
+        }
+      },
+      {
+        "id": "pc:493",
+        "identity": {
+          "Id": "pc:493",
+          "Name": "Otto Yardley",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 47,
+          "Female": false,
+          "Persona": 6,
+          "AppearanceSeed": 467863
+        },
+        "home": "address:ba%3Astreet_fourthstreet:8:home",
+        "person": {
+          "identity": "pc:493",
+          "generation": 147,
+          "character": -4268102
+        }
+      },
+      {
+        "id": "pc:130",
+        "identity": {
+          "Id": "pc:130",
+          "Name": "Orla Chen",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 38,
+          "Female": true,
+          "Persona": 1,
+          "AppearanceSeed": 861201
+        },
+        "home": "address:ba%3Astreet_secondstreet:28:home",
+        "person": null
+      },
+      {
+        "id": "c313",
+        "identity": {
+          "Id": "c313",
+          "Name": "Sadie Chen",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 28,
+          "Female": true,
+          "Persona": 0,
+          "AppearanceSeed": 916686
+        },
+        "home": "address:ba%3Astreet_firststreet:46:home",
+        "person": null
+      },
+      {
+        "id": "c177",
+        "identity": {
+          "Id": "c177",
+          "Name": "Mina Lambert",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 77,
+          "Female": true,
+          "Persona": 4,
+          "AppearanceSeed": 649311
+        },
+        "home": "address:ba%3Astreet_firststreet:17:home",
+        "person": {
+          "identity": "c177",
+          "generation": 146,
+          "character": -4256590
+        }
+      },
+      {
+        "id": "c261",
+        "identity": {
+          "Id": "c261",
+          "Name": "Luis Goldberg",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 58,
+          "Female": false,
+          "Persona": 6,
+          "AppearanceSeed": 731498
+        },
+        "home": "address:ba%3Astreet_secondstreet:22:home",
+        "person": {
+          "identity": "c261",
+          "generation": 145,
+          "character": -4278282
+        }
+      },
+      {
+        "id": "c84",
+        "identity": {
+          "Id": "c84",
+          "Name": "Tara Easton",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 25,
+          "Female": true,
+          "Persona": 3,
+          "AppearanceSeed": 60255
+        },
+        "home": "address:ba%3Astreet_secondstreet:27:home",
+        "person": {
+          "identity": "c84",
+          "generation": 144,
+          "character": -4279706
+        }
+      },
+      {
+        "id": "pc:331",
+        "identity": {
+          "Id": "pc:331",
+          "Name": "Pia Calder",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 70,
+          "Female": true,
+          "Persona": 4,
+          "AppearanceSeed": 618604
+        },
+        "home": "address:ba%3Astreet_thirdstreet:58:home",
+        "person": {
+          "identity": "pc:331",
+          "generation": 143,
+          "character": -4281138
+        }
+      },
+      {
+        "id": "pc:469",
+        "identity": {
+          "Id": "pc:469",
+          "Name": "Liv Iqbal",
+          "District": "ba:neighborhood_thehamptons",
+          "Age": 77,
+          "Female": true,
+          "Persona": 4,
+          "AppearanceSeed": 984985
+        },
+        "home": "address:ba%3Astreet_fourthstreet:22:home",
+        "person": {
+          "identity": "pc:469",
+          "generation": 142,
+          "character": -4282570
+        }
+      },
+      {
+        "id": "pc:157",
+        "identity": {
+          "Id": "pc:157",
+          "Name": "Theo Varley",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 32,
+          "Female": false,
+          "Persona": 0,
+          "AppearanceSeed": 744028
+        },
+        "home": "address:ba%3Astreet_secondstreet:21:home",
+        "person": {
+          "identity": "pc:157",
+          "generation": 141,
+          "character": -4284052
+        }
+      },
+      {
+        "id": "c355",
+        "identity": {
+          "Id": "c355",
+          "Name": "Noah Ramsey",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 22,
+          "Female": false,
+          "Persona": 3,
+          "AppearanceSeed": 635371
+        },
+        "home": "address:ba%3Astreet_thirdstreet:42:home",
+        "person": {
+          "identity": "c355",
+          "generation": 140,
+          "character": -4285484
+        }
+      },
+      {
+        "id": "c354",
+        "identity": {
+          "Id": "c354",
+          "Name": "Clara Torres",
+          "District": "ba:neighborhood_thehamptons",
+          "Age": 43,
+          "Female": true,
+          "Persona": 1,
+          "AppearanceSeed": 484841
+        },
+        "home": "address:ba%3Astreet_secondstreet:23:home",
+        "person": {
+          "identity": "c354",
+          "generation": 139,
+          "character": -4286916
+        }
+      },
+      {
+        "id": "pc:511",
+        "identity": {
+          "Id": "pc:511",
+          "Name": "Juno Corwin",
+          "District": "ba:neighborhood_midtown",
+          "Age": 48,
+          "Female": true,
+          "Persona": 1,
+          "AppearanceSeed": 260754
+        },
+        "home": "address:ba%3Astreet_thirdstreet:39:home",
+        "person": {
+          "identity": "pc:511",
+          "generation": 138,
+          "character": -4288366
+        }
+      },
+      {
+        "id": "pc:414",
+        "identity": {
+          "Id": "pc:414",
+          "Name": "Bella Jensen",
+          "District": "ba:neighborhood_hellskitchen",
+          "Age": 24,
+          "Female": true,
+          "Persona": 5,
+          "AppearanceSeed": 898027
+        },
+        "home": "address:ba%3Astreet_fourthstreet:10:home",
+        "person": {
+          "identity": "pc:414",
+          "generation": 137,
+          "character": -4289800
+        }
+      },
+      {
+        "id": "c267",
+        "identity": {
+          "Id": "c267",
+          "Name": "Frank Tilney",
+          "District": "ba:neighborhood_garmentdistrict",
+          "Age": 31,
+          "Female": false,
+          "Persona": 1,
+          "AppearanceSeed": 271834
+        },
+        "home": "address:ba%3Astreet_thirdstreet:33:home",
+        "person": {
+          "identity": "c267",
+          "generation": 136,
+          "character": -4291230
+        }
+      }
+    ],
+    "pendingDecisions": 0,
+    "diagnostics": {
+      "active": true,
+      "hourlyCustomerBatchesSuppressed": 6,
+      "nativeDrawsSuppressed": 45,
+      "nativePurchasesThisSession": 24
+    }
+  },
+  "entries": [
+    {
+      "id": "c0",
+      "identity": {
+        "Id": "c0",
+        "Name": "Ivo Barlow",
+        "District": "ba:neighborhood_lowermanhattan",
+        "Age": 43,
+        "Female": false,
+        "Persona": 7,
+        "AppearanceSeed": 466195
+      },
+      "homeId": "address:ba%3Astreet_fourthavenue:49:home",
+      "dayPlaceId": "address:ba%3Astreet_fifthavenue:21:work",
+      "destinationId": "",
+      "currentPlaceId": "address:ba%3Astreet_fourthavenue:49:home",
+      "mealPlaceId": "",
+      "insight": {
+        "ResidentId": "c0",
+        "Name": "Ivo Barlow",
+        "Age": 43,
+        "Home": {
+          "PlaceId": "address:ba%3Astreet_fourthavenue:49:home",
+          "Name": "49 4th Avenue",
+          "Street": "ba:street_fourthavenue",
+          "Number": 49,
+          "CanNavigate": true,
+          "AddressText": "49 4th Avenue",
+          "Label": "49 4th Avenue"
+        },
+        "Work": {
+          "PlaceId": "address:ba%3Astreet_fifthavenue:21:work",
+          "Name": "Joko Tech",
+          "Street": "ba:street_fifthavenue",
+          "Number": 21,
+          "CanNavigate": true,
+          "AddressText": "21 5th Avenue",
+          "Label": "Joko Tech, 21 5th Avenue"
+        },
+        "WorkRole": "Works at",
+        "Personality": [
+          "night owl",
+          "works late",
+          "owns a car"
+        ],
+        "Story": "Ivo Barlow, 43, is a night owl. Lives at 49 4th Avenue. Works at Joko Tech, 21 5th Avenue. Right now: at home until 20:31.",
+        "Heading": "Not travelling: at home",
+        "HeadingReason": "stays until 20:31",
+        "Meals": [
+          {
+            "Kind": 1,
+            "State": 4,
+            "Text": "chose food from home instead of buying"
+          },
+          {
+            "Kind": 2,
+            "State": 0,
+            "Text": "unknown"
+          },
+          {
+            "Kind": 3,
+            "State": 0,
+            "Text": "unknown"
+          }
+        ],
+        "MealNote": "",
+        "Minute": 7872.0
+      },
+      "fields": {
+        "header": "Ivo Barlow, 43",
+        "personality": "Personality: night owl · works late · owns a car",
+        "homeLabel": "49 4th Avenue  ↗",
+        "workLabel": "Joko Tech, 21 5th Avenue  ↗",
+        "body": "Ivo Barlow, 43, is a night owl. Lives at 49 4th Avenue. Works at Joko Tech, 21 5th Avenue. Right now: at home until 20:31.\n\nNot travelling: at home (stays until 20:31)\n\nToday's meals\nBreakfast: chose food from home instead of buying\nLunch: unknown\nDinner: unknown\n"
+      },
+      "places": [
+        {
+          "PlaceId": "address:ba%3Astreet_fourthavenue:49:home",
+          "Name": "ba:street_fourthavenue 49",
+          "Street": "ba:street_fourthavenue",
+          "Number": 49,
+          "nativeFormatted": "49 4th Avenue",
+          "nativeRegistrationFound": true
+        },
+        {
+          "PlaceId": "address:ba%3Astreet_fifthavenue:21:work",
+          "Name": "Joko Tech",
+          "Street": "ba:street_fifthavenue",
+          "Number": 21,
+          "nativeFormatted": "21 5th Avenue",
+          "nativeRegistrationFound": true
+        }
+      ]
+    },
+    {
+      "id": "c102",
+      "identity": {
+        "Id": "c102",
+        "Name": "Clara Lane",
+        "District": "ba:neighborhood_lowermanhattan",
+        "Age": 19,
+        "Female": true,
+        "Persona": 3,
+        "AppearanceSeed": 653463
+      },
+      "homeId": "address:ba%3Astreet_ninthstreet:18:home",
+      "dayPlaceId": "address:ba%3Astreet_fourthavenue:7:study",
+      "destinationId": "address:ba%3Astreet_fifthavenue:37:shop",
+      "currentPlaceId": "address:ba%3Astreet_ninthstreet:18:home",
+      "mealPlaceId": "",
+      "insight": {
+        "ResidentId": "c102",
+        "Name": "Clara Lane",
+        "Age": 19,
+        "Home": {
+          "PlaceId": "address:ba%3Astreet_ninthstreet:18:home",
+          "Name": "18 9th Street",
+          "Street": "ba:street_ninthstreet",
+          "Number": 18,
+          "CanNavigate": true,
+          "AddressText": "18 9th Street",
+          "Label": "18 9th Street"
+        },
+        "Work": {
+          "PlaceId": "address:ba%3Astreet_fourthavenue:7:study",
+          "Name": "Manhattan Business School",
+          "Street": "ba:street_fourthavenue",
+          "Number": 7,
+          "CanNavigate": true,
+          "AddressText": "7 4th Avenue",
+          "Label": "Manhattan Business School, 7 4th Avenue"
+        },
+        "WorkRole": "Studies at",
+        "Personality": [
+          "on a student budget",
+          "often packs lunch",
+          "minds fares"
+        ],
+        "Story": "Clara Lane, 19, is a student. Lives at 18 9th Street. Studies at Manhattan Business School, 7 4th Avenue. Right now: walking to Sip & Savor, 37 5th Avenue.",
+        "Heading": "Heading to Sip & Savor, 37 5th Avenue, arriving about 11:24",
+        "HeadingReason": "to go shopping until 11:32",
+        "Meals": [
+          {
+            "Kind": 1,
+            "State": 4,
+            "Text": "chose food from home instead of buying"
+          },
+          {
+            "Kind": 2,
+            "State": 0,
+            "Text": "unknown"
+          },
+          {
+            "Kind": 3,
+            "State": 0,
+            "Text": "unknown"
+          }
+        ],
+        "MealNote": "",
+        "Minute": 7872.0
+      },
+      "fields": {
+        "header": "Clara Lane, 19",
+        "personality": "Personality: on a student budget · often packs lunch · minds fares",
+        "homeLabel": "18 9th Street  ↗",
+        "workLabel": "Manhattan Business School, 7 4th Avenue  ↗",
+        "body": "Clara Lane, 19, is a student. Lives at 18 9th Street. Studies at Manhattan Business School, 7 4th Avenue. Right now: walking to Sip & Savor, 37 5th Avenue.\n\nHeading to Sip & Savor, 37 5th Avenue, arriving about 11:24 (to go shopping until 11:32)\n\nToday's meals\nBreakfast: chose food from home instead of buying\nLunch: unknown\nDinner: unknown\n"
+      },
+      "places": [
+        {
+          "PlaceId": "address:ba%3Astreet_ninthstreet:18:home",
+          "Name": "ba:street_ninthstreet 18",
+          "Street": "ba:street_ninthstreet",
+          "Number": 18,
+          "nativeFormatted": "18 9th Street",
+          "nativeRegistrationFound": true
+        },
+        {
+          "PlaceId": "address:ba%3Astreet_fourthavenue:7:study",
+          "Name": "Manhattan Business School",
+          "Street": "ba:street_fourthavenue",
+          "Number": 7,
+          "nativeFormatted": "7 4th Avenue",
+          "nativeRegistrationFound": true
+        },
+        {
+          "PlaceId": "address:ba%3Astreet_fifthavenue:37:shop",
+          "Name": "Sip & Savor",
+          "Street": "ba:street_fifthavenue",
+          "Number": 37,
+          "nativeFormatted": "37 5th Avenue",
+          "nativeRegistrationFound": true
+        }
+      ]
+    },
+    {
+      "id": "c149",
+      "identity": {
+        "Id": "c149",
+        "Name": "Vera Thorne",
+        "District": "ba:neighborhood_garmentdistrict",
+        "Age": 50,
+        "Female": true,
+        "Persona": 2,
+        "AppearanceSeed": 315693
+      },
+      "homeId": "address:ba%3Astreet_thirdstreet:38:home",
+      "dayPlaceId": "address:ba%3Astreet_sixthavenue:22:work",
+      "destinationId": "",
+      "currentPlaceId": "address:ba%3Astreet_thirdstreet:25:shop",
+      "mealPlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+      "insight": {
+        "ResidentId": "c149",
+        "Name": "Vera Thorne",
+        "Age": 50,
+        "Home": {
+          "PlaceId": "address:ba%3Astreet_thirdstreet:38:home",
+          "Name": "38 3rd Street",
+          "Street": "ba:street_thirdstreet",
+          "Number": 38,
+          "CanNavigate": true,
+          "AddressText": "38 3rd Street",
+          "Label": "38 3rd Street"
+        },
+        "Work": {
+          "PlaceId": "address:ba%3Astreet_sixthavenue:22:work",
+          "Name": "Eagle Eye Law",
+          "Street": "ba:street_sixthavenue",
+          "Number": 22,
+          "CanNavigate": true,
+          "AddressText": "22 6th Avenue",
+          "Label": "Eagle Eye Law, 22 6th Avenue"
+        },
+        "WorkRole": "Works at",
+        "Personality": [
+          "early riser",
+          "often packs lunch",
+          "avoids public transport"
+        ],
+        "Story": "Vera Thorne, 50, is a parent. Lives at 38 3rd Street. Works at Eagle Eye Law, 22 6th Avenue. Right now: shopping at Golden Crust, 25 3rd Street until 11:38.",
+        "Heading": "Not travelling: shopping at Golden Crust, 25 3rd Street",
+        "HeadingReason": "stays until 11:38",
+        "Meals": [
+          {
+            "Kind": 1,
+            "State": 3,
+            "Text": "bought croissant at Persistent City food routines, 30 3rd Street"
+          },
+          {
+            "Kind": 2,
+            "State": 0,
+            "Text": "unknown"
+          },
+          {
+            "Kind": 3,
+            "State": 0,
+            "Text": "unknown"
+          }
+        ],
+        "MealNote": "",
+        "Minute": 7872.0
+      },
+      "fields": {
+        "header": "Vera Thorne, 50",
+        "personality": "Personality: early riser · often packs lunch · avoids public transport",
+        "homeLabel": "38 3rd Street  ↗",
+        "workLabel": "Eagle Eye Law, 22 6th Avenue  ↗",
+        "body": "Vera Thorne, 50, is a parent. Lives at 38 3rd Street. Works at Eagle Eye Law, 22 6th Avenue. Right now: shopping at Golden Crust, 25 3rd Street until 11:38.\n\nNot travelling: shopping at Golden Crust, 25 3rd Street (stays until 11:38)\n\nToday's meals\nBreakfast: bought croissant at Persistent City food routines, 30 3rd Street\nLunch: unknown\nDinner: unknown\n"
+      },
+      "places": [
+        {
+          "PlaceId": "address:ba%3Astreet_thirdstreet:38:home",
+          "Name": "ba:street_thirdstreet 38",
+          "Street": "ba:street_thirdstreet",
+          "Number": 38,
+          "nativeFormatted": "38 3rd Street",
+          "nativeRegistrationFound": true
+        },
+        {
+          "PlaceId": "address:ba%3Astreet_sixthavenue:22:work",
+          "Name": "Eagle Eye Law",
+          "Street": "ba:street_sixthavenue",
+          "Number": 22,
+          "nativeFormatted": "22 6th Avenue",
+          "nativeRegistrationFound": true
+        },
+        {
+          "PlaceId": "address:ba%3Astreet_thirdstreet:25:shop",
+          "Name": "Golden Crust",
+          "Street": "ba:street_thirdstreet",
+          "Number": 25,
+          "nativeFormatted": "25 3rd Street",
+          "nativeRegistrationFound": true
+        },
+        {
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "Name": "Persistent City food routines",
+          "Street": "ba:street_thirdstreet",
+          "Number": 30,
+          "nativeFormatted": "30 3rd Street",
+          "nativeRegistrationFound": true
+        }
+      ]
+    },
+    {
+      "id": "c1",
+      "identity": {
+        "Id": "c1",
+        "Name": "Juno Fenwick",
+        "District": "ba:neighborhood_industrycity",
+        "Age": 27,
+        "Female": true,
+        "Persona": 0,
+        "AppearanceSeed": 795378
+      },
+      "homeId": "address:ba%3Astreet_twentyfifthstreet:18:home",
+      "dayPlaceId": "address:ba%3Astreet_ninthavenue:3:work",
+      "destinationId": "",
+      "currentPlaceId": "address:ba%3Astreet_twentyfifthstreet:18:home",
+      "mealPlaceId": "",
+      "insight": {
+        "ResidentId": "c1",
+        "Name": "Juno Fenwick",
+        "Age": 27,
+        "Home": {
+          "PlaceId": "address:ba%3Astreet_twentyfifthstreet:18:home",
+          "Name": "18 25th Street",
+          "Street": "ba:street_twentyfifthstreet",
+          "Number": 18,
+          "CanNavigate": true,
+          "AddressText": "18 25th Street",
+          "Label": "18 25th Street"
+        },
+        "Work": {
+          "PlaceId": "address:ba%3Astreet_ninthavenue:3:work",
+          "Name": "Rise and Grind, NYC",
+          "Street": "ba:street_ninthavenue",
+          "Number": 3,
+          "CanNavigate": true,
+          "AddressText": "3 9th Avenue",
+          "Label": "Rise and Grind, NYC, 3 9th Avenue"
+        },
+        "WorkRole": "Works at",
+        "Personality": [
+          "keeps a regular workday"
+        ],
+        "Story": "Juno Fenwick, 27, is a commuter. Lives at 18 25th Street. Works at Rise and Grind, NYC, 3 9th Avenue. Right now: at home until 13:51.",
+        "Heading": "Not travelling: at home",
+        "HeadingReason": "stays until 13:51",
+        "Meals": [
+          {
+            "Kind": 1,
+            "State": 4,
+            "Text": "chose food from home instead of buying"
+          },
+          {
+            "Kind": 2,
+            "State": 0,
+            "Text": "unknown"
+          },
+          {
+            "Kind": 3,
+            "State": 0,
+            "Text": "unknown"
+          }
+        ],
+        "MealNote": "",
+        "Minute": 7872.0
+      },
+      "fields": {
+        "header": "Juno Fenwick, 27",
+        "personality": "Personality: keeps a regular workday",
+        "homeLabel": "18 25th Street  ↗",
+        "workLabel": "Rise and Grind, NYC, 3 9th Avenue  ↗",
+        "body": "Juno Fenwick, 27, is a commuter. Lives at 18 25th Street. Works at Rise and Grind, NYC, 3 9th Avenue. Right now: at home until 13:51.\n\nNot travelling: at home (stays until 13:51)\n\nToday's meals\nBreakfast: chose food from home instead of buying\nLunch: unknown\nDinner: unknown\n"
+      },
+      "places": [
+        {
+          "PlaceId": "address:ba%3Astreet_twentyfifthstreet:18:home",
+          "Name": "ba:street_twentyfifthstreet 18",
+          "Street": "ba:street_twentyfifthstreet",
+          "Number": 18,
+          "nativeFormatted": "18 25th Street",
+          "nativeRegistrationFound": true
+        },
+        {
+          "PlaceId": "address:ba%3Astreet_ninthavenue:3:work",
+          "Name": "Rise and Grind, NYC",
+          "Street": "ba:street_ninthavenue",
+          "Number": 3,
+          "nativeFormatted": "3 9th Avenue",
+          "nativeRegistrationFound": true
+        }
+      ]
+    },
+    {
+      "id": "c10",
+      "identity": {
+        "Id": "c10",
+        "Name": "Rae Calder",
+        "District": "ba:neighborhood_thehamptons",
+        "Age": 22,
+        "Female": true,
+        "Persona": 6,
+        "AppearanceSeed": 476369
+      },
+      "homeId": "address:ba%3Astreet_ninthstreet:14:home",
+      "dayPlaceId": "address:ba%3Astreet_firststreet:1:work",
+      "destinationId": "",
+      "currentPlaceId": "address:ba%3Astreet_ninthstreet:14:home",
+      "mealPlaceId": "",
+      "insight": {
+        "ResidentId": "c10",
+        "Name": "Rae Calder",
+        "Age": 22,
+        "Home": {
+          "PlaceId": "address:ba%3Astreet_ninthstreet:14:home",
+          "Name": "14 9th Street",
+          "Street": "ba:street_ninthstreet",
+          "Number": 14,
+          "CanNavigate": true,
+          "AddressText": "14 9th Street",
+          "Label": "14 9th Street"
+        },
+        "Work": {
+          "PlaceId": "address:ba%3Astreet_firststreet:1:work",
+          "Name": "1PINE",
+          "Street": "ba:street_firststreet",
+          "Number": 1,
+          "CanNavigate": true,
+          "AddressText": "1 1st Street",
+          "Label": "1PINE, 1 1st Street"
+        },
+        "WorkRole": "Works at",
+        "Personality": [
+          "grumpy"
+        ],
+        "Story": "Rae Calder, 22, is a bit grumpy. Lives at 14 9th Street. Works at 1PINE, 1 1st Street. Right now: at home until 11:44.",
+        "Heading": "Not travelling: at home",
+        "HeadingReason": "stays until 11:44",
+        "Meals": [
+          {
+            "Kind": 1,
+            "State": 4,
+            "Text": "chose food from home instead of buying"
+          },
+          {
+            "Kind": 2,
+            "State": 0,
+            "Text": "unknown"
+          },
+          {
+            "Kind": 3,
+            "State": 0,
+            "Text": "unknown"
+          }
+        ],
+        "MealNote": "",
+        "Minute": 7872.0
+      },
+      "fields": {
+        "header": "Rae Calder, 22",
+        "personality": "Personality: grumpy",
+        "homeLabel": "14 9th Street  ↗",
+        "workLabel": "1PINE, 1 1st Street  ↗",
+        "body": "Rae Calder, 22, is a bit grumpy. Lives at 14 9th Street. Works at 1PINE, 1 1st Street. Right now: at home until 11:44.\n\nNot travelling: at home (stays until 11:44)\n\nToday's meals\nBreakfast: chose food from home instead of buying\nLunch: unknown\nDinner: unknown\n"
+      },
+      "places": [
+        {
+          "PlaceId": "address:ba%3Astreet_ninthstreet:14:home",
+          "Name": "ba:street_ninthstreet 14",
+          "Street": "ba:street_ninthstreet",
+          "Number": 14,
+          "nativeFormatted": "14 9th Street",
+          "nativeRegistrationFound": true
+        },
+        {
+          "PlaceId": "address:ba%3Astreet_firststreet:1:work",
+          "Name": "1PINE",
+          "Street": "ba:street_firststreet",
+          "Number": 1,
+          "nativeFormatted": "1 1st Street",
+          "nativeRegistrationFound": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,194 @@
+{
+  "base": {
+    "sourceSha": "7a344a7d9dcfedf950f93f34414bb58620303517",
+    "dllSha256": "d442b8cea2754dd0c2e7736653f06791dcdd1a5d8916d0769dfc77386dea97e9"
+  },
+  "candidate": {
+    "sourceSha": "aa9bf9c17bb32929b733f45c9ba72b4cf85a36d0",
+    "dllSha256": "5b71efdd6a70b1100c326a492580cfe06673f8e9fa52e79ef2ddd7a02eb8d074"
+  },
+  "build": {
+    "bothExitCode": 0,
+    "command": "python tools/build.py --game-managed <agent1 Managed>",
+    "pathPrefix": "%LOCALAPPDATA%\\Microsoft\\dotnet",
+    "offlineDotnetTestSuiteRun": false
+  },
+  "loaded": [
+    {
+      "arm": "base1",
+      "actualLoaded": {
+        "location": "C:\\BigAmbitions-AgentTests\\<agent1-profile>\\ModsLocal\\PersistentCity\\PersistentCity.dll",
+        "dllSha256": "d442b8cea2754dd0c2e7736653f06791dcdd1a5d8916d0769dfc77386dea97e9",
+        "assembly": "PersistentCity, Version=0.10.0.0, Culture=neutral, PublicKeyToken=null",
+        "frame": 96210
+      },
+      "fixture": {
+        "name": "FT Food Routines Locked A1 Sync 20261031",
+        "sha256": "bb8ac25721dcea825cdf40e462a606e6244fe93668c8940b9688f4ca482d9273",
+        "source": "retained FT morning-base disposable fixture",
+        "sourceSchema": "historical fixture; normal production migration only"
+      },
+      "contentFixture": {
+        "name": "FT Food Routines Locked A1 Sync Content 20261031",
+        "sha256": "a3a4dcfda26395c949f2f10a3e281910ddb03bb5cb27117d5e31945c64f0fb51",
+        "source": "disposable A1-fix address checkpoint from prior rig",
+        "sourceSha256": "a3a4dcfda26395c949f2f10a3e281910ddb03bb5cb27117d5e31945c64f0fb51"
+      },
+      "environment": {
+        "frame": 6969,
+        "focused": true,
+        "runInBackground": true,
+        "targetFrameRate": 90,
+        "vsync": 0,
+        "width": 1920,
+        "height": 1080,
+        "mouse": "(951.00, 555.00, 0.00)",
+        "left": false,
+        "wheel": "(0.00, 0.00)",
+        "pointerMoves": 0,
+        "pointerDowns": 0,
+        "pointerUps": 0,
+        "pointerWheels": 0,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "api": "Direct3D11"
+      }
+    },
+    {
+      "arm": "cand1",
+      "actualLoaded": {
+        "location": "C:\\BigAmbitions-AgentTests\\<agent1-profile>\\ModsLocal\\PersistentCity\\PersistentCity.dll",
+        "dllSha256": "5b71efdd6a70b1100c326a492580cfe06673f8e9fa52e79ef2ddd7a02eb8d074",
+        "assembly": "PersistentCity, Version=0.10.0.0, Culture=neutral, PublicKeyToken=null",
+        "frame": 66600
+      },
+      "fixture": {
+        "name": "FT Food Routines Locked A1 Sync 20261031",
+        "sha256": "bb8ac25721dcea825cdf40e462a606e6244fe93668c8940b9688f4ca482d9273",
+        "source": "retained FT morning-base disposable fixture",
+        "sourceSchema": "historical fixture; normal production migration only"
+      },
+      "contentFixture": {
+        "name": "FT Food Routines Locked A1 Sync Content 20261031",
+        "sha256": "a3a4dcfda26395c949f2f10a3e281910ddb03bb5cb27117d5e31945c64f0fb51",
+        "source": "disposable A1-fix address checkpoint from prior rig",
+        "sourceSha256": "a3a4dcfda26395c949f2f10a3e281910ddb03bb5cb27117d5e31945c64f0fb51"
+      },
+      "environment": {
+        "frame": 1061,
+        "focused": true,
+        "runInBackground": true,
+        "targetFrameRate": 90,
+        "vsync": 0,
+        "width": 1920,
+        "height": 1080,
+        "mouse": "(951.00, 555.00, 0.00)",
+        "left": false,
+        "wheel": "(0.00, 0.00)",
+        "pointerMoves": 0,
+        "pointerDowns": 0,
+        "pointerUps": 0,
+        "pointerWheels": 0,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "api": "Direct3D11"
+      }
+    },
+    {
+      "arm": "base2",
+      "actualLoaded": {
+        "location": "C:\\BigAmbitions-AgentTests\\<agent1-profile>\\ModsLocal\\PersistentCity\\PersistentCity.dll",
+        "dllSha256": "d442b8cea2754dd0c2e7736653f06791dcdd1a5d8916d0769dfc77386dea97e9",
+        "assembly": "PersistentCity, Version=0.10.0.0, Culture=neutral, PublicKeyToken=null",
+        "frame": 14895
+      },
+      "fixture": {
+        "name": "FT Food Routines Locked A1 Sync 20261031",
+        "sha256": "bb8ac25721dcea825cdf40e462a606e6244fe93668c8940b9688f4ca482d9273",
+        "source": "retained FT morning-base disposable fixture",
+        "sourceSchema": "historical fixture; normal production migration only"
+      },
+      "contentFixture": {
+        "name": "FT Food Routines Locked A1 Sync Content 20261031",
+        "sha256": "a3a4dcfda26395c949f2f10a3e281910ddb03bb5cb27117d5e31945c64f0fb51",
+        "source": "disposable A1-fix address checkpoint from prior rig",
+        "sourceSha256": "a3a4dcfda26395c949f2f10a3e281910ddb03bb5cb27117d5e31945c64f0fb51"
+      },
+      "environment": {
+        "frame": 1139,
+        "focused": true,
+        "runInBackground": true,
+        "targetFrameRate": 90,
+        "vsync": 0,
+        "width": 1920,
+        "height": 1080,
+        "mouse": "(951.00, 555.00, 0.00)",
+        "left": false,
+        "wheel": "(0.00, 0.00)",
+        "pointerMoves": 0,
+        "pointerDowns": 0,
+        "pointerUps": 0,
+        "pointerWheels": 0,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "api": "Direct3D11"
+      }
+    },
+    {
+      "arm": "cand2",
+      "actualLoaded": {
+        "location": "C:\\BigAmbitions-AgentTests\\<agent1-profile>\\ModsLocal\\PersistentCity\\PersistentCity.dll",
+        "dllSha256": "5b71efdd6a70b1100c326a492580cfe06673f8e9fa52e79ef2ddd7a02eb8d074",
+        "assembly": "PersistentCity, Version=0.10.0.0, Culture=neutral, PublicKeyToken=null",
+        "frame": 108773
+      },
+      "fixture": {
+        "name": "FT Food Routines Locked A1 Sync 20261031",
+        "sha256": "bb8ac25721dcea825cdf40e462a606e6244fe93668c8940b9688f4ca482d9273",
+        "source": "retained FT morning-base disposable fixture",
+        "sourceSchema": "historical fixture; normal production migration only"
+      },
+      "contentFixture": {
+        "name": "FT Food Routines Locked A1 Sync Content 20261031",
+        "sha256": "a3a4dcfda26395c949f2f10a3e281910ddb03bb5cb27117d5e31945c64f0fb51",
+        "source": "disposable A1-fix address checkpoint from prior rig",
+        "sourceSha256": "a3a4dcfda26395c949f2f10a3e281910ddb03bb5cb27117d5e31945c64f0fb51"
+      },
+      "environment": {
+        "frame": 1144,
+        "focused": true,
+        "runInBackground": true,
+        "targetFrameRate": 90,
+        "vsync": 0,
+        "width": 1920,
+        "height": 1080,
+        "mouse": "(951.00, 555.00, 0.00)",
+        "left": false,
+        "wheel": "(0.00, 0.00)",
+        "pointerMoves": 0,
+        "pointerDowns": 0,
+        "pointerUps": 0,
+        "pointerWheels": 0,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "api": "Direct3D11"
+      }
+    }
+  ],
+  "toolBuild": {
+    "production": "5b71efdd6a70b1100c326a492580cfe06673f8e9fa52e79ef2ddd7a02eb8d074",
+    "frameHelper": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353",
+    "guard": "636bf6912906badb8bc6d46dd1cb216e6fc179e5e504b00cbbf1dca64bd00a17",
+    "sources": {
+      "Probe.cs": "a6a8080dca4c0e31311e981eac2e6ace5c68c3a2760e87d939c705b9688ad780",
+      "Pilot.cs": "e1860b54a6cceccea702d91454a39edd3014e4f102d0aa9138513bf6b35aaad3",
+      "ClockAudit.cs": "d709996057f36e9a258b48d6040c24ac2bb1950ddd853239f1923144e1f1dd8d",
+      "Neighborhood.cs": "35c20714ff41e1ede978a66ccf3b7ce734122a63432fde4667ed39ad18a5e71a",
+      "Frames.cs": "8db081e6a7fbd22fc6125f5aab5a30a7bff2e4137123e0a6112066fc59e25240",
+      "EventMeasurements.cs": "3c6993e5246e633ea215bae932e31250e45d47f574cec71ea6cb14681ae7e8f3",
+      "EventObservations.cs": "405a23d378bc69538313bbd6ad05c09349afee1328438b1811a44dd333f06668",
+      "FrameObservations.cs": "8402e336aff12b1ccea2fb9bc857c45c990462ac786f2b7d2b68da80e4df95f9",
+      "DiagnosticResponses.cs": "11711f2818f8a536a7500c0ddd47408b73b37428446c44022324f9414fded475",
+      "Menus.cs": "e50dafe3c33adf51de1938e8520bd19f325125b3a8197c2981b96578cbf1f629",
+      "Operations.cs": "3b0e2efb18dd402458fbba36b2649d9527867219ae0982fa7ab814666dac2ce7",
+      "ReturnQuotes.cs": "78a8df1d3a82d4403b119c61c1961c285083840f3ff1aa8f9b5578238a3d5363"
+    },
+    "guardSource": "bd8fee31a151b14736d533c6449604910d72ef44e597f40ad6f55d349278dbad"
+  }
+}

@@ -1,0 +1,406 @@
+[
+  {
+    "method": "GameManager.RunMainGameTick",
+    "owners": [
+      "persistentcity.rig_test.bridge",
+      "hart.persistentcity.cityclock.v1",
+      "persistentcity.food-authority",
+      "hart.persistentcity.clockobserver.v1"
+    ],
+    "prefix": [
+      {
+        "owner": "persistentcity.rig_test.bridge",
+        "priority": 800,
+        "method": "FoodTrucks.TestBridgeCommands.ClampTickPrefix"
+      },
+      {
+        "owner": "hart.persistentcity.cityclock.v1",
+        "priority": 801,
+        "method": "PersistentCity.Runtime.NativeCityClock.TickPrefix"
+      }
+    ],
+    "postfix": [
+      "persistentcity.food-authority",
+      "hart.persistentcity.clockobserver.v1"
+    ],
+    "finalizers": []
+  },
+  {
+    "method": "Buildings.Retail.Simulation.RetailBusinessSimulator.ProcessAllCustomersFromThisHour",
+    "owners": [
+      "persistentcity.food-authority"
+    ],
+    "prefix": [
+      {
+        "owner": "persistentcity.food-authority",
+        "priority": 800,
+        "method": "PersistentCity.Runtime.NativeFoodOwnership.HourlyCustomers"
+      }
+    ],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "Buildings.Retail.Simulation.RetailBusinessSimulator.ProcessCustomer",
+    "owners": [
+      "persistentcity.food-authority"
+    ],
+    "prefix": [
+      {
+        "owner": "persistentcity.food-authority",
+        "priority": 800,
+        "method": "PersistentCity.Runtime.NativeFoodOwnership.CustomerSale"
+      }
+    ],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "AI.Customers.CustomerEntries.CustomerEntriesHelper.GetEntriesByAddress",
+    "owners": [
+      "persistentcity.food-authority"
+    ],
+    "prefix": [
+      {
+        "owner": "persistentcity.food-authority",
+        "priority": 800,
+        "method": "PersistentCity.Runtime.NativeFoodOwnership.CustomerDraw"
+      }
+    ],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "AI.Customers.CustomerEntries.CustomerEntriesHelper.UpdateCustomerEntriesForPlayerBusiness",
+    "owners": [
+      "persistentcity.food-authority"
+    ],
+    "prefix": [
+      {
+        "owner": "persistentcity.food-authority",
+        "priority": 800,
+        "method": "PersistentCity.Runtime.NativeFoodOwnership.GenerateCustomers"
+      }
+    ],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "BuildingRegistration.Reset",
+    "owners": [
+      "persistentcity.food-authority"
+    ],
+    "prefix": [
+      {
+        "owner": "persistentcity.food-authority",
+        "priority": 800,
+        "method": "PersistentCity.Runtime.NativeFoodOwnership.ResetRegistration"
+      }
+    ],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "SaveGameSerializationHelper.SerializeJsonData",
+    "owners": [
+      "persistentcity.rig_test.bridge"
+    ],
+    "prefix": [],
+    "postfix": [],
+    "finalizers": [
+      "persistentcity.rig_test.bridge"
+    ]
+  },
+  {
+    "method": "SaveGameSerializationHelper.SerializeBinaryData",
+    "owners": [
+      "persistentcity.rig_test.bridge"
+    ],
+    "prefix": [],
+    "postfix": [],
+    "finalizers": [
+      "persistentcity.rig_test.bridge"
+    ]
+  },
+  {
+    "method": "SaveGameSerializationHelper.CompressBinaryData",
+    "owners": [
+      "persistentcity.rig_test.bridge"
+    ],
+    "prefix": [],
+    "postfix": [],
+    "finalizers": [
+      "persistentcity.rig_test.bridge"
+    ]
+  },
+  {
+    "method": "UI.Load.LoadingScreen.StartLoading",
+    "owners": [
+      "persistentcity.rig_test.bridge"
+    ],
+    "prefix": [],
+    "postfix": [
+      "persistentcity.rig_test.bridge"
+    ],
+    "finalizers": []
+  },
+  {
+    "method": "NWH.VehiclePhysics2.VehicleController.OnCollisionEnter",
+    "owners": [
+      "persistentcity.rig_test.bridge"
+    ],
+    "prefix": [],
+    "postfix": [
+      "persistentcity.rig_test.bridge"
+    ],
+    "finalizers": []
+  },
+  {
+    "method": "AI.Citizens.CitizenData.IsPriceAcceptable",
+    "owners": [
+      "persistentcity.food-routines"
+    ],
+    "prefix": [
+      {
+        "owner": "persistentcity.food-routines",
+        "priority": 800,
+        "method": "PersistentCity.Runtime.NativeFoodMarket.ResidentPrice"
+      }
+    ],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "GleyTrafficSystem.IntersectionManager.SetActiveIntersection",
+    "owners": [
+      "hart.persistentcity.physicalintersections.v1"
+    ],
+    "prefix": [
+      {
+        "owner": "hart.persistentcity.physicalintersections.v1",
+        "priority": 400,
+        "method": "PersistentCity.Runtime.PhysicalIntersections.SetActivePrefix"
+      }
+    ],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "GleyTrafficSystem.IntersectionManager.UpdateIntersections",
+    "owners": [
+      "hart.persistentcity.physicalintersections.v1"
+    ],
+    "prefix": [],
+    "postfix": [
+      "hart.persistentcity.physicalintersections.v1"
+    ],
+    "finalizers": []
+  },
+  {
+    "method": "GameSpeedController.ChangeTimeScale",
+    "owners": [
+      "hart.persistentcity.physicalvehicles.v1"
+    ],
+    "prefix": [
+      {
+        "owner": "hart.persistentcity.physicalvehicles.v1",
+        "priority": 400,
+        "method": "PersistentCity.Runtime.PhysicalTrafficHooks.SpeedChangingPrefix"
+      }
+    ],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "GleyTrafficSystem.DrivingAI.VehicleCrashHandler",
+    "owners": [
+      "hart.persistentcity.physicalvehicles.v1"
+    ],
+    "prefix": [],
+    "postfix": [
+      "hart.persistentcity.physicalvehicles.v1"
+    ],
+    "finalizers": []
+  },
+  {
+    "method": "GleyTrafficSystem.DensityManager.AddVehicle",
+    "owners": [
+      "hart.persistentcity.physicalvehicles.v1"
+    ],
+    "prefix": [],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "GleyTrafficSystem.TrafficManager.FixedUpdate",
+    "owners": [
+      "hart.persistentcity.physicalvehicles.v1"
+    ],
+    "prefix": [
+      {
+        "owner": "hart.persistentcity.physicalvehicles.v1",
+        "priority": 400,
+        "method": "PersistentCity.Runtime.PhysicalTrafficHooks.FixedStepPrefix"
+      }
+    ],
+    "postfix": [
+      "hart.persistentcity.physicalvehicles.v1"
+    ],
+    "finalizers": [
+      "hart.persistentcity.physicalvehicles.v1"
+    ]
+  },
+  {
+    "method": "GleyTrafficSystem.DrivingAI.HasReachedOrPassedWaypoint",
+    "owners": [
+      "hart.persistentcity.physicalvehicles.v1"
+    ],
+    "prefix": [
+      {
+        "owner": "hart.persistentcity.physicalvehicles.v1",
+        "priority": 400,
+        "method": "PersistentCity.Runtime.PhysicalTrafficHooks.ReachedPrefix"
+      }
+    ],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "GleyTrafficSystem.DrivingAI.WaypointRequested",
+    "owners": [
+      "hart.persistentcity.physicalvehicles.v1"
+    ],
+    "prefix": [
+      {
+        "owner": "hart.persistentcity.physicalvehicles.v1",
+        "priority": 400,
+        "method": "PersistentCity.Runtime.PhysicalTrafficHooks.RequestPrefix"
+      }
+    ],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "AiCarRescueCheck.DoUpdate",
+    "owners": [
+      "hart.persistentcity.physicalvehicles.v1"
+    ],
+    "prefix": [
+      {
+        "owner": "hart.persistentcity.physicalvehicles.v1",
+        "priority": 400,
+        "method": "PersistentCity.Runtime.PhysicalTrafficHooks.RescuePrefix"
+      }
+    ],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "TrafficDespawner.OnTriggerEnter",
+    "owners": [
+      "hart.persistentcity.physicalvehicles.v1"
+    ],
+    "prefix": [
+      {
+        "owner": "hart.persistentcity.physicalvehicles.v1",
+        "priority": 400,
+        "method": "PersistentCity.Runtime.PhysicalTrafficHooks.DespawnerPrefix"
+      }
+    ],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "PedestrianSpawner.SetActivePedestrians",
+    "owners": [
+      "hart.persistentcity.ambientpedestrians.v1"
+    ],
+    "prefix": [
+      {
+        "owner": "hart.persistentcity.ambientpedestrians.v1",
+        "priority": 400,
+        "method": "PersistentCity.Runtime.AmbientPedestrians.SetActivePrefix"
+      }
+    ],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "Streets.Pedestrians.Pedestrian.OnEndCycle",
+    "owners": [
+      "hart.persistentcity.ambientpedestrians.v1"
+    ],
+    "prefix": [
+      {
+        "owner": "hart.persistentcity.ambientpedestrians.v1",
+        "priority": 400,
+        "method": "PersistentCity.Runtime.AmbientPedestrians.EndCyclePrefix"
+      }
+    ],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "Streets.Pedestrians.Pedestrian.ChangeState",
+    "owners": [
+      "hart.persistentcity.ambientpedestrians.v1"
+    ],
+    "prefix": [
+      {
+        "owner": "hart.persistentcity.ambientpedestrians.v1",
+        "priority": 400,
+        "method": "PersistentCity.Runtime.AmbientPedestrians.ChangeStatePrefix"
+      }
+    ],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "StationaryAiSpawner.Spawn",
+    "owners": [
+      "hart.persistentcity.stationarycrowds.v1"
+    ],
+    "prefix": [
+      {
+        "owner": "hart.persistentcity.stationarycrowds.v1",
+        "priority": 400,
+        "method": "PersistentCity.Runtime.StationaryCrowds.SpawnPrefix"
+      }
+    ],
+    "postfix": [],
+    "finalizers": []
+  },
+  {
+    "method": "Buildings.Retail.Simulation.RetailBusinessSimulator.RestockShelvesIfItsTime",
+    "owners": [
+      "persistentcity.food-routine-test.housekeeping"
+    ],
+    "prefix": [],
+    "postfix": [
+      "persistentcity.food-routine-test.housekeeping"
+    ],
+    "finalizers": []
+  },
+  {
+    "method": "Buildings.Retail.Simulation.RetailBusinessSimulator.RestockShelves",
+    "owners": [
+      "persistentcity.food-routine-test.housekeeping"
+    ],
+    "prefix": [],
+    "postfix": [
+      "persistentcity.food-routine-test.housekeeping"
+    ],
+    "finalizers": []
+  },
+  {
+    "method": "Buildings.Retail.Simulation.RetailBusinessSimulator.UpdateStockTasksFromFurniture",
+    "owners": [
+      "persistentcity.food-routine-test.housekeeping"
+    ],
+    "prefix": [],
+    "postfix": [
+      "persistentcity.food-routine-test.housekeeping"
+    ],
+    "finalizers": []
+  }
+]

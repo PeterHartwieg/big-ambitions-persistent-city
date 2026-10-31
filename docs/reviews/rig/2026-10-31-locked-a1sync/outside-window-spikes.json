@@ -1,0 +1,117 @@
+{
+  "role": "rig_test",
+  "routingLowerBounds": [
+    {
+      "run": "base1",
+      "unityFrame": 6852,
+      "realtime": 96.781,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/functional setup",
+      "minimumObservedModCostMs": 114.994,
+      "preparationMs": 114.994,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand1",
+      "unityFrame": 964,
+      "realtime": 29.63,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/functional setup",
+      "minimumObservedModCostMs": 98.032,
+      "preparationMs": 98.032,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand1",
+      "unityFrame": 1982,
+      "realtime": 59.298,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/functional setup",
+      "minimumObservedModCostMs": 97.243,
+      "preparationMs": 97.243,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand1",
+      "unityFrame": 3390,
+      "realtime": 99.83,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/functional setup",
+      "minimumObservedModCostMs": 93.492,
+      "preparationMs": 93.492,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand1",
+      "unityFrame": 4563,
+      "realtime": 146.983,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/functional setup",
+      "minimumObservedModCostMs": 137.772,
+      "preparationMs": 137.772,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand1",
+      "unityFrame": 65086,
+      "realtime": 911.762,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/functional setup",
+      "minimumObservedModCostMs": 140.559,
+      "preparationMs": 140.559,
+      "closureMs": 0.0
+    },
+    {
+      "run": "base2",
+      "unityFrame": 954,
+      "realtime": 29.348,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/functional setup",
+      "minimumObservedModCostMs": 96.291,
+      "preparationMs": 96.291,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand2",
+      "unityFrame": 987,
+      "realtime": 33.108,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/functional setup",
+      "minimumObservedModCostMs": 96.951,
+      "preparationMs": 96.951,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand2",
+      "unityFrame": 90963,
+      "realtime": 1087.784,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/functional setup",
+      "minimumObservedModCostMs": 156.873,
+      "preparationMs": 156.873,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand2",
+      "unityFrame": 100935,
+      "realtime": 1226.998,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/functional setup",
+      "minimumObservedModCostMs": 86.599,
+      "preparationMs": 86.599,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand2",
+      "unityFrame": 104940,
+      "realtime": 1329.532,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/functional setup",
+      "minimumObservedModCostMs": 87.101,
+      "preparationMs": 87.101,
+      "closureMs": 0.0
+    }
+  ],
+  "unmappedAdvanceSummaries": [],
+  "scope": "Measured normal-play totals/spikes are in performance-summary.json. These logged component costs are lower bounds, not whole mod-work totals. Cold startup/load/time-jump/functional work is separate from the normal-play p95 gate; summary maxima lack a frame and are retained as unaligned."
+}

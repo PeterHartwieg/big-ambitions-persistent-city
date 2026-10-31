@@ -1,0 +1,790 @@
+{
+  "role": "rig_test",
+  "method": "seam, not gesture proof; independently invokes native Streets.AddressHelper.ToFormattedString(Address) for native building registrations",
+  "selection": {
+    "ids": [
+      "c0",
+      "c102",
+      "c149",
+      "c1",
+      "c10"
+    ],
+    "roles": {
+      "worker": "c0",
+      "student": "c102",
+      "foodTraveller": "c149",
+      "mealRecord": "c0",
+      "additional3": "c1",
+      "additional4": "c10"
+    }
+  },
+  "a1fixNativeMinute": 7720.349502563477,
+  "candidateNativeMinute": 7720.349502563477,
+  "reloadedNativeMinute": 7720.682834625244,
+  "rows": [
+    {
+      "id": "c0",
+      "addresses": [
+        {
+          "field": "Home",
+          "shown": "49 4th Avenue",
+          "native": "49 4th Avenue",
+          "exact": true,
+          "nativeRegistrationFound": true,
+          "mapArguments": {
+            "PlaceId": "address:ba%3Astreet_fourthavenue:49:home",
+            "Street": "ba:street_fourthavenue",
+            "Number": 49,
+            "CanNavigate": true
+          },
+          "argumentsEqualA1fix": true
+        },
+        {
+          "field": "Work",
+          "shown": "21 5th Avenue",
+          "native": "21 5th Avenue",
+          "exact": true,
+          "nativeRegistrationFound": true,
+          "mapArguments": {
+            "PlaceId": "address:ba%3Astreet_fifthavenue:21:work",
+            "Street": "ba:street_fifthavenue",
+            "Number": 21,
+            "CanNavigate": true
+          },
+          "argumentsEqualA1fix": true
+        }
+      ],
+      "noRawKeys": true,
+      "identityEqualA1fix": true,
+      "identityEqualReload": true,
+      "fieldsEqualA1fix": true,
+      "fieldsEqualReload": true,
+      "fields": {
+        "header": {
+          "candidate": "Ivo Barlow, 43",
+          "a1fix": "Ivo Barlow, 43",
+          "reloaded": "Ivo Barlow, 43"
+        },
+        "personality": {
+          "candidate": "Personality: night owl · works late · owns a car",
+          "a1fix": "Personality: night owl · works late · owns a car",
+          "reloaded": "Personality: night owl · works late · owns a car"
+        },
+        "homeLabel": {
+          "candidate": "49 4th Avenue  ↗",
+          "a1fix": "49 4th Avenue  ↗",
+          "reloaded": "49 4th Avenue  ↗"
+        },
+        "workLabel": {
+          "candidate": "Joko Tech, 21 5th Avenue  ↗",
+          "a1fix": "Joko Tech, 21 5th Avenue  ↗",
+          "reloaded": "Joko Tech, 21 5th Avenue  ↗"
+        },
+        "body": {
+          "candidate": "Ivo Barlow, 43, is a night owl. Lives at 49 4th Avenue. Works at Joko Tech, 21 5th Avenue. Right now: at home until 20:31.\n\nNot travelling: at home (stays until 20:31)\n\nToday's meals\nBreakfast: unknown (not decided yet)\nLunch: unknown\nDinner: unknown\n",
+          "a1fix": "Ivo Barlow, 43, is a night owl. Lives at 49 4th Avenue. Works at Joko Tech, 21 5th Avenue. Right now: at home until 20:31.\n\nNot travelling: at home (stays until 20:31)\n\nToday's meals\nBreakfast: unknown (not decided yet)\nLunch: unknown\nDinner: unknown\n",
+          "reloaded": "Ivo Barlow, 43, is a night owl. Lives at 49 4th Avenue. Works at Joko Tech, 21 5th Avenue. Right now: at home until 20:31.\n\nNot travelling: at home (stays until 20:31)\n\nToday's meals\nBreakfast: unknown (not decided yet)\nLunch: unknown\nDinner: unknown\n"
+        }
+      },
+      "placesEqualA1fix": true
+    },
+    {
+      "id": "c102",
+      "addresses": [
+        {
+          "field": "Home",
+          "shown": "18 9th Street",
+          "native": "18 9th Street",
+          "exact": true,
+          "nativeRegistrationFound": true,
+          "mapArguments": {
+            "PlaceId": "address:ba%3Astreet_ninthstreet:18:home",
+            "Street": "ba:street_ninthstreet",
+            "Number": 18,
+            "CanNavigate": true
+          },
+          "argumentsEqualA1fix": true
+        },
+        {
+          "field": "Work",
+          "shown": "7 4th Avenue",
+          "native": "7 4th Avenue",
+          "exact": true,
+          "nativeRegistrationFound": true,
+          "mapArguments": {
+            "PlaceId": "address:ba%3Astreet_fourthavenue:7:study",
+            "Street": "ba:street_fourthavenue",
+            "Number": 7,
+            "CanNavigate": true
+          },
+          "argumentsEqualA1fix": true
+        }
+      ],
+      "noRawKeys": true,
+      "identityEqualA1fix": true,
+      "identityEqualReload": true,
+      "fieldsEqualA1fix": true,
+      "fieldsEqualReload": true,
+      "fields": {
+        "header": {
+          "candidate": "Clara Lane, 19",
+          "a1fix": "Clara Lane, 19",
+          "reloaded": "Clara Lane, 19"
+        },
+        "personality": {
+          "candidate": "Personality: on a student budget · often packs lunch · minds fares",
+          "a1fix": "Personality: on a student budget · often packs lunch · minds fares",
+          "reloaded": "Personality: on a student budget · often packs lunch · minds fares"
+        },
+        "homeLabel": {
+          "candidate": "18 9th Street  ↗",
+          "a1fix": "18 9th Street  ↗",
+          "reloaded": "18 9th Street  ↗"
+        },
+        "workLabel": {
+          "candidate": "Manhattan Business School, 7 4th Avenue  ↗",
+          "a1fix": "Manhattan Business School, 7 4th Avenue  ↗",
+          "reloaded": "Manhattan Business School, 7 4th Avenue  ↗"
+        },
+        "body": {
+          "candidate": "Clara Lane, 19, is a student. Lives at 18 9th Street. Studies at Manhattan Business School, 7 4th Avenue. Right now: at home until 10:47.\n\nNot travelling: at home (stays until 10:47)\n\nToday's meals\nBreakfast: chose food from home instead of buying\nLunch: unknown\nDinner: unknown\n",
+          "a1fix": "Clara Lane, 19, is a student. Lives at 18 9th Street. Studies at Manhattan Business School, 7 4th Avenue. Right now: at home until 10:47.\n\nNot travelling: at home (stays until 10:47)\n\nToday's meals\nBreakfast: chose food from home instead of buying\nLunch: unknown\nDinner: unknown\n",
+          "reloaded": "Clara Lane, 19, is a student. Lives at 18 9th Street. Studies at Manhattan Business School, 7 4th Avenue. Right now: at home until 10:47.\n\nNot travelling: at home (stays until 10:47)\n\nToday's meals\nBreakfast: chose food from home instead of buying\nLunch: unknown\nDinner: unknown\n"
+        }
+      },
+      "placesEqualA1fix": true
+    },
+    {
+      "id": "c149",
+      "addresses": [
+        {
+          "field": "Home",
+          "shown": "38 3rd Street",
+          "native": "38 3rd Street",
+          "exact": true,
+          "nativeRegistrationFound": true,
+          "mapArguments": {
+            "PlaceId": "address:ba%3Astreet_thirdstreet:38:home",
+            "Street": "ba:street_thirdstreet",
+            "Number": 38,
+            "CanNavigate": true
+          },
+          "argumentsEqualA1fix": true
+        },
+        {
+          "field": "Work",
+          "shown": "22 6th Avenue",
+          "native": "22 6th Avenue",
+          "exact": true,
+          "nativeRegistrationFound": true,
+          "mapArguments": {
+            "PlaceId": "address:ba%3Astreet_sixthavenue:22:work",
+            "Street": "ba:street_sixthavenue",
+            "Number": 22,
+            "CanNavigate": true
+          },
+          "argumentsEqualA1fix": true
+        }
+      ],
+      "noRawKeys": true,
+      "identityEqualA1fix": true,
+      "identityEqualReload": true,
+      "fieldsEqualA1fix": true,
+      "fieldsEqualReload": true,
+      "fields": {
+        "header": {
+          "candidate": "Vera Thorne, 50",
+          "a1fix": "Vera Thorne, 50",
+          "reloaded": "Vera Thorne, 50"
+        },
+        "personality": {
+          "candidate": "Personality: early riser · often packs lunch · avoids public transport",
+          "a1fix": "Personality: early riser · often packs lunch · avoids public transport",
+          "reloaded": "Personality: early riser · often packs lunch · avoids public transport"
+        },
+        "homeLabel": {
+          "candidate": "38 3rd Street  ↗",
+          "a1fix": "38 3rd Street  ↗",
+          "reloaded": "38 3rd Street  ↗"
+        },
+        "workLabel": {
+          "candidate": "Eagle Eye Law, 22 6th Avenue  ↗",
+          "a1fix": "Eagle Eye Law, 22 6th Avenue  ↗",
+          "reloaded": "Eagle Eye Law, 22 6th Avenue  ↗"
+        },
+        "body": {
+          "candidate": "Vera Thorne, 50, is a parent. Lives at 38 3rd Street. Works at Eagle Eye Law, 22 6th Avenue. Right now: walking to Persistent City food routines, 30 3rd Street.\n\nHeading to Persistent City food routines, 30 3rd Street, arriving about 08:40 (to buy croissant for breakfast)\n\nToday's meals\nBreakfast: on the way to Persistent City food routines, 30 3rd Street for croissant\nLunch: unknown\nDinner: unknown\n",
+          "a1fix": "Vera Thorne, 50, is a parent. Lives at 38 3rd Street. Works at Eagle Eye Law, 22 6th Avenue. Right now: walking to Persistent City food routines, 30 3rd Street.\n\nHeading to Persistent City food routines, 30 3rd Street, arriving about 08:40 (to buy croissant for breakfast)\n\nToday's meals\nBreakfast: on the way to Persistent City food routines, 30 3rd Street for croissant\nLunch: unknown\nDinner: unknown\n",
+          "reloaded": "Vera Thorne, 50, is a parent. Lives at 38 3rd Street. Works at Eagle Eye Law, 22 6th Avenue. Right now: walking to Persistent City food routines, 30 3rd Street.\n\nHeading to Persistent City food routines, 30 3rd Street, arriving about 08:40 (to buy croissant for breakfast)\n\nToday's meals\nBreakfast: on the way to Persistent City food routines, 30 3rd Street for croissant\nLunch: unknown\nDinner: unknown\n"
+        }
+      },
+      "placesEqualA1fix": true
+    },
+    {
+      "id": "c1",
+      "addresses": [
+        {
+          "field": "Home",
+          "shown": "18 25th Street",
+          "native": "18 25th Street",
+          "exact": true,
+          "nativeRegistrationFound": true,
+          "mapArguments": {
+            "PlaceId": "address:ba%3Astreet_twentyfifthstreet:18:home",
+            "Street": "ba:street_twentyfifthstreet",
+            "Number": 18,
+            "CanNavigate": true
+          },
+          "argumentsEqualA1fix": true
+        },
+        {
+          "field": "Work",
+          "shown": "3 9th Avenue",
+          "native": "3 9th Avenue",
+          "exact": true,
+          "nativeRegistrationFound": true,
+          "mapArguments": {
+            "PlaceId": "address:ba%3Astreet_ninthavenue:3:work",
+            "Street": "ba:street_ninthavenue",
+            "Number": 3,
+            "CanNavigate": true
+          },
+          "argumentsEqualA1fix": true
+        }
+      ],
+      "noRawKeys": true,
+      "identityEqualA1fix": true,
+      "identityEqualReload": true,
+      "fieldsEqualA1fix": true,
+      "fieldsEqualReload": true,
+      "fields": {
+        "header": {
+          "candidate": "Juno Fenwick, 27",
+          "a1fix": "Juno Fenwick, 27",
+          "reloaded": "Juno Fenwick, 27"
+        },
+        "personality": {
+          "candidate": "Personality: keeps a regular workday",
+          "a1fix": "Personality: keeps a regular workday",
+          "reloaded": "Personality: keeps a regular workday"
+        },
+        "homeLabel": {
+          "candidate": "18 25th Street  ↗",
+          "a1fix": "18 25th Street  ↗",
+          "reloaded": "18 25th Street  ↗"
+        },
+        "workLabel": {
+          "candidate": "Rise and Grind, NYC, 3 9th Avenue  ↗",
+          "a1fix": "Rise and Grind, NYC, 3 9th Avenue  ↗",
+          "reloaded": "Rise and Grind, NYC, 3 9th Avenue  ↗"
+        },
+        "body": {
+          "candidate": "Juno Fenwick, 27, is a commuter. Lives at 18 25th Street. Works at Rise and Grind, NYC, 3 9th Avenue. Right now: at home until 13:51.\n\nNot travelling: at home (stays until 13:51)\n\nToday's meals\nBreakfast: chose food from home instead of buying\nLunch: unknown\nDinner: unknown\n",
+          "a1fix": "Juno Fenwick, 27, is a commuter. Lives at 18 25th Street. Works at Rise and Grind, NYC, 3 9th Avenue. Right now: at home until 13:51.\n\nNot travelling: at home (stays until 13:51)\n\nToday's meals\nBreakfast: chose food from home instead of buying\nLunch: unknown\nDinner: unknown\n",
+          "reloaded": "Juno Fenwick, 27, is a commuter. Lives at 18 25th Street. Works at Rise and Grind, NYC, 3 9th Avenue. Right now: at home until 13:51.\n\nNot travelling: at home (stays until 13:51)\n\nToday's meals\nBreakfast: chose food from home instead of buying\nLunch: unknown\nDinner: unknown\n"
+        }
+      },
+      "placesEqualA1fix": true
+    },
+    {
+      "id": "c10",
+      "addresses": [
+        {
+          "field": "Home",
+          "shown": "14 9th Street",
+          "native": "14 9th Street",
+          "exact": true,
+          "nativeRegistrationFound": true,
+          "mapArguments": {
+            "PlaceId": "address:ba%3Astreet_ninthstreet:14:home",
+            "Street": "ba:street_ninthstreet",
+            "Number": 14,
+            "CanNavigate": true
+          },
+          "argumentsEqualA1fix": true
+        },
+        {
+          "field": "Work",
+          "shown": "1 1st Street",
+          "native": "1 1st Street",
+          "exact": true,
+          "nativeRegistrationFound": true,
+          "mapArguments": {
+            "PlaceId": "address:ba%3Astreet_firststreet:1:work",
+            "Street": "ba:street_firststreet",
+            "Number": 1,
+            "CanNavigate": true
+          },
+          "argumentsEqualA1fix": true
+        }
+      ],
+      "noRawKeys": true,
+      "identityEqualA1fix": true,
+      "identityEqualReload": true,
+      "fieldsEqualA1fix": true,
+      "fieldsEqualReload": true,
+      "fields": {
+        "header": {
+          "candidate": "Rae Calder, 22",
+          "a1fix": "Rae Calder, 22",
+          "reloaded": "Rae Calder, 22"
+        },
+        "personality": {
+          "candidate": "Personality: grumpy",
+          "a1fix": "Personality: grumpy",
+          "reloaded": "Personality: grumpy"
+        },
+        "homeLabel": {
+          "candidate": "14 9th Street  ↗",
+          "a1fix": "14 9th Street  ↗",
+          "reloaded": "14 9th Street  ↗"
+        },
+        "workLabel": {
+          "candidate": "1PINE, 1 1st Street  ↗",
+          "a1fix": "1PINE, 1 1st Street  ↗",
+          "reloaded": "1PINE, 1 1st Street  ↗"
+        },
+        "body": {
+          "candidate": "Rae Calder, 22, is a bit grumpy. Lives at 14 9th Street. Works at 1PINE, 1 1st Street. Right now: at home until 10:59.\n\nNot travelling: at home (stays until 10:59)\n\nToday's meals\nBreakfast: unknown (not decided yet)\nLunch: unknown\nDinner: unknown\n",
+          "a1fix": "Rae Calder, 22, is a bit grumpy. Lives at 14 9th Street. Works at 1PINE, 1 1st Street. Right now: at home until 10:59.\n\nNot travelling: at home (stays until 10:59)\n\nToday's meals\nBreakfast: unknown (not decided yet)\nLunch: unknown\nDinner: unknown\n",
+          "reloaded": "Rae Calder, 22, is a bit grumpy. Lives at 14 9th Street. Works at 1PINE, 1 1st Street. Right now: at home until 10:59.\n\nNot travelling: at home (stays until 10:59)\n\nToday's meals\nBreakfast: unknown (not decided yet)\nLunch: unknown\nDinner: unknown\n"
+        }
+      },
+      "placesEqualA1fix": true
+    }
+  ],
+  "allAddressesExactNative": true,
+  "allTextEqualA1fix": true,
+  "allTextEqualReload": true,
+  "noRawKeys": true,
+  "readOnlyBatches": [
+    {
+      "label": "candidate",
+      "payloadIdentical": true,
+      "payloadHashBefore": "fdd4f311a01785afba972e69559e23d294627884263ea8f56be2a80ab9e9e24f",
+      "payloadHashAfter": "fdd4f311a01785afba972e69559e23d294627884263ea8f56be2a80ab9e9e24f",
+      "countersIdentical": true,
+      "countersBefore": {
+        "frame": 2196,
+        "minute": 7720.349502563477,
+        "nativeMinute": 7720.349502563477,
+        "PlanningPending": false,
+        "runtime": {
+          "advanceFrames": 156,
+          "advanceEvents": 0,
+          "advanceMilliseconds": 1.7473000000000003,
+          "planningSlices": 0,
+          "planningEvents": 0,
+          "planningPendingFrames": 0,
+          "planningRequests": 0,
+          "planningMilliseconds": 0.0
+        },
+        "routes": {
+          "WalkingRequests": 0,
+          "WalkingInvalidInputs": 0,
+          "WalkingDistanceRejects": 0,
+          "WalkingCacheHits": 0,
+          "WalkingNegativeCacheHits": 0,
+          "WalkingCacheMisses": 0,
+          "WalkingCacheEvictions": 0,
+          "WalkingCacheClears": 1,
+          "WalkingCalculations": 0,
+          "WalkingFailedCalculations": 0,
+          "WalkingCalculationMilliseconds": 0.0,
+          "MaximumWalkingCalculationMilliseconds": 0.0,
+          "NavMeshSampleQueries": 0,
+          "NavMeshPathQueries": 0,
+          "NavMeshPathReuses": 0,
+          "NavMeshPathMilliseconds": 0.0,
+          "MaximumNavMeshPathMilliseconds": 0.0,
+          "WalkingQuoteChecks": 0,
+          "WalkingQuoteRejected": 0,
+          "NavMeshRaycastQueries": 0,
+          "WalkingQuoteCheckMilliseconds": 0.0,
+          "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+          "CitizenPlanRequests": 0,
+          "SelectedWalking": 0,
+          "SelectedSubway": 0,
+          "SelectedCar": 0,
+          "NoFeasibleRoute": 0,
+          "SubwayConnectorRequests": 0,
+          "SubwayConnectorCacheHits": 0,
+          "SubwayConnectorCacheMisses": 0,
+          "SubwayCandidates": 0
+        },
+        "marketCalls": {},
+        "marketObserverMethods": 0,
+        "physical": "physical=True, pedestrians=2, cars=0, acquired=2, released=0, blockedSamples=312, unavailable=2, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+        "bodies": [
+          {
+            "id": "c252",
+            "identity": {
+              "Id": "c252",
+              "Name": "Orla Walsh",
+              "District": "ba:neighborhood_hellskitchen",
+              "Age": 31,
+              "Female": true,
+              "Persona": 2,
+              "AppearanceSeed": 792034
+            },
+            "home": "address:ba%3Astreet_fourthavenue:12:home",
+            "person": {
+              "identity": "c252",
+              "generation": 2,
+              "character": -2036480
+            }
+          },
+          {
+            "id": "c149",
+            "identity": {
+              "Id": "c149",
+              "Name": "Vera Thorne",
+              "District": "ba:neighborhood_garmentdistrict",
+              "Age": 50,
+              "Female": true,
+              "Persona": 2,
+              "AppearanceSeed": 315693
+            },
+            "home": "address:ba%3Astreet_thirdstreet:38:home",
+            "person": {
+              "identity": "c149",
+              "generation": 3,
+              "character": -2037966
+            }
+          }
+        ],
+        "pendingDecisions": 0,
+        "diagnostics": {
+          "active": true,
+          "hourlyCustomerBatchesSuppressed": 0,
+          "nativeDrawsSuppressed": 0,
+          "nativePurchasesThisSession": 0
+        }
+      },
+      "countersAfter": {
+        "frame": 2196,
+        "minute": 7720.349502563477,
+        "nativeMinute": 7720.349502563477,
+        "PlanningPending": false,
+        "runtime": {
+          "advanceFrames": 156,
+          "advanceEvents": 0,
+          "advanceMilliseconds": 1.7473000000000003,
+          "planningSlices": 0,
+          "planningEvents": 0,
+          "planningPendingFrames": 0,
+          "planningRequests": 0,
+          "planningMilliseconds": 0.0
+        },
+        "routes": {
+          "WalkingRequests": 0,
+          "WalkingInvalidInputs": 0,
+          "WalkingDistanceRejects": 0,
+          "WalkingCacheHits": 0,
+          "WalkingNegativeCacheHits": 0,
+          "WalkingCacheMisses": 0,
+          "WalkingCacheEvictions": 0,
+          "WalkingCacheClears": 1,
+          "WalkingCalculations": 0,
+          "WalkingFailedCalculations": 0,
+          "WalkingCalculationMilliseconds": 0.0,
+          "MaximumWalkingCalculationMilliseconds": 0.0,
+          "NavMeshSampleQueries": 0,
+          "NavMeshPathQueries": 0,
+          "NavMeshPathReuses": 0,
+          "NavMeshPathMilliseconds": 0.0,
+          "MaximumNavMeshPathMilliseconds": 0.0,
+          "WalkingQuoteChecks": 0,
+          "WalkingQuoteRejected": 0,
+          "NavMeshRaycastQueries": 0,
+          "WalkingQuoteCheckMilliseconds": 0.0,
+          "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+          "CitizenPlanRequests": 0,
+          "SelectedWalking": 0,
+          "SelectedSubway": 0,
+          "SelectedCar": 0,
+          "NoFeasibleRoute": 0,
+          "SubwayConnectorRequests": 0,
+          "SubwayConnectorCacheHits": 0,
+          "SubwayConnectorCacheMisses": 0,
+          "SubwayCandidates": 0
+        },
+        "marketCalls": {},
+        "marketObserverMethods": 0,
+        "physical": "physical=True, pedestrians=2, cars=0, acquired=2, released=0, blockedSamples=312, unavailable=2, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+        "bodies": [
+          {
+            "id": "c252",
+            "identity": {
+              "Id": "c252",
+              "Name": "Orla Walsh",
+              "District": "ba:neighborhood_hellskitchen",
+              "Age": 31,
+              "Female": true,
+              "Persona": 2,
+              "AppearanceSeed": 792034
+            },
+            "home": "address:ba%3Astreet_fourthavenue:12:home",
+            "person": {
+              "identity": "c252",
+              "generation": 2,
+              "character": -2036480
+            }
+          },
+          {
+            "id": "c149",
+            "identity": {
+              "Id": "c149",
+              "Name": "Vera Thorne",
+              "District": "ba:neighborhood_garmentdistrict",
+              "Age": 50,
+              "Female": true,
+              "Persona": 2,
+              "AppearanceSeed": 315693
+            },
+            "home": "address:ba%3Astreet_thirdstreet:38:home",
+            "person": {
+              "identity": "c149",
+              "generation": 3,
+              "character": -2037966
+            }
+          }
+        ],
+        "pendingDecisions": 0,
+        "diagnostics": {
+          "active": true,
+          "hourlyCustomerBatchesSuppressed": 0,
+          "nativeDrawsSuppressed": 0,
+          "nativePurchasesThisSession": 0
+        }
+      }
+    },
+    {
+      "label": "candidate-reload",
+      "payloadIdentical": true,
+      "payloadHashBefore": "1a29f218fc319be96411ff6fa0dfdeeb362f32bc52f10cf7ec60feca0c976f3b",
+      "payloadHashAfter": "1a29f218fc319be96411ff6fa0dfdeeb362f32bc52f10cf7ec60feca0c976f3b",
+      "countersIdentical": true,
+      "countersBefore": {
+        "frame": 3585,
+        "minute": 7720.682834625244,
+        "nativeMinute": 7720.682834625244,
+        "PlanningPending": false,
+        "runtime": {
+          "advanceFrames": 139,
+          "advanceEvents": 0,
+          "advanceMilliseconds": 1.7657000000000003,
+          "planningSlices": 0,
+          "planningEvents": 0,
+          "planningPendingFrames": 0,
+          "planningRequests": 0,
+          "planningMilliseconds": 0.0
+        },
+        "routes": {
+          "WalkingRequests": 0,
+          "WalkingInvalidInputs": 0,
+          "WalkingDistanceRejects": 0,
+          "WalkingCacheHits": 0,
+          "WalkingNegativeCacheHits": 0,
+          "WalkingCacheMisses": 0,
+          "WalkingCacheEvictions": 0,
+          "WalkingCacheClears": 1,
+          "WalkingCalculations": 0,
+          "WalkingFailedCalculations": 0,
+          "WalkingCalculationMilliseconds": 0.0,
+          "MaximumWalkingCalculationMilliseconds": 0.0,
+          "NavMeshSampleQueries": 0,
+          "NavMeshPathQueries": 0,
+          "NavMeshPathReuses": 0,
+          "NavMeshPathMilliseconds": 0.0,
+          "MaximumNavMeshPathMilliseconds": 0.0,
+          "WalkingQuoteChecks": 0,
+          "WalkingQuoteRejected": 0,
+          "NavMeshRaycastQueries": 0,
+          "WalkingQuoteCheckMilliseconds": 0.0,
+          "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+          "CitizenPlanRequests": 0,
+          "SelectedWalking": 0,
+          "SelectedSubway": 0,
+          "SelectedCar": 0,
+          "NoFeasibleRoute": 0,
+          "SubwayConnectorRequests": 0,
+          "SubwayConnectorCacheHits": 0,
+          "SubwayConnectorCacheMisses": 0,
+          "SubwayCandidates": 0
+        },
+        "marketCalls": {},
+        "marketObserverMethods": 0,
+        "physical": "physical=True, pedestrians=2, cars=0, acquired=2, released=0, blockedSamples=280, unavailable=2, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+        "bodies": [
+          {
+            "id": "c252",
+            "identity": {
+              "Id": "c252",
+              "Name": "Orla Walsh",
+              "District": "ba:neighborhood_hellskitchen",
+              "Age": 31,
+              "Female": true,
+              "Persona": 2,
+              "AppearanceSeed": 792034
+            },
+            "home": "address:ba%3Astreet_fourthavenue:12:home",
+            "person": {
+              "identity": "c252",
+              "generation": 2,
+              "character": -3065816
+            }
+          },
+          {
+            "id": "c149",
+            "identity": {
+              "Id": "c149",
+              "Name": "Vera Thorne",
+              "District": "ba:neighborhood_garmentdistrict",
+              "Age": 50,
+              "Female": true,
+              "Persona": 2,
+              "AppearanceSeed": 315693
+            },
+            "home": "address:ba%3Astreet_thirdstreet:38:home",
+            "person": {
+              "identity": "c149",
+              "generation": 3,
+              "character": -3067302
+            }
+          }
+        ],
+        "pendingDecisions": 0,
+        "diagnostics": {
+          "active": true,
+          "hourlyCustomerBatchesSuppressed": 0,
+          "nativeDrawsSuppressed": 0,
+          "nativePurchasesThisSession": 0
+        }
+      },
+      "countersAfter": {
+        "frame": 3585,
+        "minute": 7720.682834625244,
+        "nativeMinute": 7720.682834625244,
+        "PlanningPending": false,
+        "runtime": {
+          "advanceFrames": 139,
+          "advanceEvents": 0,
+          "advanceMilliseconds": 1.7657000000000003,
+          "planningSlices": 0,
+          "planningEvents": 0,
+          "planningPendingFrames": 0,
+          "planningRequests": 0,
+          "planningMilliseconds": 0.0
+        },
+        "routes": {
+          "WalkingRequests": 0,
+          "WalkingInvalidInputs": 0,
+          "WalkingDistanceRejects": 0,
+          "WalkingCacheHits": 0,
+          "WalkingNegativeCacheHits": 0,
+          "WalkingCacheMisses": 0,
+          "WalkingCacheEvictions": 0,
+          "WalkingCacheClears": 1,
+          "WalkingCalculations": 0,
+          "WalkingFailedCalculations": 0,
+          "WalkingCalculationMilliseconds": 0.0,
+          "MaximumWalkingCalculationMilliseconds": 0.0,
+          "NavMeshSampleQueries": 0,
+          "NavMeshPathQueries": 0,
+          "NavMeshPathReuses": 0,
+          "NavMeshPathMilliseconds": 0.0,
+          "MaximumNavMeshPathMilliseconds": 0.0,
+          "WalkingQuoteChecks": 0,
+          "WalkingQuoteRejected": 0,
+          "NavMeshRaycastQueries": 0,
+          "WalkingQuoteCheckMilliseconds": 0.0,
+          "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+          "CitizenPlanRequests": 0,
+          "SelectedWalking": 0,
+          "SelectedSubway": 0,
+          "SelectedCar": 0,
+          "NoFeasibleRoute": 0,
+          "SubwayConnectorRequests": 0,
+          "SubwayConnectorCacheHits": 0,
+          "SubwayConnectorCacheMisses": 0,
+          "SubwayCandidates": 0
+        },
+        "marketCalls": {},
+        "marketObserverMethods": 0,
+        "physical": "physical=True, pedestrians=2, cars=0, acquired=2, released=0, blockedSamples=280, unavailable=2, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+        "bodies": [
+          {
+            "id": "c252",
+            "identity": {
+              "Id": "c252",
+              "Name": "Orla Walsh",
+              "District": "ba:neighborhood_hellskitchen",
+              "Age": 31,
+              "Female": true,
+              "Persona": 2,
+              "AppearanceSeed": 792034
+            },
+            "home": "address:ba%3Astreet_fourthavenue:12:home",
+            "person": {
+              "identity": "c252",
+              "generation": 2,
+              "character": -3065816
+            }
+          },
+          {
+            "id": "c149",
+            "identity": {
+              "Id": "c149",
+              "Name": "Vera Thorne",
+              "District": "ba:neighborhood_garmentdistrict",
+              "Age": 50,
+              "Female": true,
+              "Persona": 2,
+              "AppearanceSeed": 315693
+            },
+            "home": "address:ba%3Astreet_thirdstreet:38:home",
+            "person": {
+              "identity": "c149",
+              "generation": 3,
+              "character": -3067302
+            }
+          }
+        ],
+        "pendingDecisions": 0,
+        "diagnostics": {
+          "active": true,
+          "hourlyCustomerBatchesSuppressed": 0,
+          "nativeDrawsSuppressed": 0,
+          "nativePurchasesThisSession": 0
+        }
+      }
+    }
+  ],
+  "displayOrder": [
+    "header",
+    "Home",
+    "Work or Study",
+    "personality",
+    "story",
+    "heading and reason",
+    "breakfast",
+    "lunch",
+    "dinner",
+    "meal note"
+  ],
+  "displayOrderMethod": "Live cached fields and rendered popup; DrawPopup source wires rows in this order. Gesture path deferred.",
+  "postInterior": {
+    "payloadIdentical": true,
+    "residentIds": [
+      "c0",
+      "c102",
+      "c149",
+      "c1",
+      "c10"
+    ],
+    "identitiesPreserved": true,
+    "noRawKeys": true,
+    "allHomeWorkAddressesExactNative": true
+  }
+}
