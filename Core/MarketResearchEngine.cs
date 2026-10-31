@@ -129,7 +129,8 @@ namespace PersistentCity.Core
                 throw new ArgumentException("Invalid research cursor.");
             foreach (int value in resume.Counters) if (value < 0 || value > resume.Next) throw new ArgumentException("Invalid counter.");
             var c = resume.Counters;
-            if (c[1] > c[0] || c[5]+c[6]+c[7] != c[0] || c[8]+c[9]+c[10]+c[11] != c[0]
+            if (c[1] > c[0] || c[2] > c[0] || c[3] > c[0] || c[4] > c[0]
+                || c[5]+c[6]+c[7] != c[0] || c[8]+c[9]+c[10]+c[11] != c[0]
                 || c[58]+c[59]+c[60] != c[0] || c[61] > c[0] || c[62] != 0 || c[63] != 0
                 || ((resume.Missing & 2) != 0) != (c[61] > 0)) throw new ArgumentException("Inconsistent counters.");
             for (int trait = 0; trait < 9; trait++)
@@ -149,6 +150,7 @@ namespace PersistentCity.Core
 
         private void Reset(IMarketResearchSnapshot source)
         {
+            Completed = null; faulted = true;
             if (source.Count < 0 || source.Count > MaximumConsumers) throw new ArgumentException("Research population exceeds cap.");
             identityKey = source.Identity.Key; logicalDay = source.Identity.Day; queryKey = Key(identityKey, source.Count, scope, tier);
             cursor = new MarketResearchCursor { QueryKey = queryKey, Count = source.Count };
