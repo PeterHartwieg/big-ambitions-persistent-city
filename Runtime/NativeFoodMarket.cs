@@ -27,18 +27,7 @@ namespace PersistentCity.Runtime
         private readonly FoodCommerceState state;
         private readonly Dictionary<string, BuildingRegistration> registrations = new Dictionary<string, BuildingRegistration>(StringComparer.Ordinal);
         private readonly Dictionary<string, CityBuildingController> shopControllers = new Dictionary<string, CityBuildingController>(StringComparer.Ordinal);
-        private readonly HashSet<string> candidateBusinesses = new HashSet<string>(StringComparer.Ordinal);
-        public bool IsCandidate(FoodScope scope) => candidateBusinesses.Contains(scope.BusinessId);
-        public FoodBusiness? CaptureBusiness(string businessId,double minute)
-        {
-            var scope=state.Shops.SingleOrDefault(s=>s.BusinessId==businessId);
-            // A persisted capture must match a cold read of the saved native world. A per-minute
-            // cache alone cannot detect a player's delivery/stock edit earlier in this minute.
-            return scope==null ? null : ReadSelected(minute,new[] {scope.PlaceId},capture:true).SingleOrDefault(b=>b.Id==businessId);
-        }
-        private int discoveryCursor;
         private long lastOwnershipRefresh = -1;
-        private readonly CityBuildingController[] controllers;
         private readonly Dictionary<string, string> supplyExclusions = new Dictionary<string, string>(StringComparer.Ordinal);
         private static readonly string[] Products = FoodProducts.Ids.ToArray();
         private readonly Harmony patches = new Harmony(PatchId);
@@ -88,11 +77,6 @@ namespace PersistentCity.Runtime
         private readonly Dictionary<string, DecisionSupply> decisionSupply = new Dictionary<string, DecisionSupply>(StringComparer.Ordinal);
         private long decisionSupplyMinute = long.MinValue;
         private string? decisionSupplyAuthority;
-        // Escaped place IDs per controller slot, rebuilt only when that slot's registration or address changes.
-        private readonly BuildingRegistration?[] discoveryRegistrations;
-        private readonly string?[] discoveryStreets;
-        private readonly int[] discoveryNumbers;
-        private readonly string?[] discoveryPlaces;
 
         // One place's supply image from ReadSelected, kept only by the Buy call that asked for it.
         private sealed class SupplyObservation
@@ -166,64 +150,6 @@ namespace PersistentCity.Runtime
             }
             return false;
         }
-        // The controller ring visits every address, never just the first N eligible shops.
-        // Native city buildings are static; business registration/menu/ownership are live.
-        // Called every frame. The 64-slot slice keeps the first observation of a newly eligible business
-        // in the frame it changes, which fixes FoodAuthority.RequestedHour and therefore the acquisition hour.
-        // Place IDs are memoized per slot, so a slice over unchanged addresses builds no strings.
-        public void RefreshDiscovery() => DiscoverShops(64);
-        /// <summary>Escaped place IDs discovery has built (diagnostic); unchanged addresses reuse theirs.</summary>
-        internal long DiscoveryPlaceIdBuilds { get; private set; }
-        private void DiscoverShops(int budget)
-        {
-            for (int count = 0; count < budget && controllers.Length > 0; count++)
-            {
-                int slot = discoveryCursor++ % controllers.Length;
-                var controller = controllers[slot];
-                if (discoveryCursor == controllers.Length) discoveryCursor = 0;
-                var reg = controller.buildingRegistration;
-                if (reg == null || string.IsNullOrWhiteSpace(reg.StreetName)) continue;
-                string place = DiscoveryPlaceId(slot, reg);
-                if (!routinePlaces.ContainsKey(place) || !GamePlaces.BuildingAccessible(controller)) continue;
-                if (!reg.RentedByPlayer && !registrations.ContainsKey(place)) continue;
-                registrations[place] = reg; shopControllers[place] = controller;
-                var authority = NativeFoodOwnership.Observe(reg, Supported(reg));
-                if (authority.CanServe) { ActivateScope(authority, reg); candidateBusinesses.Add(authority.BusinessId); }
-                else candidateBusinesses.Remove(authority.BusinessId);
-            }
-        }
-        private string DiscoveryPlaceId(int slot, BuildingRegistration reg)
-        {
-            string? place = discoveryPlaces[slot];
-            if (place != null && ReferenceEquals(discoveryRegistrations[slot], reg)
-                && ReferenceEquals(discoveryStreets[slot], reg.StreetName) && discoveryNumbers[slot] == reg.StreetNumber) return place;
-            place = PlaceId(reg); DiscoveryPlaceIdBuilds++;
-            discoveryRegistrations[slot] = reg; discoveryStreets[slot] = reg.StreetName;
-            discoveryNumbers[slot] = reg.StreetNumber; discoveryPlaces[slot] = place;
-            return place;
-        }
-        internal void RefreshKnownOwnership()
-        {
-            candidateBusinesses.Clear();
-            foreach (var pair in shopControllers)
-            {
-                decisionSupply.Remove(pair.Key);
-                var reg = pair.Value.buildingRegistration;
-                if (reg == null) { NativeFoodOwnership.Retire(pair.Key); registrations.Remove(pair.Key); continue; }
-                registrations[pair.Key] = reg;
-                var authority = NativeFoodOwnership.Observe(reg, Supported(reg) && GamePlaces.BuildingAccessible(pair.Value));
-                if (authority.CanServe) { ActivateScope(authority, reg); candidateBusinesses.Add(authority.BusinessId); }
-            }
-        }
-        internal void ActivateScope(FoodAuthority authority, BuildingRegistration reg)
-        {
-            if (!authority.CanServe || !Supported(reg)) return;
-            var products = reg.cachedAvailableProducts.OrderBy(p => p, StringComparer.Ordinal).ToArray();
-            var scope = state.Shops.SingleOrDefault(s => s.PlaceId == authority.PlaceId);
-            if (scope == null) { scope = new FoodScope { PlaceId = authority.PlaceId }; state.Shops.Add(scope); }
-            if (scope.BusinessId != authority.BusinessId) scope.NextServiceAt = EarliestMinute;
-            scope.BusinessId = authority.BusinessId; scope.ProductId = products[0]; scope.AdditionalProductIds = products.Skip(1).ToList();
-        }
         private static bool ResidentPrice(string itemName, float price, ref bool __result)
         {
             if (active == null || !active.buying || itemName != active.approvedProduct) return true;
@@ -252,10 +178,8 @@ namespace PersistentCity.Runtime
         private IReadOnlyList<FoodBusiness> ReadSelected(double minute, string[] selectedPlaces,
             Dictionary<string, SupplyObservation>? observed = null, bool capture = false)
         {
-            if (!ReferenceEquals(save, SaveGameManager.Current)) throw new InvalidOperationException("Food market save changed.");
+            RefreshReadMetadata(minute);
             long observationMinute = (long)(SaveGameManager.Current.Day * 1440.0 + SaveGameManager.Current.Hour * 60.0 + SaveGameManager.Current.Minute);
-            if (lastOwnershipRefresh != observationMinute) { lastOwnershipRefresh = observationMinute; RefreshKnownOwnership(); }
-            RefreshRoutineHours(minute, true);
             if (selectedPlaces.Length == 0) return Array.Empty<FoodBusiness>();
             var catalogue = FoodBusinessCatalogue.ReadSelected(selectedPlaces, Products,
                 // A replaced registration can leave historical place keys pointing at one controller.

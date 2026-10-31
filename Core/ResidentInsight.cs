@@ -369,7 +369,7 @@ namespace PersistentCity.Core
                 case MealReasonCode.ServiceUnavailable: return "service unavailable on arrival";
                 case MealReasonCode.ShopClosed: return "the shop was closed";
                 case MealReasonCode.QueueTooLong: return "the queue was too long";
-                case MealReasonCode.NoLongerFits: return "travel and service would not fit the break";
+                case MealReasonCode.NoLongerFits: return "travel, queue or service would not fit the break";
                 case MealReasonCode.Interrupted: return "the visit was interrupted";
                 case MealReasonCode.LeftBeforeService: return "left before being served";
                 case MealReasonCode.ScheduleChanged: return "the schedule changed before leaving";
@@ -411,6 +411,6 @@ namespace PersistentCity.Core
                 ? char.ToLowerInvariant(reason[0]) + reason.Substring(1) : reason;
         }
         private static string ChoiceWords(ResidentMeal meal) => meal.ContextAttempts>0 && meal.Reason.StartsWith("Chose food",StringComparison.Ordinal)
-            ? "; "+Sentence(meal.Reason) : "";
+            ? meal.Reason.Substring("Chose food".Length) : "";
     }
 }

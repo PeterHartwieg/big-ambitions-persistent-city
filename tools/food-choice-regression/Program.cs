@@ -8,13 +8,16 @@ using PersistentCity.Persistence;
 
 sealed class Paths : IRoutePlanner, IFoodWalkingPace
 {
+    public bool Refuse;
     public double WalkingMetresPerMinute=>120;
     public int Calls;
-    public Route Plan(Place a,Place b,double at,TravelPreferences p)
-    {Calls++;return new Route {Legs=new() {new RouteLeg {From=a.Position,To=b.Position,Minutes=1,Mode=TravelMode.Walk}}};}
+    public Route? Plan(Place a,Place b,double at,TravelPreferences p)
+    {Calls++;return Refuse ? null : new Route {Legs=new() {new RouteLeg {From=a.Position,To=b.Position,Minutes=1,Mode=TravelMode.Walk}}};}
 }
 sealed class Market : IFoodMarket, ILocalFoodMarket, IFoodCandidateMarket
 {
+    private sealed class Batch : IDisposable {public void Dispose() {}}
+    public IDisposable BeginCapture(double minute)=>new Batch();
     public readonly Dictionary<string,FoodBusiness> Shops=new(StringComparer.Ordinal);
     public double EarliestMinute=>0;
     public IReadOnlyList<FoodBusiness> Read(double at)=>throw new Exception("Unbounded supply read");
@@ -24,7 +27,7 @@ sealed class Market : IFoodMarket, ILocalFoodMarket, IFoodCandidateMarket
     public bool IsCandidate(FoodScope scope)=>Shops.ContainsKey(scope.BusinessId);
     public FoodSale Buy(ResidentMeal meal,double at)=>throw new Exception("No checkout in decision benchmark");
 }
-static class Program
+static partial class Program
 {
     static (CitySimulator city,Paths paths) Ready(int seed,int count,bool nativeIds)
     {
@@ -74,8 +77,9 @@ static class Program
         return new {shops,nativeIds,samples=totals.Count,fullMs=new {p50=totals[totals.Count/2],p95=totals[(int)(totals.Count*.95)],max=totals[^1]},
             continuationUnitMs=new {p95=units[(int)(units.Count*.95)],max=units[^1]},shortlistCapturePlusPureSamplingMs=new {p95=policyCosts[(int)(policyCosts.Count*.95)],max=policyCosts[^1]},exactShortlistTraitsSamplingMs=new {p50=exactPolicyCosts[exactPolicyCosts.Count/2],p95=exactPolicyCosts[(int)(exactPolicyCosts.Count*.95)],max=exactPolicyCosts[^1]},bytesPerDecision=allocations[allocations.Count/2],logicalRoutes=calls};
     }
-    static void Main()
+    static void Main(string[] args)
     {
+        if(args.Contains("--rush")) {Console.WriteLine(JsonSerializer.Serialize(RushBench()));return;}
         var d=new FoodDrawContext(123,"r|:42",7,MealKind.Lunch,"trip:abc",3);
         if(d.ShopHash("b:9")!=2746120566u || d.OfferHash("b:9",FoodProducts.Burger)!=360816019u || d.OfferHash("","")!=3912922371u)
             throw new Exception("Version-1 draw vectors changed");

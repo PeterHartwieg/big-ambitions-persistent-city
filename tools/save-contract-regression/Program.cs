@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
-static class Program
+static partial class Program
 {
     private static CityState City(int count, int seed = 11)
     {
@@ -100,20 +100,7 @@ static class Program
     {
         var state = FoodCity(residents, steady: true, representation);
         int a2Chars=SaveCodec.Write(state).Length;
-        if(decisions)
-        {
-            foreach(var meal in state.Food!.Residents)
-            {meal.LastContextKey="trip:"+new string('x',44);meal.ContextAttempts=4;}
-            var first=state.Food.Residents[0];state.Food.ChoiceStartsDay=first.Day;
-            var scope=state.Food.Shops[0];var shop=state.Places.First(p=>p.Id==scope.PlaceId);var home=state.Places.First(p=>p.Id==state.Citizens[0].PlaceId);
-            Route Path(Position a,Position b)=>new Route {Legs={new RouteLeg {From=a,To=b,Minutes=1,Mode=TravelMode.Walk}}};
-            first.Decision=new FoodDecisionState {IntentId=first.IntentId,ContextKey=first.LastContextKey,Attempt=4,OriginAt=state.Minute,Deadline=state.Minute+90};
-            for(int i=0;i<8;i++) first.Decision.Shops.Add(new FoodDecisionShop {BusinessId="size-probe:"+i,PlaceId=shop.Id,MealsPerHour=60,
-                NextServiceAt=state.Minute,Hours=Enumerable.Range(0,7).Select(d=>new OpeningWindow {Day=d,FromMinute=0,ToMinute=1440}).ToList(),
-                Offers=FoodProducts.Ids.Select(p=>new FoodDecisionOffer {ProductId=p,Price=Money.FromCents(100),Units=100}).ToList(),
-                OutwardQuote=FoodQuoteState.Answered,ReturnQuote=FoodQuoteState.Answered,Outward=Path(home.Position,shop.Position),Return=Path(shop.Position,home.Position)});
-            first.Decision.QuotesDone=16;
-        }
+        if(decisions) PopulateDecisions(state);
         string json;
         // The codec refuses a payload above its input cap; report that bound instead of timing it.
         try { json = SaveCodec.Write(state); }
@@ -140,6 +127,21 @@ static class Program
             schema16Chars = old.Length, writeMs = write, readMs = read, upgradeFrom16Ms = upgrade,
             retainedMiB = Math.Round((after - before) / 1048576.0, 1)
         };
+    }
+
+    private static void PopulateDecisions(CityState state)
+    {
+            foreach(var meal in state.Food!.Residents)
+            {meal.LastContextKey="trip:"+new string('x',44);meal.ContextAttempts=4;}
+            var first=state.Food.Residents[0];state.Food.ChoiceStartsDay=first.Day;
+            var scope=state.Food.Shops[0];var shop=state.Places.First(p=>p.Id==scope.PlaceId);var home=state.Places.First(p=>p.Id==state.Citizens[0].PlaceId);
+            Route Path(Position a,Position b)=>new Route {Legs={new RouteLeg {From=a,To=b,Minutes=1,Mode=TravelMode.Walk}}};
+            first.Decision=new FoodDecisionState {IntentId=first.IntentId,ContextKey=first.LastContextKey,Attempt=4,OriginAt=state.Minute,Deadline=state.Minute+90};
+            for(int i=0;i<8;i++) first.Decision.Shops.Add(new FoodDecisionShop {BusinessId="size-probe:"+i,PlaceId=shop.Id,MealsPerHour=60,
+                NextServiceAt=state.Minute,Hours=Enumerable.Range(0,7).Select(d=>new OpeningWindow {Day=d,FromMinute=0,ToMinute=1440}).ToList(),
+                Offers=FoodProducts.Ids.Select(p=>new FoodDecisionOffer {ProductId=p,Price=Money.FromCents(100),Units=100}).ToList(),
+                OutwardQuote=FoodQuoteState.Answered,ReturnQuote=FoodQuoteState.Answered,Outward=Path(home.Position,shop.Position),Return=Path(shop.Position,home.Position)});
+            first.Decision.QuotesDone=16;
     }
 
     // Candidate only: trait generation and the outcome updater's hot cost (no-ops on a schema-16 tree).
@@ -175,6 +177,8 @@ static class Program
 
     static void Main(string[] args)
     {
+        if(args.Length==2 && args[0]=="--interleaved-save-bench")
+        { Console.WriteLine(JsonConvert.SerializeObject(InterleavedSaveBench(args[1])));return; }
         var city = City(120);
         string expected = SaveCodec.Write(city);
         SaveCodec.Read(expected);

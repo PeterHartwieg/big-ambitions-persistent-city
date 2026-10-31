@@ -13,6 +13,13 @@ namespace PersistentCity.Core
         private ResidentMeal? pendingDecision;
         private FoodRoutineStop? capturedStop;
         private double? choiceMilliseconds;
+        private readonly Dictionary<FoodDecisionShop,FoodBusiness> evaluatedBusinesses = new Dictionary<FoodDecisionShop,FoodBusiness>();
+        private FoodBusiness CapturedBusiness(FoodDecisionShop shop)
+        {
+            if(!evaluatedBusinesses.TryGetValue(shop,out var business))
+            {business=Materialize(shop);evaluatedBusinesses.Add(shop,business);}
+            return business;
+        }
         internal bool HasPendingDecision => pendingDecision != null;
         private bool NewChoice(ResidentMeal meal) => meal.Day>=state.ChoiceStartsDay && state.ChoicePolicyVersion==FoodChoicePolicy.Version;
         private ResidentTraits Traits(ResidentMeal meal,CitizenState person) => meal.RepresentedTraits ?? person.Traits!;
@@ -78,6 +85,8 @@ namespace PersistentCity.Core
                 Math.Min(stop.DepartureAt,now+(meal.Slot==0 ? MealRhythm.BreakMinutes(person,city.State.Seed,meal.Kind) : RepresentedBreak(person,stop,meal.Kind))));
             var d=new FoodDecisionState {IntentId=meal.IntentId,ContextKey=context,Attempt=meal.ContextAttempts+1,OriginAt=now,Deadline=deadline};
             // Capture into a private image first. Exceptions cannot publish a partial sample or consume an attempt.
+            using(var captureBatch=(market as IFoodCandidateMarket)?.BeginCapture(now))
+            {
             long choiceStarted=city.ObservingFood ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             var scopes=atStop ? state.Shops.Where(s=>s.PlaceId==stop.PlaceId).Select(FreezeScope).ToArray()
                 : Shortlist(meal,person,stop,Draw(meal,d));
@@ -100,7 +109,7 @@ namespace PersistentCity.Core
                 }
                 d.Shops.Add(shop);
             }
-            AvailableForMeal(meal);
+            }
             meal.ContextAttempts=d.Attempt;meal.LastContextKey=context;meal.Decision=d;pendingDecision=meal;
             capturedStop=CopyStop(stop);
             // No reservations, optional-stop cancellation, purchases or outcomes before commit.
@@ -161,31 +170,42 @@ namespace PersistentCity.Core
             var origin=city.FindPlace(stop.PlaceId);
             var preferences=FoodPreferences(d.Deadline-d.OriginAt);
             if(d.Result!=FoodDecisionResult.Evaluating) {CommitFoodDecision(meal,person,stop,d,atStop,preferences);return;}
-            if(d.QuotesDone<2*d.Shops.Count)
+            bool requested=false;
+            while(d.QuotesDone<2*d.Shops.Count)
             {
                 var s=d.Shops[d.QuotesDone/2]; bool outward=d.QuotesDone%2==0;
                 var shop=city.FindPlace(s.PlaceId);
                 Route? result=null; FoodQuoteState progress;
                 if(outward)
                 {
-                    var consumer=Consumer(person,meal.Allowance,meal);
-                    string? rejection=FoodDemand.KnownUnavailable(Materialize(s),consumer,d.OriginAt,d.Deadline);
+                    var consumer=Consumer(person,AvailableForMeal(meal),meal);
+                    string? rejection=FoodDemand.KnownUnavailable(CapturedBusiness(s),consumer,d.OriginAt,d.Deadline);
                     bool impossible=routes is IWalkingTimeBound bound && s.MealsPerHour>0
                         && d.OriginAt+bound.MinimumWalkingMinutes(origin,shop)+bound.MinimumWalkingMinutes(shop,origin)
                             +60/s.MealsPerHour+MealRhythm.EatingMinutes(meal.Kind)>d.Deadline;
                     if(rejection!=null || impossible) progress=FoodQuoteState.NotNeeded;
                     else if(atStop) {result=PresentRoute(origin.Position);progress=FoodQuoteState.Answered;}
-                    else {result=RequestFoodQuote(origin,shop,d.OriginAt,preferences);progress=Usable(result,origin,shop) ? FoodQuoteState.Answered : FoodQuoteState.Refused;}
+                    else
+                    {
+                        if(requested) return;
+                        requested=true;result=RequestFoodQuote(origin,shop,d.OriginAt,preferences);
+                        progress=Usable(result,origin,shop) ? FoodQuoteState.Answered : FoodQuoteState.Refused;
+                    }
                     s.Outward=progress==FoodQuoteState.Answered ? result : null;s.OutwardQuote=progress;
                 }
                 else
                 {
                     if(s.OutwardQuote!=FoodQuoteState.Answered) progress=FoodQuoteState.NotNeeded;
                     else if(atStop) {result=PresentRoute(origin.Position);progress=FoodQuoteState.Answered;}
-                    else {result=RequestFoodQuote(shop,origin,d.OriginAt+s.Outward!.Minutes,preferences);progress=Usable(result,shop,origin) ? FoodQuoteState.Answered : FoodQuoteState.Refused;}
+                    else
+                    {
+                        if(requested) return;
+                        requested=true;result=RequestFoodQuote(shop,origin,d.OriginAt+s.Outward!.Minutes,preferences);
+                        progress=Usable(result,shop,origin) ? FoodQuoteState.Answered : FoodQuoteState.Refused;
+                    }
                     s.Return=progress==FoodQuoteState.Answered ? result : null;s.ReturnQuote=progress;
                 }
-                d.QuotesDone++;return;
+                d.QuotesDone++;
             }
             var intent=EvaluateDecision(meal,person,d,stop,out var businesses,out var quotes);
             var evaluated=new List<EvaluatedFoodOffer>();
@@ -199,7 +219,7 @@ namespace PersistentCity.Core
                     c.CustomerServicePercent,c.DistrictDemandPercent,meal.Kind));
             }
             long choiceStarted=city.ObservingFood ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
-            var pick=FoodChoicePolicy.Select(evaluated,Traits(meal,person),meal.Allowance,Draw(meal,d),ChoiceSettings,intent.OutsideOption!=FoodOutsideOption.None);
+            var pick=FoodChoicePolicy.Select(evaluated,Traits(meal,person),AvailableForMeal(meal),Draw(meal,d),ChoiceSettings,intent.OutsideOption!=FoodOutsideOption.None);
             if(choiceMilliseconds.HasValue) choiceMilliseconds+=(System.Diagnostics.Stopwatch.GetTimestamp()-choiceStarted)*1000.0/System.Diagnostics.Stopwatch.Frequency;
             d.Result=pick.Outside ? FoodDecisionResult.Outside : pick.Index>=0 ? FoodDecisionResult.Selected : FoodDecisionResult.NoFeasible;
             d.Reason=pick.Reason;d.Factor1=pick.Factor1;d.Factor2=pick.Factor2;
@@ -229,17 +249,17 @@ namespace PersistentCity.Core
         private FoodIntent EvaluateDecision(ResidentMeal meal,CitizenState person,FoodDecisionState d,FoodRoutineStop stop,
             out List<FoodBusiness> businesses,out List<FoodTravelQuote> quotes)
         {
-            businesses=d.Shops.Select(Materialize).ToList();quotes=new List<FoodTravelQuote>();
+            businesses=d.Shops.Select(CapturedBusiness).ToList();quotes=new List<FoodTravelQuote>();
             foreach(var s in d.Shops)
                 if(s.Outward!=null && s.Return!=null) quotes.Add(new FoodTravelQuote {BusinessId=s.BusinessId,ConsumerId=meal.ResidentId,
                     IntentId=meal.IntentId,OriginPlaceId=stop.PlaceId,Minutes=s.Outward.Minutes,ReturnMinutes=s.Return.Minutes,Evidence="Captured complete walking paths"});
-            var consumer=Consumer(person,meal.Allowance,meal);MealRhythm.Apply(consumer,meal.Kind);
+            var consumer=Consumer(person,AvailableForMeal(meal),meal);MealRhythm.Apply(consumer,meal.Kind);
             var intent=DecisionIntent(meal,person,d,stop);
             var refusals=new Dictionary<string,string>(StringComparer.Ordinal);
             foreach(var shop in d.Shops)
                 if(shop.OutwardQuote==FoodQuoteState.Refused) refusals[shop.BusinessId]="Unreachable";
                 else if(shop.ReturnQuote==FoodQuoteState.Refused) refusals[shop.BusinessId]="No confirmed return path";
-                else if(shop.OutwardQuote==FoodQuoteState.NotNeeded && FoodDemand.KnownUnavailable(Materialize(shop),consumer,d.OriginAt,d.Deadline)==null)
+                else if(shop.OutwardQuote==FoodQuoteState.NotNeeded && FoodDemand.KnownUnavailable(CapturedBusiness(shop),consumer,d.OriginAt,d.Deadline)==null)
                     refusals[shop.BusinessId]="Service and return do not fit available time";
             FoodDemand.ChooseObserved(consumer,businesses,quotes,intent,d.OriginAt,refusals,meal.Kind,evaluateOnly:true);
             return intent;
@@ -253,7 +273,7 @@ namespace PersistentCity.Core
             if(intent.Choices.Any(c=>c.Reason=="Service unavailable")) return MealReasonCode.ServiceUnavailable;
             return MealReasonCode.NoFeasibleOffer;
         }
-        private void EndDecision(ResidentMeal meal) {meal.Decision=null;pendingDecision=null;capturedStop=null;}
+        private void EndDecision(ResidentMeal meal) {meal.Decision=null;pendingDecision=null;capturedStop=null;evaluatedBusinesses.Clear();}
         private bool ValidateCapturedRoute(Place from,Place to,Route route,TravelPreferences preferences,bool present)
         {
             if(present) return route.Minutes==0 && route.Legs.Count==1 && Position.Distance(route.Legs[0].From,from.Position)<=.01
@@ -316,7 +336,7 @@ namespace PersistentCity.Core
             if(d.Result==FoodDecisionResult.Selected) meal.Reason=ChoiceWords(d);
             EndDecision(meal);
             RecordChoices(intent,businesses);
-            if(city.ObservingFood) city.ObserveFood(new FoodDecisionTrace {Consumer=Consumer(person,meal.Allowance,meal),
+            if(city.ObservingFood) city.ObserveFood(new FoodDecisionTrace {Consumer=Consumer(person,AvailableForMeal(meal),meal),
                 Intent=intent,Businesses=businesses,Quotes=quotes,MealKind=meal.Kind,Decision=d,ChoiceMilliseconds=choiceMilliseconds,
                 RouteCalls=atStop ? 0 : d.Shops.Sum(s=>(s.OutwardQuote==FoodQuoteState.Answered || s.OutwardQuote==FoodQuoteState.Refused ? 1 : 0)
                     +(s.ReturnQuote==FoodQuoteState.Answered || s.ReturnQuote==FoodQuoteState.Refused ? 1 : 0))});

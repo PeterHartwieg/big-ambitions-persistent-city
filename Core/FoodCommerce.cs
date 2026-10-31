@@ -135,6 +135,8 @@ namespace PersistentCity.Core
     /// <summary>Metadata only; the scope catalogue and cached entrances are ranked before any supply read.</summary>
     public interface IFoodCandidateMarket
     {
+        /// <summary>Refresh metadata before ranking, then share it across this atomic capture. No yield or checkout.</summary>
+        IDisposable BeginCapture(double minute);
         bool IsCandidate(FoodScope scope);
         FoodBusiness? CaptureBusiness(string businessId, double minute);
     }
@@ -372,6 +374,8 @@ namespace PersistentCity.Core
                     // Every later addition must fit before funds move or native checkout starts.
                     if (!CanSettle(meal))
                     { Finish(meal, MealStatus.Missed, "Purchase would exceed the exact money range"); return; }
+                    if (meal.Budget == null && meal.Price > AvailableForMeal(meal))
+                    { Finish(meal, MealStatus.Missed, "Household funds no longer available at checkout"); return; }
                     if (meal.Budget != null && !HouseholdFinance.HoldPurchase(meal.Budget, meal.Price))
                     { Finish(meal, MealStatus.Missed, "Household funds no longer available at checkout"); return; }
                     if (meal.Budget == null) meal.DayAllowanceUsed += meal.Price;

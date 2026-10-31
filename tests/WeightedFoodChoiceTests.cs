@@ -41,14 +41,14 @@ public sealed class WeightedFoodChoiceTests
             return new(true,"Confirmed");
         }
     }
-    internal static (CitySimulator city, Market market, Planner planner) Ready(int seed, int shops=2, bool active=true, int representation=1)
+    internal static (CitySimulator city, Market market, Planner planner) Ready(int seed, int shops=2, bool active=true, int representation=1, bool threeMeals=false)
     {
         var places = new List<Place> {new() {Id="home",Name="Home",Kind=PlaceKind.Home,Capacity=1}};
         places.AddRange(Enumerable.Range(0,shops).Select(i=>new Place {Id="s"+i,Name="Shop "+i,Kind=PlaceKind.Shop,Position=new(10+i*10,0,0)}));
         var state=Population.Create(new[]{new CitizenIdentity {Id="r",Name="Resident",Age=30,Persona=Persona.Foodie}},places,"weighted","0.40.4",seed,1440);
         var person=state.Citizens.Single(); person.NextEventMinute=person.ActivityUntilMinute=2870;
         person.Preferences.WalkingToleranceMetres=5;
-        state.Food=new FoodCommerceState {RepresentationFactor=representation,ChoiceStartsDay=active?1:2, Shops=places.Skip(1).Select((p,i)=>new FoodScope {PlaceId=p.Id,BusinessId="b"+i,ProductId=FoodProducts.Croissant}).ToList()};
+        state.Food=new FoodCommerceState {MealRhythmVersion=threeMeals?MealRhythm.PolicyVersion:0,RepresentationFactor=representation,ChoiceStartsDay=active?1:2, Shops=places.Skip(1).Select((p,i)=>new FoodScope {PlaceId=p.Id,BusinessId="b"+i,ProductId=FoodProducts.Croissant}).ToList()};
         var market=new Market {Shops=state.Food.Shops.Select(s=>new FoodBusiness {Id=s.BusinessId,PlaceId=s.PlaceId,Name=s.PlaceId,MealsPerHour=60,
             Hours=Enumerable.Range(0,7).Select(d=>new OpeningWindow {Day=d,FromMinute=0,ToMinute=1440}).ToList(),
             Offers=new(){new FoodOffer {ProductId=FoodProducts.Croissant,Price=Money.FromCents(100),Units=100}}}).ToArray()};
@@ -270,7 +270,7 @@ public sealed class WeightedFoodChoiceTests
     public void ChangedPriceAfterSelectionRefusesExactlyWithoutReplacementOrMoneyLoss()
     {
         var (city,market,planner)=Ready(12,12);var m=city.State.Food!.Residents[0];double at=m.DesiredAt;
-        for(int i=0;i<18;i++) city.AdvanceTo(at,1);
+        for(int i=0;i<17;i++) city.AdvanceTo(at,1);
         Assert.Equal(FoodDecisionResult.Selected,m.Decision!.Result);string selected=m.Decision.BusinessId;
         city=Reload(city,market,planner);
         market.Shops.Single(b=>b.Id==selected).Offers[0].Price=Money.FromCents(200);
@@ -333,6 +333,86 @@ public sealed class WeightedFoodChoiceTests
         while(!city.AdvanceTo(at,1).CaughtUp) {}
         Assert.Equal(MealStatus.Missed,m.Status);Assert.Empty(d!.Shops);Assert.Equal(0,planner.Out+planner.Back);
         Assert.Equal(1,m.ContextAttempts);
+    }
+
+    [Theory]
+    [InlineData(50,2)] [InlineData(100,1)]
+    public void ThreeMealsWithoutFinanceRespectRemainingAllowanceAcrossDecisionReload(int laterPrice,int orders)
+    {
+        var (city,market,planner)=Ready(12,1,threeMeals:true);
+        var m=city.State.Food!.Residents[0];m.Allowance=Money.FromCents(1000);
+        market.Shops[0].Offers[0].Price=Money.FromCents(950);
+        while(!city.AdvanceTo(m.DesiredAt+25,1).CaughtUp) {}
+        Assert.Equal(Money.FromCents(950),m.DayAllowanceUsed);Assert.Single(market.Orders);
+        double lunch=MealRhythm.DesiredAt(city.State.Citizens[0],city.State.Seed,m.Day,MealKind.Lunch);
+        market.Shops[0].Offers[0].Price=Money.FromCents(laterPrice);
+        city.AdvanceTo(lunch,1);Assert.NotNull(m.Decision);
+        city=Reload(city,market,planner);
+        while(!city.AdvanceTo(2860,1).CaughtUp) {}
+        m=city.State.Food!.Residents[0];Assert.Equal(orders,market.Orders.Count);
+        Assert.Equal(Money.FromCents(1000),m.Allowance);
+        Assert.True(m.DayAllowanceUsed<=m.Allowance);Assert.Equal(m.DayAllowanceUsed,m.Spent);
+    }
+    [Theory]
+    [InlineData(false,false,18)] [InlineData(true,false,3)] [InlineData(false,true,10)]
+    public void DecisionUnitsSkipNoWorkSlotsAndSelectWithTheLastQuote(bool closed,bool refused,int expectedUnits)
+    {
+        var (city,market,planner)=Ready(12,12);var m=city.State.Food!.Residents[0];planner.Refuse=refused;
+        if(closed) foreach(var b in market.Shops)b.Hours.Clear();
+        int units=0;while(!city.IsCaughtUpTo(m.DesiredAt)) {city.AdvanceFrameSlice(m.DesiredAt,1);units++;}
+        Assert.Equal(expectedUnits,units);
+    }
+    [Fact]
+    public void ExistingShopNeedsOnlyCaptureSelectAndCommitWithoutRouteUnits()
+    {
+        var (city,_,planner)=Ready(12,1);var m=city.State.Food!.Residents[0];
+        var p=city.State.Citizens[0];p.PlaceId="s0";p.Activity=Activity.Shop;
+        int units=0;while(!city.IsCaughtUpTo(m.DesiredAt)) {city.AdvanceFrameSlice(m.DesiredAt,1);units++;}
+        Assert.Equal(3,units);Assert.Equal(MealStatus.Serving,m.Status);Assert.Equal(0,planner.Out+planner.Back);
+    }
+    [Fact]
+    public void NonBudgetCheckoutRechecksRemainingAllowanceBeforeNativeEntry()
+    {
+        var (city,market,_)=Ready(12,1);var m=city.State.Food!.Residents[0];m.Allowance=Money.FromCents(1000);
+        double at=m.DesiredAt;
+        while(m.Status!=MealStatus.Serving) city.AdvanceTo(at+1,1);
+        m.DayAllowanceUsed=Money.FromCents(950);
+        while(!city.AdvanceTo(at+20,1).CaughtUp) {}
+        Assert.Equal(MealStatus.Missed,m.Status);Assert.Empty(market.Orders);Assert.Equal(0,market.Attempts);
+        Assert.Equal(Money.FromCents(950),m.DayAllowanceUsed);
+    }
+
+    private sealed class PreparedMarket : IFoodMarket,IFoodCandidateMarket
+    {
+        private readonly Market source;
+        public bool Active;public int Batches,Reads;
+        public PreparedMarket(Market source) {this.source=source;}
+        private sealed class Batch : IDisposable
+        {private readonly PreparedMarket owner;public Batch(PreparedMarket owner) {this.owner=owner;}public void Dispose()=>owner.Active=false;}
+        public IDisposable BeginCapture(double minute) {Assert.False(Active);Batches++;Active=true;return new Batch(this);}
+        public bool IsCandidate(FoodScope scope) {Assert.True(Active);return scope.BusinessId=="b129";}
+        public FoodBusiness? CaptureBusiness(string id,double at) {Assert.True(Active);Reads++;return source.Shops.Single(b=>b.Id==id);}
+        public double EarliestMinute=>0;
+        public IReadOnlyList<FoodBusiness> Read(double at)=>throw new Exception("Detailed reads must follow preparation and sampling");
+        public FoodSale Buy(ResidentMeal m,double at)=>source.Buy(m,at);
+    }
+    [Fact]
+    public void CorePreparesCurrentCandidatesBeforeRankingAndSharesOneBatch()
+    {
+        var (city,source,planner)=Ready(12,131);var m=city.State.Food!.Residents[0];var market=new PreparedMarket(source);
+        city=new CitySimulator(city.State,planner);city.AttachFoodMarket(market);
+        while(!city.AdvanceTo(m.DesiredAt,1).CaughtUp) {}
+        Assert.Equal("b129",m.BusinessId);Assert.Equal(1,market.Batches);Assert.Equal(1,market.Reads);Assert.False(market.Active);
+    }
+    [Fact]
+    public void InspectorRendersChoiceFactorsWithoutRepeatingChoseFood()
+    {
+        var (city,_,_)=Ready(12,1);var m=city.State.Food!.Residents[0];
+        while(!city.AdvanceTo(m.DesiredAt,1).CaughtUp) {}
+        m.Reason="Chose food; likes it; values quality";
+        string text=JsonConvert.SerializeObject(city.Inspect("r"));
+        Assert.DoesNotContain("chose food",text);Assert.Contains("likes it",text);Assert.Contains("values quality",text);
+        Assert.Contains("queue",ResidentInsight.ReasonWords(MealReasonCode.NoLongerFits));
     }
 }
 
