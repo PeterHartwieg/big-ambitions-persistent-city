@@ -1,0 +1,20 @@
+{
+  "populations": [
+    957
+  ],
+  "identityDigests": [
+    "20e917890faad9447cbe170b83ed9e709921bd5cde325ef88e19eb4e319b511c"
+  ],
+  "sampledPedestrianLimits": [
+    48
+  ],
+  "maxObservedPedestrianBindings": 48,
+  "maxObservedCarBindings": 6,
+  "maxObservedOptionalBindings": 4,
+  "maxLogicalQueues": 0,
+  "maxLogicalStopRecords": 452,
+  "optionalFoodShopCollisions": 0,
+  "mealOutingObservations": 190,
+  "maximum256": "unchanged source clamp; not saturation-tested in Unity",
+  "noPerformerTrip": "production source/DLL unchanged; no native audience opportunity captured; no synthetic trip injected"
+}

@@ -1,0 +1,230 @@
+{
+  "types": [
+    {
+      "type": "ba:businesstype_coffeeshop",
+      "registrations": 28,
+      "established": 28,
+      "availableForRent": 0,
+      "multipleControllers": 0,
+      "doorCounts": {
+        "1": 28
+      },
+      "assets": [
+        {
+          "id": null,
+          "name": "CoffeeShop",
+          "businessTypeName": "ba:businesstype_coffeeshop",
+          "hasPedestriansOutside": false,
+          "pedestrianPool": null
+        }
+      ],
+      "closure": {
+        "False": 28
+      },
+      "frontage": "DEFERRED-INPUT"
+    },
+    {
+      "type": "ba:businesstype_fastfoodrestaurant",
+      "registrations": 24,
+      "established": 24,
+      "availableForRent": 0,
+      "multipleControllers": 0,
+      "doorCounts": {
+        "1": 24
+      },
+      "assets": [
+        {
+          "id": null,
+          "name": "FastFoodRestaurant",
+          "businessTypeName": "ba:businesstype_fastfoodrestaurant",
+          "hasPedestriansOutside": false,
+          "pedestrianPool": null
+        }
+      ],
+      "closure": {
+        "False": 24
+      },
+      "frontage": "DEFERRED-INPUT"
+    },
+    {
+      "type": "ba:businesstype_nightclub",
+      "registrations": 15,
+      "established": 15,
+      "availableForRent": 0,
+      "multipleControllers": 0,
+      "doorCounts": {
+        "1": 15
+      },
+      "assets": [
+        {
+          "id": null,
+          "name": "Nightclub",
+          "businessTypeName": "ba:businesstype_nightclub",
+          "hasPedestriansOutside": true,
+          "pedestrianPool": {
+            "type": "BuildingOutsidePedestrianPool",
+            "name": "NightclubOutsidePedestrianPool",
+            "instance": 61796
+          }
+        }
+      ],
+      "closure": {
+        "False": 15
+      },
+      "frontage": "DEFERRED-INPUT"
+    },
+    {
+      "type": "ba:businesstype_gym",
+      "registrations": 11,
+      "established": 11,
+      "availableForRent": 0,
+      "multipleControllers": 0,
+      "doorCounts": {
+        "1": 11
+      },
+      "assets": [
+        {
+          "id": null,
+          "name": "Gym",
+          "businessTypeName": "ba:businesstype_gym",
+          "hasPedestriansOutside": false,
+          "pedestrianPool": null
+        }
+      ],
+      "closure": {
+        "False": 11
+      },
+      "frontage": "DEFERRED-INPUT"
+    },
+    {
+      "type": "ba:businesstype_cinema",
+      "registrations": 4,
+      "established": 4,
+      "availableForRent": 0,
+      "multipleControllers": 0,
+      "doorCounts": {
+        "1": 4
+      },
+      "assets": [
+        {
+          "id": null,
+          "name": "Cinema",
+          "businessTypeName": "ba:businesstype_cinema",
+          "hasPedestriansOutside": false,
+          "pedestrianPool": null
+        }
+      ],
+      "closure": {
+        "False": 4
+      },
+      "frontage": "DEFERRED-INPUT"
+    },
+    {
+      "type": "ba:businesstype_theater",
+      "registrations": 4,
+      "established": 4,
+      "availableForRent": 0,
+      "multipleControllers": 0,
+      "doorCounts": {
+        "1": 4
+      },
+      "assets": [
+        {
+          "id": null,
+          "name": "Theater",
+          "businessTypeName": "ba:businesstype_theater",
+          "hasPedestriansOutside": false,
+          "pedestrianPool": null
+        }
+      ],
+      "closure": {
+        "False": 4
+      },
+      "frontage": "DEFERRED-INPUT"
+    },
+    {
+      "type": "ba:businesstype_lawfirm",
+      "registrations": 14,
+      "established": 14,
+      "availableForRent": 0,
+      "multipleControllers": 0,
+      "doorCounts": {
+        "1": 14
+      },
+      "assets": [
+        {
+          "id": null,
+          "name": "LawFirm",
+          "businessTypeName": "ba:businesstype_lawfirm",
+          "hasPedestriansOutside": false,
+          "pedestrianPool": null
+        }
+      ],
+      "closure": {
+        "False": 14
+      },
+      "frontage": "DEFERRED-INPUT"
+    },
+    {
+      "type": "ba:businesstype_school",
+      "registrations": 1,
+      "established": 1,
+      "availableForRent": 0,
+      "multipleControllers": 0,
+      "doorCounts": {
+        "1": 1
+      },
+      "assets": [
+        {
+          "id": null,
+          "name": "School",
+          "businessTypeName": "ba:businesstype_school",
+          "hasPedestriansOutside": false,
+          "pedestrianPool": null
+        }
+      ],
+      "closure": {
+        "False": 1
+      },
+      "frontage": "DEFERRED-INPUT"
+    },
+    {
+      "type": "ba:businesstype_warehouse",
+      "registrations": 0,
+      "established": 0,
+      "availableForRent": 0,
+      "multipleControllers": 0,
+      "doorCounts": {},
+      "assets": [
+        {
+          "id": null,
+          "name": "Warehouse",
+          "businessTypeName": "ba:businesstype_warehouse",
+          "hasPedestriansOutside": false,
+          "pedestrianPool": null
+        }
+      ],
+      "closure": {},
+      "frontage": "DEFERRED-INPUT"
+    }
+  ],
+  "nativeActors": [
+    {
+      "type": "AiSpawnerForBuildingOutsideHangoutZone",
+      "active": false,
+      "count": 6
+    },
+    {
+      "type": "StationaryAiSpawner",
+      "active": true,
+      "count": 459
+    },
+    {
+      "type": "BuildingOutsideHangoutZone",
+      "active": false,
+      "count": 6
+    }
+  ],
+  "R2": "source/double-only unless explicit native ambiguous address appears",
+  "R3": "native flags/spawners observed; geometric overlap requires visual playtest"
+}

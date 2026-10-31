@@ -1,0 +1,21 @@
+{
+  "equal": true,
+  "candidate": {
+    "FoodAuthorityStore.cs": "9a0b7fb77d00f5bc949ee5cf07028cfe2d4f57b953d0be4b0a4a4859899f249e",
+    "FoodSaleReceipts.cs": "67799d076176f0dc6023fee8960a9761c56d0c395fde7b74425a8af681ed4a17",
+    "FoodShadowCodec.cs": "eaaf1d22ed6338c8a45065bdb5c461a7a98ef1f9b9ad70dc2d04b05d99fc3b2c",
+    "MoneyJson.cs": "25487c4b954154a523071d77998b9f70df2457fe2216d0c733dc44342f52833d",
+    "SaveCodec.cs": "29f177b0b378575c5bb91e40e4cd34e4e9cf9982d78b5877d8e998d8991826f4",
+    "SaveSession.cs": "644903a731453213838a35be47bba75eb956186409c663001c824d610be25415",
+    "SaveStore.cs": "e7653f93b7fc4dbbc69f1d9281f13dfa2376312c23c8e791bfbc6c5412fa8f73"
+  },
+  "baseline": {
+    "FoodAuthorityStore.cs": "9a0b7fb77d00f5bc949ee5cf07028cfe2d4f57b953d0be4b0a4a4859899f249e",
+    "FoodSaleReceipts.cs": "67799d076176f0dc6023fee8960a9761c56d0c395fde7b74425a8af681ed4a17",
+    "FoodShadowCodec.cs": "eaaf1d22ed6338c8a45065bdb5c461a7a98ef1f9b9ad70dc2d04b05d99fc3b2c",
+    "MoneyJson.cs": "25487c4b954154a523071d77998b9f70df2457fe2216d0c733dc44342f52833d",
+    "SaveCodec.cs": "29f177b0b378575c5bb91e40e4cd34e4e9cf9982d78b5877d8e998d8991826f4",
+    "SaveSession.cs": "644903a731453213838a35be47bba75eb956186409c663001c824d610be25415",
+    "SaveStore.cs": "e7653f93b7fc4dbbc69f1d9281f13dfa2376312c23c8e791bfbc6c5412fa8f73"
+  }
+}

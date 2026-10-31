@@ -1,0 +1,38 @@
+{
+  "ok": true,
+  "session": "8afa7bad",
+  "mod_version": "0.10.2",
+  "bridge_version": 1,
+  "scene": "city",
+  "save": "FT Food Routines Locked E2a Night End 20261031",
+  "day": 8,
+  "time": "00:37",
+  "paused": true,
+  "time_skip": false,
+  "frame": 5242,
+  "load": {
+    "name": "FT Food Routines Locked E2a Night End 20261031",
+    "status": "done"
+  },
+  "lock_protocol": 1,
+  "control_process_pid": 5908,
+  "agent_instance": {
+    "id": "agent1",
+    "pid": 5908,
+    "mode": "windowed",
+    "port": 18330,
+    "product": "Big Ambitions Agent Tests",
+    "data_path": "[private-stage-path] Games\\Big Ambitions Agent Tests",
+    "cache_path": "[private-stage-path] Games\\Big Ambitions Agent Tests",
+    "executable": "C:\\BigAmbitions-AgentTests\\Big Ambitions Agent Tests.exe",
+    "test_only": true,
+    "workshop": false,
+    "steam_stats_writes": false,
+    "audio_muted": true,
+    "audio_listener_volume": 0.0,
+    "pump_frame": 5242,
+    "runtime_version": 6,
+    "steam_connected": false,
+    "owned_dlc_snapshot": []
+  }
+}

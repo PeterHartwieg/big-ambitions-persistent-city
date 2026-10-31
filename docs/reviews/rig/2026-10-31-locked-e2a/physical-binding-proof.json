@@ -1,0 +1,1526 @@
+{
+  "observations": [
+    {
+      "file": "cand0-weekday-sample-41.json",
+      "minute": 12216.587760925293,
+      "id": "c174",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_thirdstreet:23:work",
+        "SpotId": "address:ba%3Astreet_thirdstreet:23:work:Break:0",
+        "TargetId": "address:ba%3Astreet_thirdstreet:23:work",
+        "Position": {
+          "X": 214.44229125976562,
+          "Y": 0.09000015258789062,
+          "Z": -6.909999847412109,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 215.04229736328125,
+          "Y": 0.09000015258789062,
+          "Z": -8.009998321533203,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 214.34228515625,
+          "Y": 0.09000015258789062,
+          "Z": -5.810001373291016,
+          "IsFinite": true
+        },
+        "StartMinute": 12213.0,
+        "EndMinute": 12218.558,
+        "VisitMinute": 11973.0,
+        "ResumeEventMinute": 12453.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand0-weekday-sample-46.json",
+      "minute": 12241.14959514141,
+      "id": "c196",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_thirdstreet:32:work",
+        "SpotId": "address:ba%3Astreet_thirdstreet:32:work:Break:0",
+        "TargetId": "address:ba%3Astreet_thirdstreet:32:work",
+        "Position": {
+          "X": 229.46258544921875,
+          "Y": 0.09000015258789062,
+          "Z": 15.318338394165039,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 228.86257934570312,
+          "Y": 0.09000015258789062,
+          "Z": 16.418338775634766,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 229.56259155273438,
+          "Y": 0.09000015258789062,
+          "Z": 14.218338012695312,
+          "IsFinite": true
+        },
+        "StartMinute": 12240.0,
+        "EndMinute": 12248.548,
+        "VisitMinute": 12000.0,
+        "ResumeEventMinute": 12480.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand0-weekday-sample-47.json",
+      "minute": 12245.925926685333,
+      "id": "c196",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_thirdstreet:32:work",
+        "SpotId": "address:ba%3Astreet_thirdstreet:32:work:Break:0",
+        "TargetId": "address:ba%3Astreet_thirdstreet:32:work",
+        "Position": {
+          "X": 229.46258544921875,
+          "Y": 0.09000015258789062,
+          "Z": 15.318338394165039,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 228.86257934570312,
+          "Y": 0.09000015258789062,
+          "Z": 16.418338775634766,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 229.56259155273438,
+          "Y": 0.09000015258789062,
+          "Z": 14.218338012695312,
+          "IsFinite": true
+        },
+        "StartMinute": 12240.0,
+        "EndMinute": 12248.548,
+        "VisitMinute": 12000.0,
+        "ResumeEventMinute": 12480.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand0-weekday-sample-49.json",
+      "minute": 12255.591283798218,
+      "id": "pc:9",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_thirdstreet:32:work",
+        "SpotId": "address:ba%3Astreet_thirdstreet:32:work:Break:0",
+        "TargetId": "address:ba%3Astreet_thirdstreet:32:work",
+        "Position": {
+          "X": 229.46258544921875,
+          "Y": 0.09000015258789062,
+          "Z": 15.318338394165039,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 228.86257934570312,
+          "Y": 0.09000015258789062,
+          "Z": 16.418338775634766,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 229.56259155273438,
+          "Y": 0.09000015258789062,
+          "Z": 14.218338012695312,
+          "IsFinite": true
+        },
+        "StartMinute": 12255.106635093689,
+        "EndMinute": 12262.703135093689,
+        "VisitMinute": 12015.213270187378,
+        "ResumeEventMinute": 12495.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand0-weekday-sample-49.json",
+      "minute": 12255.591283798218,
+      "id": "pc:546",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthavenue:22:work",
+        "SpotId": "address:ba%3Astreet_fourthavenue:22:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:22:work",
+        "Position": {
+          "X": 161.4099884033203,
+          "Y": 0.09000015258789062,
+          "Z": -10.856449127197266,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 160.3099822998047,
+          "Y": 0.09000015258789062,
+          "Z": -11.45644760131836,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 162.50999450683594,
+          "Y": 0.09000015258789062,
+          "Z": -10.756450653076172,
+          "IsFinite": true
+        },
+        "StartMinute": 12255.034842014313,
+        "EndMinute": 12260.549842014312,
+        "VisitMinute": 12015.069684028625,
+        "ResumeEventMinute": 12495.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand0-weekday-sample-49.json",
+      "minute": 12255.591283798218,
+      "id": "pc:63",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthstreet:7:work",
+        "SpotId": "address:ba%3Astreet_fourthstreet:7:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fourthstreet:7:work",
+        "Position": {
+          "X": 124.80101013183594,
+          "Y": 0.09000015258789062,
+          "Z": 18.888999938964844,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 125.40101623535156,
+          "Y": 0.09000015258789062,
+          "Z": 17.788999557495117,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 124.70100402832031,
+          "Y": 0.09000015258789062,
+          "Z": 19.98900032043457,
+          "IsFinite": true
+        },
+        "StartMinute": 12255.034842014313,
+        "EndMinute": 12265.026842014313,
+        "VisitMinute": 12015.069684028625,
+        "ResumeEventMinute": 12495.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand0-weekday-sample-50.json",
+      "minute": 12260.444974899292,
+      "id": "pc:9",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_thirdstreet:32:work",
+        "SpotId": "address:ba%3Astreet_thirdstreet:32:work:Break:0",
+        "TargetId": "address:ba%3Astreet_thirdstreet:32:work",
+        "Position": {
+          "X": 229.46258544921875,
+          "Y": 0.09000015258789062,
+          "Z": 15.318338394165039,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 228.86257934570312,
+          "Y": 0.09000015258789062,
+          "Z": 16.418338775634766,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 229.56259155273438,
+          "Y": 0.09000015258789062,
+          "Z": 14.218338012695312,
+          "IsFinite": true
+        },
+        "StartMinute": 12255.106635093689,
+        "EndMinute": 12262.703135093689,
+        "VisitMinute": 12015.213270187378,
+        "ResumeEventMinute": 12495.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand0-weekday-sample-50.json",
+      "minute": 12260.444974899292,
+      "id": "pc:546",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthavenue:22:work",
+        "SpotId": "address:ba%3Astreet_fourthavenue:22:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:22:work",
+        "Position": {
+          "X": 161.4099884033203,
+          "Y": 0.09000015258789062,
+          "Z": -10.856449127197266,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 160.3099822998047,
+          "Y": 0.09000015258789062,
+          "Z": -11.45644760131836,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 162.50999450683594,
+          "Y": 0.09000015258789062,
+          "Z": -10.756450653076172,
+          "IsFinite": true
+        },
+        "StartMinute": 12255.034842014313,
+        "EndMinute": 12260.549842014312,
+        "VisitMinute": 12015.069684028625,
+        "ResumeEventMinute": 12495.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand0-weekday-sample-50.json",
+      "minute": 12260.444974899292,
+      "id": "pc:63",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthstreet:7:work",
+        "SpotId": "address:ba%3Astreet_fourthstreet:7:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fourthstreet:7:work",
+        "Position": {
+          "X": 124.80101013183594,
+          "Y": 0.09000015258789062,
+          "Z": 18.888999938964844,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 125.40101623535156,
+          "Y": 0.09000015258789062,
+          "Z": 17.788999557495117,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 124.70100402832031,
+          "Y": 0.09000015258789062,
+          "Z": 19.98900032043457,
+          "IsFinite": true
+        },
+        "StartMinute": 12255.034842014313,
+        "EndMinute": 12265.026842014313,
+        "VisitMinute": 12015.069684028625,
+        "ResumeEventMinute": 12495.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand0-weekday-sample-51.json",
+      "minute": 12265.54281616211,
+      "id": "pc:63",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "returning",
+      "returning": true,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthstreet:7:work",
+        "SpotId": "address:ba%3Astreet_fourthstreet:7:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fourthstreet:7:work",
+        "Position": {
+          "X": 124.80101013183594,
+          "Y": 0.09000015258789062,
+          "Z": 18.888999938964844,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 125.40101623535156,
+          "Y": 0.09000015258789062,
+          "Z": 17.788999557495117,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 124.70100402832031,
+          "Y": 0.09000015258789062,
+          "Z": 19.98900032043457,
+          "IsFinite": true
+        },
+        "StartMinute": 12255.034842014313,
+        "EndMinute": 12265.026842014313,
+        "VisitMinute": 12015.069684028625,
+        "ResumeEventMinute": 12495.0,
+        "Cancelled": true,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-sample-36.json",
+      "minute": 12213.593170166016,
+      "id": "c174",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_thirdstreet:23:work",
+        "SpotId": "address:ba%3Astreet_thirdstreet:23:work:Break:0",
+        "TargetId": "address:ba%3Astreet_thirdstreet:23:work",
+        "Position": {
+          "X": 214.44229125976562,
+          "Y": 0.09000015258789062,
+          "Z": -6.909999847412109,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 215.04229736328125,
+          "Y": 0.09000015258789062,
+          "Z": -8.009998321533203,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 214.34228515625,
+          "Y": 0.09000015258789062,
+          "Z": -5.810001373291016,
+          "IsFinite": true
+        },
+        "StartMinute": 12213.0,
+        "EndMinute": 12218.558,
+        "VisitMinute": 11973.0,
+        "ResumeEventMinute": 12453.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-reload-36-before-save.json",
+      "minute": 12214.403198242188,
+      "id": "c174",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_thirdstreet:23:work",
+        "SpotId": "address:ba%3Astreet_thirdstreet:23:work:Break:0",
+        "TargetId": "address:ba%3Astreet_thirdstreet:23:work",
+        "Position": {
+          "X": 214.44229125976562,
+          "Y": 0.09000015258789062,
+          "Z": -6.909999847412109,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 215.04229736328125,
+          "Y": 0.09000015258789062,
+          "Z": -8.009998321533203,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 214.34228515625,
+          "Y": 0.09000015258789062,
+          "Z": -5.810001373291016,
+          "IsFinite": true
+        },
+        "StartMinute": 12213.0,
+        "EndMinute": 12218.558,
+        "VisitMinute": 11973.0,
+        "ResumeEventMinute": 12453.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-reload-36-after-save.json",
+      "minute": 12214.403198242188,
+      "id": "c174",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_thirdstreet:23:work",
+        "SpotId": "address:ba%3Astreet_thirdstreet:23:work:Break:0",
+        "TargetId": "address:ba%3Astreet_thirdstreet:23:work",
+        "Position": {
+          "X": 214.44229125976562,
+          "Y": 0.09000015258789062,
+          "Z": -6.909999847412109,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 215.04229736328125,
+          "Y": 0.09000015258789062,
+          "Z": -8.009998321533203,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 214.34228515625,
+          "Y": 0.09000015258789062,
+          "Z": -5.810001373291016,
+          "IsFinite": true
+        },
+        "StartMinute": 12213.0,
+        "EndMinute": 12218.558,
+        "VisitMinute": 11973.0,
+        "ResumeEventMinute": 12453.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-reload-36-after-reload.json",
+      "minute": 12214.736530303955,
+      "id": "c174",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_thirdstreet:23:work",
+        "SpotId": "address:ba%3Astreet_thirdstreet:23:work:Break:0",
+        "TargetId": "address:ba%3Astreet_thirdstreet:23:work",
+        "Position": {
+          "X": 214.44229125976562,
+          "Y": 0.09000015258789062,
+          "Z": -6.909999847412109,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 215.04229736328125,
+          "Y": 0.09000015258789062,
+          "Z": -8.009998321533203,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 214.34228515625,
+          "Y": 0.09000015258789062,
+          "Z": -5.810001373291016,
+          "IsFinite": true
+        },
+        "StartMinute": 12213.0,
+        "EndMinute": 12218.558,
+        "VisitMinute": 11973.0,
+        "ResumeEventMinute": 12453.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-physical-0.json",
+      "minute": 12215.435230255127,
+      "id": "c174",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_thirdstreet:23:work",
+        "SpotId": "address:ba%3Astreet_thirdstreet:23:work:Break:0",
+        "TargetId": "address:ba%3Astreet_thirdstreet:23:work",
+        "Position": {
+          "X": 214.44229125976562,
+          "Y": 0.09000015258789062,
+          "Z": -6.909999847412109,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 215.04229736328125,
+          "Y": 0.09000015258789062,
+          "Z": -8.009998321533203,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 214.34228515625,
+          "Y": 0.09000015258789062,
+          "Z": -5.810001373291016,
+          "IsFinite": true
+        },
+        "StartMinute": 12213.0,
+        "EndMinute": 12218.558,
+        "VisitMinute": 11973.0,
+        "ResumeEventMinute": 12453.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-physical-1.json",
+      "minute": 12216.235229492188,
+      "id": "c174",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_thirdstreet:23:work",
+        "SpotId": "address:ba%3Astreet_thirdstreet:23:work:Break:0",
+        "TargetId": "address:ba%3Astreet_thirdstreet:23:work",
+        "Position": {
+          "X": 214.44229125976562,
+          "Y": 0.09000015258789062,
+          "Z": -6.909999847412109,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 215.04229736328125,
+          "Y": 0.09000015258789062,
+          "Z": -8.009998321533203,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 214.34228515625,
+          "Y": 0.09000015258789062,
+          "Z": -5.810001373291016,
+          "IsFinite": true
+        },
+        "StartMinute": 12213.0,
+        "EndMinute": 12218.558,
+        "VisitMinute": 11973.0,
+        "ResumeEventMinute": 12453.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-physical-2.json",
+      "minute": 12217.064533233643,
+      "id": "c174",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_thirdstreet:23:work",
+        "SpotId": "address:ba%3Astreet_thirdstreet:23:work:Break:0",
+        "TargetId": "address:ba%3Astreet_thirdstreet:23:work",
+        "Position": {
+          "X": 214.44229125976562,
+          "Y": 0.09000015258789062,
+          "Z": -6.909999847412109,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 215.04229736328125,
+          "Y": 0.09000015258789062,
+          "Z": -8.009998321533203,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 214.34228515625,
+          "Y": 0.09000015258789062,
+          "Z": -5.810001373291016,
+          "IsFinite": true
+        },
+        "StartMinute": 12213.0,
+        "EndMinute": 12218.558,
+        "VisitMinute": 11973.0,
+        "ResumeEventMinute": 12453.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-physical-3.json",
+      "minute": 12217.86266708374,
+      "id": "c174",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_thirdstreet:23:work",
+        "SpotId": "address:ba%3Astreet_thirdstreet:23:work:Break:0",
+        "TargetId": "address:ba%3Astreet_thirdstreet:23:work",
+        "Position": {
+          "X": 214.44229125976562,
+          "Y": 0.09000015258789062,
+          "Z": -6.909999847412109,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 215.04229736328125,
+          "Y": 0.09000015258789062,
+          "Z": -8.009998321533203,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 214.34228515625,
+          "Y": 0.09000015258789062,
+          "Z": -5.810001373291016,
+          "IsFinite": true
+        },
+        "StartMinute": 12213.0,
+        "EndMinute": 12218.558,
+        "VisitMinute": 11973.0,
+        "ResumeEventMinute": 12453.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-physical-4.json",
+      "minute": 12218.679233551025,
+      "id": "c174",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "returning",
+      "returning": true,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_thirdstreet:23:work",
+        "SpotId": "address:ba%3Astreet_thirdstreet:23:work:Break:0",
+        "TargetId": "address:ba%3Astreet_thirdstreet:23:work",
+        "Position": {
+          "X": 214.44229125976562,
+          "Y": 0.09000015258789062,
+          "Z": -6.909999847412109,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 215.04229736328125,
+          "Y": 0.09000015258789062,
+          "Z": -8.009998321533203,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 214.34228515625,
+          "Y": 0.09000015258789062,
+          "Z": -5.810001373291016,
+          "IsFinite": true
+        },
+        "StartMinute": 12213.0,
+        "EndMinute": 12218.558,
+        "VisitMinute": 11973.0,
+        "ResumeEventMinute": 12453.0,
+        "Cancelled": true,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-sample-61.json",
+      "minute": 12347.889633178711,
+      "id": "c339",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthavenue:19:work",
+        "SpotId": "address:ba%3Astreet_fourthavenue:19:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:19:work",
+        "Position": {
+          "X": 187.82107543945312,
+          "Y": 0.09000015258789062,
+          "Z": -35.46491241455078,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 188.92108154296875,
+          "Y": 0.09000015258789062,
+          "Z": -34.86491394042969,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 186.7210693359375,
+          "Y": 0.09000015258789062,
+          "Z": -35.564910888671875,
+          "IsFinite": true
+        },
+        "StartMinute": 12345.5,
+        "EndMinute": 12354.939,
+        "VisitMinute": 12240.0,
+        "ResumeEventMinute": 12451.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-sample-62.json",
+      "minute": 12352.8716506958,
+      "id": "c339",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthavenue:19:work",
+        "SpotId": "address:ba%3Astreet_fourthavenue:19:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:19:work",
+        "Position": {
+          "X": 187.82107543945312,
+          "Y": 0.09000015258789062,
+          "Z": -35.46491241455078,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 188.92108154296875,
+          "Y": 0.09000015258789062,
+          "Z": -34.86491394042969,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 186.7210693359375,
+          "Y": 0.09000015258789062,
+          "Z": -35.564910888671875,
+          "IsFinite": true
+        },
+        "StartMinute": 12345.5,
+        "EndMinute": 12354.939,
+        "VisitMinute": 12240.0,
+        "ResumeEventMinute": 12451.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-sample-66.json",
+      "minute": 12372.261253356934,
+      "id": "pc:226",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthavenue:19:work",
+        "SpotId": "address:ba%3Astreet_fourthavenue:19:work:Break:1",
+        "TargetId": "address:ba%3Astreet_fourthavenue:19:work",
+        "Position": {
+          "X": 188.57107543945312,
+          "Y": 0.09000015258789062,
+          "Z": -35.46491241455078,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 190.42108154296875,
+          "Y": 0.09000015258789062,
+          "Z": -34.86491394042969,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 186.7210693359375,
+          "Y": 0.09000015258789062,
+          "Z": -35.564910888671875,
+          "IsFinite": true
+        },
+        "StartMinute": 12370.5,
+        "EndMinute": 12377.3385,
+        "VisitMinute": 12240.0,
+        "ResumeEventMinute": 12501.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-sample-67.json",
+      "minute": 12377.227550506592,
+      "id": "pc:226",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthavenue:19:work",
+        "SpotId": "address:ba%3Astreet_fourthavenue:19:work:Break:1",
+        "TargetId": "address:ba%3Astreet_fourthavenue:19:work",
+        "Position": {
+          "X": 188.57107543945312,
+          "Y": 0.09000015258789062,
+          "Z": -35.46491241455078,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 190.42108154296875,
+          "Y": 0.09000015258789062,
+          "Z": -34.86491394042969,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 186.7210693359375,
+          "Y": 0.09000015258789062,
+          "Z": -35.564910888671875,
+          "IsFinite": true
+        },
+        "StartMinute": 12370.5,
+        "EndMinute": 12377.3385,
+        "VisitMinute": 12240.0,
+        "ResumeEventMinute": 12501.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-sample-68.json",
+      "minute": 12382.181283950806,
+      "id": "pc:493",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthavenue:19:work",
+        "SpotId": "address:ba%3Astreet_fourthavenue:19:work:Break:1",
+        "TargetId": "address:ba%3Astreet_fourthavenue:19:work",
+        "Position": {
+          "X": 188.57107543945312,
+          "Y": 0.09000015258789062,
+          "Z": -35.46491241455078,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 190.42108154296875,
+          "Y": 0.09000015258789062,
+          "Z": -34.86491394042969,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 186.7210693359375,
+          "Y": 0.09000015258789062,
+          "Z": -35.564910888671875,
+          "IsFinite": true
+        },
+        "StartMinute": 12380.0,
+        "EndMinute": 12387.6615,
+        "VisitMinute": 12240.0,
+        "ResumeEventMinute": 12520.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-sample-68.json",
+      "minute": 12382.181283950806,
+      "id": "c185",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthavenue:19:work",
+        "SpotId": "address:ba%3Astreet_fourthavenue:19:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:19:work",
+        "Position": {
+          "X": 187.82107543945312,
+          "Y": 0.09000015258789062,
+          "Z": -35.46491241455078,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 188.92108154296875,
+          "Y": 0.09000015258789062,
+          "Z": -34.86491394042969,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 186.7210693359375,
+          "Y": 0.09000015258789062,
+          "Z": -35.564910888671875,
+          "IsFinite": true
+        },
+        "StartMinute": 12377.0,
+        "EndMinute": 12385.3575,
+        "VisitMinute": 12240.0,
+        "ResumeEventMinute": 12514.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-sample-69.json",
+      "minute": 12386.962644577026,
+      "id": "pc:493",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthavenue:19:work",
+        "SpotId": "address:ba%3Astreet_fourthavenue:19:work:Break:1",
+        "TargetId": "address:ba%3Astreet_fourthavenue:19:work",
+        "Position": {
+          "X": 188.57107543945312,
+          "Y": 0.09000015258789062,
+          "Z": -35.46491241455078,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 190.42108154296875,
+          "Y": 0.09000015258789062,
+          "Z": -34.86491394042969,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 186.7210693359375,
+          "Y": 0.09000015258789062,
+          "Z": -35.564910888671875,
+          "IsFinite": true
+        },
+        "StartMinute": 12380.0,
+        "EndMinute": 12387.6615,
+        "VisitMinute": 12240.0,
+        "ResumeEventMinute": 12520.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-sample-69.json",
+      "minute": 12386.962644577026,
+      "id": "c185",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "returning",
+      "returning": true,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthavenue:19:work",
+        "SpotId": "address:ba%3Astreet_fourthavenue:19:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:19:work",
+        "Position": {
+          "X": 187.82107543945312,
+          "Y": 0.09000015258789062,
+          "Z": -35.46491241455078,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 188.92108154296875,
+          "Y": 0.09000015258789062,
+          "Z": -34.86491394042969,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 186.7210693359375,
+          "Y": 0.09000015258789062,
+          "Z": -35.564910888671875,
+          "IsFinite": true
+        },
+        "StartMinute": 12377.0,
+        "EndMinute": 12385.3575,
+        "VisitMinute": 12240.0,
+        "ResumeEventMinute": 12514.0,
+        "Cancelled": true,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-sample-79.json",
+      "minute": 12436.078676223755,
+      "id": "pc:547",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthavenue:10:work",
+        "SpotId": "address:ba%3Astreet_fourthavenue:10:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:10:work",
+        "Position": {
+          "X": 288.6529846191406,
+          "Y": 0.09000396728515625,
+          "Z": -11.567718505859375,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 287.552978515625,
+          "Y": 0.09000396728515625,
+          "Z": -12.167716979980469,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 289.75299072265625,
+          "Y": 0.09000396728515625,
+          "Z": -11.467720031738281,
+          "IsFinite": true
+        },
+        "StartMinute": 12435.5,
+        "EndMinute": 12440.943,
+        "VisitMinute": 12360.0,
+        "ResumeEventMinute": 12511.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-sample-80.json",
+      "minute": 12440.820112228394,
+      "id": "pc:547",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthavenue:10:work",
+        "SpotId": "address:ba%3Astreet_fourthavenue:10:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:10:work",
+        "Position": {
+          "X": 288.6529846191406,
+          "Y": 0.09000396728515625,
+          "Z": -11.567718505859375,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 287.552978515625,
+          "Y": 0.09000396728515625,
+          "Z": -12.167716979980469,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 289.75299072265625,
+          "Y": 0.09000396728515625,
+          "Z": -11.467720031738281,
+          "IsFinite": true
+        },
+        "StartMinute": 12435.5,
+        "EndMinute": 12440.943,
+        "VisitMinute": 12360.0,
+        "ResumeEventMinute": 12511.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-sample-87.json",
+      "minute": 12475.072551727295,
+      "id": "c44",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthavenue:21:work",
+        "SpotId": "address:ba%3Astreet_fourthavenue:21:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:21:work",
+        "Position": {
+          "X": 177.24285888671875,
+          "Y": 0.09000396728515625,
+          "Z": -35.752113342285156,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 178.34286499023438,
+          "Y": 0.09000396728515625,
+          "Z": -35.15211486816406,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 176.14285278320312,
+          "Y": 0.09000015258789062,
+          "Z": -35.85211181640625,
+          "IsFinite": true
+        },
+        "StartMinute": 12470.0,
+        "EndMinute": 12478.1625,
+        "VisitMinute": 12230.0,
+        "ResumeEventMinute": 12710.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-sample-89.json",
+      "minute": 12484.947528839111,
+      "id": "pc:361",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_thirdstreet:46:work",
+        "SpotId": "address:ba%3Astreet_thirdstreet:46:work:Break:0",
+        "TargetId": "address:ba%3Astreet_thirdstreet:46:work",
+        "Position": {
+          "X": 229.62228393554688,
+          "Y": 0.09000015258789062,
+          "Z": -81.83000183105469,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 229.02227783203125,
+          "Y": 0.09000015258789062,
+          "Z": -80.7300033569336,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 229.7222900390625,
+          "Y": 0.09000015258789062,
+          "Z": -82.93000030517578,
+          "IsFinite": true
+        },
+        "StartMinute": 12479.991128921509,
+        "EndMinute": 12485.91462892151,
+        "VisitMinute": 12359.982257843018,
+        "ResumeEventMinute": 12600.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-sample-89.json",
+      "minute": 12484.947528839111,
+      "id": "c82",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthavenue:25:work",
+        "SpotId": "address:ba%3Astreet_fourthavenue:25:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:25:work",
+        "Position": {
+          "X": 148.4910125732422,
+          "Y": 0.09000015258789062,
+          "Z": -35.478057861328125,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 149.5910186767578,
+          "Y": 0.09000015258789062,
+          "Z": -34.87805938720703,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 147.39100646972656,
+          "Y": 0.09000396728515625,
+          "Z": -35.57805633544922,
+          "IsFinite": true
+        },
+        "StartMinute": 12480.5,
+        "EndMinute": 12490.485,
+        "VisitMinute": 12241.0,
+        "ResumeEventMinute": 12720.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-sample-89.json",
+      "minute": 12484.947528839111,
+      "id": "pc:358",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthavenue:27:work",
+        "SpotId": "address:ba%3Astreet_fourthavenue:27:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:27:work",
+        "Position": {
+          "X": 123.20704650878906,
+          "Y": 0.09000015258789062,
+          "Z": -41.31861114501953,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 124.40913391113281,
+          "Y": 0.09000015258789062,
+          "Z": -41.67216491699219,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 122.3585205078125,
+          "Y": 0.09000015258789062,
+          "Z": -40.61150360107422,
+          "IsFinite": true
+        },
+        "StartMinute": 12482.0,
+        "EndMinute": 12491.9055,
+        "VisitMinute": 12244.0,
+        "ResumeEventMinute": 12720.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-sample-89.json",
+      "minute": 12484.947528839111,
+      "id": "pc:107",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthavenue:20:work",
+        "SpotId": "address:ba%3Astreet_fourthavenue:20:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:20:work",
+        "Position": {
+          "X": 177.58399963378906,
+          "Y": 0.09000396728515625,
+          "Z": -11.604499816894531,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 178.6840057373047,
+          "Y": 0.09000396728515625,
+          "Z": -12.204498291015625,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 176.48399353027344,
+          "Y": 0.09000015258789062,
+          "Z": -11.504501342773438,
+          "IsFinite": true
+        },
+        "StartMinute": 12483.0,
+        "EndMinute": 12488.6125,
+        "VisitMinute": 12246.0,
+        "ResumeEventMinute": 12720.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-sample-90.json",
+      "minute": 12489.869536399841,
+      "id": "pc:2",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthavenue:22:work",
+        "SpotId": "address:ba%3Astreet_fourthavenue:22:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:22:work",
+        "Position": {
+          "X": 161.4099884033203,
+          "Y": 0.09000396728515625,
+          "Z": -10.856449127197266,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 160.3099822998047,
+          "Y": 0.09000396728515625,
+          "Z": -11.45644760131836,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 162.50999450683594,
+          "Y": 0.09000015258789062,
+          "Z": -10.756450653076172,
+          "IsFinite": true
+        },
+        "StartMinute": 12485.0,
+        "EndMinute": 12491.136,
+        "VisitMinute": 12250.0,
+        "ResumeEventMinute": 12720.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-sample-90.json",
+      "minute": 12489.869536399841,
+      "id": "c82",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthavenue:25:work",
+        "SpotId": "address:ba%3Astreet_fourthavenue:25:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:25:work",
+        "Position": {
+          "X": 148.4910125732422,
+          "Y": 0.09000015258789062,
+          "Z": -35.478057861328125,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 149.5910186767578,
+          "Y": 0.09000015258789062,
+          "Z": -34.87805938720703,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 147.39100646972656,
+          "Y": 0.09000396728515625,
+          "Z": -35.57805633544922,
+          "IsFinite": true
+        },
+        "StartMinute": 12480.5,
+        "EndMinute": 12490.485,
+        "VisitMinute": 12241.0,
+        "ResumeEventMinute": 12720.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-sample-90.json",
+      "minute": 12489.869536399841,
+      "id": "pc:358",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthavenue:27:work",
+        "SpotId": "address:ba%3Astreet_fourthavenue:27:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:27:work",
+        "Position": {
+          "X": 123.20704650878906,
+          "Y": 0.09000015258789062,
+          "Z": -41.31861114501953,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 124.40913391113281,
+          "Y": 0.09000015258789062,
+          "Z": -41.67216491699219,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 122.3585205078125,
+          "Y": 0.09000015258789062,
+          "Z": -40.61150360107422,
+          "IsFinite": true
+        },
+        "StartMinute": 12482.0,
+        "EndMinute": 12491.9055,
+        "VisitMinute": 12244.0,
+        "ResumeEventMinute": 12720.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-sample-94.json",
+      "minute": 12509.814544677734,
+      "id": "pc:231",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthavenue:21:work",
+        "SpotId": "address:ba%3Astreet_fourthavenue:21:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:21:work",
+        "Position": {
+          "X": 177.24285888671875,
+          "Y": 0.09000396728515625,
+          "Z": -35.752113342285156,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 178.34286499023438,
+          "Y": 0.09000396728515625,
+          "Z": -35.15211486816406,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 176.14285278320312,
+          "Y": 0.09000015258789062,
+          "Z": -35.85211181640625,
+          "IsFinite": true
+        },
+        "StartMinute": 12508.37145614624,
+        "EndMinute": 12514.71795614624,
+        "VisitMinute": 12299.74291229248,
+        "ResumeEventMinute": 12717.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand100-day-sample-95.json",
+      "minute": 12514.619152069092,
+      "id": "pc:231",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "bound; approach/standing unresolved",
+      "returning": false,
+      "optional": {
+        "kind": "Break",
+        "PlaceId": "address:ba%3Astreet_fourthavenue:21:work",
+        "SpotId": "address:ba%3Astreet_fourthavenue:21:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fourthavenue:21:work",
+        "Position": {
+          "X": 177.24285888671875,
+          "Y": 0.09000396728515625,
+          "Z": -35.752113342285156,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 178.34286499023438,
+          "Y": 0.09000396728515625,
+          "Z": -35.15211486816406,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 176.14285278320312,
+          "Y": 0.09000015258789062,
+          "Z": -35.85211181640625,
+          "IsFinite": true
+        },
+        "StartMinute": 12508.37145614624,
+        "EndMinute": 12514.71795614624,
+        "VisitMinute": 12299.74291229248,
+        "ResumeEventMinute": 12717.0,
+        "Cancelled": false,
+        "Members": []
+      }
+    },
+    {
+      "file": "cand25-day-sample-42.json",
+      "minute": 7893.510650634766,
+      "id": "c355",
+      "queueStepRawNotOptionalPhase": "Approaching",
+      "phase": "returning",
+      "returning": true,
+      "optional": {
+        "kind": "WindowShopping",
+        "PlaceId": "address:ba%3Astreet_thirdstreet:48:shop",
+        "SpotId": "address:ba%3Astreet_thirdstreet:48:shop:WindowShopping:0",
+        "TargetId": "address:ba%3Astreet_thirdstreet:48:shop",
+        "Position": {
+          "X": 229.22845458984375,
+          "Y": 0.09000015258789062,
+          "Z": -88.87999725341797,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 229.82846069335938,
+          "Y": 0.09000015258789062,
+          "Z": -87.77999877929688,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 229.32846069335938,
+          "Y": 0.09000015258789062,
+          "Z": -87.77999877929688,
+          "IsFinite": true
+        },
+        "StartMinute": 7890.803203582764,
+        "EndMinute": 7892.911203582764,
+        "VisitMinute": 7890.803203582764,
+        "ResumeEventMinute": 7913.0,
+        "Cancelled": true,
+        "Members": []
+      }
+    }
+  ],
+  "visualProof": "DEFERRED-INPUT",
+  "noAssumedContinuity": true
+}

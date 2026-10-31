@@ -1,0 +1,14 @@
+{
+  "percentage": 0,
+  "config": {
+    "Enabled": true,
+    "OptionalStopChoicePercentage": 0,
+    "GameClockFactor": 0.3333333333333333,
+    "PhysicalEnabled": true,
+    "MaximumPedestrians": 48,
+    "MaximumVehicles": 24,
+    "PhysicalRadiusMetres": 120
+  },
+  "sha256": "2443527b0dae0fcc365c58dae527d90cf5c8710e88aaf5dab384fba330f998c9",
+  "productionDLL": "f7f0c36e42dcd2b66067245602f27622a2020c2df5670ecf636e9b9525ca471c"
+}

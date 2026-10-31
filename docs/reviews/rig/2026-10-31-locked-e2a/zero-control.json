@@ -1,0 +1,13 @@
+{
+  "initialInheritedStops": 23,
+  "initialPending": 0,
+  "samples": 95,
+  "maxEligible": 573,
+  "maxDrawn": 0,
+  "maxRealised": 0,
+  "newStopObservations": [],
+  "maxLogicalQueues": 0,
+  "queueWeatherReloadAttempted": false,
+  "nonVacuous": true,
+  "zeroNewStops": true
+}

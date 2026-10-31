@@ -1,0 +1,21 @@
+{
+  "role": "rig_test",
+  "profileFilesVerified": 4828,
+  "installReferencesVerified": 107,
+  "preferencesHashMatches": true,
+  "leaseHeld": false,
+  "leasePending": 0,
+  "ownedGamePids": [
+    6208,
+    44212,
+    18328,
+    5908,
+    16792
+  ],
+  "ownedGameProcessesRemaining": [],
+  "ownedCoordinatorLauncherBuildProcessesRemaining": [],
+  "allOwnedGamesQuitNormally": true,
+  "gameKillsRequired": false,
+  "originalAutosave": "enabled; 5 minutes; 3 slots; exact preferences/config restoration verified",
+  "otherProcessesControlled": false
+}

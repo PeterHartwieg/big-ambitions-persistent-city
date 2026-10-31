@@ -1,0 +1,5785 @@
+{
+  "identity": "delta draws = delta realised + delta pending + delta drops within each attach epoch",
+  "arms": [
+    {
+      "arm": "cand25-day",
+      "samples": 109,
+      "pairs": [
+        {
+          "before": "cand25-day-dry-before.json",
+          "after": "cand25-day-dry-after.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-dry-after.json",
+          "after": "cand25-day-sample-1.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-1.json",
+          "after": "cand25-day-sample-2.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-2.json",
+          "after": "cand25-day-sample-3.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-3.json",
+          "after": "cand25-day-sample-4.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-4.json",
+          "after": "cand25-day-sample-5.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-5.json",
+          "after": "cand25-day-sample-6.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-6.json",
+          "after": "cand25-day-sample-7.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-7.json",
+          "after": "cand25-day-sample-8.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-8.json",
+          "after": "cand25-day-sample-9.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-9.json",
+          "after": "cand25-day-sample-10.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-10.json",
+          "after": "cand25-day-sample-11.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-11.json",
+          "after": "cand25-day-sample-12.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-12.json",
+          "after": "cand25-day-sample-13.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-13.json",
+          "after": "cand25-day-sample-14.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-14.json",
+          "after": "cand25-day-sample-15.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-15.json",
+          "after": "cand25-day-sample-16.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-16.json",
+          "after": "cand25-day-sample-17.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-17.json",
+          "after": "cand25-day-sample-18.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-18.json",
+          "after": "cand25-day-sample-19.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-19.json",
+          "after": "cand25-day-sample-20.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-20.json",
+          "after": "cand25-day-sample-21.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-21.json",
+          "after": "cand25-day-sample-22.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-22.json",
+          "after": "cand25-day-sample-23.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-23.json",
+          "after": "cand25-day-sample-24.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-24.json",
+          "after": "cand25-day-sample-25.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-25.json",
+          "after": "cand25-day-sample-26.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-26.json",
+          "after": "cand25-day-sample-27.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-27.json",
+          "after": "cand25-day-sample-28.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-28.json",
+          "after": "cand25-day-sample-29.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-29.json",
+          "after": "cand25-day-sample-30.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-30.json",
+          "after": "cand25-day-sample-31.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-31.json",
+          "after": "cand25-day-sample-32.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-32.json",
+          "after": "cand25-day-sample-33.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-33.json",
+          "after": "cand25-day-sample-34.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-34.json",
+          "after": "cand25-day-sample-35.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-35.json",
+          "after": "cand25-day-sample-36.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-36.json",
+          "after": "cand25-day-sample-37.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-37.json",
+          "after": "cand25-day-sample-38.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-38.json",
+          "after": "cand25-day-reload-38-before-save.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-reload-38-before-save.json",
+          "after": "cand25-day-reload-38-after-save.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-39.json",
+          "after": "cand25-day-sample-40.json",
+          "delta": {
+            "Drawn": 2,
+            "Realised": 2,
+            "Dropped": 0,
+            "Eligible": 5
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-40.json",
+          "after": "cand25-day-sample-41.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-41.json",
+          "after": "cand25-day-sample-42.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-42.json",
+          "after": "cand25-day-sample-43.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-43.json",
+          "after": "cand25-day-sample-44.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-44.json",
+          "after": "cand25-day-sample-45.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-45.json",
+          "after": "cand25-day-sample-46.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-46.json",
+          "after": "cand25-day-sample-47.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-47.json",
+          "after": "cand25-day-sample-48.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-48.json",
+          "after": "cand25-day-sample-49.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-49.json",
+          "after": "cand25-day-sample-50.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-50.json",
+          "after": "cand25-day-sample-51.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-51.json",
+          "after": "cand25-day-sample-52.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-52.json",
+          "after": "cand25-day-sample-53.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-53.json",
+          "after": "cand25-day-sample-54.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-54.json",
+          "after": "cand25-day-sample-55.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-55.json",
+          "after": "cand25-day-sample-56.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-56.json",
+          "after": "cand25-day-sample-57.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-57.json",
+          "after": "cand25-day-sample-58.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-58.json",
+          "after": "cand25-day-sample-59.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-59.json",
+          "after": "cand25-day-sample-60.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-60.json",
+          "after": "cand25-day-sample-61.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-61.json",
+          "after": "cand25-day-sample-62.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-62.json",
+          "after": "cand25-day-sample-63.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-63.json",
+          "after": "cand25-day-sample-64.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-64.json",
+          "after": "cand25-day-sample-65.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-65.json",
+          "after": "cand25-day-sample-66.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-66.json",
+          "after": "cand25-day-sample-67.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-67.json",
+          "after": "cand25-day-sample-68.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-68.json",
+          "after": "cand25-day-sample-69.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-69.json",
+          "after": "cand25-day-sample-70.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-70.json",
+          "after": "cand25-day-sample-71.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-71.json",
+          "after": "cand25-day-sample-72.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-72.json",
+          "after": "cand25-day-sample-73.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 1,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-73.json",
+          "after": "cand25-day-sample-74.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-74.json",
+          "after": "cand25-day-sample-75.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-75.json",
+          "after": "cand25-day-sample-76.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-76.json",
+          "after": "cand25-day-sample-77.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-77.json",
+          "after": "cand25-day-sample-78.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 1,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-78.json",
+          "after": "cand25-day-sample-79.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-79.json",
+          "after": "cand25-day-sample-80.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-80.json",
+          "after": "cand25-day-reload-80-before-save.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-reload-80-before-save.json",
+          "after": "cand25-day-reload-80-after-save.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-reload-80-after-reload.json",
+          "after": "cand25-day-sample-81.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 1,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-81.json",
+          "after": "cand25-day-sample-82.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-82.json",
+          "after": "cand25-day-sample-83.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-83.json",
+          "after": "cand25-day-sample-84.json",
+          "delta": {
+            "Drawn": 3,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 4
+          },
+          "pendingDelta": 3,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-84.json",
+          "after": "cand25-day-sample-85.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-85.json",
+          "after": "cand25-day-sample-86.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 1,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-86.json",
+          "after": "cand25-day-sample-87.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-87.json",
+          "after": "cand25-day-sample-88.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-88.json",
+          "after": "cand25-day-sample-89.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 4
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-89.json",
+          "after": "cand25-day-sample-90.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 1,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-90.json",
+          "after": "cand25-day-sample-91.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 4
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-91.json",
+          "after": "cand25-day-sample-92.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-92.json",
+          "after": "cand25-day-sample-93.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-93.json",
+          "after": "cand25-day-sample-94.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 1,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-94.json",
+          "after": "cand25-day-sample-95.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 1,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-95.json",
+          "after": "cand25-day-sample-96.json",
+          "delta": {
+            "Drawn": 2,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 5
+          },
+          "pendingDelta": 2,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-96.json",
+          "after": "cand25-day-sample-97.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-97.json",
+          "after": "cand25-day-sample-98.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-98.json",
+          "after": "cand25-day-sample-99.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-day-sample-100.json",
+          "after": "cand25-day-end.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        }
+      ],
+      "skipped": [
+        {
+          "before": "cand25-day-reload-38-after-save.json",
+          "after": "cand25-day-reload-38-after-reload.json",
+          "reason": "attach/reload resets transient tally"
+        },
+        {
+          "before": "cand25-day-reload-38-after-reload.json",
+          "after": "cand25-day-sample-39.json",
+          "reason": "transient attach reset"
+        },
+        {
+          "before": "cand25-day-reload-80-after-save.json",
+          "after": "cand25-day-reload-80-after-reload.json",
+          "reason": "attach/reload resets transient tally"
+        },
+        {
+          "before": "cand25-day-sample-99.json",
+          "after": "cand25-day-sample-100.json",
+          "reason": "transient attach reset"
+        }
+      ],
+      "allReconciled": true,
+      "drawn": 18,
+      "realised": 6,
+      "drops": 0
+    },
+    {
+      "arm": "cand25-night",
+      "samples": 114,
+      "pairs": [
+        {
+          "before": "cand25-night-dry-before.json",
+          "after": "cand25-night-dry-after.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-dry-after.json",
+          "after": "cand25-night-sample-1.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-1.json",
+          "after": "cand25-night-sample-2.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-2.json",
+          "after": "cand25-night-sample-3.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-3.json",
+          "after": "cand25-night-sample-4.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-4.json",
+          "after": "cand25-night-sample-5.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-5.json",
+          "after": "cand25-night-sample-6.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-6.json",
+          "after": "cand25-night-sample-7.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-7.json",
+          "after": "cand25-night-sample-8.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-8.json",
+          "after": "cand25-night-sample-9.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-9.json",
+          "after": "cand25-night-sample-10.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-10.json",
+          "after": "cand25-night-sample-11.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-11.json",
+          "after": "cand25-night-sample-12.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-12.json",
+          "after": "cand25-night-sample-13.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-13.json",
+          "after": "cand25-night-sample-14.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-14.json",
+          "after": "cand25-night-sample-15.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-15.json",
+          "after": "cand25-night-sample-16.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-16.json",
+          "after": "cand25-night-sample-17.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-17.json",
+          "after": "cand25-night-sample-18.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-18.json",
+          "after": "cand25-night-sample-19.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-19.json",
+          "after": "cand25-night-sample-20.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-20.json",
+          "after": "cand25-night-sample-21.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-21.json",
+          "after": "cand25-night-sample-22.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-22.json",
+          "after": "cand25-night-sample-23.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-23.json",
+          "after": "cand25-night-sample-24.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-24.json",
+          "after": "cand25-night-sample-25.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-25.json",
+          "after": "cand25-night-sample-26.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-26.json",
+          "after": "cand25-night-sample-27.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-27.json",
+          "after": "cand25-night-sample-28.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-28.json",
+          "after": "cand25-night-sample-29.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-29.json",
+          "after": "cand25-night-sample-30.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-30.json",
+          "after": "cand25-night-sample-31.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-31.json",
+          "after": "cand25-night-sample-32.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-32.json",
+          "after": "cand25-night-sample-33.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-33.json",
+          "after": "cand25-night-sample-34.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-34.json",
+          "after": "cand25-night-sample-35.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-35.json",
+          "after": "cand25-night-sample-36.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-36.json",
+          "after": "cand25-night-sample-37.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-37.json",
+          "after": "cand25-night-sample-38.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-38.json",
+          "after": "cand25-night-sample-39.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-39.json",
+          "after": "cand25-night-sample-40.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-40.json",
+          "after": "cand25-night-sample-41.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-41.json",
+          "after": "cand25-night-sample-42.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-42.json",
+          "after": "cand25-night-sample-43.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-43.json",
+          "after": "cand25-night-sample-44.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-44.json",
+          "after": "cand25-night-sample-45.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-45.json",
+          "after": "cand25-night-sample-46.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-46.json",
+          "after": "cand25-night-sample-47.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-47.json",
+          "after": "cand25-night-sample-48.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-48.json",
+          "after": "cand25-night-sample-49.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-49.json",
+          "after": "cand25-night-sample-50.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-50.json",
+          "after": "cand25-night-sample-51.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-51.json",
+          "after": "cand25-night-sample-52.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-52.json",
+          "after": "cand25-night-sample-53.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-53.json",
+          "after": "cand25-night-sample-54.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-54.json",
+          "after": "cand25-night-sample-55.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-55.json",
+          "after": "cand25-night-sample-56.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": -1,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-56.json",
+          "after": "cand25-night-reload-56-before-save.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-reload-56-before-save.json",
+          "after": "cand25-night-reload-56-after-save.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-reload-56-after-reload.json",
+          "after": "cand25-night-sample-57.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-57.json",
+          "after": "cand25-night-sample-58.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-58.json",
+          "after": "cand25-night-sample-59.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-59.json",
+          "after": "cand25-night-sample-60.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-60.json",
+          "after": "cand25-night-sample-61.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-61.json",
+          "after": "cand25-night-sample-62.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-62.json",
+          "after": "cand25-night-sample-63.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": -1,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-63.json",
+          "after": "cand25-night-sample-64.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-64.json",
+          "after": "cand25-night-sample-65.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-65.json",
+          "after": "cand25-night-sample-66.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-66.json",
+          "after": "cand25-night-sample-67.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-67.json",
+          "after": "cand25-night-sample-68.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-68.json",
+          "after": "cand25-night-sample-69.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-69.json",
+          "after": "cand25-night-sample-70.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-70.json",
+          "after": "cand25-night-sample-71.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-71.json",
+          "after": "cand25-night-sample-72.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-72.json",
+          "after": "cand25-night-sample-73.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-73.json",
+          "after": "cand25-night-sample-74.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-74.json",
+          "after": "cand25-night-sample-75.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-75.json",
+          "after": "cand25-night-sample-76.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-76.json",
+          "after": "cand25-night-sample-77.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-77.json",
+          "after": "cand25-night-sample-78.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-78.json",
+          "after": "cand25-night-sample-79.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-79.json",
+          "after": "cand25-night-sample-80.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-80.json",
+          "after": "cand25-night-sample-81.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": -1,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-81.json",
+          "after": "cand25-night-reload-81-before-save.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-reload-81-before-save.json",
+          "after": "cand25-night-reload-81-after-save.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-reload-81-after-reload.json",
+          "after": "cand25-night-sample-82.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-82.json",
+          "after": "cand25-night-sample-83.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-83.json",
+          "after": "cand25-night-sample-84.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-84.json",
+          "after": "cand25-night-sample-85.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 1,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-85.json",
+          "after": "cand25-night-sample-86.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 1,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-86.json",
+          "after": "cand25-night-sample-87.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-87.json",
+          "after": "cand25-night-sample-88.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-88.json",
+          "after": "cand25-night-sample-89.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-89.json",
+          "after": "cand25-night-sample-90.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-90.json",
+          "after": "cand25-night-sample-91.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-91.json",
+          "after": "cand25-night-sample-92.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-92.json",
+          "after": "cand25-night-sample-93.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 2,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": -2,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-93.json",
+          "after": "cand25-night-reload-93-before-save.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-reload-93-before-save.json",
+          "after": "cand25-night-reload-93-after-save.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-reload-93-after-reload.json",
+          "after": "cand25-night-sample-94.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-94.json",
+          "after": "cand25-night-sample-95.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-95.json",
+          "after": "cand25-night-sample-96.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-96.json",
+          "after": "cand25-night-sample-97.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-97.json",
+          "after": "cand25-night-sample-98.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-98.json",
+          "after": "cand25-night-sample-99.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-99.json",
+          "after": "cand25-night-sample-100.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-sample-100.json",
+          "after": "cand25-night-end.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-end.json",
+          "after": "cand25-night-idle-snapshot-before.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand25-night-idle-snapshot-before.json",
+          "after": "cand25-night-idle-snapshot-after.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        }
+      ],
+      "skipped": [
+        {
+          "before": "cand25-night-reload-56-after-save.json",
+          "after": "cand25-night-reload-56-after-reload.json",
+          "reason": "attach/reload resets transient tally"
+        },
+        {
+          "before": "cand25-night-reload-81-after-save.json",
+          "after": "cand25-night-reload-81-after-reload.json",
+          "reason": "attach/reload resets transient tally"
+        },
+        {
+          "before": "cand25-night-reload-93-after-save.json",
+          "after": "cand25-night-reload-93-after-reload.json",
+          "reason": "attach/reload resets transient tally"
+        }
+      ],
+      "allReconciled": true,
+      "drawn": 4,
+      "realised": 7,
+      "drops": 0
+    },
+    {
+      "arm": "cand100-day",
+      "samples": 126,
+      "pairs": [
+        {
+          "before": "cand100-day-dry-before.json",
+          "after": "cand100-day-dry-after.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-1.json",
+          "after": "cand100-day-reload-1-before-save.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-reload-1-before-save.json",
+          "after": "cand100-day-reload-1-after-save.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-2.json",
+          "after": "cand100-day-sample-3.json",
+          "delta": {
+            "Drawn": 7,
+            "Realised": 7,
+            "Dropped": 0,
+            "Eligible": 7
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-3.json",
+          "after": "cand100-day-sample-4.json",
+          "delta": {
+            "Drawn": 8,
+            "Realised": 8,
+            "Dropped": 0,
+            "Eligible": 8
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-4.json",
+          "after": "cand100-day-sample-5.json",
+          "delta": {
+            "Drawn": 108,
+            "Realised": 67,
+            "Dropped": 41,
+            "Eligible": 108
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-5.json",
+          "after": "cand100-day-sample-6.json",
+          "delta": {
+            "Drawn": 3,
+            "Realised": 3,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-6.json",
+          "after": "cand100-day-sample-7.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-7.json",
+          "after": "cand100-day-sample-8.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-8.json",
+          "after": "cand100-day-sample-9.json",
+          "delta": {
+            "Drawn": 3,
+            "Realised": 3,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-9.json",
+          "after": "cand100-day-sample-10.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-10.json",
+          "after": "cand100-day-sample-11.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-11.json",
+          "after": "cand100-day-sample-12.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-12.json",
+          "after": "cand100-day-sample-13.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-13.json",
+          "after": "cand100-day-sample-14.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-14.json",
+          "after": "cand100-day-sample-15.json",
+          "delta": {
+            "Drawn": 2,
+            "Realised": 2,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-15.json",
+          "after": "cand100-day-sample-16.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-16.json",
+          "after": "cand100-day-sample-17.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-17.json",
+          "after": "cand100-day-sample-18.json",
+          "delta": {
+            "Drawn": 111,
+            "Realised": 44,
+            "Dropped": 67,
+            "Eligible": 111
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-18.json",
+          "after": "cand100-day-sample-19.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-19.json",
+          "after": "cand100-day-sample-20.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-20.json",
+          "after": "cand100-day-sample-21.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-21.json",
+          "after": "cand100-day-sample-22.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-22.json",
+          "after": "cand100-day-sample-23.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-23.json",
+          "after": "cand100-day-sample-24.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-24.json",
+          "after": "cand100-day-sample-25.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-25.json",
+          "after": "cand100-day-sample-26.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-26.json",
+          "after": "cand100-day-sample-27.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-27.json",
+          "after": "cand100-day-sample-28.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-28.json",
+          "after": "cand100-day-sample-29.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-29.json",
+          "after": "cand100-day-sample-30.json",
+          "delta": {
+            "Drawn": 56,
+            "Realised": 31,
+            "Dropped": 25,
+            "Eligible": 56
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-30.json",
+          "after": "cand100-day-sample-31.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-31.json",
+          "after": "cand100-day-sample-32.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-32.json",
+          "after": "cand100-day-sample-33.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-33.json",
+          "after": "cand100-day-sample-34.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-34.json",
+          "after": "cand100-day-sample-35.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-35.json",
+          "after": "cand100-day-sample-36.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-36.json",
+          "after": "cand100-day-reload-36-before-save.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-reload-36-before-save.json",
+          "after": "cand100-day-reload-36-after-save.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-reload-36-after-reload.json",
+          "after": "cand100-day-physical-0.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-physical-0.json",
+          "after": "cand100-day-physical-1.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-physical-1.json",
+          "after": "cand100-day-physical-2.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-physical-2.json",
+          "after": "cand100-day-physical-3.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-physical-3.json",
+          "after": "cand100-day-physical-4.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-physical-4.json",
+          "after": "cand100-day-physical-5.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-physical-5.json",
+          "after": "cand100-day-physical-6.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-physical-6.json",
+          "after": "cand100-day-physical-7.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-physical-7.json",
+          "after": "cand100-day-physical-8.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-physical-8.json",
+          "after": "cand100-day-physical-9.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-physical-9.json",
+          "after": "cand100-day-physical-10.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-physical-10.json",
+          "after": "cand100-day-physical-11.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-physical-11.json",
+          "after": "cand100-day-rain-start-before.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-rain-start-before.json",
+          "after": "cand100-day-rain-start-after.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-rain-start-after.json",
+          "after": "cand100-day-rain-cancelled.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-rain-cancelled.json",
+          "after": "cand100-day-rain-reload-before-save.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-rain-reload-before-save.json",
+          "after": "cand100-day-rain-reload-after-save.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-rain-reload-after-reload.json",
+          "after": "cand100-day-rain-clear-before.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-rain-clear-before.json",
+          "after": "cand100-day-rain-clear-after.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-rain-clear-after.json",
+          "after": "cand100-day-dry-no-replay.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-dry-no-replay.json",
+          "after": "cand100-day-sample-37.json",
+          "delta": {
+            "Drawn": 3,
+            "Realised": 3,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-37.json",
+          "after": "cand100-day-sample-38.json",
+          "delta": {
+            "Drawn": 3,
+            "Realised": 3,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-38.json",
+          "after": "cand100-day-sample-39.json",
+          "delta": {
+            "Drawn": 16,
+            "Realised": 16,
+            "Dropped": 0,
+            "Eligible": 16
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-39.json",
+          "after": "cand100-day-sample-40.json",
+          "delta": {
+            "Drawn": 32,
+            "Realised": 21,
+            "Dropped": 11,
+            "Eligible": 32
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-40.json",
+          "after": "cand100-day-sample-41.json",
+          "delta": {
+            "Drawn": 6,
+            "Realised": 6,
+            "Dropped": 0,
+            "Eligible": 6
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-41.json",
+          "after": "cand100-day-sample-42.json",
+          "delta": {
+            "Drawn": 11,
+            "Realised": 10,
+            "Dropped": 1,
+            "Eligible": 11
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-42.json",
+          "after": "cand100-day-sample-43.json",
+          "delta": {
+            "Drawn": 4,
+            "Realised": 3,
+            "Dropped": 1,
+            "Eligible": 4
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-43.json",
+          "after": "cand100-day-sample-44.json",
+          "delta": {
+            "Drawn": 3,
+            "Realised": 3,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-44.json",
+          "after": "cand100-day-sample-45.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-45.json",
+          "after": "cand100-day-sample-46.json",
+          "delta": {
+            "Drawn": 2,
+            "Realised": 2,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-46.json",
+          "after": "cand100-day-sample-47.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-47.json",
+          "after": "cand100-day-sample-48.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-48.json",
+          "after": "cand100-day-sample-49.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-49.json",
+          "after": "cand100-day-sample-50.json",
+          "delta": {
+            "Drawn": 3,
+            "Realised": 3,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-50.json",
+          "after": "cand100-day-sample-51.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-51.json",
+          "after": "cand100-day-sample-52.json",
+          "delta": {
+            "Drawn": 2,
+            "Realised": 2,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-52.json",
+          "after": "cand100-day-sample-53.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-53.json",
+          "after": "cand100-day-sample-54.json",
+          "delta": {
+            "Drawn": 2,
+            "Realised": 2,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-54.json",
+          "after": "cand100-day-sample-55.json",
+          "delta": {
+            "Drawn": 2,
+            "Realised": 2,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-55.json",
+          "after": "cand100-day-sample-56.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-56.json",
+          "after": "cand100-day-sample-57.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-57.json",
+          "after": "cand100-day-sample-58.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-58.json",
+          "after": "cand100-day-sample-59.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-59.json",
+          "after": "cand100-day-sample-60.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-60.json",
+          "after": "cand100-day-sample-61.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-61.json",
+          "after": "cand100-day-sample-62.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-62.json",
+          "after": "cand100-day-sample-63.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-63.json",
+          "after": "cand100-day-sample-64.json",
+          "delta": {
+            "Drawn": 4,
+            "Realised": 4,
+            "Dropped": 0,
+            "Eligible": 4
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-64.json",
+          "after": "cand100-day-sample-65.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-65.json",
+          "after": "cand100-day-sample-66.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-66.json",
+          "after": "cand100-day-sample-67.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-67.json",
+          "after": "cand100-day-sample-68.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-68.json",
+          "after": "cand100-day-sample-69.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-69.json",
+          "after": "cand100-day-sample-70.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-70.json",
+          "after": "cand100-day-sample-71.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-71.json",
+          "after": "cand100-day-sample-72.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-72.json",
+          "after": "cand100-day-sample-73.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-73.json",
+          "after": "cand100-day-sample-74.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-74.json",
+          "after": "cand100-day-sample-75.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-75.json",
+          "after": "cand100-day-sample-76.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-76.json",
+          "after": "cand100-day-sample-77.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-77.json",
+          "after": "cand100-day-sample-78.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-78.json",
+          "after": "cand100-day-sample-79.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-79.json",
+          "after": "cand100-day-sample-80.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-80.json",
+          "after": "cand100-day-sample-81.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-81.json",
+          "after": "cand100-day-sample-82.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-82.json",
+          "after": "cand100-day-sample-83.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-83.json",
+          "after": "cand100-day-sample-84.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-84.json",
+          "after": "cand100-day-sample-85.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-85.json",
+          "after": "cand100-day-sample-86.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-86.json",
+          "after": "cand100-day-sample-87.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-87.json",
+          "after": "cand100-day-sample-88.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-88.json",
+          "after": "cand100-day-sample-89.json",
+          "delta": {
+            "Drawn": 27,
+            "Realised": 26,
+            "Dropped": 1,
+            "Eligible": 27
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-89.json",
+          "after": "cand100-day-sample-90.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 1,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-90.json",
+          "after": "cand100-day-sample-91.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-91.json",
+          "after": "cand100-day-sample-92.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-92.json",
+          "after": "cand100-day-sample-93.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-93.json",
+          "after": "cand100-day-sample-94.json",
+          "delta": {
+            "Drawn": 1,
+            "Realised": 0,
+            "Dropped": 1,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-94.json",
+          "after": "cand100-day-sample-95.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand100-day-sample-96.json",
+          "after": "cand100-day-end.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        }
+      ],
+      "skipped": [
+        {
+          "before": "cand100-day-dry-after.json",
+          "after": "cand100-day-sample-1.json",
+          "reason": "transient attach reset"
+        },
+        {
+          "before": "cand100-day-reload-1-after-save.json",
+          "after": "cand100-day-reload-1-after-reload.json",
+          "reason": "attach/reload resets transient tally"
+        },
+        {
+          "before": "cand100-day-reload-1-after-reload.json",
+          "after": "cand100-day-sample-2.json",
+          "reason": "transient attach reset"
+        },
+        {
+          "before": "cand100-day-reload-36-after-save.json",
+          "after": "cand100-day-reload-36-after-reload.json",
+          "reason": "attach/reload resets transient tally"
+        },
+        {
+          "before": "cand100-day-rain-reload-after-save.json",
+          "after": "cand100-day-rain-reload-after-reload.json",
+          "reason": "attach/reload resets transient tally"
+        },
+        {
+          "before": "cand100-day-sample-95.json",
+          "after": "cand100-day-sample-96.json",
+          "reason": "transient attach reset"
+        }
+      ],
+      "allReconciled": true,
+      "drawn": 450,
+      "realised": 302,
+      "drops": 148
+    },
+    {
+      "arm": "cand100-night",
+      "samples": 1,
+      "pairs": [],
+      "skipped": [],
+      "allReconciled": true,
+      "drawn": 0,
+      "realised": 0,
+      "drops": 0
+    },
+    {
+      "arm": "cand0-day",
+      "samples": 41,
+      "pairs": [
+        {
+          "before": "cand0-day-dry-before.json",
+          "after": "cand0-day-dry-after.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-dry-after.json",
+          "after": "cand0-day-sample-1.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-1.json",
+          "after": "cand0-day-sample-2.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-2.json",
+          "after": "cand0-day-sample-3.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-3.json",
+          "after": "cand0-day-sample-4.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-4.json",
+          "after": "cand0-day-sample-5.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-5.json",
+          "after": "cand0-day-sample-6.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-6.json",
+          "after": "cand0-day-sample-7.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-7.json",
+          "after": "cand0-day-sample-8.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-8.json",
+          "after": "cand0-day-sample-9.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-9.json",
+          "after": "cand0-day-sample-10.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-10.json",
+          "after": "cand0-day-sample-11.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-11.json",
+          "after": "cand0-day-sample-12.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-12.json",
+          "after": "cand0-day-sample-13.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-13.json",
+          "after": "cand0-day-sample-14.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-14.json",
+          "after": "cand0-day-sample-15.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-15.json",
+          "after": "cand0-day-sample-16.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-16.json",
+          "after": "cand0-day-sample-17.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-17.json",
+          "after": "cand0-day-sample-18.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-18.json",
+          "after": "cand0-day-sample-19.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-19.json",
+          "after": "cand0-day-sample-20.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-20.json",
+          "after": "cand0-day-sample-21.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-21.json",
+          "after": "cand0-day-sample-22.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-22.json",
+          "after": "cand0-day-sample-23.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-23.json",
+          "after": "cand0-day-sample-24.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-24.json",
+          "after": "cand0-day-sample-25.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-25.json",
+          "after": "cand0-day-sample-26.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-26.json",
+          "after": "cand0-day-sample-27.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-27.json",
+          "after": "cand0-day-sample-28.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-28.json",
+          "after": "cand0-day-sample-29.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-29.json",
+          "after": "cand0-day-sample-30.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-30.json",
+          "after": "cand0-day-sample-31.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-31.json",
+          "after": "cand0-day-sample-32.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-32.json",
+          "after": "cand0-day-sample-33.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-33.json",
+          "after": "cand0-day-sample-34.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-34.json",
+          "after": "cand0-day-sample-35.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-35.json",
+          "after": "cand0-day-sample-36.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-36.json",
+          "after": "cand0-day-sample-37.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-37.json",
+          "after": "cand0-day-sample-38.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-day-sample-38.json",
+          "after": "cand0-day-end.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        }
+      ],
+      "skipped": [],
+      "allReconciled": true,
+      "drawn": 0,
+      "realised": 0,
+      "drops": 0
+    },
+    {
+      "arm": "cand0-weekday",
+      "samples": 99,
+      "pairs": [
+        {
+          "before": "cand0-weekday-dry-before.json",
+          "after": "cand0-weekday-dry-after.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-dry-after.json",
+          "after": "cand0-weekday-initial.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-1.json",
+          "after": "cand0-weekday-sample-2.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-2.json",
+          "after": "cand0-weekday-sample-3.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 20
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-3.json",
+          "after": "cand0-weekday-sample-4.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 4
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-4.json",
+          "after": "cand0-weekday-sample-5.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-5.json",
+          "after": "cand0-weekday-sample-6.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 5
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-6.json",
+          "after": "cand0-weekday-sample-7.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 8
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-7.json",
+          "after": "cand0-weekday-sample-8.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 10
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-8.json",
+          "after": "cand0-weekday-sample-9.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 10
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-9.json",
+          "after": "cand0-weekday-sample-10.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 41
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-10.json",
+          "after": "cand0-weekday-sample-11.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 13
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-11.json",
+          "after": "cand0-weekday-sample-12.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 9
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-12.json",
+          "after": "cand0-weekday-sample-13.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 6
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-13.json",
+          "after": "cand0-weekday-sample-14.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 7
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-14.json",
+          "after": "cand0-weekday-sample-15.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-15.json",
+          "after": "cand0-weekday-sample-16.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 14
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-16.json",
+          "after": "cand0-weekday-sample-17.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-17.json",
+          "after": "cand0-weekday-sample-18.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-18.json",
+          "after": "cand0-weekday-sample-19.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 10
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-19.json",
+          "after": "cand0-weekday-sample-20.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-20.json",
+          "after": "cand0-weekday-sample-21.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 9
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-21.json",
+          "after": "cand0-weekday-sample-22.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 84
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-22.json",
+          "after": "cand0-weekday-sample-23.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 13
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-23.json",
+          "after": "cand0-weekday-sample-24.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 10
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-24.json",
+          "after": "cand0-weekday-sample-25.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 11
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-25.json",
+          "after": "cand0-weekday-sample-26.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-26.json",
+          "after": "cand0-weekday-sample-27.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 10
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-27.json",
+          "after": "cand0-weekday-sample-28.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 9
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-28.json",
+          "after": "cand0-weekday-sample-29.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 17
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-29.json",
+          "after": "cand0-weekday-sample-30.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 8
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-30.json",
+          "after": "cand0-weekday-sample-31.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 5
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-31.json",
+          "after": "cand0-weekday-sample-32.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 6
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-32.json",
+          "after": "cand0-weekday-sample-33.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 13
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-33.json",
+          "after": "cand0-weekday-sample-34.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 69
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-34.json",
+          "after": "cand0-weekday-sample-35.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 10
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-35.json",
+          "after": "cand0-weekday-sample-36.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-36.json",
+          "after": "cand0-weekday-sample-37.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-37.json",
+          "after": "cand0-weekday-sample-38.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-38.json",
+          "after": "cand0-weekday-sample-39.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-39.json",
+          "after": "cand0-weekday-sample-40.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-40.json",
+          "after": "cand0-weekday-sample-41.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-41.json",
+          "after": "cand0-weekday-sample-42.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-42.json",
+          "after": "cand0-weekday-sample-43.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-43.json",
+          "after": "cand0-weekday-sample-44.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-44.json",
+          "after": "cand0-weekday-sample-45.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-45.json",
+          "after": "cand0-weekday-sample-46.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 43
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-46.json",
+          "after": "cand0-weekday-sample-47.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-47.json",
+          "after": "cand0-weekday-sample-48.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 4
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-48.json",
+          "after": "cand0-weekday-sample-49.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 10
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-49.json",
+          "after": "cand0-weekday-sample-50.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-50.json",
+          "after": "cand0-weekday-sample-51.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-51.json",
+          "after": "cand0-weekday-sample-52.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-52.json",
+          "after": "cand0-weekday-sample-53.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-53.json",
+          "after": "cand0-weekday-sample-54.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-54.json",
+          "after": "cand0-weekday-sample-55.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-55.json",
+          "after": "cand0-weekday-sample-56.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-56.json",
+          "after": "cand0-weekday-sample-57.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-57.json",
+          "after": "cand0-weekday-sample-58.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-58.json",
+          "after": "cand0-weekday-sample-59.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-59.json",
+          "after": "cand0-weekday-sample-60.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-60.json",
+          "after": "cand0-weekday-sample-61.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-61.json",
+          "after": "cand0-weekday-sample-62.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 4
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-62.json",
+          "after": "cand0-weekday-sample-63.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-63.json",
+          "after": "cand0-weekday-sample-64.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-64.json",
+          "after": "cand0-weekday-sample-65.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-65.json",
+          "after": "cand0-weekday-sample-66.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-66.json",
+          "after": "cand0-weekday-sample-67.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-67.json",
+          "after": "cand0-weekday-sample-68.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-68.json",
+          "after": "cand0-weekday-sample-69.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-69.json",
+          "after": "cand0-weekday-sample-70.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 4
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-70.json",
+          "after": "cand0-weekday-sample-71.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 3
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-71.json",
+          "after": "cand0-weekday-sample-72.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-72.json",
+          "after": "cand0-weekday-sample-73.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-73.json",
+          "after": "cand0-weekday-sample-74.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-74.json",
+          "after": "cand0-weekday-sample-75.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-75.json",
+          "after": "cand0-weekday-sample-76.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-76.json",
+          "after": "cand0-weekday-sample-77.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-77.json",
+          "after": "cand0-weekday-sample-78.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-78.json",
+          "after": "cand0-weekday-sample-79.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-79.json",
+          "after": "cand0-weekday-sample-80.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-80.json",
+          "after": "cand0-weekday-sample-81.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-81.json",
+          "after": "cand0-weekday-sample-82.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-82.json",
+          "after": "cand0-weekday-sample-83.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-83.json",
+          "after": "cand0-weekday-sample-84.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-84.json",
+          "after": "cand0-weekday-sample-85.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-85.json",
+          "after": "cand0-weekday-sample-86.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-86.json",
+          "after": "cand0-weekday-sample-87.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-87.json",
+          "after": "cand0-weekday-sample-88.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-88.json",
+          "after": "cand0-weekday-sample-89.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-89.json",
+          "after": "cand0-weekday-sample-90.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-90.json",
+          "after": "cand0-weekday-sample-91.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 2
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-91.json",
+          "after": "cand0-weekday-sample-92.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-92.json",
+          "after": "cand0-weekday-sample-93.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-93.json",
+          "after": "cand0-weekday-sample-94.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 1
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-94.json",
+          "after": "cand0-weekday-sample-95.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 0
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        },
+        {
+          "before": "cand0-weekday-sample-95.json",
+          "after": "cand0-weekday-end.json",
+          "delta": {
+            "Drawn": 0,
+            "Realised": 0,
+            "Dropped": 0,
+            "Eligible": 20
+          },
+          "pendingDelta": 0,
+          "residual": 0
+        }
+      ],
+      "skipped": [
+        {
+          "before": "cand0-weekday-initial.json",
+          "after": "cand0-weekday-sample-1.json",
+          "reason": "transient attach reset"
+        }
+      ],
+      "allReconciled": true,
+      "drawn": 0,
+      "realised": 0,
+      "drops": 0
+    }
+  ],
+  "allReconciled": true
+}

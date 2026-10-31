@@ -1,0 +1,1501 @@
+{
+  "sourceSnapshots": 506,
+  "distinctCapturedLines": 279,
+  "types": [
+    {
+      "type": "ba:businesstype_coffeeshop",
+      "registrations": 28,
+      "withSavedPlace": 28,
+      "withCapturedFacade": 25,
+      "spotCounts": {
+        "8": 22,
+        "5": 1,
+        "6": 1,
+        "7": 1
+      },
+      "rows": [
+        {
+          "address": "ba:street_fifthavenue:6",
+          "controller": 567032,
+          "savedPlaces": [
+            "address:ba%3Astreet_fifthavenue:6:shop",
+            "address:ba%3Astreet_fifthavenue:6:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "366.9,0.1,-198.2",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_fifthavenue:10",
+          "controller": 562334,
+          "savedPlaces": [
+            "address:ba%3Astreet_fifthavenue:10:shop",
+            "address:ba%3Astreet_fifthavenue:10:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_twentyfirststreet:13",
+          "controller": 1885466,
+          "savedPlaces": [
+            "address:ba%3Astreet_twentyfirststreet:13:shop",
+            "address:ba%3Astreet_twentyfirststreet:13:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-1400.7,0.3,-1243.7",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_firstavenue:19",
+          "controller": 570060,
+          "savedPlaces": [
+            "address:ba%3Astreet_firstavenue:19:shop",
+            "address:ba%3Astreet_firstavenue:19:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "110.4,0.1,452.3",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_thirdstreet:30",
+          "controller": 568722,
+          "savedPlaces": [
+            "address:ba%3Astreet_thirdstreet:30:shop",
+            "address:ba%3Astreet_thirdstreet:30:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "229.8,0.1,21.3",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_seventhstreet:8",
+          "controller": 563440,
+          "savedPlaces": [
+            "address:ba%3Astreet_seventhstreet:8:shop",
+            "address:ba%3Astreet_seventhstreet:8:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-138.0,0.1,-150.8",
+              "spots": 5
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_ninthavenue:7",
+          "controller": 1892438,
+          "savedPlaces": [
+            "address:ba%3Astreet_ninthavenue:7:shop",
+            "address:ba%3Astreet_ninthavenue:7:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-1542.0,0.3,-1317.4",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_fifthavenue:37",
+          "controller": 562582,
+          "savedPlaces": [
+            "address:ba%3Astreet_fifthavenue:37:shop",
+            "address:ba%3Astreet_fifthavenue:37:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-110.1,0.1,-223.1",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_seventhavenue:18",
+          "controller": 4143744,
+          "savedPlaces": [
+            "address:ba%3Astreet_seventhavenue:18:shop",
+            "address:ba%3Astreet_seventhavenue:18:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-2910.2,0.0,-1087.3",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_tenthavenue:18",
+          "controller": 1878608,
+          "savedPlaces": [
+            "address:ba%3Astreet_tenthavenue:18:shop",
+            "address:ba%3Astreet_tenthavenue:18:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_fourthavenue:20",
+          "controller": 564244,
+          "savedPlaces": [
+            "address:ba%3Astreet_fourthavenue:20:shop",
+            "address:ba%3Astreet_fourthavenue:20:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "176.5,0.1,-11.5",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_twentyfirststreet:6",
+          "controller": 1889210,
+          "savedPlaces": [
+            "address:ba%3Astreet_twentyfirststreet:6:shop",
+            "address:ba%3Astreet_twentyfirststreet:6:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-1419.7,0.3,-1169.7",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_seventhavenue:17",
+          "controller": 4080420,
+          "savedPlaces": [
+            "address:ba%3Astreet_seventhavenue:17:shop",
+            "address:ba%3Astreet_seventhavenue:17:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-3127.1,0.1,-1108.9",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_fifthavenue:2",
+          "controller": 567026,
+          "savedPlaces": [
+            "address:ba%3Astreet_fifthavenue:2:shop",
+            "address:ba%3Astreet_fifthavenue:2:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "386.7,0.1,-193.0",
+              "spots": 6
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_ninthavenue:3",
+          "controller": 1879942,
+          "savedPlaces": [
+            "address:ba%3Astreet_ninthavenue:3:shop",
+            "address:ba%3Astreet_ninthavenue:3:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-1482.1,0.3,-1318.5",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_firststreet:3",
+          "controller": 566448,
+          "savedPlaces": [
+            "address:ba%3Astreet_firststreet:3:shop",
+            "address:ba%3Astreet_firststreet:3:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "387.5,0.1,393.6",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_fourthavenue:22",
+          "controller": 563564,
+          "savedPlaces": [
+            "address:ba%3Astreet_fourthavenue:22:shop",
+            "address:ba%3Astreet_fourthavenue:22:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "162.5,0.1,-10.8",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_sixthstreet:10",
+          "controller": 562322,
+          "savedPlaces": [
+            "address:ba%3Astreet_sixthstreet:10:shop",
+            "address:ba%3Astreet_sixthstreet:10:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-49.2,0.1,95.8",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_fourthstreet:52",
+          "controller": 911280,
+          "savedPlaces": [
+            "address:ba%3Astreet_fourthstreet:52:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "155.5,0.0,-331.1",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_ninthavenue:20",
+          "controller": 1891372,
+          "savedPlaces": [
+            "address:ba%3Astreet_ninthavenue:20:shop",
+            "address:ba%3Astreet_ninthavenue:20:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-1752.8,0.3,-1375.1",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_tenthavenue:14",
+          "controller": 1863820,
+          "savedPlaces": [
+            "address:ba%3Astreet_tenthavenue:14:shop",
+            "address:ba%3Astreet_tenthavenue:14:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-1527.0,2.0,-1522.9",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_thirdstreet:46",
+          "controller": 569624,
+          "savedPlaces": [
+            "address:ba%3Astreet_thirdstreet:46:shop",
+            "address:ba%3Astreet_thirdstreet:46:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "229.7,0.1,-82.9",
+              "spots": 7
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_twelfthstreet:9",
+          "controller": 1321442,
+          "savedPlaces": [
+            "address:ba%3Astreet_twelfthstreet:9:shop",
+            "address:ba%3Astreet_twelfthstreet:9:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-556.1,0.1,-189.3",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_fifthavenue:56",
+          "controller": 565158,
+          "savedPlaces": [
+            "address:ba%3Astreet_fifthavenue:56:shop",
+            "address:ba%3Astreet_fifthavenue:56:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "10.3,0.1,-196.0",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_fifthavenue:22",
+          "controller": 565978,
+          "savedPlaces": [
+            "address:ba%3Astreet_fifthavenue:22:shop",
+            "address:ba%3Astreet_fifthavenue:22:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "278.8,0.1,-198.5",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_fifthavenue:80",
+          "controller": 1323270,
+          "savedPlaces": [
+            "address:ba%3Astreet_fifthavenue:80:shop",
+            "address:ba%3Astreet_fifthavenue:80:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_broadwaystreet:7",
+          "controller": 563522,
+          "savedPlaces": [
+            "address:ba%3Astreet_broadwaystreet:7:shop",
+            "address:ba%3Astreet_broadwaystreet:7:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "34.2,0.1,58.2",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_tenthavenue:24",
+          "controller": 1891964,
+          "savedPlaces": [
+            "address:ba%3Astreet_tenthavenue:24:shop",
+            "address:ba%3Astreet_tenthavenue:24:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-1606.0,2.0,-1523.0",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        }
+      ]
+    },
+    {
+      "type": "ba:businesstype_fastfoodrestaurant",
+      "registrations": 24,
+      "withSavedPlace": 24,
+      "withCapturedFacade": 18,
+      "spotCounts": {
+        "8": 17,
+        "2": 1
+      },
+      "rows": [
+        {
+          "address": "ba:street_thirdavenue:3",
+          "controller": 568680,
+          "savedPlaces": [
+            "address:ba%3Astreet_thirdavenue:3:shop",
+            "address:ba%3Astreet_thirdavenue:3:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "373.4,0.1,151.3",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_firststreet:10",
+          "controller": 567270,
+          "savedPlaces": [
+            "address:ba%3Astreet_firststreet:10:shop",
+            "address:ba%3Astreet_firststreet:10:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "404.2,0.1,393.3",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_fourthavenue:31",
+          "controller": 564044,
+          "savedPlaces": [
+            "address:ba%3Astreet_fourthavenue:31:shop",
+            "address:ba%3Astreet_fourthavenue:31:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "56.9,0.1,-72.5",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_fifthavenue:28",
+          "controller": 564810,
+          "savedPlaces": [
+            "address:ba%3Astreet_fifthavenue:28:shop",
+            "address:ba%3Astreet_fifthavenue:28:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "248.3,0.1,-198.2",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_twentyfourthstreet:21",
+          "controller": 1882510,
+          "savedPlaces": [
+            "address:ba%3Astreet_twentyfourthstreet:21:shop",
+            "address:ba%3Astreet_twentyfourthstreet:21:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_fifthavenue:30",
+          "controller": 566158,
+          "savedPlaces": [
+            "address:ba%3Astreet_fifthavenue:30:shop",
+            "address:ba%3Astreet_fifthavenue:30:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "236.8,0.1,-198.0",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_fifthstreet:15",
+          "controller": 566918,
+          "savedPlaces": [
+            "address:ba%3Astreet_fifthstreet:15:shop",
+            "address:ba%3Astreet_fifthstreet:15:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "55.3,0.1,-274.9",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_secondavenue:20",
+          "controller": 569964,
+          "savedPlaces": [
+            "address:ba%3Astreet_secondavenue:20:shop",
+            "address:ba%3Astreet_secondavenue:20:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "88.5,0.1,379.8",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_fourthavenue:19",
+          "controller": 565304,
+          "savedPlaces": [
+            "address:ba%3Astreet_fourthavenue:19:shop",
+            "address:ba%3Astreet_fourthavenue:19:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "186.7,0.1,-35.6",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_seventhstreet:3",
+          "controller": 566186,
+          "savedPlaces": [
+            "address:ba%3Astreet_seventhstreet:3:shop",
+            "address:ba%3Astreet_seventhstreet:3:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_fourthavenue:51",
+          "controller": 1321438,
+          "savedPlaces": [
+            "address:ba%3Astreet_fourthavenue:51:shop",
+            "address:ba%3Astreet_fourthavenue:51:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-459.1,0.1,-35.6",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_tenthavenue:34",
+          "controller": 1881528,
+          "savedPlaces": [
+            "address:ba%3Astreet_tenthavenue:34:shop",
+            "address:ba%3Astreet_tenthavenue:34:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-1709.6,2.0,-1522.1",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_tenthavenue:11",
+          "controller": 1887692,
+          "savedPlaces": [
+            "address:ba%3Astreet_tenthavenue:11:shop",
+            "address:ba%3Astreet_tenthavenue:11:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-1698.1,2.0,-1496.6",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_seventhavenue:15",
+          "controller": 4003524,
+          "savedPlaces": [
+            "address:ba%3Astreet_seventhavenue:15:shop",
+            "address:ba%3Astreet_seventhavenue:15:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_fifthavenue:32",
+          "controller": 564940,
+          "savedPlaces": [
+            "address:ba%3Astreet_fifthavenue:32:shop",
+            "address:ba%3Astreet_fifthavenue:32:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "212.1,0.1,-198.4",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_seventhavenue:40",
+          "controller": 4071058,
+          "savedPlaces": [
+            "address:ba%3Astreet_seventhavenue:40:shop",
+            "address:ba%3Astreet_seventhavenue:40:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_fifthavenue:23",
+          "controller": 562580,
+          "savedPlaces": [
+            "address:ba%3Astreet_fifthavenue:23:shop",
+            "address:ba%3Astreet_fifthavenue:23:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "121.3,0.1,-223.2",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_ninthavenue:19",
+          "controller": 1888350,
+          "savedPlaces": [
+            "address:ba%3Astreet_ninthavenue:19:shop",
+            "address:ba%3Astreet_ninthavenue:19:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-1802.6,0.3,-1316.8",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_eleventhstreet:24",
+          "controller": 1322126,
+          "savedPlaces": [
+            "address:ba%3Astreet_eleventhstreet:24:shop",
+            "address:ba%3Astreet_eleventhstreet:24:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_ninthavenue:15",
+          "controller": 1858220,
+          "savedPlaces": [
+            "address:ba%3Astreet_ninthavenue:15:shop",
+            "address:ba%3Astreet_ninthavenue:15:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_firststreet:40",
+          "controller": 563634,
+          "savedPlaces": [
+            "address:ba%3Astreet_firststreet:40:shop",
+            "address:ba%3Astreet_firststreet:40:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "406.9,0.0,-8.3",
+              "spots": 2
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_tenthavenue:13",
+          "controller": 1881222,
+          "savedPlaces": [
+            "address:ba%3Astreet_tenthavenue:13:shop",
+            "address:ba%3Astreet_tenthavenue:13:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-1715.0,2.0,-1497.1",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_firststreet:14",
+          "controller": 569894,
+          "savedPlaces": [
+            "address:ba%3Astreet_firststreet:14:shop",
+            "address:ba%3Astreet_firststreet:14:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "404.2,0.1,372.6",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_ninthavenue:24",
+          "controller": 1888242,
+          "savedPlaces": [
+            "address:ba%3Astreet_ninthavenue:24:shop",
+            "address:ba%3Astreet_ninthavenue:24:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-1802.0,0.3,-1374.8",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        }
+      ]
+    },
+    {
+      "type": "ba:businesstype_nightclub",
+      "registrations": 15,
+      "withSavedPlace": 14,
+      "withCapturedFacade": 6,
+      "spotCounts": {
+        "5": 1,
+        "8": 5
+      },
+      "rows": [
+        {
+          "address": "ba:street_seventhstreet:15",
+          "controller": 562514,
+          "savedPlaces": [
+            "address:ba%3Astreet_seventhstreet:15:leisure",
+            "address:ba%3Astreet_seventhstreet:15:shop",
+            "address:ba%3Astreet_seventhstreet:15:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-104.7,0.1,-81.6",
+              "spots": 5
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_firstavenue:20",
+          "controller": 560932,
+          "savedPlaces": [
+            "address:ba%3Astreet_firstavenue:20:leisure",
+            "address:ba%3Astreet_firstavenue:20:shop",
+            "address:ba%3Astreet_firstavenue:20:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "111.4,0.1,478.4",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_twentyfirststreet:5",
+          "controller": 1892188,
+          "savedPlaces": [
+            "address:ba%3Astreet_twentyfirststreet:5:leisure",
+            "address:ba%3Astreet_twentyfirststreet:5:shop",
+            "address:ba%3Astreet_twentyfirststreet:5:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_fifthavenue:24",
+          "controller": 566800,
+          "savedPlaces": [
+            "address:ba%3Astreet_fifthavenue:24:leisure",
+            "address:ba%3Astreet_fifthavenue:24:shop",
+            "address:ba%3Astreet_fifthavenue:24:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_firststreet:1",
+          "controller": 562838,
+          "savedPlaces": [
+            "address:ba%3Astreet_firststreet:1:leisure",
+            "address:ba%3Astreet_firststreet:1:shop",
+            "address:ba%3Astreet_firststreet:1:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_ninthavenue:30",
+          "controller": 1875260,
+          "savedPlaces": [
+            "address:ba%3Astreet_ninthavenue:30:leisure",
+            "address:ba%3Astreet_ninthavenue:30:shop",
+            "address:ba%3Astreet_ninthavenue:30:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-1830.8,0.3,-1374.9",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_thirdavenue:11",
+          "controller": 563158,
+          "savedPlaces": [
+            "address:ba%3Astreet_thirdavenue:11:leisure",
+            "address:ba%3Astreet_thirdavenue:11:shop",
+            "address:ba%3Astreet_thirdavenue:11:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_twelfthstreet:11",
+          "controller": 1323308,
+          "savedPlaces": [
+            "address:ba%3Astreet_twelfthstreet:11:leisure",
+            "address:ba%3Astreet_twelfthstreet:11:shop",
+            "address:ba%3Astreet_twelfthstreet:11:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_seventhavenue:38",
+          "controller": 4109844,
+          "savedPlaces": [
+            "address:ba%3Astreet_seventhavenue:38:leisure",
+            "address:ba%3Astreet_seventhavenue:38:shop",
+            "address:ba%3Astreet_seventhavenue:38:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_twentyfirststreet:1",
+          "controller": 1869770,
+          "savedPlaces": [
+            "address:ba%3Astreet_twentyfirststreet:1:leisure",
+            "address:ba%3Astreet_twentyfirststreet:1:shop",
+            "address:ba%3Astreet_twentyfirststreet:1:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-1400.2,0.4,-1058.0",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_seventhavenue:34",
+          "controller": 3801736,
+          "savedPlaces": [],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_fifthstreet:16",
+          "controller": 570510,
+          "savedPlaces": [
+            "address:ba%3Astreet_fifthstreet:16:leisure",
+            "address:ba%3Astreet_fifthstreet:16:shop",
+            "address:ba%3Astreet_fifthstreet:16:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "40.0,0.1,-301.9",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_fourthstreet:48",
+          "controller": 564062,
+          "savedPlaces": [
+            "address:ba%3Astreet_fourthstreet:48:leisure",
+            "address:ba%3Astreet_fourthstreet:48:shop",
+            "address:ba%3Astreet_fourthstreet:48:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_secondavenue:30",
+          "controller": 570868,
+          "savedPlaces": [
+            "address:ba%3Astreet_secondavenue:30:leisure",
+            "address:ba%3Astreet_secondavenue:30:shop",
+            "address:ba%3Astreet_secondavenue:30:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_ninthstreet:12",
+          "controller": 1321724,
+          "savedPlaces": [
+            "address:ba%3Astreet_ninthstreet:12:leisure",
+            "address:ba%3Astreet_ninthstreet:12:shop",
+            "address:ba%3Astreet_ninthstreet:12:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-309.5,0.1,-75.4",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        }
+      ]
+    },
+    {
+      "type": "ba:businesstype_gym",
+      "registrations": 11,
+      "withSavedPlace": 10,
+      "withCapturedFacade": 9,
+      "spotCounts": {
+        "8": 8,
+        "7": 1
+      },
+      "rows": [
+        {
+          "address": "ba:street_tenthstreet:3",
+          "controller": 1320866,
+          "savedPlaces": [
+            "address:ba%3Astreet_tenthstreet:3:leisure",
+            "address:ba%3Astreet_tenthstreet:3:shop",
+            "address:ba%3Astreet_tenthstreet:3:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-381.1,0.1,-98.0",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_tenthavenue:20",
+          "controller": 1882114,
+          "savedPlaces": [
+            "address:ba%3Astreet_tenthavenue:20:leisure",
+            "address:ba%3Astreet_tenthavenue:20:shop",
+            "address:ba%3Astreet_tenthavenue:20:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-1565.3,2.0,-1523.0",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_ninthavenue:9",
+          "controller": 1882882,
+          "savedPlaces": [
+            "address:ba%3Astreet_ninthavenue:9:leisure",
+            "address:ba%3Astreet_ninthavenue:9:shop",
+            "address:ba%3Astreet_ninthavenue:9:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-1557.0,0.3,-1317.2",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_fifthstreet:17",
+          "controller": 569420,
+          "savedPlaces": [
+            "address:ba%3Astreet_fifthstreet:17:leisure",
+            "address:ba%3Astreet_fifthstreet:17:shop",
+            "address:ba%3Astreet_fifthstreet:17:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "55.4,0.1,-289.2",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_tenthavenue:32",
+          "controller": 1885924,
+          "savedPlaces": [],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_thirdstreet:51",
+          "controller": 570282,
+          "savedPlaces": [
+            "address:ba%3Astreet_thirdstreet:51:leisure",
+            "address:ba%3Astreet_thirdstreet:51:shop",
+            "address:ba%3Astreet_thirdstreet:51:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "214.7,0.1,-158.0",
+              "spots": 7
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_fourthstreet:5",
+          "controller": 561528,
+          "savedPlaces": [
+            "address:ba%3Astreet_fourthstreet:5:leisure",
+            "address:ba%3Astreet_fourthstreet:5:shop",
+            "address:ba%3Astreet_fourthstreet:5:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "125.6,0.1,49.5",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_firststreet:72",
+          "controller": 569190,
+          "savedPlaces": [
+            "address:ba%3Astreet_firststreet:72:leisure",
+            "address:ba%3Astreet_firststreet:72:shop",
+            "address:ba%3Astreet_firststreet:72:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "404.6,0.1,-244.3",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_seventhavenue:26",
+          "controller": 3876760,
+          "savedPlaces": [
+            "address:ba%3Astreet_seventhavenue:26:leisure",
+            "address:ba%3Astreet_seventhavenue:26:shop",
+            "address:ba%3Astreet_seventhavenue:26:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_firststreet:4",
+          "controller": 562658,
+          "savedPlaces": [
+            "address:ba%3Astreet_firststreet:4:leisure",
+            "address:ba%3Astreet_firststreet:4:shop",
+            "address:ba%3Astreet_firststreet:4:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "404.4,0.1,436.5",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_secondavenue:12",
+          "controller": 569284,
+          "savedPlaces": [
+            "address:ba%3Astreet_secondavenue:12:leisure",
+            "address:ba%3Astreet_secondavenue:12:shop",
+            "address:ba%3Astreet_secondavenue:12:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "198.5,0.1,332.5",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        }
+      ]
+    },
+    {
+      "type": "ba:businesstype_cinema",
+      "registrations": 4,
+      "withSavedPlace": 4,
+      "withCapturedFacade": 4,
+      "spotCounts": {
+        "8": 4
+      },
+      "rows": [
+        {
+          "address": "ba:street_broadwaystreet:14",
+          "controller": 1322174,
+          "savedPlaces": [
+            "address:ba%3Astreet_broadwaystreet:14:leisure",
+            "address:ba%3Astreet_broadwaystreet:14:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-373.5,0.1,-183.6",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_sixthstreet:5",
+          "controller": 569186,
+          "savedPlaces": [
+            "address:ba%3Astreet_sixthstreet:5:leisure",
+            "address:ba%3Astreet_sixthstreet:5:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-27.7,0.1,115.2",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_broadwaystreet:4",
+          "controller": 564384,
+          "savedPlaces": [
+            "address:ba%3Astreet_broadwaystreet:4:leisure",
+            "address:ba%3Astreet_broadwaystreet:4:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "109.9,0.1,112.2",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_harborstreet:1",
+          "controller": 4111674,
+          "savedPlaces": [
+            "address:ba%3Astreet_harborstreet:1:leisure",
+            "address:ba%3Astreet_harborstreet:1:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-2942.2,0.1,-1041.1",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        }
+      ]
+    },
+    {
+      "type": "ba:businesstype_theater",
+      "registrations": 4,
+      "withSavedPlace": 4,
+      "withCapturedFacade": 3,
+      "spotCounts": {
+        "8": 2,
+        "1": 1
+      },
+      "rows": [
+        {
+          "address": "ba:street_oceancrestroad:1",
+          "controller": 4027710,
+          "savedPlaces": [
+            "address:ba%3Astreet_oceancrestroad:1:leisure",
+            "address:ba%3Astreet_oceancrestroad:1:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_fifthstreet:6",
+          "controller": 569302,
+          "savedPlaces": [
+            "address:ba%3Astreet_fifthstreet:6:leisure",
+            "address:ba%3Astreet_fifthstreet:6:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "31.7,0.1,116.6",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_broadwaystreet:3",
+          "controller": 564018,
+          "savedPlaces": [
+            "address:ba%3Astreet_broadwaystreet:3:leisure",
+            "address:ba%3Astreet_broadwaystreet:3:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "122.4,0.1,92.9",
+              "spots": 1
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_broadwaystreet:10",
+          "controller": 565576,
+          "savedPlaces": [
+            "address:ba%3Astreet_broadwaystreet:10:leisure",
+            "address:ba%3Astreet_broadwaystreet:10:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "32.8,0.1,86.7",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        }
+      ]
+    },
+    {
+      "type": "ba:businesstype_lawfirm",
+      "registrations": 14,
+      "withSavedPlace": 14,
+      "withCapturedFacade": 9,
+      "spotCounts": {
+        "5": 1,
+        "8": 7,
+        "2": 1
+      },
+      "rows": [
+        {
+          "address": "ba:street_seventhstreet:17",
+          "controller": 568456,
+          "savedPlaces": [
+            "address:ba%3Astreet_seventhstreet:17:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-117.6,0.1,-119.4",
+              "spots": 5
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_fifthavenue:15",
+          "controller": 570740,
+          "savedPlaces": [
+            "address:ba%3Astreet_fifthavenue:15:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "232.2,0.1,-223.0",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_secondavenue:11",
+          "controller": 565006,
+          "savedPlaces": [
+            "address:ba%3Astreet_secondavenue:11:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "67.9,0.1,248.7",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_thirdavenue:13",
+          "controller": 569254,
+          "savedPlaces": [
+            "address:ba%3Astreet_thirdavenue:13:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "264.1,0.1,150.1",
+              "spots": 2
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_sixthstreet:6",
+          "controller": 568518,
+          "savedPlaces": [
+            "address:ba%3Astreet_sixthstreet:6:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_secondstreet:31",
+          "controller": 567756,
+          "savedPlaces": [
+            "address:ba%3Astreet_secondstreet:31:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_sixthavenue:22",
+          "controller": 567402,
+          "savedPlaces": [
+            "address:ba%3Astreet_sixthavenue:22:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_fifthstreet:2",
+          "controller": 565654,
+          "savedPlaces": [
+            "address:ba%3Astreet_fifthstreet:2:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_thirdstreet:74",
+          "controller": 568522,
+          "savedPlaces": [
+            "address:ba%3Astreet_thirdstreet:74:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "229.7,0.1,-251.7",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_ninthstreet:6",
+          "controller": 561156,
+          "savedPlaces": [
+            "address:ba%3Astreet_ninthstreet:6:work"
+          ],
+          "sampledFacades": [],
+          "availability": "Unknown/Unavailable: no captured cached facade; never enabled by helper"
+        },
+        {
+          "address": "ba:street_tenthstreet:10",
+          "controller": 1320974,
+          "savedPlaces": [
+            "address:ba%3Astreet_tenthstreet:10:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-396.5,0.1,-112.6",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_firstavenue:28",
+          "controller": 562788,
+          "savedPlaces": [
+            "address:ba%3Astreet_firstavenue:28:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "2.4,0.1,477.3",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_eleventhstreet:15",
+          "controller": 1322288,
+          "savedPlaces": [
+            "address:ba%3Astreet_eleventhstreet:15:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-468.4,0.1,-137.6",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        },
+        {
+          "address": "ba:street_eighthstreet:11",
+          "controller": 569480,
+          "savedPlaces": [
+            "address:ba%3Astreet_eighthstreet:11:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "-222.2,0.1,-162.9",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        }
+      ]
+    },
+    {
+      "type": "ba:businesstype_school",
+      "registrations": 1,
+      "withSavedPlace": 1,
+      "withCapturedFacade": 1,
+      "spotCounts": {
+        "8": 1
+      },
+      "rows": [
+        {
+          "address": "ba:street_fourthavenue:7",
+          "controller": 568576,
+          "savedPlaces": [
+            "address:ba%3Astreet_fourthavenue:7:study",
+            "address:ba%3Astreet_fourthavenue:7:work"
+          ],
+          "sampledFacades": [
+            {
+              "key": "293.2,0.1,-35.5",
+              "spots": 8
+            }
+          ],
+          "availability": "sampled cached geometry only; visual clearance deferred"
+        }
+      ]
+    },
+    {
+      "type": "ba:businesstype_warehouse",
+      "registrations": 0,
+      "withSavedPlace": 0,
+      "withCapturedFacade": 0,
+      "spotCounts": {},
+      "rows": []
+    }
+  ],
+  "readerOnly": true,
+  "method": "Union of production DwellSpots caches read by the observer. The helper never calls sampling/registration/spawn APIs. Join saved place entrance within 0.1m. Cache success is no visual clearance proof."
+}

@@ -1,0 +1,18 @@
+{
+  "mealOutingObservations": 190,
+  "distinctResidentIds": [
+    "c149",
+    "c252",
+    "pc:289",
+    "pc:350",
+    "pc:390",
+    "pc:399",
+    "pc:502"
+  ],
+  "originActivityCounts": {
+    "0": 190
+  },
+  "matchedStopRecords": [],
+  "result": "NOT-RUN: no accepted meal interruption of a scheduled work break was observed; sampled meal origins are Home. Native NoStaff and low paper-bag warnings also occurred. No payment/receipt/reload reconciliation claimed.",
+  "optionalFoodShopIntersection": 0
+}

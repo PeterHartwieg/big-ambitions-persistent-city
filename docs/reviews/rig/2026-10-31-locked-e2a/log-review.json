@@ -1,0 +1,609 @@
+{
+  "logs": [
+    {
+      "file": "cand0-Player.log",
+      "sha256": "b5c692e8c0f9794e2dbf8e18426b729272ef3e605369d74cde817b76119938c4",
+      "lines": 545,
+      "persistentCityErrorSignals": [],
+      "persistentCityExceptionContexts": [],
+      "informationalGroundEligibilityDiagnostics": [
+        {
+          "line": 296,
+          "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence."
+        }
+      ],
+      "nativeAgentNavmeshWarnings": 1,
+      "nativeExceptionHeadings": [
+        {
+          "line": 228,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 248,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "file": "cand0-weekday-Player.log",
+      "sha256": "9b5ebb1ce404379ee1fd4701460c482aa9881b8baf0c38eccb1f3704d32c816d",
+      "lines": 660,
+      "persistentCityErrorSignals": [],
+      "persistentCityExceptionContexts": [],
+      "informationalGroundEligibilityDiagnostics": [
+        {
+          "line": 298,
+          "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence."
+        }
+      ],
+      "nativeAgentNavmeshWarnings": 1,
+      "nativeExceptionHeadings": [
+        {
+          "line": 222,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 233,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "file": "cand100-Player.log",
+      "sha256": "175e4c8b618a78d60740338667678d92aa1b5bd28f612af6d48ca9a270d80ee5",
+      "lines": 2720,
+      "persistentCityErrorSignals": [],
+      "persistentCityExceptionContexts": [],
+      "informationalGroundEligibilityDiagnostics": [
+        {
+          "line": 295,
+          "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence."
+        },
+        {
+          "line": 1338,
+          "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence."
+        },
+        {
+          "line": 1741,
+          "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence."
+        },
+        {
+          "line": 2207,
+          "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence."
+        }
+      ],
+      "nativeAgentNavmeshWarnings": 4,
+      "nativeExceptionHeadings": [
+        {
+          "line": 229,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 249,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 894,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 902,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 910,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 918,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 926,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 1272,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 1287,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 1682,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 1696,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 1797,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 1805,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 1813,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 1821,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 1829,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 1837,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 1845,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 1853,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 1861,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 1869,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 2143,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 2158,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "file": "cand25-Player.log",
+      "sha256": "ad41e966a2cbce26988799e30d3609833bcf090c9f649cf725fbd53fcee49286",
+      "lines": 3498,
+      "persistentCityErrorSignals": [],
+      "persistentCityExceptionContexts": [],
+      "informationalGroundEligibilityDiagnostics": [
+        {
+          "line": 311,
+          "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence."
+        },
+        {
+          "line": 1256,
+          "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence."
+        },
+        {
+          "line": 1701,
+          "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence."
+        },
+        {
+          "line": 2360,
+          "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence."
+        },
+        {
+          "line": 2744,
+          "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence."
+        },
+        {
+          "line": 3130,
+          "text": "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence."
+        }
+      ],
+      "nativeAgentNavmeshWarnings": 6,
+      "nativeExceptionHeadings": [
+        {
+          "line": 224,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 245,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 1193,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 1207,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 1637,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 1652,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 2297,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 2311,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 2682,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 2696,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 3067,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        },
+        {
+          "line": 3082,
+          "text": "NullReferenceException: Object reference not set to an instance of an object",
+          "firstStackLines": [
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            "  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 ",
+            ""
+          ]
+        }
+      ]
+    }
+  ],
+  "noPersistentCityErrors": true,
+  "note": "Raw logs remain private. Native load/NavMesh warnings and native exception headings are reported separately; no helper exception is treated as a production defect. Exact PC signal/context entries require human review."
+}
