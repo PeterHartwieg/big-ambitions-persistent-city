@@ -6,7 +6,7 @@ The locked-PC report at `03bc7d2` confirms that A1's earlier direct-localizer fi
 
 Regression evidence: the new missing-translation test first failed on `ba:street_ninthstreet 18`; all **22 focused inspector cases** then pass. Coverage includes the native complete-format seam, native and alternate address order, missing/blank/unresolved/throwing formatters, all three meal kinds and travelling/serving/paid/unconfirmed states, named study places, raw map-link Street/Number and PlaceId, and unchanged source place names. The existing two-day differential now supplies a complete address formatter while inspecting and still compares byte-identical save payloads and native order lists. Red and focused-green logs: ignored `build/address-inspection/`.
 
-Full unit suite: **1,573/1,573**, zero failed/skipped. Production build passes warnings as errors against the installed Managed references; DLL SHA-256 `d6de34e7c6a09d86d9ba5aa90ff3e5633ba4807a61d5a86c5240c39cdb13c0b9`. Gate logs: ignored `build/address-gate/`.
+Validation at code head `1bd31d5`: **31/31 required offline gate commands exit 0** (production build, full unit suite, test discovery, all 21 standalone regressions, four Python harnesses and three demos). Full unit suite: **1,573/1,573**, zero failed/skipped. Production build passes warnings as errors against the installed Managed references; DLL SHA-256 `d6de34e7c6a09d86d9ba5aa90ff3e5633ba4807a61d5a86c5240c39cdb13c0b9`. The prescribed dotnet guard ran before every test/run; all commands ran sequentially in the foreground and completed. Gate logs and per-command exit results: ignored `build/address-gate/`.
 
 Required separate native rig_test check before merge:
 
