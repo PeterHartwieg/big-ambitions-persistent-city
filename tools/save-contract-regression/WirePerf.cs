@@ -20,7 +20,7 @@ static partial class Program
         var current = FoodCity(residents, true); PopulateDecisions(current);
         string oldJson = (string)codec.GetMethod("Write")!.Invoke(null, new[] { previous })!;
         string newJson = SaveCodec.Write(current);
-        if (oldJson != newJson) throw new Exception("Wire optimization changed bytes.");
+        if (!Newtonsoft.Json.Linq.JToken.DeepEquals(Newtonsoft.Json.Linq.JObject.Parse(oldJson), Newtonsoft.Json.Linq.JObject.Parse(newJson))) throw new Exception("Wire optimization changed facts.");
         Action[] work = {
             () => codec.GetMethod("Write")!.Invoke(null, new[] {previous}),
             () => SaveCodec.Write(current),
@@ -60,7 +60,7 @@ static partial class Program
             for (int i = 0; i < 4096; i++) counter.Write(block);
             return new { ms = Stopwatch.GetElapsedTime(start).TotalMilliseconds, chars = type.GetProperty("Count")!.GetValue(counter), bytes = type.GetProperty("Bytes")!.GetValue(counter) };
         }
-        return new { residents, chars = newJson.Length, unchangedBytes = true, samples = 7,
+        return new { residents, chars = newJson.Length, unchangedBytes = oldJson == newJson, unchangedFacts = true, samples = 7,
             saves = Enumerable.Range(0, 4).Select(i => new { mode = new[] { "beforeWrite", "afterWrite", "beforeRead", "afterRead" }[i],
                 medianMs = times[i].OrderBy(t => t).ElementAt(3), maxMs = times[i].Max(), allocationBytes = allocations[i].OrderBy(t => t).ElementAt(3) }),
             outcomeShapeBefore = Micro(() => { if (!oldShape(outcomeWire)) throw new Exception("Bad former shape"); }),

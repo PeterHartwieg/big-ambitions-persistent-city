@@ -1181,7 +1181,10 @@ namespace PersistentCity.Persistence
             protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
             {
                 return base.CreateProperties(type, memberSerialization).Where(property => property.Writable)
-                    .OrderBy(property => property.PropertyName, StringComparer.Ordinal).Select(property =>
+                    // These two root headers let the native authority bootstrap stop before the graph.
+                    // JSON object order is not a schema change; all old property orders still read.
+                    .OrderBy(property => type == typeof(CityState) ? property.PropertyName == "Schema" ? 0 : property.PropertyName == "Capabilities" ? 1 : 2 : 2)
+                    .ThenBy(property => property.PropertyName, StringComparer.Ordinal).Select(property =>
                 {
                     property.Required = NullableRecord(property.PropertyType!) || Nullable.GetUnderlyingType(property.PropertyType!) != null ? Required.AllowNull : Required.Always;
                     return property;

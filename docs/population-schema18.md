@@ -76,7 +76,12 @@ needs a counted capacity diagnostic in B1, never a new checkout or dropped recei
 
 Root `Capabilities` has exactly `Code:"B", Revision:1, Active:false`. Missing,
 duplicate, unknown code/revision and active B refuse. The early native authority
-bootstrap probes this header before releasing any saved managed business. Population
+bootstrap probes this header before releasing any saved managed business. New writes
+place `Schema` then `Capabilities` first so this single-pass probe can stop before
+the graph. Older root ordering remains supported; full startup decoding still checks
+all remaining fields, duplicates and trailing content. Tuple initialization also
+requires exact coverage of every public writable DTO property, failing loudly if a
+future field is omitted from a positional layout. Population
 decode and simulator construction also guard capability execution. Future binaries
 must explicitly implement a revision before accepting its active state.
 

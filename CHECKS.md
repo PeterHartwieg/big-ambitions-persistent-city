@@ -1,5 +1,30 @@
 # Validation status
 
+## Step B0 review fixes - 31 October 2026 (offline only)
+
+**Opus-r1-1 fixed.** Tuple layout initialization now checks an exact, duplicate-free match against the DTO's public instance properties with public setters, before compiling readers/writers. Missing, added or duplicate writable fields fail loudly with an explicit tuple-version/save-contract message. The existing budget/meal layouts remain 18/35 fields; their slot order and version are unchanged. Regression tests exercise a DTO with an added writable property, duplicate slots, actual layout coverage and exclusion of computed read-only properties.
+
+**Opus-r1-2 fixed.** The early authority probe reads Schema and Capabilities in one root pass, validates the bounded header directly, then returns as soon as both are known. It no longer calls whole-payload ReadSchema, builds a whole-source TokenText index, deserializes the header again or skips the remaining graph after finding both headers. New writes put **Schema then Capabilities before the graph**; without this root-order change the formerly ordinal Schema property would still require a full scan. Older ordering remains readable with a single-pass fallback, and legacy integer grammar is retained. Only JSON object property order changes: schema number, fields, tuple slots, values, character/UTF-8 sizes and record budgets are unchanged. The historical wire optimization tool now compares complete facts when root order differs.
+
+Full population startup decode remains mandatory and still checks the complete structure, unknown/duplicate fields and trailing content. Tests prove that the early probe can stop before a damaged tail while full decode rejects it, alongside strict capability fields, canonical revision/schema codes, missing/unknown/active capabilities, both header orders, CR/LF/CRLF formatting and schemas 13-17. No UI, choice, economic, RLO or native authority/receipt format changes; no rig/game access.
+
+**Measurements.** [Raw results and reproduction commands](docs/reviews/2026-10-31-b0-r1-measurements.json), before `860d2d3`, Windows .NET 10 Release. Reference is 957 residents / 1,914 consumers / **5,012,736 characters** with 32 visits; ceiling is 50,000 / 150,000 / **141,086,790 characters** with no visits. Both use full four-entry memory and a full 20k/2Mi business table, matching B0's fixtures. Benchmarks ran sequentially after the gate, alternating before/after: seven reference samples, three ceiling samples, one warmup per order. Saved facts and both character/UTF-8 sizes match across root orders. Small sample p95 is diagnostic (ceiling p95 is its max), not a native frame-time estimate.
+
+| Fixture / root order | Probe | Median / p95 / max ms | Measured >=30 ms | Median allocation bytes |
+|---|---|---:|---:|---:|
+| reference / previous_ordinal | before | 31.8863 / 95.8761 / 95.8761 | 4/7 | 27,121,800 |
+| reference / previous_ordinal | after | 16.1228 / 56.1261 / 56.1261 | 2/7 | 13,130,136 |
+| reference / headers_first | before | 29.6032 / 42.0729 / 42.0729 | 3/7 | 27,121,864 |
+| reference / headers_first | after | 0.0201 / 0.0402 / 0.0402 | 0/7 | 2,968 |
+| ceiling / previous_ordinal | before | 1827.6675 / 1834.8482 / 1834.8482 | 3/3 | 801,032,696 |
+| ceiling / previous_ordinal | after | 848.7131 / 852.0435 / 852.0435 | 3/3 | 400,066,320 |
+| ceiling / headers_first | before | 1983.9598 / 1998.8169 / 1998.8169 | 3/3 | 801,032,760 |
+| ceiling / headers_first | after | 0.0255 / 0.0347 / 0.0347 | 0/3 | 2,968 |
+
+**First invocation with independent assembly/JSON caches:** reference **151.0841 -> 6.5292 ms**, ceiling **2,016.7978 -> 11.7447 ms**, on the same header-first inputs. Assembly loading/delegate binding are outside those timers; these are not Unity process-start measurements. The per-order first-call values and flags are also retained in the raw results. **Flagged >=30 ms:** old probes, the new previous-ordinal fallback (including 2/7 reference and 3/3 ceiling measured calls), their flagged first calls and both before fresh-context calls. No measured header-first after call or fresh-context after call reaches 30 ms. The old ordinal ceiling fallback still costs **848.7131 ms median** at load; subsequent normal saves use the header-first layout. These are bootstrap/load latencies, separate from ordinary mod-work p95 <5 ms and whole-frame timing. Native timing remains pending; no gate clearance is inferred.
+
+**Validation:** seven focused checks were red before the fixes, then all 19 passed; **1,832/1,832 unit tests**, discovery and **all 34 sequential foreground gate commands** pass (the 31 requested plus choice, native-candidate and rush). The historical equal-fact wire comparison also passes. Production DLL SHA-256: `b91e6029e59c56b2031bdbab3bff9d32ee2fe690097cf84b3c53cee2ece47a1e`. No push, PR, merge, game, rig, lease or release work. The existing 6 Nov rig checklist remains required.
+
 ## Step B0 population schema 18 and history-inclusive capacity - 31 October 2026 (offline only)
 
 A3's visit-free ceiling used 92.4% of the cap; accumulated ordinary histories already exceeded it. B0 publishes population schema **18**, preserves every existing fact in compact budget/meal/day/visit formats, and defines bounded B memory, watermark, business references and capability revision. **B remains empty/inactive on migration.** No UI, inspector, loyalty/capture/choice contribution, economy, config loader, RLO, native receipt/authority format, mod version or release changes.

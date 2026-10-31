@@ -25,35 +25,77 @@ namespace PersistentCity.Persistence
         public static void RequireExecutableCapabilities(string source)
         {
             Require(source != null && source.Length <= MaxInputCharacters, "Invalid population payload.");
-            int schema = ReadSchema(source);
-            Require(schema >= 13 && schema <= 18, "Unsupported population schema; preserve the payload.");
             using var reader = Reader(source);
-            reader.Read(); bool found = false;
+            Require(reader.Read() && reader.TokenType == JsonToken.StartObject, "Expected population object.");
+            int? schema = null;
+            PopulationCapabilities? capabilities = null;
+            var names = new HashSet<string>(StringComparer.Ordinal);
+            // Resolve token offsets only as far as a header requires; TokenText(source) would scan
+            // every character even when both headers precede the population graph.
+            int tokenLine = 1, lineStart = 0;
+            bool canonicalInteger = false;
+            int HeaderInteger(bool requireCanonical = true)
+            {
+                Require(reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, int.MinValue, int.MaxValue), "Invalid capability/schema integer.");
+                while (tokenLine < reader.LineNumber)
+                {
+                    int newline = source.IndexOfAny(ProbeLineBreaks, lineStart);
+                    Require(newline >= 0, "Invalid header position.");
+                    lineStart = newline + 1;
+                    if (source[newline] == '\r' && lineStart < source.Length && source[lineStart] == '\n') lineStart++;
+                    tokenLine++;
+                }
+                int end = lineStart + reader.LinePosition, start = end;
+                while (start > 0 && source[start - 1] != ':' && source[start - 1] != ',' && source[start - 1] != '['
+                    && source[start - 1] != '{' && !char.IsWhiteSpace(source[start - 1])) start--;
+                canonicalInteger = TokenText.CanonicalUnits(source.Substring(start, end - start));
+                if (requireCanonical) Require(canonicalInteger, "Noncanonical capability/schema integer.");
+                return (int)(long)reader.Value!;
+            }
             while (reader.Read() && reader.TokenType != JsonToken.EndObject)
             {
+                Require(reader.TokenType == JsonToken.PropertyName, "Expected population field.");
                 string name = (string)reader.Value!;
+                Require(names.Add(name), "Duplicate population field.");
                 Require(reader.Read(), "Missing field value.");
-                if (name == "Capabilities")
+                if (name == "Schema")
                 {
-                    Require(schema == 18, "Unknown capability header in a legacy population schema.");
-                    int count = 0;
-                    CheckShape(reader, typeof(PopulationCapabilities), StateContracts, ref count, new TokenText(source), 18, new FieldNameSets());
-                    found = true;
+                    schema = HeaderInteger(requireCanonical: false);
+                    if (schema == 18) Require(canonicalInteger, "Noncanonical population schema.");
+                    Require(schema >= 13 && schema <= 18, "Unsupported population schema; preserve the payload.");
+                }
+                else if (name == "Capabilities")
+                {
+                    Require(reader.TokenType == JsonToken.StartObject, "Expected population capabilities.");
+                    capabilities = new PopulationCapabilities();
+                    int seen = 0;
+                    while (reader.Read() && reader.TokenType != JsonToken.EndObject)
+                    {
+                        Require(reader.TokenType == JsonToken.PropertyName, "Expected capability field.");
+                        string field = (string)reader.Value!;
+                        int bit = field == "Active" ? 1 : field == "Code" ? 2 : field == "Revision" ? 4 : 0;
+                        Require(bit != 0 && (seen & bit) == 0, "Unknown or duplicate capability field.");
+                        seen |= bit;
+                        Require(reader.Read(), "Missing capability value.");
+                        if (field == "Active") { Require(reader.TokenType == JsonToken.Boolean, "Invalid active capability flag."); capabilities.Active = (bool)reader.Value!; }
+                        else if (field == "Code") { Require(reader.TokenType == JsonToken.String && ((string)reader.Value!).Length <= 512, "Invalid capability code."); capabilities.Code = (string)reader.Value!; }
+                        else capabilities.Revision = HeaderInteger();
+                    }
+                    Require(reader.TokenType == JsonToken.EndObject && seen == 7, "Missing capability fields.");
+                    ValidateCapabilities(capabilities);
                 }
                 else reader.Skip();
+                if (schema.HasValue && capabilities != null)
+                {
+                    Require(schema == 18, "Unknown capability header in a legacy population schema.");
+                    return; // Full population startup still validates all fields, duplicates and trailing content.
+                }
             }
-            Require(found || schema < 18, "Missing population capabilities.");
-            if (!found) return;
-            // Re-read just the bounded header after shape validation (required/unknown/duplicate fields).
-            using var header = Reader(source);
-            header.Read();
-            while (header.Read() && header.TokenType != JsonToken.EndObject)
-            {
-                string name = (string)header.Value!; header.Read();
-                if (name == "Capabilities") { ValidateCapabilities(JsonSerializer.Create(Settings(WireContext.Empty)).Deserialize<PopulationCapabilities>(header)!); return; }
-                header.Skip();
-            }
+            Require(reader.TokenType == JsonToken.EndObject && !reader.Read(), "Incomplete or trailing population content.");
+            Require(schema.HasValue, "Missing population schema.");
+            Require(schema < 18, "Missing population capabilities.");
         }
+        private static readonly char[] ProbeLineBreaks = { '\r', '\n' };
 
         private static int ValidateMemory(ConsumerMemory memory, int day, ISet<int> references)
         {
@@ -157,7 +199,12 @@ namespace PersistentCity.Persistence
             public readonly Func<object> Create;
             private TupleLayout(Type type, string fields)
             {
-                Properties = fields.Split(' ').Select(n => type.GetProperty(n) ?? throw new InvalidOperationException(n)).ToArray();
+                var names = fields.Split(' ');
+                var writable = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetSetMethod() != null).ToArray();
+                if (names.Length != writable.Length || names.Distinct(StringComparer.Ordinal).Count() != names.Length
+                    || !new HashSet<string>(writable.Select(p => p.Name), StringComparer.Ordinal).SetEquals(names))
+                    throw new InvalidOperationException(type.Name + " tuple fields must exactly match its public writable properties; change the tuple version and save contract deliberately.");
+                Properties = names.Select(n => type.GetProperty(n) ?? throw new InvalidOperationException(n)).ToArray();
                 Write = Properties.Select(p => {
                     var writer = Expression.Parameter(typeof(JsonWriter)); var target = Expression.Parameter(typeof(object)); var serializer = Expression.Parameter(typeof(JsonSerializer));
                     Expression value = Expression.Property(Expression.Convert(target, type), p);
