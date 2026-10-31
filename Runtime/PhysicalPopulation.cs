@@ -156,7 +156,7 @@ namespace PersistentCity.Runtime
             if (NativeTravelPace.HiddenTravel) { SuspendBeforeNativeFastForward(); return; }
             Position focus = NativeTravelPace.Focus;
             if (!focus.IsFinite) { Suspend(); return; }
-            double radius = NativeInteriorCityView.Radius(this.radius);
+            double radius = NativeInteriorCityView.AdmissionRadius(this.radius);
             double releaseRadius = NativeInteriorCityView.ReleaseRadius(this.radius);
             int pedestrianLimit = NativeInteriorCityView.Pedestrians(this.pedestrianLimit);
             int vehicleLimit = NativeInteriorCityView.Vehicles(this.vehicleLimit);
@@ -170,7 +170,13 @@ namespace PersistentCity.Runtime
                 foreach (var binding in snapshot)
                 {
                     if (ambient.IsReserved(binding.Citizen.Identity.Id)) { Release(binding); continue; }
-                    if (!Observe(binding)) { if (!TryAwaitArrival(binding)) Release(binding); continue; }
+                    if (!Observe(binding))
+                    {
+                        if (!TryAwaitArrival(binding)) { Release(binding); continue; }
+                        // Legacy arrival handoffs keep their original path. Interior handoffs
+                        // must share the same retention radius/caps as every other body.
+                        if (!interior) continue;
+                    }
                     Position position = binding.Person?.Position ?? binding.Car!.Position;
                     if (Position.Distance(position, focus) > releaseRadius) { Release(binding); continue; }
                     if (interior && (binding.Person != null ? ++keptPeople > pedestrianLimit : ++keptCars > vehicleLimit)) Release(binding);

@@ -71,6 +71,7 @@ namespace PersistentCity.Runtime
         public void Reset() { Suspend(); entry = null; faulted = false; Fallback = InteriorViewFallback.None; }
         public Position Focus(Position player) => Active ? Anchor : player;
         public double Radius(double streetRadius, double interiorRadius) => Active ? Math.Min(streetRadius, interiorRadius) : streetRadius;
+        public double AdmissionRadius(double streetRadius, double interiorRadius) => Active ? Radius(streetRadius, interiorRadius) / 1.2 : streetRadius;
         public int Pedestrians(int global, int interior) => Active ? Math.Min(global, Math.Min(48, interior)) : global;
         public int Vehicles(int global, int interior) => Active ? Math.Min(global, Math.Min(24, interior)) : global;
         public double ReleaseRadius(double streetRadius, double interiorRadius) => Active ? Radius(streetRadius, interiorRadius) : streetRadius * 1.4;

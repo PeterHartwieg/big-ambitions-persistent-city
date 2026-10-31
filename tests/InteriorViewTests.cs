@@ -152,6 +152,21 @@ public sealed class InteriorViewTests
     }
 
     [Fact]
+    public void AdmissionBufferKeepsTheStrictReleaseRadiusAndLegacyStreetBounds()
+    {
+        var state = new InteriorViewState();
+        Assert.Equal(120, state.AdmissionRadius(120, 60));
+        Assert.Equal(168, state.ReleaseRadius(120, 60));
+        state.Refresh(true, Travel(8), this, 0, Shop);
+        Assert.Equal(50, state.AdmissionRadius(120, 60));
+        Assert.Equal(60, state.ReleaseRadius(120, 60));
+        Assert.True(49.9 <= state.AdmissionRadius(120, 60));
+        Assert.False(59.9 <= state.AdmissionRadius(120, 60));
+        Assert.True(59.9 <= state.ReleaseRadius(120, 60));
+        Assert.False(60.1 <= state.ReleaseRadius(120, 60));
+    }
+
+    [Fact]
     public void InteriorFocusRadiusAndCapsNeverExceedEitherBound()
     {
         var state = new InteriorViewState(); state.Refresh(true, Travel(8), this, 0, Shop);

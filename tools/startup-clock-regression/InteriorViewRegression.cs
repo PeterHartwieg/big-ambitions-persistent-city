@@ -35,6 +35,14 @@ internal static class InteriorViewRegression
         InstanceBehavior<GameManager>.Instance = new GameManager();
         InstanceBehavior<GameManager>.Instance.playerController.transform.position = new Vector3 { x = 900, y = 2, z = 900 };
         InstanceBehavior<UI.UIs>.Instance = new UI.UIs();
+        Check(NativeGameSpeed.Prepare(), "validated native speed reader could not bind");
+        foreach (var speed in new[] { UI.TimeSpeed.Normal, UI.TimeSpeed.Pause, UI.TimeSpeed.FastForward })
+        {
+            InstanceBehavior<UI.UIs>.Instance.gameSpeed.SetForTest(speed);
+            Check(NativeGameSpeed.CurrentFastForward == (speed == UI.TimeSpeed.FastForward), "typed accessor did not read real private field");
+            Check(NativeGameSpeed.CurrentFastForward == NativeGameSpeed.LegacyFastForward, "typed/legacy native speed results differ");
+        }
+        InstanceBehavior<UI.UIs>.Instance.gameSpeed.SetForTest(UI.TimeSpeed.Normal);
         var manager = Shop();
         NativeInteriorCityView.Start(off, logger, () => restored++);
         Check(NativeTravelPace.HiddenTravel && !NativeInteriorCityView.Active, "default must stay hidden inside");
@@ -43,23 +51,31 @@ internal static class InteriorViewRegression
         Check(restored == 0 && logger.Lines.Count == 0, "off subscribed or logged discovery");
         var on = new PrototypeSettings { InteriorCityView = "on" };
         NativeInteriorCityView.Start(on, logger, () => restored++);
+        on.InteriorCityView = "off";
+        Check(NativeInteriorCityView.Configured, "configured bool must be captured at startup");
+        on.InteriorCityView = "on";
+        Time.UnscaledTimeReads = 0;
         Time.frameCount++; Check(!NativeTravelPace.HiddenTravel, "ground floor shop stayed hidden");
         Check(NativeTravelPace.Focus.X == 10 && NativeTravelPace.Focus.Z == 20, "focus must be first entrance, not detached player");
         Check(NativeInteriorCityView.Radius(120) == 60 && NativeInteriorCityView.ReleaseRadius(120) == 60, "strict interior radius");
         Check(logger.Lines.Count == 1 && logger.Lines[0].Contains("(10,1,20)"), "anchor/cap log missing");
         for (int i = 0; i < 1000; i++) Check(NativeInteriorCityView.Active, "cached active changed");
+        Check(Time.UnscaledTimeReads == 1, "full context refresh repeated within a frame");
         Check(logger.Lines.Count == 1, "active log repeated");
         manager.cityBuildingController!.entranceDoors![0].doorTransform!.position = new Vector3 { x = 123, y = 1 };
-        Time.unscaledTime = 2; Check(NativeTravelPace.Focus.X == 10, "entry anchor was not cached");
+        Time.frameCount++; Time.unscaledTime = 2; Check(NativeTravelPace.Focus.X == 10, "entry anchor was not cached");
         manager.exitZones![0].isElevator = true;
-        Time.unscaledTime = 3; Check(NativeInteriorCityView.Active, "eligibility polled more often than two seconds");
-        Time.unscaledTime = 4; Check(NativeTravelPace.HiddenTravel && !NativeInteriorCityView.Active, "elevator must close at refresh");
-        int logCount = logger.Lines.Count; Time.unscaledTime = 10; _ = NativeTravelPace.HiddenTravel;
+        Time.frameCount++; Time.unscaledTime = 3; Check(NativeInteriorCityView.Active, "eligibility polled more often than two seconds");
+        Time.frameCount++; Time.unscaledTime = 4; Check(NativeTravelPace.HiddenTravel && !NativeInteriorCityView.Active, "elevator must close at refresh");
+        int logCount = logger.Lines.Count; Time.frameCount++; Time.unscaledTime = 10; _ = NativeTravelPace.HiddenTravel;
         Check(logger.Lines.Count == logCount, "fallback repeated");
         manager = Shop(); GlobalEvents.Enter(); Time.frameCount++;
         Check(NativeInteriorCityView.Active, "reentry failed");
         BuildingManager.IsInsideBuilding = false; GlobalEvents.Exit();
         Check(restored == 1 && !NativeInteriorCityView.Active, "exit did not restore");
+        int outdoorRestores = restored;
+        UnityEngine.SceneManagement.SceneManager.Unload();
+        Check(restored == outdoorRestores, "auxiliary outdoor scene unload released street bodies");
         manager = Shop(50); GlobalEvents.Enter(); Time.frameCount++;
         Check(NativeInteriorCityView.Active && NativeTravelPace.Focus.X == 50, "second shop retained first anchor");
         NativeInteriorCityView.Suspend(); Check(!NativeInteriorCityView.Active, "save/skip suspension reactivated in same frame");
@@ -72,6 +88,8 @@ internal static class InteriorViewRegression
         Time.frameCount++; Check(NativeInteriorCityView.Active, "time machine resume failed");
         foreach (int cause in new[] { 0, 1, 2, 3, 4 })
         {
+            // A successful query already populated this exact frame's cache.
+            Check(NativeInteriorCityView.Active, "same-frame blocker fixture not active");
             PhysicalTrafficHooks.CurrentFastForward = cause == 0;
             Time.timeScale = cause == 1 ? 6 : 1;
             UI.Load.LoadScene.isLoading = cause == 2;
@@ -120,7 +138,17 @@ internal static class InteriorViewRegression
     {
         Measure("cached active predicate", () => { if (!NativeInteriorCityView.Active) throw new Exception(); });
         Measure("anchor/focus", () => { if (NativeTravelPace.Focus.X != 10) throw new Exception(); });
-        Measure("eligibility refresh (cached floor/anchor)", () => { Time.unscaledTime += 2; if (!NativeInteriorCityView.Active) throw new Exception(); });
+        Measure("eligibility refresh (cached floor/anchor)", () => { Time.frameCount++; Time.unscaledTime += 2; if (!NativeInteriorCityView.Active) throw new Exception(); });
+        Measure("actual validated native speed accessor", () => { if (NativeGameSpeed.CurrentFastForward) throw new Exception(); });
+        BeforeInteriorCityView.Start(new PrototypeSettings { InteriorCityView = "on" }, new Logger(), () => { });
+        try
+        {
+            Measure("pre-r1 Active including real FieldInfo.GetValue", () => { if (!BeforeInteriorCityView.Active) throw new Exception(); });
+            Measure("r1 Active including validated field delegate + frame cache", () => { if (!NativeInteriorCityView.Active) throw new Exception(); });
+            Measure("pre-r1 36 body queries/frame", () => { Time.frameCount++; for (int i=0;i<36;i++) if (!BeforeInteriorCityView.Active) throw new Exception(); }, 100);
+            Measure("r1 36 body queries/frame", () => { Time.frameCount++; for (int i=0;i<36;i++) if (!NativeInteriorCityView.Active) throw new Exception(); }, 100);
+        }
+        finally { BeforeInteriorCityView.Stop(); }
         var floor = InteriorElementsHelper.InteriorElementsCache["floor"];
         InteriorElementsHelper.InteriorElementsCache.Clear();
         for (int i = 0; i < 511; i++) InteriorElementsHelper.InteriorElementsCache.Add(i.ToString(), new InteriorElement { IsFloor = false });

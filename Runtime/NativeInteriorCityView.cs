@@ -21,14 +21,21 @@ namespace PersistentCity.Runtime
         private static Transform? cachedFloor;
         private static Action? restoreBodies;
         private static bool fallbackReported, activeReported;
-        private static int suspendedFrame = -1;
-        public static bool Configured => settings?.InteriorCityView == "on";
+        private static int suspendedFrame = -1, refreshedFrame = -1;
+        public static bool Configured { get; private set; }
 
         public static void Start(PrototypeSettings loaded, IModLogger logger, Action restore)
         {
             Stop();
             settings = loaded; log = logger; restoreBodies = restore;
+            Configured = loaded.InteriorCityView == "on";
             if (!Configured) return;
+            if (!NativeGameSpeed.Prepare())
+            {
+                Configured = false;
+                log.Warn("InteriorCityView hidden fallback: native speed accessor unavailable; feature disabled for this city.");
+                return;
+            }
             GlobalEvents.onEnterBuilding += OnBuildingChanged;
             GlobalEvents.onExitBuilding += OnBuildingChanged;
             GlobalEvents.onTimeMachineStarted += OnTimeMachineStarted;
@@ -36,6 +43,7 @@ namespace PersistentCity.Runtime
         }
         private static void OnSceneUnloaded(Scene scene)
         {
+            if (!State.Active && !BuildingManager.IsInsideBuilding) return;
             try { restoreBodies?.Invoke(); }
             finally { ResetEntry(); Suspend(); }
         }
@@ -54,6 +62,7 @@ namespace PersistentCity.Runtime
         {
             State.Reset(); building = null; layout = null; cachedAnchor = null; cachedFloor = null;
             fallbackReported = activeReported = false;
+            refreshedFrame = -1;
         }
         public static void Stop()
         {
@@ -61,10 +70,10 @@ namespace PersistentCity.Runtime
             GlobalEvents.onExitBuilding -= OnBuildingChanged;
             GlobalEvents.onTimeMachineStarted -= OnTimeMachineStarted;
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
-            ResetEntry(); settings = null; log = null; restoreBodies = null; suspendedFrame = -1;
+            ResetEntry(); settings = null; log = null; restoreBodies = null; suspendedFrame = -1; Configured = false;
         }
-        public static void Suspend() { State.Suspend(); suspendedFrame = Time.frameCount; }
-        public static void FailClosed() { State.FailClosed(); suspendedFrame = Time.frameCount; }
+        public static void Suspend() { State.Suspend(); suspendedFrame = Time.frameCount; refreshedFrame = -1; }
+        public static void FailClosed() { State.FailClosed(); suspendedFrame = Time.frameCount; refreshedFrame = -1; }
 
         public static bool Active
         {
@@ -76,14 +85,20 @@ namespace PersistentCity.Runtime
             try
             {
                 var travel = NativeTravelPace.Visibility;
+                // Only these non-reflective safety reads repeat within a frame: blockers may
+                // change after an earlier body query, before Unity increments frameCount.
+                if (travel.OtherHidden) { Suspend(); return; }
                 var manager = InstanceBehavior<BuildingManager>.Instance;
-                if (!travel.Inside || manager == null || manager.building == null) { ResetEntry(); return; }
+                if (!travel.Inside || manager == null || manager.building == null)
+                { if (building != null || State.Active) ResetEntry(); return; }
+                if (suspendedFrame == Time.frameCount || manager.enteringBuilding || manager.exitingBuilding)
+                { State.Suspend(); return; }
+                if (refreshedFrame == Time.frameCount) return;
                 if (!ReferenceEquals(building, manager.building) || layout != manager.currentBuildingVersion)
                 {
                     ResetEntry(); building = manager.building; layout = manager.currentBuildingVersion;
                 }
-                if (suspendedFrame == Time.frameCount || manager.enteringBuilding || manager.exitingBuilding)
-                { State.Suspend(); return; }
+                refreshedFrame = Time.frameCount;
                 State.Refresh(true, travel, building, Time.unscaledTime, ReadEligibility);
                 if (State.Active && !activeReported)
                 {
@@ -146,6 +161,7 @@ namespace PersistentCity.Runtime
             return InteriorViewEligibility.Check(shop, elevator, cachedAnchor.Value, floor);
         }
         public static double Radius(double street) => State.Radius(street, settings?.InteriorViewRadiusMetres ?? 60);
+        public static double AdmissionRadius(double street) => State.AdmissionRadius(street, settings?.InteriorViewRadiusMetres ?? 60);
         public static double ReleaseRadius(double street) => State.ReleaseRadius(street, settings?.InteriorViewRadiusMetres ?? 60);
         public static int Pedestrians(int global) => State.Pedestrians(global, settings?.InteriorMaximumPedestrians ?? 24);
         public static int Vehicles(int global) => State.Vehicles(global, settings?.InteriorMaximumVehicles ?? 12);

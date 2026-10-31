@@ -11,7 +11,7 @@ def generate(root: Path, between):
     vehicles = (root / 'Runtime/PhysicalVehicles.cs').read_text()
     mod = (root / 'Runtime/PersistentCityMod.cs').read_text()
     hooks = (root / 'Runtime/PhysicalTrafficHooks.cs').read_text()
-    hidden = between(travel, '        public static bool HiddenTravel =>', '        public static Position Focus')
+    hidden = between(travel, '        public static bool FastForward =>', '        public static Position Focus')
     ready = between(vehicles, '        private static bool NativeReady =>', '        internal PhysicalVehicleBody? Owned(').replace('private static', 'public static')
     pause = between(pedestrians, '            bool pause =', '            Agent.isStopped =')
     construct = between(mod, 'if (settings.PhysicalEnabled &&', '\n                {')
@@ -28,6 +28,7 @@ def generate(root: Path, between):
     assert 'finally { NativeInteriorCityView.Suspend(); }' in mod
     assert 'NativeInteriorCityView.Stop();' in between(mod, '        private void Detach()', '        public void Shutdown()')
     assert 'physical = new PhysicalPopulation' in mod
+    assert 'double radius = NativeInteriorCityView.AdmissionRadius(this.radius);' in population
     assert 'vehicles.SuspendForNativeFastForward = SuspendBeforeNativeFastForward;' in population
     assert 'SuspendForNativeFastForward();' in between(vehicles, '        internal void BeforeNativeFastForward()', '        internal static Position Point(')
     return '''namespace F0Wiring {
@@ -41,6 +42,7 @@ static class LoadScene { public static bool isLoading; }
 static class BuildingManager { public static bool IsInsideBuilding; }
 static class UndergroundParkingManager { public static bool IsInsideParking; }
 static class PhysicalTrafficHooks { public static bool CurrentFastForward; }
+static class NativeGameSpeed { public static bool CurrentFastForward => PhysicalTrafficHooks.CurrentFastForward; }
 class InstanceBehavior<T> where T:new() { public static T Instance = new(); }
 class UIs { public Machine timeMachine = new(); public Speed gameSpeed=new(); }
 class Machine { public bool isRunning; }
@@ -54,8 +56,10 @@ static class NativeInteriorCityView {
  public static List<string> Events=new();
  public static void Suspend() { Events.Add("restore"); State.Suspend(); }
  public static double Radius(double r) => State.Radius(r,60);
+ public static double AdmissionRadius(double r) => State.AdmissionRadius(r,60);
  public static double ReleaseRadius(double r) => State.ReleaseRadius(r,60);
- public static int Pedestrians(int n) => State.Pedestrians(n,24);
+ public static int InteriorPeople=24;
+ public static int Pedestrians(int n) => State.Pedestrians(n,InteriorPeople);
  public static int Vehicles(int n) => State.Vehicles(n,12);
 }
 static class NativeTravelPace {
@@ -70,7 +74,7 @@ static class Gates {
 class Body { public Position Position; }
 class Identity { public string Id=""; }
 class Citizen { public Identity Identity=new(); }
-class Binding { public Citizen Citizen=new(); public Body? Person, Car; }
+class Binding { public Citizen Citizen=new(); public Body? Person, Car; public bool Observed=true, Arriving; }
 class Vehicles { public void AssertHealthy() {} }
 class Ambient { public bool IsReserved(string id) => false; }
 class Fixture {
@@ -81,8 +85,8 @@ class Fixture {
  public List<Binding>? bindingSnapshot=new();
  public double radius=120; public int pedestrianLimit=48,vehicleLimit=24;
  public void ObserveForSave() { NativeInteriorCityView.Events.Add("observe"); if(ThrowObserve)throw new Exception("observe"); }
- public bool Observe(Binding b)=>true;
- public bool TryAwaitArrival(Binding b)=>false;
+ public bool Observe(Binding b)=>b.Observed;
+ public bool TryAwaitArrival(Binding b)=>b.Arriving;
  public void Release(Binding b) { bindings.Remove(b.Citizen.Identity.Id); NativeInteriorCityView.Events.Add("release"); if(b.Citizen.Identity.Id==ThrowRelease)throw new Exception("release"); }
  public void Add(int people, int cars, double distance=10) {
  for(int i=0;i<people+cars;i++) { var b=new Binding(); b.Citizen.Identity.Id=i.ToString(); var body=new Body{Position=new(distance,0,0)}; if(i<people)b.Person=body;else b.Car=body;bindings.Add(b.Citizen.Identity.Id,b); }

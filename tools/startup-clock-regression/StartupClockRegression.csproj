@@ -4,6 +4,7 @@
     <ProjectReference Include="../../Core/PersistentCity.Core.csproj" />
     <ProjectReference Include="../../Persistence/PersistentCity.Persistence.csproj" />
     <Compile Include="../../Runtime/NativeTravelPace.cs" />
+    <Compile Include="../../Runtime/NativeGameSpeed.cs" />
     <Compile Include="../../Runtime/NativeInteriorCityView.cs" />
     <Compile Include="../../Runtime/InteriorViewState.cs" />
     <Compile Include="../../Runtime/PrototypeSettings.cs" />

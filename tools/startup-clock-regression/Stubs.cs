@@ -2,7 +2,13 @@ using System;
 using System.Reflection;
 namespace UnityEngine
 {
-    public static class Time { public static int frameCount; public static float unscaledTime; public static float deltaTime = 1, timeScale = 1; }
+    public static class Time
+    {
+        public static int frameCount, UnscaledTimeReads;
+        private static float unscaled;
+        public static float unscaledTime { get { UnscaledTimeReads++; return unscaled; } set { unscaled=value; } }
+        public static float deltaTime = 1, timeScale = 1;
+    }
     public struct Vector3 { public float x, y, z; }
     public sealed class Transform
     {
@@ -63,13 +69,31 @@ namespace BigAmbitions.InteriorDesigner.InteriorElements
         public static readonly System.Collections.Generic.Dictionary<string, InteriorElement> InteriorElementsCache = new System.Collections.Generic.Dictionary<string, InteriorElement>();
     }
 }
-namespace UI { public sealed class UIs { public TimeMachine timeMachine = new TimeMachine(); } public sealed class TimeMachine { public bool isRunning; } }
+namespace UI
+{
+    public enum TimeSpeed { Normal, Pause, FastForward }
+    public sealed class GameSpeed { public TimeSpeed speed; }
+    public sealed class GameSpeedController
+    {
+        private GameSpeed currentGameSpeed = new GameSpeed();
+        public void SetForTest(TimeSpeed speed) { currentGameSpeed = new GameSpeed { speed=speed }; }
+    }
+    public sealed class UIs { public TimeMachine timeMachine = new TimeMachine(); public GameSpeedController gameSpeed = new GameSpeedController(); }
+    public sealed class TimeMachine { public bool isRunning; }
+}
 namespace UI.Load { public static class LoadScene { public static bool isLoading; } }
 namespace Parking.UndergroundParking { public static class UndergroundParkingManager { public static bool IsInsideParking; } }
 namespace PersistentCity.Runtime
 {
     internal static class NativeCityClock { public static bool Active; public static double Factor = 1; }
-    internal static class PhysicalTrafficHooks { public static bool CurrentFastForward = false; }
+    internal static class PhysicalTrafficHooks
+    {
+        public static bool CurrentFastForward
+        {
+            get => NativeGameSpeed.LegacyFastForward;
+            set => InstanceBehavior<UI.UIs>.Instance!.gameSpeed.SetForTest(value ? UI.TimeSpeed.FastForward : UI.TimeSpeed.Normal);
+        }
+    }
     internal static class GamePlaces { public static bool IsRetailShopActivity(string type) => type != "school"; }
 }
 namespace HarmonyLib
@@ -84,6 +108,7 @@ namespace HarmonyLib
     public sealed class HarmonyMethod { public HarmonyMethod(Type type, string name) { } }
     public static class AccessTools
     {
+        public static FieldInfo? Field(Type type, string name) => type.GetField(name, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
         public static MethodInfo? Method(Type type, string name, Type[] parameters) => type.GetMethod(name, parameters);
     }
 }

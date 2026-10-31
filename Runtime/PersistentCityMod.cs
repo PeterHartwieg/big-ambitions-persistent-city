@@ -297,7 +297,7 @@ namespace PersistentCity.Runtime
                 maxClosureMilliseconds = Math.Max(maxClosureMilliseconds, closureElapsed);
                 RecordRoutingFrame(prepareElapsed, closureElapsed, true);
                 AdvancePopulation(Math.Max(target, simulation.State.Minute));
-                if (settings.PhysicalEnabled && !physicalFailed && physical == null && !NativeTravelPace.HiddenTravel)
+                if (settings.PhysicalEnabled && !physicalFailed && physical == null && !BuildingManager.IsInsideBuilding && !NativeTravelPace.HiddenTravel)
                 {
                     try { physical = new PhysicalPopulation(transform, simulation, routes!, dependency!, log!, settings.MaximumPedestrians, settings.MaximumVehicles, settings.PhysicalRadiusMetres, dwellSpots); }
                     catch (Exception error)

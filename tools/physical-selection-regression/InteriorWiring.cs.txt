@@ -8,6 +8,7 @@ static class Tests {
  }
  static void On() {
   Flags(8); NativeInteriorCityView.Configured=true; NativeInteriorCityView.State.Reset();
+  NativeInteriorCityView.InteriorPeople=24;
   NativeInteriorCityView.State.Refresh(true,new(false,false,false,true,false,false),new object(),0,
    ()=>InteriorViewEligibility.Check(true,false,default,0));
   NativeInteriorCityView.Events.Clear();
@@ -41,7 +42,19 @@ static class Tests {
   Check(save.bindings.Count==0,"save retained interior bodies after hidden predicate already closed");
   On(); var caps=new Fixture(); caps.Add(48,24); caps.UpdateBodies();
   Check(caps.bindings.Values.Count(b=>b.Person!=null)==24&&caps.bindings.Values.Count(b=>b.Car!=null)==12,"existing street bindings exceed interior caps");
-  Check(Gates.Construct(new PrototypeSettings(),false,null),"construction on inside blocked");
+  On();var arrival=new Fixture();arrival.Add(1,0);arrival.bindings["0"].Observed=false;arrival.bindings["0"].Arriving=true;
+  NativeInteriorCityView.InteriorPeople=0;arrival.UpdateBodies();Check(arrival.bindings.Count==0,"arrival bypassed zero interior cap");
+  On();arrival=new Fixture();arrival.Add(25,0);arrival.bindings["24"].Observed=false;arrival.bindings["24"].Arriving=true;
+  arrival.UpdateBodies();Check(arrival.bindings.Count==24&&!arrival.bindings.ContainsKey("24"),"arrival bypassed exhausted interior cap");
+  On();arrival=new Fixture();arrival.Add(1,0,61);arrival.bindings["0"].Observed=false;arrival.bindings["0"].Arriving=true;
+  arrival.UpdateBodies();Check(arrival.bindings.Count==0,"arrival bypassed strict interior radius");
+  On();arrival=new Fixture();arrival.Add(1,0,59);arrival.bindings["0"].Observed=false;arrival.bindings["0"].Arriving=true;
+  arrival.UpdateBodies();Check(arrival.bindings.Count==1,"valid interior arrival lost its body");
+  Flags(0);NativeInteriorCityView.Configured=false;NativeInteriorCityView.State.Reset();arrival=new Fixture();arrival.Add(1,0,200);
+  arrival.bindings["0"].Observed=false;arrival.bindings["0"].Arriving=true;arrival.UpdateBodies();
+  Check(arrival.bindings.Count==1,"legacy off arrival handoff changed");
+  On();Check(!Gates.Construct(new PrototypeSettings(),false,null),"F0 must wait outside for first physical construction");
+  Check(NativeInteriorCityView.AdmissionRadius(120)==50&&NativeInteriorCityView.ReleaseRadius(120)==60,"interior admission must leave a buffer inside strict release radius");
   caps=new Fixture();caps.Add(1,1,61);caps.UpdateBodies();Check(caps.bindings.Count==0,"interior retained radius hysteresis beyond 60m");
   On(); caps=new Fixture();caps.Add(1,1,59);caps.UpdateBodies();Check(caps.bindings.Count==2,"near entrance bodies were released");
   foreach(bool fail in new[]{false,true}) {
