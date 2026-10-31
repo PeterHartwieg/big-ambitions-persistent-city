@@ -1,207 +1,207 @@
-{
-  "role": "rig_test",
-  "measuredNormalPlaySpikes": "See performance-summary.json; every >=30 ms sample has frame/phase there.",
-  "routingLowerBounds": [
-    {
-      "run": "base-A",
-      "unityFrame": 1142,
-      "realtime": 33.564,
-      "phase": "routing preparation/closure",
-      "window": "outside primary: startup/load/setup",
-      "minimumObservedModCostMs": 105.977,
-      "preparationMs": 105.977,
-      "closureMs": 0.0
-    },
-    {
-      "run": "base-A",
-      "unityFrame": 77849,
-      "realtime": 984.36,
-      "phase": "routing preparation/closure",
-      "window": "outside primary: startup/load/setup",
-      "minimumObservedModCostMs": 140.609,
-      "preparationMs": 140.609,
-      "closureMs": 0.0
-    },
-    {
-      "run": "base-B",
-      "unityFrame": 1241,
-      "realtime": 34.214,
-      "phase": "routing preparation/closure",
-      "window": "outside primary: startup/load/setup",
-      "minimumObservedModCostMs": 94.403,
-      "preparationMs": 94.403,
-      "closureMs": 0.0
-    },
-    {
-      "run": "base-B",
-      "unityFrame": 2310,
-      "realtime": 67.288,
-      "phase": "routing preparation/closure",
-      "window": "outside primary: startup/load/setup",
-      "minimumObservedModCostMs": 95.431,
-      "preparationMs": 95.431,
-      "closureMs": 0.0
-    },
-    {
-      "run": "base1-prep",
-      "unityFrame": 1537,
-      "realtime": 41.388,
-      "phase": "routing preparation/closure",
-      "window": "outside primary: startup/load/setup",
-      "minimumObservedModCostMs": 105.643,
-      "preparationMs": 105.643,
-      "closureMs": 0.0
-    },
-    {
-      "run": "cand-off",
-      "unityFrame": 1137,
-      "realtime": 37.703,
-      "phase": "routing preparation/closure",
-      "window": "outside primary: startup/load/setup",
-      "minimumObservedModCostMs": 198.828,
-      "preparationMs": 198.828,
-      "closureMs": 0.0
-    },
-    {
-      "run": "cand-off",
-      "unityFrame": 3595,
-      "realtime": 138.359,
-      "phase": "routing preparation/closure",
-      "window": "outside primary: startup/load/setup",
-      "minimumObservedModCostMs": 110.162,
-      "preparationMs": 110.162,
-      "closureMs": 0.0
-    },
-    {
-      "run": "cand-on-functional-1",
-      "unityFrame": 1177,
-      "realtime": 35.127,
-      "phase": "routing preparation/closure",
-      "window": "outside primary: startup/load/setup",
-      "minimumObservedModCostMs": 100.941,
-      "preparationMs": 100.941,
-      "closureMs": 0.0
-    },
-    {
-      "run": "cand-on-functional-1",
-      "unityFrame": 2344,
-      "realtime": 67.474,
-      "phase": "routing preparation/closure",
-      "window": "outside primary: startup/load/setup",
-      "minimumObservedModCostMs": 86.568,
-      "preparationMs": 86.568,
-      "closureMs": 0.0
-    },
-    {
-      "run": "cand-on-functional-1",
-      "unityFrame": 87554,
-      "realtime": 1127.026,
-      "phase": "routing preparation/closure",
-      "window": "outside primary: startup/load/setup",
-      "minimumObservedModCostMs": 108.073,
-      "preparationMs": 108.073,
-      "closureMs": 0.0
-    },
-    {
-      "run": "cand-on-restored",
-      "unityFrame": 1061,
-      "realtime": 33.758,
-      "phase": "routing preparation/closure",
-      "window": "outside primary: startup/load/setup",
-      "minimumObservedModCostMs": 100.094,
-      "preparationMs": 100.094,
-      "closureMs": 0.0
-    },
-    {
-      "run": "cand-on-restored",
-      "unityFrame": 11267,
-      "realtime": 351.707,
-      "phase": "routing preparation/closure",
-      "window": "outside primary: startup/load/setup",
-      "minimumObservedModCostMs": 112.804,
-      "preparationMs": 112.804,
-      "closureMs": 0.0
-    },
-    {
-      "run": "cand-on-restored",
-      "unityFrame": 12544,
-      "realtime": 405.636,
-      "phase": "routing preparation/closure",
-      "window": "outside primary: startup/load/setup",
-      "minimumObservedModCostMs": 90.259,
-      "preparationMs": 90.259,
-      "closureMs": 0.0
-    },
-    {
-      "run": "cand-on-restored",
-      "unityFrame": 12579,
-      "realtime": 406.141,
-      "phase": "routing preparation/closure",
-      "window": "outside primary: startup/load/setup",
-      "minimumObservedModCostMs": 32.495,
-      "preparationMs": 32.495,
-      "closureMs": 0.0
-    },
-    {
-      "run": "cand-on-restored",
-      "unityFrame": 30550,
-      "realtime": 630.331,
-      "phase": "routing preparation/closure",
-      "window": "outside primary: startup/load/setup",
-      "minimumObservedModCostMs": 94.539,
-      "preparationMs": 94.539,
-      "closureMs": 0.0
-    },
-    {
-      "run": "cand-on-restored",
-      "unityFrame": 31807,
-      "realtime": 683.557,
-      "phase": "routing preparation/closure",
-      "window": "outside primary: startup/load/setup",
-      "minimumObservedModCostMs": 90.465,
-      "preparationMs": 90.465,
-      "closureMs": 0.0
-    },
-    {
-      "run": "cand-tiny",
-      "unityFrame": 949,
-      "realtime": 44.016,
-      "phase": "routing preparation/closure",
-      "window": "outside primary: startup/load/setup",
-      "minimumObservedModCostMs": 212.089,
-      "preparationMs": 212.089,
-      "closureMs": 0.0
-    },
-    {
-      "run": "cand-zero",
-      "unityFrame": 1054,
-      "realtime": 44.48,
-      "phase": "routing preparation/closure",
-      "window": "outside primary: startup/load/setup",
-      "minimumObservedModCostMs": 148.651,
-      "preparationMs": 148.651,
-      "closureMs": 0.0
-    }
-  ],
-  "unmappedAdvanceSummaries": [
-    {
-      "run": "base-A",
-      "phase": "background advancement summary",
-      "window": "outside primary / broad log summary, no frame mapping",
-      "maximumAdvanceMs": 39.953
-    },
-    {
-      "run": "cand-off",
-      "phase": "background advancement summary",
-      "window": "outside primary / broad log summary, no frame mapping",
-      "maximumAdvanceMs": 31.174
-    },
-    {
-      "run": "cand-zero",
-      "phase": "background advancement summary",
-      "window": "outside primary / broad log summary, no frame mapping",
-      "maximumAdvanceMs": 36.806
-    }
-  ],
-  "scope": "These are logged component costs outside primary windows, not complete per-frame totals. Cold native preparation, time jumps and test diagnostics are separate from the normal-play p95 gate."
+{
+  "role": "rig_test",
+  "measuredNormalPlaySpikes": "See performance-summary.json; every >=30 ms sample has frame/phase there.",
+  "routingLowerBounds": [
+    {
+      "run": "base-A",
+      "unityFrame": 1142,
+      "realtime": 33.564,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/setup",
+      "minimumObservedModCostMs": 105.977,
+      "preparationMs": 105.977,
+      "closureMs": 0.0
+    },
+    {
+      "run": "base-A",
+      "unityFrame": 77849,
+      "realtime": 984.36,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/setup",
+      "minimumObservedModCostMs": 140.609,
+      "preparationMs": 140.609,
+      "closureMs": 0.0
+    },
+    {
+      "run": "base-B",
+      "unityFrame": 1241,
+      "realtime": 34.214,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/setup",
+      "minimumObservedModCostMs": 94.403,
+      "preparationMs": 94.403,
+      "closureMs": 0.0
+    },
+    {
+      "run": "base-B",
+      "unityFrame": 2310,
+      "realtime": 67.288,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/setup",
+      "minimumObservedModCostMs": 95.431,
+      "preparationMs": 95.431,
+      "closureMs": 0.0
+    },
+    {
+      "run": "base1-prep",
+      "unityFrame": 1537,
+      "realtime": 41.388,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/setup",
+      "minimumObservedModCostMs": 105.643,
+      "preparationMs": 105.643,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand-off",
+      "unityFrame": 1137,
+      "realtime": 37.703,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/setup",
+      "minimumObservedModCostMs": 198.828,
+      "preparationMs": 198.828,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand-off",
+      "unityFrame": 3595,
+      "realtime": 138.359,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/setup",
+      "minimumObservedModCostMs": 110.162,
+      "preparationMs": 110.162,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand-on-functional-1",
+      "unityFrame": 1177,
+      "realtime": 35.127,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/setup",
+      "minimumObservedModCostMs": 100.941,
+      "preparationMs": 100.941,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand-on-functional-1",
+      "unityFrame": 2344,
+      "realtime": 67.474,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/setup",
+      "minimumObservedModCostMs": 86.568,
+      "preparationMs": 86.568,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand-on-functional-1",
+      "unityFrame": 87554,
+      "realtime": 1127.026,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/setup",
+      "minimumObservedModCostMs": 108.073,
+      "preparationMs": 108.073,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand-on-restored",
+      "unityFrame": 1061,
+      "realtime": 33.758,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/setup",
+      "minimumObservedModCostMs": 100.094,
+      "preparationMs": 100.094,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand-on-restored",
+      "unityFrame": 11267,
+      "realtime": 351.707,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/setup",
+      "minimumObservedModCostMs": 112.804,
+      "preparationMs": 112.804,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand-on-restored",
+      "unityFrame": 12544,
+      "realtime": 405.636,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/setup",
+      "minimumObservedModCostMs": 90.259,
+      "preparationMs": 90.259,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand-on-restored",
+      "unityFrame": 12579,
+      "realtime": 406.141,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/setup",
+      "minimumObservedModCostMs": 32.495,
+      "preparationMs": 32.495,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand-on-restored",
+      "unityFrame": 30550,
+      "realtime": 630.331,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/setup",
+      "minimumObservedModCostMs": 94.539,
+      "preparationMs": 94.539,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand-on-restored",
+      "unityFrame": 31807,
+      "realtime": 683.557,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/setup",
+      "minimumObservedModCostMs": 90.465,
+      "preparationMs": 90.465,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand-tiny",
+      "unityFrame": 949,
+      "realtime": 44.016,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/setup",
+      "minimumObservedModCostMs": 212.089,
+      "preparationMs": 212.089,
+      "closureMs": 0.0
+    },
+    {
+      "run": "cand-zero",
+      "unityFrame": 1054,
+      "realtime": 44.48,
+      "phase": "routing preparation/closure",
+      "window": "outside primary: startup/load/setup",
+      "minimumObservedModCostMs": 148.651,
+      "preparationMs": 148.651,
+      "closureMs": 0.0
+    }
+  ],
+  "unmappedAdvanceSummaries": [
+    {
+      "run": "base-A",
+      "phase": "background advancement summary",
+      "window": "outside primary / broad log summary, no frame mapping",
+      "maximumAdvanceMs": 39.953
+    },
+    {
+      "run": "cand-off",
+      "phase": "background advancement summary",
+      "window": "outside primary / broad log summary, no frame mapping",
+      "maximumAdvanceMs": 31.174
+    },
+    {
+      "run": "cand-zero",
+      "phase": "background advancement summary",
+      "window": "outside primary / broad log summary, no frame mapping",
+      "maximumAdvanceMs": 36.806
+    }
+  ],
+  "scope": "These are logged component costs outside primary windows, not complete per-frame totals. Cold native preparation, time jumps and test diagnostics are separate from the normal-play p95 gate."
 }

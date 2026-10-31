@@ -1,377 +1,377 @@
-{
-  "nativeMethod": "Void SkipTime(System.String, Boolean)",
-  "result": null,
-  "before": {
-    "frame": 86188,
-    "seconds": 1086.7135,
-    "day": 5,
-    "hour": 11,
-    "minute": 45.2226524,
-    "timeScale": 1.0,
-    "inside": true,
-    "entering": false,
-    "exiting": false,
-    "address": "ba:street_thirdstreet 30",
-    "size": "ba:buildingsize_a",
-    "version": 1,
-    "elevator": false,
-    "floor": 0.0,
-    "configured": true,
-    "viewActive": true,
-    "fallback": "None",
-    "anchor": {
-      "X": 230.2625732421875,
-      "Y": 0.09000015258789062,
-      "Z": 21.2783203125,
-      "IsFinite": true
-    },
-    "revision": 5,
-    "hidden": false,
-    "physical": true,
-    "diagnostics": "physical=True, pedestrians=20, cars=0, acquired=160, released=140, blockedSamples=329013, unavailable=451, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=pc:506:native availability:",
-    "bindings": [
-      {
-        "id": "pc:285",
-        "kind": "pedestrian",
-        "position": {
-          "X": 229.79412841796875,
-          "Y": 0.09000015258789062,
-          "Z": 22.693260192871094,
-          "IsFinite": true
-        },
-        "body": 159,
-        "nativeId": -2144550,
-        "valid": true,
-        "progress": null
-      },
-      {
-        "id": "c325",
-        "kind": "pedestrian",
-        "position": {
-          "X": 229.77145385742188,
-          "Y": 0.09000015258789062,
-          "Z": 25.286056518554688,
-          "IsFinite": true
-        },
-        "body": 158,
-        "nativeId": -2145974,
-        "valid": true,
-        "progress": null
-      },
-      {
-        "id": "pc:531",
-        "kind": "pedestrian",
-        "position": {
-          "X": 246.14523315429688,
-          "Y": 0.09000396728515625,
-          "Z": -10.875679016113281,
-          "IsFinite": true
-        },
-        "body": 157,
-        "nativeId": -2147412,
-        "valid": true,
-        "progress": null
-      },
-      {
-        "id": "pc:169",
-        "kind": "pedestrian",
-        "position": {
-          "X": 229.40341186523438,
-          "Y": 0.09000015258789062,
-          "Z": 50.742950439453125,
-          "IsFinite": true
-        },
-        "body": 156,
-        "nativeId": -2148840,
-        "valid": true,
-        "progress": null
-      },
-      {
-        "id": "c334",
-        "kind": "pedestrian",
-        "position": {
-          "X": 201.55413818359375,
-          "Y": 0.09485114365816116,
-          "Z": -11.241767883300781,
-          "IsFinite": true
-        },
-        "body": 155,
-        "nativeId": -2150280,
-        "valid": true,
-        "progress": null
-      },
-      {
-        "id": "pc:242",
-        "kind": "pedestrian",
-        "position": {
-          "X": 229.52328491210938,
-          "Y": 0.09000015258789062,
-          "Z": 5.7196502685546875,
-          "IsFinite": true
-        },
-        "body": 153,
-        "nativeId": -2151720,
-        "valid": true,
-        "progress": null
-      },
-      {
-        "id": "pc:82",
-        "kind": "pedestrian",
-        "position": {
-          "X": 229.05801391601562,
-          "Y": 0.09000015258789062,
-          "Z": 35.9575309753418,
-          "IsFinite": true
-        },
-        "body": 152,
-        "nativeId": -2153156,
-        "valid": true,
-        "progress": null
-      },
-      {
-        "id": "c177",
-        "kind": "pedestrian",
-        "position": {
-          "X": 236.17364501953125,
-          "Y": 0.09000396728515625,
-          "Z": -10.339889526367188,
-          "IsFinite": true
-        },
-        "body": 151,
-        "nativeId": -2154592,
-        "valid": true,
-        "progress": null
-      },
-      {
-        "id": "pc:88",
-        "kind": "pedestrian",
-        "position": {
-          "X": 229.99661254882812,
-          "Y": 0.09000015258789062,
-          "Z": 1.15472412109375,
-          "IsFinite": true
-        },
-        "body": 150,
-        "nativeId": -2156016,
-        "valid": true,
-        "progress": null
-      },
-      {
-        "id": "c241",
-        "kind": "pedestrian",
-        "position": {
-          "X": 229.42153930664062,
-          "Y": 0.09000015258789062,
-          "Z": -0.9244308471679688,
-          "IsFinite": true
-        },
-        "body": 149,
-        "nativeId": -2157444,
-        "valid": true,
-        "progress": null
-      },
-      {
-        "id": "c327",
-        "kind": "pedestrian",
-        "position": {
-          "X": 228.89047241210938,
-          "Y": 0.09000015258789062,
-          "Z": 18.582979202270508,
-          "IsFinite": true
-        },
-        "body": 148,
-        "nativeId": -2158936,
-        "valid": true,
-        "progress": null
-      },
-      {
-        "id": "pc:8",
-        "kind": "pedestrian",
-        "position": {
-          "X": 229.83349609375,
-          "Y": 0.09000015258789062,
-          "Z": 17.185134887695312,
-          "IsFinite": true
-        },
-        "body": 147,
-        "nativeId": -2160380,
-        "valid": true,
-        "progress": null
-      },
-      {
-        "id": "pc:102",
-        "kind": "pedestrian",
-        "position": {
-          "X": 221.74740600585938,
-          "Y": 0.027027573436498642,
-          "Z": -11.255477905273438,
-          "IsFinite": true
-        },
-        "body": 146,
-        "nativeId": -2161820,
-        "valid": true,
-        "progress": null
-      },
-      {
-        "id": "c313",
-        "kind": "pedestrian",
-        "position": {
-          "X": 245.3507080078125,
-          "Y": 0.09000396728515625,
-          "Z": -10.901893615722656,
-          "IsFinite": true
-        },
-        "body": 145,
-        "nativeId": -2163356,
-        "valid": true,
-        "progress": null
-      },
-      {
-        "id": "c347",
-        "kind": "pedestrian",
-        "position": {
-          "X": 222.1468048095703,
-          "Y": 0.024532528594136238,
-          "Z": -9.522392272949219,
-          "IsFinite": true
-        },
-        "body": 144,
-        "nativeId": -2164800,
-        "valid": true,
-        "progress": null
-      },
-      {
-        "id": "pc:464",
-        "kind": "pedestrian",
-        "position": {
-          "X": 230.03594970703125,
-          "Y": 0.09000015258789062,
-          "Z": 9.190826416015625,
-          "IsFinite": true
-        },
-        "body": 143,
-        "nativeId": -2166248,
-        "valid": true,
-        "progress": null
-      },
-      {
-        "id": "pc:489",
-        "kind": "pedestrian",
-        "position": {
-          "X": 209.58990478515625,
-          "Y": 0.09177765250205994,
-          "Z": -10.193534851074219,
-          "IsFinite": true
-        },
-        "body": 142,
-        "nativeId": -2167676,
-        "valid": true,
-        "progress": null
-      },
-      {
-        "id": "pc:400",
-        "kind": "pedestrian",
-        "position": {
-          "X": 240.06451416015625,
-          "Y": 0.09000396728515625,
-          "Z": -10.712600708007812,
-          "IsFinite": true
-        },
-        "body": 141,
-        "nativeId": -2169112,
-        "valid": true,
-        "progress": null
-      },
-      {
-        "id": "c47",
-        "kind": "pedestrian",
-        "position": {
-          "X": 215.34011840820312,
-          "Y": 0.02190927416086197,
-          "Z": -13.100055694580078,
-          "IsFinite": true
-        },
-        "body": 140,
-        "nativeId": -2170540,
-        "valid": true,
-        "progress": null
-      },
-      {
-        "id": "pc:74",
-        "kind": "pedestrian",
-        "position": {
-          "X": 226.7751922607422,
-          "Y": 0.04968157410621643,
-          "Z": -11.696365356445312,
-          "IsFinite": true
-        },
-        "body": 139,
-        "nativeId": -2171992,
-        "valid": true,
-        "progress": null
-      }
-    ],
-    "acquired": 160,
-    "released": 140,
-    "attempted": 92,
-    "citizens": 957,
-    "ids": null,
-    "failed": false,
-    "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
-    "payload": {},
-    "nativePeople": [],
-    "nativeCars": [],
-    "lighting": {
-      "ambientIntensity": 1.0,
-      "ambientMode": "Skybox",
-      "fog": false,
-      "volumeObjects": []
-    }
-  },
-  "after": {
-    "frame": 86188,
-    "seconds": 1086.7135,
-    "day": 5,
-    "hour": 11,
-    "minute": 45.2226524,
-    "timeScale": 1.0,
-    "inside": true,
-    "entering": false,
-    "exiting": false,
-    "address": "ba:street_thirdstreet 30",
-    "size": "ba:buildingsize_a",
-    "version": 1,
-    "elevator": false,
-    "floor": 0.0,
-    "configured": true,
-    "viewActive": false,
-    "fallback": "None",
-    "anchor": {
-      "X": 0.0,
-      "Y": 0.0,
-      "Z": 0.0,
-      "IsFinite": true
-    },
-    "revision": 6,
-    "hidden": true,
-    "physical": true,
-    "diagnostics": "physical=True, pedestrians=0, cars=0, acquired=160, released=160, blockedSamples=329032, unavailable=451, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=pc:506:native availability:",
-    "bindings": [],
-    "acquired": 160,
-    "released": 160,
-    "attempted": 92,
-    "citizens": 957,
-    "ids": null,
-    "failed": false,
-    "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
-    "payload": {},
-    "nativePeople": [],
-    "nativeCars": [],
-    "lighting": {
-      "ambientIntensity": 1.0,
-      "ambientMode": "Skybox",
-      "fog": false,
-      "volumeObjects": []
-    }
-  }
+{
+  "nativeMethod": "Void SkipTime(System.String, Boolean)",
+  "result": null,
+  "before": {
+    "frame": 86188,
+    "seconds": 1086.7135,
+    "day": 5,
+    "hour": 11,
+    "minute": 45.2226524,
+    "timeScale": 1.0,
+    "inside": true,
+    "entering": false,
+    "exiting": false,
+    "address": "ba:street_thirdstreet 30",
+    "size": "ba:buildingsize_a",
+    "version": 1,
+    "elevator": false,
+    "floor": 0.0,
+    "configured": true,
+    "viewActive": true,
+    "fallback": "None",
+    "anchor": {
+      "X": 230.2625732421875,
+      "Y": 0.09000015258789062,
+      "Z": 21.2783203125,
+      "IsFinite": true
+    },
+    "revision": 5,
+    "hidden": false,
+    "physical": true,
+    "diagnostics": "physical=True, pedestrians=20, cars=0, acquired=160, released=140, blockedSamples=329013, unavailable=451, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=pc:506:native availability:",
+    "bindings": [
+      {
+        "id": "pc:285",
+        "kind": "pedestrian",
+        "position": {
+          "X": 229.79412841796875,
+          "Y": 0.09000015258789062,
+          "Z": 22.693260192871094,
+          "IsFinite": true
+        },
+        "body": 159,
+        "nativeId": -2144550,
+        "valid": true,
+        "progress": null
+      },
+      {
+        "id": "c325",
+        "kind": "pedestrian",
+        "position": {
+          "X": 229.77145385742188,
+          "Y": 0.09000015258789062,
+          "Z": 25.286056518554688,
+          "IsFinite": true
+        },
+        "body": 158,
+        "nativeId": -2145974,
+        "valid": true,
+        "progress": null
+      },
+      {
+        "id": "pc:531",
+        "kind": "pedestrian",
+        "position": {
+          "X": 246.14523315429688,
+          "Y": 0.09000396728515625,
+          "Z": -10.875679016113281,
+          "IsFinite": true
+        },
+        "body": 157,
+        "nativeId": -2147412,
+        "valid": true,
+        "progress": null
+      },
+      {
+        "id": "pc:169",
+        "kind": "pedestrian",
+        "position": {
+          "X": 229.40341186523438,
+          "Y": 0.09000015258789062,
+          "Z": 50.742950439453125,
+          "IsFinite": true
+        },
+        "body": 156,
+        "nativeId": -2148840,
+        "valid": true,
+        "progress": null
+      },
+      {
+        "id": "c334",
+        "kind": "pedestrian",
+        "position": {
+          "X": 201.55413818359375,
+          "Y": 0.09485114365816116,
+          "Z": -11.241767883300781,
+          "IsFinite": true
+        },
+        "body": 155,
+        "nativeId": -2150280,
+        "valid": true,
+        "progress": null
+      },
+      {
+        "id": "pc:242",
+        "kind": "pedestrian",
+        "position": {
+          "X": 229.52328491210938,
+          "Y": 0.09000015258789062,
+          "Z": 5.7196502685546875,
+          "IsFinite": true
+        },
+        "body": 153,
+        "nativeId": -2151720,
+        "valid": true,
+        "progress": null
+      },
+      {
+        "id": "pc:82",
+        "kind": "pedestrian",
+        "position": {
+          "X": 229.05801391601562,
+          "Y": 0.09000015258789062,
+          "Z": 35.9575309753418,
+          "IsFinite": true
+        },
+        "body": 152,
+        "nativeId": -2153156,
+        "valid": true,
+        "progress": null
+      },
+      {
+        "id": "c177",
+        "kind": "pedestrian",
+        "position": {
+          "X": 236.17364501953125,
+          "Y": 0.09000396728515625,
+          "Z": -10.339889526367188,
+          "IsFinite": true
+        },
+        "body": 151,
+        "nativeId": -2154592,
+        "valid": true,
+        "progress": null
+      },
+      {
+        "id": "pc:88",
+        "kind": "pedestrian",
+        "position": {
+          "X": 229.99661254882812,
+          "Y": 0.09000015258789062,
+          "Z": 1.15472412109375,
+          "IsFinite": true
+        },
+        "body": 150,
+        "nativeId": -2156016,
+        "valid": true,
+        "progress": null
+      },
+      {
+        "id": "c241",
+        "kind": "pedestrian",
+        "position": {
+          "X": 229.42153930664062,
+          "Y": 0.09000015258789062,
+          "Z": -0.9244308471679688,
+          "IsFinite": true
+        },
+        "body": 149,
+        "nativeId": -2157444,
+        "valid": true,
+        "progress": null
+      },
+      {
+        "id": "c327",
+        "kind": "pedestrian",
+        "position": {
+          "X": 228.89047241210938,
+          "Y": 0.09000015258789062,
+          "Z": 18.582979202270508,
+          "IsFinite": true
+        },
+        "body": 148,
+        "nativeId": -2158936,
+        "valid": true,
+        "progress": null
+      },
+      {
+        "id": "pc:8",
+        "kind": "pedestrian",
+        "position": {
+          "X": 229.83349609375,
+          "Y": 0.09000015258789062,
+          "Z": 17.185134887695312,
+          "IsFinite": true
+        },
+        "body": 147,
+        "nativeId": -2160380,
+        "valid": true,
+        "progress": null
+      },
+      {
+        "id": "pc:102",
+        "kind": "pedestrian",
+        "position": {
+          "X": 221.74740600585938,
+          "Y": 0.027027573436498642,
+          "Z": -11.255477905273438,
+          "IsFinite": true
+        },
+        "body": 146,
+        "nativeId": -2161820,
+        "valid": true,
+        "progress": null
+      },
+      {
+        "id": "c313",
+        "kind": "pedestrian",
+        "position": {
+          "X": 245.3507080078125,
+          "Y": 0.09000396728515625,
+          "Z": -10.901893615722656,
+          "IsFinite": true
+        },
+        "body": 145,
+        "nativeId": -2163356,
+        "valid": true,
+        "progress": null
+      },
+      {
+        "id": "c347",
+        "kind": "pedestrian",
+        "position": {
+          "X": 222.1468048095703,
+          "Y": 0.024532528594136238,
+          "Z": -9.522392272949219,
+          "IsFinite": true
+        },
+        "body": 144,
+        "nativeId": -2164800,
+        "valid": true,
+        "progress": null
+      },
+      {
+        "id": "pc:464",
+        "kind": "pedestrian",
+        "position": {
+          "X": 230.03594970703125,
+          "Y": 0.09000015258789062,
+          "Z": 9.190826416015625,
+          "IsFinite": true
+        },
+        "body": 143,
+        "nativeId": -2166248,
+        "valid": true,
+        "progress": null
+      },
+      {
+        "id": "pc:489",
+        "kind": "pedestrian",
+        "position": {
+          "X": 209.58990478515625,
+          "Y": 0.09177765250205994,
+          "Z": -10.193534851074219,
+          "IsFinite": true
+        },
+        "body": 142,
+        "nativeId": -2167676,
+        "valid": true,
+        "progress": null
+      },
+      {
+        "id": "pc:400",
+        "kind": "pedestrian",
+        "position": {
+          "X": 240.06451416015625,
+          "Y": 0.09000396728515625,
+          "Z": -10.712600708007812,
+          "IsFinite": true
+        },
+        "body": 141,
+        "nativeId": -2169112,
+        "valid": true,
+        "progress": null
+      },
+      {
+        "id": "c47",
+        "kind": "pedestrian",
+        "position": {
+          "X": 215.34011840820312,
+          "Y": 0.02190927416086197,
+          "Z": -13.100055694580078,
+          "IsFinite": true
+        },
+        "body": 140,
+        "nativeId": -2170540,
+        "valid": true,
+        "progress": null
+      },
+      {
+        "id": "pc:74",
+        "kind": "pedestrian",
+        "position": {
+          "X": 226.7751922607422,
+          "Y": 0.04968157410621643,
+          "Z": -11.696365356445312,
+          "IsFinite": true
+        },
+        "body": 139,
+        "nativeId": -2171992,
+        "valid": true,
+        "progress": null
+      }
+    ],
+    "acquired": 160,
+    "released": 140,
+    "attempted": 92,
+    "citizens": 957,
+    "ids": null,
+    "failed": false,
+    "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+    "payload": {},
+    "nativePeople": [],
+    "nativeCars": [],
+    "lighting": {
+      "ambientIntensity": 1.0,
+      "ambientMode": "Skybox",
+      "fog": false,
+      "volumeObjects": []
+    }
+  },
+  "after": {
+    "frame": 86188,
+    "seconds": 1086.7135,
+    "day": 5,
+    "hour": 11,
+    "minute": 45.2226524,
+    "timeScale": 1.0,
+    "inside": true,
+    "entering": false,
+    "exiting": false,
+    "address": "ba:street_thirdstreet 30",
+    "size": "ba:buildingsize_a",
+    "version": 1,
+    "elevator": false,
+    "floor": 0.0,
+    "configured": true,
+    "viewActive": false,
+    "fallback": "None",
+    "anchor": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0,
+      "IsFinite": true
+    },
+    "revision": 6,
+    "hidden": true,
+    "physical": true,
+    "diagnostics": "physical=True, pedestrians=0, cars=0, acquired=160, released=160, blockedSamples=329032, unavailable=451, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=pc:506:native availability:",
+    "bindings": [],
+    "acquired": 160,
+    "released": 160,
+    "attempted": 92,
+    "citizens": 957,
+    "ids": null,
+    "failed": false,
+    "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+    "payload": {},
+    "nativePeople": [],
+    "nativeCars": [],
+    "lighting": {
+      "ambientIntensity": 1.0,
+      "ambientMode": "Skybox",
+      "fog": false,
+      "volumeObjects": []
+    }
+  }
 }

@@ -1,30 +1,30 @@
-{
-  "key": "persistentcity:state_v1",
-  "liveSchema": 16,
-  "savedSchema": 16,
-  "topLevelFields": [
-    "Citizens",
-    "Food",
-    "InitialImportedResidents",
-    "Minute",
-    "NextResidentSequence",
-    "Places",
-    "PopulationKey",
-    "PopulationTarget",
-    "RloVersion",
-    "Schema",
-    "Seed",
-    "SourceIdentities",
-    "Traffic",
-    "TrafficTopologyId",
-    "TravelClockRate",
-    "TravelTimingVersion"
-  ],
-  "interiorPropertyNames": [],
-  "namespaceFamilies": [
-    "persistentcity:food-authority-v1",
-    "persistentcity:food-sale-v2",
-    "persistentcity:state_v1",
-    "persistentcity:test-ownership-baseline"
-  ]
+{
+  "key": "persistentcity:state_v1",
+  "liveSchema": 16,
+  "savedSchema": 16,
+  "topLevelFields": [
+    "Citizens",
+    "Food",
+    "InitialImportedResidents",
+    "Minute",
+    "NextResidentSequence",
+    "Places",
+    "PopulationKey",
+    "PopulationTarget",
+    "RloVersion",
+    "Schema",
+    "Seed",
+    "SourceIdentities",
+    "Traffic",
+    "TrafficTopologyId",
+    "TravelClockRate",
+    "TravelTimingVersion"
+  ],
+  "interiorPropertyNames": [],
+  "namespaceFamilies": [
+    "persistentcity:food-authority-v1",
+    "persistentcity:food-sale-v2",
+    "persistentcity:state_v1",
+    "persistentcity:test-ownership-baseline"
+  ]
 }

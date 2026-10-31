@@ -1,86 +1,86 @@
-{
-  "role": "rig_test",
-  "captures": [
-    {
-      "source": "f0-budget-on-native-activity-budget-stop-7ec6ca.json",
-      "recordedNewAdmissions": 12,
-      "maximumRecordedAdmissionRadius": 49.87462085608447,
-      "newAdmissionSamples": [
-        {
-          "resident": "c177",
-          "frame": 85180,
-          "radius": 49.52522162926129
-        },
-        {
-          "resident": "pc:88",
-          "frame": 85182,
-          "radius": 37.86143743065054
-        },
-        {
-          "resident": "c267",
-          "frame": 85188,
-          "radius": 49.8301842822809
-        },
-        {
-          "resident": "c387",
-          "frame": 85189,
-          "radius": 37.73264297848736
-        },
-        {
-          "resident": "pc:82",
-          "frame": 85192,
-          "radius": 49.81281089337721
-        },
-        {
-          "resident": "pc:144",
-          "frame": 85193,
-          "radius": 49.6418490372639
-        },
-        {
-          "resident": "c325",
-          "frame": 85206,
-          "radius": 42.61300723518931
-        },
-        {
-          "resident": "pc:456",
-          "frame": 85209,
-          "radius": 37.64235144610335
-        },
-        {
-          "resident": "c26",
-          "frame": 85218,
-          "radius": 49.81024633347855
-        },
-        {
-          "resident": "pc:531",
-          "frame": 85228,
-          "radius": 37.76685583229693
-        },
-        {
-          "resident": "pc:513",
-          "frame": 85230,
-          "radius": 49.87462085608447
-        },
-        {
-          "resident": "c166",
-          "frame": 85241,
-          "radius": 48.07264095699866
-        }
-      ],
-      "nearOuterEdgeDepartures": [
-        {
-          "resident": "pc:102",
-          "lastSampleRadius": 59.81129364241635,
-          "absentByFrame": 85209
-        },
-        {
-          "resident": "pc:8",
-          "lastSampleRadius": 59.560323952976816,
-          "absentByFrame": 85241
-        }
-      ],
-      "nearEdgeReacquisitionsWithin2Seconds": [],
-      "note": "Departure radii are the previous sample, so crossing the strict release boundary is inferred rather than an injected boundary proof."
-    }
-  ]
+{
+  "role": "rig_test",
+  "captures": [
+    {
+      "source": "f0-budget-on-native-activity-budget-stop-7ec6ca.json",
+      "recordedNewAdmissions": 12,
+      "maximumRecordedAdmissionRadius": 49.87462085608447,
+      "newAdmissionSamples": [
+        {
+          "resident": "c177",
+          "frame": 85180,
+          "radius": 49.52522162926129
+        },
+        {
+          "resident": "pc:88",
+          "frame": 85182,
+          "radius": 37.86143743065054
+        },
+        {
+          "resident": "c267",
+          "frame": 85188,
+          "radius": 49.8301842822809
+        },
+        {
+          "resident": "c387",
+          "frame": 85189,
+          "radius": 37.73264297848736
+        },
+        {
+          "resident": "pc:82",
+          "frame": 85192,
+          "radius": 49.81281089337721
+        },
+        {
+          "resident": "pc:144",
+          "frame": 85193,
+          "radius": 49.6418490372639
+        },
+        {
+          "resident": "c325",
+          "frame": 85206,
+          "radius": 42.61300723518931
+        },
+        {
+          "resident": "pc:456",
+          "frame": 85209,
+          "radius": 37.64235144610335
+        },
+        {
+          "resident": "c26",
+          "frame": 85218,
+          "radius": 49.81024633347855
+        },
+        {
+          "resident": "pc:531",
+          "frame": 85228,
+          "radius": 37.76685583229693
+        },
+        {
+          "resident": "pc:513",
+          "frame": 85230,
+          "radius": 49.87462085608447
+        },
+        {
+          "resident": "c166",
+          "frame": 85241,
+          "radius": 48.07264095699866
+        }
+      ],
+      "nearOuterEdgeDepartures": [
+        {
+          "resident": "pc:102",
+          "lastSampleRadius": 59.81129364241635,
+          "absentByFrame": 85209
+        },
+        {
+          "resident": "pc:8",
+          "lastSampleRadius": 59.560323952976816,
+          "absentByFrame": 85241
+        }
+      ],
+      "nearEdgeReacquisitionsWithin2Seconds": [],
+      "note": "Departure radii are the previous sample, so crossing the strict release boundary is inferred rather than an injected boundary proof."
+    }
+  ]
 }

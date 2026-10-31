@@ -1,91 +1,91 @@
-{
-  "utc": "2026-10-31T08:17:06Z",
-  "cpuTotalPercent": 17.9,
-  "logicalProcessors": 20,
-  "counts": {
-    "dotnet": 1,
-    "testhost": 0,
-    "codex": 14
-  },
-  "ram": {
-    "total": 68544573440,
-    "available": 27915571200,
-    "percent": 59.3,
-    "used": 40629002240,
-    "free": 27915571200
-  },
-  "top": [
-    {
-      "pid": 0,
-      "name": "System Idle Process",
-      "cpuPercentMachine": 205.2032019911548,
-      "rss": 8192
-    },
-    {
-      "pid": 18788,
-      "name": "Big Ambitions Agent Tests.exe",
-      "cpuPercentMachine": 15.221172962846657,
-      "rss": 6509576192
-    },
-    {
-      "pid": 1312,
-      "name": "MsMpEng.exe",
-      "cpuPercentMachine": 9.097222222222221,
-      "rss": 845410304
-    },
-    {
-      "pid": 35096,
-      "name": "python.exe",
-      "cpuPercentMachine": 3.4142721955058195,
-      "rss": 33521664
-    },
-    {
-      "pid": 3476,
-      "name": "MemCompression",
-      "cpuPercentMachine": 2.8220057034586947,
-      "rss": 923721728
-    },
-    {
-      "pid": 4,
-      "name": "System",
-      "cpuPercentMachine": 1.4397429680494647,
-      "rss": 47112192
-    },
-    {
-      "pid": 23776,
-      "name": "python.exe",
-      "cpuPercentMachine": 0.9469696970064442,
-      "rss": 58621952
-    },
-    {
-      "pid": 45004,
-      "name": "python.exe",
-      "cpuPercentMachine": 0.8810116086534845,
-      "rss": 59883520
-    },
-    {
-      "pid": 52016,
-      "name": "python.exe",
-      "cpuPercentMachine": 0.7217090069381638,
-      "rss": 45666304
-    },
-    {
-      "pid": 8156,
-      "name": "SearchIndexer.exe",
-      "cpuPercentMachine": 0.6553532009126437,
-      "rss": 220168192
-    },
-    {
-      "pid": 51320,
-      "name": "codex.exe",
-      "cpuPercentMachine": 0.23197789508726693,
-      "rss": 132689920
-    },
-    {
-      "pid": 31888,
-      "name": "csrss.exe",
-      "cpuPercentMachine": 0.1389135846413175,
-      "rss": 12009472
-    }
-  ]
+{
+  "utc": "2026-10-31T08:17:06Z",
+  "cpuTotalPercent": 17.9,
+  "logicalProcessors": 20,
+  "counts": {
+    "dotnet": 1,
+    "testhost": 0,
+    "codex": 14
+  },
+  "ram": {
+    "total": 68544573440,
+    "available": 27915571200,
+    "percent": 59.3,
+    "used": 40629002240,
+    "free": 27915571200
+  },
+  "top": [
+    {
+      "pid": 0,
+      "name": "System Idle Process",
+      "cpuPercentMachine": 205.2032019911548,
+      "rss": 8192
+    },
+    {
+      "pid": 18788,
+      "name": "Big Ambitions Agent Tests.exe",
+      "cpuPercentMachine": 15.221172962846657,
+      "rss": 6509576192
+    },
+    {
+      "pid": 1312,
+      "name": "MsMpEng.exe",
+      "cpuPercentMachine": 9.097222222222221,
+      "rss": 845410304
+    },
+    {
+      "pid": 35096,
+      "name": "python.exe",
+      "cpuPercentMachine": 3.4142721955058195,
+      "rss": 33521664
+    },
+    {
+      "pid": 3476,
+      "name": "MemCompression",
+      "cpuPercentMachine": 2.8220057034586947,
+      "rss": 923721728
+    },
+    {
+      "pid": 4,
+      "name": "System",
+      "cpuPercentMachine": 1.4397429680494647,
+      "rss": 47112192
+    },
+    {
+      "pid": 23776,
+      "name": "python.exe",
+      "cpuPercentMachine": 0.9469696970064442,
+      "rss": 58621952
+    },
+    {
+      "pid": 45004,
+      "name": "python.exe",
+      "cpuPercentMachine": 0.8810116086534845,
+      "rss": 59883520
+    },
+    {
+      "pid": 52016,
+      "name": "python.exe",
+      "cpuPercentMachine": 0.7217090069381638,
+      "rss": 45666304
+    },
+    {
+      "pid": 8156,
+      "name": "SearchIndexer.exe",
+      "cpuPercentMachine": 0.6553532009126437,
+      "rss": 220168192
+    },
+    {
+      "pid": 51320,
+      "name": "codex.exe",
+      "cpuPercentMachine": 0.23197789508726693,
+      "rss": 132689920
+    },
+    {
+      "pid": 31888,
+      "name": "csrss.exe",
+      "cpuPercentMachine": 0.1389135846413175,
+      "rss": 12009472
+    }
+  ]
 }

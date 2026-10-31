@@ -34,7 +34,7 @@ namespace FoodDemandAuditProbe
             if (!Allowed() || !SaveGameManager.Current.SaveGameName.StartsWith("FT Food Routines ", StringComparison.Ordinal))
                 throw new InvalidOperationException("An explicit disposable food-pilot city is required.");
             if (pilotShop != null) throw new InvalidOperationException("Pilot already set up.");
-            
+
             var homes = Simulation.State.Places.Where(p => p.Kind == PlaceKind.Home).ToArray();
             var places = Simulation.State.Places.ToDictionary(p => p.Id);
             pilotShop = selected ?? CityManager.Instance.cityBuildingControllers.Where(c => c != null && c.buildingRegistration != null)

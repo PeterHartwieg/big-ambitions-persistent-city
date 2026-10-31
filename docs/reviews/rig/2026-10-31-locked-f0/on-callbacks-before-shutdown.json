@@ -1,51 +1,51 @@
-{
-  "events": [
-    {
-      "target": "GlobalEvents.onEnterBuilding",
-      "available": true,
-      "persistentCityCallbacks": [
-        "PersistentCity.Runtime.NativeInteriorCityView.OnBuildingChanged"
-      ]
-    },
-    {
-      "target": "GlobalEvents.onExitBuilding",
-      "available": true,
-      "persistentCityCallbacks": [
-        "PersistentCity.Runtime.NativeInteriorCityView.OnBuildingChanged"
-      ]
-    },
-    {
-      "target": "GlobalEvents.onTimeMachineStarted",
-      "available": true,
-      "persistentCityCallbacks": [
-        "PersistentCity.Runtime.NativeInteriorCityView.OnTimeMachineStarted"
-      ]
-    },
-    {
-      "target": "GlobalEvents.onGameUnloaded",
-      "available": true,
-      "persistentCityCallbacks": [
-        "PersistentCity.Runtime.PopulationRuntime.Shutdown"
-      ]
-    },
-    {
-      "target": "GlobalEvents.onSaveGame",
-      "available": true,
-      "persistentCityCallbacks": [
-        "PersistentCity.Runtime.PopulationRuntime.Save"
-      ]
-    },
-    {
-      "target": "UnityEngine.SceneManagement.SceneManager.sceneUnloaded",
-      "available": true,
-      "persistentCityCallbacks": [
-        "PersistentCity.Runtime.RouteObjectDiscovery.SceneUnloaded",
-        "PersistentCity.Runtime.NativeInteriorCityView.OnSceneUnloaded"
-      ]
-    }
-  ],
-  "ambientOwnerPresent": true,
-  "ambientOwnershipActive": true,
-  "physicalTrafficOwnershipActive": true,
-  "viewConfigured": true
+{
+  "events": [
+    {
+      "target": "GlobalEvents.onEnterBuilding",
+      "available": true,
+      "persistentCityCallbacks": [
+        "PersistentCity.Runtime.NativeInteriorCityView.OnBuildingChanged"
+      ]
+    },
+    {
+      "target": "GlobalEvents.onExitBuilding",
+      "available": true,
+      "persistentCityCallbacks": [
+        "PersistentCity.Runtime.NativeInteriorCityView.OnBuildingChanged"
+      ]
+    },
+    {
+      "target": "GlobalEvents.onTimeMachineStarted",
+      "available": true,
+      "persistentCityCallbacks": [
+        "PersistentCity.Runtime.NativeInteriorCityView.OnTimeMachineStarted"
+      ]
+    },
+    {
+      "target": "GlobalEvents.onGameUnloaded",
+      "available": true,
+      "persistentCityCallbacks": [
+        "PersistentCity.Runtime.PopulationRuntime.Shutdown"
+      ]
+    },
+    {
+      "target": "GlobalEvents.onSaveGame",
+      "available": true,
+      "persistentCityCallbacks": [
+        "PersistentCity.Runtime.PopulationRuntime.Save"
+      ]
+    },
+    {
+      "target": "UnityEngine.SceneManagement.SceneManager.sceneUnloaded",
+      "available": true,
+      "persistentCityCallbacks": [
+        "PersistentCity.Runtime.RouteObjectDiscovery.SceneUnloaded",
+        "PersistentCity.Runtime.NativeInteriorCityView.OnSceneUnloaded"
+      ]
+    }
+  ],
+  "ambientOwnerPresent": true,
+  "ambientOwnershipActive": true,
+  "physicalTrafficOwnershipActive": true,
+  "viewConfigured": true
 }

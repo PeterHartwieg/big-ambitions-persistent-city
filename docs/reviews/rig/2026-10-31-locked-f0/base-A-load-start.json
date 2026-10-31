@@ -1,91 +1,91 @@
-{
-  "utc": "2026-10-31T07:56:11Z",
-  "cpuTotalPercent": 48.1,
-  "logicalProcessors": 20,
-  "counts": {
-    "dotnet": 1,
-    "testhost": 0,
-    "codex": 14
-  },
-  "ram": {
-    "total": 68544573440,
-    "available": 22654603264,
-    "percent": 66.9,
-    "used": 45889970176,
-    "free": 22654603264
-  },
-  "top": [
-    {
-      "pid": 0,
-      "name": "System Idle Process",
-      "cpuPercentMachine": 206.15465062532218,
-      "rss": 8192
-    },
-    {
-      "pid": 40708,
-      "name": "Big Ambitions Agent Tests.exe",
-      "cpuPercentMachine": 14.382753030647114,
-      "rss": 6476705792
-    },
-    {
-      "pid": 1312,
-      "name": "MsMpEng.exe",
-      "cpuPercentMachine": 11.640196528549543,
-      "rss": 757493760
-    },
-    {
-      "pid": 3476,
-      "name": "MemCompression",
-      "cpuPercentMachine": 6.768473953091658,
-      "rss": 1173647360
-    },
-    {
-      "pid": 36372,
-      "name": "python.exe",
-      "cpuPercentMachine": 3.8510737966961193,
-      "rss": 32071680
-    },
-    {
-      "pid": 16260,
-      "name": "VBCSCompiler.exe",
-      "cpuPercentMachine": 3.702606635183155,
-      "rss": 372293632
-    },
-    {
-      "pid": 4,
-      "name": "System",
-      "cpuPercentMachine": 3.028100775516256,
-      "rss": 47058944
-    },
-    {
-      "pid": 38112,
-      "name": "python.exe",
-      "cpuPercentMachine": 1.3839285714285716,
-      "rss": 68263936
-    },
-    {
-      "pid": 7220,
-      "name": "python.exe",
-      "cpuPercentMachine": 1.366255961937252,
-      "rss": 51281920
-    },
-    {
-      "pid": 41380,
-      "name": "vmmemWSL",
-      "cpuPercentMachine": 1.1401908504552414,
-      "rss": 6403063808
-    },
-    {
-      "pid": 34820,
-      "name": "WmiPrvSE.exe",
-      "cpuPercentMachine": 0.5202301679347169,
-      "rss": 22503424
-    },
-    {
-      "pid": 8156,
-      "name": "SearchIndexer.exe",
-      "cpuPercentMachine": 0.2976190476190476,
-      "rss": 217149440
-    }
-  ]
+{
+  "utc": "2026-10-31T07:56:11Z",
+  "cpuTotalPercent": 48.1,
+  "logicalProcessors": 20,
+  "counts": {
+    "dotnet": 1,
+    "testhost": 0,
+    "codex": 14
+  },
+  "ram": {
+    "total": 68544573440,
+    "available": 22654603264,
+    "percent": 66.9,
+    "used": 45889970176,
+    "free": 22654603264
+  },
+  "top": [
+    {
+      "pid": 0,
+      "name": "System Idle Process",
+      "cpuPercentMachine": 206.15465062532218,
+      "rss": 8192
+    },
+    {
+      "pid": 40708,
+      "name": "Big Ambitions Agent Tests.exe",
+      "cpuPercentMachine": 14.382753030647114,
+      "rss": 6476705792
+    },
+    {
+      "pid": 1312,
+      "name": "MsMpEng.exe",
+      "cpuPercentMachine": 11.640196528549543,
+      "rss": 757493760
+    },
+    {
+      "pid": 3476,
+      "name": "MemCompression",
+      "cpuPercentMachine": 6.768473953091658,
+      "rss": 1173647360
+    },
+    {
+      "pid": 36372,
+      "name": "python.exe",
+      "cpuPercentMachine": 3.8510737966961193,
+      "rss": 32071680
+    },
+    {
+      "pid": 16260,
+      "name": "VBCSCompiler.exe",
+      "cpuPercentMachine": 3.702606635183155,
+      "rss": 372293632
+    },
+    {
+      "pid": 4,
+      "name": "System",
+      "cpuPercentMachine": 3.028100775516256,
+      "rss": 47058944
+    },
+    {
+      "pid": 38112,
+      "name": "python.exe",
+      "cpuPercentMachine": 1.3839285714285716,
+      "rss": 68263936
+    },
+    {
+      "pid": 7220,
+      "name": "python.exe",
+      "cpuPercentMachine": 1.366255961937252,
+      "rss": 51281920
+    },
+    {
+      "pid": 41380,
+      "name": "vmmemWSL",
+      "cpuPercentMachine": 1.1401908504552414,
+      "rss": 6403063808
+    },
+    {
+      "pid": 34820,
+      "name": "WmiPrvSE.exe",
+      "cpuPercentMachine": 0.5202301679347169,
+      "rss": 22503424
+    },
+    {
+      "pid": 8156,
+      "name": "SearchIndexer.exe",
+      "cpuPercentMachine": 0.2976190476190476,
+      "rss": 217149440
+    }
+  ]
 }

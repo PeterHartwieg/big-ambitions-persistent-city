@@ -1,91 +1,91 @@
-{
-  "utc": "2026-10-31T08:47:14Z",
-  "cpuTotalPercent": 28.8,
-  "logicalProcessors": 20,
-  "counts": {
-    "dotnet": 0,
-    "testhost": 0,
-    "codex": 13
-  },
-  "ram": {
-    "total": 68544573440,
-    "available": 31183486976,
-    "percent": 54.5,
-    "used": 37361086464,
-    "free": 31183486976
-  },
-  "top": [
-    {
-      "pid": 0,
-      "name": "System Idle Process",
-      "cpuPercentMachine": 191.71314254434466,
-      "rss": 8192
-    },
-    {
-      "pid": 36464,
-      "name": "Big Ambitions Agent Tests.exe",
-      "cpuPercentMachine": 14.286318997728653,
-      "rss": 6051627008
-    },
-    {
-      "pid": 1312,
-      "name": "MsMpEng.exe",
-      "cpuPercentMachine": 9.934580448178224,
-      "rss": 767979520
-    },
-    {
-      "pid": 48424,
-      "name": "python.exe",
-      "cpuPercentMachine": 3.35831447959353,
-      "rss": 33312768
-    },
-    {
-      "pid": 4,
-      "name": "System",
-      "cpuPercentMachine": 1.6415950333967193,
-      "rss": 47128576
-    },
-    {
-      "pid": 23776,
-      "name": "python.exe",
-      "cpuPercentMachine": 1.5001411896506756,
-      "rss": 69201920
-    },
-    {
-      "pid": 45004,
-      "name": "python.exe",
-      "cpuPercentMachine": 0.9645061728459265,
-      "rss": 68345856
-    },
-    {
-      "pid": 6764,
-      "name": "postgres.exe",
-      "cpuPercentMachine": 0.6869809477215068,
-      "rss": 5476352
-    },
-    {
-      "pid": 34820,
-      "name": "WmiPrvSE.exe",
-      "cpuPercentMachine": 0.5614733059508884,
-      "rss": 23433216
-    },
-    {
-      "pid": 23696,
-      "name": "claude.exe",
-      "cpuPercentMachine": 0.4706325300864864,
-      "rss": 238489600
-    },
-    {
-      "pid": 8156,
-      "name": "SearchIndexer.exe",
-      "cpuPercentMachine": 0.38467994625518354,
-      "rss": 223199232
-    },
-    {
-      "pid": 1704,
-      "name": "lsass.exe",
-      "cpuPercentMachine": 0.1875,
-      "rss": 50245632
-    }
-  ]
+{
+  "utc": "2026-10-31T08:47:14Z",
+  "cpuTotalPercent": 28.8,
+  "logicalProcessors": 20,
+  "counts": {
+    "dotnet": 0,
+    "testhost": 0,
+    "codex": 13
+  },
+  "ram": {
+    "total": 68544573440,
+    "available": 31183486976,
+    "percent": 54.5,
+    "used": 37361086464,
+    "free": 31183486976
+  },
+  "top": [
+    {
+      "pid": 0,
+      "name": "System Idle Process",
+      "cpuPercentMachine": 191.71314254434466,
+      "rss": 8192
+    },
+    {
+      "pid": 36464,
+      "name": "Big Ambitions Agent Tests.exe",
+      "cpuPercentMachine": 14.286318997728653,
+      "rss": 6051627008
+    },
+    {
+      "pid": 1312,
+      "name": "MsMpEng.exe",
+      "cpuPercentMachine": 9.934580448178224,
+      "rss": 767979520
+    },
+    {
+      "pid": 48424,
+      "name": "python.exe",
+      "cpuPercentMachine": 3.35831447959353,
+      "rss": 33312768
+    },
+    {
+      "pid": 4,
+      "name": "System",
+      "cpuPercentMachine": 1.6415950333967193,
+      "rss": 47128576
+    },
+    {
+      "pid": 23776,
+      "name": "python.exe",
+      "cpuPercentMachine": 1.5001411896506756,
+      "rss": 69201920
+    },
+    {
+      "pid": 45004,
+      "name": "python.exe",
+      "cpuPercentMachine": 0.9645061728459265,
+      "rss": 68345856
+    },
+    {
+      "pid": 6764,
+      "name": "postgres.exe",
+      "cpuPercentMachine": 0.6869809477215068,
+      "rss": 5476352
+    },
+    {
+      "pid": 34820,
+      "name": "WmiPrvSE.exe",
+      "cpuPercentMachine": 0.5614733059508884,
+      "rss": 23433216
+    },
+    {
+      "pid": 23696,
+      "name": "claude.exe",
+      "cpuPercentMachine": 0.4706325300864864,
+      "rss": 238489600
+    },
+    {
+      "pid": 8156,
+      "name": "SearchIndexer.exe",
+      "cpuPercentMachine": 0.38467994625518354,
+      "rss": 223199232
+    },
+    {
+      "pid": 1704,
+      "name": "lsass.exe",
+      "cpuPercentMachine": 0.1875,
+      "rss": 50245632
+    }
+  ]
 }
