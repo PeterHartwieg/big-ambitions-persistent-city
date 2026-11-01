@@ -64,9 +64,10 @@ receipts, business authority and resident tuples are unchanged.
 ## Owner decision 1 - 1 November 2026
 
 Campaign preference applies to all residents with no demographic or native-target
-mapping. A positive observed current-hour mask supplies the active modifier;
-retained masks still support bounded awareness after stopping but do not grant an
-active bonus. Missing reads add no bits and age retained scope generations.
+mapping. A positive mask bit at the meal's captured logical hour supplies the
+active modifier, even if native observation has since advanced or stopped.
+Retained awareness grants no active bonus at stopped or unobserved hours.
+Missing reads add no bits and age retained scope generations.
 Only absent/replaced generations retire. The actual runtime observes after safe
 ownership transfers and scope activation, including hours with no transfers.
 

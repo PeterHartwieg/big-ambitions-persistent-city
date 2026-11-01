@@ -18,8 +18,8 @@ namespace PersistentCity.Core
         private readonly FoodMemoryStore references;
         private readonly int seed;
         private readonly FoodCampaignSettings settings;
-        private Dictionary<string,int> activeHours = new Dictionary<string,int>(StringComparer.Ordinal);
-        private Dictionary<string,int> scratchActive = new Dictionary<string,int>(StringComparer.Ordinal);
+        private Dictionary<string,FoodCampaignImage> imagesByBusiness = new Dictionary<string,FoodCampaignImage>(StringComparer.Ordinal);
+        private Dictionary<string,FoodCampaignImage> scratchImages = new Dictionary<string,FoodCampaignImage>(StringComparer.Ordinal);
         private List<Entry>?[] index = new List<Entry>?[8 * 8];
         private List<Entry>?[] scratch = new List<Entry>?[8 * 8];
         private readonly string?[] selected = new string?[8];
@@ -42,8 +42,16 @@ namespace PersistentCity.Core
         public long Refused { get; private set; }
         public long Publications { get; private set; }
         public int IndexedEntries { get; private set; }
-        public bool Active(string business) => HasEvidence && preparedConsumer.Length>0 && preparedDay==preparedHour/24
-            && activeHours.TryGetValue(business,out int hour) && hour==preparedHour;
+        public bool Active(string business)
+        {
+            if (!HasEvidence || preparedConsumer.Length==0 || preparedDay!=preparedHour/24
+                || !imagesByBusiness.TryGetValue(business,out var image)) return false;
+            // Native observations may be ahead of the meal clock. Only its exact saved hour bit
+            // proves activity; neither a newer observation nor a stopped/missing read rewrites it.
+            uint bit=1u<<(preparedHour%24);
+            for(int type=0;type<8;type++) if((image.Mask(preparedDay,type)&bit)!=0) return true;
+            return false;
+        }
         internal FoodMemoryStore ReferencesFor(FoodCommerceState owner)
             => ReferenceEquals(owner, food) ? references : throw new ArgumentException("Campaign source belongs to another city.");
 
@@ -107,8 +115,8 @@ namespace PersistentCity.Core
             next.Sort((a, b) => a.BusinessRef.CompareTo(b.BusinessRef));
             // Build everything privately. Neither a partially merged image nor partial indexes escape.
             var built = Build(next, out int day, out int entries);
-            var active=ActiveIndex(next);
-            food.Campaigns = next; scratchActive=activeHours;activeHours=active; scratch = index; index = built; newestDay = day; IndexedEntries = entries; Publications++;
+            var images=ImageIndex(next);
+            food.Campaigns = next; scratchImages=imagesByBusiness;imagesByBusiness=images; scratch = index; index = built; newestDay = day; IndexedEntries = entries; Publications++;
         }
         private List<Entry>?[] Build(List<FoodCampaignImage> images, out int day, out int entries)
         {
@@ -134,21 +142,18 @@ namespace PersistentCity.Core
             }
             return result;
         }
-        private Dictionary<string,int> ActiveIndex(List<FoodCampaignImage> images)
+        private Dictionary<string,FoodCampaignImage> ImageIndex(List<FoodCampaignImage> images)
         {
-            var active=scratchActive;active.Clear();
-            foreach(var image in images)
-                for(int type=0;type<8;type++)
-                    if((image.Mask(image.Day,type)&(1u<<(image.ThroughHour%24)))!=0)
-                    { active.Add(references.Identity(image.BusinessRef),image.ThroughHour);break; }
-            return active;
+            var result=scratchImages;result.Clear();
+            foreach(var image in images) result.Add(references.Identity(image.BusinessRef),image);
+            return result;
         }
         public void Rebuild()
         {
             if (!settings.Enabled || food.Campaigns.Count == 0) return;
             var built = Build(food.Campaigns, out int day, out int entries);
-            var active=ActiveIndex(food.Campaigns);
-            scratch=index;index=built;newestDay=day;IndexedEntries=entries;scratchActive=activeHours;activeHours=active;
+            var images=ImageIndex(food.Campaigns);
+            scratch=index;index=built;newestDay=day;IndexedEntries=entries;scratchImages=imagesByBusiness;imagesByBusiness=images;
         }
         private uint Hash(string consumer, int day, int slot, string domain)
         {

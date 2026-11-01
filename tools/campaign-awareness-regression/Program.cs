@@ -103,6 +103,19 @@ foreach(int count in new[]{1,1024})
         for(int slot=0;slot<8;slot++) GC.KeepAlive(source.Reference("resident:stable",day,slot));
         consumer++;
     },10001);
+    var activeIds=Enumerable.Range(0,32).Select(i=>native[i%count].Id).ToArray();
+    object ActiveLookups(int mealHour,bool expected=true,int lookups=8)
+    {
+        source.Prepare("resident:stable",mealHour/24,mealHour*60+10);
+        return Measure(()=>{
+            for(int slot=0;slot<lookups;slot++)
+                if(source.Active(activeIds[slot])!=expected) throw new Exception("Saved meal-hour active evidence changed.");
+        },10001);
+    }
+    var currentActive=ActiveLookups(hour);
+    var delayedActive=ActiveLookups(hour-1);
+    var unobservedActive=ActiveLookups(hour+1,false);
+    var unobservedFullUnion=ActiveLookups(hour+1,false,32);
     // Actual production scheduler, including scope-vector construction and C1 publication; all residents receive the active modifier.
     var runtimeFood=new FoodCommerceState();var adapter=new NativeFoodMarket(runtimeFood,native);
     NativeFoodOwnership.Hour=0;adapter.AttachCampaignAwareness(79,new());long runtimeHour=0;
@@ -131,6 +144,9 @@ foreach(int count in new[]{1,1024})
     int campaignBytes=emptyWire.Length-noImages.Length;
     if(imageCounts.Semantic-baseCounts.Semantic!=count || imageCounts.Streaming-baseCounts.Streaming!=count) throw new Exception("Image record charge changed.");
     Console.WriteLine(JsonSerializer.Serialize(new {businesses=count,hourlyC1AndPublication=sample,dayTypeIndexRebuild=rebuild,eightSlotDecision=decision,
+        eightCurrentHourActiveLookups=currentActive,eightDelayedHourActiveLookups=delayedActive,
+        eightUnobservedHourActiveLookups=unobservedActive,
+        fullUnionUnobservedHourActiveLookups=unobservedFullUnion,
         productionAllResidentsHourly=production,noCampaignHourlyCountProbes=absent,disabledHourly=off,referenceLookupAfterPublication=referenceLookup,
         campaignBytesAbove19WithSharedReferences=campaignBytes+15,campaignRecordDelta=count,imageWireCharacters=265,
         nativeStateUnchanged=before==after,notes="Offline .NET only. No native timing evidence. Whole-frame unavailable; count probes are included, not claimed as zero CPU work."}));

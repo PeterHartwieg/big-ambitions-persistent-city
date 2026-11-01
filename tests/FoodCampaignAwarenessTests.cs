@@ -95,6 +95,49 @@ public sealed class FoodCampaignAwarenessTests
         Assert.Empty(food.Campaigns);Assert.False(source.HasEvidence);
     }
     [Fact]
+    public void DelayedMealUsesItsObservedHourAcrossContinuousStoppedAndReloadedCampaigns()
+    {
+        var food=new FoodCommerceState();var source=Source(food,settings:new() {ReachProbability=0});
+        var places=Places("b");
+        var catalogue=new FoodAwarenessCatalogue(new[]{new FoodAwarenessCatalogue.Entry("b","p",new Position(10,0,0))});
+        FoodAwarenessImage Capture(int day,double minute)
+        {
+            source.Prepare("r",day,minute);
+            return catalogue.Sample(79,"r",day,new Position(),null,null,new(),_=>true,campaign:source);
+        }
+        // Capture at 23:10 and 24:10, straddling midnight; the meal clock can lag the observer.
+        source.Publish(Snapshot(23,Business("b",Campaign())),places);
+        var timely23=Capture(0,1390);Assert.True(timely23.CampaignActive("b"));
+        source.Publish(Snapshot(24,Business("b",Campaign())),places);
+        var timely24=Capture(1,1450);Assert.True(timely24.CampaignActive("b"));
+        source.Publish(Snapshot(25,Business("b",Campaign())),places);
+        Assert.Equal(JsonConvert.SerializeObject(timely23),JsonConvert.SerializeObject(Capture(0,1390)));
+        Assert.Equal(JsonConvert.SerializeObject(timely24),JsonConvert.SerializeObject(Capture(1,1450)));
+        source.Publish(Snapshot(26,Business("b",Campaign(enabled:false))),places);
+        Assert.False(Capture(1,1570).CampaignActive("b"));
+        // The disabled hour stays disabled even when a later observation is enabled again.
+        source.Publish(Snapshot(28,Business("b",Campaign())),places);
+        for(int replay=0;replay<2;replay++)
+        {
+            Assert.Equal(JsonConvert.SerializeObject(timely23),JsonConvert.SerializeObject(Capture(0,1390)));
+            Assert.Equal(JsonConvert.SerializeObject(timely24),JsonConvert.SerializeObject(Capture(1,1450)));
+            Assert.False(Capture(1,1570).CampaignActive("b")); // observed stopped
+            Assert.False(Capture(1,1630).CampaignActive("b")); // unobserved gap
+            Assert.False(Capture(0,1330).CampaignActive("b")); // before first observation
+            Assert.True(Capture(1,1690).CampaignActive("b"));
+            Assert.False(Capture(1,1750).CampaignActive("b")); // not yet observed
+            food.Campaigns=food.Campaigns.Select(i=>FoodCampaignImage.Decode(i.Encode())).ToList();
+            source=Source(food,settings:new() {ReachProbability=0});
+            source.Rebuild();
+        }
+        source.Prepare("r",1,1450);source.Active("b"); // warm bounded generation lookup
+        long before=GC.GetAllocatedBytesForCurrentThread();
+        for(int i=0;i<1000;i++) Assert.True(source.Active("b"));
+        Assert.Equal(0,GC.GetAllocatedBytesForCurrentThread()-before);
+        source.Publish(Snapshot(9*24,Business("b")),places);
+        Assert.False(Capture(1,1450).CampaignActive("b")); // outside retained eight-day image
+    }
+    [Fact]
     public void ActiveCampaignRaisesPickProbabilityAndSoftensDistanceForEveryTraitProfile()
     {
         var settings=new FoodChoiceSettings();var allowance=Money.FromCents(1000);
