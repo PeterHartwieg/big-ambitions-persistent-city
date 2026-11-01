@@ -25,7 +25,7 @@ B. Memory, loyalty and regulars. **B0 is implemented offline:** schema 18, exact
 
 C. Marketing awareness and targeting, plus the market research product. **C2a implemented offline on B0b:** bounded source/index interface, B1 memory projection/campaign-unknown providers, local/routine and positive daily distant discovery, common eight-slot shortlist, additive schema 19. B1 memory is wired within the existing four source slots and bounded rank; r1 bounds rebuild continuations and restores at-stop observation/diagnostics and strict held-image validation. Combined 6 Nov rig proof pending. [Contract](population-schema19.md). **C4 implemented offline and inactive:** bounded pure research engine/access contract only; paid research stays off because C3 found no safe native fee path. No UI, normal-play computation or saved fields. [Contract and offline proof](market-research.md).
 D. Rivals as alternatives.
-E. Weather, street life, bigger menus and more products.
+E. Weather, street life, bigger menus and more products. **E1 implemented offline:** new-context weather capture, soft rain effects, frozen queue commitment replay and additive schema 20 on the merged C2a/B1 contract; E2b timing and menu feasibility remain intact. Combined-head native checks remain pending. [Contract/budget](population-schema20.md).
 Then: re-check the same performance gate for the final release, the hands-on session, and one release.
 Later: residents as employees, households.
 
@@ -40,6 +40,8 @@ E3 salad status, 1 November (offline): [salad stop record](plans/e3-salad.md) ad
 Peter’s [31 October Q1-Q7 decisions](plans/steps-b-e.md#product-decisions-peter-31-oct-2026) specify tiered paid research as a third native-agency option (proven fee or unavailable), local/distant discovery, estimated rivals, food-first products, no anonymous crowds/night multiplier and own-shop regulars; tier contents/fees remain open.
 
 Track F (Peter, 31 October): independently authored city view from interiors, F0 spike → F1 shop view/customer entry → F2 upper-floor/penthouse view → F3 polish. [F0 findings and plan](plans/track-f-interior-view.md): default-off runtime eligibility/entrance-anchor experiment; **city drawing is a no-op pending F1**, with no save-format change or A-stack dependency. E2c (31 Oct, offline) implements only the once-per-load third-party detection guard, forced-off F0 state and read-only bridge verdict; native proof remains pending. [E2c evidence](checks/e2c-interior-guard.md#e2c-third-party-interior-guard---31-october-2026-offline-only). The same mod-work/whole-frame evidence rules apply to F.
+
+F1 status, 1 November (offline): **NO-GO at drawing step 1**; no proven detached-space projection/culling approach, no renderer or customer hand-off added. [Decision and smaller read-only probe](plans/f1-shop-view-decision.md); [offline checks and 6 Nov handoff](checks/f1-shop-view.md). F0/E2c and all runtime/save behavior remain unchanged.
 
 ## Performance gate (Peter, 2026-10-30)
 
@@ -83,3 +85,5 @@ Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index
 - E3 salad — [Conditional shared reader timing and allocation evidence](perf/e3-salad.md).
 
 - C4 — [Bounded inactive research and direct trait validation](perf/c4-market-research.md).
+
+- E1 — [Weather capture, admission and consumer precheck](perf/e1-rain.md).

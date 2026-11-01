@@ -124,6 +124,7 @@ namespace PersistentCity.Core
             AbortPending();
             var replacement = new CitySimulator(State, replacementRoutes);
             replacement.activityObservers = activityObservers;
+            replacement.weatherSource=weatherSource;replacement.weatherSettings=weatherSettings;
             if (stopEnvironment != null) replacement.AttachOptionalStops(stopEnvironment, stopPercentage, stopTiming);
             if (food != null) replacement.AttachFoodMarket(food.Market, food.ChoiceSettings, food.MemorySettings, food.AwarenessSettings, food.MemoryProvider, food.CampaignProvider);
             return replacement;
@@ -416,6 +417,7 @@ namespace PersistentCity.Core
             CommutePreparation = CopyPreparation(live.CommutePreparation),
             MealOuting = live.MealOuting == null ? null : CopyOuting(live.MealOuting),
             OptionalStop = live.OptionalStop?.Copy(),
+            W = live.W,
             OptionalStopChoice = live.OptionalStopChoice,
             Car = live.Car == null ? null : CopyCar(live.Car),
             JoinedMinute = live.JoinedMinute, LastEmploymentCheckDay = live.LastEmploymentCheckDay, JobChanges = live.JobChanges,
@@ -446,6 +448,7 @@ namespace PersistentCity.Core
         internal static void CommitEvent(CitizenState live, CitizenState working)
         {
             live.OptionalStop = working.OptionalStop;
+            live.W = working.W;
             live.OptionalStopChoice = working.OptionalStopChoice;
             live.Traits = working.Traits;
             live.HomeId = working.HomeId; live.DayPlaceId = working.DayPlaceId; live.ShopId = working.ShopId; live.LeisureId = working.LeisureId;
@@ -881,7 +884,7 @@ namespace PersistentCity.Core
             return next;
         }
 
-        private static void WaitForOpening(CitizenState person, RoutineSlot slot, double opening)
+        private void WaitForOpening(CitizenState person, RoutineSlot slot, double opening)
         {
             // Wait at the current entrance; retain the intended destination and full deadline.
             // In particular, do not invent a return-home trip that can consume the activity.
@@ -890,6 +893,9 @@ namespace PersistentCity.Core
             person.DestinationActivity = slot.Activity;
             person.ActivityUntilMinute = slot.EndsAt;
             person.NextEventMinute = opening;
+            // The event owns this queue even when no physical body/camera has observed the door.
+            if (person.PlaceId == slot.PlaceId && (slot.Activity == Activity.Shop || slot.Activity == Activity.Leisure))
+                CaptureQueueWeather(person, State.Minute);
             person.Journey = null;
             person.DepartureMinute = 0;
         }

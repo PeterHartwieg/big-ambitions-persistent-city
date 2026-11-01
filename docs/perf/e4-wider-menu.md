@@ -2,6 +2,8 @@
 
 1 November 2026. Baseline `51ce709`; native field doubles, .NET 10 Release, seed 957. No native performance claim. Raw matrix/harness logs: ignored `build/e4-menu/validation`.
 
+**Measurement provenance after base sync:** all tables and before/after numbers below were measured on the original E4 stack based on `51ce709`, before E1. They are retained historical evidence, not measurements of the merged E1/E4 tree. The sync adds current tool results and limits in [E4 checks](../checks/e4-wider-menu.md#base-sync-with-e1-and-f1). No new performance win is claimed by this merge.
+
 Taken low-risk win: `FoodSupplyReader.ReadMenu` reuses an already captured ordered string array, removing the redundant Distinct set/enumerator/result-array pipeline. Duplicate input now refuses explicitly instead of being silently collapsed. Nonarray input stops at nine entries before allocation; the eight-offer contract is checked before native setup. Successful snapshot fields remain byte-identical at width four. Native setup/counter/producer call order and the checkout path are unchanged.
 
 The harness measures the pinned baseline reader and current reader against the same fixture, 20 warmups and 1,001 samples; four/eight offers share one counter and bag pool. Choice measurements evaluate 32/64 offers from eight shops, with at most sixteen route slots. History measurements use 14 × 1,024 rows with four/eight product cells, both counting paths, churn, exact round trips, update and serialization. Fixture creation is outside measurements. Full serialization is a bulk offline operation, never ordinary-play mod-work p95. All ≥30 ms samples are reported, and whole-frame measurements are unavailable offline.

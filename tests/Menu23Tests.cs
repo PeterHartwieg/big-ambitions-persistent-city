@@ -22,7 +22,7 @@ public sealed partial class FoodCommerceTests
         return root.ToString(Formatting.None);
     }
 
-    [Theory] [InlineData(18)] [InlineData(19)]
+    [Theory] [InlineData(18)] [InlineData(19)] [InlineData(20)]
     public void E4_ExactOldReaderMigrationAndForeignOrNewerShapesPreserveSource(int schema)
     {
         var (city,_)=S17_Full();
@@ -32,7 +32,7 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(FoodMenuPolicy.Wire,read.State.MenuPolicy);
         Assert.Equal(source,E4_Old(read.State,schema));
         Assert.Equal(SaveCodec.Write(read.State),SaveCodec.Write(SaveCodec.Read(SaveCodec.Write(read.State)).State!));
-        foreach(int unknown in new[]{20,21,22,24})
+        foreach(int unknown in new[]{21,22,24})
         {
             var root=JObject.Parse(source);root["Schema"]=unknown;
             string bad=root.ToString(Formatting.None);
@@ -45,7 +45,7 @@ public sealed partial class FoodCommerceTests
         B0_Preserve(foreign.ToString(Formatting.None),city.State);
     }
 
-    [Theory] [InlineData(18)] [InlineData(19)]
+    [Theory] [InlineData(18)] [InlineData(19)] [InlineData(20)]
     public void E4_OldContractsRejectFifthScopeHistoryAndCapturedOffers(int schema)
     {
         var (city,_)=S17_Full();
@@ -73,6 +73,35 @@ public sealed partial class FoodCommerceTests
             if(damage!="scope") Assert.Contains("Oversized collection",SaveCodec.Read(root.ToString(Formatting.None)).Error);
             B0_Preserve(root.ToString(Formatting.None),city.State);
         }
+    }
+
+    [Fact]
+    public void E4_Schema20WeatherCapturesSurviveMigrationAndChangedLiveInputsExactly()
+    {
+        var (city, _, planner) = WeightedFoodChoiceTests.Ready(79, 12);
+        city.AttachWeather(new FrameWeatherSource(() => 1, () => true));
+        city.AdvanceFrameSlice(city.State.Food!.Residents.Single().DesiredAt, 1);
+        var person = city.State.Citizens[0];
+        person.W = new WeatherCommitment(city.State.Minute, WeatherSample.Rain, true);
+        city.State.WeatherStartsDay = 1;
+        string source = E4_Old(city.State, 20);
+        var read = SaveCodec.Read(source);
+        Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(20, read.SourceSchema); Assert.Equal(23, read.State!.Schema);
+        Assert.Equal(source, E4_Old(read.State, 20)); // every predecessor field, including held weather, is exact
+        Assert.Equal(1, read.State.WeatherStartsDay);
+        Assert.Equal(person.W.ToWire(), read.State.Citizens[0].W!.ToWire());
+        var meal = Assert.Single(read.State.Food!.Residents);
+        Assert.Equal(WeatherSample.Rain, meal.Memory.Weather);
+        Assert.Equal(WeatherSample.Rain, meal.Decision!.Weather);
+        Assert.Equal(1.3, meal.Decision.WeatherTravelMultiplier);
+        string migrated = SaveCodec.Write(read.State);
+        int reads = 0;
+        var resumed = new CitySimulator(read.State, planner);
+        resumed.AttachWeather(new FrameWeatherSource(() => 2, () => { reads++; return false; }),
+            new WeatherSettings { Enabled = false, RainTravelWeightMultiplier = 2 });
+        Assert.Equal(migrated, SaveCodec.Write(resumed.State)); Assert.Equal(0, reads);
+        Assert.Equal(migrated, SaveCodec.Write(SaveCodec.Read(migrated).State!));
     }
 
     [Fact]
