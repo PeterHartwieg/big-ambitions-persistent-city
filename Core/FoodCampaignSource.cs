@@ -6,10 +6,11 @@ namespace PersistentCity.Core
     public interface IFoodCampaignAwarenessProvider : IFoodAwarenessProvider
     {
         bool HasEvidence { get; }
-        void Prepare(string consumer, int day, double minute, ResidentTraits traits, bool commuteRoutine);
+        void Prepare(string consumer, int day, double minute);
+        bool Active(string business);
     }
 
-    /// <summary>Event-only publication/index build. A query visits fixed group/day/type buckets and eight
+    /// <summary>Event-only publication/index build. A query visits fixed day/type buckets and eight
     /// indexed slots, never the business collection. No resident rows or persistent exposure cache.</summary>
     public sealed class FoodCampaignSource : IFoodCampaignAwarenessProvider
     {
@@ -17,30 +18,32 @@ namespace PersistentCity.Core
         private readonly FoodMemoryStore references;
         private readonly int seed;
         private readonly FoodCampaignSettings settings;
-        private readonly FoodCampaignTargetPolicy policy;
-        private List<Entry>?[] index = new List<Entry>?[8 * 8 * 8];
-        private List<Entry>?[] scratch = new List<Entry>?[8 * 8 * 8];
+        private Dictionary<string,int> activeHours = new Dictionary<string,int>(StringComparer.Ordinal);
+        private Dictionary<string,int> scratchActive = new Dictionary<string,int>(StringComparer.Ordinal);
+        private List<Entry>?[] index = new List<Entry>?[8 * 8];
+        private List<Entry>?[] scratch = new List<Entry>?[8 * 8];
         private readonly string?[] selected = new string?[8];
-        private readonly int[] bucketKeys = new int[8 * 8 * 8], cumulative = new int[8 * 8 * 8];
+        private readonly int[] bucketKeys = new int[8 * 8], cumulative = new int[8 * 8];
         private string preparedConsumer = "";
-        private int preparedDay, newestDay = -1;
+        private int preparedDay, preparedHour, newestDay = -1;
         private struct Entry
         {
             public string Id;
             public uint Hours;
         }
-        public FoodCampaignSource(FoodCommerceState food, int seed, FoodCampaignSettings settings, FoodCampaignTargetPolicy policy)
+        public FoodCampaignSource(FoodCommerceState food, int seed, FoodCampaignSettings settings)
         {
-            this.food = food; this.seed = seed; this.settings = settings; this.policy = policy;
+            this.food = food; this.seed = seed; this.settings = settings;
             references = new FoodMemoryStore(food);
             if (settings.Enabled && food.Campaigns.Count != 0) Rebuild();
         }
-        public bool HasEvidence => settings.Enabled && settings.ReachProbability > 0 && IndexedEntries > 0;
+        public bool HasEvidence => settings.Enabled && IndexedEntries > 0;
         public long Admitted { get; private set; }
         public long Refused { get; private set; }
         public long Publications { get; private set; }
         public int IndexedEntries { get; private set; }
-        public FoodCampaignGroup ReviewedGroup(int type) => policy.Group(type);
+        public bool Active(string business) => HasEvidence && preparedConsumer.Length>0 && preparedDay==preparedHour/24
+            && activeHours.TryGetValue(business,out int hour) && hour==preparedHour;
         internal FoodMemoryStore ReferencesFor(FoodCommerceState owner)
             => ReferenceEquals(owner, food) ? references : throw new ArgumentException("Campaign source belongs to another city.");
 
@@ -52,6 +55,7 @@ namespace PersistentCity.Core
             double minute = snapshot.AtMinute;
             if (!Position.Finite(minute) || minute < 0 || minute > 1e9 || minute % 60 != 0 || snapshot.Businesses.Count > 1024)
                 throw new ArgumentException("Campaign publication requires an actual hourly boundary and bounded complete image.");
+            if(eligiblePlaces.Count>1024) throw new ArgumentException("Oversized campaign scope.");
             int hour = (int)(minute / 60);
             var sorted = new List<BusinessCampaignSnapshot>(snapshot.Businesses.Count);
             var seen = new HashSet<string>(StringComparer.Ordinal);
@@ -59,6 +63,9 @@ namespace PersistentCity.Core
             {
                 if (business == null || !seen.Add(business.BusinessId) || !eligiblePlaces.ContainsKey(business.BusinessId)
                     || business.Campaigns.Count > 8) throw new ArgumentException("Invalid campaign business scope.");
+                int slot=references.Find(business.BusinessId);
+                if(slot>=0 && references.Reference(slot)!.PlaceId!=eligiblePlaces[business.BusinessId])
+                    throw new ArgumentException("Campaign generation changed its place.");
                 sorted.Add(business);
             }
             foreach (var image in food.Campaigns) if (hour <= image.ThroughHour) throw new ArgumentException("Observation already published or backdated.");
@@ -87,10 +94,21 @@ namespace PersistentCity.Core
                 var image = FoodCampaignImage.Observe(previous, reference, hour, types);
                 if (image != null) next.Add(image);
             }
+            // Lack of a current read is not retirement. Keep observed history for a retained scope,
+            // aging it without adding evidence. Only an absent/replaced generation drops here.
+            foreach(var previous in food.Campaigns)
+            {
+                var reference=references.Reference(previous.BusinessRef)!;
+                if(seen.Contains(reference.BusinessId) || !eligiblePlaces.TryGetValue(reference.BusinessId,out var place)) continue;
+                if(place!=reference.PlaceId) throw new ArgumentException("Retained campaign generation changed its place.");
+                var image=FoodCampaignImage.Observe(previous,previous.BusinessRef,hour,0);
+                if(image!=null) next.Add(image);
+            }
             next.Sort((a, b) => a.BusinessRef.CompareTo(b.BusinessRef));
             // Build everything privately. Neither a partially merged image nor partial indexes escape.
             var built = Build(next, out int day, out int entries);
-            food.Campaigns = next; scratch = index; index = built; newestDay = day; IndexedEntries = entries; Publications++;
+            var active=ActiveIndex(next);
+            food.Campaigns = next; scratchActive=activeHours;activeHours=active; scratch = index; index = built; newestDay = day; IndexedEntries = entries; Publications++;
         }
         private List<Entry>?[] Build(List<FoodCampaignImage> images, out int day, out int entries)
         {
@@ -108,19 +126,29 @@ namespace PersistentCity.Core
                 var image=pair.Value; string id=pair.Key;
                 for (int age = 0; age < 8; age++) for (int type = 0; type < 8; type++)
                 {
-                    int group = (int)policy.Group(type); uint hours = image.Mask(day - age, type);
-                    if (group == 0 || hours == 0) continue;
-                    int key = group * 64 + age * 8 + type;
+                    uint hours = image.Mask(day - age, type);
+                    if (hours == 0) continue;
+                    int key = age * 8 + type;
                     (result[key] ??= new List<Entry>()).Add(new Entry { Id = id, Hours = hours }); entries++;
                 }
             }
             return result;
         }
+        private Dictionary<string,int> ActiveIndex(List<FoodCampaignImage> images)
+        {
+            var active=scratchActive;active.Clear();
+            foreach(var image in images)
+                for(int type=0;type<8;type++)
+                    if((image.Mask(image.Day,type)&(1u<<(image.ThroughHour%24)))!=0)
+                    { active.Add(references.Identity(image.BusinessRef),image.ThroughHour);break; }
+            return active;
+        }
         public void Rebuild()
         {
             if (!settings.Enabled || food.Campaigns.Count == 0) return;
             var built = Build(food.Campaigns, out int day, out int entries);
-            scratch=index;index=built;newestDay=day;IndexedEntries=entries;
+            var active=ActiveIndex(food.Campaigns);
+            scratch=index;index=built;newestDay=day;IndexedEntries=entries;scratchActive=activeHours;activeHours=active;
         }
         private uint Hash(string consumer, int day, int slot, string domain)
         {
@@ -130,25 +158,21 @@ namespace PersistentCity.Core
             hash = StableRandom.AppendDecimal(StableRandom.Append(hash, '|'), day);
             return StableRandom.AppendDecimal(StableRandom.Append(hash, '|'), slot);
         }
-        public void Prepare(string consumer, int day, double minute, ResidentTraits traits, bool commuteRoutine)
+        public void Prepare(string consumer, int day, double minute)
         {
             if (!HasEvidence) return;
-            preparedConsumer = consumer; preparedDay = day; Array.Clear(selected, 0, 8);
-            int membership = (int)FoodCampaignTargetPolicy.Membership(traits, commuteRoutine), count = 0, mass = 0;
-            // Fixed 7 group signatures x 8 days x 8 types; no consumer/campaign cross product.
-            for (int group = 1; group < 8; group++)
+            preparedConsumer = consumer; preparedDay = day; preparedHour=(int)(minute/60); Array.Clear(selected, 0, 8);
+            int count = 0, mass = 0;
+            // Fixed eight days x eight types; no consumer/campaign scan or demographic filter.
+            for (int age = 0; age < 8; age++)
             {
-                if ((group & membership) == 0) continue;
-                for (int age = 0; age < 8; age++)
+                int exposureDay = newestDay - age, elapsed = day - exposureDay;
+                if (elapsed < 0 || elapsed > settings.RetentionDays) continue;
+                for (int type = 0; type < 8; type++)
                 {
-                    int exposureDay = newestDay - age, elapsed = day - exposureDay;
-                    if (elapsed < 0 || elapsed > settings.RetentionDays) continue;
-                    for (int type = 0; type < 8; type++)
-                    {
-                        int key = group * 64 + age * 8 + type; var bucket = index[key];
-                        if (bucket == null) continue;
-                        mass += bucket.Count; bucketKeys[count] = key; cumulative[count++] = mass;
-                    }
+                    int key = age * 8 + type; var bucket = index[key];
+                    if (bucket == null || bucket.Count==0) continue;
+                    mass += bucket.Count; bucketKeys[count] = key; cumulative[count++] = mass;
                 }
             }
             if (mass == 0) return;
@@ -160,9 +184,9 @@ namespace PersistentCity.Core
                 int exposureDay = newestDay - bucketKeys[bucket] % 64 / 8;
                 int lastHour = (int)(minute / 60) - exposureDay * 24;
                 uint permitted = lastHour < 0 ? 0 : lastHour >= 23 ? 0xffffff : (1u << (lastHour + 1)) - 1;
-                // Reach is shared across overlapping groups/types for the same consumer/business/day.
+                // Reach is shared across overlapping types for the same consumer/business/day.
                 uint gate = StableRandom.Finish(StableRandom.Append(Hash(consumer, exposureDay, 0, "pc:campaign:reach:1"), entry.Id));
-                double probability = Math.Min(1, settings.ReachProbability * settings.TargetMatchMultiplier)
+                double probability = settings.ReachProbability
                     * Math.Pow(settings.DailyReachDecay, day - exposureDay);
                 bool admitted = (entry.Hours & permitted) != 0 && (gate + .5) / 4294967296.0 < probability;
                 for (int previous = 0; previous < slot; previous++) if (selected[previous] == entry.Id) admitted = false;

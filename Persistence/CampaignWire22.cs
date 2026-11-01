@@ -39,8 +39,8 @@ namespace PersistentCity.Persistence
         private static int ValidateAwareness22(FoodDecisionState decision, ResidentMeal meal, FoodCommerceState food)
         {
             var image = decision.Awareness;
-            if(image!=null) Require(image.Union!=null,"Missing awareness union.");
-            if (image == null || image.Union.Count <= 24 && image.Union.TrueForAll(c => c != null && (c.Sources & FoodAwarenessSource.Campaign) == 0))
+            if(image!=null) {Require(image.Union!=null,"Missing awareness union.");image.RefreshCampaignModifier();}
+            if (image == null || image.Union.Count <= 24 && image.Union.TrueForAll(c => c != null && (c.Sources & (FoodAwarenessSource.Campaign | FoodAwarenessSource.ActiveCampaign)) == 0))
                 return ValidateAwareness(decision, meal, food);
             Require(image.CatalogueRevision != null && image.CatalogueRevision.Length == 44, "Invalid awareness catalogue revision.");
             byte[] hash = Convert.FromBase64String(image.CatalogueRevision);
@@ -52,7 +52,7 @@ namespace PersistentCity.Persistence
                 Require(candidate != null, "Null awareness candidate."); Text(candidate.BusinessId, "Awareness generation", 512);
                 Require(StringComparer.Ordinal.Compare(previous, candidate.BusinessId) < 0, "Duplicate/unordered awareness generation.");
                 previous = candidate.BusinessId; int flags = (int)candidate.Sources;
-                Require(flags > 0 && flags < 64, "Unknown awareness source.");
+                Require(flags > 0 && flags < 128 && (flags & 63) > 0, "Unknown awareness source.");
                 for (int source = 0; source < 6; source++) if ((flags & (1 << source)) != 0)
                     Require(++counts[source] <= (source >= 4 ? 8 : 4), "Oversized awareness source.");
                 if (candidate.Eligible) admitted.Add(candidate.BusinessId);

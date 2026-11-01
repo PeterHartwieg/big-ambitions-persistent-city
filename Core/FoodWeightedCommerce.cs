@@ -53,7 +53,7 @@ namespace PersistentCity.Core
         private FoodAwarenessImage AwarenessSample(ResidentMeal meal,CitizenState person,FoodRoutineStop stop,int day,bool atStop,FoodAwarenessDump? dump=null)
         {
             if(CampaignProvider is IFoodCampaignAwarenessProvider campaigns && campaigns.HasEvidence)
-                campaigns.Prepare(meal.ResidentId,day,city.State.Minute,Traits(meal,person),person.DayPlaceId.Length>0);
+                campaigns.Prepare(meal.ResidentId,day,city.State.Minute);
             return AwarenessCatalogue().Sample(city.State.Seed,meal.ResidentId,day,Anchor(person.HomeId),Anchor(person.DayPlaceId),Anchor(stop.PlaceId),
                 AwarenessSettings,e=>(!atStop || e.PlaceId==stop.PlaceId) && e.Scope!.BusinessId==e.BusinessId
                     && (!(market is IFoodCandidateMarket m) || m.IsCandidate(e.Scope!)),MemoryProvider ?? storedMemoryProvider,CampaignProvider,dump,atStop ? stop.PlaceId : null);
@@ -301,7 +301,7 @@ namespace PersistentCity.Core
                 double queue=Math.Max(0,b.NextServiceMinute-c.AdmissionMinute!.Value);
                 evaluated.Add(new EvaluatedFoodOffer(c.BusinessId,c.ProductId,c.Price,c.TravelMinutes!.Value,queue,
                     c.ServiceEndsAt!.Value-d.OriginAt+c.ReturnMinutes!.Value+intent.EatingMinutes,d.Deadline-d.OriginAt,
-                    c.CustomerServicePercent,c.DistrictDemandPercent,meal.Kind,d.Shops.First(s=>s.BusinessId==c.BusinessId).MemoryContribution));
+                    c.CustomerServicePercent,c.DistrictDemandPercent,meal.Kind,d.Shops.First(s=>s.BusinessId==c.BusinessId).MemoryContribution,d.Awareness?.CampaignActive(c.BusinessId)==true));
             }
             long choiceStarted=city.ObservingFood ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             var pick=FoodChoicePolicy.Select(evaluated,Traits(meal,person),AvailableForMeal(meal),Draw(meal,d),d.Tuning.Settings,intent.OutsideOption!=FoodOutsideOption.None);

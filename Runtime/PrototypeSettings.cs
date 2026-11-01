@@ -35,8 +35,6 @@ namespace PersistentCity.Runtime
         public bool FoodMarketingCampaignEnabled { get => Campaigns.Enabled; set => Campaigns.Enabled=value; }
         [JsonConverter(typeof(AwarenessNumberConverter))]
         public double FoodMarketingCampaignReachProbability { get => Campaigns.ReachProbability; set => Campaigns.ReachProbability=value; }
-        [JsonConverter(typeof(AwarenessNumberConverter))]
-        public double FoodMarketingTargetMatchMultiplier { get => Campaigns.TargetMatchMultiplier; set => Campaigns.TargetMatchMultiplier=value; }
         [JsonConverter(typeof(FoodMemoryIntegerConverter), 1, 7)]
         public int FoodMarketingRetentionDays { get => Campaigns.RetentionDays; set => Campaigns.RetentionDays=value; }
         [JsonConverter(typeof(AwarenessNumberConverter))]

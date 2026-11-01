@@ -3,7 +3,6 @@
   "FoodMarketingNeighbourhoodDrawsPerAnchor": 4,
   "FoodMarketingDiscoveryDailyProbability": 0.02,
   "FoodMarketingCampaignReachProbability": 0.25,
-  "FoodMarketingTargetMatchMultiplier": 2.0,
   "FoodMarketingRetentionDays": 7,
   "FoodMarketingDailyReachDecay": 0.5,
   "Enabled": true,

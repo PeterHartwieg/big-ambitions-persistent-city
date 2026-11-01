@@ -21,5 +21,18 @@ namespace PersistentCity.Runtime
                 state.Shops.Add(new FoodScope {BusinessId=registration.Id,PlaceId="place:"+registration.Id});
             }
         }
+        internal void CandidateForFixture(string business,bool value)
+        {
+            if(value) candidateBusinesses.Add(business);else candidateBusinesses.Remove(business);
+        }
+    }
+}
+
+namespace UnityEngine
+{
+    public static class Debug
+    {
+        public static int CampaignWarnings;
+        public static void LogWarning(string message) { CampaignWarnings++; }
     }
 }

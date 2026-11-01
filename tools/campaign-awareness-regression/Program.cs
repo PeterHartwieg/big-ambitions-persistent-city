@@ -20,7 +20,7 @@ static object ReferenceLookup(int count,CampaignSnapshot observation,Dictionary<
     var field=typeof(FoodCampaignSource).GetField("references",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)!;
     for(int iteration=-10;iteration<101;iteration++)
     {
-        var food=new FoodCommerceState();var source=new FoodCampaignSource(food,79,new(),FoodCampaignTargetPolicy.Unknown);
+        var food=new FoodCommerceState();var source=new FoodCampaignSource(food,79,new());
         var duplicate=new FoodMemoryStore(food);var shared=(FoodMemoryStore)field.GetValue(source)!;
         duplicate.Reference(-1);shared.Reference(-1);
         source.Publish(observation,places);
@@ -42,7 +42,6 @@ static object ReferenceLookup(int count,CampaignSnapshot observation,Dictionary<
     if(sharedBytes!=0) throw new Exception("Shared index deferred allocation to the next consumer lookup.");
     return new {duplicateIndexControl=Stats(duplicateMs,duplicateBytes),sharedProductionIndex=Stats(sharedMs,sharedBytes)};
 }
-var targets=new FoodCampaignTargetPolicy(Enumerable.Repeat(FoodCampaignGroup.Commuters|FoodCampaignGroup.HealthOriented,6).ToArray());
 var probe=new NativeCampaignReader();
 if(probe.HasCampaignEntries(null) || probe.HasCampaignEntries(new object())) throw new Exception("Unknown campaign presence admitted.");
 var probeRegistration=new BuildingRegistration();
@@ -51,12 +50,40 @@ probeRegistration.marketingCampaigns.Clear();
 if(probe.HasCampaignEntries(probeRegistration)) throw new Exception("Empty list presence admitted.");
 var traits=new ResidentTraits {Bands="2222222322"};
 var settings=new FoodCampaignSettings {ReachProbability=1};
+// Actual production reader + adapter: all residents, temporary ineligibility, and failure isolation.
+{
+    NativeFoodOwnership.Hour=0;
+    var native=new BuildingRegistration {Id="acquired"};var food=new FoodCommerceState();
+    var adapter=new NativeFoodMarket(food,new[]{native});
+    var source=adapter.AttachCampaignAwareness(79,new() {ReachProbability=1,DailyReachDecay=1});
+    adapter.ObserveCampaignBoundary(1);
+    if(food.Campaigns.Count!=1 || food.Campaigns[0].Mask(0,0)!=2) throw new Exception("Acquisition observation missed.");
+    foreach(string resident in new[]{"commuter","retired","health-oriented","other"})
+    {
+        source.Prepare(resident,0,60);
+        if(!source.Active("acquired") || !Enumerable.Range(0,8).Any(slot=>source.Reference(resident,0,slot)=="acquired"))
+            throw new Exception("Production adapter excluded a resident.");
+    }
+    adapter.CandidateForFixture("acquired",false);
+    foreach(var campaign in native.marketingCampaigns) campaign.enabled=false;
+    adapter.ObserveCampaignBoundary(2);source.Prepare("other",0,120);
+    if(food.Campaigns.Count!=1 || food.Campaigns[0].Mask(0,0)!=2 || source.Active("acquired"))
+        throw new Exception("Temporary ineligibility lost history or invented active evidence.");
+    adapter.CandidateForFixture("acquired",true);adapter.ObserveCampaignBoundary(3);
+    string retained=food.Campaigns[0].Encode();
+    int warnings=UnityEngine.Debug.CampaignWarnings;long publications=source.Publications;
+    food.Shops.Add(new FoodScope {BusinessId="acquired",PlaceId="duplicate"});
+    adapter.ObserveCampaignBoundary(4);adapter.ObserveCampaignBoundary(5);
+    if(source.Publications!=publications || food.Campaigns[0].Encode()!=retained || UnityEngine.Debug.CampaignWarnings!=warnings+1)
+        throw new Exception("Optional observation did not latch one failure without partial publication.");
+    Console.WriteLine("PASS production campaign adapter: all residents, stopped/ineligible history retained, failure logged once and isolated.");
+}
 foreach(int count in new[]{1,1024})
 {
     var native=Enumerable.Range(0,count).Select(i=>new BuildingRegistration {Id="b"+i.ToString("D4")}).ToArray();
     var sources=native.Select(n=>new CampaignBusinessSource(n.Id,n)).ToArray();var reader=new NativeCampaignReader();
     var places=native.ToDictionary(n=>n.Id,n=>"place:"+n.Id);
-    var food=new FoodCommerceState();var source=new FoodCampaignSource(food,79,settings,targets);
+    var food=new FoodCommerceState();var source=new FoodCampaignSource(food,79,settings);
     int hour=0;
     CampaignSnapshot Read()
     {
@@ -72,11 +99,11 @@ foreach(int count in new[]{1,1024})
     var rebuild=Measure(source.Rebuild);
     int consumer=0;
     var decision=Measure(()=>{
-        source.Prepare("resident:stable",day,hour*60,traits,true);
+        source.Prepare("resident:stable",day,hour*60);
         for(int slot=0;slot<8;slot++) GC.KeepAlive(source.Reference("resident:stable",day,slot));
         consumer++;
     },10001);
-    // Actual production scheduler, including scope-vector construction and C1 publication; targets remain Unknown.
+    // Actual production scheduler, including scope-vector construction and C1 publication; all residents receive the active modifier.
     var runtimeFood=new FoodCommerceState();var adapter=new NativeFoodMarket(runtimeFood,native);
     NativeFoodOwnership.Hour=0;adapter.AttachCampaignAwareness(79,new());long runtimeHour=0;
     string before=JsonSerializer.Serialize(native,new JsonSerializerOptions {IncludeFields=true});
@@ -103,11 +130,25 @@ foreach(int count in new[]{1,1024})
     imageFood.Campaigns.Clear();string noImages=SaveCodec.Write(previous.State);var baseCounts=SaveCodec.CountRecords(previous.State,noImages);
     int campaignBytes=emptyWire.Length-noImages.Length;
     if(imageCounts.Semantic-baseCounts.Semantic!=count || imageCounts.Streaming-baseCounts.Streaming!=count) throw new Exception("Image record charge changed.");
-    Console.WriteLine(JsonSerializer.Serialize(new {businesses=count,syntheticReviewedHourlyC1AndPublication=sample,groupIndexRebuild=rebuild,eightSlotDecision=decision,
-        productionUnknownTargetsHourly=production,noCampaignHourlyCountProbes=absent,disabledHourly=off,referenceLookupAfterPublication=referenceLookup,
+    Console.WriteLine(JsonSerializer.Serialize(new {businesses=count,hourlyC1AndPublication=sample,dayTypeIndexRebuild=rebuild,eightSlotDecision=decision,
+        productionAllResidentsHourly=production,noCampaignHourlyCountProbes=absent,disabledHourly=off,referenceLookupAfterPublication=referenceLookup,
         campaignBytesAbove19WithSharedReferences=campaignBytes+15,campaignRecordDelta=count,imageWireCharacters=265,
-        nativeStateUnchanged=before==after,notes="Offline .NET only. No native timing/targeting evidence. Whole-frame unavailable; count probes are included, not claimed as zero CPU work."}));
+        nativeStateUnchanged=before==after,notes="Offline .NET only. No native timing evidence. Whole-frame unavailable; count probes are included, not claimed as zero CPU work."}));
 }
+
+// Original per-offer held-image scan versus the derived neutral-path cache.
+var neutralImage=new FoodAwarenessImage();
+for(int i=0;i<24;i++) neutralImage.Union.Add(new() {BusinessId="business:"+i,Sources=i<4 ? FoodAwarenessSource.Memory : i<8 ? FoodAwarenessSource.Home : i<12 ? FoodAwarenessSource.Routine : i<16 ? FoodAwarenessSource.Origin : FoodAwarenessSource.Discovery});
+var neutralIds=neutralImage.Union.Skip(16).Select(c=>c.BusinessId).ToArray();
+bool UncachedActive(string id)
+{
+    foreach(var candidate in neutralImage.Union) if(candidate.BusinessId==id)
+        return (candidate.Sources&FoodAwarenessSource.ActiveCampaign)!=0;
+    return false;
+}
+var uncached=Measure(()=>{foreach(string id in neutralIds) if(UncachedActive(id)) throw new Exception("Unexpected active modifier");},10001);
+var cached=Measure(()=>{foreach(string id in neutralIds) if(neutralImage.CampaignActive(id)) throw new Exception("Unexpected active modifier");},10001);
+Console.WriteLine(JsonSerializer.Serialize(new {noCampaignHeldModifierLookups=new {shops=8,sourceIds=24,uncachedControl=uncached,cached}}));
 
 sealed class FixturePlanner : IRoutePlanner
 {
