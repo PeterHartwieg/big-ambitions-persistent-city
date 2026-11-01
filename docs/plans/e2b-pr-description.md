@@ -1,0 +1,75 @@
+# E2b: bound street-life timing and frontage ownership
+
+**Merge gate pending:** candidate-head `rig_test` behavior, DLL identities and matched native mod-work p50/p95/max evidence are required before merge. Offline tests do not satisfy this gate.
+
+## Review round 1
+
+Indexed publication/rebinding uses an address-prefix map and 0.1m entrance cells; eligible places inspect only their address and neighbouring cells. Home/Study are skipped; Work remains eligible for assigned breaks. No new polling, actor, venue, native writer, schema or tuning change. Rebind-only count/duration/spike diagnostics support rig check 7. R4 changes planned-line membership and move-up in rain; visible retention already existed.
+
+All **31 requested checks plus findings/performance (32/32)** pass: production Steam-reference build, **1,698/1,698 unit tests**, enumeration, 21 standalone regressions, four Python harnesses and three demos. Foreground only, required other-dotnet wait before every test/run. Save-contract digest remains `6B9097A2A036A7791F118DDFF0A96530AC4A2EBAFFDFA6BF37C51ADBCC52062C` (113,747 characters); no population/persistence/config contracts changed. No game, rig, lease or test-profile work. Full ignored logs: `build/e2b-r1/`; [command exits, hashes, DLL identity and output](../reviews/offline/2026-10-31-e2b-r1.txt).
+
+All times are **ms p50/p95/max**, whole offline cache batches. Reviewed = actual methods from `1c31b47`; indexed = this candidate, same native doubles/roster, **200 batches/arm**. The 1,000-place/1,000-controller arm makes every place Work to stress all eligible frontages; a separate mixed-role 1,000-controller regression proves Home/Study are skipped and assigned-work breaks remain eligible. Source extraction also retains E2a measurements in the raw output.
+
+| Operation / places = controllers | Reviewed ms | Indexed ms | B/batch reviewed → indexed | Native entrance reads reviewed → indexed |
+| --- | --- | --- | --- | --- |
+| Publish / 48 | 0.1130/0.1449/1.4090 | 0.1146/0.1666/0.2375 | 19544.0 → 40928.0 | 48.0 → 48.0 |
+| Rebind / 48 | 0.1365/0.2051/0.6680 | 0.1352/0.2099/0.7747 | 44088.6 → 65532.8 | 48.0 → 48.0 |
+| Publish / 256 | 1.8842/2.6931/3.6120 | 0.7203/1.2541/2.0564 | 95232.0 → 211560.0 | 256.0 → 256.0 |
+| Rebind / 256 | 0.2991/0.5311/1.5942 | 0.2543/0.8456/1.6289 | 231074.2 → 347471.1 | 256.0 → 256.0 |
+| Publish / 1000 | 7.1134/8.0621/8.6583 | 0.9492/3.2639/4.8519 | 414160.0 → 935816.0 | 1000.0 → 1000.0 |
+| Rebind / 1000 | 7.6673/8.5979/9.2397 | 1.3145/6.0477/8.1665 | 934439.8 → 1456258.8 | 1000.0 → 1000.0 |
+
+**0 offline samples >=30 ms**, all individually retained with model/operation/size/duration in [the raw proof](../reviews/offline/2026-10-31-e2b-r1.txt). Model 0 is E2a, model 1 is reviewed E2b, model 2 is indexed E2b. E2a: 0 flagged cache samples. reviewed: 0 flagged cache samples. indexed: 0 flagged cache samples. These batches do not certify native mod-work or whole-frame performance. Address/entrance indexing trades extra cold index allocation for removal of global place-by-controller matching; warm ownership reads remain cached. Native entrance-call cost is unchanged versus reviewed E2b and still needs the combined rig measurement.
+
+## Initial implementation results
+
+Optional stops now refuse ambiguous/conflicting native frontage ownership independent of controller order. Already bound lines now remain in the queue plan through rain, so move-up continues; visible retention and occupied-slot reservation were already implemented. New admissions still use current rain. Five flat per-kind dwell maxima default to exactly the prior timing and clamp to existing kind bounds through the unchanged loader.
+
+No persisted field/schema/SaveCodec change. Reload can reconstruct wait eligibility/opening and same-weather lead, but cannot recover the pre-save weather/lead/body/slot; changed weather may delay/refuse the queue. Saved optional stops keep end times and continuation. Existing 0/25/100 conservation/pass-on, food priority, partner return, caps and special native suppression paths are preserved. No new venue, actors, staff identities, night multiplier, native writer or sibling dependency. R1/R3 remain deferred pending the native plus visual evidence specified below; the locked E2a report did not establish either.
+
+**Validation:** all **31/31 requested foreground checks** plus the performance/findings arm pass (**32/32**); production Steam-reference build, **1,698/1,698 unit tests with zero failures/skips**, enumeration, all 21 standalone regressions, four Python harnesses and three demos. Final affected build/adapter/performance checks were repeated after the last refinements. Save-contract digest remains `6B9097A2A036A7791F118DDFF0A96530AC4A2EBAFFDFA6BF37C51ADBCC52062C` (113,747 characters). The packaged config is byte-identical to the flat template; the loader/file failure path is unchanged. Full ignored logs: `build/e2b/`; committed command exits, hashes and before/after output are in [the evidence record](../reviews/offline/2026-10-31-e2b.txt). No owned test/run process remains; no game launch, rig/lease/profile work or install writes.
+
+Historical initial submission (`1c31b47`): all times below are **ms p50/p95/max**; B denotes allocated bytes. Before = actual E2a methods; after = initial E2b, before the review index.
+
+| Cache operation / frontages | Before ms | After ms | B/batch before → after | Entrance reads before → after |
+| --- | --- | --- | --- | --- |
+| Publish / 48 | 0.0493/0.0731/1.4570 | 0.1237/0.2134/1.3065 | 4576.0 → 19512.0 | 1176.0 → 48.0 |
+| Rebind / 48 | 0.0936/0.1806/3.7317 | 0.1554/0.2683/1.4250 | 34516.3 → 44108.3 | 1176.0 → 48.0 |
+| Publish / 256 | 1.1081/1.6025/3.0454 | 0.4571/3.3352/4.2957 | 22264.0 → 95200.0 | 32896.0 → 256.0 |
+| Rebind / 256 | 0.1924/1.9547/22.7608 | 0.3085/0.5931/1.5541 | 170097.5 → 231094.0 | 32896.0 → 256.0 |
+
+Publication/rebinding now reads each native entrance once; 200 repeated missing-frontage reads fall from 9,600 / 51,200 entrance reads at 48 / 256 controllers to **zero** (24 B for the complete observer loop in both arms). Cold doubles can be slower and allocate more for the address/entrance snapshot and cache; the table includes that cost, and no native NavMesh speedup is inferred from double CPU.
+
+| Warm facade / queries per batch | Before ms | After ms | B/query before → after |
+| --- | --- | --- | --- |
+| 48 | 0.0433/0.0885/7.9261 | 0.0275/0.0483/0.2534 | 568.1 → 360.0 |
+| 256 | 0.1005/0.1963/1.2803 | 0.0720/0.1713/1.2925 | 592.4 → 374.7 |
+
+Exactly 48/256 cold samples (one/frame), **zero additional warm samples**, and one accepted facade lookup/query; refused frontages use no sample budget. Facade results are percentage-independent.
+
+| Batch / rate / size or cap | Default ms | Minimum-maxima ms | B/batch default → tuned |
+| --- | --- | --- | --- |
+| Admission / 25 / 48 | 0.2286/0.4284/1.3425 | 0.0488/0.0695/14.2255 | 73798.3 → 73798.3 |
+| Admission / 25 / 256 | 1.3506/2.6445/3.3745 | 0.2361/0.9753/1.7666 | 392109.6 → 392109.6 |
+| Admission / 100 / 48 | 0.0691/0.1326/1.2565 | 0.0840/0.1118/0.1714 | 91470.3 → 91484.5 |
+| Admission / 100 / 256 | 0.8157/1.7651/2.8036 | 1.1334/2.1043/2.3718 | 488221.6 → 488221.6 |
+| Selector / 25 / 48 | 0.1328/0.2009/0.8578 | 0.0094/0.0280/0.1241 | 64.0 → 64.0 |
+| Selector / 25 / 256 | 0.0034/0.0042/0.0130 | 0.0025/0.0027/0.0029 | 0.0 → 0.0 |
+| Selector / 100 / 48 | 1.2987/2.3982/6.6480 | 0.1650/0.2549/0.8869 | 64.0 → 64.0 |
+| Selector / 100 / 256 | 0.0776/0.1839/1.3180 | 0.0754/0.0964/0.2753 | 64.0 → 64.0 |
+
+Default/tuned admission realisation is identical: 13/48 and 64/256 at 25, 48/48 and 256/256 at 100; query/occupancy counts also agree. Selector stress admits 48/229 and 229/229 at 25, 48/957 and 256/957 at 100 under both tunings, with four attempts/call maximum. Tuning/JIT/arm order can affect timings; these are workload comparisons, **not a duration-tuning speedup claim**. The linked raw output includes all 957-resident admission batches. Final performance run: **0 offline samples >=30 ms**. The earlier complete gate run recorded 0 such samples. Neither run measures native mod-work.
+
+Offline .NET/doubles only; combined native mod-work p95 <5 ms and spikes >=30 ms still need the ordinary matched rig windows below; whole-frame timings remain separate. The supplied unchanged-code E2a 100%-breakfast 5.68 ms under another dotnet run (other windows 0.38–2.26 ms) is context only. Four refresh/serialization hotspots remain parked.
+
+## In-game checks for 6 Nov rig
+
+Pending `rig_test` proof on the final combined head before merge. LOCKED-OK is bridge-only work under the [feasibility report at 84be71a](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/84be71a/docs/reviews/rig/2026-10-31-locked-session-feasibility/README.md); NEEDS-INPUT waits for the unlocked session. No rig work was performed by this implementation task.
+
+1. **LOCKED-OK — frontage ownership and refusals.** On the named disposable FT fixture, bridge-read native controller identities, registration street/number/type, sampled entrances and the optional environment's `buildings` cache, before and after reload/rebinding. Record eligible Work/Shop/Leisure versus skipped Home/Study counts. Reconcile every selected frontage with exactly one address/controller and entrance; record shared-entrance, duplicate-address, moved-address, missing and unreadable refusals separately. Check both native enumeration orders if a genuine ambiguous fixture exists; otherwise label R2 native ambiguity unobserved and retain the source/double proof. Read only: never call registration-creating or spawning helpers. Bound each dump and report truncation.
+2. **LOCKED-OK — bound-line planning, move-up in rain and reload.** Capture a queue with a live bound queuer and a vacant spot ahead (ID, planned-line membership, line/slot, native path target, saved wait/destination/activity deadline, binding dwell start/end and rain). Through a natural rain change that would omit the unbound current-weather plans, verify the bound line stays in `PlanQueues` and move-up still selects a free spot ahead only when the body accepts the target; unbound admissions retain current rain/thinning. Visible retention and occupied-slot reservation are baseline controls, not E2b fixes. Save outside measured windows and reload during the wait; same-weather eligibility/opening reconstruct, changed weather may reconstruct a different lead or no queue and cannot recover the old slot. Record the limitation, original activity continuation, no extra visit/chance and admission at opening. Mark unavailable natural rain/move-up opportunities honestly.
+3. **LOCKED-OK — default/tuned timing and chance ledger.** Load default maxima 10/30/3/8/40, then minimum maxima 5/10/1/2/10 (break/chat/window/audience/rest), with the city unloaded between config arms. At 25 and 100 dump effective once-only settings, existing resident IDs, stop kind/start/end/visit/resume/members, cancelled/active/future status and pending stock before/after each window. Reconcile draws = realised + delta pending + drops and unchanged 48/256 caps; compare new dwell bounds and same keys. Reload with changed tuning during a saved stop: original end/continuation must remain. Include 0 as the no-new-optional-stop control, food priority, paired return, night and rain; opening queues stay percentage-independent.
+4. **LOCKED-OK — R1 evidence before any future change.** Find a real assigned-work admission with a future break; record resident/assigned work/current venue, stop start/end, original activity deadline, rain onset before the start and clearing before the start, cancellation minute and the state at the planned start, including reload. Correlate with physical binding, focus/pool eligibility and facade availability to distinguish a missing body from a missed logical break. This captures the current cancellation; it does not enable a future-break exception. If no such case occurs, R1 remains partial.
+5. **LOCKED-OK — R3 ownership evidence before any future change.** At an existing nightclub frontage bridge-read the loaded type's `hasPedestriansOutside`/pool, established registration/entrance, hangout zone/spawner identity, each native body's owning path, and identified queue/chat IDs/positions/times. Demonstrate whether independently owned native business-frontage bodies actually coincide with identified stops; asset flags or unpatched methods alone do not prove overlap. Record performers/homeless separately. No spawning call, suppression extension or new venue mapping.
+6. **NEEDS-INPUT — visual confirmation and R1/R3 decision evidence.** Correlate screenshots/video with checks 1–5: facing, approach/standing/return, partner return, door clearance and no duplicate standers/phantom staff at day/night/rain. R1 is unblocked only by a reproducible visibly missed scheduled break after transient rain, with the state timeline from check 4. R3 is unblocked only by visible concurrent overlap with separately proven native business-spawner ownership from check 5. Confirm native performers/homeless still appear. Missing natural opportunities remain unverified; no new crowd or performer trip may be created to fill the matrix.
+7. **LOCKED-OK — matched combined performance in the ordinary 6 Nov session.** Freeze candidate and `codex/persistent-city` baseline commits/DLL hashes, dependencies, effective config, seed/checkpoints and clock/graphics/population/body/shop setup. Interleave matched idle and rush windows at 25 and 100, default versus tuned maxima, cold/warm and soak; collect mod-work p50/p95/max, every spike >=30 ms (count, duration, condition/component), facade/selector/query/allocation/catch-up counters where available. In the candidate, bridge-dump deltas of `FrontageRebindCount`, last/total/maximum rebind milliseconds and `FrontageRebindSpikes30`; include a genuine destroyed-owner rebind and separate activation publication latency. If no genuine rebind occurs, record that arm as unavailable rather than force native destruction. Flag every rebind >=30 ms and correlate it with mod-work frames. The index removes the global place-by-controller scan; native entrance-read cost still requires measurement. Require mod-work p95 <5 ms; report whole-frame p50/p95/max and stalls separately. Record original autosave, disable and verify off before every timed window and after reload; manual saves stay outside, any in-window save invalidates the sample. Restore autosave/preferences/fixture changes in cleanup. No separate performance-only run; UI states requiring pointer/keyboard are **NEEDS-INPUT**.

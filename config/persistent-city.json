@@ -4,6 +4,12 @@
   "FoodMarketingDiscoveryDailyProbability": 0.02,
   "Enabled": true,
   "OptionalStopChoicePercentage": 25,
+  "StreetLifeBreakMaximumMinutes": 10,
+  "StreetLifeChatMaximumMinutes": 30,
+  "StreetLifeWindowShoppingMaximumMinutes": 3,
+  "StreetLifeAudienceMaximumMinutes": 8,
+  "StreetLifeRestingMaximumMinutes": 40,
+
   "GameClockFactor": 0.3333333333333333,
   "PhysicalEnabled": true,
   "MaximumPedestrians": 48,

@@ -264,6 +264,36 @@ public sealed class DwellPlannerTests
         Assert.Single(DwellPlanner.AssignQueueSlots(duplicate, Array.Empty<Dwell>(), 8));
     }
 
+    [Theory]
+    [InlineData(9, 0)] [InlineData(9, 25)] [InlineData(9, 100)]
+    [InlineData(3, 0)] [InlineData(3, 25)] [InlineData(3, 100)]
+    public void CommittedQueueKeepsLeadButReloadCanOnlyReconstructCurrentWeather(int hour, int rate)
+    {
+        double opening = Day + hour * 60;
+        var shop = new Place { Id = "shop", Name = "Shop", Kind = PlaceKind.Shop, Capacity = 1, OpenMinute = hour * 60, CloseMinute = (hour + 4) * 60 };
+        var home = new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 1 };
+        var state = Population.Create(new[] { new CitizenIdentity { Id = "queue0", Name = "Queue", Age = 30 } }, new[] { home, shop }, "e2b-queue", "0.40.4", 17, opening - 10);
+        var c = state.Citizens.Single(); c.Phase = CitizenPhase.WaitingForOpening; c.PlaceId = c.DestinationId = "shop";
+        c.Activity = c.DestinationActivity = Activity.Shop; c.ActivityUntilMinute = opening + 60; c.NextEventMinute = opening;
+        var dry = DwellPlanner.QueueAtOpening(c, shop, 17, state.Minute, false)!.Value;
+        // Admit only once its deterministic dry lead is active.
+        state.Minute = dry.StartMinute + 0.01;
+        var wet = DwellPlanner.QueueAtOpening(c, shop, 17, state.Minute, true);
+        Assert.NotEqual((Dwell?)dry, wet);
+        Assert.Equal(dry, DwellPlanner.QueueAtOpening(c, shop, 17, state.Minute, true, dry));
+        string saved = SaveCodec.Write(state);
+        var loaded = SaveCodec.Read(saved).State!;
+        var sim = new CitySimulator(loaded, new NoRoutes()); sim.AttachOptionalStops(new NoOptionalGeometry { Raining = true }, rate);
+        Assert.Equal(saved, SaveCodec.Write(loaded));
+        Assert.Equal(wet, DwellPlanner.QueueAtOpening(loaded.Citizens.Single(), shop, 17, loaded.Minute, true));
+        Assert.Equal(dry, DwellPlanner.QueueAtOpening(loaded.Citizens.Single(), shop, 17, loaded.Minute, false));
+        // Identical save supports both histories: no saved weather/lead/body/slot distinguishes them.
+        Assert.Null(DwellPlanner.QueueAtOpening(c, shop, 17, opening, true, dry));
+        var foreign = new Dwell("someone-else", DwellKind.QueueAtOpening, "shop", dry.StartMinute, opening, "shop");
+        Assert.Equal(wet, DwellPlanner.QueueAtOpening(c, shop, 17, state.Minute, true, foreign));
+        sim.AdvanceTo(opening); Assert.Equal(CitizenPhase.AtPlace, loaded.Citizens.Single().Phase); Assert.Single(loaded.Citizens.Single().RecentVisits);
+    }
+
     private sealed class NoRoutes : IRoutePlanner
     {
         public Route? Plan(Place from, Place to, double departureMinute, TravelPreferences preferences) => null;

@@ -124,7 +124,7 @@ namespace PersistentCity.Core
             AbortPending();
             var replacement = new CitySimulator(State, replacementRoutes);
             replacement.activityObservers = activityObservers;
-            if (stopEnvironment != null) replacement.AttachOptionalStops(stopEnvironment, stopPercentage);
+            if (stopEnvironment != null) replacement.AttachOptionalStops(stopEnvironment, stopPercentage, stopTiming);
             if (food != null) replacement.AttachFoodMarket(food.Market, food.ChoiceSettings, food.MemorySettings, food.AwarenessSettings, food.MemoryProvider, food.CampaignProvider);
             return replacement;
         }
