@@ -40,10 +40,12 @@ static partial class Program
     {
         if(typeof(FoodDecisionState).GetProperty("Awareness")==null) return;
         var state=FoodCity(3,true);PopulateDecisions(state);
-        string wire=SaveCodec.Write(state);var root=JObject.Parse(wire);root["Schema"]=18;
+        string wire=SaveCodec.Write(state);var removed=JObject.Parse(wire);
+        ((JObject)removed["Food"]!).Remove("AwarenessStartsDay");((JObject)removed["Food"]!["Residents"]![0]![9]!).Remove("Awareness");
+        Check(wire.Length-removed.ToString(Formatting.None).Length==AwarenessChars(state),"Awareness byte allocation mismatch.");
+        var root=JObject.Parse(PreRivalWire(state));root["Schema"]=18;
         ((JObject)root["Food"]!).Remove("AwarenessStartsDay");((JObject)root["Food"]!["Residents"]![0]![9]!).Remove("Awareness");
         string baseline=root.ToString(Formatting.None);
-        Check(wire.Length-baseline.Length==AwarenessChars(state),"Awareness byte allocation mismatch.");
         var old=SaveCodec.Read(baseline);Check(old.Status==SaveReadStatus.Loaded && old.SourceSchema==18,"Schema-18 migration refused.");
         var current=SaveCodec.Read(wire);Check(current.Status==SaveReadStatus.Loaded && SaveCodec.Write(current.State!)==wire,"Awareness held image replay changed.");
         var before=SaveCodec.CountRecords(old.State!,SaveCodec.Write(old.State!));var after=SaveCodec.CountRecords(state,wire);

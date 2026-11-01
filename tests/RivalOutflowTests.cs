@@ -183,11 +183,13 @@ public sealed class RivalOutflowTests
         Price = Money.FromCents(100), Allowance = Money.FromCents(1000), Budget = new ResidentBudget {
             OpeningBalance = Money.FromCents(10000), Balance = Money.FromCents(10000), DailyHousingCents = 100,
             DailyEssentialsCents = 100, DailyHomeFoodCents = 100 } };
-    [Fact]
-    public void AtomicExternalLedgerPreservesConservationAndCannotReplay()
+    [Theory] [InlineData(1f)] [InlineData(7.30f)]
+    public void AtomicExternalLedgerPreservesConservationAndCannotReplay(float nativePrice)
     {
-        var m = Payable(); Assert.True(ExternalFoodSettlement.TryPay(m));
-        Assert.True(HouseholdFinance.CashConserved(m.Budget!)); Assert.Equal(Money.FromCents(100), m.Budget!.ExternalFoodSpent);
+        var m = Payable();m.Price=Money.FromNative(nativePrice);var balance=m.Budget!.Balance;
+        Assert.True(ExternalFoodSettlement.TryPay(m));
+        Assert.True(HouseholdFinance.CashConserved(m.Budget!)); Assert.Equal(m.Price, m.Budget!.ExternalFoodSpent);
+        Assert.Equal(balance-m.Price,m.Budget.Balance);
         Assert.Equal(Money.Zero, m.Budget.PreparedFoodSpent); Assert.Equal(Money.Zero, m.Budget.HeldPurchase);
         string before = JsonConvert.SerializeObject(m); Assert.False(ExternalFoodSettlement.TryPay(m)); Assert.Equal(before, JsonConvert.SerializeObject(m));
     }

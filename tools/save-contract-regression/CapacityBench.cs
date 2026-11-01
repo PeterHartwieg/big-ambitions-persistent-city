@@ -136,7 +136,7 @@ static partial class Program
         int reservedRecords = futureRecords - heldExistingRecords - 1 - AwarenessRecords(state); // B0 already charges its capability header
         int bHeaderChars = ("\"Capabilities\":" + JsonConvert.SerializeObject(new { Active = false, Code = "B", Revision = 1 }) + ",").Length;
         int heldTuningChars = typeof(FoodDecisionState).GetProperty("Tuning") == null ? 0 : 205 + 8 * 25;
-        int reservedChars = futureChars - bHeaderChars - heldTuningChars - AwarenessChars(state); // consume B0b's scalar image once from the existing header allowance
+        int reservedChars = futureChars - bHeaderChars - heldTuningChars - AwarenessChars(state) - RivalChars(state); // consume each implemented scalar/image once
         if (cf && SchemaVersion >= 18)
         {
             Check(json.Length + reservedChars + memoryHeadroom <= SaveCodec.MaxInputCharacters, "CF character budget.");
@@ -164,7 +164,7 @@ static partial class Program
             runs, writeMs = write, readMs = read, migrationFrom17Ms = migration, migrationSourceChars = old?.Length, migrationRefusal,
             retainedBytes, readAllocatedBytes = readAllocated, processPeakBytes = Process.GetCurrentProcess().PeakWorkingSet64,
             syntheticReservation = cf && SchemaVersion >= 18 ? new {
-                futureContractChars = reservedChars, alreadyCountedBHeaderChars = bHeaderChars, alreadyCountedHeldTuningChars = heldTuningChars, alreadyCountedAwarenessChars=AwarenessChars(state), alreadyCountedAwarenessRecords=AwarenessRecords(state), fixedMemoryHeadroomChars = memoryHeadroom,
+                futureContractChars = reservedChars, alreadyCountedBHeaderChars = bHeaderChars, alreadyCountedHeldTuningChars = heldTuningChars, alreadyCountedAwarenessChars=AwarenessChars(state), alreadyCountedAwarenessRecords=AwarenessRecords(state), alreadyCountedRivalChars=RivalChars(state), fixedMemoryHeadroomChars = memoryHeadroom,
                 futureContractRecords = reservedRecords,
                 totalBudgetedChars = json.Length + reservedChars + memoryHeadroom,
                 totalBudgetedUtf8Bytes = Encoding.UTF8.GetByteCount(json) + reservedChars + memoryHeadroom,

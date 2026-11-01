@@ -181,7 +181,8 @@ namespace PersistentCity.Core
                 foreach(var offer in b.Offers)
                 {
                     if(!FoodProducts.Known(offer.ProductId) || !scope.ContainsProduct(offer.ProductId)) continue;
-                    reservations.TryGetValue(ReservationKey(b.PlaceId,offer.ProductId),out int held);
+                    int held=0;
+                    if(offer.Units.HasValue) reservations.TryGetValue(ReservationKey(b.PlaceId,offer.ProductId),out held);
                     shop.Offers.Add(new FoodDecisionOffer {ProductId=offer.ProductId,Price=offer.Price,
                         Units=offer.Units.HasValue ? Math.Max(0,offer.Units.Value-held) : -1,DistrictDemandPercent=offer.DistrictDemandPercent ?? -1});
                 }
