@@ -2,9 +2,9 @@
 
 Owner: `pc-c2b-campaign-awareness`, 1 November 2026. Exact integrated predecessor:
 **20 (E1 weather capture)**. Reserved schema 21 (D2) remains unsupported; schema
-23 (E4) and newer refuse. The isolated `MigrateCampaigns20To22` step validates the
+23 (E4) was future on the original C2b head. The current composition writes [schema 23](population-schema23.md) and accepts exact 22 below E4; only >23 is future. The isolated `MigrateCampaigns20To22` step validates the
 complete predecessor before adding empty campaign history. D2 can later supply
-its own predecessor step below 22; E4 can add its step above 22. No reserved
+its own predecessor step below 22; E4 now adds its documented 22 -> 23 step above 22. No reserved
 number is used here. Schemas 17-20's documents and frozen validators are retained.
 
 The only new saved collection is `FoodCommerceState.Campaigns`, sorted by stable

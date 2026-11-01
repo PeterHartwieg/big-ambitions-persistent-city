@@ -34,9 +34,15 @@ Later: residents as employees, households.
 
 Implementation plan for B–E: [memory, marketing, rivals and the wider street](plans/steps-b-e.md).
 
+E3 pizza status (offline): [STOP record](plans/e3-pizza.md); pinned conditional shared probe, shipped holder unestablished, no menu/gameplay/save change. [Validation and 6 Nov handoff](checks/e3-pizza.md).
+
+E4 status, 1 November (offline): schema 23 menu/product/history envelope implemented; effective live limit four, no extra product enabled. [Validation and numbered 6 Nov handoff](checks/e4-wider-menu.md).
+
 E3 status, 31 October (offline): [donut](plans/e3-donut.md) and [cupcake feasibility discovery](plans/e3-cupcake.md) share one isolated on-demand raw-field reader with pinned candidates. Loaded equipment and natural checkout/settlement proof remain pending; no additional product certified or enabled.
 
 E3 salad status, 1 November (offline): [salad stop record](plans/e3-salad.md) adds a pinned conditional probe on the cupcake/donut stack. Shipped holder unestablished; no generic holder extension, menu, gameplay or saved change. Existing read branches retained; no additional cheap safe measured perf win identified. Three-candidate offline timing and the combined 6 Nov handoff are in [CHECKS](checks/e3-salad.md#e3-salad-feasibility---1-november-2026-offline-only).
+
+E3 ice cream status, 1 November (offline): [independent feasibility STOP](plans/e3-icecream.md); shipped holder/resource contract unestablished, shared read branches unchanged, no product/menu/save/gameplay change. [Offline timings and 6 Nov handoff](checks/e3-icecream.md).
 
 Peter’s [31 October Q1-Q7 decisions](plans/steps-b-e.md#product-decisions-peter-31-oct-2026) specify tiered paid research as a third native-agency option (proven fee or unavailable), local/distant discovery, estimated rivals, food-first products, no anonymous crowds/night multiplier and own-shop regulars; tier contents/fees remain open.
 
@@ -65,6 +71,7 @@ Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index
 
 - C2b - [Campaign index reuse, canonical sorting, shared references, active-hour buffers and neutral marker cache](perf/c2b-campaign-awareness.md).
 
+- E4 — [Supply-refresh allocation win and four/eight-offer offline measurements](perf/e4-wider-menu.md).
 - A5 — [Popup address reuse: four → two formatter calls, 6,432 → 5,856 bytes per refresh; offline limits](perf/a5-integrated-acceptance.md).
 
 - A2 — [Schema 17, lifestyle traits and base sync evidence](perf/a2-schema17-traits.md).
@@ -86,6 +93,8 @@ Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index
 - E3 cupcake — [Shared reader timing and allocation evidence](perf/e3-cupcake.md).
 
 - E3 salad — [Conditional shared reader timing and allocation evidence](perf/e3-salad.md).
+
+- E3 pizza — [Four-candidate cold/warm costs and allocations; no new win claimed](perf/e3-pizza.md).
 
 - C4 — [Bounded inactive research and direct trait validation](perf/c4-market-research.md).
 

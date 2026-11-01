@@ -46,7 +46,7 @@ public sealed class WeatherTests
     { var r=SaveCodec.Read(wire);Assert.True(r.Status==SaveReadStatus.Loaded,r.Error);return r.State!; }
     internal static string As19(string wire)
     {
-        var root=JObject.Parse(wire);root["Schema"]=19;root.Remove("WeatherStartsDay");
+        var root=JObject.Parse(wire);root["Schema"]=19;root.Remove("WeatherStartsDay");root.Remove("MenuPolicy");
         foreach(JObject p in root["Citizens"]!) p.Remove("W");
         if(root["Food"] is JObject food) { food.Remove("Campaigns"); foreach(JArray m in food["Residents"]!)
         {
@@ -200,7 +200,7 @@ public sealed class WeatherTests
     {
         var (city,_,_)=WeightedFoodChoiceTests.Ready(79,2);city.AttachWeather(new Source {Value=WeatherSample.Rain});
         city.AdvanceFrameSlice(city.State.Food!.Residents.Single().DesiredAt,1);
-        var root=JObject.Parse(SaveCodec.Write(city.State));root["Schema"]=20;((JObject)root["Food"]!).Remove("Campaigns");
+        var root=JObject.Parse(SaveCodec.Write(city.State));root["Schema"]=20;root.Remove("MenuPolicy");((JObject)root["Food"]!).Remove("Campaigns");
         var meal=(JArray)root["Food"]!["Residents"]![0]!;var d=(JObject)meal[9]!;
         if(damage=="code") d["Weather"]=3;
         if(damage=="low") d["WeatherTravelMultiplier"]=0;

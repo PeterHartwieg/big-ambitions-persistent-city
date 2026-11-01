@@ -44,7 +44,7 @@ static partial class Program
         ((JObject)root["Food"]!).Remove("Campaigns");
         ((JObject)root["Food"]!).Remove("AwarenessStartsDay");((JObject)root["Food"]!["Residents"]![0]![9]!).Remove("Awareness");
         string baseline=root.ToString(Formatting.None);
-        Check(WithoutWeather20(wire).Length-baseline.Length==AwarenessChars(state)+15,"Awareness byte allocation mismatch.");
+        Check(WithoutWeather20(wire).Length-baseline.Length==AwarenessChars(state),"Awareness byte allocation mismatch.");
         var old=SaveCodec.Read(baseline);Check(old.Status==SaveReadStatus.Loaded && old.SourceSchema==18,"Schema-18 migration refused.");
         var current=SaveCodec.Read(wire);Check(current.Status==SaveReadStatus.Loaded && SaveCodec.Write(current.State!)==wire,"Awareness held image replay changed.");
         var before=SaveCodec.CountRecords(old.State!,SaveCodec.Write(old.State!));var after=SaveCodec.CountRecords(state,wire);

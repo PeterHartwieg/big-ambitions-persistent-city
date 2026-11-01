@@ -864,7 +864,7 @@ namespace PersistentCity.Persistence
                     && meal.Slot >= 0 && meal.Slot < food.RepresentationFactor
                     && meal.ResidentId == FoodRepresentation.ConsumerId(meal.AnchorId, meal.Slot), "Unknown or duplicate consumer/anchor slot.");
                 Require(meal.PreferenceBonusCents >= 0 && meal.PreferenceBonusCents <= 150
-                    && (meal.PreferredProductId.Length == 0 ? meal.PreferenceBonusCents == 0 : FoodProducts.Known(meal.PreferredProductId)), "Invalid consumer taste.");
+                    && (meal.PreferredProductId.Length == 0 ? meal.PreferenceBonusCents == 0 : FoodProducts.KnownLegacy(meal.PreferredProductId)), "Invalid consumer taste.");
                 Require(meal.Slot > 0 || meal.Excursion == null && !meal.NeedsHomeResync, "Physical anchor cannot own an abstract excursion.");
                 Require(meal.Slot == 0 || !meal.ExistingStop, "Represented consumer cannot claim anchor's existing-stop purchase.");
                 if (meal.Slot == 0) Require(meal.RepresentedTraits == null, "Slot zero duplicates its anchor's traits.");
@@ -1003,7 +1003,7 @@ namespace PersistentCity.Persistence
                 "Decision selection differs from its result.");
             Require((decision.Result == FoodDecisionResult.Outside) == (decision.Outside != FoodOutsideOption.None), "Decision alternative differs from its result.");
             // Also for a compact decision without its shortlist image.
-            Require(decision.ProductId.Length == 0 || FoodProducts.Known(decision.ProductId), "Unknown live product code.");
+            Require(decision.ProductId.Length == 0 || FoodProducts.KnownLegacy(decision.ProductId), "Unknown live product code.");
             Require(decision.Shops != null && decision.Shops.Count <= 8, "Oversized decision shortlist.");
             Require(decision.QuotesDone >= 0 && decision.QuotesDone <= 2 * decision.Shops!.Count, "Invalid decision quote progress.");
             // Choosing follows every feasibility answer; an undecided image may stop at any slot.
@@ -1033,7 +1033,7 @@ namespace PersistentCity.Persistence
                 foreach (var offer in shop.Offers!)
                 {
                     Require(offer != null && products.Add(offer.ProductId), "Duplicate decision offer.");
-                    Require(FoodProducts.Known(offer!.ProductId), "Unknown live product code.");
+                    Require(FoodProducts.KnownLegacy(offer!.ProductId), "Unknown live product code.");
                     Require(offer.Price >= Money.Zero && offer.Price <= MaximumAllowance && offer.Units >= -1, "Invalid decision offer evidence.");
                     Require(offer.DistrictDemandPercent >= -1 && offer.DistrictDemandPercent <= 100
                         && (offer.DistrictDemandPercent == -1 || shop.DistrictId.Length > 0), "Invalid decision district evidence.");
