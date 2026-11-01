@@ -25,6 +25,8 @@
   "InteriorViewRadiusMetres": 60,
   "InteriorMaximumPedestrians": 24,
   "InteriorMaximumVehicles": 12,
+  "FoodMemoryRegularServedVisits": 3,
+  "FoodMemoryRegularRecentDays": 14,
   "FoodMemoryWeight": 1,
   "FoodMemoryLoyalReturnMultiplier": 2,
   "FoodMemoryCuriousNoveltyMultiplier": 1.3,

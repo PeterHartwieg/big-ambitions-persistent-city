@@ -20,6 +20,25 @@ BusinessSimulatorHelper.Work.ForceCompleteAllWork();
 Check(BusinessSimulatorHelper.Processed.SequenceEqual(new[] { 7, 8 }), "new hour native demand suppressed");
 Check(CustomerEntriesHelper.GetEntriesByAddress(reg.Address).Count == 0, "owned hour suppresses indoor draws");
 Check(reg.CompletedOrders.Count == 2, "old completed native orders are retained at acquisition");
+// B2 feedback reads cannot establish/transfer authority, even for an address-equivalent object.
+string feedbackGeneration = NativeFoodOwnership.Find(reg)!.BusinessId;
+string feedbackPayload = SaveGameManager.Current.modData[FoodAuthorityStore.Key];
+int feedbackOrders = reg.CompletedOrders.Count, feedbackWork = BusinessSimulatorHelper.Work.Pending.Count;
+Check(NativeFoodOwnership.ObservedOwnGeneration(reg, feedbackGeneration), "B2 recognizes the observed own generation");
+Check(!NativeFoodOwnership.ObservedOwnGeneration(reg, "stale-generation"), "B2 excludes stale generation identity");
+var feedbackReplacement = new BuildingRegistration();
+Check(!NativeFoodOwnership.ObservedOwnGeneration(feedbackReplacement, feedbackGeneration), "B2 refuses a same-address replacement before observation");
+Check(NativeFoodOwnership.ObservedOwnGeneration(reg, feedbackGeneration), "B2 replacement query does not adopt it or displace the observed registration");
+string feedbackSignature = reg.Signature;
+reg.Signature = "business:Test:7:1:bakery:rival";
+Check(!NativeFoodOwnership.ObservedOwnGeneration(reg, feedbackGeneration), "B2 refuses changed ownership/signature without refreshing authority");
+reg.Signature = feedbackSignature;
+for (int i = 0; i < 100; i++)
+    Check(NativeFoodOwnership.ObservedOwnGeneration(reg, feedbackGeneration), "B2 warmed feedback remains a pure read");
+Check(SaveGameManager.Current.modData[FoodAuthorityStore.Key] == feedbackPayload
+    && reg.CompletedOrders.Count == feedbackOrders && BusinessSimulatorHelper.Work.Pending.Count == feedbackWork,
+    "B2 repeated feedback leaves authority payload, orders and native work unchanged");
+
 BusinessSimulatorHelper.Queue(reg, 9); BusinessSimulatorHelper.Work.ForceCompleteAllWork();
 Check(BusinessSimulatorHelper.Processed.SequenceEqual(new[] { 7, 8 }), "newly owned hour cannot execute a native sale");
 

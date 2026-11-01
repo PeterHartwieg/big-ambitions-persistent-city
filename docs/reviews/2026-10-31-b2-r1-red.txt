@@ -1,0 +1,73 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  PersistentCity.Core -> C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b2-regulars\Core\bin\Debug\netstandard2.1\PersistentCity.Core.dll
+  PersistentCity.Persistence -> C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b2-regulars\Persistence\bin\Debug\netstandard2.1\PersistentCity.Persistence.dll
+  PersistentCity.Compatibility -> C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b2-regulars\Compatibility\bin\Debug\netstandard2.1\PersistentCity.Compatibility.dll
+  PersistentCity.Tests -> C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b2-regulars\tests\bin\Debug\net10.0\PersistentCity.Tests.dll
+Test run for C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b2-regulars\tests\bin\Debug\net10.0\PersistentCity.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+dotnet.exe : [xUnit.net 00:00:00.36]     
+PersistentCity.Tests.FoodMemoryTests.DiagnosticReturnsOwnCountsAndConsumerRegularFlagWithoutMarketOrRouteCalls [FAIL]
+At line:59 char:1
++ & "$env:LOCALAPPDATA\Microsoft\dotnet\dotnet.exe" test tests/Persiste ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([xUnit.net 00:0...uteCalls [FAIL]:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[xUnit.net 00:00:00.36]     
+PersistentCity.Tests.FoodMemoryTests.DiagnosticRetainsHistoricalEvidenceWithoutCountingNoncurrentGenerations(state: 
+"unobserved") [FAIL]
+[xUnit.net 00:00:00.36]     
+PersistentCity.Tests.FoodMemoryTests.DiagnosticRetainsHistoricalEvidenceWithoutCountingNoncurrentGenerations(state: 
+"withdrawn") [FAIL]
+[xUnit.net 00:00:00.36]     
+PersistentCity.Tests.FoodMemoryTests.DiagnosticRetainsHistoricalEvidenceWithoutCountingNoncurrentGenerations(state: 
+"replaced") [FAIL]
+[xUnit.net 00:00:00.37]     PersistentCity.Tests.FoodMemoryTests.RuntimeBuildersRemainBehindOpenUiAndDiagnosticGates 
+[FAIL]
+  Failed PersistentCity.Tests.FoodMemoryTests.DiagnosticReturnsOwnCountsAndConsumerRegularFlagWithoutMarketOrRouteCalls [109 ms]
+  Error Message:
+   Assert.Single() Failure: The collection was empty
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.DiagnosticReturnsOwnCountsAndConsumerRegularFlagWithoutMarketOrRouteCalls() in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b2-regulars\tests\FoodRegularsTests.cs:line 170
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+  Failed PersistentCity.Tests.FoodMemoryTests.DiagnosticRetainsHistoricalEvidenceWithoutCountingNoncurrentGenerations(state: "unobserved") [3 ms]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 2
+Actual:   0
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.DiagnosticRetainsHistoricalEvidenceWithoutCountingNoncurrentGenerations(String state) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b2-regulars\tests\FoodRegularsTests.cs:line 197
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+  Failed PersistentCity.Tests.FoodMemoryTests.DiagnosticRetainsHistoricalEvidenceWithoutCountingNoncurrentGenerations(state: "withdrawn") [1 ms]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 2
+Actual:   1
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.DiagnosticRetainsHistoricalEvidenceWithoutCountingNoncurrentGenerations(String state) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b2-regulars\tests\FoodRegularsTests.cs:line 197
+   at InvokeStub_FoodMemoryTests.DiagnosticRetainsHistoricalEvidenceWithoutCountingNoncurrentGenerations(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+  Failed PersistentCity.Tests.FoodMemoryTests.DiagnosticRetainsHistoricalEvidenceWithoutCountingNoncurrentGenerations(state: "replaced") [1 ms]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 2
+Actual:   1
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.DiagnosticRetainsHistoricalEvidenceWithoutCountingNoncurrentGenerations(String state) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b2-regulars\tests\FoodRegularsTests.cs:line 197
+   at InvokeStub_FoodMemoryTests.DiagnosticRetainsHistoricalEvidenceWithoutCountingNoncurrentGenerations(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+  Failed PersistentCity.Tests.FoodMemoryTests.RuntimeBuildersRemainBehindOpenUiAndDiagnosticGates [8 ms]
+  Error Message:
+   Assert.DoesNotContain() Failure: Sub-string found
+                                  ↓ (pos 6632)
+String: ···");\r\n                if (regularText == nu"···
+Found:  "if (regularText == null) continue;"
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.RuntimeBuildersRemainBehindOpenUiAndDiagnosticGates() in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b2-regulars\tests\FoodRegularsTests.cs:line 244
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+
+Failed!  - Failed:     5, Passed:     0, Skipped:     0, Total:     5, Duration: 121 ms - PersistentCity.Tests.dll (net10.0)

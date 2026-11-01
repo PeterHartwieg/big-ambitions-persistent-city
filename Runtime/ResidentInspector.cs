@@ -265,7 +265,7 @@ namespace PersistentCity.Runtime
                         }
                     }
                 }
-                if (selectedId != null && Time.unscaledTime >= nextRefresh) Refresh(simulation);
+                if (visible && selectedId != null && Time.unscaledTime >= nextRefresh) Refresh(simulation);
                 updatedFrame = Time.frameCount;
             }
             finally
@@ -275,11 +275,14 @@ namespace PersistentCity.Runtime
             }
         }
 
+        internal string PopupText => selectedId == null ? "" : body;
+        internal Func<string, string?>? ShopName { get; set; }
+        internal Func<FoodScope, bool>? CurrentOwnShop { get; set; }
         private void Refresh(CitySimulator simulation)
         {
             long started = Stopwatch.GetTimestamp();
             nextRefresh = Time.unscaledTime + RefreshSeconds;
-            insight = simulation.Inspect(selectedId!, null, FormattedAddress);
+            insight = simulation.Inspect(selectedId!, null, FormattedAddress, ShopName, CurrentOwnShop);
             if (insight == null) { body = "This resident has left the city."; personality = homeLabel = workLabel = ""; header = "Resident"; }
             else
             {
