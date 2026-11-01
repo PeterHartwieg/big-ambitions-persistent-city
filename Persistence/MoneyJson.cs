@@ -44,6 +44,24 @@ namespace PersistentCity.Persistence
             return source.Substring(start, end - start);
         }
         private static bool Delimiter(char c) => c == ':' || c == ',' || c == '[' || c == '{' || char.IsWhiteSpace(c);
+        // Current compact integer slots: reject Json.NET's octal/hex coercions without allocating
+        // a substring or formatting every integer. Legacy readers keep CanonicalUnits/old rules.
+        public bool CanonicalInteger(IJsonLineInfo token)
+        {
+            int end = End(token), start = end;
+            while (start > 0 && !Delimiter(source[start - 1])) start--;
+            bool negative = start < end && source[start] == '-';
+            if (negative) start++;
+            if (start == end || source[start] == '0' && (negative || end - start != 1)) return false;
+            for (int i = start; i < end; i++) if (source[i] < '0' || source[i] > '9') return false;
+            return true;
+        }
+        public bool LiteralAsciiString(IJsonLineInfo token, string value)
+        {
+            int end = End(token), start = end - value.Length - 2;
+            return start >= 0 && source[start] == '"' && source[end - 1] == '"'
+                && string.CompareOrdinal(source, start + 1, value, 0, value.Length) == 0;
+        }
         public static bool CanonicalUnits(string text)
             => long.TryParse(text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out long units)
                 && units.ToString(CultureInfo.InvariantCulture) == text;

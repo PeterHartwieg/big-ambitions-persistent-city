@@ -12,6 +12,17 @@ namespace PersistentCity.Core
     /// <summary>A detached input to a counterfactual experiment, never native inventory.</summary>
     public sealed class FoodBusiness
     {
+        // Reuse the place's exact-hours cache across offers of this observation. It validates mutable
+        // windows itself; replacing Hours also changes WeeklyHours here. Never serialized as market evidence.
+        private Place? openingPlace;
+        internal Place OpeningPlace
+        {
+            get
+            {
+                if(openingPlace==null) openingPlace=new Place {Kind=PlaceKind.Shop,OpenMinute=0,CloseMinute=0};
+                openingPlace.Id=PlaceId;openingPlace.WeeklyHours=Hours;return openingPlace;
+            }
+        }
         public string Id { get; set; } = "";
         public string PlaceId { get; set; } = "";
         public string Name { get; set; } = "";
@@ -263,12 +274,12 @@ namespace PersistentCity.Core
         /// Persisted/untrusted experiment inputs still use the validating constructor.</summary>
         public static void ChooseObserved(FoodConsumer person, IReadOnlyList<FoodBusiness> shops,
             IReadOnlyList<FoodTravelQuote> routes, FoodIntent intent, double minute,
-            IReadOnlyDictionary<string, string>? refusals = null, MealKind mealKind = MealKind.Legacy)
+            IReadOnlyDictionary<string, string>? refusals = null, MealKind mealKind = MealKind.Legacy, bool evaluateOnly = false)
         {
             if (intent.Status != FoodIntentStatus.Planned || intent.Choices.Count != 0 || shops.Count > 8)
                 throw new ArgumentException("A fresh intention and bounded live market are required.");
             Choose(intent, person, shops, business => routes.FirstOrDefault(q => q.BusinessId == business.Id
-                && q.IntentId == intent.Id && q.ConsumerId == person.Id), minute, true, refusals, mealKind);
+                && q.IntentId == intent.Id && q.ConsumerId == person.Id), minute, true, refusals, mealKind, evaluateOnly);
         }
 
         // Only reject facts that already prevent choice under this current-supply model.
@@ -285,7 +296,7 @@ namespace PersistentCity.Core
 
         private static void Choose(FoodIntent intent, FoodConsumer person, IReadOnlyList<FoodBusiness> shops,
             Func<FoodBusiness, FoodTravelQuote?> routeFor, double minute, bool routine,
-            IReadOnlyDictionary<string, string>? refusals = null, MealKind mealKind = MealKind.Legacy)
+            IReadOnlyDictionary<string, string>? refusals = null, MealKind mealKind = MealKind.Legacy, bool evaluateOnly = false)
         {
             if (routine && intent.OriginPlaceId.Length == 0)
             { Miss(intent, intent.ContextEvidence, true); return; }
@@ -337,6 +348,7 @@ namespace PersistentCity.Core
                 }
                 intent.Choices.Add(choice);
             }
+            if (evaluateOnly) return;
             var selected = intent.Choices.Where(c => c.ScoreCents.HasValue).OrderBy(c => c.ScoreCents)
                 .ThenBy(c => c.BusinessId, StringComparer.Ordinal).ThenBy(c => c.ProductId, StringComparer.Ordinal).FirstOrDefault();
             if (selected == null)
@@ -425,8 +437,7 @@ namespace PersistentCity.Core
                 + (intent.OutsideOption == FoodOutsideOption.FundedHouseholdFood ? "household food basket is funded" : "household food/ingredients/cost not verified");
         }
 
-        private static Place Place(FoodBusiness business) => new Place
-        { Id = business.PlaceId, Kind = PlaceKind.Shop, OpenMinute = 0, CloseMinute = 0, WeeklyHours = business.Hours };
+        private static Place Place(FoodBusiness business) => business.OpeningPlace;
         private static bool Terminal(FoodIntent intent) => intent.Status == FoodIntentStatus.Fulfilled
             || intent.Status == FoodIntentStatus.Unmet || intent.Status == FoodIntentStatus.Unresolved || intent.Status == FoodIntentStatus.DeclinedPurchase;
         private static double Due(FoodIntent intent) => intent.Status == FoodIntentStatus.Planned ? intent.RequestedAt

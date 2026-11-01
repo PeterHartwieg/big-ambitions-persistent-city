@@ -1,0 +1,1575 @@
+{
+  "task": "pc-b0b-sync2-base",
+  "date": "2026-11-01",
+  "branch": "codex/pc-b0b-sync2-base",
+  "audit": {
+    "mergeBase": "3b8f7ec4cdca6f8c29c853db64db8f01d93a9950",
+    "firstParent": "eee1cfbf89f84753265c552aae19d25379dac3ec",
+    "secondParent": "8c24f24ac0c97a46df5e94e5ff49b25d2b84cfbb",
+    "conflicts": [
+      "CHECKS.md",
+      "README.md",
+      "docs/plans/e2-street-life.md",
+      "docs/roadmap.md"
+    ],
+    "unchangedNonconflictedPaths": {
+      "HEAD": [
+        "Core/FoodChoiceSettings.cs",
+        "Core/FoodDecisionTuning.cs",
+        "Core/FoodToday.cs",
+        "Core/FoodWeightedCommerce.cs",
+        "Persistence/HeldTuningWire.cs",
+        "Persistence/LegacyPopulationCodec.cs",
+        "Persistence/SaveCodec.cs",
+        "docs/population-schema18.md",
+        "docs/reviews/2026-10-31-b0b-measurements.json",
+        "docs/reviews/2026-10-31-b0b-offline-checks.json",
+        "docs/reviews/2026-10-31-b0b-pr-description.md",
+        "docs/reviews/2026-10-31-b0b-r1-offline-checks.json",
+        "docs/reviews/2026-11-01-b0b-sync-base-pr-description.md",
+        "docs/reviews/2026-11-01-b0b-sync-base-results.json",
+        "tests/HeldFoodTuningTests.cs",
+        "tools/held-tuning-regression/HeldTuningRegression.csproj",
+        "tools/held-tuning-regression/Program.cs",
+        "tools/held-tuning-regression/README.md",
+        "tools/save-contract-regression/CapacityBench.cs",
+        "tools/save-contract-regression/HeldTuningContracts.cs",
+        "tools/save-contract-regression/Program.cs"
+      ],
+      "MERGE_HEAD": [
+        "AGENTS.md",
+        "Core/AgencyOrders.cs",
+        "Runtime/AgencyBindingDiagnostic.cs",
+        "Runtime/AgencyPaymentPort.cs",
+        "docs/checks/a1-resident-inspector.md",
+        "docs/checks/a2-schema17-traits.md",
+        "docs/checks/a3-weighted-choice.md",
+        "docs/checks/b0-schema18.md",
+        "docs/checks/c1-campaign-reader.md",
+        "docs/checks/c3-agency-payment.md",
+        "docs/checks/d1-rival-catalogue.md",
+        "docs/checks/e2a-street-life.md",
+        "docs/checks/f0-interior-view.md",
+        "docs/checks/history-2026-10-development.md",
+        "docs/checks/history-2026-10-pr1-pr3.md",
+        "docs/checks/pc-docs-checks-split.md",
+        "docs/implementation-plan.md",
+        "docs/perf/a2-schema17-traits.md",
+        "docs/perf/a3-weighted-choice.md",
+        "docs/perf/b0-schema18.md",
+        "docs/perf/c1-campaign-reader.md",
+        "docs/perf/d1-rival-catalogue.md",
+        "docs/perf/f0-interior-view.md",
+        "docs/plans/c1-pr-description.md",
+        "docs/plans/c3-agency-payment.md",
+        "docs/plans/e2a-pr-description.md",
+        "docs/plans/step-a-inspector-traits-choice.md",
+        "docs/plans/steps-b-e.md",
+        "docs/plans/track-f-interior-view.md",
+        "docs/reviews/2026-10-24-bounded-implementation.md",
+        "docs/reviews/2026-10-31-a1-sync-base-pr-description.md",
+        "docs/reviews/2026-10-31-a3-pr-description.md",
+        "docs/reviews/2026-10-31-c3-pr-description.md",
+        "docs/reviews/2026-10-31-c3-sync-base-pr-description.md",
+        "docs/reviews/2026-10-31-d1-rival-reader.md",
+        "docs/reviews/2026-10-31-f0-pr-description.md",
+        "docs/reviews/2026-11-01-c3-sync2-base-pr-description.md",
+        "docs/reviews/2026-11-01-c3-sync2-base-results.json",
+        "tests/AgencyOrdersTests.cs",
+        "tools/agency-payment-regression/AgencyPaymentRegression.csproj",
+        "tools/agency-payment-regression/NativeDoubles.cs",
+        "tools/agency-payment-regression/Program.cs"
+      ]
+    },
+    "executableAdditionsOnly": [
+      "Core/AgencyOrders.cs",
+      "Runtime/AgencyBindingDiagnostic.cs",
+      "Runtime/AgencyPaymentPort.cs",
+      "tests/AgencyOrdersTests.cs",
+      "tools/agency-payment-regression/AgencyPaymentRegression.csproj",
+      "tools/agency-payment-regression/NativeDoubles.cs",
+      "tools/agency-payment-regression/Program.cs"
+    ],
+    "schemaCollision": false,
+    "schemaClaim": "18 amended in place; no incoming Persistence/DTO/schema changes",
+    "nativeChecklistMarkers": {
+      "### In-game checks for 6 Nov rig": 8,
+      "LOCKED-OK": 27,
+      "NEEDS-INPUT": 13,
+      "input-only": 6
+    },
+    "localMarkdownLinksChecked": 297,
+    "localMarkdownLinkFailures": [],
+    "b0bNonLinkBlocksPreservedExactlyOnce": true,
+    "preservedHistoricalBlocks": {
+      "HEAD:CHECKS.md": 488,
+      "3b8f7ec4cdca6f8c29c853db64db8f01d93a9950:CHECKS.md": 464,
+      "HEAD:README notices": 32,
+      "HEAD:performance rows": 23,
+      "3b8f7ec4cdca6f8c29c853db64db8f01d93a9950:README notices": 30,
+      "3b8f7ec4cdca6f8c29c853db64db8f01d93a9950:performance rows": 22
+    },
+    "dllSha256": "ebd0720e6f367e4289caa9f4c41210606a7b1db5cb82f18431679fa70234b385"
+  },
+  "schema": 18,
+  "integrationFixRequired": false,
+  "b0bRuntimeCorePersistenceChanged": false,
+  "unitTests": {
+    "passed": 2002,
+    "failed": 0,
+    "skipped": 0,
+    "discovered": 2002,
+    "heldTuningCases": 30
+  },
+  "execution": "50 sequential foreground commands; other-dotnet guard before every invocation; no execution deadline; build/compiler server reuse disabled",
+  "saveContract": {
+    "schema": 18,
+    "digest": "018FC26676937FEEF88B7D06AE32B522CCE93A1CC265BCDD87A08C7DD91FBB56",
+    "length": 119083,
+    "refusals": [
+      "Invalid:Invalid state: Missing state schema.",
+      "Future:State uses a newer schema; preserve the original payload.",
+      "Invalid:Invalid state: Incomplete or trailing JSON content.",
+      "Invalid:Invalid state: Unknown field: UnknownCitizens"
+    ],
+    "economy": {
+      "orders": 849,
+      "ordersDigest": "1B94987B3158044594B9C4D6A5473BA22BE0D4F3488D769CBBEE23318BB33B91",
+      "purchases": 797,
+      "spentUnits": 107967424757760,
+      "uncertain": 2,
+      "economyDigest": "74D0FE8081EA795D4D56A11B4B955DC6E777E3822C702D3C09BC9477E6679AF9",
+      "reloadDigest": "59B6F14D44CA0F996C5A828E2E538B52C5426347FCFA40767527B72D77F1D4FA"
+    },
+    "writeBytes": 14453112,
+    "readBytes": 38774584,
+    "bench": null,
+    "hot": null
+  },
+  "capacity": {
+    "reference": {
+      "name": "reference",
+      "schema": 18,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "F697C9B56A02775D6AE966E17C310062551B0C4A30D1546AA7E058F801652413",
+      "residents": 957,
+      "representation": 2,
+      "consumers": 1914,
+      "visitsPerResident": 32,
+      "visits": 30624,
+      "placeCount": 9,
+      "extraExistingPlaces": 0,
+      "extraExistingPlaceChars": 0,
+      "extraExistingNameChars": 0,
+      "actualExistingGrowthChars": 0,
+      "existingGrowthAllowanceChars": 0,
+      "memoryEntries": 7656,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 5013141,
+      "utf8Bytes": 5013141,
+      "streamingRecords": 54560,
+      "semanticRecords": 54557,
+      "runs": 1,
+      "writeMs": 149.4,
+      "readMs": 497.4,
+      "migrationFrom17Ms": 733.2,
+      "migrationSourceChars": 5372125,
+      "migrationRefusal": null,
+      "retainedBytes": 11109112,
+      "readAllocatedBytes": 84907424,
+      "processPeakBytes": 145408000,
+      "syntheticReservation": null
+    },
+    "consumers5000": {
+      "name": "consumers5000",
+      "schema": 18,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "E0A6FB7457805003F1FF3DFC1E2F2DEC58DE72551C77B5C50884170A98F8F15E",
+      "residents": 2500,
+      "representation": 2,
+      "consumers": 5000,
+      "visitsPerResident": 32,
+      "visits": 80000,
+      "placeCount": 9,
+      "extraExistingPlaces": 0,
+      "extraExistingPlaceChars": 0,
+      "extraExistingNameChars": 0,
+      "actualExistingGrowthChars": 0,
+      "existingGrowthAllowanceChars": 0,
+      "memoryEntries": 20000,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 9701305,
+      "utf8Bytes": 9701305,
+      "streamingRecords": 110108,
+      "semanticRecords": 110105,
+      "runs": 1,
+      "writeMs": 153.2,
+      "readMs": 736.4,
+      "migrationFrom17Ms": 1553.3,
+      "migrationSourceChars": 14021170,
+      "migrationRefusal": null,
+      "retainedBytes": 20877560,
+      "readAllocatedBytes": 164688936,
+      "processPeakBytes": 210845696,
+      "syntheticReservation": null
+    },
+    "5000": {
+      "name": "5000",
+      "schema": 18,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "BE7360559F08B4B97BB838173482DEB076C15642EF13052DC8B8EF36E39E744F",
+      "residents": 5000,
+      "representation": 2,
+      "consumers": 10000,
+      "visitsPerResident": 32,
+      "visits": 160000,
+      "placeCount": 9,
+      "extraExistingPlaces": 0,
+      "extraExistingPlaceChars": 0,
+      "extraExistingNameChars": 0,
+      "actualExistingGrowthChars": 0,
+      "existingGrowthAllowanceChars": 0,
+      "memoryEntries": 40000,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 17298040,
+      "utf8Bytes": 17298040,
+      "streamingRecords": 200108,
+      "semanticRecords": 200105,
+      "runs": 1,
+      "writeMs": 297.0,
+      "readMs": 968.2,
+      "migrationFrom17Ms": 1657.0,
+      "migrationSourceChars": 28035405,
+      "migrationRefusal": null,
+      "retainedBytes": 36675984,
+      "readAllocatedBytes": 294634320,
+      "processPeakBytes": 382308352,
+      "syntheticReservation": null
+    },
+    "ceiling": {
+      "name": "ceiling",
+      "schema": 18,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "1362DDFD8DF8D1602A549D704076056E585FBF9311D9E817336BCE655C17381D",
+      "residents": 50000,
+      "representation": 3,
+      "consumers": 150000,
+      "visitsPerResident": 0,
+      "visits": 0,
+      "placeCount": 9,
+      "extraExistingPlaces": 0,
+      "extraExistingPlaceChars": 0,
+      "extraExistingNameChars": 0,
+      "actualExistingGrowthChars": 0,
+      "existingGrowthAllowanceChars": 0,
+      "memoryEntries": 600000,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 141087195,
+      "utf8Bytes": 141087195,
+      "streamingRecords": 320108,
+      "semanticRecords": 320105,
+      "runs": 1,
+      "writeMs": 1835.3,
+      "readMs": 4619.6,
+      "migrationFrom17Ms": 9464.5,
+      "migrationSourceChars": 248039560,
+      "migrationRefusal": null,
+      "retainedBytes": 325403960,
+      "readAllocatedBytes": 2218635272,
+      "processPeakBytes": 2125651968,
+      "syntheticReservation": null
+    },
+    "CF32": {
+      "name": "CF32",
+      "schema": 18,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "1CB6BAB5285F5DF8214B0D750DDCA023BE62DF53B8837159E2C9E9320EC1147F",
+      "residents": 50000,
+      "representation": 3,
+      "consumers": 150000,
+      "visitsPerResident": 32,
+      "visits": 1600000,
+      "placeCount": 20000,
+      "extraExistingPlaces": 19991,
+      "extraExistingPlaceChars": 6343907,
+      "extraExistingNameChars": 6239005,
+      "actualExistingGrowthChars": 12582912,
+      "existingGrowthAllowanceChars": 12582912,
+      "memoryEntries": 600000,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 192020107,
+      "utf8Bytes": 192020107,
+      "streamingRecords": 1920108,
+      "semanticRecords": 1920105,
+      "runs": 1,
+      "writeMs": 2804.9,
+      "readMs": 6107.1,
+      "migrationFrom17Ms": null,
+      "migrationSourceChars": null,
+      "migrationRefusal": "Serialized state exceeds the input size limit.",
+      "retainedBytes": 426270536,
+      "readAllocatedBytes": 3188250056,
+      "processPeakBytes": 3278139392,
+      "syntheticReservation": {
+        "futureContractChars": 26694259,
+        "alreadyCountedBHeaderChars": 56,
+        "alreadyCountedHeldTuningChars": 405,
+        "fixedMemoryHeadroomChars": 1950000,
+        "futureContractRecords": 191759,
+        "totalBudgetedChars": 220664366,
+        "totalBudgetedUtf8Bytes": 220664366,
+        "totalBudgetedRecords": 2111867
+      }
+    },
+    "CF64": {
+      "name": "CF64",
+      "schema": 18,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "BBFAF24D7C663DCBB6B5B620BC0406E74A12796A59D330410DEBF2361844A08D",
+      "residents": 50000,
+      "representation": 3,
+      "consumers": 150000,
+      "visitsPerResident": 64,
+      "visits": 3200000,
+      "placeCount": 20000,
+      "extraExistingPlaces": 19991,
+      "extraExistingPlaceChars": 6343907,
+      "extraExistingNameChars": 6239005,
+      "actualExistingGrowthChars": 12582912,
+      "existingGrowthAllowanceChars": 12582912,
+      "memoryEntries": 600000,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 230420107,
+      "utf8Bytes": 230420107,
+      "streamingRecords": 3520108,
+      "semanticRecords": 3520105,
+      "runs": 1,
+      "writeMs": 3648.2,
+      "readMs": 10607.3,
+      "migrationFrom17Ms": null,
+      "migrationSourceChars": null,
+      "migrationRefusal": "Serialized state exceeds the input size limit.",
+      "retainedBytes": 503077512,
+      "readAllocatedBytes": 3995873120,
+      "processPeakBytes": 3224825856,
+      "syntheticReservation": {
+        "futureContractChars": 26694259,
+        "alreadyCountedBHeaderChars": 56,
+        "alreadyCountedHeldTuningChars": 405,
+        "fixedMemoryHeadroomChars": 1950000,
+        "futureContractRecords": 191759,
+        "totalBudgetedChars": 259064366,
+        "totalBudgetedUtf8Bytes": 259064366,
+        "totalBudgetedRecords": 3711867
+      }
+    }
+  },
+  "priorSyncComparison": {
+    "saveFactsRefusalsAndEconomyDigestsMatch": true,
+    "capacityWireHashesSizesRecordsAndReservationsMatch": true
+  },
+  "baseRecovery": {
+    "residents": 50000,
+    "representation": 3,
+    "beforeChars": 248039560,
+    "afterChars": 132990045,
+    "recoveredChars": 115049515,
+    "beforeUtf8": 248039560,
+    "afterUtf8": 132990045,
+    "streamingAndSemantic": {
+      "Item1": 300108,
+      "Item2": 300105
+    },
+    "bInactive": true,
+    "memoriesEmpty": true
+  },
+  "inputBoundary": {
+    "exactCharactersAndUtf8": 268435456,
+    "oneCharacterOver": "read/store/session preserved",
+    "oneUtf8ByteOver": "read/store/session preserved",
+    "oversizedSources": [
+      13,
+      14,
+      15,
+      16,
+      17
+    ]
+  },
+  "recordBoundary": {
+    "streamingAtCap": 4000000,
+    "semanticAtCap": 3999997,
+    "oneRecordOver": "read/write/store/session refused and source reference preserved",
+    "chars": 241306355,
+    "utf8Bytes": 241306355
+  },
+  "historyChurn": {
+    "generationsOnOneDay": 280000,
+    "purchasesRetained": 280000,
+    "revenueUnitsRetained": 7516192768000000,
+    "result": "global size refusal; store/session source reference, all history and exact product totals preserved"
+  },
+  "offlineSaveLatencyFlagsAtLeast30Ms": [
+    {
+      "fixture": "reference",
+      "operation": "writeMs",
+      "milliseconds": 149.4,
+      "classification": "offline save/load/startup latency; not native frame/mod-work"
+    },
+    {
+      "fixture": "reference",
+      "operation": "readMs",
+      "milliseconds": 497.4,
+      "classification": "offline save/load/startup latency; not native frame/mod-work"
+    },
+    {
+      "fixture": "reference",
+      "operation": "migrationFrom17Ms",
+      "milliseconds": 733.2,
+      "classification": "offline save/load/startup latency; not native frame/mod-work"
+    },
+    {
+      "fixture": "consumers5000",
+      "operation": "writeMs",
+      "milliseconds": 153.2,
+      "classification": "offline save/load/startup latency; not native frame/mod-work"
+    },
+    {
+      "fixture": "consumers5000",
+      "operation": "readMs",
+      "milliseconds": 736.4,
+      "classification": "offline save/load/startup latency; not native frame/mod-work"
+    },
+    {
+      "fixture": "consumers5000",
+      "operation": "migrationFrom17Ms",
+      "milliseconds": 1553.3,
+      "classification": "offline save/load/startup latency; not native frame/mod-work"
+    },
+    {
+      "fixture": "5000",
+      "operation": "writeMs",
+      "milliseconds": 297.0,
+      "classification": "offline save/load/startup latency; not native frame/mod-work"
+    },
+    {
+      "fixture": "5000",
+      "operation": "readMs",
+      "milliseconds": 968.2,
+      "classification": "offline save/load/startup latency; not native frame/mod-work"
+    },
+    {
+      "fixture": "5000",
+      "operation": "migrationFrom17Ms",
+      "milliseconds": 1657.0,
+      "classification": "offline save/load/startup latency; not native frame/mod-work"
+    },
+    {
+      "fixture": "ceiling",
+      "operation": "writeMs",
+      "milliseconds": 1835.3,
+      "classification": "offline save/load/startup latency; not native frame/mod-work"
+    },
+    {
+      "fixture": "ceiling",
+      "operation": "readMs",
+      "milliseconds": 4619.6,
+      "classification": "offline save/load/startup latency; not native frame/mod-work"
+    },
+    {
+      "fixture": "ceiling",
+      "operation": "migrationFrom17Ms",
+      "milliseconds": 9464.5,
+      "classification": "offline save/load/startup latency; not native frame/mod-work"
+    },
+    {
+      "fixture": "CF32",
+      "operation": "writeMs",
+      "milliseconds": 2804.9,
+      "classification": "offline save/load/startup latency; not native frame/mod-work"
+    },
+    {
+      "fixture": "CF32",
+      "operation": "readMs",
+      "milliseconds": 6107.1,
+      "classification": "offline save/load/startup latency; not native frame/mod-work"
+    },
+    {
+      "fixture": "CF64",
+      "operation": "writeMs",
+      "milliseconds": 3648.2,
+      "classification": "offline save/load/startup latency; not native frame/mod-work"
+    },
+    {
+      "fixture": "CF64",
+      "operation": "readMs",
+      "milliseconds": 10607.3,
+      "classification": "offline save/load/startup latency; not native frame/mod-work"
+    }
+  ],
+  "choice": {
+    "bench": [
+      {
+        "shops": 8,
+        "nativeIds": false,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.1312,
+          "p95": 0.3153,
+          "max": 9.8594
+        },
+        "continuationUnitMs": {
+          "p95": 0.0396,
+          "max": 0.943
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.0562,
+          "max": 0.9185
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.012,
+          "p95": 0.0218,
+          "max": 0.8707
+        },
+        "bytesPerDecision": 84168,
+        "logicalRoutes": 16
+      },
+      {
+        "shops": 64,
+        "nativeIds": false,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.1537,
+          "p95": 0.3694,
+          "max": 1.1986
+        },
+        "continuationUnitMs": {
+          "p95": 0.0445,
+          "max": 0.9605
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.08940000000000001,
+          "max": 0.9374
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.024300000000000002,
+          "p95": 0.0501,
+          "max": 0.9007999999999999
+        },
+        "bytesPerDecision": 84296,
+        "logicalRoutes": 16
+      },
+      {
+        "shops": 1024,
+        "nativeIds": false,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.3037,
+          "p95": 0.5835,
+          "max": 3.5306
+        },
+        "continuationUnitMs": {
+          "p95": 0.1022,
+          "max": 3.3498
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.2747,
+          "max": 3.3686000000000003
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.07819999999999999,
+          "p95": 0.16799999999999998,
+          "max": 3.2996
+        },
+        "bytesPerDecision": 84360,
+        "logicalRoutes": 16
+      }
+    ],
+    "nativeIdBench": [
+      {
+        "shops": 8,
+        "nativeIds": true,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.0781,
+          "p95": 0.2071,
+          "max": 1.2151
+        },
+        "continuationUnitMs": {
+          "p95": 0.0213,
+          "max": 1.0799
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.045700000000000005,
+          "max": 0.7872
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.007,
+          "p95": 0.0142,
+          "max": 0.8400000000000001
+        },
+        "bytesPerDecision": 77024,
+        "logicalRoutes": 16
+      },
+      {
+        "shops": 64,
+        "nativeIds": true,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.0922,
+          "p95": 0.2306,
+          "max": 1.1526
+        },
+        "continuationUnitMs": {
+          "p95": 0.0268,
+          "max": 1.0146
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.059,
+          "max": 0.9439
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.0177,
+          "p95": 0.034,
+          "max": 0.9107
+        },
+        "bytesPerDecision": 77136,
+        "logicalRoutes": 16
+      },
+      {
+        "shops": 1024,
+        "nativeIds": true,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.2103,
+          "p95": 0.3489,
+          "max": 2.1154
+        },
+        "continuationUnitMs": {
+          "p95": 0.1306,
+          "max": 2.0552
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.2822,
+          "max": 2.0571
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.15259999999999999,
+          "p95": 0.258,
+          "max": 2.0394
+        },
+        "bytesPerDecision": 83152,
+        "logicalRoutes": 16
+      }
+    ]
+  },
+  "heldTuning": {
+    "schema": 18,
+    "heldTuning": true,
+    "decisions": [
+      {
+        "shops": 1,
+        "samples": 3000,
+        "capture": {
+          "p50Us": 3.9,
+          "p95Us": 5.9,
+          "maxUs": 487.9,
+          "spikesAtLeast30Ms": 0
+        },
+        "continuation": {
+          "p50Us": 15.9,
+          "p95Us": 20.8,
+          "maxUs": 1023.9,
+          "spikesAtLeast30Ms": 0
+        },
+        "captureBytes": 2720.448,
+        "continuationBytes": 11560.832
+      },
+      {
+        "shops": 8,
+        "samples": 3000,
+        "capture": {
+          "p50Us": 13.4,
+          "p95Us": 24.4,
+          "maxUs": 235.0,
+          "spikesAtLeast30Ms": 0
+        },
+        "continuation": {
+          "p50Us": 97.3,
+          "p95Us": 136.8,
+          "maxUs": 496.8,
+          "spikesAtLeast30Ms": 0
+        },
+        "captureBytes": 10561.717333333334,
+        "continuationBytes": 61747.02133333333
+      }
+    ],
+    "retained": [
+      {
+        "shops": 0,
+        "retainedBytesPerHeld": 279.1536,
+        "allocatedBytesPerHeld": 280.0
+      },
+      {
+        "shops": 8,
+        "retainedBytesPerHeld": 1768.412,
+        "allocatedBytesPerHeld": 1832.0
+      }
+    ],
+    "shapePrecheck": {
+      "materializing": {
+        "ns": 1330.25,
+        "bytes": 136.00010666666665
+      },
+      "nonmaterializing": {
+        "ns": 170.11433333333332,
+        "bytes": 0.00010666666666666667
+      }
+    }
+  },
+  "otherOfflineTimingNotes": {
+    "nativeModWorkAndWholeFrameMeasured": false,
+    "newPerformanceWinClaimed": false,
+    "d1Cold20000PlaceAggregateMs": 48.8884,
+    "d1FlagAtLeast30Ms": true,
+    "d1Classification": "offline aggregate across bounded cold-build units; not a native frame",
+    "nativeId1024ScopePurePolicyP95Ms": 0.258,
+    "purePolicyEngineeringTargetMs": 0.2,
+    "purePolicyTargetMet": false
+  },
+  "commands": [
+    {
+      "name": "build",
+      "command": [
+        "python",
+        "tools/build.py",
+        "--game-managed",
+        "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed"
+      ],
+      "startedUtc": "2026-11-01T01:50:58.463408+00:00",
+      "elapsedSeconds": 3.687,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\01-build.log",
+      "logSha256": "5d509148abf3b36754cc95dc200143ef699f1701bfcf4521ce6765fd9db6f27e"
+    },
+    {
+      "name": "unit-tests",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj"
+      ],
+      "startedUtc": "2026-11-01T01:51:02.925099+00:00",
+      "elapsedSeconds": 214.0,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\02-unit-tests.log",
+      "logSha256": "7a7243c5e4d4dfda76bcc89b73202979c48b04823afc198fdf76a779cb366953"
+    },
+    {
+      "name": "test-discovery",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--no-build",
+        "--list-tests"
+      ],
+      "startedUtc": "2026-11-01T01:54:37.778314+00:00",
+      "elapsedSeconds": 2.954,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\03-test-discovery.log",
+      "logSha256": "8e4f961ca1897649474a1c5a7a52f9fa66a4b18e08b805d8efbfb5ea5205af18"
+    },
+    {
+      "name": "AgencyPaymentRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/agency-payment-regression/AgencyPaymentRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:54:41.861187+00:00",
+      "elapsedSeconds": 9.375,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\04-AgencyPaymentRegression.log",
+      "logSha256": "63dc8c888cd7a50b049c2cf0f0c38c1c01ccef33c60f5307754b122a926111ef"
+    },
+    {
+      "name": "CampaignReaderRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/campaign-reader-regression/CampaignReaderRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:54:52.060534+00:00",
+      "elapsedSeconds": 8.578,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\05-CampaignReaderRegression.log",
+      "logSha256": "1ede87e18d4efac6cc58cb01df7575434bbc80533e2ef2d39589ab1c21ebcd81"
+    },
+    {
+      "name": "CoreIdentityRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/core-identity-regression/CoreIdentityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:55:01.421552+00:00",
+      "elapsedSeconds": 13.625,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\06-CoreIdentityRegression.log",
+      "logSha256": "d128fe45c9cfc5e3274ea19595adde9c56d0aba5e39fa61af3fe752f6cb86967"
+    },
+    {
+      "name": "DiagnosticResponseRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/diagnostic-response-regression/DiagnosticResponseRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:55:15.949120+00:00",
+      "elapsedSeconds": 6.625,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\07-DiagnosticResponseRegression.log",
+      "logSha256": "a89f8e2948c58df6f28f5d0bf439ea876f62fe55dd2f032fb9d77ea4d0a7b103"
+    },
+    {
+      "name": "EventObservationRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/event-observation-regression/EventObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:55:23.388118+00:00",
+      "elapsedSeconds": 10.484,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\08-EventObservationRegression.log",
+      "logSha256": "82b58b06f198ca7c7cce6e7e2762d4b9dd0b65dc6236280d7f2492451c3b241a"
+    },
+    {
+      "name": "FoodCandidateRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-candidate-regression/FoodCandidateRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:55:35.223200+00:00",
+      "elapsedSeconds": 13.172,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\09-FoodCandidateRegression.log",
+      "logSha256": "b7f6dd399c7ec8de643b4da646f35ebb73735c8aa8c54473eaff51c181274ee5"
+    },
+    {
+      "name": "FoodCatalogueRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-catalogue-regression/FoodCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:55:49.200160+00:00",
+      "elapsedSeconds": 8.328,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\10-FoodCatalogueRegression.log",
+      "logSha256": "aa8b1ab6094525dcf8466b5523392c53363af0b4dd92e4f7b740f39f3bd96d83"
+    },
+    {
+      "name": "FoodCheckoutRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-checkout-regression/FoodCheckoutRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:55:58.197555+00:00",
+      "elapsedSeconds": 6.859,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\11-FoodCheckoutRegression.log",
+      "logSha256": "626485385041a389bb403270834bbc781cd73720968862e32075a1871fdf1fe6"
+    },
+    {
+      "name": "FoodChoiceRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:56:06.283511+00:00",
+      "elapsedSeconds": 8.0,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\12-FoodChoiceRegression.log",
+      "logSha256": "a21402c529173a9ac4720b135c19650f48a909fa5381512ebb92bf56673c9fce"
+    },
+    {
+      "name": "FoodHoursRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-hours-regression/FoodHoursRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:56:14.859809+00:00",
+      "elapsedSeconds": 4.906,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\13-FoodHoursRegression.log",
+      "logSha256": "2410218689a17bf8e5ae868d3025d1a8bd9e449d7fd49d83728819236ce6607c"
+    },
+    {
+      "name": "FoodHouseholdCatalogueRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-household-catalogue-regression/FoodHouseholdCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:56:20.693345+00:00",
+      "elapsedSeconds": 5.156,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\14-FoodHouseholdCatalogueRegression.log",
+      "logSha256": "b0f19cfd0acbbded5af38461d6e0bbe596b236cd83207afa0223100fdcfb8609"
+    },
+    {
+      "name": "FoodOwnershipRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-ownership-regression/FoodOwnershipRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:56:26.494268+00:00",
+      "elapsedSeconds": 7.062,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\15-FoodOwnershipRegression.log",
+      "logSha256": "56c5c7195031985612e50f09a118926a8cebe0e7e8f48e10163c331dbeb02525"
+    },
+    {
+      "name": "FoodSupplyRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-supply-regression/FoodSupplyRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:56:34.448323+00:00",
+      "elapsedSeconds": 3.75,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\16-FoodSupplyRegression.log",
+      "logSha256": "bea33031a003404270de233cbd073eb44deacac65f41be406a1eae3b70385683"
+    },
+    {
+      "name": "FrameObservationRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/frame-observation-regression/FrameObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:56:39.027265+00:00",
+      "elapsedSeconds": 4.297,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\17-FrameObservationRegression.log",
+      "logSha256": "7e5da72d80f98e71b464d3c9f918cf9457b5350bfcafc294e80e823b646b2d02"
+    },
+    {
+      "name": "GateAccessRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/gate-access-regression/GateAccessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:56:44.224824+00:00",
+      "elapsedSeconds": 5.859,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\18-GateAccessRegression.log",
+      "logSha256": "6e9877acee2b84dfcc2de1b4d7d7236ac991a58c1a89fbe420966d127bf4afae"
+    },
+    {
+      "name": "HeldTuningRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/held-tuning-regression/HeldTuningRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:56:50.659471+00:00",
+      "elapsedSeconds": 7.985,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\19-HeldTuningRegression.log",
+      "logSha256": "4a668caf2ad60742966e83574ab7e073114308b50ccb65fb3ea2cd1d3df68031"
+    },
+    {
+      "name": "PickupRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/persistent-continuity/regression/PickupRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:56:59.097460+00:00",
+      "elapsedSeconds": 6.687,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\20-PickupRegression.log",
+      "logSha256": "608eae841ef2ed0f1dbfb45d11a356fef2231fcfe9cee06e68756577f5a0b157"
+    },
+    {
+      "name": "RoadCeilingRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-ceiling-regression/RoadCeilingRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:57:06.527848+00:00",
+      "elapsedSeconds": 4.454,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\21-RoadCeilingRegression.log",
+      "logSha256": "895bf78ce78f6cceb24e97e6ac8d4cc6c68fa71cfb5b0e54f707e9bf46369762"
+    },
+    {
+      "name": "RoadHandoffRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-handoff-regression/RoadHandoffRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:57:11.661607+00:00",
+      "elapsedSeconds": 3.36,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\22-RoadHandoffRegression.log",
+      "logSha256": "5de54d90bad9b212aac21705900b22ad270fa18365f1284fc4e988bf67a5f23e"
+    },
+    {
+      "name": "RoadInvalidationRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-invalidation-regression/RoadInvalidationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:57:15.313778+00:00",
+      "elapsedSeconds": 5.078,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\23-RoadInvalidationRegression.log",
+      "logSha256": "11bcbab6bdde92b021b10a41d941aa322629fadbc821906b55ed9aa7d5d7e656"
+    },
+    {
+      "name": "RoadSpeedRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-speed-regression/RoadSpeedRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:57:20.745173+00:00",
+      "elapsedSeconds": 4.063,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\24-RoadSpeedRegression.log",
+      "logSha256": "5242c509cd90b21734fe4321b43dcbba531282677f91d66ddc8931b9b07cef19"
+    },
+    {
+      "name": "RouteDiscoveryRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/route-discovery-regression/RouteDiscoveryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:57:25.135778+00:00",
+      "elapsedSeconds": 11.281,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\25-RouteDiscoveryRegression.log",
+      "logSha256": "7c3684eedaa0bea2266b919908de9f88a5bb82d63511f939d1661ee67c9cd95b"
+    },
+    {
+      "name": "SaveContractRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:57:36.854962+00:00",
+      "elapsedSeconds": 6.593,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\26-SaveContractRegression.log",
+      "logSha256": "8cf334e454edf90d5059ee5d80247614b1f2c95557f8873f90c9c1191fbbbb02"
+    },
+    {
+      "name": "StartupClockRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/startup-clock-regression/StartupClockRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:57:44.054359+00:00",
+      "elapsedSeconds": 4.219,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\27-StartupClockRegression.log",
+      "logSha256": "24c7ef31140c8ee053c191427549cc8907edadc897fcc374745e9b70ad2ae976"
+    },
+    {
+      "name": "TrafficClosureRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-closure-regression/TrafficClosureRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:57:48.624788+00:00",
+      "elapsedSeconds": 4.25,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\28-TrafficClosureRegression.log",
+      "logSha256": "708d6590f5351a9c1adf0b939e6775caa82602e1d6ec261b597977db98e808aa"
+    },
+    {
+      "name": "TrafficQueueRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-queue-regression/TrafficQueueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:57:53.296047+00:00",
+      "elapsedSeconds": 3.844,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\29-TrafficQueueRegression.log",
+      "logSha256": "897d1d2e5c92ef25374e61f7da26e9dea2849c91f3495eb8bc65210eb2e4b9c4"
+    },
+    {
+      "name": "WalkingQuoteRegression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/walking-quote-regression/WalkingQuoteRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "startedUtc": "2026-11-01T01:57:57.468439+00:00",
+      "elapsedSeconds": 4.859,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\30-WalkingQuoteRegression.log",
+      "logSha256": "b20b2938933dcf089ca5390b756d89a587ca9d5f003c7440677ccda69bf0d405"
+    },
+    {
+      "name": "native-command",
+      "command": [
+        "python",
+        "tools/native-command-regression/run.py"
+      ],
+      "startedUtc": "2026-11-01T01:58:02.762130+00:00",
+      "elapsedSeconds": 3.156,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\31-native-command.log",
+      "logSha256": "bd610e1a32a30f6ad7638fc2a65ae7bf8bea9d44baba81884f821aea4ed0a9aa"
+    },
+    {
+      "name": "physical-selection",
+      "command": [
+        "python",
+        "tools/physical-selection-regression/run.py"
+      ],
+      "startedUtc": "2026-11-01T01:58:06.377671+00:00",
+      "elapsedSeconds": 4.688,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\32-physical-selection.log",
+      "logSha256": "49d1f3ef9c57b709d7483b9af0d53211147d5522796c43f275d6765843f606b9"
+    },
+    {
+      "name": "vehicle-ownership",
+      "command": [
+        "python",
+        "tools/vehicle-ownership-regression/run.py"
+      ],
+      "startedUtc": "2026-11-01T01:58:11.509568+00:00",
+      "elapsedSeconds": 3.172,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\33-vehicle-ownership.log",
+      "logSha256": "7539f54a1b778a54ca9bc75f398a40c0491fb40281611c8c8efbbc473dd32e46"
+    },
+    {
+      "name": "optional-stop",
+      "command": [
+        "python",
+        "tools/optional-stop-regression/run.py"
+      ],
+      "startedUtc": "2026-11-01T01:58:15.231465+00:00",
+      "elapsedSeconds": 3.859,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\34-optional-stop.log",
+      "logSha256": "83169edd57e839615aaf26b1c484d01efb768209811f4538fa4cfd838a767883"
+    },
+    {
+      "name": "simulate",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/simulate/Simulate.csproj",
+        "--",
+        "28",
+        "build/harness-demo"
+      ],
+      "startedUtc": "2026-11-01T01:58:19.454101+00:00",
+      "elapsedSeconds": 6.438,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\35-simulate.log",
+      "logSha256": "9874ef99112b00671438d68398524141f6bc8140ef39baf8559184bbcf559bd7"
+    },
+    {
+      "name": "food-routines",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-routines/FoodRoutines.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "build/harness-food-routines-demo",
+        "957"
+      ],
+      "startedUtc": "2026-11-01T01:58:26.327841+00:00",
+      "elapsedSeconds": 7.344,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\36-food-routines.log",
+      "logSha256": "b868313ad42ccee502db80fd57948da1e45e6868fa526022ec232c0ed25e8057"
+    },
+    {
+      "name": "food-demand",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-demand/FoodDemand.csproj",
+        "--",
+        "build/harness-food-demand-demo"
+      ],
+      "startedUtc": "2026-11-01T01:58:33.996905+00:00",
+      "elapsedSeconds": 4.016,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\37-food-demand.log",
+      "logSha256": "cd37661c456396b4fadc1a16f96b83ffab598abc82b6b0fb4c7628ee2a62be65"
+    },
+    {
+      "name": "capacity-reference",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "reference"
+      ],
+      "startedUtc": "2026-11-01T01:58:38.441739+00:00",
+      "elapsedSeconds": 4.172,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\38-capacity-reference.log",
+      "logSha256": "1cd78c8a4742d8572cc05189f3fd04933e4d088d686dd31bd16e66852f7fc8b6"
+    },
+    {
+      "name": "capacity-consumers5000",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "consumers5000"
+      ],
+      "startedUtc": "2026-11-01T01:58:43.081222+00:00",
+      "elapsedSeconds": 5.813,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\39-capacity-consumers5000.log",
+      "logSha256": "2c91100d93a0209fdcd6f1703ac68644b6be572ded2a5e8390c87ff68f94296f"
+    },
+    {
+      "name": "capacity-5000",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "5000"
+      ],
+      "startedUtc": "2026-11-01T01:58:49.312295+00:00",
+      "elapsedSeconds": 7.422,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\40-capacity-5000.log",
+      "logSha256": "91971cc0627c6b117df2fb6cbc879f1692be4623d29e0cf4a7f2fe613f483a5d"
+    },
+    {
+      "name": "capacity-ceiling",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "ceiling"
+      ],
+      "startedUtc": "2026-11-01T01:58:57.397755+00:00",
+      "elapsedSeconds": 34.469,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\41-capacity-ceiling.log",
+      "logSha256": "1cc152701921123ac56a95c9f6b7cf26694a5cf8249be0c7378ad2c3d5a79458"
+    },
+    {
+      "name": "capacity-CF32",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "CF32"
+      ],
+      "startedUtc": "2026-11-01T01:59:32.177771+00:00",
+      "elapsedSeconds": 31.375,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\42-capacity-CF32.log",
+      "logSha256": "833b150ebc5ac28ca9eed9c9cb2a2336e00c9c8a58b617931fcd3b7177af78e5"
+    },
+    {
+      "name": "capacity-CF64",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "CF64"
+      ],
+      "startedUtc": "2026-11-01T02:00:03.874842+00:00",
+      "elapsedSeconds": 48.047,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\43-capacity-CF64.log",
+      "logSha256": "515c5a1063696bdde4604903fbda3e8d75418154a7895cc654a059789cfa4845"
+    },
+    {
+      "name": "base-recovery",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--base-recovery"
+      ],
+      "startedUtc": "2026-11-01T02:00:52.469071+00:00",
+      "elapsedSeconds": 13.047,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\44-base-recovery.log",
+      "logSha256": "94ee77048f623bb5b8896738c46412241b3e65992b3ad8ce722ffae549d21b08"
+    },
+    {
+      "name": "input-boundary",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--input-boundary"
+      ],
+      "startedUtc": "2026-11-01T02:01:06.020213+00:00",
+      "elapsedSeconds": 4.578,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\45-input-boundary.log",
+      "logSha256": "66e1b7c6583508f2337aa6e6e934b4d585d20882d93f38cc5078ab41a7b0711e"
+    },
+    {
+      "name": "record-boundary",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--record-boundary"
+      ],
+      "startedUtc": "2026-11-01T02:01:11.077319+00:00",
+      "elapsedSeconds": 44.938,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\46-record-boundary.log",
+      "logSha256": "b5067a410fe37835ec83a109ee878e04930d561f9c57c1e465b0c02e14dbf9b9"
+    },
+    {
+      "name": "history-churn",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--history-churn"
+      ],
+      "startedUtc": "2026-11-01T02:01:56.521675+00:00",
+      "elapsedSeconds": 14.672,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\47-history-churn.log",
+      "logSha256": "9cd7f9708f3455dbddb5910a44d188ac6398ab04192c3b6d645edb7dfbf62887"
+    },
+    {
+      "name": "choice-rush",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--rush"
+      ],
+      "startedUtc": "2026-11-01T02:02:11.723411+00:00",
+      "elapsedSeconds": 9.266,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\48-choice-rush.log",
+      "logSha256": "4fb737afe11b97c667b25417523d952f6fcf4cea4d49aea99f72456256f0c00e"
+    },
+    {
+      "name": "optional-stop-performance",
+      "command": [
+        "python",
+        "tools/optional-stop-regression/run.py",
+        "--performance"
+      ],
+      "startedUtc": "2026-11-01T02:02:21.567455+00:00",
+      "elapsedSeconds": 15.5,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\49-optional-stop-performance.log",
+      "logSha256": "28257f55fd21b0737821dd80c3f928a78c3c82924a18a1cfa1c8590d37c88a3d"
+    },
+    {
+      "name": "optional-stop-findings",
+      "command": [
+        "python",
+        "tools/optional-stop-regression/run.py",
+        "--findings"
+      ],
+      "startedUtc": "2026-11-01T02:02:37.624735+00:00",
+      "elapsedSeconds": 5.875,
+      "exitCode": 0,
+      "log": "build\\b0b-sync2-base-gate\\50-optional-stop-findings.log",
+      "logSha256": "30da5793ccac10d152871b400fc18198fa6e03dd7c6fbe960e4594e9cd6de10a"
+    }
+  ]
+}

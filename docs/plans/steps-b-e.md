@@ -4,7 +4,9 @@ Planning record, 31 October 2026. Documentation only. Inspected development head
 
 ## Scope and decisions carried forward
 
-Track F is an independent, separately approved presentation track with no B0/A-stack or save-format dependency. Its default-off F0 discovery and drawing no-op limits are recorded in [city view from interiors](track-f-interior-view.md); the later E2c compatibility guard remains separate from E2a/E2b.
+C3 status, 31 October (offline): [agency/payment findings](c3-agency-payment.md) are **PARTIAL**: recurring native fee path verified in DLL, durable request identity and third-product attachment not proven. Inactive typed Core contract/refusing Runtime port and read-only dump only; no gameplay/UI/schema change or A/B dependency. Native proof awaits the [6 Nov checklist](../checks/c3-agency-payment.md#c3-agency-payment-31-october-2026-offline-only). Peter's 31 October third-option/tier decision bounds C3; contents/fees remain C4/C5 work. The historical open-questions section below is unchanged.
+
+Track F is an independent, separately approved presentation track with no B0/A-stack or save-format dependency. Its default-off F0 discovery and drawing no-op limits are recorded in [city view from interiors](track-f-interior-view.md); E2c (31 Oct, offline) now supplies the separate once-per-load detection/forced-off guard and cached bridge verdict, with no foreign implementation, interop, patches or save changes; [evidence and pending rig checks](../checks/e2c-interior-guard.md#e2c-third-party-interior-guard---31-october-2026-offline-only). It remains independent of E2a/E2b and the A/B stack.
 
 [Peter's roadmap](../roadmap.md) governs product decisions 1–8, order **A → B → C → D → E**, standing performance practice and the single release after the complete roadmap. Its later decisions supersede the phase order, obsolete schema numbers, inspect-mode suggestion and rival scope question in the [27 October review](../reviews/2026-10-27-realism-gameplay-roadmap.md). README and CHECKS describe evidence for particular candidates; older opt-in, menu and schema statements in design/food documents are historical, not new requirements.
 

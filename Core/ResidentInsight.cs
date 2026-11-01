@@ -287,7 +287,7 @@ namespace PersistentCity.Core
                 reason = "going back to " + ActivityName(outing.OriginActivity) + " after a meal break";
             else if (outing != null)
                 reason = meal != null && meal.PlaceId == person.DestinationId && meal.Status == MealStatus.Travelling
-                    ? "to buy " + productName(meal.ProductId) + " for " + KindName(meal.Kind).ToLowerInvariant()
+                    ? "to buy " + productName(meal.ProductId) + " for " + KindName(meal.Kind).ToLowerInvariant() + ChoiceWords(meal)
                     : "to get something to eat";
             else
                 switch (person.DestinationActivity)
@@ -337,7 +337,14 @@ namespace PersistentCity.Core
             var outcome = recorded?.Find(slot.Kind);
             if (current && (meal.Status == MealStatus.Travelling || meal.Status == MealStatus.Serving || meal.Status == MealStatus.Pending && outcome == null))
             { slot.State = State(meal.Status); slot.Text = Describe(meal, label, productName, now); return; }
-            if (outcome != null) { slot.State = State(outcome.Status); slot.Text = Describe(outcome, label, productName); return; }
+            if (outcome != null)
+            {
+                slot.State = State(outcome.Status);
+                slot.Text = current && outcome.Reason==MealReasonCode.Other && meal.ContextAttempts>0
+                    && (meal.Reason=="Meal decision limit reached" || meal.Reason=="This meal situation was already considered")
+                    ? "skipped: "+Sentence(meal.Reason) : Describe(outcome, label, productName);
+                return;
+            }
             if (recorded != null && MealOutcomes.Index(slot.Kind) < recorded.Unrecorded)
             { slot.State = ResidentMealState.NotRecorded; slot.Text = "not recorded (before the upgrade)"; return; }
             if (current) { slot.State = State(meal.Status); slot.Text = Describe(meal, label, productName, now); return; }
@@ -357,7 +364,7 @@ namespace PersistentCity.Core
             string product = productName(outcome.ProductId);
             switch (outcome.Status)
             {
-                case MealOutcomeStatus.Bought: return "bought " + product + " at " + shop;
+                case MealOutcomeStatus.Bought: return "bought " + product + " at " + shop + FactorWords(outcome);
                 // A choice, never a claim that the food was eaten.
                 case MealOutcomeStatus.ChoseAlternative: return Alternative(outcome.Outside);
                 case MealOutcomeStatus.Unconfirmed: return "purchase of " + product + " at " + shop + " not yet confirmed";
@@ -369,6 +376,9 @@ namespace PersistentCity.Core
             : outside == FoodOutsideOption.HomePreparation ? "chose to prepare food at home"
             : outside == FoodOutsideOption.PackedMeal ? "chose a packed meal" : "chose food from home instead of buying";
 
+        private static string FactorWords(MealOutcomeRecord outcome) => (outcome.Factor1==MealFactor.Taste ? "; likes it" : "")
+            +(outcome.Factor1==MealFactor.Quality || outcome.Factor2==MealFactor.Quality ? "; values quality" : "");
+
         public static string ReasonWords(MealReasonCode reason)
         {
             switch (reason)
@@ -379,7 +389,7 @@ namespace PersistentCity.Core
                 case MealReasonCode.ServiceUnavailable: return "service unavailable on arrival";
                 case MealReasonCode.ShopClosed: return "the shop was closed";
                 case MealReasonCode.QueueTooLong: return "the queue was too long";
-                case MealReasonCode.NoLongerFits: return "the queue no longer fit the break";
+                case MealReasonCode.NoLongerFits: return "travel, queue or service would not fit the break";
                 case MealReasonCode.Interrupted: return "the visit was interrupted";
                 case MealReasonCode.LeftBeforeService: return "left before being served";
                 case MealReasonCode.ScheduleChanged: return "the schedule changed before leaving";
@@ -403,8 +413,8 @@ namespace PersistentCity.Core
             string product = productName(meal.ProductId);
             switch (meal.Status)
             {
-                case MealStatus.Travelling: return "on the way to " + shop + " for " + product;
-                case MealStatus.Serving: return "waiting for " + product + " at " + shop;
+                case MealStatus.Travelling: return "on the way to " + shop + " for " + product + ChoiceWords(meal);
+                case MealStatus.Serving: return "waiting for " + product + " at " + shop + ChoiceWords(meal);
                 case MealStatus.Paid: return "bought " + product + " at " + shop;
                 case MealStatus.Declined: return Alternative(meal.Today?.Day == meal.Day ? meal.Today.Find(meal.Kind)?.Outside ?? FoodOutsideOption.None : FoodOutsideOption.None);
                 case MealStatus.Missed: return "skipped: " + Sentence(meal.Reason);
@@ -420,5 +430,7 @@ namespace PersistentCity.Core
             return reason.Length > 1 && char.IsUpper(reason[0]) && !char.IsUpper(reason[1])
                 ? char.ToLowerInvariant(reason[0]) + reason.Substring(1) : reason;
         }
+        private static string ChoiceWords(ResidentMeal meal) => meal.ContextAttempts>0 && meal.Reason.StartsWith("Chose food",StringComparison.Ordinal)
+            ? meal.Reason.Substring("Chose food".Length) : "";
     }
 }
