@@ -6,9 +6,10 @@ Merged integration base `0ffb819` (F1, E1 and A5) into C2b `992291e` using a
 real two-parent merge from `51ce709`. All 16 conflict resolutions are listed in
 the [prepared PR description](../plans/c2b-pr-description.md#sync-base-integration-1-november-2026).
 All preexisting checks/perf index lines and both parents' slice files are retained.
-The 54 incoming-only files outside integration seams were compared with their
+The 53 incoming-only files outside integration seams were compared with their
 parent and match exactly after newline normalization. A5's test-only current-schema
-expectation changes from 20 to 22, preserving all its invariant assertions.
+expectation changes from 20 to 22, preserving all its invariant assertions; the
+C4 byte differential likewise pins schema 22 and retains exact byte equality.
 
 Schema 20 now has an exact filtered reader and bootstrap allow-list entry.
 The isolated 20 -> 22 campaign step validates the predecessor, adds only empty
@@ -23,6 +24,53 @@ historical evidence and do not describe this merged tree. No new perf win is
 claimed. In-game checks are batched into the combined locked rig under merge
 rule v2; no rig proof is claimed, and input-only checks wait for Peter's 6 Nov
 playtest. This sync does not authorize release/upload or normal-save deployment.
+
+### Merged-tree offline validation
+
+Validated merge commit `c455851` (parents `992291e`, `0ffb819`): **2,416/2,416
+unit tests pass**, zero failures/skips; final `--no-build --list-tests` passes.
+All **48 final distinct command gates pass**: Steam-reference build, unit suite,
+discovery, all 37 top-level regression projects, four Python adapters, three
+simulations and the extra C4 exact-byte differential. The first suite run had
+only four A5 current-schema assertions fail (expected 20, actual 22); changing
+that expectation to CurrentSchema preserved every subsequent invariant. The
+complete suite was rerun, with no weakened or skipped assertion.
+
+Every test/run and Python wrapper was preceded by the required other-dotnet wait.
+All runs were foreground, with no command time limit or process termination.
+All owned test/run processes ended; no owned dotnet/testhost/runner remained.
+[Command exits, source hashes, preservation audit and full offline metrics](c2b-sync-base-results.json).
+Ignored logs: `build/c2b-sync/`. DLL SHA-256:
+`afeb5a246049a7d0e5679b751b3efe5324431783a2f00340d51b3c73b9a96447`.
+
+The schema-22 population fixture is **120,184 characters**, digest
+`D520285710B5BBCBF7715CF430D75AC6733B23BD7B6EB71ED9D6E7CD0DD72945`.
+Its weather-stripped schema-19 projection is **119,083 characters**, digest
+`D7FF8294F56C3B3D5AF736540274E68E9848319B34658859FC15E0D4CDB1F3A2`,
+matching the original base. The no-campaign economy still produces **849 orders,
+797 purchases, 107,967,424,757,760 spent units and two uncertain meals**; order,
+economy and reload digests match the historical base exactly. The ownership-hook
+regression retains **243 assertions**. C4's schema-22 fixtures with/without its
+engine are byte-identical: population **41,787 bytes**, food **66,275 bytes**.
+
+The merged campaign harness re-verifies **282 / 274,446 bytes** and **1 / 1,024
+records** above schema 20 with existing references; images remain 265 characters.
+At 1,024 images, publication p95/max is **2.5747 / 3.1028 ms** and the production
+adapter **4.3486 / 8.7057 ms**, with zero >=30 ms samples in those component
+series. **Cold C1-reader p95 6.4337 ms remains above 5 ms** (max 11.3982 ms).
+Inherited C2a setup flags **one dense / eight sparse** 20,000-place full-build
+samples >=30 ms (max **38.8319 / 75.8547 ms**). Its original baseline scan flags
+**one sparse 1,024-place / 41 sparse 20,000-place** samples >=30 ms (max
+**32.824 / 589.1993 ms**); candidate admission has zero >=30 ms samples. These
+shared-host offline component results include JIT/GC/scheduling variability;
+no new performance win or native mod-work/whole-frame proof is claimed. The four
+parked hotspots and native combined performance gate remain unchanged.
+
+No game launch, rig files/lease or normal-profile access, Steam/Workshop
+operations or WSL use occurred. The build referenced local Managed assemblies
+read-only.
+In-game checks remain batched under merge rule v2; input-only checks wait for
+Peter's 6 Nov playtest. No native proof, release or deployment approval is claimed.
 
 ## Round-2 fix - Sol-r2-2, 1 November 2026
 

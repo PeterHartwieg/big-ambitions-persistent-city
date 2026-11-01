@@ -56,6 +56,17 @@ one-shot isolation and private-buffer implementations are preserved from their
 parents. Persistence and offline fixtures/tools changed as detailed above.
 No new feature or slice policy/design change is introduced.
 
+Final offline validation on `c455851`: **2,416/2,416 tests**, zero failures/skips;
+all **48 distinct gates pass** (build, unit/discovery, 37 regression projects,
+four Python adapters, three simulations and C4's exact-byte differential).
+The first run's four stale A5 schema expectations were corrected and the full
+suite rerun. Current save contract: 120,184 characters; schema-19 weather
+projection 119,083. Economy/order/reload digests match the original base. Schema-20
+campaign byte/record deltas re-verified. Cold C1-reader p95 6.4337 ms remains
+flagged above 5 ms; inherited C2a setup/baseline >=30 ms samples are retained in
+the checks. No new perf win or native/whole-frame proof is claimed. All runs
+ended; no owned test process remains.
+
 Validation results and source preservation: [C2b owning checks](../checks/c2b-campaign-awareness.md).
 All older numbers below are historical C2b measurements against `51ce709` before
 E1 and A5, including digests/byte counts; they are not merged-head measurements.
