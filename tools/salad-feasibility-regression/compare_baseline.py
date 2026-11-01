@@ -27,6 +27,7 @@ APPROVED_SHA256 = {
 def source(path):
     body = (ROOT / path).read_text(encoding="utf-8")
     if path == "Runtime/DirectStockShowcaseReader.cs":
+        body = body.replace('        internal static readonly DirectStockCandidate FrenchFries = new DirectStockCandidate("ba:itemname_frenchfries");\n', '')
         body = body.replace('        internal static readonly DirectStockCandidate Salad = new DirectStockCandidate("ba:itemname_salad");\n', '')
         body = body.replace('See the E3 per-product records;', 'See e3-donut.md and e3-cupcake.md;')
     elif path == "tools/donut-feasibility-regression/Program.cs":

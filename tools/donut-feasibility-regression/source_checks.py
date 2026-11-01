@@ -7,7 +7,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 readers = {ROOT / ("Runtime/" + name + ".cs") for name in
-           ("DonutFeasibilityReader", "CupcakeFeasibilityReader", "SaladFeasibilityReader", "DirectStockShowcaseReader")}
+           ("DonutFeasibilityReader", "CupcakeFeasibilityReader", "SaladFeasibilityReader", "FrenchFriesFeasibilityReader", "DirectStockShowcaseReader")}
 text = "\n".join(path.read_text(encoding="utf-8") for path in sorted(readers))
 code = re.sub(r"//[^\n]*|/\*.*?\*/", "", text, flags=re.S)
 for forbidden in ("Harmony", "SetUp(", "ProcessCustomer", "CustomerEntry", "OrderEntry",
@@ -20,7 +20,7 @@ for directory in ("Core", "Runtime", "Persistence", "Compatibility"):
     for path in (ROOT / directory).glob("*.cs"):
         if path not in readers:
             source = path.read_text(encoding="utf-8-sig")
-            for symbol in ("DonutFeasibility", "CupcakeFeasibility", "SaladFeasibility", "DirectStockShowcase", "DirectStockCandidate"):
+            for symbol in ("DonutFeasibility", "CupcakeFeasibility", "SaladFeasibility", "FrenchFriesFeasibility", "DirectStockShowcase", "DirectStockCandidate"):
                 assert symbol not in source, str(path)
 
 # Pins come from approved cupcake head 682aa77 and landed donut 3f7b885.
@@ -43,6 +43,13 @@ def without_salad(path, source):
         source = re.sub(r"#if SALAD\n.*?#endif\n", "", source, flags=re.S)
     return source
 
+# Remove only the new pinned identity for the existing exact approved source checks.
+# Full frenchfries descriptor/facade pins and all-caller isolation live in its own guard.
+FRIES_DESCRIPTOR = '        internal static readonly DirectStockCandidate FrenchFries = new DirectStockCandidate("ba:itemname_frenchfries");\n'
+def approved_source(path):
+    source = (ROOT / path).read_text(encoding="utf-8")
+    return source.replace(FRIES_DESCRIPTOR, "") if path == "Runtime/DirectStockShowcaseReader.cs" else source
+
 # Preserve the approved complete salad additions as well as the stripped cupcake contract.
 SALAD_SHA256 = {
     'Runtime/DirectStockShowcaseReader.cs': '999228241ef6a44a17fb0d26dad4961ab4c9cc25f81354f34dee6dd92e5837de',
@@ -51,9 +58,9 @@ SALAD_SHA256 = {
     'tools/salad-feasibility-regression/SaladFeasibilityRegression.csproj': '21264d538b1754ab431be0a1e689dc843b13c443d91f8fa409cf678434ea0691',
 }
 for path, expected in SALAD_SHA256.items():
-    assert hashlib.sha256((ROOT / path).read_bytes().replace(b"\r\n", b"\n")).hexdigest() == expected, path
+    assert hashlib.sha256(approved_source(path).encode()).hexdigest() == expected, path
 for path, expected in APPROVED_SHA256.items():
-    current = hashlib.sha256(without_salad(path, (ROOT / path).read_text(encoding="utf-8")).encode()).hexdigest()
+    current = hashlib.sha256(without_salad(path, approved_source(path)).encode()).hexdigest()
     assert current == expected, f"Approved E3 source/harness changed: {path}"
 print("PASS isolation and history-independent approved cupcake/shared-reader/donut fixture pins")
 
