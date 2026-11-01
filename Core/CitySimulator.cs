@@ -56,18 +56,19 @@ namespace PersistentCity.Core
         internal Position? FindPosition(string id) => places.TryGetValue(id,out var place) ? place.Position : (Position?)null;
         /// <summary>Read-only inspector view of one resident from already stored facts, or null if the
         /// ID has left the population. Never changes the city, draws, plans routes or reads a market.</summary>
-        public ResidentInsight? Inspect(string residentId, Func<string, string>? productName = null, Func<string, string>? localize = null)
+        public ResidentInsight? Inspect(string residentId, Func<string, string>? productName = null, Func<string, int, string>? formatAddress = null,
+            Func<string, string?>? shopName = null, Func<FoodScope, bool>? currentOwnShop = null)
         {
             if (residentId == null) return null;
             var person = FindCitizen(residentId);
             if (person == null) return null;
             ResidentMeal? meal = food != null ? food.FindMeal(residentId) : State.Food?.Residents.Find(m => m.ResidentId == residentId);
-            return ResidentInsight.Capture(State, person, meal, id => places.TryGetValue(id, out var place) ? place : null, productName, localize);
+            return ResidentInsight.Capture(State, person, meal, id => places.TryGetValue(id, out var place) ? place : null, productName, formatAddress, food?.MemorySettings, food == null ? null : food.MemoryReference, shopName, currentOwnShop);
         }
-        public void AttachFoodMarket(IFoodMarket market, FoodChoiceSettings? choiceSettings = null, FoodAwarenessSettings? awarenessSettings = null, IFoodAwarenessProvider? memory = null, IFoodAwarenessProvider? campaign = null)
+        public void AttachFoodMarket(IFoodMarket market, FoodChoiceSettings? choiceSettings = null, FoodMemorySettings? memorySettings = null, FoodAwarenessSettings? awarenessSettings = null, IFoodAwarenessProvider? memory = null, IFoodAwarenessProvider? campaign = null)
         {
             if (food != null) throw new InvalidOperationException("Food market already attached.");
-            food = new FoodCommerce(this, market, routes, choiceSettings, awarenessSettings, memory, campaign);
+            food = new FoodCommerce(this, market, routes, choiceSettings, memorySettings, awarenessSettings, memory, campaign);
         }
 
         /// <summary>Explicit place/catalogue publication notification for non-versioned Core providers.</summary>
@@ -124,8 +125,8 @@ namespace PersistentCity.Core
             var replacement = new CitySimulator(State, replacementRoutes);
             replacement.activityObservers = activityObservers;
             replacement.weatherSource=weatherSource;replacement.weatherSettings=weatherSettings;
-            if (stopEnvironment != null) replacement.AttachOptionalStops(stopEnvironment, stopPercentage);
-            if (food != null) replacement.AttachFoodMarket(food.Market, food.ChoiceSettings, food.AwarenessSettings, food.MemoryProvider, food.CampaignProvider);
+            if (stopEnvironment != null) replacement.AttachOptionalStops(stopEnvironment, stopPercentage, stopTiming);
+            if (food != null) replacement.AttachFoodMarket(food.Market, food.ChoiceSettings, food.MemorySettings, food.AwarenessSettings, food.MemoryProvider, food.CampaignProvider);
             return replacement;
         }
 
@@ -170,7 +171,8 @@ namespace PersistentCity.Core
         private bool NoEventsThrough(double targetMinute) => pending == null && food?.HasPendingDecision != true
             && (due.Count == 0 || due.Min!.Minute > targetMinute)
             && (traffic == null || traffic.NextEventMinute > targetMinute)
-            && (State.Food == null || (food != null && food.NextMinute > targetMinute));
+            && (State.Food == null || (food != null && food.NextMinute > targetMinute))
+            && (State.Capabilities.Active || (Math.Floor(State.Minute / 1440) + 1) * 1440 > targetMinute);
 
         private AdvanceResult AdvanceCore(double targetMinute, int eventBudget, bool publishSnapshot)
         {
@@ -195,9 +197,11 @@ namespace PersistentCity.Core
                 double citizenMinute = due.Count == 0 ? double.PositiveInfinity : due.Min!.Minute;
                 double trafficMinute = traffic?.NextEventMinute ?? double.PositiveInfinity;
                 double foodMinute = food?.NextMinute ?? double.PositiveInfinity;
-                double next = Math.Min(foodMinute, Math.Min(citizenMinute, trafficMinute));
+                double activation = State.Capabilities.Active ? double.PositiveInfinity : (Math.Floor(State.Minute / 1440) + 1) * 1440;
+                double next = Math.Min(activation, Math.Min(foodMinute, Math.Min(citizenMinute, trafficMinute)));
                 if (next > targetMinute) break;
                 State.Minute = next;
+                if (next == activation) { State.Capabilities.Active = true; count++; continue; }
                 if(food?.NeedsAwarenessPreparation(next)==true)
                 {
                     // One bounded shared-index unit. Keep this event/due ordering unchanged until

@@ -1,0 +1,737 @@
+{
+  "boundary": "Offline, sequential foreground workloads, prescribed guard before every workload, no execution deadline, build-server reuse disabled.",
+  "commands": [
+    {
+      "name": "build",
+      "command": [
+        "python",
+        "tools/build.py",
+        "--game-managed",
+        "C:/Program Files (x86)/Steam/steamapps/common/Big Ambitions/Big Ambitions_Data/Managed"
+      ],
+      "exit": 0,
+      "seconds": 2.812,
+      "log": "build/e2b-sync2/gate/01-build.txt",
+      "sha256": "c001ab3f6cda5c9957cc9860121b1bbf3f18eff51c0b73dfb6c035e90a9fd514"
+    },
+    {
+      "name": "unit",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj"
+      ],
+      "exit": 0,
+      "seconds": 177.0,
+      "log": "build/e2b-sync2/gate/02-unit.txt",
+      "sha256": "fa97a5d1317c92ef9f7af5775bb9500a2abc8f645809cb7692e018b3308176ed",
+      "summary": "Passed!  - Failed:     0, Passed:  2184, Skipped:     0, Total:  2184, Duration: 2 m 47 s - PersistentCity.Tests.dll (net10.0)"
+    },
+    {
+      "name": "list",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--no-build",
+        "--list-tests"
+      ],
+      "exit": 0,
+      "seconds": 1.36,
+      "log": "build/e2b-sync2/gate/03-list.txt",
+      "sha256": "35418746dcaa4554594aa8bcb3eb88ade4da51ce3c8312d13f116b95a81b05fb",
+      "discovered": 2184,
+      "countingNote": "All indented names, including the 18 global-namespace AgencyOrdersTests cases; no filter."
+    },
+    {
+      "name": "AgencyPaymentRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/agency-payment-regression/AgencyPaymentRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.734,
+      "log": "build/e2b-sync2/gate/04-AgencyPaymentRegression.txt",
+      "sha256": "06cf863110c36843fa9854ad4542d032639e719fddb12077f1283fb9f7c27ae1"
+    },
+    {
+      "name": "CampaignReaderRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/campaign-reader-regression/CampaignReaderRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.203,
+      "log": "build/e2b-sync2/gate/05-CampaignReaderRegression.txt",
+      "sha256": "0a0ac111cbd671a8addaf682d1efb585d26d560abbc215cd3df2f5a73f457c6a"
+    },
+    {
+      "name": "CoreIdentityRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/core-identity-regression/CoreIdentityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 7.484,
+      "log": "build/e2b-sync2/gate/06-CoreIdentityRegression.txt",
+      "sha256": "1bdc41e2abff89d5fbce5722cc5990525be7933f19f20578b590c9b2e574957f"
+    },
+    {
+      "name": "DiagnosticResponseRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/diagnostic-response-regression/DiagnosticResponseRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.797,
+      "log": "build/e2b-sync2/gate/07-DiagnosticResponseRegression.txt",
+      "sha256": "a89f8e2948c58df6f28f5d0bf439ea876f62fe55dd2f032fb9d77ea4d0a7b103"
+    },
+    {
+      "name": "DonutFeasibilityRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/donut-feasibility-regression/DonutFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.766,
+      "log": "build/e2b-sync2/gate/08-DonutFeasibilityRegression.txt",
+      "sha256": "7c72022e25e28e40bc85bf87559990e4eddf75e1bcdd82f99694962cc86bc915"
+    },
+    {
+      "name": "EventObservationRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/event-observation-regression/EventObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 5.297,
+      "log": "build/e2b-sync2/gate/09-EventObservationRegression.txt",
+      "sha256": "42161e30fac5b62fb9ee46e23bd8e3cd8a6e6cb2b48aa61fc3ec810953881166"
+    },
+    {
+      "name": "FoodCandidateRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-candidate-regression/FoodCandidateRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 5.828,
+      "log": "build/e2b-sync2/gate/10-FoodCandidateRegression.txt",
+      "sha256": "de89ae84b8864ffeef5fb6008f24dd62bcb49ae6987c77de448dc0be63eb6d8f"
+    },
+    {
+      "name": "FoodCatalogueRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-catalogue-regression/FoodCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.515,
+      "log": "build/e2b-sync2/gate/11-FoodCatalogueRegression.txt",
+      "sha256": "cc6389c4ebb62c260aba8d97d9359adb658c676b8bc5be5b35a0299648d13c84"
+    },
+    {
+      "name": "FoodCheckoutRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-checkout-regression/FoodCheckoutRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.437,
+      "log": "build/e2b-sync2/gate/12-FoodCheckoutRegression.txt",
+      "sha256": "d39c8fa9305598c616691bfa3cc51d2f01b52cd9957b42957ecea6e6ffa9cd3d"
+    },
+    {
+      "name": "FoodChoiceRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 6.14,
+      "log": "build/e2b-sync2/gate/13-FoodChoiceRegression.txt",
+      "sha256": "4baa830c4b3f422546c576a89822ab1de77fc58fb4cf1e2e31a65fded102989a"
+    },
+    {
+      "name": "FoodHoursRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-hours-regression/FoodHoursRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.25,
+      "log": "build/e2b-sync2/gate/14-FoodHoursRegression.txt",
+      "sha256": "2410218689a17bf8e5ae868d3025d1a8bd9e449d7fd49d83728819236ce6607c"
+    },
+    {
+      "name": "FoodHouseholdCatalogueRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-household-catalogue-regression/FoodHouseholdCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.437,
+      "log": "build/e2b-sync2/gate/15-FoodHouseholdCatalogueRegression.txt",
+      "sha256": "b0f19cfd0acbbded5af38461d6e0bbe596b236cd83207afa0223100fdcfb8609"
+    },
+    {
+      "name": "FoodMemoryRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-memory-regression/FoodMemoryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 10.453,
+      "log": "build/e2b-sync2/gate/16-FoodMemoryRegression.txt",
+      "sha256": "26c45648caab01f28c14aa42f4a1ce7cadf3d83c1e30d189a78e4b5b7e6507f6"
+    },
+    {
+      "name": "FoodOwnershipRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-ownership-regression/FoodOwnershipRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.531,
+      "log": "build/e2b-sync2/gate/17-FoodOwnershipRegression.txt",
+      "sha256": "0868149a24cebe8c5801b20d7530b12bc49a633011d2bf039392c6d97de66efa"
+    },
+    {
+      "name": "FoodRegularsRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-regulars-regression/FoodRegularsRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 7.703,
+      "log": "build/e2b-sync2/gate/18-FoodRegularsRegression.txt",
+      "sha256": "e717be0d4a8ccc52db4a5a2e94c3d0a6e50c793167c6bb681489c0cd103a1f1a"
+    },
+    {
+      "name": "FoodSupplyRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-supply-regression/FoodSupplyRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.64,
+      "log": "build/e2b-sync2/gate/19-FoodSupplyRegression.txt",
+      "sha256": "bea33031a003404270de233cbd073eb44deacac65f41be406a1eae3b70385683"
+    },
+    {
+      "name": "FrameObservationRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/frame-observation-regression/FrameObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.093,
+      "log": "build/e2b-sync2/gate/20-FrameObservationRegression.txt",
+      "sha256": "7e5da72d80f98e71b464d3c9f918cf9457b5350bfcafc294e80e823b646b2d02"
+    },
+    {
+      "name": "GateAccessRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/gate-access-regression/GateAccessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 5.234,
+      "log": "build/e2b-sync2/gate/21-GateAccessRegression.txt",
+      "sha256": "6e9877acee2b84dfcc2de1b4d7d7236ac991a58c1a89fbe420966d127bf4afae"
+    },
+    {
+      "name": "HeldTuningRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/held-tuning-regression/HeldTuningRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 6.125,
+      "log": "build/e2b-sync2/gate/22-HeldTuningRegression.txt",
+      "sha256": "4cad3e2b1d149d416d533913b81989948c7c5ba698f4956d9ed6fcd920b02531"
+    },
+    {
+      "name": "InteriorGuardRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/interior-guard-regression/InteriorGuardRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.766,
+      "log": "build/e2b-sync2/gate/23-InteriorGuardRegression.txt",
+      "sha256": "bb93295a23d3057bbfd0635b348d06dc5ccbe42f2280e8230cc8f46dab4e26e4"
+    },
+    {
+      "name": "PickupRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/persistent-continuity/regression/PickupRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.953,
+      "log": "build/e2b-sync2/gate/24-PickupRegression.txt",
+      "sha256": "608eae841ef2ed0f1dbfb45d11a356fef2231fcfe9cee06e68756577f5a0b157"
+    },
+    {
+      "name": "RoadCeilingRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-ceiling-regression/RoadCeilingRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 5.016,
+      "log": "build/e2b-sync2/gate/25-RoadCeilingRegression.txt",
+      "sha256": "895bf78ce78f6cceb24e97e6ac8d4cc6c68fa71cfb5b0e54f707e9bf46369762"
+    },
+    {
+      "name": "RoadHandoffRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-handoff-regression/RoadHandoffRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.469,
+      "log": "build/e2b-sync2/gate/26-RoadHandoffRegression.txt",
+      "sha256": "5de54d90bad9b212aac21705900b22ad270fa18365f1284fc4e988bf67a5f23e"
+    },
+    {
+      "name": "RoadInvalidationRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-invalidation-regression/RoadInvalidationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 6.797,
+      "log": "build/e2b-sync2/gate/27-RoadInvalidationRegression.txt",
+      "sha256": "11bcbab6bdde92b021b10a41d941aa322629fadbc821906b55ed9aa7d5d7e656"
+    },
+    {
+      "name": "RoadSpeedRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-speed-regression/RoadSpeedRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.875,
+      "log": "build/e2b-sync2/gate/28-RoadSpeedRegression.txt",
+      "sha256": "5242c509cd90b21734fe4321b43dcbba531282677f91d66ddc8931b9b07cef19"
+    },
+    {
+      "name": "RouteDiscoveryRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/route-discovery-regression/RouteDiscoveryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 11.625,
+      "log": "build/e2b-sync2/gate/29-RouteDiscoveryRegression.txt",
+      "sha256": "eff274aaa88d1147e64edb58c0cdfa86bcc9101e03154b3d3a78250ea4b14d8f"
+    },
+    {
+      "name": "SaveContractRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 5.937,
+      "log": "build/e2b-sync2/gate/30-SaveContractRegression.txt",
+      "sha256": "fb5d544cc03a0de45762e2fa54240b7a77960c1bf7c2371a2610e69a4f458f9a"
+    },
+    {
+      "name": "StartupClockRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/startup-clock-regression/StartupClockRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 5.0,
+      "log": "build/e2b-sync2/gate/31-StartupClockRegression.txt",
+      "sha256": "cac1a674f83f525bcede01e695fa9b4538472ba74268b899c27748bdaa978f8d"
+    },
+    {
+      "name": "TrafficClosureRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-closure-regression/TrafficClosureRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.453,
+      "log": "build/e2b-sync2/gate/32-TrafficClosureRegression.txt",
+      "sha256": "708d6590f5351a9c1adf0b939e6775caa82602e1d6ec261b597977db98e808aa"
+    },
+    {
+      "name": "TrafficQueueRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-queue-regression/TrafficQueueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.688,
+      "log": "build/e2b-sync2/gate/33-TrafficQueueRegression.txt",
+      "sha256": "897d1d2e5c92ef25374e61f7da26e9dea2849c91f3495eb8bc65210eb2e4b9c4"
+    },
+    {
+      "name": "WalkingQuoteRegression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/walking-quote-regression/WalkingQuoteRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.781,
+      "log": "build/e2b-sync2/gate/34-WalkingQuoteRegression.txt",
+      "sha256": "b20b2938933dcf089ca5390b756d89a587ca9d5f003c7440677ccda69bf0d405"
+    },
+    {
+      "name": "native-command",
+      "command": [
+        "python",
+        "tools/native-command-regression/run.py"
+      ],
+      "exit": 0,
+      "seconds": 3.234,
+      "log": "build/e2b-sync2/gate/35-native-command.txt",
+      "sha256": "bd610e1a32a30f6ad7638fc2a65ae7bf8bea9d44baba81884f821aea4ed0a9aa"
+    },
+    {
+      "name": "physical-selection",
+      "command": [
+        "python",
+        "tools/physical-selection-regression/run.py"
+      ],
+      "exit": 0,
+      "seconds": 5.438,
+      "log": "build/e2b-sync2/gate/36-physical-selection.txt",
+      "sha256": "393100ac330820ea8d3d92a307aa71d85c033f7439e2a3b097226abd5ec80c85"
+    },
+    {
+      "name": "vehicle-ownership",
+      "command": [
+        "python",
+        "tools/vehicle-ownership-regression/run.py"
+      ],
+      "exit": 0,
+      "seconds": 3.469,
+      "log": "build/e2b-sync2/gate/37-vehicle-ownership.txt",
+      "sha256": "7539f54a1b778a54ca9bc75f398a40c0491fb40281611c8c8efbbc473dd32e46"
+    },
+    {
+      "name": "optional-stop",
+      "command": [
+        "python",
+        "tools/optional-stop-regression/run.py"
+      ],
+      "exit": 0,
+      "seconds": 5.406,
+      "log": "build/e2b-sync2/gate/38-optional-stop.txt",
+      "sha256": "561690c42502ebc3ed5f50a844443da9c2491e9d92e6bbb5385aeb68e532df0b"
+    },
+    {
+      "name": "simulate",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/simulate/Simulate.csproj",
+        "--",
+        "28",
+        "build/harness-demo"
+      ],
+      "exit": 0,
+      "seconds": 8.641,
+      "log": "build/e2b-sync2/gate/39-simulate.txt",
+      "sha256": "cc0eb8a2a6fda428fb4171a407b0a06a9e7c6dfb21d63352f658ea92ca6c7373"
+    },
+    {
+      "name": "food-routines",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-routines/FoodRoutines.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "build/harness-food-routines-demo",
+        "957"
+      ],
+      "exit": 0,
+      "seconds": 8.672,
+      "log": "build/e2b-sync2/gate/40-food-routines.txt",
+      "sha256": "7c34cd04691657fc9fc0788ffbab93b203e4dfd9597a74d65f40f0d7c46e9148"
+    },
+    {
+      "name": "food-demand",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-demand/FoodDemand.csproj",
+        "--",
+        "build/harness-food-demand-demo"
+      ],
+      "exit": 0,
+      "seconds": 5.109,
+      "log": "build/e2b-sync2/gate/41-food-demand.txt",
+      "sha256": "d13caf8d140e784a7524dd0da116216cfee0c44d3e5bd95c8d1a5bef89612961"
+    },
+    {
+      "name": "e3-isolation",
+      "command": [
+        "python",
+        "tools/donut-feasibility-regression/source_checks.py"
+      ],
+      "exit": 0,
+      "seconds": 0.063,
+      "log": "build/e2b-sync2/gate/42-e3-isolation.txt",
+      "sha256": "96f2ba7508541e11ba53ab929031f5c428ab29b38592c4d65400edc35c95e148"
+    },
+    {
+      "name": "optional-stop-performance",
+      "command": [
+        "python",
+        "tools/optional-stop-regression/run.py",
+        "--performance",
+        "--findings"
+      ],
+      "exit": 0,
+      "seconds": 20.781,
+      "log": "build/e2b-sync2/gate/43-optional-stop-performance.txt",
+      "sha256": "753556bbd7aaa62618b4f79ac510a21a6be88b0c1d2652209862ef48487281b9"
+    }
+  ],
+  "allPassed": true,
+  "parents": {
+    "feature": "e6f970bd9a762d03a2bbaee7427c66f43798e8d0",
+    "incoming": "3f7b885d0f8c19e1052947806bf224834e0b8b34",
+    "mergeBase": "8b05227d80e150404669d6d8243537a8acfb688b"
+  },
+  "preservation": {
+    "incoming": "3f7b885d0f8c19e1052947806bf224834e0b8b34",
+    "incomingFiles": 1197,
+    "differentIncomingPaths": [
+      "CHECKS.md",
+      "Core/CitySimulator.cs",
+      "Core/DwellPlanner.cs",
+      "Core/OptionalStopScheduling.cs",
+      "Runtime/OptionalStopEnvironment.cs",
+      "Runtime/PersistentCityMod.cs",
+      "Runtime/PhysicalPopulation.cs",
+      "Runtime/PrototypeSettings.cs",
+      "config/persistent-city.json",
+      "docs/plans/e2-street-life.md",
+      "docs/roadmap.md",
+      "tests/DwellPlannerTests.cs",
+      "tests/OptionalStopSchedulingTests.cs",
+      "tests/OptionalStopSettingsTests.cs",
+      "tools/optional-stop-regression/Harness.cs.txt",
+      "tools/optional-stop-regression/NativeDoor.cs.txt",
+      "tools/optional-stop-regression/Performance.cs.txt",
+      "tools/optional-stop-regression/run.py"
+    ],
+    "e2bMovedChecksLines": 103,
+    "e2bMarkers": {
+      "LOCKED-OK": 8,
+      "NEEDS-INPUT": 4,
+      "input-only": 1
+    },
+    "e2bPerfRows": 3,
+    "unchangedE2bExclusiveFiles": [
+      "Core/DwellPlanner.cs",
+      "Core/OptionalStopScheduling.cs",
+      "Runtime/OptionalStopEnvironment.cs",
+      "Runtime/PhysicalPopulation.cs",
+      "tests/DwellPlannerTests.cs",
+      "tools/optional-stop-regression/Harness.cs.txt",
+      "tools/optional-stop-regression/NativeDoor.cs.txt",
+      "tools/optional-stop-regression/Performance.cs.txt",
+      "tools/optional-stop-regression/run.py"
+    ],
+    "sharedCodeFiles": [
+      "Core/CitySimulator.cs",
+      "Runtime/PersistentCityMod.cs",
+      "Runtime/PrototypeSettings.cs",
+      "config/persistent-city.json",
+      "tests/OptionalStopSchedulingTests.cs",
+      "tests/OptionalStopSettingsTests.cs"
+    ],
+    "assertions": "PASS: incoming checks/perf/persistence/model preserved; E2b checks/notices/perf retained with link-only edits; E2b exclusives unchanged; shared code exact auto-merge except combined RebuildRoutes arguments."
+  },
+  "links": {
+    "files": [
+      "CHECKS.md",
+      "README.md",
+      "docs/roadmap.md",
+      "docs/checks/e2b-street-life.md",
+      "docs/perf/e2b-street-life.md",
+      "docs/plans/e2b-pr-description.md",
+      "docs/plans/e2-street-life.md",
+      "docs/reviews/2026-10-31-e2b-sync-base-pr-description.md",
+      "docs/reviews/2026-11-01-e2b-sync2-base-pr-description.md"
+    ],
+    "localLinks": 97,
+    "issues": []
+  },
+  "productionDllSha256": "ba5984093d0ef6ce4ab2c512719f2517b6ae7025ca2b3f71e47d7ed9c7e5f8eb",
+  "observations": {
+    "CampaignReaderRegression": "Campaign bridge: 20 repeated detached reads unchanged; duplicate scope refused; native helper/money spies untouched.\n{\"businesses\":1,\"campaignsPerBusiness\":6,\"cold\":{\"p50Ms\":0.0067,\"p95Ms\":0.0103,\"maxMs\":0.0157,\"spikesAtLeast30Ms\":0,\"allocatedBytes\":4056},\"warm\":{\"p50Ms\":0.0036,\"p95Ms\":0.0069,\"maxMs\":0.018,\"spikesAtLeast30Ms\":0,\"allocatedBytes\":1912},\"continuation\":{\"p50Ms\":0.0032,\"p95Ms\":0.0066,\"maxMs\":0.0086,\"spikesAtLeast30Ms\":0,\"allocatedBytesPerUnit\":1621},\"retainedBytesPerSnapshot\":880}\n{\"businesses\":8,\"campaignsPerBusiness\":6,\"cold\":{\"p50Ms\":0.0323,\"p95Ms\":0.0384,\"maxMs\":0.057,\"spikesAtLeast30Ms\":0,\"allocatedBytes\":15336},\"warm\":{\"p50Ms\":0.0274,\"p95Ms\":0.034,\"maxMs\":0.0431,\"spikesAtLeast30Ms\":0,\"allocatedBytes\":13192},\"continuation\":{\"p50Ms\":0.0045,\"p95Ms\":0.0081,\"maxMs\":0.0539,\"spikesAtLeast30Ms\":0,\"allocatedBytesPerUnit\":1543},\"retainedBytesPerSnapshot\":6392}\n{\"businesses\":1024,\"campaignsPerBusiness\":6,\"cold\":{\"p50Ms\":1.2514,\"p95Ms\":6.7996,\"maxMs\":8.9429,\"spikesAtLeast30Ms\":0,\"allocatedBytes\":1639972},\"warm\":{\"p50Ms\":0.9993,\"p95Ms\":2.1409,\"maxMs\":3.5489,\"spikesAtLeast30Ms\":0,\"allocatedBytes\":1637896},\"continuation\":{\"p50Ms\":0.0009,\"p95Ms\":0.0014,\"maxMs\":1.5724,\"spikesAtLeast30Ms\":0,\"allocatedBytesPerUnit\":1532},\"retainedBytesPerSnapshot\":810298}",
+    "DonutFeasibilityRegression": "{\"checks\":2082,\"cold\":{\"samples\":1,\"coldMs\":1.5322,\"coldBytes\":968},\"warm\":[{\"furniture\":2,\"p50Ms\":0.0004,\"p95Ms\":0.0005,\"maxMs\":0.0048,\"bytesPerCall\":200,\"spikesAtLeast30Ms\":0},{\"furniture\":2000,\"p50Ms\":0.082,\"p95Ms\":0.1457,\"maxMs\":1.3387,\"bytesPerCall\":49104,\"spikesAtLeast30Ms\":0}]}",
+    "FoodCatalogueRegression": "29 actual catalogue-adapter checks passed against native field doubles. No Unity/game execution.\n272 D1 read-only rival catalogue checks passed. No Unity/game execution.\nD1 PERF 1024: empty-cache build 0.8938 ms/967640 B; warm refresh 0.1058 ms/32 B; 16-read unit 0.0039 ms/0 B; eight details 0.0069 ms/11632 B; retained 491848 B (GC estimate; native fixtures excluded).\nD1 PERF 20000: empty-cache build 35.7630 ms/19483781 B; warm refresh 1.2924 ms/32 B; 16-read unit 0.0019 ms/0 B; eight details 0.0088 ms/11632 B; retained 9838136 B (GC estimate; native fixtures excluded).",
+    "FoodChoiceRegression": "{\"bench\":[{\"shops\":8,\"nativeIds\":false,\"samples\":512,\"fullMs\":{\"p50\":0.1136,\"p95\":0.1439,\"max\":7.7919},\"continuationUnitMs\":{\"p95\":0.0385,\"max\":0.5864},\"shortlistCapturePlusPureSamplingMs\":{\"p95\":0.025300000000000003,\"max\":0.5961000000000001},\"exactShortlistTraitsSamplingMs\":{\"p50\":0.0114,\"p95\":0.0132,\"max\":0.15039999999999998},\"bytesPerDecision\":86296,\"logicalRoutes\":16},{\"shops\":64,\"nativeIds\":false,\"samples\":512,\"fullMs\":{\"p50\":0.1201,\"p95\":0.1495,\"max\":0.4481},\"continuationUnitMs\":{\"p95\":0.0377,\"max\":0.3542},\"shortlistCapturePlusPureSamplingMs\":{\"p95\":0.0374,\"max\":0.2639},\"exactShortlistTraitsSamplingMs\":{\"p50\":0.0207,\"p95\":0.0235,\"max\":0.0502},\"bytesPerDecision\":86424,\"logicalRoutes\":16},{\"shops\":1024,\"nativeIds\":false,\"samples\":512,\"fullMs\":{\"p50\":0.2483,\"p95\":0.3825,\"max\":3.6973},\"continuationUnitMs\":{\"p95\":0.0858,\"max\":3.5153},\"shortlistCapturePlusPureSamplingMs\":{\"p95\":0.1571,\"max\":3.5262},\"exactShortlistTraitsSamplingMs\":{\"p50\":0.08109999999999999,\"p95\":0.1264,\"max\":3.4993},\"bytesPerDecision\":86496,\"logicalRoutes\":16}],\"nativeIdBench\":[{\"shops\":8,\"nativeIds\":true,\"samples\":512,\"fullMs\":{\"p50\":0.163,\"p95\":0.3376,\"max\":1.0923},\"continuationUnitMs\":{\"p95\":0.0526,\"max\":0.8984},\"shortlistCapturePlusPureSamplingMs\":{\"p95\":0.0637,\"max\":0.7643},\"exactShortlistTraitsSamplingMs\":{\"p50\":0.0204,\"p95\":0.043,\"max\":0.2208},\"bytesPerDecision\":86256,\"logicalRoutes\":16},{\"shops\":64,\"nativeIds\":true,\"samples\":512,\"fullMs\":{\"p50\":0.0967,\"p95\":0.1789,\"max\":1.6452},\"continuationUnitMs\":{\"p95\":0.0267,\"max\":1.5695},\"shortlistCapturePlusPureSamplingMs\":{\"p95\":0.049499999999999995,\"max\":0.1033},\"exactShortlistTraitsSamplingMs\":{\"p50\":0.0186,\"p95\":0.0276,\"max\":0.0599},\"bytesPerDecision\":82344,\"logicalRoutes\":16},{\"shops\":1024,\"nativeIds\":true,\"samples\":512,\"fullMs\":{\"p50\":0.1979,\"p95\":0.3119,\"max\":2.6277},\"continuationUnitMs\":{\"p95\":0.1296,\"max\":2.3963},\"shortlistCapturePlusPureSamplingMs\":{\"p95\":0.2361,\"max\":1.1265},\"exactShortlistTraitsSamplingMs\":{\"p50\":0.1365,\"p95\":0.2032,\"max\":1.0955},\"bytesPerDecision\":82464,\"logicalRoutes\":16}]}",
+    "FoodMemoryRegression": "{\n  \"boundary\": \"Offline .NET 10 synthetic paths; feature cost only, no native mod-work or whole-frame gate claim\",\n  \"populations\": [\n    {\n      \"residents\": 957,\n      \"consumers\": 1914,\n      \"saturatedEntries\": 7656,\n      \"retainedMemoryBytes\": 474024,\n      \"populationAllocatedBytes\": 475608,\n      \"sharedIndexRetainedBytes\": 1264,\n      \"sharedIndexAllocatedBytes\": 2056,\n      \"emptySavedBytes\": 1325848,\n      \"saturatedSavedBytes\": 1403235,\n      \"savedByteGrowth\": 77387,\n      \"perConsumerMemoryGrowth\": 40,\n      \"consumerExtensionInclusiveCeiling\": 51,\n      \"b0PerConsumerAllocation\": 64,\n      \"perCandidateLookup\": {\n        \"p50Ms\": 4.168299373040752E-05,\n        \"p95Ms\": 4.949386102403344E-05,\n        \"maxMs\": 6.290164576802507E-05,\n        \"spikesAtLeast30Ms\": 0\n      },\n      \"lookupAllocatedBytesPerCandidate\": 0.0,\n      \"perCommit\": {\n        \"p50Ms\": 5.047021943573668E-05,\n        \"p95Ms\": 8.855799373040753E-05,\n        \"maxMs\": 0.00022946708463949842,\n        \"spikesAtLeast30Ms\": 0\n      },\n      \"allocatedBytesPerCommit\": 0.0,\n      \"sink\": 186885.77946705418\n    },\n    {\n      \"residents\": 2500,\n      \"consumers\": 5000,\n      \"saturatedEntries\": 20000,\n      \"retainedMemoryBytes\": 1237144,\n      \"populationAllocatedBytes\": 1240936,\n      \"sharedIndexRetainedBytes\": 1264,\n      \"sharedIndexAllocatedBytes\": 2056,\n      \"emptySavedBytes\": 3463837,\n      \"saturatedSavedBytes\": 3664664,\n      \"savedByteGrowth\": 200827,\n      \"perConsumerMemoryGrowth\": 40,\n      \"consumerExtensionInclusiveCeiling\": 51,\n      \"b0PerConsumerAllocation\": 64,\n      \"perCandidateLookup\": {\n        \"p50Ms\": 4.043875E-05,\n        \"p95Ms\": 4.7785E-05,\n        \"maxMs\": 5.35775E-05,\n        \"spikesAtLeast30Ms\": 0\n      },\n      \"lookupAllocatedBytesPerCandidate\": 0.0,\n      \"perCommit\": {\n        \"p50Ms\": 4.36E-05,\n        \"p95Ms\": 8.576E-05,\n        \"maxMs\": 0.00011574,\n        \"spikesAtLeast30Ms\": 0\n      },\n      \"allocatedBytesPerCommit\": 0.0,\n      \"sink\": 488216.12558160274\n    }\n  ],\n  \"rush\": [\n    {\n      \"residents\": 957,\n      \"consumers\": 1914,\n      \"memoryWeight\": 1,\n      \"unitBudget\": 128,\n      \"sample\": 0,\n      \"frames\": 271,\n      \"events\": 34452,\n      \"routes\": 30624,\n      \"decisionsPerSecond\": 8007.383192193094,\n      \"cpuMs\": 239.0294,\n      \"offlineModLoop\": {\n        \"p50Ms\": 0.762,\n        \"p95Ms\": 1.3966,\n        \"maxMs\": 5.5043,\n        \"spikesAtLeast30Ms\": 0\n      },\n      \"wholeFrame\": \"unmeasured; separate native watch item\",\n      \"modeledCatchupLagMinutesAtFastestClock\": 0.0,\n      \"savedStateSha256\": \"217B6F4B411DB926BEA3A5CD42935FCDE84AD8F8EE008D91AF5333A11BCE81E8\"\n    },\n    {\n      \"residents\": 957,\n      \"consumers\": 1914,\n      \"memoryWeight\": 0,\n      \"unitBudget\": 128,\n      \"sample\": 0,\n      \"frames\": 271,\n      \"events\": 34452,\n      \"routes\": 30624,\n      \"decisionsPerSecond\": 7514.348518939181,\n      \"cpuMs\": 254.7127,\n      \"offlineModLoop\": {\n        \"p50Ms\": 0.8259,\n        \"p95Ms\": 1.6341,\n        \"maxMs\": 3.7591,\n        \"spikesAtLeast30Ms\": 0\n      },\n      \"wholeFrame\": \"unmeasured; separate native watch item\",\n      \"modeledCatchupLagMinutesAtFastestClock\": 0.0,\n      \"savedStateSha256\": \"9FB588D4FFF85695CD5BD5F4B45ED507543860E994C20E518C7812CF12FD5A5D\"\n    },\n    {\n      \"residents\": 957,\n      \"consumers\": 1914,\n      \"memoryWeight\": 0,\n      \"unitBudget\": 128,\n      \"sample\": 1,\n      \"frames\": 275,\n      \"events\": 34452,\n      \"routes\": 30624,\n      \"decisionsPerSecond\": 6060.258729353088,\n      \"cpuMs\": 315.8281,\n      \"offlineModLoop\": {\n        \"p50Ms\": 1.0106,\n        \"p95Ms\": 1.8008,\n        \"maxMs\": 11.0535,\n        \"spikesAtLeast30Ms\": 0\n      },\n      \"wholeFrame\": \"unmeasured; separate native watch item\",\n      \"modeledCatchupLagMinutesAtFastestClock\": 0.0,\n      \"savedStateSha256\": \"9FB588D4FFF85695CD5BD5F4B45ED507543860E994C20E518C7812CF12FD5A5D\"\n    },\n    {\n      \"residents\": 957,\n      \"consumers\": 1914,\n      \"memoryWeight\": 1,\n      \"unitBudget\": 128,\n      \"sample\": 1,\n      \"frames\": 270,\n      \"events\": 34452,\n      \"routes\": 30624,\n      \"decisionsPerSecond\": 7237.050066471965,\n      \"cpuMs\": 264.4724,\n      \"offlineModLoop\": {\n        \"p50Ms\": 0.8923,\n        \"p95Ms\": 1.5248,\n        \"maxMs\": 3.0533,\n        \"spikesAtLeast30Ms\": 0\n      },\n      \"wholeFrame\": \"unmeasured; separate native watch item\",\n      \"modeledCatchupLagMinutesAtFastestClock\": 0.0,\n      \"savedStateSha256\": \"217B6F4B411DB926BEA3A5CD42935FCDE84AD8F8EE008D91AF5333A11BCE81E8\"\n    },\n    {\n      \"residents\": 957,\n      \"consumers\": 1914,\n      \"memoryWeight\": 1,\n      \"unitBudget\": 128,\n      \"sample\": 2,\n      \"frames\": 272,\n      \"events\": 34452,\n      \"routes\": 30624,\n      \"decisionsPerSecond\": 6583.570586092569,\n      \"cpuMs\": 290.7237,\n      \"offlineModLoop\": {\n        \"p50Ms\": 0.8807,\n        \"p95Ms\": 1.4723,\n        \"maxMs\": 16.8304,\n        \"spikesAtLeast30Ms\": 0\n      },\n      \"wholeFrame\": \"unmeasured; separate native watch item\",\n      \"modeledCatchupLagMinutesAtFastestClock\": 0.0,\n      \"savedStateSha256\": \"217B6F4B411DB926BEA3A5CD42935FCDE84AD8F8EE008D91AF5333A11BCE81E8\"\n    },\n    {\n      \"residents\": 957,\n      \"consumers\": 1914,\n      \"memoryWeight\": 0,\n      \"unitBudget\": 128,\n      \"sample\": 2,\n      \"frames\": 271,\n      \"events\": 34452,\n      \"routes\": 30624,\n      \"decisionsPerSecond\": 8800.21039583475,\n      \"cpuMs\": 217.4948,\n      \"offlineModLoop\": {\n        \"p50Ms\": 0.6637,\n        \"p95Ms\": 1.1728,\n        \"maxMs\": 14.2172,\n        \"spikesAtLeast30Ms\": 0\n      },\n      \"wholeFrame\": \"unmeasured; separate native watch item\",\n      \"modeledCatchupLagMinutesAtFastestClock\": 0.0,\n      \"savedStateSha256\": \"9FB588D4FFF85695CD5BD5F4B45ED507543860E994C20E518C7812CF12FD5A5D\"\n    },\n    {\n      \"residents\": 2500,\n      \"consumers\": 5000,\n      \"memoryWeight\": 1,\n      \"unitBudget\": 128,\n      \"sample\": 0,\n      \"frames\": 706,\n      \"events\": 90000,\n      \"routes\": 80000,\n      \"decisionsPerSecond\": 10685.212776779068,\n      \"cpuMs\": 467.9364,\n      \"offlineModLoop\": {\n        \"p50Ms\": 0.6063,\n        \"p95Ms\": 1.02,\n        \"maxMs\": 13.3347,\n        \"spikesAtLeast30Ms\": 0\n      },\n      \"wholeFrame\": \"unmeasured; separate native watch item\",\n      \"modeledCatchupLagMinutesAtFastestClock\": 0.0,\n      \"savedStateSha256\": \"0E48CDC458126DBC08A9E92158CA69806193592BC1CEF969550ED1263345D021\"\n    },\n    {\n      \"residents\": 2500,\n      \"consumers\": 5000,\n      \"memoryWeight\": 0,\n      \"unitBudget\": 128,\n      \"sample\": 0,\n      \"frames\": 705,\n      \"events\": 90000,\n      \"routes\": 80000,\n      \"decisionsPerSecond\": 18883.344738873555,\n      \"cpuMs\": 264.7836,\n      \"offlineModLoop\": {\n        \"p50Ms\": 0.3143,\n        \"p95Ms\": 0.4497,\n        \"maxMs\": 12.7341,\n        \"spikesAtLeast30Ms\": 0\n      },\n      \"wholeFrame\": \"unmeasured; separate native watch item\",\n      \"modeledCatchupLagMinutesAtFastestClock\": 0.0,\n      \"savedStateSha256\": \"BA1FDB19BAE2380EE8EB4C5450604EF913A681C7EB5C90C1262E29F1A8B06D81\"\n    },\n    {\n      \"residents\": 2500,\n      \"consumers\": 5000,\n      \"memoryWeight\": 0,\n      \"unitBudget\": 128,\n      \"sample\": 1,\n      \"frames\": 705,\n      \"events\": 90000,\n      \"routes\": 80000,\n      \"decisionsPerSecond\": 17372.131557067627,\n      \"cpuMs\": 287.8173,\n      \"offlineModLoop\": {\n        \"p50Ms\": 0.3235,\n        \"p95Ms\": 0.6814,\n        \"maxMs\": 13.4027,\n        \"spikesAtLeast30Ms\": 0\n      },\n      \"wholeFrame\": \"unmeasured; separate native watch item\",\n      \"modeledCatchupLagMinutesAtFastestClock\": 0.0,\n      \"savedStateSha256\": \"BA1FDB19BAE2380EE8EB4C5450604EF913A681C7EB5C90C1262E29F1A8B06D81\"\n    },\n    {\n      \"residents\": 2500,\n      \"consumers\": 5000,\n      \"memoryWeight\": 1,\n      \"unitBudget\": 128,\n      \"sample\": 1,\n      \"frames\": 705,\n      \"events\": 90000,\n      \"routes\": 80000,\n      \"decisionsPerSecond\": 16444.44195950655,\n      \"cpuMs\": 304.0541,\n      \"offlineModLoop\": {\n        \"p50Ms\": 0.3203,\n        \"p95Ms\": 0.7064,\n        \"maxMs\": 15.0824,\n        \"spikesAtLeast30Ms\": 0\n      },\n      \"wholeFrame\": \"unmeasured; separate native watch item\",\n      \"modeledCatchupLagMinutesAtFastestClock\": 0.0,\n      \"savedStateSha256\": \"0E48CDC458126DBC08A9E92158CA69806193592BC1CEF969550ED1263345D021\"\n    },\n    {\n      \"residents\": 2500,\n      \"consumers\": 5000,\n      \"memoryWeight\": 1,\n      \"unitBudget\": 128,\n      \"sample\": 2,\n      \"frames\": 708,\n      \"events\": 90000,\n      \"routes\": 80000,\n      \"decisionsPerSecond\": 16671.46804946491,\n      \"cpuMs\": 299.9136,\n      \"offlineModLoop\": {\n        \"p50Ms\": 0.3254,\n        \"p95Ms\": 0.7901,\n        \"maxMs\": 10.3707,\n        \"spikesAtLeast30Ms\": 0\n      },\n      \"wholeFrame\": \"unmeasured; separate native watch item\",\n      \"modeledCatchupLagMinutesAtFastestClock\": 0.0,\n      \"savedStateSha256\": \"0E48CDC458126DBC08A9E92158CA69806193592BC1CEF969550ED1263345D021\"\n    },\n    {\n      \"residents\": 2500,\n      \"consumers\": 5000,\n      \"memoryWeight\": 0,\n      \"unitBudget\": 128,\n      \"sample\": 2,\n      \"frames\": 705,\n      \"events\": 90000,\n      \"routes\": 80000,\n      \"decisionsPerSecond\": 21989.891686589508,\n      \"cpuMs\": 227.3772,\n      \"offlineModLoop\": {\n        \"p50Ms\": 0.2963,\n        \"p95Ms\": 0.4205,\n        \"maxMs\": 14.1693,\n        \"spikesAtLeast30Ms\": 0\n      },\n      \"wholeFrame\": \"unmeasured; separate native watch item\",\n      \"modeledCatchupLagMinutesAtFastestClock\": 0.0,\n      \"savedStateSha256\": \"BA1FDB19BAE2380EE8EB4C5450604EF913A681C7EB5C90C1262E29F1A8B06D81\"\n    },\n    {\n      \"residents\": 957,\n      \"consumers\": 1914,\n      \"memoryWeight\": 1,\n      \"unitBudget\": 1,\n      \"sample\": 3,\n      \"frames\": 34452,\n      \"events\": 34452,\n      \"routes\": 30624,\n      \"decisionsPerSecond\": 22538.72739797811,\n      \"cpuMs\": 84.9205,\n      \"offlineModLoop\": {\n        \"p50Ms\": 0.0006,\n        \"p95Ms\": 0.009,\n        \"maxMs\": 7.1085,\n        \"spikesAtLeast30Ms\": 0\n      },\n      \"wholeFrame\": \"unmeasured; separate native watch item\",\n      \"modeledCatchupLagMinutesAtFastestClock\": 988.56,\n      \"savedStateSha256\": \"217B6F4B411DB926BEA3A5CD42935FCDE84AD8F8EE008D91AF5333A11BCE81E8\"\n    },\n    {\n      \"residents\": 957,\n      \"consumers\": 1914,\n      \"memoryWeight\": 0,\n      \"unitBudget\": 1,\n      \"sample\": 3,\n      \"frames\": 34452,\n      \"events\": 34452,\n      \"routes\": 30624,\n      \"decisionsPerSecond\": 32511.59733180684,\n      \"cpuMs\": 58.8713,\n      \"offlineModLoop\": {\n        \"p50Ms\": 0.0005,\n        \"p95Ms\": 0.0056,\n        \"maxMs\": 2.9614,\n        \"spikesAtLeast30Ms\": 0\n      },\n      \"wholeFrame\": \"unmeasured; separate native watch item\",\n      \"modeledCatchupLagMinutesAtFastestClock\": 988.56,\n      \"savedStateSha256\": \"9FB588D4FFF85695CD5BD5F4B45ED507543860E994C20E518C7812CF12FD5A5D\"\n    }\n  ]\n}",
+    "FoodRegularsRegression": "{\n  \"boundary\": \"Offline .NET 10; 40 normalized batch means after 5 warmups, not individual-call percentiles. Saturated four-entry memory; 16 owned shops. Panel timing covers B2 text including projection; native account reads/Unity GUI excluded. Full Core popup capture/text included. Closed zero cost and zero commit hooks established by call-site/source tests, not a native timing window. Batch spikes flag benchmark batches, not mod-work frames.\",\n  \"populations\": [\n    {\n      \"residents\": 957,\n      \"consumers\": 1914,\n      \"memoryEntries\": 7656,\n      \"shops\": 16,\n      \"projectionRefresh\": {\n        \"p50Ms\": 0.49907500000000005,\n        \"p95Ms\": 0.6732199999999999,\n        \"maxMs\": 0.7442300000000001,\n        \"allocatedBytesPerCall\": 41840.0,\n        \"batchSpikesAtLeast30Ms\": 0\n      },\n      \"perShopLookup\": {\n        \"p50Ms\": 1.206E-05,\n        \"p95Ms\": 1.299E-05,\n        \"maxMs\": 1.4249999999999999E-05,\n        \"allocatedBytesPerCall\": 0.0,\n        \"batchSpikesAtLeast30Ms\": 0\n      },\n      \"panelB2Text\": {\n        \"p50Ms\": 0.23093499999999997,\n        \"p95Ms\": 0.98675,\n        \"maxMs\": 1.24434,\n        \"allocatedBytesPerCall\": 44496.0,\n        \"batchSpikesAtLeast30Ms\": 0\n      },\n      \"fullCorePopupCaptureAndText\": {\n        \"p50Ms\": 0.0066690000000000004,\n        \"p95Ms\": 0.0072440000000000004,\n        \"maxMs\": 0.008057,\n        \"allocatedBytesPerCall\": 9136.0,\n        \"batchSpikesAtLeast30Ms\": 0\n      },\n      \"unchangedB1Commit\": {\n        \"p50Ms\": 0.00013780000000000002,\n        \"p95Ms\": 0.0002321,\n        \"maxMs\": 0.0002631,\n        \"allocatedBytesPerCall\": 0.0,\n        \"batchSpikesAtLeast30Ms\": 0\n      },\n      \"projectionCommitHooks\": 0,\n      \"closedProjectionBuilds\": 0,\n      \"closedTextBuilds\": 0,\n      \"closedAddedAllocations\": 0,\n      \"growingDedupSet\": {\n        \"p50Ms\": 0.03147,\n        \"p95Ms\": 0.06336,\n        \"maxMs\": 0.25326499999999996,\n        \"allocatedBytesPerCall\": 73152.0,\n        \"batchSpikesAtLeast30Ms\": 0\n      },\n      \"presizedDedupSet\": {\n        \"p50Ms\": 0.023085,\n        \"p95Ms\": 0.046715,\n        \"maxMs\": 0.062655,\n        \"allocatedBytesPerCall\": 38736.0,\n        \"batchSpikesAtLeast30Ms\": 0\n      },\n      \"savedBytesBefore\": 1503076,\n      \"savedBytesAfter\": 1503076,\n      \"savedByteGrowth\": 0,\n      \"sink\": 225885600,\n      \"textLength\": 418\n    },\n    {\n      \"residents\": 2500,\n      \"consumers\": 5000,\n      \"memoryEntries\": 20000,\n      \"shops\": 16,\n      \"projectionRefresh\": {\n        \"p50Ms\": 0.590425,\n        \"p95Ms\": 0.7534150000000001,\n        \"maxMs\": 0.7683150000000001,\n        \"allocatedBytesPerCall\": 120030.18,\n        \"batchSpikesAtLeast30Ms\": 0\n      },\n      \"perShopLookup\": {\n        \"p50Ms\": 5.55E-06,\n        \"p95Ms\": 5.99E-06,\n        \"maxMs\": 7.280000000000001E-06,\n        \"allocatedBytesPerCall\": 0.0,\n        \"batchSpikesAtLeast30Ms\": 0\n      },\n      \"panelB2Text\": {\n        \"p50Ms\": 1.04513,\n        \"p95Ms\": 1.130045,\n        \"maxMs\": 1.2182600000000001,\n        \"allocatedBytesPerCall\": 122832.67,\n        \"batchSpikesAtLeast30Ms\": 0\n      },\n      \"fullCorePopupCaptureAndText\": {\n        \"p50Ms\": 0.007973000000000001,\n        \"p95Ms\": 0.011661999999999999,\n        \"maxMs\": 0.013849,\n        \"allocatedBytesPerCall\": 9136.0,\n        \"batchSpikesAtLeast30Ms\": 0\n      },\n      \"unchangedB1Commit\": {\n        \"p50Ms\": 0.0001692,\n        \"p95Ms\": 0.0002328,\n        \"maxMs\": 0.0003191,\n        \"allocatedBytesPerCall\": 0.0,\n        \"batchSpikesAtLeast30Ms\": 0\n      },\n      \"projectionCommitHooks\": 0,\n      \"closedProjectionBuilds\": 0,\n      \"closedTextBuilds\": 0,\n      \"closedAddedAllocations\": 0,\n      \"growingDedupSet\": {\n        \"p50Ms\": 0.23159000000000002,\n        \"p95Ms\": 0.797655,\n        \"maxMs\": 1.02346,\n        \"allocatedBytesPerCall\": 322638.2,\n        \"batchSpikesAtLeast30Ms\": 0\n      },\n      \"presizedDedupSet\": {\n        \"p50Ms\": 0.05598499999999999,\n        \"p95Ms\": 0.09142,\n        \"maxMs\": 0.105375,\n        \"allocatedBytesPerCall\": 116939.33,\n        \"batchSpikesAtLeast30Ms\": 0\n      },\n      \"savedBytesBefore\": 3925066,\n      \"savedBytesAfter\": 3925066,\n      \"savedByteGrowth\": 0,\n      \"sink\": 589500000,\n      \"textLength\": 418\n    }\n  ],\n  \"nativeModWork\": \"pending normal combined 6 Nov session: p95 <5 ms, flag >=30 ms; whole-frame separate\"\n}",
+    "HeldTuningRegression": "{\"schema\":18,\"heldTuning\":true,\"decisions\":[{\"shops\":1,\"samples\":3000,\"capture\":{\"p50Us\":4.5,\"p95Us\":12.7,\"maxUs\":97.0,\"spikesAtLeast30Ms\":0},\"continuation\":{\"p50Us\":17.0,\"p95Us\":32.6,\"maxUs\":2135.0,\"spikesAtLeast30Ms\":0},\"captureBytes\":2832.448,\"continuationBytes\":11720.776},{\"shops\":8,\"samples\":3000,\"capture\":{\"p50Us\":13.8,\"p95Us\":32.4,\"maxUs\":703.2,\"spikesAtLeast30Ms\":0},\"continuation\":{\"p50Us\":100.3,\"p95Us\":169.1,\"maxUs\":936.2,\"spikesAtLeast30Ms\":0},\"captureBytes\":10673.717333333334,\"continuationBytes\":62994.90933333334}],\"retained\":[{\"shops\":0,\"retainedBytesPerHeld\":279.1536,\"allocatedBytesPerHeld\":280.0},{\"shops\":8,\"retainedBytesPerHeld\":1768.412,\"allocatedBytesPerHeld\":1832.0}],\"shapePrecheck\":{\"materializing\":{\"ns\":1070.3026666666667,\"bytes\":136.00010666666665},\"nonmaterializing\":{\"ns\":175.73366666666666,\"bytes\":0.00010666666666666667}}}",
+    "InteriorGuardRegression": "PASS actual Runtime adapter: assembly/owner/error/off, cached session and on-demand bridge; own emitted stand-in only.\n{\"coldMs\":1.4508,\"coldAllocatedBytes\":7072,\"samples\":501,\"assemblies\":9,\"scanP50Ms\":0.0082,\"scanP95Ms\":0.0094,\"scanMaxMs\":0.0174,\"scanAllocatedBytes\":5920,\"spikesAtLeast30Ms\":0,\"cachedReads\":1000000,\"cachedMeanMs\":1.1902999999999999E-06,\"cachedAllocatedBytes\":0,\"perFrameDetectionCalls\":0}",
+    "optional-stop-performance": "R4 queue-plan selection: approaching/standing commitment and new-admission checks passed; visible retention pre-existed.\nNative venue boundaries: 240 checks passed (doubles; no venue enabled).\nR2 acceptance: ambiguous club-first=False, cafe-first=False; cached refusal, unique/repeated reference and conflicting address checks passed.\nIndexed frontage: 120 three-axis negative/boundary/order checks; 1,000-controller mixed-role publish/rebind, work breaks, warm reuse and counters passed.\nSaved facade reload: 9 integration checks passed.\nSaved facade reload: 9 integration checks passed.\nNative door replacement/refusal republication: 7 checks passed.\nStationary suppression patch scope: 7 checks passed (Harmony/spawner doubles; native special respawn needs rig).\nE2b future-break observation (candidate visibility change, not an acceptance assertion): rain at 100, dry at start 160; desired active=True, actual active=False, cancelled=True; saved start/end=160/165.\nE2b queue reload reconstruction limitation: id=queue0, seed=17, opening=540; dry start=531.7137, wet start=535.6426; unbound current-weather plan changes lead; no persisted lead/body/slot. Live commitment is asserted separately.\nR2 acceptance: ambiguous club-first=False, cafe-first=False; cached refusal, unique/repeated reference and conflicting address checks passed.\nVenue cache model=0 rebind=False count=48: p50=0.0429 p95=0.0552 max=0.5038 ms; bytes/batch=4576.0; entrance reads/batch=1176.0.\nVenue cache model=0 rebind=True count=48: p50=0.0667 p95=0.1171 max=0.7972 ms; bytes/batch=34516.3; entrance reads/batch=1176.0.\nVenue cache model=1 rebind=False count=48: p50=0.1149 p95=0.1899 max=1.7371 ms; bytes/batch=19544.0; entrance reads/batch=48.0.\nVenue cache model=1 rebind=True count=48: p50=0.1357 p95=0.2121 max=1.1025 ms; bytes/batch=44088.6; entrance reads/batch=48.0.\nVenue cache model=2 rebind=False count=48: p50=0.1167 p95=0.1671 max=0.2727 ms; bytes/batch=40928.0; entrance reads/batch=48.0.\nVenue cache model=2 rebind=True count=48: p50=0.1364 p95=0.2058 max=0.9013 ms; bytes/batch=65532.8; entrance reads/batch=48.0.\nCached refusal after=False controllers=48: 200 reads -> native entrance reads=9600, bytes=24.\nCached refusal after=True controllers=48: 200 reads -> native entrance reads=0, bytes=24.\nFacade doubles after=False cap-batch=48: cold samples=48 (one/frame), warm queries=9600, new warm samples=0; batch ms p50=0.0332 p95=0.0571 max=12.8311; bytes/query=568.0; spikes>=30ms=0.\nFacade doubles after=True cap-batch=48: cold samples=48 (one/frame), warm queries=9600, new warm samples=0; batch ms p50=0.0208 p95=0.0501 max=0.5680; bytes/query=360.0; spikes>=30ms=0.\nVenue cache model=0 rebind=False count=256: p50=0.9883 p95=1.2165 max=2.5589 ms; bytes/batch=22264.0; entrance reads/batch=32896.0.\nVenue cache model=0 rebind=True count=256: p50=0.8907 p95=1.4571 max=2.0411 ms; bytes/batch=178841.3; entrance reads/batch=32896.0.\nVenue cache model=1 rebind=False count=256: p50=1.2480 p95=2.9043 max=3.5380 ms; bytes/batch=95232.0; entrance reads/batch=256.0.\nVenue cache model=1 rebind=True count=256: p50=0.2849 p95=0.5089 max=1.3498 ms; bytes/batch=231074.2; entrance reads/batch=256.0.\nVenue cache model=2 rebind=False count=256: p50=0.6993 p95=1.0227 max=1.6470 ms; bytes/batch=211560.0; entrance reads/batch=256.0.\nVenue cache model=2 rebind=True count=256: p50=0.2774 p95=0.9550 max=1.7606 ms; bytes/batch=347471.1; entrance reads/batch=256.0.\nCached refusal after=False controllers=256: 200 reads -> native entrance reads=51200, bytes=24.\nCached refusal after=True controllers=256: 200 reads -> native entrance reads=0, bytes=24.\nFacade doubles after=False cap-batch=256: cold samples=256 (one/frame), warm queries=51200, new warm samples=0; batch ms p50=0.1019 p95=0.1757 max=0.4699; bytes/query=592.4; spikes>=30ms=0.\nFacade doubles after=True cap-batch=256: cold samples=256 (one/frame), warm queries=51200, new warm samples=0; batch ms p50=0.0734 p95=0.1289 max=0.4585; bytes/query=374.6; spikes>=30ms=0.\nVenue cache model=0 rebind=False count=1000: p50=0.7418 p95=1.2297 max=1.8639 ms; bytes/batch=102168.0; entrance reads/batch=500500.0.\nVenue cache model=0 rebind=True count=1000: p50=0.9409 p95=1.9020 max=2.7424 ms; bytes/batch=622429.0; entrance reads/batch=500500.0.\nVenue cache model=1 rebind=False count=1000: p50=7.1985 p95=7.8583 max=8.5782 ms; bytes/batch=414160.0; entrance reads/batch=1000.0.\nVenue cache model=1 rebind=True count=1000: p50=7.6545 p95=8.4739 max=8.9463 ms; bytes/batch=934439.8; entrance reads/batch=1000.0.\nVenue cache model=2 rebind=False count=1000: p50=0.9437 p95=3.2525 max=4.5415 ms; bytes/batch=935816.0; entrance reads/batch=1000.0.\nVenue cache model=2 rebind=True count=1000: p50=1.3045 p95=5.7818 max=8.5049 ms; bytes/batch=1456258.8; entrance reads/batch=1000.0.\nCached refusal after=False controllers=1000: 200 reads -> native entrance reads=200000, bytes=24.\nCached refusal after=True controllers=1000: 200 reads -> native entrance reads=0, bytes=24.\nOptional stop physical adapter: 234 checks passed.\nAdmission tuned=False rate=25 residents=48 realised=13: ms p50=0.2077 p95=0.3026 max=0.6112; bytes/sample=74182.3; spikes>=30ms=0.\n  per batch: spot queries=26.0; occupancy calls=23.0; occupancy record visits=140.0\nAdmission tuned=False rate=25 residents=256 realised=64: ms p50=1.1498 p95=1.6167 max=3.2862; bytes/sample=394157.6; spikes>=30ms=0.\n  per batch: spot queries=128.0; occupancy calls=116.0; occupancy record visits=3581.0\nAdmission tuned=False rate=25 residents=957 realised=229: ms p50=2.5295 p95=7.6580 max=12.3864; bytes/sample=1477680.1; spikes>=30ms=0.\n  per batch: spot queries=458.0; occupancy calls=416.0; occupancy record visits=46858.0\nSelector tuned=False rate=25 cap=48 admitted=48/229: ms p50=0.1321 p95=0.1803 max=0.2487; bytes/sample=64.0; spikes>=30ms=0.\nSelector tuned=False rate=25 cap=256 admitted=229/229: ms p50=0.0034 p95=0.0040 max=0.0066; bytes/sample=0.0; spikes>=30ms=0.\nAdmission tuned=False rate=100 residents=48 realised=48: ms p50=0.0625 p95=0.1027 max=0.5293; bytes/sample=91854.3; spikes>=30ms=0.\n  per batch: spot queries=96.0; occupancy calls=216.0; occupancy record visits=4992.0\nAdmission tuned=False rate=100 residents=256 realised=256: ms p50=0.7131 p95=1.3556 max=1.8193; bytes/sample=490269.6; spikes>=30ms=0.\n  per batch: spot queries=512.0; occupancy calls=1152.0; occupancy record visits=146432.0\nAdmission tuned=False rate=100 residents=957 realised=957: ms p50=7.4955 p95=8.8902 max=11.4246; bytes/sample=1854190.4; spikes>=30ms=0.\n  per batch: spot queries=1914.0; occupancy calls=4299.0; occupancy record visits=2049686.0\nSelector tuned=False rate=100 cap=48 admitted=48/957: ms p50=1.2726 p95=1.5594 max=6.1236; bytes/sample=64.0; spikes>=30ms=0.\nSelector tuned=False rate=100 cap=256 admitted=256/957: ms p50=0.0438 p95=0.0835 max=0.1832; bytes/sample=64.0; spikes>=30ms=0.\nAdmission tuned=True rate=25 residents=48 realised=13: ms p50=0.0304 p95=0.0528 max=0.1427; bytes/sample=74182.3; spikes>=30ms=0.\n  per batch: spot queries=26.0; occupancy calls=23.0; occupancy record visits=140.0\nAdmission tuned=True rate=25 residents=256 realised=64: ms p50=0.2237 p95=0.3875 max=0.9003; bytes/sample=394157.6; spikes>=30ms=0.\n  per batch: spot queries=128.0; occupancy calls=116.0; occupancy record visits=3581.0\nAdmission tuned=True rate=25 residents=957 realised=229: ms p50=1.0428 p95=5.2024 max=5.6277; bytes/sample=1477665.9; spikes>=30ms=0.\n  per batch: spot queries=458.0; occupancy calls=416.0; occupancy record visits=46858.0\nSelector tuned=True rate=25 cap=48 admitted=48/229: ms p50=0.0095 p95=0.0101 max=0.0397; bytes/sample=64.0; spikes>=30ms=0.\nSelector tuned=True rate=25 cap=256 admitted=229/229: ms p50=0.0011 p95=0.0012 max=0.0013; bytes/sample=0.0; spikes>=30ms=0.\nAdmission tuned=True rate=100 residents=48 realised=48: ms p50=0.0495 p95=0.0712 max=0.3487; bytes/sample=91854.3; spikes>=30ms=0.\n  per batch: spot queries=96.0; occupancy calls=216.0; occupancy record visits=4992.0\nAdmission tuned=True rate=100 residents=256 realised=256: ms p50=1.1014 p95=1.2997 max=3.1202; bytes/sample=490283.9; spikes>=30ms=0.\n  per batch: spot queries=512.0; occupancy calls=1152.0; occupancy record visits=146432.0\nAdmission tuned=True rate=100 residents=957 realised=957: ms p50=11.5720 p95=17.4789 max=18.9213; bytes/sample=1854176.1; spikes>=30ms=0.\n  per batch: spot queries=1914.0; occupancy calls=4299.0; occupancy record visits=2049686.0\nSelector tuned=True rate=100 cap=48 admitted=48/957: ms p50=0.1622 p95=0.1944 max=1.0679; bytes/sample=64.0; spikes>=30ms=0.\nSelector tuned=True rate=100 cap=256 admitted=256/957: ms p50=0.0752 p95=0.0858 max=0.7650; bytes/sample=64.0; spikes>=30ms=0.\nOffline synthetic costs only; instrumented occupancy counters, .NET JIT and geometry/body doubles are not Unity mod-work or whole-frame evidence."
+  },
+  "saveContract": {
+    "schema": 18,
+    "digest": "018FC26676937FEEF88B7D06AE32B522CCE93A1CC265BCDD87A08C7DD91FBB56",
+    "length": 119083,
+    "refusals": [
+      "Invalid:Invalid state: Missing state schema.",
+      "Future:State uses a newer schema; preserve the original payload.",
+      "Invalid:Invalid state: Incomplete or trailing JSON content.",
+      "Invalid:Invalid state: Unknown field: UnknownCitizens"
+    ],
+    "economy": {
+      "orders": 849,
+      "ordersDigest": "1B94987B3158044594B9C4D6A5473BA22BE0D4F3488D769CBBEE23318BB33B91",
+      "purchases": 797,
+      "spentUnits": 107967424757760,
+      "uncertain": 2,
+      "economyDigest": "74D0FE8081EA795D4D56A11B4B955DC6E777E3822C702D3C09BC9477E6679AF9",
+      "reloadDigest": "59B6F14D44CA0F996C5A828E2E538B52C5426347FCFA40767527B72D77F1D4FA"
+    },
+    "f0": "PASS F0 off/on runtime state + hidden/save/reload payloads byte-identical (12 transitions); no persistence source changes."
+  },
+  "whitespace": "Manual integration/docs edits pass git diff --check. Whole first-parent/incoming comparisons retain unchanged parent historical red-log whitespace and incoming blank-at-EOF warnings; these blobs were not rewritten.",
+  "processes": "All workload subprocesses returned; no detached test/watch/server launch. Build/compiler-server reuse disabled.",
+  "nativeBoundary": "No game, rig/profile/lease, Steam/Workshop mutation, WSL, normal save, campaign purchase or in-game money access. Native checks wait for combined locked rig under merge rule v2; pointer checks wait for 6 Nov."
+}

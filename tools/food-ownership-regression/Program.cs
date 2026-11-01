@@ -20,6 +20,25 @@ BusinessSimulatorHelper.Work.ForceCompleteAllWork();
 Check(BusinessSimulatorHelper.Processed.SequenceEqual(new[] { 7, 8 }), "new hour native demand suppressed");
 Check(CustomerEntriesHelper.GetEntriesByAddress(reg.Address).Count == 0, "owned hour suppresses indoor draws");
 Check(reg.CompletedOrders.Count == 2, "old completed native orders are retained at acquisition");
+// B2 feedback reads cannot establish/transfer authority, even for an address-equivalent object.
+string feedbackGeneration = NativeFoodOwnership.Find(reg)!.BusinessId;
+string feedbackPayload = SaveGameManager.Current.modData[FoodAuthorityStore.Key];
+int feedbackOrders = reg.CompletedOrders.Count, feedbackWork = BusinessSimulatorHelper.Work.Pending.Count;
+Check(NativeFoodOwnership.ObservedOwnGeneration(reg, feedbackGeneration), "B2 recognizes the observed own generation");
+Check(!NativeFoodOwnership.ObservedOwnGeneration(reg, "stale-generation"), "B2 excludes stale generation identity");
+var feedbackReplacement = new BuildingRegistration();
+Check(!NativeFoodOwnership.ObservedOwnGeneration(feedbackReplacement, feedbackGeneration), "B2 refuses a same-address replacement before observation");
+Check(NativeFoodOwnership.ObservedOwnGeneration(reg, feedbackGeneration), "B2 replacement query does not adopt it or displace the observed registration");
+string feedbackSignature = reg.Signature;
+reg.Signature = "business:Test:7:1:bakery:rival";
+Check(!NativeFoodOwnership.ObservedOwnGeneration(reg, feedbackGeneration), "B2 refuses changed ownership/signature without refreshing authority");
+reg.Signature = feedbackSignature;
+for (int i = 0; i < 100; i++)
+    Check(NativeFoodOwnership.ObservedOwnGeneration(reg, feedbackGeneration), "B2 warmed feedback remains a pure read");
+Check(SaveGameManager.Current.modData[FoodAuthorityStore.Key] == feedbackPayload
+    && reg.CompletedOrders.Count == feedbackOrders && BusinessSimulatorHelper.Work.Pending.Count == feedbackWork,
+    "B2 repeated feedback leaves authority payload, orders and native work unchanged");
+
 BusinessSimulatorHelper.Queue(reg, 9); BusinessSimulatorHelper.Work.ForceCompleteAllWork();
 Check(BusinessSimulatorHelper.Processed.SequenceEqual(new[] { 7, 8 }), "newly owned hour cannot execute a native sale");
 
@@ -259,11 +278,10 @@ GameManager.DuringNewHour = null; IndoorCustomerSpawner.Customers.Clear(); GameM
 Check(!NativeFoodOwnership.Find(reg)!.Managed, "drain-time body deferral still cannot acquire midway through the same hour");
 
 // B0 executes the actual earliest native hook, before attaching any population or market.
-foreach (string damage in new[] { "active", "revision", "code", "future" })
+foreach (string damage in new[] { "revision", "code", "future" })
 {
     string supported = PopulationPayload(9);
-    string unsupportedPopulation = damage == "active" ? supported.Replace("\"Active\":false", "\"Active\":true")
-        : damage == "revision" ? supported.Replace("\"Revision\":1", "\"Revision\":2")
+    string unsupportedPopulation = damage == "revision" ? supported.Replace("\"Revision\":1", "\"Revision\":2")
         : damage == "code" ? supported.Replace("\"Code\":\"B\"", "\"Code\":\"C\"")
         : supported.Replace("\"Schema\":"+CityState.CurrentSchema, "\"Schema\":999");
     reg = Fresh(9, saved, populationPayload: unsupportedPopulation);
@@ -274,6 +292,12 @@ foreach (string damage in new[] { "active", "revision", "code", "future" })
     Check(ReferenceEquals(unsupportedPopulation, SaveGameManager.Current.modData[SaveStore.StateKey]), "capability refusal preserves exact population payload reference");
     Check(ReferenceEquals(saved, SaveGameManager.Current.modData[FoodAuthorityStore.Key]), "capability refusal preserves authority manifest");
 }
+
+// B1 explicitly supports active B revision 1 at the same earliest bootstrap hook.
+string activeB = PopulationPayload(9).Replace("\"Active\":false", "\"Active\":true");
+reg = Fresh(9, saved, populationPayload: activeB);
+Check(NativeFoodOwnership.Error.Length == 0, "active B revision 1 executes at earliest native bootstrap");
+Check(ReferenceEquals(activeB, SaveGameManager.Current.modData[SaveStore.StateKey]), "bootstrap does not rewrite active population");
 
 Console.WriteLine($"PASS {checks} actual ownership-hook checks against native field/callback doubles. No Unity/game execution.");
 

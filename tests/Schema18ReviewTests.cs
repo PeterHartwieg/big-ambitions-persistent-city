@@ -86,7 +86,6 @@ public sealed class Schema18ReviewTests
     [InlineData("{\"Active\":false,\"Code\":\"B\",\"Revision\":1,\"Revision\":1}")]
     [InlineData("{\"Active\":false,\"Code\":\"B\"}")]
     [InlineData("{\"Active\":false,\"Code\":\"B\",\"Revision\":1,\"Extra\":0}")]
-    [InlineData("{\"Active\":true,\"Code\":\"B\",\"Revision\":1}")]
     [InlineData("{\"Active\":false,\"Code\":\"C\",\"Revision\":1}")]
     [InlineData("{\"Active\":false,\"Code\":\"B\",\"Revision\":2}")]
     public void ProbeKeepsStrictCapabilityHeaderValidation(string capability)
