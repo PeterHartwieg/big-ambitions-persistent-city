@@ -145,7 +145,7 @@ public sealed partial class FoodCommerceTests
     {
         var (city, _, _) = Ready();
         city.State.Food!.Residents.Single().Allowance = Money.FromCents(2);
-        string encoded = SaveCodec.Write(city.State);
+        string encoded = LegacyWire.Write(city.State);
         if (field == "AllowanceCents") encoded = LegacyMoneyWire.ToLegacy(JObject.Parse(encoded), wholeCents: false).ToString(Newtonsoft.Json.Formatting.None);
         Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(encoded).Status);
         string damaged = Regex.Replace(encoded, "\"" + field + "\":[0-9.]+", "\"" + field + "\":" + token);
@@ -167,15 +167,15 @@ public sealed partial class FoodCommerceTests
         city.State.Food.Residents.Single().Budget!.OpeningBalance += Money.FromCents(1000000);
         Advance(city, city.State.Food.Residents.Single().DesiredAt + 30);
         Assert.Equal(MealStatus.Paid, city.State.Food.Residents.Single().Status);
-        string encoded = SaveCodec.Write(city.State);
+        string encoded = LegacyWire.Write(city.State);
         Assert.Contains("\"Price\":" + market.Price.Units + ",", encoded);
         var read = SaveCodec.Read(encoded);
         Assert.Equal(SaveReadStatus.Loaded, read.Status);
-        Assert.Equal(encoded, SaveCodec.Write(read.State!));
+        Assert.Equal(encoded, LegacyWire.Write(read.State!));
         // The earlier decimal-cents form of the same state loads to identical units.
         string legacy = LegacyMoneyWire.ToLegacy(JObject.Parse(encoded), wholeCents: false).ToString(Newtonsoft.Json.Formatting.None);
         Assert.Contains("\"PriceCents\":" + market.Price.ToCentsText(), legacy);
-        Assert.Equal(encoded, SaveCodec.Write(SaveCodec.Read(legacy).State!));
+        Assert.Equal(encoded, LegacyWire.Write(SaveCodec.Read(legacy).State!));
     }
 
     // Settlement additions after a native sale cannot fail: each is checked before funds move.

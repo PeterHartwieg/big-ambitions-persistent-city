@@ -124,6 +124,8 @@ namespace PersistentCity.Core
         public CitySimulator(CityState state, IRoutePlanner routes)
         {
             State = state ?? throw new ArgumentNullException(nameof(state));
+            if (state.Capabilities == null) throw new InvalidOperationException("Missing population capabilities.");
+            state.Capabilities.RequireExecutable();
             this.routes = routes ?? throw new ArgumentNullException(nameof(routes));
             foreach (var place in state.Places)
             {

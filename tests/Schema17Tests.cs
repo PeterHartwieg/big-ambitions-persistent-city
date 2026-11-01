@@ -73,7 +73,7 @@ public sealed partial class FoodCommerceTests
         Assert.NotEqual(a.Citizens.Select(x => x.Traits!.Bands), c.Citizens.Select(x => x.Traits!.Bands));
         // No food scope: traits exist, nothing economic does, and the save keeps it that way.
         Assert.Null(a.Food);
-        var read = SaveCodec.Read(SaveCodec.Write(a));
+        var read = SaveCodec.Read(LegacyWire.Write(a));
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Null(read.State!.Food);
         Assert.Equal(a.Citizens.Select(x => x.Traits!.Bands), read.State.Citizens.Select(x => x.Traits!.Bands));
     }
@@ -120,7 +120,7 @@ public sealed partial class FoodCommerceTests
         // Stop while a meal is under way: its committed shop, product, price and return must survive.
         double until = city.State.Food!.Residents.Min(m => m.DesiredAt);
         while (!city.State.Food.Residents.Any(m => m.Status == MealStatus.Travelling || m.Status == MealStatus.Serving)) Advance(city, until += 1);
-        string current = SaveCodec.Write(city.State);
+        string current = LegacyWire.Write(city.State);
         string old = S17_Old(current, schema);
         Assert.Contains("\"Schema\":" + schema + ",", old);
         foreach (string field in EconomyScenario.Schema17Fields) Assert.DoesNotContain("\"" + field + "\":", old);
@@ -131,7 +131,7 @@ public sealed partial class FoodCommerceTests
         var migrated = read.State!;
         // Everything the old payload held is preserved byte for byte: IDs, assignments, sequence, money units,
         // budgets, shop authority, receipts, active meals, returns and optional-stop choices.
-        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(SaveCodec.Write(migrated)));
+        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(migrated)));
         int today = (int)(migrated.Minute / 1440);
         Assert.Equal(FoodChoicePolicy.Version, migrated.Food!.ChoicePolicyVersion);
         Assert.Equal(today + 1, migrated.Food.ChoiceStartsDay);
@@ -149,13 +149,13 @@ public sealed partial class FoodCommerceTests
         }
         // The upgraded payload is now writable through the normal save path, and reads back as 17.
         Assert.True(SaveStore.WriteTo(data, migrated).Success);
-        Assert.Equal(17, SaveCodec.Read(data[SaveStore.StateKey]).SourceSchema);
+        Assert.Equal(18, SaveCodec.Read(data[SaveStore.StateKey]).SourceSchema);
         // Continue both: identical orders and economy, the meal in progress finishing on its legacy terms.
         var twin = new Market { Units = market.Units }; twin.Orders.AddRange(market.Orders); twin.Times.AddRange(market.Times);
         var resumed = new CitySimulator(migrated, routes); resumed.AttachFoodMarket(twin);
         Advance(city, until + 2 * 1440); Advance(resumed, until + 2 * 1440);
         Assert.Equal(market.Orders, twin.Orders); Assert.Equal(market.Times, twin.Times);
-        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(SaveCodec.Write(city.State)), LegacyMoneyWire.WithoutUpgradeFacts(SaveCodec.Write(resumed.State)));
+        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(city.State)), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(resumed.State)));
         Assert.Equal(today + 1, resumed.State.Food!.ChoiceStartsDay);
     }
 
@@ -208,7 +208,7 @@ public sealed partial class FoodCommerceTests
                     new FoodDecisionOffer { ProductId = FoodProducts.Croissant, Price = Money.FromCents(350) } },
                 OutwardQuote = FoodQuoteState.Answered, ReturnQuote = FoodQuoteState.Answered,
                 Outward = Walk(new(0, 0, 0), new(2, 0, 0)), Return = Walk(new(2, 0, 0), new(0, 0, 0)) } }, QuotesDone = 2 };
-        return (city, SaveCodec.Write(city.State));
+        return (city, LegacyWire.Write(city.State));
     }
 
     [Fact]
@@ -220,12 +220,12 @@ public sealed partial class FoodCommerceTests
         Assert.Contains("\"Traits\":{\"Bands\":\"" + city.State.Citizens[0].Traits!.Bands + "\",\"Version\":1}", json);
         var read = SaveCodec.Read(json);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(17, read.SourceSchema);
-        Assert.Equal(json, SaveCodec.Write(read.State!));
+        Assert.Equal(json, LegacyWire.Write(read.State!));
         var decision = read.State!.Food!.Residents.Single(m => m.Decision != null).Decision!;
         Assert.True(decision.RouteBearing); Assert.Equal(2, decision.Shops[0].Offers.Count); Assert.Equal(-1, decision.Shops[0].Offers[1].Units);
         var data = new Dictionary<string, string>();
         var session = SaveSession.Open(data, city.State.PopulationKey);
-        Assert.True(session.WriteTo(data, read.State).Success); Assert.Equal(json, data[SaveStore.StateKey]);
+        Assert.True(session.WriteTo(data, read.State).Success); Assert.Equal(SaveCodec.Write(read.State), data[SaveStore.StateKey]);
     }
 
     public static IEnumerable<object[]> S17_Damage() => new (string name, string error)[]
@@ -409,10 +409,10 @@ public sealed partial class FoodCommerceTests
         var pending = new FoodDecisionShop { BusinessId = "b3", PlaceId = "shop" };
         decision.Shops = new List<FoodDecisionShop> { refusedOutward, refusedReturn, pending };
         decision.Result = FoodDecisionResult.Evaluating; decision.BusinessId = decision.ProductId = ""; decision.QuotesDone = 4;
-        string json = SaveCodec.Write(city.State);
+        string json = LegacyWire.Write(city.State);
         var read = SaveCodec.Read(json);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(json, SaveCodec.Write(read.State!));
+        Assert.Equal(json, LegacyWire.Write(read.State!));
         var restored = read.State!.Food!.Residents.Single(m => m.Decision != null).Decision!;
         Assert.Equal(4, restored.QuotesDone);
         Assert.Equal(new[] { (FoodQuoteState.Refused, FoodQuoteState.NotNeeded), (FoodQuoteState.Answered, FoodQuoteState.Refused), (FoodQuoteState.Unrequested, FoodQuoteState.Unrequested) },
@@ -420,7 +420,7 @@ public sealed partial class FoodCommerceTests
         Assert.Null(restored.Shops[0].Outward); Assert.NotNull(restored.Shops[1].Outward); Assert.Null(restored.Shops[1].Return);
         // Before b2's return was asked, the same image differs: unrequested is not refused.
         refusedReturn.ReturnQuote = FoodQuoteState.Unrequested; decision.QuotesDone = 3;
-        Assert.NotEqual(json, SaveCodec.Write(city.State));
+        Assert.NotEqual(json, LegacyWire.Write(city.State));
     }
 
     [Fact]
@@ -434,14 +434,14 @@ public sealed partial class FoodCommerceTests
         dinner.Reason = MealReasonCode.ReceiptConfirmed;
         string wire = dinner.ToWire();
         Assert.True(wire.Length <= SaveCodec.MaxMealOutcomeWire, wire.Length.ToString());
-        string json = SaveCodec.Write(city.State);
+        string json = LegacyWire.Write(city.State);
         var read = SaveCodec.Read(json);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(json, SaveCodec.Write(read.State!));
+        Assert.Equal(json, LegacyWire.Write(read.State!));
         Assert.Equal(553, 6 * 2 + 2 * 10 + 9 + 256 + 256);
         // An ID one character longer is refused at write, so it never reaches the reader.
         dinner.PlaceId += "p";
-        Assert.Throws<SaveValidationException>(() => SaveCodec.Write(city.State));
+        Assert.Throws<SaveValidationException>(() => LegacyWire.Write(city.State));
         // A record string beyond the reader's cap is refused before deserialization and preserved.
         string oversized = json.Replace(wire, wire.Substring(0, wire.Length - 256) + new string('p', SaveCodec.MaxMealOutcomeWire - (wire.Length - 256) + 1));
         Assert.NotEqual(json, oversized);
@@ -457,7 +457,7 @@ public sealed partial class FoodCommerceTests
         var (city, _) = S17_Full();
         var meal = city.State.Food!.Residents.First(m => m.Today != null);
         meal.Today!.Meals[2].ProductId = "pas|try";
-        Assert.Contains("cannot contain", Assert.Throws<SaveValidationException>(() => SaveCodec.Write(city.State)).Message);
+        Assert.Contains("cannot contain", Assert.Throws<SaveValidationException>(() => LegacyWire.Write(city.State)).Message);
     }
 
     [Fact]
@@ -504,7 +504,7 @@ public sealed partial class FoodCommerceTests
         var city = new CitySimulator(state, new Walking()); city.AttachFoodMarket(new S17_NoMarket()); city.EnableHouseholdFinances();
         Assert.Equal(130200, state.Food.Residents.Count);
         // Schema-16 image: the same city as an earlier writer produced it.
-        string fresh = SaveCodec.Write(state);
+        string fresh = LegacyWire.Write(state);
         string old = System.Text.RegularExpressions.Regex.Replace(System.Text.RegularExpressions.Regex.Replace(System.Text.RegularExpressions.Regex.Replace(fresh,
                 "\"ChoicePolicyVersion\":1,\"ChoiceStartsDay\":[0-9]+,", ""),
                 ",\"(Traits|RepresentedTraits)\":(null|\\{\"Bands\":\"[0-4]{10}\",\"Version\":1\\})|,\"Today\":null|,\"Decision\":null|,\"LastContextKey\":\"\"|,\"ContextAttempts\":0", ""),
@@ -523,7 +523,7 @@ public sealed partial class FoodCommerceTests
             today.Meals.Add(new MealOutcomeRecord { Kind = (MealKind)kind++, Status = MealOutcomeStatus.Bought, Reason = MealReasonCode.Bought,
                 At = day * 1440 + minute, CheckoutAt = day * 1440 + minute, ProductId = product, PlaceId = "address:" + Uri.EscapeDataString(street) + ":1042:shop" });
         foreach (var meal in state.Food.Residents) meal.Today = today;
-        string json = SaveCodec.Write(state);
+        string json = LegacyWire.Write(state);
         Assert.True(json.Length <= SaveCodec.MaxInputCharacters);
         var read = SaveCodec.Read(json);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
@@ -534,7 +534,7 @@ public sealed partial class FoodCommerceTests
     public void S17_FutureSchemasAreRefusedAsFutureAndPreserved()
     {
         var (city, json) = S17_Full();
-        foreach (int schema in new[] { 18, 19, 1000 })
+        foreach (int schema in new[] { 19, 20, 1000 })
         {
             var wire = JObject.Parse(json); wire["Schema"] = schema; string payload = wire.ToString(Formatting.None);
             Assert.Equal(SaveReadStatus.Future, SaveCodec.Read(payload).Status);
@@ -556,9 +556,9 @@ public sealed partial class FoodCommerceTests
             var meal = city.State.Food!.Residents.Single();
             double until = meal.DesiredAt;
             while (meal.Status != MealStatus.Paid) Advance(city, until += 1);
-            string current = SaveCodec.Write(city.State);
+            string current = LegacyWire.Write(city.State);
             // The same paid meal, recorded live and synthesized by a schema-16 upgrade.
-            string json = upgraded ? SaveCodec.Write(SaveCodec.Read(LegacyMoneyWire.AsSchema(JObject.Parse(current), 16).ToString(Formatting.None)).State!) : current;
+            string json = upgraded ? LegacyWire.Write(SaveCodec.Read(LegacyMoneyWire.AsSchema(JObject.Parse(current), 16).ToString(Formatting.None)).State!) : current;
             var record = meal.Today!.Find(meal.Kind)!;
             Assert.Equal((MealOutcomeStatus.Bought, meal.PlaceId, meal.ProductId, (int)Math.Floor(meal.ServiceAt)),
                 (record.Status, record.PlaceId, record.ProductId, record.CheckoutAt));
@@ -584,7 +584,7 @@ public sealed partial class FoodCommerceTests
             var live = bad.Food!.Residents.Single().Today!.Find(meal.Kind)!;
             if (damage == "other-shop") live.PlaceId = "work"; else if (damage == "other-product") live.ProductId = FoodProducts.HotDog;
             else if (damage == "erased-checkout") live.CheckoutAt = 0; else live.CheckoutAt--;
-            Assert.Throws<SaveValidationException>(() => SaveCodec.Write(bad));
+            Assert.Throws<SaveValidationException>(() => LegacyWire.Write(bad));
         }
     }
 

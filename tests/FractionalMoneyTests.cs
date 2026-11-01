@@ -276,9 +276,9 @@ public sealed partial class FoodCommerceTests
         var meal = city.State.Food.Residents.Single();
         Assert.Single(market.Orders);
         Assert.Equal(interrupt ? MealStatus.Uncertain : MealStatus.Paid, meal.Status);
-        string encoded = SaveCodec.Write(city.State);
+        string encoded = LegacyWire.Write(city.State);
         city = Reload(city, market, routes);
-        Assert.Equal(encoded, SaveCodec.Write(city.State));
+        Assert.Equal(encoded, LegacyWire.Write(city.State));
         if (interrupt)
         {
             market.ConfirmEvidence = true;
@@ -302,7 +302,7 @@ public sealed partial class FoodCommerceTests
         city = city.RebuildRoutes(routes); city.EnableHouseholdFinances();
         Advance(city, city.State.Food!.Residents.Single().DesiredAt + 30);
         // The amount twelve-digit conversion stored for 10.2528f: not a whole number of 2^-28 cents.
-        var token = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(JObject.Parse(SaveCodec.Write(city.State)), wholeCents: false), 14);
+        var token = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(JObject.Parse(LegacyWire.Write(city.State)), wholeCents: false), 14);
         token["Food"]!["Residents"]![0]!["PriceCents"] = 1025.279998779297m;
         string legacy = token.ToString(Newtonsoft.Json.Formatting.None);
         Assert.Contains("\"PriceCents\":1025.279998779297", legacy);
@@ -321,14 +321,14 @@ public sealed partial class FoodCommerceTests
         market.ThrowAfterSale = true;
         Advance(city, city.State.Food!.Residents.Single().DesiredAt + 30);
         Assert.Equal(MealStatus.Uncertain, city.State.Food.Residents.Single().Status);
-        string current = SaveCodec.Write(city.State);
+        string current = LegacyWire.Write(city.State);
         // What the decimal-cents writer produced for this state: the same amounts as decimal cents.
         string legacy = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(JObject.Parse(current), wholeCents: false), 14).ToString(Newtonsoft.Json.Formatting.None);
         Assert.Contains("\"PriceCents\":1025.279998779296875", legacy);
         Assert.Contains("\"BalanceCents\":", legacy); Assert.DoesNotContain("\"Balance\":", legacy);
         var read = SaveCodec.Read(legacy);
         Assert.Equal(SaveReadStatus.Loaded, read.Status); Assert.Equal(14, read.SourceSchema);
-        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(SaveCodec.Write(read.State!)));
+        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(read.State!)));
         // A native v2 receipt written before the unit change still identifies this intention.
         var meal = read.State!.Food!.Residents.Single();
         var receipt = new Dictionary<string, string> { [FoodSaleReceipts.Prefix + meal.IntentId] = "paid|1025.279998779296875|b|" + Uri.EscapeDataString(FoodProducts.Croissant) };
@@ -356,7 +356,7 @@ public sealed partial class FoodCommerceTests
 
     private static string Schema13(CityState state)
     {
-        var token = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(JObject.Parse(SaveCodec.Write(state)), wholeCents: true), 13);
+        var token = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(JObject.Parse(LegacyWire.Write(state)), wholeCents: true), 13);
         return token.ToString();
     }
 
@@ -371,7 +371,7 @@ public sealed partial class FoodCommerceTests
         var read = SaveStore.ReadFrom(data, city.State.PopulationKey);
         Assert.Equal(SaveReadStatus.Loaded, read.Status); Assert.Equal(13, read.SourceSchema);
         Assert.Equal(CityState.CurrentSchema, read.State!.Schema); Assert.Equal(old, data[SaveStore.StateKey]);
-        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(SaveCodec.Write(city.State)), LegacyMoneyWire.WithoutUpgradeFacts(SaveCodec.Write(read.State)));
+        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(city.State)), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(read.State)));
         var loaded = new CitySimulator(read.State, routes); loaded.AttachFoodMarket(market);
         Assert.Equal(orders, market.Orders.Count);
         Assert.True(SaveStore.WriteTo(data, loaded.State).Success);
