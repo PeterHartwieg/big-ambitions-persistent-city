@@ -41,6 +41,8 @@ namespace PersistentCity.Core
         public long Publications { get; private set; }
         public int IndexedEntries { get; private set; }
         public FoodCampaignGroup ReviewedGroup(int type) => policy.Group(type);
+        internal FoodMemoryStore ReferencesFor(FoodCommerceState owner)
+            => ReferenceEquals(owner, food) ? references : throw new ArgumentException("Campaign source belongs to another city.");
 
         /// <summary>Only a complete C1 image may enter. Snapshot minute is the actual observed boundary,
         /// never the lagging simulation clock or an inferred campaign start. Retired generations drop here.</summary>

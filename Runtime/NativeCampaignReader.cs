@@ -18,7 +18,7 @@ namespace PersistentCity.Runtime
 
     /// <summary>Explicit main-thread fields-only reader. Never scheduled by Update, choice or meals.
     /// Bind metadata once per shape, with a hard cache bound; do not invoke native getters/helpers.</summary>
-    public sealed class NativeCampaignReader
+    public sealed partial class NativeCampaignReader
     {
         public const int MaximumBusinesses = 1024;
         public const int MaximumCampaignsPerBusiness = 8;

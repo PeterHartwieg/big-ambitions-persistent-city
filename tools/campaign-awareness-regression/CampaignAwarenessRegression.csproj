@@ -4,6 +4,7 @@
     <ProjectReference Include="../../Core/PersistentCity.Core.csproj" />
     <ProjectReference Include="../../Persistence/PersistentCity.Persistence.csproj" />
     <Compile Include="../../Runtime/NativeCampaignReader.cs" Link="NativeCampaignReader.cs" />
+    <Compile Include="../../Runtime/CampaignPresenceProbe.cs" Link="CampaignPresenceProbe.cs" />
     <Compile Include="../../Runtime/NativeCampaignDiagnostics.cs" Link="NativeCampaignDiagnostics.cs" />
     <Compile Include="../../Runtime/NativeCampaignAwareness.cs" Link="NativeCampaignAwareness.cs" />
     <Compile Include="../campaign-reader-regression/Doubles.cs" Link="Doubles.cs" />

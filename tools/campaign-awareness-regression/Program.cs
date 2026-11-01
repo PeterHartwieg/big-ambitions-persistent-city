@@ -13,7 +13,42 @@ static object Measure(Action action,int runs=301)
     allocation=GC.GetAllocatedBytesForCurrentThread()-allocation;Array.Sort(samples);
     return new {p50Ms=samples[runs/2],p95Ms=samples[(int)(runs*.95)],maxMs=samples[^1],spikesAtLeast30Ms=samples.Count(t=>t>=30),allocatedBytesPerOperation=allocation/runs};
 }
+static object ReferenceLookup(int count,CampaignSnapshot observation,Dictionary<string,string> places)
+{
+    var duplicateMs=new double[101];var sharedMs=new double[101];long duplicateBytes=0,sharedBytes=0;
+    // Reflection selects the production-owned store once per fixture, outside both measured lookups.
+    var field=typeof(FoodCampaignSource).GetField("references",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)!;
+    for(int iteration=-10;iteration<101;iteration++)
+    {
+        var food=new FoodCommerceState();var source=new FoodCampaignSource(food,79,new(),FoodCampaignTargetPolicy.Unknown);
+        var duplicate=new FoodMemoryStore(food);var shared=(FoodMemoryStore)field.GetValue(source)!;
+        duplicate.Reference(-1);shared.Reference(-1);
+        source.Publish(observation,places);
+        long allocated=GC.GetAllocatedBytesForCurrentThread(),start=Stopwatch.GetTimestamp();
+        GC.KeepAlive(duplicate.Reference(count-1));
+        double before=Stopwatch.GetElapsedTime(start).TotalMilliseconds;
+        long beforeBytes=GC.GetAllocatedBytesForCurrentThread()-allocated;
+        allocated=GC.GetAllocatedBytesForCurrentThread();start=Stopwatch.GetTimestamp();
+        GC.KeepAlive(shared.Reference(count-1));
+        double after=Stopwatch.GetElapsedTime(start).TotalMilliseconds;
+        long afterBytes=GC.GetAllocatedBytesForCurrentThread()-allocated;
+        if(iteration<0) continue;
+        duplicateMs[iteration]=before;sharedMs[iteration]=after;duplicateBytes+=beforeBytes;sharedBytes+=afterBytes;
+    }
+    object Stats(double[] values,long bytes)
+    {
+        Array.Sort(values);return new {p50Ms=values[50],p95Ms=values[95],maxMs=values[^1],allocatedBytesPerLookup=bytes/101,spikesAtLeast30Ms=values.Count(v=>v>=30)};
+    }
+    if(sharedBytes!=0) throw new Exception("Shared index deferred allocation to the next consumer lookup.");
+    return new {duplicateIndexControl=Stats(duplicateMs,duplicateBytes),sharedProductionIndex=Stats(sharedMs,sharedBytes)};
+}
 var targets=new FoodCampaignTargetPolicy(Enumerable.Repeat(FoodCampaignGroup.Commuters|FoodCampaignGroup.HealthOriented,6).ToArray());
+var probe=new NativeCampaignReader();
+if(probe.HasCampaignEntries(null) || probe.HasCampaignEntries(new object())) throw new Exception("Unknown campaign presence admitted.");
+var probeRegistration=new BuildingRegistration();
+if(!probe.HasCampaignEntries(probeRegistration)) throw new Exception("Verified list presence missed.");
+probeRegistration.marketingCampaigns.Clear();
+if(probe.HasCampaignEntries(probeRegistration)) throw new Exception("Empty list presence admitted.");
 var traits=new ResidentTraits {Bands="2222222322"};
 var settings=new FoodCampaignSettings {ReachProbability=1};
 foreach(int count in new[]{1,1024})
@@ -32,6 +67,7 @@ foreach(int count in new[]{1,1024})
     // Eight-day history loaded before the measured same-day hourly replacement series.
     for(hour=0;hour<=7*24;hour++) source.Publish(Read(),places);
     var sample=Measure(()=>{hour++;source.Publish(Read(),places);});
+    var referenceLookup=ReferenceLookup(count,Read(),places);
     int day=hour/24;
     var rebuild=Measure(source.Rebuild);
     int consumer=0;
@@ -68,7 +104,7 @@ foreach(int count in new[]{1,1024})
     int campaignBytes=emptyWire.Length-noImages.Length;
     if(imageCounts.Semantic-baseCounts.Semantic!=count || imageCounts.Streaming-baseCounts.Streaming!=count) throw new Exception("Image record charge changed.");
     Console.WriteLine(JsonSerializer.Serialize(new {businesses=count,syntheticReviewedHourlyC1AndPublication=sample,groupIndexRebuild=rebuild,eightSlotDecision=decision,
-        productionUnknownTargetsHourly=production,noCampaignHourlyCountProbes=absent,disabledHourly=off,
+        productionUnknownTargetsHourly=production,noCampaignHourlyCountProbes=absent,disabledHourly=off,referenceLookupAfterPublication=referenceLookup,
         campaignBytesAbove19WithSharedReferences=campaignBytes+15,campaignRecordDelta=count,imageWireCharacters=265,
         nativeStateUnchanged=before==after,notes="Offline .NET only. No native timing/targeting evidence. Whole-frame unavailable; count probes are included, not claimed as zero CPU work."}));
 }

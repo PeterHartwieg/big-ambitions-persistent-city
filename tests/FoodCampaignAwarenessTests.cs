@@ -175,6 +175,13 @@ public sealed class FoodCampaignAwarenessTests
         root["Schema"]=19;root["Food"]!["Campaigns"]=new JArray();Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(root.ToString(Formatting.None)).Status);
         ((JObject)root["Food"]!).Remove("Campaigns");root["Food"]!["AwarenessStartsDay"]=-1;
         Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(root.ToString(Formatting.None)).Status);
+        var (heldCity,_,_)=WeightedFoodChoiceTests.Ready(79,24);heldCity.State.Food!.AwarenessStartsDay=1;
+        heldCity.InspectFoodAwareness("r");heldCity.AdvanceTo(heldCity.State.Food.Residents[0].DesiredAt,1);
+        var heldRoot=JObject.Parse(SaveCodec.Write(heldCity.State));heldRoot["Schema"]=19;((JObject)heldRoot["Food"]!).Remove("Campaigns");
+        var heldRead=SaveCodec.Read(heldRoot.ToString(Formatting.None));Assert.True(heldRead.Status==SaveReadStatus.Loaded,heldRead.Error);
+        Assert.Equal(JsonConvert.SerializeObject(heldCity.State.Food.Residents[0].Decision),JsonConvert.SerializeObject(heldRead.State!.Food!.Residents[0].Decision));
+        heldRoot["Food"]!["Residents"]![0]![9]!["Awareness"]!["Union"]![0]!["Sources"]=32;
+        Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(heldRoot.ToString(Formatting.None)).Status); // old 19 still forbids campaigns
     }
     [Fact]
     public void CampaignImageCountsExactlyOnceAndRejectsCorruptOrForeignReferences()
@@ -190,6 +197,32 @@ public sealed class FoodCampaignAwarenessTests
         Assert.Throws<ArgumentException>(()=>new FoodCampaignImage(0,0,new uint[64]));
         var masks=new uint[64];masks[6]=1;Assert.Throws<ArgumentException>(()=>new FoodCampaignImage(0,0,masks));
         masks=new uint[64];masks[0]=2;Assert.Throws<ArgumentException>(()=>new FoodCampaignImage(0,0,masks));
+        masks[0]=1;var detached=new FoodCampaignImage(0,0,masks);masks[0]=0;
+        Assert.Equal(1u,detached.Mask(0,0)); // public buffers cannot alter a published image
+    }
+    [Fact]
+    public void HourlyReferenceInsertionDoesNotMoveCatalogueWorkOntoTheNextMemoryLookup()
+    {
+        var (city,market,planner)=WeightedFoodChoiceTests.Ready(79,1024);
+        var food=city.State.Food!;var source=Source(food);
+        var commerce=new FoodCommerce(city,market,planner,campaign:source);
+        commerce.MemoryReference(-1); // warm the bounded lookup before publication
+        source.Publish(Snapshot(24,food.Shops.Select(s=>Business(s.BusinessId,Campaign())).ToArray()),
+            food.Shops.ToDictionary(s=>s.BusinessId,s=>s.PlaceId));
+        Assert.Equal(1024,food.BusinessReferences.Count);
+        long before=GC.GetAllocatedBytesForCurrentThread();
+        var reference=commerce.MemoryReference(1023);
+        long allocated=GC.GetAllocatedBytesForCurrentThread()-before;
+        Assert.Equal(0,allocated);Assert.Same(food.BusinessReferences[1023],reference);
+    }
+    [Fact]
+    public void AForeignCityCampaignSourceCannotChangeThisCitysReferenceOwnership()
+    {
+        var (prepared,market,planner)=WeightedFoodChoiceTests.Ready(79,2);
+        string before=SaveCodec.Write(prepared.State);
+        var city=new CitySimulator(prepared.State,planner);
+        Assert.Throws<ArgumentException>(()=>city.AttachFoodMarket(market,campaign:Source(new FoodCommerceState())));
+        Assert.Equal(before,SaveCodec.Write(prepared.State));
     }
     [Fact]
     public void FlatTunablesClampAndLogOnceWithoutChangingOtherSettings()

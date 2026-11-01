@@ -26,10 +26,11 @@ namespace PersistentCity.Runtime
             campaignHour = hour;
             // This is called ONLY by the existing accounting-hour boundary hook. With no campaigns,
             // count probes allocate nothing and there is no C1 read/publication/index/decision work.
+            awarenessCampaignReader ??= new NativeCampaignReader();
             bool any = state.Campaigns.Count != 0;
             if (!any) foreach (var scope in state.Shops)
                 if (candidateBusinesses.Contains(scope.BusinessId) && registrations.TryGetValue(scope.PlaceId,out var reg)
-                    && reg.marketingCampaigns?.Count > 0) { any = true; break; }
+                    && awarenessCampaignReader.HasCampaignEntries(reg)) { any = true; break; }
             if (!any) return;
             var sources = new List<CampaignBusinessSource>();
             var places = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -44,7 +45,6 @@ namespace PersistentCity.Runtime
                 campaignSource.Publish(new CampaignSnapshot(hour * 60, hour, Array.Empty<BusinessCampaignSnapshot>()), places);
                 return;
             }
-            awarenessCampaignReader ??= new NativeCampaignReader();
             var refresh = awarenessCampaignReader.Begin(sources, hour * 60, hour);
             // All native reads finish on this main-thread boundary before returning to native/UI writers.
             // C1 units remain <=16; no native registration survives into an asynchronous continuation.
