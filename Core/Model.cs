@@ -208,6 +208,7 @@ namespace PersistentCity.Core
 
     public sealed class CitizenState
     {
+        public WeatherCommitment? W { get; set; }
         public CitizenIdentity Identity { get; set; } = new CitizenIdentity();
         public string HomeId { get; set; } = "";
         public string DayPlaceId { get; set; } = "";
@@ -252,7 +253,9 @@ namespace PersistentCity.Core
 
     public sealed class CityState
     {
-        public const int CurrentSchema = 21;
+        public const int CurrentSchema = 23;
+        public string MenuPolicy { get; set; } = FoodMenuPolicy.Wire;
+        public int WeatherStartsDay { get; set; }
         public PopulationCapabilities Capabilities { get; set; } = new PopulationCapabilities();
         public int Schema { get; set; } = CurrentSchema;
         public int TravelTimingVersion { get; set; } = 1;

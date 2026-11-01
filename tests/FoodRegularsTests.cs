@@ -133,7 +133,7 @@ public sealed partial class FoodMemoryTests
     {
         var food = RegularFixture(); var meal = food.Residents[0];
         var person = new CitizenState { Identity = new() { Id = meal.ResidentId, Name = "Ada" }, Traits = Traits(0) };
-        var city = new CityState { Food = food, Minute = 20 * 1440 };
+        var city = new CityState { Food = food, Minute = 20 * 1440, Capabilities = new() { Active = true } };
         var place = new Place { Id = "door", Name = "Bakery", Kind = PlaceKind.Shop };
         ResidentInsight Capture(ResidentMeal m) => ResidentInsight.Capture(city, person, m, _ => place,
             shopName: _ => "Native Bakery");

@@ -249,32 +249,37 @@ namespace PersistentCity.Runtime
             // the native ending-hour batch available for its normal distributed processing.
             market.RefreshKnownOwnership();
             lastBoundaryHour = Hour;
-            if (!records.Values.Any(row => Hour > row.RequestedHour && (row.Desired != row.Managed || row.Suspended)
-                && (!row.Desired || !HasNativeCustomers(row)))) return;
-            boundary = true;
-            try
+            if (records.Values.Any(row => Hour > row.RequestedHour && (row.Desired != row.Managed || row.Suspended)
+                && (!row.Desired || !HasNativeCustomers(row))))
             {
-                // Native RunMainGameTick queues the ENDING hour before it increments Hour/Day.
-                // Here the clock has advanced; drain those ending batches under their old owner,
-                // then transfer only the current/future hour. At midnight native RunHourly already
-                // force-drained 23:00 before daily settlement. Never delete orders or baskets.
-                BusinessSimulatorHelper.Work.ForceCompleteAllWork();
-                // Drained native callbacks may have changed eligibility or introduced customers.
-                market.RefreshKnownOwnership();
-                bool changed = false;
-                foreach (var row in records.Values.ToArray())
+                boundary = true;
+                try
                 {
-                    observed.TryGetValue(row.PlaceId, out var reg);
-                    if (!row.Boundary(Hour, true, HasNativeCustomers(row), market != null)) continue;
-                    changed = true;
-                    if (row.Managed) market!.ActivateScope(row, reg!);
-                    // Regenerate only the new native hour and future hours. Native helper keeps
-                    // completed entries and does not recreate past hours or touch completed orders.
-                    else if (reg != null && reg.RentedByPlayer) CustomerEntriesHelper.UpdateCustomerEntriesForPlayerBusiness(reg, TimeHelper.GetDayOfWeek());
+                    // Native RunMainGameTick queues the ENDING hour before it increments Hour/Day.
+                    // Here the clock has advanced; drain those ending batches under their old owner,
+                    // then transfer only the current/future hour. At midnight native RunHourly already
+                    // force-drained 23:00 before daily settlement. Never delete orders or baskets.
+                    BusinessSimulatorHelper.Work.ForceCompleteAllWork();
+                    // Drained native callbacks may have changed eligibility or introduced customers.
+                    market.RefreshKnownOwnership();
+                    bool changed = false;
+                    foreach (var row in records.Values.ToArray())
+                    {
+                        observed.TryGetValue(row.PlaceId, out var reg);
+                        if (!row.Boundary(Hour, true, HasNativeCustomers(row), market != null)) continue;
+                        changed = true;
+                        if (row.Managed) market!.ActivateScope(row, reg!);
+                        // Regenerate only the new native hour and future hours. Native helper keeps
+                        // completed entries and does not recreate past hours or touch completed orders.
+                        else if (reg != null && reg.RentedByPlayer) CustomerEntriesHelper.UpdateCustomerEntriesForPlayerBusiness(reg, TimeHelper.GetDayOfWeek());
+                    }
+                    if (changed) Persist();
                 }
-                if (changed) Persist();
+                finally { boundary = false; }
             }
-            finally { boundary = false; }
+            // New scopes must exist before the first eligible observation. The optional observer
+            // isolates its own failures and still runs on boundaries with no authority transfers.
+            market?.ObserveCampaignBoundary(Hour);
         }
         private static bool HasNativeCustomers(FoodAuthority row) => observed.TryGetValue(row.PlaceId, out var reg)
             && BuildingManager.Instance != null && ReferenceEquals(BuildingManager.Instance.buildingRegistration, reg)

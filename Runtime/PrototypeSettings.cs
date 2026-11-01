@@ -19,6 +19,13 @@ namespace PersistentCity.Runtime
         public int RivalRefreshGameMinutes { get => Rivals.RivalRefreshGameMinutes; set => Rivals.RivalRefreshGameMinutes=value; }
         [JsonConverter(typeof(FoodMemoryIntegerConverter), 1, 64)]
         public int RivalReadsPerUnit { get => Rivals.RivalReadsPerUnit; set => Rivals.RivalReadsPerUnit=value; }
+
+        [JsonConverter(typeof(StreetLifeMinutesConverter), 1, 8)]
+        public int FoodMenuMaximumOffersPerShop { get => FoodChoice.FoodMenuMaximumOffersPerShop; set => FoodChoice.FoodMenuMaximumOffersPerShop=value; }
+        [JsonConverter(typeof(FoodMenuNumberConverter))]
+        public double FoodMenuNewTasteWeight { get => FoodChoice.FoodMenuNewTasteWeight; set => FoodChoice.FoodMenuNewTasteWeight=value; }
+        [JsonConverter(typeof(FoodMenuNumberConverter))]
+        public double FoodMenuHealthWeight { get => FoodChoice.FoodMenuHealthWeight; set => FoodChoice.FoodMenuHealthWeight=value; }
         [JsonIgnore]
         public MarketResearchSettings MarketResearch { get; } = new MarketResearchSettings();
         [JsonConverter(typeof(ResearchCatchmentSettingConverter))]
@@ -39,6 +46,15 @@ namespace PersistentCity.Runtime
         public double FoodShortlistTemperature { get => FoodChoice.FoodShortlistTemperature; set => FoodChoice.FoodShortlistTemperature=value; }
         [JsonIgnore]
         public FoodAwarenessSettings Awareness { get; } = new FoodAwarenessSettings();
+        [JsonIgnore]
+        public FoodCampaignSettings Campaigns { get; } = new FoodCampaignSettings();
+        public bool FoodMarketingCampaignEnabled { get => Campaigns.Enabled; set => Campaigns.Enabled=value; }
+        [JsonConverter(typeof(AwarenessNumberConverter))]
+        public double FoodMarketingCampaignReachProbability { get => Campaigns.ReachProbability; set => Campaigns.ReachProbability=value; }
+        [JsonConverter(typeof(FoodMemoryIntegerConverter), 1, 7)]
+        public int FoodMarketingRetentionDays { get => Campaigns.RetentionDays; set => Campaigns.RetentionDays=value; }
+        [JsonConverter(typeof(AwarenessNumberConverter))]
+        public double FoodMarketingDailyReachDecay { get => Campaigns.DailyReachDecay; set => Campaigns.DailyReachDecay=value; }
         [JsonConverter(typeof(AwarenessNumberConverter))]
         public double FoodMarketingNeighbourhoodMetres { get => Awareness.RadiusMetres; set => Awareness.RadiusMetres=value; }
         [JsonConverter(typeof(AwarenessNumberConverter))]
@@ -77,6 +93,16 @@ namespace PersistentCity.Runtime
         public int FoodMemoryRegularServedVisits { get => FoodMemory.FoodMemoryRegularServedVisits; set => FoodMemory.FoodMemoryRegularServedVisits=value; }
         [JsonConverter(typeof(FoodMemoryIntegerConverter), 1, 28)]
         public int FoodMemoryRegularRecentDays { get => FoodMemory.FoodMemoryRegularRecentDays; set => FoodMemory.FoodMemoryRegularRecentDays=value; }
+        [JsonIgnore]
+        public WeatherSettings Weather { get; } = new WeatherSettings();
+        [JsonConverter(typeof(WeatherBooleanConverter))]
+        public bool? WeatherEnabled { get => Weather.Enabled; set => Weather.SetEnabled(value); }
+        [JsonConverter(typeof(AwarenessNumberConverter))]
+        public double WeatherRainOptionalOutingMultiplier { get => Weather.RainOptionalOutingMultiplier; set => Weather.RainOptionalOutingMultiplier=value; }
+        [JsonConverter(typeof(AwarenessNumberConverter))]
+        public double WeatherRainTravelWeightMultiplier { get => Weather.RainTravelWeightMultiplier; set => Weather.RainTravelWeightMultiplier=value; }
+        [JsonConverter(typeof(WeatherLeadConverter))]
+        public int WeatherQueueRainLeadMinutes { get => Weather.QueueRainLeadMinutes; set => Weather.QueueRainLeadMinutes=value; }
         // Optional developer overrides; normal installation needs no configuration.
         private int optionalStopChoicePercentage = OptionalStopPolicy.ApprovedChoicePercentage;
         [JsonConverter(typeof(OptionalStopPercentageConverter))]
@@ -252,6 +278,16 @@ namespace PersistentCity.Runtime
         public override double ReadJson(JsonReader reader, Type type, double existing, bool hasExisting, JsonSerializer serializer) => Number(reader);
         public override void WriteJson(JsonWriter writer, double value, JsonSerializer serializer) => writer.WriteValue(value);
     }
+    internal sealed class FoodMenuNumberConverter : JsonConverter<double>
+    {
+        public override double ReadJson(JsonReader reader, Type type, double existing, bool hasExisting, JsonSerializer serializer)
+        {
+            var token=JToken.Load(reader);
+            if(token.Type==JTokenType.Integer || token.Type==JTokenType.Float) return (double)token;
+            return token.Type==JTokenType.String && double.TryParse((string)token!,NumberStyles.Float,CultureInfo.InvariantCulture,out double value) ? value : double.NaN;
+        }
+        public override void WriteJson(JsonWriter writer,double value,JsonSerializer serializer) => writer.WriteValue(value);
+    }
     internal sealed class FoodMemoryIntegerConverter : JsonConverter<int>
     {
         private readonly int min, max;
@@ -322,6 +358,35 @@ namespace PersistentCity.Runtime
     internal sealed class ResearchUnitSettingConverter : ResearchIntegerSettingConverter
     {
         public ResearchUnitSettingConverter() : base(16, 1024, 256) { }
+    }
+
+    internal sealed class WeatherBooleanConverter : JsonConverter<bool?>
+    {
+        public override bool? ReadJson(JsonReader reader,Type type,bool? old,bool exists,JsonSerializer serializer)
+        {
+            var token=JToken.Load(reader);
+            if(token.Type==JTokenType.Boolean) return (bool)token;
+            if(token.Type==JTokenType.String && bool.TryParse((string)token!,out bool value)) return value;
+            return null;
+        }
+        public override void WriteJson(JsonWriter writer,bool? value,JsonSerializer serializer) => writer.WriteValue(value);
+    }
+
+    internal sealed class WeatherLeadConverter : JsonConverter<int>
+    {
+        public override int ReadJson(JsonReader reader, Type type, int old, bool exists, JsonSerializer serializer)
+        {
+            var token=JToken.Load(reader);
+            if((token.Type==JTokenType.Integer || token.Type==JTokenType.Float || token.Type==JTokenType.String)
+                && double.TryParse(token.ToString(),NumberStyles.Float,CultureInfo.InvariantCulture,out double value) && !double.IsNaN(value))
+            {
+                if(value<2) return 1;
+                if(value>10) return 11;
+                if(value==Math.Truncate(value)) return (int)value;
+            }
+            return int.MinValue;
+        }
+        public override void WriteJson(JsonWriter writer,int value,JsonSerializer serializer) => writer.WriteValue(value);
     }
 
     // Invalid individual values fall back without discarding unrelated settings.

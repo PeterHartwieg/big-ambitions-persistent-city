@@ -27,6 +27,7 @@ namespace PersistentCity.Runtime
         private RivalFoodSettings rivalSettings = new RivalFoodSettings();
         private readonly Action<string>? rivalWarning;
         private readonly FoodCommerceState state;
+        private readonly int menuLimit;
         private readonly Dictionary<string, BuildingRegistration> registrations = new Dictionary<string, BuildingRegistration>(StringComparer.Ordinal);
         private readonly Dictionary<string, CityBuildingController> shopControllers = new Dictionary<string, CityBuildingController>(StringComparer.Ordinal);
         private long lastOwnershipRefresh = -1;
@@ -90,12 +91,13 @@ namespace PersistentCity.Runtime
             public IReadOnlyDictionary<string, FoodSupplySnapshot> Supply { get; }
         }
         public double EarliestMinute => SaveGameManager.Current.Day * 1440.0 + SaveGameManager.Current.Hour * 60.0;
-        public NativeFoodMarket(FoodCommerceState state, IReadOnlyList<Place>? places = null, bool enrolling = false, RivalFoodSettings? rivalSettings = null, Action<string>? rivalWarning = null)
+        public NativeFoodMarket(FoodCommerceState state, IReadOnlyList<Place>? places = null, bool enrolling = false, RivalFoodSettings? rivalSettings = null, Action<string>? rivalWarning = null, int maximumOffers = 4)
         {
             if (active != null) throw new InvalidOperationException("A food market already owns the native hooks.");
             save = SaveGameManager.Current; this.state = state;
             this.rivalSettings = rivalSettings ?? new RivalFoodSettings(); this.rivalSettings.Clamp();
             this.rivalWarning = rivalWarning;
+            menuLimit=Math.Max(1,Math.Min(FoodMenuPolicy.LiveMaximumOffers,maximumOffers));
             NativeFoodOwnership.ValidatePopulation(state);
             controllers = CityManager.Instance.cityBuildingControllers.Where(c => c != null).ToArray();
             discoveryRegistrations = new BuildingRegistration?[controllers.Length];
@@ -120,8 +122,10 @@ namespace PersistentCity.Runtime
         }
         public static string PlaceId(BuildingRegistration r) => "address:" + Uri.EscapeDataString(r.StreetName) + ":"
             + r.StreetNumber.ToString(System.Globalization.CultureInfo.InvariantCulture) + ":shop";
+        private bool SupportedMenu(BuildingRegistration r) => Supported(r) && r.cachedAvailableProducts.Count <= menuLimit;
         internal static bool Supported(BuildingRegistration r) => r.RentedByPlayer && r.HasEstablishedBusiness && !r.AvailableForRent
-            && r.cachedAvailableProducts != null && r.cachedAvailableProducts.Count >= 1 && r.cachedAvailableProducts.Count <= 4
+            && r.cachedAvailableProducts != null && r.cachedAvailableProducts.Count >= 1
+            && r.cachedAvailableProducts.Count <= FoodMenuPolicy.LiveMaximumOffers
             && r.cachedAvailableProducts.All(FoodProducts.Known)
             && r.cachedAvailableProducts.Distinct(StringComparer.Ordinal).Count() == r.cachedAvailableProducts.Count
             && BusinessTypeHelper.GetData(r.businessTypeName)?.simulator?.GetType() == typeof(FullServiceBusinessSimulator)
@@ -134,7 +138,7 @@ namespace PersistentCity.Runtime
         }
         private string MenuStatus(string placeId)
         {
-            if (!registrations.TryGetValue(placeId, out var reg) || !Supported(reg)) return "Excluded: unsupported menu or business type";
+            if (!registrations.TryGetValue(placeId, out var reg) || !SupportedMenu(reg)) return "Excluded: unsupported menu or business type";
             var authority = NativeFoodOwnership.Find(reg);
             if (authority == null || !authority.CanServe) return "Waiting for a safe native accounting boundary";
             return "";
@@ -148,7 +152,7 @@ namespace PersistentCity.Runtime
             if(!scopesByBusiness.TryGetValue(businessId,out var scope) || !registrations.TryGetValue(scope.PlaceId,out var reg)) return false;
             var authority=NativeFoodOwnership.Find(reg);
             if(authority?.BusinessId!=businessId) return false;
-            if(!Supported(reg)) { NativeFoodOwnership.Observe(reg,false);return false; }
+            if(!SupportedMenu(reg)) { NativeFoodOwnership.Observe(reg,false);return false; }
             return authority.CanServe;
         }
         private static bool ResidentPrice(string itemName, float price, ref bool __result)
@@ -172,7 +176,7 @@ namespace PersistentCity.Runtime
             // entrance geometry selects candidates before native supply setup/stock inspection.
             if (state.Shops.Count <= maximumCandidates) return Read(minute);
             var selected = state.Shops.Where(s => routinePlaces.ContainsKey(s.PlaceId) && registrations.TryGetValue(s.PlaceId, out var reg)
-                    && Supported(reg) && NativeFoodOwnership.Find(reg)?.CanServe == true)
+                    && SupportedMenu(reg) && NativeFoodOwnership.Find(reg)?.CanServe == true)
                 .Select(s => new { s.PlaceId, s.BusinessId, Distance = Position.Distance(origin.Position, routinePlaces[s.PlaceId].Position) })
                 .Where(s => s.Distance <= walkingToleranceMetres).OrderBy(s => s.Distance).ThenBy(s => s.BusinessId, StringComparer.Ordinal)
                 .Take(maximumCandidates).Select(s => s.PlaceId).ToArray();

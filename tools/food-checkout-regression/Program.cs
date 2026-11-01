@@ -43,13 +43,13 @@ static partial class Program
         public readonly NativeFoodMarket Market;
         public readonly string PlaceId;
         public BuildingRegistration Reg => Controller.buildingRegistration!;
-        public Fixture(int croissants = 5, int burgers = 7, int bags = 3)
+        public Fixture(int croissants = 5, int burgers = 7, int bags = 3, int maximumOffers = 4)
         {
             Hooks.Reset(); SaveGameManager.Current.modData.Clear(); SaveGameManager.Current.Minute = 0;
             Controller = new CityBuildingController { buildingRegistration = Registration(1, croissants, burgers, bags) };
             CityManager.Instance.cityBuildingControllers = new[] { Controller };
             PlaceId = NativeFoodMarket.PlaceId(Reg);
-            Market = new NativeFoodMarket(State, new[] { new Place { Id = PlaceId, Kind = PlaceKind.Shop } });
+            Market = new NativeFoodMarket(State, new[] { new Place { Id = PlaceId, Kind = PlaceKind.Shop } }, maximumOffers: maximumOffers);
         }
         public string BusinessId => State.Shops.Single().BusinessId;
         public ResidentMeal Meal(string resident, string product = Croissant, Money? cents = null) => new() {
@@ -149,6 +149,8 @@ static partial class Program
 
     static void Main()
     {
+        E4MissingPriceChecks();
+        E4MenuChecks();
         InvalidPreSalePricesRefuseWithoutUncertainFunds();
         CatalogueRefusalsRefundBeforeSale();
         FractionalCheckoutMatchesNativeAndRejectsSameCentPriceChanges();

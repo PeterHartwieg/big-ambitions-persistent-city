@@ -1,0 +1,306 @@
+{
+  "date": "2026-11-01",
+  "finding": "Sol-r2-2",
+  "scope": "Offline .NET 10 components only; native final-head rig gate pending; whole-frame not measured",
+  "method": "30 warmups; 301 publication/rebuild samples; 10001 source and active-lookup samples; 1 then 1024 images, sequential tiered JIT/host/GC effects apply; full-union workload repeats the single ID at 1 image and uses 32 distinct IDs at 1024 images",
+  "sourceSha256": {
+    "Core/FoodCampaignSource.cs": "b85edfc2a47ed8e3ffbcaa8d36104bba9bc59e33c70465d61660d6c4428f05b7",
+    "tests/FoodCampaignAwarenessTests.cs": "64101c8b2025b3f40076eb03004045ecb262f97e40a492a5db6e822e0ade2607",
+    "tools/campaign-awareness-regression/Program.cs": "9300c7b8e32ac7d66b0b673daa6d93db9f65b4e8da45e165ef06830035520681"
+  },
+  "campaignAwareness": [
+    {
+      "businesses": 1,
+      "hourlyC1AndPublication": {
+        "p50Ms": 0.0101,
+        "p95Ms": 0.0142,
+        "maxMs": 0.0241,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 2880
+      },
+      "dayTypeIndexRebuild": {
+        "p50Ms": 0.002,
+        "p95Ms": 0.0031,
+        "maxMs": 0.0141,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 72
+      },
+      "eightSlotDecision": {
+        "p50Ms": 0.0044,
+        "p95Ms": 0.0074,
+        "maxMs": 0.2362,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "eightCurrentHourActiveLookups": {
+        "p50Ms": 0.0003,
+        "p95Ms": 0.0004,
+        "maxMs": 0.0292,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "eightDelayedHourActiveLookups": {
+        "p50Ms": 0.0003,
+        "p95Ms": 0.0004,
+        "maxMs": 0.0153,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "eightUnobservedHourActiveLookups": {
+        "p50Ms": 0.0007,
+        "p95Ms": 0.0013,
+        "maxMs": 0.1741,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "fullUnionUnobservedHourActiveLookups": {
+        "p50Ms": 0.0026,
+        "p95Ms": 0.0047,
+        "maxMs": 0.2338,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "productionAllResidentsHourly": {
+        "p50Ms": 0.0105,
+        "p95Ms": 0.0167,
+        "maxMs": 0.0636,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 3244
+      },
+      "noCampaignHourlyCountProbes": {
+        "p50Ms": 0.0001,
+        "p95Ms": 0.0002,
+        "maxMs": 0.0096,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "disabledHourly": {
+        "p50Ms": 0,
+        "p95Ms": 0.0001,
+        "maxMs": 0.0002,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "referenceLookupAfterPublication": {
+        "duplicateIndexControl": {
+          "p50Ms": 0.0002,
+          "p95Ms": 0.0004,
+          "maxMs": 0.0037,
+          "allocatedBytesPerLookup": 272,
+          "spikesAtLeast30Ms": 0
+        },
+        "sharedProductionIndex": {
+          "p50Ms": 0,
+          "p95Ms": 0.0001,
+          "maxMs": 0.0001,
+          "allocatedBytesPerLookup": 0,
+          "spikesAtLeast30Ms": 0
+        }
+      },
+      "campaignBytesAbove19WithSharedReferences": 282,
+      "campaignRecordDelta": 1,
+      "imageWireCharacters": 265,
+      "nativeStateUnchanged": true,
+      "notes": "Offline .NET only. No native timing evidence. Whole-frame unavailable; count probes are included, not claimed as zero CPU work."
+    },
+    {
+      "businesses": 1024,
+      "hourlyC1AndPublication": {
+        "p50Ms": 2.0794,
+        "p95Ms": 3.1701,
+        "maxMs": 4.624,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 2198552
+      },
+      "dayTypeIndexRebuild": {
+        "p50Ms": 0.4835,
+        "p95Ms": 0.5375,
+        "maxMs": 0.6897,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 16440
+      },
+      "eightSlotDecision": {
+        "p50Ms": 0.0011,
+        "p95Ms": 0.0032,
+        "maxMs": 0.1695,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "eightCurrentHourActiveLookups": {
+        "p50Ms": 0.0002,
+        "p95Ms": 0.0003,
+        "maxMs": 0.0094,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "eightDelayedHourActiveLookups": {
+        "p50Ms": 0.0001,
+        "p95Ms": 0.0002,
+        "maxMs": 0.0146,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "eightUnobservedHourActiveLookups": {
+        "p50Ms": 0.0002,
+        "p95Ms": 0.0003,
+        "maxMs": 0.0172,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "fullUnionUnobservedHourActiveLookups": {
+        "p50Ms": 0.0008,
+        "p95Ms": 0.0009,
+        "maxMs": 0.0199,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "productionAllResidentsHourly": {
+        "p50Ms": 3.06,
+        "p95Ms": 4.5993,
+        "maxMs": 8.2773,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 2358090
+      },
+      "noCampaignHourlyCountProbes": {
+        "p50Ms": 0.0642,
+        "p95Ms": 0.0741,
+        "maxMs": 0.2641,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "disabledHourly": {
+        "p50Ms": 0,
+        "p95Ms": 0.0001,
+        "maxMs": 0.0081,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "referenceLookupAfterPublication": {
+        "duplicateIndexControl": {
+          "p50Ms": 0.1915,
+          "p95Ms": 0.2285,
+          "maxMs": 0.8868,
+          "allocatedBytesPerLookup": 227440,
+          "spikesAtLeast30Ms": 0
+        },
+        "sharedProductionIndex": {
+          "p50Ms": 0.0001,
+          "p95Ms": 0.0002,
+          "maxMs": 0.0013,
+          "allocatedBytesPerLookup": 0,
+          "spikesAtLeast30Ms": 0
+        }
+      },
+      "campaignBytesAbove19WithSharedReferences": 274446,
+      "campaignRecordDelta": 1024,
+      "imageWireCharacters": 265,
+      "nativeStateUnchanged": true,
+      "notes": "Offline .NET only. No native timing evidence. Whole-frame unavailable; count probes are included, not claimed as zero CPU work."
+    },
+    {
+      "noCampaignHeldModifierLookups": {
+        "shops": 8,
+        "sourceIds": 24,
+        "uncachedControl": {
+          "p50Ms": 0.0021,
+          "p95Ms": 0.0024,
+          "maxMs": 0.1685,
+          "spikesAtLeast30Ms": 0,
+          "allocatedBytesPerOperation": 0
+        },
+        "cached": {
+          "p50Ms": 0.0001,
+          "p95Ms": 0.0002,
+          "maxMs": 0.0144,
+          "spikesAtLeast30Ms": 0,
+          "allocatedBytesPerOperation": 0
+        }
+      }
+    }
+  ],
+  "campaignReader": [
+    {
+      "businesses": 1,
+      "campaignsPerBusiness": 6,
+      "cold": {
+        "p50Ms": 0.0078,
+        "p95Ms": 0.0143,
+        "maxMs": 0.053,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytes": 4056
+      },
+      "warm": {
+        "p50Ms": 0.0036,
+        "p95Ms": 0.0065,
+        "maxMs": 0.0145,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytes": 1912
+      },
+      "continuation": {
+        "p50Ms": 0.0032,
+        "p95Ms": 0.0068,
+        "maxMs": 0.0245,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerUnit": 1621
+      },
+      "retainedBytesPerSnapshot": 880
+    },
+    {
+      "businesses": 8,
+      "campaignsPerBusiness": 6,
+      "cold": {
+        "p50Ms": 0.0321,
+        "p95Ms": 0.0393,
+        "maxMs": 0.0845,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytes": 15336
+      },
+      "warm": {
+        "p50Ms": 0.0278,
+        "p95Ms": 0.0419,
+        "maxMs": 0.2202,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytes": 13192
+      },
+      "continuation": {
+        "p50Ms": 0.0028,
+        "p95Ms": 0.0077,
+        "maxMs": 0.0119,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerUnit": 1543
+      },
+      "retainedBytesPerSnapshot": 6392
+    },
+    {
+      "businesses": 1024,
+      "campaignsPerBusiness": 6,
+      "cold": {
+        "p50Ms": 1.1158,
+        "p95Ms": 6.3476,
+        "maxMs": 10.1882,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytes": 1640019
+      },
+      "warm": {
+        "p50Ms": 0.9913,
+        "p95Ms": 2.1562,
+        "maxMs": 2.7177,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytes": 1637896
+      },
+      "continuation": {
+        "p50Ms": 0.0008,
+        "p95Ms": 0.0016,
+        "maxMs": 1.3137,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerUnit": 1532
+      },
+      "retainedBytesPerSnapshot": 810298
+    }
+  ],
+  "above5Ms": [
+    "Separate cold C1 reader at 1024 businesses: p95 6.3476 ms"
+  ],
+  "spikesAtLeast30Ms": 0,
+  "implementationCommit": "0a58a8b"
+}

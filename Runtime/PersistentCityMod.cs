@@ -121,7 +121,7 @@ namespace PersistentCity.Runtime
                 AdditionalProductIds = b.Offers.Skip(1).Select(o => o.ProductId).ToList() }).ToList(),
                 Districts = FoodHouseholdCatalogue.Read(simulation.State.Places.Where(p => p.Kind == PlaceKind.Home)
                     .Select(p => p.District).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct(StringComparer.Ordinal).ToArray()).ToList() };
-            var adapter = new NativeFoodMarket(state, simulation.State.Places, enrolling: true, rivalSettings: settings.Rivals, rivalWarning: message => log?.Warn(message));
+            var adapter = new NativeFoodMarket(state, simulation.State.Places, enrolling: true, rivalSettings: settings.Rivals, rivalWarning: message => log?.Warn(message), maximumOffers: settings.FoodChoice.FoodMenuMaximumOffersPerShop);
             try { simulation.State.Food = state; simulation.AttachFoodMarket(adapter, settings.FoodChoice, settings.FoodMemory, settings.Awareness, rivalSettings: settings.Rivals); foodMarket = adapter; }
             catch { simulation.State.Food = null; adapter.Dispose(); throw; }
         }
@@ -187,10 +187,15 @@ namespace PersistentCity.Runtime
                 inspector.ShopName = place => foodMarket?.NameOf(place);
                 inspector.CurrentOwnShop = ObservedOwnShop;
                 settings.FoodChoice.Clamp(message => log.Info(message));
+                log.Info("Food menu policy v1: configured="+settings.FoodMenuMaximumOffersPerShop+", effective native maximum="+Math.Min(FoodMenuPolicy.LiveMaximumOffers,settings.FoodMenuMaximumOffersPerShop)+"; reserved product codes grant no sale permission.");
                 settings.MarketResearch.Clamp(message => log.Info(message));
                 settings.Rivals.Clamp(message => log.Info(message));
                 log.Info("Rival choice revision 1: estimated availability; weight="+settings.RivalChoiceWeight+", service="+settings.RivalAssumedServiceMinutes+", refresh="+settings.RivalRefreshGameMinutes+", reads/unit="+settings.RivalReadsPerUnit);
                 settings.Awareness.Clamp(message => log.Info(message));
+                settings.Campaigns.Clamp(message => log.Info(message));
+
+                settings.Weather.Clamp(message => log.Info(message));
+                log.Info("E1 weather revision 1; missing/failed source is unknown (neutral).");
                 log.Info("Food awareness v1: radius="+settings.Awareness.RadiusMetres.ToString(System.Globalization.CultureInfo.InvariantCulture)
                     +", draws/anchor="+settings.Awareness.DrawsPerAnchor+", discovery="+settings.Awareness.DiscoveryProbability.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 settings.FoodMemory.Clamp(message => log.Info(message));
@@ -584,7 +589,9 @@ namespace PersistentCity.Runtime
             routes = new MultimodalRoutes(state.Places, NativeTravelPace.WalkingMetresPerSecond / state.TravelClockRate, state.TravelClockRate, dependency, routeObjects);
             simulation = new CitySimulator(state, routes);
             dwellSpots = new DwellSpots();
-            simulation.AttachOptionalStops(new OptionalStopEnvironment(state.Places, dwellSpots), settings.OptionalStopChoicePercentage, settings.StopTiming());
+            var stopEnvironment=new OptionalStopEnvironment(state.Places,dwellSpots);
+            simulation.AttachOptionalStops(stopEnvironment, settings.OptionalStopChoicePercentage, settings.StopTiming());
+            simulation.AttachWeather(new FrameWeatherSource(()=>UnityEngine.Time.frameCount,()=>stopEnvironment.Raining),settings.Weather);
             seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
             if (state.Food == null)
                 state.Food = new FoodCommerceState { MealRhythmVersion = MealRhythm.PolicyVersion, HouseholdFinanceVersion = HouseholdFinance.PolicyVersion,
@@ -593,8 +600,8 @@ namespace PersistentCity.Runtime
                         .Select(p => p.District).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct(StringComparer.Ordinal).ToArray()).ToList() };
             if (state.Food.HouseholdFinanceVersion != HouseholdFinance.PolicyVersion || state.Food.MealRhythmVersion != MealRhythm.PolicyVersion)
                 throw new InvalidDataException("Unsupported experimental food policy; preserve this city and use a fresh development baseline.");
-            foodMarket = new NativeFoodMarket(state.Food, state.Places, rivalSettings: settings.Rivals, rivalWarning: message => log?.Warn(message));
-            simulation.AttachFoodMarket(foodMarket, settings.FoodChoice, settings.FoodMemory, settings.Awareness, rivalSettings: settings.Rivals);
+            foodMarket = new NativeFoodMarket(state.Food, state.Places, rivalSettings: settings.Rivals, rivalWarning: message => log?.Warn(message), maximumOffers: settings.FoodChoice.FoodMenuMaximumOffersPerShop);
+            simulation.AttachFoodMarket(foodMarket, settings.FoodChoice, settings.FoodMemory, settings.Awareness, campaign: foodMarket.AttachCampaignAwareness(state.Seed, settings.Campaigns), rivalSettings: settings.Rivals);
             saveIdentity = save;
             NativeInteriorCityView.Start(settings, log!, RestoreInterior);
             NativeCityClock.Start(save, settings.GameClockFactor, () => simulation?.IsCaughtUpTo(Now()) == true, () => simulation?.State.Food != null, Now);

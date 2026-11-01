@@ -1,0 +1,1300 @@
+{
+  "source": "d146f9007d15bf6361a73836653f5ebdc230918f",
+  "base": "51ce709e2696648a189a17f09890561446b2d75d",
+  "scope": "Offline synthetic evidence only; shared-machine waits are not performance samples. Native mod-work/whole-frame timing remain pending.",
+  "schema19Projection": {
+    "baseline": {
+      "schema": 19,
+      "length": 119083,
+      "digest": "D7FF8294F56C3B3D5AF736540274E68E9848319B34658859FC15E0D4CDB1F3A2",
+      "economy": {
+        "orders": 849,
+        "ordersDigest": "1B94987B3158044594B9C4D6A5473BA22BE0D4F3488D769CBBEE23318BB33B91",
+        "purchases": 797,
+        "spentUnits": 107967424757760,
+        "uncertain": 2,
+        "economyDigest": "74D0FE8081EA795D4D56A11B4B955DC6E777E3822C702D3C09BC9477E6679AF9",
+        "reloadDigest": "59B6F14D44CA0F996C5A828E2E538B52C5426347FCFA40767527B72D77F1D4FA"
+      }
+    },
+    "candidate": {
+      "schema": 20,
+      "length": 120184,
+      "digest": "39D2E48CD937D1BDD8E183CDB6125461FB44B67784DA935258CC88EC2BC1CAF0",
+      "weatherProjectionLength": 119083,
+      "weatherProjectionDigest": "D7FF8294F56C3B3D5AF736540274E68E9848319B34658859FC15E0D4CDB1F3A2",
+      "economy": {
+        "orders": 849,
+        "ordersDigest": "1B94987B3158044594B9C4D6A5473BA22BE0D4F3488D769CBBEE23318BB33B91",
+        "purchases": 797,
+        "spentUnits": 107967424757760,
+        "uncertain": 2,
+        "economyDigest": "74D0FE8081EA795D4D56A11B4B955DC6E777E3822C702D3C09BC9477E6679AF9",
+        "reloadDigest": "59B6F14D44CA0F996C5A828E2E538B52C5426347FCFA40767527B72D77F1D4FA"
+      }
+    },
+    "exactProjectedBytesAndEconomyDigestsMatch": true
+  },
+  "c4ZeroDelta": {
+    "baseline": "d146f9007d15bf6361a73836653f5ebdc230918f",
+    "candidateCoreCommit": "d146f9007d15bf6361a73836653f5ebdc230918f",
+    "fixtures": [
+      {
+        "fixture": "population.json",
+        "schema": 20,
+        "baselineBytes": 41787,
+        "candidateBytes": 41787,
+        "delta": 0,
+        "identicalBytes": true,
+        "sha256": "d138dda8ebf13e2969f9be519e0b6f2d6e42686a30fb1ddc44f69180a1d6457a"
+      },
+      {
+        "fixture": "food.json",
+        "schema": 20,
+        "baselineBytes": 66260,
+        "candidateBytes": 66260,
+        "delta": 0,
+        "identicalBytes": true,
+        "sha256": "37db731778de34a0749a86ecf65d4e01036cd0f158b4dc399e48c08bc914274b"
+      }
+    ],
+    "excludedBaselineSourceFiles": [
+      "Core/MarketResearchAccess.cs",
+      "Core/MarketResearchEngine.cs",
+      "Core/MarketResearchFriends.cs",
+      "Core/MarketResearchSettings.cs"
+    ]
+  },
+  "weather": [
+    {
+      "environment": ".NET 10.0.13",
+      "protocol": "20 warmups, 100 measured sweeps; policy/capture only, no routes/native work; frame increment per capture sweep; timers/arrays outside allocation counters",
+      "sizes": [
+        {
+          "count": 957,
+          "capture": {
+            "boundaries": 957,
+            "repeats": 100,
+            "p50Ms": 0.0298,
+            "p95Ms": 0.0341,
+            "maxMs": 0.059,
+            "nsPerBoundary": 31.138975966562175,
+            "bytesPerBoundary": 40.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "foodCapture": {
+            "boundaries": 957,
+            "repeats": 100,
+            "p50Ms": 0.0097,
+            "p95Ms": 0.0157,
+            "maxMs": 0.0215,
+            "nsPerBoundary": 10.135841170323928,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "cachedSourceReads": 120,
+          "cachedFoodSourceReads": 120,
+          "uncachedSourceReads": 114840,
+          "dry": {
+            "boundaries": 957,
+            "repeats": 100,
+            "p50Ms": 0.0053,
+            "p95Ms": 0.0089,
+            "maxMs": 0.009,
+            "nsPerBoundary": 5.538140020898641,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rain": {
+            "boundaries": 957,
+            "repeats": 100,
+            "p50Ms": 0.1351,
+            "p95Ms": 0.1709,
+            "maxMs": 0.2357,
+            "nsPerBoundary": 141.1703239289446,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rainConcatenationPrototype": {
+            "boundaries": 957,
+            "repeats": 100,
+            "p50Ms": 0.1448,
+            "p95Ms": 0.1795,
+            "maxMs": 0.6974,
+            "nsPerBoundary": 151.30616509926855,
+            "bytesPerBoundary": 120.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "residentWeatherMaxInclusiveBytes": 22,
+          "optionalBytesHeadroom": 2,
+          "consumerWeatherDeltaBytes": 2,
+          "consumerBytesHeadroom": 6
+        },
+        {
+          "count": 5000,
+          "capture": {
+            "boundaries": 5000,
+            "repeats": 100,
+            "p50Ms": 0.04,
+            "p95Ms": 0.0461,
+            "maxMs": 0.5846,
+            "nsPerBoundary": 8.0,
+            "bytesPerBoundary": 40.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "foodCapture": {
+            "boundaries": 5000,
+            "repeats": 100,
+            "p50Ms": 0.0261,
+            "p95Ms": 0.0264,
+            "maxMs": 0.0333,
+            "nsPerBoundary": 5.22,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "cachedSourceReads": 120,
+          "cachedFoodSourceReads": 120,
+          "uncachedSourceReads": 600000,
+          "dry": {
+            "boundaries": 5000,
+            "repeats": 100,
+            "p50Ms": 0.007,
+            "p95Ms": 0.0073,
+            "maxMs": 0.0074,
+            "nsPerBoundary": 1.4,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rain": {
+            "boundaries": 5000,
+            "repeats": 100,
+            "p50Ms": 0.2745,
+            "p95Ms": 0.3511,
+            "maxMs": 0.5382,
+            "nsPerBoundary": 54.9,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rainConcatenationPrototype": {
+            "boundaries": 5000,
+            "repeats": 100,
+            "p50Ms": 0.7041,
+            "p95Ms": 0.9577,
+            "maxMs": 1.0547,
+            "nsPerBoundary": 140.82,
+            "bytesPerBoundary": 126.4,
+            "sweepsAtLeast30Ms": 0
+          },
+          "residentWeatherMaxInclusiveBytes": 22,
+          "optionalBytesHeadroom": 2,
+          "consumerWeatherDeltaBytes": 2,
+          "consumerBytesHeadroom": 6
+        },
+        {
+          "count": 50000,
+          "capture": {
+            "boundaries": 50000,
+            "repeats": 100,
+            "p50Ms": 0.2669,
+            "p95Ms": 0.4459,
+            "maxMs": 0.7716,
+            "nsPerBoundary": 5.338,
+            "bytesPerBoundary": 40.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "foodCapture": {
+            "boundaries": 50000,
+            "repeats": 100,
+            "p50Ms": 0.1118,
+            "p95Ms": 0.1177,
+            "maxMs": 0.3495,
+            "nsPerBoundary": 2.236,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "cachedSourceReads": 120,
+          "cachedFoodSourceReads": 120,
+          "uncachedSourceReads": 6000000,
+          "dry": {
+            "boundaries": 50000,
+            "repeats": 100,
+            "p50Ms": 0.0271,
+            "p95Ms": 0.0313,
+            "maxMs": 0.6941,
+            "nsPerBoundary": 0.542,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rain": {
+            "boundaries": 50000,
+            "repeats": 100,
+            "p50Ms": 1.7165,
+            "p95Ms": 1.9076,
+            "maxMs": 2.2702,
+            "nsPerBoundary": 34.33,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rainConcatenationPrototype": {
+            "boundaries": 50000,
+            "repeats": 100,
+            "p50Ms": 2.1662,
+            "p95Ms": 2.5416,
+            "maxMs": 2.8251,
+            "nsPerBoundary": 43.324,
+            "bytesPerBoundary": 127.84,
+            "sweepsAtLeast30Ms": 0
+          },
+          "residentWeatherMaxInclusiveBytes": 22,
+          "optionalBytesHeadroom": 2,
+          "consumerWeatherDeltaBytes": 2,
+          "consumerBytesHeadroom": 6
+        }
+      ],
+      "oldPrecheck": {
+        "boundaries": 5000,
+        "repeats": 100,
+        "p50Ms": 1.5361,
+        "p95Ms": 1.6234,
+        "maxMs": 1.9396,
+        "nsPerBoundary": 307.22,
+        "bytesPerBoundary": 120.0,
+        "sweepsAtLeast30Ms": 0
+      },
+      "newPrecheck": {
+        "boundaries": 5000,
+        "repeats": 100,
+        "p50Ms": 1.5164,
+        "p95Ms": 1.5954,
+        "maxMs": 1.9054,
+        "nsPerBoundary": 303.28,
+        "bytesPerBoundary": 0.0,
+        "sweepsAtLeast30Ms": 0
+      },
+      "sink": "1O21AAAAAACIo0A",
+      "hash": 1708484150,
+      "admitted": 16097880
+    },
+    {
+      "environment": ".NET 10.0.13",
+      "protocol": "20 warmups, 100 measured sweeps; policy/capture only, no routes/native work; frame increment per capture sweep; timers/arrays outside allocation counters",
+      "sizes": [
+        {
+          "count": 957,
+          "capture": {
+            "boundaries": 957,
+            "repeats": 100,
+            "p50Ms": 0.0382,
+            "p95Ms": 0.0484,
+            "maxMs": 0.1285,
+            "nsPerBoundary": 39.916405433646815,
+            "bytesPerBoundary": 40.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "foodCapture": {
+            "boundaries": 957,
+            "repeats": 100,
+            "p50Ms": 0.0174,
+            "p95Ms": 0.0216,
+            "maxMs": 0.0367,
+            "nsPerBoundary": 18.181818181818183,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "cachedSourceReads": 120,
+          "cachedFoodSourceReads": 120,
+          "uncachedSourceReads": 114840,
+          "dry": {
+            "boundaries": 957,
+            "repeats": 100,
+            "p50Ms": 0.0073,
+            "p95Ms": 0.0109,
+            "maxMs": 0.0137,
+            "nsPerBoundary": 7.628004179728317,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rain": {
+            "boundaries": 957,
+            "repeats": 100,
+            "p50Ms": 0.2154,
+            "p95Ms": 0.3903,
+            "maxMs": 0.5964,
+            "nsPerBoundary": 225.07836990595612,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rainConcatenationPrototype": {
+            "boundaries": 957,
+            "repeats": 100,
+            "p50Ms": 0.2705,
+            "p95Ms": 0.5506,
+            "maxMs": 1.4303,
+            "nsPerBoundary": 282.6541274817137,
+            "bytesPerBoundary": 120.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "residentWeatherMaxInclusiveBytes": 22,
+          "optionalBytesHeadroom": 2,
+          "consumerWeatherDeltaBytes": 2,
+          "consumerBytesHeadroom": 6
+        },
+        {
+          "count": 5000,
+          "capture": {
+            "boundaries": 5000,
+            "repeats": 100,
+            "p50Ms": 0.1076,
+            "p95Ms": 0.3969,
+            "maxMs": 1.7373,
+            "nsPerBoundary": 21.52,
+            "bytesPerBoundary": 40.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "foodCapture": {
+            "boundaries": 5000,
+            "repeats": 100,
+            "p50Ms": 0.0465,
+            "p95Ms": 0.148,
+            "maxMs": 0.35,
+            "nsPerBoundary": 9.3,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "cachedSourceReads": 120,
+          "cachedFoodSourceReads": 120,
+          "uncachedSourceReads": 600000,
+          "dry": {
+            "boundaries": 5000,
+            "repeats": 100,
+            "p50Ms": 0.013,
+            "p95Ms": 0.0137,
+            "maxMs": 0.0141,
+            "nsPerBoundary": 2.6,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rain": {
+            "boundaries": 5000,
+            "repeats": 100,
+            "p50Ms": 0.3827,
+            "p95Ms": 0.6725,
+            "maxMs": 0.8359,
+            "nsPerBoundary": 76.54,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rainConcatenationPrototype": {
+            "boundaries": 5000,
+            "repeats": 100,
+            "p50Ms": 0.8155,
+            "p95Ms": 1.2481,
+            "maxMs": 1.6695,
+            "nsPerBoundary": 163.1,
+            "bytesPerBoundary": 126.4,
+            "sweepsAtLeast30Ms": 0
+          },
+          "residentWeatherMaxInclusiveBytes": 22,
+          "optionalBytesHeadroom": 2,
+          "consumerWeatherDeltaBytes": 2,
+          "consumerBytesHeadroom": 6
+        },
+        {
+          "count": 50000,
+          "capture": {
+            "boundaries": 50000,
+            "repeats": 100,
+            "p50Ms": 0.4994,
+            "p95Ms": 1.1077,
+            "maxMs": 2.4531,
+            "nsPerBoundary": 9.988,
+            "bytesPerBoundary": 40.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "foodCapture": {
+            "boundaries": 50000,
+            "repeats": 100,
+            "p50Ms": 0.1731,
+            "p95Ms": 0.3508,
+            "maxMs": 0.7153,
+            "nsPerBoundary": 3.462,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "cachedSourceReads": 120,
+          "cachedFoodSourceReads": 120,
+          "uncachedSourceReads": 6000000,
+          "dry": {
+            "boundaries": 50000,
+            "repeats": 100,
+            "p50Ms": 0.0488,
+            "p95Ms": 0.0674,
+            "maxMs": 1.6776,
+            "nsPerBoundary": 0.976,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rain": {
+            "boundaries": 50000,
+            "repeats": 100,
+            "p50Ms": 2.3154,
+            "p95Ms": 3.6779,
+            "maxMs": 3.8871,
+            "nsPerBoundary": 46.308,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rainConcatenationPrototype": {
+            "boundaries": 50000,
+            "repeats": 100,
+            "p50Ms": 3.3217,
+            "p95Ms": 5.1282,
+            "maxMs": 5.6037,
+            "nsPerBoundary": 66.434,
+            "bytesPerBoundary": 127.84,
+            "sweepsAtLeast30Ms": 0
+          },
+          "residentWeatherMaxInclusiveBytes": 22,
+          "optionalBytesHeadroom": 2,
+          "consumerWeatherDeltaBytes": 2,
+          "consumerBytesHeadroom": 6
+        }
+      ],
+      "oldPrecheck": {
+        "boundaries": 5000,
+        "repeats": 100,
+        "p50Ms": 2.1638,
+        "p95Ms": 2.9515,
+        "maxMs": 3.1821,
+        "nsPerBoundary": 432.76,
+        "bytesPerBoundary": 120.0,
+        "sweepsAtLeast30Ms": 0
+      },
+      "newPrecheck": {
+        "boundaries": 5000,
+        "repeats": 100,
+        "p50Ms": 1.0165,
+        "p95Ms": 1.4913,
+        "maxMs": 1.9458,
+        "nsPerBoundary": 203.3,
+        "bytesPerBoundary": 0.0,
+        "sweepsAtLeast30Ms": 0
+      },
+      "sink": "1O21AAAAAACIo0A",
+      "hash": 1708484150,
+      "admitted": 16097880
+    },
+    {
+      "environment": ".NET 10.0.13",
+      "protocol": "20 warmups, 100 measured sweeps; policy/capture only, no routes/native work; frame increment per capture sweep; timers/arrays outside allocation counters",
+      "sizes": [
+        {
+          "count": 957,
+          "capture": {
+            "boundaries": 957,
+            "repeats": 100,
+            "p50Ms": 0.0207,
+            "p95Ms": 0.0245,
+            "maxMs": 0.051,
+            "nsPerBoundary": 21.630094043887148,
+            "bytesPerBoundary": 40.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "foodCapture": {
+            "boundaries": 957,
+            "repeats": 100,
+            "p50Ms": 0.01,
+            "p95Ms": 0.0159,
+            "maxMs": 0.0163,
+            "nsPerBoundary": 10.449320794148381,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "cachedSourceReads": 120,
+          "cachedFoodSourceReads": 120,
+          "uncachedSourceReads": 114840,
+          "dry": {
+            "boundaries": 957,
+            "repeats": 100,
+            "p50Ms": 0.0053,
+            "p95Ms": 0.0088,
+            "maxMs": 0.0104,
+            "nsPerBoundary": 5.538140020898641,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rain": {
+            "boundaries": 957,
+            "repeats": 100,
+            "p50Ms": 0.1363,
+            "p95Ms": 0.1448,
+            "maxMs": 0.1743,
+            "nsPerBoundary": 142.42424242424244,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rainConcatenationPrototype": {
+            "boundaries": 957,
+            "repeats": 100,
+            "p50Ms": 0.1476,
+            "p95Ms": 0.19,
+            "maxMs": 0.7295,
+            "nsPerBoundary": 154.2319749216301,
+            "bytesPerBoundary": 120.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "residentWeatherMaxInclusiveBytes": 22,
+          "optionalBytesHeadroom": 2,
+          "consumerWeatherDeltaBytes": 2,
+          "consumerBytesHeadroom": 6
+        },
+        {
+          "count": 5000,
+          "capture": {
+            "boundaries": 5000,
+            "repeats": 100,
+            "p50Ms": 0.0459,
+            "p95Ms": 0.0551,
+            "maxMs": 0.6598,
+            "nsPerBoundary": 9.18,
+            "bytesPerBoundary": 40.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "foodCapture": {
+            "boundaries": 5000,
+            "repeats": 100,
+            "p50Ms": 0.0262,
+            "p95Ms": 0.0269,
+            "maxMs": 0.0332,
+            "nsPerBoundary": 5.24,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "cachedSourceReads": 120,
+          "cachedFoodSourceReads": 120,
+          "uncachedSourceReads": 600000,
+          "dry": {
+            "boundaries": 5000,
+            "repeats": 100,
+            "p50Ms": 0.0069,
+            "p95Ms": 0.008,
+            "maxMs": 0.0149,
+            "nsPerBoundary": 1.38,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rain": {
+            "boundaries": 5000,
+            "repeats": 100,
+            "p50Ms": 0.2746,
+            "p95Ms": 0.3395,
+            "maxMs": 0.4059,
+            "nsPerBoundary": 54.92,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rainConcatenationPrototype": {
+            "boundaries": 5000,
+            "repeats": 100,
+            "p50Ms": 0.6993,
+            "p95Ms": 0.8315,
+            "maxMs": 1.0724,
+            "nsPerBoundary": 139.86,
+            "bytesPerBoundary": 126.4,
+            "sweepsAtLeast30Ms": 0
+          },
+          "residentWeatherMaxInclusiveBytes": 22,
+          "optionalBytesHeadroom": 2,
+          "consumerWeatherDeltaBytes": 2,
+          "consumerBytesHeadroom": 6
+        },
+        {
+          "count": 50000,
+          "capture": {
+            "boundaries": 50000,
+            "repeats": 100,
+            "p50Ms": 0.3043,
+            "p95Ms": 0.3698,
+            "maxMs": 0.679,
+            "nsPerBoundary": 6.086,
+            "bytesPerBoundary": 40.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "foodCapture": {
+            "boundaries": 50000,
+            "repeats": 100,
+            "p50Ms": 0.1786,
+            "p95Ms": 0.2123,
+            "maxMs": 0.5208,
+            "nsPerBoundary": 3.572,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "cachedSourceReads": 120,
+          "cachedFoodSourceReads": 120,
+          "uncachedSourceReads": 6000000,
+          "dry": {
+            "boundaries": 50000,
+            "repeats": 100,
+            "p50Ms": 0.0272,
+            "p95Ms": 0.0334,
+            "maxMs": 0.7235,
+            "nsPerBoundary": 0.544,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rain": {
+            "boundaries": 50000,
+            "repeats": 100,
+            "p50Ms": 1.7105,
+            "p95Ms": 1.9573,
+            "maxMs": 2.1473,
+            "nsPerBoundary": 34.21,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rainConcatenationPrototype": {
+            "boundaries": 50000,
+            "repeats": 100,
+            "p50Ms": 2.2071,
+            "p95Ms": 2.4605,
+            "maxMs": 2.6865,
+            "nsPerBoundary": 44.142,
+            "bytesPerBoundary": 127.84,
+            "sweepsAtLeast30Ms": 0
+          },
+          "residentWeatherMaxInclusiveBytes": 22,
+          "optionalBytesHeadroom": 2,
+          "consumerWeatherDeltaBytes": 2,
+          "consumerBytesHeadroom": 6
+        }
+      ],
+      "oldPrecheck": {
+        "boundaries": 5000,
+        "repeats": 100,
+        "p50Ms": 1.605,
+        "p95Ms": 2.3359,
+        "maxMs": 2.6195,
+        "nsPerBoundary": 321.0,
+        "bytesPerBoundary": 120.0,
+        "sweepsAtLeast30Ms": 0
+      },
+      "newPrecheck": {
+        "boundaries": 5000,
+        "repeats": 100,
+        "p50Ms": 1.5172,
+        "p95Ms": 1.7037,
+        "maxMs": 1.8595,
+        "nsPerBoundary": 303.44,
+        "bytesPerBoundary": 0.0,
+        "sweepsAtLeast30Ms": 0
+      },
+      "sink": "1O21AAAAAACIo0A",
+      "hash": 1708484150,
+      "admitted": 16097880
+    }
+  ],
+  "weatherSummary": {
+    "measuredSweeps": 5100,
+    "sweepsAtLeast30Ms": 0,
+    "maxMs": 5.6037
+  },
+  "capacity": [
+    {
+      "name": "CF32",
+      "schema": 20,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "79D59D623465B606D78900FD47A37B9573E9AA17C230A3A8EB61D45A8E477C7D",
+      "residents": 50000,
+      "representation": 3,
+      "consumers": 150000,
+      "visitsPerResident": 32,
+      "visits": 1600000,
+      "placeCount": 20000,
+      "extraExistingPlaces": 19991,
+      "extraExistingPlaceChars": 6343907,
+      "extraExistingNameChars": 6239005,
+      "actualExistingGrowthChars": 12582912,
+      "existingGrowthAllowanceChars": 12582912,
+      "memoryEntries": 600000,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 193429684,
+      "utf8Bytes": 193429684,
+      "streamingRecords": 1970132,
+      "semanticRecords": 1970129,
+      "runs": 1,
+      "writeMs": 2204.0,
+      "readMs": 8033.9,
+      "migrationFrom17Ms": null,
+      "migrationSourceChars": null,
+      "migrationRefusal": "Serialized state exceeds the input size limit.",
+      "retainedBytes": 429888320,
+      "readAllocatedBytes": 3275178928,
+      "processPeakBytes": 3275988992,
+      "syntheticReservation": {
+        "futureContractChars": 25284682,
+        "alreadyCountedBHeaderChars": 56,
+        "alreadyCountedHeldTuningChars": 405,
+        "alreadyCountedAwarenessChars": 9514,
+        "alreadyCountedAwarenessRecords": 24,
+        "alreadyCountedWeatherChars": 1400063,
+        "alreadyCountedWeatherRecords": 50000,
+        "fixedMemoryHeadroomChars": 1950000,
+        "futureContractRecords": 141735,
+        "totalBudgetedChars": 220664366,
+        "totalBudgetedUtf8Bytes": 220664366,
+        "totalBudgetedRecords": 2111867
+      }
+    },
+    {
+      "name": "CF64",
+      "schema": 20,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "90DA738A33A6D005AD71B942B0BD713E65429A01AFEC9167A3118327CA9B7A66",
+      "residents": 50000,
+      "representation": 3,
+      "consumers": 150000,
+      "visitsPerResident": 64,
+      "visits": 3200000,
+      "placeCount": 20000,
+      "extraExistingPlaces": 19991,
+      "extraExistingPlaceChars": 6343907,
+      "extraExistingNameChars": 6239005,
+      "actualExistingGrowthChars": 12582912,
+      "existingGrowthAllowanceChars": 12582912,
+      "memoryEntries": 600000,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 231829684,
+      "utf8Bytes": 231829684,
+      "streamingRecords": 3570132,
+      "semanticRecords": 3570129,
+      "runs": 1,
+      "writeMs": 4615.4,
+      "readMs": 15171.3,
+      "migrationFrom17Ms": null,
+      "migrationSourceChars": null,
+      "migrationRefusal": "Serialized state exceeds the input size limit.",
+      "retainedBytes": 506688576,
+      "readAllocatedBytes": 4082802568,
+      "processPeakBytes": 3305230336,
+      "syntheticReservation": {
+        "futureContractChars": 25284682,
+        "alreadyCountedBHeaderChars": 56,
+        "alreadyCountedHeldTuningChars": 405,
+        "alreadyCountedAwarenessChars": 9514,
+        "alreadyCountedAwarenessRecords": 24,
+        "alreadyCountedWeatherChars": 1400063,
+        "alreadyCountedWeatherRecords": 50000,
+        "fixedMemoryHeadroomChars": 1950000,
+        "futureContractRecords": 141735,
+        "totalBudgetedChars": 259064366,
+        "totalBudgetedUtf8Bytes": 259064366,
+        "totalBudgetedRecords": 3711867
+      }
+    }
+  ],
+  "awareness": {
+    "schema": 20,
+    "runtime": ".NET 10.0.13",
+    "baseline": "c0af745 A3/B0b metadata rank loop; native reads/routes excluded",
+    "policy": {
+      "radiusMetres": 250,
+      "drawsPerAnchor": 4,
+      "discoveryDailyProbability": 0.02
+    },
+    "stages": [
+      {
+        "alternatives": 1024,
+        "seed": 77,
+        "dense": true,
+        "buildMs": {
+          "p50": 1.5538,
+          "p95": 1.7279,
+          "max": 1.7279,
+          "spikesAtLeast30ms": 0
+        },
+        "buildAllocatedBytes": 406112.0,
+        "samples": 3000,
+        "baselineAdmissionMs": {
+          "p50": 0.0826,
+          "p95": 0.1429,
+          "max": 3.4071,
+          "spikesAtLeast30ms": 0
+        },
+        "candidateAdmissionMs": {
+          "p50": 0.0062,
+          "p95": 0.0232,
+          "max": 0.145,
+          "spikesAtLeast30ms": 0
+        },
+        "baselineAllocatedBytes": 323.2373333333333,
+        "candidateAllocatedBytes": 1079.6853333333333,
+        "maxUnion": 18,
+        "maxShortlist": 8,
+        "maxRouteSlots": 16,
+        "heldImageJsonBytes": 2052
+      },
+      {
+        "alternatives": 20000,
+        "seed": 77,
+        "dense": true,
+        "buildMs": {
+          "p50": 25.7125,
+          "p95": 34.9501,
+          "max": 34.9501,
+          "spikesAtLeast30ms": 2
+        },
+        "buildAllocatedBytes": 6755886.4,
+        "samples": 3000,
+        "baselineAdmissionMs": {
+          "p50": 2.3392,
+          "p95": 2.8323,
+          "max": 5.5968,
+          "spikesAtLeast30ms": 0
+        },
+        "candidateAdmissionMs": {
+          "p50": 0.0168,
+          "p95": 0.0269,
+          "max": 0.1015,
+          "spikesAtLeast30ms": 0
+        },
+        "baselineAllocatedBytes": 280.0,
+        "candidateAllocatedBytes": 884.64,
+        "maxUnion": 19,
+        "maxShortlist": 8,
+        "maxRouteSlots": 16,
+        "heldImageJsonBytes": 2067
+      },
+      {
+        "alternatives": 1024,
+        "seed": 77,
+        "dense": false,
+        "buildMs": {
+          "p50": 2.3086,
+          "p95": 10.6445,
+          "max": 10.6445,
+          "spikesAtLeast30ms": 0
+        },
+        "buildAllocatedBytes": 822526.4,
+        "samples": 3000,
+        "baselineAdmissionMs": {
+          "p50": 0.0849,
+          "p95": 0.1249,
+          "max": 0.3022,
+          "spikesAtLeast30ms": 0
+        },
+        "candidateAdmissionMs": {
+          "p50": 0.0037,
+          "p95": 0.006,
+          "max": 0.0182,
+          "spikesAtLeast30ms": 0
+        },
+        "baselineAllocatedBytes": 280.0,
+        "candidateAllocatedBytes": 827.064,
+        "maxUnion": 17,
+        "maxShortlist": 8,
+        "maxRouteSlots": 16,
+        "heldImageJsonBytes": 1566
+      },
+      {
+        "alternatives": 20000,
+        "seed": 77,
+        "dense": false,
+        "buildMs": {
+          "p50": 23.9821,
+          "p95": 46.2181,
+          "max": 46.2181,
+          "spikesAtLeast30ms": 1
+        },
+        "buildAllocatedBytes": 15976604.8,
+        "samples": 3000,
+        "baselineAdmissionMs": {
+          "p50": 1.6905,
+          "p95": 2.5706,
+          "max": 3.6335,
+          "spikesAtLeast30ms": 0
+        },
+        "candidateAdmissionMs": {
+          "p50": 0.0059,
+          "p95": 0.0131,
+          "max": 2.9605,
+          "spikesAtLeast30ms": 0
+        },
+        "baselineAllocatedBytes": 280.0,
+        "candidateAllocatedBytes": 827.0986666666666,
+        "maxUnion": 17,
+        "maxShortlist": 8,
+        "maxRouteSlots": 16,
+        "heldImageJsonBytes": 1440
+      }
+    ],
+    "saved": [
+      {
+        "residents": 957,
+        "consumers": 1914,
+        "baselineBytes": 1338075,
+        "candidateBytes": 1341149,
+        "addedBytes": 3074,
+        "awarenessProjectionSchema": 19,
+        "currentWireBytes": 1353653,
+        "weatherBytes": 12504,
+        "managedGraphBytesSharedStrings": 1048,
+        "heldImageBytes": 3038,
+        "Streaming": 3864,
+        "Semantic": 3861
+      },
+      {
+        "residents": 2500,
+        "consumers": 5000,
+        "baselineBytes": 3491673,
+        "candidateBytes": 3494747,
+        "addedBytes": 3074,
+        "awarenessProjectionSchema": 19,
+        "currentWireBytes": 3527310,
+        "weatherBytes": 32563,
+        "managedGraphBytesSharedStrings": 1048,
+        "heldImageBytes": 3038,
+        "Streaming": 10036,
+        "Semantic": 10033
+      }
+    ]
+  },
+  "awarenessRebuild": {
+    "workPerUnit": 64,
+    "cases": [
+      {
+        "alternatives": 1024,
+        "dense": true,
+        "iterations": 6,
+        "includesColdJit": true,
+        "unitCount": 2454,
+        "maxItems": 64,
+        "unitMs": {
+          "p50": 0.0031,
+          "p95": 0.0114,
+          "max": 4.3072,
+          "spikesAtLeast30ms": 0
+        },
+        "totalCpuMs": {
+          "p50": 1.7044000000000006,
+          "p95": 13.070099999999979,
+          "max": 13.070099999999979,
+          "spikesAtLeast30ms": 0
+        },
+        "spikes": []
+      },
+      {
+        "alternatives": 20000,
+        "dense": true,
+        "iterations": 6,
+        "includesColdJit": true,
+        "unitCount": 56340,
+        "maxItems": 64,
+        "unitMs": {
+          "p50": 0.0018,
+          "p95": 0.0087,
+          "max": 2.9192,
+          "spikesAtLeast30ms": 0
+        },
+        "totalCpuMs": {
+          "p50": 30.017300000002237,
+          "p95": 32.79750000000138,
+          "max": 32.79750000000138,
+          "spikesAtLeast30ms": 3
+        },
+        "spikes": []
+      },
+      {
+        "alternatives": 1024,
+        "dense": false,
+        "iterations": 6,
+        "includesColdJit": true,
+        "unitCount": 2724,
+        "maxItems": 64,
+        "unitMs": {
+          "p50": 0.0034,
+          "p95": 0.0116,
+          "max": 0.295,
+          "spikesAtLeast30ms": 0
+        },
+        "totalCpuMs": {
+          "p50": 1.859900000000003,
+          "p95": 1.965200000000002,
+          "max": 1.965200000000002,
+          "spikesAtLeast30ms": 0
+        },
+        "spikes": []
+      },
+      {
+        "alternatives": 20000,
+        "dense": false,
+        "iterations": 6,
+        "includesColdJit": true,
+        "unitCount": 62448,
+        "maxItems": 64,
+        "unitMs": {
+          "p50": 0.0029,
+          "p95": 0.0086,
+          "max": 7.3606,
+          "spikesAtLeast30ms": 0
+        },
+        "totalCpuMs": {
+          "p50": 37.330700000000085,
+          "p95": 43.20160000000066,
+          "max": 43.20160000000066,
+          "spikesAtLeast30ms": 6
+        },
+        "spikes": []
+      }
+    ]
+  },
+  "offlineTimingMetricsAtLeast30": [
+    {
+      "path": "awareness-rebuild#0.cases[1].totalCpuMs.p50",
+      "value": 30.017300000002237,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "awareness-rebuild#0.cases[1].totalCpuMs.p95",
+      "value": 32.79750000000138,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "awareness-rebuild#0.cases[1].totalCpuMs.max",
+      "value": 32.79750000000138,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "awareness-rebuild#0.cases[3].totalCpuMs.p50",
+      "value": 37.330700000000085,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "awareness-rebuild#0.cases[3].totalCpuMs.p95",
+      "value": 43.20160000000066,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "awareness-rebuild#0.cases[3].totalCpuMs.max",
+      "value": 43.20160000000066,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "awareness-regression#0.stages[1].buildMs.p95",
+      "value": 34.9501,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "awareness-regression#0.stages[1].buildMs.max",
+      "value": 34.9501,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "awareness-regression#0.stages[3].buildMs.p95",
+      "value": 46.2181,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "awareness-regression#0.stages[3].buildMs.max",
+      "value": 46.2181,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "capacity-CF32#0.writeMs",
+      "value": 2204.0,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "capacity-CF32#0.readMs",
+      "value": 8033.9,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "capacity-CF64#0.writeMs",
+      "value": 4615.4,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "capacity-CF64#0.readMs",
+      "value": 15171.3,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "core-identity-regression#0.simulateMs",
+      "value": 2506,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "donut-differential#0.cold.coldMs",
+      "value": 52.7902,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-memory-regression#0.rush[0].cpuMs",
+      "value": 284.2804,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-memory-regression#0.rush[1].cpuMs",
+      "value": 302.3714,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-memory-regression#0.rush[2].cpuMs",
+      "value": 298.3946,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-memory-regression#0.rush[3].cpuMs",
+      "value": 167.9511,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-memory-regression#0.rush[4].cpuMs",
+      "value": 155.9387,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-memory-regression#0.rush[5].cpuMs",
+      "value": 62.8599,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-memory-regression#0.rush[6].cpuMs",
+      "value": 286.6677,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-memory-regression#0.rush[7].cpuMs",
+      "value": 262.6753,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-memory-regression#0.rush[8].cpuMs",
+      "value": 285.1319,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-memory-regression#0.rush[9].cpuMs",
+      "value": 288.2558,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-memory-regression#0.rush[10].cpuMs",
+      "value": 256.3326,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-memory-regression#0.rush[11].cpuMs",
+      "value": 281.5952,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-memory-regression#0.rush[12].cpuMs",
+      "value": 106.0002,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-memory-regression#0.rush[13].cpuMs",
+      "value": 105.7232,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-routines#0.populationReplayMs",
+      "value": 283.1399,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-routines#0.opportunityMs",
+      "value": 38.0383,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-routines#0.scenarios[0].SimulationMs",
+      "value": 32.4227,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-routines#0.scenarios[1].QuoteMs",
+      "value": 39.8683,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-routines#0.scenarios[1].SimulationMs",
+      "value": 49.8432,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-routines#0.scenarios[2].SimulationMs",
+      "value": 62.4463,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-routines#0.scenarios[3].QuoteMs",
+      "value": 65.704,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-routines#0.scenarios[3].SimulationMs",
+      "value": 70.8019,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-routines#0.scenarios[4].QuoteMs",
+      "value": 51.2733,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-routines#0.scenarios[4].SimulationMs",
+      "value": 58.4257,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-routines#0.scenarios[5].QuoteMs",
+      "value": 39.7225,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "food-routines#0.scenarios[5].SimulationMs",
+      "value": 85.6078,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "salad-differential#0.cold.coldMs",
+      "value": 41.2137,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    },
+    {
+      "path": "salad-differential#1.cold.coldMs",
+      "value": 30.1374,
+      "boundary": "offline aggregate/batch/whole-save or benchmark timing, not native frame timing"
+    }
+  ],
+  "offlineTextTimingFlags": [
+    {
+      "log": "build/e1-sync/latest-gates/food-catalogue-regression.log",
+      "line": "D1 PERF 20000: empty-cache build 39.9565 ms/19483777 B; warm refresh 0.8403 ms/32 B; 16-read unit 0.0023 ms/0 B; eight details 0.0108 ms/11632 B; retained 9838136 B (GC estimate; native fixtures excluded)."
+    }
+  ],
+  "implementedWeatherSummary": {
+    "excludesControlKernels": [
+      "rainConcatenationPrototype",
+      "oldPrecheck"
+    ],
+    "measuredSweeps": 3900,
+    "sweepsAtLeast30Ms": 0,
+    "maxMs": 3.8871,
+    "largestProcessCaseP95Ms": 3.6779,
+    "scope": "Offline separated policy/capture/precheck sweeps only; not combined mod-work or native whole-frame timing"
+  }
+}

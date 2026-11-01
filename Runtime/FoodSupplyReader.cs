@@ -47,9 +47,13 @@ namespace PersistentCity.Runtime
 
         public static IReadOnlyDictionary<string, FoodSupplySnapshot> ReadMenu(BuildingRegistration registration, IEnumerable<string> products)
         {
-            var ids = products.Distinct(StringComparer.Ordinal).ToArray();
-            if (registration == null || ids.Length == 0 || ids.Length > 4 || ids.Any(string.IsNullOrWhiteSpace))
-                throw new ArgumentException("A shop and one to four products are required.");
+            // Native callers already capture an immutable ordered menu array. Reuse it rather than
+            // rebuilding a hash set and array on every refresh. Refuse duplicate/oversized menus.
+            var ids = products as string[] ?? products.Take(FoodMenuPolicy.MaximumOffers+1).ToArray();
+            if (registration == null || ids.Length == 0 || ids.Length > FoodMenuPolicy.MaximumOffers || ids.Any(string.IsNullOrWhiteSpace))
+                throw new ArgumentException("A shop and one to eight products are required.");
+            for(int i=0;i<ids.Length;i++) for(int j=0;j<i;j++)
+                if(string.Equals(ids[i],ids[j],StringComparison.Ordinal)) throw new ArgumentException("Duplicate menu product.");
             var save = SaveGameManager.Current ?? throw new InvalidOperationException("No current city.");
             var result = ids.ToDictionary(id => id, id => new FoodSupplySnapshot {
                 AtMinute = save.Day * 1440.0 + save.Hour * 60.0 + save.Minute, ProductId = id }, StringComparer.Ordinal);

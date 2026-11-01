@@ -20,23 +20,32 @@ namespace PersistentCity.Core
         public FoodMemoryStore(FoodCommerceState food)
         {
             this.food = food;
-            foreach (var reference in food.BusinessReferences)
+            Synchronize();
+        }
+        private int indexedCount;
+        private void Synchronize()
+        {
+            while (indexedCount < food.BusinessReferences.Count)
             {
+                var reference=food.BusinessReferences[indexedCount++];
                 byId.Add(reference.BusinessId, reference); bySlot.Add(reference.Slot, reference);
                 Count(reference.BusinessId, reference.Slot, out int characters, out int bytes);
                 tableCharacters += characters; tableBytes += bytes;
+                if(indexedCount==1) {tableCharacters--;tableBytes--;}
                 nextSlot = Math.Max(nextSlot, reference.Slot + 1);
             }
-            if (food.BusinessReferences.Count != 0) { tableCharacters--; tableBytes--; }
         }
 
-        public BusinessReference? Reference(int slot) => bySlot.TryGetValue(slot, out var reference) ? reference : null;
+        public BusinessReference? Reference(int slot) { Synchronize(); return bySlot.TryGetValue(slot, out var reference) ? reference : null; }
 
-        public int Find(string businessId) => byId.TryGetValue(businessId, out var reference) ? reference.Slot : -1;
-        public string Identity(int slot) => bySlot[slot].BusinessId;
+        public int Find(string businessId) { Synchronize(); return byId.TryGetValue(businessId, out var reference) ? reference.Slot : -1; }
+        public string Identity(int slot) { Synchronize(); return bySlot[slot].BusinessId; }
+
+        public int RegisterCampaign(string businessId, string placeId) => Register(businessId, placeId);
 
         private int Register(string businessId, string placeId)
         {
+            Synchronize();
             if (byId.TryGetValue(businessId, out var existing))
             {
                 if (existing.PlaceId != placeId) throw new InvalidOperationException("Business generation changed its place.");
@@ -47,7 +56,7 @@ namespace PersistentCity.Core
             if (nextSlot >= 20000 || tableCharacters + characters > TableLimit || tableBytes + bytes > TableLimit)
             { CapacityMisses++; return -1; }
             var reference = new BusinessReference { Slot = nextSlot++, BusinessId = businessId, PlaceId = placeId };
-            food.BusinessReferences.Add(reference); byId.Add(businessId, reference); bySlot.Add(reference.Slot, reference);
+            food.BusinessReferences.Add(reference); indexedCount++; byId.Add(businessId, reference); bySlot.Add(reference.Slot, reference);
             tableCharacters += characters; tableBytes += bytes;
             return reference.Slot;
         }

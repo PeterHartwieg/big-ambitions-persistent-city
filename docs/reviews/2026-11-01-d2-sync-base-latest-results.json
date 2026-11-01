@@ -1,0 +1,5815 @@
+{
+  "recordedUtc": "2026-11-01T13:16:40.310594+00:00",
+  "sourceHead": "5ecc4262b915e0e4cd4653d90b578a49f55ab890",
+  "latestIntegration": "75c956ccf8cd20205964e4e6b0fce6352bc0c73b",
+  "sourceFilesSha256": "8f3dfb4967ecb1d1ab29519c0d9d4efb6b9df5e667a238bed26e84d30838513e",
+  "sourceWasUnchangedDuringFinalBatch": true,
+  "validation": "Offline only; serial foreground commands; required other-dotnet guard; no CLI deadlines; no game/rig/profile access or native performance/release claim.",
+  "unitSummary": "Passed!  - Failed:     0, Passed:  2438, Skipped:     0, Total:  2438, Duration: 3 m 34 s - PersistentCity.Tests.dll (net10.0)",
+  "discoveredTests": 2438,
+  "passedGates": 63,
+  "failedGates": 0,
+  "commands": [
+    {
+      "name": "build",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/build.py",
+        "--game-managed",
+        "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed"
+      ],
+      "started": "2026-11-01T12:46:23.853547+00:00",
+      "seconds": 2.378744199872017,
+      "exit": 0,
+      "log": "build\\d2\\gates\\build.log",
+      "logSha256": "ea9fd092734100ba37fef716679151a110ff34ea503f7fdf81e0976e36c1d476"
+    },
+    {
+      "name": "test",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj"
+      ],
+      "started": "2026-11-01T12:46:57.987833+00:00",
+      "seconds": 222.03752939985134,
+      "exit": 0,
+      "log": "build\\d2\\gates\\test.log",
+      "logSha256": "7c592a277678496f339798bbae070e773e4d749cb38e9a254c361fa0b6eb0034"
+    },
+    {
+      "name": "list-tests",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--no-build",
+        "--list-tests"
+      ],
+      "started": "2026-11-01T12:50:40.734058+00:00",
+      "seconds": 2.3916158000938594,
+      "exit": 0,
+      "log": "build\\d2\\gates\\list-tests.log",
+      "logSha256": "1a62d280301dc210fc6c9d34e1aa1e174c97166d5331cee3cfe9f538e3f645ac"
+    },
+    {
+      "name": "core-identity",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\core-identity-regression\\CoreIdentityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:50:43.882156+00:00",
+      "seconds": 7.887013199971989,
+      "exit": 0,
+      "log": "build\\d2\\gates\\core-identity.log",
+      "logSha256": "40937228931fe36d1a1c316dfe705a11a9e528454ab4014a9a363839f50162db"
+    },
+    {
+      "name": "diagnostic-response",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\diagnostic-response-regression\\DiagnosticResponseRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:50:52.534092+00:00",
+      "seconds": 2.6010624000336975,
+      "exit": 0,
+      "log": "build\\d2\\gates\\diagnostic-response.log",
+      "logSha256": "a89f8e2948c58df6f28f5d0bf439ea876f62fe55dd2f032fb9d77ea4d0a7b103"
+    },
+    {
+      "name": "event-observation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\event-observation-regression\\EventObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:50:55.982020+00:00",
+      "seconds": 6.0442896001040936,
+      "exit": 0,
+      "log": "build\\d2\\gates\\event-observation.log",
+      "logSha256": "cd06b2a7767122377685f98a1755cc0ad0c97fea75f1ae690115d70b577ec705"
+    },
+    {
+      "name": "food-catalogue",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-catalogue-regression\\FoodCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:51:02.871352+00:00",
+      "seconds": 3.719960199901834,
+      "exit": 0,
+      "log": "build\\d2\\gates\\food-catalogue.log",
+      "logSha256": "0bd6e960e4b366edd225a90d6f8ec4c2d4a48271f68e00df8b44ecb9c44c3d32"
+    },
+    {
+      "name": "food-checkout",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-checkout-regression\\FoodCheckoutRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:51:07.147946+00:00",
+      "seconds": 3.6813010999467224,
+      "exit": 0,
+      "log": "build\\d2\\gates\\food-checkout.log",
+      "logSha256": "d39c8fa9305598c616691bfa3cc51d2f01b52cd9957b42957ecea6e6ffa9cd3d"
+    },
+    {
+      "name": "food-hours",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-hours-regression\\FoodHoursRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:51:11.331468+00:00",
+      "seconds": 2.4004022998269647,
+      "exit": 0,
+      "log": "build\\d2\\gates\\food-hours.log",
+      "logSha256": "2410218689a17bf8e5ae868d3025d1a8bd9e449d7fd49d83728819236ce6607c"
+    },
+    {
+      "name": "food-household-catalogue",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-household-catalogue-regression\\FoodHouseholdCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:51:14.275226+00:00",
+      "seconds": 1.8368872001301497,
+      "exit": 0,
+      "log": "build\\d2\\gates\\food-household-catalogue.log",
+      "logSha256": "b0f19cfd0acbbded5af38461d6e0bbe596b236cd83207afa0223100fdcfb8609"
+    },
+    {
+      "name": "food-ownership",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-ownership-regression\\FoodOwnershipRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:51:16.656267+00:00",
+      "seconds": 4.182562500005588,
+      "exit": 0,
+      "log": "build\\d2\\gates\\food-ownership.log",
+      "logSha256": "0868149a24cebe8c5801b20d7530b12bc49a633011d2bf039392c6d97de66efa"
+    },
+    {
+      "name": "food-supply",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-supply-regression\\FoodSupplyRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:51:21.348462+00:00",
+      "seconds": 1.9903813998680562,
+      "exit": 0,
+      "log": "build\\d2\\gates\\food-supply.log",
+      "logSha256": "bea33031a003404270de233cbd073eb44deacac65f41be406a1eae3b70385683"
+    },
+    {
+      "name": "frame-observation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\frame-observation-regression\\FrameObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:51:23.875915+00:00",
+      "seconds": 1.4854298001155257,
+      "exit": 0,
+      "log": "build\\d2\\gates\\frame-observation.log",
+      "logSha256": "7e5da72d80f98e71b464d3c9f918cf9457b5350bfcafc294e80e823b646b2d02"
+    },
+    {
+      "name": "gate-access",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\gate-access-regression\\GateAccessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:51:25.888186+00:00",
+      "seconds": 2.8908891000319272,
+      "exit": 0,
+      "log": "build\\d2\\gates\\gate-access.log",
+      "logSha256": "6e9877acee2b84dfcc2de1b4d7d7236ac991a58c1a89fbe420966d127bf4afae"
+    },
+    {
+      "name": "road-ceiling",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\road-ceiling-regression\\RoadCeilingRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:51:29.262869+00:00",
+      "seconds": 2.350026500178501,
+      "exit": 0,
+      "log": "build\\d2\\gates\\road-ceiling.log",
+      "logSha256": "895bf78ce78f6cceb24e97e6ac8d4cc6c68fa71cfb5b0e54f707e9bf46369762"
+    },
+    {
+      "name": "road-handoff",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\road-handoff-regression\\RoadHandoffRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:51:32.171167+00:00",
+      "seconds": 2.2334624000359327,
+      "exit": 0,
+      "log": "build\\d2\\gates\\road-handoff.log",
+      "logSha256": "5de54d90bad9b212aac21705900b22ad270fa18365f1284fc4e988bf67a5f23e"
+    },
+    {
+      "name": "road-invalidation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\road-invalidation-regression\\RoadInvalidationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:51:34.994707+00:00",
+      "seconds": 3.8791581001132727,
+      "exit": 0,
+      "log": "build\\d2\\gates\\road-invalidation.log",
+      "logSha256": "11bcbab6bdde92b021b10a41d941aa322629fadbc821906b55ed9aa7d5d7e656"
+    },
+    {
+      "name": "road-speed",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\road-speed-regression\\RoadSpeedRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:51:39.291819+00:00",
+      "seconds": 2.229922099970281,
+      "exit": 0,
+      "log": "build\\d2\\gates\\road-speed.log",
+      "logSha256": "5242c509cd90b21734fe4321b43dcbba531282677f91d66ddc8931b9b07cef19"
+    },
+    {
+      "name": "route-discovery",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\route-discovery-regression\\RouteDiscoveryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:51:41.996384+00:00",
+      "seconds": 10.410996600054204,
+      "exit": 0,
+      "log": "build\\d2\\gates\\route-discovery.log",
+      "logSha256": "7c3684eedaa0bea2266b919908de9f88a5bb82d63511f939d1661ee67c9cd95b"
+    },
+    {
+      "name": "save-contract",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\save-contract-regression\\SaveContractRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:51:52.880563+00:00",
+      "seconds": 3.442096799844876,
+      "exit": 0,
+      "log": "build\\d2\\gates\\save-contract.log",
+      "logSha256": "315eedfa2eafa36ce59212066c37ab36ffdef1d56cee1dd2b8bb15b33c1a112e"
+    },
+    {
+      "name": "startup-clock",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\startup-clock-regression\\StartupClockRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:51:56.843972+00:00",
+      "seconds": 3.8044709998648614,
+      "exit": 0,
+      "log": "build\\d2\\gates\\startup-clock.log",
+      "logSha256": "17a5f573446130a0af40cb255164280cef5367ba165795dcb5a172b1bbe85e60"
+    },
+    {
+      "name": "traffic-closure",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\traffic-closure-regression\\TrafficClosureRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:52:01.187214+00:00",
+      "seconds": 2.50418489985168,
+      "exit": 0,
+      "log": "build\\d2\\gates\\traffic-closure.log",
+      "logSha256": "708d6590f5351a9c1adf0b939e6775caa82602e1d6ec261b597977db98e808aa"
+    },
+    {
+      "name": "traffic-queue",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\traffic-queue-regression\\TrafficQueueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:52:04.219808+00:00",
+      "seconds": 2.3418394001200795,
+      "exit": 0,
+      "log": "build\\d2\\gates\\traffic-queue.log",
+      "logSha256": "897d1d2e5c92ef25374e61f7da26e9dea2849c91f3495eb8bc65210eb2e4b9c4"
+    },
+    {
+      "name": "walking-quote",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\walking-quote-regression\\WalkingQuoteRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:52:07.131841+00:00",
+      "seconds": 3.123717100126669,
+      "exit": 0,
+      "log": "build\\d2\\gates\\walking-quote.log",
+      "logSha256": "b20b2938933dcf089ca5390b756d89a587ca9d5f003c7440677ccda69bf0d405"
+    },
+    {
+      "name": "campaign-reader",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\campaign-reader-regression\\CampaignReaderRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:52:11.232737+00:00",
+      "seconds": 3.898025400005281,
+      "exit": 0,
+      "log": "build\\d2\\gates\\campaign-reader.log",
+      "logSha256": "88824ec91b3646e523612f1830e3f7e00ee1fd93b543c9990f1dd957415acb6a"
+    },
+    {
+      "name": "awareness",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\awareness-regression\\AwarenessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:52:15.612426+00:00",
+      "seconds": 29.088432400021702,
+      "exit": 0,
+      "log": "build\\d2\\gates\\awareness.log",
+      "logSha256": "1001c2fb6e8741eb5d742ee36cb33becbba66cd087f722cd557082eeb50e15e1"
+    },
+    {
+      "name": "food-candidate",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-candidate-regression\\FoodCandidateRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:52:45.529146+00:00",
+      "seconds": 4.572700100019574,
+      "exit": 0,
+      "log": "build\\d2\\gates\\food-candidate.log",
+      "logSha256": "8d852467048d105e0df26d9b10fc15c6725675ce2348f5724cc5d92baed00b97"
+    },
+    {
+      "name": "rival-outflow",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\rival-outflow-regression\\RivalOutflowRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T12:52:50.946384+00:00",
+      "seconds": 12.39612349984236,
+      "exit": 0,
+      "log": "build\\d2\\gates\\rival-outflow.log",
+      "logSha256": "ba8e1cb9ce37828c9ffc6ba73d892dd2dc2193b13d2efd8a96f196598ce1bd59"
+    },
+    {
+      "name": "native-command",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/native-command-regression/run.py"
+      ],
+      "started": "2026-11-01T12:53:04.187308+00:00",
+      "seconds": 6.298614100087434,
+      "exit": 0,
+      "log": "build\\d2\\gates\\native-command.log",
+      "logSha256": "bd610e1a32a30f6ad7638fc2a65ae7bf8bea9d44baba81884f821aea4ed0a9aa"
+    },
+    {
+      "name": "physical-selection",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/physical-selection-regression/run.py"
+      ],
+      "started": "2026-11-01T12:53:11.374036+00:00",
+      "seconds": 8.23420020006597,
+      "exit": 0,
+      "log": "build\\d2\\gates\\physical-selection.log",
+      "logSha256": "cb219f411ccb1547f492c02afe407049d0a06cb43534e48af722a8fdb165801b"
+    },
+    {
+      "name": "vehicle-ownership",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/vehicle-ownership-regression/run.py"
+      ],
+      "started": "2026-11-01T12:53:20.769145+00:00",
+      "seconds": 6.295235800091177,
+      "exit": 0,
+      "log": "build\\d2\\gates\\vehicle-ownership.log",
+      "logSha256": "7539f54a1b778a54ca9bc75f398a40c0491fb40281611c8c8efbbc473dd32e46"
+    },
+    {
+      "name": "optional-stop",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/optional-stop-regression/run.py"
+      ],
+      "started": "2026-11-01T12:53:27.968952+00:00",
+      "seconds": 9.556764799868688,
+      "exit": 0,
+      "log": "build\\d2\\gates\\optional-stop.log",
+      "logSha256": "f7d3a55ef6b939ada52be73e50fcae27ead5eb4643a5c9f7516905986ecddaa4"
+    },
+    {
+      "name": "simulate",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/simulate/Simulate.csproj",
+        "--",
+        "28",
+        "build/harness-demo"
+      ],
+      "started": "2026-11-01T12:53:38.290024+00:00",
+      "seconds": 9.072221900103614,
+      "exit": 0,
+      "log": "build\\d2\\gates\\simulate.log",
+      "logSha256": "7141faddcc018bdebd788458c981f458426fa46a3bb061b43eed92d4f41326ef"
+    },
+    {
+      "name": "food-routines",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-routines/FoodRoutines.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "build/harness-food-routines-demo",
+        "957"
+      ],
+      "started": "2026-11-01T12:53:48.182938+00:00",
+      "seconds": 9.9618657999672,
+      "exit": 0,
+      "log": "build\\d2\\gates\\food-routines.log",
+      "logSha256": "603addf3e17654c802047f18c8d35baa141a0dd902e6f8b8f28b484533347ebc"
+    },
+    {
+      "name": "food-demand",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-demand/FoodDemand.csproj",
+        "--",
+        "build/harness-food-demand-demo"
+      ],
+      "started": "2026-11-01T12:53:58.920236+00:00",
+      "seconds": 5.147173400036991,
+      "exit": 0,
+      "log": "build\\d2\\gates\\food-demand.log",
+      "logSha256": "9f7e3aa0af6ca08dbf04366e7574221f5ecdb27c9c2aa0bf74fead9a9cd1e134"
+    },
+    {
+      "name": "capacity-reference",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "reference",
+        "1"
+      ],
+      "started": "2026-11-01T12:54:05.372875+00:00",
+      "seconds": 6.870219700038433,
+      "exit": 0,
+      "log": "build\\d2\\gates\\capacity-reference.log",
+      "logSha256": "85c22c9fa67264a8d736a8b5d6b1df473a65a81a51f37efc3aa8b81b4416ae66"
+    },
+    {
+      "name": "capacity-consumers5000",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "consumers5000",
+        "1"
+      ],
+      "started": "2026-11-01T12:55:44.054737+00:00",
+      "seconds": 7.811990299960598,
+      "exit": 0,
+      "log": "build\\d2\\gates\\capacity-consumers5000.log",
+      "logSha256": "d133d30b009b09a48fcb0d3fb4094c22813d73d916adfb0002bc0d1e453f5ce6"
+    },
+    {
+      "name": "capacity-CF32",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "CF32",
+        "1"
+      ],
+      "started": "2026-11-01T12:58:53.856533+00:00",
+      "seconds": 41.20840090001002,
+      "exit": 0,
+      "log": "build\\d2\\gates\\capacity-CF32.log",
+      "logSha256": "44b590e385de418305305b335f81e5c851bf00af3f1630db6d65079de5011f7a"
+    },
+    {
+      "name": "capacity-CF64",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "CF64",
+        "1"
+      ],
+      "started": "2026-11-01T12:59:35.581143+00:00",
+      "seconds": 46.23953290004283,
+      "exit": 0,
+      "log": "build\\d2\\gates\\capacity-CF64.log",
+      "logSha256": "98ec24d5301593098d0f1d52d8d40d03ec4e1a475956d70bbc116416d6e4dbe5"
+    },
+    {
+      "name": "a5-inspector",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\a5-inspector-regression\\A5InspectorRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T13:00:22.305325+00:00",
+      "seconds": 10.901001499965787,
+      "exit": 0,
+      "log": "build\\d2\\gates\\a5-inspector.log",
+      "logSha256": "cc4be606c8c6bd8c802624a1b2b186ebcaeb28af950212605a6a6271cf435ad9"
+    },
+    {
+      "name": "agency-payment",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\agency-payment-regression\\AgencyPaymentRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T13:00:33.921350+00:00",
+      "seconds": 5.41038309992291,
+      "exit": 0,
+      "log": "build\\d2\\gates\\agency-payment.log",
+      "logSha256": "c680b3bd6578ecf873badec9ab4db255d90b53be60b4fa423285ab0895c0de0d"
+    },
+    {
+      "name": "cupcake-feasibility",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\cupcake-feasibility-regression\\CupcakeFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T13:00:40.591737+00:00",
+      "seconds": 4.736917900154367,
+      "exit": 0,
+      "log": "build\\d2\\gates\\cupcake-feasibility.log",
+      "logSha256": "a8f05f4b5b57feddb84b1710858d72a3ae8ffae499a3de4f76320192efe27e31"
+    },
+    {
+      "name": "donut-feasibility",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\donut-feasibility-regression\\DonutFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T13:00:45.978082+00:00",
+      "seconds": 4.702076199930161,
+      "exit": 0,
+      "log": "build\\d2\\gates\\donut-feasibility.log",
+      "logSha256": "6a2964a7f3a0676d2484a566a33b3057047676097c9f28b4c1097d5fcf310f43"
+    },
+    {
+      "name": "food-choice",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-choice-regression\\FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T13:00:51.338778+00:00",
+      "seconds": 11.771483700023964,
+      "exit": 0,
+      "log": "build\\d2\\gates\\food-choice.log",
+      "logSha256": "9c9302781ed1d7b682603c0c6cade29ba7372a6c5ff19bcaf6dc6b2e1e7fa337"
+    },
+    {
+      "name": "food-memory",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-memory-regression\\FoodMemoryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T13:09:09.609103+00:00",
+      "seconds": 12.966066599823534,
+      "exit": 0,
+      "log": "build\\d2\\gates\\food-memory.log",
+      "logSha256": "b74112d013e608749c74c6986355437566f1106f749cb366c703ff0ff674a85d"
+    },
+    {
+      "name": "food-regulars",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-regulars-regression\\FoodRegularsRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T13:09:23.103036+00:00",
+      "seconds": 10.197935999836773,
+      "exit": 0,
+      "log": "build\\d2\\gates\\food-regulars.log",
+      "logSha256": "3988c83db6b3a2b5fff86683abe40ce0301f97d548e46448725bb74f0b3a396d"
+    },
+    {
+      "name": "held-tuning",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\held-tuning-regression\\HeldTuningRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T13:09:33.865999+00:00",
+      "seconds": 7.147088499972597,
+      "exit": 0,
+      "log": "build\\d2\\gates\\held-tuning.log",
+      "logSha256": "defb7a7f3cec6f0bc6131267af5a2599d313636c2798667f66fe4c11fb89b657"
+    },
+    {
+      "name": "icecream-feasibility",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\icecream-feasibility-regression\\IcecreamFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T13:11:42.563201+00:00",
+      "seconds": 3.5290873998310417,
+      "exit": 0,
+      "log": "build\\d2\\gates\\icecream-feasibility.log",
+      "logSha256": "f5e5b25889873b34c302b9f235a8f7f334f7f06f483e48bc3112820c655b049d"
+    },
+    {
+      "name": "interior-guard",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\interior-guard-regression\\InteriorGuardRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T13:11:46.925139+00:00",
+      "seconds": 2.898265700088814,
+      "exit": 0,
+      "log": "build\\d2\\gates\\interior-guard.log",
+      "logSha256": "8e4909e65b6279bfac2936c0f0c5fdfec7aac7d91925bde32bf048fa0cd18d54"
+    },
+    {
+      "name": "market-research",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\market-research-regression\\MarketResearchRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T13:11:50.275090+00:00",
+      "seconds": 6.243313299957663,
+      "exit": 0,
+      "log": "build\\d2\\gates\\market-research.log",
+      "logSha256": "91ae1e9a128f457e02a1d0a9775327f19085bdf11d46007052f461684559d876"
+    },
+    {
+      "name": "salad-feasibility",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\salad-feasibility-regression\\SaladFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T13:11:57.031274+00:00",
+      "seconds": 3.393166799796745,
+      "exit": 0,
+      "log": "build\\d2\\gates\\salad-feasibility.log",
+      "logSha256": "9049dc4035f0684c1301933f3f1fd5e65e065f2e38ecae1116d63673d540d591"
+    },
+    {
+      "name": "weather",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\weather-regression\\WeatherRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T13:12:00.891745+00:00",
+      "seconds": 6.008522199932486,
+      "exit": 0,
+      "log": "build\\d2\\gates\\weather.log",
+      "logSha256": "8132e7b119edf0164e190dcb8a4a5b66fb4f04bc28ece7af7a7ff5b7fb87239d"
+    },
+    {
+      "name": "pickup-continuity",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/persistent-continuity/regression/PickupRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T13:12:07.509221+00:00",
+      "seconds": 5.356277900049463,
+      "exit": 0,
+      "log": "build\\d2\\gates\\pickup-continuity.log",
+      "logSha256": "608eae841ef2ed0f1dbfb45d11a356fef2231fcfe9cee06e68756577f5a0b157"
+    },
+    {
+      "name": "choice-rush",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--rush"
+      ],
+      "started": "2026-11-01T13:12:13.357701+00:00",
+      "seconds": 7.9642779000569135,
+      "exit": 0,
+      "log": "build\\d2\\gates\\choice-rush.log",
+      "logSha256": "aed9794990be65b3a4fce38f307c6514806738617b10dac55da237f0b2cd137f"
+    },
+    {
+      "name": "choice-integrated",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--integrated"
+      ],
+      "started": "2026-11-01T13:12:21.758292+00:00",
+      "seconds": 5.333786000031978,
+      "exit": 0,
+      "log": "build\\d2\\gates\\choice-integrated.log",
+      "logSha256": "77ec1ddf62be04984f658331cd2668edbd79728bbaae886a74f875f2594918e7"
+    },
+    {
+      "name": "choice-rush-integrated",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--rush",
+        "--integrated"
+      ],
+      "started": "2026-11-01T13:12:27.589316+00:00",
+      "seconds": 7.3992018001154065,
+      "exit": 0,
+      "log": "build\\d2\\gates\\choice-rush-integrated.log",
+      "logSha256": "a43f5191cd4714bb088aa617798e0a989594e99ad365c9d8f5fd83145dd0c3cd"
+    },
+    {
+      "name": "choice-rush-integrated-5000",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--rush-5000",
+        "--integrated"
+      ],
+      "started": "2026-11-01T13:12:35.416045+00:00",
+      "seconds": 30.380265599815175,
+      "exit": 0,
+      "log": "build\\d2\\gates\\choice-rush-integrated-5000.log",
+      "logSha256": "8760291cbddacf7d2172b53a4faa63a5978a1ab5873efd29ae6753f557c766a2"
+    },
+    {
+      "name": "save-bench",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--bench",
+        "--decisions"
+      ],
+      "started": "2026-11-01T13:13:06.604390+00:00",
+      "seconds": 20.84450490004383,
+      "exit": 0,
+      "log": "build\\d2\\gates\\save-bench.log",
+      "logSha256": "9eb4903dfa269e41feb933414e59bda900fed8d8558c300566d06d09ef91a71f"
+    },
+    {
+      "name": "c4-save-comparison",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/market-research-regression/compare_save_baseline.py",
+        "--baseline",
+        "HEAD"
+      ],
+      "started": "2026-11-01T13:13:28.278287+00:00",
+      "seconds": 149.64159690006636,
+      "exit": 0,
+      "log": "build\\d2\\gates\\c4-save-comparison.log",
+      "logSha256": "356ea1b38d29f8274fd35a78b4879024f4d25c72f08cf923d431a9012176a501"
+    },
+    {
+      "name": "donut-isolation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/donut-feasibility-regression/source_checks.py"
+      ],
+      "started": "2026-11-01T13:15:57.920948+00:00",
+      "seconds": 0.17415879992768168,
+      "exit": 0,
+      "log": "build\\d2\\gates\\donut-isolation.log",
+      "logSha256": "cc6c0de139d40371e4fba40e86518707c7a4310b794607cd59d28b78b695852e"
+    },
+    {
+      "name": "salad-isolation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/salad-feasibility-regression/source_checks.py"
+      ],
+      "started": "2026-11-01T13:15:58.097184+00:00",
+      "seconds": 0.07754650013521314,
+      "exit": 0,
+      "log": "build\\d2\\gates\\salad-isolation.log",
+      "logSha256": "320b305ad04a0ccc371ef2a6bea1d1a9a3357023c4ae74105b832eb60f7451b7"
+    },
+    {
+      "name": "icecream-isolation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/icecream-feasibility-regression/source_checks.py"
+      ],
+      "started": "2026-11-01T13:15:58.175910+00:00",
+      "seconds": 0.1081415000371635,
+      "exit": 0,
+      "log": "build\\d2\\gates\\icecream-isolation.log",
+      "logSha256": "3216ba55dfb65e001666ba7649eb260eb6b0c0029a72fd76f15379dc3fc93572"
+    },
+    {
+      "name": "icecream-baseline",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/icecream-feasibility-regression/measure_baseline.py"
+      ],
+      "started": "2026-11-01T13:15:58.766111+00:00",
+      "seconds": 14.716696699848399,
+      "exit": 0,
+      "log": "build\\d2\\gates\\icecream-baseline.log",
+      "logSha256": "d5b75b46ce0e323ed2c3395278c2d7c61d883fc2a25fbc27a836338cae9e4fbe"
+    }
+  ],
+  "buildOutput": "Package: C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\d2-sync-base\\build\\PersistentCity\nDLL SHA256: d7c4529ab88e0d718424f5c0a5378568f57788ce2c7e1e3aca56a2c579784d1f\nGame assemblies and RLO are referenced externally; neither is copied into this package.\n",
+  "metrics": {
+    "rival-outflow": {
+      "scales": [
+        {
+          "count": 1024,
+          "coldRefresh": {
+            "p50": 0.0177,
+            "p95": 0.033,
+            "max": 0.0797,
+            "spikesAtLeast30ms": 0,
+            "allocatedBytesPerOperation": 19484.30769230769
+          },
+          "warmRefresh": {
+            "p50": 0.0061,
+            "p95": 0.0127,
+            "max": 0.0345,
+            "spikesAtLeast30ms": 0,
+            "allocatedBytesPerOperation": 0.49230769230769234
+          },
+          "retainedReaderBytes": 720808,
+          "indexBuild": {
+            "p50": 0.003,
+            "p95": 0.0175,
+            "max": 0.6182,
+            "spikesAtLeast30ms": 0,
+            "allocatedBytesPerOperation": 1153.799511002445
+          },
+          "coldDecision": {
+            "p50": 0.4542,
+            "p95": 0.4542,
+            "max": 0.4542,
+            "spikesAtLeast30ms": 0,
+            "allocatedBytesPerOperation": 1640.0
+          },
+          "warmDecision": {
+            "p50": 0.0272,
+            "p95": 0.0353,
+            "max": 0.3201,
+            "spikesAtLeast30ms": 0,
+            "allocatedBytesPerOperation": 1563.072
+          },
+          "maxSources": 17,
+          "maxShortlist": 8,
+          "maximumLogicalRouteSlots": 16,
+          "arrivalBeforeTwoReads": {
+            "p50": 0.0082,
+            "p95": 0.0156,
+            "max": 0.3086,
+            "spikesAtLeast30ms": 0,
+            "allocatedBytesPerOperation": 5744.0
+          },
+          "arrivalAfterOneRead": {
+            "p50": 0.0023,
+            "p95": 0.0068,
+            "max": 0.1461,
+            "spikesAtLeast30ms": 0,
+            "allocatedBytesPerOperation": 2872.0
+          }
+        },
+        {
+          "count": 20000,
+          "coldRefresh": {
+            "p50": 0.0455,
+            "p95": 0.0785,
+            "max": 24.4241,
+            "spikesAtLeast30ms": 0,
+            "allocatedBytesPerOperation": 20210.813749000798
+          },
+          "warmRefresh": {
+            "p50": 0.0068,
+            "p95": 0.0099,
+            "max": 0.0238,
+            "spikesAtLeast30ms": 0,
+            "allocatedBytesPerOperation": 0.025579536370903277
+          },
+          "retainedReaderBytes": 14092952,
+          "indexBuild": {
+            "p50": 0.0048,
+            "p95": 0.024,
+            "max": 0.3794,
+            "spikesAtLeast30ms": 0,
+            "allocatedBytesPerOperation": 719.3899893503727
+          },
+          "coldDecision": {
+            "p50": 0.13,
+            "p95": 0.13,
+            "max": 0.13,
+            "spikesAtLeast30ms": 0,
+            "allocatedBytesPerOperation": 1496.0
+          },
+          "warmDecision": {
+            "p50": 0.0297,
+            "p95": 0.0505,
+            "max": 0.3263,
+            "spikesAtLeast30ms": 0,
+            "allocatedBytesPerOperation": 1566.032
+          },
+          "maxSources": 17,
+          "maxShortlist": 8,
+          "maximumLogicalRouteSlots": 16,
+          "arrivalBeforeTwoReads": {
+            "p50": 0.0084,
+            "p95": 0.0124,
+            "max": 4.3693,
+            "spikesAtLeast30ms": 0,
+            "allocatedBytesPerOperation": 5744.0
+          },
+          "arrivalAfterOneRead": {
+            "p50": 0.0039,
+            "p95": 0.0084,
+            "max": 0.0693,
+            "spikesAtLeast30ms": 0,
+            "allocatedBytesPerOperation": 2872.0
+          }
+        }
+      ],
+      "settlement": {
+        "p50": 0.0001,
+        "p95": 0.0004,
+        "max": 0.3446,
+        "spikesAtLeast30ms": 0,
+        "allocatedBytesPerOperation": 192.0
+      },
+      "unknownStockReservations": {
+        "eightUnknownStockOffersBefore": {
+          "p50": 0.0003,
+          "p95": 0.0018,
+          "max": 0.0033,
+          "spikesAtLeast30ms": 0,
+          "allocatedBytesPerOperation": 1024.0
+        },
+        "eightUnknownStockOffersAfter": {
+          "p50": 0.0001,
+          "p95": 0.0002,
+          "max": 0.0002,
+          "spikesAtLeast30ms": 0,
+          "allocatedBytesPerOperation": 0.0
+        }
+      },
+      "saves": [
+        {
+          "consumers": 1914,
+          "baselineBytes": 2284562,
+          "currentBytes": 2294151,
+          "deltaBytes": 9589,
+          "streaming": 3829,
+          "semantic": 3829,
+          "baselineStreaming": 3829,
+          "baselineSemantic": 3829
+        },
+        {
+          "consumers": 5000,
+          "baselineBytes": 5973936,
+          "currentBytes": 5998955,
+          "deltaBytes": 25019,
+          "streaming": 10001,
+          "semantic": 10001,
+          "baselineStreaming": 10001,
+          "baselineSemantic": 10001
+        }
+      ],
+      "wholeDay": [
+        {
+          "alternatives": 1024,
+          "consumers": 1914,
+          "milliseconds": 2181.234,
+          "allocatedBytes": 650857968,
+          "workUnits": 123120,
+          "continuations": 98652,
+          "advance128UnitSamples": {
+            "p50": 2.1229,
+            "p95": 3.6489,
+            "max": 18.4122,
+            "spikesAtLeast30ms": 0,
+            "allocatedBytesPerOperation": 676567.5343035343
+          },
+          "routes": 95401,
+          "RivalRefreshUnits": 845,
+          "RivalDetailReads": 57063,
+          "purchases": 3745,
+          "pendingMeals": 0,
+          "caughtUp": true,
+          "cityMinute": 2869.0,
+          "diagnostic": {
+            "RivalChoices": 3745,
+            "RivalSettlements": 3745,
+            "RivalRefusals": 0,
+            "Availability": "EstimatedFromPriceAndHours",
+            "NativeRivalCheckout": "Unsupported",
+            "ExternalFoodSpentUnits": "100529078272000"
+          }
+        },
+        {
+          "alternatives": 20000,
+          "consumers": 1914,
+          "milliseconds": 1720.7358,
+          "allocatedBytes": 675058104,
+          "workUnits": 147974,
+          "continuations": 123261,
+          "advance128UnitSamples": {
+            "p50": 1.0376,
+            "p95": 3.203,
+            "max": 70.0504,
+            "spikesAtLeast30ms": 5,
+            "allocatedBytesPerOperation": 583455.5782195333
+          },
+          "routes": 95660,
+          "RivalRefreshUnits": 16263,
+          "RivalDetailReads": 57315,
+          "purchases": 3794,
+          "pendingMeals": 0,
+          "caughtUp": true,
+          "cityMinute": 2869.0,
+          "diagnostic": {
+            "RivalChoices": 3794,
+            "RivalSettlements": 3794,
+            "RivalRefusals": 0,
+            "Availability": "EstimatedFromPriceAndHours",
+            "NativeRivalCheckout": "Unsupported",
+            "ExternalFoodSpentUnits": "101844412006400"
+          }
+        }
+      ],
+      "checks": 19844
+    },
+    "awareness": {
+      "schema": 21,
+      "runtime": ".NET 10.0.13",
+      "baseline": "c0af745 A3/B0b metadata rank loop; native reads/routes excluded",
+      "policy": {
+        "radiusMetres": 250,
+        "drawsPerAnchor": 4,
+        "discoveryDailyProbability": 0.02
+      },
+      "stages": [
+        {
+          "alternatives": 1024,
+          "seed": 77,
+          "dense": true,
+          "buildMs": {
+            "p50": 1.518,
+            "p95": 1.6888,
+            "max": 1.6888,
+            "spikesAtLeast30ms": 0
+          },
+          "buildAllocatedBytes": 406112.0,
+          "samples": 3000,
+          "baselineAdmissionMs": {
+            "p50": 0.0798,
+            "p95": 0.1361,
+            "max": 3.2775,
+            "spikesAtLeast30ms": 0
+          },
+          "candidateAdmissionMs": {
+            "p50": 0.0055,
+            "p95": 0.0205,
+            "max": 0.1572,
+            "spikesAtLeast30ms": 0
+          },
+          "baselineAllocatedBytes": 313.85066666666665,
+          "candidateAllocatedBytes": 1155.3066666666666,
+          "maxUnion": 18,
+          "maxShortlist": 8,
+          "maxRouteSlots": 16,
+          "heldImageJsonBytes": 2372
+        },
+        {
+          "alternatives": 20000,
+          "seed": 77,
+          "dense": true,
+          "buildMs": {
+            "p50": 25.5171,
+            "p95": 35.6457,
+            "max": 35.6457,
+            "spikesAtLeast30ms": 1
+          },
+          "buildAllocatedBytes": 6755864.0,
+          "samples": 3000,
+          "baselineAdmissionMs": {
+            "p50": 2.4994,
+            "p95": 3.0172,
+            "max": 4.4162,
+            "spikesAtLeast30ms": 0
+          },
+          "candidateAdmissionMs": {
+            "p50": 0.0198,
+            "p95": 0.0353,
+            "max": 0.9062,
+            "spikesAtLeast30ms": 0
+          },
+          "baselineAllocatedBytes": 280.0,
+          "candidateAllocatedBytes": 1013.8,
+          "maxUnion": 19,
+          "maxShortlist": 8,
+          "maxRouteSlots": 16,
+          "heldImageJsonBytes": 2387
+        },
+        {
+          "alternatives": 1024,
+          "seed": 77,
+          "dense": false,
+          "buildMs": {
+            "p50": 2.7991,
+            "p95": 13.5776,
+            "max": 13.5776,
+            "spikesAtLeast30ms": 0
+          },
+          "buildAllocatedBytes": 822526.4,
+          "samples": 3000,
+          "baselineAdmissionMs": {
+            "p50": 0.1221,
+            "p95": 0.1374,
+            "max": 0.3355,
+            "spikesAtLeast30ms": 0
+          },
+          "candidateAdmissionMs": {
+            "p50": 0.0048,
+            "p95": 0.0085,
+            "max": 0.183,
+            "spikesAtLeast30ms": 0
+          },
+          "baselineAllocatedBytes": 280.0,
+          "candidateAllocatedBytes": 925.4426666666667,
+          "maxUnion": 17,
+          "maxShortlist": 8,
+          "maxRouteSlots": 16,
+          "heldImageJsonBytes": 1806
+        },
+        {
+          "alternatives": 20000,
+          "seed": 77,
+          "dense": false,
+          "buildMs": {
+            "p50": 24.753,
+            "p95": 39.4568,
+            "max": 39.4568,
+            "spikesAtLeast30ms": 4
+          },
+          "buildAllocatedBytes": 15978443.2,
+          "samples": 3000,
+          "baselineAdmissionMs": {
+            "p50": 2.7953,
+            "p95": 4.1416,
+            "max": 5.8745,
+            "spikesAtLeast30ms": 0
+          },
+          "candidateAdmissionMs": {
+            "p50": 0.0138,
+            "p95": 0.0293,
+            "max": 0.096,
+            "spikesAtLeast30ms": 0
+          },
+          "baselineAllocatedBytes": 280.0,
+          "candidateAllocatedBytes": 925.464,
+          "maxUnion": 17,
+          "maxShortlist": 8,
+          "maxRouteSlots": 16,
+          "heldImageJsonBytes": 1660
+        }
+      ],
+      "saved": [
+        {
+          "residents": 957,
+          "consumers": 1914,
+          "baselineBytes": 1338075,
+          "candidateBytes": 1341149,
+          "addedBytes": 3074,
+          "awarenessProjectionSchema": 19,
+          "currentWireBytes": 1354824,
+          "weatherBytes": 12504,
+          "rivalBytes": 1171,
+          "managedGraphBytesSharedStrings": 1240,
+          "heldImageBytes": 3518,
+          "Streaming": 3864,
+          "Semantic": 3861
+        },
+        {
+          "residents": 2500,
+          "consumers": 5000,
+          "baselineBytes": 3491673,
+          "candidateBytes": 3494747,
+          "addedBytes": 3074,
+          "awarenessProjectionSchema": 19,
+          "currentWireBytes": 3528481,
+          "weatherBytes": 32563,
+          "rivalBytes": 1171,
+          "managedGraphBytesSharedStrings": 1240,
+          "heldImageBytes": 3518,
+          "Streaming": 10036,
+          "Semantic": 10033
+        }
+      ]
+    },
+    "weather": {
+      "environment": ".NET 10.0.13",
+      "protocol": "20 warmups, 100 measured sweeps; policy/capture only, no routes/native work; frame increment per capture sweep; timers/arrays outside allocation counters",
+      "sizes": [
+        {
+          "count": 957,
+          "capture": {
+            "boundaries": 957,
+            "repeats": 100,
+            "p50Ms": 0.023,
+            "p95Ms": 0.0345,
+            "maxMs": 0.0877,
+            "nsPerBoundary": 24.033437826541274,
+            "bytesPerBoundary": 40.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "foodCapture": {
+            "boundaries": 957,
+            "repeats": 100,
+            "p50Ms": 0.0096,
+            "p95Ms": 0.0156,
+            "maxMs": 0.0253,
+            "nsPerBoundary": 10.031347962382446,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "cachedSourceReads": 120,
+          "cachedFoodSourceReads": 120,
+          "uncachedSourceReads": 114840,
+          "dry": {
+            "boundaries": 957,
+            "repeats": 100,
+            "p50Ms": 0.0058,
+            "p95Ms": 0.0088,
+            "maxMs": 0.0113,
+            "nsPerBoundary": 6.0606060606060606,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rain": {
+            "boundaries": 957,
+            "repeats": 100,
+            "p50Ms": 0.1359,
+            "p95Ms": 0.1732,
+            "maxMs": 0.2242,
+            "nsPerBoundary": 142.00626959247649,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rainConcatenationPrototype": {
+            "boundaries": 957,
+            "repeats": 100,
+            "p50Ms": 0.1686,
+            "p95Ms": 0.2406,
+            "maxMs": 0.7849,
+            "nsPerBoundary": 176.1755485893417,
+            "bytesPerBoundary": 120.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "residentWeatherMaxInclusiveBytes": 22,
+          "optionalBytesHeadroom": 2,
+          "consumerWeatherDeltaBytes": 2,
+          "consumerBytesHeadroom": 6
+        },
+        {
+          "count": 5000,
+          "capture": {
+            "boundaries": 5000,
+            "repeats": 100,
+            "p50Ms": 0.049,
+            "p95Ms": 0.0841,
+            "maxMs": 0.936,
+            "nsPerBoundary": 9.8,
+            "bytesPerBoundary": 40.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "foodCapture": {
+            "boundaries": 5000,
+            "repeats": 100,
+            "p50Ms": 0.0261,
+            "p95Ms": 0.0308,
+            "maxMs": 0.0648,
+            "nsPerBoundary": 5.22,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "cachedSourceReads": 120,
+          "cachedFoodSourceReads": 120,
+          "uncachedSourceReads": 600000,
+          "dry": {
+            "boundaries": 5000,
+            "repeats": 100,
+            "p50Ms": 0.0071,
+            "p95Ms": 0.0217,
+            "maxMs": 0.1089,
+            "nsPerBoundary": 1.42,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rain": {
+            "boundaries": 5000,
+            "repeats": 100,
+            "p50Ms": 0.2765,
+            "p95Ms": 0.4085,
+            "maxMs": 0.5029,
+            "nsPerBoundary": 55.3,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rainConcatenationPrototype": {
+            "boundaries": 5000,
+            "repeats": 100,
+            "p50Ms": 0.7024,
+            "p95Ms": 0.9481,
+            "maxMs": 1.0887,
+            "nsPerBoundary": 140.48,
+            "bytesPerBoundary": 126.4,
+            "sweepsAtLeast30Ms": 0
+          },
+          "residentWeatherMaxInclusiveBytes": 22,
+          "optionalBytesHeadroom": 2,
+          "consumerWeatherDeltaBytes": 2,
+          "consumerBytesHeadroom": 6
+        },
+        {
+          "count": 50000,
+          "capture": {
+            "boundaries": 50000,
+            "repeats": 100,
+            "p50Ms": 0.3189,
+            "p95Ms": 0.4212,
+            "maxMs": 0.6898,
+            "nsPerBoundary": 6.378,
+            "bytesPerBoundary": 40.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "foodCapture": {
+            "boundaries": 50000,
+            "repeats": 100,
+            "p50Ms": 0.109,
+            "p95Ms": 0.1186,
+            "maxMs": 0.3598,
+            "nsPerBoundary": 2.18,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "cachedSourceReads": 120,
+          "cachedFoodSourceReads": 120,
+          "uncachedSourceReads": 6000000,
+          "dry": {
+            "boundaries": 50000,
+            "repeats": 100,
+            "p50Ms": 0.0272,
+            "p95Ms": 0.0332,
+            "maxMs": 0.7162,
+            "nsPerBoundary": 0.544,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rain": {
+            "boundaries": 50000,
+            "repeats": 100,
+            "p50Ms": 1.773,
+            "p95Ms": 2.1037,
+            "maxMs": 2.1568,
+            "nsPerBoundary": 35.46,
+            "bytesPerBoundary": 0.0,
+            "sweepsAtLeast30Ms": 0
+          },
+          "rainConcatenationPrototype": {
+            "boundaries": 50000,
+            "repeats": 100,
+            "p50Ms": 2.3482,
+            "p95Ms": 2.7011,
+            "maxMs": 2.7494,
+            "nsPerBoundary": 46.964,
+            "bytesPerBoundary": 127.84,
+            "sweepsAtLeast30Ms": 0
+          },
+          "residentWeatherMaxInclusiveBytes": 22,
+          "optionalBytesHeadroom": 2,
+          "consumerWeatherDeltaBytes": 2,
+          "consumerBytesHeadroom": 6
+        }
+      ],
+      "oldPrecheck": {
+        "boundaries": 5000,
+        "repeats": 100,
+        "p50Ms": 1.6051,
+        "p95Ms": 1.9658,
+        "maxMs": 2.4685,
+        "nsPerBoundary": 321.02,
+        "bytesPerBoundary": 120.0,
+        "sweepsAtLeast30Ms": 0
+      },
+      "newPrecheck": {
+        "boundaries": 5000,
+        "repeats": 100,
+        "p50Ms": 1.5083,
+        "p95Ms": 2.0134,
+        "maxMs": 2.5351,
+        "nsPerBoundary": 301.66,
+        "bytesPerBoundary": 0.0,
+        "sweepsAtLeast30Ms": 0
+      },
+      "sink": "1O21AAAAAACIo0A",
+      "hash": 1708484150,
+      "admitted": 16097880
+    },
+    "save-contract": {
+      "schema": 21,
+      "digest": "3CCE97ACCE82916F14F8C0072D9F985F1F298755181E1324F94D5C199CC59C49",
+      "length": 120184,
+      "weatherProjectionLength": 119083,
+      "weatherProjectionDigest": "D7FF8294F56C3B3D5AF736540274E68E9848319B34658859FC15E0D4CDB1F3A2",
+      "refusals": [
+        "Invalid:Invalid state: Missing state schema.",
+        "Future:State uses a newer schema; preserve the original payload.",
+        "Invalid:Invalid state: Incomplete or trailing JSON content.",
+        "Invalid:Invalid state: Unknown field: UnknownCitizens"
+      ],
+      "economy": {
+        "orders": 849,
+        "ordersDigest": "1B94987B3158044594B9C4D6A5473BA22BE0D4F3488D769CBBEE23318BB33B91",
+        "purchases": 797,
+        "spentUnits": 107967424757760,
+        "uncertain": 2,
+        "economyDigest": "74D0FE8081EA795D4D56A11B4B955DC6E777E3822C702D3C09BC9477E6679AF9",
+        "reloadDigest": "59B6F14D44CA0F996C5A828E2E538B52C5426347FCFA40767527B72D77F1D4FA"
+      },
+      "writeBytes": 14504136,
+      "readBytes": 39004600,
+      "bench": null,
+      "hot": null
+    },
+    "capacity-reference": {
+      "name": "reference",
+      "schema": 21,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "E86AC64622A9CC6995414A0C1F1DF68AA1E7D35A07D9CC3793946F46FDAE2F4F",
+      "residents": 957,
+      "representation": 2,
+      "consumers": 1914,
+      "visitsPerResident": 32,
+      "visits": 30624,
+      "placeCount": 9,
+      "extraExistingPlaces": 0,
+      "extraExistingPlaceChars": 0,
+      "extraExistingNameChars": 0,
+      "actualExistingGrowthChars": 0,
+      "existingGrowthAllowanceChars": 0,
+      "memoryEntries": 7656,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 5058341,
+      "utf8Bytes": 5058341,
+      "streamingRecords": 55541,
+      "semanticRecords": 55538,
+      "runs": 1,
+      "writeMs": 201.8,
+      "readMs": 497.4,
+      "migrationFrom17Ms": 1103.9,
+      "migrationSourceChars": 5372125,
+      "migrationRefusal": null,
+      "retainedBytes": 11280992,
+      "readAllocatedBytes": 86692256,
+      "processPeakBytes": 159989760,
+      "syntheticReservation": null
+    },
+    "capacity-consumers5000": {
+      "name": "consumers5000",
+      "schema": 21,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "F827D0AFAE11DC51CCA74FF2CE651F19219105D0AFB0E4803A4B98DD3EDE1C56",
+      "residents": 2500,
+      "representation": 2,
+      "consumers": 5000,
+      "visitsPerResident": 32,
+      "visits": 80000,
+      "placeCount": 9,
+      "extraExistingPlaces": 0,
+      "extraExistingPlaceChars": 0,
+      "extraExistingNameChars": 0,
+      "actualExistingGrowthChars": 0,
+      "existingGrowthAllowanceChars": 0,
+      "memoryEntries": 20000,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 9802053,
+      "utf8Bytes": 9802053,
+      "streamingRecords": 112632,
+      "semanticRecords": 112629,
+      "runs": 1,
+      "writeMs": 289.7,
+      "readMs": 1126.4,
+      "migrationFrom17Ms": 1899.4,
+      "migrationSourceChars": 14021170,
+      "migrationRefusal": null,
+      "retainedBytes": 21296192,
+      "readAllocatedBytes": 169971976,
+      "processPeakBytes": 224919552,
+      "syntheticReservation": null
+    },
+    "capacity-CF32": {
+      "name": "CF32",
+      "schema": 21,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "EE3A3B1097C5301EF96BFC975E072F627CD3D1B452E76DACC4EF59D70FE2E377",
+      "residents": 50000,
+      "representation": 3,
+      "consumers": 150000,
+      "visitsPerResident": 32,
+      "visits": 1600000,
+      "placeCount": 20000,
+      "extraExistingPlaces": 19991,
+      "extraExistingPlaceChars": 6343907,
+      "extraExistingNameChars": 6239005,
+      "actualExistingGrowthChars": 12582912,
+      "existingGrowthAllowanceChars": 12582912,
+      "memoryEntries": 600000,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 194180855,
+      "utf8Bytes": 194180855,
+      "streamingRecords": 1970132,
+      "semanticRecords": 1970129,
+      "runs": 1,
+      "writeMs": 2733.4,
+      "readMs": 9481.7,
+      "migrationFrom17Ms": null,
+      "migrationSourceChars": null,
+      "migrationRefusal": "Serialized state exceeds the input size limit.",
+      "retainedBytes": 437088736,
+      "readAllocatedBytes": 3285998648,
+      "processPeakBytes": 3300491264,
+      "syntheticReservation": {
+        "futureContractChars": 24533511,
+        "alreadyCountedBHeaderChars": 56,
+        "alreadyCountedHeldTuningChars": 405,
+        "alreadyCountedAwarenessChars": 9994,
+        "alreadyCountedAwarenessRecords": 24,
+        "alreadyCountedRivalChars": 750691,
+        "alreadyCountedWeatherChars": 1400063,
+        "alreadyCountedWeatherRecords": 50000,
+        "fixedMemoryHeadroomChars": 1950000,
+        "futureContractRecords": 141735,
+        "totalBudgetedChars": 220664366,
+        "totalBudgetedUtf8Bytes": 220664366,
+        "totalBudgetedRecords": 2111867
+      }
+    },
+    "capacity-CF64": {
+      "name": "CF64",
+      "schema": 21,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "0C152A2B47C6384B9CB2CB54FB81E373A91C458D3289EEA0B197C11DEDF935CB",
+      "residents": 50000,
+      "representation": 3,
+      "consumers": 150000,
+      "visitsPerResident": 64,
+      "visits": 3200000,
+      "placeCount": 20000,
+      "extraExistingPlaces": 19991,
+      "extraExistingPlaceChars": 6343907,
+      "extraExistingNameChars": 6239005,
+      "actualExistingGrowthChars": 12582912,
+      "existingGrowthAllowanceChars": 12582912,
+      "memoryEntries": 600000,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 232580855,
+      "utf8Bytes": 232580855,
+      "streamingRecords": 3570132,
+      "semanticRecords": 3570129,
+      "runs": 1,
+      "writeMs": 3502.5,
+      "readMs": 10248.2,
+      "migrationFrom17Ms": null,
+      "migrationSourceChars": null,
+      "migrationRefusal": "Serialized state exceeds the input size limit.",
+      "retainedBytes": 513888736,
+      "readAllocatedBytes": 4093621872,
+      "processPeakBytes": 3303014400,
+      "syntheticReservation": {
+        "futureContractChars": 24533511,
+        "alreadyCountedBHeaderChars": 56,
+        "alreadyCountedHeldTuningChars": 405,
+        "alreadyCountedAwarenessChars": 9994,
+        "alreadyCountedAwarenessRecords": 24,
+        "alreadyCountedRivalChars": 750691,
+        "alreadyCountedWeatherChars": 1400063,
+        "alreadyCountedWeatherRecords": 50000,
+        "fixedMemoryHeadroomChars": 1950000,
+        "futureContractRecords": 141735,
+        "totalBudgetedChars": 259064366,
+        "totalBudgetedUtf8Bytes": 259064366,
+        "totalBudgetedRecords": 3711867
+      }
+    },
+    "a5-inspector": {
+      "boundary": "Offline .NET 10 Release, 80 batch means after eight warmups. Closed = pure stationary throttle; hover = scoring 48 preprojected walkers. Unity projection, guards, GUI draw and native formatter excluded. Open = Core capture/text, with absent food or saturated four-entry B memory on two consumers/resident and 16 shops; C2a active header but inspector never samples awareness. Batch flags are not mod-work frames.",
+      "closedStationary": {
+        "p50Ms": 5.25e-06,
+        "p95Ms": 6.1400000000000005e-06,
+        "maxMs": 6.57e-06,
+        "bytesPerCall": 0,
+        "batchSize": 10000,
+        "batchSpikesAtLeast30Ms": 0
+      },
+      "hoverPicking": {
+        "p50Ms": 0.0008599,
+        "p95Ms": 0.0011321,
+        "maxMs": 0.0012282,
+        "bytesPerCall": 0,
+        "batchSize": 1000,
+        "batchSpikesAtLeast30Ms": 0
+      },
+      "closedPicks": 0,
+      "populations": [
+        {
+          "residents": 957,
+          "activeMemory": false,
+          "consumers": 0,
+          "popupCaptureAndText": {
+            "p50Ms": 0.0050149999999999995,
+            "p95Ms": 0.008237,
+            "maxMs": 0.012821,
+            "bytesPerCall": 5856,
+            "batchSize": 100,
+            "batchSpikesAtLeast30Ms": 0
+          },
+          "formatsPerCapture": 2,
+          "textLength": 354,
+          "unchangedPayload": true
+        },
+        {
+          "residents": 5000,
+          "activeMemory": false,
+          "consumers": 0,
+          "popupCaptureAndText": {
+            "p50Ms": 0.004668,
+            "p95Ms": 0.0062970000000000005,
+            "maxMs": 0.044224,
+            "bytesPerCall": 5856.034,
+            "batchSize": 100,
+            "batchSpikesAtLeast30Ms": 0
+          },
+          "formatsPerCapture": 2,
+          "textLength": 354,
+          "unchangedPayload": true
+        },
+        {
+          "residents": 957,
+          "activeMemory": true,
+          "consumers": 1914,
+          "popupCaptureAndText": {
+            "p50Ms": 0.011833,
+            "p95Ms": 0.014601999999999999,
+            "maxMs": 0.017932999999999998,
+            "bytesPerCall": 7728,
+            "batchSize": 100,
+            "batchSpikesAtLeast30Ms": 0
+          },
+          "formatsPerCapture": 2,
+          "textLength": 390,
+          "unchangedPayload": true
+        },
+        {
+          "residents": 5000,
+          "activeMemory": true,
+          "consumers": 10000,
+          "popupCaptureAndText": {
+            "p50Ms": 0.010498,
+            "p95Ms": 0.014154,
+            "maxMs": 0.021825,
+            "bytesPerCall": 7728,
+            "batchSize": 100,
+            "batchSpikesAtLeast30Ms": 0
+          },
+          "formatsPerCapture": 2,
+          "textLength": 390,
+          "unchangedPayload": true
+        }
+      ],
+      "nativeModWorkGate": "unverified on this head; requires matched 6 Nov windows"
+    },
+    "choice-rush": {
+      "boundary": "Synthetic simultaneous lunch; stub paths; one warmup + three alternating samples per mode/accounting, 16 citizen / 128 total units / 2 ms soft budget. Snapshot published per frame. Frame/backlog estimates at 100 fps, explicit clock-rate scenarios. Not native throughput or path cost.",
+      "results": [
+        {
+          "mode": "all_feasible",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 34452,
+          "citizenEvents": 1914,
+          "continuationEvents": 32538,
+          "eventsPerDecision": 18,
+          "eventCapFrames": 2154,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 2154,
+          "estimatedSecondsAt100Fps": 21.54,
+          "offlineCpuMs": 323.7324,
+          "logicalRouteRequests": 30624,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 581
+            }
+          ],
+          "savedStateSha256": "9B46FCBFA29A17DE10ED9C152BDC0F7CD584941D988B68ED74A337E1B2F8A0E4",
+          "syntheticLoopMs": {
+            "p50": 0.124,
+            "p95": 0.2159,
+            "max": 2.0015,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 34452,
+          "citizenEvents": 1914,
+          "continuationEvents": 32538,
+          "eventsPerDecision": 18,
+          "eventCapFrames": 270,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 271,
+          "estimatedSecondsAt100Fps": 2.71,
+          "offlineCpuMs": 314.4277,
+          "logicalRouteRequests": 30624,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "9B46FCBFA29A17DE10ED9C152BDC0F7CD584941D988B68ED74A337E1B2F8A0E4",
+          "syntheticLoopMs": {
+            "p50": 1.1313,
+            "p95": 1.7732,
+            "max": 2.719,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5742,
+          "citizenEvents": 1914,
+          "continuationEvents": 3828,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 359,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 359,
+          "estimatedSecondsAt100Fps": 3.59,
+          "offlineCpuMs": 98.9026,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "36E5BC04802411598AD151144BC2FB625AE006ED6D787DCA29011AD0F6A923AB",
+          "syntheticLoopMs": {
+            "p50": 0.2494,
+            "p95": 0.3708,
+            "max": 3.5522,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5742,
+          "citizenEvents": 1914,
+          "continuationEvents": 3828,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 120,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 121,
+          "estimatedSecondsAt100Fps": 1.21,
+          "offlineCpuMs": 70.0995,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "36E5BC04802411598AD151144BC2FB625AE006ED6D787DCA29011AD0F6A923AB",
+          "syntheticLoopMs": {
+            "p50": 0.5779,
+            "p95": 0.7502,
+            "max": 2.0704,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 19140,
+          "citizenEvents": 1914,
+          "continuationEvents": 17226,
+          "eventsPerDecision": 10,
+          "eventCapFrames": 1197,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1198,
+          "estimatedSecondsAt100Fps": 11.98,
+          "offlineCpuMs": 57.7159,
+          "logicalRouteRequests": 15312,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "F55FBC1E052081F7E427D7BCEFAE1C0230224A1217AF276BEF29FA89130EFD1B",
+          "syntheticLoopMs": {
+            "p50": 0.0356,
+            "p95": 0.054,
+            "max": 7.983,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 19140,
+          "citizenEvents": 1914,
+          "continuationEvents": 17226,
+          "eventsPerDecision": 10,
+          "eventCapFrames": 150,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 150,
+          "estimatedSecondsAt100Fps": 1.5,
+          "offlineCpuMs": 65.4829,
+          "logicalRouteRequests": 15312,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "F55FBC1E052081F7E427D7BCEFAE1C0230224A1217AF276BEF29FA89130EFD1B",
+          "syntheticLoopMs": {
+            "p50": 0.4302,
+            "p95": 0.5988,
+            "max": 1.9182,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2871,
+          "citizenEvents": 957,
+          "continuationEvents": 1914,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 180,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 181,
+          "estimatedSecondsAt100Fps": 1.81,
+          "offlineCpuMs": 20.3019,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "64B0B5597FF1164CB3C0F6062B44E81E3B92ADBFD25B152E1FA5A7BB1A45E7DB",
+          "syntheticLoopMs": {
+            "p50": 0.0667,
+            "p95": 0.0767,
+            "max": 6.4812,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2871,
+          "citizenEvents": 957,
+          "continuationEvents": 1914,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 60,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 60,
+          "estimatedSecondsAt100Fps": 0.6,
+          "offlineCpuMs": 9.1872,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "64B0B5597FF1164CB3C0F6062B44E81E3B92ADBFD25B152E1FA5A7BB1A45E7DB",
+          "syntheticLoopMs": {
+            "p50": 0.0921,
+            "p95": 0.2931,
+            "max": 1.7173,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 34452,
+          "citizenEvents": 1914,
+          "continuationEvents": 32538,
+          "eventsPerDecision": 18,
+          "eventCapFrames": 270,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 272,
+          "estimatedSecondsAt100Fps": 2.72,
+          "offlineCpuMs": 107.5024,
+          "logicalRouteRequests": 30624,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "9B46FCBFA29A17DE10ED9C152BDC0F7CD584941D988B68ED74A337E1B2F8A0E4",
+          "syntheticLoopMs": {
+            "p50": 0.312,
+            "p95": 0.4359,
+            "max": 16.1169,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 34452,
+          "citizenEvents": 1914,
+          "continuationEvents": 32538,
+          "eventsPerDecision": 18,
+          "eventCapFrames": 2154,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 2154,
+          "estimatedSecondsAt100Fps": 21.54,
+          "offlineCpuMs": 78.5023,
+          "logicalRouteRequests": 30624,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 581
+            }
+          ],
+          "savedStateSha256": "9B46FCBFA29A17DE10ED9C152BDC0F7CD584941D988B68ED74A337E1B2F8A0E4",
+          "syntheticLoopMs": {
+            "p50": 0.0311,
+            "p95": 0.0443,
+            "max": 2.017,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5742,
+          "citizenEvents": 1914,
+          "continuationEvents": 3828,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 120,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 121,
+          "estimatedSecondsAt100Fps": 1.21,
+          "offlineCpuMs": 46.7,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "36E5BC04802411598AD151144BC2FB625AE006ED6D787DCA29011AD0F6A923AB",
+          "syntheticLoopMs": {
+            "p50": 0.354,
+            "p95": 0.5863,
+            "max": 3.3114,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5742,
+          "citizenEvents": 1914,
+          "continuationEvents": 3828,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 359,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 360,
+          "estimatedSecondsAt100Fps": 3.6,
+          "offlineCpuMs": 42.8526,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "36E5BC04802411598AD151144BC2FB625AE006ED6D787DCA29011AD0F6A923AB",
+          "syntheticLoopMs": {
+            "p50": 0.1089,
+            "p95": 0.1254,
+            "max": 3.8274,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 19140,
+          "citizenEvents": 1914,
+          "continuationEvents": 17226,
+          "eventsPerDecision": 10,
+          "eventCapFrames": 150,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 151,
+          "estimatedSecondsAt100Fps": 1.51,
+          "offlineCpuMs": 60.5984,
+          "logicalRouteRequests": 15312,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "F55FBC1E052081F7E427D7BCEFAE1C0230224A1217AF276BEF29FA89130EFD1B",
+          "syntheticLoopMs": {
+            "p50": 0.2103,
+            "p95": 0.7727,
+            "max": 16.0867,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 19140,
+          "citizenEvents": 1914,
+          "continuationEvents": 17226,
+          "eventsPerDecision": 10,
+          "eventCapFrames": 1197,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1198,
+          "estimatedSecondsAt100Fps": 11.98,
+          "offlineCpuMs": 55.8269,
+          "logicalRouteRequests": 15312,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "F55FBC1E052081F7E427D7BCEFAE1C0230224A1217AF276BEF29FA89130EFD1B",
+          "syntheticLoopMs": {
+            "p50": 0.0281,
+            "p95": 0.0545,
+            "max": 13.3172,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2871,
+          "citizenEvents": 957,
+          "continuationEvents": 1914,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 60,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 60,
+          "estimatedSecondsAt100Fps": 0.6,
+          "offlineCpuMs": 5.5923,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "64B0B5597FF1164CB3C0F6062B44E81E3B92ADBFD25B152E1FA5A7BB1A45E7DB",
+          "syntheticLoopMs": {
+            "p50": 0.0735,
+            "p95": 0.1381,
+            "max": 0.9459,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2871,
+          "citizenEvents": 957,
+          "continuationEvents": 1914,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 180,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 181,
+          "estimatedSecondsAt100Fps": 1.81,
+          "offlineCpuMs": 9.5381,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "64B0B5597FF1164CB3C0F6062B44E81E3B92ADBFD25B152E1FA5A7BB1A45E7DB",
+          "syntheticLoopMs": {
+            "p50": 0.023,
+            "p95": 0.0358,
+            "max": 5.0616,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 34452,
+          "citizenEvents": 1914,
+          "continuationEvents": 32538,
+          "eventsPerDecision": 18,
+          "eventCapFrames": 2154,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 2154,
+          "estimatedSecondsAt100Fps": 21.54,
+          "offlineCpuMs": 101.9333,
+          "logicalRouteRequests": 30624,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 582
+            }
+          ],
+          "savedStateSha256": "9B46FCBFA29A17DE10ED9C152BDC0F7CD584941D988B68ED74A337E1B2F8A0E4",
+          "syntheticLoopMs": {
+            "p50": 0.0381,
+            "p95": 0.0468,
+            "max": 12.0447,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 34452,
+          "citizenEvents": 1914,
+          "continuationEvents": 32538,
+          "eventsPerDecision": 18,
+          "eventCapFrames": 270,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 270,
+          "estimatedSecondsAt100Fps": 2.7,
+          "offlineCpuMs": 59.2834,
+          "logicalRouteRequests": 30624,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "9B46FCBFA29A17DE10ED9C152BDC0F7CD584941D988B68ED74A337E1B2F8A0E4",
+          "syntheticLoopMs": {
+            "p50": 0.1692,
+            "p95": 0.3133,
+            "max": 1.9712,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5742,
+          "citizenEvents": 1914,
+          "continuationEvents": 3828,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 359,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 360,
+          "estimatedSecondsAt100Fps": 3.6,
+          "offlineCpuMs": 30.4955,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "36E5BC04802411598AD151144BC2FB625AE006ED6D787DCA29011AD0F6A923AB",
+          "syntheticLoopMs": {
+            "p50": 0.0616,
+            "p95": 0.1177,
+            "max": 2.0081,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5742,
+          "citizenEvents": 1914,
+          "continuationEvents": 3828,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 120,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 120,
+          "estimatedSecondsAt100Fps": 1.2,
+          "offlineCpuMs": 28.1758,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "36E5BC04802411598AD151144BC2FB625AE006ED6D787DCA29011AD0F6A923AB",
+          "syntheticLoopMs": {
+            "p50": 0.1781,
+            "p95": 0.2972,
+            "max": 3.7733,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 19140,
+          "citizenEvents": 1914,
+          "continuationEvents": 17226,
+          "eventsPerDecision": 10,
+          "eventCapFrames": 1197,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1197,
+          "estimatedSecondsAt100Fps": 11.97,
+          "offlineCpuMs": 58.6512,
+          "logicalRouteRequests": 15312,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "F55FBC1E052081F7E427D7BCEFAE1C0230224A1217AF276BEF29FA89130EFD1B",
+          "syntheticLoopMs": {
+            "p50": 0.0288,
+            "p95": 0.0433,
+            "max": 11.5954,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 19140,
+          "citizenEvents": 1914,
+          "continuationEvents": 17226,
+          "eventsPerDecision": 10,
+          "eventCapFrames": 150,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 151,
+          "estimatedSecondsAt100Fps": 1.51,
+          "offlineCpuMs": 61.3768,
+          "logicalRouteRequests": 15312,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "F55FBC1E052081F7E427D7BCEFAE1C0230224A1217AF276BEF29FA89130EFD1B",
+          "syntheticLoopMs": {
+            "p50": 0.2176,
+            "p95": 0.6907,
+            "max": 14.8601,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2871,
+          "citizenEvents": 957,
+          "continuationEvents": 1914,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 180,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 181,
+          "estimatedSecondsAt100Fps": 1.81,
+          "offlineCpuMs": 9.0598,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "64B0B5597FF1164CB3C0F6062B44E81E3B92ADBFD25B152E1FA5A7BB1A45E7DB",
+          "syntheticLoopMs": {
+            "p50": 0.0234,
+            "p95": 0.0344,
+            "max": 3.2559,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2871,
+          "citizenEvents": 957,
+          "continuationEvents": 1914,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 60,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 60,
+          "estimatedSecondsAt100Fps": 0.6,
+          "offlineCpuMs": 6.2025,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "64B0B5597FF1164CB3C0F6062B44E81E3B92ADBFD25B152E1FA5A7BB1A45E7DB",
+          "syntheticLoopMs": {
+            "p50": 0.0701,
+            "p95": 0.1005,
+            "max": 1.9332,
+            "spikesAtLeast30Ms": 0
+          }
+        }
+      ]
+    },
+    "choice-integrated": {
+      "bench": [
+        {
+          "shops": 8,
+          "nativeIds": false,
+          "samples": 512,
+          "fullMs": {
+            "p50": 0.1317,
+            "p95": 0.2156,
+            "max": 9.0682,
+            "spikesAtLeast30Ms": 0
+          },
+          "continuationUnitMs": {
+            "p50": 0.001,
+            "p95": 0.0251,
+            "max": 0.3901,
+            "spikesAtLeast30Ms": 0
+          },
+          "shortlistCapturePlusPureSamplingMs": {
+            "p95": 0.0166,
+            "max": 0.0403
+          },
+          "exactShortlistTraitsSamplingMs": {
+            "p50": 0.0201,
+            "p95": 0.031100000000000003,
+            "max": 0.1027
+          },
+          "bytesPerDecision": 144488,
+          "logicalRoutes": 12,
+          "logicalRouteRange": {
+            "min": 6,
+            "max": 16
+          }
+        },
+        {
+          "shops": 64,
+          "nativeIds": false,
+          "samples": 512,
+          "fullMs": {
+            "p50": 0.2464,
+            "p95": 0.386,
+            "max": 0.8389,
+            "spikesAtLeast30Ms": 0
+          },
+          "continuationUnitMs": {
+            "p50": 0.0025,
+            "p95": 0.0324,
+            "max": 0.5886,
+            "spikesAtLeast30Ms": 0
+          },
+          "shortlistCapturePlusPureSamplingMs": {
+            "p95": 0.052599999999999994,
+            "max": 0.2811
+          },
+          "exactShortlistTraitsSamplingMs": {
+            "p50": 0.0252,
+            "p95": 0.036500000000000005,
+            "max": 0.09340000000000001
+          },
+          "bytesPerDecision": 178248,
+          "logicalRoutes": 16,
+          "logicalRouteRange": {
+            "min": 12,
+            "max": 16
+          }
+        },
+        {
+          "shops": 1024,
+          "nativeIds": false,
+          "samples": 512,
+          "fullMs": {
+            "p50": 1.7198,
+            "p95": 2.3953,
+            "max": 3.2461,
+            "spikesAtLeast30Ms": 0
+          },
+          "continuationUnitMs": {
+            "p50": 0.002,
+            "p95": 0.013,
+            "max": 1.671,
+            "spikesAtLeast30Ms": 0
+          },
+          "shortlistCapturePlusPureSamplingMs": {
+            "p95": 0.039099999999999996,
+            "max": 0.1256
+          },
+          "exactShortlistTraitsSamplingMs": {
+            "p50": 0.0353,
+            "p95": 0.0557,
+            "max": 1.4299000000000002
+          },
+          "bytesPerDecision": 470584,
+          "logicalRoutes": 8,
+          "logicalRouteRange": {
+            "min": 2,
+            "max": 16
+          }
+        }
+      ],
+      "nativeIdBench": [
+        {
+          "shops": 8,
+          "nativeIds": true,
+          "samples": 512,
+          "fullMs": {
+            "p50": 0.0668,
+            "p95": 0.0939,
+            "max": 0.2694,
+            "spikesAtLeast30Ms": 0
+          },
+          "continuationUnitMs": {
+            "p50": 0.0003,
+            "p95": 0.0124,
+            "max": 0.1816,
+            "spikesAtLeast30Ms": 0
+          },
+          "shortlistCapturePlusPureSamplingMs": {
+            "p95": 0.0048000000000000004,
+            "max": 0.019899999999999998
+          },
+          "exactShortlistTraitsSamplingMs": {
+            "p50": 0.0105,
+            "p95": 0.014199999999999999,
+            "max": 0.1702
+          },
+          "bytesPerDecision": 139136,
+          "logicalRoutes": 12,
+          "logicalRouteRange": {
+            "min": 6,
+            "max": 16
+          }
+        },
+        {
+          "shops": 64,
+          "nativeIds": true,
+          "samples": 512,
+          "fullMs": {
+            "p50": 0.1078,
+            "p95": 0.186,
+            "max": 0.4213,
+            "spikesAtLeast30Ms": 0
+          },
+          "continuationUnitMs": {
+            "p50": 0.0007,
+            "p95": 0.0165,
+            "max": 0.2895,
+            "spikesAtLeast30Ms": 0
+          },
+          "shortlistCapturePlusPureSamplingMs": {
+            "p95": 0.011099999999999999,
+            "max": 0.21660000000000001
+          },
+          "exactShortlistTraitsSamplingMs": {
+            "p50": 0.0143,
+            "p95": 0.024,
+            "max": 0.066
+          },
+          "bytesPerDecision": 171112,
+          "logicalRoutes": 16,
+          "logicalRouteRange": {
+            "min": 14,
+            "max": 16
+          }
+        },
+        {
+          "shops": 1024,
+          "nativeIds": true,
+          "samples": 512,
+          "fullMs": {
+            "p50": 0.5154,
+            "p95": 0.8875,
+            "max": 2.727,
+            "spikesAtLeast30Ms": 0
+          },
+          "continuationUnitMs": {
+            "p50": 0.0006,
+            "p95": 0.0045,
+            "max": 1.8752,
+            "spikesAtLeast30Ms": 0
+          },
+          "shortlistCapturePlusPureSamplingMs": {
+            "p95": 0.0151,
+            "max": 0.039700000000000006
+          },
+          "exactShortlistTraitsSamplingMs": {
+            "p50": 0.0133,
+            "p95": 0.023100000000000002,
+            "max": 0.0338
+          },
+          "bytesPerDecision": 467592,
+          "logicalRoutes": 10,
+          "logicalRouteRange": {
+            "min": 2,
+            "max": 16
+          }
+        }
+      ]
+    },
+    "choice-rush-integrated": {
+      "boundary": "Synthetic simultaneous lunch; stub paths; one warmup + three alternating samples per mode/accounting, 16 citizen / 128 total units / 2 ms soft budget. Snapshot published per frame. Frame/backlog estimates at 100 fps, explicit clock-rate scenarios. Not native throughput or path cost.",
+      "results": [
+        {
+          "mode": "all_feasible",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 30884,
+          "citizenEvents": 1914,
+          "continuationEvents": 28970,
+          "eventsPerDecision": 16.13584117032393,
+          "eventCapFrames": 1931,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1931,
+          "estimatedSecondsAt100Fps": 19.31,
+          "offlineCpuMs": 226.5092,
+          "logicalRouteRequests": 27032,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 430
+            }
+          ],
+          "savedStateSha256": "E0D66540C376946C72575E5E95010366DBDA0359A4D1663E062A207CD0B8B5D8",
+          "syntheticLoopMs": {
+            "p50": 0.0986,
+            "p95": 0.1527,
+            "max": 16.3709,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 30884,
+          "citizenEvents": 1914,
+          "continuationEvents": 28970,
+          "eventsPerDecision": 16.13584117032393,
+          "eventCapFrames": 242,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 243,
+          "estimatedSecondsAt100Fps": 2.43,
+          "offlineCpuMs": 186.0284,
+          "logicalRouteRequests": 27032,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "E0D66540C376946C72575E5E95010366DBDA0359A4D1663E062A207CD0B8B5D8",
+          "syntheticLoopMs": {
+            "p50": 0.665,
+            "p95": 1.1327,
+            "max": 2.681,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5766,
+          "citizenEvents": 1914,
+          "continuationEvents": 3852,
+          "eventsPerDecision": 3.012539184952978,
+          "eventCapFrames": 361,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 362,
+          "estimatedSecondsAt100Fps": 3.62,
+          "offlineCpuMs": 84.9033,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "8BD2EFD8EF4DDE4E6AE988149A01A08404DBDE26B4337BCDF7EAE379C86EB208",
+          "syntheticLoopMs": {
+            "p50": 0.1744,
+            "p95": 0.3302,
+            "max": 9.3674,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5766,
+          "citizenEvents": 1914,
+          "continuationEvents": 3852,
+          "eventsPerDecision": 3.012539184952978,
+          "eventCapFrames": 120,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 121,
+          "estimatedSecondsAt100Fps": 1.21,
+          "offlineCpuMs": 63.3863,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "8BD2EFD8EF4DDE4E6AE988149A01A08404DBDE26B4337BCDF7EAE379C86EB208",
+          "syntheticLoopMs": {
+            "p50": 0.465,
+            "p95": 0.7424,
+            "max": 2.0674,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 17368,
+          "citizenEvents": 1914,
+          "continuationEvents": 15454,
+          "eventsPerDecision": 9.074190177638453,
+          "eventCapFrames": 1086,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1086,
+          "estimatedSecondsAt100Fps": 10.86,
+          "offlineCpuMs": 113.2155,
+          "logicalRouteRequests": 13516,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "598777ED3B2A4EC031F888C96394C707338E8DAE7F69AE30B02C0B602E327C1F",
+          "syntheticLoopMs": {
+            "p50": 0.0968,
+            "p95": 0.1449,
+            "max": 3.3821,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 17368,
+          "citizenEvents": 1914,
+          "continuationEvents": 15454,
+          "eventsPerDecision": 9.074190177638453,
+          "eventCapFrames": 136,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 138,
+          "estimatedSecondsAt100Fps": 1.38,
+          "offlineCpuMs": 89.1105,
+          "logicalRouteRequests": 13516,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "598777ED3B2A4EC031F888C96394C707338E8DAE7F69AE30B02C0B602E327C1F",
+          "syntheticLoopMs": {
+            "p50": 0.5834,
+            "p95": 1.2659,
+            "max": 4.3108,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2895,
+          "citizenEvents": 957,
+          "continuationEvents": 1938,
+          "eventsPerDecision": 3.0250783699059562,
+          "eventCapFrames": 181,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 183,
+          "estimatedSecondsAt100Fps": 1.83,
+          "offlineCpuMs": 36.2984,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "AB657AC2A8FE5DD64839FFE504C93FB373CAE50542D79720F264DFA2334D5481",
+          "syntheticLoopMs": {
+            "p50": 0.0915,
+            "p95": 0.1292,
+            "max": 15.6344,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2895,
+          "citizenEvents": 957,
+          "continuationEvents": 1938,
+          "eventsPerDecision": 3.0250783699059562,
+          "eventCapFrames": 60,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 61,
+          "estimatedSecondsAt100Fps": 0.61,
+          "offlineCpuMs": 16.4642,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "AB657AC2A8FE5DD64839FFE504C93FB373CAE50542D79720F264DFA2334D5481",
+          "syntheticLoopMs": {
+            "p50": 0.2768,
+            "p95": 0.4375,
+            "max": 2.2474,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 30884,
+          "citizenEvents": 1914,
+          "continuationEvents": 28970,
+          "eventsPerDecision": 16.13584117032393,
+          "eventCapFrames": 242,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 243,
+          "estimatedSecondsAt100Fps": 2.43,
+          "offlineCpuMs": 95.52,
+          "logicalRouteRequests": 27032,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "E0D66540C376946C72575E5E95010366DBDA0359A4D1663E062A207CD0B8B5D8",
+          "syntheticLoopMs": {
+            "p50": 0.3621,
+            "p95": 0.4783,
+            "max": 3.03,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 30884,
+          "citizenEvents": 1914,
+          "continuationEvents": 28970,
+          "eventsPerDecision": 16.13584117032393,
+          "eventCapFrames": 1931,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1931,
+          "estimatedSecondsAt100Fps": 19.31,
+          "offlineCpuMs": 91.992,
+          "logicalRouteRequests": 27032,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 429
+            }
+          ],
+          "savedStateSha256": "E0D66540C376946C72575E5E95010366DBDA0359A4D1663E062A207CD0B8B5D8",
+          "syntheticLoopMs": {
+            "p50": 0.0423,
+            "p95": 0.0697,
+            "max": 1.8993,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5766,
+          "citizenEvents": 1914,
+          "continuationEvents": 3852,
+          "eventsPerDecision": 3.012539184952978,
+          "eventCapFrames": 120,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 120,
+          "estimatedSecondsAt100Fps": 1.2,
+          "offlineCpuMs": 50.4547,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "8BD2EFD8EF4DDE4E6AE988149A01A08404DBDE26B4337BCDF7EAE379C86EB208",
+          "syntheticLoopMs": {
+            "p50": 0.4057,
+            "p95": 0.6057,
+            "max": 2.8495,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5766,
+          "citizenEvents": 1914,
+          "continuationEvents": 3852,
+          "eventsPerDecision": 3.012539184952978,
+          "eventCapFrames": 361,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 361,
+          "estimatedSecondsAt100Fps": 3.61,
+          "offlineCpuMs": 49.2694,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "8BD2EFD8EF4DDE4E6AE988149A01A08404DBDE26B4337BCDF7EAE379C86EB208",
+          "syntheticLoopMs": {
+            "p50": 0.1135,
+            "p95": 0.1674,
+            "max": 3.5964,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 17368,
+          "citizenEvents": 1914,
+          "continuationEvents": 15454,
+          "eventsPerDecision": 9.074190177638453,
+          "eventCapFrames": 136,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 137,
+          "estimatedSecondsAt100Fps": 1.37,
+          "offlineCpuMs": 86.8442,
+          "logicalRouteRequests": 13516,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "598777ED3B2A4EC031F888C96394C707338E8DAE7F69AE30B02C0B602E327C1F",
+          "syntheticLoopMs": {
+            "p50": 0.4869,
+            "p95": 1.4019,
+            "max": 12.6046,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 17368,
+          "citizenEvents": 1914,
+          "continuationEvents": 15454,
+          "eventsPerDecision": 9.074190177638453,
+          "eventCapFrames": 1086,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1087,
+          "estimatedSecondsAt100Fps": 10.87,
+          "offlineCpuMs": 75.3721,
+          "logicalRouteRequests": 13516,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "598777ED3B2A4EC031F888C96394C707338E8DAE7F69AE30B02C0B602E327C1F",
+          "syntheticLoopMs": {
+            "p50": 0.0616,
+            "p95": 0.087,
+            "max": 3.1778,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2895,
+          "citizenEvents": 957,
+          "continuationEvents": 1938,
+          "eventsPerDecision": 3.0250783699059562,
+          "eventCapFrames": 60,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 61,
+          "estimatedSecondsAt100Fps": 0.61,
+          "offlineCpuMs": 24.9659,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "AB657AC2A8FE5DD64839FFE504C93FB373CAE50542D79720F264DFA2334D5481",
+          "syntheticLoopMs": {
+            "p50": 0.2343,
+            "p95": 0.4563,
+            "max": 11.4239,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2895,
+          "citizenEvents": 957,
+          "continuationEvents": 1938,
+          "eventsPerDecision": 3.0250783699059562,
+          "eventCapFrames": 181,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 183,
+          "estimatedSecondsAt100Fps": 1.83,
+          "offlineCpuMs": 23.1579,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "AB657AC2A8FE5DD64839FFE504C93FB373CAE50542D79720F264DFA2334D5481",
+          "syntheticLoopMs": {
+            "p50": 0.0336,
+            "p95": 0.2346,
+            "max": 10.6195,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 30884,
+          "citizenEvents": 1914,
+          "continuationEvents": 28970,
+          "eventsPerDecision": 16.13584117032393,
+          "eventCapFrames": 1931,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1931,
+          "estimatedSecondsAt100Fps": 19.31,
+          "offlineCpuMs": 72.3586,
+          "logicalRouteRequests": 27032,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 430
+            }
+          ],
+          "savedStateSha256": "E0D66540C376946C72575E5E95010366DBDA0359A4D1663E062A207CD0B8B5D8",
+          "syntheticLoopMs": {
+            "p50": 0.0248,
+            "p95": 0.0527,
+            "max": 2.7102,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 30884,
+          "citizenEvents": 1914,
+          "continuationEvents": 28970,
+          "eventsPerDecision": 16.13584117032393,
+          "eventCapFrames": 242,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 244,
+          "estimatedSecondsAt100Fps": 2.44,
+          "offlineCpuMs": 96.6894,
+          "logicalRouteRequests": 27032,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "E0D66540C376946C72575E5E95010366DBDA0359A4D1663E062A207CD0B8B5D8",
+          "syntheticLoopMs": {
+            "p50": 0.3234,
+            "p95": 0.6226,
+            "max": 17.4621,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5766,
+          "citizenEvents": 1914,
+          "continuationEvents": 3852,
+          "eventsPerDecision": 3.012539184952978,
+          "eventCapFrames": 361,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 361,
+          "estimatedSecondsAt100Fps": 3.61,
+          "offlineCpuMs": 49.0706,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "8BD2EFD8EF4DDE4E6AE988149A01A08404DBDE26B4337BCDF7EAE379C86EB208",
+          "syntheticLoopMs": {
+            "p50": 0.113,
+            "p95": 0.2049,
+            "max": 2.4428,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5766,
+          "citizenEvents": 1914,
+          "continuationEvents": 3852,
+          "eventsPerDecision": 3.012539184952978,
+          "eventCapFrames": 120,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 120,
+          "estimatedSecondsAt100Fps": 1.2,
+          "offlineCpuMs": 48.9532,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "8BD2EFD8EF4DDE4E6AE988149A01A08404DBDE26B4337BCDF7EAE379C86EB208",
+          "syntheticLoopMs": {
+            "p50": 0.3561,
+            "p95": 0.4846,
+            "max": 2.9748,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 17368,
+          "citizenEvents": 1914,
+          "continuationEvents": 15454,
+          "eventsPerDecision": 9.074190177638453,
+          "eventCapFrames": 1086,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1087,
+          "estimatedSecondsAt100Fps": 10.87,
+          "offlineCpuMs": 60.2525,
+          "logicalRouteRequests": 13516,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "598777ED3B2A4EC031F888C96394C707338E8DAE7F69AE30B02C0B602E327C1F",
+          "syntheticLoopMs": {
+            "p50": 0.0489,
+            "p95": 0.0643,
+            "max": 3.2143,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 17368,
+          "citizenEvents": 1914,
+          "continuationEvents": 15454,
+          "eventsPerDecision": 9.074190177638453,
+          "eventCapFrames": 136,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 136,
+          "estimatedSecondsAt100Fps": 1.36,
+          "offlineCpuMs": 46.016,
+          "logicalRouteRequests": 13516,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "598777ED3B2A4EC031F888C96394C707338E8DAE7F69AE30B02C0B602E327C1F",
+          "syntheticLoopMs": {
+            "p50": 0.2434,
+            "p95": 0.5637,
+            "max": 1.7095,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2895,
+          "citizenEvents": 957,
+          "continuationEvents": 1938,
+          "eventsPerDecision": 3.0250783699059562,
+          "eventCapFrames": 181,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 182,
+          "estimatedSecondsAt100Fps": 1.82,
+          "offlineCpuMs": 12.2303,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "AB657AC2A8FE5DD64839FFE504C93FB373CAE50542D79720F264DFA2334D5481",
+          "syntheticLoopMs": {
+            "p50": 0.0469,
+            "p95": 0.0815,
+            "max": 2.8854,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2895,
+          "citizenEvents": 957,
+          "continuationEvents": 1938,
+          "eventsPerDecision": 3.0250783699059562,
+          "eventCapFrames": 60,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 61,
+          "estimatedSecondsAt100Fps": 0.61,
+          "offlineCpuMs": 16.4234,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "AB657AC2A8FE5DD64839FFE504C93FB373CAE50542D79720F264DFA2334D5481",
+          "syntheticLoopMs": {
+            "p50": 0.2273,
+            "p95": 0.2889,
+            "max": 2.4259,
+            "spikesAtLeast30Ms": 0
+          }
+        }
+      ]
+    },
+    "choice-rush-integrated-5000": {
+      "boundary": "Synthetic simultaneous lunch; stub paths; one warmup + three alternating samples per mode/accounting, 16 citizen / 128 total units / 2 ms soft budget. Snapshot published per frame. Frame/backlog estimates at 100 fps, explicit clock-rate scenarios. Not native throughput or path cost.",
+      "results": [
+        {
+          "mode": "all_feasible",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 160952,
+          "citizenEvents": 10000,
+          "continuationEvents": 150952,
+          "eventsPerDecision": 16.0952,
+          "eventCapFrames": 10060,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 10067,
+          "estimatedSecondsAt100Fps": 100.67,
+          "offlineCpuMs": 726.1623,
+          "logicalRouteRequests": 140928,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 5539
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 8516
+            }
+          ],
+          "savedStateSha256": "4E738077BFF1E69BCB61C4C8C879F7D107BA05457FEDD991DC20E9B61354D391",
+          "syntheticLoopMs": {
+            "p50": 0.0523,
+            "p95": 0.0738,
+            "max": 21.6916,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 160952,
+          "citizenEvents": 10000,
+          "continuationEvents": 150952,
+          "eventsPerDecision": 16.0952,
+          "eventCapFrames": 1258,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1266,
+          "estimatedSecondsAt100Fps": 12.66,
+          "offlineCpuMs": 745.948,
+          "logicalRouteRequests": 140928,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "4E738077BFF1E69BCB61C4C8C879F7D107BA05457FEDD991DC20E9B61354D391",
+          "syntheticLoopMs": {
+            "p50": 0.4082,
+            "p95": 0.6552,
+            "max": 31.8013,
+            "spikesAtLeast30Ms": 1
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 30024,
+          "citizenEvents": 10000,
+          "continuationEvents": 20024,
+          "eventsPerDecision": 3.0024,
+          "eventCapFrames": 1877,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1886,
+          "estimatedSecondsAt100Fps": 18.86,
+          "offlineCpuMs": 442.6202,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 2055
+            }
+          ],
+          "savedStateSha256": "9F216465E8FA1002EE0758FA485C3DD6829B9CF58029D35900A4FEF7E371431B",
+          "syntheticLoopMs": {
+            "p50": 0.1587,
+            "p95": 0.2225,
+            "max": 26.113,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 30024,
+          "citizenEvents": 10000,
+          "continuationEvents": 20024,
+          "eventsPerDecision": 3.0024,
+          "eventCapFrames": 625,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 635,
+          "estimatedSecondsAt100Fps": 6.35,
+          "offlineCpuMs": 450.9125,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "9F216465E8FA1002EE0758FA485C3DD6829B9CF58029D35900A4FEF7E371431B",
+          "syntheticLoopMs": {
+            "p50": 0.479,
+            "p95": 0.7767,
+            "max": 19.7799,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 90488,
+          "citizenEvents": 10000,
+          "continuationEvents": 80488,
+          "eventsPerDecision": 9.0488,
+          "eventCapFrames": 5656,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 5664,
+          "estimatedSecondsAt100Fps": 56.64,
+          "offlineCpuMs": 571.233,
+          "logicalRouteRequests": 70464,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 2059
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 7363
+            }
+          ],
+          "savedStateSha256": "4A38796317AE3E8344270F56DEDA22C5E26CCF2FB4AC9F09007F107B136E061A",
+          "syntheticLoopMs": {
+            "p50": 0.0729,
+            "p95": 0.0962,
+            "max": 24.8735,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 90488,
+          "citizenEvents": 10000,
+          "continuationEvents": 80488,
+          "eventsPerDecision": 9.0488,
+          "eventCapFrames": 707,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 716,
+          "estimatedSecondsAt100Fps": 7.16,
+          "offlineCpuMs": 593.6508,
+          "logicalRouteRequests": 70464,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "4A38796317AE3E8344270F56DEDA22C5E26CCF2FB4AC9F09007F107B136E061A",
+          "syntheticLoopMs": {
+            "p50": 0.5692,
+            "p95": 1.7187,
+            "max": 34.8105,
+            "spikesAtLeast30Ms": 1
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 1,
+          "consumers": 5000,
+          "events": 15024,
+          "citizenEvents": 5000,
+          "continuationEvents": 10024,
+          "eventsPerDecision": 3.0048,
+          "eventCapFrames": 939,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 943,
+          "estimatedSecondsAt100Fps": 9.43,
+          "offlineCpuMs": 149.9365,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "7D38B81D29D1770496C6432232C6F6FFD1E4D99D15EE87851ED2CAB60E27582A",
+          "syntheticLoopMs": {
+            "p50": 0.0921,
+            "p95": 0.1426,
+            "max": 16.0205,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 1,
+          "consumers": 5000,
+          "events": 15024,
+          "citizenEvents": 5000,
+          "continuationEvents": 10024,
+          "eventsPerDecision": 3.0048,
+          "eventCapFrames": 313,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 316,
+          "estimatedSecondsAt100Fps": 3.16,
+          "offlineCpuMs": 142.1473,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "7D38B81D29D1770496C6432232C6F6FFD1E4D99D15EE87851ED2CAB60E27582A",
+          "syntheticLoopMs": {
+            "p50": 0.2823,
+            "p95": 0.4597,
+            "max": 16.2826,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 160952,
+          "citizenEvents": 10000,
+          "continuationEvents": 150952,
+          "eventsPerDecision": 16.0952,
+          "eventCapFrames": 1258,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1266,
+          "estimatedSecondsAt100Fps": 12.66,
+          "offlineCpuMs": 747.8314,
+          "logicalRouteRequests": 140928,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "4E738077BFF1E69BCB61C4C8C879F7D107BA05457FEDD991DC20E9B61354D391",
+          "syntheticLoopMs": {
+            "p50": 0.4064,
+            "p95": 0.6377,
+            "max": 27.074,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 160952,
+          "citizenEvents": 10000,
+          "continuationEvents": 150952,
+          "eventsPerDecision": 16.0952,
+          "eventCapFrames": 10060,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 10075,
+          "estimatedSecondsAt100Fps": 100.75,
+          "offlineCpuMs": 966.4371,
+          "logicalRouteRequests": 140928,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 5542
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 8519
+            }
+          ],
+          "savedStateSha256": "4E738077BFF1E69BCB61C4C8C879F7D107BA05457FEDD991DC20E9B61354D391",
+          "syntheticLoopMs": {
+            "p50": 0.0511,
+            "p95": 0.0816,
+            "max": 38.2077,
+            "spikesAtLeast30Ms": 1
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 30024,
+          "citizenEvents": 10000,
+          "continuationEvents": 20024,
+          "eventsPerDecision": 3.0024,
+          "eventCapFrames": 625,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 638,
+          "estimatedSecondsAt100Fps": 6.38,
+          "offlineCpuMs": 517.5447,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "9F216465E8FA1002EE0758FA485C3DD6829B9CF58029D35900A4FEF7E371431B",
+          "syntheticLoopMs": {
+            "p50": 0.5181,
+            "p95": 1.2286,
+            "max": 18.077,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 30024,
+          "citizenEvents": 10000,
+          "continuationEvents": 20024,
+          "eventsPerDecision": 3.0024,
+          "eventCapFrames": 1877,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1891,
+          "estimatedSecondsAt100Fps": 18.91,
+          "offlineCpuMs": 493.7356,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 2063
+            }
+          ],
+          "savedStateSha256": "9F216465E8FA1002EE0758FA485C3DD6829B9CF58029D35900A4FEF7E371431B",
+          "syntheticLoopMs": {
+            "p50": 0.1608,
+            "p95": 0.2218,
+            "max": 17.4507,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 90488,
+          "citizenEvents": 10000,
+          "continuationEvents": 80488,
+          "eventsPerDecision": 9.0488,
+          "eventCapFrames": 707,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 718,
+          "estimatedSecondsAt100Fps": 7.18,
+          "offlineCpuMs": 592.9051,
+          "logicalRouteRequests": 70464,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "4A38796317AE3E8344270F56DEDA22C5E26CCF2FB4AC9F09007F107B136E061A",
+          "syntheticLoopMs": {
+            "p50": 0.5672,
+            "p95": 1.8649,
+            "max": 25.0812,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 90488,
+          "citizenEvents": 10000,
+          "continuationEvents": 80488,
+          "eventsPerDecision": 9.0488,
+          "eventCapFrames": 5656,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 5663,
+          "estimatedSecondsAt100Fps": 56.63,
+          "offlineCpuMs": 584.3736,
+          "logicalRouteRequests": 70464,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 2059
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 7362
+            }
+          ],
+          "savedStateSha256": "4A38796317AE3E8344270F56DEDA22C5E26CCF2FB4AC9F09007F107B136E061A",
+          "syntheticLoopMs": {
+            "p50": 0.0728,
+            "p95": 0.1095,
+            "max": 26.5504,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 1,
+          "consumers": 5000,
+          "events": 15024,
+          "citizenEvents": 5000,
+          "continuationEvents": 10024,
+          "eventsPerDecision": 3.0048,
+          "eventCapFrames": 313,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 316,
+          "estimatedSecondsAt100Fps": 3.16,
+          "offlineCpuMs": 128.4118,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "7D38B81D29D1770496C6432232C6F6FFD1E4D99D15EE87851ED2CAB60E27582A",
+          "syntheticLoopMs": {
+            "p50": 0.2824,
+            "p95": 0.3652,
+            "max": 17.0597,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 1,
+          "consumers": 5000,
+          "events": 15024,
+          "citizenEvents": 5000,
+          "continuationEvents": 10024,
+          "eventsPerDecision": 3.0048,
+          "eventCapFrames": 939,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 941,
+          "estimatedSecondsAt100Fps": 9.41,
+          "offlineCpuMs": 119.2488,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "7D38B81D29D1770496C6432232C6F6FFD1E4D99D15EE87851ED2CAB60E27582A",
+          "syntheticLoopMs": {
+            "p50": 0.0888,
+            "p95": 0.1065,
+            "max": 20.7419,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 160952,
+          "citizenEvents": 10000,
+          "continuationEvents": 150952,
+          "eventsPerDecision": 16.0952,
+          "eventCapFrames": 10060,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 10071,
+          "estimatedSecondsAt100Fps": 100.71,
+          "offlineCpuMs": 779.9165,
+          "logicalRouteRequests": 140928,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 5544
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 8522
+            }
+          ],
+          "savedStateSha256": "4E738077BFF1E69BCB61C4C8C879F7D107BA05457FEDD991DC20E9B61354D391",
+          "syntheticLoopMs": {
+            "p50": 0.0511,
+            "p95": 0.0746,
+            "max": 23.5464,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 160952,
+          "citizenEvents": 10000,
+          "continuationEvents": 150952,
+          "eventsPerDecision": 16.0952,
+          "eventCapFrames": 1258,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1271,
+          "estimatedSecondsAt100Fps": 12.71,
+          "offlineCpuMs": 889.0485,
+          "logicalRouteRequests": 140928,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "4E738077BFF1E69BCB61C4C8C879F7D107BA05457FEDD991DC20E9B61354D391",
+          "syntheticLoopMs": {
+            "p50": 0.4363,
+            "p95": 0.9,
+            "max": 25.2648,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 30024,
+          "citizenEvents": 10000,
+          "continuationEvents": 20024,
+          "eventsPerDecision": 3.0024,
+          "eventCapFrames": 1877,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1888,
+          "estimatedSecondsAt100Fps": 18.88,
+          "offlineCpuMs": 549.0039,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 2056
+            }
+          ],
+          "savedStateSha256": "9F216465E8FA1002EE0758FA485C3DD6829B9CF58029D35900A4FEF7E371431B",
+          "syntheticLoopMs": {
+            "p50": 0.1771,
+            "p95": 0.2798,
+            "max": 23.2727,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 30024,
+          "citizenEvents": 10000,
+          "continuationEvents": 20024,
+          "eventsPerDecision": 3.0024,
+          "eventCapFrames": 625,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 639,
+          "estimatedSecondsAt100Fps": 6.39,
+          "offlineCpuMs": 624.1705,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "9F216465E8FA1002EE0758FA485C3DD6829B9CF58029D35900A4FEF7E371431B",
+          "syntheticLoopMs": {
+            "p50": 0.554,
+            "p95": 2.0027,
+            "max": 41.0404,
+            "spikesAtLeast30Ms": 1
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 90488,
+          "citizenEvents": 10000,
+          "continuationEvents": 80488,
+          "eventsPerDecision": 9.0488,
+          "eventCapFrames": 5656,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 5670,
+          "estimatedSecondsAt100Fps": 56.7,
+          "offlineCpuMs": 692.5324,
+          "logicalRouteRequests": 70464,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 2069
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 7369
+            }
+          ],
+          "savedStateSha256": "4A38796317AE3E8344270F56DEDA22C5E26CCF2FB4AC9F09007F107B136E061A",
+          "syntheticLoopMs": {
+            "p50": 0.0797,
+            "p95": 0.1304,
+            "max": 24.7651,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 90488,
+          "citizenEvents": 10000,
+          "continuationEvents": 80488,
+          "eventsPerDecision": 9.0488,
+          "eventCapFrames": 707,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 724,
+          "estimatedSecondsAt100Fps": 7.24,
+          "offlineCpuMs": 681.9069,
+          "logicalRouteRequests": 70464,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "4A38796317AE3E8344270F56DEDA22C5E26CCF2FB4AC9F09007F107B136E061A",
+          "syntheticLoopMs": {
+            "p50": 0.6513,
+            "p95": 2.0089,
+            "max": 27.601,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 1,
+          "consumers": 5000,
+          "events": 15024,
+          "citizenEvents": 5000,
+          "continuationEvents": 10024,
+          "eventsPerDecision": 3.0048,
+          "eventCapFrames": 939,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 943,
+          "estimatedSecondsAt100Fps": 9.43,
+          "offlineCpuMs": 184.5937,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "7D38B81D29D1770496C6432232C6F6FFD1E4D99D15EE87851ED2CAB60E27582A",
+          "syntheticLoopMs": {
+            "p50": 0.1038,
+            "p95": 0.1725,
+            "max": 24.0373,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 1,
+          "consumers": 5000,
+          "events": 15024,
+          "citizenEvents": 5000,
+          "continuationEvents": 10024,
+          "eventsPerDecision": 3.0048,
+          "eventCapFrames": 313,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 316,
+          "estimatedSecondsAt100Fps": 3.16,
+          "offlineCpuMs": 161.3613,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "7D38B81D29D1770496C6432232C6F6FFD1E4D99D15EE87851ED2CAB60E27582A",
+          "syntheticLoopMs": {
+            "p50": 0.3099,
+            "p95": 0.5209,
+            "max": 29.881,
+            "spikesAtLeast30Ms": 0
+          }
+        }
+      ]
+    },
+    "save-bench": {
+      "schema": 21,
+      "digest": "3CCE97ACCE82916F14F8C0072D9F985F1F298755181E1324F94D5C199CC59C49",
+      "length": 120184,
+      "weatherProjectionLength": 119083,
+      "weatherProjectionDigest": "D7FF8294F56C3B3D5AF736540274E68E9848319B34658859FC15E0D4CDB1F3A2",
+      "refusals": [
+        "Invalid:Invalid state: Missing state schema.",
+        "Future:State uses a newer schema; preserve the original payload.",
+        "Invalid:Invalid state: Incomplete or trailing JSON content.",
+        "Invalid:Invalid state: Unknown field: UnknownCitizens"
+      ],
+      "economy": {
+        "orders": 849,
+        "ordersDigest": "1B94987B3158044594B9C4D6A5473BA22BE0D4F3488D769CBBEE23318BB33B91",
+        "purchases": 797,
+        "spentUnits": 107967424757760,
+        "uncertain": 2,
+        "economyDigest": "74D0FE8081EA795D4D56A11B4B955DC6E777E3822C702D3C09BC9477E6679AF9",
+        "reloadDigest": "59B6F14D44CA0F996C5A828E2E538B52C5426347FCFA40767527B72D77F1D4FA"
+      },
+      "writeBytes": 14497672,
+      "readBytes": 39004600,
+      "bench": [
+        {
+          "residents": 957,
+          "representation": 2,
+          "decisions": true,
+          "a2Chars": 2024634,
+          "decisionDelta": 113537,
+          "consumers": 1914,
+          "chars": 2138171,
+          "capShare": 0.008,
+          "utf8Bytes": 2138171,
+          "schema16Chars": 2662766,
+          "writeMs": 55.8,
+          "readMs": 193.0,
+          "upgradeFrom16Ms": 289.3,
+          "retainedMiB": 4.0
+        },
+        {
+          "residents": 5000,
+          "representation": 2,
+          "decisions": true,
+          "a2Chars": 10581887,
+          "decisionDelta": 509751,
+          "consumers": 10000,
+          "chars": 11091638,
+          "capShare": 0.041,
+          "utf8Bytes": 11091638,
+          "schema16Chars": 13916700,
+          "writeMs": 220.5,
+          "readMs": 687.0,
+          "upgradeFrom16Ms": 1077.8,
+          "retainedMiB": 20.9
+        }
+      ],
+      "hot": {
+        "traitGenerateNs": 571.0,
+        "outcomeRecordNs": 98.3,
+        "outcomeRecordBytesPerConsumerDay": 216.0
+      }
+    },
+    "icecream-feasibility": {
+      "checks": 2127,
+      "cold": {
+        "samples": 1,
+        "coldMs": 1.8859,
+        "coldBytes": 1064
+      },
+      "warm": [
+        {
+          "furniture": 2,
+          "p50Ms": 0.0004,
+          "p95Ms": 0.0005,
+          "maxMs": 0.0092,
+          "bytesPerCall": 200,
+          "spikesAtLeast30Ms": 0
+        },
+        {
+          "furniture": 2000,
+          "p50Ms": 0.0827,
+          "p95Ms": 0.1327,
+          "maxMs": 1.4274,
+          "bytesPerCall": 49104,
+          "spikesAtLeast30Ms": 0
+        }
+      ]
+    },
+    "icecream-baseline": [
+      {
+        "checks": 2082,
+        "cold": {
+          "samples": 1,
+          "coldMs": 2.216,
+          "coldBytes": 1040
+        },
+        "warm": [
+          {
+            "furniture": 2,
+            "p50Ms": 0.0005,
+            "p95Ms": 0.0006,
+            "maxMs": 0.0057,
+            "bytesPerCall": 200,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2000,
+            "p50Ms": 0.102,
+            "p95Ms": 0.1717,
+            "maxMs": 1.5889,
+            "bytesPerCall": 49104,
+            "spikesAtLeast30Ms": 0
+          }
+        ]
+      },
+      {
+        "checks": 2098,
+        "cold": {
+          "samples": 1,
+          "coldMs": 2.1593,
+          "coldBytes": 1040
+        },
+        "warm": [
+          {
+            "furniture": 2,
+            "p50Ms": 0.0004,
+            "p95Ms": 0.0005,
+            "maxMs": 0.0102,
+            "bytesPerCall": 200,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2000,
+            "p50Ms": 0.085,
+            "p95Ms": 0.1506,
+            "maxMs": 1.5162,
+            "bytesPerCall": 49104,
+            "spikesAtLeast30Ms": 0
+          }
+        ]
+      },
+      {
+        "checks": 2119,
+        "cold": {
+          "samples": 1,
+          "coldMs": 2.4809,
+          "coldBytes": 1040
+        },
+        "warm": [
+          {
+            "furniture": 2,
+            "p50Ms": 0.0004,
+            "p95Ms": 0.0005,
+            "maxMs": 0.0037,
+            "bytesPerCall": 200,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2000,
+            "p50Ms": 0.0841,
+            "p95Ms": 0.1414,
+            "maxMs": 1.4643,
+            "bytesPerCall": 49104,
+            "spikesAtLeast30Ms": 0
+          }
+        ]
+      }
+    ]
+  },
+  "c4SaveComparison": {
+    "baseline": "5ecc4262b915e0e4cd4653d90b578a49f55ab890",
+    "candidateCoreCommit": "5ecc4262b915e0e4cd4653d90b578a49f55ab890",
+    "fixtures": [
+      {
+        "fixture": "population.json",
+        "schema": 21,
+        "baselineBytes": 41787,
+        "candidateBytes": 41787,
+        "delta": 0,
+        "identicalBytes": true,
+        "sha256": "15b8ee024e538aca02d02cb7682d34c3158729cf77531d8e0ae566588a0b75ad"
+      },
+      {
+        "fixture": "food.json",
+        "schema": 21,
+        "baselineBytes": 66679,
+        "candidateBytes": 66679,
+        "delta": 0,
+        "identicalBytes": true,
+        "sha256": "9b0d46a1bdcb4536f365c6d79c393b7b49a5b730bff4198bed083225bab5ba96"
+      }
+    ]
+  },
+  "testMethodPreservation": {
+    "ef2d72e": {
+      "methods": 1159,
+      "missing": []
+    },
+    "75c956c": {
+      "methods": 1163,
+      "missing": []
+    }
+  },
+  "offlineTimingFlags": [
+    {
+      "path": "metrics.rival-outflow.wholeDay[1].advance128UnitSamples.max",
+      "value": 70.0504,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.rival-outflow.wholeDay[1].advance128UnitSamples.spikesAtLeast30ms",
+      "value": 5,
+      "kind": "reported count/threshold"
+    },
+    {
+      "path": "metrics.awareness.stages[1].buildMs.p95",
+      "value": 35.6457,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.awareness.stages[1].buildMs.max",
+      "value": 35.6457,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.awareness.stages[1].buildMs.spikesAtLeast30ms",
+      "value": 1,
+      "kind": "reported count/threshold"
+    },
+    {
+      "path": "metrics.awareness.stages[3].buildMs.p95",
+      "value": 39.4568,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.awareness.stages[3].buildMs.max",
+      "value": 39.4568,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.awareness.stages[3].buildMs.spikesAtLeast30ms",
+      "value": 4,
+      "kind": "reported count/threshold"
+    },
+    {
+      "path": "metrics.capacity-reference.writeMs",
+      "value": 201.8,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.capacity-reference.readMs",
+      "value": 497.4,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.capacity-reference.migrationFrom17Ms",
+      "value": 1103.9,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.capacity-consumers5000.writeMs",
+      "value": 289.7,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.capacity-consumers5000.readMs",
+      "value": 1126.4,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.capacity-consumers5000.migrationFrom17Ms",
+      "value": 1899.4,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.capacity-CF32.writeMs",
+      "value": 2733.4,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.capacity-CF32.readMs",
+      "value": 9481.7,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.capacity-CF64.writeMs",
+      "value": 3502.5,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.capacity-CF64.readMs",
+      "value": 10248.2,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush.results[0].offlineCpuMs",
+      "value": 323.7324,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush.results[1].offlineCpuMs",
+      "value": 314.4277,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush.results[2].offlineCpuMs",
+      "value": 98.9026,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush.results[3].offlineCpuMs",
+      "value": 70.0995,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush.results[4].offlineCpuMs",
+      "value": 57.7159,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush.results[5].offlineCpuMs",
+      "value": 65.4829,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush.results[8].offlineCpuMs",
+      "value": 107.5024,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush.results[9].offlineCpuMs",
+      "value": 78.5023,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush.results[10].offlineCpuMs",
+      "value": 46.7,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush.results[11].offlineCpuMs",
+      "value": 42.8526,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush.results[12].offlineCpuMs",
+      "value": 60.5984,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush.results[13].offlineCpuMs",
+      "value": 55.8269,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush.results[16].offlineCpuMs",
+      "value": 101.9333,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush.results[17].offlineCpuMs",
+      "value": 59.2834,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush.results[18].offlineCpuMs",
+      "value": 30.4955,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush.results[20].offlineCpuMs",
+      "value": 58.6512,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush.results[21].offlineCpuMs",
+      "value": 61.3768,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated.results[0].offlineCpuMs",
+      "value": 226.5092,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated.results[1].offlineCpuMs",
+      "value": 186.0284,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated.results[2].offlineCpuMs",
+      "value": 84.9033,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated.results[3].offlineCpuMs",
+      "value": 63.3863,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated.results[4].offlineCpuMs",
+      "value": 113.2155,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated.results[5].offlineCpuMs",
+      "value": 89.1105,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated.results[6].offlineCpuMs",
+      "value": 36.2984,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated.results[8].offlineCpuMs",
+      "value": 95.52,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated.results[9].offlineCpuMs",
+      "value": 91.992,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated.results[10].offlineCpuMs",
+      "value": 50.4547,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated.results[11].offlineCpuMs",
+      "value": 49.2694,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated.results[12].offlineCpuMs",
+      "value": 86.8442,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated.results[13].offlineCpuMs",
+      "value": 75.3721,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated.results[16].offlineCpuMs",
+      "value": 72.3586,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated.results[17].offlineCpuMs",
+      "value": 96.6894,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated.results[18].offlineCpuMs",
+      "value": 49.0706,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated.results[19].offlineCpuMs",
+      "value": 48.9532,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated.results[20].offlineCpuMs",
+      "value": 60.2525,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated.results[21].offlineCpuMs",
+      "value": 46.016,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[0].offlineCpuMs",
+      "value": 726.1623,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[1].offlineCpuMs",
+      "value": 745.948,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[1].syntheticLoopMs.max",
+      "value": 31.8013,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[1].syntheticLoopMs.spikesAtLeast30Ms",
+      "value": 1,
+      "kind": "reported count/threshold"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[2].offlineCpuMs",
+      "value": 442.6202,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[3].offlineCpuMs",
+      "value": 450.9125,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[4].offlineCpuMs",
+      "value": 571.233,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[5].offlineCpuMs",
+      "value": 593.6508,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[5].syntheticLoopMs.max",
+      "value": 34.8105,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[5].syntheticLoopMs.spikesAtLeast30Ms",
+      "value": 1,
+      "kind": "reported count/threshold"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[6].offlineCpuMs",
+      "value": 149.9365,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[7].offlineCpuMs",
+      "value": 142.1473,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[8].offlineCpuMs",
+      "value": 747.8314,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[9].offlineCpuMs",
+      "value": 966.4371,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[9].syntheticLoopMs.max",
+      "value": 38.2077,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[9].syntheticLoopMs.spikesAtLeast30Ms",
+      "value": 1,
+      "kind": "reported count/threshold"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[10].offlineCpuMs",
+      "value": 517.5447,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[11].offlineCpuMs",
+      "value": 493.7356,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[12].offlineCpuMs",
+      "value": 592.9051,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[13].offlineCpuMs",
+      "value": 584.3736,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[14].offlineCpuMs",
+      "value": 128.4118,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[15].offlineCpuMs",
+      "value": 119.2488,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[16].offlineCpuMs",
+      "value": 779.9165,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[17].offlineCpuMs",
+      "value": 889.0485,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[18].offlineCpuMs",
+      "value": 549.0039,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[19].offlineCpuMs",
+      "value": 624.1705,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[19].syntheticLoopMs.max",
+      "value": 41.0404,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[19].syntheticLoopMs.spikesAtLeast30Ms",
+      "value": 1,
+      "kind": "reported count/threshold"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[20].offlineCpuMs",
+      "value": 692.5324,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[21].offlineCpuMs",
+      "value": 681.9069,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[22].offlineCpuMs",
+      "value": 184.5937,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.choice-rush-integrated-5000.results[23].offlineCpuMs",
+      "value": 161.3613,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.save-bench.bench[0].writeMs",
+      "value": 55.8,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.save-bench.bench[0].readMs",
+      "value": 193.0,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.save-bench.bench[0].upgradeFrom16Ms",
+      "value": 289.3,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.save-bench.bench[1].writeMs",
+      "value": 220.5,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.save-bench.bench[1].readMs",
+      "value": 687.0,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    },
+    {
+      "path": "metrics.save-bench.bench[1].upgradeFrom16Ms",
+      "value": 1077.8,
+      "kind": "offline reported ms >=30; aggregate/statistic, not extra spike events"
+    }
+  ],
+  "offlineTimingFlagsLimit": "Reported offline >=30 ms statistics, counts and whole-operation totals; overlapping statistics are not additional spike events. Whole-save/full-day times remain separate from native mod-work/frame costs. No matched speedup claimed."
+}

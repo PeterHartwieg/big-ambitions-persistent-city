@@ -95,6 +95,7 @@ static partial class Program
         RetainVisits(state, visits);
         if (cf) AddReferencePlaces(state);
         if (SchemaVersion >= 18) FullMemoryAndTable(state);
+        PopulateWeather20(state);
         // B full memory at all sizes uses all 20,000 refs, backed by existing places. AddReferencePlaces
         // is only CF's extra-existing-state allowance, not necessary for a reference table's identity cap.
         string? json = null, refused = null;
@@ -133,10 +134,10 @@ static partial class Program
         int memoryHeadroom = state.Food!.Residents.Count * 13; // 51 actual incl. slot overhead -> 64 allocation
         const int futureRecords = 191864; // every non-B row of CF64's published ledger (held image inclusive)
         int heldExistingRecords = 8 * (1 + 3 + 7 + 2); // actual image: shops/offers/windows/two single-leg routes
-        int reservedRecords = futureRecords - heldExistingRecords - 1 - AwarenessRecords(state); // B0 already charges its capability header
+        int reservedRecords = futureRecords - heldExistingRecords - 1 - AwarenessRecords(state) - WeatherRecords20(state) - CampaignRecords22(state); // charge each extension once
         int bHeaderChars = ("\"Capabilities\":" + JsonConvert.SerializeObject(new { Active = false, Code = "B", Revision = 1 }) + ",").Length;
         int heldTuningChars = typeof(FoodDecisionState).GetProperty("Tuning") == null ? 0 : 205 + 8 * 25;
-        int reservedChars = futureChars - bHeaderChars - heldTuningChars - AwarenessChars(state) - RivalChars(state); // consume each implemented scalar/image once
+        int reservedChars = futureChars - bHeaderChars - heldTuningChars - AwarenessChars(state) - RivalChars(state) - WeatherChars20(state) - CampaignChars22(state) - MenuHeaderChars23(state); // consume each implemented scalar/image once
         if (cf && SchemaVersion >= 18)
         {
             Check(json.Length + reservedChars + memoryHeadroom <= SaveCodec.MaxInputCharacters, "CF character budget.");
@@ -164,7 +165,7 @@ static partial class Program
             runs, writeMs = write, readMs = read, migrationFrom17Ms = migration, migrationSourceChars = old?.Length, migrationRefusal,
             retainedBytes, readAllocatedBytes = readAllocated, processPeakBytes = Process.GetCurrentProcess().PeakWorkingSet64,
             syntheticReservation = cf && SchemaVersion >= 18 ? new {
-                futureContractChars = reservedChars, alreadyCountedBHeaderChars = bHeaderChars, alreadyCountedHeldTuningChars = heldTuningChars, alreadyCountedAwarenessChars=AwarenessChars(state), alreadyCountedAwarenessRecords=AwarenessRecords(state), alreadyCountedRivalChars=RivalChars(state), fixedMemoryHeadroomChars = memoryHeadroom,
+                futureContractChars = reservedChars, alreadyCountedBHeaderChars = bHeaderChars, alreadyCountedHeldTuningChars = heldTuningChars, alreadyCountedAwarenessChars=AwarenessChars(state), alreadyCountedAwarenessRecords=AwarenessRecords(state), alreadyCountedRivalChars=RivalChars(state), alreadyCountedWeatherChars=WeatherChars20(state), alreadyCountedWeatherRecords=WeatherRecords20(state), alreadyCountedMenuHeaderChars=MenuHeaderChars23(state), fixedMemoryHeadroomChars = memoryHeadroom,
                 futureContractRecords = reservedRecords,
                 totalBudgetedChars = json.Length + reservedChars + memoryHeadroom,
                 totalBudgetedUtf8Bytes = Encoding.UTF8.GetByteCount(json) + reservedChars + memoryHeadroom,
