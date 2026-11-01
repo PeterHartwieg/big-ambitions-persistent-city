@@ -11,7 +11,7 @@ using UnityEngine;
 namespace PersistentCity.Runtime
 {
     /// <summary>Rendering leases follow the population; measured body movement owns visible journey progress.</summary>
-    internal sealed class PhysicalPopulation : IDisposable
+    internal sealed partial class PhysicalPopulation : IDisposable
     {
         private sealed class Binding
         {
