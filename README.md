@@ -2,6 +2,8 @@
 
 Validation and dated development notices are in the [checks index](CHECKS.md); each slice maintains its own evidence file.
 
+C2b has offline campaign evidence/source plumbing and schema 22; native target mappings remain Unknown, so campaign admission awaits reviewed targeting evidence. [Checks and 6 Nov rig list](docs/checks/c2b-campaign-awareness.md).
+
 An independent Big Ambitions mod that requires Real Life Overhaul. Working name; no public release yet.
 
 The population foundation gives citizens persistent identities, homes, daily activities and journeys even when the player is elsewhere. The current implementation automatically acquires eligible player food businesses at a verified hourly boundary; unsupported businesses remain native. Outside an owned food scope, activity visits have no economic effects. Work destinations create no native employment. The [neighborhood food candidate](docs/neighborhood-economy.md) adds persistent individual balances, explicit outside income/support, essential expenses and a paid home-food alternative.

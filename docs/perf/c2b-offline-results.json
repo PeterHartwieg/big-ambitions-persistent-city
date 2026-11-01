@@ -1,0 +1,147 @@
+{
+  "date": "2026-11-01",
+  "base": "51ce709",
+  "sourceSha256": {
+    "Core/FoodCampaignImage.cs": "947235e5c21138b29df16711d03e303e3e71da8c0282a75d0aef3e083097db92",
+    "Core/FoodCampaignSource.cs": "e7fcc1c7f56eabe7655a3c5e64dd00535d5e187c635abd43956f73b2b0f5379d",
+    "Core/FoodCommerce.cs": "1bf8c77d612f558a1b820c2934ad5f7a340d0d62aeeae9e10b04b753c162d078",
+    "Runtime/CampaignPresenceProbe.cs": "d9f9d6dd988100794c2990bb847bec4f9855e367963f805c714b47af8049a3fc",
+    "Runtime/NativeCampaignReader.cs": "f3d9d26fb47c269c37723f025f88646bb08584536ed480ec2a467b70f057e9e1",
+    "Runtime/NativeCampaignAwareness.cs": "336ab4d33937713817ef365a4bb91dc8d511500a551d04b17e1ed75edfdcbfd7",
+    "tools/campaign-awareness-regression/Program.cs": "119e0fc34637741a680f7712625da653eaea731b5e10bbf8abe2d5328e6e1c74"
+  },
+  "finalBoundaryRepeat": [
+    {
+      "businesses": 1,
+      "syntheticReviewedHourlyC1AndPublication": {
+        "p50Ms": 0.0112,
+        "p95Ms": 0.0164,
+        "maxMs": 0.0669,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 2880
+      },
+      "groupIndexRebuild": {
+        "p50Ms": 0.0046,
+        "p95Ms": 0.0051,
+        "maxMs": 0.0198,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 72
+      },
+      "eightSlotDecision": {
+        "p50Ms": 0.006,
+        "p95Ms": 0.0088,
+        "maxMs": 0.1187,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "productionUnknownTargetsHourly": {
+        "p50Ms": 0.0091,
+        "p95Ms": 0.0123,
+        "maxMs": 0.0233,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 3216
+      },
+      "noCampaignHourlyCountProbes": {
+        "p50Ms": 0.0001,
+        "p95Ms": 0.0002,
+        "maxMs": 0.0007,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "disabledHourly": {
+        "p50Ms": 0,
+        "p95Ms": 0.0001,
+        "maxMs": 0.0001,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "referenceLookupAfterPublication": {
+        "duplicateIndexControl": {
+          "p50Ms": 0.0003,
+          "p95Ms": 0.0006,
+          "maxMs": 0.0172,
+          "allocatedBytesPerLookup": 272,
+          "spikesAtLeast30Ms": 0
+        },
+        "sharedProductionIndex": {
+          "p50Ms": 0,
+          "p95Ms": 0.0001,
+          "maxMs": 0.0001,
+          "allocatedBytesPerLookup": 0,
+          "spikesAtLeast30Ms": 0
+        }
+      },
+      "campaignBytesAbove19WithSharedReferences": 282,
+      "campaignRecordDelta": 1,
+      "imageWireCharacters": 265,
+      "nativeStateUnchanged": true,
+      "notes": "Offline .NET only. No native timing/targeting evidence. Whole-frame unavailable; count probes are included, not claimed as zero CPU work."
+    },
+    {
+      "businesses": 1024,
+      "syntheticReviewedHourlyC1AndPublication": {
+        "p50Ms": 1.6726,
+        "p95Ms": 2.3997,
+        "maxMs": 2.8717,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 2198552
+      },
+      "groupIndexRebuild": {
+        "p50Ms": 0.3574,
+        "p95Ms": 0.4096,
+        "maxMs": 0.58,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 16440
+      },
+      "eightSlotDecision": {
+        "p50Ms": 0.0011,
+        "p95Ms": 0.0056,
+        "maxMs": 0.0143,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "productionUnknownTargetsHourly": {
+        "p50Ms": 2.5693,
+        "p95Ms": 3.7834,
+        "maxMs": 7.1044,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 2350208
+      },
+      "noCampaignHourlyCountProbes": {
+        "p50Ms": 0.0612,
+        "p95Ms": 0.0737,
+        "maxMs": 3.3573,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "disabledHourly": {
+        "p50Ms": 0,
+        "p95Ms": 0.0001,
+        "maxMs": 0.0025,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "referenceLookupAfterPublication": {
+        "duplicateIndexControl": {
+          "p50Ms": 0.1283,
+          "p95Ms": 0.1711,
+          "maxMs": 0.6594,
+          "allocatedBytesPerLookup": 227440,
+          "spikesAtLeast30Ms": 0
+        },
+        "sharedProductionIndex": {
+          "p50Ms": 0.0001,
+          "p95Ms": 0.0002,
+          "maxMs": 0.0008,
+          "allocatedBytesPerLookup": 0,
+          "spikesAtLeast30Ms": 0
+        }
+      },
+      "campaignBytesAbove19WithSharedReferences": 274446,
+      "campaignRecordDelta": 1024,
+      "imageWireCharacters": 265,
+      "nativeStateUnchanged": true,
+      "notes": "Offline .NET only. No native timing/targeting evidence. Whole-frame unavailable; count probes are included, not claimed as zero CPU work."
+    }
+  ]
+}

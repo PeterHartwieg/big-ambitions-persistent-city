@@ -28,3 +28,5 @@ Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here
 - E3 salad — Conditional direct-stock probe, feasibility stop, base sync and native checklist: [checks](docs/checks/e3-salad.md).
 
 - C4 — Bounded inactive market research, access contract, base sync and native checklist: [checks](docs/checks/c4-market-research.md).
+
+- C2b - 1 November 2026 (offline): schema 22; synthetic hourly/query p95 at 1,024 images 2.3997/0.0056 ms, query/absent/disabled 0 B; target mappings Unknown. [Checks and rig list](docs/checks/c2b-campaign-awareness.md).
