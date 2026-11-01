@@ -63,3 +63,30 @@ in the checks/results manifest.
 
 Combined native mod-work p95 <5 ms / spikes <30 ms and whole-frame observations
 remain pending the normal combined 6 Nov rig session.
+
+## Round-one repair rerun — 1 November 2026
+
+Known-food eligibility is cached during the existing metadata refresh, including
+in-place advertised-menu changes. It adds no consumer-time product scan. Detached
+trip admission preserves the one live arrival read and does not allocate/copy a
+second hours schedule or mutate saved places. Source failures warn once and stop
+their own refresh/candidate work for the loaded city.
+
+At 1,024/20,000 alternatives, warm source/rank p95 is **0.0276/0.0353 ms**,
+warm 16-read refresh-unit p95 **0.0044/0.0050 ms**, with unchanged allocation
+1,563/1,566 bytes/context and 32 bytes/whole warm refresh. These shared-host reruns
+are not an isolated speedup control. Ledger p95/max is **0.0001/0.1785 ms**,
+192 bytes/payment. One offline 128-unit batch is **>=30 ms**, max **31.7774 ms**;
+no finer component attribution. D1's aggregate cold 20k build mean is **50.0471 ms**,
+many bounded units. Both are flagged separately from the pending native gate;
+individual D2 micro-samples remain below 30 ms. Full rerun evidence is linked from
+the slice checks; initial measurements and limits above are preserved.
+
+The final rerun (including null/blank label coverage) retains those allocations
+and bounds: source/rank p95 **0.0332/0.0441 ms**, warm refresh-unit p95
+**0.0059/0.0166 ms**, ledger p95/max **0.0004/0.2696 ms**. **Three** final
+20k offline 128-unit batches are >=30 ms, max **90.6681 ms**, with no finer
+component attribution; D1 aggregate cold 20k mean **53.2260 ms** is also flagged.
+Individual D2 micro-samples remain below 30 ms. The preceding first-rerun values
+and raw JSON are retained separately in the round-one manifest. These shared-host
+measurements do not establish a speedup or the native mod-work/whole-frame gate.

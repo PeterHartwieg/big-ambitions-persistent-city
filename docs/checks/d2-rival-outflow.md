@@ -15,7 +15,7 @@ records the compact target/account/outcome variants, exact conservation identity
 unchanged caps and zero extra consumer-record charge. Schema 17–19 contract
 documents, native receipt formats, menus and RLO source are unchanged.
 
-**Offline validation:** all **39/39** required-plus-D2 foreground gate commands
+**Initial offline validation (0858529):** all **39/39** required-plus-D2 foreground gate commands
 pass, including the final game-assembly build, **2,380/2,380** unit tests and discovery,
 the requested regressions/Python harnesses/demos, awareness/candidate regressions
 and the new **19,828-assertion** D2 native-double/measurement harness. Four capacity
@@ -39,10 +39,10 @@ deadline. Ignored raw logs/manifests are under `build/d2/gates/`. The new
 against throwing native API/field doubles. D1's existing emitted-IL native
 write/API guards remain in the required catalogue regression.
 
-The committed [results manifest](../reviews/2026-11-01-d2-rival-outflow-results.json)
+The committed [initial results manifest](../reviews/2026-11-01-d2-rival-outflow-results.json)
 retains commands, exit codes, source/log hashes, complete benchmark JSON and the
 published schema-19 comparison. Implementation/proof commits are `72971d3` and
-`988d4c6`; final DLL SHA-256 is
+`988d4c6`; initial tested DLL SHA-256 is
 `72435f39a79abce0bf3ab0b4c9dd3bf349259dccffd6b38fc1ff43480f0e32bc`.
 
 Tests cover slot-zero/represented trips and returns, reload at held/route/service/
@@ -51,6 +51,87 @@ price/hours/closure/ownership, empty B1/campaign sources, unchanged player recei
 exact accounts, conservation/overflow and malformed/foreign-schema preservation.
 The native-double harness compares complete fixture fields, including stock and
 finance canaries. These are offline checks, not native evidence.
+
+## 1 November 2026 — round-one review fixes
+
+`Opus-r1-1`: metadata refresh now records whether an existing registration
+advertises any known food item; null/blank labels remain unsupported. Non-food entries publish no food scope, fail the
+candidate predicate and receive no detail read or shortlist slot. In-place food
+additions/removals change the shared metadata revision. Refresh still reads only
+existing fields in bounded units, with no per-consumer product scan.
+
+`Opus-r1-2`: native rival refresh exceptions retire only the rival source for
+that loaded city, invalidate its index and emit one warning. No retry/poll loop,
+candidate or target read survives. Player commerce and population continue;
+saved rival commitments take the existing no-debit refusal and return path.
+The read-only bridge line includes the source's failure reason on request.
+
+`Opus-r1-3`: rival capture no longer replaces persistent place hours. Departure
+uses the captured detached schedule; only the owning meal outing defers door
+admission to its live rival check. Ordinary routines keep their original hours.
+The successful and withdrawn-choice tests preserve the original hours object
+and byte-identical serialized place through capture, service/cancellation and return.
+
+The focused red cases reproduced shortlist displacement, an escaping refresh
+exception in both fresh and cold-reload simulations, and replaced saved hours.
+All focused green cases pass: seven non-food checks, five source-failure checks,
+four saved-failure checks and all **44 D2 unit cases**. **39/39 distinct gate
+commands are green**, including the full **2,381/2,381** suite and discovery,
+**19,844** D2 assertions, **358** D1 read-only guards plus 29 catalogue checks,
+**336** actual checkout checks, all required regressions/Python harnesses/demos
+and four capacity cases. Code repairs are `7a8545f`, `f11600c` and `b435be7`.
+The standalone checkout build initially exposed warning storage declared in an
+optional partial it omits; storage now lives beside the constructor. Checkout
+logic was not changed. After the Runtime-only storage/null-label corrections,
+the final production build, catalogue, checkout and complete D2 harness reran and
+passed; unit-test inputs did not change after the full-suite pass. The
+[round-one results](../reviews/2026-11-01-d2-rival-outflow-r1-results.json) retain
+commands, hashes, red/green tails and both measurement runs. The final DLL SHA-256
+is `eb75824b5e8767d17a7b7df4765d5b34b762757129a967f01422703eb40aacb7`.
+Original measurements below remain initial evidence. No game or rig action is
+part of this repair.
+
+First round-one shared-host offline rerun, same bounded benchmark protocol:
+
+| Alternatives | Warm source/rank p50 / p95 / max ms | Warm refresh-unit p95 / max ms | Reader retained bytes |
+| --- | ---: | ---: | ---: |
+| 1,024 | 0.0170 / 0.0276 / 0.1649 | 0.0044 / 0.0198 | 720,808 |
+| 20,000 | 0.0217 / 0.0353 / 0.2386 | 0.0050 / 0.0420 | 14,092,928 |
+
+Source allocation remains 1,563/1,566 bytes/context, warm refresh remains 32
+bytes/complete refresh and zero otherwise, settlement p95 **0.0001 ms**, max
+**0.1785 ms**, **192 bytes/payment**. The 32/8/16 bounds and zero-weight checks
+still pass; no individual D2 micro-sample is >=30 ms. One rerun offline 128-unit
+batch is **>=30 ms, max 31.7774 ms**, flagged without finer attribution. Its
+p50/p95 is 1.0656/2.5225 ms at 20k (1.4509/2.3904, max 10.6544 ms at 1,024).
+The D1 aggregate cold-cache mean **50.0471 ms >=30 ms** is also flagged; it spans
+many bounded units. Neither result is native mod-work or whole-frame evidence.
+Idle save bytes and record counts are exactly the initial values below.
+
+The **final** native-double rerun includes null/blank advertised-label coverage:
+
+| Alternatives | Warm source/rank p50 / p95 / max ms | Warm refresh-unit p95 / max ms |
+| --- | ---: | ---: |
+| 1,024 | 0.0187 / 0.0332 / 0.3418 | 0.0059 / 0.0214 |
+| 20,000 | 0.0260 / 0.0441 / 0.3405 | 0.0166 / 0.1939 |
+
+Allocation/retention and the 32/8/16 bounds are unchanged from the first rerun.
+Settlement p50/p95/max is **0.0001/0.0004/0.2696 ms**, 192 bytes/payment.
+No individual D2 micro-sample is >=30 ms. **Three final offline 128-unit batches
+are >=30 ms, max 90.6681 ms**, flagged with no finer attribution than the whole
+`AdvanceTo` batch. Final batch p50/p95 is 1.0435/2.9578 ms at 20k;
+1,024 has 2.0633/3.6534 ms, max 13.1952 ms, zero >=30 ms samples. The final D1
+aggregate cold 20k mean **53.2260 ms >=30 ms** spans many bounded units and is
+also flagged. Shared-host offline batches are not native mod-work or whole-frame
+samples, and do not certify the pending combined 6 Nov gate.
+
+Full capacity rerun payload bytes, record counts and future envelopes also match
+the initial figures exactly. **Standalone save latencies >=30 ms are flagged**:
+write/read/migration-from-17 milliseconds are reference **192.9/497.8/735.3**,
+5k **451.3/1,097.2/1,730.9**, CF32 **3,647.1/12,587.2/refused** and CF64
+**3,831.1/8,960.9/refused**. The two CF migration refusals retain the old input
+size limit. These single shared-host whole-operation samples are not native
+mod-work or frame evidence; serialization remains parked.
 
 ## Performance and save allocation
 
