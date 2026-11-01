@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Newtonsoft.Json;
@@ -145,6 +146,10 @@ public sealed class RivalOutflowHistoryTests
             if (value == null) ((JObject)json["Food"]!).Remove("Outflow"); else json["Food"]!["Outflow"] = value;
             string bad = json.ToString(Formatting.None), original = bad;
             Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(bad).Status); Assert.Equal(original, bad);
+            var store = new Dictionary<string, string> { [SaveStore.StateKey] = bad };
+            Assert.False(SaveStore.WriteTo(store, city.State).Success);
+            Assert.False(SaveSession.Open(store, city.State.PopulationKey).WriteTo(store, city.State).Success);
+            Assert.Same(original, store[SaveStore.StateKey]);
         }
         var future = JObject.Parse(source); future["Schema"] = 25;
         Assert.Equal(SaveReadStatus.Future, SaveCodec.Read(future.ToString()).Status);
@@ -163,6 +168,17 @@ public sealed class RivalOutflowHistoryTests
         Assert.Equal(BigInteger.Zero, zero.Count); Assert.Same(text, zero.Text());
         history.Advance(14); Assert.Equal(BigInteger.Zero, history.Capture(14).Count);
         Assert.Equal(1, paid.Count); Assert.True(history.Reconciles(food));
+    }
+    [Fact]
+    public void ExistingUndatedLedgerAtMidnightCannotInventAFullZeroDay()
+    {
+        var meal = Meal(); var food = new FoodCommerceState(); food.Residents.Add(meal);
+        Assert.True(ExternalFoodSettlement.TryPay(meal));
+        var history = RivalOutflowHistory.Begin(food, 1440);
+        var day = history.Capture(1).Days.Single(d => d.Day == 1);
+        Assert.True(day.Known); Assert.True(day.Partial); Assert.Equal(BigInteger.Zero, day.Units);
+        Assert.Contains("earlier spending unknown", history.Capture(1).Text());
+        Assert.True(history.Reconciles(food));
     }
 }
 

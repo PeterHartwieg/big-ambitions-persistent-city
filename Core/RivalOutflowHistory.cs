@@ -23,8 +23,13 @@ namespace PersistentCity.Core
             internal BigInteger Units, Count;
         }
         public static RivalOutflowHistory Begin(FoodCommerceState food, double minute)
-            => new RivalOutflowHistory { StartDay = (int)(minute / 1440), ThroughDay = (int)(minute / 1440),
-                PartialStart = minute % 1440 != 0, Baseline = Ledger(food) };
+        {
+            var baseline = Ledger(food);
+            return new RivalOutflowHistory { StartDay = (int)(minute / 1440), ThroughDay = (int)(minute / 1440),
+                // A preexisting undated ledger can include a boundary-minute debit. Midnight
+                // alone cannot prove this first day is fully covered by the new history.
+                PartialStart = minute % 1440 != 0 || baseline > 0, Baseline = baseline };
+        }
         public static BigInteger Ledger(FoodCommerceState food)
         {
             BigInteger units = 0;
