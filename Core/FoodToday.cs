@@ -186,6 +186,8 @@ namespace PersistentCity.Core
     /// </summary>
     public sealed class FoodDecisionState
     {
+        public WeatherSample Weather { get; set; }
+        public double WeatherTravelMultiplier { get; set; }=1;
         /// <summary>Null only for a migrated/pre-image context; capture live once on first continuation.</summary>
         public FoodDecisionTuning? Tuning { get; set; }
         public FoodAwarenessImage? Awareness { get; set; }

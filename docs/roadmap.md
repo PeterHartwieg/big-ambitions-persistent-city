@@ -25,7 +25,7 @@ B. Memory, loyalty and regulars. **B0 is implemented offline:** schema 18, exact
 
 C. Marketing awareness and targeting, plus the market research product. **C2a implemented offline on B0b:** bounded source/index interface, B1 memory projection/campaign-unknown providers, local/routine and positive daily distant discovery, common eight-slot shortlist, additive schema 19. B1 memory is wired within the existing four source slots and bounded rank; r1 bounds rebuild continuations and restores at-stop observation/diagnostics and strict held-image validation. Combined 6 Nov rig proof pending. [Contract](population-schema19.md). **C4 implemented offline and inactive:** bounded pure research engine/access contract only; paid research stays off because C3 found no safe native fee path. No UI, normal-play computation or saved fields. [Contract and offline proof](market-research.md).
 D. Rivals as alternatives.
-E. Weather, street life, bigger menus and more products.
+E. Weather, street life, bigger menus and more products. **E1 implemented offline:** new-context weather capture, soft rain effects, frozen queue commitment replay and additive schema 20 on the merged C2a/B1 contract; E2b timing and menu feasibility remain intact. Combined-head native checks remain pending. [Contract/budget](population-schema20.md).
 Then: re-check the same performance gate for the final release, the hands-on session, and one release.
 Later: residents as employees, households.
 
@@ -81,3 +81,5 @@ Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index
 - E3 salad — [Conditional shared reader timing and allocation evidence](perf/e3-salad.md).
 
 - C4 — [Bounded inactive research and direct trait validation](perf/c4-market-research.md).
+
+- E1 — [Weather capture, admission and consumer precheck](perf/e1-rain.md).
