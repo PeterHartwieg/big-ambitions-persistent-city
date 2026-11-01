@@ -1,0 +1,262 @@
+{
+  "baselineCommit": "860d2d3",
+  "fixtureProtocol": "Final sequential measurements after the full gate completed; before/after alternate, one warmup per order and 7 reference / 3 ceiling measured calls. Independent assembly-context first invocation excludes assembly loading/delegate binding. External machine load uncontrolled. Windows .NET 10 Release, offline only.",
+  "findings": [
+    "Opus-r1-1",
+    "Opus-r1-2"
+  ],
+  "probeBenchmarks": [
+    {
+      "fixture": "reference",
+      "beforeAssembly": "10527B6AC27688093B63D5950343A903CA6D5491EC6BFA29A61D3D90CA7DAF8A",
+      "sourceFactsAndSizeUnchanged": true,
+      "byteSizeUnchanged": true,
+      "boundary": "offline bootstrap probe only; alternating before/after, first call per order plus measured samples; fresh-context first invocation measured separately; no Unity/game timing",
+      "freshContextFirstInvocations": [
+        {
+          "probe": "before",
+          "order": "headers_first",
+          "ms": 151.0841,
+          "atLeast30Ms": true
+        },
+        {
+          "probe": "after",
+          "order": "headers_first",
+          "ms": 6.5292,
+          "atLeast30Ms": false
+        }
+      ],
+      "results": [
+        {
+          "fixture": "reference",
+          "residents": 957,
+          "consumers": 1914,
+          "chars": 5012736,
+          "order": "previous_ordinal",
+          "probe": "before",
+          "samples": 7,
+          "firstCallMs": 163.8855,
+          "medianMs": 31.8863,
+          "p95Ms": 95.8761,
+          "maxMs": 95.8761,
+          "samplesAtLeast30Ms": 4,
+          "firstCallAtLeast30Ms": true,
+          "allocatedBytesMedian": 27121800
+        },
+        {
+          "fixture": "reference",
+          "residents": 957,
+          "consumers": 1914,
+          "chars": 5012736,
+          "order": "previous_ordinal",
+          "probe": "after",
+          "samples": 7,
+          "firstCallMs": 49.8707,
+          "medianMs": 16.1228,
+          "p95Ms": 56.1261,
+          "maxMs": 56.1261,
+          "samplesAtLeast30Ms": 2,
+          "firstCallAtLeast30Ms": true,
+          "allocatedBytesMedian": 13130136
+        },
+        {
+          "fixture": "reference",
+          "residents": 957,
+          "consumers": 1914,
+          "chars": 5012736,
+          "order": "headers_first",
+          "probe": "before",
+          "samples": 7,
+          "firstCallMs": 26.3299,
+          "medianMs": 29.6032,
+          "p95Ms": 42.0729,
+          "maxMs": 42.0729,
+          "samplesAtLeast30Ms": 3,
+          "firstCallAtLeast30Ms": false,
+          "allocatedBytesMedian": 27121864
+        },
+        {
+          "fixture": "reference",
+          "residents": 957,
+          "consumers": 1914,
+          "chars": 5012736,
+          "order": "headers_first",
+          "probe": "after",
+          "samples": 7,
+          "firstCallMs": 0.0298,
+          "medianMs": 0.0201,
+          "p95Ms": 0.0402,
+          "maxMs": 0.0402,
+          "samplesAtLeast30Ms": 0,
+          "firstCallAtLeast30Ms": false,
+          "allocatedBytesMedian": 2968
+        }
+      ]
+    },
+    {
+      "fixture": "ceiling",
+      "beforeAssembly": "10527B6AC27688093B63D5950343A903CA6D5491EC6BFA29A61D3D90CA7DAF8A",
+      "sourceFactsAndSizeUnchanged": true,
+      "byteSizeUnchanged": true,
+      "boundary": "offline bootstrap probe only; alternating before/after, first call per order plus measured samples; fresh-context first invocation measured separately; no Unity/game timing",
+      "freshContextFirstInvocations": [
+        {
+          "probe": "before",
+          "order": "headers_first",
+          "ms": 2016.7978,
+          "atLeast30Ms": true
+        },
+        {
+          "probe": "after",
+          "order": "headers_first",
+          "ms": 11.7447,
+          "atLeast30Ms": false
+        }
+      ],
+      "results": [
+        {
+          "fixture": "ceiling",
+          "residents": 50000,
+          "consumers": 150000,
+          "chars": 141086790,
+          "order": "previous_ordinal",
+          "probe": "before",
+          "samples": 3,
+          "firstCallMs": 2057.2526,
+          "medianMs": 1827.6675,
+          "p95Ms": 1834.8482,
+          "maxMs": 1834.8482,
+          "samplesAtLeast30Ms": 3,
+          "firstCallAtLeast30Ms": true,
+          "allocatedBytesMedian": 801032696
+        },
+        {
+          "fixture": "ceiling",
+          "residents": 50000,
+          "consumers": 150000,
+          "chars": 141086790,
+          "order": "previous_ordinal",
+          "probe": "after",
+          "samples": 3,
+          "firstCallMs": 986.311,
+          "medianMs": 848.7131,
+          "p95Ms": 852.0435,
+          "maxMs": 852.0435,
+          "samplesAtLeast30Ms": 3,
+          "firstCallAtLeast30Ms": true,
+          "allocatedBytesMedian": 400066320
+        },
+        {
+          "fixture": "ceiling",
+          "residents": 50000,
+          "consumers": 150000,
+          "chars": 141086790,
+          "order": "headers_first",
+          "probe": "before",
+          "samples": 3,
+          "firstCallMs": 1839.2071,
+          "medianMs": 1983.9598,
+          "p95Ms": 1998.8169,
+          "maxMs": 1998.8169,
+          "samplesAtLeast30Ms": 3,
+          "firstCallAtLeast30Ms": true,
+          "allocatedBytesMedian": 801032760
+        },
+        {
+          "fixture": "ceiling",
+          "residents": 50000,
+          "consumers": 150000,
+          "chars": 141086790,
+          "order": "headers_first",
+          "probe": "after",
+          "samples": 3,
+          "firstCallMs": 0.0354,
+          "medianMs": 0.0255,
+          "p95Ms": 0.0347,
+          "maxMs": 0.0347,
+          "samplesAtLeast30Ms": 0,
+          "firstCallAtLeast30Ms": false,
+          "allocatedBytesMedian": 2968
+        }
+      ]
+    }
+  ],
+  "regressionEvidence": {
+    "redBeforeFix": {
+      "failed": 7,
+      "passed": 12,
+      "total": 19
+    },
+    "focusedAfter": 19,
+    "unitTests": 1832,
+    "gateCommands": 34,
+    "allGateExitCodesZero": true,
+    "buildSha256": "b91e6029e59c56b2031bdbab3bff9d32ee2fe690097cf84b3c53cee2ece47a1e"
+  },
+  "historicalPrototypeComparison": {
+    "residents": 957,
+    "chars": 2105007,
+    "unchangedBytes": false,
+    "unchangedFacts": true,
+    "samples": 7,
+    "saves": [
+      {
+        "mode": "beforeWrite",
+        "medianMs": 35.621,
+        "maxMs": 177.6709,
+        "allocationBytes": 16995128
+      },
+      {
+        "mode": "afterWrite",
+        "medianMs": 25.519,
+        "maxMs": 118.4293,
+        "allocationBytes": 15203672
+      },
+      {
+        "mode": "beforeRead",
+        "medianMs": 109.2966,
+        "maxMs": 199.8135,
+        "allocationBytes": 38373024
+      },
+      {
+        "mode": "afterRead",
+        "medianMs": 114.1154,
+        "maxMs": 229.5766,
+        "allocationBytes": 33364952
+      }
+    ],
+    "outcomeShapeBefore": {
+      "ns": 232.756,
+      "bytesPerCall": 552.000064
+    },
+    "outcomeShapeAfter": {
+      "ns": 80.6012,
+      "bytesPerCall": 6.4e-05
+    },
+    "countBefore": {
+      "ms": 366.4892,
+      "chars": 268435456,
+      "bytes": 268435456
+    },
+    "countAfter": {
+      "ms": 23.6128,
+      "chars": 268435456,
+      "bytes": 268435456
+    },
+    "memoryShapeBefore": {
+      "ns": 489.4632,
+      "bytesPerCall": 352.000064
+    },
+    "memoryShapeAfter": {
+      "ns": 460.9028,
+      "bytesPerCall": 6.4e-05
+    }
+  },
+  "commands": [
+    "git archive --output=build/b0-review-before/source.tar 860d2d3 Core Persistence tools/save-contract-regression",
+    "tar -xf build/b0-review-before/source.tar -C build/b0-review-before",
+    "dotnet build build/b0-review-before/tools/save-contract-regression/SaveContractRegression.csproj --configuration Release",
+    "dotnet run --project tools/save-contract-regression/SaveContractRegression.csproj --configuration Release -- --capability-probe-bench <archived-SaveContractRegression.dll> reference",
+    "dotnet run --project tools/save-contract-regression/SaveContractRegression.csproj --configuration Release -- --capability-probe-bench <archived-SaveContractRegression.dll> ceiling"
+  ]
+}

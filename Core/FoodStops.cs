@@ -17,6 +17,20 @@ namespace PersistentCity.Core
         internal void ObserveStop(CitizenState person)
         {
             CaptureRoutineStop(person);
+            if (city.State.Capabilities.Active && records.TryGetValue(person.Identity.Id, out var arriving) && arriving.Status == MealStatus.Travelling
+                && person.PlaceId == arriving.PlaceId && person.MealOuting?.Returning == true)
+            {
+                // The native place-hours admission may have refused before a RecentVisit was added.
+                // Reaching the committed door plus named closed hours is evidence; a lost route is not.
+                var business = ReadBusiness(arriving.BusinessId, city.State.Minute);
+                if (business != null && business.PlaceId == arriving.PlaceId && business.Id == arriving.BusinessId
+                    && !DailyRoutine.Open(business.OpeningPlace, city.State.Minute))
+                {
+                    due.Remove(arriving);
+                    try { Finish(arriving, MealStatus.Missed, "Shop closed before admission"); }
+                    finally { due.Add(arriving); }
+                }
+            }
             // A brief home stay can fall entirely between meal windows. Rejoin idle
             // represented consumers when that stay is observed, not at their next meal.
             // An unfinished excursion or uncertain checkout keeps its own ownership.
@@ -27,6 +41,7 @@ namespace PersistentCity.Core
             if (!records.TryGetValue(person.Identity.Id, out var meal) || !AtFoodStop(person)
                 || (meal.Status != MealStatus.Pending && meal.Status != MealStatus.Missed && meal.Status != MealStatus.Declined)
                 || city.State.Minute >= meal.ExpiresAt) return;
+            if(NewChoice(meal) && meal.LastContextKey==Context(ChoiceStop(meal,person),true)) return;
             double at = Math.Max(city.State.Minute, meal.DesiredAt);
             if (at >= Math.Min(person.NextEventMinute, person.ActivityUntilMinute)) return;
             due.Remove(meal);
@@ -37,6 +52,7 @@ namespace PersistentCity.Core
 
         private void DecideAtStop(ResidentMeal meal, CitizenState person)
         {
+            if (NewChoice(meal)) { BeginFoodDecision(meal,person,true); return; }
             city.CancelOptionalStop(person.Identity.Id);
             double now = city.State.Minute;
             var consumer = Consumer(person, AvailableForMeal(meal), meal);

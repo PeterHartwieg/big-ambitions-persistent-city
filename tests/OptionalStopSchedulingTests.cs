@@ -220,7 +220,7 @@ public sealed class OptionalStopSchedulingTests
     public void Schema15MigrationPreservesStopsButDoesNotInventWaitingChoices()
     {
         var (sim, env) = Ready(DwellKind.Resting); sim.AdvanceTo(1450);
-        var wire = LegacyMoneyWire.AsSchema(JObject.Parse(SaveCodec.Write(sim.State)), 15);
+        var wire = LegacyMoneyWire.AsSchema(JObject.Parse(LegacyWire.Write(sim.State)), 15);
         var read = SaveCodec.Read(wire.ToString()); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Null(read.State!.Citizens[0].OptionalStopChoice);
         var loaded = new CitySimulator(read.State, new Walking()); loaded.AttachOptionalStops(env, 0);
@@ -319,7 +319,7 @@ public sealed class OptionalStopSchedulingTests
         var (sim, env) = Ready(DwellKind.WindowShopping, percentage: 0); sim.AdvanceTo(1450);
         foreach (int schema in new[] {13,14})
         {
-            var wire = LegacyMoneyWire.AsSchema(JObject.Parse(SaveCodec.Write(sim.State)), schema);
+            var wire = LegacyMoneyWire.AsSchema(JObject.Parse(LegacyWire.Write(sim.State)), schema);
             string source = wire.ToString(); var read = SaveCodec.Read(source);
             Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(schema, read.SourceSchema);
             Assert.Equal(CityState.CurrentSchema, read.State!.Schema); Assert.Null(read.State.Citizens[0].OptionalStop);
@@ -385,7 +385,7 @@ public sealed class OptionalStopSchedulingTests
     public void OrphanedActiveConversationCannotLoad()
     {
         var (sim, _) = Ready(DwellKind.ChatOutsideVenue, 2); sim.AdvanceTo(1450);
-        var wire = JObject.Parse(SaveCodec.Write(sim.State)); wire["Citizens"]![0]!["OptionalStop"] = null;
+        var wire = JObject.Parse(LegacyWire.Write(sim.State)); wire["Citizens"]![0]!["OptionalStop"] = null;
         Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status);
     }
     [Fact]
@@ -471,10 +471,10 @@ public sealed class OptionalStopSchedulingTests
     public void IndexedStopValidationStillRejectsDuplicateAndMissingReferences()
     {
         var (sim, _) = Ready(DwellKind.ChatOutsideVenue, 2); sim.AdvanceTo(1450);
-        var wire = JObject.Parse(SaveCodec.Write(sim.State));
+        var wire = JObject.Parse(LegacyWire.Write(sim.State));
         wire["Citizens"]![1]!["Identity"]!["Id"] = "c0";
         Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status);
-        wire = JObject.Parse(SaveCodec.Write(sim.State));
+        wire = JObject.Parse(LegacyWire.Write(sim.State));
         wire["Citizens"]![0]!["OptionalStop"]!["PlaceId"] = "missing";
         Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(wire.ToString()).Status);
     }

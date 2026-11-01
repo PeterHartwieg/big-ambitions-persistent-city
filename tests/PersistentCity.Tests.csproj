@@ -8,6 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Runtime/PrototypeSettings.cs" Link="PrototypeSettings.cs" />
+    <Compile Include="../Runtime/InteriorGuardSettings.cs" Link="InteriorGuardSettings.cs" />
     <Compile Include="../Runtime/InteriorViewState.cs" Link="InteriorViewState.cs" />
     <Compile Include="../Runtime/AudienceGeometryCache.cs" Link="AudienceGeometryCache.cs" />
     <Compile Include="../Runtime/NativeCampaignReader.cs" Link="NativeCampaignReader.cs" />

@@ -1,0 +1,480 @@
+{
+  "date": "2026-10-31",
+  "branch": "codex/pc-e3-first-product",
+  "base": "00d1321b257e70e57829cfef2ca823b4d0e25060",
+  "evidence": "Offline only; conditional native doubles, no game or rig execution",
+  "gates": [
+    {
+      "name": "build",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/build.py",
+        "--game-managed",
+        "C:/Program Files (x86)/Steam/steamapps/common/Big Ambitions/Big Ambitions_Data/Managed"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "unit",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "list",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--no-build",
+        "--list-tests"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "core-identity",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/core-identity-regression/CoreIdentityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "diagnostic-response",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/diagnostic-response-regression/DiagnosticResponseRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "event-observation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/event-observation-regression/EventObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "food-catalogue",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-catalogue-regression/FoodCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "food-checkout",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-checkout-regression/FoodCheckoutRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "food-hours",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-hours-regression/FoodHoursRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "food-household-catalogue",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-household-catalogue-regression/FoodHouseholdCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "food-ownership",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-ownership-regression/FoodOwnershipRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "food-supply",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-supply-regression/FoodSupplyRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "frame-observation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/frame-observation-regression/FrameObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "gate-access",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/gate-access-regression/GateAccessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "road-ceiling",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-ceiling-regression/RoadCeilingRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "road-handoff",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-handoff-regression/RoadHandoffRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "road-invalidation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-invalidation-regression/RoadInvalidationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "road-speed",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-speed-regression/RoadSpeedRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "route-discovery",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/route-discovery-regression/RouteDiscoveryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "save-contract",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "startup-clock",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/startup-clock-regression/StartupClockRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "traffic-closure",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-closure-regression/TrafficClosureRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "traffic-queue",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-queue-regression/TrafficQueueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "walking-quote",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/walking-quote-regression/WalkingQuoteRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "campaign-reader",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/campaign-reader-regression/CampaignReaderRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "native-command",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/native-command-regression/run.py"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "physical-selection",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/physical-selection-regression/run.py"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "vehicle-ownership",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/vehicle-ownership-regression/run.py"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "optional-stop",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/optional-stop-regression/run.py"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "simulate",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/simulate/Simulate.csproj",
+        "--",
+        "28",
+        "build/harness-demo"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "food-routines",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-routines/FoodRoutines.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "build/harness-food-routines-demo",
+        "957"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "food-demand",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-demand/FoodDemand.csproj",
+        "--",
+        "build/harness-food-demand-demo"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "donut",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/donut-feasibility-regression/DonutFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "isolation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/donut-feasibility-regression/source_checks.py"
+      ],
+      "exit": 0
+    }
+  ],
+  "finalRechecks": {
+    "productionBuild": 0,
+    "donutAssertions": 2082,
+    "sourceIsolation": 0,
+    "preservedExistingBlobs": 209
+  },
+  "unitTests": {
+    "passed": 1611,
+    "failed": 0,
+    "skipped": 0
+  },
+  "unchangedRegressions": {
+    "catalogueChecks": 29,
+    "checkoutChecks": 330,
+    "supplyChecks": 19,
+    "saveContractSha256": "6B9097A2A036A7791F118DDFF0A96530AC4A2EBAFFDFA6BF37C51ADBCC52062C",
+    "saveContractCharacters": 113747
+  },
+  "finalDllSha256": "fec84ef404ea865d7587a021aa2367ffa2c7de5f6c2022c8b863695be980ef3a",
+  "readerSourceSha256": "880d062dcbf9a21af4168ac44b25fd1bfc91311830058a26356c4aeca4b30cf1",
+  "performanceMethod": "Release .NET 10 native doubles. Fixture construction outside timers. First explicit read is one process-cold sample including reader JIT and metadata binding; not a percentile. 30 warmups, then 1001 individually timed reads at each size. No reader cache or per-frame caller. Native mod-work/whole-frame unmeasured.",
+  "comparisonMethod": "Ignored build/e3/before/BeforeDonutReader.cs is final reader plus only: declare a StringComparer.Ordinal HashSet<string> before the furniture loop and append !seen.Add(instance.id) to the key/id refusal. Same Program.cs and Release/Core references. No production source mutation. Both variants use authored-tag field reads, not native tag APIs.",
+  "before": {
+    "checks": 2082,
+    "cold": {
+      "samples": 1,
+      "coldMs": 3.15,
+      "coldBytes": 1144
+    },
+    "warm": [
+      {
+        "furniture": 2,
+        "p50Ms": 0.0005,
+        "p95Ms": 0.0019,
+        "maxMs": 0.2569,
+        "bytesPerCall": 376,
+        "spikesAtLeast30Ms": 0
+      },
+      {
+        "furniture": 2000,
+        "p50Ms": 0.1253,
+        "p95Ms": 0.2493,
+        "maxMs": 2.553,
+        "bytesPerCall": 203288,
+        "spikesAtLeast30Ms": 0
+      }
+    ]
+  },
+  "after": {
+    "checks": 2082,
+    "cold": {
+      "samples": 1,
+      "coldMs": 1.6876,
+      "coldBytes": 968
+    },
+    "warm": [
+      {
+        "furniture": 2,
+        "p50Ms": 0.0004,
+        "p95Ms": 0.0005,
+        "maxMs": 0.0076,
+        "bytesPerCall": 200,
+        "spikesAtLeast30Ms": 0
+      },
+      {
+        "furniture": 2000,
+        "p50Ms": 0.0853,
+        "p95Ms": 0.1822,
+        "maxMs": 1.5725,
+        "bytesPerCall": 49104,
+        "spikesAtLeast30Ms": 0
+      }
+    ]
+  },
+  "supersededMeasurements": "Earlier boolean-HasTag/tag-index iterations are not the final field-only reader comparison; see ignored build/e3/reader-before.txt, reader-after.txt and gates/donut.txt. The final pair above supersedes their timing claims.",
+  "existingDiagnosticFlags": {
+    "D1_20000AggregateColdBuildMs": 42.2474,
+    "C1_1024ColdP95Ms": 7.6693,
+    "note": "Existing unchanged regressions: D1 aggregate cold build >=30 ms; C1 synchronous cold full read p95 >=5 ms. Neither is an E3 or native per-frame gate. Bounded scheduling requirements remain unchanged."
+  },
+  "cleanup": "All foreground commands completed; final audit found no E3-owned dotnet/testhost/compiler workers. Other worktree processes left untouched.",
+  "nativeAssemblySha256": {
+    "BigAmbitions.dll": "9427561b81aaab2ada09c22a3c98dd9a4017a65225b389513885bf336852e911",
+    "BigAmbitions.Items.dll": "db07038215ea8ab2430fb942b86a19e93b5fb84f70639d87606b194786d5bab1",
+    "HGPlugins.dll": "7c0d57b839d03cd385efd1ff675fff64999050e27a5866e8882be4977400fb96"
+  }
+}

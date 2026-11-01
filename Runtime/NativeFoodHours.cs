@@ -10,6 +10,7 @@ namespace PersistentCity.Runtime
     {
         private readonly Dictionary<string, Place> routinePlaces = new Dictionary<string, Place>(StringComparer.Ordinal);
         private double lastHoursRefreshMinute = double.NegativeInfinity;
+        public long HoursRefreshPasses { get; private set; }
 
         // Refresh the enrolled slice only. The native menu remains the schedule authority;
         // route planners and the simulator share these existing Place objects and stable IDs.
@@ -17,6 +18,7 @@ namespace PersistentCity.Runtime
         {
             if (!ReferenceEquals(save, SaveGameManager.Current) || (!force && Math.Floor(minute) == lastHoursRefreshMinute)) return;
             lastHoursRefreshMinute = Math.Floor(minute);
+            HoursRefreshPasses++;
             foreach (var pair in registrations)
             {
                 if (!routinePlaces.TryGetValue(pair.Key, out var place)) continue;

@@ -1,0 +1,488 @@
+{
+  "date": "2026-10-31",
+  "purpose": "Opus-r1-1 documentation-only saved-payload reader clarification; mandatory foreground checks rerun",
+  "sourceHead": "5a788b2e498ab0e0f84cad5780f863cb7c1fc183",
+  "foregroundOnly": true,
+  "otherDotnetGate": "wait-other-dotnet.ps1 -Repo <repo> before every command; no command execution timeouts",
+  "result": "1862/1862 tests, discovery and 34/34 commands passed",
+  "dllSha256": "34bbcf02fded476c79b58e84e3a005af38b979694435994e4f9220d2ce73a246",
+  "productionChanged": false,
+  "commands": [
+    {
+      "index": 1,
+      "command": [
+        "python",
+        "tools/build.py",
+        "--game-managed",
+        "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed"
+      ],
+      "exit": 0,
+      "seconds": 1.469,
+      "output": "Package: <repo>\\build\\PersistentCity\nDLL SHA256: 34bbcf02fded476c79b58e84e3a005af38b979694435994e4f9220d2ce73a246\nGame assemblies and RLO are referenced externally; neither is copied into this package.\n"
+    },
+    {
+      "index": 2,
+      "command": [
+        "<dotnet>",
+        "test",
+        "tests/PersistentCity.Tests.csproj"
+      ],
+      "exit": 0,
+      "seconds": 216.0,
+      "output": "  Determining projects to restore...\n  All projects are up-to-date for restore.\n  PersistentCity.Core -> <repo>\\Core\\bin\\Debug\\netstandard2.1\\PersistentCity.Core.dll\n  PersistentCity.Persistence -> <repo>\\Persistence\\bin\\Debug\\netstandard2.1\\PersistentCity.Persistence.dll\n  PersistentCity.Compatibility -> <repo>\\Compatibility\\bin\\Debug\\netstandard2.1\\PersistentCity.Compatibility.dll\n  PersistentCity.Tests -> <repo>\\tests\\bin\\Debug\\net10.0\\PersistentCity.Tests.dll\nTest run for <repo>\\tests\\bin\\Debug\\net10.0\\PersistentCity.Tests.dll (.NETCoreApp,Version=v10.0)\nA total of 1 test files matched the specified pattern.\n\nPassed!  - Failed:     0, Passed:  1862, Skipped:     0, Total:  1862, Duration: 3 m 33 s - PersistentCity.Tests.dll (net10.0)\n"
+    },
+    {
+      "index": 3,
+      "command": [
+        "<dotnet>",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--no-build",
+        "--list-tests"
+      ],
+      "exit": 0,
+      "seconds": 2.782,
+      "discovery": {
+        "tests": 1862,
+        "outputSha256": "a7ed88f3fa3101993c6da0d3d1afcb52bdf2895050c4938f3f1668bc4e07a29a"
+      }
+    },
+    {
+      "index": 4,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/core-identity-regression/CoreIdentityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 7.687,
+      "output": "{\"residents\":600,\"places\":1011,\"days\":6,\"events\":38924,\"eventDigest\":\"d5337f2a6c665cb1\",\"advanceEvents\":101968,\"frames\":35438,\"residentsWithCars\":186,\"trafficEvents\":63044,\"routeRequests\":16452,\"carRoutes\":3293,\"trafficVehiclesAtSaves\":[0,0,3,0,0,0,0],\"saves\":[\"c48c341aa73009e8408cda2704be5950bf4e9ab3563b0f3023bb4fdefb7b750a\",\"1b3832591171decb1532a7bcb5b85ddc797b74e4b7043041d536a08c409ad313\",\"1ec7628af4a5f2f62dfe005b5e9c8670dc90d5ad42a5598ad22cee163c490d19\",\"aca9b40c107634eba23dbd2c41fe3db7f061eea97be7e68de380e43af0eb4507\",\"25938633348013a6bfafa6170a6013df888eab459873befc1bf239233a4361a8\",\"73b9f92e0424bbc04f24688387028f3547a5df329d42864a822ff7245d315d09\",\"99dfcc12f1369a53bcd374e3364dcc10299507de166312dd3efb3e8b32c081dd\"],\"routineDigest\":\"0631e52806483d91\",\"openingDigest\":\"7104ba65ac720db5\",\"choiceDigest\":\"4cfd8693c5de0c00\",\"mappingDigest\":\"6dc5adecf1d31d33\",\"bytes\":{\"advance\":121866744,\"planner\":31022224,\"routine\":107720,\"opening\":1627592,\"choice\":705600,\"mapping\":1146608},\"simulateMs\":3963}\n"
+    },
+    {
+      "index": 5,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/diagnostic-response-regression/DiagnosticResponseRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 1.515,
+      "output": "14 diagnostic response invariants passed.\n"
+    },
+    {
+      "index": 6,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/event-observation-regression/EventObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.391,
+      "output": "fail=False;events=680;save=700657A8796333E2162F9A41A398BC89445B81677ADC9283BF9642B747F52918\nfail=True;events=680;save=700657A8796333E2162F9A41A398BC89445B81677ADC9283BF9642B747F52918\nobserverFault=event-prefix;nativeFailure=False;events=680;outputs=identical\nobserverFault=event-prefix;nativeFailure=True;events=680;outputs=identical\nobserverFault=event-finalizer;nativeFailure=False;events=680;outputs=identical\nobserverFault=event-finalizer;nativeFailure=True;events=680;outputs=identical\nobserverFault=query-prefix;nativeFailure=False;events=680;outputs=identical\nobserverFault=query-prefix;nativeFailure=True;events=680;outputs=identical\nobserverFault=query-finalizer;nativeFailure=False;events=680;outputs=identical\nobserverFault=query-finalizer;nativeFailure=True;events=680;outputs=identical\nBoth diagnostic finalizers preserve the exact original exception on observer failure.\n"
+    },
+    {
+      "index": 7,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-catalogue-regression/FoodCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 1.828,
+      "output": "29 actual catalogue-adapter checks passed against native field doubles. No Unity/game execution.\n"
+    },
+    {
+      "index": 8,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-checkout-regression/FoodCheckoutRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 1.797,
+      "output": "Decision workload: 123 reads over 8 shops, 3 checkouts; decision cache 957 hits / 27 misses; supply-reader setups 33 (uncached: 990)\n330 actual NativeFoodMarket checkout checks passed (synthetic native surfaces, not game execution).\n"
+    },
+    {
+      "index": 9,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-hours-regression/FoodHoursRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 1.719,
+      "output": "PASS live enrolled-shop hours: extension, closure, reopening, stable identity, unchanged schedule allocation and save ownership.\nPASS actual GamePlaces + NativeFoodHours: five retail study/leisure roles stay dormant, convert in place, return dormant; vacant retail has no fake Work role.\n"
+    },
+    {
+      "index": 10,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-household-catalogue-regression/FoodHouseholdCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 1.812,
+      "output": "11 actual native household-reader checks passed against field doubles; no game execution.\n"
+    },
+    {
+      "index": 11,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-ownership-regression/FoodOwnershipRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.031,
+      "output": "PASS 138 actual ownership-hook checks against native field/callback doubles. No Unity/game execution.\n"
+    },
+    {
+      "index": 12,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-supply-regression/FoodSupplyRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 1.828,
+      "output": "19 actual FoodSupplyReader checks passed (synthetic native surfaces, not game execution).\n"
+    },
+    {
+      "index": 13,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/frame-observation-regression/FrameObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 1.672,
+      "output": "40 checks passed; marshaled row estimate bytes=120; default marshaled storage estimate=7864320\n"
+    },
+    {
+      "index": 14,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/gate-access-regression/GateAccessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.797,
+      "output": "PASS 213884 gate-access checks against actual Runtime PublicRoadAccess; offline only.\n"
+    },
+    {
+      "index": 15,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/road-ceiling-regression/RoadCeilingRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.547,
+      "output": "{\"checks\":69,\"results\":[{\"name\":\"car-wins-0.01\",\"fingerprint\":\"7E7B6DAC833F16432F174694D1B38198775B5542213138E2E4BD2A718C211955\",\"minutes\":4.364999999999994,\"estimate\":4.364999999999994,\"nativeReads\":498},{\"name\":\"congestion-walk-0.01\",\"fingerprint\":\"4576B1B83D2F83B1FBF58D6530EE6D177365521C5CA1CFA074EEE30AFC55E06C\",\"minutes\":20,\"estimate\":20,\"nativeReads\":150},{\"name\":\"congestion-subway-0.01\",\"fingerprint\":\"96BD5E1FDB9E52A097B9232A15AE4E95D605890DD771EDD1B64F119BF7AF575C\",\"minutes\":3.3200016666620367,\"estimate\":3.3200016666620367,\"nativeReads\":0},{\"name\":\"drained-car-0.01\",\"fingerprint\":\"7E7B6DAC833F16432F174694D1B38198775B5542213138E2E4BD2A718C211955\",\"minutes\":4.364999999999994,\"estimate\":4.364999999999994,\"nativeReads\":498},{\"name\":\"no-alternative-0.01\",\"fingerprint\":\"87FEFA5253672BF90376C87E3C6886F597EB79E6838E15967522F2BD5B19376A\",\"minutes\":4.364999999999994,\"estimate\":404.36499999999995,\"nativeReads\":498},{\"name\":\"closed-0.01\",\"fingerprint\":\"null\",\"minutes\":null,\"estimate\":null,\"nativeReads\":498},{\"name\":\"no-egress-0.01\",\"fingerprint\":\"null\",\"minutes\":null,\"estimate\":null,\"nativeReads\":126},{\"name\":\"car-wins-1\",\"fingerprint\":\"008ACB53FCAFCE2FB91BE081DAE5666C92C5B666411B05573D226ACCBE093612\",\"minutes\":40.5,\"estimate\":40.5,\"nativeReads\":498},{\"name\":\"congestion-walk-1\",\"fingerprint\":\"EC34423C728DFF1F53D904BFCA1796F95BD328DC8C9E842D83BB65488ABA8912\",\"minutes\":2000,\"estimate\":2000,\"nativeReads\":150},{\"name\":\"congestion-subway-1\",\"fingerprint\":\"0CDBEDCB31B5F75FA007803C83C1A6E1800840ADC5BBC70463E9B36F79726905\",\"minutes\":33.0201666662037,\"estimate\":33.0201666662037,\"nativeReads\":126},{\"name\":\"drained-car-1\",\"fingerprint\":\"008ACB53FCAFCE2FB91BE081DAE5666C92C5B666411B05573D226ACCBE093612\",\"minutes\":40.5,\"estimate\":40.5,\"nativeReads\":498},{\"name\":\"no-alternative-1\",\"fingerprint\":\"B88FEC45EFDC051B883D2FE3474EAEDBD52FE8715B32F4D277D27FD717435AA7\",\"minutes\":40.5,\"estimate\":40040.49999999999,\"nativeReads\":498},{\"name\":\"closed-1\",\"fingerprint\":\"null\",\"minutes\":null,\"estimate\":null,\"nativeReads\":498},{\"name\":\"no-egress-1\",\"fingerprint\":\"null\",\"minutes\":null,\"estimate\":null,\"nativeReads\":126},{\"name\":\"car-wins-2\",\"fingerprint\":\"A55AD96D0007F90B2A5D0BF6AA4B3DE4D0E08DA7893CED1DE133956AA091A61E\",\"minutes\":77,\"estimate\":77,\"nativeReads\":498},{\"name\":\"congestion-walk-2\",\"fingerprint\":\"100AE0F6C926A619D1DD2382DC167DEA47EF5239AF2DEE3F66AA07E40C3D1AD4\",\"minutes\":4000,\"estimate\":4000,\"nativeReads\":150},{\"name\":\"congestion-subway-2\",\"fingerprint\":\"43900D432B3B90DB998472A87C32A4FE6121099C7169DB83F01ED3069A645B51\",\"minutes\":63.020333332407404,\"estimate\":63.020333332407404,\"nativeReads\":126},{\"name\":\"drained-car-2\",\"fingerprint\":\"A55AD96D0007F90B2A5D0BF6AA4B3DE4D0E08DA7893CED1DE133956AA091A61E\",\"minutes\":77,\"estimate\":77,\"nativeReads\":498},{\"name\":\"no-alternative-2\",\"fingerprint\":\"C66BFEA200704B0BCA26ACD69F5FB0C6B0D03176569DF8E9FB0DD4E3F696C646\",\"minutes\":77,\"estimate\":80076.99999999999,\"nativeReads\":498},{\"name\":\"closed-2\",\"fingerprint\":\"null\",\"minutes\":null,\"estimate\":null,\"nativeReads\":498},{\"name\":\"no-egress-2\",\"fingerprint\":\"null\",\"minutes\":null,\"estimate\":null,\"nativeReads\":126},{\"name\":\"car-wins-1000\",\"fingerprint\":\"D02094454604EAA65E57F4C457DF91BFC55315FE2284E8F2BA3D58CEDEA6772C\",\"minutes\":36504,\"estimate\":36504,\"nativeReads\":498},{\"name\":\"congestion-walk-1000\",\"fingerprint\":\"D2EE1E8117DC14CCDFF7AE20E8114B8E3C1662E80AE5B67182EEB35B6D9CAA43\",\"minutes\":2000000,\"estimate\":2000000,\"nativeReads\":150},{\"name\":\"congestion-subway-1000\",\"fingerprint\":\"6CD6C2934DA1F1AFDA75B1D4D55A841CE3216AFF69C607CB1BA50F56B6EBE27B\",\"minutes\":30003.186666203703,\"estimate\":30003.186666203703,\"nativeReads\":126},{\"name\":\"drained-car-1000\",\"fingerprint\":\"D02094454604EAA65E57F4C457DF91BFC55315FE2284E8F2BA3D58CEDEA6772C\",\"minutes\":36504,\"estimate\":36504,\"nativeReads\":498},{\"name\":\"no-alternative-1000\",\"fingerprint\":\"EDD1A36934FE58EBFCF24AF16610E39254D04DFE24E69D7A916F179A302C330C\",\"minutes\":36504,\"estimate\":40036503.99999999,\"nativeReads\":498},{\"name\":\"closed-1000\",\"fingerprint\":\"null\",\"minutes\":null,\"estimate\":null,\"nativeReads\":498},{\"name\":\"no-egress-1000\",\"fingerprint\":\"null\",\"minutes\":null,\"estimate\":null,\"nativeReads\":126},{\"name\":\"tie\",\"fingerprint\":\"5BBA7835CA8A9DE7FD4B691F125FF0DB2745DDA16683390511C6A94CE5053AA4\",\"minutes\":11,\"estimate\":11,\"nativeReads\":72},{\"name\":\"ulp-car-win\",\"fingerprint\":\"13543B40ED91C893EFC0B4E23793D1B4F25425D371393C27E565FA6B572EBDF0\",\"minutes\":7,\"estimate\":11,\"nativeReads\":72},{\"name\":\"ulp-walk-win\",\"fingerprint\":\"3A48571431FA3A267699F8AC2A708BB9319E4F0718C129F5E38C95729FEBE752\",\"minutes\":10.999999999999998,\"estimate\":10.999999999999998,\"nativeReads\":72},{\"name\":\"connectors-tie\",\"fingerprint\":\"A28642D9237ACB684F9FE4B1D01677ED08C1AF1592359F37E41DB9570B24C05F\",\"minutes\":15.5,\"estimate\":15.5,\"nativeReads\":72},{\"name\":\"connectors-ulp-car-win\",\"fingerprint\":\"6BE1A547F86240D68B41D18A5629F713CB909CE3FD851089EE5FDC546E427B0B\",\"minutes\":11.5,\"estimate\":15.5,\"nativeReads\":72},{\"name\":\"connectors-ulp-walk-win\",\"fingerprint\":\"D63B1A8F7BFC764EB38ADD2D8D63C60916AED0FAE1F90D1961D78042DE358E12\",\"minutes\":15.499999999999998,\"estimate\":15.499999999999998,\"nativeReads\":72},{\"name\":\"second-curb-car-wins\",\"fingerprint\":\"2F697DDC4E70CED20AE8E44B77B4DB6577A198E3AC6380729984C9381BCF485A\",\"minutes\":18.5,\"estimate\":18.5,\"nativeReads\":348},{\"name\":\"subway-ceiling-during-car-search\",\"fingerprint\":\"D75E50D29AC6BE3AABFFA651EA8D7886ACFCB407E868DE66CF8FA354CB76570A\",\"minutes\":43.02066665925942,\"estimate\":43.02066665925942,\"nativeReads\":144},{\"name\":\"unreachable-walk\",\"fingerprint\":\"AB52E139F6E42376969341E53C805DB122692D8130F2312583F18346F780059A\",\"minutes\":30,\"estimate\":30,\"nativeReads\":252},{\"name\":\"unreachable-no-alternative\",\"fingerprint\":\"null\",\"minutes\":null,\"estimate\":null,\"nativeReads\":7362}],\"slicedChecks\":142,\"sliced\":[{\"name\":\"car-wins-0.01\",\"fingerprint\":\"7E7B6DAC833F16432F174694D1B38198775B5542213138E2E4BD2A718C211955\",\"slices\":16,\"nativeReads\":498},{\"name\":\"congestion-walk-0.01\",\"fingerprint\":\"4576B1B83D2F83B1FBF58D6530EE6D177365521C5CA1CFA074EEE30AFC55E06C\",\"slices\":16,\"nativeReads\":150},{\"name\":\"congestion-subway-0.01\",\"fingerprint\":\"96BD5E1FDB9E52A097B9232A15AE4E95D605890DD771EDD1B64F119BF7AF575C\",\"slices\":9,\"nativeReads\":0},{\"name\":\"drained-car-0.01\",\"fingerprint\":\"7E7B6DAC833F16432F174694D1B38198775B5542213138E2E4BD2A718C211955\",\"slices\":16,\"nativeReads\":498},{\"name\":\"no-alternative-0.01\",\"fingerprint\":\"87FEFA5253672BF90376C87E3C6886F597EB79E6838E15967522F2BD5B19376A\",\"slices\":16,\"nativeReads\":498},{\"name\":\"closed-0.01\",\"fingerprint\":\"null\",\"slices\":16,\"nativeReads\":498},{\"name\":\"no-egress-0.01\",\"fingerprint\":\"null\",\"slices\":14,\"nativeReads\":126},{\"name\":\"car-wins-1\",\"fingerprint\":\"008ACB53FCAFCE2FB91BE081DAE5666C92C5B666411B05573D226ACCBE093612\",\"slices\":16,\"nativeReads\":498},{\"name\":\"congestion-walk-1\",\"fingerprint\":\"EC34423C728DFF1F53D904BFCA1796F95BD328DC8C9E842D83BB65488ABA8912\",\"slices\":16,\"nativeReads\":150},{\"name\":\"congestion-subway-1\",\"fingerprint\":\"0CDBEDCB31B5F75FA007803C83C1A6E1800840ADC5BBC70463E9B36F79726905\",\"slices\":14,\"nativeReads\":126},{\"name\":\"drained-car-1\",\"fingerprint\":\"008ACB53FCAFCE2FB91BE081DAE5666C92C5B666411B05573D226ACCBE093612\",\"slices\":16,\"nativeReads\":498},{\"name\":\"no-alternative-1\",\"fingerprint\":\"B88FEC45EFDC051B883D2FE3474EAEDBD52FE8715B32F4D277D27FD717435AA7\",\"slices\":16,\"nativeReads\":498},{\"name\":\"closed-1\",\"fingerprint\":\"null\",\"slices\":16,\"nativeReads\":498},{\"name\":\"no-egress-1\",\"fingerprint\":\"null\",\"slices\":14,\"nativeReads\":126},{\"name\":\"car-wins-2\",\"fingerprint\":\"A55AD96D0007F90B2A5D0BF6AA4B3DE4D0E08DA7893CED1DE133956AA091A61E\",\"slices\":16,\"nativeReads\":498},{\"name\":\"congestion-walk-2\",\"fingerprint\":\"100AE0F6C926A619D1DD2382DC167DEA47EF5239AF2DEE3F66AA07E40C3D1AD4\",\"slices\":16,\"nativeReads\":150},{\"name\":\"congestion-subway-2\",\"fingerprint\":\"43900D432B3B90DB998472A87C32A4FE6121099C7169DB83F01ED3069A645B51\",\"slices\":14,\"nativeReads\":126},{\"name\":\"drained-car-2\",\"fingerprint\":\"A55AD96D0007F90B2A5D0BF6AA4B3DE4D0E08DA7893CED1DE133956AA091A61E\",\"slices\":16,\"nativeReads\":498},{\"name\":\"no-alternative-2\",\"fingerprint\":\"C66BFEA200704B0BCA26ACD69F5FB0C6B0D03176569DF8E9FB0DD4E3F696C646\",\"slices\":16,\"nativeReads\":498},{\"name\":\"closed-2\",\"fingerprint\":\"null\",\"slices\":16,\"nativeReads\":498},{\"name\":\"no-egress-2\",\"fingerprint\":\"null\",\"slices\":14,\"nativeReads\":126},{\"name\":\"car-wins-1000\",\"fingerprint\":\"D02094454604EAA65E57F4C457DF91BFC55315FE2284E8F2BA3D58CEDEA6772C\",\"slices\":16,\"nativeReads\":498},{\"name\":\"congestion-walk-1000\",\"fingerprint\":\"D2EE1E8117DC14CCDFF7AE20E8114B8E3C1662E80AE5B67182EEB35B6D9CAA43\",\"slices\":16,\"nativeReads\":150},{\"name\":\"congestion-subway-1000\",\"fingerprint\":\"6CD6C2934DA1F1AFDA75B1D4D55A841CE3216AFF69C607CB1BA50F56B6EBE27B\",\"slices\":14,\"nativeReads\":126},{\"name\":\"drained-car-1000\",\"fingerprint\":\"D02094454604EAA65E57F4C457DF91BFC55315FE2284E8F2BA3D58CEDEA6772C\",\"slices\":16,\"nativeReads\":498},{\"name\":\"no-alternative-1000\",\"fingerprint\":\"EDD1A36934FE58EBFCF24AF16610E39254D04DFE24E69D7A916F179A302C330C\",\"slices\":16,\"nativeReads\":498},{\"name\":\"closed-1000\",\"fingerprint\":\"null\",\"slices\":16,\"nativeReads\":498},{\"name\":\"no-egress-1000\",\"fingerprint\":\"null\",\"slices\":14,\"nativeReads\":126},{\"name\":\"tie\",\"fingerprint\":\"5BBA7835CA8A9DE7FD4B691F125FF0DB2745DDA16683390511C6A94CE5053AA4\",\"slices\":16,\"nativeReads\":72},{\"name\":\"ulp-car-win\",\"fingerprint\":\"13543B40ED91C893EFC0B4E23793D1B4F25425D371393C27E565FA6B572EBDF0\",\"slices\":16,\"nativeReads\":72},{\"name\":\"ulp-walk-win\",\"fingerprint\":\"3A48571431FA3A267699F8AC2A708BB9319E4F0718C129F5E38C95729FEBE752\",\"slices\":16,\"nativeReads\":72},{\"name\":\"connectors-tie\",\"fingerprint\":\"A28642D9237ACB684F9FE4B1D01677ED08C1AF1592359F37E41DB9570B24C05F\",\"slices\":16,\"nativeReads\":72},{\"name\":\"connectors-ulp-car-win\",\"fingerprint\":\"6BE1A547F86240D68B41D18A5629F713CB909CE3FD851089EE5FDC546E427B0B\",\"slices\":16,\"nativeReads\":72},{\"name\":\"connectors-ulp-walk-win\",\"fingerprint\":\"D63B1A8F7BFC764EB38ADD2D8D63C60916AED0FAE1F90D1961D78042DE358E12\",\"slices\":16,\"nativeReads\":72},{\"name\":\"second-curb-car-wins\",\"fingerprint\":\"2F697DDC4E70CED20AE8E44B77B4DB6577A198E3AC6380729984C9381BCF485A\",\"slices\":18,\"nativeReads\":348},{\"name\":\"subway-ceiling-during-car-search\",\"fingerprint\":\"D75E50D29AC6BE3AABFFA651EA8D7886ACFCB407E868DE66CF8FA354CB76570A\",\"slices\":16,\"nativeReads\":144},{\"name\":\"unreachable-walk\",\"fingerprint\":\"AB52E139F6E42376969341E53C805DB122692D8130F2312583F18346F780059A\",\"slices\":16,\"nativeReads\":252},{\"name\":\"unreachable-no-alternative\",\"fingerprint\":\"null\",\"slices\":34,\"nativeReads\":7362},{\"name\":\"search-generation-restart\",\"fingerprint\":\"125B7B2452E59A6229C9F811636A4E5FC7CD9B158043C12E117DC2BCA3220526\",\"slices\":20,\"nativeReads\":0},{\"name\":\"snapshot-replacement-restart\",\"fingerprint\":\"7D32A79462F6F6B67DB14E9C419B3AC7CD224E3BF527B64CDBF04441809C6C51\",\"slices\":16,\"nativeReads\":0},{\"name\":\"snapshot-replacement-before-first-slice\",\"fingerprint\":\"7D32A79462F6F6B67DB14E9C419B3AC7CD224E3BF527B64CDBF04441809C6C51\",\"slices\":16,\"nativeReads\":0},{\"name\":\"home-car-snapshot-restart\",\"fingerprint\":\"F89850F0256F83B8BEF00AB7895F11473E09413BEF6B7DFB4F6D20AB96C771C8\",\"slices\":18,\"nativeReads\":0}]}\n"
+    },
+    {
+      "index": 16,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/road-handoff-regression/RoadHandoffRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.156,
+      "output": "PASS staged snapshot sweep: unchanged snapshot kept; excluded node, interrupted sweep, neighbour nullness and stop flag detected.\nPASS public gates: leaf poses neither open a road nor repeat a change; replaced doors are recorded; a moved frame is a change.\nPASS sample scope: each node/junction validated once per sample; public resolve live; same-frame closures, contract changes, reentrancy, exceptions and generation wrap detected.\nPASS actual RoadRoutes: current fragments rejected; later full run sampled; malformed/unknown history rejected; future fragment bounded; junction identities/history/admission preserved.\n"
+    },
+    {
+      "index": 17,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/road-invalidation-regression/RoadInvalidationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.079,
+      "output": "PASS 265 road invalidation checks; 40 signal cycles preserve network; 20 genuine rebuilds perform zero additional global road-scene searches.\n"
+    },
+    {
+      "index": 18,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/road-speed-regression/RoadSpeedRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.406,
+      "output": "PASS slowdown during staged preflight on both sides of the copied-node cursor\nPASS unexplained raw/original/observed speed mutations fail closed\nPASS canonical topology, initial-active overlay, old queue immutability, SaveCodec/rebind/restoration: native=824bd5ba73d50953231f3c2a14ba83b2feb08004df74b2abc0cb6f47c41f4409, traffic=88b88ec4817e749052ed4d49e16ea1f8cfd8089ce99eeabb4e48fc412427af41, links=1, capacity=13, baseline=9.6, slowed=10.200000000000001, partial40m=5.1\nPASS actual Runtime mapping preserves 6m FIFO storage spacing with heterogeneous native speed overlay\nPASS 602 offline assertions using actual Runtime/Core/Persistence and synthetic Unity/native surfaces; no rig or RLO mutation.\n"
+    },
+    {
+      "index": 19,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/route-discovery-regression/RouteDiscoveryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 10.937,
+      "output": "PASS 675 discovery assertions, including zero steady-state hierarchy queries, load/reset discovery, explicit invalidation, mutation, persistent/additive scenes, bounded initialization and disposal.\n"
+    },
+    {
+      "index": 20,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.469,
+      "output": "{\"schema\":18,\"digest\":\"018FC26676937FEEF88B7D06AE32B522CCE93A1CC265BCDD87A08C7DD91FBB56\",\"length\":119083,\"refusals\":[\"Invalid:Invalid state: Missing state schema.\",\"Future:State uses a newer schema; preserve the original payload.\",\"Invalid:Invalid state: Incomplete or trailing JSON content.\",\"Invalid:Invalid state: Unknown field: UnknownCitizens\"],\"economy\":{\"orders\":849,\"ordersDigest\":\"1B94987B3158044594B9C4D6A5473BA22BE0D4F3488D769CBBEE23318BB33B91\",\"purchases\":797,\"spentUnits\":107967424757760,\"uncertain\":2,\"economyDigest\":\"74D0FE8081EA795D4D56A11B4B955DC6E777E3822C702D3C09BC9477E6679AF9\",\"reloadDigest\":\"59B6F14D44CA0F996C5A828E2E538B52C5426347FCFA40767527B72D77F1D4FA\"},\"writeBytes\":14452712,\"readBytes\":38773560,\"bench\":null,\"hot\":null}\n"
+    },
+    {
+      "index": 21,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/startup-clock-regression/StartupClockRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 1.938,
+      "output": "PASS 17 actual startup-clock source checks; native clock/UI doubles, no Unity execution.\n"
+    },
+    {
+      "index": 22,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/traffic-closure-regression/TrafficClosureRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.468,
+      "output": "{\"checks\":35,\"results\":[{\"name\":\"initial\",\"fingerprint\":\"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D\",\"nativeReads\":255},{\"name\":\"repeat\",\"fingerprint\":\"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D\",\"nativeReads\":255},{\"name\":\"temporary-close\",\"fingerprint\":\"996D9E7FB8A0E65E10407CAD5F45A3B445F397DFD5B87D5079E66A772595E3C9\",\"nativeReads\":255},{\"name\":\"same-frame-reopen\",\"fingerprint\":\"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D\",\"nativeReads\":255},{\"name\":\"after-boundary\",\"fingerprint\":\"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D\",\"nativeReads\":255},{\"name\":\"generation-wrap\",\"fingerprint\":\"F0BF59C5C985A05CE5E4E603292864414543DDEDC0B99B27C21E06BC89ED2A2A\",\"nativeReads\":255},{\"name\":\"after-wrap\",\"fingerprint\":\"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D\",\"nativeReads\":255},{\"name\":\"new-gate-snapshot\",\"fingerprint\":\"98E62076064D5251192C219A89CD0317949315F97CE67CFEFCBDBE15BCD86E34\",\"nativeReads\":255},{\"name\":\"gate-removed\",\"fingerprint\":\"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D\",\"nativeReads\":255},{\"name\":\"after-read-exception\",\"fingerprint\":\"4642CBB939E2E9A03D8AE5F833AECDD12FF4D7F3EA8730C898C74D6256B2D190\",\"nativeReads\":255},{\"name\":\"exception-reopened\",\"fingerprint\":\"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D\",\"nativeReads\":255},{\"name\":\"agents\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":25},{\"name\":\"cars\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":25},{\"name\":\"neighbours\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":25},{\"name\":\"position\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":26},{\"name\":\"flags\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":29},{\"name\":\"road-id\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":31},{\"name\":\"association\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":29},{\"name\":\"lanes\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":31},{\"name\":\"junction-group\",\"fingerprint\":\"E7AC5253D23F99A544FBC74509CF1D0E057A0926A274B8B4FC0DE9190A6AA968\",\"nativeReads\":7},{\"name\":\"junction-name\",\"fingerprint\":\"E7AC5253D23F99A544FBC74509CF1D0E057A0926A274B8B4FC0DE9190A6AA968\",\"nativeReads\":6},{\"name\":\"junction-array\",\"fingerprint\":\"E7AC5253D23F99A544FBC74509CF1D0E057A0926A274B8B4FC0DE9190A6AA968\",\"nativeReads\":0},{\"name\":\"waypoint-array\",\"fingerprint\":\"E7AC5253D23F99A544FBC74509CF1D0E057A0926A274B8B4FC0DE9190A6AA968\",\"nativeReads\":0},{\"name\":\"empty-closed-reopened\",\"fingerprint\":\"A1472043595E769929FCBD6110FDB92A22D96208FCC97C32EC271FF018702B9E\",\"nativeReads\":13}]}\n"
+    },
+    {
+      "index": 23,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/traffic-queue-regression/TrafficQueueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.422,
+      "output": "32414 observations; SHA256=D328799A130E4BF1834A448B46765F4D5BC1750A21DF86B879B42B97307ABAFE\n"
+    },
+    {
+      "index": 24,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/walking-quote-regression/WalkingQuoteRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.203,
+      "output": "Walking quote regression: 28 checks passed (actual Runtime source; native calls replaced by controlled doubles).\nIntegrated K=2 walking requests: native path queries 488 unscoped, 448 scoped (40 reused); quote checks 454, rejected 16; purchases identical.\nWalking quote operation: 48 checks passed (actual Core FoodCommerce and Runtime WalkingRoutes; native calls replaced by controlled doubles).\n"
+    },
+    {
+      "index": 25,
+      "command": [
+        "python",
+        "tools/native-command-regression/run.py"
+      ],
+      "exit": 0,
+      "seconds": 3.906,
+      "output": "PASS 72 native command/step checks; actual production method source, deferred physics test doubles (not game evidence).\n"
+    },
+    {
+      "index": 26,
+      "command": [
+        "python",
+        "tools/physical-selection-regression/run.py"
+      ],
+      "exit": 0,
+      "seconds": 4.75,
+      "output": "PASS 27567 checks; positions 93665->55737; hierarchy 88308->33300\n"
+    },
+    {
+      "index": 27,
+      "command": [
+        "python",
+        "tools/vehicle-ownership-regression/run.py"
+      ],
+      "exit": 0,
+      "seconds": 4.453,
+      "output": "PASS 361 actual Runtime vehicle ownership assertions\nPASS epoch call sites: Update, BeginNativeFixedStep and Release advance first; 5 native mutation wrappers advance in finally; no raw native mutation elsewhere\n"
+    },
+    {
+      "index": 28,
+      "command": [
+        "python",
+        "tools/optional-stop-regression/run.py"
+      ],
+      "exit": 0,
+      "seconds": 5.125,
+      "output": "Saved facade reload: 9 integration checks passed.\nSaved facade reload: 9 integration checks passed.\nNative door replacement: 6 checks passed.\nOptional stop physical adapter: 213 checks passed.\n"
+    },
+    {
+      "index": 29,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/simulate/Simulate.csproj",
+        "--",
+        "28",
+        "build/harness-demo"
+      ],
+      "exit": 0,
+      "seconds": 5.172,
+      "output": "{\n  \"Scenario\": \"Synthetic connected grid, not game performance or RLO population evidence\",\n  \"Citizens\": 400,\n  \"Days\": 28,\n  \"Events\": 97156,\n  \"BoundedBatches\": 486,\n  \"ElapsedMilliseconds\": 2831.8032,\n  \"CompletedJourneys\": 44266,\n  \"MissedActivities\": 88,\n  \"RouteRequests\": 45205,\n  \"Unreachable\": 916,\n  \"PlannedModeCounts\": {\n    \"Walk\": 39630,\n    \"Bus\": 4659\n  },\n  \"SnapshotBytes\": 732516,\n  \"SaveRoundTrip\": \"Exact\",\n  \"EconomyTransactions\": \"Not implemented in this project\"\n}\n"
+    },
+    {
+      "index": 30,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-routines/FoodRoutines.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "build/harness-food-routines-demo",
+        "957"
+      ],
+      "exit": 0,
+      "seconds": 4.547,
+      "output": "{\n  \"evidence\": \"Synthetic two-neighborhood city replayed through the actual population/routine engine. Connected fixture paths, controlled prices/stock/staffed hourly throughput and temporary allowances. No native sales or measured profitability.\",\n  \"residents\": 957,\n  \"days\": 7,\n  \"purchasedMealOpportunities\": 6699,\n  \"actualObservedSpans\": 27231,\n  \"opportunityOrigins\": {\n    \"Home\": 2872,\n    \"Work\": 3630,\n    \"Shop\": 130,\n    \"Leisure\": 67\n  },\n  \"distinctDailyMealTimes\": 6.83594566353187,\n  \"populationReplayMs\": 256.2766,\n  \"opportunityMs\": 37.2875,\n  \"invariants\": {\n    \"Second neighborhood serves additional needs\": true,\n    \"First shop retains its customers when second covers another neighborhood\": true,\n    \"Two local shops reach more needs than one larger distant shop in this fixture\": true,\n    \"Unavailable service makes no sale\": true,\n    \"No extra needs or purchasing power created by adding shops\": true,\n    \"Quote work never exceeds two route calls per batch\": true\n  },\n  \"scenarios\": [\n    {\n      \"Name\": \"one-small\",\n      \"Fulfilled\": 535,\n      \"Unmet\": 6164,\n      \"Unresolved\": 0,\n      \"ShopMeals\": {\n        \"a\": 535\n      },\n      \"MeanOutingMinutes\": 36.78355140186918,\n      \"MeanQueueMinutes\": 12.95102803738317,\n      \"RouteCalls\": 6692,\n      \"MaximumRouteCallsPerBatch\": 2,\n      \"QuoteMs\": 28.6759,\n      \"SimulationMs\": 37.7757,\n      \"Maximum16EventBatchMs\": 8.2852,\n      \"Batches\": 542\n    },\n    {\n      \"Name\": \"two-neighborhoods\",\n      \"Fulfilled\": 1045,\n      \"Unmet\": 5654,\n      \"Unresolved\": 0,\n      \"ShopMeals\": {\n        \"a\": 535,\n        \"b\": 510\n      },\n      \"MeanOutingMinutes\": 36.76513875598104,\n      \"MeanQueueMinutes\": 12.93564593301436,\n      \"RouteCalls\": 13398,\n      \"MaximumRouteCallsPerBatch\": 2,\n      \"QuoteMs\": 46.8279,\n      \"SimulationMs\": 44.664,\n      \"Maximum16EventBatchMs\": 6.5012,\n      \"Batches\": 664\n    },\n    {\n      \"Name\": \"one-larger\",\n      \"Fulfilled\": 959,\n      \"Unmet\": 5740,\n      \"Unresolved\": 0,\n      \"ShopMeals\": {\n        \"a\": 959\n      },\n      \"MeanOutingMinutes\": 33.699572471324764,\n      \"MeanQueueMinutes\": 11.906141814390034,\n      \"RouteCalls\": 6692,\n      \"MaximumRouteCallsPerBatch\": 2,\n      \"QuoteMs\": 21.1532,\n      \"SimulationMs\": 32.926,\n      \"Maximum16EventBatchMs\": 9.5102,\n      \"Batches\": 610\n    },\n    {\n      \"Name\": \"two-same-location\",\n      \"Fulfilled\": 952,\n      \"Unmet\": 5747,\n      \"Unresolved\": 0,\n      \"ShopMeals\": {\n        \"a\": 506,\n        \"a2\": 446\n      },\n      \"MeanOutingMinutes\": 34.97413865546264,\n      \"MeanQueueMinutes\": 11.173865546218535,\n      \"RouteCalls\": 13384,\n      \"MaximumRouteCallsPerBatch\": 2,\n      \"QuoteMs\": 30.7813,\n      \"SimulationMs\": 43.469,\n      \"Maximum16EventBatchMs\": 10.0115,\n      \"Batches\": 644\n    },\n    {\n      \"Name\": \"second-unavailable\",\n      \"Fulfilled\": 535,\n      \"Unmet\": 6164,\n      \"Unresolved\": 0,\n      \"ShopMeals\": {\n        \"a\": 535,\n        \"b\": 0\n      },\n      \"MeanOutingMinutes\": 36.78355140186918,\n      \"MeanQueueMinutes\": 12.95102803738317,\n      \"RouteCalls\": 13398,\n      \"MaximumRouteCallsPerBatch\": 2,\n      \"QuoteMs\": 62.2321,\n      \"SimulationMs\": 36.1429,\n      \"Maximum16EventBatchMs\": 9.9361,\n      \"Batches\": 542\n    },\n    {\n      \"Name\": \"second-price-plus-25pct\",\n      \"Fulfilled\": 1045,\n      \"Unmet\": 5654,\n      \"Unresolved\": 0,\n      \"ShopMeals\": {\n        \"a\": 535,\n        \"b\": 510\n      },\n      \"MeanOutingMinutes\": 36.76513875598104,\n      \"MeanQueueMinutes\": 12.93564593301436,\n      \"RouteCalls\": 13398,\n      \"MaximumRouteCallsPerBatch\": 2,\n      \"QuoteMs\": 47.8506,\n      \"SimulationMs\": 49.5471,\n      \"Maximum16EventBatchMs\": 11.4422,\n      \"Batches\": 664\n    }\n  ],\n  \"limitations\": \"One purchased meal/day; provisional lunch breaks; hourly service smoothing; walking outings; no home food, wages, operating costs or live native stock/service validation. Timings are offline .NET measurements, not Unity frame-time evidence.\"\n}\n"
+    },
+    {
+      "index": 31,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-demand/FoodDemand.csproj",
+        "--",
+        "build/harness-food-demand-demo"
+      ],
+      "exit": 0,
+      "seconds": 2.094,
+      "output": "{\n  \"Evidence\": \"Synthetic demonstration: 24 fictional residents and two fictional shops. No live city was read.\",\n  \"Consumers\": 24,\n  \"Days\": 2,\n  \"Comparisons\": 4,\n  \"NativeSalesChanged\": 0\n}\nComparison and saved intentions: <repo>\\build\\harness-food-demand-demo\n"
+    },
+    {
+      "index": 32,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 6.437,
+      "output": "{\"bench\":[{\"shops\":8,\"nativeIds\":false,\"samples\":512,\"fullMs\":{\"p50\":0.1292,\"p95\":0.3084,\"max\":10.7039},\"continuationUnitMs\":{\"p95\":0.0398,\"max\":1.8028},\"shortlistCapturePlusPureSamplingMs\":{\"p95\":0.057,\"max\":0.1068},\"exactShortlistTraitsSamplingMs\":{\"p50\":0.012199999999999999,\"p95\":0.023999999999999997,\"max\":0.1224},\"bytesPerDecision\":84168,\"logicalRoutes\":16},{\"shops\":64,\"nativeIds\":false,\"samples\":512,\"fullMs\":{\"p50\":0.1552,\"p95\":0.3526,\"max\":1.3253},\"continuationUnitMs\":{\"p95\":0.0445,\"max\":1.1863},\"shortlistCapturePlusPureSamplingMs\":{\"p95\":0.0824,\"max\":0.8633},\"exactShortlistTraitsSamplingMs\":{\"p50\":0.0242,\"p95\":0.0489,\"max\":0.8312},\"bytesPerDecision\":84296,\"logicalRoutes\":16},{\"shops\":1024,\"nativeIds\":false,\"samples\":512,\"fullMs\":{\"p50\":0.2871,\"p95\":0.4977,\"max\":3.4393},\"continuationUnitMs\":{\"p95\":0.0965,\"max\":3.2626},\"shortlistCapturePlusPureSamplingMs\":{\"p95\":0.2208,\"max\":3.2721999999999998},\"exactShortlistTraitsSamplingMs\":{\"p50\":0.07400000000000001,\"p95\":0.1448,\"max\":3.2182},\"bytesPerDecision\":84360,\"logicalRoutes\":16}],\"nativeIdBench\":[{\"shops\":8,\"nativeIds\":true,\"samples\":512,\"fullMs\":{\"p50\":0.1179,\"p95\":0.2498,\"max\":1.0045},\"continuationUnitMs\":{\"p95\":0.0355,\"max\":0.7811},\"shortlistCapturePlusPureSamplingMs\":{\"p95\":0.046,\"max\":0.7037},\"exactShortlistTraitsSamplingMs\":{\"p50\":0.0097,\"p95\":0.0229,\"max\":0.5336},\"bytesPerDecision\":84128,\"logicalRoutes\":16},{\"shops\":64,\"nativeIds\":true,\"samples\":512,\"fullMs\":{\"p50\":0.1181,\"p95\":0.2567,\"max\":1.992},\"continuationUnitMs\":{\"p95\":0.034,\"max\":1.7519},\"shortlistCapturePlusPureSamplingMs\":{\"p95\":0.0622,\"max\":0.3458},\"exactShortlistTraitsSamplingMs\":{\"p50\":0.0199,\"p95\":0.0336,\"max\":0.14079999999999998},\"bytesPerDecision\":80208,\"logicalRoutes\":16},{\"shops\":1024,\"nativeIds\":true,\"samples\":512,\"fullMs\":{\"p50\":0.2138,\"p95\":0.4085,\"max\":1.7934},\"continuationUnitMs\":{\"p95\":0.1315,\"max\":1.4984},\"shortlistCapturePlusPureSamplingMs\":{\"p95\":0.3013,\"max\":1.239},\"exactShortlistTraitsSamplingMs\":{\"p50\":0.1507,\"p95\":0.2515,\"max\":1.2229999999999999},\"bytesPerDecision\":83216,\"logicalRoutes\":16}]}\n"
+    },
+    {
+      "index": 33,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-candidate-regression/FoodCandidateRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.859,
+      "output": "{\"checks\":\"actual NativeFoodCandidates + NativeFoodHours, synthetic native surfaces\",\"controllers\":131,\"discoveryFrames\":[0,1,2,5],\"reload\":true,\"oldHoursPasses\":8,\"newHoursPasses\":1,\"oldMedianMs\":0.146,\"newMedianMs\":0.125}\n"
+    },
+    {
+      "index": 34,
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--rush"
+      ],
+      "exit": 0,
+      "seconds": 12.203,
+      "output": "{\"boundary\":\"Synthetic simultaneous lunch; stub paths; one warmup \\u002B three alternating samples per mode/accounting, 16 citizen / 128 total units / 2 ms soft budget. Snapshot published per frame. Frame/backlog estimates at 100 fps, explicit clock-rate scenarios. Not native throughput or path cost.\",\"results\":[{\"mode\":\"all_feasible\",\"sample\":0,\"frameAccounting\":\"R1_all_units_are_citizens\",\"residents\":957,\"factor\":2,\"consumers\":1914,\"events\":34452,\"citizenEvents\":1914,\"continuationEvents\":32538,\"eventsPerDecision\":18,\"eventCapFrames\":2154,\"measuredFramesWith16Citizen128Unit2MsLoop\":2156,\"estimatedSecondsAt100Fps\":21.56,\"offlineCpuMs\":177.552,\"logicalRouteRequests\":30624,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":582}],\"savedStateSha256\":\"D693FD66E938032DD5863C89E2433EDA50D0AA76E380DF06791B4489E7794879\"},{\"mode\":\"all_feasible\",\"sample\":0,\"frameAccounting\":\"separate_continuations\",\"residents\":957,\"factor\":2,\"consumers\":1914,\"events\":34452,\"citizenEvents\":1914,\"continuationEvents\":32538,\"eventsPerDecision\":18,\"eventCapFrames\":270,\"measuredFramesWith16Citizen128Unit2MsLoop\":272,\"estimatedSecondsAt100Fps\":2.72,\"offlineCpuMs\":166.1137,\"logicalRouteRequests\":30624,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":0}],\"savedStateSha256\":\"D693FD66E938032DD5863C89E2433EDA50D0AA76E380DF06791B4489E7794879\"},{\"mode\":\"closed\",\"sample\":0,\"frameAccounting\":\"R1_all_units_are_citizens\",\"residents\":957,\"factor\":2,\"consumers\":1914,\"events\":5742,\"citizenEvents\":1914,\"continuationEvents\":3828,\"eventsPerDecision\":3,\"eventCapFrames\":359,\"measuredFramesWith16Citizen128Unit2MsLoop\":360,\"estimatedSecondsAt100Fps\":3.6,\"offlineCpuMs\":93.0086,\"logicalRouteRequests\":0,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":0}],\"savedStateSha256\":\"056922A792BF5B97758ED64FBD025E16A2AB29ED629FD106FCEF3DDE2FF22A3E\"},{\"mode\":\"closed\",\"sample\":0,\"frameAccounting\":\"separate_continuations\",\"residents\":957,\"factor\":2,\"consumers\":1914,\"events\":5742,\"citizenEvents\":1914,\"continuationEvents\":3828,\"eventsPerDecision\":3,\"eventCapFrames\":120,\"measuredFramesWith16Citizen128Unit2MsLoop\":121,\"estimatedSecondsAt100Fps\":1.21,\"offlineCpuMs\":81.0071,\"logicalRouteRequests\":0,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":0}],\"savedStateSha256\":\"056922A792BF5B97758ED64FBD025E16A2AB29ED629FD106FCEF3DDE2FF22A3E\"},{\"mode\":\"refused_outward\",\"sample\":0,\"frameAccounting\":\"R1_all_units_are_citizens\",\"residents\":957,\"factor\":2,\"consumers\":1914,\"events\":19140,\"citizenEvents\":1914,\"continuationEvents\":17226,\"eventsPerDecision\":10,\"eventCapFrames\":1197,\"measuredFramesWith16Citizen128Unit2MsLoop\":1200,\"estimatedSecondsAt100Fps\":12,\"offlineCpuMs\":137.4489,\"logicalRouteRequests\":15312,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":0}],\"savedStateSha256\":\"994885980246645D182F6303A84382E7583EEF702CACA77E77C43512746E31CB\"},{\"mode\":\"refused_outward\",\"sample\":0,\"frameAccounting\":\"separate_continuations\",\"residents\":957,\"factor\":2,\"consumers\":1914,\"events\":19140,\"citizenEvents\":1914,\"continuationEvents\":17226,\"eventsPerDecision\":10,\"eventCapFrames\":150,\"measuredFramesWith16Citizen128Unit2MsLoop\":152,\"estimatedSecondsAt100Fps\":1.52,\"offlineCpuMs\":102.472,\"logicalRouteRequests\":15312,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":0}],\"savedStateSha256\":\"994885980246645D182F6303A84382E7583EEF702CACA77E77C43512746E31CB\"},{\"mode\":\"existing_shop\",\"sample\":0,\"frameAccounting\":\"R1_all_units_are_citizens\",\"residents\":957,\"factor\":1,\"consumers\":957,\"events\":2871,\"citizenEvents\":957,\"continuationEvents\":1914,\"eventsPerDecision\":3,\"eventCapFrames\":180,\"measuredFramesWith16Citizen128Unit2MsLoop\":181,\"estimatedSecondsAt100Fps\":1.81,\"offlineCpuMs\":18.4789,\"logicalRouteRequests\":0,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":0}],\"savedStateSha256\":\"AC0BA50B560931F588C772E5B0184FAB886C9248619F36BF2FD327FC7D2732B6\"},{\"mode\":\"existing_shop\",\"sample\":0,\"frameAccounting\":\"separate_continuations\",\"residents\":957,\"factor\":1,\"consumers\":957,\"events\":2871,\"citizenEvents\":957,\"continuationEvents\":1914,\"eventsPerDecision\":3,\"eventCapFrames\":60,\"measuredFramesWith16Citizen128Unit2MsLoop\":60,\"estimatedSecondsAt100Fps\":0.6,\"offlineCpuMs\":16.2431,\"logicalRouteRequests\":0,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":0}],\"savedStateSha256\":\"AC0BA50B560931F588C772E5B0184FAB886C9248619F36BF2FD327FC7D2732B6\"},{\"mode\":\"all_feasible\",\"sample\":1,\"frameAccounting\":\"separate_continuations\",\"residents\":957,\"factor\":2,\"consumers\":1914,\"events\":34452,\"citizenEvents\":1914,\"continuationEvents\":32538,\"eventsPerDecision\":18,\"eventCapFrames\":270,\"measuredFramesWith16Citizen128Unit2MsLoop\":273,\"estimatedSecondsAt100Fps\":2.73,\"offlineCpuMs\":145.9255,\"logicalRouteRequests\":30624,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":0}],\"savedStateSha256\":\"D693FD66E938032DD5863C89E2433EDA50D0AA76E380DF06791B4489E7794879\"},{\"mode\":\"all_feasible\",\"sample\":1,\"frameAccounting\":\"R1_all_units_are_citizens\",\"residents\":957,\"factor\":2,\"consumers\":1914,\"events\":34452,\"citizenEvents\":1914,\"continuationEvents\":32538,\"eventsPerDecision\":18,\"eventCapFrames\":2154,\"measuredFramesWith16Citizen128Unit2MsLoop\":2155,\"estimatedSecondsAt100Fps\":21.55,\"offlineCpuMs\":126.1635,\"logicalRouteRequests\":30624,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":582}],\"savedStateSha256\":\"D693FD66E938032DD5863C89E2433EDA50D0AA76E380DF06791B4489E7794879\"},{\"mode\":\"closed\",\"sample\":1,\"frameAccounting\":\"separate_continuations\",\"residents\":957,\"factor\":2,\"consumers\":1914,\"events\":5742,\"citizenEvents\":1914,\"continuationEvents\":3828,\"eventsPerDecision\":3,\"eventCapFrames\":120,\"measuredFramesWith16Citizen128Unit2MsLoop\":121,\"estimatedSecondsAt100Fps\":1.21,\"offlineCpuMs\":69.7895,\"logicalRouteRequests\":0,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":0}],\"savedStateSha256\":\"056922A792BF5B97758ED64FBD025E16A2AB29ED629FD106FCEF3DDE2FF22A3E\"},{\"mode\":\"closed\",\"sample\":1,\"frameAccounting\":\"R1_all_units_are_citizens\",\"residents\":957,\"factor\":2,\"consumers\":1914,\"events\":5742,\"citizenEvents\":1914,\"continuationEvents\":3828,\"eventsPerDecision\":3,\"eventCapFrames\":359,\"measuredFramesWith16Citizen128Unit2MsLoop\":360,\"estimatedSecondsAt100Fps\":3.6,\"offlineCpuMs\":66.9746,\"logicalRouteRequests\":0,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":0}],\"savedStateSha256\":\"056922A792BF5B97758ED64FBD025E16A2AB29ED629FD106FCEF3DDE2FF22A3E\"},{\"mode\":\"refused_outward\",\"sample\":1,\"frameAccounting\":\"separate_continuations\",\"residents\":957,\"factor\":2,\"consumers\":1914,\"events\":19140,\"citizenEvents\":1914,\"continuationEvents\":17226,\"eventsPerDecision\":10,\"eventCapFrames\":150,\"measuredFramesWith16Citizen128Unit2MsLoop\":152,\"estimatedSecondsAt100Fps\":1.52,\"offlineCpuMs\":94.4367,\"logicalRouteRequests\":15312,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":0}],\"savedStateSha256\":\"994885980246645D182F6303A84382E7583EEF702CACA77E77C43512746E31CB\"},{\"mode\":\"refused_outward\",\"sample\":1,\"frameAccounting\":\"R1_all_units_are_citizens\",\"residents\":957,\"factor\":2,\"consumers\":1914,\"events\":19140,\"citizenEvents\":1914,\"continuationEvents\":17226,\"eventsPerDecision\":10,\"eventCapFrames\":1197,\"measuredFramesWith16Citizen128Unit2MsLoop\":1198,\"estimatedSecondsAt100Fps\":11.98,\"offlineCpuMs\":94.2025,\"logicalRouteRequests\":15312,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":0}],\"savedStateSha256\":\"994885980246645D182F6303A84382E7583EEF702CACA77E77C43512746E31CB\"},{\"mode\":\"existing_shop\",\"sample\":1,\"frameAccounting\":\"separate_continuations\",\"residents\":957,\"factor\":1,\"consumers\":957,\"events\":2871,\"citizenEvents\":957,\"continuationEvents\":1914,\"eventsPerDecision\":3,\"eventCapFrames\":60,\"measuredFramesWith16Citizen128Unit2MsLoop\":61,\"estimatedSecondsAt100Fps\":0.61,\"offlineCpuMs\":27.0316,\"logicalRouteRequests\":0,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":0}],\"savedStateSha256\":\"AC0BA50B560931F588C772E5B0184FAB886C9248619F36BF2FD327FC7D2732B6\"},{\"mode\":\"existing_shop\",\"sample\":1,\"frameAccounting\":\"R1_all_units_are_citizens\",\"residents\":957,\"factor\":1,\"consumers\":957,\"events\":2871,\"citizenEvents\":957,\"continuationEvents\":1914,\"eventsPerDecision\":3,\"eventCapFrames\":180,\"measuredFramesWith16Citizen128Unit2MsLoop\":180,\"estimatedSecondsAt100Fps\":1.8,\"offlineCpuMs\":21.2854,\"logicalRouteRequests\":0,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":0}],\"savedStateSha256\":\"AC0BA50B560931F588C772E5B0184FAB886C9248619F36BF2FD327FC7D2732B6\"},{\"mode\":\"all_feasible\",\"sample\":2,\"frameAccounting\":\"R1_all_units_are_citizens\",\"residents\":957,\"factor\":2,\"consumers\":1914,\"events\":34452,\"citizenEvents\":1914,\"continuationEvents\":32538,\"eventsPerDecision\":18,\"eventCapFrames\":2154,\"measuredFramesWith16Citizen128Unit2MsLoop\":2156,\"estimatedSecondsAt100Fps\":21.56,\"offlineCpuMs\":136.4637,\"logicalRouteRequests\":30624,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":582}],\"savedStateSha256\":\"D693FD66E938032DD5863C89E2433EDA50D0AA76E380DF06791B4489E7794879\"},{\"mode\":\"all_feasible\",\"sample\":2,\"frameAccounting\":\"separate_continuations\",\"residents\":957,\"factor\":2,\"consumers\":1914,\"events\":34452,\"citizenEvents\":1914,\"continuationEvents\":32538,\"eventsPerDecision\":18,\"eventCapFrames\":270,\"measuredFramesWith16Citizen128Unit2MsLoop\":272,\"estimatedSecondsAt100Fps\":2.72,\"offlineCpuMs\":132.0989,\"logicalRouteRequests\":30624,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":0}],\"savedStateSha256\":\"D693FD66E938032DD5863C89E2433EDA50D0AA76E380DF06791B4489E7794879\"},{\"mode\":\"closed\",\"sample\":2,\"frameAccounting\":\"R1_all_units_are_citizens\",\"residents\":957,\"factor\":2,\"consumers\":1914,\"events\":5742,\"citizenEvents\":1914,\"continuationEvents\":3828,\"eventsPerDecision\":3,\"eventCapFrames\":359,\"measuredFramesWith16Citizen128Unit2MsLoop\":360,\"estimatedSecondsAt100Fps\":3.6,\"offlineCpuMs\":74.2202,\"logicalRouteRequests\":0,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":0}],\"savedStateSha256\":\"056922A792BF5B97758ED64FBD025E16A2AB29ED629FD106FCEF3DDE2FF22A3E\"},{\"mode\":\"closed\",\"sample\":2,\"frameAccounting\":\"separate_continuations\",\"residents\":957,\"factor\":2,\"consumers\":1914,\"events\":5742,\"citizenEvents\":1914,\"continuationEvents\":3828,\"eventsPerDecision\":3,\"eventCapFrames\":120,\"measuredFramesWith16Citizen128Unit2MsLoop\":122,\"estimatedSecondsAt100Fps\":1.22,\"offlineCpuMs\":76.8422,\"logicalRouteRequests\":0,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":0}],\"savedStateSha256\":\"056922A792BF5B97758ED64FBD025E16A2AB29ED629FD106FCEF3DDE2FF22A3E\"},{\"mode\":\"refused_outward\",\"sample\":2,\"frameAccounting\":\"R1_all_units_are_citizens\",\"residents\":957,\"factor\":2,\"consumers\":1914,\"events\":19140,\"citizenEvents\":1914,\"continuationEvents\":17226,\"eventsPerDecision\":10,\"eventCapFrames\":1197,\"measuredFramesWith16Citizen128Unit2MsLoop\":1197,\"estimatedSecondsAt100Fps\":11.97,\"offlineCpuMs\":100.9806,\"logicalRouteRequests\":15312,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":0}],\"savedStateSha256\":\"994885980246645D182F6303A84382E7583EEF702CACA77E77C43512746E31CB\"},{\"mode\":\"refused_outward\",\"sample\":2,\"frameAccounting\":\"separate_continuations\",\"residents\":957,\"factor\":2,\"consumers\":1914,\"events\":19140,\"citizenEvents\":1914,\"continuationEvents\":17226,\"eventsPerDecision\":10,\"eventCapFrames\":150,\"measuredFramesWith16Citizen128Unit2MsLoop\":152,\"estimatedSecondsAt100Fps\":1.52,\"offlineCpuMs\":129.0422,\"logicalRouteRequests\":15312,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":0}],\"savedStateSha256\":\"994885980246645D182F6303A84382E7583EEF702CACA77E77C43512746E31CB\"},{\"mode\":\"existing_shop\",\"sample\":2,\"frameAccounting\":\"R1_all_units_are_citizens\",\"residents\":957,\"factor\":1,\"consumers\":957,\"events\":2871,\"citizenEvents\":957,\"continuationEvents\":1914,\"eventsPerDecision\":3,\"eventCapFrames\":180,\"measuredFramesWith16Citizen128Unit2MsLoop\":180,\"estimatedSecondsAt100Fps\":1.8,\"offlineCpuMs\":14.9947,\"logicalRouteRequests\":0,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":0}],\"savedStateSha256\":\"AC0BA50B560931F588C772E5B0184FAB886C9248619F36BF2FD327FC7D2732B6\"},{\"mode\":\"existing_shop\",\"sample\":2,\"frameAccounting\":\"separate_continuations\",\"residents\":957,\"factor\":1,\"consumers\":957,\"events\":2871,\"citizenEvents\":957,\"continuationEvents\":1914,\"eventsPerDecision\":3,\"eventCapFrames\":60,\"measuredFramesWith16Citizen128Unit2MsLoop\":61,\"estimatedSecondsAt100Fps\":0.61,\"offlineCpuMs\":15.7356,\"logicalRouteRequests\":0,\"lunchWindowMinutes\":45,\"backlog\":[{\"gameMinutesPerRealSecond\":0.3333333333333333,\"windowFrames\":13500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":1,\"windowFrames\":4500,\"pendingAtWindowEnd\":0},{\"gameMinutesPerRealSecond\":3,\"windowFrames\":1500,\"pendingAtWindowEnd\":0}],\"savedStateSha256\":\"AC0BA50B560931F588C772E5B0184FAB886C9248619F36BF2FD327FC7D2732B6\"}]}\n"
+    }
+  ],
+  "syntheticPerformanceDiagnostics": {
+    "wholeDecisionMaxMs": 10.7039,
+    "routine16EventBatchMaxMs": 11.4422,
+    "nativeId1024PurePolicyP95Ms": 0.2515,
+    "engineeringPolicyTargetMs": 0.2,
+    "nativeModWork": "not measured",
+    "wholeFrame": "not measured",
+    "warning": "Offline diagnostics do not satisfy native acceptance. Pure-policy p95 remains above the existing 0.20ms engineering target; no performance improvement claimed."
+  },
+  "processCleanup": {
+    "checkedAt": "2026-10-31T12:43:35.0706737+01:00",
+    "ownedTaskProcessesRemaining": 0
+  }
+}

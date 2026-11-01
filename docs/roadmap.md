@@ -20,7 +20,9 @@ Replaces the phase order in docs/reviews/2026-10-27-realism-gameplay-roadmap.md 
 
 0. Performance: the 30 October comprehensive review is done and passes the mod-work gate below. Spock agreed: no optimization work now; re-measure as each slice lands. This isn't a release step.
 A. Inspector, traits and probabilistic choice. Start now (Peter 15:24 JST), with the standing performance gate applied to each slice.
-B. Memory, loyalty and regulars.
+B. Memory, loyalty and regulars. **B0 is implemented offline:** schema 18, exact old-source migration and history-inclusive capacity; memory remains empty/inactive and the regulars helper is a pure own-shop projection. **B0b is inserted between B0 and B1:** persist the held A3 tuning image and neutral bounded per-candidate contribution; schema 18 is amended before player use. B1 is implemented offline on B0b: per-consumer generation memory, atomic experience watermarks and captured bounded loyalty/curiosity weights; 6 Nov native proof remains pending. B2 is implemented offline on B1: unique-consumer own-shop regular counts, inspector memory words and read-only bridge flags/counts, with zero saved growth and no choice contribution. Default Q7 thresholds are three served visits, positive effective memory and fourteen days. Native proof remains pending the combined 6 Nov session. [B2 checks](checks/b2-regulars-inspector.md#step-b2-regulars-and-inspector-words---31-october-2026-offline-only). [Contract and capacity evidence](population-schema18.md).
+   B1 protected-insertion exception: if recording a new bad visit would evict a competing boost, return chance stays equal (never higher), with a terminal failed watermark and no negative per-shop entry. B2 must not assume every failure leaves a negative entry; `ProtectedInsertions` is session-local, not saved history. [Exact exception](population-schema18.md#b1-execution--31-october-2026).
+
 C. Marketing awareness and targeting, plus the market research product.
 D. Rivals as alternatives.
 E. Weather, street life, bigger menus and more products.
@@ -29,13 +31,9 @@ Later: residents as employees, households.
 
 Implementation plan for B–E: [memory, marketing, rivals and the wider street](plans/steps-b-e.md).
 
-E2a offline street-life proof and read-only venue findings: [coverage and E2b cases](plans/e2-street-life.md), including Peter's 31 October Q6 decision (existing identified residents/caps and 25% semantics; no new anonymous crowds or night multiplier). Native evidence remains on the combined 6 Nov checklist.
-
-E2b (31 Oct, offline): R2 fails closed on ambiguous/conflicting frontage ownership; R4 keeps bound lines planned for move-up through rain (visible retention pre-existed) with an explicit reload reconstruction limit; five flat per-kind timing maxima preserve existing defaults. R1/R3 await native/visual evidence; no additional venue is enabled. [Implementation and 6 Nov handoff](plans/e2-street-life.md#e2b-implementation--31-october-2026-offline).
-
 Peter’s [31 October Q1-Q7 decisions](plans/steps-b-e.md#product-decisions-peter-31-oct-2026) specify tiered paid research as a third native-agency option (proven fee or unavailable), local/distant discovery, estimated rivals, food-first products, no anonymous crowds/night multiplier and own-shop regulars; tier contents/fees remain open.
 
-Track F (Peter, 31 October): independently authored city view from interiors, F0 spike → F1 shop view/customer entry → F2 upper-floor/penthouse view → F3 polish. [F0 findings and plan](plans/track-f-interior-view.md): default-off runtime eligibility/entrance-anchor experiment; **city drawing is a no-op pending F1**, with no save-format change or A-stack dependency. Separate later E2c owns the third-party detection guard. The same mod-work/whole-frame evidence rules apply to F.
+Track F (Peter, 31 October): independently authored city view from interiors, F0 spike → F1 shop view/customer entry → F2 upper-floor/penthouse view → F3 polish. [F0 findings and plan](plans/track-f-interior-view.md): default-off runtime eligibility/entrance-anchor experiment; **city drawing is a no-op pending F1**, with no save-format change or A-stack dependency. E2c (31 Oct, offline) implements only the once-per-load third-party detection guard, forced-off F0 state and read-only bridge verdict; native proof remains pending. [E2c evidence](checks/e2c-interior-guard.md#e2c-third-party-interior-guard---31-october-2026-offline-only). The same mod-work/whole-frame evidence rules apply to F.
 
 ## Performance gate (Peter, 2026-10-30)
 
@@ -54,18 +52,19 @@ Applies to every step A–E slice re-measure and to the final release:
 
 Record every taken win with before/after numbers.
 
-| Slice | Change | Before | After |
-|---|---|---|---|
-| E2b review r1 (31 Oct, offline) | Address/entrance-cell indexes; skip Home/Study, retain assigned-work frontages; no refresh rewrite. Actual reviewed/current methods, 1,000 places × 1,000 controllers, 200 batches/arm. | Publish 7.1134/8.0621/8.6583 ms, 414160.0 B; rebind 7.6673/8.5979/9.2397 ms, 934439.8 B. | Publish 0.9492/3.2639/4.8519 ms, 935816.0 B; rebind 1.3145/6.0477/8.1665 ms, 1456258.8 B. Native calls unchanged; allocation trade-off and all >=30 ms flags in [review proof](../CHECKS.md#e2b-review-round-1--31-october-2026-offline-only). Native gate pending. |
-| E2b (31 Oct, offline) | Share one native frontage image at publication/rebind; cache refusals. | 48/256-frontage batches: 1,176/32,896 native entrance reads; 200 misses: 9,600/51,200 reads. | 48/256 entrance reads per batch; **zero** reads for 200 cached refusals. Cold snapshot allocation increases; [full costs and limits](../CHECKS.md#e2b-bounded-street-life--31-october-2026-offline-only). Native calls counted with doubles, not NavMesh CPU measured. |
-| E2b (31 Oct, offline) | Check cached ownership before sampling; remove the duplicate facade lookup, preserving the one-cold-door/frame budget. | Warm 48/256-query batch p50/p95: 0.0433/0.0885 and 0.1005/0.1963 ms; 568.1/592.4 B/query. | 0.0275/0.0483 and 0.0720/0.1713 ms; **360.0/374.7 B/query**; zero extra warm samples. Actual E2a/current extracted methods, same doubles; native benefit unmeasured. |
-| A2 | Save validation builds error text only on failure (`Text`/`Bounded`/`Known`/duplicate/unknown-field checks); runs on every save and load | Validation alloc per save **8.39 MiB** (957 residents with journeys, offline .NET 10) | **1.31 MiB** |
-| A2 | Read shape check: one reusable duplicate-field set per JSON depth, bit flags per position, integer range from the token value; positions streamed instead of one `JObject` each | Read alloc **83.3 MiB**, read median **119.7 ms**; write alloc **26.1 MiB** (same payload) | **38.8 MiB**, **89.2 ms**; **19.1 MiB** |
-| A2 r2 | Schema-17 outcome records as one compact string each (no field names) | 4,038,976 chars at 957 residents end of day; 50,000 × factor 3 above the input cap | 3,470,518 chars (−14.1%); 50,000 × factor 3 at 89.7% of the cap |
-| A2 r2 | Unboxed range checks for schema-17 enums in save validation | Validation 1.83 MiB alloc, 4.3 ms per save (957 residents, end of day) | 1.04 MiB, 2.7 ms |
-| A2 r1 | Schema-17 outcomes: whole-minute integer times, shop/product kept only for purchases | Bought record 210 chars, skipped 196 (full-precision minutes, shop/product on skips) | 182 and 122 chars (−13% / −38% per record) |
-| A2 | Schema-17 traits stored as one 0–4 digit per trait (`{"Bands":"…","Version":1}`) instead of ten named integer fields | 208 chars per trait record (+333,036 chars at 957 residents × 2 consumers) | 34 chars per record (174 fewer; 1.74 M chars saved at 5,000, 17.4 M at 50,000) |
-| C1 | Cache verified enum/list metadata per bounded shape; replace per-business duplicate hash sets with at most 8 x 8 comparisons (offline .NET, 1,024 businesses x six campaigns, 301 reads) | Warm p50/p95 3.316/5.196 ms; 3,637,080 allocated bytes/read | Warm p50/p95 0.980/2.380 ms; 1,637,960 bytes/read (55% fewer); one-business continuation p50 0.0029 to 0.0008 ms. Cold/read-tail and native limits: [C1 checks](../CHECKS.md#c1-native-campaign-reader---31-october-2026-offline-only). |
-| D1 (31 Oct, offline) | Reuse address-tuple metadata index; no escaped address strings on warm refresh. Zero work when not called. | Warm refresh allocation 227,200 / 4,629,632 B at 1,024 / 20,000 places (0.2286 / 1.9294 ms). | 32 / 32 B (0.1061 / 1.4670 ms); 16-read units 0 B. Retention trade-off: 422,208 / 8,500,600 to 491,848 / 9,838,136 B. [Method, cold/detail costs and limits](reviews/2026-10-31-d1-rival-reader.md#offline-validation-and-performance). No native timing claim. |
-| F0 review r1, 31 Oct | Cache configured bool/full context per frame and use a validated native speed delegate. Frozen pre-r1 adapter versus fixed adapter, actual `FieldInfo.GetValue` before / actual typed accessor after, 36 queries per emulated frame, 300 × 100 batches; native doubles. | p50/p95/max batch means **0.000975/0.001576/0.002240 ms/frame**, **0 B/frame** | **0.000690/0.000941/0.001080 ms/frame**, **0 B/frame**. Same-frame blockers still invalidate immediately; full-context reads 1 per frame rather than per body. `build/f0-review-r1/accessor-verified.txt`; .NET-only partial timings, not Unity/full-mod clearance. |
-| F0, 31 Oct | Skip candidate scan when both body pools are full, after observations and queue movement; same extracted selector with/without this one break, 957 residents, 300 single calls, native doubles. | p50/p95/max **0.1885/0.3179/4.2312 ms**, **96 B/call** | **0.0001/0.0001/0.0022 ms**, **32 B/call** (harness result list); zero candidate position reads versus 957 per full-pool call. No acquisition/cooldown difference in differential fixtures. Unity/full-mod benefit unmeasured. [F0 limits](plans/track-f-interior-view.md). |
+Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index line here. Keep before/after numbers and measurement limits in that file; sync/review-fix notes stay with the slice.
+
+- A2 — [Schema 17, lifestyle traits and base sync evidence](perf/a2-schema17-traits.md).
+- A3 — [Weighted food choices, review fixes and native checklist](perf/a3-weighted-choice.md).
+- B0 — [Schema 18, capacity, review fixes and native checklist](perf/b0-schema18.md).
+- B0b — [Held tuning, base syncs and native checklist](perf/b0b-held-tuning.md).
+- E3 — [Donut feasibility reader](perf/e3-donut.md).
+- C1 — [Native campaign reader and native checklist](perf/c1-campaign-reader.md).
+- D1 — [Read-only rival food catalogue and native checklist](perf/d1-rival-catalogue.md).
+- F0 — [Interior view experiment, reviews and native checklist](perf/f0-interior-view.md).
+- E2c — [Third-party interior guard](perf/e2c-interior-guard.md).
+- B1 — [Shop memory and loyalty v2](perf/b1-memory-loyalty.md).
+
+- B2 — [Observed own-shop regulars and resident memory words](perf/b2-regulars-inspector.md).
+
+- E2b ? [Bounded street-life timing and fail-closed frontage ownership](perf/e2b-street-life.md).

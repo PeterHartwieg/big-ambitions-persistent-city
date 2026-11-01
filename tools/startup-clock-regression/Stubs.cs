@@ -28,6 +28,8 @@ public sealed class GameManager
 }
 public sealed class BuildingManager
 {
+    public void EnterBuilding() { }
+    public void ExitFromBuilding() { }
     public static bool IsInsideBuilding;
     public bool enteringBuilding, exitingBuilding;
     public Building? building;
@@ -98,8 +100,11 @@ namespace PersistentCity.Runtime
 }
 namespace HarmonyLib
 {
+    public sealed class Patches { public string[] Owners => Array.Empty<string>(); }
     public sealed class Harmony
     {
+        public static int MetadataReads;
+        public static Patches? GetPatchInfo(MethodBase method) { MetadataReads++; return null; }
         public Harmony(string owner) { }
         public static bool HasAnyPatches(string owner) => false;
         public void Patch(MethodInfo method, HarmonyMethod? postfix = null) { }

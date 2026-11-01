@@ -75,7 +75,7 @@ public sealed partial class FoodCommerceTests
     {
         var (city, _, _) = Ready(); var payload = JObject.Parse(SaveCodec.Write(city.State));
         var shop = (JObject)payload["Food"]!["Shops"]![0]!;
-        if (error == "duplicate") shop["AdditionalProductIds"] = new JArray("pastry");
+        if (error == "duplicate") shop["AdditionalProductIds"] = new JArray(FoodProducts.Croissant);
         if (error == "too-many") shop["AdditionalProductIds"] = new JArray("a", "b", "c", "d");
         if (error == "null") shop["AdditionalProductIds"] = null;
         if (error == "missing") shop.Remove("AdditionalProductIds");

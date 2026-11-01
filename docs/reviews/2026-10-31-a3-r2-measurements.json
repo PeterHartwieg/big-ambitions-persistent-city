@@ -1,0 +1,1581 @@
+{
+  "date": "2026-10-31",
+  "finding": "Opus-r2-1",
+  "scope": "Offline only; transient frame accounting, no saved shape or food-choice changes",
+  "reproduceRush": "dotnet run --project tools/food-choice-regression/FoodChoiceRegression.csproj --configuration Release -- --rush",
+  "summary": [
+    {
+      "mode": "all_feasible",
+      "results": [
+        {
+          "accounting": "R1_all_units_are_citizens",
+          "medianFrames": 2157,
+          "minFrames": 2156,
+          "maxFrames": 2157,
+          "medianCpuMs": 152.8712,
+          "fastestClockPending": [
+            583,
+            583,
+            583
+          ],
+          "citizenEvents": 1914,
+          "continuationEvents": 32538,
+          "totalUnits": 34452,
+          "logicalRoutes": 30624,
+          "eventCapFrames": 2154
+        },
+        {
+          "accounting": "separate_continuations",
+          "medianFrames": 274,
+          "minFrames": 271,
+          "maxFrames": 274,
+          "medianCpuMs": 140.4393,
+          "fastestClockPending": [
+            0,
+            0,
+            0
+          ],
+          "citizenEvents": 1914,
+          "continuationEvents": 32538,
+          "totalUnits": 34452,
+          "logicalRoutes": 30624,
+          "eventCapFrames": 270
+        }
+      ]
+    },
+    {
+      "mode": "closed",
+      "results": [
+        {
+          "accounting": "R1_all_units_are_citizens",
+          "medianFrames": 361,
+          "minFrames": 360,
+          "maxFrames": 361,
+          "medianCpuMs": 91.1078,
+          "fastestClockPending": [
+            0,
+            0,
+            0
+          ],
+          "citizenEvents": 1914,
+          "continuationEvents": 3828,
+          "totalUnits": 5742,
+          "logicalRoutes": 0,
+          "eventCapFrames": 359
+        },
+        {
+          "accounting": "separate_continuations",
+          "medianFrames": 123,
+          "minFrames": 122,
+          "maxFrames": 123,
+          "medianCpuMs": 86.6453,
+          "fastestClockPending": [
+            0,
+            0,
+            0
+          ],
+          "citizenEvents": 1914,
+          "continuationEvents": 3828,
+          "totalUnits": 5742,
+          "logicalRoutes": 0,
+          "eventCapFrames": 120
+        }
+      ]
+    },
+    {
+      "mode": "refused_outward",
+      "results": [
+        {
+          "accounting": "R1_all_units_are_citizens",
+          "medianFrames": 1199,
+          "minFrames": 1198,
+          "maxFrames": 1199,
+          "medianCpuMs": 111.2317,
+          "fastestClockPending": [
+            0,
+            0,
+            0
+          ],
+          "citizenEvents": 1914,
+          "continuationEvents": 17226,
+          "totalUnits": 19140,
+          "logicalRoutes": 15312,
+          "eventCapFrames": 1197
+        },
+        {
+          "accounting": "separate_continuations",
+          "medianFrames": 153,
+          "minFrames": 152,
+          "maxFrames": 153,
+          "medianCpuMs": 112.1199,
+          "fastestClockPending": [
+            0,
+            0,
+            0
+          ],
+          "citizenEvents": 1914,
+          "continuationEvents": 17226,
+          "totalUnits": 19140,
+          "logicalRoutes": 15312,
+          "eventCapFrames": 150
+        }
+      ]
+    },
+    {
+      "mode": "existing_shop",
+      "results": [
+        {
+          "accounting": "R1_all_units_are_citizens",
+          "medianFrames": 181,
+          "minFrames": 181,
+          "maxFrames": 181,
+          "medianCpuMs": 26.1241,
+          "fastestClockPending": [
+            0,
+            0,
+            0
+          ],
+          "citizenEvents": 957,
+          "continuationEvents": 1914,
+          "totalUnits": 2871,
+          "logicalRoutes": 0,
+          "eventCapFrames": 180
+        },
+        {
+          "accounting": "separate_continuations",
+          "medianFrames": 61,
+          "minFrames": 61,
+          "maxFrames": 61,
+          "medianCpuMs": 20.0002,
+          "fastestClockPending": [
+            0,
+            0,
+            0
+          ],
+          "citizenEvents": 957,
+          "continuationEvents": 1914,
+          "totalUnits": 2871,
+          "logicalRoutes": 0,
+          "eventCapFrames": 60
+        }
+      ]
+    }
+  ],
+  "rush": {
+    "boundary": "Synthetic simultaneous lunch; stub paths; one warmup + three alternating samples per mode/accounting, 16 citizen / 128 total units / 2 ms soft budget. Snapshot published per frame. Frame/backlog estimates at 100 fps, explicit clock-rate scenarios. Not native throughput or path cost.",
+    "results": [
+      {
+        "mode": "all_feasible",
+        "sample": 0,
+        "frameAccounting": "R1_all_units_are_citizens",
+        "residents": 957,
+        "factor": 2,
+        "consumers": 1914,
+        "events": 34452,
+        "citizenEvents": 1914,
+        "continuationEvents": 32538,
+        "eventsPerDecision": 18,
+        "eventCapFrames": 2154,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 2157,
+        "estimatedSecondsAt100Fps": 21.57,
+        "offlineCpuMs": 183.4041,
+        "logicalRouteRequests": 30624,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 583
+          }
+        ],
+        "savedStateSha256": "E471A1681FD7B45F4321F8CED4F690A10122A896EDD8A16B2E78FB998C8F6E0A"
+      },
+      {
+        "mode": "all_feasible",
+        "sample": 0,
+        "frameAccounting": "separate_continuations",
+        "residents": 957,
+        "factor": 2,
+        "consumers": 1914,
+        "events": 34452,
+        "citizenEvents": 1914,
+        "continuationEvents": 32538,
+        "eventsPerDecision": 18,
+        "eventCapFrames": 270,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 271,
+        "estimatedSecondsAt100Fps": 2.71,
+        "offlineCpuMs": 140.4393,
+        "logicalRouteRequests": 30624,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ],
+        "savedStateSha256": "E471A1681FD7B45F4321F8CED4F690A10122A896EDD8A16B2E78FB998C8F6E0A"
+      },
+      {
+        "mode": "closed",
+        "sample": 0,
+        "frameAccounting": "R1_all_units_are_citizens",
+        "residents": 957,
+        "factor": 2,
+        "consumers": 1914,
+        "events": 5742,
+        "citizenEvents": 1914,
+        "continuationEvents": 3828,
+        "eventsPerDecision": 3,
+        "eventCapFrames": 359,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 360,
+        "estimatedSecondsAt100Fps": 3.6,
+        "offlineCpuMs": 91.1078,
+        "logicalRouteRequests": 0,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ],
+        "savedStateSha256": "37A0CBB05C1274CA053D51BDE05C3B1DE2A1B51F90238CC19530DC0D6AE30043"
+      },
+      {
+        "mode": "closed",
+        "sample": 0,
+        "frameAccounting": "separate_continuations",
+        "residents": 957,
+        "factor": 2,
+        "consumers": 1914,
+        "events": 5742,
+        "citizenEvents": 1914,
+        "continuationEvents": 3828,
+        "eventsPerDecision": 3,
+        "eventCapFrames": 120,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 123,
+        "estimatedSecondsAt100Fps": 1.23,
+        "offlineCpuMs": 121.3989,
+        "logicalRouteRequests": 0,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ],
+        "savedStateSha256": "37A0CBB05C1274CA053D51BDE05C3B1DE2A1B51F90238CC19530DC0D6AE30043"
+      },
+      {
+        "mode": "refused_outward",
+        "sample": 0,
+        "frameAccounting": "R1_all_units_are_citizens",
+        "residents": 957,
+        "factor": 2,
+        "consumers": 1914,
+        "events": 19140,
+        "citizenEvents": 1914,
+        "continuationEvents": 17226,
+        "eventsPerDecision": 10,
+        "eventCapFrames": 1197,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 1199,
+        "estimatedSecondsAt100Fps": 11.99,
+        "offlineCpuMs": 115.3583,
+        "logicalRouteRequests": 15312,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ],
+        "savedStateSha256": "4B9D1F7164797455893A94757DFDD8753E7762F99DDA20A1FFB7CAD1B31D2CA6"
+      },
+      {
+        "mode": "refused_outward",
+        "sample": 0,
+        "frameAccounting": "separate_continuations",
+        "residents": 957,
+        "factor": 2,
+        "consumers": 1914,
+        "events": 19140,
+        "citizenEvents": 1914,
+        "continuationEvents": 17226,
+        "eventsPerDecision": 10,
+        "eventCapFrames": 150,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 152,
+        "estimatedSecondsAt100Fps": 1.52,
+        "offlineCpuMs": 124.3552,
+        "logicalRouteRequests": 15312,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ],
+        "savedStateSha256": "4B9D1F7164797455893A94757DFDD8753E7762F99DDA20A1FFB7CAD1B31D2CA6"
+      },
+      {
+        "mode": "existing_shop",
+        "sample": 0,
+        "frameAccounting": "R1_all_units_are_citizens",
+        "residents": 957,
+        "factor": 1,
+        "consumers": 957,
+        "events": 2871,
+        "citizenEvents": 957,
+        "continuationEvents": 1914,
+        "eventsPerDecision": 3,
+        "eventCapFrames": 180,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 181,
+        "estimatedSecondsAt100Fps": 1.81,
+        "offlineCpuMs": 34.2306,
+        "logicalRouteRequests": 0,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ],
+        "savedStateSha256": "7C01229DB2E2645E2FBD60A3848D19CE310B87C6837D4AA76B50B6F19FF04248"
+      },
+      {
+        "mode": "existing_shop",
+        "sample": 0,
+        "frameAccounting": "separate_continuations",
+        "residents": 957,
+        "factor": 1,
+        "consumers": 957,
+        "events": 2871,
+        "citizenEvents": 957,
+        "continuationEvents": 1914,
+        "eventsPerDecision": 3,
+        "eventCapFrames": 60,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 61,
+        "estimatedSecondsAt100Fps": 0.61,
+        "offlineCpuMs": 32.5797,
+        "logicalRouteRequests": 0,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ],
+        "savedStateSha256": "7C01229DB2E2645E2FBD60A3848D19CE310B87C6837D4AA76B50B6F19FF04248"
+      },
+      {
+        "mode": "all_feasible",
+        "sample": 1,
+        "frameAccounting": "separate_continuations",
+        "residents": 957,
+        "factor": 2,
+        "consumers": 1914,
+        "events": 34452,
+        "citizenEvents": 1914,
+        "continuationEvents": 32538,
+        "eventsPerDecision": 18,
+        "eventCapFrames": 270,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 274,
+        "estimatedSecondsAt100Fps": 2.74,
+        "offlineCpuMs": 138.9954,
+        "logicalRouteRequests": 30624,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ],
+        "savedStateSha256": "E471A1681FD7B45F4321F8CED4F690A10122A896EDD8A16B2E78FB998C8F6E0A"
+      },
+      {
+        "mode": "all_feasible",
+        "sample": 1,
+        "frameAccounting": "R1_all_units_are_citizens",
+        "residents": 957,
+        "factor": 2,
+        "consumers": 1914,
+        "events": 34452,
+        "citizenEvents": 1914,
+        "continuationEvents": 32538,
+        "eventsPerDecision": 18,
+        "eventCapFrames": 2154,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 2157,
+        "estimatedSecondsAt100Fps": 21.57,
+        "offlineCpuMs": 140.7991,
+        "logicalRouteRequests": 30624,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 583
+          }
+        ],
+        "savedStateSha256": "E471A1681FD7B45F4321F8CED4F690A10122A896EDD8A16B2E78FB998C8F6E0A"
+      },
+      {
+        "mode": "closed",
+        "sample": 1,
+        "frameAccounting": "separate_continuations",
+        "residents": 957,
+        "factor": 2,
+        "consumers": 1914,
+        "events": 5742,
+        "citizenEvents": 1914,
+        "continuationEvents": 3828,
+        "eventsPerDecision": 3,
+        "eventCapFrames": 120,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 123,
+        "estimatedSecondsAt100Fps": 1.23,
+        "offlineCpuMs": 86.3051,
+        "logicalRouteRequests": 0,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ],
+        "savedStateSha256": "37A0CBB05C1274CA053D51BDE05C3B1DE2A1B51F90238CC19530DC0D6AE30043"
+      },
+      {
+        "mode": "closed",
+        "sample": 1,
+        "frameAccounting": "R1_all_units_are_citizens",
+        "residents": 957,
+        "factor": 2,
+        "consumers": 1914,
+        "events": 5742,
+        "citizenEvents": 1914,
+        "continuationEvents": 3828,
+        "eventsPerDecision": 3,
+        "eventCapFrames": 359,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 361,
+        "estimatedSecondsAt100Fps": 3.61,
+        "offlineCpuMs": 93.3944,
+        "logicalRouteRequests": 0,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ],
+        "savedStateSha256": "37A0CBB05C1274CA053D51BDE05C3B1DE2A1B51F90238CC19530DC0D6AE30043"
+      },
+      {
+        "mode": "refused_outward",
+        "sample": 1,
+        "frameAccounting": "separate_continuations",
+        "residents": 957,
+        "factor": 2,
+        "consumers": 1914,
+        "events": 19140,
+        "citizenEvents": 1914,
+        "continuationEvents": 17226,
+        "eventsPerDecision": 10,
+        "eventCapFrames": 150,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 153,
+        "estimatedSecondsAt100Fps": 1.53,
+        "offlineCpuMs": 112.1199,
+        "logicalRouteRequests": 15312,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ],
+        "savedStateSha256": "4B9D1F7164797455893A94757DFDD8753E7762F99DDA20A1FFB7CAD1B31D2CA6"
+      },
+      {
+        "mode": "refused_outward",
+        "sample": 1,
+        "frameAccounting": "R1_all_units_are_citizens",
+        "residents": 957,
+        "factor": 2,
+        "consumers": 1914,
+        "events": 19140,
+        "citizenEvents": 1914,
+        "continuationEvents": 17226,
+        "eventsPerDecision": 10,
+        "eventCapFrames": 1197,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 1199,
+        "estimatedSecondsAt100Fps": 11.99,
+        "offlineCpuMs": 111.2317,
+        "logicalRouteRequests": 15312,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ],
+        "savedStateSha256": "4B9D1F7164797455893A94757DFDD8753E7762F99DDA20A1FFB7CAD1B31D2CA6"
+      },
+      {
+        "mode": "existing_shop",
+        "sample": 1,
+        "frameAccounting": "separate_continuations",
+        "residents": 957,
+        "factor": 1,
+        "consumers": 957,
+        "events": 2871,
+        "citizenEvents": 957,
+        "continuationEvents": 1914,
+        "eventsPerDecision": 3,
+        "eventCapFrames": 60,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 61,
+        "estimatedSecondsAt100Fps": 0.61,
+        "offlineCpuMs": 17.6461,
+        "logicalRouteRequests": 0,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ],
+        "savedStateSha256": "7C01229DB2E2645E2FBD60A3848D19CE310B87C6837D4AA76B50B6F19FF04248"
+      },
+      {
+        "mode": "existing_shop",
+        "sample": 1,
+        "frameAccounting": "R1_all_units_are_citizens",
+        "residents": 957,
+        "factor": 1,
+        "consumers": 957,
+        "events": 2871,
+        "citizenEvents": 957,
+        "continuationEvents": 1914,
+        "eventsPerDecision": 3,
+        "eventCapFrames": 180,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 181,
+        "estimatedSecondsAt100Fps": 1.81,
+        "offlineCpuMs": 26.1241,
+        "logicalRouteRequests": 0,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ],
+        "savedStateSha256": "7C01229DB2E2645E2FBD60A3848D19CE310B87C6837D4AA76B50B6F19FF04248"
+      },
+      {
+        "mode": "all_feasible",
+        "sample": 2,
+        "frameAccounting": "R1_all_units_are_citizens",
+        "residents": 957,
+        "factor": 2,
+        "consumers": 1914,
+        "events": 34452,
+        "citizenEvents": 1914,
+        "continuationEvents": 32538,
+        "eventsPerDecision": 18,
+        "eventCapFrames": 2154,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 2156,
+        "estimatedSecondsAt100Fps": 21.56,
+        "offlineCpuMs": 152.8712,
+        "logicalRouteRequests": 30624,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 583
+          }
+        ],
+        "savedStateSha256": "E471A1681FD7B45F4321F8CED4F690A10122A896EDD8A16B2E78FB998C8F6E0A"
+      },
+      {
+        "mode": "all_feasible",
+        "sample": 2,
+        "frameAccounting": "separate_continuations",
+        "residents": 957,
+        "factor": 2,
+        "consumers": 1914,
+        "events": 34452,
+        "citizenEvents": 1914,
+        "continuationEvents": 32538,
+        "eventsPerDecision": 18,
+        "eventCapFrames": 270,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 274,
+        "estimatedSecondsAt100Fps": 2.74,
+        "offlineCpuMs": 145.4208,
+        "logicalRouteRequests": 30624,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ],
+        "savedStateSha256": "E471A1681FD7B45F4321F8CED4F690A10122A896EDD8A16B2E78FB998C8F6E0A"
+      },
+      {
+        "mode": "closed",
+        "sample": 2,
+        "frameAccounting": "R1_all_units_are_citizens",
+        "residents": 957,
+        "factor": 2,
+        "consumers": 1914,
+        "events": 5742,
+        "citizenEvents": 1914,
+        "continuationEvents": 3828,
+        "eventsPerDecision": 3,
+        "eventCapFrames": 359,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 361,
+        "estimatedSecondsAt100Fps": 3.61,
+        "offlineCpuMs": 82.211,
+        "logicalRouteRequests": 0,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ],
+        "savedStateSha256": "37A0CBB05C1274CA053D51BDE05C3B1DE2A1B51F90238CC19530DC0D6AE30043"
+      },
+      {
+        "mode": "closed",
+        "sample": 2,
+        "frameAccounting": "separate_continuations",
+        "residents": 957,
+        "factor": 2,
+        "consumers": 1914,
+        "events": 5742,
+        "citizenEvents": 1914,
+        "continuationEvents": 3828,
+        "eventsPerDecision": 3,
+        "eventCapFrames": 120,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 122,
+        "estimatedSecondsAt100Fps": 1.22,
+        "offlineCpuMs": 86.6453,
+        "logicalRouteRequests": 0,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ],
+        "savedStateSha256": "37A0CBB05C1274CA053D51BDE05C3B1DE2A1B51F90238CC19530DC0D6AE30043"
+      },
+      {
+        "mode": "refused_outward",
+        "sample": 2,
+        "frameAccounting": "R1_all_units_are_citizens",
+        "residents": 957,
+        "factor": 2,
+        "consumers": 1914,
+        "events": 19140,
+        "citizenEvents": 1914,
+        "continuationEvents": 17226,
+        "eventsPerDecision": 10,
+        "eventCapFrames": 1197,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 1198,
+        "estimatedSecondsAt100Fps": 11.98,
+        "offlineCpuMs": 110.6436,
+        "logicalRouteRequests": 15312,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ],
+        "savedStateSha256": "4B9D1F7164797455893A94757DFDD8753E7762F99DDA20A1FFB7CAD1B31D2CA6"
+      },
+      {
+        "mode": "refused_outward",
+        "sample": 2,
+        "frameAccounting": "separate_continuations",
+        "residents": 957,
+        "factor": 2,
+        "consumers": 1914,
+        "events": 19140,
+        "citizenEvents": 1914,
+        "continuationEvents": 17226,
+        "eventsPerDecision": 10,
+        "eventCapFrames": 150,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 153,
+        "estimatedSecondsAt100Fps": 1.53,
+        "offlineCpuMs": 106.7831,
+        "logicalRouteRequests": 15312,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ],
+        "savedStateSha256": "4B9D1F7164797455893A94757DFDD8753E7762F99DDA20A1FFB7CAD1B31D2CA6"
+      },
+      {
+        "mode": "existing_shop",
+        "sample": 2,
+        "frameAccounting": "R1_all_units_are_citizens",
+        "residents": 957,
+        "factor": 1,
+        "consumers": 957,
+        "events": 2871,
+        "citizenEvents": 957,
+        "continuationEvents": 1914,
+        "eventsPerDecision": 3,
+        "eventCapFrames": 180,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 181,
+        "estimatedSecondsAt100Fps": 1.81,
+        "offlineCpuMs": 20.6373,
+        "logicalRouteRequests": 0,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ],
+        "savedStateSha256": "7C01229DB2E2645E2FBD60A3848D19CE310B87C6837D4AA76B50B6F19FF04248"
+      },
+      {
+        "mode": "existing_shop",
+        "sample": 2,
+        "frameAccounting": "separate_continuations",
+        "residents": 957,
+        "factor": 1,
+        "consumers": 957,
+        "events": 2871,
+        "citizenEvents": 957,
+        "continuationEvents": 1914,
+        "eventsPerDecision": 3,
+        "eventCapFrames": 60,
+        "measuredFramesWith16Citizen128Unit2MsLoop": 61,
+        "estimatedSecondsAt100Fps": 0.61,
+        "offlineCpuMs": 20.0002,
+        "logicalRouteRequests": 0,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ],
+        "savedStateSha256": "7C01229DB2E2645E2FBD60A3848D19CE310B87C6837D4AA76B50B6F19FF04248"
+      }
+    ]
+  },
+  "choice": {
+    "bench": [
+      {
+        "shops": 8,
+        "nativeIds": false,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.1334,
+          "p95": 0.3422,
+          "max": 12.1402
+        },
+        "continuationUnitMs": {
+          "p95": 0.0416,
+          "max": 0.7072
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.0713,
+          "max": 0.23600000000000002
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.012400000000000001,
+          "p95": 0.0262,
+          "max": 0.1278
+        },
+        "bytesPerDecision": 83960,
+        "logicalRoutes": 16
+      },
+      {
+        "shops": 64,
+        "nativeIds": false,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.1548,
+          "p95": 0.3684,
+          "max": 1.078
+        },
+        "continuationUnitMs": {
+          "p95": 0.0465,
+          "max": 0.7696
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.08410000000000001,
+          "max": 0.4306
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.023,
+          "p95": 0.0532,
+          "max": 0.3382
+        },
+        "bytesPerDecision": 84088,
+        "logicalRoutes": 16
+      },
+      {
+        "shops": 1024,
+        "nativeIds": false,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.3168,
+          "p95": 0.6725,
+          "max": 3.9541
+        },
+        "continuationUnitMs": {
+          "p95": 0.1066,
+          "max": 3.7825
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.2713,
+          "max": 3.7927000000000004
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.0795,
+          "p95": 0.16849999999999998,
+          "max": 3.7465
+        },
+        "bytesPerDecision": 84184,
+        "logicalRoutes": 16
+      }
+    ],
+    "nativeIdBench": [
+      {
+        "shops": 8,
+        "nativeIds": true,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.1677,
+          "p95": 0.3146,
+          "max": 0.8915
+        },
+        "continuationUnitMs": {
+          "p95": 0.0529,
+          "max": 0.734
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.0594,
+          "max": 0.2384
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.020999999999999998,
+          "p95": 0.039,
+          "max": 0.0903
+        },
+        "bytesPerDecision": 83944,
+        "logicalRoutes": 16
+      },
+      {
+        "shops": 64,
+        "nativeIds": true,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.1307,
+          "p95": 0.3065,
+          "max": 1.0448
+        },
+        "continuationUnitMs": {
+          "p95": 0.0414,
+          "max": 0.8031
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.0873,
+          "max": 0.8156
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.0206,
+          "p95": 0.06810000000000001,
+          "max": 0.6827
+        },
+        "bytesPerDecision": 76984,
+        "logicalRoutes": 16
+      },
+      {
+        "shops": 1024,
+        "nativeIds": true,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.2489,
+          "p95": 0.4121,
+          "max": 2.1566
+        },
+        "continuationUnitMs": {
+          "p95": 0.1432,
+          "max": 1.8391
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.2836,
+          "max": 1.7949
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.1831,
+          "p95": 0.2402,
+          "max": 1.7848000000000002
+        },
+        "bytesPerDecision": 82920,
+        "logicalRoutes": 16
+      }
+    ]
+  },
+  "nativeCandidates": {
+    "checks": "actual NativeFoodCandidates + NativeFoodHours, synthetic native surfaces",
+    "controllers": 131,
+    "discoveryFrames": [
+      0,
+      1,
+      2,
+      5
+    ],
+    "reload": true,
+    "oldHoursPasses": 8,
+    "newHoursPasses": 1,
+    "oldMedianMs": 0.1094,
+    "newMedianMs": 0.0818
+  },
+  "gate": {
+    "passedCommands": 34,
+    "unitTests": 1734,
+    "buildDllSha256": "29ef76b33deb22f499cd1aff02b8507d26a0f19cf7a16fa38568eb75706e5cdd",
+    "commands": [
+      {
+        "argv": [
+          "python",
+          "tools/build.py",
+          "--game-managed",
+          "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "test",
+          "tests/PersistentCity.Tests.csproj",
+          "--logger",
+          "trx;LogFileName=a3-r2-gate.trx",
+          "--results-directory",
+          "build/test-results"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "test",
+          "tests/PersistentCity.Tests.csproj",
+          "--no-build",
+          "--list-tests"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\core-identity-regression\\CoreIdentityRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\diagnostic-response-regression\\DiagnosticResponseRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\event-observation-regression\\EventObservationRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\food-catalogue-regression\\FoodCatalogueRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\food-checkout-regression\\FoodCheckoutRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\food-hours-regression\\FoodHoursRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\food-household-catalogue-regression\\FoodHouseholdCatalogueRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\food-ownership-regression\\FoodOwnershipRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\food-supply-regression\\FoodSupplyRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\frame-observation-regression\\FrameObservationRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\gate-access-regression\\GateAccessRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\road-ceiling-regression\\RoadCeilingRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\road-handoff-regression\\RoadHandoffRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\road-invalidation-regression\\RoadInvalidationRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\road-speed-regression\\RoadSpeedRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\route-discovery-regression\\RouteDiscoveryRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\save-contract-regression\\SaveContractRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\startup-clock-regression\\StartupClockRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\traffic-closure-regression\\TrafficClosureRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\traffic-queue-regression\\TrafficQueueRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\walking-quote-regression\\WalkingQuoteRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\food-choice-regression\\FoodChoiceRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\food-candidate-regression\\FoodCandidateRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "python",
+          "tools/native-command-regression/run.py"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "python",
+          "tools/physical-selection-regression/run.py"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "python",
+          "tools/vehicle-ownership-regression/run.py"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "python",
+          "tools/optional-stop-regression/run.py"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools/simulate/Simulate.csproj",
+          "--",
+          "28",
+          "build/harness-demo"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools/food-routines/FoodRoutines.csproj",
+          "--configuration",
+          "Release",
+          "--",
+          "build/harness-food-routines-demo",
+          "957"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools/food-demand/FoodDemand.csproj",
+          "--",
+          "build/harness-food-demand-demo"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools/food-choice-regression/FoodChoiceRegression.csproj",
+          "--configuration",
+          "Release",
+          "--",
+          "--rush"
+        ],
+        "exitCode": 0
+      }
+    ]
+  },
+  "limitations": [
+    "Synthetic paths and no concurrent ordinary citizen/traffic work; not native mod-work or clock-lateness proof.",
+    "One logical food quote request per unit, 128 total units and 2 ms soft time budget remain unchanged; selected geometry and return revalidation are separate, and a single native query can overrun that budget.",
+    "Old counter reproduced by charging every non-traffic unit; both modes run the same decision code and publish a snapshot per frame. Warmup once then three alternating measured runs.",
+    "Saved-state hashes, including decisions, reasons and money, match across all runs/accounting modes per scenario. No raw saves committed.",
+    "6 Nov rig remains required before merge; native p95 below 5 ms and every spike at least 30 ms flagged.",
+    "Policy-only p95 at 1024 native-length IDs is 0.2402 ms in the R2 gate, above the 0.20 ms engineering target (R1 0.1989 ms); no policy algorithm changes in this fix."
+  ]
+}
