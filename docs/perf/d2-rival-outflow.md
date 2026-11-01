@@ -133,3 +133,18 @@ The separate full dense awareness catalogue-build benchmark flags one 33.2802 ms
 sample (p95 33.2802 ms); it is a whole-build offline operation, not a measured
 runtime continuation or native frame. See the selected-tool timing flags in the
 [raw final results](../reviews/2026-11-01-d2-sync-base-results.json).
+
+## E4-head re-measure
+
+Source `df69679` (integration `2bd9006`), before the pizza landing: warm
+source/rank p95 0.0183 / 0.0242 ms at 1,024 / 20,000 alternatives, settlement
+p95 0.0011 ms. Offline 128-unit batch p95 is 2.1740 / 2.1400 ms; one 20k batch
+is >=30 ms, max 36.0793 ms. No matched speedup/regression or new optimization
+is inferred from these shared-host reruns. D2's intermediate 20 -> 21 idle
+delta stays +5 bytes/consumer +19 header, zero records. E4's separate 73-byte
+header consumes the existing reserve once; all caps/future envelopes remain.
+Current bytes, whole-save/aggregate timing flags and limits are in
+[D2 checks](../checks/d2-rival-outflow.md#e4-head-acceptance-before-the-pizza-landing)
+and the [raw E4-head results](../reviews/2026-11-01-d2-sync-base-e4-results.json).
+Native mod-work and whole-frame proof remain pending the combined head;
+the four parked hotspots are unchanged.

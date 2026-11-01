@@ -467,3 +467,44 @@ helper. Selecting the explicit non-null resolver fixes the annotation and avoids
 creating serializer settings there. The package rebuild passes; full unit and
 remaining regressions must finish before acceptance. No game/rig/profile action
 or native performance/release claim is made.
+
+### E4-head acceptance before the pizza landing
+
+Source `df69679` includes integration `2bd9006`. All **66/66 foreground gates**
+pass with **2,457 unit tests** (zero failed/skipped) and discovery of all 2,457.
+The passing build/unit prefix and remaining 64 commands used an identical verified
+source fingerprint. This includes every required regression/demo, all root
+regression projects, four capacities, E4 envelope/default-economy checks, A5 modes,
+C4 exact bytes, isolation guards and the frozen-reader baseline.
+[Commands, hashes and raw metrics](../reviews/2026-11-01-d2-sync-base-e4-results.json)
+retain this acceptance separately from the earlier E3 run.
+
+The current population fixture is **120,257 bytes**. The legacy-named
+`weatherProjectionLength` strips both weather and the menu header and remains
+the exact **119,083-byte schema-19 projection**. D2's separate native-double
+byte fixture deliberately targets intermediate **20 -> 21**, still exactly
++5 bytes/consumer +19 header, zero added records. E4's fixed menu header is
+**73 bytes**, consumed once from the existing capacity reserve.
+
+| E4-head capacity | Current bytes | Streaming / semantic records | Full future bytes / records |
+| --- | ---: | ---: | ---: |
+| reference | 5,058,414 | 55,541 / 55,538 | - |
+| consumers5000 | 9,802,126 | 112,632 / 112,629 | - |
+| CF32 | 194,180,928 | 1,970,132 / 1,970,129 | 220,664,366 / 2,111,867 |
+| CF64 | 232,580,928 | 3,570,132 / 3,570,129 | 259,064,366 / 3,711,867 |
+
+The existing oversized schema-17 migration refusal is unchanged; current reload
+passes. No cap grows. C4 exact-byte controls are identical at **41,860 population
+/ 66,752 food bytes**. E4's shipped-product economy comparison to `51ce709`
+is identical for both legacy and weighted arms.
+
+Warm source/rank p95 is 0.0183 / 0.0242 ms at 1,024 / 20,000 alternatives;
+settlement p95 0.0011 ms. Offline 128-unit batch p95 is 2.1740 / 2.1400 ms,
+with **one >=30 ms batch, max 36.0793 ms** in the 20k arm. Whole-save,
+whole-history serialization and aggregate timings are separately flagged in
+the raw metrics. These shared-host offline samples establish no matched speedup
+or native mod-work/frame result. All four parked hotspots remain parked.
+
+The final fetch then caught read-only E3 pizza at `8c6b3f3`. The complete E4
+acceptance above remains on its named source; pizza sync and fresh validation
+follow separately. No game, rig, bridge, Steam/profile, push or PR action occurred.
