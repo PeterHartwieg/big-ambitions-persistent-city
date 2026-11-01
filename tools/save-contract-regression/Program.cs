@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
 using PersistentCity.Runtime;
-static class Program
+static partial class Program
 {
     private static CityState City(int count, int seed = 11)
     {
@@ -97,9 +97,11 @@ static class Program
         return Math.Round(samples[samples.Count / 2], 1);
     }
 
-    private static object Bench(int residents, int runs, int representation = 2)
+    private static object Bench(int residents, int runs, int representation = 2, bool decisions = false)
     {
         var state = FoodCity(residents, steady: true, representation);
+        int a2Chars=SaveCodec.Write(state).Length;
+        if(decisions) PopulateDecisions(state);
         string json;
         // The codec refuses a payload above its input cap; report that bound instead of timing it.
         try { json = SaveCodec.Write(state); }
@@ -108,7 +110,7 @@ static class Program
         bool candidate = TodayProperty != null;
         // Schema-16 image of the same city without outcomes: what an upgrade actually reads.
         var fresh = FoodCity(residents, steady: false, representation);
-        string old = candidate ? AsSchema16(SaveCodec.Write(fresh)) : SaveCodec.Write(fresh);
+        string old = candidate ? AsSchema16(Legacy17(fresh)) : SaveCodec.Write(fresh);
         var migrated = SaveCodec.Read(old);
         if (migrated.Status != SaveReadStatus.Loaded) throw new Exception("Schema-16 image did not load: " + migrated.Error);
         migrated = null!;
@@ -122,10 +124,25 @@ static class Program
         GC.KeepAlive(retained);
         return new
         {
-            residents, representation, consumers = state.Food!.Residents.Count, chars = json.Length, capShare = Math.Round(json.Length / (double)SaveCodec.MaxInputCharacters, 3), utf8Bytes = Encoding.UTF8.GetByteCount(json),
+            residents, representation, decisions, a2Chars, decisionDelta=json.Length-a2Chars, consumers = state.Food!.Residents.Count, chars = json.Length, capShare = Math.Round(json.Length / (double)SaveCodec.MaxInputCharacters, 3), utf8Bytes = Encoding.UTF8.GetByteCount(json),
             schema16Chars = old.Length, writeMs = write, readMs = read, upgradeFrom16Ms = upgrade,
             retainedMiB = Math.Round((after - before) / 1048576.0, 1)
         };
+    }
+
+    private static void PopulateDecisions(CityState state)
+    {
+            foreach(var meal in state.Food!.Residents)
+            {meal.LastContextKey="trip:"+new string('x',44);meal.ContextAttempts=4;}
+            var first=state.Food.Residents[0];state.Food.ChoiceStartsDay=first.Day;
+            var scope=state.Food.Shops[0];var shop=state.Places.First(p=>p.Id==scope.PlaceId);var home=state.Places.First(p=>p.Id==state.Citizens[0].PlaceId);
+            Route Path(Position a,Position b)=>new Route {Legs={new RouteLeg {From=a,To=b,Minutes=1,Mode=TravelMode.Walk}}};
+            first.Decision=new FoodDecisionState {IntentId=first.IntentId,ContextKey=first.LastContextKey,Attempt=4,OriginAt=state.Minute,Deadline=state.Minute+90};
+            for(int i=0;i<8;i++) first.Decision.Shops.Add(new FoodDecisionShop {BusinessId="size-probe:"+i,PlaceId=shop.Id,MealsPerHour=60,
+                NextServiceAt=state.Minute,Hours=Enumerable.Range(0,7).Select(d=>new OpeningWindow {Day=d,FromMinute=0,ToMinute=1440}).ToList(),
+                Offers=FoodProducts.Ids.Select(p=>new FoodDecisionOffer {ProductId=p,Price=Money.FromCents(100),Units=100}).ToList(),
+                OutwardQuote=FoodQuoteState.Answered,ReturnQuote=FoodQuoteState.Answered,Outward=Path(home.Position,shop.Position),Return=Path(shop.Position,home.Position)});
+            first.Decision.QuotesDone=16;
     }
 
     // Candidate only: trait generation and the outcome updater's hot cost (no-ops on a schema-16 tree).
@@ -161,6 +178,18 @@ static class Program
 
     static void Main(string[] args)
     {
+        if(args.Length == 3 && args[0] == "--capability-probe-bench") { Console.WriteLine(JsonConvert.SerializeObject(CapabilityProbeBench(args[1], args[2]))); return; }
+        if(args.Length == 1 && args[0] == "--history-churn") { Console.WriteLine(JsonConvert.SerializeObject(HistoryChurn())); return; }
+        if(args.Length == 1 && args[0] == "--input-boundary") { Console.WriteLine(JsonConvert.SerializeObject(InputBoundary())); return; }
+        if(args.Length == 1 && args[0] == "--record-boundary") { Console.WriteLine(JsonConvert.SerializeObject(RecordBoundary())); return; }
+        if(args.Length == 1 && args[0] == "--base-recovery") { Console.WriteLine(JsonConvert.SerializeObject(BaseRecovery())); return; }
+        if(args.Length == 3 && args[0] == "--wire-perf")
+        { Console.WriteLine(JsonConvert.SerializeObject(WirePerf(args[1], int.Parse(args[2])))); return; }
+        if(args.Length >= 2 && args[0] == "--capacity")
+        { Console.WriteLine(JsonConvert.SerializeObject(CapacityBench(args[1], args.Length > 2 ? int.Parse(args[2]) : 1))); return; }
+        if(args.Length==2 && args[0]=="--interleaved-save-bench")
+        { Console.WriteLine(JsonConvert.SerializeObject(InterleavedSaveBench(args[1])));return; }
+        B0ContractChecks();
         var city = City(120);
         string expected = SaveCodec.Write(city);
         foreach (string mode in new[] { "off", "on" })
@@ -194,13 +223,14 @@ static class Program
             refusals.Add(result.Status + ":" + result.Error);
         }
         // Schema 17 adds fields by design: the save digest is reported, the economy digest must match.
-        var economy = EconomyScenario.Run();
+        var economy = EconomyScenario.Run(legacyChoice:true);
         object? bench = null, hot = null;
         if (args.Contains("--bench"))
         {
             bool ceiling = args.Contains("--ceiling");
-            var sizes = new List<object> { Bench(957, 5), Bench(5000, 3) };
-            if (ceiling) { sizes.Add(Bench(50000, 3)); sizes.Add(Bench(50000, 1, representation: 3)); }
+            bool decisions=args.Contains("--decisions");
+            var sizes = new List<object> { Bench(957, 5, decisions:decisions), Bench(5000, 3, decisions:decisions) };
+            if (ceiling) { sizes.Add(Bench(50000, 3,decisions:decisions)); sizes.Add(Bench(50000, 1, representation: 3,decisions:decisions)); }
             bench = sizes; hot = Hot();
         }
         Console.WriteLine(JsonConvert.SerializeObject(new { schema = CityState.CurrentSchema, digest = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(expected))),

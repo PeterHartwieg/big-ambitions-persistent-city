@@ -7,6 +7,20 @@ namespace PersistentCity.Tests;
 public sealed class OptionalStopSettingsTests
 {
     [Fact]
+    public void FoodChoiceDefaultsClampsAndOneTimeLogDoNotChangeOptionalStopSetting()
+    {
+        var defaults=JsonConvert.DeserializeObject<PrototypeSettings>("{}")!;
+        Assert.Equal(1,defaults.FoodChoiceTemperature);Assert.Equal(.02,defaults.FoodChoiceWeightFloor);
+        Assert.Equal(10,defaults.FoodChoiceDistanceScaleMinutes);Assert.Equal(.5,defaults.FoodChoiceQualityWeight);
+        var settings=JsonConvert.DeserializeObject<PrototypeSettings>("{\"FoodChoiceTemperature\":-2,\"FoodChoiceWeightFloor\":9,\"FoodChoiceTasteWeight\":99,\"FoodChoicePriceWeight\":-1,\"FoodChoiceDistanceScaleMinutes\":100,\"FoodChoiceHouseholdWeight\":0,\"FoodShortlistTemperature\":100,\"OptionalStopChoicePercentage\":60}")!;
+        var logs=new System.Collections.Generic.List<string>();settings.FoodChoice.Clamp(logs.Add);
+        Assert.Equal(7,logs.Count);settings.FoodChoice.Clamp(logs.Add);Assert.Equal(7,logs.Count);
+        Assert.Equal(.25,settings.FoodChoiceTemperature);Assert.Equal(.25,settings.FoodChoiceWeightFloor);
+        Assert.Equal(3,settings.FoodChoiceTasteWeight);Assert.Equal(0,settings.FoodChoicePriceWeight);
+        Assert.Equal(60,settings.FoodChoiceDistanceScaleMinutes);Assert.Equal(.1,settings.FoodChoiceHouseholdWeight);
+        Assert.Equal(4,settings.FoodShortlistTemperature);Assert.Equal(60,settings.OptionalStopChoicePercentage);
+    }
+    [Fact]
     public void ApprovedAndMissingSettingsDefaultTo25()
     {
         Assert.Equal(25, OptionalStopPolicy.ApprovedChoicePercentage);

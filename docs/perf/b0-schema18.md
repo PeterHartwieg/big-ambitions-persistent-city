@@ -1,0 +1,8 @@
+# B0 performance wins
+
+| Slice | Change | Before | After |
+|---|---|---|---|
+| B0 | Nonmaterializing outcome and memory shape prechecks; validate bounded tuple arity before creating children | 552 bytes/outcome and 352 bytes/memory precheck in the preserved prototype | 0 bytes for both new shape prechecks (500k calls); outcome 126.16 -> 50.24 ns, memory 328.32 -> 280.61 ns in the 5k comparison; no native timing claim |
+| B0 | Cached typed primitive access in the new budget/meal tuple converters; direct scalar writer/reader dispatch | Equal-wire 5k prototype: write/read alloc 88,360,664 / 199,517,384 bytes; medians 109.36 / 316.11 ms | 79,001,488 / 173,354,440 bytes; 90.34 / 274.09 ms, seven interleaved measured rounds; byte equality asserted; [raw measurements](../reviews/2026-10-31-b0-measurements.json) |
+| B0 | Count UTF-8 in bulk string/array writes with tested split-surrogate carry, instead of per-character loops | 256 Mi ASCII-character count: 249.43 ms | 5.42 ms in the 5k comparison; same 268,435,456 chars/bytes; save preflight only, not a serializer traversal rewrite |
+| B0 r1 | One-pass early capability probe, bounded direct header validation, and Schema/Capabilities first in new root writes; full decode unchanged | Actual previous-order reference/ceiling probe median **31.8863 / 1,827.6675 ms**, allocation **27,121,800 / 801,032,696 bytes** | New header-first **0.0201 / 0.0255 ms**, **2,968 bytes** each; fresh-context first calls **6.5292 / 11.7447 ms**. Previous-order fallback **16.1228 / 848.7131 ms**, >=30 ms calls flagged as load latency. [R1 measurements](../reviews/2026-10-31-b0-r1-measurements.json); no native timing claim |
