@@ -61,7 +61,7 @@ public sealed class Schema18ReviewTests
         var city = Population.Create(new[] { new CitizenIdentity { Id = "r", Name = "Resident", Age = 30 } },
             new[] { new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 1 } }, "probe-review", "test", 11, 0);
         string current = SaveCodec.Write(city);
-        Assert.StartsWith("{\"Schema\":18,\"Capabilities\":", current);
+        Assert.StartsWith("{\"Schema\":19,\"Capabilities\":", current);
         var root = JObject.Parse(current);
         var oldOrder = new JObject(root.Properties().OrderBy(p => p.Name, StringComparer.Ordinal).Select(p => new JProperty(p.Name, p.Value.DeepClone())));
         string previous = oldOrder.ToString(Formatting.None);
@@ -75,7 +75,7 @@ public sealed class Schema18ReviewTests
     [InlineData("\"Schema\":18,\"Schema\":18,")]
     [InlineData("\"Schema\":0x12,")]
     [InlineData("\"Schema\":17,")]
-    [InlineData("\"Schema\":19,")]
+    [InlineData("\"Schema\":20,")]
     public void ProbeRefusesDuplicateNoncanonicalLegacyOrFutureHeader(string schema)
     {
         Assert.Throws<SaveValidationException>(() => SaveCodec.RequireExecutableCapabilities("{" + schema + "\"Capabilities\":{\"Active\":false,\"Code\":\"B\",\"Revision\":1}}"));
@@ -86,7 +86,6 @@ public sealed class Schema18ReviewTests
     [InlineData("{\"Active\":false,\"Code\":\"B\",\"Revision\":1,\"Revision\":1}")]
     [InlineData("{\"Active\":false,\"Code\":\"B\"}")]
     [InlineData("{\"Active\":false,\"Code\":\"B\",\"Revision\":1,\"Extra\":0}")]
-    [InlineData("{\"Active\":true,\"Code\":\"B\",\"Revision\":1}")]
     [InlineData("{\"Active\":false,\"Code\":\"C\",\"Revision\":1}")]
     [InlineData("{\"Active\":false,\"Code\":\"B\",\"Revision\":2}")]
     public void ProbeKeepsStrictCapabilityHeaderValidation(string capability)

@@ -125,8 +125,21 @@ namespace PersistentCity.Runtime
         {
             if (!active || disposed) return;
             try { ObserveForSave(); }
-            finally { Suspend(); }
+            finally
+            {
+                if (NativeInteriorCityView.Configured) NativeInteriorCityView.Suspend();
+                Suspend();
+            }
         }
+        public void BeforeSave()
+        {
+            // A blocker may already have cleared the view predicate before this callback,
+            // while its bodies still await BeforeAdvance. Saving must release those too.
+            if (NativeInteriorCityView.Configured && BuildingManager.IsInsideBuilding) SuspendBeforeNativeFastForward();
+            else ObserveForSave();
+        }
+        public void RestoreInterior() { if (bindings.Count != 0) SuspendBeforeNativeFastForward(); }
+        public bool HasBodies => bindings.Count != 0;
         public void Suspend()
         {
             Exception? failure = null;
@@ -143,17 +156,30 @@ namespace PersistentCity.Runtime
             if (NativeTravelPace.HiddenTravel) { SuspendBeforeNativeFastForward(); return; }
             Position focus = NativeTravelPace.Focus;
             if (!focus.IsFinite) { Suspend(); return; }
+            double radius = NativeInteriorCityView.AdmissionRadius(this.radius);
+            double releaseRadius = NativeInteriorCityView.ReleaseRadius(this.radius);
+            int pedestrianLimit = NativeInteriorCityView.Pedestrians(this.pedestrianLimit);
+            int vehicleLimit = NativeInteriorCityView.Vehicles(this.vehicleLimit);
+            bool interior = NativeInteriorCityView.State.Active;
             var snapshot = bindingSnapshot ?? new List<Binding>(bindings.Count);
             bindingSnapshot = null;
             try
             {
                 snapshot.AddRange(bindings.Values);
+                int keptPeople = 0, keptCars = 0;
                 foreach (var binding in snapshot)
                 {
                     if (ambient.IsReserved(binding.Citizen.Identity.Id)) { Release(binding); continue; }
-                    if (!Observe(binding)) { if (!TryAwaitArrival(binding)) Release(binding); continue; }
+                    if (!Observe(binding))
+                    {
+                        if (!TryAwaitArrival(binding)) { Release(binding); continue; }
+                        // Legacy arrival handoffs keep their original path. Interior handoffs
+                        // must share the same retention radius/caps as every other body.
+                        if (!interior) continue;
+                    }
                     Position position = binding.Person?.Position ?? binding.Car!.Position;
-                    if (Position.Distance(position, focus) > radius * 1.4) Release(binding);
+                    if (Position.Distance(position, focus) > releaseRadius) { Release(binding); continue; }
+                    if (interior && (binding.Person != null ? ++keptPeople > pedestrianLimit : ++keptCars > vehicleLimit)) Release(binding);
                 }
             }
             finally { snapshot.Clear(); bindingSnapshot = snapshot; }
@@ -162,12 +188,15 @@ namespace PersistentCity.Runtime
             // The bounded view is selected deterministically. No filler identities or unrelated trips are created.
             int people = personBindings, cars = bindings.Count - people;
             int attempts = 0;
-            PlanQueues(focus);
+            PlanQueues(focus, radius);
             // Candidate selection. tools/physical-selection-regression extracts the text from this line
             // to the road sample below and compares it with the frozen LINQ selection.
             candidates.Clear();
             foreach (var c in simulation.State.Citizens)
             {
+                // Both pools are full: observations and queue movement above still ran; no
+                // candidate can acquire a body until a later update frees a slot.
+                if (people >= pedestrianLimit && cars >= vehicleLimit) break;
                 if (!(c.NextEventMinute > simulation.State.Minute) || bindings.ContainsKey(c.Identity.Id) || ambient.IsReserved(c.Identity.Id)) continue;
                 bool tried = attempted.TryGetValue(c.Identity.Id, out float lastAttempt);
                 if (tried && !(Time.unscaledTime - lastAttempt >= 2)) continue;
@@ -277,7 +306,7 @@ namespace PersistentCity.Runtime
         /// line per door: places sharing an entrance share it. A body already in a line keeps its
         /// spot until it leaves (DwellPlanner.AssignQueueSlots). A full line leaves the rest indoors.
         /// </summary>
-        private void PlanQueues(Position focus)
+        private void PlanQueues(Position focus, double radius)
         {
             queuers.Clear();
             double now = simulation.State.Minute;
@@ -287,7 +316,7 @@ namespace PersistentCity.Runtime
             {
                 if (citizen.Phase != CitizenPhase.WaitingForOpening || !places.TryGetValue(citizen.PlaceId, out var place)
                     || Position.Distance(place.Position, focus) > radius) continue;
-                var dwell = DwellPlanner.QueueAtOpening(citizen, place, simulation.State.Seed, now, raining);
+                var dwell = QueueDwell(citizen, place, now, raining);
                 if (!dwell.HasValue || !dwell.Value.ActiveAt(now) || GaveUp(dwell.Value)) continue;
                 string key = DwellSpots.KeyOf(place);
                 if (!planned.TryGetValue(key, out var line)) planned.Add(key, line = (place, new List<Dwell>()));
@@ -314,6 +343,14 @@ namespace PersistentCity.Runtime
                     if (slots.TryGetValue(dwell.CitizenId, out int slot))
                         queuers[dwell.CitizenId] = new QueuePlanEntry { Dwell = dwell, Line = found, Slot = slot };
             }
+        }
+
+        private Dwell? QueueDwell(CitizenState citizen, Place place, double now, bool raining)
+        {
+            Dwell? committed = bindings.TryGetValue(citizen.Identity.Id, out var bound)
+                && bound.Person != null && bound.Person.Valid && bound.Line != null && bound.Step != QueueStep.Entering
+                ? bound.Queue : null;
+            return DwellPlanner.QueueAtOpening(citizen, place, simulation.State.Seed, now, raining, committed);
         }
 
         private bool GaveUp(Dwell dwell)

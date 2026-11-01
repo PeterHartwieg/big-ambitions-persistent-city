@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
+using PersistentCity.Runtime;
 static partial class Program
 {
     private static CityState City(int count, int seed = 11)
@@ -147,6 +148,7 @@ static partial class Program
                 Offers=FoodProducts.Ids.Select(p=>new FoodDecisionOffer {ProductId=p,Price=Money.FromCents(100),Units=100}).ToList(),
                 OutwardQuote=FoodQuoteState.Answered,ReturnQuote=FoodQuoteState.Answered,Outward=Path(home.Position,shop.Position),Return=Path(shop.Position,home.Position)});
             first.Decision.QuotesDone=16;
+            PopulateAwareness(first.Decision);
     }
 
     // Candidate only: trait generation and the outcome updater's hot cost (no-ops on a schema-16 tree).
@@ -193,9 +195,24 @@ static partial class Program
         { Console.WriteLine(JsonConvert.SerializeObject(CapacityBench(args[1], args.Length > 2 ? int.Parse(args[2]) : 1))); return; }
         if(args.Length==2 && args[0]=="--interleaved-save-bench")
         { Console.WriteLine(JsonConvert.SerializeObject(InterleavedSaveBench(args[1])));return; }
-        B0ContractChecks(); HeldTuningContractChecks();
+        B0ContractChecks(); HeldTuningContractChecks(); AwarenessContractChecks();
         var city = City(120);
         string expected = SaveCodec.Write(city);
+        foreach (string mode in new[] { "off", "on" })
+        {
+            var settings = JsonConvert.DeserializeObject<PrototypeSettings>("{\"InteriorCityView\":\"" + mode + "\"}")!;
+            var view = new InteriorViewState();
+            var entry = new object();
+            foreach (int cause in new[] { 0, 1, 2, 4, 8, 16 })
+            {
+                view.Refresh(settings.InteriorCityView == "on", new TravelVisibility(cause == 1, cause == 2, cause == 4, true, cause == 8, cause == 16),
+                    entry, cause * 3, () => InteriorViewEligibility.Check(true, false, new Position(11, 0, 22), 0));
+                view.Suspend(); // save boundary: no runtime field enters the payload
+                if (SaveCodec.Write(city) != expected || SaveCodec.Write(SaveCodec.Read(expected).State!) != expected)
+                    throw new Exception("F0 runtime view changed save bytes in mode " + mode);
+            }
+        }
+        Console.Error.WriteLine("PASS F0 off/on runtime state + hidden/save/reload payloads byte-identical (12 transitions); no persistence source changes.");
         SaveCodec.Read(expected);
         long start = GC.GetAllocatedBytesForCurrentThread();
         for (int i = 0; i < 20; i++)

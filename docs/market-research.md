@@ -1,6 +1,7 @@
 # C4 market research contract (31 October 2026)
 
-C4 is a pure, inactive engine on B0b (`c0af745`), a sibling of C2a, B1 and B2.
+C4 was approved as a pure, inactive engine on B0b (`c0af745`). The base sync now
+includes C2a, B1 and B2; C4's inputs and unknown loyalty/rival cells stay unchanged.
 It adds no schema, population fields, charge, order, UI, bridge command, runtime
 input reader or Update work. [C3 / PR #20](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/20)
 found no safe native fee/evidence path. Paid research remains unavailable.
@@ -94,9 +95,11 @@ with `Unknown` codes, even on an empty fixture.
 Run `python tools/market-research-regression/validate.py` for the sequential
 foreground gate (including the other-worktree dotnet guard before commands).
 Run `python tools/market-research-regression/compare_save_baseline.py` to export
-tracked B0b Core/Persistence sources into ignored `build/c4`, compile the same
-fixture against both heads, and assert literal UTF-8 population/food byte equality.
+tracked current `origin/codex/persistent-city` Core/Persistence sources without C4
+into ignored `build/c4`, compile the same fixture against both heads, and assert
+schema 19 and literal UTF-8 population/food byte equality (zero C4 payload delta).
+Use `--baseline <commit>` to reproduce against the integrated base commit.
 Neither script switches branches or accesses a rig. Raw gate logs and local
 synthetic payloads stay ignored. The committed measurements and the dated
-[CHECKS entry](../CHECKS.md#step-c4-market-research-engine--31-october-2026-offline-only)
+[CHECKS entry](checks/c4-market-research.md#step-c4-market-research-engine--31-october-2026-offline-only)
 record offline costs and the separate pending native proof.

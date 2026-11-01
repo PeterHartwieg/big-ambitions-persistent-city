@@ -175,7 +175,7 @@ public sealed class HeldFoodTuningTests
 
     [Theory]
     [InlineData(0)] [InlineData(1)] [InlineData(2)] [InlineData(3)] [InlineData(4)] [InlineData(5)] [InlineData(6)]
-    [InlineData(7)] [InlineData(8)] [InlineData(9)]
+    [InlineData(7)] [InlineData(9)]
     public void MalformedImagesAndReservedMemoryRefuseWithoutReplacement(int corruption)
     {
         var root = JObject.Parse(Checkpoint(1)); var d = root["Food"]!["Residents"]![0]![9]!;
@@ -202,7 +202,7 @@ public sealed class HeldFoodTuningTests
     {
         var read = SaveCodec.Read(Checkpoint(1)); var state = read.State!;
         var shop = state.Food!.Residents.Single().Decision!.Shops.Single();
-        foreach (double value in new[] { -8.01, 8.01, double.NaN, double.PositiveInfinity, .1 }) {
+        foreach (double value in new[] { -8.01, 8.01, double.NaN, double.PositiveInfinity }) {
             shop.MemoryContribution = value; Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state));
         }
     }

@@ -56,6 +56,16 @@ static class Program {
  .GetFields(System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.NonPublic)
  .All(f=>SameValue(f.GetValue(a),f.GetValue(b)));
  static void Main() {
+ var interiorView = new PersistentCity.Runtime.InteriorViewState();
+ interiorView.Refresh(true,new PersistentCity.Runtime.TravelVisibility(false,false,false,true,false,false),new object(),0,
+  ()=>PersistentCity.Runtime.InteriorViewEligibility.Check(true,false,default,0));
+ var edge = new After { radius = interiorView.AdmissionRadius(120,60) };
+ foreach (var point in new[]{(Id:"1",X:49.9),(Id:"2",X:50.1),(Id:"3",X:59.9),(Id:"4",X:60.1)}) {
+  var leg = new RouteLeg {Mode=TravelMode.Walk,Minutes=1,From=new Position(point.X,0,0),To=new Position(point.X+1,0,0)};
+  var c = new CitizenState {Identity=new CitizenIdentity {Id=point.Id},Phase=CitizenPhase.Travelling,Journey=new Route {Legs=new(){leg}},NextEventMinute=200};
+  edge.simulation.State.Citizens.Add(c);edge.simulation.Samples[c.Identity.Id]=new PhysicalJourneySample(0,1,0,0,leg,leg.From,null,null);
+ }
+ Check(edge.Select().SequenceEqual(new[]{"1"}),"interior admission must reject release-edge candidates and admit inside buffer");
  var optional=new After(); optional.places["indoor"]=new Place {Id="indoor"};
  for(int i=1;i<=4;i++) optional.simulation.State.Citizens.Add(new CitizenState {
  Identity=new CitizenIdentity {Id=i.ToString()},PlaceId="indoor",Phase=CitizenPhase.AtPlace,Activity=Activity.Work,NextEventMinute=200,
