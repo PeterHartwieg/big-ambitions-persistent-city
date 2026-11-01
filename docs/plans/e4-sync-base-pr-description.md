@@ -1,4 +1,4 @@
-# Sync approved E4 with E1/F1 integration base
+# Sync approved E4 with the latest E1/F1/A5 integration base
 
 Target: `codex/pc-e4-wider-menu`. Merge this PR with a **merge commit** so the real integration merge ancestry is retained; PR #56 can then be squash-merged into `codex/persistent-city`.
 
@@ -39,6 +39,10 @@ The additional regression sweep exposed a stale partial native double in `tools/
 
 ## Validation and measurement provenance
 
-Current results will be recorded in [E4 checks](../checks/e4-wider-menu.md#base-sync-with-e1-and-f1). All original E4 tables/JSON/hash/byte comparisons remain historical measurements of the `51ce709`-based stack **before E1**; neither those results nor E1's archived measurements are relabelled as integrated-tree evidence. The merge adds no per-frame work or claimed performance win; legacy loading now validates the composed migration steps and the saved wire includes both owners' fields.
+Final head `caa28f8` passes the production build, **2,407/2,407 unit tests** (2,407 listed, zero failed/skipped), all requested regressions/demos and the additional standalone programs, including A5: **50/50 top-level checks**. E4 reports **25,165 assertions**; exact schema-20 replay, old four-offer refusals, reserved/newer refusal, weather/menu byte ledgers and default legacy/weighted economy comparisons pass. C4-excluded/included schema-23 fixtures remain byte-identical. Runs were sequential/foreground with the prescribed guard and no execution deadlines; cleanup found zero task-path dotnet/testhost processes. Final fetch confirmed latest integration `0ffb819` is retained as an ancestor.
+
+[E4 checks](../checks/e4-wider-menu.md#base-sync-with-e1-and-f1) distinguish the completed initial pre-A5 run from [final command results, log hashes, benchmarks and preservation proof](../checks/e4-sync-base-results.json). All 25 incoming checks entries remain, with one E4 line. Initial and final results preserve the fixture compile failure/fix rather than hiding it. All original E4 tables/JSON/hash/byte comparisons remain historical measurements of the `51ce709`-based stack **before E1**; neither those results nor E1/A5 archived measurements are relabelled as integrated-tree evidence. The merge adds no per-frame work or claimed performance win; legacy loading now validates the composed migration steps and the saved wire includes both owners' fields.
+
+Current population fixture: 120,257 characters versus its exact schema-19 projection of 119,083. Current four/eight-product history saves: 8,649,017 / 10,135,865 ASCII bytes, 32 bytes above original E4 because of E1 weather fields. Record counts stay exact. All **42/42 bulk serialization samples >=30 ms** are flagged, max **234.3412 / 233.2704 ms**; these are offline full saves. No E4 selection/supply/update sample reaches 30 ms. Shared-PC, JIT/tiering and sequential field-double limits prevent causal/native timing claims; command wall times can include nested guard waits. The four parked hotspots remain parked.
 
 No per-PR rig under merge rule v2. The existing numbered E4 [6 Nov checklist](../checks/e4-wider-menu.md#in-game-checks-for-6-nov-rig), E1 checklist and F1 handoff remain pending for the combined locked head; pointer/input checks wait for Peter's playtest. This integration provides no release, upload or ordinary-save clearance.
