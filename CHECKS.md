@@ -2,7 +2,7 @@
 
 Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here; never append slice sections to this file. Sync/review-fix notes go into the slice's own file.
 
-- D4 - 1 November 2026, offline: writer 24; D4 adds no shape; mixed lookup/update p95 0.0002/0.0002 ms, 0 B; historical pre-sync neutral/active/all-own controls 2,422 B and 7/7 records; [Dated checks and In-game checks for 6 Nov rig](docs/checks/d4-rival-memory.md#in-game-checks-for-6-nov-rig).
+- D4 - 1 November 2026, offline sync: writer 24; 2,556 unit cases; mixed lookup/update p95 0.0003/0.0002 ms, 0 B; matched controls 2,446 B and 8/8 records; [Dated checks and In-game checks for 6 Nov rig](docs/checks/d4-rival-memory.md#in-game-checks-for-6-nov-rig).
 
 - D3a — 1 November 2026 (offline): free fourteen-day totals-only outflow, schema 24; 2,528 tests; warm line 0 B/request, 128-settlement/open p95 0.0687 ms, no component spike ≥30 ms. [Dated evidence and In-game checks for 6 Nov rig](docs/checks/d3a-outflow-line.md).
 - D2 - Rival choice/outflow, schema 21 below C2b/E4; offline sync evidence and numbered native checklist: [checks](docs/checks/d2-rival-outflow.md).

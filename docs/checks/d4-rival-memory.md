@@ -209,3 +209,35 @@ Fresh offline aggregate flags: 20k whole-catalogue awareness construction has
 **two dense samples >=30 ms, max 34.4564 ms**, and **one sparse sample >=30 ms,
 max 30.9823 ms**. These are whole catalogue builds, not native mod-work frames;
 they do not replace the historical measurements or satisfy the native gate.
+
+
+## 1 November 2026 - D4/D3a base sync (offline)
+
+Two-parent merge `d6f883f` retains D4 `1be75e5` and D3a `fb958ae`.
+Schema 24 remains D3a's writer; D4 widens only its existing bounded scalar.
+Genuine 21/22/23 remain neutral-only, including refusal without replacing the
+source; every predecessor migration and future-schema refusal remain intact.
+The paired source audit retains all checks/performance index entries and D4's
+numbered in-game checks, including those in the PR description. D3a history,
+wire, UI, tests and regression runner are retained unchanged. The only Core
+combination is D4's memory outcomes around D3a's history-aware payment call.
+No other runtime/Core behavior changes were needed.
+
+First merged foreground matrix on source `503b57b`: **57/57 commands passed**,
+including Steam-reference build, **2,556/2,556 unit cases** (no failures/skips),
+**2,494 listed test entries** (theory discovery and executed cases differ), all
+**45 root regression projects**, four Python adapters, three demos and the
+specified source guards. There are now **28 D4 cases**, including schema 23's
+original neutral-only rule and combined three-consumer memory/outflow replay.
+The D3a/D2 wrapper receipts and complete command/log hashes are recorded in
+[the sync manifest](../reviews/2026-11-01-d4-sync-base-results.json).
+
+The first merged D4 fixture is **2,446 B / 8 streaming / 8 semantic records**
+for all three equal-width-ID controls, versus historical **2,422 B / 7 / 7**.
+The **+24 B / +1 record** is D3a's empty `Outflow` field, present identically in
+neutral/active/all-own arms. D4 adds no format overhead; four entries/references
+and the 48-character memory tuple remain fixed. Mixed lookup/update p95 is
+**0.0003/0.0002 ms**, still **0 B/call**. Historical and merged measurements,
+including every component max/spike counter, are kept separately in the
+[owning performance note](../perf/d4-rival-memory.md) and sync manifest.
+Native acceptance remains deferred under merge rule v2 as stated above.
