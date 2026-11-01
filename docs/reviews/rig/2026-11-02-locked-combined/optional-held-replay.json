@@ -1,0 +1,331 @@
+{
+  "sourceMinute": 16385.345634937286,
+  "reloadedMinute": 16385.678968429565,
+  "futureStops": 84,
+  "allCapturedEndsAndContinuationsPreserved": true,
+  "distinctDefaultDurationsAboveNewMinimum": 84,
+  "examples": [
+    {
+      "id": "c120",
+      "before": {
+        "Kind": 2,
+        "PlaceId": "address:ba%3Astreet_fifthavenue:6:work",
+        "SpotId": "address:ba%3Astreet_fifthavenue:6:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fifthavenue:6:work",
+        "Position": {
+          "X": 365.7667541503906,
+          "Y": 0.09000396728515625,
+          "Z": -198.34774780273438,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 364.666748046875,
+          "Y": 0.09000396728515625,
+          "Z": -198.94775390625,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 366.86676025390625,
+          "Y": 0.09000396728515625,
+          "Z": -198.24774169921875,
+          "IsFinite": true
+        },
+        "StartMinute": 16559.0,
+        "EndMinute": 16566.0695,
+        "VisitMinute": 16319.0,
+        "ResumeEventMinute": 16799.0,
+        "Cancelled": false,
+        "Members": []
+      },
+      "after": {
+        "Kind": 2,
+        "PlaceId": "address:ba%3Astreet_fifthavenue:6:work",
+        "SpotId": "address:ba%3Astreet_fifthavenue:6:work:Break:0",
+        "TargetId": "address:ba%3Astreet_fifthavenue:6:work",
+        "Position": {
+          "X": 365.7667541503906,
+          "Y": 0.09000396728515625,
+          "Z": -198.34774780273438,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 364.666748046875,
+          "Y": 0.09000396728515625,
+          "Z": -198.94775390625,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 366.86676025390625,
+          "Y": 0.09000396728515625,
+          "Z": -198.24774169921875,
+          "IsFinite": true
+        },
+        "StartMinute": 16559.0,
+        "EndMinute": 16566.0695,
+        "VisitMinute": 16319.0,
+        "ResumeEventMinute": 16799.0,
+        "Cancelled": false,
+        "Members": []
+      },
+      "preserved": true
+    },
+    {
+      "id": "c122",
+      "before": {
+        "Kind": 2,
+        "PlaceId": "address:ba%3Astreet_tenthavenue:20:work",
+        "SpotId": "address:ba%3Astreet_tenthavenue:20:work:Break:1",
+        "TargetId": "address:ba%3Astreet_tenthavenue:20:work",
+        "Position": {
+          "X": -1563.4095458984375,
+          "Y": 2.049999237060547,
+          "Z": -1522.853271484375,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": -1561.5595703125,
+          "Y": 2.049999237060547,
+          "Z": -1522.2532958984375,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": -1565.259521484375,
+          "Y": 2.049999237060547,
+          "Z": -1522.9532470703125,
+          "IsFinite": true
+        },
+        "StartMinute": 16557.0,
+        "EndMinute": 16562.0735,
+        "VisitMinute": 16317.0,
+        "ResumeEventMinute": 16797.0,
+        "Cancelled": false,
+        "Members": []
+      },
+      "after": {
+        "Kind": 2,
+        "PlaceId": "address:ba%3Astreet_tenthavenue:20:work",
+        "SpotId": "address:ba%3Astreet_tenthavenue:20:work:Break:1",
+        "TargetId": "address:ba%3Astreet_tenthavenue:20:work",
+        "Position": {
+          "X": -1563.4095458984375,
+          "Y": 2.049999237060547,
+          "Z": -1522.853271484375,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": -1561.5595703125,
+          "Y": 2.049999237060547,
+          "Z": -1522.2532958984375,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": -1565.259521484375,
+          "Y": 2.049999237060547,
+          "Z": -1522.9532470703125,
+          "IsFinite": true
+        },
+        "StartMinute": 16557.0,
+        "EndMinute": 16562.0735,
+        "VisitMinute": 16317.0,
+        "ResumeEventMinute": 16797.0,
+        "Cancelled": false,
+        "Members": []
+      },
+      "preserved": true
+    },
+    {
+      "id": "c126",
+      "before": {
+        "Kind": 2,
+        "PlaceId": "address:ba%3Astreet_secondavenue:12:work",
+        "SpotId": "address:ba%3Astreet_secondavenue:12:work:Break:0",
+        "TargetId": "address:ba%3Astreet_secondavenue:12:work",
+        "Position": {
+          "X": 197.39999389648438,
+          "Y": 0.09000396728515625,
+          "Z": 332.44000244140625,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 196.29998779296875,
+          "Y": 0.09000396728515625,
+          "Z": 331.8399963378906,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 198.5,
+          "Y": 0.09000015258789062,
+          "Z": 332.5400085449219,
+          "IsFinite": true
+        },
+        "StartMinute": 16589.0,
+        "EndMinute": 16598.928,
+        "VisitMinute": 16349.0,
+        "ResumeEventMinute": 16829.0,
+        "Cancelled": false,
+        "Members": []
+      },
+      "after": {
+        "Kind": 2,
+        "PlaceId": "address:ba%3Astreet_secondavenue:12:work",
+        "SpotId": "address:ba%3Astreet_secondavenue:12:work:Break:0",
+        "TargetId": "address:ba%3Astreet_secondavenue:12:work",
+        "Position": {
+          "X": 197.39999389648438,
+          "Y": 0.09000396728515625,
+          "Z": 332.44000244140625,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 196.29998779296875,
+          "Y": 0.09000396728515625,
+          "Z": 331.8399963378906,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 198.5,
+          "Y": 0.09000015258789062,
+          "Z": 332.5400085449219,
+          "IsFinite": true
+        },
+        "StartMinute": 16589.0,
+        "EndMinute": 16598.928,
+        "VisitMinute": 16349.0,
+        "ResumeEventMinute": 16829.0,
+        "Cancelled": false,
+        "Members": []
+      },
+      "preserved": true
+    },
+    {
+      "id": "c172",
+      "before": {
+        "Kind": 2,
+        "PlaceId": "address:ba%3Astreet_thirdstreet:32:work",
+        "SpotId": "address:ba%3Astreet_thirdstreet:32:work:Break:0",
+        "TargetId": "address:ba%3Astreet_thirdstreet:32:work",
+        "Position": {
+          "X": 229.46258544921875,
+          "Y": 0.09000015258789062,
+          "Z": 15.318338394165039,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 228.86257934570312,
+          "Y": 0.09000015258789062,
+          "Z": 16.418338775634766,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 229.56259155273438,
+          "Y": 0.09000015258789062,
+          "Z": 14.218338012695312,
+          "IsFinite": true
+        },
+        "StartMinute": 16598.0,
+        "EndMinute": 16605.7925,
+        "VisitMinute": 16358.0,
+        "ResumeEventMinute": 16838.0,
+        "Cancelled": false,
+        "Members": []
+      },
+      "after": {
+        "Kind": 2,
+        "PlaceId": "address:ba%3Astreet_thirdstreet:32:work",
+        "SpotId": "address:ba%3Astreet_thirdstreet:32:work:Break:0",
+        "TargetId": "address:ba%3Astreet_thirdstreet:32:work",
+        "Position": {
+          "X": 229.46258544921875,
+          "Y": 0.09000015258789062,
+          "Z": 15.318338394165039,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 228.86257934570312,
+          "Y": 0.09000015258789062,
+          "Z": 16.418338775634766,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 229.56259155273438,
+          "Y": 0.09000015258789062,
+          "Z": 14.218338012695312,
+          "IsFinite": true
+        },
+        "StartMinute": 16598.0,
+        "EndMinute": 16605.7925,
+        "VisitMinute": 16358.0,
+        "ResumeEventMinute": 16838.0,
+        "Cancelled": false,
+        "Members": []
+      },
+      "preserved": true
+    },
+    {
+      "id": "c174",
+      "before": {
+        "Kind": 2,
+        "PlaceId": "address:ba%3Astreet_thirdstreet:23:work",
+        "SpotId": "address:ba%3Astreet_thirdstreet:23:work:Break:0",
+        "TargetId": "address:ba%3Astreet_thirdstreet:23:work",
+        "Position": {
+          "X": 214.44229125976562,
+          "Y": 0.09000015258789062,
+          "Z": -6.909999847412109,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 215.04229736328125,
+          "Y": 0.09000015258789062,
+          "Z": -8.009998321533203,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 214.34228515625,
+          "Y": 0.09000015258789062,
+          "Z": -5.810001373291016,
+          "IsFinite": true
+        },
+        "StartMinute": 16533.0,
+        "EndMinute": 16538.0345,
+        "VisitMinute": 16293.0,
+        "ResumeEventMinute": 16773.0,
+        "Cancelled": false,
+        "Members": []
+      },
+      "after": {
+        "Kind": 2,
+        "PlaceId": "address:ba%3Astreet_thirdstreet:23:work",
+        "SpotId": "address:ba%3Astreet_thirdstreet:23:work:Break:0",
+        "TargetId": "address:ba%3Astreet_thirdstreet:23:work",
+        "Position": {
+          "X": 214.44229125976562,
+          "Y": 0.09000015258789062,
+          "Z": -6.909999847412109,
+          "IsFinite": true
+        },
+        "Facing": {
+          "X": 215.04229736328125,
+          "Y": 0.09000015258789062,
+          "Z": -8.009998321533203,
+          "IsFinite": true
+        },
+        "ReturnPosition": {
+          "X": 214.34228515625,
+          "Y": 0.09000015258789062,
+          "Z": -5.810001373291016,
+          "IsFinite": true
+        },
+        "StartMinute": 16533.0,
+        "EndMinute": 16538.0345,
+        "VisitMinute": 16293.0,
+        "ResumeEventMinute": 16773.0,
+        "Cancelled": false,
+        "Members": []
+      },
+      "preserved": true
+    }
+  ],
+  "mismatchIds": [],
+  "editedWhileUnloaded": true
+}

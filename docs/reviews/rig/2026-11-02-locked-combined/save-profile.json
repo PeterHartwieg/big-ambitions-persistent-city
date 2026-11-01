@@ -1,0 +1,308 @@
+{
+  "codecProfiles": [
+    {
+      "label": "base-reference-profile",
+      "sourceSchema": 18,
+      "writeMsMedian": 288.26390000000004,
+      "readMsMedian": 592.6296,
+      "utf8Bytes": 5322121,
+      "sourceUtf8Bytes": 5322121,
+      "samples": [
+        {
+          "startedUtc": "2026-11-01T16:07:09.2629709Z",
+          "finishedUtc": "2026-11-01T16:07:10.1562000Z",
+          "sample": 0,
+          "writeMs": 295.4118,
+          "readMs": 597.782,
+          "status": "Loaded",
+          "SourceSchema": 18,
+          "characters": 5322120,
+          "utf8Bytes": 5322121,
+          "sourceCharacters": 5322120,
+          "sourceUtf8Bytes": 5322121,
+          "managedBefore": 799961088,
+          "managedAfter": 819560448,
+          "workingSet": 0,
+          "peakWorkingSet": 0,
+          "gcBefore": [
+            173,
+            173,
+            173
+          ],
+          "gcAfter": [
+            174,
+            174,
+            174
+          ]
+        },
+        {
+          "startedUtc": "2026-11-01T16:07:10.1592998Z",
+          "finishedUtc": "2026-11-01T16:07:11.0394458Z",
+          "sample": 1,
+          "writeMs": 288.26390000000004,
+          "readMs": 592.3694,
+          "status": "Loaded",
+          "SourceSchema": 18,
+          "characters": 5322120,
+          "utf8Bytes": 5322121,
+          "sourceCharacters": 5322120,
+          "sourceUtf8Bytes": 5322121,
+          "managedBefore": 819560448,
+          "managedAfter": 837660672,
+          "workingSet": 0,
+          "peakWorkingSet": 0,
+          "gcBefore": [
+            174,
+            174,
+            174
+          ],
+          "gcAfter": [
+            175,
+            175,
+            175
+          ]
+        },
+        {
+          "startedUtc": "2026-11-01T16:07:11.0409612Z",
+          "finishedUtc": "2026-11-01T16:07:11.9222868Z",
+          "sample": 2,
+          "writeMs": 288.1931,
+          "readMs": 592.6296,
+          "status": "Loaded",
+          "SourceSchema": 18,
+          "characters": 5322120,
+          "utf8Bytes": 5322121,
+          "sourceCharacters": 5322120,
+          "sourceUtf8Bytes": 5322121,
+          "managedBefore": 837660672,
+          "managedAfter": 865169408,
+          "workingSet": 0,
+          "peakWorkingSet": 0,
+          "gcBefore": [
+            175,
+            175,
+            175
+          ],
+          "gcAfter": [
+            176,
+            176,
+            176
+          ]
+        }
+      ],
+      "memoryApiNote": "Native Mono WorkingSet/PeakWorkingSet returned zero; not a measured peak-memory series"
+    },
+    {
+      "label": "candidate-migration-profile",
+      "sourceSchema": 18,
+      "writeMsMedian": 321.3415,
+      "readMsMedian": 1541.8494,
+      "utf8Bytes": 5344209,
+      "sourceUtf8Bytes": 5322121,
+      "samples": [
+        {
+          "startedUtc": "2026-11-01T16:12:00.5456261Z",
+          "finishedUtc": "2026-11-01T16:12:02.4088007Z",
+          "sample": 0,
+          "writeMs": 321.3415,
+          "readMs": 1541.8494,
+          "status": "Loaded",
+          "SourceSchema": 18,
+          "characters": 5344208,
+          "utf8Bytes": 5344209,
+          "sourceCharacters": 5322120,
+          "sourceUtf8Bytes": 5322121,
+          "managedBefore": 1045172224,
+          "managedAfter": 1155629056,
+          "workingSet": 0,
+          "peakWorkingSet": 0,
+          "gcBefore": [
+            219,
+            219,
+            219
+          ],
+          "gcAfter": [
+            220,
+            220,
+            220
+          ]
+        },
+        {
+          "startedUtc": "2026-11-01T16:12:02.4118028Z",
+          "finishedUtc": "2026-11-01T16:12:04.4174252Z",
+          "sample": 1,
+          "writeMs": 448.73290000000003,
+          "readMs": 1556.8894,
+          "status": "Loaded",
+          "SourceSchema": 18,
+          "characters": 5344208,
+          "utf8Bytes": 5344209,
+          "sourceCharacters": 5322120,
+          "sourceUtf8Bytes": 5322121,
+          "managedBefore": 1155629056,
+          "managedAfter": 916684800,
+          "workingSet": 0,
+          "peakWorkingSet": 0,
+          "gcBefore": [
+            220,
+            220,
+            220
+          ],
+          "gcAfter": [
+            222,
+            222,
+            222
+          ]
+        },
+        {
+          "startedUtc": "2026-11-01T16:12:04.4194260Z",
+          "finishedUtc": "2026-11-01T16:12:06.2187703Z",
+          "sample": 2,
+          "writeMs": 320.2248,
+          "readMs": 1478.5897,
+          "status": "Loaded",
+          "SourceSchema": 18,
+          "characters": 5344208,
+          "utf8Bytes": 5344209,
+          "sourceCharacters": 5322120,
+          "sourceUtf8Bytes": 5322121,
+          "managedBefore": 916684800,
+          "managedAfter": 997527552,
+          "workingSet": 0,
+          "peakWorkingSet": 0,
+          "gcBefore": [
+            222,
+            222,
+            222
+          ],
+          "gcAfter": [
+            223,
+            223,
+            223
+          ]
+        }
+      ],
+      "memoryApiNote": "Native Mono WorkingSet/PeakWorkingSet returned zero; not a measured peak-memory series"
+    },
+    {
+      "label": "candidate23-profile",
+      "sourceSchema": 23,
+      "writeMsMedian": 326.08860000000004,
+      "readMsMedian": 655.5418000000001,
+      "utf8Bytes": 5344209,
+      "sourceUtf8Bytes": 5344209,
+      "samples": [
+        {
+          "startedUtc": "2026-11-01T16:12:10.0019274Z",
+          "finishedUtc": "2026-11-01T16:12:11.0123867Z",
+          "sample": 0,
+          "writeMs": 355.1137,
+          "readMs": 655.5418000000001,
+          "status": "Loaded",
+          "SourceSchema": 23,
+          "characters": 5344208,
+          "utf8Bytes": 5344209,
+          "sourceCharacters": 5344208,
+          "sourceUtf8Bytes": 5344209,
+          "managedBefore": 1014198272,
+          "managedAfter": 1025916928,
+          "workingSet": 0,
+          "peakWorkingSet": 0,
+          "gcBefore": [
+            226,
+            226,
+            226
+          ],
+          "gcAfter": [
+            227,
+            227,
+            227
+          ]
+        },
+        {
+          "startedUtc": "2026-11-01T16:12:11.0145170Z",
+          "finishedUtc": "2026-11-01T16:12:11.9973794Z",
+          "sample": 1,
+          "writeMs": 320.8157,
+          "readMs": 661.8105,
+          "status": "Loaded",
+          "SourceSchema": 23,
+          "characters": 5344208,
+          "utf8Bytes": 5344209,
+          "sourceCharacters": 5344208,
+          "sourceUtf8Bytes": 5344209,
+          "managedBefore": 1025916928,
+          "managedAfter": 1043013632,
+          "workingSet": 0,
+          "peakWorkingSet": 0,
+          "gcBefore": [
+            227,
+            227,
+            227
+          ],
+          "gcAfter": [
+            228,
+            228,
+            228
+          ]
+        },
+        {
+          "startedUtc": "2026-11-01T16:12:11.9983801Z",
+          "finishedUtc": "2026-11-01T16:12:12.9359324Z",
+          "sample": 2,
+          "writeMs": 326.08860000000004,
+          "readMs": 611.0756,
+          "status": "Loaded",
+          "SourceSchema": 23,
+          "characters": 5344208,
+          "utf8Bytes": 5344209,
+          "sourceCharacters": 5344208,
+          "sourceUtf8Bytes": 5344209,
+          "managedBefore": 1043013632,
+          "managedAfter": 1132064768,
+          "workingSet": 0,
+          "peakWorkingSet": 0,
+          "gcBefore": [
+            228,
+            228,
+            228
+          ],
+          "gcAfter": [
+            228,
+            228,
+            228
+          ]
+        }
+      ],
+      "memoryApiNote": "Native Mono WorkingSet/PeakWorkingSet returned zero; not a measured peak-memory series"
+    }
+  ],
+  "nativeFiles": [
+    {
+      "fixture": "FT Food Routines Locked Combined 20261102",
+      "bytes": 1197683,
+      "sha256": "519e73ccbb83d9e46f65d190635f1638cdb8b47d94c28d68ac53a2b1e9e85db1"
+    },
+    {
+      "fixture": "FT Food Routines Locked Combined Schema23 20261102",
+      "bytes": 1199127,
+      "sha256": "62f8b941482b82cf37b1b2204f7d08e1cf2eb055606ab9a3a3deac65b884c5c8"
+    },
+    {
+      "fixture": "FT Food Routines Locked Combined Schema23 Roundtrip 20261102",
+      "bytes": 1199133,
+      "sha256": "09a6c683a7750cc552ddf2e1351dabef0af6864baa68ab217939591ac72523a8"
+    },
+    {
+      "fixture": "FT Food Routines Locked Combined Schema23 Twice 20261102",
+      "bytes": 1199129,
+      "sha256": "7a055c3f46a5f3508f7a95dcd569af04457c69bf61e0811e885db1cfaff40747"
+    },
+    {
+      "fixture": "FT Food Routines Locked Combined CandidateDayStart23 20261102",
+      "bytes": 1473317,
+      "sha256": "68435ee06a2408654b4e6d62d68479a15aee41acfaa1857d676175377c048369"
+    }
+  ],
+  "referenceCombined1Schema18Bytes": 1197683
+}

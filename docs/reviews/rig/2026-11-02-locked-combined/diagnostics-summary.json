@@ -1,0 +1,497 @@
+{
+  "schema": 23,
+  "capabilities": {
+    "Code": "B",
+    "Revision": 1,
+    "Active": false
+  },
+  "settings": {
+    "<Awareness>k__BackingField": {
+      "<DiscoveryProbability>k__BackingField": 0.02,
+      "<DrawsPerAnchor>k__BackingField": 4,
+      "<RadiusMetres>k__BackingField": 250.0
+    },
+    "<Campaigns>k__BackingField": {
+      "<DailyReachDecay>k__BackingField": 0.5,
+      "<Enabled>k__BackingField": true,
+      "<ReachProbability>k__BackingField": 0.25,
+      "<RetentionDays>k__BackingField": 7
+    },
+    "<Enabled>k__BackingField": true,
+    "<FoodChoice>k__BackingField": {
+      "<FoodChoiceDistanceScaleMinutes>k__BackingField": 10.0,
+      "<FoodChoiceDistanceWeight>k__BackingField": 1.0,
+      "<FoodChoiceHealthWeight>k__BackingField": 0.0,
+      "<FoodChoiceHouseholdWeight>k__BackingField": 1.0,
+      "<FoodChoicePriceWeight>k__BackingField": 1.0,
+      "<FoodChoiceQualityWeight>k__BackingField": 0.5,
+      "<FoodChoiceQueueWeight>k__BackingField": 1.0,
+      "<FoodChoiceTasteWeight>k__BackingField": 1.0,
+      "<FoodChoiceTemperature>k__BackingField": 1.0,
+      "<FoodChoiceTimePressureWeight>k__BackingField": 1.0,
+      "<FoodChoiceWeightFloor>k__BackingField": 0.02,
+      "<FoodMenuHealthWeight>k__BackingField": 0.0,
+      "<FoodMenuMaximumOffersPerShop>k__BackingField": 4,
+      "<FoodMenuNewTasteWeight>k__BackingField": 1.0,
+      "<FoodShortlistTemperature>k__BackingField": 1.0
+    },
+    "<FoodMemory>k__BackingField": {
+      "<FoodMemoryBadVisitTraitWeight>k__BackingField": 1.0,
+      "<FoodMemoryCapacity>k__BackingField": 4,
+      "<FoodMemoryClosedPenalty>k__BackingField": 3,
+      "<FoodMemoryCuriousNoveltyMultiplier>k__BackingField": 1.3,
+      "<FoodMemoryDecayDaysPerPoint>k__BackingField": 2,
+      "<FoodMemoryForgetAfterDays>k__BackingField": 28,
+      "<FoodMemoryLoyalReturnMultiplier>k__BackingField": 2.0,
+      "<FoodMemoryMaximumMultiplier>k__BackingField": 2.5,
+      "<FoodMemoryMinimumMultiplier>k__BackingField": 0.25,
+      "<FoodMemoryQueuePenalty>k__BackingField": 2,
+      "<FoodMemoryRegularRecentDays>k__BackingField": 14,
+      "<FoodMemoryRegularServedVisits>k__BackingField": 3,
+      "<FoodMemoryServedGain>k__BackingField": 1,
+      "<FoodMemoryStockPenalty>k__BackingField": 3,
+      "<FoodMemoryWeight>k__BackingField": 1.0
+    },
+    "<GameClockFactor>k__BackingField": 0.3333333333333333,
+    "<MarketResearch>k__BackingField": {
+      "<MarketResearchCatchmentMetres>k__BackingField": 500,
+      "<MarketResearchConsumersPerUnit>k__BackingField": 256,
+      "reported": true
+    },
+    "<MaximumPedestrians>k__BackingField": 48,
+    "<MaximumVehicles>k__BackingField": 24,
+    "<PhysicalEnabled>k__BackingField": true,
+    "<PhysicalRadiusMetres>k__BackingField": 120.0,
+    "<Rivals>k__BackingField": {
+      "<RivalAssumedServiceMinutes>k__BackingField": 5,
+      "<RivalChoiceWeight>k__BackingField": 1.0,
+      "<RivalReadsPerUnit>k__BackingField": 16,
+      "<RivalRefreshGameMinutes>k__BackingField": 60
+    },
+    "<ThirdPartyInteriorAssemblyPatterns>k__BackingField": [
+      "TrueCityInteriors",
+      "TrueCity*"
+    ],
+    "<ThirdPartyInteriorGuard>k__BackingField": "auto",
+    "<ThirdPartyInteriorHarmonyOwnerIds>k__BackingField": [],
+    "<Weather>k__BackingField": {
+      "<Enabled>k__BackingField": true,
+      "<QueueRainLeadMinutes>k__BackingField": 5,
+      "<RainOptionalOutingMultiplier>k__BackingField": 0.7,
+      "<RainTravelWeightMultiplier>k__BackingField": 1.3,
+      "invalidEnabled": false
+    },
+    "audienceMaximum": 8,
+    "breakMaximum": 10,
+    "chatMaximum": 30,
+    "interiorCityView": "off",
+    "interiorPedestrians": 24,
+    "interiorRadius": 60.0,
+    "interiorReported": true,
+    "interiorVehicles": 12,
+    "modeAdjusted": false,
+    "optionalStopChoicePercentage": 25,
+    "pedestriansAdjusted": false,
+    "radiusAdjusted": false,
+    "restingMaximum": 40,
+    "timingAdjusted": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "timingReported": true,
+    "vehiclesAdjusted": false,
+    "windowShoppingMaximum": 3
+  },
+  "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+  "rivals": {
+    "Core": {
+      "RivalChoices": 0,
+      "RivalSettlements": 0,
+      "RivalRefusals": 0,
+      "Availability": "EstimatedFromPriceAndHours",
+      "NativeRivalCheckout": "Unsupported",
+      "ExternalFoodSpentUnits": "0"
+    },
+    "RefreshUnits": 0,
+    "DetailReads": 0,
+    "Unavailable": ""
+  },
+  "campaigns": {
+    "images": [],
+    "verifiedTypes": [
+      {
+        "Code": 0,
+        "Name": "SmallInternet",
+        "audience": "All residents",
+        "nativeTarget": "Not used"
+      },
+      {
+        "Code": 1,
+        "Name": "MediumInternet",
+        "audience": "All residents",
+        "nativeTarget": "Not used"
+      },
+      {
+        "Code": 2,
+        "Name": "LargeInternet",
+        "audience": "All residents",
+        "nativeTarget": "Not used"
+      },
+      {
+        "Code": 3,
+        "Name": "SmallBillboard",
+        "audience": "All residents",
+        "nativeTarget": "Not used"
+      },
+      {
+        "Code": 4,
+        "Name": "MediumBillboard",
+        "audience": "All residents",
+        "nativeTarget": "Not used"
+      },
+      {
+        "Code": 5,
+        "Name": "LargeBillboard",
+        "audience": "All residents",
+        "nativeTarget": "Not used"
+      }
+    ],
+    "indexedEntries": 0,
+    "publications": 0,
+    "exposuresAdmitted": 0,
+    "exposuresRefused": 0,
+    "observationError": "",
+    "lastObservedHour": 149,
+    "enabled": true,
+    "evidence": "Observed enabled types only; Active verified campaigns soften distance preference for every resident; no native writes."
+  },
+  "publicMethods": [
+    "PersistentCity.Core.CampaignSnapshot ReadCampaignSnapshot(System.Collections.Generic.IReadOnlyList`1[System.Int32])",
+    "PersistentCity.Core.FoodRouteBatch QuoteFoodRoutes(PersistentCity.Core.FoodRoutineCapture, PersistentCity.Core.FoodRoutinePlan, System.Collections.Generic.IReadOnlyList`1[PersistentCity.Core.FoodBusiness], Int32)",
+    "PersistentCity.Core.FoodRoutineRecorder ObserveFoodRoutines()",
+    "System.Object CampaignAwareness()",
+    "System.Object FoodAwareness(System.String, System.Nullable`1[System.Int32])",
+    "System.Object FoodMemoryDump(System.String)",
+    "System.Object get_EconomyOverview()",
+    "System.Object get_FoodDiagnostics()",
+    "System.Object get_InspectorTiming()",
+    "System.Object get_NativeEconomyAccounts()",
+    "System.Object get_RivalFoodDiagnostics()",
+    "System.Object Weather(System.String)",
+    "System.Object[] FoodRegularsDump()",
+    "System.String get_FoodEconomyPanelText()",
+    "System.String get_InteriorGuardDiagnostics()",
+    "System.String get_ResidentPopupText()",
+    "Void EnableHouseholdFinances()",
+    "Void Initialize(BAModAPI.ModContext)",
+    "Void ResetInspectorTiming()",
+    "Void Shutdown()",
+    "Void StartFoodRoutines(System.Collections.Generic.IReadOnlyCollection`1[System.String])"
+  ],
+  "runtimeFields": [
+    {
+      "name": "showEconomy",
+      "type": "System.Boolean"
+    },
+    {
+      "name": "nextEconomyText",
+      "type": "System.Single"
+    },
+    {
+      "name": "economyText",
+      "type": "System.String"
+    },
+    {
+      "name": "economyScroll",
+      "type": "UnityEngine.Vector2"
+    },
+    {
+      "name": "economyLabel",
+      "type": "UnityEngine.GUIStyle"
+    },
+    {
+      "name": "economyRect",
+      "type": "UnityEngine.Rect"
+    },
+    {
+      "name": "campaignReader",
+      "type": "PersistentCity.Runtime.NativeCampaignReader"
+    },
+    {
+      "name": "MaxAdvanceEventsPerFrame",
+      "type": "System.Int32"
+    },
+    {
+      "name": "MaxCitizenEventsPerFrame",
+      "type": "System.Int32"
+    },
+    {
+      "name": "AdvanceBudgetMilliseconds",
+      "type": "System.Double"
+    },
+    {
+      "name": "HiddenSkipBudgetMilliseconds",
+      "type": "System.Double"
+    },
+    {
+      "name": "MillisecondsPerTimestamp",
+      "type": "System.Double"
+    },
+    {
+      "name": "rlo",
+      "type": "PersistentCity.Compatibility.RloIdentityAdapter"
+    },
+    {
+      "name": "log",
+      "type": "BAModAPI.IModLogger"
+    },
+    {
+      "name": "settings",
+      "type": "PersistentCity.Runtime.PrototypeSettings"
+    },
+    {
+      "name": "simulation",
+      "type": "PersistentCity.Core.CitySimulator"
+    },
+    {
+      "name": "routes",
+      "type": "PersistentCity.Runtime.MultimodalRoutes"
+    },
+    {
+      "name": "routeObjects",
+      "type": "PersistentCity.Runtime.RouteObjectDiscovery"
+    },
+    {
+      "name": "physical",
+      "type": "PersistentCity.Runtime.PhysicalPopulation"
+    },
+    {
+      "name": "dwellSpots",
+      "type": "PersistentCity.Runtime.DwellSpots"
+    },
+    {
+      "name": "physicalFailed",
+      "type": "System.Boolean"
+    },
+    {
+      "name": "inspector",
+      "type": "PersistentCity.Runtime.ResidentInspector"
+    },
+    {
+      "name": "inspectorFailed",
+      "type": "System.Boolean"
+    },
+    {
+      "name": "inspectorWarning",
+      "type": "System.Action`1[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "saveIdentity",
+      "type": "System.Object"
+    },
+    {
+      "name": "initializingSave",
+      "type": "System.Object"
+    },
+    {
+      "name": "initialization",
+      "type": "System.Threading.Tasks.Task`1[[PersistentCity.Runtime.PopulationRuntime+PreparedCity, PersistentCity, Version=0.10.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "name": "saveSession",
+      "type": "PersistentCity.Persistence.SaveSession"
+    },
+    {
+      "name": "foodMarket",
+      "type": "PersistentCity.Runtime.NativeFoodMarket"
+    },
+    {
+      "name": "initializingPayload",
+      "type": "System.String"
+    },
+    {
+      "name": "initializingHadPayload",
+      "type": "System.Boolean"
+    },
+    {
+      "name": "dependency",
+      "type": "System.Reflection.Assembly"
+    },
+    {
+      "name": "nextStart",
+      "type": "System.Single"
+    },
+    {
+      "name": "nextDependencyCheck",
+      "type": "System.Single"
+    },
+    {
+      "name": "nextStationScan",
+      "type": "System.Single"
+    },
+    {
+      "name": "nextSummary",
+      "type": "System.Single"
+    },
+    {
+      "name": "gateChanges",
+      "type": "System.Int32"
+    },
+    {
+      "name": "roadSnapshots",
+      "type": "System.Int32"
+    },
+    {
+      "name": "seenRoadSnapshots",
+      "type": "System.Int32"
+    },
+    {
+      "name": "waitingFrames",
+      "type": "System.Int32"
+    },
+    {
+      "name": "roadRebuildReasons",
+      "type": "System.Collections.Generic.Dictionary`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+    },
+    {
+      "name": "lastRoadRebuild",
+      "type": "System.String"
+    },
+    {
+      "name": "slowRoutingFrames",
+      "type": "System.Int32"
+    },
+    {
+      "name": "routingFrameLogs",
+      "type": "System.Int32"
+    },
+    {
+      "name": "clockRetimingRoutes",
+      "type": "System.Boolean"
+    },
+    {
+      "name": "maxRloCheckMilliseconds",
+      "type": "System.Double"
+    },
+    {
+      "name": "maxGateCheckMilliseconds",
+      "type": "System.Double"
+    },
+    {
+      "name": "maxStationSearchMilliseconds",
+      "type": "System.Double"
+    },
+    {
+      "name": "maxPrepareMilliseconds",
+      "type": "System.Double"
+    },
+    {
+      "name": "failed",
+      "type": "System.Boolean"
+    },
+    {
+      "name": "subscribed",
+      "type": "System.Boolean"
+    },
+    {
+      "name": "status",
+      "type": "System.String"
+    },
+    {
+      "name": "advanceFrames",
+      "type": "System.Int64"
+    },
+    {
+      "name": "advanceEvents",
+      "type": "System.Int64"
+    },
+    {
+      "name": "advanceMilliseconds",
+      "type": "System.Double"
+    },
+    {
+      "name": "maxAdvanceMilliseconds",
+      "type": "System.Double"
+    },
+    {
+      "name": "closureMilliseconds",
+      "type": "System.Double"
+    },
+    {
+      "name": "maxClosureMilliseconds",
+      "type": "System.Double"
+    },
+    {
+      "name": "closureFrames",
+      "type": "System.Int64"
+    },
+    {
+      "name": "maxAdvanceEvents",
+      "type": "System.Int32"
+    },
+    {
+      "name": "planningSlices",
+      "type": "System.Int64"
+    },
+    {
+      "name": "planningEvents",
+      "type": "System.Int64"
+    },
+    {
+      "name": "planningPendingFrames",
+      "type": "System.Int64"
+    },
+    {
+      "name": "seenPlanningRequests",
+      "type": "System.Int64"
+    },
+    {
+      "name": "planningRequests",
+      "type": "System.Int64"
+    },
+    {
+      "name": "eventRestarts",
+      "type": "System.Int64"
+    },
+    {
+      "name": "inlineRestarts",
+      "type": "System.Int64"
+    },
+    {
+      "name": "seenEventRestarts",
+      "type": "System.Int64"
+    },
+    {
+      "name": "seenInlineRestarts",
+      "type": "System.Int64"
+    },
+    {
+      "name": "planningMilliseconds",
+      "type": "System.Double"
+    },
+    {
+      "name": "maxPlanningSliceMilliseconds",
+      "type": "System.Double"
+    },
+    {
+      "name": "slowestPlanningUnit",
+      "type": "System.String"
+    },
+    {
+      "name": "slowestPlanningUnitNavMeshQueries",
+      "type": "System.Int64"
+    }
+  ],
+  "inspector": {
+    "seamNotGesture": true,
+    "id": "c282",
+    "payloadIdentical": true,
+    "routesUnchanged": true,
+    "marketCallsUnchanged": true,
+    "popup": "Mae Adler, 48, is a bit grumpy. Lives at 11 4th Avenue. Works at Hyperlink Solutions, 1 7th Street. Right now: at home until 08:35.\n\ncurious, tries new places.\n\nNot travelling: at home (stays until 08:35)\n\nToday's meals\nBreakfast: unknown\nLunch: unknown\nDinner: unknown\n",
+    "rawStreetKeysInShownText": false
+  }
+}

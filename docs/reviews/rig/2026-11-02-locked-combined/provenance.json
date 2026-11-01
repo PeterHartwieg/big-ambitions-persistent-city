@@ -1,0 +1,87 @@
+{
+  "role": "rig_test",
+  "candidate": "dbddada2e35d0ac2ac826985214741392a406364",
+  "control": "a7ab5bc51ffaabae28697efad7b35411553f03a7",
+  "candidateDllSha256": "c521129592619b3e80ee101952c700e5b957c35e20a4aad6a15eb21992333603",
+  "controlDllSha256": "36e79f5c6aa6819ebe6f247c37252dae4b7cf8af47b71a21049eef200b5a852d",
+  "fixture": {
+    "sourceName": "FT Food Routines Locked Combined Schema18 20261101.hsg",
+    "sha256": "519e73ccbb83d9e46f65d190635f1638cdb8b47d94c28d68ac53a2b1e9e85db1",
+    "copySha256": "519e73ccbb83d9e46f65d190635f1638cdb8b47d94c28d68ac53a2b1e9e85db1",
+    "schema": 18,
+    "writer": "a7ab5bc51ffaabae28697efad7b35411553f03a7"
+  },
+  "gameManaged": "C:/BigAmbitions-AgentTests/Big Ambitions Agent Tests_Data/Managed",
+  "offlineTestSuitesRun": 0,
+  "builds": "Unmodified detached candidate and control sources; python tools/build.py; required dotnet PATH prefix",
+  "scope": [
+    {
+      "number": 17,
+      "title": "Step B1: shop memory capture and loyalty policy (stacked on #16)"
+    },
+    {
+      "number": 19,
+      "title": "Step B2: regulars projection and inspector words (stacked on #17)"
+    },
+    {
+      "number": 23,
+      "title": "Step E3: first direct-stock food product feasibility record (read-only)"
+    },
+    {
+      "number": 24,
+      "title": "Step C2a: core bounded awareness sources and candidate interface (stacked on #16)"
+    },
+    {
+      "number": 28,
+      "title": "Step E2b: bounded street-life timing and fail-closed venue ownership"
+    },
+    {
+      "number": 30,
+      "title": "Step C4: bounded market-research engine and access contract, inactive (stacked on #16)"
+    },
+    {
+      "number": 33,
+      "title": "Step E3: cupcake feasibility record + shared direct-stock reader (read-only, stacked on #23)"
+    },
+    {
+      "number": 36,
+      "title": "Step E3: salad feasibility record on the shared direct-stock reader (read-only, stacked on #33)"
+    },
+    {
+      "number": 37,
+      "title": "Step E1: rain in new outings and food decisions, schema 20 weather capture (stacked on #24)"
+    },
+    {
+      "number": 54,
+      "title": "Track F1: ground-floor shop city view and visible customer entry (default off)"
+    },
+    {
+      "number": 55,
+      "title": "Step C2b: campaign awareness and targeting (schema 22)"
+    },
+    {
+      "number": 56,
+      "title": "Step E4: bounded wider-menu framework, live limit four (schema 23)"
+    },
+    {
+      "number": 58,
+      "title": "Step D2: rival choice and own-ledger outflow (schema 21)"
+    },
+    {
+      "number": 59,
+      "title": "Step A5: integrated acceptance, offline closure and perf report"
+    },
+    {
+      "number": 60,
+      "title": "Step E3: pizza feasibility record on the shared direct-stock reader (read-only)"
+    },
+    {
+      "number": 62,
+      "title": "Step E3: icecream feasibility record on the shared direct-stock reader (read-only)"
+    },
+    {
+      "number": 66,
+      "title": "Step E3: frenchfries feasibility record on the shared direct-stock reader (read-only)"
+    }
+  ]
+}

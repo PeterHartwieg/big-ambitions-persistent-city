@@ -1,0 +1,25 @@
+{
+  "observedConsumers": 10,
+  "maximumRawUnion": 21,
+  "maximumShortlist": 8,
+  "distantDiscoveries": [
+    {
+      "consumer": "consumer:c192:1",
+      "day": 7,
+      "business": "business:ba%3Astreet_twelfthstreet:9:1:ba%3Abusinesstype_coffeeshop:Oi0RvhdBU02%2BQP9HAn5atQ%3D%3D",
+      "place": "address:ba%3Astreet_twelfthstreet:9:shop",
+      "nativeSavedEntrance": {
+        "X": -556.1090087890625,
+        "Y": 0.09000015258789062,
+        "Z": -189.32083129882812,
+        "IsFinite": true
+      },
+      "anchorDistancesMetres": {
+        "HomeId": 797.0831919907226,
+        "PlaceId": 797.0831919907226
+      },
+      "inShortlist": true,
+      "player": false
+    }
+  ]
+}

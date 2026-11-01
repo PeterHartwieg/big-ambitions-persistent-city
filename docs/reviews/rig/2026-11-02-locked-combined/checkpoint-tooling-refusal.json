@@ -1,0 +1,8 @@
+{
+  "nativeSaveSha256": "49d06f56593f8bd0bc7b15f9a95da41ff657dd564bf70308dd2417505f0340a9",
+  "lastValidSourcePayloadEmbeddedUnchanged": true,
+  "phase": "AdvanceFrameSlice postfix before coherent traffic/city clock",
+  "classification": "test observer attempted a mid-unit native save; excluded from normal-save proof",
+  "productionResponse": "protective refusal, original last valid population payload retained",
+  "correction": "Clock-equality gate did not yield a usable in-unit checkpoint. That observer was disabled; all accepted interrupted proof uses ordinary native saves after caught-up pause, plus one ordinary running1x save. No production code change."
+}

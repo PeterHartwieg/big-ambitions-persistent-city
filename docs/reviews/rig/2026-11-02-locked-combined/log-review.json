@@ -1,0 +1,229 @@
+{
+  "logs": [
+    {
+      "log": "base1-Player.private.log",
+      "sha256": "0f4ca6e6ba8fe2d6a69eaf27e9ee52717620acb74efbf4a725a10c2d6848f9fb",
+      "persistentCityStops": [],
+      "nativeExceptionCount": 4,
+      "nativeExceptionSignatures": [
+        {
+          "type": "NullReferenceException: Object reference not set to an instance of an object",
+          "topFrames": [
+            "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0"
+          ],
+          "persistentCityInStack": false
+        },
+        {
+          "type": "NullReferenceException: Object reference not set to an instance of an object",
+          "topFrames": [
+            "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0"
+          ],
+          "persistentCityInStack": false
+        }
+      ]
+    },
+    {
+      "log": "base2-Player.private.log",
+      "sha256": "12f5cb0aa8e82c722aa671a7d973f384c9927685ce6b3a656fbb47c7d4747e6a",
+      "persistentCityStops": [],
+      "nativeExceptionCount": 4,
+      "nativeExceptionSignatures": [
+        {
+          "type": "NullReferenceException: Object reference not set to an instance of an object",
+          "topFrames": [
+            "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0"
+          ],
+          "persistentCityInStack": false
+        },
+        {
+          "type": "NullReferenceException: Object reference not set to an instance of an object",
+          "topFrames": [
+            "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0"
+          ],
+          "persistentCityInStack": false
+        }
+      ]
+    },
+    {
+      "log": "cand1-Player.private.log",
+      "sha256": "ebbc13eace2e7a297348282933ca0814e3c3d39ec9f0a9a03b889439b85f78c6",
+      "persistentCityStops": [
+        "[Mod:PersistentCity] Persistent City stopped: Population save refused: Invalid state: Unexpected character encountered while parsing number: !. Path 'WeatherStartsDay', line 1, position 5344201. Original payload retained.",
+        "[Mod:PersistentCity] Persistent City stopped: Food ownership suspended: Unsupported population schema; preserve the payload."
+      ],
+      "nativeExceptionCount": 20,
+      "nativeExceptionSignatures": [
+        {
+          "type": "NullReferenceException: Object reference not set to an instance of an object",
+          "topFrames": [
+            "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0"
+          ],
+          "persistentCityInStack": false
+        },
+        {
+          "type": "NullReferenceException: Object reference not set to an instance of an object",
+          "topFrames": [
+            "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0"
+          ],
+          "persistentCityInStack": false
+        }
+      ]
+    },
+    {
+      "log": "cand2-Player.private.log",
+      "sha256": "2e480328aade728fb2946cc19015489ab513e9d4050dead2bdeefc2351948fe9",
+      "persistentCityStops": [],
+      "nativeExceptionCount": 8,
+      "nativeExceptionSignatures": [
+        {
+          "type": "NullReferenceException: Object reference not set to an instance of an object",
+          "topFrames": [
+            "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0"
+          ],
+          "persistentCityInStack": false
+        },
+        {
+          "type": "NullReferenceException: Object reference not set to an instance of an object",
+          "topFrames": [
+            "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0"
+          ],
+          "persistentCityInStack": false
+        }
+      ]
+    },
+    {
+      "log": "cand3-tooling-Player.private.log",
+      "sha256": "d3c030f4e11d4f9a26ee96a5bd36b05e787c450cfa94bc6e93097db71a0f45b5",
+      "persistentCityStops": [
+        "[Mod:PersistentCity] Persistent City stopped: Population save refused: Traffic and city clocks disagree."
+      ],
+      "nativeExceptionCount": 4,
+      "nativeExceptionSignatures": [
+        {
+          "type": "NullReferenceException: Object reference not set to an instance of an object",
+          "topFrames": [
+            "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0"
+          ],
+          "persistentCityInStack": false
+        },
+        {
+          "type": "NullReferenceException: Object reference not set to an instance of an object",
+          "topFrames": [
+            "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0"
+          ],
+          "persistentCityInStack": false
+        }
+      ]
+    },
+    {
+      "log": "cand4-observer-Player.private.log",
+      "sha256": "b151859f09b476daabd924b576c1e2a3a340d994b02f3f86df36363aef359778",
+      "persistentCityStops": [],
+      "nativeExceptionCount": 4,
+      "nativeExceptionSignatures": [
+        {
+          "type": "NullReferenceException: Object reference not set to an instance of an object",
+          "topFrames": [
+            "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0"
+          ],
+          "persistentCityInStack": false
+        },
+        {
+          "type": "NullReferenceException: Object reference not set to an instance of an object",
+          "topFrames": [
+            "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0"
+          ],
+          "persistentCityInStack": false
+        }
+      ]
+    },
+    {
+      "log": "cand5-Player.private.log",
+      "sha256": "a6a998e2ff062c2e9b418c5972eefc034aba9bdc3d47fe537698dd735a29080e",
+      "persistentCityStops": [
+        "[Mod:PersistentCity] Persistent City stopped: Population save refused: Invalid state: Unexpected character encountered while parsing number: !. Path 'WeatherStartsDay', line 1, position 5344201. Original payload retained.",
+        "[Mod:PersistentCity] Persistent City stopped: Food ownership suspended: Unsupported population schema; preserve the payload."
+      ],
+      "nativeExceptionCount": 110,
+      "nativeExceptionSignatures": [
+        {
+          "type": "NullReferenceException: Object reference not set to an instance of an object",
+          "topFrames": [
+            "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0"
+          ],
+          "persistentCityInStack": false
+        },
+        {
+          "type": "NullReferenceException: Object reference not set to an instance of an object",
+          "topFrames": [
+            "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0"
+          ],
+          "persistentCityInStack": false
+        },
+        {
+          "type": "NullReferenceException: Object reference not set to an instance of an object",
+          "topFrames": [
+            "at StreetLamp+<ChangeLightSetting>d__34.MoveNext () [0x00058] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at UnityEngine.SetupCoroutine.InvokeMoveNext (System.Collections.IEnumerator enumerator, System.IntPtr returnValueAddress) [0x00026] in <c39a522eee05469b8171a6cfeb646c59>:0",
+            "",
+            "NullReferenceException: Object reference not set to an instance of an object"
+          ],
+          "persistentCityInStack": false
+        },
+        {
+          "type": "NullReferenceException: Object reference not set to an instance of an object",
+          "topFrames": [
+            "at StreetLamp+<ChangeLightSetting>d__34.MoveNext () [0x00058] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+            "at UnityEngine.SetupCoroutine.InvokeMoveNext (System.Collections.IEnumerator enumerator, System.IntPtr returnValueAddress) [0x00026] in <c39a522eee05469b8171a6cfeb646c59>:0",
+            "",
+            "<color=#0099bc><b>DOTWEEN \u25ba </b></color>Target or field is missing/null () \u25ba"
+          ],
+          "persistentCityInStack": false
+        }
+      ]
+    }
+  ],
+  "classification": "Ordinary candidate/control have no unexpected PC stop/exception. Music/Hangout culling NullReferenceException and native NavMesh warnings occur in baseline too. Candidate long soak also has native StreetLamp coroutine exceptions without a PC stack; matched control soak was not run for that signature. Deliberate malformed/future schema sources refuse. One stage observer saved inside an unfinished Core unit; protective clock-refusal is tooling only, excluded from ordinary native save evidence. RLO transit FAIL diagnostic is dependency evidence, not a new PC exception."
+}

@@ -1,0 +1,156 @@
+{
+  "sourceSchema": 18,
+  "writer": 23,
+  "chain": [
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+  ],
+  "sourceCheckpoint": {
+    "sourceName": "FT Food Routines Locked Combined Schema18 20261101.hsg",
+    "sha256": "519e73ccbb83d9e46f65d190635f1638cdb8b47d94c28d68ac53a2b1e9e85db1",
+    "copySha256": "519e73ccbb83d9e46f65d190635f1638cdb8b47d94c28d68ac53a2b1e9e85db1",
+    "schema": 18,
+    "writer": "a7ab5bc51ffaabae28697efad7b35411553f03a7"
+  },
+  "preservedOldGraphDifferences": [],
+  "rootAdded": {
+    "MenuPolicy": "1|1=croissant|2=burger|3=hotdog|4=donut|5=cupcake|6=salad",
+    "WeatherStartsDay": 7
+  },
+  "foodAdded": {
+    "Campaigns": [],
+    "RivalStartsDay": 7,
+    "AwarenessStartsDay": 7
+  },
+  "capabilities": {
+    "Code": "B",
+    "Revision": 1,
+    "Active": false
+  },
+  "initialReferences": [],
+  "memoryEntryCount": 0,
+  "externalInitialTotal": 0,
+  "reloads": {
+    "reload1-export": {
+      "exact": true,
+      "oldFieldDifferences": [],
+      "beforeSha256": "5c7f69f60c609336a68d2446fd82738d9d448edd957248954b54116a84701936",
+      "afterSha256": "5c7f69f60c609336a68d2446fd82738d9d448edd957248954b54116a84701936"
+    },
+    "reload2-export": {
+      "exact": true,
+      "oldFieldDifferences": [],
+      "beforeSha256": "fe68095030c64643dd86b5c03bf30cc88121b4a2a79f19f354128eb4baed82c1",
+      "afterSha256": "fe68095030c64643dd86b5c03bf30cc88121b4a2a79f19f354128eb4baed82c1"
+    }
+  },
+  "writeProgression": [
+    [
+      {
+        "path": "/Traffic/Clock",
+        "before": 8986.013870239258,
+        "after": 8986.347202301025
+      },
+      {
+        "path": "/Traffic/RequestedTime",
+        "before": 8986.013870239258,
+        "after": 8986.347202301025
+      },
+      {
+        "path": "/Minute",
+        "before": 8986.013870239258,
+        "after": 8986.347202301025
+      }
+    ],
+    [
+      {
+        "path": "/Traffic/Clock",
+        "before": 8986.347202301025,
+        "after": 8986.680534362793
+      },
+      {
+        "path": "/Traffic/RequestedTime",
+        "before": 8986.347202301025,
+        "after": 8986.680534362793
+      },
+      {
+        "path": "/Minute",
+        "before": 8986.347202301025,
+        "after": 8986.680534362793
+      }
+    ],
+    [
+      {
+        "path": "/Traffic/Clock",
+        "before": 8986.680534362793,
+        "after": 8987.01386642456
+      },
+      {
+        "path": "/Traffic/RequestedTime",
+        "before": 8986.680534362793,
+        "after": 8987.01386642456
+      },
+      {
+        "path": "/Minute",
+        "before": 8986.680534362793,
+        "after": 8987.01386642456
+      },
+      {
+        "path": "/Citizens/151/NextEventMinute",
+        "before": 8987.0,
+        "after": 9017.0
+      }
+    ]
+  ],
+  "stableFacts": {
+    "source18": {
+      "identities": "1d0c1b0a2e03ddd42feecbbb1f570e940d28d4f1c2606093bde6233d891898dd",
+      "traits": "0e3fdf206ef45b99bc4f27cb591f8c3e4d21d69ed84a53e4370f98eaad943f69",
+      "assignments": "17e9be83b62fbb3c24172db44311f565ce74c479033d22ec4c32757ff57a4c88",
+      "consumerMoney": "73c27dffcf746518bf725ad1f8413a285f7121ac5b07dd07c72c4172697e1336",
+      "history": "a28550ea6e7213d2da7264faeb34f57dbe4bad96d8d2783aaab9cb22f411be5c",
+      "consumers": 1914,
+      "residents": 957
+    },
+    "decodedMigration23": {
+      "identities": "1d0c1b0a2e03ddd42feecbbb1f570e940d28d4f1c2606093bde6233d891898dd",
+      "traits": "0e3fdf206ef45b99bc4f27cb591f8c3e4d21d69ed84a53e4370f98eaad943f69",
+      "assignments": "17e9be83b62fbb3c24172db44311f565ce74c479033d22ec4c32757ff57a4c88",
+      "consumerMoney": "73c27dffcf746518bf725ad1f8413a285f7121ac5b07dd07c72c4172697e1336",
+      "history": "a28550ea6e7213d2da7264faeb34f57dbe4bad96d8d2783aaab9cb22f411be5c",
+      "consumers": 1914,
+      "residents": 957
+    },
+    "candidate23-export": {
+      "identities": "1d0c1b0a2e03ddd42feecbbb1f570e940d28d4f1c2606093bde6233d891898dd",
+      "traits": "0e3fdf206ef45b99bc4f27cb591f8c3e4d21d69ed84a53e4370f98eaad943f69",
+      "assignments": "17e9be83b62fbb3c24172db44311f565ce74c479033d22ec4c32757ff57a4c88",
+      "consumerMoney": "73c27dffcf746518bf725ad1f8413a285f7121ac5b07dd07c72c4172697e1336",
+      "history": "a28550ea6e7213d2da7264faeb34f57dbe4bad96d8d2783aaab9cb22f411be5c",
+      "consumers": 1914,
+      "residents": 957
+    },
+    "candidate23-roundtrip-export": {
+      "identities": "1d0c1b0a2e03ddd42feecbbb1f570e940d28d4f1c2606093bde6233d891898dd",
+      "traits": "0e3fdf206ef45b99bc4f27cb591f8c3e4d21d69ed84a53e4370f98eaad943f69",
+      "assignments": "17e9be83b62fbb3c24172db44311f565ce74c479033d22ec4c32757ff57a4c88",
+      "consumerMoney": "73c27dffcf746518bf725ad1f8413a285f7121ac5b07dd07c72c4172697e1336",
+      "history": "a28550ea6e7213d2da7264faeb34f57dbe4bad96d8d2783aaab9cb22f411be5c",
+      "consumers": 1914,
+      "residents": 957
+    },
+    "candidate23-twice-export": {
+      "identities": "1d0c1b0a2e03ddd42feecbbb1f570e940d28d4f1c2606093bde6233d891898dd",
+      "traits": "0e3fdf206ef45b99bc4f27cb591f8c3e4d21d69ed84a53e4370f98eaad943f69",
+      "assignments": "17e9be83b62fbb3c24172db44311f565ce74c479033d22ec4c32757ff57a4c88",
+      "consumerMoney": "73c27dffcf746518bf725ad1f8413a285f7121ac5b07dd07c72c4172697e1336",
+      "history": "a28550ea6e7213d2da7264faeb34f57dbe4bad96d8d2783aaab9cb22f411be5c",
+      "consumers": 1914,
+      "residents": 957
+    }
+  }
+}

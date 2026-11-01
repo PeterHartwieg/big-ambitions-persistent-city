@@ -1,0 +1,60 @@
+{
+  "schema": 23,
+  "sameCandidateIdleControl": true,
+  "payloadByteIdentical": false,
+  "idleBytes": 5782625,
+  "readBytes": 5782625,
+  "idleSha256": "aed483a22d19b353cebe3d573c55fba142c5ef84a0d0ce5c60a759cdebe0bb0a",
+  "readSha256": "0cb28f4b6551bd7fb24a6470829772107dd3cd6253ba237873550942ca288fb8",
+  "note": "Literal same-schema candidate no-reader versus exercised save/reload; no cross-schema18/23 equality claim",
+  "nativeBeforeAfterEqual": true,
+  "decodedDifferenceCount": 7,
+  "decodedDifferences": [
+    {
+      "path": "/Citizens/698/Journey/Legs/0/Minutes",
+      "before": 5.863910021521224,
+      "after": 5.863910022153655
+    },
+    {
+      "path": "/Citizens/698/Journey/Legs/0/To/Y",
+      "before": 0.29999542236328125,
+      "after": 0.2999992370605469
+    },
+    {
+      "path": "/Citizens/698/Journey/Legs/1/From/Y",
+      "before": 0.29999542236328125,
+      "after": 0.2999992370605469
+    },
+    {
+      "path": "/Citizens/698/Journey/Legs/1/Minutes",
+      "before": 2.2866619089426306,
+      "after": 2.286661908942542
+    },
+    {
+      "path": "/Citizens/698/Journey/EstimatedMinutes",
+      "before": 9.997032714326675,
+      "after": 9.997032714959017
+    },
+    {
+      "path": "/Citizens/698/Journey/Minutes",
+      "before": 9.997032714326675,
+      "after": 9.997032714959017
+    },
+    {
+      "path": "/Citizens/698/NextEventMinute",
+      "before": 16395.994065429284,
+      "after": 16395.994065429917
+    }
+  ],
+  "qualification": "The seven listed geometry/derived-time differences already exist in post-load live states before reader calls. Direct paused reads preserve exact native values/payload. Independent native reload literal equality is PARTIAL.",
+  "postLoadPreReadDifferentPaths": [
+    "/Citizens/698/Journey/Legs/0/To/Y",
+    "/Citizens/698/Journey/Legs/0/Minutes",
+    "/Citizens/698/Journey/Legs/1/From/Y",
+    "/Citizens/698/Journey/Legs/1/Minutes",
+    "/Citizens/698/Journey/Minutes",
+    "/Citizens/698/Journey/EstimatedMinutes",
+    "/Citizens/698/NextEventMinute"
+  ],
+  "allFinalDifferencesAlreadyPresentBeforeReaderCalls": true
+}

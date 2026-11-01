@@ -1,0 +1,84 @@
+{
+  "batches": [
+    {
+      "offset": 0,
+      "consumers": 32,
+      "days": 8,
+      "frame": 121621,
+      "operationMs": 12.370800000000001,
+      "payloadEqual": true,
+      "beforeSha": "69ad24b5db21ea166bce99ead6fa435b66d93ddf274c8c77b5ed6e86ac6bf67f",
+      "afterSha": "69ad24b5db21ea166bce99ead6fa435b66d93ddf274c8c77b5ed6e86ac6bf67f",
+      "maxRawUnion": 20,
+      "maxShortlist": 8
+    },
+    {
+      "offset": 32,
+      "consumers": 32,
+      "days": 8,
+      "frame": 121643,
+      "operationMs": 9.3985,
+      "payloadEqual": true,
+      "beforeSha": "69ad24b5db21ea166bce99ead6fa435b66d93ddf274c8c77b5ed6e86ac6bf67f",
+      "afterSha": "69ad24b5db21ea166bce99ead6fa435b66d93ddf274c8c77b5ed6e86ac6bf67f",
+      "maxRawUnion": 20,
+      "maxShortlist": 8
+    },
+    {
+      "offset": 64,
+      "consumers": 32,
+      "days": 8,
+      "frame": 121661,
+      "operationMs": 9.2301,
+      "payloadEqual": true,
+      "beforeSha": "69ad24b5db21ea166bce99ead6fa435b66d93ddf274c8c77b5ed6e86ac6bf67f",
+      "afterSha": "69ad24b5db21ea166bce99ead6fa435b66d93ddf274c8c77b5ed6e86ac6bf67f",
+      "maxRawUnion": 20,
+      "maxShortlist": 8
+    }
+  ],
+  "distantPlayerExamples": [
+    {
+      "consumer": "c111",
+      "slot": 0,
+      "day": 9,
+      "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+      "position": {
+        "X": 229.7625732421875,
+        "Y": 0.09000015258789062,
+        "Z": 21.2783203125,
+        "IsFinite": true
+      },
+      "distancesMetres": {
+        "home": 499.9446220240912,
+        "work": 644.5570953034974,
+        "current": 499.9446220240912
+      },
+      "eligible": true,
+      "inShortlist": true,
+      "catalogueRevision": "QJfTG0ky2ptoQ9BdKwn8mQpqf+ggLU1Gi72FrdYAw98="
+    },
+    {
+      "consumer": "consumer:c120:1",
+      "slot": 1,
+      "day": 7,
+      "business": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+      "position": {
+        "X": 229.7625732421875,
+        "Y": 0.09000015258789062,
+        "Z": 21.2783203125,
+        "IsFinite": true
+      },
+      "distancesMetres": {
+        "home": 500.3693610674108,
+        "work": 258.8228158383981,
+        "current": 500.3693610674108
+      },
+      "eligible": true,
+      "inShortlist": true,
+      "catalogueRevision": "QJfTG0ky2ptoQ9BdKwn8mQpqf+ggLU1Gi72FrdYAw98="
+    }
+  ],
+  "distantPlayerCount": 2,
+  "qualification": "Read-only proposed admission/shortlist evidence, not a purchase. Origin-at-stop random-draw0/dense-player-fixture arms remain unproved."
+}

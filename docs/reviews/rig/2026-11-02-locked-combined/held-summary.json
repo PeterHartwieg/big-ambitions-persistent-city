@@ -1,0 +1,100 @@
+{
+  "role": "rig_test",
+  "source": {
+    "sourceName": "FT Food Routines Locked Combined Candidate Partial 20261101.hsg",
+    "schema": 18,
+    "sha256": "3dd3289a1678a4e28931f7e8bd3133abffaa34b08bfd9b19cfb2f4adae3f5875",
+    "writer": "a7ab5bc51ffaabae28697efad7b35411553f03a7",
+    "note": "Genuine prior evaluating/partial checkpoint; no decision fields edited"
+  },
+  "rows": [
+    {
+      "label": "held-default",
+      "upgradedSchema": 23,
+      "sourceCursor": 1,
+      "heldContextKey": "trip:8tVqXi7AmHZTjtpwZyImetUsstybaAW2SI+dKffge0k=",
+      "heldImage": "13FF00000000000003F947AE147AE147B00000000000000003FF00000000000003FF000000000000040240000000000003FF00000000000003FE00000000000003FF000000000000000000000000000003FB999999999999A3FF0000000000000",
+      "heldImageSha256": "7117d38e08a3482fc2bbc7c8a3445ac87242cbbebc5a6a3d4d6c4c746a28e20d",
+      "heldTaste": 0.0,
+      "heldHousehold": 0.1,
+      "runtimeEdits": {
+        "OptionalStopChoicePercentage": 25,
+        "RivalChoiceWeight": 1,
+        "FoodChoiceTasteWeight": 1,
+        "FoodChoiceHouseholdWeight": 1,
+        "WeatherEnabled": true,
+        "InteriorCityView": "off"
+      },
+      "result": {
+        "ResidentId": "pc:350",
+        "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+        "ProductId": "ba:itemname_croissant",
+        "Price": {
+          "Units": 275221504000
+        },
+        "Spent": {
+          "Units": 275221504000
+        },
+        "Purchases": 1,
+        "Status": 3,
+        "LastContextKey": "trip:8tVqXi7AmHZTjtpwZyImetUsstybaAW2SI+dKffge0k=",
+        "ContextAttempts": 1
+      },
+      "purchaseDelta": 1,
+      "spendDeltaUnits": "275221504000",
+      "targetNewReceiptKeys": [
+        "persistentcity:food-sale-v2:food:pc%3A350:breakfast:6"
+      ],
+      "targetReceiptValues": [
+        "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant"
+      ],
+      "nativeAfterReloadExact": true
+    },
+    {
+      "label": "held-edited",
+      "upgradedSchema": 23,
+      "sourceCursor": 1,
+      "heldContextKey": "trip:8tVqXi7AmHZTjtpwZyImetUsstybaAW2SI+dKffge0k=",
+      "heldImage": "13FF00000000000003F947AE147AE147B00000000000000003FF00000000000003FF000000000000040240000000000003FF00000000000003FE00000000000003FF000000000000000000000000000003FB999999999999A3FF0000000000000",
+      "heldImageSha256": "7117d38e08a3482fc2bbc7c8a3445ac87242cbbebc5a6a3d4d6c4c746a28e20d",
+      "heldTaste": 0.0,
+      "heldHousehold": 0.1,
+      "runtimeEdits": {
+        "OptionalStopChoicePercentage": 25,
+        "RivalChoiceWeight": 1,
+        "FoodChoiceTasteWeight": 3,
+        "FoodChoiceHouseholdWeight": 5,
+        "WeatherEnabled": true,
+        "InteriorCityView": "off"
+      },
+      "result": {
+        "ResidentId": "pc:350",
+        "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+        "ProductId": "ba:itemname_croissant",
+        "Price": {
+          "Units": 275221504000
+        },
+        "Spent": {
+          "Units": 275221504000
+        },
+        "Purchases": 1,
+        "Status": 3,
+        "LastContextKey": "trip:8tVqXi7AmHZTjtpwZyImetUsstybaAW2SI+dKffge0k=",
+        "ContextAttempts": 1
+      },
+      "purchaseDelta": 1,
+      "spendDeltaUnits": "275221504000",
+      "targetNewReceiptKeys": [
+        "persistentcity:food-sale-v2:food:pc%3A350:breakfast:6"
+      ],
+      "targetReceiptValues": [
+        "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant"
+      ],
+      "nativeAfterReloadExact": true
+    }
+  ],
+  "heldImageExact": true,
+  "heldChoiceAndExactTargetPaymentEqual": true,
+  "newContextWireCapture": "NOT-RUN: no fresh held decision remained at the stable native save boundaries; running settings and new audit traces are retained without claiming a captured fresh tuning image",
+  "method": "Real schema18 partial checkpoint, actual candidate migration and ordinary native outward/payment saves and reloads; no decision or payment forced"
+}

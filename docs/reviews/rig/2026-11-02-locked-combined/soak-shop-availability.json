@@ -1,0 +1,31 @@
+{
+  "minute": 16386.012301921844,
+  "diagnostics": {
+    "active": true,
+    "hourlyCustomerBatchesSuppressed": 50,
+    "nativeDrawsSuppressed": 0,
+    "nativePurchasesThisSession": 0
+  },
+  "shopAvailability": [
+    {
+      "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+      "exclusion": "",
+      "supply": {
+        "AtMinute": 16386.012301921844,
+        "ProductId": "ba:itemname_croissant",
+        "Units": 0,
+        "MealsPerHour": 0,
+        "StaffedCounters": 0,
+        "StockedCounters": 0,
+        "ProducerUnits": 158,
+        "BagUnits": 0,
+        "Producers": [
+          "yD3CJiiGrEiw8ar47cqu5A=="
+        ],
+        "Evidence": "Current native eligible producers, staffed counters and shared bag pool; one stock unit per product; checkout revalidates contention",
+        "AvailabilityReason": "No staffed counter"
+      }
+    }
+  ],
+  "qualification": "After the first active served day the owned fixture has no staffed counter. No staff, cargo, money or business was edited to manufacture further served days; multi-day regular threshold/recovery remains unproved."
+}

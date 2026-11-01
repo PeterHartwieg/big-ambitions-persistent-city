@@ -1,0 +1,767 @@
+{
+  "rows": [
+    {
+      "label": "slice-morning",
+      "minute": 10625.341635227203,
+      "frame": 121575,
+      "nativeRaining": false,
+      "capabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "regulars": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "Regulars": 0
+        }
+      ],
+      "weather": [
+        {
+          "Minute": 10625.341635227203,
+          "WeatherStartsDay": 7,
+          "ResidentId": "c0",
+          "OutingOrQueue": {
+            "Boundary": 9961.0,
+            "Weather": 0,
+            "Queue": false,
+            "Value": 1
+          },
+          "UnknownMeaning": "unknown weather is neutral",
+          "Consumers": [
+            {
+              "ResidentId": "c0",
+              "CapturedWeather": 0,
+              "ContextAttempts": 1,
+              "Held": null
+            },
+            {
+              "ResidentId": "consumer:c0:1",
+              "CapturedWeather": 0,
+              "ContextAttempts": 1,
+              "Held": null
+            }
+          ]
+        },
+        {
+          "Minute": 10625.341635227203,
+          "WeatherStartsDay": 7,
+          "ResidentId": "c1",
+          "OutingOrQueue": {
+            "Boundary": 9471.0,
+            "Weather": 0,
+            "Queue": false,
+            "Value": 1
+          },
+          "UnknownMeaning": "unknown weather is neutral",
+          "Consumers": [
+            {
+              "ResidentId": "c1",
+              "CapturedWeather": 1,
+              "ContextAttempts": 1,
+              "Held": null
+            },
+            {
+              "ResidentId": "consumer:c1:1",
+              "CapturedWeather": 1,
+              "ContextAttempts": 1,
+              "Held": null
+            }
+          ]
+        },
+        {
+          "Minute": 10625.341635227203,
+          "WeatherStartsDay": 7,
+          "ResidentId": "c10",
+          "OutingOrQueue": {
+            "Boundary": 9479.0,
+            "Weather": 0,
+            "Queue": false,
+            "Value": 1
+          },
+          "UnknownMeaning": "unknown weather is neutral",
+          "Consumers": [
+            {
+              "ResidentId": "c10",
+              "CapturedWeather": 0,
+              "ContextAttempts": 1,
+              "Held": null
+            },
+            {
+              "ResidentId": "consumer:c10:1",
+              "CapturedWeather": 0,
+              "ContextAttempts": 1,
+              "Held": null
+            }
+          ]
+        }
+      ],
+      "logicalStopRecords": 0,
+      "futureStops": 0,
+      "activeStops": 0,
+      "cancelledStops": 0,
+      "pending": 159,
+      "chanceTally": {
+        "Eligible": 0,
+        "Drawn": 0,
+        "Realised": 0,
+        "HandedOn": 0,
+        "PassedOn": 0,
+        "Dropped": 0
+      },
+      "frontageCounts": {
+        "total": 723,
+        "shown": 723,
+        "truncated": false
+      },
+      "frontageRoleCounts": {
+        "Leisure": 37,
+        "Work": 385,
+        "Shop": 301
+      },
+      "nullFrontages": 5,
+      "frontageRebinds": 0,
+      "frontageRebindMaxMs": 0.0,
+      "frontageRebindSpikes30": 0,
+      "chanceLedgerReconciles": true
+    },
+    {
+      "label": "soak-1",
+      "minute": 12065.342635154724,
+      "frame": 122824,
+      "nativeRaining": true,
+      "capabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "regulars": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "Regulars": 0
+        }
+      ],
+      "weather": [
+        {
+          "Minute": 12065.342635154724,
+          "WeatherStartsDay": 7,
+          "ResidentId": "c0",
+          "OutingOrQueue": {
+            "Boundary": 11420.452043043224,
+            "Weather": 1,
+            "Queue": false,
+            "Value": 1
+          },
+          "UnknownMeaning": "unknown weather is neutral",
+          "Consumers": [
+            {
+              "ResidentId": "c0",
+              "CapturedWeather": 1,
+              "ContextAttempts": 0,
+              "Held": null
+            },
+            {
+              "ResidentId": "consumer:c0:1",
+              "CapturedWeather": 1,
+              "ContextAttempts": 0,
+              "Held": null
+            }
+          ]
+        },
+        {
+          "Minute": 12065.342635154724,
+          "WeatherStartsDay": 7,
+          "ResidentId": "c1",
+          "OutingOrQueue": {
+            "Boundary": 10911.0,
+            "Weather": 1,
+            "Queue": false,
+            "Value": 1
+          },
+          "UnknownMeaning": "unknown weather is neutral",
+          "Consumers": [
+            {
+              "ResidentId": "c1",
+              "CapturedWeather": 2,
+              "ContextAttempts": 1,
+              "Held": null
+            },
+            {
+              "ResidentId": "consumer:c1:1",
+              "CapturedWeather": 2,
+              "ContextAttempts": 0,
+              "Held": null
+            }
+          ]
+        },
+        {
+          "Minute": 12065.342635154724,
+          "WeatherStartsDay": 7,
+          "ResidentId": "c10",
+          "OutingOrQueue": {
+            "Boundary": 10919.0,
+            "Weather": 1,
+            "Queue": false,
+            "Value": 1
+          },
+          "UnknownMeaning": "unknown weather is neutral",
+          "Consumers": [
+            {
+              "ResidentId": "c10",
+              "CapturedWeather": 1,
+              "ContextAttempts": 0,
+              "Held": null
+            },
+            {
+              "ResidentId": "consumer:c10:1",
+              "CapturedWeather": 1,
+              "ContextAttempts": 0,
+              "Held": null
+            }
+          ]
+        }
+      ],
+      "logicalStopRecords": 0,
+      "futureStops": 0,
+      "activeStops": 0,
+      "cancelledStops": 0,
+      "pending": 306,
+      "chanceTally": {
+        "Eligible": 1333,
+        "Drawn": 324,
+        "Realised": 177,
+        "HandedOn": 119,
+        "PassedOn": 56,
+        "Dropped": 0
+      },
+      "frontageCounts": {
+        "total": 723,
+        "shown": 723,
+        "truncated": false
+      },
+      "frontageRoleCounts": {
+        "Leisure": 37,
+        "Work": 385,
+        "Shop": 301
+      },
+      "nullFrontages": 5,
+      "frontageRebinds": 0,
+      "frontageRebindMaxMs": 0.0,
+      "frontageRebindSpikes30": 0,
+      "chanceLedgerReconciles": true
+    },
+    {
+      "label": "soak-2",
+      "minute": 13505.343635082245,
+      "frame": 123694,
+      "nativeRaining": false,
+      "capabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "regulars": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "Regulars": 0
+        }
+      ],
+      "weather": [
+        {
+          "Minute": 13505.343635082245,
+          "WeatherStartsDay": 7,
+          "ResidentId": "c0",
+          "OutingOrQueue": {
+            "Boundary": 12841.0,
+            "Weather": 1,
+            "Queue": false,
+            "Value": 1
+          },
+          "UnknownMeaning": "unknown weather is neutral",
+          "Consumers": [
+            {
+              "ResidentId": "c0",
+              "CapturedWeather": 2,
+              "ContextAttempts": 1,
+              "Held": null
+            },
+            {
+              "ResidentId": "consumer:c0:1",
+              "CapturedWeather": 2,
+              "ContextAttempts": 1,
+              "Held": null
+            }
+          ]
+        },
+        {
+          "Minute": 13505.343635082245,
+          "WeatherStartsDay": 7,
+          "ResidentId": "c1",
+          "OutingOrQueue": {
+            "Boundary": 12651.0,
+            "Weather": 2,
+            "Queue": false,
+            "Value": 1
+          },
+          "UnknownMeaning": "unknown weather is neutral",
+          "Consumers": [
+            {
+              "ResidentId": "c1",
+              "CapturedWeather": 1,
+              "ContextAttempts": 1,
+              "Held": null
+            },
+            {
+              "ResidentId": "consumer:c1:1",
+              "CapturedWeather": 1,
+              "ContextAttempts": 1,
+              "Held": null
+            }
+          ]
+        },
+        {
+          "Minute": 13505.343635082245,
+          "WeatherStartsDay": 7,
+          "ResidentId": "c10",
+          "OutingOrQueue": {
+            "Boundary": 12569.0,
+            "Weather": 2,
+            "Queue": false,
+            "Value": 1
+          },
+          "UnknownMeaning": "unknown weather is neutral",
+          "Consumers": [
+            {
+              "ResidentId": "c10",
+              "CapturedWeather": 2,
+              "ContextAttempts": 0,
+              "Held": null
+            },
+            {
+              "ResidentId": "consumer:c10:1",
+              "CapturedWeather": 2,
+              "ContextAttempts": 0,
+              "Held": null
+            }
+          ]
+        }
+      ],
+      "logicalStopRecords": 134,
+      "futureStops": 134,
+      "activeStops": 0,
+      "cancelledStops": 0,
+      "pending": 243,
+      "chanceTally": {
+        "Eligible": 1788,
+        "Drawn": 438,
+        "Realised": 354,
+        "HandedOn": 213,
+        "PassedOn": 91,
+        "Dropped": 0
+      },
+      "frontageCounts": {
+        "total": 723,
+        "shown": 723,
+        "truncated": false
+      },
+      "frontageRoleCounts": {
+        "Leisure": 37,
+        "Work": 385,
+        "Shop": 301
+      },
+      "nullFrontages": 5,
+      "frontageRebinds": 0,
+      "frontageRebindMaxMs": 0.0,
+      "frontageRebindSpikes30": 0,
+      "chanceLedgerReconciles": true
+    },
+    {
+      "label": "soak-3",
+      "minute": 14945.344635009766,
+      "frame": 124653,
+      "nativeRaining": false,
+      "capabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "regulars": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "Regulars": 0
+        }
+      ],
+      "weather": [
+        {
+          "Minute": 14945.344635009766,
+          "WeatherStartsDay": 7,
+          "ResidentId": "c0",
+          "OutingOrQueue": {
+            "Boundary": 14281.0,
+            "Weather": 1,
+            "Queue": false,
+            "Value": 1
+          },
+          "UnknownMeaning": "unknown weather is neutral",
+          "Consumers": [
+            {
+              "ResidentId": "c0",
+              "CapturedWeather": 1,
+              "ContextAttempts": 1,
+              "Held": null
+            },
+            {
+              "ResidentId": "consumer:c0:1",
+              "CapturedWeather": 1,
+              "ContextAttempts": 1,
+              "Held": null
+            }
+          ]
+        },
+        {
+          "Minute": 14945.344635009766,
+          "WeatherStartsDay": 7,
+          "ResidentId": "c1",
+          "OutingOrQueue": {
+            "Boundary": 14007.643037907425,
+            "Weather": 1,
+            "Queue": false,
+            "Value": 1
+          },
+          "UnknownMeaning": "unknown weather is neutral",
+          "Consumers": [
+            {
+              "ResidentId": "c1",
+              "CapturedWeather": 1,
+              "ContextAttempts": 1,
+              "Held": null
+            },
+            {
+              "ResidentId": "consumer:c1:1",
+              "CapturedWeather": 1,
+              "ContextAttempts": 0,
+              "Held": null
+            }
+          ]
+        },
+        {
+          "Minute": 14945.344635009766,
+          "WeatherStartsDay": 7,
+          "ResidentId": "c10",
+          "OutingOrQueue": {
+            "Boundary": 14099.0,
+            "Weather": 1,
+            "Queue": false,
+            "Value": 1
+          },
+          "UnknownMeaning": "unknown weather is neutral",
+          "Consumers": [
+            {
+              "ResidentId": "c10",
+              "CapturedWeather": 1,
+              "ContextAttempts": 0,
+              "Held": null
+            },
+            {
+              "ResidentId": "consumer:c10:1",
+              "CapturedWeather": 1,
+              "ContextAttempts": 0,
+              "Held": null
+            }
+          ]
+        }
+      ],
+      "logicalStopRecords": 163,
+      "futureStops": 161,
+      "activeStops": 0,
+      "cancelledStops": 2,
+      "pending": 0,
+      "chanceTally": {
+        "Eligible": 3319,
+        "Drawn": 797,
+        "Realised": 956,
+        "HandedOn": 598,
+        "PassedOn": 129,
+        "Dropped": 0
+      },
+      "frontageCounts": {
+        "total": 723,
+        "shown": 723,
+        "truncated": false
+      },
+      "frontageRoleCounts": {
+        "Leisure": 37,
+        "Work": 385,
+        "Shop": 301
+      },
+      "nullFrontages": 5,
+      "frontageRebinds": 0,
+      "frontageRebindMaxMs": 0.0,
+      "frontageRebindSpikes30": 0,
+      "chanceLedgerReconciles": true
+    },
+    {
+      "label": "soak-4",
+      "minute": 16385.345634937286,
+      "frame": 125588,
+      "nativeRaining": false,
+      "capabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "regulars": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "Regulars": 0
+        }
+      ],
+      "weather": [
+        {
+          "Minute": 16385.345634937286,
+          "WeatherStartsDay": 7,
+          "ResidentId": "c0",
+          "OutingOrQueue": {
+            "Boundary": 15721.0,
+            "Weather": 1,
+            "Queue": false,
+            "Value": 1
+          },
+          "UnknownMeaning": "unknown weather is neutral",
+          "Consumers": [
+            {
+              "ResidentId": "c0",
+              "CapturedWeather": 1,
+              "ContextAttempts": 1,
+              "Held": null
+            },
+            {
+              "ResidentId": "consumer:c0:1",
+              "CapturedWeather": 1,
+              "ContextAttempts": 1,
+              "Held": null
+            }
+          ]
+        },
+        {
+          "Minute": 16385.345634937286,
+          "WeatherStartsDay": 7,
+          "ResidentId": "c1",
+          "OutingOrQueue": {
+            "Boundary": 15447.643037907425,
+            "Weather": 2,
+            "Queue": false,
+            "Value": 1
+          },
+          "UnknownMeaning": "unknown weather is neutral",
+          "Consumers": [
+            {
+              "ResidentId": "c1",
+              "CapturedWeather": 1,
+              "ContextAttempts": 1,
+              "Held": null
+            },
+            {
+              "ResidentId": "consumer:c1:1",
+              "CapturedWeather": 1,
+              "ContextAttempts": 1,
+              "Held": null
+            }
+          ]
+        },
+        {
+          "Minute": 16385.345634937286,
+          "WeatherStartsDay": 7,
+          "ResidentId": "c10",
+          "OutingOrQueue": {
+            "Boundary": 15539.0,
+            "Weather": 2,
+            "Queue": false,
+            "Value": 1
+          },
+          "UnknownMeaning": "unknown weather is neutral",
+          "Consumers": [
+            {
+              "ResidentId": "c10",
+              "CapturedWeather": 2,
+              "ContextAttempts": 0,
+              "Held": null
+            },
+            {
+              "ResidentId": "consumer:c10:1",
+              "CapturedWeather": 2,
+              "ContextAttempts": 0,
+              "Held": null
+            }
+          ]
+        }
+      ],
+      "logicalStopRecords": 84,
+      "futureStops": 84,
+      "activeStops": 0,
+      "cancelledStops": 0,
+      "pending": 0,
+      "chanceTally": {
+        "Eligible": 3927,
+        "Drawn": 940,
+        "Realised": 1099,
+        "HandedOn": 646,
+        "PassedOn": 129,
+        "Dropped": 0
+      },
+      "frontageCounts": {
+        "total": 723,
+        "shown": 723,
+        "truncated": false
+      },
+      "frontageRoleCounts": {
+        "Leisure": 37,
+        "Work": 385,
+        "Shop": 301
+      },
+      "nullFrontages": 5,
+      "frontageRebinds": 0,
+      "frontageRebindMaxMs": 0.0,
+      "frontageRebindSpikes30": 0,
+      "chanceLedgerReconciles": true
+    },
+    {
+      "label": "soak-final-reloaded",
+      "minute": 16385.678968429565,
+      "frame": 126817,
+      "nativeRaining": false,
+      "capabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "regulars": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "Regulars": 0
+        }
+      ],
+      "weather": [
+        {
+          "Minute": 16385.678968429565,
+          "WeatherStartsDay": 7,
+          "ResidentId": "c0",
+          "OutingOrQueue": {
+            "Boundary": 15721.0,
+            "Weather": 1,
+            "Queue": false,
+            "Value": 1
+          },
+          "UnknownMeaning": "unknown weather is neutral",
+          "Consumers": [
+            {
+              "ResidentId": "c0",
+              "CapturedWeather": 1,
+              "ContextAttempts": 1,
+              "Held": null
+            },
+            {
+              "ResidentId": "consumer:c0:1",
+              "CapturedWeather": 1,
+              "ContextAttempts": 1,
+              "Held": null
+            }
+          ]
+        },
+        {
+          "Minute": 16385.678968429565,
+          "WeatherStartsDay": 7,
+          "ResidentId": "c1",
+          "OutingOrQueue": {
+            "Boundary": 15447.643037907425,
+            "Weather": 2,
+            "Queue": false,
+            "Value": 1
+          },
+          "UnknownMeaning": "unknown weather is neutral",
+          "Consumers": [
+            {
+              "ResidentId": "c1",
+              "CapturedWeather": 1,
+              "ContextAttempts": 1,
+              "Held": null
+            },
+            {
+              "ResidentId": "consumer:c1:1",
+              "CapturedWeather": 1,
+              "ContextAttempts": 1,
+              "Held": null
+            }
+          ]
+        },
+        {
+          "Minute": 16385.678968429565,
+          "WeatherStartsDay": 7,
+          "ResidentId": "c10",
+          "OutingOrQueue": {
+            "Boundary": 15539.0,
+            "Weather": 2,
+            "Queue": false,
+            "Value": 1
+          },
+          "UnknownMeaning": "unknown weather is neutral",
+          "Consumers": [
+            {
+              "ResidentId": "c10",
+              "CapturedWeather": 2,
+              "ContextAttempts": 0,
+              "Held": null
+            },
+            {
+              "ResidentId": "consumer:c10:1",
+              "CapturedWeather": 2,
+              "ContextAttempts": 0,
+              "Held": null
+            }
+          ]
+        }
+      ],
+      "logicalStopRecords": 84,
+      "futureStops": 84,
+      "activeStops": 0,
+      "cancelledStops": 0,
+      "pending": 0,
+      "chanceTally": {
+        "Eligible": 0,
+        "Drawn": 0,
+        "Realised": 0,
+        "HandedOn": 0,
+        "PassedOn": 0,
+        "Dropped": 0
+      },
+      "frontageCounts": {
+        "total": 723,
+        "shown": 723,
+        "truncated": false
+      },
+      "frontageRoleCounts": {
+        "Leisure": 37,
+        "Work": 385,
+        "Shop": 301
+      },
+      "nullFrontages": 5,
+      "frontageRebinds": 0,
+      "frontageRebindMaxMs": 0.0,
+      "frontageRebindSpikes30": 0
+    }
+  ],
+  "sourcePending": 159,
+  "interpretation": "Logical record counts include future/cancelled stops; physical body limits are separate. 48/256 selector fixture variants were not fabricated. Native no-staffed-counter evidence limits further served-day cohorts.",
+  "unreached": [
+    "transient rain clearing before a planned break",
+    "bound queuer move-up into a vacant slot in rain",
+    "separately owned native nightclub overlap",
+    "destroyed-controller rebind"
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "arms": [
+    {
+      "label": "optional-zero-functional",
+      "percentage": 0,
+      "timing": {
+        "Break": 10.0,
+        "Chat": 30.0,
+        "WindowShopping": 3.0,
+        "Audience": 8.0,
+        "Resting": 40.0
+      },
+      "startMinute": 10827.745473861694,
+      "endMinute": 10890.013761520386,
+      "startPending": 0,
+      "endPending": 0,
+      "tallyDelta": {
+        "Eligible": 0,
+        "Drawn": 0,
+        "Realised": 0,
+        "HandedOn": 0,
+        "PassedOn": 0,
+        "Dropped": 0
+      },
+      "chanceLedgerReconciles": true,
+      "stopsBefore": 0,
+      "stopsAfter": 0,
+      "newStopDurations": []
+    },
+    {
+      "label": "optional-minima-functional",
+      "percentage": 100,
+      "timing": {
+        "Break": 5.0,
+        "Chat": 10.0,
+        "WindowShopping": 1.0,
+        "Audience": 2.0,
+        "Resting": 10.0
+      },
+      "startMinute": 10827.745473861694,
+      "endMinute": 10890.01591682434,
+      "startPending": 0,
+      "endPending": 0,
+      "tallyDelta": {
+        "Eligible": 0,
+        "Drawn": 0,
+        "Realised": 0,
+        "HandedOn": 0,
+        "PassedOn": 0,
+        "Dropped": 0
+      },
+      "chanceLedgerReconciles": true,
+      "stopsBefore": 0,
+      "stopsAfter": 0,
+      "newStopDurations": []
+    }
+  ]
+}

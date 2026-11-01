@@ -1,0 +1,25 @@
+{
+  "candidate": "dbddada2e35d0ac2ac826985214741392a406364",
+  "control": "a7ab5bc51ffaabae28697efad7b35411553f03a7",
+  "firstParent": [
+    "dbddada2e35d0ac2ac826985214741392a406364 Step D2: rival choice and own-ledger outflow (schema 21) (#58)",
+    "04b502c4d90f0b7382a93dd26b099f2842cb51b6 Step E3: frenchfries feasibility record on the shared direct-stock reader (read-only) (#66)",
+    "6909beb5cce7164e9c5df863cadeb23881b47e33 Step C2b: campaign awareness and targeting (schema 22) (#55)",
+    "8c6b3f3319b886804d53fb54e11e2a2c4f3cd4c0 Step E3: pizza feasibility record on the shared direct-stock reader (read-only) (#60)",
+    "2bd9006aec3a4ecd7911fe13aea049b5aa9d61c2 Step E4: bounded wider-menu framework, live limit four (schema 23) (#56)",
+    "75c956ccf8cd20205964e4e6b0fce6352bc0c73b Step E3: icecream feasibility record on the shared direct-stock reader (read-only) (#62)",
+    "0ffb819353c44a802224b98af673e1085040fc8a Step A5: integrated acceptance, offline closure and perf report (#59)",
+    "587745362a035395efc1a45bbb277799aae5cbdc Step E1: rain in new outings and food decisions, schema 20 weather capture (stacked on #24) (#37)",
+    "2f12ae94a51c1983cd101c8df3839bdc03da1ef6 Track F1: NO-GO stop report for shop city view, feasibility proposal (docs only) (#54)",
+    "51ce709e2696648a189a17f09890561446b2d75d Step E3: salad feasibility record on the shared direct-stock reader (read-only, stacked on #33) (#36)",
+    "1f8f4b41cfc37adf23f3832de97747a719bff99b Step C4: bounded market-research engine and access contract, inactive (stacked on #16) (#30)",
+    "692b8b5778b5b202eebcc9d8f73b6d6dccceef93 Step C2a: core bounded awareness sources and candidate interface (stacked on #16) (#24)",
+    "3178f3e68a81aafb72029778f50d684eddf08e91 Step E3: cupcake feasibility record + shared direct-stock reader (read-only, stacked on #23) (#33)",
+    "193c81defd6e11d1484d3aa545b3eb35de83ad59 Step E2b: bounded street-life timing and fail-closed venue ownership (#28)",
+    "3f7b885d0f8c19e1052947806bf224834e0b8b34 Step E3: first direct-stock food product feasibility record (read-only) (#23)",
+    "81472e637ee058b337a849f4e931f6d80fa4ad44 Step B2: regulars projection and inspector words (stacked on #17) (#19)",
+    "7053a281cfa4d8fb70a0d8cf4e10b056630cfa95 Step B1: shop memory capture and loyalty policy (stacked on #16) (#17)"
+  ],
+  "expectedMissing": [],
+  "actualWriter": 23
+}

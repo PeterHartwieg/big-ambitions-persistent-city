@@ -1,0 +1,1026 @@
+{
+  "examples": [
+    {
+      "consumer": "consumer:pc%3A24:1",
+      "context": "trip:EwvPEZxk0f4rl5mJJpVVYs2DJGLXKF5So4nzcwH3vh0=",
+      "selected": "business:ba%3Astreet_fifthavenue:2:1:ba%3Abusinesstype_coffeeshop:jTnQhoNwhkuGDTnL6K0Sxw%3D%3D",
+      "product": "ba:itemname_croissant",
+      "routeCalls": 2,
+      "quotesDone": 14,
+      "shortlistCount": 7,
+      "awareness": {
+        "CatalogueRevision": "QJfTG0ky2ptoQ9BdKwn8mQpqf+ggLU1Gi72FrdYAw98=",
+        "Union": [
+          {
+            "AlternativeKind": 1,
+            "BusinessId": "business:ba%3Astreet_fifthavenue:22:1:ba%3Abusinesstype_coffeeshop:jTnQhoNwhkuGDTnL6K0Sxw%3D%3D",
+            "Sources": 8,
+            "Eligible": true
+          },
+          {
+            "AlternativeKind": 1,
+            "BusinessId": "business:ba%3Astreet_fifthavenue:28:1:ba%3Abusinesstype_fastfoodrestaurant:jTnQhoNwhkuGDTnL6K0Sxw%3D%3D",
+            "Sources": 2,
+            "Eligible": true
+          },
+          {
+            "AlternativeKind": 1,
+            "BusinessId": "business:ba%3Astreet_fifthavenue:2:1:ba%3Abusinesstype_coffeeshop:jTnQhoNwhkuGDTnL6K0Sxw%3D%3D",
+            "Sources": 8,
+            "Eligible": true
+          },
+          {
+            "AlternativeKind": 1,
+            "BusinessId": "business:ba%3Astreet_fifthavenue:30:1:ba%3Abusinesstype_fastfoodrestaurant:jTnQhoNwhkuGDTnL6K0Sxw%3D%3D",
+            "Sources": 12,
+            "Eligible": true
+          },
+          {
+            "AlternativeKind": 1,
+            "BusinessId": "business:ba%3Astreet_fifthavenue:56:1:ba%3Abusinesstype_coffeeshop:0rwLbOxbEkOotd8aCkZ2Og%3D%3D",
+            "Sources": 8,
+            "Eligible": false
+          },
+          {
+            "AlternativeKind": 1,
+            "BusinessId": "business:ba%3Astreet_firststreet:40:1:ba%3Abusinesstype_fastfoodrestaurant:Oi0RvhdBU02%2BQP9HAn5atQ%3D%3D",
+            "Sources": 6,
+            "Eligible": true
+          },
+          {
+            "AlternativeKind": 1,
+            "BusinessId": "business:ba%3Astreet_fourthavenue:20:1:ba%3Abusinesstype_coffeeshop:HJFtA8Jq%2BkOZ6KHWfS8PQ%3D%3D",
+            "Sources": 2,
+            "Eligible": false
+          },
+          {
+            "AlternativeKind": 1,
+            "BusinessId": "business:ba%3Astreet_thirdavenue:3:1:ba%3Abusinesstype_fastfoodrestaurant:HJFtA8Jq%2BkOZ6KHWfS8PQ%3D%3D",
+            "Sources": 4,
+            "Eligible": false
+          },
+          {
+            "AlternativeKind": 0,
+            "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+            "Sources": 2,
+            "Eligible": true
+          },
+          {
+            "AlternativeKind": 1,
+            "BusinessId": "business:ba%3Astreet_thirdstreet:46:1:ba%3Abusinesstype_coffeeshop:l4dEdW6Cv0ujkWYG6vtbmw%3D%3D",
+            "Sources": 16,
+            "Eligible": true
+          }
+        ]
+      },
+      "shops": [
+        {
+          "AlternativeKind": 1,
+          "AvailabilityEvidence": 2,
+          "RivalTerms": "itmvoz0xAxVp015mRh0",
+          "RivalServiceMinutes": 5,
+          "AlternativeWeight": 1.0,
+          "ServiceMinutes": 5.0,
+          "MemoryContribution": 0.0,
+          "BusinessId": "business:ba%3Astreet_fifthavenue:2:1:ba%3Abusinesstype_coffeeshop:jTnQhoNwhkuGDTnL6K0Sxw%3D%3D",
+          "PlaceId": "address:ba%3Astreet_fifthavenue:2:shop",
+          "MealsPerHour": -1.0,
+          "ServiceUnavailable": false,
+          "NextServiceAt": 10551.0,
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 1,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 2,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 3,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 4,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 5,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 6,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            }
+          ],
+          "CustomerServicePercent": 50,
+          "DistrictId": "",
+          "Offers": [
+            {
+              "ProductId": "ba:itemname_croissant",
+              "Price": {
+                "Units": 248163200000
+              },
+              "Units": -1,
+              "DistrictDemandPercent": -1
+            }
+          ],
+          "OutwardQuote": 1,
+          "ReturnQuote": 1,
+          "Outward": {
+            "Legs": [
+              {
+                "From": {
+                  "X": 404.1673889160156,
+                  "Y": 0.09000015258789062,
+                  "Z": -156.37411499023438,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": 402.562255859375,
+                  "Y": 0.09000015258789062,
+                  "Z": -189.59368896484375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 5.543055385397255,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": 402.562255859375,
+                  "Y": 0.09000015258789062,
+                  "Z": -189.59368896484375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": 402.072265625,
+                  "Y": 0.083686463534832,
+                  "Z": -196.24783325195312,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 1.112027319766783,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": 402.072265625,
+                  "Y": 0.083686463534832,
+                  "Z": -196.24783325195312,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": 391.7122802734375,
+                  "Y": 0.09000396728515625,
+                  "Z": -196.24371337890625,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 1.7266647772783859,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": 391.7122802734375,
+                  "Y": 0.09000396728515625,
+                  "Z": -196.24371337890625,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": 386.7000427246094,
+                  "Y": 0.09000396728515625,
+                  "Z": -192.96371459960938,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.9983447573594326,
+                "ServiceId": ""
+              }
+            ],
+            "Minutes": 9.380092239801858,
+            "EstimatedMinutes": 9.380092239801858
+          },
+          "Return": {
+            "Legs": [
+              {
+                "From": {
+                  "X": 386.7000427246094,
+                  "Y": 0.09000396728515625,
+                  "Z": -192.96371459960938,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": 391.7122802734375,
+                  "Y": 0.09000396728515625,
+                  "Z": -196.24371337890625,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.9983447573594326,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": 391.7122802734375,
+                  "Y": 0.09000396728515625,
+                  "Z": -196.24371337890625,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": 402.072265625,
+                  "Y": 0.09000396728515625,
+                  "Z": -196.24371337890625,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 1.7266643197149725,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": 402.072265625,
+                  "Y": 0.09000396728515625,
+                  "Z": -196.24371337890625,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": 402.562255859375,
+                  "Y": 0.09000015258789062,
+                  "Z": -189.59368896484375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 1.1113420315843605,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": 402.562255859375,
+                  "Y": 0.09000015258789062,
+                  "Z": -189.59368896484375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": 404.1673889160156,
+                  "Y": 0.09000015258789062,
+                  "Z": -156.37411499023438,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 5.543055385397255,
+                "ServiceId": ""
+              }
+            ],
+            "Minutes": 9.37940649405602,
+            "EstimatedMinutes": 9.37940649405602
+          }
+        },
+        {
+          "AlternativeKind": 1,
+          "AvailabilityEvidence": 2,
+          "RivalTerms": "itmvoz0xAxVp015mRh0",
+          "RivalServiceMinutes": 5,
+          "AlternativeWeight": 1.0,
+          "ServiceMinutes": 5.0,
+          "MemoryContribution": 0.0,
+          "BusinessId": "business:ba%3Astreet_fifthavenue:22:1:ba%3Abusinesstype_coffeeshop:jTnQhoNwhkuGDTnL6K0Sxw%3D%3D",
+          "PlaceId": "address:ba%3Astreet_fifthavenue:22:shop",
+          "MealsPerHour": -1.0,
+          "ServiceUnavailable": false,
+          "NextServiceAt": 10551.0,
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 1,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 2,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 3,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 4,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 5,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 6,
+              "FromMinute": 480,
+              "ToMinute": 1200
+            }
+          ],
+          "CustomerServicePercent": 50,
+          "DistrictId": "",
+          "Offers": [
+            {
+              "ProductId": "ba:itemname_croissant",
+              "Price": {
+                "Units": 248163200000
+              },
+              "Units": -1,
+              "DistrictDemandPercent": -1
+            }
+          ],
+          "OutwardQuote": 3,
+          "ReturnQuote": 3,
+          "Outward": null,
+          "Return": null
+        },
+        {
+          "AlternativeKind": 1,
+          "AvailabilityEvidence": 2,
+          "RivalTerms": "unzFMlTIzRa76Pyj3DU",
+          "RivalServiceMinutes": 5,
+          "AlternativeWeight": 1.0,
+          "ServiceMinutes": 5.0,
+          "MemoryContribution": 0.0,
+          "BusinessId": "business:ba%3Astreet_firststreet:40:1:ba%3Abusinesstype_fastfoodrestaurant:Oi0RvhdBU02%2BQP9HAn5atQ%3D%3D",
+          "PlaceId": "address:ba%3Astreet_firststreet:40:shop",
+          "MealsPerHour": -1.0,
+          "ServiceUnavailable": false,
+          "NextServiceAt": 10551.0,
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 540,
+              "ToMinute": 1380
+            },
+            {
+              "Day": 1,
+              "FromMinute": 540,
+              "ToMinute": 1380
+            },
+            {
+              "Day": 2,
+              "FromMinute": 540,
+              "ToMinute": 1380
+            },
+            {
+              "Day": 3,
+              "FromMinute": 540,
+              "ToMinute": 1380
+            },
+            {
+              "Day": 4,
+              "FromMinute": 540,
+              "ToMinute": 1380
+            },
+            {
+              "Day": 5,
+              "FromMinute": 540,
+              "ToMinute": 1380
+            },
+            {
+              "Day": 6,
+              "FromMinute": 540,
+              "ToMinute": 1380
+            }
+          ],
+          "CustomerServicePercent": 50,
+          "DistrictId": "",
+          "Offers": [
+            {
+              "ProductId": "ba:itemname_burger",
+              "Price": {
+                "Units": 477815142400
+              },
+              "Units": -1,
+              "DistrictDemandPercent": -1
+            }
+          ],
+          "OutwardQuote": 3,
+          "ReturnQuote": 3,
+          "Outward": null,
+          "Return": null
+        },
+        {
+          "AlternativeKind": 1,
+          "AvailabilityEvidence": 2,
+          "RivalTerms": "A9jCxVuuaLfsgcKAdMQ",
+          "RivalServiceMinutes": 5,
+          "AlternativeWeight": 1.0,
+          "ServiceMinutes": 5.0,
+          "MemoryContribution": 0.0,
+          "BusinessId": "business:ba%3Astreet_fifthavenue:28:1:ba%3Abusinesstype_fastfoodrestaurant:jTnQhoNwhkuGDTnL6K0Sxw%3D%3D",
+          "PlaceId": "address:ba%3Astreet_fifthavenue:28:shop",
+          "MealsPerHour": -1.0,
+          "ServiceUnavailable": false,
+          "NextServiceAt": 10551.0,
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 660,
+              "ToMinute": 1320
+            },
+            {
+              "Day": 1,
+              "FromMinute": 660,
+              "ToMinute": 1320
+            },
+            {
+              "Day": 2,
+              "FromMinute": 660,
+              "ToMinute": 1320
+            },
+            {
+              "Day": 3,
+              "FromMinute": 660,
+              "ToMinute": 1320
+            },
+            {
+              "Day": 4,
+              "FromMinute": 660,
+              "ToMinute": 1320
+            },
+            {
+              "Day": 5,
+              "FromMinute": 660,
+              "ToMinute": 1320
+            },
+            {
+              "Day": 6,
+              "FromMinute": 660,
+              "ToMinute": 1320
+            }
+          ],
+          "CustomerServicePercent": 50,
+          "DistrictId": "",
+          "Offers": [
+            {
+              "ProductId": "ba:itemname_burger",
+              "Price": {
+                "Units": 430838886400
+              },
+              "Units": -1,
+              "DistrictDemandPercent": -1
+            },
+            {
+              "ProductId": "ba:itemname_hotdog",
+              "Price": {
+                "Units": 401541811200
+              },
+              "Units": -1,
+              "DistrictDemandPercent": -1
+            }
+          ],
+          "OutwardQuote": 3,
+          "ReturnQuote": 3,
+          "Outward": null,
+          "Return": null
+        },
+        {
+          "AlternativeKind": 1,
+          "AvailabilityEvidence": 2,
+          "RivalTerms": "A9jCxVuuaLfsgcKAdMQ",
+          "RivalServiceMinutes": 5,
+          "AlternativeWeight": 1.0,
+          "ServiceMinutes": 5.0,
+          "MemoryContribution": 0.0,
+          "BusinessId": "business:ba%3Astreet_fifthavenue:30:1:ba%3Abusinesstype_fastfoodrestaurant:jTnQhoNwhkuGDTnL6K0Sxw%3D%3D",
+          "PlaceId": "address:ba%3Astreet_fifthavenue:30:shop",
+          "MealsPerHour": -1.0,
+          "ServiceUnavailable": false,
+          "NextServiceAt": 10551.0,
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 660,
+              "ToMinute": 1320
+            },
+            {
+              "Day": 1,
+              "FromMinute": 660,
+              "ToMinute": 1320
+            },
+            {
+              "Day": 2,
+              "FromMinute": 660,
+              "ToMinute": 1320
+            },
+            {
+              "Day": 3,
+              "FromMinute": 660,
+              "ToMinute": 1320
+            },
+            {
+              "Day": 4,
+              "FromMinute": 660,
+              "ToMinute": 1320
+            },
+            {
+              "Day": 5,
+              "FromMinute": 660,
+              "ToMinute": 1320
+            },
+            {
+              "Day": 6,
+              "FromMinute": 660,
+              "ToMinute": 1320
+            }
+          ],
+          "CustomerServicePercent": 50,
+          "DistrictId": "",
+          "Offers": [
+            {
+              "ProductId": "ba:itemname_burger",
+              "Price": {
+                "Units": 430838886400
+              },
+              "Units": -1,
+              "DistrictDemandPercent": -1
+            },
+            {
+              "ProductId": "ba:itemname_hotdog",
+              "Price": {
+                "Units": 401541811200
+              },
+              "Units": -1,
+              "DistrictDemandPercent": -1
+            }
+          ],
+          "OutwardQuote": 3,
+          "ReturnQuote": 3,
+          "Outward": null,
+          "Return": null
+        },
+        {
+          "AlternativeKind": 0,
+          "AvailabilityEvidence": 1,
+          "RivalTerms": "",
+          "RivalServiceMinutes": 0,
+          "AlternativeWeight": 1.0,
+          "ServiceMinutes": "Infinity",
+          "MemoryContribution": 0.07232066157962608,
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "MealsPerHour": 0.0,
+          "ServiceUnavailable": true,
+          "NextServiceAt": 10551.0,
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 1,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 2,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 3,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 4,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 5,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 6,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            }
+          ],
+          "CustomerServicePercent": 20,
+          "DistrictId": "ba:neighborhood_hellskitchen",
+          "Offers": [
+            {
+              "ProductId": "ba:itemname_croissant",
+              "Price": {
+                "Units": 275221504000
+              },
+              "Units": 0,
+              "DistrictDemandPercent": 42
+            }
+          ],
+          "OutwardQuote": 3,
+          "ReturnQuote": 3,
+          "Outward": null,
+          "Return": null
+        },
+        {
+          "AlternativeKind": 1,
+          "AvailabilityEvidence": 2,
+          "RivalTerms": "TpCwJJGMUXTesFfln7Y",
+          "RivalServiceMinutes": 5,
+          "AlternativeWeight": 1.0,
+          "ServiceMinutes": 5.0,
+          "MemoryContribution": 0.0,
+          "BusinessId": "business:ba%3Astreet_thirdstreet:46:1:ba%3Abusinesstype_coffeeshop:l4dEdW6Cv0ujkWYG6vtbmw%3D%3D",
+          "PlaceId": "address:ba%3Astreet_thirdstreet:46:shop",
+          "MealsPerHour": -1.0,
+          "ServiceUnavailable": false,
+          "NextServiceAt": 10551.0,
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 1,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 2,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 3,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 4,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 5,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 6,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            }
+          ],
+          "CustomerServicePercent": 50,
+          "DistrictId": "",
+          "Offers": [
+            {
+              "ProductId": "ba:itemname_croissant",
+              "Price": {
+                "Units": 248163200000
+              },
+              "Units": -1,
+              "DistrictDemandPercent": -1
+            }
+          ],
+          "OutwardQuote": 3,
+          "ReturnQuote": 3,
+          "Outward": null,
+          "Return": null
+        }
+      ]
+    },
+    {
+      "consumer": "consumer:pc%3A362:1",
+      "context": "trip:JTjGj45zo1TNoz/jaS5+r1UeRFnKOwWcgPJ+LFt8KhI=",
+      "selected": "business:ba%3Astreet_firstavenue:19:1:ba%3Abusinesstype_coffeeshop:1mrLUhR5rE%2BLcNYfFKmTTg%3D%3D",
+      "product": "ba:itemname_croissant",
+      "routeCalls": 2,
+      "quotesDone": 6,
+      "shortlistCount": 3,
+      "awareness": {
+        "CatalogueRevision": "QJfTG0ky2ptoQ9BdKwn8mQpqf+ggLU1Gi72FrdYAw98=",
+        "Union": [
+          {
+            "AlternativeKind": 1,
+            "BusinessId": "business:ba%3Astreet_fifthavenue:37:1:ba%3Abusinesstype_coffeeshop:EU%2BuDKJcnUaAVB95hp8Tg%3D%3D",
+            "Sources": 4,
+            "Eligible": false
+          },
+          {
+            "AlternativeKind": 1,
+            "BusinessId": "business:ba%3Astreet_firstavenue:19:1:ba%3Abusinesstype_coffeeshop:1mrLUhR5rE%2BLcNYfFKmTTg%3D%3D",
+            "Sources": 2,
+            "Eligible": true
+          },
+          {
+            "AlternativeKind": 1,
+            "BusinessId": "business:ba%3Astreet_fourthavenue:20:1:ba%3Abusinesstype_coffeeshop:HJFtA8Jq%2BkOZ6KHWfS8PQ%3D%3D",
+            "Sources": 4,
+            "Eligible": true
+          },
+          {
+            "AlternativeKind": 1,
+            "BusinessId": "business:ba%3Astreet_seventhstreet:3:1:ba%3Abusinesstype_fastfoodrestaurant:OWnstBBx4ku22KVIBLmcPg%3D%3D",
+            "Sources": 10,
+            "Eligible": false
+          },
+          {
+            "AlternativeKind": 1,
+            "BusinessId": "business:ba%3Astreet_sixthstreet:10:1:ba%3Abusinesstype_coffeeshop:yXNH9hTIv0KhI5OI8be0A%3D%3D",
+            "Sources": 8,
+            "Eligible": false
+          },
+          {
+            "AlternativeKind": 1,
+            "BusinessId": "business:ba%3Astreet_thirdavenue:3:1:ba%3Abusinesstype_fastfoodrestaurant:HJFtA8Jq%2BkOZ6KHWfS8PQ%3D%3D",
+            "Sources": 6,
+            "Eligible": false
+          },
+          {
+            "AlternativeKind": 0,
+            "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+            "Sources": 14,
+            "Eligible": true
+          }
+        ]
+      },
+      "shops": [
+        {
+          "AlternativeKind": 1,
+          "AvailabilityEvidence": 2,
+          "RivalTerms": "S4_EIRvRRQ0RLTAsg1A",
+          "RivalServiceMinutes": 5,
+          "AlternativeWeight": 1.0,
+          "ServiceMinutes": 5.0,
+          "MemoryContribution": 0.0,
+          "BusinessId": "business:ba%3Astreet_fourthavenue:20:1:ba%3Abusinesstype_coffeeshop:HJFtA8Jq%2BkOZ6KHWfS8PQ%3D%3D",
+          "PlaceId": "address:ba%3Astreet_fourthavenue:20:shop",
+          "MealsPerHour": -1.0,
+          "ServiceUnavailable": false,
+          "NextServiceAt": 10564.0,
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 420,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 1,
+              "FromMinute": 420,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 2,
+              "FromMinute": 420,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 3,
+              "FromMinute": 420,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 4,
+              "FromMinute": 420,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 5,
+              "FromMinute": 420,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 6,
+              "FromMinute": 420,
+              "ToMinute": 1200
+            }
+          ],
+          "CustomerServicePercent": 50,
+          "DistrictId": "",
+          "Offers": [
+            {
+              "ProductId": "ba:itemname_croissant",
+              "Price": {
+                "Units": 275221504000
+              },
+              "Units": -1,
+              "DistrictDemandPercent": -1
+            }
+          ],
+          "OutwardQuote": 3,
+          "ReturnQuote": 3,
+          "Outward": null,
+          "Return": null
+        },
+        {
+          "AlternativeKind": 0,
+          "AvailabilityEvidence": 1,
+          "RivalTerms": "",
+          "RivalServiceMinutes": 0,
+          "AlternativeWeight": 1.0,
+          "ServiceMinutes": 4.0,
+          "MemoryContribution": 0.20294084399669038,
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "MealsPerHour": 15.0,
+          "ServiceUnavailable": false,
+          "NextServiceAt": 10564.0,
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 1,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 2,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 3,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 4,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 5,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 6,
+              "FromMinute": 480,
+              "ToMinute": 1080
+            }
+          ],
+          "CustomerServicePercent": 20,
+          "DistrictId": "ba:neighborhood_hellskitchen",
+          "Offers": [
+            {
+              "ProductId": "ba:itemname_croissant",
+              "Price": {
+                "Units": 275221504000
+              },
+              "Units": 166,
+              "DistrictDemandPercent": 42
+            }
+          ],
+          "OutwardQuote": 3,
+          "ReturnQuote": 3,
+          "Outward": null,
+          "Return": null
+        },
+        {
+          "AlternativeKind": 1,
+          "AvailabilityEvidence": 2,
+          "RivalTerms": "Bmo5OOyC27k0E5oZZqA",
+          "RivalServiceMinutes": 5,
+          "AlternativeWeight": 1.0,
+          "ServiceMinutes": 5.0,
+          "MemoryContribution": 0.0,
+          "BusinessId": "business:ba%3Astreet_firstavenue:19:1:ba%3Abusinesstype_coffeeshop:1mrLUhR5rE%2BLcNYfFKmTTg%3D%3D",
+          "PlaceId": "address:ba%3Astreet_firstavenue:19:shop",
+          "MealsPerHour": -1.0,
+          "ServiceUnavailable": false,
+          "NextServiceAt": 10564.0,
+          "Hours": [
+            {
+              "Day": 0,
+              "FromMinute": 300,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 1,
+              "FromMinute": 300,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 2,
+              "FromMinute": 300,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 3,
+              "FromMinute": 300,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 4,
+              "FromMinute": 300,
+              "ToMinute": 1080
+            },
+            {
+              "Day": 5,
+              "FromMinute": 360,
+              "ToMinute": 1200
+            },
+            {
+              "Day": 6,
+              "FromMinute": 360,
+              "ToMinute": 1200
+            }
+          ],
+          "CustomerServicePercent": 50,
+          "DistrictId": "",
+          "Offers": [
+            {
+              "ProductId": "ba:itemname_croissant",
+              "Price": {
+                "Units": 325086054400
+              },
+              "Units": -1,
+              "DistrictDemandPercent": -1
+            }
+          ],
+          "OutwardQuote": 1,
+          "ReturnQuote": 1,
+          "Outward": {
+            "Legs": [
+              {
+                "From": {
+                  "X": 174.1199951171875,
+                  "Y": 0.09000396728515625,
+                  "Z": 450.25,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": 110.43818664550781,
+                  "Y": 0.09000015258789062,
+                  "Z": 452.2878723144531,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 10.619068406950984,
+                "ServiceId": ""
+              }
+            ],
+            "Minutes": 10.619068406950984,
+            "EstimatedMinutes": 10.619068406950984
+          },
+          "Return": {
+            "Legs": [
+              {
+                "From": {
+                  "X": 110.43818664550781,
+                  "Y": 0.09000015258789062,
+                  "Z": 452.2878723144531,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": 174.1199951171875,
+                  "Y": 0.09000396728515625,
+                  "Z": 450.25,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 10.619068406950984,
+                "ServiceId": ""
+              }
+            ],
+            "Minutes": 10.619068406950984,
+            "EstimatedMinutes": 10.619068406950984
+          }
+        }
+      ]
+    }
+  ],
+  "capture": {
+    "recording": false,
+    "decisionsRetained": 5000,
+    "decisionLimit": 5000,
+    "droppedDecisions": 636,
+    "routineDiagnosticsRetained": 4821,
+    "routineDiagnosticLimit": 100000,
+    "droppedRoutineDiagnostics": 0,
+    "truncated": true,
+    "note": "Bounded diagnostic traces only; dropped records do not stop simulation or alter authoritative saved ledgers."
+  },
+  "qualification": "Native decision observer was bounded/truncated; examples are positive observations, not an untruncated frequency estimate. Full-day exact accounting independently reconciles all purchases."
+}

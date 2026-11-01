@@ -1,0 +1,163 @@
+{
+  "source": {
+    "sourceFixture": "FT Food Routines Locked B1 RecoveryFinal 20261101.hsg",
+    "sourceBuild": "f214cd4a88bb872f9e96233e9616f1bd941abe50",
+    "sourceSchema": 18,
+    "sourceMinute": 19360.01125717163,
+    "sourceSha256": "61d751935f313ab3ad5900842fbe7886c1cf0118bb83368f2f1963e7f6a91263",
+    "copiedSha256": "61d751935f313ab3ad5900842fbe7886c1cf0118bb83368f2f1963e7f6a91263",
+    "historicalEvidence": "Archived B1 native recovery snapshots; synthetic capacity fixtures excluded",
+    "positiveSubjects": [
+      {
+        "id": "c154",
+        "anchor": "c154",
+        "slot": 0,
+        "entries": [
+          {
+            "BusinessRef": 0,
+            "Day": 13,
+            "Served": 3,
+            "Affinity": 3,
+            "Outcome": 1
+          }
+        ]
+      },
+      {
+        "id": "pc:2",
+        "anchor": "pc:2",
+        "slot": 0,
+        "entries": [
+          {
+            "BusinessRef": 0,
+            "Day": 11,
+            "Served": 3,
+            "Affinity": 3,
+            "Outcome": 1
+          }
+        ]
+      },
+      {
+        "id": "consumer:pc%3A9:1",
+        "anchor": "pc:9",
+        "slot": 1,
+        "entries": [
+          {
+            "BusinessRef": 0,
+            "Day": 11,
+            "Served": 5,
+            "Affinity": 5,
+            "Outcome": 1
+          }
+        ]
+      },
+      {
+        "id": "consumer:pc%3A377:1",
+        "anchor": "pc:377",
+        "slot": 1,
+        "entries": [
+          {
+            "BusinessRef": 0,
+            "Day": 11,
+            "Served": 3,
+            "Affinity": 3,
+            "Outcome": 1
+          }
+        ]
+      },
+      {
+        "id": "pc:399",
+        "anchor": "pc:399",
+        "slot": 0,
+        "entries": [
+          {
+            "BusinessRef": 0,
+            "Day": 12,
+            "Served": 3,
+            "Affinity": 2,
+            "Outcome": 1
+          }
+        ]
+      },
+      {
+        "id": "consumer:pc%3A502:1",
+        "anchor": "pc:502",
+        "slot": 1,
+        "entries": [
+          {
+            "BusinessRef": 0,
+            "Day": 13,
+            "Served": 3,
+            "Affinity": 2,
+            "Outcome": 1
+          }
+        ]
+      },
+      {
+        "id": "pc:519",
+        "anchor": "pc:519",
+        "slot": 0,
+        "entries": [
+          {
+            "BusinessRef": 0,
+            "Day": 11,
+            "Served": 3,
+            "Affinity": 2,
+            "Outcome": 1
+          }
+        ]
+      },
+      {
+        "id": "consumer:pc%3A519:1",
+        "anchor": "pc:519",
+        "slot": 1,
+        "entries": [
+          {
+            "BusinessRef": 0,
+            "Day": 11,
+            "Served": 3,
+            "Affinity": 3,
+            "Outcome": 1
+          }
+        ]
+      }
+    ]
+  },
+  "schema": 23,
+  "day": 13,
+  "regularsBefore": [
+    {
+      "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+      "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+      "Regulars": 8
+    }
+  ],
+  "regularsReload": [
+    {
+      "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+      "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+      "Regulars": 8
+    }
+  ],
+  "regularsStableAllReads": true,
+  "regularsStableReload": true,
+  "readOnlyNativeExact": true,
+  "nativeBeforeSha256": "04a10767e7fc191b713b12c6402eaf01ef035c03e05b43f0931f4fc68bc1a4b5",
+  "nativeAfterSha256": "04a10767e7fc191b713b12c6402eaf01ef035c03e05b43f0931f4fc68bc1a4b5",
+  "payloadExactDuringReads": true,
+  "memoryHashes": {
+    "source": "f34bb40ed86266c64eb81f064196be665f676ba69e03cde93d2ea3278605a40d",
+    "nativeSave": "f34bb40ed86266c64eb81f064196be665f676ba69e03cde93d2ea3278605a40d",
+    "reload": "f34bb40ed86266c64eb81f064196be665f676ba69e03cde93d2ea3278605a40d"
+  },
+  "memoryDiagnostics": {
+    "c154": "{ ConsumerId = c154, Day = 13, Active = True, Represented = False, StoryKind = Resident's own consumer, Words = System.Collections.Generic.List`1[System.String], OwnShopRegulars = <>f__AnonymousType2`3[System.String,System.String,System.Int32][], PolicyRevision = 1, CapacityMisses = 0, ProtectedInsertions = 0, Watermark = PersistentCity.Core.ExperienceWatermark, Regular = True, Entries = <>f__AnonymousType3`10[System.String,System.Int32,System.Int32,System.Int32,System.Int32,PersistentCity.Core.ShopExperience,System.Int32,System.Boolean,System.Boolean,System.Boolean][] }",
+    "pc-2": "{ ConsumerId = pc:2, Day = 13, Active = True, Represented = False, StoryKind = Resident's own consumer, Words = System.Collections.Generic.List`1[System.String], OwnShopRegulars = <>f__AnonymousType2`3[System.String,System.String,System.Int32][], PolicyRevision = 1, CapacityMisses = 0, ProtectedInsertions = 0, Watermark = PersistentCity.Core.ExperienceWatermark, Regular = True, Entries = <>f__AnonymousType3`10[System.String,System.Int32,System.Int32,System.Int32,System.Int32,PersistentCity.Core.ShopExperience,System.Int32,System.Boolean,System.Boolean,System.Boolean][] }",
+    "consumer-pc-3A9-1": "{ ConsumerId = consumer:pc%3A9:1, Day = 13, Active = True, Represented = True, StoryKind = Represented consumer; no physical body, Words = System.Collections.Generic.List`1[System.String], OwnShopRegulars = <>f__AnonymousType2`3[System.String,System.String,System.Int32][], PolicyRevision = 1, CapacityMisses = 0, ProtectedInsertions = 0, Watermark = PersistentCity.Core.ExperienceWatermark, Regular = True, Entries = <>f__AnonymousType3`10[System.String,System.Int32,System.Int32,System.Int32,System.Int32,PersistentCity.Core.ShopExperience,System.Int32,System.Boolean,System.Boolean,System.Boolean][] }",
+    "pc-9": "{ ConsumerId = pc:9, Day = 13, Active = True, Represented = False, StoryKind = Resident's own consumer, Words = System.Collections.Generic.List`1[System.String], OwnShopRegulars = <>f__AnonymousType2`3[System.String,System.String,System.Int32][], PolicyRevision = 1, CapacityMisses = 0, ProtectedInsertions = 0, Watermark = PersistentCity.Core.ExperienceWatermark, Regular = False, Entries = <>f__AnonymousType3`10[System.String,System.Int32,System.Int32,System.Int32,System.Int32,PersistentCity.Core.ShopExperience,System.Int32,System.Boolean,System.Boolean,System.Boolean][] }"
+  },
+  "regularPopup": "Paul Okafor, 23, is a student. Lives at 16 3rd Street. Studies at Manhattan Business School, 7 4th Avenue. Right now: at home until 10:50.\n\na regular at Persistent City food routines \u00b7 30 3rd Street.\n\nNot travelling: at home (stays until 10:50)\n\nToday's meals\nBreakfast: bought croissant at Persistent City food routines, 30 3rd Street\nLunch: unknown\nDinner: unknown\n",
+  "residentWithRepresentedRegularPopup": "Esme Frost, 43, is sporty. Lives at 16 10th Street. Works at Daily Bread, 32 3rd Street. Right now: at home until 10:45.\n\nNot travelling: at home (stays until 10:45)\n\nToday's meals\nBreakfast: chose household food\nLunch: unknown\nDinner: unknown\n",
+  "noRawStreetKeysInShownText": true,
+  "representedStoryNotInheritedByOwnPopup": true,
+  "qualification": "Historical genuine B1 native served visits, projected on candidate schema23 and reloaded; no new 1/2/3-day cohort, age14/15, penalty, expiry or generation-replacement proof. Reflection return uses native ToString; aggregate/count, StoryKind and Regular flags plus actual popup retained."
+}

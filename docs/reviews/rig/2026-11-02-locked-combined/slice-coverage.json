@@ -1,0 +1,970 @@
+[
+  {
+    "slice": "b1-memory-loyalty",
+    "item": 1,
+    "verdict": "PASS",
+    "detail": "Frozen fixture/build/settings/autosave/restore. Prior same-code standalone PASS reused.",
+    "evidence": "provenance.json",
+    "sourceSectionSha256": "3f37fcb9785af7805d6e513c4671d9ae1fb876a7d55973cf090e3163f4608856"
+  },
+  {
+    "slice": "b1-memory-loyalty",
+    "item": 2,
+    "verdict": "PARTIAL",
+    "detail": "Current9 memories and archived real served-day cohort project8regulars; no multi-seed loyal/curious frequency proof. Later shop lacks staffed counter.",
+    "evidence": "b2-retained-summary.json",
+    "sourceSectionSha256": "3f37fcb9785af7805d6e513c4671d9ae1fb876a7d55973cf090e3163f4608856"
+  },
+  {
+    "slice": "b1-memory-loyalty",
+    "item": 3,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "3f37fcb9785af7805d6e513c4671d9ae1fb876a7d55973cf090e3163f4608856"
+  },
+  {
+    "slice": "b1-memory-loyalty",
+    "item": 4,
+    "verdict": "PARTIAL",
+    "detail": "Genuine archived native recovery read on candidate; no current prepared failure/recovery/generation-turnover sequence.",
+    "evidence": "b2-retained-summary.json",
+    "sourceSectionSha256": "3f37fcb9785af7805d6e513c4671d9ae1fb876a7d55973cf090e3163f4608856"
+  },
+  {
+    "slice": "b1-memory-loyalty",
+    "item": 5,
+    "verdict": "PARTIAL",
+    "detail": "Integration partial quote preserves old tuning despite unloaded edit; one native receipt. Journey replay passes. No late receipt/every cursor/fresh edited capture; prior standalone PASS retained.",
+    "evidence": "held-summary.json",
+    "sourceSectionSha256": "3f37fcb9785af7805d6e513c4671d9ae1fb876a7d55973cf090e3163f4608856"
+  },
+  {
+    "slice": "b1-memory-loyalty",
+    "item": 6,
+    "verdict": "PASS",
+    "detail": "Integration full native day exact money/receipts/stock/bags/accounts/reload; prior standalone PASS retained.",
+    "evidence": "accounting-summary.json",
+    "sourceSectionSha256": "3f37fcb9785af7805d6e513c4671d9ae1fb876a7d55973cf090e3163f4608856"
+  },
+  {
+    "slice": "b1-memory-loyalty",
+    "item": 7,
+    "verdict": "PASS",
+    "detail": "Combined18->23 retains old data, empty memory then next-day activation; corrupt/future refusal preserves bytes. Prior capacity proof reused, not repeated.",
+    "evidence": "migration-summary.json",
+    "sourceSectionSha256": "3f37fcb9785af7805d6e513c4671d9ae1fb876a7d55973cf090e3163f4608856"
+  },
+  {
+    "slice": "b1-memory-loyalty",
+    "item": 8,
+    "verdict": "FAIL",
+    "detail": "C4 six combined windows only: p95 passes, one >=30ms flag. Slice-specific variants omitted as instructed.",
+    "evidence": "performance-summary.json",
+    "sourceSectionSha256": "3f37fcb9785af7805d6e513c4671d9ae1fb876a7d55973cf090e3163f4608856"
+  },
+  {
+    "slice": "b2-regulars-inspector",
+    "item": 1,
+    "verdict": "PASS",
+    "detail": "Frozen native archived cohort/default3visits14days/autosave/restore.",
+    "evidence": "provenance.json",
+    "sourceSectionSha256": "f1d860f4f1932c97f53a1bc8bc21ab551a722bbc77bb13247eda05cb78f522d8"
+  },
+  {
+    "slice": "b2-regulars-inspector",
+    "item": 2,
+    "verdict": "PARTIAL",
+    "detail": "4slot-zero+4represented current regulars from genuine3/5served counts/positive affinity; no new1/2/3-day or14/15/expiry progression.",
+    "evidence": "b2-retained-summary.json",
+    "sourceSectionSha256": "f1d860f4f1932c97f53a1bc8bc21ab551a722bbc77bb13247eda05cb78f522d8"
+  },
+  {
+    "slice": "b2-regulars-inspector",
+    "item": 3,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "f1d860f4f1932c97f53a1bc8bc21ab551a722bbc77bb13247eda05cb78f522d8"
+  },
+  {
+    "slice": "b2-regulars-inspector",
+    "item": 4,
+    "verdict": "PARTIAL",
+    "detail": "Repeated diagnostics/popup preserve exact native/payload; positive words and own/represented separation. No freshly prepared stockout transition.",
+    "evidence": "b2-retained-summary.json",
+    "sourceSectionSha256": "f1d860f4f1932c97f53a1bc8bc21ab551a722bbc77bb13247eda05cb78f522d8"
+  },
+  {
+    "slice": "b2-regulars-inspector",
+    "item": 5,
+    "verdict": "PARTIAL",
+    "detail": "8regulars and memory hashes stable native save/reload; no actual generation replacement/continuation-budget variants or isolated B1/B2 byte comparison.",
+    "evidence": "b2-retained-summary.json",
+    "sourceSectionSha256": "f1d860f4f1932c97f53a1bc8bc21ab551a722bbc77bb13247eda05cb78f522d8"
+  },
+  {
+    "slice": "b2-regulars-inspector",
+    "item": 6,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "f1d860f4f1932c97f53a1bc8bc21ab551a722bbc77bb13247eda05cb78f522d8"
+  },
+  {
+    "slice": "b2-regulars-inspector",
+    "item": 7,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "f1d860f4f1932c97f53a1bc8bc21ab551a722bbc77bb13247eda05cb78f522d8"
+  },
+  {
+    "slice": "b2-regulars-inspector",
+    "item": 8,
+    "verdict": "FAIL",
+    "detail": "C4 six combined windows only: p95 passes, one >=30ms flag. Slice-specific variants omitted as instructed.",
+    "evidence": "performance-summary.json",
+    "sourceSectionSha256": "f1d860f4f1932c97f53a1bc8bc21ab551a722bbc77bb13247eda05cb78f522d8"
+  },
+  {
+    "slice": "c2a-core-awareness",
+    "item": 1,
+    "verdict": "PARTIAL",
+    "detail": "96consumers x8days, exact payload, union<=32/shortlist<=8 and actual traces<=16routes; dense-origin/draw0 fixture absent.",
+    "evidence": "awareness-batch-summary.json",
+    "sourceSectionSha256": "d3b004422ed4e4de31c7c47e680d5f9bf35207e0d3a16c72f721ab65cc6c10f9"
+  },
+  {
+    "slice": "c2a-core-awareness",
+    "item": 2,
+    "verdict": "PASS",
+    "detail": "2eligible PLAYER discoveries beyond every250m anchor enter ordinary shortlist; consumer/day/revision/positions/distances retained, no sale inferred.",
+    "evidence": "awareness-batch-summary.json",
+    "sourceSectionSha256": "d3b004422ed4e4de31c7c47e680d5f9bf35207e0d3a16c72f721ab65cc6c10f9"
+  },
+  {
+    "slice": "c2a-core-awareness",
+    "item": 3,
+    "verdict": "NOT-RUN",
+    "detail": "Matched price/stock/deadline fixture conditions absent, no forced edits.",
+    "evidence": "rival-competition.json",
+    "sourceSectionSha256": "d3b004422ed4e4de31c7c47e680d5f9bf35207e0d3a16c72f721ab65cc6c10f9"
+  },
+  {
+    "slice": "c2a-core-awareness",
+    "item": 4,
+    "verdict": "PARTIAL",
+    "detail": "Absent campaigns/initial empty memory observed; old isolated unknown-reserved-slot condition superseded by integrated C2b.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "d3b004422ed4e4de31c7c47e680d5f9bf35207e0d3a16c72f721ab65cc6c10f9"
+  },
+  {
+    "slice": "c2a-core-awareness",
+    "item": 5,
+    "verdict": "PARTIAL",
+    "detail": "C2 covers18->23/two reloads/held old terms; isolated writer19 superseded. Every cursor/new edited context not caught.",
+    "evidence": "migration-summary.json",
+    "sourceSectionSha256": "d3b004422ed4e4de31c7c47e680d5f9bf35207e0d3a16c72f721ab65cc6c10f9"
+  },
+  {
+    "slice": "c2a-core-awareness",
+    "item": 6,
+    "verdict": "FAIL",
+    "detail": "C4 six combined windows only: p95 passes, one >=30ms flag. Slice-specific variants omitted as instructed.",
+    "evidence": "performance-summary.json",
+    "sourceSectionSha256": "d3b004422ed4e4de31c7c47e680d5f9bf35207e0d3a16c72f721ab65cc6c10f9"
+  },
+  {
+    "slice": "c2a-core-awareness",
+    "item": 7,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "d3b004422ed4e4de31c7c47e680d5f9bf35207e0d3a16c72f721ab65cc6c10f9"
+  },
+  {
+    "slice": "c4-market-research",
+    "item": 1,
+    "verdict": "PASS",
+    "detail": "Public API/state enumerate no research command/job/cache/reader/scheduler. Fixed-command bridge only; no eval command added or payment/report execution.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "8874f88bc325521f9182218493379070389ef1cba7a8de08bb4244f524e1c4a4"
+  },
+  {
+    "slice": "c4-market-research",
+    "item": 2,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "8874f88bc325521f9182218493379070389ef1cba7a8de08bb4244f524e1c4a4"
+  },
+  {
+    "slice": "c4-market-research",
+    "item": 3,
+    "verdict": "PARTIAL",
+    "detail": "Integrated23 cannot literally equal18. Direct paused reads exact; candidate native replay has7geometry/time differences present before reads, no research fields.",
+    "evidence": "reader-save-control.json",
+    "sourceSectionSha256": "8874f88bc325521f9182218493379070389ef1cba7a8de08bb4244f524e1c4a4"
+  },
+  {
+    "slice": "c4-market-research",
+    "item": 4,
+    "verdict": "FAIL",
+    "detail": "C4 six combined windows only: p95 passes, one >=30ms flag. Slice-specific variants omitted as instructed.",
+    "evidence": "performance-summary.json",
+    "sourceSectionSha256": "8874f88bc325521f9182218493379070389ef1cba7a8de08bb4244f524e1c4a4"
+  },
+  {
+    "slice": "e2b-street-life",
+    "item": 1,
+    "verdict": "PARTIAL",
+    "detail": "723cachedWork/Shop/Leisure frontages, Home/Study absent. No destroyed-controller rebind or ambiguous native fixture.",
+    "evidence": "soak-summary.json",
+    "sourceSectionSha256": "53ba99061edf035a15f77206e8aea27cca650b7f772aeab03145c95f555ef468"
+  },
+  {
+    "slice": "e2b-street-life",
+    "item": 2,
+    "verdict": "NOT-RUN",
+    "detail": "No naturally captured bound queuer with vacant forward slot during rain.",
+    "evidence": "soak-summary.json",
+    "sourceSectionSha256": "53ba99061edf035a15f77206e8aea27cca650b7f772aeab03145c95f555ef468"
+  },
+  {
+    "slice": "e2b-street-life",
+    "item": 3,
+    "verdict": "PARTIAL",
+    "detail": "0/25/100 and default/minimum settings read; chance ledger conserves.84genuine future-break ends/continuations retained under lower tuning. No new opportunity in0/minimum short arms.",
+    "evidence": "optional-held-replay.json",
+    "sourceSectionSha256": "53ba99061edf035a15f77206e8aea27cca650b7f772aeab03145c95f555ef468"
+  },
+  {
+    "slice": "e2b-street-life",
+    "item": 4,
+    "verdict": "NOT-RUN",
+    "detail": "No same-break natural rain-onset/clearing-before-start timeline.",
+    "evidence": "soak-summary.json",
+    "sourceSectionSha256": "53ba99061edf035a15f77206e8aea27cca650b7f772aeab03145c95f555ef468"
+  },
+  {
+    "slice": "e2b-street-life",
+    "item": 5,
+    "verdict": "NOT-RUN",
+    "detail": "No independently identified native-nightclub/managed-stop simultaneous ownership fixture.",
+    "evidence": "soak-summary.json",
+    "sourceSectionSha256": "53ba99061edf035a15f77206e8aea27cca650b7f772aeab03145c95f555ef468"
+  },
+  {
+    "slice": "e2b-street-life",
+    "item": 6,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "53ba99061edf035a15f77206e8aea27cca650b7f772aeab03145c95f555ef468"
+  },
+  {
+    "slice": "e2b-street-life",
+    "item": 7,
+    "verdict": "FAIL",
+    "detail": "C4 six combined windows only: p95 passes, one >=30ms flag. Slice-specific variants omitted as instructed.",
+    "evidence": "performance-summary.json",
+    "sourceSectionSha256": "53ba99061edf035a15f77206e8aea27cca650b7f772aeab03145c95f555ef468"
+  },
+  {
+    "slice": "e1-rain",
+    "item": 1,
+    "verdict": "PARTIAL",
+    "detail": "Native dry/rain/dry and captured weather/settings observed; no matched causal probability/distance mix or failed-source arm.",
+    "evidence": "soak-summary.json",
+    "sourceSectionSha256": "d955374c2b52b5dbb448eb0f35ac00e51c8b79148b1514360d86089ca109cfcb"
+  },
+  {
+    "slice": "e1-rain",
+    "item": 2,
+    "verdict": "PARTIAL",
+    "detail": "Native soak/reload preserves active population; individual work/queue/paired transition matrix not captured.",
+    "evidence": "soak-summary.json",
+    "sourceSectionSha256": "d955374c2b52b5dbb448eb0f35ac00e51c8b79148b1514360d86089ca109cfcb"
+  },
+  {
+    "slice": "e1-rain",
+    "item": 3,
+    "verdict": "NOT-RUN",
+    "detail": "No genuine held-E1-weather checkpoint with changed rain/tuning; legacy held replay is separate.",
+    "evidence": "held-summary.json",
+    "sourceSectionSha256": "d955374c2b52b5dbb448eb0f35ac00e51c8b79148b1514360d86089ca109cfcb"
+  },
+  {
+    "slice": "e1-rain",
+    "item": 4,
+    "verdict": "PASS",
+    "detail": "C2 covers18 through19/20/21/22/23, next-day weather start7 and preserved refused sources; standalone19 step omitted as instructed.",
+    "evidence": "migration-summary.json",
+    "sourceSectionSha256": "d955374c2b52b5dbb448eb0f35ac00e51c8b79148b1514360d86089ca109cfcb"
+  },
+  {
+    "slice": "e1-rain",
+    "item": 5,
+    "verdict": "FAIL",
+    "detail": "C4 six combined windows only: p95 passes, one >=30ms flag. Slice-specific variants omitted as instructed.",
+    "evidence": "performance-summary.json",
+    "sourceSectionSha256": "d955374c2b52b5dbb448eb0f35ac00e51c8b79148b1514360d86089ca109cfcb"
+  },
+  {
+    "slice": "e1-rain",
+    "item": 6,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "d955374c2b52b5dbb448eb0f35ac00e51c8b79148b1514360d86089ca109cfcb"
+  },
+  {
+    "slice": "a5-integrated-acceptance",
+    "item": 1,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "af3d6d8147dd89fb0e9d4136249d35150825e79a7d92fe47a43cd8e9997bfd48"
+  },
+  {
+    "slice": "a5-integrated-acceptance",
+    "item": 2,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "af3d6d8147dd89fb0e9d4136249d35150825e79a7d92fe47a43cd8e9997bfd48"
+  },
+  {
+    "slice": "a5-integrated-acceptance",
+    "item": 3,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "af3d6d8147dd89fb0e9d4136249d35150825e79a7d92fe47a43cd8e9997bfd48"
+  },
+  {
+    "slice": "a5-integrated-acceptance",
+    "item": 4,
+    "verdict": "PARTIAL",
+    "detail": "Semantic popup payload/routes/market unchanged, formatted addresses/identity; B2positive/represented controls. Pointer camera/pool subset deferred.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "af3d6d8147dd89fb0e9d4136249d35150825e79a7d92fe47a43cd8e9997bfd48"
+  },
+  {
+    "slice": "a5-integrated-acceptance",
+    "item": 5,
+    "verdict": "PARTIAL",
+    "detail": "Traits/Today/own and represented words/unknown meals read; active B/regular evidence. Not every meal/generation case available.",
+    "evidence": "b2-retained-summary.json",
+    "sourceSectionSha256": "af3d6d8147dd89fb0e9d4136249d35150825e79a7d92fe47a43cd8e9997bfd48"
+  },
+  {
+    "slice": "a5-integrated-acceptance",
+    "item": 6,
+    "verdict": "PARTIAL",
+    "detail": "408native businesses, traced rival/player bounded competition <=8shortlist/16routes. Continuation-budget matrix not repeated.",
+    "evidence": "rival-competition.json",
+    "sourceSectionSha256": "af3d6d8147dd89fb0e9d4136249d35150825e79a7d92fe47a43cd8e9997bfd48"
+  },
+  {
+    "slice": "a5-integrated-acceptance",
+    "item": 7,
+    "verdict": "PARTIAL",
+    "detail": "Genuine legacy partial quote/one purchase and rival outward/service/paid/return plus weightzero replay. Not every cursor/red baseline/fresh tuning image.",
+    "evidence": "held-summary.json",
+    "sourceSectionSha256": "af3d6d8147dd89fb0e9d4136249d35150825e79a7d92fe47a43cd8e9997bfd48"
+  },
+  {
+    "slice": "a5-integrated-acceptance",
+    "item": 8,
+    "verdict": "PASS",
+    "detail": "C2 integration18->23/two reloads stable IDs/traits/money/old graph/authority and source refusal. Older16/17 steps omitted from this combined scope.",
+    "evidence": "migration-summary.json",
+    "sourceSectionSha256": "af3d6d8147dd89fb0e9d4136249d35150825e79a7d92fe47a43cd8e9997bfd48"
+  },
+  {
+    "slice": "a5-integrated-acceptance",
+    "item": 9,
+    "verdict": "PARTIAL",
+    "detail": "Chance ledgers/reloads/0/25/100/held stops observed; no unsafe UI edits or uncertain/late receipt.",
+    "evidence": "optional-functional-summary.json",
+    "sourceSectionSha256": "af3d6d8147dd89fb0e9d4136249d35150825e79a7d92fe47a43cd8e9997bfd48"
+  },
+  {
+    "slice": "a5-integrated-acceptance",
+    "item": 10,
+    "verdict": "PASS",
+    "detail": "Full native day9own+270external reconciles, ordinary interrupted native saves do not replay purchase/debit or lose return; rival fields exact.",
+    "evidence": "accounting-summary.json",
+    "sourceSectionSha256": "af3d6d8147dd89fb0e9d4136249d35150825e79a7d92fe47a43cd8e9997bfd48"
+  },
+  {
+    "slice": "a5-integrated-acceptance",
+    "item": 11,
+    "verdict": "PARTIAL",
+    "detail": "Reference957/1914 consumers,4day soak/reload; no existing authorized5k/ceiling fixture used.",
+    "evidence": "soak-summary.json",
+    "sourceSectionSha256": "af3d6d8147dd89fb0e9d4136249d35150825e79a7d92fe47a43cd8e9997bfd48"
+  },
+  {
+    "slice": "a5-integrated-acceptance",
+    "item": 12,
+    "verdict": "FAIL",
+    "detail": "C4 six combined windows only: p95 passes, one >=30ms flag. Slice-specific variants omitted as instructed.",
+    "evidence": "performance-summary.json",
+    "sourceSectionSha256": "af3d6d8147dd89fb0e9d4136249d35150825e79a7d92fe47a43cd8e9997bfd48"
+  },
+  {
+    "slice": "e4-wider-menu",
+    "item": 1,
+    "verdict": "PARTIAL",
+    "detail": "Live cap4 confirmed; actual own menu only croissant. Authority/shared pool/accounting read; largest multi-offer fixture absent.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "8846fedadca0f42fb0b73d33ebb63a5d060fa9ae9ce25e8fa64cde919387fc84"
+  },
+  {
+    "slice": "e4-wider-menu",
+    "item": 2,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "8846fedadca0f42fb0b73d33ebb63a5d060fa9ae9ce25e8fa64cde919387fc84"
+  },
+  {
+    "slice": "e4-wider-menu",
+    "item": 3,
+    "verdict": "NOT-RUN",
+    "detail": "Multi-offer/product/shared-shortage fixture missing.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "8846fedadca0f42fb0b73d33ebb63a5d060fa9ae9ce25e8fa64cde919387fc84"
+  },
+  {
+    "slice": "e4-wider-menu",
+    "item": 4,
+    "verdict": "PARTIAL",
+    "detail": "Supported croissant exact debit/bag/receipt/day accounts and legacy-held upgrade; no largest-menu/shortage matrix.",
+    "evidence": "held-summary.json",
+    "sourceSectionSha256": "8846fedadca0f42fb0b73d33ebb63a5d060fa9ae9ce25e8fa64cde919387fc84"
+  },
+  {
+    "slice": "e4-wider-menu",
+    "item": 5,
+    "verdict": "NOT-RUN",
+    "detail": "Unsupported UI menu edit/restoration fixture not prepared.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "8846fedadca0f42fb0b73d33ebb63a5d060fa9ae9ce25e8fa64cde919387fc84"
+  },
+  {
+    "slice": "e4-wider-menu",
+    "item": 6,
+    "verdict": "FAIL",
+    "detail": "C4 six combined windows only: p95 passes, one >=30ms flag. Slice-specific variants omitted as instructed.",
+    "evidence": "performance-summary.json",
+    "sourceSectionSha256": "8846fedadca0f42fb0b73d33ebb63a5d060fa9ae9ce25e8fa64cde919387fc84"
+  },
+  {
+    "slice": "c2b-campaign-awareness",
+    "item": 1,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "19572633a15e1e6f6daba177b9bebe787eb01b64c12d945e54844dca79735912"
+  },
+  {
+    "slice": "c2b-campaign-awareness",
+    "item": 2,
+    "verdict": "NOT-RUN",
+    "detail": "No already-active campaign fixture; acquisition-hour masks/observer error not exercised.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "19572633a15e1e6f6daba177b9bebe787eb01b64c12d945e54844dca79735912"
+  },
+  {
+    "slice": "c2b-campaign-awareness",
+    "item": 3,
+    "verdict": "NOT-RUN",
+    "detail": "No native active/stopped pair. Design uniform1.25 preference/half soft distance, no targeting/demographics; no campaign purchase.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "19572633a15e1e6f6daba177b9bebe787eb01b64c12d945e54844dca79735912"
+  },
+  {
+    "slice": "c2b-campaign-awareness",
+    "item": 4,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "19572633a15e1e6f6daba177b9bebe787eb01b64c12d945e54844dca79735912"
+  },
+  {
+    "slice": "c2b-campaign-awareness",
+    "item": 5,
+    "verdict": "NOT-RUN",
+    "detail": "Active/stopped/ineligible/retired campaign fixture absent.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "19572633a15e1e6f6daba177b9bebe787eb01b64c12d945e54844dca79735912"
+  },
+  {
+    "slice": "c2b-campaign-awareness",
+    "item": 6,
+    "verdict": "PARTIAL",
+    "detail": "100absent-campaign snapshots preserve native/payload/empty outputs; no running masks or daily fee proof.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "19572633a15e1e6f6daba177b9bebe787eb01b64c12d945e54844dca79735912"
+  },
+  {
+    "slice": "c2b-campaign-awareness",
+    "item": 7,
+    "verdict": "FAIL",
+    "detail": "C4 six combined windows only: p95 passes, one >=30ms flag. Slice-specific variants omitted as instructed.",
+    "evidence": "performance-summary.json",
+    "sourceSectionSha256": "19572633a15e1e6f6daba177b9bebe787eb01b64c12d945e54844dca79735912"
+  },
+  {
+    "slice": "d2-rival-outflow",
+    "item": 1,
+    "verdict": "PASS",
+    "detail": "Actual rival winner with player competitor in same bounded shortlist; estimated supply/service/exact price; not a share estimate.",
+    "evidence": "rival-competition.json",
+    "sourceSectionSha256": "ef211a737081c2b1c12bef4617a8c0e807acd771e67c7feab5ea56fb9a7bcbc2"
+  },
+  {
+    "slice": "d2-rival-outflow",
+    "item": 2,
+    "verdict": "PASS",
+    "detail": "Slot0/represented outward/service/paid/return native boundaries; slot0 normal1x home/clear and represented clear, no fabricated body.",
+    "evidence": "journey-summary.json",
+    "sourceSectionSha256": "ef211a737081c2b1c12bef4617a8c0e807acd771e67c7feab5ea56fb9a7bcbc2"
+  },
+  {
+    "slice": "d2-rival-outflow",
+    "item": 3,
+    "verdict": "PARTIAL",
+    "detail": "One exact external debit/count per consumer and conservation/no replay; arrears/hold/future-essentials refusals absent.",
+    "evidence": "journey-summary.json",
+    "sourceSectionSha256": "ef211a737081c2b1c12bef4617a8c0e807acd771e67c7feab5ea56fb9a7bcbc2"
+  },
+  {
+    "slice": "d2-rival-outflow",
+    "item": 4,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "ef211a737081c2b1c12bef4617a8c0e807acd771e67c7feab5ea56fb9a7bcbc2"
+  },
+  {
+    "slice": "d2-rival-outflow",
+    "item": 5,
+    "verdict": "PARTIAL",
+    "detail": "Outward/service/paid/return native reload and weightzero pass; old player partialquote control passes. New D2 every-cursor/changed-terms fixture not captured.",
+    "evidence": "journey-summary.json",
+    "sourceSectionSha256": "ef211a737081c2b1c12bef4617a8c0e807acd771e67c7feab5ea56fb9a7bcbc2"
+  },
+  {
+    "slice": "d2-rival-outflow",
+    "item": 6,
+    "verdict": "PASS",
+    "detail": "Passive observer of natural debit keeps selected rival registration/cash/finance/receipts exact; player stock/bag/order/day control exact. No forced settlement/credit/checkout.",
+    "evidence": "journey-summary.json",
+    "sourceSectionSha256": "ef211a737081c2b1c12bef4617a8c0e807acd771e67c7feab5ea56fb9a7bcbc2"
+  },
+  {
+    "slice": "d2-rival-outflow",
+    "item": 7,
+    "verdict": "FAIL",
+    "detail": "C4 six combined windows only: p95 passes, one >=30ms flag. Slice-specific variants omitted as instructed.",
+    "evidence": "performance-summary.json",
+    "sourceSectionSha256": "ef211a737081c2b1c12bef4617a8c0e807acd771e67c7feab5ea56fb9a7bcbc2"
+  },
+  {
+    "slice": "d2-rival-outflow",
+    "item": 8,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "ef211a737081c2b1c12bef4617a8c0e807acd771e67c7feab5ea56fb9a7bcbc2"
+  },
+  {
+    "slice": "f1-shop-view",
+    "item": 1,
+    "verdict": "PARTIAL",
+    "detail": "One small own shop30 3rd Street geometry/authority/caps. Medium/large own/elevator prepared fixtures missing.",
+    "evidence": "geometry-summary.json",
+    "sourceSectionSha256": "f3479e3f67f36541f47a485ab70619a14c643356ab0c27e79061a3d189d3b817"
+  },
+  {
+    "slice": "f1-shop-view",
+    "item": 2,
+    "verdict": "PARTIAL",
+    "detail": "Six matched native doorway off/on captures30/60/120; F1drawing/depth/lighting BLOCKED absent renderer.",
+    "evidence": "geometry-summary.json",
+    "sourceSectionSha256": "f3479e3f67f36541f47a485ab70619a14c643356ab0c27e79061a3d189d3b817"
+  },
+  {
+    "slice": "f1-shop-view",
+    "item": 3,
+    "verdict": "BLOCKED",
+    "detail": "F1renderer/indoor customer hand-off absent by design; F0active/body retention not proof.",
+    "evidence": "geometry-summary.json",
+    "sourceSectionSha256": "f3479e3f67f36541f47a485ab70619a14c643356ab0c27e79061a3d189d3b817"
+  },
+  {
+    "slice": "f1-shop-view",
+    "item": 4,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "f3479e3f67f36541f47a485ab70619a14c643356ab0c27e79061a3d189d3b817"
+  },
+  {
+    "slice": "f1-shop-view",
+    "item": 5,
+    "verdict": "PARTIAL",
+    "detail": "Prepared transitions/inside save-reload captured; reload uncertain/outside-first preflight. Not full scene/disable/fast-time/elevator matrix.",
+    "evidence": "geometry-summary.json",
+    "sourceSectionSha256": "f3479e3f67f36541f47a485ab70619a14c643356ab0c27e79061a3d189d3b817"
+  },
+  {
+    "slice": "f1-shop-view",
+    "item": 6,
+    "verdict": "PASS",
+    "detail": "Defaultnot detected; own harmless stand-in forces viewoff after cityload;100cached reads exact, no real third-party implementation.",
+    "evidence": "guard-summary.json",
+    "sourceSectionSha256": "f3479e3f67f36541f47a485ab70619a14c643356ab0c27e79061a3d189d3b817"
+  },
+  {
+    "slice": "f1-shop-view",
+    "item": 7,
+    "verdict": "NOT-RUN",
+    "detail": "Optional F0interior performance omitted; only six required C4 windows.",
+    "evidence": "performance-summary.json",
+    "sourceSectionSha256": "f3479e3f67f36541f47a485ab70619a14c643356ab0c27e79061a3d189d3b817"
+  },
+  {
+    "slice": "e3-donut",
+    "item": 1,
+    "verdict": "PARTIAL",
+    "detail": "Existing registration refuses missing/ambiguous advertised price with Unknown eligibility; matching fixture0, conditional equipment/direct-stock approval withheld.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "5ce0931f07c91201756cac3b95b788a266c8d080cf874555ee69793c2b70b597"
+  },
+  {
+    "slice": "e3-donut",
+    "item": 2,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "5ce0931f07c91201756cac3b95b788a266c8d080cf874555ee69793c2b70b597"
+  },
+  {
+    "slice": "e3-donut",
+    "item": 3,
+    "verdict": "NOT-RUN",
+    "detail": "Advertised product/equipment/stock fixture absent; no product-specific natural sale/settlement or synthetic cargo/customer.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "5ce0931f07c91201756cac3b95b788a266c8d080cf874555ee69793c2b70b597"
+  },
+  {
+    "slice": "e3-donut",
+    "item": 4,
+    "verdict": "PARTIAL",
+    "detail": "100paused repeated/interleaved reads exact native/payload; matched native reload has7geometry/time differences already present before reads. Literal replay equality not claimed.",
+    "evidence": "reader-save-control.json",
+    "sourceSectionSha256": "5ce0931f07c91201756cac3b95b788a266c8d080cf874555ee69793c2b70b597"
+  },
+  {
+    "slice": "e3-donut",
+    "item": 5,
+    "verdict": "FAIL",
+    "detail": "C4 six combined windows only: p95 passes, one >=30ms flag. Slice-specific variants omitted as instructed.",
+    "evidence": "performance-summary.json",
+    "sourceSectionSha256": "5ce0931f07c91201756cac3b95b788a266c8d080cf874555ee69793c2b70b597"
+  },
+  {
+    "slice": "e3-cupcake",
+    "item": 1,
+    "verdict": "PARTIAL",
+    "detail": "Existing registration refuses missing/ambiguous advertised price with Unknown eligibility; matching fixture0, conditional equipment/direct-stock approval withheld.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "3fe576aa6c993a887fbeee6aad4ab64cfb3faafc06bde10cae542e33c9ec393a"
+  },
+  {
+    "slice": "e3-cupcake",
+    "item": 2,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "3fe576aa6c993a887fbeee6aad4ab64cfb3faafc06bde10cae542e33c9ec393a"
+  },
+  {
+    "slice": "e3-cupcake",
+    "item": 3,
+    "verdict": "NOT-RUN",
+    "detail": "Advertised product/equipment/stock fixture absent; no product-specific natural sale/settlement or synthetic cargo/customer.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "3fe576aa6c993a887fbeee6aad4ab64cfb3faafc06bde10cae542e33c9ec393a"
+  },
+  {
+    "slice": "e3-cupcake",
+    "item": 4,
+    "verdict": "PARTIAL",
+    "detail": "100paused repeated/interleaved reads exact native/payload; matched native reload has7geometry/time differences already present before reads. Literal replay equality not claimed.",
+    "evidence": "reader-save-control.json",
+    "sourceSectionSha256": "3fe576aa6c993a887fbeee6aad4ab64cfb3faafc06bde10cae542e33c9ec393a"
+  },
+  {
+    "slice": "e3-cupcake",
+    "item": 5,
+    "verdict": "PARTIAL",
+    "detail": "Shared readers100x refusal/Unknown/native-payload preservation; advertised regression fixtures absent.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "3fe576aa6c993a887fbeee6aad4ab64cfb3faafc06bde10cae542e33c9ec393a"
+  },
+  {
+    "slice": "e3-cupcake",
+    "item": 6,
+    "verdict": "FAIL",
+    "detail": "C4 six combined windows only: p95 passes, one >=30ms flag. Slice-specific variants omitted as instructed.",
+    "evidence": "performance-summary.json",
+    "sourceSectionSha256": "3fe576aa6c993a887fbeee6aad4ab64cfb3faafc06bde10cae542e33c9ec393a"
+  },
+  {
+    "slice": "e3-salad",
+    "item": 1,
+    "verdict": "PARTIAL",
+    "detail": "Existing registration refuses missing/ambiguous advertised price with Unknown eligibility; matching fixture0, conditional equipment/direct-stock approval withheld.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "85aaaebe6e9472c747e3a103973d44111159867a5a493ec82314b7f9176fb6e3"
+  },
+  {
+    "slice": "e3-salad",
+    "item": 2,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "85aaaebe6e9472c747e3a103973d44111159867a5a493ec82314b7f9176fb6e3"
+  },
+  {
+    "slice": "e3-salad",
+    "item": 3,
+    "verdict": "NOT-RUN",
+    "detail": "Advertised product/equipment/stock fixture absent; no product-specific natural sale/settlement or synthetic cargo/customer.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "85aaaebe6e9472c747e3a103973d44111159867a5a493ec82314b7f9176fb6e3"
+  },
+  {
+    "slice": "e3-salad",
+    "item": 4,
+    "verdict": "PARTIAL",
+    "detail": "100paused repeated/interleaved reads exact native/payload; matched native reload has7geometry/time differences already present before reads. Literal replay equality not claimed.",
+    "evidence": "reader-save-control.json",
+    "sourceSectionSha256": "85aaaebe6e9472c747e3a103973d44111159867a5a493ec82314b7f9176fb6e3"
+  },
+  {
+    "slice": "e3-salad",
+    "item": 5,
+    "verdict": "PARTIAL",
+    "detail": "Shared readers100x refusal/Unknown/native-payload preservation; advertised regression fixtures absent.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "85aaaebe6e9472c747e3a103973d44111159867a5a493ec82314b7f9176fb6e3"
+  },
+  {
+    "slice": "e3-salad",
+    "item": 6,
+    "verdict": "PARTIAL",
+    "detail": "Shared readers100x refusal/Unknown/native-payload preservation; advertised regression fixtures absent.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "85aaaebe6e9472c747e3a103973d44111159867a5a493ec82314b7f9176fb6e3"
+  },
+  {
+    "slice": "e3-salad",
+    "item": 7,
+    "verdict": "FAIL",
+    "detail": "C4 six combined windows only: p95 passes, one >=30ms flag. Slice-specific variants omitted as instructed.",
+    "evidence": "performance-summary.json",
+    "sourceSectionSha256": "85aaaebe6e9472c747e3a103973d44111159867a5a493ec82314b7f9176fb6e3"
+  },
+  {
+    "slice": "e3-icecream",
+    "item": 1,
+    "verdict": "PARTIAL",
+    "detail": "Existing registration refuses missing/ambiguous advertised price with Unknown eligibility; matching fixture0, conditional equipment/direct-stock approval withheld.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "11cf39d619050d3b31996c00ecb8de37f07174f23928c99c5e2154401241c216"
+  },
+  {
+    "slice": "e3-icecream",
+    "item": 2,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "11cf39d619050d3b31996c00ecb8de37f07174f23928c99c5e2154401241c216"
+  },
+  {
+    "slice": "e3-icecream",
+    "item": 3,
+    "verdict": "NOT-RUN",
+    "detail": "Advertised product/equipment/stock fixture absent; no product-specific natural sale/settlement or synthetic cargo/customer.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "11cf39d619050d3b31996c00ecb8de37f07174f23928c99c5e2154401241c216"
+  },
+  {
+    "slice": "e3-icecream",
+    "item": 4,
+    "verdict": "PARTIAL",
+    "detail": "100paused repeated/interleaved reads exact native/payload; matched native reload has7geometry/time differences already present before reads. Literal replay equality not claimed.",
+    "evidence": "reader-save-control.json",
+    "sourceSectionSha256": "11cf39d619050d3b31996c00ecb8de37f07174f23928c99c5e2154401241c216"
+  },
+  {
+    "slice": "e3-icecream",
+    "item": 5,
+    "verdict": "PARTIAL",
+    "detail": "Shared readers100x refusal/Unknown/native-payload preservation; advertised regression fixtures absent.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "11cf39d619050d3b31996c00ecb8de37f07174f23928c99c5e2154401241c216"
+  },
+  {
+    "slice": "e3-icecream",
+    "item": 6,
+    "verdict": "PARTIAL",
+    "detail": "Shared readers100x refusal/Unknown/native-payload preservation; advertised regression fixtures absent.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "11cf39d619050d3b31996c00ecb8de37f07174f23928c99c5e2154401241c216"
+  },
+  {
+    "slice": "e3-icecream",
+    "item": 7,
+    "verdict": "PARTIAL",
+    "detail": "Shared readers100x refusal/Unknown/native-payload preservation; advertised regression fixtures absent.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "11cf39d619050d3b31996c00ecb8de37f07174f23928c99c5e2154401241c216"
+  },
+  {
+    "slice": "e3-icecream",
+    "item": 8,
+    "verdict": "FAIL",
+    "detail": "C4 six combined windows only: p95 passes, one >=30ms flag. Slice-specific variants omitted as instructed.",
+    "evidence": "performance-summary.json",
+    "sourceSectionSha256": "11cf39d619050d3b31996c00ecb8de37f07174f23928c99c5e2154401241c216"
+  },
+  {
+    "slice": "e3-pizza",
+    "item": 1,
+    "verdict": "PARTIAL",
+    "detail": "Existing registration refuses missing/ambiguous advertised price with Unknown eligibility; matching fixture0, conditional equipment/direct-stock approval withheld.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "d67b8b979d355875754b0664c65995afc37e22c25bfb4439b5172685757dafe3"
+  },
+  {
+    "slice": "e3-pizza",
+    "item": 2,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "d67b8b979d355875754b0664c65995afc37e22c25bfb4439b5172685757dafe3"
+  },
+  {
+    "slice": "e3-pizza",
+    "item": 3,
+    "verdict": "NOT-RUN",
+    "detail": "Advertised product/equipment/stock fixture absent; no product-specific natural sale/settlement or synthetic cargo/customer.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "d67b8b979d355875754b0664c65995afc37e22c25bfb4439b5172685757dafe3"
+  },
+  {
+    "slice": "e3-pizza",
+    "item": 4,
+    "verdict": "NOT-RUN",
+    "detail": "Advertised product/equipment/stock fixture absent; no product-specific natural sale/settlement or synthetic cargo/customer.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "d67b8b979d355875754b0664c65995afc37e22c25bfb4439b5172685757dafe3"
+  },
+  {
+    "slice": "e3-pizza",
+    "item": 5,
+    "verdict": "PARTIAL",
+    "detail": "100paused repeated/interleaved reads exact native/payload; matched native reload has7geometry/time differences already present before reads. Literal replay equality not claimed.",
+    "evidence": "reader-save-control.json",
+    "sourceSectionSha256": "d67b8b979d355875754b0664c65995afc37e22c25bfb4439b5172685757dafe3"
+  },
+  {
+    "slice": "e3-pizza",
+    "item": 6,
+    "verdict": "PARTIAL",
+    "detail": "Shared readers100x refusal/Unknown/native-payload preservation; advertised regression fixtures absent.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "d67b8b979d355875754b0664c65995afc37e22c25bfb4439b5172685757dafe3"
+  },
+  {
+    "slice": "e3-pizza",
+    "item": 7,
+    "verdict": "FAIL",
+    "detail": "C4 six combined windows only: p95 passes, one >=30ms flag. Slice-specific variants omitted as instructed.",
+    "evidence": "performance-summary.json",
+    "sourceSectionSha256": "d67b8b979d355875754b0664c65995afc37e22c25bfb4439b5172685757dafe3"
+  },
+  {
+    "slice": "e3-frenchfries",
+    "item": 1,
+    "verdict": "PARTIAL",
+    "detail": "Existing registration refuses missing/ambiguous advertised price with Unknown eligibility; matching fixture0, conditional equipment/direct-stock approval withheld.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "2ce0413800d00f3edcbdbf01896b2cb0cc5b66abaebef03136b477b39a44cda1"
+  },
+  {
+    "slice": "e3-frenchfries",
+    "item": 2,
+    "verdict": "DEFERRED-INPUT",
+    "detail": "Real pointer/focus/fixture UI preparation or visual interaction requires unlocked6Nov playtest.",
+    "evidence": "diagnostics-summary.json",
+    "sourceSectionSha256": "2ce0413800d00f3edcbdbf01896b2cb0cc5b66abaebef03136b477b39a44cda1"
+  },
+  {
+    "slice": "e3-frenchfries",
+    "item": 3,
+    "verdict": "NOT-RUN",
+    "detail": "Advertised product/equipment/stock fixture absent; no product-specific natural sale/settlement or synthetic cargo/customer.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "2ce0413800d00f3edcbdbf01896b2cb0cc5b66abaebef03136b477b39a44cda1"
+  },
+  {
+    "slice": "e3-frenchfries",
+    "item": 4,
+    "verdict": "PARTIAL",
+    "detail": "100paused repeated/interleaved reads exact native/payload; matched native reload has7geometry/time differences already present before reads. Literal replay equality not claimed.",
+    "evidence": "reader-save-control.json",
+    "sourceSectionSha256": "2ce0413800d00f3edcbdbf01896b2cb0cc5b66abaebef03136b477b39a44cda1"
+  },
+  {
+    "slice": "e3-frenchfries",
+    "item": 5,
+    "verdict": "PARTIAL",
+    "detail": "Shared readers100x refusal/Unknown/native-payload preservation; advertised regression fixtures absent.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "2ce0413800d00f3edcbdbf01896b2cb0cc5b66abaebef03136b477b39a44cda1"
+  },
+  {
+    "slice": "e3-frenchfries",
+    "item": 6,
+    "verdict": "PARTIAL",
+    "detail": "Shared readers100x refusal/Unknown/native-payload preservation; advertised regression fixtures absent.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "2ce0413800d00f3edcbdbf01896b2cb0cc5b66abaebef03136b477b39a44cda1"
+  },
+  {
+    "slice": "e3-frenchfries",
+    "item": 7,
+    "verdict": "PARTIAL",
+    "detail": "Shared readers100x refusal/Unknown/native-payload preservation; advertised regression fixtures absent.",
+    "evidence": "reader-summary.json",
+    "sourceSectionSha256": "2ce0413800d00f3edcbdbf01896b2cb0cc5b66abaebef03136b477b39a44cda1"
+  },
+  {
+    "slice": "e3-frenchfries",
+    "item": 8,
+    "verdict": "FAIL",
+    "detail": "C4 six combined windows only: p95 passes, one >=30ms flag. Slice-specific variants omitted as instructed.",
+    "evidence": "performance-summary.json",
+    "sourceSectionSha256": "2ce0413800d00f3edcbdbf01896b2cb0cc5b66abaebef03136b477b39a44cda1"
+  }
+]

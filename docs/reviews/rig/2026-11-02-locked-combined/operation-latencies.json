@@ -1,0 +1,1330 @@
+{
+  "operations": [
+    {
+      "operation": "activation-source-wall",
+      "wallMs": 34233.99999993853,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "b2-retained-reload-wall",
+      "wallMs": 34514.999999897555,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "b2-retained-save-wall",
+      "wallMs": 609.9999998696148,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "b2-retained-source-wall",
+      "wallMs": 32938.00000008196,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "base1-matched-wall",
+      "wallMs": 28735.000000102445,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "base2-matched-wall",
+      "wallMs": 30702.99999997951,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "cand1-matched-wall",
+      "wallMs": 31281.000000191852,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "cand100idle-matched-wall",
+      "wallMs": 24875.0,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "cand100rush-matched-wall",
+      "wallMs": 30108.999999938533,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "cand2-matched-wall",
+      "wallMs": 30063.000000081956,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "candidate-day-end-wall",
+      "wallMs": 577.9999999795109,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "candidate-day-reload-wall",
+      "wallMs": 32812.000000150874,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "candidate-day-source-wall",
+      "wallMs": 31015.000000130385,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "candidate23-roundtrip-wall",
+      "wallMs": 563.0000000819564,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "candidate23-twice-wall",
+      "wallMs": 547.0000000204891,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "candidate23-wall",
+      "wallMs": 702.9999999795109,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "geometry-guard-standin-new-city-wall",
+      "wallMs": 34546.00000008941,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "geometry-guard-standin-reload-wall",
+      "wallMs": 36594.00000004098,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "geometry-guard-standin-save-wall",
+      "wallMs": 780.9999999590218,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "geometry-guard-standin-source-wall",
+      "wallMs": 25562.999999849126,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "geometry-off-120-source-wall",
+      "wallMs": 26984.000000171363,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "geometry-off-30-source-wall",
+      "wallMs": 26094.00000004098,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "geometry-off-60-source-wall",
+      "wallMs": 25500.0,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "geometry-on-120-source-wall",
+      "wallMs": 27235.000000102445,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "geometry-on-30-source-wall",
+      "wallMs": 28203.00000021234,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "geometry-on-60-inside-reload-wall",
+      "wallMs": 32718.000000109896,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "geometry-on-60-inside-save-wall",
+      "wallMs": 531.9999998901039,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "geometry-on-60-source-wall",
+      "wallMs": 28750.0,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "held-default-outward-reload-wall",
+      "wallMs": 29969.00000004098,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "held-default-outward-wall",
+      "wallMs": 577.9999999795109,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "held-default-returned-reload-wall",
+      "wallMs": 30000.0,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "held-default-returned-wall",
+      "wallMs": 514.9999998975545,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "held-default-source-wall",
+      "wallMs": 25952.99999997951,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "held-edited-outward-reload-wall",
+      "wallMs": 31015.999999828637,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "held-edited-outward-wall",
+      "wallMs": 500.0,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "held-edited-returned-reload-wall",
+      "wallMs": 30952.99999997951,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "held-edited-returned-wall",
+      "wallMs": 577.9999999795109,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "held-edited-source-wall",
+      "wallMs": 25140.000000130385,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "migration-wall",
+      "wallMs": 31875.0,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "normal-save-source-wall",
+      "wallMs": 26108.999999938533,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "normal-unpaused-reload-wall",
+      "wallMs": 31796.99999978766,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "normal-unpaused-save-wall",
+      "wallMs": 656.9999998901039,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "optional-minima-functional-source-wall",
+      "wallMs": 26719.00000004098,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "optional-soak-held-reload-wall",
+      "wallMs": 27530.99999995902,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "optional-zero-functional-source-wall",
+      "wallMs": 26719.00000004098,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "reader-exercised-save-wall",
+      "wallMs": 641.0000000614673,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "reader-exercised-source-wall",
+      "wallMs": 32061.999999918044,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "reader-idle-save-wall",
+      "wallMs": 640.9999998286366,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "reader-idle-source-wall",
+      "wallMs": 33890.000000130385,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "reader-matched-source-wall",
+      "wallMs": 780.9999999590218,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "refuse-corrupt-wall",
+      "wallMs": 26530.99999995902,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "refuse-future-wall",
+      "wallMs": 26483.999999938533,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "refuse-open-corrupt-wall",
+      "wallMs": 28500.0,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "refuse-open-future-wall",
+      "wallMs": 28530.99999995902,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "reload1-wall",
+      "wallMs": 29780.99999995902,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "reload2-wall",
+      "wallMs": 30202.99999997951,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "Rival0 outward-saved-wall",
+      "wallMs": 781.0000001918525,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "Rival0 outward-source-wall",
+      "wallMs": 20452.99999997951,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "Rival0 paid-saved-wall",
+      "wallMs": 702.9999999795109,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "Rival0 return-saved-wall",
+      "wallMs": 530.9999999590218,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "Rival0 serving-saved-wall",
+      "wallMs": 547.0000000204891,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "Rival0-completed-return-wall",
+      "wallMs": 562.0000001508743,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "Rival0-initial-reload-wall",
+      "wallMs": 24889.999999897555,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "Rival0-last-reload-wall",
+      "wallMs": 30937.999999849126,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "Rival0-paid-source-wall",
+      "wallMs": 32187.000000150874,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "Rival0-return-normal-source-wall",
+      "wallMs": 25125.0,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "Rival0-return-source-wall",
+      "wallMs": 30250.0,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "Rival0-serving-source-wall",
+      "wallMs": 32436.999999918044,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "Rival1 outward-saved-wall",
+      "wallMs": 594.0000000409782,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "Rival1 paid-saved-wall",
+      "wallMs": 563.0000000819564,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "Rival1 return-saved-wall",
+      "wallMs": 578.0000002123415,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "Rival1 serving-saved-wall",
+      "wallMs": 562.9999998491257,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "Rival1-initial-reload-wall",
+      "wallMs": 31202.99999997951,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "Rival1-last-reload-wall",
+      "wallMs": 33077.99999997951,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "Rival1-paid-source-wall",
+      "wallMs": 31343.000000109896,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "Rival1-return-source-wall",
+      "wallMs": 35937.000000150874,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "Rival1-serving-source-wall",
+      "wallMs": 29937.000000150874,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "RivalZero outward-saved-wall",
+      "wallMs": 640.9999998286366,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "RivalZero paid-saved-wall",
+      "wallMs": 563.0000000819564,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "RivalZero return-saved-wall",
+      "wallMs": 625.0,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "RivalZero serving-saved-wall",
+      "wallMs": 609.0000001713634,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "RivalZero-completed-return-wall",
+      "wallMs": 547.0000000204891,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "RivalZero-initial-reload-wall",
+      "wallMs": 25968.000000109896,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "RivalZero-last-reload-wall",
+      "wallMs": 31875.0,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "RivalZero-paid-source-wall",
+      "wallMs": 36422.00000002049,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "RivalZero-return-normal-source-wall",
+      "wallMs": 25547.00000002049,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "RivalZero-return-source-wall",
+      "wallMs": 33094.00000004098,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "RivalZero-serving-source-wall",
+      "wallMs": 31656.000000191852,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "rush-inflight-source-wall",
+      "wallMs": 625.0,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "slice-active-source-wall",
+      "wallMs": 24671.99999978766,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "soak-final-reload-wall",
+      "wallMs": 32843.000000109896,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "soak-final-save-wall",
+      "wallMs": 593.0000001098961,
+      "ge30ms": true,
+      "phase": "native save/load operation outside all measured frame windows"
+    },
+    {
+      "operation": "activation-source-export",
+      "ms": 338.2241,
+      "frame": 18165,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "b2-retained-reload-export",
+      "ms": 361.95160000000004,
+      "frame": 265341,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "b2-retained-save-export",
+      "ms": 372.8865,
+      "frame": 264152,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "b2-retained-source-export",
+      "ms": 361.9854,
+      "frame": 263818,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "base1-matched-export",
+      "ms": 343.5514,
+      "frame": 8910,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "base2-matched-export",
+      "ms": 289.4676,
+      "frame": 2794,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "cand1-matched-export",
+      "ms": 332.54040000000003,
+      "frame": 8574,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "cand100idle-matched-export",
+      "ms": 373.9427,
+      "frame": 21269,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "cand100rush-matched-export",
+      "ms": 319.9185,
+      "frame": 31015,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "cand2-matched-export",
+      "ms": 321.7976,
+      "frame": 3054,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "candidate-day-end-export",
+      "ms": 354.8045,
+      "frame": 42158,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "candidate-day-reload-export",
+      "ms": 346.1128,
+      "frame": 43418,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "candidate-day-source-export",
+      "ms": 343.4001,
+      "frame": 24930,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "candidate23-export",
+      "ms": 343.6847,
+      "frame": 2747,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "candidate23-roundtrip-export",
+      "ms": 425.35720000000003,
+      "frame": 3837,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "candidate23-twice-export",
+      "ms": 340.3999,
+      "frame": 4935,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "geometry-guard-standin-new-city-export",
+      "ms": 328.36170000000004,
+      "frame": 240157,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "geometry-guard-standin-reload-export",
+      "ms": 327.211,
+      "frame": 245519,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "geometry-guard-standin-save-export",
+      "ms": 358.3125,
+      "frame": 244259,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "geometry-guard-standin-source-export",
+      "ms": 327.4391,
+      "frame": 234960,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "geometry-off-120-source-export",
+      "ms": 325.6342,
+      "frame": 211335,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "geometry-off-30-source-export",
+      "ms": 409.8489,
+      "frame": 200254,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "geometry-off-60-source-export",
+      "ms": 339.6984,
+      "frame": 205735,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "geometry-on-120-source-export",
+      "ms": 325.3668,
+      "frame": 229503,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "geometry-on-30-source-export",
+      "ms": 331.8714,
+      "frame": 216986,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "geometry-on-60-inside-reload-export",
+      "ms": 333.28430000000003,
+      "frame": 228085,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "geometry-on-60-inside-save-export",
+      "ms": 331.6653,
+      "frame": 226998,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "geometry-on-60-source-export",
+      "ms": 339.2853,
+      "frame": 222682,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "held-default-outward-export",
+      "ms": 327.77000000000004,
+      "frame": 85144,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "held-default-outward-reload-export",
+      "ms": 329.2097,
+      "frame": 86135,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "held-default-returned-export",
+      "ms": 333.18850000000003,
+      "frame": 88213,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "held-default-returned-reload-export",
+      "ms": 348.4818,
+      "frame": 89248,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "held-default-source-export",
+      "ms": 332.8668,
+      "frame": 85043,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "held-edited-outward-export",
+      "ms": 320.8358,
+      "frame": 90607,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "held-edited-outward-reload-export",
+      "ms": 326.586,
+      "frame": 91678,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "held-edited-returned-export",
+      "ms": 327.7303,
+      "frame": 93738,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "held-edited-returned-reload-export",
+      "ms": 319.5942,
+      "frame": 94828,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "held-edited-source-export",
+      "ms": 389.21680000000003,
+      "frame": 90518,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "migration-export",
+      "ms": 326.83230000000003,
+      "frame": 2700,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "normal-save-source-export",
+      "ms": 383.6309,
+      "frame": 82399,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "normal-unpaused-reload-export",
+      "ms": 490.3038,
+      "frame": 83748,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "optional-minima-functional-source-export",
+      "ms": 367.04720000000003,
+      "frame": 173927,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "optional-soak-held-reload-export",
+      "ms": 362.93190000000004,
+      "frame": 191276,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "optional-zero-functional-source-export",
+      "ms": 449.92060000000004,
+      "frame": 169667,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "reader-exercised-save-export",
+      "ms": 361.3834,
+      "frame": 151579,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "reader-exercised-source-export",
+      "ms": 375.7495,
+      "frame": 151405,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "reader-idle-save-export",
+      "ms": 365.4363,
+      "frame": 150322,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "reader-idle-source-export",
+      "ms": 468.81890000000004,
+      "frame": 150268,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "reader-matched-source-export",
+      "ms": 634.4661,
+      "frame": 149157,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "reload1-export",
+      "ms": 334.61940000000004,
+      "frame": 3800,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "reload2-export",
+      "ms": 339.8724,
+      "frame": 4887,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "Rival0 outward-saved-export",
+      "ms": 383.60490000000004,
+      "frame": 14124,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "Rival0 paid-saved-export",
+      "ms": 418.16540000000003,
+      "frame": 21946,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "Rival0 return-saved-export",
+      "ms": 332.2797,
+      "frame": 28480,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "Rival0 serving-saved-export",
+      "ms": 347.1615,
+      "frame": 19381,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "Rival0-completed-return-export",
+      "ms": 341.1877,
+      "frame": 111512,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "Rival0-initial-reload-export",
+      "ms": 431.9882,
+      "frame": 14047,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "Rival0-last-reload-export",
+      "ms": 344.6308,
+      "frame": 29568,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "Rival0-paid-source-export",
+      "ms": 352.7966,
+      "frame": 20515,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "Rival0-return-normal-source-export",
+      "ms": 340.64160000000004,
+      "frame": 104194,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "Rival0-return-source-export",
+      "ms": 375.2044,
+      "frame": 22975,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "Rival0-serving-source-export",
+      "ms": 404.64320000000004,
+      "frame": 15253,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "Rival1 outward-saved-export",
+      "ms": 369.63,
+      "frame": 33372,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "Rival1 paid-saved-export",
+      "ms": 338.2495,
+      "frame": 41270,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "Rival1 return-saved-export",
+      "ms": 346.31030000000004,
+      "frame": 48097,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "Rival1 serving-saved-export",
+      "ms": 340.3548,
+      "frame": 38639,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "Rival1-initial-reload-export",
+      "ms": 362.3528,
+      "frame": 33251,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "Rival1-last-reload-export",
+      "ms": 418.9599,
+      "frame": 49311,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "Rival1-paid-source-export",
+      "ms": 375.62100000000004,
+      "frame": 39801,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "Rival1-return-source-export",
+      "ms": 351.5872,
+      "frame": 42651,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "Rival1-serving-source-export",
+      "ms": 352.9936,
+      "frame": 34406,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "RivalZero outward-saved-export",
+      "ms": 375.36600000000004,
+      "frame": 53187,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "RivalZero paid-saved-export",
+      "ms": 342.43280000000004,
+      "frame": 61215,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "RivalZero return-saved-export",
+      "ms": 337.81890000000004,
+      "frame": 67897,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "RivalZero serving-saved-export",
+      "ms": 356.87620000000004,
+      "frame": 58487,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "RivalZero-completed-return-export",
+      "ms": 335.25710000000004,
+      "frame": 120135,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "RivalZero-initial-reload-export",
+      "ms": 474.87780000000004,
+      "frame": 53111,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "RivalZero-last-reload-export",
+      "ms": 333.1859,
+      "frame": 68975,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "RivalZero-paid-source-export",
+      "ms": 358.012,
+      "frame": 59782,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "RivalZero-return-normal-source-export",
+      "ms": 390.3256,
+      "frame": 112830,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "RivalZero-return-source-export",
+      "ms": 355.0992,
+      "frame": 62415,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "RivalZero-serving-source-export",
+      "ms": 430.1379,
+      "frame": 54321,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "rush-inflight-source-export",
+      "ms": 379.3799,
+      "frame": 52743,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "slice-active-source-export",
+      "ms": 361.5527,
+      "frame": 121353,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "soak-final-reload-export",
+      "ms": 362.92420000000004,
+      "frame": 126778,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "soak-final-save-export",
+      "ms": 365.4411,
+      "frame": 125623,
+      "ge30ms": true,
+      "phase": "on-demand state serialization/export outside C4"
+    },
+    {
+      "operation": "candidate-initial-readers:donut:100reads",
+      "ms": 5.260000000000001,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "candidate-initial-readers:cupcake:100reads",
+      "ms": 2.4044000000000003,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "candidate-initial-readers:salad:100reads",
+      "ms": 1.883,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "candidate-initial-readers:icecream:100reads",
+      "ms": 2.0951,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "candidate-initial-readers:pizza:100reads",
+      "ms": 1.879,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "candidate-initial-readers:frenchfries:100reads",
+      "ms": 1.9416,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "candidate-day-after-readers:donut:100reads",
+      "ms": 1.1866,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "candidate-day-after-readers:cupcake:100reads",
+      "ms": 1.1759000000000002,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "candidate-day-after-readers:salad:100reads",
+      "ms": 1.1207,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "candidate-day-after-readers:icecream:100reads",
+      "ms": 1.1689,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "candidate-day-after-readers:pizza:100reads",
+      "ms": 1.2248,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "candidate-day-after-readers:frenchfries:100reads",
+      "ms": 2.0935,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "slice-e3-100:donut:100reads",
+      "ms": 9.356300000000001,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "slice-e3-100:cupcake:100reads",
+      "ms": 2.3877,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "slice-e3-100:salad:100reads",
+      "ms": 3.9793000000000003,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "slice-e3-100:icecream:100reads",
+      "ms": 2.2524,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "slice-e3-100:pizza:100reads",
+      "ms": 3.378,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "slice-e3-100:frenchfries:100reads",
+      "ms": 3.2306000000000004,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "reader-exercised-all100:donut:100reads",
+      "ms": 1.2102000000000002,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "reader-exercised-all100:cupcake:100reads",
+      "ms": 1.0951,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "reader-exercised-all100:salad:100reads",
+      "ms": 1.1996,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "reader-exercised-all100:icecream:100reads",
+      "ms": 1.1820000000000002,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "reader-exercised-all100:pizza:100reads",
+      "ms": 1.121,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "reader-exercised-all100:frenchfries:100reads",
+      "ms": 5.2443,
+      "ge30ms": false,
+      "phase": "explicit repeated-reader dispatch outside C4; not normal-play window"
+    },
+    {
+      "operation": "awareness-batch-0",
+      "ms": 12.370800000000001,
+      "frame": 121621,
+      "ge30ms": false,
+      "phase": "explicit read-only diagnostic batch outside C4"
+    },
+    {
+      "operation": "awareness-batch-32",
+      "ms": 9.3985,
+      "frame": 121643,
+      "ge30ms": false,
+      "phase": "explicit read-only diagnostic batch outside C4"
+    },
+    {
+      "operation": "awareness-batch-64",
+      "ms": 9.2301,
+      "frame": 121661,
+      "ge30ms": false,
+      "phase": "explicit read-only diagnostic batch outside C4"
+    },
+    {
+      "operation": "guard-100cached-reads",
+      "ms": 99.0096,
+      "ge30ms": true,
+      "phase": "Capture plus cached guard diagnostic; one Unity object lookup reported separately outside C4"
+    }
+  ],
+  "qualification": "Wall duration includes native lifecycle/bridge work; codec timings are separately in save-profile. Unavailable per-frame native-vs-managed attribution is not invented."
+}

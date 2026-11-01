@@ -1,0 +1,2031 @@
+{
+  "samples": [
+    {
+      "frame": 204297,
+      "inside": true,
+      "address": "ba:street_thirdstreet 30",
+      "formattedAddress": "30 3rd Street",
+      "size": "ba:buildingsize_a",
+      "version": 1,
+      "authority": {
+        "persistentcity:food-authority-v1": "{\"version\":1,\"shops\":[{\"place\":\"address:ba%3Astreet_thirdstreet:30:shop\",\"signature\":\"business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player\",\"generation\":1,\"desired\":true,\"requested\":121,\"from\":122,\"until\":-1,\"suspended\":false}]}"
+      },
+      "layout": {
+        "position": {
+          "x": 1000.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "rotation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "w": 1.0
+        },
+        "scale": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        },
+        "localPosition": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "localScale": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        }
+      },
+      "doors": [
+        {
+          "index": 0,
+          "transform": {
+            "position": {
+              "x": 230.262573,
+              "y": 0.09000015,
+              "z": 21.27832
+            },
+            "rotation": {
+              "x": 0.0,
+              "y": -0.707106769,
+              "z": 0.0,
+              "w": 0.7071068
+            },
+            "scale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "localPosition": {
+              "x": 230.258743,
+              "y": 0.09000015,
+              "z": -149.903
+            },
+            "localScale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            }
+          }
+        }
+      ],
+      "exits": [
+        {
+          "index": 0,
+          "id": -38555532,
+          "elevator": false,
+          "transform": {
+            "position": {
+              "x": 999.0,
+              "y": 0.0,
+              "z": -4.43
+            },
+            "rotation": {
+              "x": 2.18556941e-08,
+              "y": 7.8976143e-07,
+              "z": -6.114987e-16,
+              "w": -1.0
+            },
+            "scale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "localPosition": {
+              "x": -1.0,
+              "y": 0.0,
+              "z": -4.43
+            },
+            "localScale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            }
+          }
+        }
+      ],
+      "elevator": false,
+      "cachedFloor": null,
+      "state": {
+        "<Active>k__BackingField": false,
+        "<Anchor>k__BackingField": {
+          "<X>k__BackingField": 0.0,
+          "<Y>k__BackingField": 0.0,
+          "<Z>k__BackingField": 0.0
+        },
+        "<Fallback>k__BackingField": 0,
+        "<Revision>k__BackingField": 0,
+        "entry": null,
+        "faulted": false,
+        "nextCheck": 0.0
+      },
+      "configured": false,
+      "radius": 120.0,
+      "admissionRadius": 120.0,
+      "pedestrianCap": 48,
+      "vehicleCap": 24,
+      "bodies": [],
+      "diagnostics": "physical=True, pedestrians=0, cars=0, acquired=1, released=1, blockedSamples=872, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+      "nativeLighting": {
+        "ambientIntensity": 1.0,
+        "ambientMode": "Skybox",
+        "fog": false
+      },
+      "doorCorrespondence": "one exterior/one interior; transform mapping not established",
+      "renderer": "F0 drawing no-op; F1 unavailable",
+      "label": "geometry-off-30",
+      "outdoorPreflight": {
+        "frame": 204225,
+        "seconds": 3441.29761,
+        "day": 6,
+        "hour": 10,
+        "minute": 0.006742682,
+        "timeScale": 0.0,
+        "nativeSpeed": "Normal",
+        "inside": false,
+        "entering": false,
+        "exiting": false,
+        "address": null,
+        "size": null,
+        "version": null,
+        "elevator": false,
+        "floor": null,
+        "configured": false,
+        "viewActive": false,
+        "fallback": "None",
+        "anchor": {
+          "X": 0.0,
+          "Y": 0.0,
+          "Z": 0.0,
+          "IsFinite": true
+        },
+        "revision": 0,
+        "hidden": false,
+        "physical": true,
+        "diagnostics": "physical=True, pedestrians=1, cars=0, acquired=1, released=0, blockedSamples=858, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+        "acquired": 1,
+        "released": 0,
+        "attempted": 1,
+        "citizens": 957,
+        "failed": false,
+        "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+        "lighting": {
+          "ambientIntensity": 1.0,
+          "ambientMode": "Skybox",
+          "fog": false,
+          "volumeObjects": [
+            {
+              "id": -38212624,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 144121346,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 144194742,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 144765438,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 144765442,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 144765450,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 144765456,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 144765460,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 144765462,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 144765466,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 144765480,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 144765482,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 144765484,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 144765494,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 144765500,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 144765528,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 145114120,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 145114122,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 145114124,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 145114126,
+              "enabled": true,
+              "active": true
+            }
+          ]
+        }
+      },
+      "environment": {
+        "frame": 204520,
+        "focused": true,
+        "runInBackground": true,
+        "targetFrameRate": 90,
+        "vsync": 0,
+        "width": 1920,
+        "height": 1080,
+        "mouse": "(951.00, 555.00, 0.00)",
+        "left": false,
+        "wheel": "(0.00, 0.00)",
+        "pointerMoves": 0,
+        "pointerDowns": 0,
+        "pointerUps": 0,
+        "pointerWheels": 0,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "api": "Direct3D11"
+      },
+      "capture": "geometry-off-30.jpg"
+    },
+    {
+      "frame": 209763,
+      "inside": true,
+      "address": "ba:street_thirdstreet 30",
+      "formattedAddress": "30 3rd Street",
+      "size": "ba:buildingsize_a",
+      "version": 1,
+      "authority": {
+        "persistentcity:food-authority-v1": "{\"version\":1,\"shops\":[{\"place\":\"address:ba%3Astreet_thirdstreet:30:shop\",\"signature\":\"business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player\",\"generation\":1,\"desired\":true,\"requested\":121,\"from\":122,\"until\":-1,\"suspended\":false}]}"
+      },
+      "layout": {
+        "position": {
+          "x": 1000.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "rotation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "w": 1.0
+        },
+        "scale": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        },
+        "localPosition": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "localScale": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        }
+      },
+      "doors": [
+        {
+          "index": 0,
+          "transform": {
+            "position": {
+              "x": 230.262573,
+              "y": 0.09000015,
+              "z": 21.27832
+            },
+            "rotation": {
+              "x": 0.0,
+              "y": -0.707106769,
+              "z": 0.0,
+              "w": 0.7071068
+            },
+            "scale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "localPosition": {
+              "x": 230.258743,
+              "y": 0.09000015,
+              "z": -149.903
+            },
+            "localScale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            }
+          }
+        }
+      ],
+      "exits": [
+        {
+          "index": 0,
+          "id": -39621388,
+          "elevator": false,
+          "transform": {
+            "position": {
+              "x": 999.0,
+              "y": 0.0,
+              "z": -4.43
+            },
+            "rotation": {
+              "x": 2.18556941e-08,
+              "y": 7.8976143e-07,
+              "z": -6.114987e-16,
+              "w": -1.0
+            },
+            "scale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "localPosition": {
+              "x": -1.0,
+              "y": 0.0,
+              "z": -4.43
+            },
+            "localScale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            }
+          }
+        }
+      ],
+      "elevator": false,
+      "cachedFloor": null,
+      "state": {
+        "<Active>k__BackingField": false,
+        "<Anchor>k__BackingField": {
+          "<X>k__BackingField": 0.0,
+          "<Y>k__BackingField": 0.0,
+          "<Z>k__BackingField": 0.0
+        },
+        "<Fallback>k__BackingField": 0,
+        "<Revision>k__BackingField": 0,
+        "entry": null,
+        "faulted": false,
+        "nextCheck": 0.0
+      },
+      "configured": false,
+      "radius": 120.0,
+      "admissionRadius": 120.0,
+      "pedestrianCap": 48,
+      "vehicleCap": 24,
+      "bodies": [],
+      "diagnostics": "physical=True, pedestrians=0, cars=0, acquired=1, released=1, blockedSamples=865, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+      "nativeLighting": {
+        "ambientIntensity": 1.0,
+        "ambientMode": "Skybox",
+        "fog": false
+      },
+      "doorCorrespondence": "one exterior/one interior; transform mapping not established",
+      "renderer": "F0 drawing no-op; F1 unavailable",
+      "label": "geometry-off-60",
+      "outdoorPreflight": {
+        "frame": 209696,
+        "seconds": 3539.52344,
+        "day": 6,
+        "hour": 10,
+        "minute": 0.003838217,
+        "timeScale": 0.0,
+        "nativeSpeed": "Normal",
+        "inside": false,
+        "entering": false,
+        "exiting": false,
+        "address": null,
+        "size": null,
+        "version": null,
+        "elevator": false,
+        "floor": null,
+        "configured": false,
+        "viewActive": false,
+        "fallback": "None",
+        "anchor": {
+          "X": 0.0,
+          "Y": 0.0,
+          "Z": 0.0,
+          "IsFinite": true
+        },
+        "revision": 0,
+        "hidden": false,
+        "physical": true,
+        "diagnostics": "physical=True, pedestrians=1, cars=0, acquired=1, released=0, blockedSamples=857, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+        "acquired": 1,
+        "released": 0,
+        "attempted": 1,
+        "citizens": 957,
+        "failed": false,
+        "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+        "lighting": {
+          "ambientIntensity": 1.0,
+          "ambientMode": "Skybox",
+          "fog": false,
+          "volumeObjects": [
+            {
+              "id": -39276384,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 148120538,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 148193934,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 148764630,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 148764634,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 148764642,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 148764648,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 148764652,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 148764654,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 148764658,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 148764672,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 148764674,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 148764676,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 148764686,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 148764692,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 148764720,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 149113312,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 149113314,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 149113316,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 149113318,
+              "enabled": true,
+              "active": true
+            }
+          ]
+        }
+      },
+      "environment": {
+        "frame": 209971,
+        "focused": true,
+        "runInBackground": true,
+        "targetFrameRate": 90,
+        "vsync": 0,
+        "width": 1920,
+        "height": 1080,
+        "mouse": "(951.00, 555.00, 0.00)",
+        "left": false,
+        "wheel": "(0.00, 0.00)",
+        "pointerMoves": 0,
+        "pointerDowns": 0,
+        "pointerUps": 0,
+        "pointerWheels": 0,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "api": "Direct3D11"
+      },
+      "capture": "geometry-off-60.jpg"
+    },
+    {
+      "frame": 215384,
+      "inside": true,
+      "address": "ba:street_thirdstreet 30",
+      "formattedAddress": "30 3rd Street",
+      "size": "ba:buildingsize_a",
+      "version": 1,
+      "authority": {
+        "persistentcity:food-authority-v1": "{\"version\":1,\"shops\":[{\"place\":\"address:ba%3Astreet_thirdstreet:30:shop\",\"signature\":\"business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player\",\"generation\":1,\"desired\":true,\"requested\":121,\"from\":122,\"until\":-1,\"suspended\":false}]}"
+      },
+      "layout": {
+        "position": {
+          "x": 1000.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "rotation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "w": 1.0
+        },
+        "scale": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        },
+        "localPosition": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "localScale": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        }
+      },
+      "doors": [
+        {
+          "index": 0,
+          "transform": {
+            "position": {
+              "x": 230.262573,
+              "y": 0.09000015,
+              "z": 21.27832
+            },
+            "rotation": {
+              "x": 0.0,
+              "y": -0.707106769,
+              "z": 0.0,
+              "w": 0.7071068
+            },
+            "scale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "localPosition": {
+              "x": 230.258743,
+              "y": 0.09000015,
+              "z": -149.903
+            },
+            "localScale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            }
+          }
+        }
+      ],
+      "exits": [
+        {
+          "index": 0,
+          "id": -40662390,
+          "elevator": false,
+          "transform": {
+            "position": {
+              "x": 999.0,
+              "y": 0.0,
+              "z": -4.43
+            },
+            "rotation": {
+              "x": 2.18556941e-08,
+              "y": 7.8976143e-07,
+              "z": -6.114987e-16,
+              "w": -1.0
+            },
+            "scale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "localPosition": {
+              "x": -1.0,
+              "y": 0.0,
+              "z": -4.43
+            },
+            "localScale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            }
+          }
+        }
+      ],
+      "elevator": false,
+      "cachedFloor": null,
+      "state": {
+        "<Active>k__BackingField": false,
+        "<Anchor>k__BackingField": {
+          "<X>k__BackingField": 0.0,
+          "<Y>k__BackingField": 0.0,
+          "<Z>k__BackingField": 0.0
+        },
+        "<Fallback>k__BackingField": 0,
+        "<Revision>k__BackingField": 0,
+        "entry": null,
+        "faulted": false,
+        "nextCheck": 0.0
+      },
+      "configured": false,
+      "radius": 120.0,
+      "admissionRadius": 120.0,
+      "pedestrianCap": 48,
+      "vehicleCap": 24,
+      "bodies": [],
+      "diagnostics": "physical=True, pedestrians=0, cars=0, acquired=1, released=1, blockedSamples=256, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+      "nativeLighting": {
+        "ambientIntensity": 1.0,
+        "ambientMode": "Skybox",
+        "fog": false
+      },
+      "doorCorrespondence": "one exterior/one interior; transform mapping not established",
+      "renderer": "F0 drawing no-op; F1 unavailable",
+      "label": "geometry-off-120",
+      "outdoorPreflight": {
+        "frame": 215296,
+        "seconds": 3639.844,
+        "day": 6,
+        "hour": 10,
+        "minute": 0.00372096244,
+        "timeScale": 0.0,
+        "nativeSpeed": "Normal",
+        "inside": false,
+        "entering": false,
+        "exiting": false,
+        "address": null,
+        "size": null,
+        "version": null,
+        "elevator": false,
+        "floor": null,
+        "configured": false,
+        "viewActive": false,
+        "fallback": "None",
+        "anchor": {
+          "X": 0.0,
+          "Y": 0.0,
+          "Z": 0.0,
+          "IsFinite": true
+        },
+        "revision": 0,
+        "hidden": false,
+        "physical": true,
+        "diagnostics": "physical=True, pedestrians=1, cars=0, acquired=1, released=0, blockedSamples=246, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+        "acquired": 1,
+        "released": 0,
+        "attempted": 1,
+        "citizens": 957,
+        "failed": false,
+        "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+        "lighting": {
+          "ambientIntensity": 1.0,
+          "ambientMode": "Skybox",
+          "fog": false,
+          "volumeObjects": [
+            {
+              "id": -40320200,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 152119730,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 152193126,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 152763822,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 152763826,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 152763834,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 152763840,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 152763844,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 152763846,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 152763850,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 152763864,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 152763866,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 152763868,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 152763878,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 152763884,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 152763912,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 153112504,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 153112506,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 153112508,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 153112510,
+              "enabled": true,
+              "active": true
+            }
+          ]
+        }
+      },
+      "environment": {
+        "frame": 215598,
+        "focused": true,
+        "runInBackground": true,
+        "targetFrameRate": 90,
+        "vsync": 0,
+        "width": 1920,
+        "height": 1080,
+        "mouse": "(951.00, 555.00, 0.00)",
+        "left": false,
+        "wheel": "(0.00, 0.00)",
+        "pointerMoves": 0,
+        "pointerDowns": 0,
+        "pointerUps": 0,
+        "pointerWheels": 0,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "api": "Direct3D11"
+      },
+      "capture": "geometry-off-120.jpg"
+    },
+    {
+      "frame": 221022,
+      "inside": true,
+      "address": "ba:street_thirdstreet 30",
+      "formattedAddress": "30 3rd Street",
+      "size": "ba:buildingsize_a",
+      "version": 1,
+      "authority": {
+        "persistentcity:food-authority-v1": "{\"version\":1,\"shops\":[{\"place\":\"address:ba%3Astreet_thirdstreet:30:shop\",\"signature\":\"business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player\",\"generation\":1,\"desired\":true,\"requested\":121,\"from\":122,\"until\":-1,\"suspended\":false}]}"
+      },
+      "layout": {
+        "position": {
+          "x": 1000.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "rotation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "w": 1.0
+        },
+        "scale": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        },
+        "localPosition": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "localScale": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        }
+      },
+      "doors": [
+        {
+          "index": 0,
+          "transform": {
+            "position": {
+              "x": 230.262573,
+              "y": 0.09000397,
+              "z": 21.27832
+            },
+            "rotation": {
+              "x": 0.0,
+              "y": -0.707106769,
+              "z": 0.0,
+              "w": 0.7071068
+            },
+            "scale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "localPosition": {
+              "x": 230.258743,
+              "y": 0.09000397,
+              "z": -149.903
+            },
+            "localScale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            }
+          }
+        }
+      ],
+      "exits": [
+        {
+          "index": 0,
+          "id": -41695300,
+          "elevator": false,
+          "transform": {
+            "position": {
+              "x": 999.0,
+              "y": 0.0,
+              "z": -4.43
+            },
+            "rotation": {
+              "x": 2.18556941e-08,
+              "y": 7.8976143e-07,
+              "z": -6.114987e-16,
+              "w": -1.0
+            },
+            "scale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "localPosition": {
+              "x": -1.0,
+              "y": 0.0,
+              "z": -4.43
+            },
+            "localScale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            }
+          }
+        }
+      ],
+      "elevator": false,
+      "cachedFloor": {
+        "position": {
+          "x": 997.0,
+          "y": 0.0,
+          "z": -4.0
+        },
+        "rotation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "w": 1.0
+        },
+        "scale": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        },
+        "localPosition": {
+          "x": -3.0,
+          "y": 0.0,
+          "z": -4.0
+        },
+        "localScale": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        }
+      },
+      "state": {
+        "<Active>k__BackingField": true,
+        "<Anchor>k__BackingField": {
+          "<X>k__BackingField": 230.2625732421875,
+          "<Y>k__BackingField": 0.09000396728515625,
+          "<Z>k__BackingField": 21.2783203125
+        },
+        "<Fallback>k__BackingField": 0,
+        "<Revision>k__BackingField": 1,
+        "entry": {
+          "type": "Buildings.Building",
+          "id": 376976
+        },
+        "faulted": false,
+        "nextCheck": 3755.794921875
+      },
+      "configured": true,
+      "radius": 30.0,
+      "admissionRadius": 25.0,
+      "pedestrianCap": 24,
+      "vehicleCap": 12,
+      "bodies": [],
+      "diagnostics": "physical=True, pedestrians=0, cars=0, acquired=1, released=1, blockedSamples=252, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+      "nativeLighting": {
+        "ambientIntensity": 1.0,
+        "ambientMode": "Skybox",
+        "fog": false
+      },
+      "doorCorrespondence": "one exterior/one interior; transform mapping not established",
+      "renderer": "F0 drawing no-op; F1 unavailable",
+      "label": "geometry-on-30",
+      "outdoorPreflight": {
+        "frame": 220945,
+        "seconds": 3740.37036,
+        "day": 6,
+        "hour": 10,
+        "minute": 0.003472754,
+        "timeScale": 0.0,
+        "nativeSpeed": "Normal",
+        "inside": false,
+        "entering": false,
+        "exiting": false,
+        "address": null,
+        "size": null,
+        "version": null,
+        "elevator": false,
+        "floor": null,
+        "configured": true,
+        "viewActive": false,
+        "fallback": "None",
+        "anchor": {
+          "X": 0.0,
+          "Y": 0.0,
+          "Z": 0.0,
+          "IsFinite": true
+        },
+        "revision": 0,
+        "hidden": false,
+        "physical": true,
+        "diagnostics": "physical=True, pedestrians=1, cars=0, acquired=1, released=0, blockedSamples=242, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+        "acquired": 1,
+        "released": 0,
+        "attempted": 1,
+        "citizens": 957,
+        "failed": false,
+        "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+        "lighting": {
+          "ambientIntensity": 1.0,
+          "ambientMode": "Skybox",
+          "fog": false,
+          "volumeObjects": [
+            {
+              "id": -41358564,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 156118922,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 156192318,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 156763014,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 156763018,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 156763026,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 156763032,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 156763036,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 156763038,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 156763042,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 156763056,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 156763058,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 156763060,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 156763070,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 156763076,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 156763104,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 157111696,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 157111698,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 157111700,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 157111702,
+              "enabled": true,
+              "active": true
+            }
+          ]
+        }
+      },
+      "environment": {
+        "frame": 221235,
+        "focused": true,
+        "runInBackground": true,
+        "targetFrameRate": 90,
+        "vsync": 0,
+        "width": 1920,
+        "height": 1080,
+        "mouse": "(951.00, 555.00, 0.00)",
+        "left": false,
+        "wheel": "(0.00, 0.00)",
+        "pointerMoves": 0,
+        "pointerDowns": 0,
+        "pointerUps": 0,
+        "pointerWheels": 0,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "api": "Direct3D11"
+      },
+      "capture": "geometry-on-30.jpg"
+    },
+    {
+      "frame": 226736,
+      "inside": true,
+      "address": "ba:street_thirdstreet 30",
+      "formattedAddress": "30 3rd Street",
+      "size": "ba:buildingsize_a",
+      "version": 1,
+      "authority": {
+        "persistentcity:food-authority-v1": "{\"version\":1,\"shops\":[{\"place\":\"address:ba%3Astreet_thirdstreet:30:shop\",\"signature\":\"business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player\",\"generation\":1,\"desired\":true,\"requested\":121,\"from\":122,\"until\":-1,\"suspended\":false}]}"
+      },
+      "layout": {
+        "position": {
+          "x": 1000.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "rotation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "w": 1.0
+        },
+        "scale": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        },
+        "localPosition": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "localScale": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        }
+      },
+      "doors": [
+        {
+          "index": 0,
+          "transform": {
+            "position": {
+              "x": 230.262573,
+              "y": 0.09000015,
+              "z": 21.27832
+            },
+            "rotation": {
+              "x": 0.0,
+              "y": -0.707106769,
+              "z": 0.0,
+              "w": 0.7071068
+            },
+            "scale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "localPosition": {
+              "x": 230.258743,
+              "y": 0.09000015,
+              "z": -149.903
+            },
+            "localScale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            }
+          }
+        }
+      ],
+      "exits": [
+        {
+          "index": 0,
+          "id": -42733408,
+          "elevator": false,
+          "transform": {
+            "position": {
+              "x": 999.0,
+              "y": 0.0,
+              "z": -4.43
+            },
+            "rotation": {
+              "x": 2.18556941e-08,
+              "y": 7.8976143e-07,
+              "z": -6.114987e-16,
+              "w": -1.0
+            },
+            "scale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "localPosition": {
+              "x": -1.0,
+              "y": 0.0,
+              "z": -4.43
+            },
+            "localScale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            }
+          }
+        }
+      ],
+      "elevator": false,
+      "cachedFloor": {
+        "position": {
+          "x": 997.0,
+          "y": 0.0,
+          "z": -4.0
+        },
+        "rotation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "w": 1.0
+        },
+        "scale": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        },
+        "localPosition": {
+          "x": -3.0,
+          "y": 0.0,
+          "z": -4.0
+        },
+        "localScale": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        }
+      },
+      "state": {
+        "<Active>k__BackingField": true,
+        "<Anchor>k__BackingField": {
+          "<X>k__BackingField": 230.2625732421875,
+          "<Y>k__BackingField": 0.09000015258789062,
+          "<Z>k__BackingField": 21.2783203125
+        },
+        "<Fallback>k__BackingField": 0,
+        "<Revision>k__BackingField": 3,
+        "entry": {
+          "type": "Buildings.Building",
+          "id": 376976
+        },
+        "faulted": false,
+        "nextCheck": 3856.66064453125
+      },
+      "configured": true,
+      "radius": 60.0,
+      "admissionRadius": 50.0,
+      "pedestrianCap": 24,
+      "vehicleCap": 12,
+      "bodies": [],
+      "diagnostics": "physical=True, pedestrians=0, cars=0, acquired=2, released=2, blockedSamples=886, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+      "nativeLighting": {
+        "ambientIntensity": 1.0,
+        "ambientMode": "Skybox",
+        "fog": false
+      },
+      "doorCorrespondence": "one exterior/one interior; transform mapping not established",
+      "renderer": "F0 drawing no-op; F1 unavailable",
+      "label": "geometry-on-60",
+      "outdoorPreflight": {
+        "frame": 226649,
+        "seconds": 3841.32959,
+        "day": 6,
+        "hour": 10,
+        "minute": 0.00364243472,
+        "timeScale": 0.0,
+        "nativeSpeed": "Normal",
+        "inside": false,
+        "entering": false,
+        "exiting": false,
+        "address": null,
+        "size": null,
+        "version": null,
+        "elevator": false,
+        "floor": null,
+        "configured": true,
+        "viewActive": false,
+        "fallback": "None",
+        "anchor": {
+          "X": 0.0,
+          "Y": 0.0,
+          "Z": 0.0,
+          "IsFinite": true
+        },
+        "revision": 2,
+        "hidden": false,
+        "physical": true,
+        "diagnostics": "physical=True, pedestrians=1, cars=0, acquired=1, released=0, blockedSamples=872, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+        "acquired": 1,
+        "released": 0,
+        "attempted": 1,
+        "citizens": 957,
+        "failed": false,
+        "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+        "lighting": {
+          "ambientIntensity": 1.0,
+          "ambientMode": "Skybox",
+          "fog": false,
+          "volumeObjects": [
+            {
+              "id": -42391164,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 160118114,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 160191510,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 160762206,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 160762210,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 160762218,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 160762224,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 160762228,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 160762230,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 160762234,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 160762248,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 160762250,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 160762252,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 160762262,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 160762268,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 160762296,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 161110888,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 161110890,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 161110892,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 161110894,
+              "enabled": true,
+              "active": true
+            }
+          ]
+        }
+      },
+      "environment": {
+        "frame": 226968,
+        "focused": true,
+        "runInBackground": true,
+        "targetFrameRate": 90,
+        "vsync": 0,
+        "width": 1920,
+        "height": 1080,
+        "mouse": "(951.00, 555.00, 0.00)",
+        "left": false,
+        "wheel": "(0.00, 0.00)",
+        "pointerMoves": 0,
+        "pointerDowns": 0,
+        "pointerUps": 0,
+        "pointerWheels": 0,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "api": "Direct3D11"
+      },
+      "capture": "geometry-on-60.jpg"
+    },
+    {
+      "frame": 233548,
+      "inside": true,
+      "address": "ba:street_thirdstreet 30",
+      "formattedAddress": "30 3rd Street",
+      "size": "ba:buildingsize_a",
+      "version": 1,
+      "authority": {
+        "persistentcity:food-authority-v1": "{\"version\":1,\"shops\":[{\"place\":\"address:ba%3Astreet_thirdstreet:30:shop\",\"signature\":\"business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player\",\"generation\":1,\"desired\":true,\"requested\":121,\"from\":122,\"until\":-1,\"suspended\":false}]}"
+      },
+      "layout": {
+        "position": {
+          "x": 1000.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "rotation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "w": 1.0
+        },
+        "scale": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        },
+        "localPosition": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "localScale": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        }
+      },
+      "doors": [
+        {
+          "index": 0,
+          "transform": {
+            "position": {
+              "x": 230.262573,
+              "y": 0.09000015,
+              "z": 21.27832
+            },
+            "rotation": {
+              "x": 0.0,
+              "y": -0.707106769,
+              "z": 0.0,
+              "w": 0.7071068
+            },
+            "scale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "localPosition": {
+              "x": 230.258743,
+              "y": 0.09000015,
+              "z": -149.903
+            },
+            "localScale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            }
+          }
+        }
+      ],
+      "exits": [
+        {
+          "index": 0,
+          "id": -44794402,
+          "elevator": false,
+          "transform": {
+            "position": {
+              "x": 999.0,
+              "y": 0.0,
+              "z": -4.43
+            },
+            "rotation": {
+              "x": 2.18556941e-08,
+              "y": 7.8976143e-07,
+              "z": -6.114987e-16,
+              "w": -1.0
+            },
+            "scale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "localPosition": {
+              "x": -1.0,
+              "y": 0.0,
+              "z": -4.43
+            },
+            "localScale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            }
+          }
+        }
+      ],
+      "elevator": false,
+      "cachedFloor": {
+        "position": {
+          "x": 997.0,
+          "y": 0.0,
+          "z": -4.0
+        },
+        "rotation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "w": 1.0
+        },
+        "scale": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        },
+        "localPosition": {
+          "x": -3.0,
+          "y": 0.0,
+          "z": -4.0
+        },
+        "localScale": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        }
+      },
+      "state": {
+        "<Active>k__BackingField": true,
+        "<Anchor>k__BackingField": {
+          "<X>k__BackingField": 230.2625732421875,
+          "<Y>k__BackingField": 0.09000015258789062,
+          "<Z>k__BackingField": 21.2783203125
+        },
+        "<Fallback>k__BackingField": 0,
+        "<Revision>k__BackingField": 7,
+        "entry": {
+          "type": "Buildings.Building",
+          "id": 376976
+        },
+        "faulted": false,
+        "nextCheck": 3994.599609375
+      },
+      "configured": true,
+      "radius": 120.0,
+      "admissionRadius": 100.0,
+      "pedestrianCap": 24,
+      "vehicleCap": 12,
+      "bodies": [],
+      "diagnostics": "physical=True, pedestrians=0, cars=0, acquired=1, released=1, blockedSamples=392, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+      "nativeLighting": {
+        "ambientIntensity": 1.0,
+        "ambientMode": "Skybox",
+        "fog": false
+      },
+      "doorCorrespondence": "one exterior/one interior; transform mapping not established",
+      "renderer": "F0 drawing no-op; F1 unavailable",
+      "label": "geometry-on-120",
+      "outdoorPreflight": {
+        "frame": 233457,
+        "seconds": 3979.43335,
+        "day": 6,
+        "hour": 10,
+        "minute": 0.00466263667,
+        "timeScale": 0.0,
+        "nativeSpeed": "Normal",
+        "inside": false,
+        "entering": false,
+        "exiting": false,
+        "address": null,
+        "size": null,
+        "version": null,
+        "elevator": false,
+        "floor": null,
+        "configured": true,
+        "viewActive": false,
+        "fallback": "None",
+        "anchor": {
+          "X": 0.0,
+          "Y": 0.0,
+          "Z": 0.0,
+          "IsFinite": true
+        },
+        "revision": 6,
+        "hidden": false,
+        "physical": true,
+        "diagnostics": "physical=True, pedestrians=1, cars=0, acquired=1, released=0, blockedSamples=375, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::",
+        "acquired": 1,
+        "released": 0,
+        "attempted": 1,
+        "citizens": 957,
+        "failed": false,
+        "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+        "lighting": {
+          "ambientIntensity": 1.0,
+          "ambientMode": "Skybox",
+          "fog": false,
+          "volumeObjects": [
+            {
+              "id": -44457032,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 168116498,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 168189894,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 168760590,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 168760594,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 168760602,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 168760608,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 168760612,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 168760614,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 168760618,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 168760632,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 168760634,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 168760636,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 168760646,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 168760652,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 168760680,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 169109272,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 169109274,
+              "enabled": true,
+              "active": true
+            },
+            {
+              "id": 169109276,
+              "enabled": false,
+              "active": true
+            },
+            {
+              "id": 169109278,
+              "enabled": true,
+              "active": true
+            }
+          ]
+        }
+      },
+      "environment": {
+        "frame": 233762,
+        "focused": true,
+        "runInBackground": true,
+        "targetFrameRate": 90,
+        "vsync": 0,
+        "width": 1920,
+        "height": 1080,
+        "mouse": "(951.00, 555.00, 0.00)",
+        "left": false,
+        "wheel": "(0.00, 0.00)",
+        "pointerMoves": 0,
+        "pointerDowns": 0,
+        "pointerUps": 0,
+        "pointerWheels": 0,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "api": "Direct3D11"
+      },
+      "capture": "geometry-on-120.jpg"
+    }
+  ],
+  "insideReload": {
+    "frame": 228105,
+    "inside": true,
+    "address": "ba:street_thirdstreet 30",
+    "formattedAddress": "30 3rd Street",
+    "size": "ba:buildingsize_a",
+    "version": 1,
+    "authority": {
+      "persistentcity:food-authority-v1": "{\"version\":1,\"shops\":[{\"place\":\"address:ba%3Astreet_thirdstreet:30:shop\",\"signature\":\"business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player\",\"generation\":1,\"desired\":true,\"requested\":121,\"from\":122,\"until\":-1,\"suspended\":false}]}"
+    },
+    "layout": {
+      "position": {
+        "x": 1000.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 1.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "localPosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "localScale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      }
+    },
+    "doors": [
+      {
+        "index": 0,
+        "transform": {
+          "position": {
+            "x": 230.262573,
+            "y": 0.09000015,
+            "z": 21.27832
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": -0.707106769,
+            "z": 0.0,
+            "w": 0.7071068
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "localPosition": {
+            "x": 230.258743,
+            "y": 0.09000015,
+            "z": -149.903
+          },
+          "localScale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        }
+      }
+    ],
+    "exits": [
+      {
+        "index": 0,
+        "id": -43755666,
+        "elevator": false,
+        "transform": {
+          "position": {
+            "x": 999.0,
+            "y": 0.0,
+            "z": -4.43
+          },
+          "rotation": {
+            "x": 2.18556941e-08,
+            "y": 7.8976143e-07,
+            "z": -6.114987e-16,
+            "w": -1.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "localPosition": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": -4.43
+          },
+          "localScale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        }
+      }
+    ],
+    "elevator": false,
+    "cachedFloor": null,
+    "state": {
+      "<Active>k__BackingField": false,
+      "<Anchor>k__BackingField": {
+        "<X>k__BackingField": 0.0,
+        "<Y>k__BackingField": 0.0,
+        "<Z>k__BackingField": 0.0
+      },
+      "<Fallback>k__BackingField": 0,
+      "<Revision>k__BackingField": 6,
+      "entry": null,
+      "faulted": false,
+      "nextCheck": 0.0
+    },
+    "configured": true,
+    "radius": 120.0,
+    "admissionRadius": 120.0,
+    "pedestrianCap": 48,
+    "vehicleCap": 24,
+    "bodies": [],
+    "diagnostics": null,
+    "nativeLighting": {
+      "ambientIntensity": 1.0,
+      "ambientMode": "Skybox",
+      "fog": false
+    },
+    "doorCorrespondence": "one exterior/one interior; transform mapping not established",
+    "renderer": "F0 drawing no-op; F1 unavailable"
+  },
+  "fixtureMatrix": {
+    "smallOwnShop": "30 3rd Street",
+    "mediumOwnShop": "NOT-RUN(fixture missing)",
+    "largeOwnShop": "NOT-RUN(fixture missing)",
+    "elevator": "NOT-RUN(prepared example missing)"
+  },
+  "qualification": "One exterior door and one interior exit gives one candidate pair by cardinality; no validated door/trigger transform correspondence. F1 renderer and customer hand-off absent/BLOCKED. F0 active flag and retained bodies are not drawing proof. Captures inspected at prepared doorway only; unprepared window/camera viewpoints DEFERRED-INPUT. JPEG1280x720 derivative of native Unity capture, normal visible owned window; native lighting and clock matched."
+}

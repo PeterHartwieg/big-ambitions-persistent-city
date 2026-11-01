@@ -1,0 +1,3570 @@
+{
+  "default": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+  "standin": {
+    "shop-guard": {
+      "agency": "C3 read-only; tuple/queue ordinal is NOT durable identity\nday=6 money(binary32 dollars)=10160.5107\nagency=ba%3Astreet_secondavenue:5 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallBillboard;MediumBillboard;LargeBillboard;\nagency=ba%3Astreet_thirdavenue:17 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallInternet;MediumInternet;LargeInternet;\nmarketingRecordsInQueue=0\nexpense day=1 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=2 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=3 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=4 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=5 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\n",
+      "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+      "GuardStarts": 43,
+      "GuardEvaluations": 43,
+      "PaymentEntries": 0
+    },
+    "cached-after-load": {
+      "agency": "C3 read-only; tuple/queue ordinal is NOT durable identity\nday=6 money(binary32 dollars)=10160.5107\nagency=ba%3Astreet_secondavenue:5 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallBillboard;MediumBillboard;LargeBillboard;\nagency=ba%3Astreet_thirdavenue:17 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallInternet;MediumInternet;LargeInternet;\nmarketingRecordsInQueue=0\nexpense day=1 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=2 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=3 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=4 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=5 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\n",
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=on; active=False",
+      "GuardStarts": 42,
+      "GuardEvaluations": 42,
+      "PaymentEntries": 0
+    },
+    "repeat": {
+      "repeats": 100,
+      "runtimeLookupMs": 99.0096,
+      "timingScope": "Capture plus cached guard diagnostic; one Unity object lookup reported separately",
+      "agencyAvailable": true,
+      "guardAvailable": true,
+      "first": "C3 read-only; tuple/queue ordinal is NOT durable identity\nday=6 money(binary32 dollars)=10160.5107\nagency=ba%3Astreet_secondavenue:5 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallBillboard;MediumBillboard;LargeBillboard;\nagency=ba%3Astreet_thirdavenue:17 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallInternet;MediumInternet;LargeInternet;\nmarketingRecordsInQueue=0\nexpense day=1 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=2 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=3 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=4 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=5 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\n",
+      "last": "C3 read-only; tuple/queue ordinal is NOT durable identity\nday=6 money(binary32 dollars)=10160.5107\nagency=ba%3Astreet_secondavenue:5 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallBillboard;MediumBillboard;LargeBillboard;\nagency=ba%3Astreet_thirdavenue:17 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallInternet;MediumInternet;LargeInternet;\nmarketingRecordsInQueue=0\nexpense day=1 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=2 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=3 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=4 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=5 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\n",
+      "allOutputIdentical": true,
+      "nativeEqual": true,
+      "beforeSha256": "c72d03844aa9c6ff338c7128d95658bef916aed13342c305825c68a196795bd7",
+      "afterSha256": "c72d03844aa9c6ff338c7128d95658bef916aed13342c305825c68a196795bd7",
+      "payloadEqual": true,
+      "payloadBeforeSha256": "f4aeaf490a7fe3b88d8143e7c2b339d48c3adedd72f64d4621671da7176b8986",
+      "payloadAfterSha256": "f4aeaf490a7fe3b88d8143e7c2b339d48c3adedd72f64d4621671da7176b8986",
+      "guardStartsBefore": 44,
+      "guardStartsAfter": 44,
+      "guardEvaluationsBefore": 44,
+      "guardEvaluationsAfter": 44,
+      "paymentEntriesBefore": 0,
+      "paymentEntriesAfter": 0,
+      "samples": [
+        {
+          "iteration": 0,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.1254,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 1,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.10210000000000001,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 2,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0274,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 3,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0235,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 4,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0233,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 5,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.024200000000000003,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 6,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0233,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 7,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0224,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 8,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0235,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 9,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0221,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 10,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0241,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 11,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.022500000000000003,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 12,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0239,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 13,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0234,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 14,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0223,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 15,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0229,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 16,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0238,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 17,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0217,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 18,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.022500000000000003,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 19,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0229,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 20,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0233,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 21,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0219,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 22,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.024300000000000002,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 23,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0218,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 24,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0238,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 25,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.024900000000000002,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 26,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.022500000000000003,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 27,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0221,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 28,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0236,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 29,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0219,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 30,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.024200000000000003,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 31,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0238,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 32,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.023200000000000002,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 33,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.023,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 34,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0223,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 35,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.022500000000000003,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 36,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0222,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 37,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0234,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 38,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.022600000000000002,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 39,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0228,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 40,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.025500000000000002,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 41,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0224,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 42,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.023,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 43,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.022000000000000002,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 44,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0223,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 45,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0228,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 46,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0218,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 47,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0234,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 48,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0221,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 49,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0229,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 50,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0229,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 51,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0223,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 52,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0318,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 53,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0238,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 54,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0219,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 55,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0227,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 56,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0246,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 57,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0216,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 58,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.022000000000000002,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 59,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.022600000000000002,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 60,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.022600000000000002,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 61,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0228,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 62,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.021500000000000002,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 63,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.022600000000000002,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 64,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0227,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 65,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0219,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 66,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.022600000000000002,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 67,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0223,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 68,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0221,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 69,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0238,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 70,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0238,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 71,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.023100000000000002,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 72,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0224,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 73,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0233,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 74,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0233,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 75,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0221,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 76,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0234,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 77,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0217,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 78,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0229,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 79,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0222,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 80,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0224,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 81,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0238,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 82,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0222,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 83,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0223,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 84,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.023100000000000002,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 85,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0228,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 86,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0218,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 87,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0228,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 88,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0238,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 89,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0234,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 90,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0229,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 91,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0221,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 92,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0221,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 93,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0236,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 94,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0222,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 95,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.023,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 96,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.022600000000000002,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 97,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.023100000000000002,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 98,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0228,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        },
+        {
+          "iteration": 99,
+          "frame": 245537,
+          "phase": "paused on-demand diagnostic",
+          "ms": 0.0227,
+          "bytes": 0,
+          "outputCharacters": 801,
+          "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+          "gcBefore": [
+            1519,
+            1519,
+            1519
+          ],
+          "gcAfter": [
+            1519,
+            1519,
+            1519
+          ]
+        }
+      ]
+    },
+    "detected-coarse-caught-1793555945326299100": {
+      "minute": 9226.348201751709,
+      "nativeMinute": 9226.348201751709,
+      "caughtUp": true,
+      "clock": {
+        "factor": 0.3333333333333333,
+        "active": true,
+        "drivenRides": false,
+        "heldEconomySkipTicks": 19,
+        "rideActive": false,
+        "rideDriving": false,
+        "realSeconds": 0.0,
+        "frames": 0,
+        "totalAdvanceMs": 0.0,
+        "recording": false,
+        "sampleLimit": 2000000,
+        "droppedAdvanceSamples": 0,
+        "truncated": false,
+        "p95AdvanceMs": 0.0,
+        "maxAdvanceMs": 0.0,
+        "peakServing": 0,
+        "peakTravelling": 0,
+        "maxLag": 0.0,
+        "timeScale": 0.0,
+        "fixedDeltaTime": 0.02,
+        "note": "Diagnostic advancement timing includes trace capture, excludes rendering and route preparation. Peaks/lag sampled every 0.2 real seconds."
+      },
+      "travelClockRate": 0.33333335156782934,
+      "routines": {
+        "citizens": 957,
+        "journeys": 2775,
+        "missed": 273
+      },
+      "diagnostics": {
+        "active": true,
+        "hourlyCustomerBatchesSuppressed": 69,
+        "nativeDrawsSuppressed": 41,
+        "nativePurchasesThisSession": 7
+      },
+      "auditDecisions": 0,
+      "auditCapture": {
+        "recording": false,
+        "decisionsRetained": 0,
+        "decisionLimit": 5000,
+        "droppedDecisions": 0,
+        "routineDiagnosticsRetained": 0,
+        "routineDiagnosticLimit": 100000,
+        "droppedRoutineDiagnostics": 0,
+        "truncated": false,
+        "note": "Bounded diagnostic traces only; dropped records do not stop simulation or alter authoritative saved ledgers."
+      },
+      "housekeeping": {
+        "restockChecks": 1,
+        "restocks": 0,
+        "stockTasks": 1
+      },
+      "receipts": {
+        "persistentcity:food-sale-v2:food:consumer%3Ac149%3A1:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:c149:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Ac252%3A1:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:c248:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Ac248%3A1:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Apc%253A544%3A1:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:pc%3A544:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Apc%253A161%3A1:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:pc%3A161:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:c394:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:c217:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Apc%253A169%3A1:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:pc%3A58:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:c289:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Apc%253A23%3A1:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:pc%3A23:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Apc%253A390%3A1:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:pc%3A390:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:pc%3A542:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:pc%3A489:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Apc%253A502%3A1:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:pc%3A502:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Apc%253A399%3A1:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:pc%3A399:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Apc%253A144%3A1:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:pc%3A144:breakfast:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Apc%253A19%3A1:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:pc%3A331:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Ac125%3A1:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:pc%3A523:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Apc%253A37%3A1:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:pc%3A37:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:c252:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Ac252%3A1:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Ac347%3A1:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Apc%253A289%3A1:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Apc%253A544%3A1:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:pc%3A544:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:c248:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:c394:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:c289:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Apc%253A183%3A1:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Apc%253A502%3A1:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:pc%3A502:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Apc%253A399%3A1:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:pc%3A399:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Apc%253A413%3A1:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:pc%3A413:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Apc%253A144%3A1:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:pc%3A144:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Apc%253A389%3A1:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Apc%253A263%3A1:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Apc%253A145%3A1:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:pc%3A145:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:c73:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Ac60%3A1:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Apc%253A14%3A1:lunch:5": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Ac248%3A1:breakfast:6": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Ac147%3A1:breakfast:6": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:c394:breakfast:6": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:pc%3A350:breakfast:6": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:pc%3A183:breakfast:6": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:consumer%3Ac173%3A1:breakfast:6": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant",
+        "persistentcity:food-sale-v2:food:c25:breakfast:6": "paid|1025.279998779296875|business%3Aba%253Astreet_thirdstreet%3A30%3A1%3Aba%253Abusinesstype_coffeeshop%3Aplayer%3Ageneration%3A1|ba%3Aitemname_croissant"
+      },
+      "count": 1914,
+      "scope": [
+        {
+          "AlternativeKind": 0,
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "ProductId": "ba:itemname_croissant",
+          "AdditionalProductIds": [],
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "NextServiceAt": 9214.86365466929
+        }
+      ],
+      "totals": {
+        "Declined": 1865,
+        "Pending": 30,
+        "Paid": 4,
+        "Missed": 14,
+        "Travelling": 1
+      },
+      "purchases": 64,
+      "spendingCents": "65617.919921875",
+      "active": [
+        {
+          "ResidentId": "c25",
+          "AnchorId": "c25",
+          "Slot": 0,
+          "PreferredProductId": "",
+          "PreferenceBonusCents": 0,
+          "NeedsHomeResync": false,
+          "Excursion": null,
+          "Day": 6,
+          "Kind": 1,
+          "DayAllowanceUsed": {
+            "Units": 0
+          },
+          "DesiredAt": 9196.0,
+          "ExpiresAt": 9286.0,
+          "DueAt": 9429.0,
+          "Status": 3,
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "ProductId": "ba:itemname_croissant",
+          "Reason": "Native product, bag and completed order confirmed; daily settlement remains native",
+          "Allowance": {
+            "Units": 35888478289920
+          },
+          "Price": {
+            "Units": 275221504000
+          },
+          "ServiceMinutes": 4.0,
+          "ServiceAt": 9214.86365466929,
+          "Deadline": 9241.0,
+          "ReturnMinutes": 14.863654669289803,
+          "Budget": {
+            "IncomeSource": 2,
+            "BaseIncomeCents": 29605,
+            "DailyIncomeCents": 17763,
+            "DailyHousingCents": 5461,
+            "DailyEssentialsCents": 2099,
+            "DailyHomeFoodCents": 1164,
+            "OpeningBalance": {
+              "Units": 33377533034496
+            },
+            "Balance": {
+              "Units": 37955087704064
+            },
+            "IncomeReceived": {
+              "Units": 9536438009856
+            },
+            "EssentialsPaid": {
+              "Units": 4058744094720
+            },
+            "HomeFoodPaid": {
+              "Units": 624917741568
+            },
+            "PreparedFoodSpent": {
+              "Units": 275221504000
+            },
+            "ExternalFoodSpent": {
+              "Units": 0
+            },
+            "HeldPurchase": {
+              "Units": 0
+            },
+            "Arrears": {
+              "Units": 0
+            },
+            "LastPostedDay": 6,
+            "HomeFoodFundedDay": 6,
+            "DaysWithoutHomeFood": 0,
+            "NextPostingMinute": 10080.0
+          },
+          "ExistingStop": false,
+          "ExistingStopPurchases": 0,
+          "Purchases": 1,
+          "Spent": {
+            "Units": 275221504000
+          },
+          "RepresentedTraits": null,
+          "Today": {
+            "Day": 6,
+            "Unrecorded": 0,
+            "Meals": [
+              {
+                "TargetKind": 0,
+                "Kind": 1,
+                "Status": 0,
+                "Reason": 1,
+                "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+                "ProductId": "ba:itemname_croissant",
+                "Outside": 0,
+                "Factor1": 1,
+                "Factor2": 0,
+                "At": 9214,
+                "CheckoutAt": 9214
+              }
+            ]
+          },
+          "Decision": null,
+          "LastContextKey": "trip:rGH+ujwwar0M9BrrWiA/azH6dfPOzErDgLuL9KdFvLc=",
+          "ContextAttempts": 1,
+          "Memory": {
+            "Weather": 0,
+            "Watermark": null,
+            "Entries": []
+          },
+          "External": "",
+          "LegacyExternalFoodSpent": {
+            "Units": 0
+          },
+          "TargetKind": 0,
+          "AvailabilityEvidence": 1,
+          "IntentId": "food:c25:breakfast:6"
+        },
+        {
+          "ResidentId": "c394",
+          "AnchorId": "c394",
+          "Slot": 0,
+          "PreferredProductId": "",
+          "PreferenceBonusCents": 0,
+          "NeedsHomeResync": false,
+          "Excursion": null,
+          "Day": 6,
+          "Kind": 1,
+          "DayAllowanceUsed": {
+            "Units": 0
+          },
+          "DesiredAt": 9151.0,
+          "ExpiresAt": 9241.0,
+          "DueAt": 9415.0,
+          "Status": 3,
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "ProductId": "ba:itemname_croissant",
+          "Reason": "Native product, bag and completed order confirmed; daily settlement remains native",
+          "Allowance": {
+            "Units": 51427251208192
+          },
+          "Price": {
+            "Units": 275221504000
+          },
+          "ServiceMinutes": 4.0,
+          "ServiceAt": 9171.527750922674,
+          "Deadline": 9196.0,
+          "ReturnMinutes": 13.833715478214847,
+          "Budget": {
+            "IncomeSource": 0,
+            "BaseIncomeCents": 24804,
+            "DailyIncomeCents": 24804,
+            "DailyHousingCents": 7074,
+            "DailyEssentialsCents": 1591,
+            "DailyHomeFoodCents": 1203,
+            "OpeningBalance": {
+              "Units": 46607911354368
+            },
+            "Balance": {
+              "Units": 53800950784000
+            },
+            "IncomeReceived": {
+              "Units": 13316546101248
+            },
+            "EssentialsPaid": {
+              "Units": 4651986452480
+            },
+            "HomeFoodPaid": {
+              "Units": 645855707136
+            },
+            "PreparedFoodSpent": {
+              "Units": 825664512000
+            },
+            "ExternalFoodSpent": {
+              "Units": 0
+            },
+            "HeldPurchase": {
+              "Units": 0
+            },
+            "Arrears": {
+              "Units": 0
+            },
+            "LastPostedDay": 6,
+            "HomeFoodFundedDay": 6,
+            "DaysWithoutHomeFood": 0,
+            "NextPostingMinute": 10080.0
+          },
+          "ExistingStop": false,
+          "ExistingStopPurchases": 0,
+          "Purchases": 3,
+          "Spent": {
+            "Units": 825664512000
+          },
+          "RepresentedTraits": null,
+          "Today": {
+            "Day": 6,
+            "Unrecorded": 0,
+            "Meals": [
+              {
+                "TargetKind": 0,
+                "Kind": 1,
+                "Status": 0,
+                "Reason": 1,
+                "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+                "ProductId": "ba:itemname_croissant",
+                "Outside": 0,
+                "Factor1": 1,
+                "Factor2": 0,
+                "At": 9171,
+                "CheckoutAt": 9171
+              }
+            ]
+          },
+          "Decision": null,
+          "LastContextKey": "trip:xRvm1pzrMGTKuil2+YeaDiNQVk98etBLW1mzycgZIIw=",
+          "ContextAttempts": 1,
+          "Memory": {
+            "Weather": 0,
+            "Watermark": null,
+            "Entries": []
+          },
+          "External": "",
+          "LegacyExternalFoodSpent": {
+            "Units": 0
+          },
+          "TargetKind": 0,
+          "AvailabilityEvidence": 1,
+          "IntentId": "food:c394:breakfast:6"
+        },
+        {
+          "ResidentId": "consumer:pc%3A23:1",
+          "AnchorId": "pc:23",
+          "Slot": 1,
+          "PreferredProductId": "ba:itemname_hotdog",
+          "PreferenceBonusCents": 140,
+          "NeedsHomeResync": false,
+          "Excursion": {
+            "OriginId": "address:ba%3Astreet_fourthavenue:13:home",
+            "DestinationId": "address:ba%3Astreet_thirdstreet:30:shop",
+            "OriginActivity": 0,
+            "OriginPosition": {
+              "X": 240.88601684570312,
+              "Y": 0.09000015258789062,
+              "Z": -35.894775390625,
+              "IsFinite": true
+            },
+            "DestinationPosition": {
+              "X": 229.7625732421875,
+              "Y": 0.09000015258789062,
+              "Z": 21.2783203125,
+              "IsFinite": true
+            },
+            "DepartedAt": 9219.0,
+            "ArrivesAt": 9229.75613042006,
+            "AdmissionAt": 9229.75613042006,
+            "SharedDepartureAt": 9492.0,
+            "ReturnStartsAt": 0.0,
+            "ReturnsAt": 0.0,
+            "MaximumQueueMinutes": 5,
+            "ReturnGeometry": "6ILHAKJ4MSpQtG1SnHxmRNLIfAXMOZcavAT76yF5m/c=",
+            "Returning": false,
+            "Unresolved": false,
+            "UnresolvedReason": ""
+          },
+          "Day": 6,
+          "Kind": 1,
+          "DayAllowanceUsed": {
+            "Units": 0
+          },
+          "DesiredAt": 9219.0,
+          "ExpiresAt": 9309.0,
+          "DueAt": 9229.75613042006,
+          "Status": 1,
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "ProductId": "ba:itemname_croissant",
+          "Reason": "Chose food",
+          "Allowance": {
+            "Units": 29577485557760
+          },
+          "Price": {
+            "Units": 275221504000
+          },
+          "ServiceMinutes": 4.0,
+          "ServiceAt": 0.0,
+          "Deadline": 9264.0,
+          "ReturnMinutes": 10.756130420061114,
+          "Budget": {
+            "IncomeSource": 0,
+            "BaseIncomeCents": 14454,
+            "DailyIncomeCents": 14454,
+            "DailyHousingCents": 3315,
+            "DailyEssentialsCents": 1855,
+            "DailyHomeFoodCents": 1122,
+            "OpeningBalance": {
+              "Units": 27159762567168
+            },
+            "Balance": {
+              "Units": 31266481446912
+            },
+            "IncomeReceived": {
+              "Units": 7759932162048
+            },
+            "EssentialsPaid": {
+              "Units": 2775622615040
+            },
+            "HomeFoodPaid": {
+              "Units": 602369163264
+            },
+            "PreparedFoodSpent": {
+              "Units": 275221504000
+            },
+            "ExternalFoodSpent": {
+              "Units": 0
+            },
+            "HeldPurchase": {
+              "Units": 0
+            },
+            "Arrears": {
+              "Units": 0
+            },
+            "LastPostedDay": 6,
+            "HomeFoodFundedDay": 6,
+            "DaysWithoutHomeFood": 0,
+            "NextPostingMinute": 10080.0
+          },
+          "ExistingStop": false,
+          "ExistingStopPurchases": 0,
+          "Purchases": 1,
+          "Spent": {
+            "Units": 275221504000
+          },
+          "RepresentedTraits": {
+            "Version": 1,
+            "Bands": "2212143222",
+            "IsValid": true
+          },
+          "Today": {
+            "Day": 5,
+            "Unrecorded": 0,
+            "Meals": [
+              {
+                "TargetKind": 0,
+                "Kind": 1,
+                "Status": 0,
+                "Reason": 1,
+                "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+                "ProductId": "ba:itemname_croissant",
+                "Outside": 0,
+                "Factor1": 0,
+                "Factor2": 0,
+                "At": 7770,
+                "CheckoutAt": 7770
+              },
+              {
+                "TargetKind": 0,
+                "Kind": 2,
+                "Status": 1,
+                "Reason": 3,
+                "PlaceId": "",
+                "ProductId": "",
+                "Outside": 3,
+                "Factor1": 0,
+                "Factor2": 0,
+                "At": 8079,
+                "CheckoutAt": 0
+              },
+              {
+                "TargetKind": 0,
+                "Kind": 3,
+                "Status": 1,
+                "Reason": 3,
+                "PlaceId": "",
+                "ProductId": "",
+                "Outside": 3,
+                "Factor1": 0,
+                "Factor2": 0,
+                "At": 8426,
+                "CheckoutAt": 0
+              }
+            ]
+          },
+          "Decision": null,
+          "LastContextKey": "trip:evE90BfMxTu1B0tW2BwXNhULLpAVHO9JELLtskyh+vo=",
+          "ContextAttempts": 1,
+          "Memory": {
+            "Weather": 0,
+            "Watermark": null,
+            "Entries": []
+          },
+          "External": "",
+          "LegacyExternalFoodSpent": {
+            "Units": 0
+          },
+          "TargetKind": 0,
+          "AvailabilityEvidence": 1,
+          "IntentId": "food:consumer%3Apc%253A23%3A1:breakfast:6"
+        },
+        {
+          "ResidentId": "pc:183",
+          "AnchorId": "pc:183",
+          "Slot": 0,
+          "PreferredProductId": "",
+          "PreferenceBonusCents": 0,
+          "NeedsHomeResync": false,
+          "Excursion": null,
+          "Day": 6,
+          "Kind": 1,
+          "DayAllowanceUsed": {
+            "Units": 0
+          },
+          "DesiredAt": 9174.0,
+          "ExpiresAt": 9264.0,
+          "DueAt": 9432.0,
+          "Status": 3,
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "ProductId": "ba:itemname_croissant",
+          "Reason": "Native product, bag and completed order confirmed; daily settlement remains native",
+          "Allowance": {
+            "Units": 19237963825152
+          },
+          "Price": {
+            "Units": 275221504000
+          },
+          "ServiceMinutes": 4.0,
+          "ServiceAt": 9191.195492198227,
+          "Deadline": 9219.0,
+          "ReturnMinutes": 13.195492198226429,
+          "Budget": {
+            "IncomeSource": 2,
+            "BaseIncomeCents": 18962,
+            "DailyIncomeCents": 11377,
+            "DailyHousingCents": 7682,
+            "DailyEssentialsCents": 1594,
+            "DailyHomeFoodCents": 966,
+            "OpeningBalance": {
+              "Units": 21377931280384
+            },
+            "Balance": {
+              "Units": 21712058261504
+            },
+            "IncomeReceived": {
+              "Units": 6107980365824
+            },
+            "EssentialsPaid": {
+              "Units": 4980014579712
+            },
+            "HomeFoodPaid": {
+              "Units": 518617300992
+            },
+            "PreparedFoodSpent": {
+              "Units": 275221504000
+            },
+            "ExternalFoodSpent": {
+              "Units": 0
+            },
+            "HeldPurchase": {
+              "Units": 0
+            },
+            "Arrears": {
+              "Units": 0
+            },
+            "LastPostedDay": 6,
+            "HomeFoodFundedDay": 6,
+            "DaysWithoutHomeFood": 0,
+            "NextPostingMinute": 10080.0
+          },
+          "ExistingStop": false,
+          "ExistingStopPurchases": 0,
+          "Purchases": 1,
+          "Spent": {
+            "Units": 275221504000
+          },
+          "RepresentedTraits": null,
+          "Today": {
+            "Day": 6,
+            "Unrecorded": 0,
+            "Meals": [
+              {
+                "TargetKind": 0,
+                "Kind": 1,
+                "Status": 0,
+                "Reason": 1,
+                "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+                "ProductId": "ba:itemname_croissant",
+                "Outside": 0,
+                "Factor1": 0,
+                "Factor2": 0,
+                "At": 9191,
+                "CheckoutAt": 9191
+              }
+            ]
+          },
+          "Decision": null,
+          "LastContextKey": "trip:oP3/OnGY/JNOzmm1dyi2UdJU3zVx413JPhFci/D2WQw=",
+          "ContextAttempts": 1,
+          "Memory": {
+            "Weather": 0,
+            "Watermark": null,
+            "Entries": []
+          },
+          "External": "",
+          "LegacyExternalFoodSpent": {
+            "Units": 0
+          },
+          "TargetKind": 0,
+          "AvailabilityEvidence": 1,
+          "IntentId": "food:pc%3A183:breakfast:6"
+        },
+        {
+          "ResidentId": "pc:350",
+          "AnchorId": "pc:350",
+          "Slot": 0,
+          "PreferredProductId": "",
+          "PreferenceBonusCents": 0,
+          "NeedsHomeResync": false,
+          "Excursion": null,
+          "Day": 6,
+          "Kind": 1,
+          "DayAllowanceUsed": {
+            "Units": 0
+          },
+          "DesiredAt": 9165.0,
+          "ExpiresAt": 9255.0,
+          "DueAt": 9448.0,
+          "Status": 3,
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "ProductId": "ba:itemname_croissant",
+          "Reason": "Native product, bag and completed order confirmed; daily settlement remains native",
+          "Allowance": {
+            "Units": 45230837465088
+          },
+          "Price": {
+            "Units": 275221504000
+          },
+          "ServiceMinutes": 4.0,
+          "ServiceAt": 9175.527750922674,
+          "Deadline": 9210.0,
+          "ReturnMinutes": 1.6817435893234516,
+          "Budget": {
+            "IncomeSource": 0,
+            "BaseIncomeCents": 21929,
+            "DailyIncomeCents": 21929,
+            "DailyHousingCents": 6390,
+            "DailyEssentialsCents": 2046,
+            "DailyHomeFoodCents": 1185,
+            "OpeningBalance": {
+              "Units": 41205647802368
+            },
+            "Balance": {
+              "Units": 47538233483264
+            },
+            "IncomeReceived": {
+              "Units": 11773042229248
+            },
+            "EssentialsPaid": {
+              "Units": 4529043013632
+            },
+            "HomeFoodPaid": {
+              "Units": 636192030720
+            },
+            "PreparedFoodSpent": {
+              "Units": 275221504000
+            },
+            "ExternalFoodSpent": {
+              "Units": 0
+            },
+            "HeldPurchase": {
+              "Units": 0
+            },
+            "Arrears": {
+              "Units": 0
+            },
+            "LastPostedDay": 6,
+            "HomeFoodFundedDay": 6,
+            "DaysWithoutHomeFood": 0,
+            "NextPostingMinute": 10080.0
+          },
+          "ExistingStop": false,
+          "ExistingStopPurchases": 0,
+          "Purchases": 1,
+          "Spent": {
+            "Units": 275221504000
+          },
+          "RepresentedTraits": null,
+          "Today": {
+            "Day": 6,
+            "Unrecorded": 0,
+            "Meals": [
+              {
+                "TargetKind": 0,
+                "Kind": 1,
+                "Status": 0,
+                "Reason": 1,
+                "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+                "ProductId": "ba:itemname_croissant",
+                "Outside": 0,
+                "Factor1": 0,
+                "Factor2": 0,
+                "At": 9175,
+                "CheckoutAt": 9175
+              }
+            ]
+          },
+          "Decision": null,
+          "LastContextKey": "trip:8tVqXi7AmHZTjtpwZyImetUsstybaAW2SI+dKffge0k=",
+          "ContextAttempts": 1,
+          "Memory": {
+            "Weather": 0,
+            "Watermark": null,
+            "Entries": []
+          },
+          "External": "",
+          "LegacyExternalFoodSpent": {
+            "Units": 0
+          },
+          "TargetKind": 0,
+          "AvailabilityEvidence": 1,
+          "IntentId": "food:pc%3A350:breakfast:6"
+        }
+      ],
+      "outings": [
+        {
+          "Id": "c25",
+          "Phase": 1,
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "DestinationId": "address:ba%3Astreet_thirdstreet:15:home",
+          "NextEventMinute": 9239.727309338581,
+          "MealOuting": {
+            "OriginId": "address:ba%3Astreet_thirdstreet:15:home",
+            "OriginActivity": 0,
+            "ResumeUntil": 9484.0,
+            "ResumeEvent": 9484.0,
+            "Returning": true
+          }
+        }
+      ],
+      "supply": {
+        "AtMinute": 9226.348201751709,
+        "ProductId": "ba:itemname_croissant",
+        "Units": 174,
+        "MealsPerHour": 15,
+        "StaffedCounters": 1,
+        "StockedCounters": 1,
+        "ProducerUnits": 174,
+        "BagUnits": 174,
+        "Producers": [
+          "yD3CJiiGrEiw8ar47cqu5A=="
+        ],
+        "Evidence": "Current native eligible producers, staffed counters and shared bag pool; one stock unit per product; checkout revalidates contention",
+        "AvailabilityReason": ""
+      },
+      "orders": [
+        {
+          "entries": [
+            {
+              "itemName": "ba:itemname_croissant",
+              "price": 10.2528,
+              "available": true,
+              "priceAccceptable": true,
+              "paid": true,
+              "processed": true,
+              "wholesalePrice": 1.0
+            },
+            {
+              "itemName": "ba:itemname_paperbag",
+              "price": 0.0,
+              "available": true,
+              "priceAccceptable": true,
+              "paid": true,
+              "processed": false,
+              "wholesalePrice": 1.0
+            }
+          ],
+          "timestamp": {
+            "Day": 6,
+            "Hour": 8,
+            "Minute": 0.0
+          },
+          "completed": true,
+          "customerServiceSkill": 21.0001278,
+          "cleanliness": 100.0,
+          "customerDemandTypes": [],
+          "customerDemandScore": 100.0
+        },
+        {
+          "entries": [
+            {
+              "itemName": "ba:itemname_croissant",
+              "price": 10.2528,
+              "available": true,
+              "priceAccceptable": true,
+              "paid": true,
+              "processed": true,
+              "wholesalePrice": 1.0
+            },
+            {
+              "itemName": "ba:itemname_paperbag",
+              "price": 0.0,
+              "available": true,
+              "priceAccceptable": true,
+              "paid": true,
+              "processed": false,
+              "wholesalePrice": 1.0
+            }
+          ],
+          "timestamp": {
+            "Day": 6,
+            "Hour": 8,
+            "Minute": 0.0
+          },
+          "completed": true,
+          "customerServiceSkill": 21.0001278,
+          "cleanliness": 100.0,
+          "customerDemandTypes": [],
+          "customerDemandScore": 100.0
+        },
+        {
+          "entries": [
+            {
+              "itemName": "ba:itemname_croissant",
+              "price": 10.2528,
+              "available": true,
+              "priceAccceptable": true,
+              "paid": true,
+              "processed": true,
+              "wholesalePrice": 1.0
+            },
+            {
+              "itemName": "ba:itemname_paperbag",
+              "price": 0.0,
+              "available": true,
+              "priceAccceptable": true,
+              "paid": true,
+              "processed": false,
+              "wholesalePrice": 1.0
+            }
+          ],
+          "timestamp": {
+            "Day": 6,
+            "Hour": 8,
+            "Minute": 0.0
+          },
+          "completed": true,
+          "customerServiceSkill": 21.0001278,
+          "cleanliness": 100.0,
+          "customerDemandTypes": [],
+          "customerDemandScore": 100.0
+        },
+        {
+          "entries": [
+            {
+              "itemName": "ba:itemname_croissant",
+              "price": 10.2528,
+              "available": true,
+              "priceAccceptable": true,
+              "paid": true,
+              "processed": true,
+              "wholesalePrice": 1.0
+            },
+            {
+              "itemName": "ba:itemname_paperbag",
+              "price": 0.0,
+              "available": true,
+              "priceAccceptable": true,
+              "paid": true,
+              "processed": false,
+              "wholesalePrice": 1.0
+            }
+          ],
+          "timestamp": {
+            "Day": 6,
+            "Hour": 8,
+            "Minute": 0.0
+          },
+          "completed": true,
+          "customerServiceSkill": 21.0001278,
+          "cleanliness": 100.0,
+          "customerDemandTypes": [],
+          "customerDemandScore": 100.0
+        },
+        {
+          "entries": [
+            {
+              "itemName": "ba:itemname_croissant",
+              "price": 10.2528,
+              "available": true,
+              "priceAccceptable": true,
+              "paid": true,
+              "processed": true,
+              "wholesalePrice": 1.0
+            },
+            {
+              "itemName": "ba:itemname_paperbag",
+              "price": 0.0,
+              "available": true,
+              "priceAccceptable": true,
+              "paid": true,
+              "processed": false,
+              "wholesalePrice": 1.0
+            }
+          ],
+          "timestamp": {
+            "Day": 6,
+            "Hour": 9,
+            "Minute": 0.0
+          },
+          "completed": true,
+          "customerServiceSkill": 20.550127,
+          "cleanliness": 100.0,
+          "customerDemandTypes": [],
+          "customerDemandScore": 100.0
+        },
+        {
+          "entries": [
+            {
+              "itemName": "ba:itemname_croissant",
+              "price": 10.2528,
+              "available": true,
+              "priceAccceptable": true,
+              "paid": true,
+              "processed": true,
+              "wholesalePrice": 1.0
+            },
+            {
+              "itemName": "ba:itemname_paperbag",
+              "price": 0.0,
+              "available": true,
+              "priceAccceptable": true,
+              "paid": true,
+              "processed": false,
+              "wholesalePrice": 1.0
+            }
+          ],
+          "timestamp": {
+            "Day": 6,
+            "Hour": 9,
+            "Minute": 0.0
+          },
+          "completed": true,
+          "customerServiceSkill": 20.550127,
+          "cleanliness": 100.0,
+          "customerDemandTypes": [],
+          "customerDemandScore": 100.0
+        },
+        {
+          "entries": [
+            {
+              "itemName": "ba:itemname_croissant",
+              "price": 10.2528,
+              "available": true,
+              "priceAccceptable": true,
+              "paid": true,
+              "processed": true,
+              "wholesalePrice": 1.0
+            },
+            {
+              "itemName": "ba:itemname_paperbag",
+              "price": 0.0,
+              "available": true,
+              "priceAccceptable": true,
+              "paid": true,
+              "processed": false,
+              "wholesalePrice": 1.0
+            }
+          ],
+          "timestamp": {
+            "Day": 6,
+            "Hour": 9,
+            "Minute": 0.0
+          },
+          "completed": true,
+          "customerServiceSkill": 20.550127,
+          "cleanliness": 100.0,
+          "customerDemandTypes": [],
+          "customerDemandScore": 100.0
+        }
+      ],
+      "nativeItems": [
+        {
+          "id": "e5g2cWeEPEqUK4pKpiNtwg==",
+          "itemName": "ba:itemname_cashregister",
+          "parentId": "J7+jLg7I3UyODyam2SNiNQ==",
+          "stackedItems": [],
+          "cargoInstances": [
+            {
+              "itemName": "ba:itemname_paperbag",
+              "amount": 174,
+              "pricePerUnit": 1.0,
+              "paid": true,
+              "customColors": null,
+              "nestedCargoInstances": [],
+              "IsSealed": false
+            }
+          ],
+          "requirements": []
+        },
+        {
+          "id": "J7+jLg7I3UyODyam2SNiNQ==",
+          "itemName": "ba:itemname_angledwoodendisplaystand",
+          "parentId": null,
+          "stackedItems": [
+            {
+              "childId": "e5g2cWeEPEqUK4pKpiNtwg==",
+              "childItemName": "ba:itemname_cashregister",
+              "attachmentIndex": 0
+            }
+          ],
+          "cargoInstances": [],
+          "requirements": []
+        },
+        {
+          "id": "yD3CJiiGrEiw8ar47cqu5A==",
+          "itemName": "ba:itemname_bakeryshowcase",
+          "parentId": null,
+          "stackedItems": [],
+          "cargoInstances": [
+            {
+              "itemName": "ba:itemname_croissant",
+              "amount": 174,
+              "pricePerUnit": 1.0,
+              "paid": true,
+              "customColors": null,
+              "nestedCargoInstances": [],
+              "IsSealed": false
+            }
+          ],
+          "requirements": []
+        }
+      ],
+      "nativeShifts": [
+        {
+          "day": 1,
+          "isOpen": true,
+          "openingHourSlots": [
+            {
+              "startingHour": 8,
+              "endingHour": 18,
+              "GetDurationInHours": 10
+            }
+          ],
+          "workShifts": [
+            {
+              "startingHour": 8,
+              "endingHour": 18,
+              "employeeId": "0RUQa8bbGEKriNqujyVbdQ==",
+              "itemInstanceId": "e5g2cWeEPEqUK4pKpiNtwg==",
+              "type": 1,
+              "DurationInHours": 10
+            }
+          ],
+          "GetHoursOpen": 10
+        },
+        {
+          "day": 2,
+          "isOpen": true,
+          "openingHourSlots": [
+            {
+              "startingHour": 8,
+              "endingHour": 18,
+              "GetDurationInHours": 10
+            }
+          ],
+          "workShifts": [
+            {
+              "startingHour": 8,
+              "endingHour": 18,
+              "employeeId": "0RUQa8bbGEKriNqujyVbdQ==",
+              "itemInstanceId": "e5g2cWeEPEqUK4pKpiNtwg==",
+              "type": 1,
+              "DurationInHours": 10
+            }
+          ],
+          "GetHoursOpen": 10
+        },
+        {
+          "day": 3,
+          "isOpen": true,
+          "openingHourSlots": [
+            {
+              "startingHour": 8,
+              "endingHour": 18,
+              "GetDurationInHours": 10
+            }
+          ],
+          "workShifts": [
+            {
+              "startingHour": 8,
+              "endingHour": 18,
+              "employeeId": "0RUQa8bbGEKriNqujyVbdQ==",
+              "itemInstanceId": "e5g2cWeEPEqUK4pKpiNtwg==",
+              "type": 1,
+              "DurationInHours": 10
+            }
+          ],
+          "GetHoursOpen": 10
+        },
+        {
+          "day": 4,
+          "isOpen": true,
+          "openingHourSlots": [
+            {
+              "startingHour": 8,
+              "endingHour": 18,
+              "GetDurationInHours": 10
+            }
+          ],
+          "workShifts": [
+            {
+              "startingHour": 8,
+              "endingHour": 18,
+              "employeeId": "0RUQa8bbGEKriNqujyVbdQ==",
+              "itemInstanceId": "e5g2cWeEPEqUK4pKpiNtwg==",
+              "type": 1,
+              "DurationInHours": 10
+            }
+          ],
+          "GetHoursOpen": 10
+        },
+        {
+          "day": 5,
+          "isOpen": true,
+          "openingHourSlots": [
+            {
+              "startingHour": 8,
+              "endingHour": 18,
+              "GetDurationInHours": 10
+            }
+          ],
+          "workShifts": [
+            {
+              "startingHour": 8,
+              "endingHour": 18,
+              "employeeId": "0RUQa8bbGEKriNqujyVbdQ==",
+              "itemInstanceId": "e5g2cWeEPEqUK4pKpiNtwg==",
+              "type": 1,
+              "DurationInHours": 10
+            }
+          ],
+          "GetHoursOpen": 10
+        },
+        {
+          "day": 6,
+          "isOpen": true,
+          "openingHourSlots": [
+            {
+              "startingHour": 8,
+              "endingHour": 18,
+              "GetDurationInHours": 10
+            }
+          ],
+          "workShifts": [
+            {
+              "startingHour": 8,
+              "endingHour": 18,
+              "employeeId": "0RUQa8bbGEKriNqujyVbdQ==",
+              "itemInstanceId": "e5g2cWeEPEqUK4pKpiNtwg==",
+              "type": 1,
+              "DurationInHours": 10
+            }
+          ],
+          "GetHoursOpen": 10
+        },
+        {
+          "day": 7,
+          "isOpen": true,
+          "openingHourSlots": [
+            {
+              "startingHour": 8,
+              "endingHour": 18,
+              "GetDurationInHours": 10
+            }
+          ],
+          "workShifts": [
+            {
+              "startingHour": 8,
+              "endingHour": 18,
+              "employeeId": "0RUQa8bbGEKriNqujyVbdQ==",
+              "itemInstanceId": "e5g2cWeEPEqUK4pKpiNtwg==",
+              "type": 1,
+              "DurationInHours": 10
+            }
+          ],
+          "GetHoursOpen": 10
+        }
+      ],
+      "economy": {
+        "minute": 9226.348201751709,
+        "residents": 1914,
+        "physicalResidents": 957,
+        "representedConsumers": 1914,
+        "representationFactor": 2,
+        "unresolvedConsumers": 0,
+        "financePolicy": 1,
+        "mealPolicy": 1,
+        "boundary": "Provisional individual budget policy: external income/support, housing and essentials; paid household food basket. No native job or family pooling inferred.",
+        "balances": "293427648.080078125",
+        "openingSavings": "256825954",
+        "income": "73378844",
+        "essentials": "32112334",
+        "householdFood": "4599198",
+        "preparedFood": "65617.919921875",
+        "heldPurchases": "0",
+        "arrears": "0",
+        "unfundedFoodDays": 0,
+        "incomeSources": {
+          "ExternalEmployment": 1520,
+          "ExternalSupport": 160,
+          "ExternalPension": 234
+        },
+        "purchases": 64,
+        "existingStopPurchases": 0,
+        "currentDecisions": {
+          "Declined": 1865,
+          "Pending": 30,
+          "Paid": 4,
+          "Missed": 14,
+          "Travelling": 1
+        },
+        "history": [
+          {
+            "Day": 5,
+            "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+            "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+            "OffersConsidered": 5688,
+            "ChosenOffers": 82,
+            "PriceRejections": 0,
+            "AccessRejections": 3226,
+            "ClosedRejections": 1872,
+            "StockRejections": 0,
+            "StaffRejections": 244,
+            "ServiceRejections": 220,
+            "UnknownEvidence": 0,
+            "PreferredAlternatives": 44,
+            "Purchases": 57,
+            "ExistingStopPurchases": 0,
+            "Revenue": {
+              "Units": 15687625728000
+            },
+            "PurchaseHours": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              9,
+              11,
+              4,
+              3,
+              6,
+              9,
+              2,
+              6,
+              7,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "PurchaseMeals": [
+              0,
+              26,
+              31,
+              0
+            ],
+            "ProductSales": [
+              {
+                "ProductId": "ba:itemname_croissant",
+                "Purchases": 57,
+                "Revenue": {
+                  "Units": 15687625728000
+                },
+                "PurchaseMeals": [
+                  0,
+                  26,
+                  31,
+                  0
+                ]
+              }
+            ],
+            "BuyerDistricts": [
+              {
+                "DistrictId": "ba:neighborhood_garmentdistrict",
+                "Purchases": 14
+              },
+              {
+                "DistrictId": "ba:neighborhood_hellskitchen",
+                "Purchases": 42
+              },
+              {
+                "DistrictId": "ba:neighborhood_midtown",
+                "Purchases": 1
+              }
+            ]
+          },
+          {
+            "Day": 6,
+            "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+            "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+            "OffersConsidered": 1588,
+            "ChosenOffers": 9,
+            "PriceRejections": 0,
+            "AccessRejections": 0,
+            "ClosedRejections": 16,
+            "StockRejections": 0,
+            "StaffRejections": 0,
+            "ServiceRejections": 1518,
+            "UnknownEvidence": 0,
+            "PreferredAlternatives": 45,
+            "Purchases": 7,
+            "ExistingStopPurchases": 0,
+            "Revenue": {
+              "Units": 1926550528000
+            },
+            "PurchaseHours": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              4,
+              3,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "PurchaseMeals": [
+              0,
+              7,
+              0,
+              0
+            ],
+            "ProductSales": [
+              {
+                "ProductId": "ba:itemname_croissant",
+                "Purchases": 7,
+                "Revenue": {
+                  "Units": 1926550528000
+                },
+                "PurchaseMeals": [
+                  0,
+                  7,
+                  0,
+                  0
+                ]
+              }
+            ],
+            "BuyerDistricts": [
+              {
+                "DistrictId": "ba:neighborhood_hellskitchen",
+                "Purchases": 7
+              }
+            ]
+          }
+        ],
+        "historyMeaning": "Observed offers and confirmed purchases within enrolled shops; repeated decisions are not unique people or total district demand. Revenue is not profit."
+      },
+      "accounts": [
+        {
+          "Day": 1,
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "Name": "Persistent City food routines",
+          "Revenue": 82.0224,
+          "Resources": 16.0,
+          "Wages": 194.61554,
+          "Rent": 0.0,
+          "OtherOperatingCosts": 0.0,
+          "OperatingProfit": -128.59314
+        },
+        {
+          "Day": 2,
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "Name": "Persistent City food routines",
+          "Revenue": 82.0224,
+          "Resources": 16.0,
+          "Wages": 216.239487,
+          "Rent": 0.0,
+          "OtherOperatingCosts": 0.0,
+          "OperatingProfit": -150.217087
+        },
+        {
+          "Day": 3,
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "Name": "Persistent City food routines",
+          "Revenue": 82.0224,
+          "Resources": 16.0,
+          "Wages": 216.239487,
+          "Rent": 0.0,
+          "OtherOperatingCosts": 0.0,
+          "OperatingProfit": -150.217087
+        },
+        {
+          "Day": 4,
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "Name": "Persistent City food routines",
+          "Revenue": 389.606384,
+          "Resources": 76.0,
+          "Wages": 216.239487,
+          "Rent": 0.0,
+          "OtherOperatingCosts": 0.0,
+          "OperatingProfit": 97.3669
+        },
+        {
+          "Day": 5,
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "Name": "Persistent City food routines",
+          "Revenue": 584.4096,
+          "Resources": 114.0,
+          "Wages": 216.239487,
+          "Rent": 0.0,
+          "OtherOperatingCosts": 0.0,
+          "OperatingProfit": 254.17012
+        }
+      ],
+      "shops": [
+        {
+          "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+          "BusinessName": "Persistent City food routines",
+          "customerCapacity": 15,
+          "RentPerDay": 0.0,
+          "advertisedProducts": [
+            "ba:itemname_croissant"
+          ],
+          "exclusion": "",
+          "supply": {
+            "AtMinute": 9226.348201751709,
+            "ProductId": "ba:itemname_croissant",
+            "Units": 174,
+            "MealsPerHour": 15,
+            "StaffedCounters": 1,
+            "StockedCounters": 1,
+            "ProducerUnits": 174,
+            "BagUnits": 174,
+            "Producers": [
+              "yD3CJiiGrEiw8ar47cqu5A=="
+            ],
+            "Evidence": "Current native eligible producers, staffed counters and shared bag pool; one stock unit per product; checkout revalidates contention",
+            "AvailabilityReason": ""
+          },
+          "menuSupply": {
+            "ba:itemname_croissant": {
+              "AtMinute": 9226.348201751709,
+              "ProductId": "ba:itemname_croissant",
+              "Units": 174,
+              "MealsPerHour": 15,
+              "StaffedCounters": 1,
+              "StockedCounters": 1,
+              "ProducerUnits": 174,
+              "BagUnits": 174,
+              "Producers": [
+                "yD3CJiiGrEiw8ar47cqu5A=="
+              ],
+              "Evidence": "Current native eligible producers, staffed counters and shared bag pool; one stock unit per product; checkout revalidates contention",
+              "AvailabilityReason": ""
+            }
+          },
+          "nativeItems": [
+            {
+              "id": "e5g2cWeEPEqUK4pKpiNtwg==",
+              "itemName": "ba:itemname_cashregister",
+              "cargoInstances": [
+                {
+                  "itemName": "ba:itemname_paperbag",
+                  "amount": 174,
+                  "pricePerUnit": 1.0,
+                  "paid": true,
+                  "customColors": null,
+                  "nestedCargoInstances": [],
+                  "IsSealed": false
+                }
+              ]
+            },
+            {
+              "id": "J7+jLg7I3UyODyam2SNiNQ==",
+              "itemName": "ba:itemname_angledwoodendisplaystand",
+              "cargoInstances": []
+            },
+            {
+              "id": "yD3CJiiGrEiw8ar47cqu5A==",
+              "itemName": "ba:itemname_bakeryshowcase",
+              "cargoInstances": [
+                {
+                  "itemName": "ba:itemname_croissant",
+                  "amount": 174,
+                  "pricePerUnit": 1.0,
+                  "paid": true,
+                  "customColors": null,
+                  "nestedCargoInstances": [],
+                  "IsSealed": false
+                }
+              ]
+            }
+          ],
+          "history": [
+            {
+              "dayNumber": 1,
+              "totalRevenue": 82.0224,
+              "totalCustomers": 8
+            },
+            {
+              "dayNumber": 2,
+              "totalRevenue": 82.0224,
+              "totalCustomers": 8
+            },
+            {
+              "dayNumber": 3,
+              "totalRevenue": 82.0224,
+              "totalCustomers": 8
+            },
+            {
+              "dayNumber": 4,
+              "totalRevenue": 389.606384,
+              "totalCustomers": 38
+            },
+            {
+              "dayNumber": 5,
+              "totalRevenue": 584.4096,
+              "totalCustomers": 57
+            }
+          ]
+        }
+      ],
+      "history": [
+        {
+          "dayNumber": 1,
+          "totalRevenue": 82.0224,
+          "totalCustomers": 8
+        },
+        {
+          "dayNumber": 2,
+          "totalRevenue": 82.0224,
+          "totalCustomers": 8
+        },
+        {
+          "dayNumber": 3,
+          "totalRevenue": 82.0224,
+          "totalCustomers": 8
+        },
+        {
+          "dayNumber": 4,
+          "totalRevenue": 389.606384,
+          "totalCustomers": 38
+        },
+        {
+          "dayNumber": 5,
+          "totalRevenue": 584.4096,
+          "totalCustomers": 57
+        }
+      ]
+    },
+    "source-runtime-1793555853377735100": {
+      "enabled": true,
+      "failed": false,
+      "status": "Persistent population active: 957 residents, 1059 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.",
+      "taskStatus": null,
+      "taskCompleted": null,
+      "taskError": null,
+      "saveMatches": false,
+      "discoveryReady": false,
+      "discoverySweeps": 0,
+      "lastDiscoverySeconds": 0.0,
+      "lastDiscoveryWorkMs": 0.0,
+      "maximumDiscoverySliceMs": 17.885,
+      "waitingRoutingFrames": 18,
+      "maximumPreparationMs": 0.004
+    }
+  },
+  "qualification": "Our harmless matching assembly only, loaded after all six geometry captures. Cached detection changes on city load; no real third-party implementation obtained."
+}

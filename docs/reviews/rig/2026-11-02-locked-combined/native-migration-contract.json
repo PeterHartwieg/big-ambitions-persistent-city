@@ -1,0 +1,22 @@
+{
+  "cashBits": {
+    "controlEqualsCandidate": true,
+    "candidateAfterTwoReloadsEqual": true
+  },
+  "receipts": {
+    "controlEqualsCandidate": true,
+    "candidateAfterTwoReloadsEqual": true
+  },
+  "authority": {
+    "controlEqualsCandidate": true,
+    "candidateAfterTwoReloadsEqual": true
+  },
+  "shops": {
+    "controlEqualsCandidate": true,
+    "candidateAfterTwoReloadsEqual": true
+  },
+  "accounts": {
+    "controlEqualsCandidate": true,
+    "candidateAfterTwoReloadsEqual": true
+  }
+}

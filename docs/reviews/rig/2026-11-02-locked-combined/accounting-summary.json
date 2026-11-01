@@ -1,0 +1,64 @@
+{
+  "role": "rig_test",
+  "nativeDay": 7,
+  "startMinute": 10085.007301807404,
+  "endMinute": 11525.00366783142,
+  "budgetConservationFailures": [],
+  "residentSpendDeltaUnits": "98807486566400",
+  "externalFoodOutflowDeltaUnits": "96330493030400",
+  "nativePaidReceiptUnits": "2476993536000",
+  "historyRevenueUnits": "2476993536000",
+  "residentSpendReconciles": true,
+  "ownReceiptHistoryReconciles": true,
+  "residentPurchaseDelta": 279,
+  "newNativeReceiptCount": 9,
+  "newPaidReceiptCount": 9,
+  "ownHistoryPurchases": 9,
+  "stockConsumed": {
+    "ba:itemname_paperbag": 9,
+    "ba:itemname_croissant": 9
+  },
+  "ownStockBagsReceiptReconcile": true,
+  "nativeDailyAccounts": [
+    {
+      "Day": 7,
+      "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+      "Name": "Persistent City food routines",
+      "Revenue": 92.2752,
+      "Resources": 18.0,
+      "Wages": 216.239487,
+      "Rent": 0.0,
+      "OtherOperatingCosts": 0.0,
+      "OperatingProfit": -141.9643
+    }
+  ],
+  "nativeRevenueExpectedFloatBits": "e78cb842",
+  "nativeRevenueActualFloatBits": "e78cb842",
+  "pendingCompletedOrdersBefore": 0,
+  "pendingCompletedOrdersAfter": 0,
+  "nativeAfterReloadExact": true,
+  "nativeAfterSha256": "dd1bec1d2207fab93bf333fad1e3ceb8d1e042b06defa0d512f24df300fdb672",
+  "nativeAfterReloadSha256": "dd1bec1d2207fab93bf333fad1e3ceb8d1e042b06defa0d512f24df300fdb672",
+  "identitiesStable": true,
+  "traitsStable": true,
+  "rivalsAtDayEnd": {
+    "Core": {
+      "RivalChoices": 270,
+      "RivalSettlements": 270,
+      "RivalRefusals": 0,
+      "Availability": "EstimatedFromPriceAndHours",
+      "NativeRivalCheckout": "Unsupported",
+      "ExternalFoodSpentUnits": "96330493030400"
+    },
+    "RefreshUnits": 1344,
+    "DetailReads": 24286,
+    "Unavailable": ""
+  },
+  "activeAtDayEnd": {
+    "Code": "B",
+    "Revision": 1,
+    "Active": true
+  },
+  "memoryEntriesAfter": 9,
+  "externalPurchasesWithNoNativeReceipt": 270
+}
