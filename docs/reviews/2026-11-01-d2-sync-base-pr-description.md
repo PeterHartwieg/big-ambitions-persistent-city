@@ -36,7 +36,7 @@ current weather wire support and early schema-20 authority acceptance.
 
 | File | Resolution |
 | --- | --- |
-| `CHECKS.md` | Keep D2 and F1 entries and every integration index line, including E1; qualify archived D2 timings. All sync evidence lives in D2's own checks file. |
+| `CHECKS.md` | Keep D2 and F1 entries and every integration index line, including E1; current D2 index points to its final results, with the archived timing/index record preserved in D2 checks. All sync evidence lives in D2's own checks file. |
 | `README.md` | Retain D2 overview and F1 NO-GO pointer; current schema list includes predecessor 20. |
 | `docs/roadmap.md` | Retain D2 and E1 status, F1 stop entry, both perf-log links and all other entries. |
 | `config/persistent-city.json` | Keep all four rival and all four weather settings. |
@@ -64,8 +64,21 @@ combined weighting invariant checks rain, rival weight and zero-weight exclusion
 
 ## Validation and limits
 
-Pending final offline results; recorded in `docs/checks/d2-rival-outflow.md` and
-the companion sync results/preservation artifacts before completion.
+Acceptance source `29147ee` includes latest integration `0ffb819`. The installed-game
+assembly build, all **2,438 unit tests** (0 skipped), discovery of all 2,438 tests,
+and **58/58 final foreground gates pass**. This includes every required regression,
+all root regression projects, three simulation tools, four capacity cases, nested
+pickup, A5 rush/integrated/save-bench modes and C4 exact-byte comparison. Every
+test/run used the required other-dotnet guard; no CLI deadline was set. Commands,
+log hashes and raw metrics: `docs/reviews/2026-11-01-d2-sync-base-results.json`.
+
+Current population-only fixture is 120,184 bytes; its weather-stripped projection
+is 119,083. D2's genuine 20 -> 21 idle delta remains +5 bytes/consumer +19 header,
+zero records. C4 control is identical at 41,787 population / 66,679 food bytes.
+CF64 full future budget remains 259,064,366 bytes / 3,711,867 records; no cap grows.
+One D2 offline batch spike is flagged at 40.9275 ms, and one full dense awareness
+build sample at 33.2802 ms. Whole-save latency >=30 ms is separately recorded;
+these are shared-host offline operations, not native mod-work or frame proof.
 
 Old D2 byte/perf tables were measured on the line based on `51ce709`, before E1;
 they are explicitly labelled historical and their measured numbers are preserved.

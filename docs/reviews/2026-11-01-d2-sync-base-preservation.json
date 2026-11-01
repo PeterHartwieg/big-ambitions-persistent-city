@@ -263,5 +263,28 @@
     "docs/checks/a5-integrated-acceptance.md": true,
     "docs/perf/a5-integrated-acceptance.md": true,
     "docs/plans/step-a-inspector-traits-choice.md": true
+  },
+  "finalSourceHead": "29147ee468e1cdb329519f12bf8914947680543e",
+  "latestSliceDocumentPresence": {
+    "source": "0ffb819353c44a802224b98af673e1085040fc8a",
+    "files": 727,
+    "missing": []
+  },
+  "latestTestMethodPreservation": {
+    "ef2d72e": {
+      "methods": 1176,
+      "missing": []
+    },
+    "origin/codex/persistent-city": {
+      "methods": 1179,
+      "missing": []
+    }
+  },
+  "finalAcceptance": {
+    "unitTests": 2438,
+    "discoveredTests": 2438,
+    "foregroundGates": 58,
+    "failures": 0,
+    "rawResults": "2026-11-01-d2-sync-base-results.json"
   }
 }

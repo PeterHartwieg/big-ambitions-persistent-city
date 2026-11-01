@@ -2,7 +2,7 @@
 
 Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here; never append slice sections to this file. Sync/review-fix notes go into the slice's own file.
 
-- D2 — 1 November 2026 (offline, original pre-E1 measurements): schema 21, 39/39 gates, 2,380 tests; source/rank p95 0.0189/0.0438 ms at 1,024/20k, settlement p95 0.0001 ms, +5 bytes/idle consumer +19 header with no records; two offline batch spikes >=30 ms (max 47.7935), native gate pending: [measurements and 6 Nov rig checks](docs/checks/d2-rival-outflow.md).
+- D2 — Rival choice/outflow, schema 21, E1/F1/A5 base sync, 2,438 tests / 58 offline gates and native checklist: [checks](docs/checks/d2-rival-outflow.md).
 
 - F1 — Shop-view drawing NO-GO, offline validation and numbered 6 Nov handoff: [checks](docs/checks/f1-shop-view.md).
 - F0 — Interior view experiment, reviews and native checklist: [checks](docs/checks/f0-interior-view.md).

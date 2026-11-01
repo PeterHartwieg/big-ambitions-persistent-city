@@ -316,3 +316,71 @@ perf index entries. All A5 documents/checks/tests/tools and its incoming Core
 inspector changes are retained. Only A5's migration-result assertion needs 20
 changed to 21. Full final validation is rerun after this sync; first-batch
 measurements above remain identified by their E1/F1 merge parents.
+
+### Final combined-head validation
+
+Acceptance source: `29147ee`, the real merge of `e263af6` and latest A5
+`0ffb819`. The game-assembly build passes and all **2,438 unit tests pass**
+(0 failed, 0 skipped). All **58/58 final foreground gates pass**, including discovery of all 2,438
+tests, every required regression, every root regression project, all three
+simulation tools, four capacity cases, the nested pickup regression, A5's extra
+rush/integrated/save-bench modes, and the C4 exact-byte comparator. Every dotnet
+test/run was preceded by the required guard; no CLI execution deadline was set.
+[Commands, log hashes and raw measurements](../reviews/2026-11-01-d2-sync-base-results.json)
+retain the actual results. The current integration head `0ffb819` is an ancestor
+of the tested source.
+The earlier 50-command batch passed and is archived separately because A5
+arrived while it was in progress. It does not substitute for this final run.
+
+Final-head measured limits (synthetic, foreground Release tools; one capacity
+sample/case; no matched native comparison): source/rank p95 0.0191 / 0.0298 ms
+at 1,024 / 20,000 alternatives; settlement p95 0.0006 ms. The two 128-event
+whole-day batch p95 values are 2.1011 / 1.7834 ms. One >=30 ms offline batch
+sample is flagged: **40.9275 ms** in the 20,000-alternative arm. Native mod-work
+and whole-frame attribution remain pending. The 32-source / 8-shortlist /
+16-route-slot envelope is unchanged. No new optimization is claimed.
+
+The idle native-double fixture still measures schema 20 -> 21 at exactly
++5 bytes/consumer +19 header, with no additional records. The population-only
+save-contract fixture is **120,184 bytes**, and its explicitly weather-stripped
+projection remains **119,083 bytes**. The old pre-E1 figure is not a current
+population-save size.
+
+| Final capacity fixture | Current bytes | Streaming / semantic records | Full future bytes / records |
+| --- | ---: | ---: | ---: |
+| reference | 5,058,341 | 55,541 / 55,538 | - |
+| consumers5000 | 9,802,053 | 112,632 / 112,629 | - |
+| CF32 | 194,180,855 | 1,970,132 / 1,970,129 | 220,664,366 / 2,111,867 |
+| CF64 | 232,580,855 | 3,570,132 / 3,570,129 | 259,064,366 / 3,711,867 |
+
+Weather and rival fields each consume their own existing reserve exactly once.
+The existing CF32/CF64 schema-17 oversized-migration refusal is retained;
+current-schema reload succeeds. Neither byte nor record caps were raised.
+
+Standalone save latency >=30 ms is flagged separately from mod-work samples.
+Write/read/migration-from-17 milliseconds (one foreground sample each):
+
+- reference: **128.8 / 346.7 / 650.0**.
+- consumers5000: **156.3 / 728.7 / 1,750.9**.
+- CF32: **2,015.0 / 6,108.9 / refused (oversized original)**.
+- CF64: **2,714.9 / 8,612.8 / refused (oversized original)**.
+
+These shared-host, whole-operation timings do not establish a speedup or native
+frame regression. The four parked hotspots remain parked. Final raw measurements
+and command results are kept in the companion sync results artifact.
+
+The full 20,000-alternative dense awareness-build benchmark also flags one
+>=30 ms sample (**33.2802 ms**, p95 also 33.2802 ms). This is whole catalogue
+construction in the offline benchmark, not a native frame or a measured bounded
+runtime continuation. Named timing/spike fields from the selected tools are
+retained in `offlineTimingFlags` in the raw results; repeated percentile/max
+statistics are not counted as additional spike events.
+
+C4 exact-byte control (same schema-21 source with C4 engine/access files omitted
+versus present): **41,787 / 41,787 population bytes** and **66,679 / 66,679 food
+bytes**, identical hashes and zero byte growth. This remains a pure synthetic
+fixture comparison, not ordinary-save or native release proof.
+
+Archived pre-E1 index record (measurements preserved):
+
+> - D2 — 1 November 2026 (offline, original pre-E1 measurements): schema 21, 39/39 gates, 2,380 tests; source/rank p95 0.0189/0.0438 ms at 1,024/20k, settlement p95 0.0001 ms, +5 bytes/idle consumer +19 header with no records; two offline batch spikes >=30 ms (max 47.7935), native gate pending: [measurements and 6 Nov rig checks](#).

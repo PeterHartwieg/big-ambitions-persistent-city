@@ -116,3 +116,20 @@ projection is 119,083 bytes. These are named synthetic fixtures, not raw game
 save sizes. The original tables remain pre-E1 evidence, with their original
 numbers intact. Current raw output is retained with the sync validation results.
 The four parked hotspots remain parked; no native timing gate is claimed.
+
+## Final A5-head re-measure
+
+At acceptance source `29147ee` (A5 `0ffb819` included), warm source/rank p95 is
+0.0191 / 0.0298 ms at 1,024 / 20,000 alternatives; settlement p95 0.0006 ms.
+Offline 128-event batch p95 is 2.1011 / 1.7834 ms, with one >=30 ms batch sample
+(**40.9275 ms**, 20,000 alternatives). The earlier 35.5058 ms sample remains
+identified above as the E1/F1-pass result. No matched performance inference or
+new optimization is claimed. Save-byte deltas remain +5/idle consumer +19 header
+from schema 20 to 21, with no extra records. Current capacity/save timings and
+all >=30 ms whole-save latencies are recorded in [D2 checks](../checks/d2-rival-outflow.md#final-combined-head-validation);
+native mod-work and whole-frame proof remain separate and pending.
+
+The separate full dense awareness catalogue-build benchmark flags one 33.2802 ms
+sample (p95 33.2802 ms); it is a whole-build offline operation, not a measured
+runtime continuation or native frame. See the selected-tool timing flags in the
+[raw final results](../reviews/2026-11-01-d2-sync-base-results.json).
