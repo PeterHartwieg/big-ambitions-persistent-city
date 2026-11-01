@@ -1,5 +1,70 @@
 # C2b: observed campaigns and soft distance preference
 
+## Second base sync: E3 ice cream - 1 November 2026
+
+Merged `75c956c` into C2b `ffe85a0` from merge base `0ffb819` as two-parent
+commit `033ba81`. Both sides' diffs against that base were inspected. The sole
+textual conflict was the adjacent README status paragraphs: retain both C2b
+and E3 ice cream, followed by A5/F1. Automatic CHECKS/roadmap/plan compositions
+retain every existing index/status entry, C2b/A5 perf entries and incoming ice
+cream plans, tools, checks and evidence. [Prepared sync PR description](../plans/c2b-sync2-base-pr-description.md).
+
+The merge-tree audit covers all **1,351 tracked paths**: **1,347 exact parent
+blobs** outside four composed documents; both parents' checks-index lines and
+all added documentation lines survive. No integration code fix was needed.
+C2b Core/Runtime/persistence/tests/tools are unchanged; the only Runtime
+additions from its parent are E3's unchanged ice cream facade and shared-reader
+descriptor. Schema remains **22**, with E1 **19 -> 20** then C2b **20 -> 22**;
+21/23 remain refused. Incoming ice cream's schema-20 results and all earlier
+measurements below remain historical, with their original limitations.
+
+**60/60 foreground command gates pass** on `033ba81`: production build against
+local Managed assemblies, **2,416/2,416 unit tests**, zero failed/skipped,
+**2,416 discovered tests**, all **38 top-level regression projects**, four
+Python regressions, continuity pickup, optional-stop performance/findings,
+three simulations, reader isolation/frozen baselines, C4 exact-byte comparison,
+and A5's rush/integrated/combined/5,000-resident/decision-save modes. Every
+dotnet test/run, including Python children, used the prescribed other-dotnet
+guard. Shared-PC waits were allowed to finish; no command deadline or detached
+test was used. Both runners exited; process inspection found no task-owned
+test/run/compiler process remaining. [Commands, log hashes, preservation audit,
+save fingerprints and offline measurements](c2b-sync2-base-results.json).
+Ignored raw logs are under `build/e3-icecream/gates/` and `build/c2b-sync2/`.
+
+Current schema-22 save contract repeats **120,184 characters**, digest
+`D520285710B5BBCBF7715CF430D75AC6733B23BD7B6EB71ED9D6E7CD0DD72945`;
+weather-stripped projection **119,083 characters**, with the prior digest.
+Economy/order/reload digests, **849 orders / 797 purchases / two uncertain
+meals**, and all twelve F0 transitions remain unchanged. C4's schema-22
+population/food fixtures remain byte-identical at **41,787 / 66,275 bytes**.
+Production DLL SHA-256:
+`94fa2718ecd943656983d686968eb588e7ffa8a6af64f52cf8b7981cef38ace4`.
+
+Campaign wire charges reverify **282 / 274,446 bytes** and **1 / 1,024 records**
+above schema 20, with 265-character images. At 1,024 images, publication
+p95/max is **2.7971 / 3.6038 ms**, production adapter **4.4494 / 10.4813 ms**,
+with zero >=30 ms samples in those series; eight-slot queries remain **0 B**.
+Donut/cupcake/salad/ice cream pass **2,082 / 2,098 / 2,119 / 2,127 assertions**;
+all seven reader baseline/candidate sets report zero samples >=30 ms, with
+unchanged warm **200 / 49,104 B/call** allocations at 2 / 2,000 entries.
+
+Offline flags remain explicit: C1 cold 1,024-business p95 **6.713 ms** exceeds
+5 ms; C2a 20,000-place setup has **one dense / five sparse** samples >=30 ms,
+max **39.4224 / 64.348 ms**. Its sparse 1,024-place setup p95 is **16.2639 ms**;
+candidate admission has zero >=30 ms samples. Aggregate rush CPU costs and
+separate save/read/migration operations >=30 ms are retained separately in
+the machine record. These shared-host component/double/aggregate measurements
+include JIT/GC/scheduling variation; they are neither native frame samples nor
+a new performance win. Combined native mod-work p95 <5 ms, every spike >=30 ms
+flagged and separate whole-frame evidence remain pending; four parked hotspots
+are untouched.
+
+Final fetch still reports base `75c956c`, already an ancestor of this branch.
+No game, rig/test profile, bridge lease, Steam/Workshop or WSL operations were
+performed. Native checks remain batched under merge rule v2; pointer/input
+proof waits for Peter's 6 Nov playtest. No release/upload or ordinary-save
+deployment approval is claimed.
+
 ## Schema-20 base sync - 1 November 2026
 
 Merged integration base `0ffb819` (F1, E1 and A5) into C2b `992291e` using a
