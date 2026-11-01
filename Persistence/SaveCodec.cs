@@ -59,6 +59,7 @@ namespace PersistentCity.Persistence
         {
             if (state == null) throw new SaveValidationException("State is null.");
             state.PrepareForSave();
+            InitializeOutflow24(state, schema);
             Validate(state,schema);
             var json = JsonConvert.SerializeObject(state, Formatting.None, SettingsForSchema(WireContext.FromState(state),schema));
             Require(json.Length <= MaxInputCharacters, "Serialized state exceeds the input size limit.");
@@ -73,6 +74,7 @@ namespace PersistentCity.Persistence
         {
             if (state == null) throw new SaveValidationException("State is null.");
             state.PrepareForSave();
+            InitializeOutflow24(state, schema);
             Validate(state,schema);
             using var count = new CharacterCountingWriter();
             var serializer = JsonSerializer.CreateDefault(SettingsForSchema(WireContext.FromState(state),schema));
@@ -132,10 +134,11 @@ namespace PersistentCity.Persistence
                     MigrateCampaigns21To22(old.State!);
                     Validate(old.State!,22);
                     MigrateMenu23(old.State!);
+                    MigrateOutflow24(old.State!);
                     ValidateForActivation(old.State!);
                     return new SaveReadResult(SaveReadStatus.Loaded,old.State,"",old.SourceSchema);
                 }
-                Require(schema == 21 || schema == 22 || schema == 23, "Unsupported experimental state schema; preserve the original payload.");
+                Require(schema == 21 || schema == 22 || schema == 23 || schema == 24, "Unsupported experimental state schema; preserve the original payload.");
                 Require(System.Text.Encoding.UTF8.GetByteCount(source) <= MaxInputCharacters, "State exceeds the UTF-8 size limit.");
                 var context = WireContext.FromSource(source);
                 var serializer = JsonSerializer.Create(SettingsForSchema(context, schema));
@@ -151,7 +154,8 @@ namespace PersistentCity.Persistence
                 Require(state != null, "State is null.");
                 Validate(state!,schema);
                 if(schema==21) MigrateCampaigns21To22(state!);
-                if(state!.Schema==22) { Validate(state,22); MigrateMenu23(state); ValidateForActivation(state); }
+                if(state!.Schema==22) { Validate(state,22); MigrateMenu23(state); }
+                if(state.Schema==23) { Validate(state,23); MigrateOutflow24(state); ValidateForActivation(state); }
                 return new SaveReadResult(SaveReadStatus.Loaded, state, "", schema);
             }
             catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)
@@ -212,7 +216,14 @@ namespace PersistentCity.Persistence
         private static void CheckShape(JsonReader reader, Type type, IContractResolver resolver, ref int records, TokenText text, int schema, FieldNameSets fieldNames)
         {
             var token = reader.TokenType;
-            if (schema == 23 && type == typeof(FoodProductSales) && token == JsonToken.StartArray)
+            if (type == typeof(RivalOutflowHistory) && reader.TokenType != JsonToken.Null)
+            {
+                Require(schema == 24 && reader.TokenType == JsonToken.String, "Invalid outflow shape.");
+                var outflow = RivalOutflowHistory.FromWire((string)reader.Value!);
+                for (int i = 0; i < outflow.RecordCount; i++) Charge(ref records);
+                return;
+            }
+            if (schema >= 23 && type == typeof(FoodProductSales) && token == JsonToken.StartArray)
             { CheckProductCell23(reader, text); return; }
             Type? nullable = Nullable.GetUnderlyingType(type);
             if (token == JsonToken.Null)
@@ -225,13 +236,13 @@ namespace PersistentCity.Persistence
             if (nullable != null) type = nullable;
             if (type == typeof(FoodCampaignImage))
             {
-                Require((schema==22 || schema==23) && token == JsonToken.String, "Expected campaign image.");
+                Require((schema==22 || schema>=23) && token == JsonToken.String, "Expected campaign image.");
                 FoodCampaignImage.Decode((string)reader.Value!); Charge(ref records); return;
             }
             if (type == typeof(FoodDecisionTuning))
             {
                 Require(token == JsonToken.String && FoodDecisionTuning.IsCanonicalWire((string)reader.Value!)
-                    && (schema == 23 || ((string)reader.Value!).Length == FoodDecisionTuning.WireLength), "Invalid held tuning image.");
+                    && (schema >= 23 || ((string)reader.Value!).Length == FoodDecisionTuning.WireLength), "Invalid held tuning image.");
                 return;
             }
             if (type == typeof(string)) { Require(token == JsonToken.String, "Expected a string."); Require(((string)reader.Value!).Length <= 512, "Oversized string."); return; }
@@ -334,7 +345,7 @@ namespace PersistentCity.Persistence
                 while (reader.Read() && reader.TokenType != JsonToken.EndArray)
                 {
                     Require(++count <= limit, "Oversized collection.");
-                    if (schema==23 && (item==typeof(FoodShopDay) || item==typeof(FoodProductSales))) Charge(ref records);
+                    if (schema>=23 && (item==typeof(FoodShopDay) || item==typeof(FoodProductSales))) Charge(ref records);
                     if (item == typeof(FoodAwarenessCandidate) || item == typeof(BusinessReference) || item == typeof(RouteLeg) || item == typeof(VisitRecord) || item == typeof(OpeningWindow)
                         || item == typeof(TrafficRouteLeg) || item == typeof(TrafficVehicleState) || item == typeof(TrafficLinkDefinition)
                         || item == typeof(TrafficLinkState) || item == typeof(TrafficEventState) || item == typeof(int) || item == typeof(string)
@@ -361,16 +372,16 @@ namespace PersistentCity.Persistence
                 var property = properties.GetProperty(name, StringComparison.Ordinal);
                 if (property == null) Fail("Unknown field: " + name);
                 Require(reader.Read(), "Missing field value.");
-                if(schema==23 && type==typeof(FoodProductSales) && name=="ProductId")
+                if(schema>=23 && type==typeof(FoodProductSales) && name=="ProductId")
                     Require(reader.TokenType==JsonToken.String && FoodMenuPolicy.Code((string)reader.Value!)==0,"Reviewed product history requires a compact cell.");
-                if(schema==23 && type==typeof(FoodScope) && name=="AdditionalProductIds") CheckMenuIds23(reader,ref records);
+                if(schema>=23 && type==typeof(FoodScope) && name=="AdditionalProductIds") CheckMenuIds23(reader,ref records);
                 else CheckShape(reader, property.PropertyType!, resolver, ref records, text, schema, fieldNames);
             }
             Require(reader.TokenType == JsonToken.EndObject && names.Count == properties.Count - (type == typeof(FoodDecisionState) && !names.Contains("Tuning") ? 1 : 0)
                 - (type == typeof(FoodDecisionShop) && !names.Contains("MemoryContribution") ? 1 : 0), "Missing object fields.");
         }
 
-        private static bool NullableRecord(Type type) => type == typeof(OptionalStopState) || type == typeof(Route) || type == typeof(CarState)
+        private static bool NullableRecord(Type type) => type == typeof(RivalOutflowHistory) || type == typeof(OptionalStopState) || type == typeof(Route) || type == typeof(CarState)
             || type == typeof(TrafficKernelState) || type == typeof(TrafficSignalSchedule)
             || type == typeof(FoodCommerceState) || type == typeof(MealOuting) || type == typeof(MealExcursion) || type == typeof(ResidentBudget)
             || type == typeof(WeatherCommitment) || type == typeof(FoodAwarenessImage) || type == typeof(FoodDecisionTuning) || type == typeof(ResidentTraits) || type == typeof(ResidentFoodToday) || type == typeof(FoodDecisionState);
@@ -382,21 +393,23 @@ namespace PersistentCity.Persistence
         private static readonly IContractResolver Schema18Contracts = new StateContractResolver(18);
         private static readonly IContractResolver Schema20Contracts = new StateContractResolver(20);
         private static readonly IContractResolver Schema21Contracts = new StateContractResolver(21);
+        private static readonly IContractResolver Schema23Contracts = new StateContractResolver(23);
         private static readonly IContractResolver Schema22Contracts = new StateContractResolver(22);
         private static JsonSerializerSettings Settings(WireContext context) => SettingsForSchema(context,CityState.CurrentSchema);
         private static JsonSerializerSettings SettingsForSchema(WireContext context, int schema)
         {
             var settings = new JsonSerializerSettings {
-                ContractResolver = schema==18 ? Schema18Contracts : schema==19 ? Schema19Contracts : schema==20 ? Schema20Contracts : schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : StateContracts, Culture = CultureInfo.InvariantCulture,
+                ContractResolver = schema==18 ? Schema18Contracts : schema==19 ? Schema19Contracts : schema==20 ? Schema20Contracts : schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : schema==23 ? Schema23Contracts : StateContracts, Culture = CultureInfo.InvariantCulture,
                 MissingMemberHandling = MissingMemberHandling.Error, TypeNameHandling = TypeNameHandling.None,
                 MaxDepth = 48, FloatParseHandling = FloatParseHandling.Double
             };
+            settings.Converters.Add(new OutflowConverter24());
             settings.Converters.Add(new CampaignImageConverter22());
             settings.Converters.Add(new WeatherConverter()); settings.Converters.Add(new PositionConverter()); settings.Converters.Add(new MoneyJsonConverter());
             settings.Converters.Add(new TuningConverter()); settings.Converters.Add(new MealOutcomeConverter()); settings.Converters.Add(new TupleConverter());
             settings.Converters.Add(new TodayConverter()); settings.Converters.Add(new MemoryConverter(schema));
             settings.Converters.Add(new VisitConverter(context)); settings.Converters.Add(new BusinessReferenceConverter(context));
-            if(schema==23) settings.Converters.Add(new ProductSales23Converter());
+            if(schema>=23) settings.Converters.Add(new ProductSales23Converter());
             return settings;
         }
 
@@ -452,8 +465,8 @@ namespace PersistentCity.Persistence
         private static int Validate(CityState state, int schema = CityState.CurrentSchema)
         {
             Require(state != null, "State is null.");
-            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23), "Unsupported state schema.");
-            if(schema==23) Require(state.MenuPolicy == FoodMenuPolicy.Wire, "Unsupported menu product policy.");
+            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23 || schema==24), "Unsupported state schema.");
+            if(schema>=23) Require(state.MenuPolicy == FoodMenuPolicy.Wire, "Unsupported menu product policy.");
             Require(state.WeatherStartsDay>=0 && state.WeatherStartsDay<=(int)(state.Minute/1440)+1,"Invalid weather activation day.");
             Require(state.Capabilities != null, "Missing population capabilities.");
             ValidateCapabilities(state.Capabilities);
@@ -877,7 +890,7 @@ namespace PersistentCity.Persistence
             var historyKeys = new HashSet<string>(StringComparer.Ordinal);
             foreach (var row in food.History)
             {
-                if(state.Schema==23) records+=1+(row?.ProductSales?.Count ?? 0);
+                if(state.Schema>=23) records+=1+(row?.ProductSales?.Count ?? 0);
                 Require(row != null && row.Day >= 0 && row.Day <= (int)(state.Minute / 1440) && foodPlaces.Contains(row.PlaceId, (int)PlaceKind.Shop)
                     && historyKeys.Add(row.Day + ":" + row.PlaceId + "\n" + row.BusinessId), "Invalid market history ownership.");
                 Text(row.BusinessId, "Historical business", 512);
@@ -978,6 +991,13 @@ namespace PersistentCity.Persistence
                     Minute(outing.ResumeUntil, "Meal resume end"); Minute(outing.ResumeEvent, "Meal resume event");
                     Require(outing.ResumeEvent <= outing.ResumeUntil && meal.PlaceId.Length > 0, "Invalid meal return ownership.");
                 }
+            }
+            if (state.Schema >= 24)
+            {
+                Require(food.Outflow != null, "Missing outflow history.");
+                RivalOutflowHistory.FromWire(food.Outflow.ToWire());
+                Require(food.Outflow.ValidAt(food, state.Minute), "Outflow does not reconcile with D2 ledger/clock/counts.");
+                records += food.Outflow.RecordCount;
             }
             return records;
         }
@@ -1252,11 +1272,12 @@ namespace PersistentCity.Persistence
             protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
             {
                 return base.CreateProperties(type, memberSerialization).Where(property => property.Writable
+                    && !(schema<24 && type==typeof(FoodCommerceState) && property.PropertyName=="Outflow")
                     && !(schema<22 && type==typeof(FoodCommerceState) && property.PropertyName=="Campaigns")
                     && !(schema<21 && RivalWire21.AddedProperty(type,property.PropertyName!))
                     && !(schema<20 && WeatherProperty(type,property.PropertyName))
                     && !(type==typeof(FoodScope) && property.PropertyName=="AlternativeKind")
-                    && !(schema!=23 && type==typeof(CityState) && property.PropertyName=="MenuPolicy") && !(schema==18 &&
+                    && !(schema<23 && type==typeof(CityState) && property.PropertyName=="MenuPolicy") && !(schema==18 &&
                     (type==typeof(FoodDecisionState) && property.PropertyName=="Awareness"
                      || type==typeof(FoodCommerceState) && property.PropertyName=="AwarenessStartsDay")))
                     // These two root headers let the native authority bootstrap stop before the graph.

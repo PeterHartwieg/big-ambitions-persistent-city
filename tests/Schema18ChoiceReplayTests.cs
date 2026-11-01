@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Linq;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
@@ -20,6 +22,14 @@ public sealed class Schema18ChoiceReplayTests
         var restored = new CitySimulator(SaveCodec.Read(data[SaveStore.StateKey]).State!, planner); restored.AttachFoodMarket(market); return restored;
     }
 
+    // D3a starts recording on migration; compare every older field separately from that new coverage marker.
+    private static string PreOutflow(CityState state)
+    {
+        var root = JObject.Parse(SaveCodec.Write(state));
+        ((JObject)root["Food"]!).Remove("Outflow");
+        return root.ToString(Formatting.None);
+    }
+
     [Theory]
     [InlineData(0)] [InlineData(1)] [InlineData(2)] [InlineData(3)] [InlineData(4)] [InlineData(5)]
     [InlineData(6)] [InlineData(7)] [InlineData(8)] [InlineData(9)] [InlineData(10)] [InlineData(11)]
@@ -34,7 +44,8 @@ public sealed class Schema18ChoiceReplayTests
         control.State.WeatherStartsDay=changed.State.WeatherStartsDay; // additive next-day weather capability, economy stays exact
         while (!control.AdvanceTo(at + 30, 128).CaughtUp) { }
         while (!changed.AdvanceTo(at + 30, 1).CaughtUp) { }
-        Assert.Equal(SaveCodec.Write(control.State), SaveCodec.Write(changed.State));
+        Assert.Equal(PreOutflow(control.State), PreOutflow(changed.State));
+        Assert.True(changed.State.Food!.Outflow!.Reconciles(changed.State.Food));
         Assert.Equal(mc.Orders, mm.Orders); Assert.Single(mm.Orders); Assert.Equal(pc.Out, pm.Out); Assert.Equal(pc.Back, pm.Back);
         Assert.All(changed.State.Food!.Residents, m => { Assert.Empty(m.Memory.Entries); Assert.Null(m.Memory.Watermark); });
     }
@@ -51,7 +62,8 @@ public sealed class Schema18ChoiceReplayTests
         control.State.WeatherStartsDay=changed.State.WeatherStartsDay; // additive next-day weather capability, economy stays exact
         while (!control.AdvanceTo(at + 30, 128).CaughtUp) { }
         while (!changed.AdvanceTo(at + 30, 1).CaughtUp) { }
-        Assert.Equal(SaveCodec.Write(control.State), SaveCodec.Write(changed.State));
+        Assert.Equal(PreOutflow(control.State), PreOutflow(changed.State));
+        Assert.True(changed.State.Food!.Outflow!.Reconciles(changed.State.Food));
         Assert.Equal(mc.Orders, mm.Orders); Assert.Single(mm.Orders); Assert.Equal(1, mm.Attempts);
         Assert.Equal(pc.Out, pm.Out); Assert.Equal(pc.Back, pm.Back);
     }

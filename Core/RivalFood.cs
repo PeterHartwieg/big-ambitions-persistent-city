@@ -101,8 +101,10 @@ namespace PersistentCity.Core
             return price <= HouseholdFinance.SpendingLimit(meal.Budget)
                 && Money.TryAdd(meal.Budget.ExternalFoodSpent, price, out _);
         }
-        public static bool TryPay(ResidentMeal meal)
+        public static bool TryPay(ResidentMeal meal) => TryPay(meal, null, 0);
+        public static bool TryPay(ResidentMeal meal, RivalOutflowHistory? history, double minute)
         {
+            if (history != null && (!Position.Finite(minute) || minute < history.StartDay * 1440.0 || minute > 1000000000)) return false;
             if (meal.TargetKind != FoodAlternativeKind.Rival || meal.External.Length != 21 || meal.External[1] != '0'
                 || !RivalFoodTerms.Canonical(meal.External.Substring(2))
                 || meal.Status != MealStatus.Serving || !CanPay(meal, meal.Price)) return false;
@@ -115,6 +117,7 @@ namespace PersistentCity.Core
             else meal.LegacyExternalFoodSpent = external;
             meal.DayAllowanceUsed = used; meal.Spent = spent; meal.Purchases++;
             if (meal.ExistingStop) meal.ExistingStopPurchases++;
+            history?.Record(meal.Price, (int)(minute / 1440));
             meal.External = watermark; meal.Status = MealStatus.Paid;
             return true;
         }
@@ -212,7 +215,7 @@ namespace PersistentCity.Core
         {
             if (!RivalMatches(meal.BusinessId, meal.PlaceId, meal.External.Substring(2), null, meal, now, out _, out var failure))
             { RivalRefusals++; RivalExperience(meal, failure, now); Finish(meal, MealStatus.Missed, "Business no longer accepts this commitment"); return; }
-            if (!ExternalFoodSettlement.TryPay(meal))
+            if (!ExternalFoodSettlement.TryPay(meal, state.Outflow, now))
             { Finish(meal, MealStatus.Missed, "Household funds no longer available at checkout"); return; }
             RivalSettlements++; meal.ServiceAt = now;
             RivalExperience(meal, ShopExperience.Served, now);
@@ -220,6 +223,7 @@ namespace PersistentCity.Core
             MealOutcomes.Record(meal, now, checkout: true);
         }
         internal object RivalDiagnostics() => new { RivalChoices, RivalSettlements, RivalRefusals,
+            FreeOutflow = city.FreeRivalOutflow(),
             Availability = "EstimatedFromPriceAndHours", NativeRivalCheckout = "Unsupported",
             ExternalFoodSpentUnits = Money.TotalUnits(state.Residents.Select(m => m.Budget?.ExternalFoodSpent ?? m.LegacyExternalFoodSpent)).ToString(CultureInfo.InvariantCulture) };
     }

@@ -115,6 +115,9 @@ public sealed class RivalMemoryTests
         Advance(a, at, 128);
         b.InspectFoodAwareness("r");
         while (!b.AdvanceTo(at, 1).CaughtUp) b = Reload(b, mb, pb);
+        Assert.True(a.State.Food!.Outflow!.Reconciles(a.State.Food));
+        Assert.Equal(3, a.FreeRivalOutflow()!.Count);
+        Assert.All(a.State.Food.Residents, m => Assert.Equal(1, Assert.Single(m.Memory.Entries).Served));
         Assert.Equal(SaveCodec.Write(a.State), SaveCodec.Write(b.State));
         Assert.Equal(pa.Out, pb.Out); Assert.Equal(pa.Back, pb.Back);
         Assert.Equal(ma.Reads, mb.Reads);
@@ -172,7 +175,7 @@ public sealed class RivalMemoryTests
     }
 
     [Fact]
-    public void Source23AcceptsBoundedModeledScalarButRejectsNonfiniteWithoutChangingShape()
+    public void Source24AcceptsBoundedModeledScalarButRejectsNonfiniteWithoutChangingShape()
     {
         var (city, _, _) = RivalOutflowTests.Ready(); city.InspectFoodAwareness("r");
         city.AdvanceTo(city.State.Food!.Residents[0].DesiredAt, 1);
@@ -189,7 +192,7 @@ public sealed class RivalMemoryTests
         }
     }
 
-    [Theory] [InlineData(21)] [InlineData(22)]
+    [Theory] [InlineData(21)] [InlineData(22)] [InlineData(23)]
     public void OlderSourceValidatorsKeepTheirNeutralOnlyRivalContract(int schema)
     {
         var (city, _, _) = RivalOutflowTests.Ready(); city.InspectFoodAwareness("r");
@@ -199,7 +202,13 @@ public sealed class RivalMemoryTests
         Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(neutral).Status);
         var root = JObject.Parse(neutral);
         root["Food"]!["Residents"]![0]![9]!["Shops"]![0]!["MemoryContribution"] = 1;
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(root.ToString(Formatting.None)).Status);
+        string forged = root.ToString(Formatting.None);
+        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(forged).Status);
+        var saved = new System.Collections.Generic.Dictionary<string, string> { [SaveCodec.StateKey] = forged };
+        Assert.False(SaveStore.WriteTo(saved, city.State).Success);
+        Assert.Equal(forged, saved[SaveCodec.StateKey]);
+        city.State.Food.Residents[0].Decision!.Shops[0].MemoryContribution = 1;
+        Assert.Throws<SaveValidationException>(() => SaveCodec.WriteForSchema(city.State, schema));
     }
 
     [Fact]

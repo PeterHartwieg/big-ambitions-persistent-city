@@ -1,12 +1,12 @@
 # D4: optional modeled rival-experience memory
 
-**MERGE BLOCKED — native proof pending (Sol-r1-1).** Before merge, the authorized
-combined `rig_test` session (Codex Sol, high) must attach verifiable before/red
-and after/green evidence to PR #73 for native memory replay, rival nonmutation
-and combined performance. Evidence must include mod-work p50/p95/max, p95 <5 ms,
-every spike >=30 ms with count/condition/component, and whole-frame timing/stalls
-tracked separately. Offline checks and microbenchmarks do not clear this block.
-This review-fix run performs no rig work.
+Native acceptance checks are deferred to the next batched combined rig / Peter's
+playtest per merge rule v2, are recorded in `rig-2026-11-06-checklist.md`, and do
+not gate merge. Pending evidence still includes native memory replay, rival
+nonmutation, mod-work p50/p95/max (p95 <5 ms), every spike >=30 ms with
+count/condition/component, and separate whole-frame timing/stalls. Offline
+checks and microbenchmarks do not establish native acceptance. No rig work was
+performed in this integration task.
 
 ## 1 November 2026 — offline implementation
 
@@ -20,17 +20,22 @@ keeps entries and watermark empty. No D2/D3a prerequisite is added.
 
 Rival choice captures B1's existing contribution before shortlisting and holds
 that scalar across reload/tuning edits, just as player choices do. The current
-rival validator permits that already bounded scalar in current schema 23;
-schema-21/22 source validation retains its neutral-only rival rule. Tests exercise
+rival validator permits that already bounded scalar in current schema 24;
+schema-21/22/23 source validation retains its neutral-only rival rule. Tests exercise
 those genuine predecessor writers and refusal paths, plus finite endpoints and
-nonfinite/out-of-range refusal at 23. The malformed-scalar test now uses 9 rather
+nonfinite/out-of-range refusal at 24. The malformed-scalar test now uses 9 rather
 than valid 1.
-Pre-D4 schema-23 binaries (including the base and uncomposed D3a sibling) refuse
-D4-written saves holding a nonzero rival `MemoryContribution`, so shared dev/rig
-fixtures must be created and read on the combined head (Opus-r1-1).
-No new DTO, tuple slot, collection, ledger, schema, migration, capability revision,
-route request, native rival write or outcome history. Writer stays **23** and the
-18 -> 19 -> 20 -> 21 -> 22 -> 23 chain is unchanged. Frozen 13-20 readers are untouched; 21/22 retain their prior scalar gate.
+Pre-D4 binaries, including the uncomposed D3a writer, refuse D4-written saves
+holding a nonzero rival `MemoryContribution`, so shared dev/rig fixtures must be
+created and read on the combined head (Opus-r1-1).
+D4 adds no DTO, tuple slot, collection, ledger, schema, migration, capability
+revision, route request, native rival write or outcome history. The merged
+writer is **24**, owned by D3a's outflow shape; the complete chain remains
+18 -> 19 -> 20 -> 21 -> 22 -> 23 -> 24. Frozen 13-20 readers are untouched;
+21/22/23 retain their original neutral-only rival scalar gate. D4's unmerged
+semantic widening is re-anchored on 24, not backported into genuine sources.
+The save contracts allocate numbers for new shapes and require exact predecessor
+validation; this existing finite [-8,8] slot adds no shape requiring schema 25.
 
 Known advertised closure is the only rival failure cause: no native stockout or
 queue is invented. Missing/unreadable reads, ownership/generation/place changes,
@@ -62,7 +67,7 @@ from advertised hours, household declines, neutral refusals, old commitments,
 identical full snapshots under budgets 1/128, captured nonzero contributions,
 mixed eviction/decay, late replay, protected insertion and honest words.
 
-Final source **`eee4dff`** passes **59/59 foreground acceptance commands**:
+Historical pre-sync source **`eee4dff`** passed **59/59 foreground acceptance commands**:
 Steam-reference build, **2,540/2,540 unit tests** (zero failed/skipped), **2,540
 discovered cases**, all **44 root regression projects**, four Python adapters,
 three demos and all five product-reader isolation guards. E4's existing frozen
@@ -93,7 +98,7 @@ The empty lookup has no retained entries; the active lookup includes generation
 index lookup and the four-entry policy. Measurements are synthetic .NET 10,
 separate from native mod-work and whole-frame timing.
 
-Final warmed results (milliseconds per call):
+Historical pre-sync warmed results at `eee4dff` (milliseconds per call):
 
 | Operation | p50 | p95 | Max | Allocation |
 | --- | ---: | ---: | ---: | ---: |
@@ -102,7 +107,7 @@ Final warmed results (milliseconds per call):
 | Mixed four-entry repeat update | 0.0002 | 0.0002 | 0.0058 | 0 B |
 
 No D4 micro-sample is >=30 ms. Timer resolution and shared-host/JIT noise limit
-interpretation at this scale. Saturated fixture bytes are **2,422 / 2,422** for
+interpretation at this scale. Historical pre-sync saturated fixture bytes were **2,422 / 2,422** for
 neutral/active contributors and **2,422** for the all-own equal-width-ID control;
 streaming/semantic records are **7/7** in every arm. Four retained entries and
 four shared references stay fixed through 12,000 repeat updates.
@@ -185,9 +190,10 @@ read through Git; no UI capability or fixture mutation helper is presumed.
 
 ## 1 November 2026 - round-one review follow-up (offline only)
 
-Sol-r1-1: the explicit merge block above remains in force until the authorized
-combined native session attaches the required before/red and after/green proof.
-Opus-r1-1: the schema-23 compatibility note requires shared fixtures to be created
+Sol-r1-1: native acceptance is deferred to the next batched combined rig /
+Peter's playtest per merge rule v2, recorded in `rig-2026-11-06-checklist.md`,
+and does not gate merge. The before/red and after/green proof remains pending.
+Opus-r1-1: the fixture compatibility note requires shared fixtures to be created
 and read on the combined head. Neither change alters code, schemas or downgrade
 behavior; no native evidence is claimed and no rig work was performed.
 

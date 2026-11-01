@@ -1,6 +1,8 @@
-# D4: integrate modeled rival experiences with bounded shop memory
+# D4 base sync: preserve rival memory and D3a outflow history
 
-Final tested implementation `eee4dff`, based on `c85dc19` (B1/B2 + D2 + C2b + E4, writer 23).
+Sync branch `codex/pc-d4-sync-base` merges D4 head `1be75e5` with
+`origin/codex/persistent-city` (`fb958ae`, D3a). The original D4 implementation
+and its historical measurements used source `eee4dff` on `c85dc19`.
 
 Committed rival outings now use B1's existing watermark, record a modeled purchase
 or known closure once, and apply the same trait-weighted return contribution as
@@ -9,9 +11,9 @@ Unknown/mixed refusals and declines remain neutral; B inactive and pre-integrati
 commitments remain empty. Protected insertion keeps the documented equal-return
 exception when a new failure would remove a competitor's positive memory.
 
-Schema 23 permits the existing bounded rival scalar; genuine 21/22 sources retain
+Schema 24 permits the existing bounded rival scalar; genuine 21/22/23 sources retain
 their neutral-only rule. No DTO/tuple/collection/ledger/migration/schema growth, no native rival transaction,
-extra route or history. Writer stays 23. Existing generation references and scalar
+extra route or history. Writer is 24 (D3a). Existing generation references and scalar
 budgets are reused; actual experience content can fill the preallocated memory.
 Rival inspector words explicitly identify modeled experience and unobserved native
 service, without counting rivals as own-shop regulars. D2/D3a retain independent
@@ -19,7 +21,7 @@ acceptance and acquire no backward prerequisite.
 
 Validation and measurements: [D4 checks](../checks/d4-rival-memory.md),
 [performance](../perf/d4-rival-memory.md), [command receipts/raw metrics](2026-11-01-d4-rival-memory-results.json).
-**59/59 foreground checks pass**, including production build, **2,540/2,540 unit
+Historical pre-sync **59/59 foreground checks passed**, including production build, **2,540/2,540 unit
 tests**, all 2,540 discovered cases, 44 root regression projects, the Python
 adapters/demos and all five product-reader isolation guards. The runner prepares
 E4's existing generated baseline inputs. Every dotnet test/run waits on the
@@ -35,7 +37,7 @@ process remains.
 10,000 warmed calls after 2,000 warmups; first insertion/setup excluded. No D4
 sample >=30 ms. Retained entries/references remain four/four. Neutral/active
 contributors and the all-own equal-width-ID control each serialize **2,422 B**,
-**7 streaming / 7 semantic records**, writer **23**. The saturated memory tuple
+**7 streaming / 7 semantic records**, historical pre-sync fixture. The saturated memory tuple
 stays 48 characters/51 inclusive JSON bytes; new experiences use its existing
 allocation rather than adding a format or history. No retained provenance field.
 
@@ -55,6 +57,10 @@ tree, with equivalent advertised-window membership; arrival's next-close rules
 remain. No new frame work. Four parked hotspots remain parked. Native combined
 mod-work p95 <5 ms and all >=30 ms spike evidence remain pending the normal
 combined session; whole-frame stalls are separate.
+
+Native acceptance checks are deferred to the next batched combined rig / Peter's
+playtest per merge rule v2, are recorded in `rig-2026-11-06-checklist.md`, and do
+not gate merge. All locked-PC versus input-only markers below remain intact.
 
 ## In-game checks for 6 Nov rig
 

@@ -20,7 +20,7 @@ unchanged. This is on-demand UI work only, not a new frame participant. The
 benchmark compares the original split/length path against the production check
 for an actual-format player generation.
 
-Tested source `eee4dff`; [raw metrics and foreground receipts](../reviews/2026-11-01-d4-rival-memory-results.json).
+Historical pre-sync measurements, source `eee4dff`; [raw metrics and foreground receipts](../reviews/2026-11-01-d4-rival-memory-results.json).
 
 | Warmed operation | p50 / p95 / max ms | B/call | >=30 ms samples |
 | --- | ---: | ---: | ---: |
@@ -38,7 +38,7 @@ an actual-format player identity. Allocation comparisons are deterministic in
 these warmed arms; no native or end-to-end timing speedup is claimed. These tiny
 single-call percentiles are close to timer resolution and subject to JIT/load.
 
-The retained format/control fixture is **2,422 UTF-8 bytes**, **7 streaming / 7
+The historical pre-sync retained format/control fixture was **2,422 UTF-8 bytes**, **7 streaming / 7
 semantic records** with either neutral/active contribution or four all-own entries
 using equal-width generation IDs. Its mixed form has two own/two rival entries.
 The update arm retains **four entries/four references** through 12,000 updates,
