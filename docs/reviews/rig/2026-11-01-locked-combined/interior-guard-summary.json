@@ -1,0 +1,438 @@
+{
+  "role": "rig_test",
+  "checks": {
+    "matchesControlOff": true,
+    "matchesControlOn": true,
+    "standInForcesOff": true,
+    "offBypassAllowsOn": true
+  },
+  "cases": [
+    {
+      "case": "base-view-off",
+      "inside": {
+        "configured": false,
+        "viewActive": false,
+        "hidden": true,
+        "fallback": "None",
+        "anchor": {
+          "X": 0.0,
+          "Y": 0.0,
+          "Z": 0.0,
+          "IsFinite": true
+        },
+        "inside": true,
+        "citizens": 957,
+        "diagnostics": "physical=True, pedestrians=0, cars=0, acquired=1, released=1, blockedSamples=269, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      "guard": {
+        "agency": null,
+        "guard": null,
+        "GuardStarts": 0,
+        "GuardEvaluations": 0,
+        "PaymentEntries": 0
+      },
+      "repeat": {
+        "repeats": 100,
+        "runtimeLookupMs": 183.3238,
+        "timingScope": "Capture plus cached guard diagnostic; one Unity object lookup reported separately",
+        "agencyAvailable": false,
+        "guardAvailable": false,
+        "allOutputIdentical": true,
+        "nativeEqual": true,
+        "beforeSha256": "8e17b6c693f644972af0076281288707afddd0341e49f1426556a06f2f73d76d",
+        "afterSha256": "8e17b6c693f644972af0076281288707afddd0341e49f1426556a06f2f73d76d",
+        "payloadEqual": true,
+        "payloadBeforeSha256": "2c99082b520a05f9d6982a8ab5396f1a44cb6d4e20e2876b6e8a6be84b663ca0",
+        "payloadAfterSha256": "2c99082b520a05f9d6982a8ab5396f1a44cb6d4e20e2876b6e8a6be84b663ca0",
+        "guardStartsBefore": 0,
+        "guardStartsAfter": 0,
+        "guardEvaluationsBefore": 0,
+        "guardEvaluationsAfter": 0,
+        "paymentEntriesBefore": 0,
+        "paymentEntriesAfter": 0
+      },
+      "final": {
+        "configured": false,
+        "viewActive": false,
+        "hidden": true,
+        "fallback": "None",
+        "anchor": {
+          "X": 0.0,
+          "Y": 0.0,
+          "Z": 0.0,
+          "IsFinite": true
+        },
+        "inside": true
+      },
+      "savedPayloadReloadBytesEqual": true
+    },
+    {
+      "case": "base-view-on",
+      "inside": {
+        "configured": true,
+        "viewActive": true,
+        "hidden": false,
+        "fallback": "None",
+        "anchor": {
+          "X": 230.2625732421875,
+          "Y": 0.09000015258789062,
+          "Z": 21.2783203125,
+          "IsFinite": true
+        },
+        "inside": true,
+        "citizens": 957,
+        "diagnostics": "physical=True, pedestrians=0, cars=0, acquired=1, released=1, blockedSamples=236, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      "guard": {
+        "agency": null,
+        "guard": null,
+        "GuardStarts": 0,
+        "GuardEvaluations": 0,
+        "PaymentEntries": 0
+      },
+      "repeat": {
+        "repeats": 100,
+        "runtimeLookupMs": 85.8919,
+        "timingScope": "Capture plus cached guard diagnostic; one Unity object lookup reported separately",
+        "agencyAvailable": false,
+        "guardAvailable": false,
+        "allOutputIdentical": true,
+        "nativeEqual": true,
+        "beforeSha256": "180f5bf64875cc2f4322393ed4d0a3fbac3e0597dae7e0b6106276dbb9ec2a38",
+        "afterSha256": "180f5bf64875cc2f4322393ed4d0a3fbac3e0597dae7e0b6106276dbb9ec2a38",
+        "payloadEqual": true,
+        "payloadBeforeSha256": "db5d3ac69e3ae1eedae2ab87316c606ebe96cd5506bcce1c1b573a40fcc978a5",
+        "payloadAfterSha256": "db5d3ac69e3ae1eedae2ab87316c606ebe96cd5506bcce1c1b573a40fcc978a5",
+        "guardStartsBefore": 0,
+        "guardStartsAfter": 0,
+        "guardEvaluationsBefore": 0,
+        "guardEvaluationsAfter": 0,
+        "paymentEntriesBefore": 0,
+        "paymentEntriesAfter": 0
+      },
+      "final": {
+        "configured": true,
+        "viewActive": false,
+        "hidden": true,
+        "fallback": "Uncertain",
+        "anchor": {
+          "X": 0.0,
+          "Y": 0.0,
+          "Z": 0.0,
+          "IsFinite": true
+        },
+        "inside": true
+      },
+      "savedPayloadReloadBytesEqual": true,
+      "hiddenTransition": {
+        "beforeActive": true,
+        "immediateAfterActive": false,
+        "immediateAfterHidden": true,
+        "resumedActive": true,
+        "resumedAnchor": {
+          "X": 230.2625732421875,
+          "Y": 0.09000015258789062,
+          "Z": 21.2783203125,
+          "IsFinite": true
+        },
+        "seamNotGesture": true
+      }
+    },
+    {
+      "case": "cand-view-off",
+      "inside": {
+        "configured": false,
+        "viewActive": false,
+        "hidden": true,
+        "fallback": "None",
+        "anchor": {
+          "X": 0.0,
+          "Y": 0.0,
+          "Z": 0.0,
+          "IsFinite": true
+        },
+        "inside": true,
+        "citizens": 957,
+        "diagnostics": "physical=True, pedestrians=0, cars=0, acquired=1, released=1, blockedSamples=788, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      "guard": {
+        "agency": "C3 read-only; tuple/queue ordinal is NOT durable identity\nday=6 money(binary32 dollars)=10160.5107\nagency=ba%3Astreet_secondavenue:5 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallBillboard;MediumBillboard;LargeBillboard;\nagency=ba%3Astreet_thirdavenue:17 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallInternet;MediumInternet;LargeInternet;\nmarketingRecordsInQueue=0\nexpense day=1 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=2 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=3 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=4 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=5 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\n",
+        "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+        "GuardStarts": 16,
+        "GuardEvaluations": 16,
+        "PaymentEntries": 0
+      },
+      "repeat": {
+        "repeats": 100,
+        "runtimeLookupMs": 109.45190000000001,
+        "timingScope": "Capture plus cached guard diagnostic; one Unity object lookup reported separately",
+        "agencyAvailable": true,
+        "guardAvailable": true,
+        "allOutputIdentical": true,
+        "nativeEqual": true,
+        "beforeSha256": "d08832616ece6a9f2b8fbe83cf948ce020b426cd3878abcff8e007795169045e",
+        "afterSha256": "d08832616ece6a9f2b8fbe83cf948ce020b426cd3878abcff8e007795169045e",
+        "payloadEqual": true,
+        "payloadBeforeSha256": "f67ce0db9992852fea86fabb769e97ed77e4f8aba21639d25a70e811dd90a5c2",
+        "payloadAfterSha256": "f67ce0db9992852fea86fabb769e97ed77e4f8aba21639d25a70e811dd90a5c2",
+        "guardStartsBefore": 17,
+        "guardStartsAfter": 17,
+        "guardEvaluationsBefore": 17,
+        "guardEvaluationsAfter": 17,
+        "paymentEntriesBefore": 0,
+        "paymentEntriesAfter": 0
+      },
+      "final": {
+        "configured": false,
+        "viewActive": false,
+        "hidden": true,
+        "fallback": "None",
+        "anchor": {
+          "X": 0.0,
+          "Y": 0.0,
+          "Z": 0.0,
+          "IsFinite": true
+        },
+        "inside": true
+      },
+      "savedPayloadReloadBytesEqual": true
+    },
+    {
+      "case": "cand-view-on",
+      "inside": {
+        "configured": true,
+        "viewActive": true,
+        "hidden": false,
+        "fallback": "None",
+        "anchor": {
+          "X": 230.2625732421875,
+          "Y": 0.09000015258789062,
+          "Z": 21.2783203125,
+          "IsFinite": true
+        },
+        "inside": true,
+        "citizens": 957,
+        "diagnostics": "physical=True, pedestrians=0, cars=0, acquired=1, released=1, blockedSamples=432, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      "guard": {
+        "agency": "C3 read-only; tuple/queue ordinal is NOT durable identity\nday=6 money(binary32 dollars)=10160.5107\nagency=ba%3Astreet_thirdavenue:17 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallInternet;MediumInternet;LargeInternet;\nagency=ba%3Astreet_secondavenue:5 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallBillboard;MediumBillboard;LargeBillboard;\nmarketingRecordsInQueue=0\nexpense day=1 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=2 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=3 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=4 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=5 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\n",
+        "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=on; active=True",
+        "GuardStarts": 18,
+        "GuardEvaluations": 18,
+        "PaymentEntries": 0
+      },
+      "repeat": {
+        "repeats": 100,
+        "runtimeLookupMs": 90.7762,
+        "timingScope": "Capture plus cached guard diagnostic; one Unity object lookup reported separately",
+        "agencyAvailable": true,
+        "guardAvailable": true,
+        "allOutputIdentical": true,
+        "nativeEqual": true,
+        "beforeSha256": "6ffa7cd40aa185a397d54c97e7fcbdf85f845ec47750655589497f4880426bee",
+        "afterSha256": "6ffa7cd40aa185a397d54c97e7fcbdf85f845ec47750655589497f4880426bee",
+        "payloadEqual": true,
+        "payloadBeforeSha256": "5eea3189bd02a87d83f4b1416fee5b20d943f955ed9d3c9c45ace3cce36cf457",
+        "payloadAfterSha256": "5eea3189bd02a87d83f4b1416fee5b20d943f955ed9d3c9c45ace3cce36cf457",
+        "guardStartsBefore": 19,
+        "guardStartsAfter": 19,
+        "guardEvaluationsBefore": 19,
+        "guardEvaluationsAfter": 19,
+        "paymentEntriesBefore": 0,
+        "paymentEntriesAfter": 0
+      },
+      "final": {
+        "configured": true,
+        "viewActive": false,
+        "hidden": true,
+        "fallback": "Uncertain",
+        "anchor": {
+          "X": 0.0,
+          "Y": 0.0,
+          "Z": 0.0,
+          "IsFinite": true
+        },
+        "inside": true
+      },
+      "savedPayloadReloadBytesEqual": true,
+      "hiddenTransition": {
+        "beforeActive": true,
+        "immediateAfterActive": false,
+        "immediateAfterHidden": true,
+        "resumedActive": true,
+        "resumedAnchor": {
+          "X": 230.2625732421875,
+          "Y": 0.09000015258789062,
+          "Z": 21.2783203125,
+          "IsFinite": true
+        },
+        "seamNotGesture": true
+      }
+    },
+    {
+      "case": "cand-standin",
+      "inside": {
+        "configured": false,
+        "viewActive": false,
+        "hidden": true,
+        "fallback": "None",
+        "anchor": {
+          "X": 0.0,
+          "Y": 0.0,
+          "Z": 0.0,
+          "IsFinite": true
+        },
+        "inside": true,
+        "citizens": 957,
+        "diagnostics": "physical=True, pedestrians=0, cars=0, acquired=1, released=1, blockedSamples=818, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+      },
+      "guard": {
+        "agency": "C3 read-only; tuple/queue ordinal is NOT durable identity\nday=6 money(binary32 dollars)=10160.5107\nagency=ba%3Astreet_thirdavenue:17 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallInternet;MediumInternet;LargeInternet;\nagency=ba%3Astreet_secondavenue:5 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallBillboard;MediumBillboard;LargeBillboard;\nmarketingRecordsInQueue=0\nexpense day=1 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=2 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=3 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=4 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=5 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\n",
+        "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+        "GuardStarts": 21,
+        "GuardEvaluations": 21,
+        "PaymentEntries": 0
+      },
+      "repeat": {
+        "repeats": 100,
+        "runtimeLookupMs": 88.01230000000001,
+        "timingScope": "Capture plus cached guard diagnostic; one Unity object lookup reported separately",
+        "agencyAvailable": true,
+        "guardAvailable": true,
+        "allOutputIdentical": true,
+        "nativeEqual": true,
+        "beforeSha256": "2edd23de050a465da17028b3af0dfd7a0b2c68d9d7f3f1fa077d318b53f75aca",
+        "afterSha256": "2edd23de050a465da17028b3af0dfd7a0b2c68d9d7f3f1fa077d318b53f75aca",
+        "payloadEqual": true,
+        "payloadBeforeSha256": "1f208982ecd4719abbabe171aee7a58a22abec730a3609003ba8a3a8991ccc67",
+        "payloadAfterSha256": "1f208982ecd4719abbabe171aee7a58a22abec730a3609003ba8a3a8991ccc67",
+        "guardStartsBefore": 22,
+        "guardStartsAfter": 22,
+        "guardEvaluationsBefore": 22,
+        "guardEvaluationsAfter": 22,
+        "paymentEntriesBefore": 0,
+        "paymentEntriesAfter": 0
+      },
+      "final": {
+        "configured": false,
+        "viewActive": false,
+        "hidden": true,
+        "fallback": "None",
+        "anchor": {
+          "X": 0.0,
+          "Y": 0.0,
+          "Z": 0.0,
+          "IsFinite": true
+        },
+        "inside": true
+      },
+      "savedPayloadReloadBytesEqual": true,
+      "cachedAfterAssemblyLoad": {
+        "agency": "C3 read-only; tuple/queue ordinal is NOT durable identity\nday=6 money(binary32 dollars)=10160.5107\nagency=ba%3Astreet_secondavenue:5 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallBillboard;MediumBillboard;LargeBillboard;\nagency=ba%3Astreet_thirdavenue:17 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallInternet;MediumInternet;LargeInternet;\nmarketingRecordsInQueue=0\nexpense day=1 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=2 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=3 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=4 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=5 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\n",
+        "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=on; active=False",
+        "GuardStarts": 20,
+        "GuardEvaluations": 20,
+        "PaymentEntries": 0
+      },
+      "newCityDetected": {
+        "agency": "C3 read-only; tuple/queue ordinal is NOT durable identity\nday=6 money(binary32 dollars)=10160.5107\nagency=ba%3Astreet_thirdavenue:17 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallInternet;MediumInternet;LargeInternet;\nagency=ba%3Astreet_secondavenue:5 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallBillboard;MediumBillboard;LargeBillboard;\nmarketingRecordsInQueue=0\nexpense day=1 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=2 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=3 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=4 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=5 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\n",
+        "guard": "ThirdPartyInteriorGuard: detected; rule=assembly rule TrueCity* matched TrueCity.PersistentCityHarmlessStandIn; effective view=off; active=False",
+        "GuardStarts": 21,
+        "GuardEvaluations": 21,
+        "PaymentEntries": 0
+      }
+    },
+    {
+      "case": "cand-bypass",
+      "inside": {
+        "configured": true,
+        "viewActive": true,
+        "hidden": false,
+        "fallback": "None",
+        "anchor": {
+          "X": 230.2625732421875,
+          "Y": 0.09000015258789062,
+          "Z": 21.2783203125,
+          "IsFinite": true
+        },
+        "inside": true,
+        "citizens": 957,
+        "diagnostics": "physical=True, pedestrians=0, cars=0, acquired=2, released=2, blockedSamples=780, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=1, carAdmission=::"
+      },
+      "guard": {
+        "agency": "C3 read-only; tuple/queue ordinal is NOT durable identity\nday=6 money(binary32 dollars)=10160.5107\nagency=ba%3Astreet_thirdavenue:17 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallInternet;MediumInternet;LargeInternet;\nagency=ba%3Astreet_secondavenue:5 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallBillboard;MediumBillboard;LargeBillboard;\nmarketingRecordsInQueue=0\nexpense day=1 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=2 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=3 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=4 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=5 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\n",
+        "guard": "ThirdPartyInteriorGuard: not detected; rule=guard off; effective view=on; active=True",
+        "GuardStarts": 23,
+        "GuardEvaluations": 23,
+        "PaymentEntries": 0
+      },
+      "repeat": {
+        "repeats": 100,
+        "runtimeLookupMs": 90.3271,
+        "timingScope": "Capture plus cached guard diagnostic; one Unity object lookup reported separately",
+        "agencyAvailable": true,
+        "guardAvailable": true,
+        "allOutputIdentical": true,
+        "nativeEqual": true,
+        "beforeSha256": "689ddfcffccbaabc28c6030c8b9ff32f97ae7433fa6ea811302589cd6dac15e2",
+        "afterSha256": "689ddfcffccbaabc28c6030c8b9ff32f97ae7433fa6ea811302589cd6dac15e2",
+        "payloadEqual": true,
+        "payloadBeforeSha256": "fbcaec58c86755d6f83207aeaddbd92fd5f2053556e72a97752c8dd1a37b3de3",
+        "payloadAfterSha256": "fbcaec58c86755d6f83207aeaddbd92fd5f2053556e72a97752c8dd1a37b3de3",
+        "guardStartsBefore": 24,
+        "guardStartsAfter": 24,
+        "guardEvaluationsBefore": 24,
+        "guardEvaluationsAfter": 24,
+        "paymentEntriesBefore": 0,
+        "paymentEntriesAfter": 0
+      },
+      "final": {
+        "configured": true,
+        "viewActive": false,
+        "hidden": true,
+        "fallback": "Uncertain",
+        "anchor": {
+          "X": 0.0,
+          "Y": 0.0,
+          "Z": 0.0,
+          "IsFinite": true
+        },
+        "inside": true
+      },
+      "savedPayloadReloadBytesEqual": true,
+      "hiddenTransition": {
+        "beforeActive": true,
+        "immediateAfterActive": false,
+        "immediateAfterHidden": true,
+        "resumedActive": true,
+        "resumedAnchor": {
+          "X": 230.2625732421875,
+          "Y": 0.09000015258789062,
+          "Z": 21.2783203125,
+          "IsFinite": true
+        },
+        "seamNotGesture": true
+      }
+    }
+  ],
+  "ordinaryFrameScanCounts": [
+    {
+      "window": "cand1",
+      "startsBefore": 5,
+      "startsAfter": 5,
+      "evaluationsBefore": 5,
+      "evaluationsAfter": 5,
+      "unchanged": true
+    },
+    {
+      "window": "cand2",
+      "startsBefore": 2,
+      "startsAfter": 2,
+      "evaluationsBefore": 2,
+      "evaluationsAfter": 2,
+      "unchanged": true
+    }
+  ],
+  "bodyCapQualification": "Configured limits 24 pedestrians / 12 vehicles / 60 m, within global 48/24. Prepared shop observations had zero local bodies; no crowded cap-saturation or pointer/visual gesture proof is claimed.",
+  "persistenceQualification": "Guard diagnostics/repeats preserve the same live payload bytes. Coordinated source/reload proof is recorded separately; native clock advancement is not treated as a guard-saved field."
+}

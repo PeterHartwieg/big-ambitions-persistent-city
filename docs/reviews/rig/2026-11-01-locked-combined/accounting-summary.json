@@ -1,0 +1,95 @@
+{
+  "role": "rig_test",
+  "control": {
+    "label": "control-day",
+    "budgetConservationFailures": [],
+    "day7Purchases": 12,
+    "day7ExactRevenueUnits": "3302658048000",
+    "day7NativeAccounts": [
+      {
+        "Day": 7,
+        "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+        "Name": "Persistent City food routines",
+        "Revenue": 123.0336,
+        "Resources": 24.0,
+        "Wages": 216.239487,
+        "Rent": 0.0,
+        "OtherOperatingCosts": 0.0,
+        "OperatingProfit": -117.205887
+      }
+    ],
+    "expectedRevenueFloatBits": "3411f642",
+    "actualNativeRevenueFloatBits": "3411f642",
+    "cashBits": "6EA71146",
+    "nativeReloadExact": true,
+    "consumerMoneySha256": "cde1f622e6bafdd0d0ca82f50da154e8212e0a64e86770e1d57781caa74d554a",
+    "identitiesStable": true,
+    "traitsStable": true,
+    "residentPurchaseDelta": 12,
+    "residentSpendDeltaUnits": "3302658048000",
+    "newNativeReceipts": 12,
+    "newPaidNativeReceipts": 12,
+    "newReceiptExactUnits": "3302658048000",
+    "allThreeRevenueLedgersEqual": true,
+    "stockConsumed": {
+      "ba:itemname_paperbag": 12,
+      "ba:itemname_croissant": 12
+    },
+    "stockAndBagsMatchPurchases": true,
+    "completedOrdersPendingBefore": 0,
+    "completedOrdersPendingAfter": 0,
+    "agedConfirmedReceiptKeysRemoved": 57,
+    "agedRemovedKeysSha256": "d5457295f516af3ff5597cec32da102596629a41fc5a0f8721293e199f7256fb",
+    "nativeBeforeSha256": "7485584519803a39b8446cf26319788a5f79723be319aae2fe22904271e57819",
+    "nativeAfterSha256": "d3b8e21836782b6d8f84bbd809608e6dff1e5c5ce6742a100ee5a960b257cb3d",
+    "nativeAfterReloadSha256": "d3b8e21836782b6d8f84bbd809608e6dff1e5c5ce6742a100ee5a960b257cb3d"
+  },
+  "candidate": {
+    "label": "candidate-day",
+    "budgetConservationFailures": [],
+    "day7Purchases": 10,
+    "day7ExactRevenueUnits": "2752215040000",
+    "day7NativeAccounts": [
+      {
+        "Day": 7,
+        "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+        "Name": "Persistent City food routines",
+        "Revenue": 102.528,
+        "Resources": 20.0,
+        "Wages": 216.239487,
+        "Rent": 0.0,
+        "OtherOperatingCosts": 0.0,
+        "OperatingProfit": -133.711487
+      }
+    ],
+    "expectedRevenueFloatBits": "560ecd42",
+    "actualNativeRevenueFloatBits": "560ecd42",
+    "cashBits": "69551146",
+    "nativeReloadExact": true,
+    "consumerMoneySha256": "021d33969254d62ddc559036c0c7b24e2be763e540cac89b13d88767e49f8944",
+    "identitiesStable": true,
+    "traitsStable": true,
+    "residentPurchaseDelta": 10,
+    "residentSpendDeltaUnits": "2752215040000",
+    "newNativeReceipts": 10,
+    "newPaidNativeReceipts": 10,
+    "newReceiptExactUnits": "2752215040000",
+    "allThreeRevenueLedgersEqual": true,
+    "stockConsumed": {
+      "ba:itemname_paperbag": 10,
+      "ba:itemname_croissant": 10
+    },
+    "stockAndBagsMatchPurchases": true,
+    "completedOrdersPendingBefore": 0,
+    "completedOrdersPendingAfter": 0,
+    "agedConfirmedReceiptKeysRemoved": 57,
+    "agedRemovedKeysSha256": "d5457295f516af3ff5597cec32da102596629a41fc5a0f8721293e199f7256fb",
+    "nativeBeforeSha256": "7485584519803a39b8446cf26319788a5f79723be319aae2fe22904271e57819",
+    "nativeAfterSha256": "7a50fdf1b6c8d6ee8bb49b3618af2e2c382f06756891cca2eb63f14c57305690",
+    "nativeAfterReloadSha256": "7a50fdf1b6c8d6ee8bb49b3618af2e2c382f06756891cca2eb63f14c57305690"
+  },
+  "nativeAccountingEqual": false,
+  "consumerMoneyEqual": false,
+  "day7RevenueEqual": false,
+  "day7PurchasesEqual": false
+}

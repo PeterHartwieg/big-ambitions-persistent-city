@@ -1,0 +1,221 @@
+[
+  {
+    "kind": "corrupt",
+    "beforeSha256": "3f1c69021d03c150f2f296811e49f1a035d6b3734b114fb41e575db9d8378a44",
+    "afterSha256": "3f1c69021d03c150f2f296811e49f1a035d6b3734b114fb41e575db9d8378a44",
+    "bytesPreserved": true,
+    "runtime": {
+      "enabled": true,
+      "failed": true,
+      "status": "Population save refused: Invalid state: Unexpected character encountered while parsing number: !. Path 'TravelTimingVersion', line 1, position 5322116. Original payload retained.",
+      "taskStatus": null,
+      "taskCompleted": null,
+      "taskError": null,
+      "saveMatches": false,
+      "discoveryReady": null,
+      "discoverySweeps": null,
+      "lastDiscoverySeconds": null,
+      "lastDiscoveryWorkMs": null,
+      "maximumDiscoverySliceMs": null,
+      "waitingRoutingFrames": 0,
+      "maximumPreparationMs": 0.0
+    },
+    "ownership": {
+      "frame": 58127,
+      "error": "",
+      "awaitingPopulation": false,
+      "observedMarketCalls": {},
+      "cash": 10160.5107,
+      "cashBits": "0BC21E46",
+      "shops": [
+        {
+          "BusinessName": "Persistent City food routines",
+          "orders": 0,
+          "items": [
+            {
+              "id": "e5g2cWeEPEqUK4pKpiNtwg==",
+              "itemName": "ba:itemname_cashregister",
+              "cargoInstances": [
+                {
+                  "itemName": "ba:itemname_paperbag",
+                  "amount": 181,
+                  "pricePerUnit": 1.0,
+                  "paid": true,
+                  "customColors": null,
+                  "nestedCargoInstances": [],
+                  "IsSealed": false
+                }
+              ]
+            },
+            {
+              "id": "J7+jLg7I3UyODyam2SNiNQ==",
+              "itemName": "ba:itemname_angledwoodendisplaystand",
+              "cargoInstances": []
+            },
+            {
+              "id": "yD3CJiiGrEiw8ar47cqu5A==",
+              "itemName": "ba:itemname_bakeryshowcase",
+              "cargoInstances": [
+                {
+                  "itemName": "ba:itemname_croissant",
+                  "amount": 181,
+                  "pricePerUnit": 1.0,
+                  "paid": true,
+                  "customColors": null,
+                  "nestedCargoInstances": [],
+                  "IsSealed": false
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "kind": "future",
+    "beforeSha256": "1f3ce0d43dc5ba6c1f065e06220efb5358260759721b8da4cc6998a58124ae77",
+    "afterSha256": "1f3ce0d43dc5ba6c1f065e06220efb5358260759721b8da4cc6998a58124ae77",
+    "bytesPreserved": true,
+    "runtime": {
+      "enabled": true,
+      "failed": true,
+      "status": "Food ownership suspended: Unsupported population schema; preserve the payload.",
+      "taskStatus": null,
+      "taskCompleted": null,
+      "taskError": null,
+      "saveMatches": false,
+      "discoveryReady": null,
+      "discoverySweeps": null,
+      "lastDiscoverySeconds": null,
+      "lastDiscoveryWorkMs": null,
+      "maximumDiscoverySliceMs": null,
+      "waitingRoutingFrames": 0,
+      "maximumPreparationMs": 0.0
+    },
+    "ownership": {
+      "frame": 59001,
+      "error": "Food ownership suspended: Unsupported population schema; preserve the payload.",
+      "awaitingPopulation": false,
+      "observedMarketCalls": {},
+      "cash": 10160.5107,
+      "cashBits": "0BC21E46",
+      "shops": [
+        {
+          "BusinessName": "Persistent City food routines",
+          "orders": 0,
+          "items": [
+            {
+              "id": "e5g2cWeEPEqUK4pKpiNtwg==",
+              "itemName": "ba:itemname_cashregister",
+              "cargoInstances": [
+                {
+                  "itemName": "ba:itemname_paperbag",
+                  "amount": 181,
+                  "pricePerUnit": 1.0,
+                  "paid": true,
+                  "customColors": null,
+                  "nestedCargoInstances": [],
+                  "IsSealed": false
+                }
+              ]
+            },
+            {
+              "id": "J7+jLg7I3UyODyam2SNiNQ==",
+              "itemName": "ba:itemname_angledwoodendisplaystand",
+              "cargoInstances": []
+            },
+            {
+              "id": "yD3CJiiGrEiw8ar47cqu5A==",
+              "itemName": "ba:itemname_bakeryshowcase",
+              "cargoInstances": [
+                {
+                  "itemName": "ba:itemname_croissant",
+                  "amount": 181,
+                  "pricePerUnit": 1.0,
+                  "paid": true,
+                  "customColors": null,
+                  "nestedCargoInstances": [],
+                  "IsSealed": false
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "kind": "active",
+    "beforeSha256": "031216b0400990f184de1a0227de577733a56aee2321211213aa046e97b9a26f",
+    "afterSha256": "031216b0400990f184de1a0227de577733a56aee2321211213aa046e97b9a26f",
+    "bytesPreserved": true,
+    "runtime": {
+      "enabled": true,
+      "failed": true,
+      "status": "Food ownership suspended: Unsupported active population capability or revision; preserve the payload and suspend simulation.",
+      "taskStatus": null,
+      "taskCompleted": null,
+      "taskError": null,
+      "saveMatches": false,
+      "discoveryReady": null,
+      "discoverySweeps": null,
+      "lastDiscoverySeconds": null,
+      "lastDiscoveryWorkMs": null,
+      "maximumDiscoverySliceMs": null,
+      "waitingRoutingFrames": 0,
+      "maximumPreparationMs": 0.0
+    },
+    "ownership": {
+      "frame": 59927,
+      "error": "Food ownership suspended: Unsupported active population capability or revision; preserve the payload and suspend simulation.",
+      "awaitingPopulation": false,
+      "observedMarketCalls": {},
+      "cash": 10160.5107,
+      "cashBits": "0BC21E46",
+      "shops": [
+        {
+          "BusinessName": "Persistent City food routines",
+          "orders": 0,
+          "items": [
+            {
+              "id": "e5g2cWeEPEqUK4pKpiNtwg==",
+              "itemName": "ba:itemname_cashregister",
+              "cargoInstances": [
+                {
+                  "itemName": "ba:itemname_paperbag",
+                  "amount": 181,
+                  "pricePerUnit": 1.0,
+                  "paid": true,
+                  "customColors": null,
+                  "nestedCargoInstances": [],
+                  "IsSealed": false
+                }
+              ]
+            },
+            {
+              "id": "J7+jLg7I3UyODyam2SNiNQ==",
+              "itemName": "ba:itemname_angledwoodendisplaystand",
+              "cargoInstances": []
+            },
+            {
+              "id": "yD3CJiiGrEiw8ar47cqu5A==",
+              "itemName": "ba:itemname_bakeryshowcase",
+              "cargoInstances": [
+                {
+                  "itemName": "ba:itemname_croissant",
+                  "amount": 181,
+                  "pricePerUnit": 1.0,
+                  "paid": true,
+                  "customColors": null,
+                  "nestedCargoInstances": [],
+                  "IsSealed": false
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

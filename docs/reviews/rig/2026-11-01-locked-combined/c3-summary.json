@@ -1,0 +1,1963 @@
+{
+  "role": "rig_test",
+  "repeatedRead": {
+    "repeats": 100,
+    "runtimeLookupMs": 88.75670000000001,
+    "timingScope": "Capture plus cached guard diagnostic; one Unity object lookup reported separately",
+    "agencyAvailable": true,
+    "guardAvailable": true,
+    "first": "C3 read-only; tuple/queue ordinal is NOT durable identity\nday=6 money(binary32 dollars)=10160.5107\nagency=ba%3Astreet_thirdavenue:17 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallInternet;MediumInternet;LargeInternet;\nagency=ba%3Astreet_secondavenue:5 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallBillboard;MediumBillboard;LargeBillboard;\nmarketingRecordsInQueue=0\nexpense day=1 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=2 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=3 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=4 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=5 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\n",
+    "last": "C3 read-only; tuple/queue ordinal is NOT durable identity\nday=6 money(binary32 dollars)=10160.5107\nagency=ba%3Astreet_thirdavenue:17 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallInternet;MediumInternet;LargeInternet;\nagency=ba%3Astreet_secondavenue:5 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallBillboard;MediumBillboard;LargeBillboard;\nmarketingRecordsInQueue=0\nexpense day=1 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=2 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=3 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=4 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=5 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\n",
+    "allOutputIdentical": true,
+    "nativeEqual": true,
+    "beforeSha256": "5e677316e69285387b028da300fea5bf6b78913e1c4b8a10dd867439879a6d68",
+    "afterSha256": "5e677316e69285387b028da300fea5bf6b78913e1c4b8a10dd867439879a6d68",
+    "payloadEqual": true,
+    "payloadBeforeSha256": "b4c24d1bc64c64d4deb8ea402c376c973ac338fd601623c54fce355c945ffee2",
+    "payloadAfterSha256": "b4c24d1bc64c64d4deb8ea402c376c973ac338fd601623c54fce355c945ffee2",
+    "guardStartsBefore": 3,
+    "guardStartsAfter": 3,
+    "guardEvaluationsBefore": 3,
+    "guardEvaluationsAfter": 3,
+    "paymentEntriesBefore": 0,
+    "paymentEntriesAfter": 0
+  },
+  "samples": [
+    {
+      "iteration": 0,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.1046,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 1,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0391,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 2,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0241,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 3,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0236,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 4,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0227,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 5,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.023200000000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 6,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0234,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 7,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.022500000000000003,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 8,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.023,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 9,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0219,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 10,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.023,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 11,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0236,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 12,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.023200000000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 13,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0223,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 14,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0219,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 15,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0239,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 16,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0227,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 17,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0227,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 18,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0233,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 19,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0222,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 20,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0227,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 21,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0223,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 22,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0222,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 23,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.022000000000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 24,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0239,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 25,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0223,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 26,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0224,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 27,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0221,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 28,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.023200000000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 29,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0228,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 30,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.022600000000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 31,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.022500000000000003,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 32,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.022600000000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 33,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0221,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 34,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0224,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 35,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0229,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 36,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0227,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 37,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0223,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 38,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.022000000000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 39,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0238,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 40,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0229,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 41,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0239,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 42,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.023200000000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 43,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0236,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 44,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0219,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 45,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.023,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 46,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0229,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 47,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0222,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 48,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.023,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 49,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.022000000000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 50,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.022500000000000003,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 51,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0221,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 52,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.023700000000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 53,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.022600000000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 54,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.031,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 55,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.023100000000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 56,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.022600000000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 57,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0222,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 58,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0227,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 59,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.023,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 60,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0229,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 61,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.023100000000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 62,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0222,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 63,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.022600000000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 64,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0227,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 65,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0229,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 66,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.022000000000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 67,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0233,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 68,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.023,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 69,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.022000000000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 70,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0224,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 71,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.023100000000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 72,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0223,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 73,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0218,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 74,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0224,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 75,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0221,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 76,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.024200000000000003,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 77,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0223,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 78,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0223,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 79,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0224,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 80,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0228,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 81,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0228,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 82,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.022600000000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 83,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0221,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 84,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.022500000000000003,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 85,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0219,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 86,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.022500000000000003,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 87,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0227,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 88,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0222,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 89,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0245,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 90,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0234,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 91,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.022500000000000003,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 92,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.022500000000000003,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 93,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0229,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 94,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.022600000000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 95,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0221,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 96,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.024200000000000003,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 97,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.0227,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 98,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.022500000000000003,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "iteration": 99,
+      "frame": 94984,
+      "phase": "paused on-demand diagnostic",
+      "ms": 0.022500000000000003,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        292,
+        292,
+        292
+      ],
+      "gcAfter": [
+        292,
+        292,
+        292
+      ]
+    }
+  ],
+  "captureMs": {
+    "p50": 0.0227,
+    "p95": 0.024200000000000003,
+    "maximum": 0.1046
+  },
+  "nativeAgencyComparison": [
+    {
+      "address": "ba%3Astreet_thirdavenue:17",
+      "businessType": "ba:businesstype_marketingagency",
+      "dialogType": "MarketingAgencyDialog",
+      "options": [
+        "SmallInternet",
+        "MediumInternet",
+        "LargeInternet"
+      ],
+      "allFieldsInDiagnostic": true
+    },
+    {
+      "address": "ba%3Astreet_secondavenue:5",
+      "businessType": "ba:businesstype_marketingagency",
+      "dialogType": "MarketingAgencyDialog",
+      "options": [
+        "SmallBillboard",
+        "MediumBillboard",
+        "LargeBillboard"
+      ],
+      "allFieldsInDiagnostic": true
+    }
+  ],
+  "lookupGe30ms": {
+    "milliseconds": 88.75670000000001,
+    "frame": 94984,
+    "phase": "paused bridge setup outside performance windows",
+    "component": "test helper Unity runtime lookup"
+  },
+  "earlierTimingQualification": "Initial 100-read timing included a Unity object lookup on every iteration (84.269?141.223 ms, all >=30 ms; Unity frame not recorded). Native immutability proof remains valid. This corrected pass isolates reader plus cached guard formatting from the one lookup."
+}

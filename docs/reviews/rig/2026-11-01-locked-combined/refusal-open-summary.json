@@ -1,0 +1,222 @@
+[
+  {
+    "kind": "corrupt",
+    "before": {
+      "frame": 68339,
+      "error": "",
+      "awaitingPopulation": false,
+      "observedMarketCalls": {},
+      "cash": 10160.5107,
+      "cashBits": "0BC21E46",
+      "shops": [
+        {
+          "BusinessName": "Persistent City food routines",
+          "orders": 0,
+          "items": [
+            {
+              "id": "e5g2cWeEPEqUK4pKpiNtwg==",
+              "itemName": "ba:itemname_cashregister",
+              "cargoInstances": [
+                {
+                  "itemName": "ba:itemname_paperbag",
+                  "amount": 181,
+                  "pricePerUnit": 1.0,
+                  "paid": true,
+                  "customColors": null,
+                  "nestedCargoInstances": [],
+                  "IsSealed": false
+                }
+              ]
+            },
+            {
+              "id": "J7+jLg7I3UyODyam2SNiNQ==",
+              "itemName": "ba:itemname_angledwoodendisplaystand",
+              "cargoInstances": []
+            },
+            {
+              "id": "yD3CJiiGrEiw8ar47cqu5A==",
+              "itemName": "ba:itemname_bakeryshowcase",
+              "cargoInstances": [
+                {
+                  "itemName": "ba:itemname_croissant",
+                  "amount": 181,
+                  "pricePerUnit": 1.0,
+                  "paid": true,
+                  "customColors": null,
+                  "nestedCargoInstances": [],
+                  "IsSealed": false
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "after": {
+      "frame": 71199,
+      "error": "",
+      "awaitingPopulation": false,
+      "observedMarketCalls": {},
+      "cash": 10160.5107,
+      "cashBits": "0BC21E46",
+      "shops": [
+        {
+          "BusinessName": "Persistent City food routines",
+          "orders": 0,
+          "items": [
+            {
+              "id": "e5g2cWeEPEqUK4pKpiNtwg==",
+              "itemName": "ba:itemname_cashregister",
+              "cargoInstances": [
+                {
+                  "itemName": "ba:itemname_paperbag",
+                  "amount": 181,
+                  "pricePerUnit": 1.0,
+                  "paid": true,
+                  "customColors": null,
+                  "nestedCargoInstances": [],
+                  "IsSealed": false
+                }
+              ]
+            },
+            {
+              "id": "J7+jLg7I3UyODyam2SNiNQ==",
+              "itemName": "ba:itemname_angledwoodendisplaystand",
+              "cargoInstances": []
+            },
+            {
+              "id": "yD3CJiiGrEiw8ar47cqu5A==",
+              "itemName": "ba:itemname_bakeryshowcase",
+              "cargoInstances": [
+                {
+                  "itemName": "ba:itemname_croissant",
+                  "amount": 181,
+                  "pricePerUnit": 1.0,
+                  "paid": true,
+                  "customColors": null,
+                  "nestedCargoInstances": [],
+                  "IsSealed": false
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "endClock": "09:05",
+    "sourceBytesPreserved": true,
+    "nativeCashEqual": true,
+    "shopStateEqual": true,
+    "noModCheckout": true
+  },
+  {
+    "kind": "future",
+    "before": {
+      "frame": 72057,
+      "error": "Food ownership suspended: Unsupported population schema; preserve the payload.",
+      "awaitingPopulation": false,
+      "observedMarketCalls": {},
+      "cash": 10160.5107,
+      "cashBits": "0BC21E46",
+      "shops": [
+        {
+          "BusinessName": "Persistent City food routines",
+          "orders": 0,
+          "items": [
+            {
+              "id": "e5g2cWeEPEqUK4pKpiNtwg==",
+              "itemName": "ba:itemname_cashregister",
+              "cargoInstances": [
+                {
+                  "itemName": "ba:itemname_paperbag",
+                  "amount": 181,
+                  "pricePerUnit": 1.0,
+                  "paid": true,
+                  "customColors": null,
+                  "nestedCargoInstances": [],
+                  "IsSealed": false
+                }
+              ]
+            },
+            {
+              "id": "J7+jLg7I3UyODyam2SNiNQ==",
+              "itemName": "ba:itemname_angledwoodendisplaystand",
+              "cargoInstances": []
+            },
+            {
+              "id": "yD3CJiiGrEiw8ar47cqu5A==",
+              "itemName": "ba:itemname_bakeryshowcase",
+              "cargoInstances": [
+                {
+                  "itemName": "ba:itemname_croissant",
+                  "amount": 181,
+                  "pricePerUnit": 1.0,
+                  "paid": true,
+                  "customColors": null,
+                  "nestedCargoInstances": [],
+                  "IsSealed": false
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "after": {
+      "frame": 74943,
+      "error": "Food ownership suspended: Unsupported population schema; preserve the payload.",
+      "awaitingPopulation": false,
+      "observedMarketCalls": {},
+      "cash": 10160.5107,
+      "cashBits": "0BC21E46",
+      "shops": [
+        {
+          "BusinessName": "Persistent City food routines",
+          "orders": 0,
+          "items": [
+            {
+              "id": "e5g2cWeEPEqUK4pKpiNtwg==",
+              "itemName": "ba:itemname_cashregister",
+              "cargoInstances": [
+                {
+                  "itemName": "ba:itemname_paperbag",
+                  "amount": 181,
+                  "pricePerUnit": 1.0,
+                  "paid": true,
+                  "customColors": null,
+                  "nestedCargoInstances": [],
+                  "IsSealed": false
+                }
+              ]
+            },
+            {
+              "id": "J7+jLg7I3UyODyam2SNiNQ==",
+              "itemName": "ba:itemname_angledwoodendisplaystand",
+              "cargoInstances": []
+            },
+            {
+              "id": "yD3CJiiGrEiw8ar47cqu5A==",
+              "itemName": "ba:itemname_bakeryshowcase",
+              "cargoInstances": [
+                {
+                  "itemName": "ba:itemname_croissant",
+                  "amount": 181,
+                  "pricePerUnit": 1.0,
+                  "paid": true,
+                  "customColors": null,
+                  "nestedCargoInstances": [],
+                  "IsSealed": false
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "endClock": "09:05",
+    "sourceBytesPreserved": true,
+    "nativeCashEqual": true,
+    "shopStateEqual": true,
+    "noModCheckout": true
+  }
+]

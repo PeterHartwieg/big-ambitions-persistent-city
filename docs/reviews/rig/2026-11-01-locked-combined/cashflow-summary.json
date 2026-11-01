@@ -1,0 +1,126 @@
+{
+  "role": "rig_test",
+  "method": "Read native fields after normal reload of the same saved endpoints. Replay each newly appended signed native amount through binary32 addition; compare final bits. Queue/tuple matching is observation only, never proof of durable C3 payment identity.",
+  "runs": [
+    {
+      "label": "control",
+      "sourceCashBits": "41c81d46",
+      "actualFinalCashBits": "6ea71146",
+      "replayedFinalCashBits": "6ea71146",
+      "observedQueuePrefixPreserved": true,
+      "cashReconcilesWithNativeTransactionSequence": true,
+      "sourceTransactions": 12,
+      "finalTransactions": 16,
+      "newTransactions": [
+        {
+          "type": "ba:transaction_wage",
+          "amount": -216.239487,
+          "timestamp": {
+            "Day": 7,
+            "Hour": 0,
+            "Minute": 0.00246810913
+          },
+          "nativeFlooredBalance": 9881.0,
+          "replayedCashBits": "4c671a46",
+          "replayedFloor": 9881
+        },
+        {
+          "type": "ba:transaction_revenue",
+          "amount": 123.0336,
+          "timestamp": {
+            "Day": 7,
+            "Hour": 0,
+            "Minute": 0.00246810913
+          },
+          "nativeFlooredBalance": 10004.0,
+          "replayedCashBits": "6e531c46",
+          "replayedFloor": 10004
+        },
+        {
+          "type": "reallife_transaction_util_power",
+          "amount": -510.0,
+          "timestamp": {
+            "Day": 8,
+            "Hour": 0,
+            "Minute": 0.00246810913
+          },
+          "nativeFlooredBalance": 9494.0,
+          "replayedCashBits": "6e5b1446",
+          "replayedFloor": 9494
+        },
+        {
+          "type": "reallife_transaction_util_water",
+          "amount": -173.0,
+          "timestamp": {
+            "Day": 8,
+            "Hour": 0,
+            "Minute": 0.00246810913
+          },
+          "nativeFlooredBalance": 9321.0,
+          "replayedCashBits": "6ea71146",
+          "replayedFloor": 9321
+        }
+      ]
+    },
+    {
+      "label": "candidate",
+      "sourceCashBits": "41c81d46",
+      "actualFinalCashBits": "69551146",
+      "replayedFinalCashBits": "69551146",
+      "observedQueuePrefixPreserved": true,
+      "cashReconcilesWithNativeTransactionSequence": true,
+      "sourceTransactions": 12,
+      "finalTransactions": 16,
+      "newTransactions": [
+        {
+          "type": "ba:transaction_wage",
+          "amount": -216.239487,
+          "timestamp": {
+            "Day": 7,
+            "Hour": 0,
+            "Minute": 0.00219726563
+          },
+          "nativeFlooredBalance": 9881.0,
+          "replayedCashBits": "4c671a46",
+          "replayedFloor": 9881
+        },
+        {
+          "type": "ba:transaction_revenue",
+          "amount": 102.528,
+          "timestamp": {
+            "Day": 7,
+            "Hour": 0,
+            "Minute": 0.00219726563
+          },
+          "nativeFlooredBalance": 9984.0,
+          "replayedCashBits": "69011c46",
+          "replayedFloor": 9984
+        },
+        {
+          "type": "reallife_transaction_util_power",
+          "amount": -510.0,
+          "timestamp": {
+            "Day": 8,
+            "Hour": 0,
+            "Minute": 0.00219726563
+          },
+          "nativeFlooredBalance": 9474.0,
+          "replayedCashBits": "69091446",
+          "replayedFloor": 9474
+        },
+        {
+          "type": "reallife_transaction_util_water",
+          "amount": -173.0,
+          "timestamp": {
+            "Day": 8,
+            "Hour": 0,
+            "Minute": 0.00219726563
+          },
+          "nativeFlooredBalance": 9301.0,
+          "replayedCashBits": "69551146",
+          "replayedFloor": 9301
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "method": "Independent reflected native fields only; no AgencyBindingDiagnostic call",
+  "agencies": [
+    {
+      "street": "ba:street_thirdavenue",
+      "number": 17,
+      "businessType": "ba:businesstype_marketingagency",
+      "dialogType": "MarketingAgencyDialog",
+      "options": [
+        {
+          "name": "SmallInternet",
+          "value": 0
+        },
+        {
+          "name": "MediumInternet",
+          "value": 1
+        },
+        {
+          "name": "LargeInternet",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "street": "ba:street_secondavenue",
+      "number": 5,
+      "businessType": "ba:businesstype_marketingagency",
+      "dialogType": "MarketingAgencyDialog",
+      "options": [
+        {
+          "name": "SmallBillboard",
+          "value": 3
+        },
+        {
+          "name": "MediumBillboard",
+          "value": 4
+        },
+        {
+          "name": "LargeBillboard",
+          "value": 5
+        }
+      ]
+    }
+  ]
+}

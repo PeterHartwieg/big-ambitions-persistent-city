@@ -1,0 +1,186 @@
+{
+  "role": "rig_test",
+  "qualification": "Production interval maxima, not individual frame samples. Exact frame/count and native/managed subdivision unavailable. Diagnostic normal saves from AdvanceFrameSlice postfix are included in enclosing advancement timer; do not attribute checkpoint maxima to production-only work. Separate from raw-derived C4 gate.",
+  "observations": [
+    {
+      "run": "base1-Player.private",
+      "line": 5286,
+      "milliseconds": 100.548,
+      "component": "PopulationRuntime advancement inclusive of native calls and any diagnostic checkpoint postfix",
+      "window": "outside primary C4 windows; all raw C4 maxima are below 30 ms",
+      "unityFrame": "not recorded by production aggregate summary",
+      "context": "[Mod:PR3RigGuard] Test bridge: console 'skiptime 18h true' (0 lines).",
+      "summary": "[Mod:PersistentCity] Population: 957 citizens; 64 travelling, 21 awaiting a route, 0 awaiting opening; clock 10079.5, lag 0.0 game minutes. Advancement this observation: 4387 frames, 34049 events, 9508.367 ms total, 100.548 ms maximum advance, 128 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 94.182 ms, station captures 2; discovery sweeps 1, last branch captures 34379, split hints 9, maximum slice 18.336 ms, last sweep 0.522 s / 154.362 ms work; slowest RLO check 1.770 ms (RLO contract bindings this session 1, 0.085 ms), door search 0.116 ms, station search 0.085 ms, preparation frame 0.570 ms. Closure refresh: 4387 calls, 260.809 ms total, 0.640 ms maximum. Route planning across frames: 4051 requests, 4435 slices, 3500 events completed, 400 frames ended with a plan pending, 6154.674 ms total, slowest slice 22.535 ms ending in subway-candidates with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 38328. physical=True, pedestrians=3, cars=0, acquired=4, released=1, blockedSamples=796, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+    },
+    {
+      "run": "base1-Player.private",
+      "line": 5774,
+      "milliseconds": 117.667,
+      "component": "PopulationRuntime advancement inclusive of native calls and any diagnostic checkpoint postfix",
+      "window": "outside primary C4 windows; all raw C4 maxima are below 30 ms",
+      "unityFrame": "not recorded by production aggregate summary",
+      "context": "[Mod:PR3RigGuard] Test bridge: console 'skiptime 23h true' (0 lines).",
+      "summary": "[Mod:PersistentCity] Population: 957 citizens; 21 travelling, 24 awaiting a route, 0 awaiting opening; clock 11476.7, lag 0.0 game minutes. Advancement this observation: 4051 frames, 34938 events, 11810.381 ms total, 117.667 ms maximum advance, 128 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 88.246 ms, station captures 2; discovery sweeps 1, last branch captures 34377, split hints 9, maximum slice 20.450 ms, last sweep 0.509 s / 160.262 ms work; slowest RLO check 1.842 ms (RLO contract bindings this session 1, 0.097 ms), door search 0.112 ms, station search 0.097 ms, preparation frame 0.515 ms. Closure refresh: 4051 calls, 185.143 ms total, 0.500 ms maximum. Route planning across frames: 4853 requests, 5301 slices, 4296 events completed, 462 frames ended with a plan pending, 7076.990 ms total, slowest slice 22.341 ms ending in car-search with 1 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 44779. physical=True, pedestrians=2, cars=1, acquired=6, released=3, blockedSamples=2152, unavailable=4, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=pc:365:admitted:"
+    },
+    {
+      "run": "base2-Player.private",
+      "line": 1171,
+      "milliseconds": 47.929,
+      "component": "PopulationRuntime advancement inclusive of native calls and any diagnostic checkpoint postfix",
+      "window": "outside primary C4 windows; all raw C4 maxima are below 30 ms",
+      "unityFrame": "not recorded by production aggregate summary",
+      "context": "[Mod:PR3RigGuard] Test bridge: console 'skiptime 6h true' (0 lines).",
+      "summary": "[Mod:PersistentCity] Population: 957 citizens; 271 travelling, 16 awaiting a route, 0 awaiting opening; clock 9359.9, lag 0.0 game minutes. Advancement this observation: 2506 frames, 10678 events, 7377.733 ms total, 47.929 ms maximum advance, 128 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 195.970 ms, station captures 2; discovery sweeps 1, last branch captures 34333, split hints 21, maximum slice 23.868 ms, last sweep 1.094 s / 343.244 ms work; slowest RLO check 2.090 ms (RLO contract bindings this session 1, 0.198 ms), door search 0.133 ms, station search 0.122 ms, preparation frame 1.055 ms. Closure refresh: 2506 calls, 591.280 ms total, 0.881 ms maximum. Route planning across frames: 1518 requests, 1932 slices, 1157 events completed, 430 frames ended with a plan pending, 4282.754 ms total, slowest slice 47.787 ms ending in car-search with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 14732. physical=True, pedestrians=48, cars=2, acquired=70, released=20, blockedSamples=9495, unavailable=8, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=pc:380:admitted:"
+    },
+    {
+      "run": "base2-Player.private",
+      "line": 1677,
+      "milliseconds": 156.214,
+      "component": "PopulationRuntime advancement inclusive of native calls and any diagnostic checkpoint postfix",
+      "window": "outside primary C4 windows; all raw C4 maxima are below 30 ms",
+      "unityFrame": "not recorded by production aggregate summary",
+      "context": "[Mod:PR3RigGuard] Test bridge: console 'skiptime 23h true' (0 lines).",
+      "summary": "[Mod:PersistentCity] Population: 957 citizens; 23 travelling, 23 awaiting a route, 0 awaiting opening; clock 11473.2, lag 0.0 game minutes. Advancement this observation: 3201 frames, 33762 events, 15163.815 ms total, 156.214 ms maximum advance, 128 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 133.909 ms, station captures 2; discovery sweeps 1, last branch captures 34353, split hints 20, maximum slice 27.780 ms, last sweep 0.856 s / 288.149 ms work; slowest RLO check 2.693 ms (RLO contract bindings this session 1, 0.188 ms), door search 0.173 ms, station search 0.086 ms, preparation frame 1.051 ms. Closure refresh: 3201 calls, 230.607 ms total, 5.241 ms maximum. Route planning across frames: 4818 requests, 5359 slices, 4266 events completed, 561 frames ended with a plan pending, 8890.301 ms total, slowest slice 36.307 ms ending in subway-candidates with 1 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 44257. physical=True, pedestrians=2, cars=1, acquired=6, released=3, blockedSamples=1754, unavailable=4, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=pc:365:admitted:"
+    },
+    {
+      "run": "base2-Player.private",
+      "line": 3262,
+      "milliseconds": 936.28,
+      "component": "PopulationRuntime advancement inclusive of native calls and any diagnostic checkpoint postfix",
+      "window": "outside primary C4 windows; all raw C4 maxima are below 30 ms",
+      "unityFrame": "not recorded by production aggregate summary",
+      "context": "[Mod:PR3RigGuard] Test bridge: load 'FT Food Routines Locked Combined Base Eval 20261101' done: day 6, the mod's save data attached.",
+      "summary": "[Mod:PersistentCity] Population: 957 citizens; 3 travelling, 21 awaiting a route, 0 awaiting opening; clock 9165.0, lag 1.6 game minutes. Advancement this observation: 1 frames, 1 events, 936.280 ms total, 936.280 ms maximum advance, 1 maximum events in one frame; these figures cover advancement calls only. Routes: 1 road snapshots started (0 for gate changes), 106 frames waiting for routes; rebuild reasons [initial=1]; slow routing frames 1 (first 1 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 116.346 ms, station captures 1; discovery sweeps 1, last branch captures 34396, split hints 14, maximum slice 23.908 ms, last sweep 0.597 s / 186.733 ms work; slowest RLO check 0.000 ms (RLO contract bindings this session 1, 0.089 ms), door search 0.000 ms, station search 0.209 ms, preparation frame 119.525 ms. Closure refresh: 1 calls, 2.061 ms total, 2.061 ms maximum. Route planning across frames: 0 requests, 0 slices, 0 events completed, 0 frames ended with a plan pending, 0.000 ms total, slowest slice 0.000 ms ending in none with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 0. physical=True, pedestrians=2, cars=0, acquired=2, released=0, blockedSamples=1, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+    },
+    {
+      "run": "base2-Player.private",
+      "line": 3541,
+      "milliseconds": 986.726,
+      "component": "PopulationRuntime advancement inclusive of native calls and any diagnostic checkpoint postfix",
+      "window": "outside primary C4 windows; all raw C4 maxima are below 30 ms",
+      "unityFrame": "not recorded by production aggregate summary",
+      "context": "[Mod:PR3RigGuard] Test bridge: load 'FT Food Routines Locked Combined Base Partial 20261101' done: day 6, the mod's save data attached.",
+      "summary": "[Mod:PersistentCity] Population: 957 citizens; 3 travelling, 21 awaiting a route, 0 awaiting opening; clock 9165.0, lag 2.0 game minutes. Advancement this observation: 1 frames, 1 events, 986.726 ms total, 986.726 ms maximum advance, 1 maximum events in one frame; these figures cover advancement calls only. Routes: 1 road snapshots started (0 for gate changes), 92 frames waiting for routes; rebuild reasons [initial=1]; slow routing frames 1 (first 1 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 94.648 ms, station captures 1; discovery sweeps 1, last branch captures 34401, split hints 3, maximum slice 18.542 ms, last sweep 0.499 s / 139.994 ms work; slowest RLO check 0.000 ms (RLO contract bindings this session 1, 0.100 ms), door search 0.000 ms, station search 0.075 ms, preparation frame 96.904 ms. Closure refresh: 1 calls, 2.579 ms total, 2.579 ms maximum. Route planning across frames: 0 requests, 0 slices, 0 events completed, 0 frames ended with a plan pending, 0.000 ms total, slowest slice 0.000 ms ending in none with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 0. physical=True, pedestrians=2, cars=0, acquired=2, released=0, blockedSamples=1, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+    },
+    {
+      "run": "base2-Player.private",
+      "line": 3822,
+      "milliseconds": 990.751,
+      "component": "PopulationRuntime advancement inclusive of native calls and any diagnostic checkpoint postfix",
+      "window": "outside primary C4 windows; all raw C4 maxima are below 30 ms",
+      "unityFrame": "not recorded by production aggregate summary",
+      "context": "[Mod:PR3RigGuard] Test bridge: load 'FT Food Routines Locked Combined Base Partial 20261101' done: day 6, the mod's save data attached.",
+      "summary": "[Mod:PersistentCity] Population: 957 citizens; 3 travelling, 21 awaiting a route, 0 awaiting opening; clock 9165.0, lag 2.0 game minutes. Advancement this observation: 1 frames, 1 events, 990.751 ms total, 990.751 ms maximum advance, 1 maximum events in one frame; these figures cover advancement calls only. Routes: 1 road snapshots started (0 for gate changes), 91 frames waiting for routes; rebuild reasons [initial=1]; slow routing frames 1 (first 1 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 91.230 ms, station captures 1; discovery sweeps 1, last branch captures 34403, split hints 9, maximum slice 19.587 ms, last sweep 0.507 s / 159.182 ms work; slowest RLO check 0.000 ms (RLO contract bindings this session 1, 0.123 ms), door search 0.000 ms, station search 0.082 ms, preparation frame 93.493 ms. Closure refresh: 1 calls, 2.644 ms total, 2.644 ms maximum. Route planning across frames: 0 requests, 0 slices, 0 events completed, 0 frames ended with a plan pending, 0.000 ms total, slowest slice 0.000 ms ending in none with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 0. physical=True, pedestrians=2, cars=0, acquired=2, released=0, blockedSamples=1, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+    },
+    {
+      "run": "base2-Player.private",
+      "line": 5480,
+      "milliseconds": 1170.419,
+      "component": "PopulationRuntime advancement inclusive of native calls and any diagnostic checkpoint postfix",
+      "window": "outside primary C4 windows; all raw C4 maxima are below 30 ms",
+      "unityFrame": "not recorded by production aggregate summary",
+      "context": "[Mod:PR3RigGuard] Test bridge: load 'FT Food Routines Locked Combined Replay Seed17 20261101' done: day 6, the mod's save data attached.",
+      "summary": "[Mod:PersistentCity] Population: 957 citizens; 0 travelling, 21 awaiting a route, 0 awaiting opening; clock 9165.0, lag 2.5 game minutes. Advancement this observation: 1 frames, 1 events, 1170.419 ms total, 1170.419 ms maximum advance, 1 maximum events in one frame; these figures cover advancement calls only. Routes: 1 road snapshots started (0 for gate changes), 93 frames waiting for routes; rebuild reasons [initial=1]; slow routing frames 1 (first 1 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 89.632 ms, station captures 1; discovery sweeps 1, last branch captures 34469, split hints 3, maximum slice 18.968 ms, last sweep 0.598 s / 142.716 ms work; slowest RLO check 0.000 ms (RLO contract bindings this session 1, 0.087 ms), door search 0.000 ms, station search 0.082 ms, preparation frame 91.868 ms. Closure refresh: 1 calls, 2.716 ms total, 2.716 ms maximum. Route planning across frames: 0 requests, 0 slices, 0 events completed, 0 frames ended with a plan pending, 0.000 ms total, slowest slice 0.000 ms ending in none with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 0. physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+    },
+    {
+      "run": "base2-Player.private",
+      "line": 5768,
+      "milliseconds": 900.824,
+      "component": "PopulationRuntime advancement inclusive of native calls and any diagnostic checkpoint postfix",
+      "window": "outside primary C4 windows; all raw C4 maxima are below 30 ms",
+      "unityFrame": "not recorded by production aggregate summary",
+      "context": "[Mod:PR3RigGuard] Test bridge: load 'FT Food Routines Locked Combined Replay Base Partial 20261101' done: day 6, the mod's save data attached.",
+      "summary": "[Mod:PersistentCity] Population: 957 citizens; 0 travelling, 21 awaiting a route, 0 awaiting opening; clock 9165.0, lag 4.3 game minutes. Advancement this observation: 1 frames, 1 events, 900.824 ms total, 900.824 ms maximum advance, 1 maximum events in one frame; these figures cover advancement calls only. Routes: 1 road snapshots started (0 for gate changes), 90 frames waiting for routes; rebuild reasons [initial=1]; slow routing frames 1 (first 1 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 90.517 ms, station captures 1; discovery sweeps 1, last branch captures 34422, split hints 6, maximum slice 21.549 ms, last sweep 0.523 s / 151.629 ms work; slowest RLO check 0.000 ms (RLO contract bindings this session 1, 0.093 ms), door search 0.000 ms, station search 0.090 ms, preparation frame 92.801 ms. Closure refresh: 1 calls, 2.492 ms total, 2.492 ms maximum. Route planning across frames: 0 requests, 0 slices, 0 events completed, 0 frames ended with a plan pending, 0.000 ms total, slowest slice 0.000 ms ending in none with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 0. physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+    },
+    {
+      "run": "base2-Player.private",
+      "line": 6050,
+      "milliseconds": 1008.794,
+      "component": "PopulationRuntime advancement inclusive of native calls and any diagnostic checkpoint postfix",
+      "window": "outside primary C4 windows; all raw C4 maxima are below 30 ms",
+      "unityFrame": "not recorded by production aggregate summary",
+      "context": "[Mod:PR3RigGuard] Test bridge: load 'FT Food Routines Locked Combined Replay Base Partial 20261101' done: day 6, the mod's save data attached.",
+      "summary": "[Mod:PersistentCity] Population: 957 citizens; 0 travelling, 21 awaiting a route, 0 awaiting opening; clock 9165.0, lag 4.8 game minutes. Advancement this observation: 1 frames, 1 events, 1008.794 ms total, 1008.794 ms maximum advance, 1 maximum events in one frame; these figures cover advancement calls only. Routes: 1 road snapshots started (0 for gate changes), 91 frames waiting for routes; rebuild reasons [initial=1]; slow routing frames 1 (first 1 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 88.260 ms, station captures 1; discovery sweeps 1, last branch captures 34463, split hints 3, maximum slice 18.293 ms, last sweep 0.502 s / 138.681 ms work; slowest RLO check 0.000 ms (RLO contract bindings this session 1, 0.102 ms), door search 0.000 ms, station search 0.078 ms, preparation frame 90.502 ms. Closure refresh: 1 calls, 2.668 ms total, 2.668 ms maximum. Route planning across frames: 0 requests, 0 slices, 0 events completed, 0 frames ended with a plan pending, 0.000 ms total, slowest slice 0.000 ms ending in none with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 0. physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+    },
+    {
+      "run": "cand1-Player.private",
+      "line": 12031,
+      "milliseconds": 121.699,
+      "component": "PopulationRuntime advancement inclusive of native calls and any diagnostic checkpoint postfix",
+      "window": "outside primary C4 windows; all raw C4 maxima are below 30 ms",
+      "unityFrame": "not recorded by production aggregate summary",
+      "context": "[Mod:PR3RigGuard] Test bridge: console 'skiptime 23h true' (0 lines).",
+      "summary": "[Mod:PersistentCity] Population: 957 citizens; 22 travelling, 24 awaiting a route, 0 awaiting opening; clock 11475.5, lag 0.0 game minutes. Advancement this observation: 3625 frames, 34916 events, 13070.501 ms total, 121.699 ms maximum advance, 128 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 84.857 ms, station captures 2; discovery sweeps 1, last branch captures 34390, split hints 3, maximum slice 18.797 ms, last sweep 0.488 s / 135.158 ms work; slowest RLO check 2.942 ms (RLO contract bindings this session 1, 0.156 ms), door search 0.131 ms, station search 0.098 ms, preparation frame 13.001 ms. Closure refresh: 3625 calls, 190.179 ms total, 0.536 ms maximum. Route planning across frames: 4846 requests, 5337 slices, 4289 events completed, 507 frames ended with a plan pending, 7838.491 ms total, slowest slice 15.910 ms ending in finish with 1 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 44754. physical=True, pedestrians=2, cars=1, acquired=6, released=3, blockedSamples=2185, unavailable=4, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=pc:365:admitted:"
+    },
+    {
+      "run": "cand1-Player.private",
+      "line": 12544,
+      "milliseconds": 53.527,
+      "component": "PopulationRuntime advancement inclusive of native calls and any diagnostic checkpoint postfix",
+      "window": "outside primary C4 windows; all raw C4 maxima are below 30 ms",
+      "unityFrame": "not recorded by production aggregate summary",
+      "context": "[Mod:PR3RigGuard] Test bridge: console 'skiptime 72h true' (0 lines).",
+      "summary": "[Mod:PersistentCity] Population: 957 citizens; 379 travelling, 22 awaiting a route, 0 awaiting opening; clock 12575.0, lag 25.0 game minutes. Advancement this observation: 4411 frames, 20930 events, 6727.710 ms total, 53.527 ms maximum advance, 128 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 151.803 ms, station captures 2; discovery sweeps 1, last branch captures 34363, split hints 22, maximum slice 24.582 ms, last sweep 1.022 s / 339.295 ms work; slowest RLO check 2.932 ms (RLO contract bindings this session 1, 0.202 ms), door search 0.152 ms, station search 0.088 ms, preparation frame 1.274 ms. Closure refresh: 4411 calls, 43.172 ms total, 0.429 ms maximum. Route planning across frames: 3141 requests, 3406 slices, 2926 events completed, 273 frames ended with a plan pending, 4855.565 ms total, slowest slice 33.936 ms ending in subway-connector with 4 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 26579. physical=True, pedestrians=0, cars=0, acquired=3, released=3, blockedSamples=11923, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+    },
+    {
+      "run": "cand2-Player.private",
+      "line": 1314,
+      "milliseconds": 38.693,
+      "component": "PopulationRuntime advancement inclusive of native calls and any diagnostic checkpoint postfix",
+      "window": "outside primary C4 windows; all raw C4 maxima are below 30 ms",
+      "unityFrame": "not recorded by production aggregate summary",
+      "context": "[Mod:PR3RigGuard] Test bridge: console 'skiptime 6h true' (0 lines).",
+      "summary": "[Mod:PersistentCity] Population: 957 citizens; 271 travelling, 16 awaiting a route, 0 awaiting opening; clock 9361.9, lag 0.0 game minutes. Advancement this observation: 4566 frames, 10835 events, 4221.597 ms total, 38.693 ms maximum advance, 128 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 89.662 ms, station captures 2; discovery sweeps 1, last branch captures 34368, split hints 5, maximum slice 19.932 ms, last sweep 0.498 s / 143.554 ms work; slowest RLO check 1.606 ms (RLO contract bindings this session 1, 0.104 ms), door search 0.111 ms, station search 0.084 ms, preparation frame 8.943 ms. Closure refresh: 4566 calls, 665.314 ms total, 1.280 ms maximum. Route planning across frames: 1526 requests, 1815 slices, 1166 events completed, 294 frames ended with a plan pending, 2607.090 ms total, slowest slice 35.888 ms ending in subway-connector with 3 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 14809. physical=True, pedestrians=48, cars=4, acquired=76, released=24, blockedSamples=26926, unavailable=10, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=1, carAdmission=pc:132:admitted:"
+    },
+    {
+      "run": "cand2-Player.private",
+      "line": 2794,
+      "milliseconds": 1200.844,
+      "component": "PopulationRuntime advancement inclusive of native calls and any diagnostic checkpoint postfix",
+      "window": "outside primary C4 windows; all raw C4 maxima are below 30 ms",
+      "unityFrame": "not recorded by production aggregate summary",
+      "context": "[Mod:PR3RigGuard] Test bridge: load 'FT Food Routines Locked Combined Replay Seed17 20261101' done: day 6, the mod's save data attached.",
+      "summary": "[Mod:PersistentCity] Population: 957 citizens; 0 travelling, 21 awaiting a route, 0 awaiting opening; clock 9165.0, lag 1.7 game minutes. Advancement this observation: 1 frames, 1 events, 1200.844 ms total, 1200.844 ms maximum advance, 1 maximum events in one frame; these figures cover advancement calls only. Routes: 1 road snapshots started (0 for gate changes), 97 frames waiting for routes; rebuild reasons [initial=1]; slow routing frames 1 (first 1 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 101.955 ms, station captures 1; discovery sweeps 1, last branch captures 34394, split hints 17, maximum slice 21.341 ms, last sweep 0.659 s / 185.793 ms work; slowest RLO check 0.000 ms (RLO contract bindings this session 1, 0.098 ms), door search 0.000 ms, station search 0.094 ms, preparation frame 104.226 ms. Closure refresh: 1 calls, 1.947 ms total, 1.947 ms maximum. Route planning across frames: 0 requests, 0 slices, 0 events completed, 0 frames ended with a plan pending, 0.000 ms total, slowest slice 0.000 ms ending in none with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 0. physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+    },
+    {
+      "run": "cand2-Player.private",
+      "line": 3081,
+      "milliseconds": 904.244,
+      "component": "PopulationRuntime advancement inclusive of native calls and any diagnostic checkpoint postfix",
+      "window": "outside primary C4 windows; all raw C4 maxima are below 30 ms",
+      "unityFrame": "not recorded by production aggregate summary",
+      "context": "[Mod:PR3RigGuard] Test bridge: load 'FT Food Routines Locked Combined Candidate Partial 20261101' done: day 6, the mod's save data attached.",
+      "summary": "[Mod:PersistentCity] Population: 957 citizens; 0 travelling, 21 awaiting a route, 0 awaiting opening; clock 9165.0, lag 3.7 game minutes. Advancement this observation: 1 frames, 1 events, 904.244 ms total, 904.244 ms maximum advance, 1 maximum events in one frame; these figures cover advancement calls only. Routes: 1 road snapshots started (0 for gate changes), 96 frames waiting for routes; rebuild reasons [initial=1]; slow routing frames 1 (first 1 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 88.601 ms, station captures 1; discovery sweeps 1, last branch captures 34419, split hints 4, maximum slice 18.695 ms, last sweep 0.503 s / 136.927 ms work; slowest RLO check 0.000 ms (RLO contract bindings this session 1, 0.100 ms), door search 0.000 ms, station search 0.081 ms, preparation frame 90.855 ms. Closure refresh: 1 calls, 1.788 ms total, 1.788 ms maximum. Route planning across frames: 0 requests, 0 slices, 0 events completed, 0 frames ended with a plan pending, 0.000 ms total, slowest slice 0.000 ms ending in none with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 0. physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+    },
+    {
+      "run": "cand2-Player.private",
+      "line": 3364,
+      "milliseconds": 906.102,
+      "component": "PopulationRuntime advancement inclusive of native calls and any diagnostic checkpoint postfix",
+      "window": "outside primary C4 windows; all raw C4 maxima are below 30 ms",
+      "unityFrame": "not recorded by production aggregate summary",
+      "context": "[Mod:PR3RigGuard] Test bridge: load 'FT Food Routines Locked Combined Candidate Partial 20261101' done: day 6, the mod's save data attached.",
+      "summary": "[Mod:PersistentCity] Population: 957 citizens; 0 travelling, 21 awaiting a route, 0 awaiting opening; clock 9165.0, lag 2.7 game minutes. Advancement this observation: 1 frames, 1 events, 906.102 ms total, 906.102 ms maximum advance, 1 maximum events in one frame; these figures cover advancement calls only. Routes: 1 road snapshots started (0 for gate changes), 107 frames waiting for routes; rebuild reasons [initial=1]; slow routing frames 1 (first 1 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 88.256 ms, station captures 1; discovery sweeps 1, last branch captures 34384, split hints 5, maximum slice 19.995 ms, last sweep 0.502 s / 143.570 ms work; slowest RLO check 0.000 ms (RLO contract bindings this session 1, 0.087 ms), door search 0.000 ms, station search 0.078 ms, preparation frame 90.498 ms. Closure refresh: 1 calls, 2.045 ms total, 2.045 ms maximum. Route planning across frames: 0 requests, 0 slices, 0 events completed, 0 frames ended with a plan pending, 0.000 ms total, slowest slice 0.000 ms ending in none with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 0. physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+    },
+    {
+      "run": "cand2-Player.private",
+      "line": 3830,
+      "milliseconds": 933.63,
+      "component": "PopulationRuntime advancement inclusive of native calls and any diagnostic checkpoint postfix",
+      "window": "outside primary C4 windows; all raw C4 maxima are below 30 ms",
+      "unityFrame": "not recorded by production aggregate summary",
+      "context": "[Mod:PR3RigGuard] Test bridge: load 'FT Food Routines Locked Combined Control17 20261101' done: day 6, the mod's save data attached.",
+      "summary": "[Mod:PersistentCity] Population: 957 citizens; 0 travelling, 21 awaiting a route, 0 awaiting opening; clock 9066.0, lag 0.0 game minutes. Advancement this observation: 5260 frames, 20 events, 2167.991 ms total, 933.630 ms maximum advance, 5 maximum events in one frame; these figures cover advancement calls only. Routes: 0 road snapshots started (0 for gate changes), 0 frames waiting for routes; rebuild reasons []; slow routing frames 0 (first 0 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 92.739 ms, station captures 8; discovery sweeps 1, last branch captures 34387, split hints 4, maximum slice 18.635 ms, last sweep 0.491 s / 139.258 ms work; slowest RLO check 2.157 ms (RLO contract bindings this session 1, 0.165 ms), door search 0.120 ms, station search 0.087 ms, preparation frame 0.688 ms. Closure refresh: 5260 calls, 21.298 ms total, 0.068 ms maximum. Route planning across frames: 14 requests, 26 slices, 14 events completed, 12 frames ended with a plan pending, 34.729 ms total, slowest slice 2.455 ms ending in car-ends with 2 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 332. physical=True, pedestrians=0, cars=0, acquired=0, released=0, blockedSamples=0, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+    },
+    {
+      "run": "cand2-Player.private",
+      "line": 4107,
+      "milliseconds": 1015.728,
+      "component": "PopulationRuntime advancement inclusive of native calls and any diagnostic checkpoint postfix",
+      "window": "outside primary C4 windows; all raw C4 maxima are below 30 ms",
+      "unityFrame": "not recorded by production aggregate summary",
+      "context": "[Mod:PR3RigGuard] Test bridge: load 'FT Food Routines Locked Combined Candidate Old 20261101' done: day 6, the mod's save data attached.",
+      "summary": "[Mod:PersistentCity] Population: 957 citizens; 1 travelling, 21 awaiting a route, 0 awaiting opening; clock 9165.0, lag 4.1 game minutes. Advancement this observation: 1 frames, 1 events, 1015.728 ms total, 1015.728 ms maximum advance, 1 maximum events in one frame; these figures cover advancement calls only. Routes: 1 road snapshots started (0 for gate changes), 89 frames waiting for routes; rebuild reasons [initial=1]; slow routing frames 1 (first 1 logged); last rebuild initial index=-1; this planner scene searches 1, maximum 87.160 ms, station captures 1; discovery sweeps 1, last branch captures 34407, split hints 3, maximum slice 17.766 ms, last sweep 0.492 s / 138.826 ms work; slowest RLO check 0.000 ms (RLO contract bindings this session 1, 0.095 ms), door search 0.000 ms, station search 0.079 ms, preparation frame 89.404 ms. Closure refresh: 1 calls, 1.958 ms total, 1.958 ms maximum. Route planning across frames: 0 requests, 0 slices, 0 events completed, 0 frames ended with a plan pending, 0.000 ms total, slowest slice 0.000 ms ending in none with 0 NavMesh path queries; event restarts 0 (run inline after repeated restarts 0), road search restarts 0, units 0. physical=True, pedestrians=1, cars=0, acquired=1, released=0, blockedSamples=1, unavailable=0, trafficOvershoots=0, queueing=0, queued=0, walkersResumed=0, carAdmission=::"
+    }
+  ]
+}

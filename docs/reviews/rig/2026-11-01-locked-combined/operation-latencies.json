@@ -1,0 +1,356 @@
+{
+  "role": "rig_test",
+  "scope": "Manual save / load / diagnostic operations outside primary normal-play frame windows. Load wall time includes native loading and paused runtime readiness; not a pure disk-read timer.",
+  "operations": [
+    {
+      "operation": "Base Edited-source-wall",
+      "seconds": 22.45299999997951,
+      "ge30ms": true
+    },
+    {
+      "operation": "Base Old-source-wall",
+      "seconds": 28.57799999997951,
+      "ge30ms": true
+    },
+    {
+      "operation": "Base Partial-source-wall",
+      "seconds": 28.82799999997951,
+      "ge30ms": true
+    },
+    {
+      "operation": "base-day-start-source-wall",
+      "seconds": 32.811999999918044,
+      "ge30ms": true
+    },
+    {
+      "operation": "base-view-off-reload-wall",
+      "seconds": 49.71900000004098,
+      "ge30ms": true
+    },
+    {
+      "operation": "base-view-off-save-wall",
+      "seconds": 0.671000000089407,
+      "ge30ms": true
+    },
+    {
+      "operation": "base-view-off-source-wall",
+      "seconds": 25.70299999997951,
+      "ge30ms": true
+    },
+    {
+      "operation": "base-view-on-reload-wall",
+      "seconds": 30.609999999869615,
+      "ge30ms": true
+    },
+    {
+      "operation": "base-view-on-save-wall",
+      "seconds": 0.625,
+      "ge30ms": true
+    },
+    {
+      "operation": "base-view-on-source-wall",
+      "seconds": 28.860000000102445,
+      "ge30ms": true
+    },
+    {
+      "operation": "base1-matched-wall",
+      "seconds": 35.54700000002049,
+      "ge30ms": true
+    },
+    {
+      "operation": "base2-matched-wall",
+      "seconds": 53.15599999995902,
+      "ge30ms": true
+    },
+    {
+      "operation": "c3-proper-source-wall",
+      "seconds": 31.265000000130385,
+      "ge30ms": true
+    },
+    {
+      "operation": "cand-bypass-reload-wall",
+      "seconds": 33.92100000008941,
+      "ge30ms": true
+    },
+    {
+      "operation": "cand-bypass-save-wall",
+      "seconds": 0.625,
+      "ge30ms": true
+    },
+    {
+      "operation": "cand-bypass-source-wall",
+      "seconds": 24.780999999959022,
+      "ge30ms": true
+    },
+    {
+      "operation": "cand-standin-new-city-wall",
+      "seconds": 30.280999999959022,
+      "ge30ms": true
+    },
+    {
+      "operation": "cand-standin-reload-wall",
+      "seconds": 32.20300000021234,
+      "ge30ms": true
+    },
+    {
+      "operation": "cand-standin-save-wall",
+      "seconds": 0.5319999998901039,
+      "ge30ms": true
+    },
+    {
+      "operation": "cand-standin-source-wall",
+      "seconds": 26.953999999910593,
+      "ge30ms": true
+    },
+    {
+      "operation": "cand-view-off-reload-wall",
+      "seconds": 32.95300000021234,
+      "ge30ms": true
+    },
+    {
+      "operation": "cand-view-off-save-wall",
+      "seconds": 0.625,
+      "ge30ms": true
+    },
+    {
+      "operation": "cand-view-off-source-wall",
+      "seconds": 25.531999999890104,
+      "ge30ms": true
+    },
+    {
+      "operation": "cand-view-on-reload-wall",
+      "seconds": 40.25,
+      "ge30ms": true
+    },
+    {
+      "operation": "cand-view-on-save-wall",
+      "seconds": 0.8120000001508743,
+      "ge30ms": true
+    },
+    {
+      "operation": "cand-view-on-source-wall",
+      "seconds": 39.29700000002049,
+      "ge30ms": true
+    },
+    {
+      "operation": "cand1-matched-wall",
+      "seconds": 33.20299999997951,
+      "ge30ms": true
+    },
+    {
+      "operation": "cand2-matched-wall",
+      "seconds": 32.25,
+      "ge30ms": true
+    },
+    {
+      "operation": "Candidate Edited-source-wall",
+      "seconds": 20.436999999918044,
+      "ge30ms": true
+    },
+    {
+      "operation": "Candidate New-source-wall",
+      "seconds": 26.719000000040978,
+      "ge30ms": true
+    },
+    {
+      "operation": "Candidate Old-source-wall",
+      "seconds": 28.609000000171363,
+      "ge30ms": true
+    },
+    {
+      "operation": "Candidate Outward-source-wall",
+      "seconds": 28.57799999997951,
+      "ge30ms": true
+    },
+    {
+      "operation": "Candidate Paid-source-wall",
+      "seconds": 28.54700000002049,
+      "ge30ms": true
+    },
+    {
+      "operation": "Candidate Partial-source-wall",
+      "seconds": 26.67199999978766,
+      "ge30ms": true
+    },
+    {
+      "operation": "Candidate Returning-source-wall",
+      "seconds": 26.54699999978766,
+      "ge30ms": true
+    },
+    {
+      "operation": "Candidate Serving-source-wall",
+      "seconds": 28.562999999849126,
+      "ge30ms": true
+    },
+    {
+      "operation": "candidate-day-end-wall",
+      "seconds": 0.8430000001098961,
+      "ge30ms": true
+    },
+    {
+      "operation": "candidate-day-reload-wall",
+      "seconds": 49.843000000109896,
+      "ge30ms": true
+    },
+    {
+      "operation": "candidate-day-source-wall",
+      "seconds": 30.92200000002049,
+      "ge30ms": true
+    },
+    {
+      "operation": "candidate-last-boundary-wall",
+      "seconds": 33.610000000102445,
+      "ge30ms": true
+    },
+    {
+      "operation": "candidate-returned-wall",
+      "seconds": 0.5159999998286366,
+      "ge30ms": true
+    },
+    {
+      "operation": "candidate18-roundtrip-wall",
+      "seconds": 0.5160000000614673,
+      "ge30ms": true
+    },
+    {
+      "operation": "candidate18-twice-wall",
+      "seconds": 0.5619999999180436,
+      "ge30ms": true
+    },
+    {
+      "operation": "candidate18-wall",
+      "seconds": 0.625,
+      "ge30ms": true
+    },
+    {
+      "operation": "cashflow-candidate-wall",
+      "seconds": 47.031999999890104,
+      "ge30ms": true
+    },
+    {
+      "operation": "cashflow-control-wall",
+      "seconds": 49.28099999995902,
+      "ge30ms": true
+    },
+    {
+      "operation": "cashflow-source-wall",
+      "seconds": 41.92200000002049,
+      "ge30ms": true
+    },
+    {
+      "operation": "control-day-end-wall",
+      "seconds": 0.5779999999795109,
+      "ge30ms": true
+    },
+    {
+      "operation": "control-day-reload-wall",
+      "seconds": 31.95299999997951,
+      "ge30ms": true
+    },
+    {
+      "operation": "control-day-source-wall",
+      "seconds": 31.969000000040978,
+      "ge30ms": true
+    },
+    {
+      "operation": "control-held-source-wall",
+      "seconds": 23.688000000081956,
+      "ge30ms": true
+    },
+    {
+      "operation": "control-repeat-end-wall",
+      "seconds": 0.7190000000409782,
+      "ge30ms": true
+    },
+    {
+      "operation": "control-repeat-reload-wall",
+      "seconds": 31.563000000081956,
+      "ge30ms": true
+    },
+    {
+      "operation": "control-repeat-source-wall",
+      "seconds": 50.78100000019185,
+      "ge30ms": true
+    },
+    {
+      "operation": "control17-wall",
+      "seconds": 0.578999999910593,
+      "ge30ms": true
+    },
+    {
+      "operation": "daystart17-wall",
+      "seconds": 0.6400000001303852,
+      "ge30ms": true
+    },
+    {
+      "operation": "history32-reload-wall",
+      "seconds": 33.0,
+      "ge30ms": true
+    },
+    {
+      "operation": "history32-wall",
+      "seconds": 0.5779999999795109,
+      "ge30ms": true
+    },
+    {
+      "operation": "malformed-tuning-wall",
+      "seconds": 28.515000000130385,
+      "ge30ms": true
+    },
+    {
+      "operation": "migration-wall",
+      "seconds": 29.765999999828637,
+      "ge30ms": true
+    },
+    {
+      "operation": "refuse-active-wall",
+      "seconds": 36.89100000006147,
+      "ge30ms": true
+    },
+    {
+      "operation": "refuse-corrupt-wall",
+      "seconds": 41.32799999997951,
+      "ge30ms": true
+    },
+    {
+      "operation": "refuse-future-wall",
+      "seconds": 42.07799999997951,
+      "ge30ms": true
+    },
+    {
+      "operation": "refuse-open-corrupt-wall",
+      "seconds": 30.563000000081956,
+      "ge30ms": true
+    },
+    {
+      "operation": "refuse-open-future-wall",
+      "seconds": 28.515999999828637,
+      "ge30ms": true
+    },
+    {
+      "operation": "reload1-wall",
+      "seconds": 29.95299999997951,
+      "ge30ms": true
+    },
+    {
+      "operation": "reload2-wall",
+      "seconds": 30.125,
+      "ge30ms": true
+    },
+    {
+      "operation": "Replay Base Edited-source-wall",
+      "seconds": 22.45300000021234,
+      "ge30ms": true
+    },
+    {
+      "operation": "Replay Base Old-source-wall",
+      "seconds": 28.514999999897555,
+      "ge30ms": true
+    },
+    {
+      "operation": "Replay Base Partial-source-wall",
+      "seconds": 22.45299999997951,
+      "ge30ms": true
+    }
+  ]
+}

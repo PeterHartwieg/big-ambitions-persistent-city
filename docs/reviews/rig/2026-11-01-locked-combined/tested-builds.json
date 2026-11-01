@@ -1,0 +1,67 @@
+{
+  "role": "rig_test",
+  "candidate": "a7ab5bc51ffaabae28697efad7b35411553f03a7",
+  "control": "831637cd4fe788cdf153e2de57c2bc9dd185ed24",
+  "candidatePinned": true,
+  "firstParent": [
+    "a7ab5bc Step B0b: persist held decision tuning image (stacked on #9) (#16)",
+    "b17e4a9 Step E2c: third-party interior mod detection guard (keeps our view off) (#22)",
+    "8c24f24 docs: isolate per-slice validation and performance logs (#41)",
+    "c6d7535 Step C3: agency order/payment seam discovery (inactive adapter) (#20)",
+    "3b8f7ec Step B0: population schema 18 and save-size budget (#9)"
+  ],
+  "prs": [
+    {
+      "number": 9,
+      "title": "Step B0: population schema 18 and save-size budget (stacked on #7)"
+    },
+    {
+      "number": 16,
+      "title": "Step B0b: persist held decision tuning image (stacked on #9)"
+    },
+    {
+      "number": 20,
+      "title": "Step C3: agency order/payment seam discovery (inactive adapter)"
+    },
+    {
+      "number": 22,
+      "title": "Step E2c: third-party interior mod detection guard (keeps our view off)"
+    },
+    {
+      "number": 41,
+      "title": "Docs: split per-slice checks into docs/checks/<slice>.md and make CHECKS.md a short index (stops squash-merge doc conflicts)"
+    }
+  ],
+  "notInCandidate": [
+    "E3 donut #23",
+    "E3 cupcake #33",
+    "E3 salad #36",
+    "E2b #28",
+    "B1 #17",
+    "B2 #19",
+    "C2a #24",
+    "C4 #30",
+    "E1 #37"
+  ],
+  "builds": [
+    {
+      "role": "candidate",
+      "sha": "a7ab5bc51ffaabae28697efad7b35411553f03a7",
+      "dllSha256": "36e79f5c6aa6819ebe6f247c37252dae4b7cf8af47b71a21049eef200b5a852d",
+      "managed": "C:\\BigAmbitions-AgentTests\\Big Ambitions Agent Tests_Data\\Managed",
+      "loaded": true
+    },
+    {
+      "role": "control",
+      "sha": "831637cd4fe788cdf153e2de57c2bc9dd185ed24",
+      "dllSha256": "b10eefbcec69518c6ae17a6085521774ae0ba7107d95fffac1e9ad19b3461fb5",
+      "managed": "C:\\BigAmbitions-AgentTests\\Big Ambitions Agent Tests_Data\\Managed",
+      "loaded": true
+    }
+  ],
+  "offlineTestSuiteRun": false,
+  "loaded": true,
+  "laterRemoteHeadObserved": "3f7b885d0f8c19e1052947806bf224834e0b8b34",
+  "laterHeadObservedUtc": "2026-11-01T05:14:26.841890+00:00",
+  "qualification": "Development branch advanced during the session. All candidate runs stayed pinned to a7ab5bc51ffaabae28697efad7b35411553f03a7; later merges were not tested."
+}

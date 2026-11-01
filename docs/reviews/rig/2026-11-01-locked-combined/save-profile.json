@@ -1,0 +1,275 @@
+{
+  "role": "rig_test",
+  "profiles": [
+    {
+      "operation": "base-reference-profile",
+      "samples": [
+        {
+          "startedUtc": "2026-11-01T03:05:53.6732219Z",
+          "finishedUtc": "2026-11-01T03:05:54.6705692Z",
+          "sample": 0,
+          "writeMs": 286.7534,
+          "readMs": 710.4923,
+          "status": "Loaded",
+          "SourceSchema": 17,
+          "characters": 6999361,
+          "utf8Bytes": 6999362,
+          "sourceCharacters": 6999361,
+          "sourceUtf8Bytes": 6999362,
+          "managedBefore": 907603968,
+          "managedAfter": 939106304,
+          "workingSet": 0,
+          "peakWorkingSet": 0,
+          "gcBefore": [
+            175,
+            175,
+            175
+          ],
+          "gcAfter": [
+            176,
+            176,
+            176
+          ]
+        },
+        {
+          "startedUtc": "2026-11-01T03:05:54.6730728Z",
+          "finishedUtc": "2026-11-01T03:05:55.6705206Z",
+          "sample": 1,
+          "writeMs": 297.2242,
+          "readMs": 700.2238,
+          "status": "Loaded",
+          "SourceSchema": 17,
+          "characters": 6999361,
+          "utf8Bytes": 6999362,
+          "sourceCharacters": 6999361,
+          "sourceUtf8Bytes": 6999362,
+          "managedBefore": 939106304,
+          "managedAfter": 982110208,
+          "workingSet": 0,
+          "peakWorkingSet": 0,
+          "gcBefore": [
+            176,
+            176,
+            176
+          ],
+          "gcAfter": [
+            177,
+            177,
+            177
+          ]
+        },
+        {
+          "startedUtc": "2026-11-01T03:05:55.6730627Z",
+          "finishedUtc": "2026-11-01T03:05:56.9150761Z",
+          "sample": 2,
+          "writeMs": 285.67920000000004,
+          "readMs": 955.5122,
+          "status": "Loaded",
+          "SourceSchema": 17,
+          "characters": 6999361,
+          "utf8Bytes": 6999362,
+          "sourceCharacters": 6999361,
+          "sourceUtf8Bytes": 6999362,
+          "managedBefore": 982110208,
+          "managedAfter": 815894528,
+          "workingSet": 0,
+          "peakWorkingSet": 0,
+          "gcBefore": [
+            177,
+            177,
+            177
+          ],
+          "gcAfter": [
+            178,
+            178,
+            178
+          ]
+        }
+      ],
+      "medianWriteMs": 286.7534,
+      "medianReadMs": 710.4923,
+      "allSaveOperationsGe30ms": true,
+      "workingSetQualification": "Native Mono process-memory API returned zero; no matched peak-memory claim is made."
+    },
+    {
+      "operation": "candidate-migration-profile",
+      "samples": [
+        {
+          "startedUtc": "2026-11-01T03:31:43.9544289Z",
+          "finishedUtc": "2026-11-01T03:31:45.2798011Z",
+          "sample": 0,
+          "writeMs": 342.61580000000004,
+          "readMs": 982.8100000000001,
+          "status": "Loaded",
+          "SourceSchema": 17,
+          "characters": 5322120,
+          "utf8Bytes": 5322121,
+          "sourceCharacters": 6999361,
+          "sourceUtf8Bytes": 6999362,
+          "managedBefore": 1102295040,
+          "managedAfter": 1135665152,
+          "workingSet": 0,
+          "peakWorkingSet": 0,
+          "gcBefore": [
+            218,
+            218,
+            218
+          ],
+          "gcAfter": [
+            219,
+            219,
+            219
+          ]
+        },
+        {
+          "startedUtc": "2026-11-01T03:31:45.2828022Z",
+          "finishedUtc": "2026-11-01T03:31:46.8105088Z",
+          "sample": 1,
+          "writeMs": 448.00120000000004,
+          "readMs": 1080.2869,
+          "status": "Loaded",
+          "SourceSchema": 17,
+          "characters": 5322120,
+          "utf8Bytes": 5322121,
+          "sourceCharacters": 6999361,
+          "sourceUtf8Bytes": 6999362,
+          "managedBefore": 1135665152,
+          "managedAfter": 920223744,
+          "workingSet": 0,
+          "peakWorkingSet": 0,
+          "gcBefore": [
+            219,
+            219,
+            219
+          ],
+          "gcAfter": [
+            220,
+            220,
+            220
+          ]
+        },
+        {
+          "startedUtc": "2026-11-01T03:31:46.8125130Z",
+          "finishedUtc": "2026-11-01T03:31:48.1386106Z",
+          "sample": 2,
+          "writeMs": 329.5389,
+          "readMs": 996.0182000000001,
+          "status": "Loaded",
+          "SourceSchema": 17,
+          "characters": 5322120,
+          "utf8Bytes": 5322121,
+          "sourceCharacters": 6999361,
+          "sourceUtf8Bytes": 6999362,
+          "managedBefore": 920227840,
+          "managedAfter": 991813632,
+          "workingSet": 0,
+          "peakWorkingSet": 0,
+          "gcBefore": [
+            220,
+            220,
+            220
+          ],
+          "gcAfter": [
+            221,
+            221,
+            221
+          ]
+        }
+      ],
+      "medianWriteMs": 342.61580000000004,
+      "medianReadMs": 996.0182000000001,
+      "allSaveOperationsGe30ms": true,
+      "workingSetQualification": "Native Mono process-memory API returned zero; no matched peak-memory claim is made."
+    },
+    {
+      "operation": "candidate18-profile",
+      "samples": [
+        {
+          "startedUtc": "2026-11-01T03:31:51.5680255Z",
+          "finishedUtc": "2026-11-01T03:31:52.5187311Z",
+          "sample": 0,
+          "writeMs": 313.3766,
+          "readMs": 636.6378000000001,
+          "status": "Loaded",
+          "SourceSchema": 18,
+          "characters": 5322120,
+          "utf8Bytes": 5322121,
+          "sourceCharacters": 5322120,
+          "sourceUtf8Bytes": 5322121,
+          "managedBefore": 998965248,
+          "managedAfter": 1007779840,
+          "workingSet": 0,
+          "peakWorkingSet": 0,
+          "gcBefore": [
+            224,
+            224,
+            224
+          ],
+          "gcAfter": [
+            225,
+            225,
+            225
+          ]
+        },
+        {
+          "startedUtc": "2026-11-01T03:31:52.5207354Z",
+          "finishedUtc": "2026-11-01T03:31:53.4683053Z",
+          "sample": 1,
+          "writeMs": 312.8385,
+          "readMs": 634.9079,
+          "status": "Loaded",
+          "SourceSchema": 18,
+          "characters": 5322120,
+          "utf8Bytes": 5322121,
+          "sourceCharacters": 5322120,
+          "sourceUtf8Bytes": 5322121,
+          "managedBefore": 1007779840,
+          "managedAfter": 1026473984,
+          "workingSet": 0,
+          "peakWorkingSet": 0,
+          "gcBefore": [
+            225,
+            225,
+            225
+          ],
+          "gcAfter": [
+            226,
+            226,
+            226
+          ]
+        },
+        {
+          "startedUtc": "2026-11-01T03:31:53.4698089Z",
+          "finishedUtc": "2026-11-01T03:31:54.3751642Z",
+          "sample": 2,
+          "writeMs": 296.09700000000004,
+          "readMs": 608.9318000000001,
+          "status": "Loaded",
+          "SourceSchema": 18,
+          "characters": 5322120,
+          "utf8Bytes": 5322121,
+          "sourceCharacters": 5322120,
+          "sourceUtf8Bytes": 5322121,
+          "managedBefore": 1026478080,
+          "managedAfter": 1123479552,
+          "workingSet": 0,
+          "peakWorkingSet": 0,
+          "gcBefore": [
+            226,
+            226,
+            226
+          ],
+          "gcAfter": [
+            226,
+            226,
+            226
+          ]
+        }
+      ],
+      "medianWriteMs": 312.8385,
+      "medianReadMs": 634.9079,
+      "allSaveOperationsGe30ms": true,
+      "workingSetQualification": "Native Mono process-memory API returned zero; no matched peak-memory claim is made."
+    }
+  ]
+}

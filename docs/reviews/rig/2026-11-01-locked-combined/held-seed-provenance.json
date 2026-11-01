@@ -1,0 +1,9 @@
+{
+  "role": "rig_test",
+  "source": "Retained disposable A3 Normal17 evaluating checkpoint from the earlier B0b rig",
+  "sourceSha256": "344933a40c21a70520c4299f2aca8c1189308554335884f2873b928b428f82ce",
+  "copySha256": "344933a40c21a70520c4299f2aca8c1189308554335884f2873b928b428f82ce",
+  "sameBytes": true,
+  "sourceSchema": 17,
+  "newName": "FT Food Routines Locked Combined Replay Seed17 20261101"
+}

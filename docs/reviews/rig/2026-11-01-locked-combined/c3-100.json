@@ -1,0 +1,1722 @@
+{
+  "repeats": 100,
+  "agencyAvailable": true,
+  "guardAvailable": true,
+  "first": "C3 read-only; tuple/queue ordinal is NOT durable identity\nday=6 money(binary32 dollars)=10160.5107\nagency=ba%3Astreet_secondavenue:5 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallBillboard;MediumBillboard;LargeBillboard;\nagency=ba%3Astreet_thirdavenue:17 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallInternet;MediumInternet;LargeInternet;\nmarketingRecordsInQueue=0\nexpense day=1 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=2 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=3 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=4 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=5 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\n",
+  "last": "C3 read-only; tuple/queue ordinal is NOT durable identity\nday=6 money(binary32 dollars)=10160.5107\nagency=ba%3Astreet_secondavenue:5 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallBillboard;MediumBillboard;LargeBillboard;\nagency=ba%3Astreet_thirdavenue:17 businessType=ba:businesstype_marketingagency dialogType=MarketingAgencyDialog options=SmallInternet;MediumInternet;LargeInternet;\nmarketingRecordsInQueue=0\nexpense day=1 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=2 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=3 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=4 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\nexpense day=5 address=ba%3Astreet_thirdstreet:30 MarketingExpenses=0\n",
+  "allOutputIdentical": true,
+  "nativeEqual": true,
+  "beforeSha256": "ddfb24c0b517057957c33d68443111403cb8d6f1f9abf2a85251daf23ff78576",
+  "afterSha256": "ddfb24c0b517057957c33d68443111403cb8d6f1f9abf2a85251daf23ff78576",
+  "payloadEqual": true,
+  "payloadBeforeSha256": "739d9920f106634343fee397bb4249337d87dd3e95825a10b2c2d27b9aaa0251",
+  "payloadAfterSha256": "739d9920f106634343fee397bb4249337d87dd3e95825a10b2c2d27b9aaa0251",
+  "guardStartsBefore": 4,
+  "guardStartsAfter": 4,
+  "guardEvaluationsBefore": 4,
+  "guardEvaluationsAfter": 4,
+  "paymentEntriesBefore": 0,
+  "paymentEntriesAfter": 0,
+  "samples": [
+    {
+      "iteration": 0,
+      "ms": 91.4897,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 1,
+      "ms": 91.46640000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 2,
+      "ms": 91.98620000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 3,
+      "ms": 86.8223,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 4,
+      "ms": 85.9632,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 5,
+      "ms": 91.863,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 6,
+      "ms": 87.9388,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 7,
+      "ms": 90.1346,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 8,
+      "ms": 91.19640000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 9,
+      "ms": 91.039,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 10,
+      "ms": 94.93740000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 11,
+      "ms": 91.9775,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 12,
+      "ms": 87.53070000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 13,
+      "ms": 96.0947,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 14,
+      "ms": 90.5903,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 15,
+      "ms": 90.9158,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 16,
+      "ms": 89.69080000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 17,
+      "ms": 96.7581,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 18,
+      "ms": 90.25840000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 19,
+      "ms": 87.2784,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 20,
+      "ms": 97.7401,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 21,
+      "ms": 88.1923,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 22,
+      "ms": 100.6723,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 23,
+      "ms": 84.26870000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 24,
+      "ms": 89.1342,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 25,
+      "ms": 98.5121,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 26,
+      "ms": 87.86240000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 27,
+      "ms": 111.5622,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 28,
+      "ms": 141.22320000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 29,
+      "ms": 131.89690000000002,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 30,
+      "ms": 104.9893,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 31,
+      "ms": 88.123,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 32,
+      "ms": 95.5108,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 33,
+      "ms": 94.08550000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 34,
+      "ms": 96.3186,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 35,
+      "ms": 91.2641,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 36,
+      "ms": 92.7313,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 37,
+      "ms": 88.36420000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 38,
+      "ms": 87.1063,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 39,
+      "ms": 85.721,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 40,
+      "ms": 84.5741,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 41,
+      "ms": 90.2709,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 42,
+      "ms": 88.1757,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 43,
+      "ms": 90.0232,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 44,
+      "ms": 95.0644,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 45,
+      "ms": 103.95110000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 46,
+      "ms": 107.9153,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 47,
+      "ms": 91.84110000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 48,
+      "ms": 99.76960000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 49,
+      "ms": 89.6237,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 50,
+      "ms": 92.9376,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 51,
+      "ms": 96.70530000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 52,
+      "ms": 95.53710000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 53,
+      "ms": 89.86120000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 54,
+      "ms": 98.1804,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 55,
+      "ms": 95.24520000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 56,
+      "ms": 90.6359,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 57,
+      "ms": 89.6564,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 58,
+      "ms": 92.1701,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 59,
+      "ms": 93.336,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 60,
+      "ms": 86.8394,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 61,
+      "ms": 112.23960000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 62,
+      "ms": 97.75540000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 63,
+      "ms": 90.2975,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 64,
+      "ms": 92.79990000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 65,
+      "ms": 96.63810000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 66,
+      "ms": 92.36670000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 67,
+      "ms": 85.0395,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 68,
+      "ms": 89.5573,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 69,
+      "ms": 87.02770000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 70,
+      "ms": 88.23830000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 71,
+      "ms": 107.6868,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 72,
+      "ms": 89.3408,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 73,
+      "ms": 90.27380000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 74,
+      "ms": 95.5745,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 75,
+      "ms": 86.218,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 76,
+      "ms": 95.2851,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 77,
+      "ms": 93.29010000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 78,
+      "ms": 88.6952,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 79,
+      "ms": 89.5862,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 80,
+      "ms": 91.7838,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 81,
+      "ms": 86.99040000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 82,
+      "ms": 89.4106,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 83,
+      "ms": 93.024,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 84,
+      "ms": 87.8647,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 85,
+      "ms": 92.4983,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 86,
+      "ms": 85.4435,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 87,
+      "ms": 92.20830000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 88,
+      "ms": 97.0112,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 89,
+      "ms": 92.69630000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 90,
+      "ms": 87.94340000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 91,
+      "ms": 90.565,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 92,
+      "ms": 91.274,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 93,
+      "ms": 96.10520000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 94,
+      "ms": 88.00760000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 95,
+      "ms": 88.0736,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 96,
+      "ms": 87.4209,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 97,
+      "ms": 88.9358,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 98,
+      "ms": 92.6755,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    },
+    {
+      "iteration": 99,
+      "ms": 88.17840000000001,
+      "bytes": 0,
+      "outputCharacters": 801,
+      "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+      "gcBefore": [
+        314,
+        314,
+        314
+      ],
+      "gcAfter": [
+        314,
+        314,
+        314
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "instance": "agent1",
+  "held": true,
+  "owner": "pc-rig-test-locked-combined-20261101",
+  "purpose": "Pinned candidate combined locked-session proof",
+  "acquired_utc": "2026-11-01T03:04:00.1317152Z",
+  "expires_automatically": false,
+  "pending": 0,
+  "legacy_blocked": false
+}

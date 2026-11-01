@@ -1,0 +1,7 @@
+{
+  "available": true,
+  "first": "C3 unavailable: no loaded city",
+  "singletonsUnchanged": true,
+  "before": "{\"<IsApplicationQuitting>k__BackingField\":false,\"Initialized\":true,\"Locks\":{\"SteamAPI\":{}},\"MissingTypes\":[],\"Singletons\":{\"MainMenuController\":{\"type\":\"MainMenuController\",\"id\":52622},\"SteamAPI\":{\"type\":\"SteamAPI\",\"id\":52548}}}",
+  "after": "{\"<IsApplicationQuitting>k__BackingField\":false,\"Initialized\":true,\"Locks\":{\"SteamAPI\":{}},\"MissingTypes\":[],\"Singletons\":{\"MainMenuController\":{\"type\":\"MainMenuController\",\"id\":52622},\"SteamAPI\":{\"type\":\"SteamAPI\",\"id\":52548}}}"
+}

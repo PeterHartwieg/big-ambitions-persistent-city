@@ -1,0 +1,14 @@
+﻿{
+    "all_games_exited_normally":  true,
+    "owned_game_pids":  [
+                            50656,
+                            29300,
+                            22224,
+                            35936
+                        ],
+    "kill_required":  false,
+    "remaining":  [
+
+                  ],
+    "all_foreground_game_waiters_completed":  true
+}

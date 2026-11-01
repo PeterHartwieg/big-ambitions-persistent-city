@@ -1,0 +1,139 @@
+{
+  "role": "rig_test",
+  "boundaries": [
+    {
+      "label": "Candidate Outward",
+      "schema": 18,
+      "minute": 9165.0,
+      "consumer": "pc:350",
+      "status": 1,
+      "purchases": 0,
+      "spentUnits": "0",
+      "heldUnits": "0",
+      "budgetConserved": true,
+      "decision": null,
+      "journey": {
+        "Legs": [
+          {
+            "From": {
+              "X": 229.22433471679688,
+              "Y": 0.09000015258789062,
+              "Z": 11.202224731445312,
+              "IsFinite": true
+            },
+            "To": {
+              "X": 229.7625732421875,
+              "Y": 0.09000015258789062,
+              "Z": 21.2783203125,
+              "IsFinite": true
+            },
+            "Mode": 0,
+            "Minutes": 1.6817435657342494,
+            "ServiceId": ""
+          }
+        ],
+        "Minutes": 1.6817435657342494,
+        "EstimatedMinutes": 1.6817435657342494
+      },
+      "outing": {
+        "OriginId": "address:ba%3Astreet_thirdstreet:34:home",
+        "OriginActivity": 0,
+        "ResumeUntil": 9292.0,
+        "ResumeEvent": 9292.0,
+        "Returning": false
+      }
+    },
+    {
+      "label": "Candidate Serving",
+      "schema": 18,
+      "minute": 9172.138801574707,
+      "consumer": "pc:350",
+      "status": 2,
+      "purchases": 0,
+      "spentUnits": "0",
+      "heldUnits": "0",
+      "budgetConserved": true,
+      "decision": null,
+      "journey": null,
+      "outing": {
+        "OriginId": "address:ba%3Astreet_thirdstreet:34:home",
+        "OriginActivity": 0,
+        "ResumeUntil": 9292.0,
+        "ResumeEvent": 9292.0,
+        "Returning": false
+      }
+    },
+    {
+      "label": "Candidate Paid",
+      "schema": 18,
+      "minute": 9176.139152526855,
+      "consumer": "pc:350",
+      "status": 3,
+      "purchases": 1,
+      "spentUnits": "275221504000",
+      "heldUnits": "0",
+      "budgetConserved": true,
+      "decision": null,
+      "journey": null,
+      "outing": {
+        "OriginId": "address:ba%3Astreet_thirdstreet:34:home",
+        "OriginActivity": 0,
+        "ResumeUntil": 9292.0,
+        "ResumeEvent": 9292.0,
+        "Returning": false
+      }
+    },
+    {
+      "label": "Candidate Returning",
+      "schema": 18,
+      "minute": 9186.138487815857,
+      "consumer": "pc:350",
+      "status": 3,
+      "purchases": 1,
+      "spentUnits": "275221504000",
+      "heldUnits": "0",
+      "budgetConserved": true,
+      "decision": null,
+      "journey": {
+        "Legs": [
+          {
+            "From": {
+              "X": 229.7625732421875,
+              "Y": 0.09000015258789062,
+              "Z": 21.2783203125,
+              "IsFinite": true
+            },
+            "To": {
+              "X": 229.22433471679688,
+              "Y": 0.09000015258789062,
+              "Z": 11.202224731445312,
+              "IsFinite": true
+            },
+            "Mode": 0,
+            "Minutes": 1.6817435657342494,
+            "ServiceId": ""
+          }
+        ],
+        "Minutes": 1.6817435657342494,
+        "EstimatedMinutes": 1.6817435657342494
+      },
+      "outing": {
+        "OriginId": "address:ba%3Astreet_thirdstreet:34:home",
+        "OriginActivity": 0,
+        "ResumeUntil": 9292.0,
+        "ResumeEvent": 9292.0,
+        "Returning": true
+      }
+    }
+  ],
+  "method": "Genuine normal coordinated saves at observed simulation-unit boundaries; every next boundary loads the preceding save.",
+  "returnedEndpoint": {
+    "consumer": "pc:350",
+    "purchases": 1,
+    "spentUnits": "275221504000",
+    "heldUnits": "0",
+    "atOriginalHome": true,
+    "journey": false,
+    "mealOuting": false
+  }
+}

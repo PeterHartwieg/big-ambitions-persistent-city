@@ -1,0 +1,30 @@
+{
+  "role": "rig_test",
+  "files": [
+    {
+      "fixture": "FT Food Routines Locked Combined Control17 20261101",
+      "bytes": 1271601,
+      "sha256": "43d5fc49ae83690785cabe5363392037ac52cf0647f7863fe2018c4c1f457689"
+    },
+    {
+      "fixture": "FT Food Routines Locked Combined Schema18 20261101",
+      "bytes": 1197683,
+      "sha256": "519e73ccbb83d9e46f65d190635f1638cdb8b47d94c28d68ac53a2b1e9e85db1"
+    },
+    {
+      "fixture": "FT Food Routines Locked Combined Schema18 Roundtrip 20261101",
+      "bytes": 1197692,
+      "sha256": "47a74f0ebb861d295b6be301810ba2c5c85e4171abaf58db2c2bd7f84d07cdb2"
+    },
+    {
+      "fixture": "FT Food Routines Locked Combined Schema18 Twice 20261101",
+      "bytes": 1197683,
+      "sha256": "43ae71ebca71078316b1f7563febd95fdccc5dc30e8a0a3a3a6346473e913887"
+    },
+    {
+      "fixture": "FT Food Routines Locked Combined History 20261101",
+      "bytes": 1553581,
+      "sha256": "7a559436fe05fb6b58e421165d5ba3b84ae1f8261f1888ed64ba7cc0c4ddd169"
+    }
+  ]
+}

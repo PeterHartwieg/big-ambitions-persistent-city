@@ -1,0 +1,15 @@
+{
+  "label": "fresh control17 to combined18",
+  "sourceHsgSha256": "43d5fc49ae83690785cabe5363392037ac52cf0647f7863fe2018c4c1f457689",
+  "targetHsgSha256": "519e73ccbb83d9e46f65d190635f1638cdb8b47d94c28d68ac53a2b1e9e85db1",
+  "authorityHashBefore": "52139e7fdc78238b028751115639a11fb4243f1a5c9424b630978cb71af979c7",
+  "authorityHashAfter": "52139e7fdc78238b028751115639a11fb4243f1a5c9424b630978cb71af979c7",
+  "authorityEqual": true,
+  "sourceReceipts": 57,
+  "targetReceipts": 57,
+  "receiptHashBefore": "541501b8d990298a1e96c3257b2da8edc910b2e8ad98c1a14b755a05ef140cb0",
+  "receiptHashAfter": "541501b8d990298a1e96c3257b2da8edc910b2e8ad98c1a14b755a05ef140cb0",
+  "receiptDictionaryEqual": true,
+  "allOriginalReceiptsRetainedUnchanged": true,
+  "authorityShops": 1
+}

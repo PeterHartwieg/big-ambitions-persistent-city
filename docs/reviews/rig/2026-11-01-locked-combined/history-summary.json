@@ -1,0 +1,31 @@
+{
+  "role": "rig_test",
+  "maxRetainedVisits": 32,
+  "residentsAt32": 1,
+  "minimumRetainedVisits": 0,
+  "residents": 957,
+  "consumers": 1914,
+  "identityStable": true,
+  "traitsStable": true,
+  "savedReloadExact": true,
+  "size": {
+    "records": {
+      "Item1": 48196,
+      "Item2": 48196
+    },
+    "frame": 50943,
+    "minute": 15845.338122844696,
+    "writeMs": 473.59540000000004,
+    "characters": 5753928,
+    "sha256": "ad974d9e4bc6c4d281fa508073839384a347f779eca1c0a58d472390cd3db23e",
+    "savedSha256": "ad974d9e4bc6c4d281fa508073839384a347f779eca1c0a58d472390cd3db23e",
+    "diagnostics": {
+      "active": true,
+      "hourlyCustomerBatchesSuppressed": 40,
+      "nativeDrawsSuppressed": 0,
+      "nativePurchasesThisSession": 0
+    }
+  },
+  "warningReached": false,
+  "warningNotRunReason": "Reference payload remains well below the 95 percent threshold; no warning or payment failure was injected."
+}

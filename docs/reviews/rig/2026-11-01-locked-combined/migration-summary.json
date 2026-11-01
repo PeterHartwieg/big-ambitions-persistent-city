@@ -1,0 +1,141 @@
+{
+  "sourcePreserved": true,
+  "sourceSchema": 17,
+  "candidateSchema": 18,
+  "decodedSourceMigration": {
+    "normalizedEqual": true,
+    "beforeSha256": "a8a5df702d5ff0c7e51e96a8b961bf0c20cac55631b250df6a0d296836b90a58",
+    "afterSha256": "a8a5df702d5ff0c7e51e96a8b961bf0c20cac55631b250df6a0d296836b90a58",
+    "differenceCount": 0,
+    "differences": []
+  },
+  "firstSave": {
+    "normalizedEqual": false,
+    "beforeSha256": "a8a5df702d5ff0c7e51e96a8b961bf0c20cac55631b250df6a0d296836b90a58",
+    "afterSha256": "71b856b6c8d0733367ec015ab1b4fdfcea33dabf45d2fa295af674cea9d6cc72",
+    "differenceCount": 4,
+    "differences": [
+      {
+        "path": "/Citizens/335/NextEventMinute",
+        "before": 8986.0,
+        "after": 9016.0
+      },
+      {
+        "path": "/Minute",
+        "before": 8985.68053817749,
+        "after": 8986.013870239258
+      },
+      {
+        "path": "/Traffic/Clock",
+        "before": 8985.68053817749,
+        "after": 8986.013870239258
+      },
+      {
+        "path": "/Traffic/RequestedTime",
+        "before": 8985.68053817749,
+        "after": 8986.013870239258
+      }
+    ]
+  },
+  "roundtripWrite1": {
+    "normalizedEqual": false,
+    "beforeSha256": "71b856b6c8d0733367ec015ab1b4fdfcea33dabf45d2fa295af674cea9d6cc72",
+    "afterSha256": "9469ecc662626e34c03ad783b78f503e05680f61221469c3b3888c231802cdf9",
+    "differenceCount": 3,
+    "differences": [
+      {
+        "path": "/Minute",
+        "before": 8986.013870239258,
+        "after": 8986.347202301025
+      },
+      {
+        "path": "/Traffic/Clock",
+        "before": 8986.013870239258,
+        "after": 8986.347202301025
+      },
+      {
+        "path": "/Traffic/RequestedTime",
+        "before": 8986.013870239258,
+        "after": 8986.347202301025
+      }
+    ]
+  },
+  "roundtripWrite2": {
+    "normalizedEqual": false,
+    "beforeSha256": "9469ecc662626e34c03ad783b78f503e05680f61221469c3b3888c231802cdf9",
+    "afterSha256": "6cdb879836005a8f993eddbb8b1a3a56e553e7f5d14d1f8e9f1fc2c4b1ce5c8f",
+    "differenceCount": 3,
+    "differences": [
+      {
+        "path": "/Minute",
+        "before": 8986.347202301025,
+        "after": 8986.680534362793
+      },
+      {
+        "path": "/Traffic/Clock",
+        "before": 8986.347202301025,
+        "after": 8986.680534362793
+      },
+      {
+        "path": "/Traffic/RequestedTime",
+        "before": 8986.347202301025,
+        "after": 8986.680534362793
+      }
+    ]
+  },
+  "reload1": {
+    "normalizedEqual": true,
+    "beforeSha256": "71b856b6c8d0733367ec015ab1b4fdfcea33dabf45d2fa295af674cea9d6cc72",
+    "afterSha256": "71b856b6c8d0733367ec015ab1b4fdfcea33dabf45d2fa295af674cea9d6cc72",
+    "differenceCount": 0,
+    "differences": []
+  },
+  "reload2": {
+    "normalizedEqual": true,
+    "beforeSha256": "9469ecc662626e34c03ad783b78f503e05680f61221469c3b3888c231802cdf9",
+    "afterSha256": "9469ecc662626e34c03ad783b78f503e05680f61221469c3b3888c231802cdf9",
+    "differenceCount": 0,
+    "differences": []
+  },
+  "preservationFacts": {
+    "control17-export": {
+      "identities": "1d0c1b0a2e03ddd42feecbbb1f570e940d28d4f1c2606093bde6233d891898dd",
+      "traits": "0e3fdf206ef45b99bc4f27cb591f8c3e4d21d69ed84a53e4370f98eaad943f69",
+      "assignments": "17e9be83b62fbb3c24172db44311f565ce74c479033d22ec4c32757ff57a4c88",
+      "consumerMoney": "621a018dcf6031bd6033deaa23895c37167b705f7d79b4954cf9be60e089c0f5",
+      "history": "a28550ea6e7213d2da7264faeb34f57dbe4bad96d8d2783aaab9cb22f411be5c",
+      "residentIds": "78e717772ab209119f15c91108b383f7b7d4c3ce3b509c0f2b8e4aae2069c3f5"
+    },
+    "candidate18-export": {
+      "identities": "1d0c1b0a2e03ddd42feecbbb1f570e940d28d4f1c2606093bde6233d891898dd",
+      "traits": "0e3fdf206ef45b99bc4f27cb591f8c3e4d21d69ed84a53e4370f98eaad943f69",
+      "assignments": "17e9be83b62fbb3c24172db44311f565ce74c479033d22ec4c32757ff57a4c88",
+      "consumerMoney": "621a018dcf6031bd6033deaa23895c37167b705f7d79b4954cf9be60e089c0f5",
+      "history": "a28550ea6e7213d2da7264faeb34f57dbe4bad96d8d2783aaab9cb22f411be5c",
+      "residentIds": "78e717772ab209119f15c91108b383f7b7d4c3ce3b509c0f2b8e4aae2069c3f5"
+    },
+    "candidate18-roundtrip-export": {
+      "identities": "1d0c1b0a2e03ddd42feecbbb1f570e940d28d4f1c2606093bde6233d891898dd",
+      "traits": "0e3fdf206ef45b99bc4f27cb591f8c3e4d21d69ed84a53e4370f98eaad943f69",
+      "assignments": "17e9be83b62fbb3c24172db44311f565ce74c479033d22ec4c32757ff57a4c88",
+      "consumerMoney": "621a018dcf6031bd6033deaa23895c37167b705f7d79b4954cf9be60e089c0f5",
+      "history": "a28550ea6e7213d2da7264faeb34f57dbe4bad96d8d2783aaab9cb22f411be5c",
+      "residentIds": "78e717772ab209119f15c91108b383f7b7d4c3ce3b509c0f2b8e4aae2069c3f5"
+    },
+    "candidate18-twice-export": {
+      "identities": "1d0c1b0a2e03ddd42feecbbb1f570e940d28d4f1c2606093bde6233d891898dd",
+      "traits": "0e3fdf206ef45b99bc4f27cb591f8c3e4d21d69ed84a53e4370f98eaad943f69",
+      "assignments": "17e9be83b62fbb3c24172db44311f565ce74c479033d22ec4c32757ff57a4c88",
+      "consumerMoney": "621a018dcf6031bd6033deaa23895c37167b705f7d79b4954cf9be60e089c0f5",
+      "history": "a28550ea6e7213d2da7264faeb34f57dbe4bad96d8d2783aaab9cb22f411be5c",
+      "residentIds": "78e717772ab209119f15c91108b383f7b7d4c3ce3b509c0f2b8e4aae2069c3f5"
+    }
+  },
+  "capabilities": {
+    "Code": "B",
+    "Revision": 1,
+    "Active": false
+  },
+  "businessReferences": [],
+  "memoryNonNull": 1914
+}

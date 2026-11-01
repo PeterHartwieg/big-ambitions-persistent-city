@@ -1,0 +1,128 @@
+{
+  "role": "rig_test",
+  "runtime": {
+    "enabled": true,
+    "failed": true,
+    "status": "Population save refused: Invalid state: Invalid held tuning image. Original payload retained.",
+    "taskStatus": null,
+    "taskCompleted": null,
+    "taskError": null,
+    "saveMatches": false,
+    "discoveryReady": null,
+    "discoverySweeps": null,
+    "lastDiscoverySeconds": null,
+    "lastDiscoveryWorkMs": null,
+    "maximumDiscoverySliceMs": null,
+    "waitingRoutingFrames": 0,
+    "maximumPreparationMs": 0.0
+  },
+  "sourceBytesPreserved": true,
+  "beforeSha256": "96d6beb8b82c4ab57736738a84e454412ed32e67fe65f4228800f4b2644f2dba",
+  "afterSha256": "96d6beb8b82c4ab57736738a84e454412ed32e67fe65f4228800f4b2644f2dba",
+  "nativeCashEqual": true,
+  "shopStateEqual": true,
+  "noCheckout": true,
+  "endClock": "09:05",
+  "before": {
+    "frame": 169752,
+    "error": "",
+    "awaitingPopulation": false,
+    "observedMarketCalls": {},
+    "cash": 10160.5107,
+    "cashBits": "0BC21E46",
+    "shops": [
+      {
+        "BusinessName": "Persistent City food routines",
+        "orders": 0,
+        "items": [
+          {
+            "id": "e5g2cWeEPEqUK4pKpiNtwg==",
+            "itemName": "ba:itemname_cashregister",
+            "cargoInstances": [
+              {
+                "itemName": "ba:itemname_paperbag",
+                "amount": 181,
+                "pricePerUnit": 1.0,
+                "paid": true,
+                "customColors": null,
+                "nestedCargoInstances": [],
+                "IsSealed": false
+              }
+            ]
+          },
+          {
+            "id": "J7+jLg7I3UyODyam2SNiNQ==",
+            "itemName": "ba:itemname_angledwoodendisplaystand",
+            "cargoInstances": []
+          },
+          {
+            "id": "yD3CJiiGrEiw8ar47cqu5A==",
+            "itemName": "ba:itemname_bakeryshowcase",
+            "cargoInstances": [
+              {
+                "itemName": "ba:itemname_croissant",
+                "amount": 181,
+                "pricePerUnit": 1.0,
+                "paid": true,
+                "customColors": null,
+                "nestedCargoInstances": [],
+                "IsSealed": false
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "after": {
+    "frame": 170035,
+    "error": "",
+    "awaitingPopulation": false,
+    "observedMarketCalls": {},
+    "cash": 10160.5107,
+    "cashBits": "0BC21E46",
+    "shops": [
+      {
+        "BusinessName": "Persistent City food routines",
+        "orders": 0,
+        "items": [
+          {
+            "id": "e5g2cWeEPEqUK4pKpiNtwg==",
+            "itemName": "ba:itemname_cashregister",
+            "cargoInstances": [
+              {
+                "itemName": "ba:itemname_paperbag",
+                "amount": 181,
+                "pricePerUnit": 1.0,
+                "paid": true,
+                "customColors": null,
+                "nestedCargoInstances": [],
+                "IsSealed": false
+              }
+            ]
+          },
+          {
+            "id": "J7+jLg7I3UyODyam2SNiNQ==",
+            "itemName": "ba:itemname_angledwoodendisplaystand",
+            "cargoInstances": []
+          },
+          {
+            "id": "yD3CJiiGrEiw8ar47cqu5A==",
+            "itemName": "ba:itemname_bakeryshowcase",
+            "cargoInstances": [
+              {
+                "itemName": "ba:itemname_croissant",
+                "amount": 181,
+                "pricePerUnit": 1.0,
+                "paid": true,
+                "customColors": null,
+                "nestedCargoInstances": [],
+                "IsSealed": false
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

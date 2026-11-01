@@ -1,0 +1,38 @@
+[
+  {
+    "name": "BigAmbitions",
+    "version": "0.0.0.0",
+    "file": "BigAmbitions.dll",
+    "sha256": "055700fd26a7a6430bbb6a9d79379781909fbc518af760453396947887db5063"
+  },
+  {
+    "name": "0Harmony",
+    "version": "2.4.2.0",
+    "file": "0Harmony.dll",
+    "sha256": "7b9e756306fa3d7620e02a857c8927a6ab04973f9bd8a77d3866700a6deac55c"
+  },
+  {
+    "name": "FoodDemandAuditProbe",
+    "version": "0.0.0.0",
+    "file": "FoodDemandAuditProbe.dll",
+    "sha256": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353"
+  },
+  {
+    "name": "PersistentCity",
+    "version": "0.10.0.0",
+    "file": "PersistentCity.dll",
+    "sha256": "36e79f5c6aa6819ebe6f247c37252dae4b7cf8af47b71a21049eef200b5a852d"
+  },
+  {
+    "name": "ReviewGuard",
+    "version": "0.0.0.0",
+    "file": "ReviewGuard.dll",
+    "sha256": "e015621286939475ffb26641ba162c7e1e0b42c38bda1167e9876f9e4bd87626"
+  },
+  {
+    "name": "RealLifeOverhaul",
+    "version": "0.45.0.0",
+    "file": "RealLifeOverhaul.dll",
+    "sha256": "2f360a365cf7915f012cd62f4fd06214ef5cdaa0498331e05a7c831a3c20ab32"
+  }
+]

@@ -1,0 +1,100 @@
+[
+  {
+    "status": {
+      "instance": "agent1",
+      "held": true,
+      "owner": "big-copilot-rig-552",
+      "purpose": "Big Copilot PR #552 Link host-guard merge-gating rig proof",
+      "acquired_utc": "2026-11-01T02:51:12.5696445Z",
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    },
+    "utc": "2026-11-01T02:52:00.0011835Z",
+    "elapsed_seconds": 0.18358739999999998
+  },
+  {
+    "status": {
+      "instance": "agent1",
+      "held": true,
+      "owner": "big-copilot-rig-552",
+      "purpose": "Big Copilot PR #552 Link host-guard merge-gating rig proof",
+      "acquired_utc": "2026-11-01T02:51:12.5696445Z",
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    },
+    "utc": "2026-11-01T02:54:00.0571068Z",
+    "elapsed_seconds": 120.23696609999999
+  },
+  {
+    "status": {
+      "instance": "agent1",
+      "held": true,
+      "owner": "big-copilot-rig-552",
+      "purpose": "Big Copilot PR #552 Link host-guard merge-gating rig proof",
+      "acquired_utc": "2026-11-01T02:51:12.5696445Z",
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    },
+    "utc": "2026-11-01T02:56:00.0749003Z",
+    "elapsed_seconds": 240.2547596
+  },
+  {
+    "status": {
+      "instance": "agent1",
+      "held": true,
+      "owner": "big-copilot-rig-552",
+      "purpose": "Big Copilot PR #552 Link host-guard merge-gating rig proof",
+      "acquired_utc": "2026-11-01T02:51:12.5696445Z",
+      "expires_automatically": false,
+      "pending": 1,
+      "legacy_blocked": false
+    },
+    "utc": "2026-11-01T02:58:00.0871676Z",
+    "elapsed_seconds": 360.26702689999996
+  },
+  {
+    "status": {
+      "instance": "agent1",
+      "held": true,
+      "owner": "big-copilot-rig-552",
+      "purpose": "Big Copilot PR #552 Link host-guard merge-gating rig proof",
+      "acquired_utc": "2026-11-01T02:51:12.5696445Z",
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    },
+    "utc": "2026-11-01T03:00:00.0986572Z",
+    "elapsed_seconds": 480.27851649999997
+  },
+  {
+    "status": {
+      "instance": "agent1",
+      "held": true,
+      "owner": "big-copilot-rig-552",
+      "purpose": "Big Copilot PR #552 Link host-guard merge-gating rig proof",
+      "acquired_utc": "2026-11-01T02:51:12.5696445Z",
+      "expires_automatically": false,
+      "pending": 1,
+      "legacy_blocked": false
+    },
+    "utc": "2026-11-01T03:02:00.1091066Z",
+    "elapsed_seconds": 600.2889659
+  },
+  {
+    "status": {
+      "instance": "agent1",
+      "held": false,
+      "owner": null,
+      "purpose": null,
+      "acquired_utc": null,
+      "expires_automatically": false,
+      "pending": 0,
+      "legacy_blocked": false
+    },
+    "utc": "2026-11-01T03:04:00.1237164Z",
+    "elapsed_seconds": 720.3035757
+  }
+]
