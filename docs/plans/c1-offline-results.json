@@ -1,0 +1,348 @@
+{
+  "date": "2026-10-31",
+  "sourceCommit": "ac60a00c5d0edda68d6ec5a3becb9b72fc2cc04d",
+  "evidence": "Offline Windows Release net10.0 doubles only; no game/rig measurements.",
+  "parameters": {
+    "campaignsPerBusiness": 6,
+    "warmupReads": 30,
+    "coldAndWarmSamplesEach": 301,
+    "cursorPasses": 101,
+    "businessesPerContinuation": 1,
+    "businessesPerFullReadUnit": 64,
+    "retainedImages": 32,
+    "coldMeaning": "new reader/binding cache; not a fresh Unity process",
+    "scopeConstructionTimed": false
+  },
+  "gateCommands": [
+    {
+      "name": "production-build",
+      "exit": 0
+    },
+    {
+      "name": "unit-tests",
+      "exit": 0
+    },
+    {
+      "name": "test-list",
+      "exit": 0
+    },
+    {
+      "name": "core-identity-regression",
+      "exit": 0
+    },
+    {
+      "name": "diagnostic-response-regression",
+      "exit": 0
+    },
+    {
+      "name": "event-observation-regression",
+      "exit": 0
+    },
+    {
+      "name": "food-catalogue-regression",
+      "exit": 0
+    },
+    {
+      "name": "food-checkout-regression",
+      "exit": 0
+    },
+    {
+      "name": "food-hours-regression",
+      "exit": 0
+    },
+    {
+      "name": "food-household-catalogue-regression",
+      "exit": 0
+    },
+    {
+      "name": "food-ownership-regression",
+      "exit": 0
+    },
+    {
+      "name": "food-supply-regression",
+      "exit": 0
+    },
+    {
+      "name": "frame-observation-regression",
+      "exit": 0
+    },
+    {
+      "name": "gate-access-regression",
+      "exit": 0
+    },
+    {
+      "name": "road-ceiling-regression",
+      "exit": 0
+    },
+    {
+      "name": "road-handoff-regression",
+      "exit": 0
+    },
+    {
+      "name": "road-invalidation-regression",
+      "exit": 0
+    },
+    {
+      "name": "road-speed-regression",
+      "exit": 0
+    },
+    {
+      "name": "route-discovery-regression",
+      "exit": 0
+    },
+    {
+      "name": "save-contract-regression",
+      "exit": 0
+    },
+    {
+      "name": "startup-clock-regression",
+      "exit": 0
+    },
+    {
+      "name": "traffic-closure-regression",
+      "exit": 0
+    },
+    {
+      "name": "traffic-queue-regression",
+      "exit": 0
+    },
+    {
+      "name": "walking-quote-regression",
+      "exit": 0
+    },
+    {
+      "name": "campaign-reader-regression",
+      "exit": 0
+    },
+    {
+      "name": "native-command-python",
+      "exit": 0
+    },
+    {
+      "name": "physical-selection-python",
+      "exit": 0
+    },
+    {
+      "name": "vehicle-ownership-python",
+      "exit": 0
+    },
+    {
+      "name": "optional-stop-python",
+      "exit": 0
+    },
+    {
+      "name": "simulate-demo",
+      "exit": 0
+    },
+    {
+      "name": "food-routines-demo",
+      "exit": 0
+    },
+    {
+      "name": "food-demand-demo",
+      "exit": 0
+    }
+  ],
+  "finalRerun": {
+    "productionBuild": 0,
+    "unitTests": {
+      "passed": 1566,
+      "failed": 0,
+      "skipped": 0
+    },
+    "testList": 0,
+    "campaignHarness": 0,
+    "dllSha256": "7dc7074408e93c88394ef8c9f56e5f9af4df935d2d0ee8b5b086ee15db722e8f"
+  },
+  "finalMeasurements": [
+    {
+      "businesses": 1,
+      "campaignsPerBusiness": 6,
+      "cold": {
+        "p50Ms": 0.0091,
+        "p95Ms": 0.0178,
+        "maxMs": 0.7097,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytes": 4056
+      },
+      "warm": {
+        "p50Ms": 0.004,
+        "p95Ms": 0.0071,
+        "maxMs": 0.0337,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytes": 1912
+      },
+      "continuation": {
+        "p50Ms": 0.0087,
+        "p95Ms": 0.0142,
+        "maxMs": 0.0555,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerUnit": 1621
+      },
+      "retainedBytesPerSnapshot": 880
+    },
+    {
+      "businesses": 8,
+      "campaignsPerBusiness": 6,
+      "cold": {
+        "p50Ms": 0.0386,
+        "p95Ms": 0.093,
+        "maxMs": 0.8405,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytes": 15336
+      },
+      "warm": {
+        "p50Ms": 0.0404,
+        "p95Ms": 0.0593,
+        "maxMs": 0.7935,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytes": 13192
+      },
+      "continuation": {
+        "p50Ms": 0.0052,
+        "p95Ms": 0.011,
+        "maxMs": 0.0825,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerUnit": 1543
+      },
+      "retainedBytesPerSnapshot": 6392
+    },
+    {
+      "businesses": 1024,
+      "campaignsPerBusiness": 6,
+      "cold": {
+        "p50Ms": 1.2538,
+        "p95Ms": 7.3455,
+        "maxMs": 9.218,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytes": 1639959
+      },
+      "warm": {
+        "p50Ms": 0.98,
+        "p95Ms": 2.3799,
+        "maxMs": 3.867,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytes": 1637960
+      },
+      "continuation": {
+        "p50Ms": 0.0008,
+        "p95Ms": 0.0015,
+        "maxMs": 1.9552,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerUnit": 1532
+      },
+      "retainedBytesPerSnapshot": 810298
+    }
+  ],
+  "precedingGateMeasurementsBeforeMalformedAddressGuard": [
+    {
+      "businesses": 1,
+      "campaignsPerBusiness": 6,
+      "cold": {
+        "p50Ms": 0.0074,
+        "p95Ms": 0.0099,
+        "maxMs": 0.0218,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytes": 4056
+      },
+      "warm": {
+        "p50Ms": 0.0036,
+        "p95Ms": 0.0066,
+        "maxMs": 0.0245,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytes": 1912
+      },
+      "continuation": {
+        "p50Ms": 0.0033,
+        "p95Ms": 0.0068,
+        "maxMs": 0.0271,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerUnit": 1621
+      },
+      "retainedBytesPerSnapshot": 880
+    },
+    {
+      "businesses": 8,
+      "campaignsPerBusiness": 6,
+      "cold": {
+        "p50Ms": 0.035,
+        "p95Ms": 0.072,
+        "maxMs": 0.8956,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytes": 15336
+      },
+      "warm": {
+        "p50Ms": 0.0294,
+        "p95Ms": 0.048,
+        "maxMs": 0.7578,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytes": 13192
+      },
+      "continuation": {
+        "p50Ms": 0.0048,
+        "p95Ms": 0.0105,
+        "maxMs": 0.0312,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerUnit": 1543
+      },
+      "retainedBytesPerSnapshot": 6392
+    },
+    {
+      "businesses": 1024,
+      "campaignsPerBusiness": 6,
+      "cold": {
+        "p50Ms": 1.5677,
+        "p95Ms": 7.4726,
+        "maxMs": 10.7164,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytes": 1639977
+      },
+      "warm": {
+        "p50Ms": 1.0944,
+        "p95Ms": 2.5838,
+        "maxMs": 4.4718,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytes": 1637960
+      },
+      "continuation": {
+        "p50Ms": 0.0009,
+        "p95Ms": 0.002,
+        "maxMs": 6.2034,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerUnit": 1532
+      },
+      "retainedBytesPerSnapshot": 810298
+    }
+  ],
+  "preOptimizationLocalBaseline": {
+    "note": "Before caching enum/list contract verification and replacing duplicate hash sets; ordinary valid double inputs.",
+    "businesses": 1024,
+    "cold": {
+      "p50Ms": 3.2971,
+      "p95Ms": 13.7709,
+      "maxMs": 18.4817,
+      "allocatedBytes": 3638607
+    },
+    "warm": {
+      "p50Ms": 3.3156,
+      "p95Ms": 5.196,
+      "maxMs": 6.7116,
+      "allocatedBytes": 3637080
+    },
+    "continuation": {
+      "p50Ms": 0.0029,
+      "p95Ms": 0.0046,
+      "maxMs": 1.7815,
+      "allocatedBytesPerUnit": 3484
+    },
+    "retainedBytesPerSnapshot": 810532,
+    "spikesAtLeast30Ms": 0
+  },
+  "branchBase": "6d43276198eba5d0dd016b51bc7fc670bc651762",
+  "finalProcessInventory": {
+    "dotnet": 0,
+    "testhost": 0,
+    "compilerServer": 0,
+    "cleanup": "Coordinated build-server shutdown after no other test/run load."
+  }
+}
