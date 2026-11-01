@@ -35,6 +35,17 @@ steps += [('simulate', [dotnet, 'run', '--project', 'tools/simulate/Simulate.csp
           ('food-demand', [dotnet, 'run', '--project', 'tools/food-demand/FoodDemand.csproj', '--', 'build/harness-food-demand-demo'])]
 for name in ['donut', 'salad']:
     steps.append((name + '-source', [sys.executable, f'tools/{name}-feasibility-regression/source_checks.py']))
+# Other existing standalone regression tools remain part of the repeatable green gate.
+known = {name for name, _ in steps}
+for directory in sorted((root / 'tools').glob('*-regression')):
+    name = directory.name.removesuffix('-regression')
+    projects = list(directory.glob('*.csproj'))
+    if name not in known and len(projects) == 1:
+        steps.append((name, [dotnet, 'run', '--project', str(projects[0].relative_to(root)), '--configuration', 'Release']))
+for name in ['icecream', 'pizza', 'frenchfries']:
+    steps.append((name + '-source', [sys.executable, f'tools/{name}-feasibility-regression/source_checks.py']))
+steps += [('c4-save-comparison', [sys.executable, 'tools/market-research-regression/compare_save_baseline.py', '--baseline', 'HEAD']),
+          ('e4-default-comparison', [sys.executable, 'tools/e4-menu-regression/compare-default.py'])]
 selected = set(sys.argv[1:])
 manifest = output / 'results.json'
 results = json.loads(manifest.read_text()) if manifest.exists() else {}
