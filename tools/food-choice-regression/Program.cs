@@ -29,6 +29,18 @@ sealed class Market : IFoodMarket, ILocalFoodMarket, IFoodCandidateMarket
 }
 static partial class Program
 {
+    static bool integrated;
+    static CitySimulator Integrated(CitySimulator city, Paths paths, Market market)
+    {
+        if (!integrated) return city;
+        var state = city.State; state.Capabilities.Active = true; state.Food!.AwarenessStartsDay = 1;
+        var scope = state.Food.Shops[^1];
+        state.Food.BusinessReferences.Add(new() { Slot = 0, BusinessId = scope.BusinessId, PlaceId = scope.PlaceId });
+        foreach (var meal in state.Food.Residents)
+            meal.Memory.Entries.Add(new() { BusinessRef = 0, Day = meal.Day, Served = 3, Affinity = 8, Outcome = ShopExperience.Served });
+        city = new CitySimulator(state, paths); city.AttachFoodMarket(market);
+        return city;
+    }
     static (CitySimulator city,Paths paths) Ready(int seed,int count,bool nativeIds)
     {
         var places=new List<Place> {new() {Id="home",Name="Home",Kind=PlaceKind.Home,Capacity=1}};
@@ -43,11 +55,11 @@ static partial class Program
             Hours=Enumerable.Range(0,7).Select(d=>new OpeningWindow {Day=d,FromMinute=0,ToMinute=1440}).ToList(),
             Offers=FoodProducts.Ids.Select(id=>new FoodOffer {ProductId=id,Price=Money.FromCents(100),Units=100}).ToList()});
         var paths=new Paths();var city=new CitySimulator(state,paths);city.AttachFoodMarket(market);state.Food.ChoiceStartsDay=1;
-        return (city,paths);
+        return (Integrated(city,paths,market),paths);
     }
     static object Bench(int shops,bool nativeIds=false)
     {
-        var totals=new List<double>();var units=new List<double>();var allocations=new List<long>();var policyCosts=new List<double>();var exactPolicyCosts=new List<double>();int calls=0;
+        var totals=new List<double>();var units=new List<double>();var allocations=new List<long>();var policyCosts=new List<double>();var exactPolicyCosts=new List<double>();int calls=0,minCalls=16,maxCalls=0;
         var evaluated=Enumerable.Range(0,8).SelectMany(i=>FoodProducts.Ids.Select(id=>new EvaluatedFoodOffer("b"+i,id,Money.FromCents(100),1,0,12,90,75,60,MealKind.Lunch))).ToArray();
         for(int i=0;i<600;i++)
         {
@@ -65,7 +77,8 @@ static partial class Program
             double elapsed=Stopwatch.GetElapsedTime(start).TotalMilliseconds;
             long bytes=GC.GetAllocatedBytesForCurrentThread()-before;
             calls=paths.Calls;
-            if(calls!=2*Math.Min(8,shops)) throw new Exception("Route ceiling changed");
+            if(i>=88) {minCalls=Math.Min(minCalls,calls);maxCalls=Math.Max(maxCalls,calls);}
+            if(integrated ? calls<2 || calls>16 : calls!=2*Math.Min(8,shops)) throw new Exception("Route ceiling changed");
             if(city.State.Food.Residents[0].Status!=MealStatus.Travelling) throw new Exception("No feasible winner");
             var m=city.State.Food.Residents[0];var draw=new FoodDrawContext(i,m.ResidentId,m.Day,m.Kind,m.LastContextKey,1);
             var settings=new FoodChoiceSettings();long pick=Stopwatch.GetTimestamp();
@@ -74,12 +87,13 @@ static partial class Program
             if(i>=88) {totals.Add(elapsed);allocations.Add(bytes);policyCosts.Add(captureMs+pickMs);exactPolicyCosts.Add(exact ?? throw new Exception("No policy timing"));}
         }
         totals.Sort();units.Sort();allocations.Sort();policyCosts.Sort();exactPolicyCosts.Sort();
-        return new {shops,nativeIds,samples=totals.Count,fullMs=new {p50=totals[totals.Count/2],p95=totals[(int)(totals.Count*.95)],max=totals[^1]},
-            continuationUnitMs=new {p95=units[(int)(units.Count*.95)],max=units[^1]},shortlistCapturePlusPureSamplingMs=new {p95=policyCosts[(int)(policyCosts.Count*.95)],max=policyCosts[^1]},exactShortlistTraitsSamplingMs=new {p50=exactPolicyCosts[exactPolicyCosts.Count/2],p95=exactPolicyCosts[(int)(exactPolicyCosts.Count*.95)],max=exactPolicyCosts[^1]},bytesPerDecision=allocations[allocations.Count/2],logicalRoutes=calls};
+        return new {shops,nativeIds,samples=totals.Count,fullMs=new {p50=totals[totals.Count/2],p95=totals[(int)(totals.Count*.95)],max=totals[^1],spikesAtLeast30Ms=totals.Count(x=>x>=30)},
+            continuationUnitMs=new {p50=units[units.Count/2],p95=units[(int)(units.Count*.95)],max=units[^1],spikesAtLeast30Ms=units.Count(x=>x>=30)},shortlistCapturePlusPureSamplingMs=new {p95=policyCosts[(int)(policyCosts.Count*.95)],max=policyCosts[^1]},exactShortlistTraitsSamplingMs=new {p50=exactPolicyCosts[exactPolicyCosts.Count/2],p95=exactPolicyCosts[(int)(exactPolicyCosts.Count*.95)],max=exactPolicyCosts[^1]},bytesPerDecision=allocations[allocations.Count/2],logicalRoutes=calls,logicalRouteRange=new {min=minCalls,max=maxCalls}};
     }
     static void Main(string[] args)
     {
-        if(args.Contains("--rush")) {Console.WriteLine(JsonSerializer.Serialize(RushBench()));return;}
+        integrated=args.Contains("--integrated");
+        if(args.Contains("--rush") || args.Contains("--rush-5000")) {Console.WriteLine(JsonSerializer.Serialize(RushBench(args.Contains("--rush-5000") ? 5000 : 957)));return;}
         var d=new FoodDrawContext(123,"r|:42",7,MealKind.Lunch,"trip:abc",3);
         if(d.ShopHash("b:9")!=2746120566u || d.OfferHash("b:9",FoodProducts.Burger)!=360816019u || d.OfferHash("","")!=3912922371u)
             throw new Exception("Version-1 draw vectors changed");

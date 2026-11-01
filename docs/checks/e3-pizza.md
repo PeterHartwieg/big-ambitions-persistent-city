@@ -14,7 +14,7 @@ Schema **20**, save digest `39D2E48CD937D1BDD8E183CDB6125461FB44B67784DA935258CC
 
 ### Local test list
 
-Run [the foreground gate runner](../../tools/pizza-feasibility-regression/run_checks.py) with `before`, `pizza`, `audit` or `all`. It runs each command sequentially, calls the prescribed `wait-other-dotnet.ps1 -Repo <this checkout>` before every dotnet workload (also guarding Python runners that spawn dotnet), disables build/compiler-server reuse, captures exit/log hashes and sets no execution deadline. No background test jobs or watchers. The `before` arm ran before the shared descriptor change; `all` is the final full suite. `audit` separately checks this slice against incoming base `5877453`; default isolation does not freeze unrelated later slice files.
+Run [the foreground gate runner](../../tools/pizza-feasibility-regression/run_checks.py) with `before`, `pizza`, `audit` or `all`. It runs each command sequentially, calls the prescribed `wait-other-dotnet.ps1 -Repo <this checkout>` before every dotnet workload (also guarding Python runners that spawn dotnet), disables build/compiler-server reuse, captures exit/log hashes and sets no execution deadline. No background test jobs or watchers. The `before` arm ran before the shared descriptor change; `all` is the original final full suite. The original audit used incoming base `5877453`; the sync updates the `audit` arm to incoming A5 base `0ffb819`. Default isolation does not freeze unrelated later slice files.
 
 - Read-only Steam-reference `python tools/build.py --game-managed <Steam Managed>` production build.
 - `dotnet test tests/PersistentCity.Tests.csproj`; separate `--no-build --list-tests` discovery.
