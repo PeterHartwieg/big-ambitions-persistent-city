@@ -1,5 +1,58 @@
 # C2a core bounded awareness
 
+## Second base sync ? 1 November 2026 (offline only)
+
+`pc-c2a-sync2-base` merges approved C2a `0aa41ff` with development head `193c81d`
+through two-parent commit `09f6457` (merge base `81472e6`). E3 donut feasibility
+and E2b street-life timing/venue ownership are retained, including E3's checks and
+perf index lines. C2a retains schema 19 above the base's schema 18, the frozen
+18-to-19 reader, B1 memory payloads and the Sol-r1-1 failure-only admission fix.
+No C2a awareness or B1/B2 implementation was changed. The only hand-resolved Core
+line adds E2b's `stopTiming` argument to simulator replacement while retaining all
+C2a awareness providers/settings. Runtime/settings/configuration merged both sides.
+Both complete historical native checklists and their sync amendments below remain
+applicable, including every LOCKED-OK / NEEDS-INPUT marker.
+
+**47/47 sequential foreground validation gates pass:** game-assembly build,
+**2,293/2,293 unit tests**, **2,293 discovered cases**, every regression executable
+(including pickup continuity), all four Python harnesses, all three requested
+simulations, E3 source/isolation guards and four full-memory/table capacity cases.
+Each gate used the required other-dotnet wait; no execution timeout or detached
+test worker was used. No combination-only build/test fix was needed. DLL SHA-256:
+`e0e5131f85676495144ac8d988989c27b7d0c989ea41b6e103e0fcea9795cfae`.
+
+| Full B1 memory/table fixture | UTF-8 bytes / characters | Streaming / semantic records | Write / read / schema-17 migration ms |
+| --- | ---: | ---: | ---: |
+| reference | 5,022,655 | 54,584 / 54,581 | 119.2 / 335.0 / 495.2 |
+| consumers5000 | 9,710,819 | 110,132 / 110,129 | 239.5 / 747.5 / 1893.9 |
+| CF32 | 192,029,621 | 1,920,132 / 1,920,129 | 1768.5 / 6187.6 / source refused |
+| CF64 | 230,429,621 | 3,520,132 / 3,520,129 | 2617.8 / 7423.9 / source refused |
+
+Sizes and record counts exactly match the approved sync baselines. C2a still
+consumes **9,514 bytes / 24 records** from existing reserves; CF32/CF64 future
+budgets remain **220,664,366 / 259,064,366 bytes** and **2,111,867 / 3,711,867
+records**. CF32 meets the 85% goal; CF64 retains the existing >95% warning within
+the unchanged hard cap. Legacy schema-17 CF inputs remain refused at their old
+input limit; current schema-19 round trips pass. Every numeric latency in the
+above table is **>=30 ms**, explicitly flagged as separate offline save/load/
+migration cost, not ordinary mod work or whole-frame cost. The unchanged awareness
+benchmark also reports **two >=30 ms synchronous full-build samples**, maximum
+**33.1144 ms**, separately from production's yielded 64-item work and native frames.
+No new perf win or in-game performance claim is made; the four hotspots stay parked.
+
+Both parents' diffs were read for all three conflicts. The preservation audit
+retains all 45 C2a-only and 41 base-only changed files byte-for-byte at the merge,
+plus every nonblank checks/roadmap line from both parents. E3 reader/harness/guard
+files remain byte-identical to the base and their history-independent pins pass.
+See the [PR description and conflict inventory](../reviews/2026-11-01-c2a-sync2-base-pr-description.md),
+[command/source/benchmark manifest](../reviews/2026-11-01-c2a-sync2-base-results.json)
+and [merge preservation audit](../reviews/2026-11-01-c2a-sync2-base-preservation.json).
+
+Offline evidence remains separate from the later batched combined-head locked rig
+under merge rule v2; input-only checks await Peter's 6 November playtest. No game,
+rig directory, bridge lease, ordinary profile, Steam/Workshop or WSL was used. E1
+is untouched. No release/upload/ordinary-save deployment approval is implied.
+
 ## Sol-r1-1 — failure memory admission (1 November 2026, offline only)
 
 The integration admitted every unexpired B1 entry, so a first failed visit could

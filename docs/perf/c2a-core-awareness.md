@@ -37,3 +37,18 @@ maximum **42.6555 ms**. These complete-build measurements are separate from
 ordinary yielded work units and native mod-work/whole-frame timing. Full benchmark
 data and final checks are in the
 [review manifest](../reviews/2026-11-01-c2a-sync-base-r1-results.json).
+
+
+## Second base sync validation ? 1 November 2026
+
+This merge adds no performance change or new win. The unchanged synchronous
+offline awareness `BuildAll` benchmark reports **two samples >=30 ms** at 20k
+dense, maximum **33.1144 ms**; all other complete-build cases and all measured
+admission samples are below 30 ms. These are separate from production's yielded
+64-item units and from native mod-work/whole-frame timing. Every measured capacity
+write/read and each successful schema-17 migration is also >=30 ms and explicitly
+flagged as offline save/load/migration latency in [C2a checks](../checks/c2a-core-awareness.md).
+Full benchmark data and exact unchanged capacity/record totals are in the
+[sync manifest](../reviews/2026-11-01-c2a-sync2-base-results.json). Mod-work p95 <5 ms,
+spike reporting, autosave discipline, separate whole-frame tracking and the four
+parked hotspots remain unchanged. No native performance claim is made.
