@@ -235,14 +235,16 @@ public sealed class RivalOutflowTests
         string before = JsonConvert.SerializeObject(m); Assert.False(ExternalFoodSettlement.TryPay(m)); Assert.Equal(before, JsonConvert.SerializeObject(m));
     }
     [Theory] [InlineData(false)] [InlineData(true)]
-    public void HouseholdOutflowDoesNotWriteB1WhenActiveOrInactive(bool memoryActive)
+    public void HouseholdOutflowKeepsIndependentLedgerWithOptionalMemory(bool memoryActive)
     {
         var (city, market, _) = Ready(finances: true);
         city.State.Capabilities.Active = memoryActive;
         var meal = city.State.Food!.Residents.Single();
         Advance(city, meal.DesiredAt + 7);
         Assert.Equal(1, meal.Purchases); Assert.Equal(Money.FromCents(100), meal.Budget!.ExternalFoodSpent);
-        Assert.True(HouseholdFinance.CashConserved(meal.Budget)); Assert.Empty(meal.Memory.Entries); Assert.Null(meal.Memory.Watermark);
+        Assert.True(HouseholdFinance.CashConserved(meal.Budget));
+        if (memoryActive) { Assert.Equal(1, Assert.Single(meal.Memory.Entries).Served); Assert.Equal(ExperienceStage.Served, meal.Memory.Watermark!.Stage); }
+        else { Assert.Empty(meal.Memory.Entries); Assert.Null(meal.Memory.Watermark); }
         Assert.Equal(0, market.NativeBuys);
         var read = SaveCodec.Read(SaveCodec.Write(city.State)); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(meal.Budget.ExternalFoodSpent, read.State!.Food!.Residents[0].Budget!.ExternalFoodSpent);
@@ -384,7 +386,7 @@ public sealed class RivalOutflowTests
             case "service": shop["RivalServiceMinutes"]=0; break;
             case "terms": shop["RivalTerms"]="bad"; break;
             case "weight": shop["AlternativeWeight"]=0; break;
-            case "memory": shop["MemoryContribution"]=1; break;
+            case "memory": shop["MemoryContribution"]=9; break;
             case "queue": shop["NextServiceAt"]=(double)shop["NextServiceAt"]!+1; break;
             case "source-kind": foreach(var c in decision["Awareness"]!["Union"]!) c["AlternativeKind"]=0; break;
             case "legacy-account": meal[3]=-1; break;

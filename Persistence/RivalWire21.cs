@@ -89,7 +89,7 @@ namespace PersistentCity.Persistence
             else
             {
                 Require(RivalFoodTerms.Canonical(shop.RivalTerms) && shop.RivalServiceMinutes >= 1 && shop.RivalServiceMinutes <= 30
-                    && shop.MealsPerHour == -1 && shop.AlternativeWeight > 0 && shop.MemoryContribution == 0
+                    && shop.MealsPerHour == -1 && shop.AlternativeWeight > 0
                     && !shop.ServiceUnavailable && shop.DistrictId == "" && shop.NextServiceAt == decision.OriginAt, "Invalid estimated rival candidate.");
                 Require(shop.Offers != null, "Missing rival offers.");
                 foreach (var offer in shop.Offers!) Require(offer != null && offer.Units == -1 && offer.DistrictDemandPercent == -1, "Rival stock/demand must remain unknown.");

@@ -434,7 +434,7 @@ namespace PersistentCity.Core
                     }
                     else meal.DueAt=person.NextEventMinute;
                 }
-                if (shop.AlternativeKind==FoodAlternativeKind.Player && city.State.Capabilities.Active) memoryStore.CommitStage(meal,ExperienceStage.Committed);
+                if (city.State.Capabilities.Active) memoryStore.CommitStage(meal,ExperienceStage.Committed);
                 Reserve(meal,1);
             }
             else

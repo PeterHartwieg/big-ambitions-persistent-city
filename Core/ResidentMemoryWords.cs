@@ -19,6 +19,15 @@ namespace PersistentCity.Core
             {
                 var shop = reference(entry.BusinessRef);
                 if (shop == null || entry.Day > day || FoodMemoryPolicy.Expired(entry, day, settings)) continue;
+                if (RivalFoodMemory.ModeledGeneration(shop.BusinessId))
+                {
+                    string rival = label(shop.PlaceId);
+                    if (entry.Outcome == ShopExperience.Closed)
+                        words.Add("found " + rival + " closed during a modeled rival visit; native service unobserved");
+                    else if (entry.Outcome == ShopExperience.Served)
+                        words.Add("remembers a modeled food purchase at " + rival + "; native service unobserved");
+                    continue;
+                }
                 // Generation and place must still belong to an owned scope.
                 var scope = food.Shops.Find(s => s.BusinessId == shop.BusinessId && s.PlaceId == shop.PlaceId);
                 if (scope == null || currentOwnShop != null && !currentOwnShop(scope)) continue;
