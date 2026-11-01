@@ -1,5 +1,38 @@
 # Validation status
 
+## E1 review round 1 - 1 November 2026 (offline only)
+
+**Opus-r1-1**, fix **ff11168** on reviewed **8fa4d27**. Queue weather was first
+captured by the in-radius renderer lookup. `WaitForOpening` now owns Q capture
+when the customer reaches the destination, before any physical observation.
+Normal queue refresh only reads saved terms. Migrated/pre-existing waits lacking
+a matching Q retain the fallback. Native rain still applies when E1 is disabled
+or pre-activation; only its configured lead is gated. No schema/wire-format,
+byte-budget, draw-key, route or movement change. [Updated contract](docs/population-schema20.md).
+
+Seven new real-event regressions fail on the reviewed source: dry commitment,
+rain before the first physical refresh, enabled/disabled E1 and save/reload all
+lose the dry queue; the three capture/gating cases have no Q at commitment.
+All seven pass after the fix, within **90/90 focused cases**. They verify frozen
+dry terms, unchanged saved bytes on first refresh, no new source read or route,
+and one cached native read with correctly gated new leads.
+
+**1,951/1,951 tests**, discovery and **35/35 foreground gate commands** pass (all
+31 requested plus food candidate/choice, weather and C2a comparison). The required
+one-dotnet guard ran before every command. [Embedded red/green evidence and command/hash manifest](docs/reviews/2026-11-01-e1-r1-offline-checks.json).
+Save-contract regression retains the exact C2a projected bytes and all historical
+order/economy/reload digests. The W record remains at most 22/24 bytes/resident;
+consumer weather remains 2/8 extra bytes with zero extra consumer records.
+The unchanged weather kernels have **0 >=30 ms across 1,700 measured sweeps**,
+max **4.7605 ms** in one Release process; this is offline evidence, not native
+mod-work p95 or whole-frame timing. The existing numbered 6 Nov rig checklist
+below still applies; native proof remains pending. No parked-hotspot rewrite.
+
+Final game-target DLL SHA-256: `d6c3e373c6ebc9491d25e7e1f9b88bfd99b483844a3faf773e8926155118e95d`.
+All owned test/run processes exited; repository process check found zero. No game,
+rig/test profile, ModsLocal, bridge profile or lease was touched; no push or merge.
+
+
 ## E1 rain - 1 November 2026 (offline only)
 
 Base C2a **9b13698**; implementation **0ea45a6**, hardened code/tools **dc59816**.
