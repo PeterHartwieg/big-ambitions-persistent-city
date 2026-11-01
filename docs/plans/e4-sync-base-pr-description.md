@@ -2,7 +2,7 @@
 
 Target: `codex/pc-e4-wider-menu`. Merge this PR with a **merge commit** so the real integration merge ancestry is retained; PR #56 can then be squash-merged into `codex/persistent-city`.
 
-Merge integration head `5877453` (E1) and ancestor `2f12ae9` (F1) into the approved E4 head `506e434`, using merge base `51ce709`. No rebase, squash, cherry-pick, new feature, game access or deployment. E4 retains schema 23, the eight-offer saved envelope, effective live limit four, reserved product identities and the approved missing-price fix. E1 rain capture/settings/choice inputs and F1's NO-GO stop report remain intact.
+Merge `5877453` (E1) and ancestor `2f12ae9` (F1) into the approved E4 head `506e434`, using merge base `51ce709`. When integration advanced to `0ffb819` (A5), merge it again using merge base `5877453`. No rebase, squash, cherry-pick, new feature, game access or deployment. E4 retains schema 23, the eight-offer saved envelope, effective live limit four, reserved product identities and the approved missing-price fix. E1 rain capture/settings/choice inputs, F1's NO-GO stop report and A5's inspector/acceptance changes remain intact.
 
 ## Conflict resolutions
 
@@ -25,9 +25,11 @@ Both sides' diffs against `51ce709` were read for each conflicted file:
 
 Automatic merges retain both roadmap status/perf-log entries and all existing slice checks/plans. Food choice combines captured rain multipliers with the approved E4 offer limit and derived taste inputs. Runtime retains both startup/settings paths, supply/catalogue behavior and the missing-price fix.
 
+The second real merge, against A5 `0ffb819`, conflicts only in `CHECKS.md`, `README.md` and `docs/roadmap.md`. Both sides' diffs against its merge base `5877453` were inspected. Keep both A5/E4 checks entries, README descriptions and perf-log entries, while the current README schema remains 23 with migration through 20. All A5 checks, historical measurement qualifications, plans, reviews and tests are retained. `tests/A5IntegratedAcceptanceTests.cs` changes only its current-schema assertion from 20 to 23; its four old-source migration cases and all inspector/weather/continuation assertions remain. A5's `Core/ResidentInsight.cs` is imported byte-for-byte; there is no integration-specific change to its behavior.
+
 ## Minimal integration edits
 
-Relative to the E4 head, this merge imports E1's approved Core/Runtime weather code; relative to the integration head, it imports E4's approved menu code. There are no additional **Core or Runtime code changes** beyond composing those branches. The only Core conflict selects schema 23 and retains both owners' fields. No E1/E4 policy, product permission, route bound, price, checkout, native ownership or other slice behavior was redesigned.
+Relative to the E4 head, these merges import E1's approved Core/Runtime weather code and A5's approved Core inspector code; relative to the integration head, they import E4's approved menu code. There are no additional **Core or Runtime code changes** beyond composing those branches. The only Core conflict selects schema 23 and retains both owners' fields. No E1/E4 policy, product permission, route bound, price, checkout, native ownership or other slice behavior was redesigned.
 
 Persistence changes make `MenuPredecessorSchema=20`, expose E1's existing next-day activation as the isolated `MigrateWeather20` step, and admit schema 20 in early capability probing. E4's migration still only sets `MenuPolicy` and schema 23. Schema-20 activation day, resident commitment, consumer weather and held decision weather/multiplier are preserved exactly. D2=21 and C2b=22 remain reserved and refused; they can later insert exact resolvers/migrations below E4 without changing its migration body. Unknown/newer/corrupt data remains atomically preserved.
 

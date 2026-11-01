@@ -1,0 +1,17 @@
+{
+  "testedHead": "1aaecd5756ccb742e8aab1dc22c99399351c0f6b",
+  "scope": "Additional nested offline regression; guarded foreground run, no game or rig activity.",
+  "command": [
+    "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+    "run",
+    "--project",
+    "tools/persistent-continuity/regression/PickupRegression.csproj",
+    "--configuration",
+    "Release"
+  ],
+  "exit": 0,
+  "seconds": 4.578,
+  "log": "build\\a5-gate\\pickup-regression.log",
+  "logSha256": "608eae841ef2ed0f1dbfb45d11a356fef2231fcfe9cee06e68756577f5a0b157",
+  "output": "PASS 25 pickup helper checks against actual Core scheduler/kernel, with native route/clock doubles. No Unity/game execution.\n"
+}

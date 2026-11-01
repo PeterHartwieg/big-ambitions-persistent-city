@@ -31,4 +31,6 @@ Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here
 - C4 — Bounded inactive market research, access contract, base sync and native checklist: [checks](docs/checks/c4-market-research.md).
 
 - E4 — Schema 23 envelope (1 Nov, offline; original pre-E1 measurements): 4/8 choice p95 0.0134/0.0257 ms; supply 1,960 -> 1,552 B; eight-product save 10,135,833 B; 6 Nov checklist: [checks](docs/checks/e4-wider-menu.md).
+- A5 — Integrated acceptance, pre-E1 measurements, schema-20 base sync and 12 numbered rig checks: [checks](docs/checks/a5-integrated-acceptance.md).
+
 - E1 — New-outing and food weather, schema 20, base sync and native checklist: [checks](docs/checks/e1-rain.md).
