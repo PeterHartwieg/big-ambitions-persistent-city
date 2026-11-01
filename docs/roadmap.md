@@ -33,6 +33,8 @@ Later: residents as employees, households.
 
 Implementation plan for B–E: [memory, marketing, rivals and the wider street](plans/steps-b-e.md).
 
+E3 pizza status (offline): [STOP record](plans/e3-pizza.md); pinned conditional shared probe, shipped holder unestablished, no menu/gameplay/save change. [Validation and 6 Nov handoff](checks/e3-pizza.md).
+
 E4 status, 1 November (offline): schema 23 menu/product/history envelope implemented; effective live limit four, no extra product enabled. [Validation and numbered 6 Nov handoff](checks/e4-wider-menu.md).
 
 E3 status, 31 October (offline): [donut](plans/e3-donut.md) and [cupcake feasibility discovery](plans/e3-cupcake.md) share one isolated on-demand raw-field reader with pinned candidates. Loaded equipment and natural checkout/settlement proof remain pending; no additional product certified or enabled.
@@ -88,6 +90,8 @@ Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index
 - E3 cupcake — [Shared reader timing and allocation evidence](perf/e3-cupcake.md).
 
 - E3 salad — [Conditional shared reader timing and allocation evidence](perf/e3-salad.md).
+
+- E3 pizza — [Four-candidate cold/warm costs and allocations; no new win claimed](perf/e3-pizza.md).
 
 - C4 — [Bounded inactive research and direct trait validation](perf/c4-market-research.md).
 

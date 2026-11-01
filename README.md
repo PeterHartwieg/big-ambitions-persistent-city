@@ -2,6 +2,8 @@
 
 Validation and dated development notices are in the [checks index](CHECKS.md); each slice maintains its own evidence file.
 
+E3 pizza: [feasibility STOP record](docs/plans/e3-pizza.md), conditional shared probe only; shipped holder unestablished, no product enabled or gameplay/save change. [Offline checks and 6 Nov handoff](docs/checks/e3-pizza.md).
+
 E4 implements the [schema 23 wider-menu envelope](docs/population-schema23.md) with offline coverage; the effective live menu limit stays four and no additional native product is enabled. [Evidence and pending 6 Nov checks](docs/checks/e4-wider-menu.md).
 
 E3 ice cream: [feasibility STOP](docs/plans/e3-icecream.md), shipped holder unestablished; conditional read-only probe only ([offline checks](docs/checks/e3-icecream.md)).

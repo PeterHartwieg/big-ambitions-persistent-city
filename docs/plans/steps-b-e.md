@@ -21,6 +21,8 @@ Implementation PRs land through ordinary review and proof gates on the developme
 
 ## Verified seams and gaps
 
+E3 pizza status (offline): [STOP at unestablished shipped holder](e3-pizza.md); conditional pinned shared probe only, existing read branches unchanged, no menu/gameplay/schema change. [Offline proof and 6 Nov handoff](../checks/e3-pizza.md).
+
 Paths are repository-relative. “Verified” means present in the inspected source, **not** fresh native proof. Cross-project field names quoted by the older review remain leads until independently checked against the then-targeted game assemblies and a disposable native fixture.
 
 | Area | Source-backed seam | Gap / implementation constraint |
