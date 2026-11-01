@@ -1,4 +1,5 @@
 """Foreground-only E3 offline gates. No game/rig/profile access and no command timeouts."""
+import argparse
 import json
 import os
 from pathlib import Path
@@ -59,7 +60,19 @@ gates += [
     ("icecream-isolation", [sys.executable, "tools/icecream-feasibility-regression/source_checks.py"]),
     ("icecream-baseline", [sys.executable, "tools/icecream-feasibility-regression/measure_baseline.py"]),
 ]
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--from-gate", help="Resume after a harness-only fix; retain earlier successful gates")
+args = parser.parse_args()
 results = []
+if args.from_gate:
+    start = next(i for i, (name, _) in enumerate(gates) if name == args.from_gate)
+    previous = json.loads((OUT / "results.json").read_text(encoding="utf-8"))
+    results = previous[:start]
+    assert len(results) == start and all(r["exit"] == 0 for r in results)
+    failed = OUT / (args.from_gate + ".txt")
+    if failed.exists():
+        (OUT / (args.from_gate + "-previous.txt")).write_bytes(failed.read_bytes())
+    gates = gates[start:]
 for name, command in gates:
     print(f"START {name}", flush=True)
     # Python harnesses also launch dotnet; serialize those too. No tests are detached.

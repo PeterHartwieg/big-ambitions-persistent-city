@@ -12,4 +12,4 @@ source = source.replace("static class Program\n", "static partial class Program\
 source = source.replace("        var timings = new List<object>();", "        IcecreamChecks(cold);\n        var timings = new List<object>();")
 target = Path(sys.argv[1])
 target.parent.mkdir(parents=True, exist_ok=True)
-target.write_text(source, encoding="utf-8")
+target.write_text("#nullable enable\n" + source, encoding="utf-8")

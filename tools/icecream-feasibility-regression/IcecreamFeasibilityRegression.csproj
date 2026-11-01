@@ -5,7 +5,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../Core/PersistentCity.Core.csproj" />
-    <Compile Include="$(IntermediateOutputPath)Program.Generated.cs" />
     <Compile Include="../../Runtime/DirectStockShowcaseReader.cs" />
     <Compile Include="../../Runtime/DonutFeasibilityReader.cs" />
     <Compile Include="../../Runtime/CupcakeFeasibilityReader.cs" />
@@ -14,5 +13,6 @@
   </ItemGroup>
   <Target Name="ReusePinnedCases" BeforeTargets="CoreCompile">
     <Exec Command="python &quot;$(MSBuildProjectDirectory)/generate_cases.py&quot; &quot;$(MSBuildProjectDirectory)/$(IntermediateOutputPath)Program.Generated.cs&quot;" />
+    <ItemGroup><Compile Include="$(IntermediateOutputPath)Program.Generated.cs" /></ItemGroup>
   </Target>
 </Project>
