@@ -24,6 +24,8 @@ static partial class Program
         {
             var fixtures=Fixtures(1024);
             foreach(var c in fixtures) c.buildingRegistration.retailPrices[0].itemName="clothing";
+            fixtures[1].buildingRegistration.retailPrices[0].itemName=null!;
+            fixtures[2].buildingRegistration.retailPrices[0].itemName="";
             var (city,market)=PlayerControl(fixtures);
             foreach(var c in fixtures.Skip(1)) city.State.Places.Add(new Place {Id="address:Test%20Street:"+c.buildingRegistration.StreetNumber+":shop",Kind=PlaceKind.Shop,Position=new(1,0,0)});
             var meal=city.State.Food!.Residents.Single();var dump=city.InspectFoodAwareness(meal.ResidentId)!;

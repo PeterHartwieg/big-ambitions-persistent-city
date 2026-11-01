@@ -123,7 +123,7 @@ namespace PersistentCity.Runtime
             // retailer must never occupy the common source/index or shortlist slots.
             bool food = false;
             if (reg.retailPrices != null) foreach (var price in reg.retailPrices)
-                if (price != null && FoodProducts.Known(price.itemName)) { food = true; break; }
+                if (price != null && price.itemName != null && FoodProducts.Known(price.itemName)) { food = true; break; }
             if (entry.AdvertisesFood != food) { entry.AdvertisesFood = food; MetadataRevision++; }
             entry.Seen = epoch;
         }
