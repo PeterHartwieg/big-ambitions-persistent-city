@@ -176,7 +176,7 @@ public sealed partial class FoodCommerceTests
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = source, ["foreign"] = "kept" };
         var read = SaveSession.Open(data, city.State.PopulationKey).InitialReadResult;
         Assert.Equal(SaveReadStatus.Loaded, read.Status); Assert.Equal(sourceSchema, read.SourceSchema);
-        Assert.Equal(23, read.State!.Schema); Assert.Same(source, data[SaveStore.StateKey]);
+        Assert.Equal(CityState.CurrentSchema, read.State!.Schema); Assert.Same(source, data[SaveStore.StateKey]);
         Assert.Equal((int)(city.State.Minute / 1440) + 1, read.State.WeatherStartsDay);
         Assert.All(read.State.Citizens, p => Assert.Null(p.W));
         Assert.All(read.State.Food!.Residents, m => Assert.Equal(WeatherSample.Unknown, m.Memory.Weather));

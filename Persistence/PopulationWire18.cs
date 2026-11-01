@@ -63,7 +63,7 @@ namespace PersistentCity.Persistence
                 {
                     schema = HeaderInteger(requireCanonical: false);
                     if (schema >= 18) Require(canonicalInteger, "Noncanonical population schema.");
-                    Require(schema >= 13 && (schema <= 21 || schema == 23), "Unsupported population schema; preserve the payload.");
+                    Require(schema >= 13 && schema <= 23, "Unsupported population schema; preserve the payload.");
                 }
                 else if (name == "Capabilities")
                 {
@@ -152,7 +152,7 @@ namespace PersistentCity.Persistence
             var context = WireContext.FromSource(source);
             using var reader = Reader(source);
             Require(reader.Read(), "Missing state.");
-            CheckShape(reader, typeof(CityState), schema==21 ? Schema21Contracts : StateContracts, ref streaming, new TokenText(source), schema, new FieldNameSets());
+            CheckShape(reader, typeof(CityState), schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : StateContracts, ref streaming, new TokenText(source), schema, new FieldNameSets());
             Require(!reader.Read(), "Trailing content.");
             return (streaming, semantic);
         }

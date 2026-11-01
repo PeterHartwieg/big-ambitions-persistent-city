@@ -26,6 +26,7 @@ B. Memory, loyalty and regulars. **B0 is implemented offline:** schema 18, exact
    B1 protected-insertion exception: if recording a new bad visit would evict a competing boost, return chance stays equal (never higher), with a terminal failed watermark and no negative per-shop entry. B2 must not assume every failure leaves a negative entry; `ProtectedInsertions` is session-local, not saved history. [Exact exception](population-schema18.md#b1-execution--31-october-2026).
 
 C. Marketing awareness and targeting, plus the market research product. **C2a implemented offline on B0b:** bounded source/index interface, B1 memory projection/campaign-unknown providers, local/routine and positive daily distant discovery, common eight-slot shortlist, additive schema 19. B1 memory is wired within the existing four source slots and bounded rank; r1 bounds rebuild continuations and restores at-stop observation/diagnostics and strict held-image validation. Combined 6 Nov rig proof pending. [Contract](population-schema19.md). **C4 implemented offline and inactive:** bounded pure research engine/access contract only; paid research stays off because C3 found no safe native fee path. No UI, normal-play computation or saved fields. [Contract and offline proof](market-research.md).
+   C2b (1 Nov, offline): hourly observed campaign images, bounded source/index and schema 22 implemented; Peter's 1 Nov rule now applies active preference/softer distance for all residents; native checks batched into the combined locked rig under merge rule v2, no rig proof claimed. [Checks](checks/c2b-campaign-awareness.md).
 D. Rivals as alternatives. **D2 implemented offline, schema 21:** bounded rival choices and atomic external-food spending; combined 6 Nov proof pending. [D2 checks](checks/d2-rival-outflow.md).
 E. Weather, street life, bigger menus and more products. **E1 implemented offline:** new-context weather capture, soft rain effects, frozen queue commitment replay and additive schema 20 on the merged C2a/B1 contract; E2b timing and menu feasibility remain intact. Combined-head native checks remain pending. [Contract/budget](population-schema20.md).
 Then: re-check the same performance gate for the final release, the hands-on session, and one release.
@@ -42,6 +43,8 @@ E3 status, 31 October (offline): [donut](plans/e3-donut.md) and [cupcake feasibi
 E3 salad status, 1 November (offline): [salad stop record](plans/e3-salad.md) adds a pinned conditional probe on the cupcake/donut stack. Shipped holder unestablished; no generic holder extension, menu, gameplay or saved change. Existing read branches retained; no additional cheap safe measured perf win identified. Three-candidate offline timing and the combined 6 Nov handoff are in [CHECKS](checks/e3-salad.md#e3-salad-feasibility---1-november-2026-offline-only).
 
 E3 ice cream status, 1 November (offline): [independent feasibility STOP](plans/e3-icecream.md); shipped holder/resource contract unestablished, shared read branches unchanged, no product/menu/save/gameplay change. [Offline timings and 6 Nov handoff](checks/e3-icecream.md).
+
+E3 frenchfries status, 1 November (offline): [STOP record](plans/e3-frenchfries.md); shipped holder unestablished, pinned conditional probe with unchanged shared read branches. No gameplay/menu/save change; [four-reader timing and 6 Nov handoff](checks/e3-frenchfries.md). No additional cheap safe measured perf win identified.
 
 Peter’s [31 October Q1-Q7 decisions](plans/steps-b-e.md#product-decisions-peter-31-oct-2026) specify tiered paid research as a third native-agency option (proven fee or unavailable), local/distant discovery, estimated rivals, food-first products, no anonymous crowds/night multiplier and own-shop regulars; tier contents/fees remain open.
 
@@ -68,6 +71,7 @@ Record every taken win with before/after numbers.
 
 Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index line here. Keep before/after numbers and measurement limits in that file; sync/review-fix notes stay with the slice.
 
+- C2b - [Campaign index reuse, canonical sorting, shared references, active-hour buffers and neutral marker cache](perf/c2b-campaign-awareness.md).
 - D2 — [Bounded rival choice, refresh and settlement measurements](perf/d2-rival-outflow.md).
 
 

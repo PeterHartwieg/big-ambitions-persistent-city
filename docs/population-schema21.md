@@ -3,9 +3,10 @@
 Owner: `pc-d2-rival-outflow`, 1 November 2026. D2 builds on E1's schema 20
 at `5877453`. The initial D2 measurements used schema 19 at `51ce709`, before
 E1; those archived numbers are not merged-head measurements. The isolated
-migration hook is `RivalWire21.Migrate`. Schema 22 (C2b) remains reserved and refused. After E4 landed at `2bd9006`,
-its isolated menu step follows this validated predecessor as 21 -> 23; current
-saves use schema 23. D2 continues to own only schema 21.
+migration hook is `RivalWire21.Migrate`. D2 sits below C2b schema 22 and E4
+schema 23: **20 -> 21 -> 22 -> 23**; the writer remains 23. D2 continues to
+own only schema 21. Exact 21 contains E1 weather and D2 state, excluding C2b
+campaigns and E4 fields. Exact 22 adds campaigns while retaining D2 state.
 
 ## Migration and authority
 
@@ -28,7 +29,7 @@ the 20 -> 21 step.
 
 Unknown/future schemas, foreign fields, bad enum codes, malformed tuples and
 noncanonical money refuse without overwriting the source. Early native-authority
-bootstrap accepts only supported schemas 13-21 and 23; older binaries reject 21 before
+bootstrap accepts only supported schemas 13-23; older binaries reject 21 before
 resuming authority. Native authority keys, `persistentcity:state_v1`,
 `FoodSaleReceipts` keys/content and the detached shadow schema are unchanged.
 Transient D2 `FoodBusiness` evidence is excluded from the unchanged shadow format;

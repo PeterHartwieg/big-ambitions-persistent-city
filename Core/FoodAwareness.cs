@@ -11,7 +11,7 @@ namespace PersistentCity.Core
     public enum FoodAwarenessAlternativeKind { Managed, External }
 
     [Flags]
-    public enum FoodAwarenessSource { Memory=1, Home=2, Routine=4, Origin=8, Discovery=16, Campaign=32 }
+    public enum FoodAwarenessSource { Memory=1, Home=2, Routine=4, Origin=8, Discovery=16, Campaign=32, ActiveCampaign=64 }
 
     /// <summary>Complete generation identity, never a door/name or recycled ordinal. Implementations do
     /// O(1) lookup per slot. C2a supplies no memory writer or campaign evidence.</summary>
@@ -59,6 +59,24 @@ namespace PersistentCity.Core
     {
         public string CatalogueRevision { get; set; } = "";
         public List<FoodAwarenessCandidate> Union { get; set; } = new List<FoodAwarenessCandidate>(24);
+        // Transient derived cache. Capture/strict decode restore it; no saved field is added.
+        private bool? activeCampaign;
+        internal void ClearCampaignModifier() => activeCampaign=false;
+        internal void MarkCampaignModifier() => activeCampaign=true;
+        public void RefreshCampaignModifier()
+        {
+            activeCampaign=false;
+            foreach(var candidate in Union) if(candidate!=null && (candidate.Sources & FoodAwarenessSource.ActiveCampaign)!=0)
+            {activeCampaign=true;break;}
+        }
+        public bool CampaignActive(string business)
+        {
+            if(!activeCampaign.HasValue) RefreshCampaignModifier();
+            if(activeCampaign!=true) return false;
+            foreach(var candidate in Union) if(candidate.BusinessId==business)
+                return (candidate.Sources & FoodAwarenessSource.ActiveCampaign)!=0;
+            return false;
+        }
     }
     public sealed class FoodAwarenessSample
     {
@@ -305,6 +323,7 @@ namespace PersistentCity.Core
             IFoodAwarenessProvider? campaign=null,FoodAwarenessDump? diagnostic=null,string? presentPlace=null)
         {
             var image=new FoodAwarenessImage {CatalogueRevision=Revision};
+            image.ClearCampaignModifier();
             void Add(Entry? entry,FoodAwarenessSource source,int slot,bool exposed,string reason)
             {
                 bool admitted=entry!=null && exposed && eligible(entry);
@@ -359,8 +378,19 @@ namespace PersistentCity.Core
                 Add(exposed ? entry : null,FoodAwarenessSource.Discovery,i,exposed,"not discovered");
                 if(diagnostic!=null && !exposed) diagnostic.Samples[diagnostic.Samples.Count-1].BusinessId=entry?.BusinessId ?? "";
             }
-            // Do not ask a provider for native campaign data in C2a. This reserved seam admits zero.
-            if(diagnostic!=null) for(int i=0;i<8;i++) diagnostic.Samples.Add(new FoodAwarenessSample {Source=FoodAwarenessSource.Campaign,Slot=i,Result="unknown"});
+            // Only a prepared C2b provider can supply evidence. Unavailable/foreign providers remain Unknown.
+            if(campaign is IFoodCampaignAwarenessProvider verified && verified.HasEvidence)
+                for(int i=0;i<8;i++)
+                {
+                    string? id=verified.Reference(consumer,day,i);
+                    Add(id==null ? null : Find(id),FoodAwarenessSource.Campaign,i,true,"unexposed, duplicate or ineligible");
+                }
+            else if(diagnostic!=null) for(int i=0;i<8;i++) diagnostic.Samples.Add(new FoodAwarenessSample {Source=FoodAwarenessSource.Campaign,Slot=i,Result="unknown"});
+            // A modifier on already-admitted identities, not another draw or admission slot.
+            if(campaign is IFoodCampaignAwarenessProvider active && active.HasEvidence)
+                foreach(var candidate in image.Union)
+                    if(active.Active(candidate.BusinessId))
+                    {candidate.Sources|=FoodAwarenessSource.ActiveCampaign;image.MarkCampaignModifier();}
             image.Union.Sort((a,b)=>StringComparer.Ordinal.Compare(a.BusinessId,b.BusinessId));
             if(diagnostic!=null) diagnostic.Image=image;
             return image;
@@ -374,7 +404,7 @@ namespace PersistentCity.Core
             {
                 if(!candidate.Eligible) continue;
                 var entry=Find(candidate.BusinessId);if(entry==null || entry.Kind==FoodAwarenessAlternativeKind.External && rivalWeight==0) continue;
-                double rank=FoodDrawContext.Rank(draw.ShopHash(entry.BusinessId),FoodChoicePolicy.ApplyMemory(preference.Weight(Position.Distance(origin,entry.Position)/pace,true),memoryContribution?.Invoke(entry.BusinessId) ?? 0,settings.FoodChoiceWeightFloor)*(entry.Kind==FoodAwarenessAlternativeKind.External ? rivalWeight : 1));
+                double rank=FoodDrawContext.Rank(draw.ShopHash(entry.BusinessId),FoodChoicePolicy.ApplyMemory(preference.Weight(Position.Distance(origin,entry.Position)/pace,true,(candidate.Sources & FoodAwarenessSource.ActiveCampaign)!=0),memoryContribution?.Invoke(entry.BusinessId) ?? 0,settings.FoodChoiceWeightFloor)*(entry.Kind==FoodAwarenessAlternativeKind.External ? rivalWeight : 1));
                 int at=0;while(at<count && (ranks[at]<rank || ranks[at]==rank && StringComparer.Ordinal.Compare(selected[at].BusinessId,entry.BusinessId)<0)) at++;
                 if(at==8) continue;
                 for(int j=Math.Min(count,7);j>at;j--) {selected[j]=selected[j-1];ranks[j]=ranks[j-1];}

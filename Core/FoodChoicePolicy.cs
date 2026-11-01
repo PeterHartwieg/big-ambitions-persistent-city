@@ -8,9 +8,10 @@ namespace PersistentCity.Core
     public readonly struct EvaluatedFoodOffer
     {
         public EvaluatedFoodOffer(string business, string product, Money price, double travel, double queue,
-            double usedTime, double window, int? quality, int? demand, MealKind kind, double memoryContribution = 0, double alternativeWeight = 1, int newTasteBand = -1)
-        { NewTasteBand=newTasteBand; AlternativeWeight=alternativeWeight; MemoryContribution=memoryContribution; BusinessId=business; ProductId=product; Price=price; Travel=travel; Queue=queue; UsedTime=usedTime;
+            double usedTime, double window, int? quality, int? demand, MealKind kind, double memoryContribution = 0, double alternativeWeight = 1, int newTasteBand = -1, bool campaignActive = false)
+        { CampaignActive=campaignActive; NewTasteBand=newTasteBand; AlternativeWeight=alternativeWeight; MemoryContribution=memoryContribution; BusinessId=business; ProductId=product; Price=price; Travel=travel; Queue=queue; UsedTime=usedTime;
           Window=window; Quality=quality; Demand=demand; Kind=kind; }
+        public bool CampaignActive { get; }
         public double MemoryContribution { get; }
         public double AlternativeWeight { get; }
         public int NewTasteBand { get; }
@@ -74,9 +75,13 @@ namespace PersistentCity.Core
                 divisor=1+traits.Band(ResidentTrait.TravelWillingness)/2.0;
                 floor=settings.FoodChoiceWeightFloor;temperature=settings.FoodShortlistTemperature;
             }
-            internal double Weight(double minutes,bool shortlist)
+            internal double Weight(double minutes,bool shortlist,bool campaignActive=false)
             {
+                // Peter, 1 Nov: all residents receive the same active-campaign preference.
+                // Halve the soft distance penalty and add a modest 25% preference even at the door.
+                if(campaignActive) minutes*=.5;
                 double w=1/(1+weight*Math.Max(0,minutes)/scale*2/divisor);
+                if(campaignActive) w*=1.25;
                 return shortlist ? Positive(w,floor,temperature) : w;
             }
         }
@@ -93,7 +98,7 @@ namespace PersistentCity.Core
             double w=tasteWeight==1 ? taste : Math.Pow(taste,tasteWeight);
             w/=1+s.FoodChoicePriceWeight*(.5+.25*t.Band(ResidentTrait.PriceSensitivity))
                 *o.Price.ApproximateCents()/Math.Max(1,allowance.ApproximateCents());
-            w*=DistanceWeight(o.Travel,t,s,false,weatherTravelMultiplier);
+            w*=DistanceWeight(o.Travel,t,s,false,weatherTravelMultiplier,o.CampaignActive);
             w/=1+s.FoodChoiceQueueWeight*o.Queue/(2+3*t.Band(ResidentTrait.QueuePatience));
             double quality=(o.Quality.HasValue ? (o.Quality.Value-50)/100.0 : 0)
                 +(o.Demand.HasValue ? (o.Demand.Value-50)/100.0 : 0);
@@ -102,8 +107,10 @@ namespace PersistentCity.Core
             w/=1+s.FoodChoiceTasteWeight*MealRhythm.ProductPenalty(o.Kind,o.ProductId)/200.0;
             return ApplyMemory(Positive(w,s.FoodChoiceWeightFloor,s.FoodChoiceTemperature), o.MemoryContribution, s.FoodChoiceWeightFloor);
         }
-        public static double DistanceWeight(double minutes,ResidentTraits t,FoodChoiceSettings s,bool shortlist,double weatherTravelMultiplier=1)
-            => new DistancePreference(t,s,weatherTravelMultiplier).Weight(minutes,shortlist);
+        public static double DistanceWeight(double minutes,ResidentTraits t,FoodChoiceSettings s,bool shortlist,double weatherTravelMultiplier=1,bool campaignActive=false)
+            => new DistancePreference(t,s,weatherTravelMultiplier).Weight(minutes,shortlist,campaignActive);
+        public static double DistanceWeight(double minutes,ResidentTraits t,FoodChoiceSettings s,bool shortlist,bool campaignActive)
+            => DistanceWeight(minutes,t,s,shortlist,1,campaignActive);
         internal static double ApplyMemory(double weight, double contribution, double floor)
             => Math.Max(floor, Math.Min(64, weight * Math.Exp(contribution)));
         private static double Positive(double w,double floor,double temperature)

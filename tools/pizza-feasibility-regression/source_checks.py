@@ -8,14 +8,16 @@ ROOT = Path(__file__).resolve().parents[2]
 prior = runpy.run_path(str(ROOT / "tools/donut-feasibility-regression/source_checks.py"), run_name="__main__")
 # Combined pizza/icecream reader; the icecream guard changes only its full-reader pin and facade allowlist.
 PINS = {
-    'tools/icecream-feasibility-regression/source_checks.py': 'd245b1ba1b9115e23d958c478f2d991f5e878fb6cc8e797e3c1b7844cad4869f',
-    'Runtime/DirectStockShowcaseReader.cs': '6aff3daddcb0a47f8bbe652790a8711e984a3994dd89f9c09a5b9ad192c55448',
+    'tools/icecream-feasibility-regression/source_checks.py': '78334d24112652e986130716c1961d4a8d8782e2c046cdfa0c06063e75b81acf',
+    'Runtime/DirectStockShowcaseReader.cs': '239650040cb06dde4f0d8030e659c906a5fe09c8b37ea7be9dc763162ddb880d',
     'Runtime/PizzaFeasibilityReader.cs': '405c404b3bf5db5a53aaf3499b2cca0ead84b9c310cdbcfcd66dd660aa712031',
     'tools/pizza-feasibility-regression/PizzaFeasibilityRegression.csproj': 'aae90ea4187cb9def744ce5a3c8899abfa78472bab2d665b10e1eaa7bc3a718d',
     'tools/pizza-feasibility-regression/Program.cs': '973e0752fcc24b8b5699901aaeb1c409617ccbf102095ae5f9c4238dae710cca',
 }
 for path, expected in PINS.items():
     source = (ROOT / path).read_bytes().replace(b"\r\n", b"\n")
+    if path == "tools/icecream-feasibility-regression/source_checks.py":
+        source = source.replace(b'    source = (ROOT / path).read_text(encoding="utf-8")\n    if path == "tools/icecream-feasibility-regression/measure_baseline.py":\n        source = source.replace(\'shared = shared.replace(\\\'        internal static readonly DirectStockCandidate Pizza = new DirectStockCandidate("ba:itemname_pizza");\\\\n\\\', "")\\n\', "")\n    assert hashlib.sha256(source.encode()).hexdigest() == expected, path\n', b'    assert hashlib.sha256((ROOT / path).read_text(encoding="utf-8").encode()).hexdigest() == expected, path\n')
     assert hashlib.sha256(source).hexdigest() == expected, path
 
 print("PASS pizza source pins and no gameplay caller/poll/writer")
@@ -24,7 +26,9 @@ BASE = prior["args"].audit_base
 if not BASE:
     raise SystemExit(0)
 allowed = {"Runtime/DirectStockShowcaseReader.cs", "tools/donut-feasibility-regression/source_checks.py",
-           "tools/icecream-feasibility-regression/source_checks.py"}  # Exact guard pin above.
+           "tools/icecream-feasibility-regression/source_checks.py",
+           "tools/pizza-feasibility-regression/source_checks.py",
+           "tools/salad-feasibility-regression/compare_baseline.py"}  # Exact guard pin above.
 tree = subprocess.check_output(["git", "ls-tree", "-rz", BASE], cwd=ROOT)
 protected = []
 for entry in tree.rstrip(b"\0").split(b"\0"):

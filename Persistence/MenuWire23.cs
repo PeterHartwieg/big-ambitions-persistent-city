@@ -7,10 +7,10 @@ namespace PersistentCity.Persistence
 {
     public static partial class SaveCodec
     {
-        private const int MenuPredecessorSchema = 21;
+        private const int MenuPredecessorSchema = 22;
         private static void MigrateMenu23(CityState state)
         {
-            Require(state.Schema == MenuPredecessorSchema, "Menu migration requires exact schema 21.");
+            Require(state.Schema == MenuPredecessorSchema, "Menu migration requires exact schema 22.");
             // The source has already passed its original shape, bounds, money and identity checks.
             state.MenuPolicy = FoodMenuPolicy.Wire;
             state.Schema = 23;

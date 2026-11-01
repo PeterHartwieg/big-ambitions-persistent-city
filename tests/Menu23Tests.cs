@@ -17,7 +17,7 @@ public sealed partial class FoodCommerceTests
     {
         int current=city.Schema;city.Schema=schema<20 ? 19 : schema;
         string wire;
-        try { wire=schema==21 ? SaveCodec.WriteForSchema(city,21) : schema<20 ? PopulationSchema19.Write(city) : PopulationSchema20.Write(city); }
+        try { wire=schema>=21 ? SaveCodec.WriteForSchema(city,schema) : schema<20 ? PopulationSchema19.Write(city) : PopulationSchema20.Write(city); }
         finally { city.Schema=current; }
         if(schema!=18) return wire;
         var root=JObject.Parse(wire);root["Schema"]=18;((JObject)root["Food"]!).Remove("AwarenessStartsDay");
@@ -25,7 +25,7 @@ public sealed partial class FoodCommerceTests
         return root.ToString(Formatting.None);
     }
 
-    [Theory] [InlineData(18)] [InlineData(19)] [InlineData(20)] [InlineData(21)]
+    [Theory] [InlineData(18)] [InlineData(19)] [InlineData(20)] [InlineData(21)] [InlineData(22)]
     public void E4_ExactOldReaderMigrationAndForeignOrNewerShapesPreserveSource(int schema)
     {
         var (city,_)=S17_Full();
@@ -35,7 +35,7 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(FoodMenuPolicy.Wire,read.State.MenuPolicy);
         Assert.Equal(source,E4_Old(read.State,schema));
         Assert.Equal(SaveCodec.Write(read.State),SaveCodec.Write(SaveCodec.Read(SaveCodec.Write(read.State)).State!));
-        foreach(int unknown in new[]{22,24,25})
+        foreach(int unknown in new[]{24,25,99})
         {
             var root=JObject.Parse(source);root["Schema"]=unknown;
             string bad=root.ToString(Formatting.None);
@@ -48,7 +48,7 @@ public sealed partial class FoodCommerceTests
         B0_Preserve(foreign.ToString(Formatting.None),city.State);
     }
 
-    [Theory] [InlineData(18)] [InlineData(19)] [InlineData(20)] [InlineData(21)]
+    [Theory] [InlineData(18)] [InlineData(19)] [InlineData(20)] [InlineData(21)] [InlineData(22)]
     public void E4_OldContractsRejectFifthScopeHistoryAndCapturedOffers(int schema)
     {
         var (city,_)=S17_Full();

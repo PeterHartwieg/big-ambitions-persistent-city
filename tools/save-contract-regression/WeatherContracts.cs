@@ -12,13 +12,13 @@ static partial class Program
     private static string WithoutMenu23(string wire)
     {
         if(typeof(CityState).GetProperty("MenuPolicy")==null) return wire;
-        var root=JObject.Parse(wire);root["Schema"]=21;root.Remove("MenuPolicy");
+        var root=JObject.Parse(wire);root["Schema"]=22;root.Remove("MenuPolicy");
         return root.ToString(Formatting.None);
     }
     private static string WithoutWeather20(string wire)
     {
         if(!Weather20) return wire;
-        var root=JObject.Parse(WithoutMenu23(wire));root["Schema"]=19;root.Remove("WeatherStartsDay");
+        var root=JObject.Parse(WithoutCampaigns22(WithoutMenu23(wire)));root["Schema"]=19;root.Remove("WeatherStartsDay");
         foreach(JObject p in root["Citizens"]!) p.Remove("W");
         if(root["Food"] is JObject food) foreach(JArray m in food["Residents"]!)
         {
@@ -72,6 +72,8 @@ static partial class Program
         string wire=SaveCodec.Write(state),old=WithoutWeather20(PreRivalWire(state));
         Check(PreRivalWire(state).Length-old.Length==WeatherChars20(state),"Schema-20 additive weather byte ledger mismatch.");
         Check(wire.Length-WithoutMenu23(wire).Length==MenuHeaderChars23(state),"Schema-23 menu header byte ledger mismatch.");
+        string schema22=WithoutMenu23(wire);
+        Check(schema22.Length-WithoutCampaigns22(schema22).Length==CampaignChars22(state),"Schema-22 campaign byte ledger mismatch.");
         string schema20=PreRivalWire(state);
         var from20=SaveCodec.Read(schema20);
         Check(from20.Status==SaveReadStatus.Loaded && from20.SourceSchema==20,"Schema-20 migration refused.");

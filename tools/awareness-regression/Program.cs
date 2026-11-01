@@ -97,7 +97,7 @@ static class Program
     }
     static JObject WithoutWeather20(JObject root)
     {
-        root.Remove("WeatherStartsDay");root.Remove("MenuPolicy");
+        ((JObject)root["Food"]!).Remove("Campaigns");root.Remove("WeatherStartsDay");root.Remove("MenuPolicy");
         foreach(JObject citizen in root["Citizens"]!) citizen.Remove("W");
         foreach(JArray row in root["Food"]!["Residents"]!)
         {
@@ -132,7 +132,7 @@ static class Program
         foreach(var entry in image.Union) clone.Union.Add(new FoodAwarenessCandidate {BusinessId=entry.BusinessId,Eligible=entry.Eligible,Sources=entry.Sources});
         long managedGraphBytes=GC.GetAllocatedBytesForCurrentThread()-allocation;GC.KeepAlive(clone);
         // Equal held image exists once even at the 150k-consumer ceiling. No per-consumer delta.
-        return new {residents,consumers=state.Food.Residents.Count,baselineBytes,candidateBytes=bytes,addedBytes=bytes-baselineBytes,awarenessProjectionSchema=19,currentWireBytes=wireBytes,weatherAndMenuBytes=wireBytes-System.Text.Encoding.UTF8.GetByteCount(WithoutWeather20(JObject.Parse(candidate)).ToString(Formatting.None)),rivalBytes=System.Text.Encoding.UTF8.GetByteCount(WithoutWeather20(JObject.Parse(candidate)).ToString(Formatting.None))-bytes,managedGraphBytesSharedStrings=managedGraphBytes,heldImageBytes=System.Text.Encoding.UTF8.GetByteCount(JsonConvert.SerializeObject(image)),counts.Streaming,counts.Semantic};
+        return new {residents,consumers=state.Food.Residents.Count,baselineBytes,candidateBytes=bytes,addedBytes=bytes-baselineBytes,awarenessProjectionSchema=19,currentWireBytes=wireBytes,weatherCampaignAndMenuBytes=wireBytes-System.Text.Encoding.UTF8.GetByteCount(WithoutWeather20(JObject.Parse(candidate)).ToString(Formatting.None)),rivalBytes=System.Text.Encoding.UTF8.GetByteCount(WithoutWeather20(JObject.Parse(candidate)).ToString(Formatting.None))-bytes,managedGraphBytesSharedStrings=managedGraphBytes,heldImageBytes=System.Text.Encoding.UTF8.GetByteCount(JsonConvert.SerializeObject(image)),counts.Streaming,counts.Semantic};
     }
     static object ReviewRebuildUnits(int count,bool dense)
     {
