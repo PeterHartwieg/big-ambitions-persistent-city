@@ -9,7 +9,7 @@ namespace PersistentCity.Core
     {
         public const int Version = 1;
         public const int MaximumShortlist = 8;
-        public const int MaximumOffersPerShop = 4;
+        public const int MaximumOffersPerShop = FoodMenuPolicy.MaximumOffers;
         public const int MaximumContextsPerMeal = 4;
         public const int MaximumRouteBearingDecisions = 1;
     }

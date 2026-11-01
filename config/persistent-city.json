@@ -1,4 +1,7 @@
 {
+  "FoodMenuMaximumOffersPerShop": 4,
+  "FoodMenuNewTasteWeight": 1.0,
+  "FoodMenuHealthWeight": 0,
   "FoodMarketingNeighbourhoodMetres": 250,
   "FoodMarketingNeighbourhoodDrawsPerAnchor": 4,
   "FoodMarketingDiscoveryDailyProbability": 0.02,
