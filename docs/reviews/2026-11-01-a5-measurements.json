@@ -1,0 +1,4281 @@
+{
+  "date": "2026-11-01",
+  "baseline": "51ce709",
+  "productionCode": "bcc3b00",
+  "boundary": "Offline, guarded sequential foreground .NET 10; no native mod-work frames, whole-frame data, game or rig activity.",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "productionDllSha256": "b94a86fd7dbff58b29026160f95f9980af43b68a318d5d16cc6812d22b07c354",
+  "unitSummary": "Passed!  - Failed:     0, Passed:  2351, Skipped:     0, Total:  2351, Duration: 3 m 7 s - PersistentCity.Tests.dll (net10.0)",
+  "gate": [
+    {
+      "name": "build",
+      "exit": 0,
+      "seconds": 2.14
+    },
+    {
+      "name": "unit",
+      "exit": 0,
+      "seconds": 199.234
+    },
+    {
+      "name": "discovery",
+      "exit": 0,
+      "seconds": 2.875
+    },
+    {
+      "name": "a5-inspector-regression",
+      "exit": 0,
+      "seconds": 8.843
+    },
+    {
+      "name": "agency-payment-regression",
+      "exit": 0,
+      "seconds": 3.875
+    },
+    {
+      "name": "awareness-regression",
+      "exit": 0,
+      "seconds": 20.906
+    },
+    {
+      "name": "campaign-reader-regression",
+      "exit": 0,
+      "seconds": 3.86
+    },
+    {
+      "name": "core-identity-regression",
+      "exit": 0,
+      "seconds": 10.422
+    },
+    {
+      "name": "cupcake-feasibility-regression",
+      "exit": 0,
+      "seconds": 3.703
+    },
+    {
+      "name": "diagnostic-response-regression",
+      "exit": 0,
+      "seconds": 2.875
+    },
+    {
+      "name": "donut-feasibility-regression",
+      "exit": 0,
+      "seconds": 3.485
+    },
+    {
+      "name": "event-observation-regression",
+      "exit": 0,
+      "seconds": 5.156
+    },
+    {
+      "name": "food-candidate-regression",
+      "exit": 0,
+      "seconds": 3.484
+    },
+    {
+      "name": "food-catalogue-regression",
+      "exit": 0,
+      "seconds": 3.735
+    },
+    {
+      "name": "food-checkout-regression",
+      "exit": 0,
+      "seconds": 4.343
+    },
+    {
+      "name": "food-choice-regression",
+      "exit": 0,
+      "seconds": 7.797
+    },
+    {
+      "name": "food-hours-regression",
+      "exit": 0,
+      "seconds": 3.329
+    },
+    {
+      "name": "food-household-catalogue-regression",
+      "exit": 0,
+      "seconds": 4.406
+    },
+    {
+      "name": "food-memory-regression",
+      "exit": 0,
+      "seconds": 18.485
+    },
+    {
+      "name": "food-ownership-regression",
+      "exit": 0,
+      "seconds": 5.125
+    },
+    {
+      "name": "food-regulars-regression",
+      "exit": 0,
+      "seconds": 8.938
+    },
+    {
+      "name": "food-supply-regression",
+      "exit": 0,
+      "seconds": 2.844
+    },
+    {
+      "name": "frame-observation-regression",
+      "exit": 0,
+      "seconds": 3.375
+    },
+    {
+      "name": "gate-access-regression",
+      "exit": 0,
+      "seconds": 5.172
+    },
+    {
+      "name": "held-tuning-regression",
+      "exit": 0,
+      "seconds": 8.313
+    },
+    {
+      "name": "interior-guard-regression",
+      "exit": 0,
+      "seconds": 6.015
+    },
+    {
+      "name": "market-research-regression",
+      "exit": 0,
+      "seconds": 8.453
+    },
+    {
+      "name": "native-command-regression",
+      "exit": 0,
+      "seconds": 8.828
+    },
+    {
+      "name": "optional-stop-regression",
+      "exit": 0,
+      "seconds": 5.437
+    },
+    {
+      "name": "physical-selection-regression",
+      "exit": 0,
+      "seconds": 3.907
+    },
+    {
+      "name": "road-ceiling-regression",
+      "exit": 0,
+      "seconds": 3.922
+    },
+    {
+      "name": "road-handoff-regression",
+      "exit": 0,
+      "seconds": 3.438
+    },
+    {
+      "name": "road-invalidation-regression",
+      "exit": 0,
+      "seconds": 5.578
+    },
+    {
+      "name": "road-speed-regression",
+      "exit": 0,
+      "seconds": 3.891
+    },
+    {
+      "name": "route-discovery-regression",
+      "exit": 0,
+      "seconds": 10.812
+    },
+    {
+      "name": "salad-feasibility-regression",
+      "exit": 0,
+      "seconds": 3.141
+    },
+    {
+      "name": "save-contract-regression",
+      "exit": 0,
+      "seconds": 5.922
+    },
+    {
+      "name": "startup-clock-regression",
+      "exit": 0,
+      "seconds": 7.407
+    },
+    {
+      "name": "traffic-closure-regression",
+      "exit": 0,
+      "seconds": 6.469
+    },
+    {
+      "name": "traffic-queue-regression",
+      "exit": 0,
+      "seconds": 6.344
+    },
+    {
+      "name": "vehicle-ownership-regression",
+      "exit": 0,
+      "seconds": 5.234
+    },
+    {
+      "name": "walking-quote-regression",
+      "exit": 0,
+      "seconds": 6.015
+    },
+    {
+      "name": "simulate",
+      "exit": 0,
+      "seconds": 12.203
+    },
+    {
+      "name": "food-routines",
+      "exit": 0,
+      "seconds": 11.64
+    },
+    {
+      "name": "food-demand",
+      "exit": 0,
+      "seconds": 8.172
+    },
+    {
+      "name": "choice-rush",
+      "exit": 0,
+      "seconds": 13.422
+    },
+    {
+      "name": "choice-integrated",
+      "exit": 0,
+      "seconds": 7.907
+    },
+    {
+      "name": "choice-rush-integrated",
+      "exit": 0,
+      "seconds": 9.36
+    },
+    {
+      "name": "save-bench",
+      "exit": 0,
+      "seconds": 16.141
+    },
+    {
+      "name": "choice-rush-integrated-5000",
+      "exit": 0,
+      "seconds": 20.032
+    }
+  ],
+  "saveContractStableOutputUnchanged": true,
+  "saveContract": {
+    "schema": 19,
+    "digest": "D7FF8294F56C3B3D5AF736540274E68E9848319B34658859FC15E0D4CDB1F3A2",
+    "length": 119083,
+    "refusals": [
+      "Invalid:Invalid state: Missing state schema.",
+      "Future:State uses a newer schema; preserve the original payload.",
+      "Invalid:Invalid state: Incomplete or trailing JSON content.",
+      "Invalid:Invalid state: Unknown field: UnknownCitizens"
+    ],
+    "economy": {
+      "orders": 849,
+      "ordersDigest": "1B94987B3158044594B9C4D6A5473BA22BE0D4F3488D769CBBEE23318BB33B91",
+      "purchases": 797,
+      "spentUnits": 107967424757760,
+      "uncertain": 2,
+      "economyDigest": "74D0FE8081EA795D4D56A11B4B955DC6E777E3822C702D3C09BC9477E6679AF9",
+      "reloadDigest": "59B6F14D44CA0F996C5A828E2E538B52C5426347FCFA40767527B72D77F1D4FA"
+    },
+    "writeBytes": 14454200,
+    "readBytes": 38773560,
+    "bench": null,
+    "hot": null
+  },
+  "allocationDiagnostics": {
+    "before": {
+      "writeBytes": 14460136,
+      "readBytes": 38773560
+    },
+    "after": {
+      "writeBytes": 14454200,
+      "readBytes": 38773560
+    }
+  },
+  "inspectorBefore": {
+    "boundary": "Offline .NET 10 Release, 80 batch means after eight warmups. Closed = pure stationary throttle; hover = scoring 48 preprojected walkers. Unity projection, guards, GUI draw and native formatter excluded. Open = Core capture/text on 957/5000 residents; no food scope in this fixture. Batch flags are not mod-work frames.",
+    "closedStationary": {
+      "p50Ms": 6.45e-06,
+      "p95Ms": 8.36e-06,
+      "maxMs": 1.519e-05,
+      "bytesPerCall": 0,
+      "batchSize": 10000,
+      "batchSpikesAtLeast30Ms": 0
+    },
+    "hoverPicking": {
+      "p50Ms": 0.0007588,
+      "p95Ms": 0.0012156,
+      "maxMs": 0.0012773,
+      "bytesPerCall": 0,
+      "batchSize": 1000,
+      "batchSpikesAtLeast30Ms": 0
+    },
+    "closedPicks": 0,
+    "populations": [
+      {
+        "residents": 957,
+        "popupCaptureAndText": {
+          "p50Ms": 0.003144,
+          "p95Ms": 0.006279,
+          "maxMs": 0.007588,
+          "bytesPerCall": 6432,
+          "batchSize": 100,
+          "batchSpikesAtLeast30Ms": 0
+        },
+        "formatsPerCapture": 4,
+        "textLength": 354,
+        "unchangedPayload": true
+      },
+      {
+        "residents": 5000,
+        "popupCaptureAndText": {
+          "p50Ms": 0.003417,
+          "p95Ms": 0.007809,
+          "maxMs": 0.13705299999999998,
+          "bytesPerCall": 6432.002,
+          "batchSize": 100,
+          "batchSpikesAtLeast30Ms": 0
+        },
+        "formatsPerCapture": 4,
+        "textLength": 354,
+        "unchangedPayload": true
+      }
+    ],
+    "nativeModWorkGate": "unverified on this head; requires matched 6 Nov windows"
+  },
+  "inspectorInitialAfter": {
+    "boundary": "Offline .NET 10 Release, 80 batch means after eight warmups. Closed = pure stationary throttle; hover = scoring 48 preprojected walkers. Unity projection, guards, GUI draw and native formatter excluded. Open = Core capture/text on 957/5000 residents; no food scope in this fixture. Batch flags are not mod-work frames.",
+    "closedStationary": {
+      "p50Ms": 4.52e-06,
+      "p95Ms": 6.9599999999999994e-06,
+      "maxMs": 7.57e-06,
+      "bytesPerCall": 0,
+      "batchSize": 10000,
+      "batchSpikesAtLeast30Ms": 0
+    },
+    "hoverPicking": {
+      "p50Ms": 0.0005544,
+      "p95Ms": 0.0010892999999999999,
+      "maxMs": 0.0012218,
+      "bytesPerCall": 0,
+      "batchSize": 1000,
+      "batchSpikesAtLeast30Ms": 0
+    },
+    "closedPicks": 0,
+    "populations": [
+      {
+        "residents": 957,
+        "popupCaptureAndText": {
+          "p50Ms": 0.0033950000000000004,
+          "p95Ms": 0.00729,
+          "maxMs": 0.008456,
+          "bytesPerCall": 5856,
+          "batchSize": 100,
+          "batchSpikesAtLeast30Ms": 0
+        },
+        "formatsPerCapture": 2,
+        "textLength": 354,
+        "unchangedPayload": true
+      },
+      {
+        "residents": 5000,
+        "popupCaptureAndText": {
+          "p50Ms": 0.003505,
+          "p95Ms": 0.007362,
+          "maxMs": 0.17444400000000002,
+          "bytesPerCall": 5856.056,
+          "batchSize": 100,
+          "batchSpikesAtLeast30Ms": 0
+        },
+        "formatsPerCapture": 2,
+        "textLength": 354,
+        "unchangedPayload": true
+      }
+    ],
+    "nativeModWorkGate": "unverified on this head; requires matched 6 Nov windows"
+  },
+  "inspectorCurrent": {
+    "boundary": "Offline .NET 10 Release, 80 batch means after eight warmups. Closed = pure stationary throttle; hover = scoring 48 preprojected walkers. Unity projection, guards, GUI draw and native formatter excluded. Open = Core capture/text, with absent food or saturated four-entry B memory on two consumers/resident and 16 shops; C2a active header but inspector never samples awareness. Batch flags are not mod-work frames.",
+    "closedStationary": {
+      "p50Ms": 4.15e-06,
+      "p95Ms": 5.7099999999999995e-06,
+      "maxMs": 1.267e-05,
+      "bytesPerCall": 0,
+      "batchSize": 10000,
+      "batchSpikesAtLeast30Ms": 0
+    },
+    "hoverPicking": {
+      "p50Ms": 0.0005291,
+      "p95Ms": 0.0009315,
+      "maxMs": 0.0010760000000000001,
+      "bytesPerCall": 0,
+      "batchSize": 1000,
+      "batchSpikesAtLeast30Ms": 0
+    },
+    "closedPicks": 0,
+    "populations": [
+      {
+        "residents": 957,
+        "activeMemory": false,
+        "consumers": 0,
+        "popupCaptureAndText": {
+          "p50Ms": 0.002651,
+          "p95Ms": 0.00617,
+          "maxMs": 0.006381,
+          "bytesPerCall": 5856,
+          "batchSize": 100,
+          "batchSpikesAtLeast30Ms": 0
+        },
+        "formatsPerCapture": 2,
+        "textLength": 354,
+        "unchangedPayload": true
+      },
+      {
+        "residents": 5000,
+        "activeMemory": false,
+        "consumers": 0,
+        "popupCaptureAndText": {
+          "p50Ms": 0.002722,
+          "p95Ms": 0.005748,
+          "maxMs": 0.08963499999999999,
+          "bytesPerCall": 5856.056,
+          "batchSize": 100,
+          "batchSpikesAtLeast30Ms": 0
+        },
+        "formatsPerCapture": 2,
+        "textLength": 354,
+        "unchangedPayload": true
+      },
+      {
+        "residents": 957,
+        "activeMemory": true,
+        "consumers": 1914,
+        "popupCaptureAndText": {
+          "p50Ms": 0.004991,
+          "p95Ms": 0.011576,
+          "maxMs": 0.018959,
+          "bytesPerCall": 7728,
+          "batchSize": 100,
+          "batchSpikesAtLeast30Ms": 0
+        },
+        "formatsPerCapture": 2,
+        "textLength": 390,
+        "unchangedPayload": true
+      },
+      {
+        "residents": 5000,
+        "activeMemory": true,
+        "consumers": 10000,
+        "popupCaptureAndText": {
+          "p50Ms": 0.004869,
+          "p95Ms": 0.008905999999999999,
+          "maxMs": 0.009323,
+          "bytesPerCall": 7728,
+          "batchSize": 100,
+          "batchSpikesAtLeast30Ms": 0
+        },
+        "formatsPerCapture": 2,
+        "textLength": 390,
+        "unchangedPayload": true
+      }
+    ],
+    "nativeModWorkGate": "unverified on this head; requires matched 6 Nov windows"
+  },
+  "a3Comparable": {
+    "bench": [
+      {
+        "shops": 8,
+        "nativeIds": false,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.1146,
+          "p95": 0.1646,
+          "max": 8.9903,
+          "spikesAtLeast30Ms": 0
+        },
+        "continuationUnitMs": {
+          "p50": 0.0025,
+          "p95": 0.0389,
+          "max": 0.5082,
+          "spikesAtLeast30Ms": 0
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.029400000000000003,
+          "max": 0.0775
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.0115,
+          "p95": 0.0142,
+          "max": 0.058800000000000005
+        },
+        "bytesPerDecision": 86256,
+        "logicalRoutes": 16,
+        "logicalRouteRange": {
+          "min": 16,
+          "max": 16
+        }
+      },
+      {
+        "shops": 64,
+        "nativeIds": false,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.1205,
+          "p95": 0.1829,
+          "max": 1.2894,
+          "spikesAtLeast30Ms": 0
+        },
+        "continuationUnitMs": {
+          "p50": 0.0024,
+          "p95": 0.0379,
+          "max": 1.1243,
+          "spikesAtLeast30Ms": 0
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.044399999999999995,
+          "max": 0.2654
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.020999999999999998,
+          "p95": 0.026500000000000003,
+          "max": 0.0762
+        },
+        "bytesPerDecision": 86384,
+        "logicalRoutes": 16,
+        "logicalRouteRange": {
+          "min": 16,
+          "max": 16
+        }
+      },
+      {
+        "shops": 1024,
+        "nativeIds": false,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.2145,
+          "p95": 0.405,
+          "max": 35.3581,
+          "spikesAtLeast30Ms": 2
+        },
+        "continuationUnitMs": {
+          "p50": 0.0031,
+          "p95": 0.0751,
+          "max": 34.9261,
+          "spikesAtLeast30Ms": 2
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.17779999999999999,
+          "max": 34.9496
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.06609999999999999,
+          "p95": 0.114,
+          "max": 33.356899999999996
+        },
+        "bytesPerDecision": 86448,
+        "logicalRoutes": 16,
+        "logicalRouteRange": {
+          "min": 16,
+          "max": 16
+        }
+      }
+    ],
+    "nativeIdBench": [
+      {
+        "shops": 8,
+        "nativeIds": true,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.0764,
+          "p95": 0.1352,
+          "max": 0.2736,
+          "spikesAtLeast30Ms": 0
+        },
+        "continuationUnitMs": {
+          "p50": 0.0021,
+          "p95": 0.0213,
+          "max": 0.1883,
+          "spikesAtLeast30Ms": 0
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.0274,
+          "max": 0.0657
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.0079,
+          "p95": 0.0119,
+          "max": 0.0281
+        },
+        "bytesPerDecision": 79112,
+        "logicalRoutes": 16,
+        "logicalRouteRange": {
+          "min": 16,
+          "max": 16
+        }
+      },
+      {
+        "shops": 64,
+        "nativeIds": true,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.0879,
+          "p95": 0.1546,
+          "max": 0.4462,
+          "spikesAtLeast30Ms": 0
+        },
+        "continuationUnitMs": {
+          "p50": 0.002,
+          "p95": 0.0243,
+          "max": 0.342,
+          "spikesAtLeast30Ms": 0
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.0446,
+          "max": 0.1255
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.0179,
+          "p95": 0.0261,
+          "max": 0.0435
+        },
+        "bytesPerDecision": 79200,
+        "logicalRoutes": 16,
+        "logicalRouteRange": {
+          "min": 16,
+          "max": 16
+        }
+      },
+      {
+        "shops": 1024,
+        "nativeIds": true,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.1711,
+          "p95": 0.2453,
+          "max": 1.3217,
+          "spikesAtLeast30Ms": 0
+        },
+        "continuationUnitMs": {
+          "p50": 0.0005,
+          "p95": 0.1275,
+          "max": 1.1353,
+          "spikesAtLeast30Ms": 0
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.1895,
+          "max": 0.444
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.1318,
+          "p95": 0.17479999999999998,
+          "max": 0.2953
+        },
+        "bytesPerDecision": 85352,
+        "logicalRoutes": 16,
+        "logicalRouteRange": {
+          "min": 16,
+          "max": 16
+        }
+      }
+    ]
+  },
+  "activeMemoryAwareness": {
+    "bench": [
+      {
+        "shops": 8,
+        "nativeIds": false,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.1985,
+          "p95": 0.3401,
+          "max": 14.3519,
+          "spikesAtLeast30Ms": 0
+        },
+        "continuationUnitMs": {
+          "p50": 0.0013,
+          "p95": 0.0349,
+          "max": 0.6237,
+          "spikesAtLeast30Ms": 0
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.021900000000000003,
+          "max": 0.044700000000000004
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.0297,
+          "p95": 0.0428,
+          "max": 0.0764
+        },
+        "bytesPerDecision": 142552,
+        "logicalRoutes": 12,
+        "logicalRouteRange": {
+          "min": 6,
+          "max": 16
+        }
+      },
+      {
+        "shops": 64,
+        "nativeIds": false,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.3834,
+          "p95": 0.5827,
+          "max": 0.9135,
+          "spikesAtLeast30Ms": 0
+        },
+        "continuationUnitMs": {
+          "p50": 0.0033,
+          "p95": 0.0407,
+          "max": 0.4418,
+          "spikesAtLeast30Ms": 0
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.0474,
+          "max": 0.086
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.04,
+          "p95": 0.055900000000000005,
+          "max": 0.2856
+        },
+        "bytesPerDecision": 175816,
+        "logicalRoutes": 16,
+        "logicalRouteRange": {
+          "min": 12,
+          "max": 16
+        }
+      },
+      {
+        "shops": 1024,
+        "nativeIds": false,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.8664,
+          "p95": 2.7389,
+          "max": 4.6397,
+          "spikesAtLeast30Ms": 0
+        },
+        "continuationUnitMs": {
+          "p50": 0.0012,
+          "p95": 0.0077,
+          "max": 2.2277,
+          "spikesAtLeast30Ms": 0
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.051199999999999996,
+          "max": 0.0945
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.0471,
+          "p95": 0.0816,
+          "max": 0.1509
+        },
+        "bytesPerDecision": 469016,
+        "logicalRoutes": 8,
+        "logicalRouteRange": {
+          "min": 2,
+          "max": 16
+        }
+      }
+    ],
+    "nativeIdBench": [
+      {
+        "shops": 8,
+        "nativeIds": true,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.0555,
+          "p95": 0.0946,
+          "max": 0.4625,
+          "spikesAtLeast30Ms": 0
+        },
+        "continuationUnitMs": {
+          "p50": 0.0002,
+          "p95": 0.0113,
+          "max": 0.3053,
+          "spikesAtLeast30Ms": 0
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.0066,
+          "max": 0.0106
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.0087,
+          "p95": 0.0141,
+          "max": 0.1986
+        },
+        "bytesPerDecision": 134488,
+        "logicalRoutes": 12,
+        "logicalRouteRange": {
+          "min": 6,
+          "max": 16
+        }
+      },
+      {
+        "shops": 64,
+        "nativeIds": true,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.0963,
+          "p95": 0.1911,
+          "max": 0.6809,
+          "spikesAtLeast30Ms": 0
+        },
+        "continuationUnitMs": {
+          "p50": 0.0005,
+          "p95": 0.0153,
+          "max": 0.4657,
+          "spikesAtLeast30Ms": 0
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.0165,
+          "max": 0.4708
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.012,
+          "p95": 0.0237,
+          "max": 0.0467
+        },
+        "bytesPerDecision": 165192,
+        "logicalRoutes": 16,
+        "logicalRouteRange": {
+          "min": 14,
+          "max": 16
+        }
+      },
+      {
+        "shops": 1024,
+        "nativeIds": true,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.9633,
+          "p95": 1.1661,
+          "max": 3.6113,
+          "spikesAtLeast30Ms": 0
+        },
+        "continuationUnitMs": {
+          "p50": 0.0011,
+          "p95": 0.0074,
+          "max": 2.5051,
+          "spikesAtLeast30Ms": 0
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.0284,
+          "max": 0.08059999999999999
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.03,
+          "p95": 0.0422,
+          "max": 0.06079999999999999
+        },
+        "bytesPerDecision": 467848,
+        "logicalRoutes": 10,
+        "logicalRouteRange": {
+          "min": 2,
+          "max": 16
+        }
+      }
+    ]
+  },
+  "a3ComparableRush": {
+    "raw": {
+      "boundary": "Synthetic simultaneous lunch; stub paths; one warmup + three alternating samples per mode/accounting, 16 citizen / 128 total units / 2 ms soft budget. Snapshot published per frame. Frame/backlog estimates at 100 fps, explicit clock-rate scenarios. Not native throughput or path cost.",
+      "results": [
+        {
+          "mode": "all_feasible",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 34452,
+          "citizenEvents": 1914,
+          "continuationEvents": 32538,
+          "eventsPerDecision": 18,
+          "eventCapFrames": 2154,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 2157,
+          "estimatedSecondsAt100Fps": 21.57,
+          "offlineCpuMs": 364.0267,
+          "logicalRouteRequests": 30624,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 584
+            }
+          ],
+          "savedStateSha256": "A79241D715560467B693A4F5CF032F5B1005EDAE5B16FF1A12A3F1F07EF2286E",
+          "syntheticLoopMs": {
+            "p50": 0.1623,
+            "p95": 0.2152,
+            "max": 10.6712,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 34452,
+          "citizenEvents": 1914,
+          "continuationEvents": 32538,
+          "eventsPerDecision": 18,
+          "eventCapFrames": 270,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 271,
+          "estimatedSecondsAt100Fps": 2.71,
+          "offlineCpuMs": 210.5769,
+          "logicalRouteRequests": 30624,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "A79241D715560467B693A4F5CF032F5B1005EDAE5B16FF1A12A3F1F07EF2286E",
+          "syntheticLoopMs": {
+            "p50": 0.7232,
+            "p95": 0.9606,
+            "max": 2.8702,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5742,
+          "citizenEvents": 1914,
+          "continuationEvents": 3828,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 359,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 361,
+          "estimatedSecondsAt100Fps": 3.61,
+          "offlineCpuMs": 83.0972,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "762703C6669AE0683D2E6A046AD7311698F4D02FB1AE18C4303257DA7532C57A",
+          "syntheticLoopMs": {
+            "p50": 0.1993,
+            "p95": 0.2549,
+            "max": 3.6909,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5742,
+          "citizenEvents": 1914,
+          "continuationEvents": 3828,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 120,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 122,
+          "estimatedSecondsAt100Fps": 1.22,
+          "offlineCpuMs": 73.2693,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "762703C6669AE0683D2E6A046AD7311698F4D02FB1AE18C4303257DA7532C57A",
+          "syntheticLoopMs": {
+            "p50": 0.4933,
+            "p95": 0.8233,
+            "max": 8.0815,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 19140,
+          "citizenEvents": 1914,
+          "continuationEvents": 17226,
+          "eventsPerDecision": 10,
+          "eventCapFrames": 1197,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1200,
+          "estimatedSecondsAt100Fps": 12,
+          "offlineCpuMs": 113.7814,
+          "logicalRouteRequests": 15312,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "DAF6C271842B3486B9941CF34E1D869228D07341E1F82396B123082FEE38A718",
+          "syntheticLoopMs": {
+            "p50": 0.0645,
+            "p95": 0.0906,
+            "max": 14.3113,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 19140,
+          "citizenEvents": 1914,
+          "continuationEvents": 17226,
+          "eventsPerDecision": 10,
+          "eventCapFrames": 150,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 151,
+          "estimatedSecondsAt100Fps": 1.51,
+          "offlineCpuMs": 103.2122,
+          "logicalRouteRequests": 15312,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "DAF6C271842B3486B9941CF34E1D869228D07341E1F82396B123082FEE38A718",
+          "syntheticLoopMs": {
+            "p50": 0.5092,
+            "p95": 1.4044,
+            "max": 9.4265,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2871,
+          "citizenEvents": 957,
+          "continuationEvents": 1914,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 180,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 182,
+          "estimatedSecondsAt100Fps": 1.82,
+          "offlineCpuMs": 32.7291,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "0937BDBF6CFCE6515C37FA248AEE7DAB9B8D9C773F4E1E6D128272D4C66C4C63",
+          "syntheticLoopMs": {
+            "p50": 0.0785,
+            "p95": 0.1103,
+            "max": 11.2824,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2871,
+          "citizenEvents": 957,
+          "continuationEvents": 1914,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 60,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 61,
+          "estimatedSecondsAt100Fps": 0.61,
+          "offlineCpuMs": 35.5138,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "0937BDBF6CFCE6515C37FA248AEE7DAB9B8D9C773F4E1E6D128272D4C66C4C63",
+          "syntheticLoopMs": {
+            "p50": 0.2068,
+            "p95": 0.309,
+            "max": 17.8369,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 34452,
+          "citizenEvents": 1914,
+          "continuationEvents": 32538,
+          "eventsPerDecision": 18,
+          "eventCapFrames": 270,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 273,
+          "estimatedSecondsAt100Fps": 2.73,
+          "offlineCpuMs": 111.2316,
+          "logicalRouteRequests": 30624,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "A79241D715560467B693A4F5CF032F5B1005EDAE5B16FF1A12A3F1F07EF2286E",
+          "syntheticLoopMs": {
+            "p50": 0.3434,
+            "p95": 0.468,
+            "max": 5.2377,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 34452,
+          "citizenEvents": 1914,
+          "continuationEvents": 32538,
+          "eventsPerDecision": 18,
+          "eventCapFrames": 2154,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 2154,
+          "estimatedSecondsAt100Fps": 21.54,
+          "offlineCpuMs": 114.8354,
+          "logicalRouteRequests": 30624,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 581
+            }
+          ],
+          "savedStateSha256": "A79241D715560467B693A4F5CF032F5B1005EDAE5B16FF1A12A3F1F07EF2286E",
+          "syntheticLoopMs": {
+            "p50": 0.0463,
+            "p95": 0.0554,
+            "max": 6.1871,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5742,
+          "citizenEvents": 1914,
+          "continuationEvents": 3828,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 120,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 120,
+          "estimatedSecondsAt100Fps": 1.2,
+          "offlineCpuMs": 64.2964,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "762703C6669AE0683D2E6A046AD7311698F4D02FB1AE18C4303257DA7532C57A",
+          "syntheticLoopMs": {
+            "p50": 0.4179,
+            "p95": 0.731,
+            "max": 7.1193,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5742,
+          "citizenEvents": 1914,
+          "continuationEvents": 3828,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 359,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 360,
+          "estimatedSecondsAt100Fps": 3.6,
+          "offlineCpuMs": 56.6642,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "762703C6669AE0683D2E6A046AD7311698F4D02FB1AE18C4303257DA7532C57A",
+          "syntheticLoopMs": {
+            "p50": 0.13,
+            "p95": 0.1664,
+            "max": 3.4353,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 19140,
+          "citizenEvents": 1914,
+          "continuationEvents": 17226,
+          "eventsPerDecision": 10,
+          "eventCapFrames": 150,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 152,
+          "estimatedSecondsAt100Fps": 1.52,
+          "offlineCpuMs": 94.94,
+          "logicalRouteRequests": 15312,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "DAF6C271842B3486B9941CF34E1D869228D07341E1F82396B123082FEE38A718",
+          "syntheticLoopMs": {
+            "p50": 0.4551,
+            "p95": 1.2413,
+            "max": 12.7171,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 19140,
+          "citizenEvents": 1914,
+          "continuationEvents": 17226,
+          "eventsPerDecision": 10,
+          "eventCapFrames": 1197,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1199,
+          "estimatedSecondsAt100Fps": 11.99,
+          "offlineCpuMs": 96.7335,
+          "logicalRouteRequests": 15312,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "DAF6C271842B3486B9941CF34E1D869228D07341E1F82396B123082FEE38A718",
+          "syntheticLoopMs": {
+            "p50": 0.0577,
+            "p95": 0.0784,
+            "max": 13.5366,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2871,
+          "citizenEvents": 957,
+          "continuationEvents": 1914,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 60,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 61,
+          "estimatedSecondsAt100Fps": 0.61,
+          "offlineCpuMs": 22.1145,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "0937BDBF6CFCE6515C37FA248AEE7DAB9B8D9C773F4E1E6D128272D4C66C4C63",
+          "syntheticLoopMs": {
+            "p50": 0.2031,
+            "p95": 0.3164,
+            "max": 5.5898,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2871,
+          "citizenEvents": 957,
+          "continuationEvents": 1914,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 180,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 182,
+          "estimatedSecondsAt100Fps": 1.82,
+          "offlineCpuMs": 29.8164,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "0937BDBF6CFCE6515C37FA248AEE7DAB9B8D9C773F4E1E6D128272D4C66C4C63",
+          "syntheticLoopMs": {
+            "p50": 0.0637,
+            "p95": 0.0801,
+            "max": 11.3138,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 34452,
+          "citizenEvents": 1914,
+          "continuationEvents": 32538,
+          "eventsPerDecision": 18,
+          "eventCapFrames": 2154,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 2155,
+          "estimatedSecondsAt100Fps": 21.55,
+          "offlineCpuMs": 123.9602,
+          "logicalRouteRequests": 30624,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 582
+            }
+          ],
+          "savedStateSha256": "A79241D715560467B693A4F5CF032F5B1005EDAE5B16FF1A12A3F1F07EF2286E",
+          "syntheticLoopMs": {
+            "p50": 0.0457,
+            "p95": 0.0604,
+            "max": 8.5974,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 34452,
+          "citizenEvents": 1914,
+          "continuationEvents": 32538,
+          "eventsPerDecision": 18,
+          "eventCapFrames": 270,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 272,
+          "estimatedSecondsAt100Fps": 2.72,
+          "offlineCpuMs": 114.7396,
+          "logicalRouteRequests": 30624,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "A79241D715560467B693A4F5CF032F5B1005EDAE5B16FF1A12A3F1F07EF2286E",
+          "syntheticLoopMs": {
+            "p50": 0.3506,
+            "p95": 0.5106,
+            "max": 7.0915,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5742,
+          "citizenEvents": 1914,
+          "continuationEvents": 3828,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 359,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 360,
+          "estimatedSecondsAt100Fps": 3.6,
+          "offlineCpuMs": 59.3463,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "762703C6669AE0683D2E6A046AD7311698F4D02FB1AE18C4303257DA7532C57A",
+          "syntheticLoopMs": {
+            "p50": 0.1252,
+            "p95": 0.1987,
+            "max": 8.4848,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5742,
+          "citizenEvents": 1914,
+          "continuationEvents": 3828,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 120,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 121,
+          "estimatedSecondsAt100Fps": 1.21,
+          "offlineCpuMs": 66.7902,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "762703C6669AE0683D2E6A046AD7311698F4D02FB1AE18C4303257DA7532C57A",
+          "syntheticLoopMs": {
+            "p50": 0.4117,
+            "p95": 0.5289,
+            "max": 8.2707,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 19140,
+          "citizenEvents": 1914,
+          "continuationEvents": 17226,
+          "eventsPerDecision": 10,
+          "eventCapFrames": 1197,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1198,
+          "estimatedSecondsAt100Fps": 11.98,
+          "offlineCpuMs": 106.5337,
+          "logicalRouteRequests": 15312,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "DAF6C271842B3486B9941CF34E1D869228D07341E1F82396B123082FEE38A718",
+          "syntheticLoopMs": {
+            "p50": 0.0578,
+            "p95": 0.0791,
+            "max": 15.22,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 19140,
+          "citizenEvents": 1914,
+          "continuationEvents": 17226,
+          "eventsPerDecision": 10,
+          "eventCapFrames": 150,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 151,
+          "estimatedSecondsAt100Fps": 1.51,
+          "offlineCpuMs": 93.9307,
+          "logicalRouteRequests": 15312,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "DAF6C271842B3486B9941CF34E1D869228D07341E1F82396B123082FEE38A718",
+          "syntheticLoopMs": {
+            "p50": 0.4371,
+            "p95": 0.8772,
+            "max": 14.0066,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2871,
+          "citizenEvents": 957,
+          "continuationEvents": 1914,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 180,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 181,
+          "estimatedSecondsAt100Fps": 1.81,
+          "offlineCpuMs": 30.1115,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "0937BDBF6CFCE6515C37FA248AEE7DAB9B8D9C773F4E1E6D128272D4C66C4C63",
+          "syntheticLoopMs": {
+            "p50": 0.0686,
+            "p95": 0.1075,
+            "max": 11.3226,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2871,
+          "citizenEvents": 957,
+          "continuationEvents": 1914,
+          "eventsPerDecision": 3,
+          "eventCapFrames": 60,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 61,
+          "estimatedSecondsAt100Fps": 0.61,
+          "offlineCpuMs": 28.0241,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "0937BDBF6CFCE6515C37FA248AEE7DAB9B8D9C773F4E1E6D128272D4C66C4C63",
+          "syntheticLoopMs": {
+            "p50": 0.1249,
+            "p95": 0.2881,
+            "max": 16.4459,
+            "spikesAtLeast30Ms": 0
+          }
+        }
+      ]
+    },
+    "summary": [
+      {
+        "mode": "all_feasible",
+        "accounting": "R1_all_units_are_citizens",
+        "medianFrames": 2155,
+        "p95LoopRangeMs": [
+          0.0554,
+          0.2152
+        ],
+        "maxLoopMs": 10.6712,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 584
+      },
+      {
+        "mode": "all_feasible",
+        "accounting": "separate_continuations",
+        "medianFrames": 272,
+        "p95LoopRangeMs": [
+          0.468,
+          0.9606
+        ],
+        "maxLoopMs": 7.0915,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 0
+      },
+      {
+        "mode": "closed",
+        "accounting": "R1_all_units_are_citizens",
+        "medianFrames": 360,
+        "p95LoopRangeMs": [
+          0.1664,
+          0.2549
+        ],
+        "maxLoopMs": 8.4848,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 0
+      },
+      {
+        "mode": "closed",
+        "accounting": "separate_continuations",
+        "medianFrames": 121,
+        "p95LoopRangeMs": [
+          0.5289,
+          0.8233
+        ],
+        "maxLoopMs": 8.2707,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 0
+      },
+      {
+        "mode": "existing_shop",
+        "accounting": "R1_all_units_are_citizens",
+        "medianFrames": 182,
+        "p95LoopRangeMs": [
+          0.0801,
+          0.1103
+        ],
+        "maxLoopMs": 11.3226,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 0
+      },
+      {
+        "mode": "existing_shop",
+        "accounting": "separate_continuations",
+        "medianFrames": 61,
+        "p95LoopRangeMs": [
+          0.2881,
+          0.3164
+        ],
+        "maxLoopMs": 17.8369,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 0
+      },
+      {
+        "mode": "refused_outward",
+        "accounting": "R1_all_units_are_citizens",
+        "medianFrames": 1199,
+        "p95LoopRangeMs": [
+          0.0784,
+          0.0906
+        ],
+        "maxLoopMs": 15.22,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 0
+      },
+      {
+        "mode": "refused_outward",
+        "accounting": "separate_continuations",
+        "medianFrames": 151,
+        "p95LoopRangeMs": [
+          0.8772,
+          1.4044
+        ],
+        "maxLoopMs": 14.0066,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 0
+      }
+    ]
+  },
+  "activeMemoryAwarenessRush": {
+    "raw": {
+      "boundary": "Synthetic simultaneous lunch; stub paths; one warmup + three alternating samples per mode/accounting, 16 citizen / 128 total units / 2 ms soft budget. Snapshot published per frame. Frame/backlog estimates at 100 fps, explicit clock-rate scenarios. Not native throughput or path cost.",
+      "results": [
+        {
+          "mode": "all_feasible",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 30884,
+          "citizenEvents": 1914,
+          "continuationEvents": 28970,
+          "eventsPerDecision": 16.13584117032393,
+          "eventCapFrames": 1931,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1931,
+          "estimatedSecondsAt100Fps": 19.31,
+          "offlineCpuMs": 201.2794,
+          "logicalRouteRequests": 27032,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 430
+            }
+          ],
+          "savedStateSha256": "EA7A95856425EA4602EA8BCD5D31E6AC887E30080461BF184C5E0DC6F904D151",
+          "syntheticLoopMs": {
+            "p50": 0.0844,
+            "p95": 0.1426,
+            "max": 10.3735,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 30884,
+          "citizenEvents": 1914,
+          "continuationEvents": 28970,
+          "eventsPerDecision": 16.13584117032393,
+          "eventCapFrames": 242,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 243,
+          "estimatedSecondsAt100Fps": 2.43,
+          "offlineCpuMs": 140.4394,
+          "logicalRouteRequests": 27032,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "EA7A95856425EA4602EA8BCD5D31E6AC887E30080461BF184C5E0DC6F904D151",
+          "syntheticLoopMs": {
+            "p50": 0.5261,
+            "p95": 0.8195,
+            "max": 6.8704,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5766,
+          "citizenEvents": 1914,
+          "continuationEvents": 3852,
+          "eventsPerDecision": 3.012539184952978,
+          "eventCapFrames": 361,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 362,
+          "estimatedSecondsAt100Fps": 3.62,
+          "offlineCpuMs": 93.2457,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "93DC7D5A22F3E7FD1EDC71345C86E4CC8243CF3B975B5B5CF551F50DEB1BF730",
+          "syntheticLoopMs": {
+            "p50": 0.2153,
+            "p95": 0.2981,
+            "max": 8.4345,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5766,
+          "citizenEvents": 1914,
+          "continuationEvents": 3852,
+          "eventsPerDecision": 3.012539184952978,
+          "eventCapFrames": 120,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 122,
+          "estimatedSecondsAt100Fps": 1.22,
+          "offlineCpuMs": 91.9105,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "93DC7D5A22F3E7FD1EDC71345C86E4CC8243CF3B975B5B5CF551F50DEB1BF730",
+          "syntheticLoopMs": {
+            "p50": 0.6082,
+            "p95": 0.9156,
+            "max": 11.7978,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 17368,
+          "citizenEvents": 1914,
+          "continuationEvents": 15454,
+          "eventsPerDecision": 9.074190177638453,
+          "eventCapFrames": 1086,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1087,
+          "estimatedSecondsAt100Fps": 10.87,
+          "offlineCpuMs": 114.5613,
+          "logicalRouteRequests": 13516,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "FD128E83D307DB2ECB84D9F6FB887C3DBCC9713AAF60B70B6725CCAC0F5D4328",
+          "syntheticLoopMs": {
+            "p50": 0.0909,
+            "p95": 0.1246,
+            "max": 6.0773,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 17368,
+          "citizenEvents": 1914,
+          "continuationEvents": 15454,
+          "eventsPerDecision": 9.074190177638453,
+          "eventCapFrames": 136,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 138,
+          "estimatedSecondsAt100Fps": 1.38,
+          "offlineCpuMs": 104.6496,
+          "logicalRouteRequests": 13516,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "FD128E83D307DB2ECB84D9F6FB887C3DBCC9713AAF60B70B6725CCAC0F5D4328",
+          "syntheticLoopMs": {
+            "p50": 0.6612,
+            "p95": 1.2475,
+            "max": 5.5135,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2895,
+          "citizenEvents": 957,
+          "continuationEvents": 1938,
+          "eventsPerDecision": 3.0250783699059562,
+          "eventCapFrames": 181,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 182,
+          "estimatedSecondsAt100Fps": 1.82,
+          "offlineCpuMs": 37.6975,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "F1FAD731F34E29C0EE91397D53CD7615F21F5BB3F5083CAEBCEC33AF85E03B8E",
+          "syntheticLoopMs": {
+            "p50": 0.092,
+            "p95": 0.1128,
+            "max": 10.7993,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2895,
+          "citizenEvents": 957,
+          "continuationEvents": 1938,
+          "eventsPerDecision": 3.0250783699059562,
+          "eventCapFrames": 60,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 61,
+          "estimatedSecondsAt100Fps": 0.61,
+          "offlineCpuMs": 31.9021,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "F1FAD731F34E29C0EE91397D53CD7615F21F5BB3F5083CAEBCEC33AF85E03B8E",
+          "syntheticLoopMs": {
+            "p50": 0.2737,
+            "p95": 0.4226,
+            "max": 14.4407,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 30884,
+          "citizenEvents": 1914,
+          "continuationEvents": 28970,
+          "eventsPerDecision": 16.13584117032393,
+          "eventCapFrames": 242,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 242,
+          "estimatedSecondsAt100Fps": 2.42,
+          "offlineCpuMs": 120.8329,
+          "logicalRouteRequests": 27032,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "EA7A95856425EA4602EA8BCD5D31E6AC887E30080461BF184C5E0DC6F904D151",
+          "syntheticLoopMs": {
+            "p50": 0.3769,
+            "p95": 0.5403,
+            "max": 15.0139,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 30884,
+          "citizenEvents": 1914,
+          "continuationEvents": 28970,
+          "eventsPerDecision": 16.13584117032393,
+          "eventCapFrames": 1931,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1932,
+          "estimatedSecondsAt100Fps": 19.32,
+          "offlineCpuMs": 120.3702,
+          "logicalRouteRequests": 27032,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 429
+            }
+          ],
+          "savedStateSha256": "EA7A95856425EA4602EA8BCD5D31E6AC887E30080461BF184C5E0DC6F904D151",
+          "syntheticLoopMs": {
+            "p50": 0.0498,
+            "p95": 0.0746,
+            "max": 7.2762,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5766,
+          "citizenEvents": 1914,
+          "continuationEvents": 3852,
+          "eventsPerDecision": 3.012539184952978,
+          "eventCapFrames": 120,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 122,
+          "estimatedSecondsAt100Fps": 1.22,
+          "offlineCpuMs": 73.3494,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "93DC7D5A22F3E7FD1EDC71345C86E4CC8243CF3B975B5B5CF551F50DEB1BF730",
+          "syntheticLoopMs": {
+            "p50": 0.5064,
+            "p95": 0.7979,
+            "max": 6.5231,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5766,
+          "citizenEvents": 1914,
+          "continuationEvents": 3852,
+          "eventsPerDecision": 3.012539184952978,
+          "eventCapFrames": 361,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 362,
+          "estimatedSecondsAt100Fps": 3.62,
+          "offlineCpuMs": 75.8163,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "93DC7D5A22F3E7FD1EDC71345C86E4CC8243CF3B975B5B5CF551F50DEB1BF730",
+          "syntheticLoopMs": {
+            "p50": 0.1614,
+            "p95": 0.1945,
+            "max": 8.9081,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 17368,
+          "citizenEvents": 1914,
+          "continuationEvents": 15454,
+          "eventsPerDecision": 9.074190177638453,
+          "eventCapFrames": 136,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 137,
+          "estimatedSecondsAt100Fps": 1.37,
+          "offlineCpuMs": 115.2214,
+          "logicalRouteRequests": 13516,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "FD128E83D307DB2ECB84D9F6FB887C3DBCC9713AAF60B70B6725CCAC0F5D4328",
+          "syntheticLoopMs": {
+            "p50": 0.5703,
+            "p95": 1.533,
+            "max": 16.5076,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 17368,
+          "citizenEvents": 1914,
+          "continuationEvents": 15454,
+          "eventsPerDecision": 9.074190177638453,
+          "eventCapFrames": 1086,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1087,
+          "estimatedSecondsAt100Fps": 10.87,
+          "offlineCpuMs": 85.4666,
+          "logicalRouteRequests": 13516,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "FD128E83D307DB2ECB84D9F6FB887C3DBCC9713AAF60B70B6725CCAC0F5D4328",
+          "syntheticLoopMs": {
+            "p50": 0.0668,
+            "p95": 0.0815,
+            "max": 5.5009,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2895,
+          "citizenEvents": 957,
+          "continuationEvents": 1938,
+          "eventsPerDecision": 3.0250783699059562,
+          "eventCapFrames": 60,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 61,
+          "estimatedSecondsAt100Fps": 0.61,
+          "offlineCpuMs": 35.5192,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "F1FAD731F34E29C0EE91397D53CD7615F21F5BB3F5083CAEBCEC33AF85E03B8E",
+          "syntheticLoopMs": {
+            "p50": 0.2563,
+            "p95": 0.4576,
+            "max": 14.9035,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2895,
+          "citizenEvents": 957,
+          "continuationEvents": 1938,
+          "eventsPerDecision": 3.0250783699059562,
+          "eventCapFrames": 181,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 182,
+          "estimatedSecondsAt100Fps": 1.82,
+          "offlineCpuMs": 31.7433,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "F1FAD731F34E29C0EE91397D53CD7615F21F5BB3F5083CAEBCEC33AF85E03B8E",
+          "syntheticLoopMs": {
+            "p50": 0.0876,
+            "p95": 0.1159,
+            "max": 14.8796,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 30884,
+          "citizenEvents": 1914,
+          "continuationEvents": 28970,
+          "eventsPerDecision": 16.13584117032393,
+          "eventCapFrames": 1931,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1933,
+          "estimatedSecondsAt100Fps": 19.33,
+          "offlineCpuMs": 125.4578,
+          "logicalRouteRequests": 27032,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 431
+            }
+          ],
+          "savedStateSha256": "EA7A95856425EA4602EA8BCD5D31E6AC887E30080461BF184C5E0DC6F904D151",
+          "syntheticLoopMs": {
+            "p50": 0.0459,
+            "p95": 0.0641,
+            "max": 16.4068,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 30884,
+          "citizenEvents": 1914,
+          "continuationEvents": 28970,
+          "eventsPerDecision": 16.13584117032393,
+          "eventCapFrames": 242,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 243,
+          "estimatedSecondsAt100Fps": 2.43,
+          "offlineCpuMs": 111.1365,
+          "logicalRouteRequests": 27032,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "EA7A95856425EA4602EA8BCD5D31E6AC887E30080461BF184C5E0DC6F904D151",
+          "syntheticLoopMs": {
+            "p50": 0.3771,
+            "p95": 0.5784,
+            "max": 6.7832,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5766,
+          "citizenEvents": 1914,
+          "continuationEvents": 3852,
+          "eventsPerDecision": 3.012539184952978,
+          "eventCapFrames": 361,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 362,
+          "estimatedSecondsAt100Fps": 3.62,
+          "offlineCpuMs": 63.809,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "93DC7D5A22F3E7FD1EDC71345C86E4CC8243CF3B975B5B5CF551F50DEB1BF730",
+          "syntheticLoopMs": {
+            "p50": 0.1439,
+            "p95": 0.1969,
+            "max": 6.5341,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 5766,
+          "citizenEvents": 1914,
+          "continuationEvents": 3852,
+          "eventsPerDecision": 3.012539184952978,
+          "eventCapFrames": 120,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 121,
+          "estimatedSecondsAt100Fps": 1.21,
+          "offlineCpuMs": 59.8962,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "93DC7D5A22F3E7FD1EDC71345C86E4CC8243CF3B975B5B5CF551F50DEB1BF730",
+          "syntheticLoopMs": {
+            "p50": 0.4275,
+            "p95": 0.5706,
+            "max": 3.0943,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 17368,
+          "citizenEvents": 1914,
+          "continuationEvents": 15454,
+          "eventsPerDecision": 9.074190177638453,
+          "eventCapFrames": 1086,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1088,
+          "estimatedSecondsAt100Fps": 10.88,
+          "offlineCpuMs": 99.0449,
+          "logicalRouteRequests": 13516,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "FD128E83D307DB2ECB84D9F6FB887C3DBCC9713AAF60B70B6725CCAC0F5D4328",
+          "syntheticLoopMs": {
+            "p50": 0.0658,
+            "p95": 0.0888,
+            "max": 11.5973,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 2,
+          "consumers": 1914,
+          "events": 17368,
+          "citizenEvents": 1914,
+          "continuationEvents": 15454,
+          "eventsPerDecision": 9.074190177638453,
+          "eventCapFrames": 136,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 138,
+          "estimatedSecondsAt100Fps": 1.38,
+          "offlineCpuMs": 94.3302,
+          "logicalRouteRequests": 13516,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "FD128E83D307DB2ECB84D9F6FB887C3DBCC9713AAF60B70B6725CCAC0F5D4328",
+          "syntheticLoopMs": {
+            "p50": 0.5495,
+            "p95": 1.6976,
+            "max": 6.3903,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2895,
+          "citizenEvents": 957,
+          "continuationEvents": 1938,
+          "eventsPerDecision": 3.0250783699059562,
+          "eventCapFrames": 181,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 182,
+          "estimatedSecondsAt100Fps": 1.82,
+          "offlineCpuMs": 20.9193,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "F1FAD731F34E29C0EE91397D53CD7615F21F5BB3F5083CAEBCEC33AF85E03B8E",
+          "syntheticLoopMs": {
+            "p50": 0.0934,
+            "p95": 0.1141,
+            "max": 3.8112,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 957,
+          "factor": 1,
+          "consumers": 957,
+          "events": 2895,
+          "citizenEvents": 957,
+          "continuationEvents": 1938,
+          "eventsPerDecision": 3.0250783699059562,
+          "eventCapFrames": 60,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 61,
+          "estimatedSecondsAt100Fps": 0.61,
+          "offlineCpuMs": 20.3381,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "F1FAD731F34E29C0EE91397D53CD7615F21F5BB3F5083CAEBCEC33AF85E03B8E",
+          "syntheticLoopMs": {
+            "p50": 0.273,
+            "p95": 0.3906,
+            "max": 3.4584,
+            "spikesAtLeast30Ms": 0
+          }
+        }
+      ]
+    },
+    "summary": [
+      {
+        "mode": "all_feasible",
+        "accounting": "R1_all_units_are_citizens",
+        "medianFrames": 1932,
+        "p95LoopRangeMs": [
+          0.0641,
+          0.1426
+        ],
+        "maxLoopMs": 16.4068,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 431
+      },
+      {
+        "mode": "all_feasible",
+        "accounting": "separate_continuations",
+        "medianFrames": 243,
+        "p95LoopRangeMs": [
+          0.5403,
+          0.8195
+        ],
+        "maxLoopMs": 15.0139,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 0
+      },
+      {
+        "mode": "closed",
+        "accounting": "R1_all_units_are_citizens",
+        "medianFrames": 362,
+        "p95LoopRangeMs": [
+          0.1945,
+          0.2981
+        ],
+        "maxLoopMs": 8.9081,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 0
+      },
+      {
+        "mode": "closed",
+        "accounting": "separate_continuations",
+        "medianFrames": 122,
+        "p95LoopRangeMs": [
+          0.5706,
+          0.9156
+        ],
+        "maxLoopMs": 11.7978,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 0
+      },
+      {
+        "mode": "existing_shop",
+        "accounting": "R1_all_units_are_citizens",
+        "medianFrames": 182,
+        "p95LoopRangeMs": [
+          0.1128,
+          0.1159
+        ],
+        "maxLoopMs": 14.8796,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 0
+      },
+      {
+        "mode": "existing_shop",
+        "accounting": "separate_continuations",
+        "medianFrames": 61,
+        "p95LoopRangeMs": [
+          0.3906,
+          0.4576
+        ],
+        "maxLoopMs": 14.9035,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 0
+      },
+      {
+        "mode": "refused_outward",
+        "accounting": "R1_all_units_are_citizens",
+        "medianFrames": 1087,
+        "p95LoopRangeMs": [
+          0.0815,
+          0.1246
+        ],
+        "maxLoopMs": 11.5973,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 0
+      },
+      {
+        "mode": "refused_outward",
+        "accounting": "separate_continuations",
+        "medianFrames": 138,
+        "p95LoopRangeMs": [
+          1.2475,
+          1.6976
+        ],
+        "maxLoopMs": 16.5076,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 0
+      }
+    ]
+  },
+  "activeMemoryAwarenessRush5000": {
+    "raw": {
+      "boundary": "Synthetic simultaneous lunch; stub paths; one warmup + three alternating samples per mode/accounting, 16 citizen / 128 total units / 2 ms soft budget. Snapshot published per frame. Frame/backlog estimates at 100 fps, explicit clock-rate scenarios. Not native throughput or path cost.",
+      "results": [
+        {
+          "mode": "all_feasible",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 160952,
+          "citizenEvents": 10000,
+          "continuationEvents": 150952,
+          "eventsPerDecision": 16.0952,
+          "eventCapFrames": 10060,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 10061,
+          "estimatedSecondsAt100Fps": 100.61,
+          "offlineCpuMs": 500.199,
+          "logicalRouteRequests": 140928,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 5538
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 8517
+            }
+          ],
+          "savedStateSha256": "C2BDE666ACE05DCBC27D89867FA60F1390845D0117EEE230D84734B336A423C3",
+          "syntheticLoopMs": {
+            "p50": 0.0432,
+            "p95": 0.057,
+            "max": 15.3376,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 160952,
+          "citizenEvents": 10000,
+          "continuationEvents": 150952,
+          "eventsPerDecision": 16.0952,
+          "eventCapFrames": 1258,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1262,
+          "estimatedSecondsAt100Fps": 12.62,
+          "offlineCpuMs": 484.5873,
+          "logicalRouteRequests": 140928,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "C2BDE666ACE05DCBC27D89867FA60F1390845D0117EEE230D84734B336A423C3",
+          "syntheticLoopMs": {
+            "p50": 0.3464,
+            "p95": 0.4754,
+            "max": 14.1089,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 30024,
+          "citizenEvents": 10000,
+          "continuationEvents": 20024,
+          "eventsPerDecision": 3.0024,
+          "eventCapFrames": 1877,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1881,
+          "estimatedSecondsAt100Fps": 18.81,
+          "offlineCpuMs": 354.3559,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 2028
+            }
+          ],
+          "savedStateSha256": "232241AEDE0BE08433FA8127CD17442E66233DA8A300870125448B0F693BA376",
+          "syntheticLoopMs": {
+            "p50": 0.1372,
+            "p95": 0.202,
+            "max": 19.759,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 30024,
+          "citizenEvents": 10000,
+          "continuationEvents": 20024,
+          "eventsPerDecision": 3.0024,
+          "eventCapFrames": 625,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 630,
+          "estimatedSecondsAt100Fps": 6.3,
+          "offlineCpuMs": 276.5302,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "232241AEDE0BE08433FA8127CD17442E66233DA8A300870125448B0F693BA376",
+          "syntheticLoopMs": {
+            "p50": 0.3901,
+            "p95": 0.5505,
+            "max": 15.9536,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 90488,
+          "citizenEvents": 10000,
+          "continuationEvents": 80488,
+          "eventsPerDecision": 9.0488,
+          "eventCapFrames": 5656,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 5659,
+          "estimatedSecondsAt100Fps": 56.59,
+          "offlineCpuMs": 329.9494,
+          "logicalRouteRequests": 70464,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 2052
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 7361
+            }
+          ],
+          "savedStateSha256": "78A120925423F4EE8B21CB070DFB232F127189E70DB4EBFF50D9634B71955181",
+          "syntheticLoopMs": {
+            "p50": 0.0378,
+            "p95": 0.0701,
+            "max": 15.1049,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 90488,
+          "citizenEvents": 10000,
+          "continuationEvents": 80488,
+          "eventsPerDecision": 9.0488,
+          "eventCapFrames": 707,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 709,
+          "estimatedSecondsAt100Fps": 7.09,
+          "offlineCpuMs": 314.6806,
+          "logicalRouteRequests": 70464,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "78A120925423F4EE8B21CB070DFB232F127189E70DB4EBFF50D9634B71955181",
+          "syntheticLoopMs": {
+            "p50": 0.3639,
+            "p95": 0.7207,
+            "max": 13.1293,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 0,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 1,
+          "consumers": 5000,
+          "events": 15024,
+          "citizenEvents": 5000,
+          "continuationEvents": 10024,
+          "eventsPerDecision": 3.0048,
+          "eventCapFrames": 939,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 940,
+          "estimatedSecondsAt100Fps": 9.4,
+          "offlineCpuMs": 46.4919,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "722DA2586C2FE06DDC0AC698799B72AF06286497D7438666969ABDFD49D8A901",
+          "syntheticLoopMs": {
+            "p50": 0.0334,
+            "p95": 0.04,
+            "max": 9.8807,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 0,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 1,
+          "consumers": 5000,
+          "events": 15024,
+          "citizenEvents": 5000,
+          "continuationEvents": 10024,
+          "eventsPerDecision": 3.0048,
+          "eventCapFrames": 313,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 317,
+          "estimatedSecondsAt100Fps": 3.17,
+          "offlineCpuMs": 93.7134,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "722DA2586C2FE06DDC0AC698799B72AF06286497D7438666969ABDFD49D8A901",
+          "syntheticLoopMs": {
+            "p50": 0.1581,
+            "p95": 0.2499,
+            "max": 13.0967,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 160952,
+          "citizenEvents": 10000,
+          "continuationEvents": 150952,
+          "eventsPerDecision": 16.0952,
+          "eventCapFrames": 1258,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1260,
+          "estimatedSecondsAt100Fps": 12.6,
+          "offlineCpuMs": 340.3844,
+          "logicalRouteRequests": 140928,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "C2BDE666ACE05DCBC27D89867FA60F1390845D0117EEE230D84734B336A423C3",
+          "syntheticLoopMs": {
+            "p50": 0.1881,
+            "p95": 0.4309,
+            "max": 15.0008,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 160952,
+          "citizenEvents": 10000,
+          "continuationEvents": 150952,
+          "eventsPerDecision": 16.0952,
+          "eventCapFrames": 10060,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 10062,
+          "estimatedSecondsAt100Fps": 100.62,
+          "offlineCpuMs": 354.1919,
+          "logicalRouteRequests": 140928,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 5539
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 8518
+            }
+          ],
+          "savedStateSha256": "C2BDE666ACE05DCBC27D89867FA60F1390845D0117EEE230D84734B336A423C3",
+          "syntheticLoopMs": {
+            "p50": 0.024,
+            "p95": 0.0482,
+            "max": 10.9258,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 30024,
+          "citizenEvents": 10000,
+          "continuationEvents": 20024,
+          "eventsPerDecision": 3.0024,
+          "eventCapFrames": 625,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 630,
+          "estimatedSecondsAt100Fps": 6.3,
+          "offlineCpuMs": 256.1768,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "232241AEDE0BE08433FA8127CD17442E66233DA8A300870125448B0F693BA376",
+          "syntheticLoopMs": {
+            "p50": 0.3869,
+            "p95": 0.5728,
+            "max": 11.3314,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 30024,
+          "citizenEvents": 10000,
+          "continuationEvents": 20024,
+          "eventsPerDecision": 3.0024,
+          "eventCapFrames": 1877,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1882,
+          "estimatedSecondsAt100Fps": 18.82,
+          "offlineCpuMs": 282.4991,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 2033
+            }
+          ],
+          "savedStateSha256": "232241AEDE0BE08433FA8127CD17442E66233DA8A300870125448B0F693BA376",
+          "syntheticLoopMs": {
+            "p50": 0.1158,
+            "p95": 0.1524,
+            "max": 12.4001,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 90488,
+          "citizenEvents": 10000,
+          "continuationEvents": 80488,
+          "eventsPerDecision": 9.0488,
+          "eventCapFrames": 707,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 709,
+          "estimatedSecondsAt100Fps": 7.09,
+          "offlineCpuMs": 265.1552,
+          "logicalRouteRequests": 70464,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "78A120925423F4EE8B21CB070DFB232F127189E70DB4EBFF50D9634B71955181",
+          "syntheticLoopMs": {
+            "p50": 0.2459,
+            "p95": 0.7251,
+            "max": 16.1336,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 90488,
+          "citizenEvents": 10000,
+          "continuationEvents": 80488,
+          "eventsPerDecision": 9.0488,
+          "eventCapFrames": 5656,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 5658,
+          "estimatedSecondsAt100Fps": 56.58,
+          "offlineCpuMs": 330.3382,
+          "logicalRouteRequests": 70464,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 2051
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 7361
+            }
+          ],
+          "savedStateSha256": "78A120925423F4EE8B21CB070DFB232F127189E70DB4EBFF50D9634B71955181",
+          "syntheticLoopMs": {
+            "p50": 0.0506,
+            "p95": 0.0684,
+            "max": 11.0363,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 1,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 1,
+          "consumers": 5000,
+          "events": 15024,
+          "citizenEvents": 5000,
+          "continuationEvents": 10024,
+          "eventsPerDecision": 3.0048,
+          "eventCapFrames": 313,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 315,
+          "estimatedSecondsAt100Fps": 3.15,
+          "offlineCpuMs": 56.3245,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "722DA2586C2FE06DDC0AC698799B72AF06286497D7438666969ABDFD49D8A901",
+          "syntheticLoopMs": {
+            "p50": 0.1049,
+            "p95": 0.225,
+            "max": 8.663,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 1,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 1,
+          "consumers": 5000,
+          "events": 15024,
+          "citizenEvents": 5000,
+          "continuationEvents": 10024,
+          "eventsPerDecision": 3.0048,
+          "eventCapFrames": 939,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 942,
+          "estimatedSecondsAt100Fps": 9.42,
+          "offlineCpuMs": 94.5342,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "722DA2586C2FE06DDC0AC698799B72AF06286497D7438666969ABDFD49D8A901",
+          "syntheticLoopMs": {
+            "p50": 0.0734,
+            "p95": 0.0887,
+            "max": 14.0191,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 160952,
+          "citizenEvents": 10000,
+          "continuationEvents": 150952,
+          "eventsPerDecision": 16.0952,
+          "eventCapFrames": 10060,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 10061,
+          "estimatedSecondsAt100Fps": 100.61,
+          "offlineCpuMs": 429.3272,
+          "logicalRouteRequests": 140928,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 5538
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 8517
+            }
+          ],
+          "savedStateSha256": "C2BDE666ACE05DCBC27D89867FA60F1390845D0117EEE230D84734B336A423C3",
+          "syntheticLoopMs": {
+            "p50": 0.0404,
+            "p95": 0.0538,
+            "max": 17.4758,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "all_feasible",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 160952,
+          "citizenEvents": 10000,
+          "continuationEvents": 150952,
+          "eventsPerDecision": 16.0952,
+          "eventCapFrames": 1258,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1260,
+          "estimatedSecondsAt100Fps": 12.6,
+          "offlineCpuMs": 370.83,
+          "logicalRouteRequests": 140928,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "C2BDE666ACE05DCBC27D89867FA60F1390845D0117EEE230D84734B336A423C3",
+          "syntheticLoopMs": {
+            "p50": 0.191,
+            "p95": 0.4259,
+            "max": 14.8571,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 30024,
+          "citizenEvents": 10000,
+          "continuationEvents": 20024,
+          "eventsPerDecision": 3.0024,
+          "eventCapFrames": 1877,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 1878,
+          "estimatedSecondsAt100Fps": 18.78,
+          "offlineCpuMs": 202.2918,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 2012
+            }
+          ],
+          "savedStateSha256": "232241AEDE0BE08433FA8127CD17442E66233DA8A300870125448B0F693BA376",
+          "syntheticLoopMs": {
+            "p50": 0.0708,
+            "p95": 0.1398,
+            "max": 7.5353,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "closed",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 30024,
+          "citizenEvents": 10000,
+          "continuationEvents": 20024,
+          "eventsPerDecision": 3.0024,
+          "eventCapFrames": 625,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 633,
+          "estimatedSecondsAt100Fps": 6.33,
+          "offlineCpuMs": 298.7214,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "232241AEDE0BE08433FA8127CD17442E66233DA8A300870125448B0F693BA376",
+          "syntheticLoopMs": {
+            "p50": 0.3912,
+            "p95": 0.5722,
+            "max": 13.3852,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 90488,
+          "citizenEvents": 10000,
+          "continuationEvents": 80488,
+          "eventsPerDecision": 9.0488,
+          "eventCapFrames": 5656,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 5658,
+          "estimatedSecondsAt100Fps": 56.58,
+          "offlineCpuMs": 406.8374,
+          "logicalRouteRequests": 70464,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 2051
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 7360
+            }
+          ],
+          "savedStateSha256": "78A120925423F4EE8B21CB070DFB232F127189E70DB4EBFF50D9634B71955181",
+          "syntheticLoopMs": {
+            "p50": 0.0625,
+            "p95": 0.0833,
+            "max": 14.3235,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "refused_outward",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 2,
+          "consumers": 10000,
+          "events": 90488,
+          "citizenEvents": 10000,
+          "continuationEvents": 80488,
+          "eventsPerDecision": 9.0488,
+          "eventCapFrames": 707,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 710,
+          "estimatedSecondsAt100Fps": 7.1,
+          "offlineCpuMs": 419.5078,
+          "logicalRouteRequests": 70464,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "78A120925423F4EE8B21CB070DFB232F127189E70DB4EBFF50D9634B71955181",
+          "syntheticLoopMs": {
+            "p50": 0.4785,
+            "p95": 1.0849,
+            "max": 18.8956,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 2,
+          "frameAccounting": "R1_all_units_are_citizens",
+          "residents": 5000,
+          "factor": 1,
+          "consumers": 5000,
+          "events": 15024,
+          "citizenEvents": 5000,
+          "continuationEvents": 10024,
+          "eventsPerDecision": 3.0048,
+          "eventCapFrames": 939,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 941,
+          "estimatedSecondsAt100Fps": 9.41,
+          "offlineCpuMs": 87.4074,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "722DA2586C2FE06DDC0AC698799B72AF06286497D7438666969ABDFD49D8A901",
+          "syntheticLoopMs": {
+            "p50": 0.0613,
+            "p95": 0.1217,
+            "max": 10.855,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "mode": "existing_shop",
+          "sample": 2,
+          "frameAccounting": "separate_continuations",
+          "residents": 5000,
+          "factor": 1,
+          "consumers": 5000,
+          "events": 15024,
+          "citizenEvents": 5000,
+          "continuationEvents": 10024,
+          "eventsPerDecision": 3.0048,
+          "eventCapFrames": 313,
+          "measuredFramesWith16Citizen128Unit2MsLoop": 317,
+          "estimatedSecondsAt100Fps": 3.17,
+          "offlineCpuMs": 97.9343,
+          "logicalRouteRequests": 0,
+          "lunchWindowMinutes": 45,
+          "backlog": [
+            {
+              "gameMinutesPerRealSecond": 0.3333333333333333,
+              "windowFrames": 13500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 1,
+              "windowFrames": 4500,
+              "pendingAtWindowEnd": 0
+            },
+            {
+              "gameMinutesPerRealSecond": 3,
+              "windowFrames": 1500,
+              "pendingAtWindowEnd": 0
+            }
+          ],
+          "savedStateSha256": "722DA2586C2FE06DDC0AC698799B72AF06286497D7438666969ABDFD49D8A901",
+          "syntheticLoopMs": {
+            "p50": 0.232,
+            "p95": 0.2832,
+            "max": 12.1759,
+            "spikesAtLeast30Ms": 0
+          }
+        }
+      ]
+    },
+    "summary": [
+      {
+        "mode": "all_feasible",
+        "accounting": "R1_all_units_are_citizens",
+        "medianFrames": 10061,
+        "p95LoopRangeMs": [
+          0.0482,
+          0.057
+        ],
+        "maxLoopMs": 17.4758,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 8518
+      },
+      {
+        "mode": "all_feasible",
+        "accounting": "separate_continuations",
+        "medianFrames": 1260,
+        "p95LoopRangeMs": [
+          0.4259,
+          0.4754
+        ],
+        "maxLoopMs": 15.0008,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 0
+      },
+      {
+        "mode": "closed",
+        "accounting": "R1_all_units_are_citizens",
+        "medianFrames": 1881,
+        "p95LoopRangeMs": [
+          0.1398,
+          0.202
+        ],
+        "maxLoopMs": 19.759,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 2033
+      },
+      {
+        "mode": "closed",
+        "accounting": "separate_continuations",
+        "medianFrames": 630,
+        "p95LoopRangeMs": [
+          0.5505,
+          0.5728
+        ],
+        "maxLoopMs": 15.9536,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 0
+      },
+      {
+        "mode": "existing_shop",
+        "accounting": "R1_all_units_are_citizens",
+        "medianFrames": 941,
+        "p95LoopRangeMs": [
+          0.04,
+          0.1217
+        ],
+        "maxLoopMs": 14.0191,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 0
+      },
+      {
+        "mode": "existing_shop",
+        "accounting": "separate_continuations",
+        "medianFrames": 317,
+        "p95LoopRangeMs": [
+          0.225,
+          0.2832
+        ],
+        "maxLoopMs": 13.0967,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 0
+      },
+      {
+        "mode": "refused_outward",
+        "accounting": "R1_all_units_are_citizens",
+        "medianFrames": 5658,
+        "p95LoopRangeMs": [
+          0.0684,
+          0.0833
+        ],
+        "maxLoopMs": 15.1049,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 7361
+      },
+      {
+        "mode": "refused_outward",
+        "accounting": "separate_continuations",
+        "medianFrames": 709,
+        "p95LoopRangeMs": [
+          0.7207,
+          1.0849
+        ],
+        "maxLoopMs": 18.8956,
+        "flaggedLoops": 0,
+        "worstBacklogAtFastestClock": 0
+      }
+    ]
+  },
+  "saveBench": {
+    "schema": 19,
+    "digest": "D7FF8294F56C3B3D5AF736540274E68E9848319B34658859FC15E0D4CDB1F3A2",
+    "length": 119083,
+    "refusals": [
+      "Invalid:Invalid state: Missing state schema.",
+      "Future:State uses a newer schema; preserve the original payload.",
+      "Invalid:Invalid state: Incomplete or trailing JSON content.",
+      "Invalid:Invalid state: Unknown field: UnknownCitizens"
+    ],
+    "economy": {
+      "orders": 849,
+      "ordersDigest": "1B94987B3158044594B9C4D6A5473BA22BE0D4F3488D769CBBEE23318BB33B91",
+      "purchases": 797,
+      "spentUnits": 107967424757760,
+      "uncertain": 2,
+      "economyDigest": "74D0FE8081EA795D4D56A11B4B955DC6E777E3822C702D3C09BC9477E6679AF9",
+      "reloadDigest": "59B6F14D44CA0F996C5A828E2E538B52C5426347FCFA40767527B72D77F1D4FA"
+    },
+    "writeBytes": 14453904,
+    "readBytes": 38773560,
+    "bench": [
+      {
+        "residents": 957,
+        "representation": 2,
+        "decisions": true,
+        "a2Chars": 2002583,
+        "decisionDelta": 112343,
+        "consumers": 1914,
+        "chars": 2114926,
+        "capShare": 0.008,
+        "utf8Bytes": 2114926,
+        "schema16Chars": 2662766,
+        "writeMs": 47.8,
+        "readMs": 209.5,
+        "upgradeFrom16Ms": 217.0,
+        "retainedMiB": 3.9
+      },
+      {
+        "residents": 5000,
+        "representation": 2,
+        "decisions": true,
+        "a2Chars": 10466847,
+        "decisionDelta": 508557,
+        "consumers": 10000,
+        "chars": 10975404,
+        "capShare": 0.041,
+        "utf8Bytes": 10975404,
+        "schema16Chars": 13916700,
+        "writeMs": 141.7,
+        "readMs": 565.2,
+        "upgradeFrom16Ms": 789.6,
+        "retainedMiB": 20.4
+      }
+    ],
+    "hot": {
+      "traitGenerateNs": 512.0,
+      "outcomeRecordNs": 86.2,
+      "outcomeRecordBytesPerConsumerDay": 192.0
+    }
+  }
+}

@@ -28,3 +28,5 @@ Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here
 - E3 salad — Conditional direct-stock probe, feasibility stop, base sync and native checklist: [checks](docs/checks/e3-salad.md).
 
 - C4 — Bounded inactive market research, access contract, base sync and native checklist: [checks](docs/checks/c4-market-research.md).
+
+- A5 - 1 Nov 2026, offline only: **2,351 tests /50 commands pass**; synthetic inspector closed-throttle/48-walker-score/open-memory p95 **0.000006/0.000932/0.011576 ms**; active 1,024-scope decision/unit p95 **1.1661/0.0074 ms**; 957/5k rush **243/1,260 loops**, zero modeled backlog; save write/read **47.8/209.5 and 141.7/565.2 ms**, **0.788%/4.089%** cap; short-ID >=30 ms flags (max **35.358 ms**), native gate pending: [checks, closure and 6 Nov handoff](docs/checks/a5-integrated-acceptance.md).
