@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Globalization;
 using System.Reflection;
 using Entities;
 using Buildings;
@@ -17,7 +18,7 @@ namespace PersistentCity.Runtime
     {
         private readonly DwellSpots doors;
         private readonly AudienceGeometryCache audiences = new AudienceGeometryCache();
-        private readonly Dictionary<string, CityBuildingController> buildings = new Dictionary<string, CityBuildingController>(StringComparer.Ordinal);
+        private readonly Dictionary<string, CityBuildingController?> buildings = new Dictionary<string, CityBuildingController?>(StringComparer.Ordinal);
         private readonly Dictionary<string, OptionalStopSpot> validatedSpots = new Dictionary<string, OptionalStopSpot>(StringComparer.Ordinal);
         private readonly Dictionary<string, OptionalStopSpot[]> cached = new Dictionary<string, OptionalStopSpot[]>(StringComparer.Ordinal);
         private readonly Dictionary<string, StationaryAiSpawner> performerZones = new Dictionary<string, StationaryAiSpawner>(StringComparer.Ordinal);
@@ -25,7 +26,10 @@ namespace PersistentCity.Runtime
         private readonly Dictionary<string, Place> places;
         private static readonly FieldInfo? Performer = typeof(StationaryAiSpawner).GetField("_streetPerformer", BindingFlags.Instance | BindingFlags.NonPublic);
         public OptionalStopEnvironment(IEnumerable<Place> places, DwellSpots doors)
-        { this.places = places.ToDictionary(p => p.Id, StringComparer.Ordinal); this.doors = doors; }
+        {
+            this.places = places.ToDictionary(p => p.Id, StringComparer.Ordinal); this.doors = doors;
+            PublishFrontages(this.places.Values);
+        }
         public bool Raining => RainHelper.isRaining;
         public IReadOnlyList<OptionalStopSpot> Spots(Place place, DwellKind kind)
         {
@@ -43,12 +47,10 @@ namespace PersistentCity.Runtime
             string key = place.Id + ":" + kind;
             if (kind == DwellKind.Resting)
                 return cached.TryGetValue(key, out var park) ? park : ParkEdge(place, key);
-            // Refuse cold work before a separate native-building lookup when this frame's
-            // shared facade budget has already been consumed.
-            if (!doors.TryQueue(place, out var line) || line == null || !NativeDoorPresent(place, kind))
+            // Ownership is already published. Check it before sampling so refused frontages
+            // consume no facade budget. A rebind invalidates geometry before the single lookup.
+            if (!NativeDoorPresent(place, kind) || !doors.TryQueue(place, out var line) || line == null)
                 return Array.Empty<OptionalStopSpot>();
-            // A dead building reference can invalidate the shared facade during that check.
-            if (!doors.TryQueue(place, out line) || line == null) return Array.Empty<OptionalStopSpot>();
             if (cached.TryGetValue(key, out var known)) return known;
             // Geometry already validated beside the facade, reachable and clear of entrances.
             var result = line.Spots.Select((p, index) => new OptionalStopSpot { Id = key + ":" + index,
@@ -58,30 +60,151 @@ namespace PersistentCity.Runtime
         }
         private bool NativeDoorPresent(Place place, DwellKind kind)
         {
+            if (!CanHostFrontage(place)) return false;
             bool known = buildings.TryGetValue(place.Id, out var found);
-            if (known && found == null)
+            // A cached refusal is retained until publication. A destroyed previously owned
+            // controller triggers a rebind; missing/ambiguous frontages are never polled each frame.
+            if (known && !ReferenceEquals(found, null) && found == null)
             {
-                buildings.Remove(place.Id); doors.Invalidate(place);
-                foreach (var doorKind in new[] { DwellKind.Break, DwellKind.WindowShopping, DwellKind.ChatOutsideVenue })
-                {
-                    string key = place.Id + ":" + doorKind;
-                    if (cached.TryGetValue(key, out var old)) foreach (var spot in old) validatedSpots.Remove(spot.Id);
-                    cached.Remove(key);
-                }
+                PublishFrontages(places.Values, rebind: true);
+                found = buildings[place.Id];
             }
-            if (found == null)
+            if (!known)
             {
-                var manager = CityManager.Instance;
-                if (manager == null || manager.cityBuildingControllers == null) return false;
-                foreach (var candidate in manager.cityBuildingControllers)
-                    if (candidate != null && GamePlaces.TryEntrance(candidate, out var entrance)
-                        && Position.Distance(entrance, place.Position) < 0.1)
-                    { buildings[place.Id] = found = candidate; break; }
+                places[place.Id] = place;
+                buildings[place.Id] = found = ResolveFrontage(place);
             }
             return found != null && found.gameObject.activeInHierarchy && GamePlaces.BuildingAccessible(found)
                 && found.buildingRegistration != null && found.buildingRegistration.HasEstablishedBusiness
                 && !found.buildingRegistration.temporarilyClosed
                 && (kind != DwellKind.ChatOutsideVenue || found.buildingRegistration.businessTypeName == "ba:businesstype_nightclub");
+        }
+        private void InvalidateFrontage(Place place, DwellKind kind)
+        {
+            string key = place.Id + ":" + kind;
+            if (cached.TryGetValue(key, out var old)) foreach (var spot in old) validatedSpots.Remove(spot.Id);
+            cached.Remove(key);
+        }
+        private readonly struct Frontage
+        {
+            public Frontage(CityBuildingController controller, string? address, Position entrance, bool hasEntrance)
+            { Controller = controller; Address = address; Entrance = entrance; HasEntrance = hasEntrance; }
+            public CityBuildingController Controller { get; }
+            public string? Address { get; }
+            public Position Entrance { get; }
+            public bool HasEntrance { get; }
+        }
+        // Read-only bridge diagnostics; written only at publication/rebind, never per query.
+        public long FrontageRebindCount { get; private set; }
+        public double FrontageRebindLastMilliseconds { get; private set; }
+        public double FrontageRebindTotalMilliseconds { get; private set; }
+        public double FrontageRebindMaximumMilliseconds { get; private set; }
+        public long FrontageRebindSpikes30 { get; private set; }
+        private static bool CanHostFrontage(Place place) => place.Kind == PlaceKind.Work
+            || place.Kind == PlaceKind.Shop || place.Kind == PlaceKind.Leisure;
+        private sealed class FrontageImage
+        {
+            public readonly Dictionary<string, Frontage?> Addresses = new Dictionary<string, Frontage?>(StringComparer.Ordinal);
+            public readonly Dictionary<(double X, double Y, double Z), List<Frontage>> Entrances
+                = new Dictionary<(double, double, double), List<Frontage>>();
+            public static (double X, double Y, double Z) Cell(Position at)
+                => (Math.Floor(at.X / 0.1), Math.Floor(at.Y / 0.1), Math.Floor(at.Z / 0.1));
+            public void Add(Frontage frontage)
+            {
+                if (frontage.Address != null)
+                {
+                    if (!Addresses.TryGetValue(frontage.Address, out var prior)) Addresses.Add(frontage.Address, frontage);
+                    else if (!prior.HasValue || !ReferenceEquals(prior.Value.Controller, frontage.Controller)) Addresses[frontage.Address] = null;
+                }
+                if (!frontage.HasEntrance) return;
+                var cell = Cell(frontage.Entrance);
+                if (!Entrances.TryGetValue(cell, out var entries)) Entrances.Add(cell, entries = new List<Frontage>(1));
+                entries.Add(frontage);
+            }
+        }
+        private void PublishFrontages(IEnumerable<Place> venues, bool rebind = false)
+        {
+            long started = rebind ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
+            // Index every controller once. Resolve only frontage-capable roles against their
+            // exact address and neighbouring entrance cells, never the entire city image.
+            var image = ReadFrontages();
+            foreach (var place in venues)
+            {
+                if (!CanHostFrontage(place)) continue;
+                var owner = ResolveFrontage(place, image);
+                if (buildings.TryGetValue(place.Id, out var previous) && !ReferenceEquals(previous, owner))
+                {
+                    doors.Invalidate(place);
+                    InvalidateFrontage(place, DwellKind.Break);
+                    InvalidateFrontage(place, DwellKind.WindowShopping);
+                    InvalidateFrontage(place, DwellKind.ChatOutsideVenue);
+                }
+                buildings[place.Id] = owner;
+            }
+            if (rebind)
+            {
+                double elapsed = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+                FrontageRebindCount++;
+                FrontageRebindLastMilliseconds = elapsed;
+                FrontageRebindTotalMilliseconds += elapsed;
+                FrontageRebindMaximumMilliseconds = Math.Max(FrontageRebindMaximumMilliseconds, elapsed);
+                if (elapsed >= 30) FrontageRebindSpikes30++;
+            }
+        }
+        private static FrontageImage ReadFrontages()
+        {
+            var image = new FrontageImage();
+            var manager = CityManager.Instance;
+            if (manager == null || manager.cityBuildingControllers == null) return image;
+            foreach (var candidate in manager.cityBuildingControllers)
+            {
+                if (candidate == null) continue;
+                try
+                {
+                    var registration = candidate.buildingRegistration;
+                    string? address = registration == null || string.IsNullOrWhiteSpace(registration.StreetName) ? null
+                        : "address:" + Uri.EscapeDataString(registration.StreetName) + ":"
+                            + registration.StreetNumber.ToString(CultureInfo.InvariantCulture) + ":";
+                    bool hasEntrance = GamePlaces.TryEntrance(candidate, out var entrance) && entrance.IsFinite;
+                    image.Add(new Frontage(candidate, address, entrance, hasEntrance));
+                }
+                catch (Exception)
+                {
+                    // Unreadable ownership cannot be ruled out as a conflict. Refuse the image.
+                    return new FrontageImage();
+                }
+            }
+            return image;
+        }
+        private static CityBuildingController? ResolveFrontage(Place place) => ResolveFrontage(place, ReadFrontages());
+        private static CityBuildingController? ResolveFrontage(Place place, FrontageImage image)
+        {
+            if (!place.Position.IsFinite) return null;
+            bool addressPlace = place.Id.StartsWith("address:", StringComparison.Ordinal);
+            string? address = addressPlace ? place.Id.Substring(0, place.Id.LastIndexOf(':') + 1) : null;
+            CityBuildingController? owner = null;
+            if (addressPlace)
+            {
+                if (address == null || !image.Addresses.TryGetValue(address, out var registered) || !registered.HasValue
+                    || !registered.Value.HasEntrance || Position.Distance(registered.Value.Entrance, place.Position) >= 0.1) return null;
+                owner = registered.Value.Controller;
+            }
+            var cell = FrontageImage.Cell(place.Position);
+            // A match within 0.1m can cross any of the three quantisation boundaries.
+            for (int x = -1; x <= 1; x++)
+                for (int y = -1; y <= 1; y++)
+                    for (int z = -1; z <= 1; z++)
+                    {
+                        if (!image.Entrances.TryGetValue((cell.X + x, cell.Y + y, cell.Z + z), out var entries)) continue;
+                        foreach (var candidate in entries)
+                        {
+                            if (Position.Distance(candidate.Entrance, place.Position) >= 0.1) continue;
+                            if (candidate.Address == null || addressPlace && candidate.Address != address
+                                || owner != null && !ReferenceEquals(owner, candidate.Controller)) return null;
+                            owner = candidate.Controller;
+                        }
+                    }
+            return owner;
         }
         private IReadOnlyList<OptionalStopSpot> ParkEdge(Place place, string key)
         {

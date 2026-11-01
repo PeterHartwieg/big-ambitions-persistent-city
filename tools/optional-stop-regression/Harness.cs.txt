@@ -171,6 +171,45 @@ partial class Harness
         Check(ReferenceEquals(first,a.Person)&&ReferenceEquals(second,b.Person),"partners keep original bodies");
         Check(a.Citizen.NextEventMinute==1000&&c.NextEventMinute==1000,"paired return does not extend activities");
     }
+    private static void QueueCommitment()
+    {
+        var h=new Harness(); var c=h.simulation.State.Citizens[0];
+        var p=new Place {Id="shop",Kind=PlaceKind.Shop,OpenMinute=540,CloseMinute=1080};
+        c.Identity.Id="queue0"; c.Phase=CitizenPhase.WaitingForOpening; c.PlaceId=c.DestinationId="shop";
+        c.DestinationActivity=Activity.Shop; c.ActivityUntilMinute=900;
+        var dry=h.QueueDwell(c,p,530,false)!.Value; double now=dry.StartMinute+0.01;
+        var wet=h.QueueDwell(c,p,now,true);
+        foreach(var step in new[]{QueueStep.Approaching,QueueStep.Standing})
+        {
+            var bound=new Binding {Citizen=c,Person=new Body(),Line=new DoorQueue(),Queue=dry,Step=step};
+            h.bindings[c.Identity.Id]=bound;
+            Check(Equals(h.QueueDwell(c,p,now,true),dry),"R4 committed binding retained through rain");
+            bound.Person.Valid=false;
+            Check(Equals(h.QueueDwell(c,p,now,true),wet),"invalid body is a new admission");
+            bound.Person.Valid=true; bound.Step=QueueStep.Entering;
+            Check(Equals(h.QueueDwell(c,p,now,true),wet),"leaving body has no queue commitment");
+        }
+        h.bindings.Clear(); Check(Equals(h.QueueDwell(c,p,now,true),wet),"unbound admission uses current rain");
+        if(wet.HasValue)
+        {
+            var bound=new Binding {Citizen=c,Person=new Body(),Line=new DoorQueue(),Queue=wet,Step=QueueStep.Standing};
+            h.bindings[c.Identity.Id]=bound;
+            Check(Equals(h.QueueDwell(c,p,wet.Value.StartMinute+0.01,false),wet),"rain clearing keeps the shorter committed lead");
+            h.bindings.Clear();
+            Check(Equals(h.QueueDwell(c,p,wet.Value.StartMinute+0.01,false),dry),"new dry admission uses dry lead");
+        }
+        for(int i=1;i<100;i++)
+        {
+            c.Identity.Id="thinned"+i;
+            if(h.QueueDwell(c,p,530,true).HasValue) continue;
+            var original=h.QueueDwell(c,p,530,false)!.Value;
+            h.bindings[c.Identity.Id]=new Binding {Citizen=c,Person=new Body(),Line=new DoorQueue(),Queue=original,Step=QueueStep.Standing};
+            Check(Equals(h.QueueDwell(c,p,original.StartMinute+0.01,true),original),"rain thinning never removes an existing commitment");
+            h.bindings.Clear(); Check(!h.QueueDwell(c,p,original.StartMinute+0.01,true).HasValue,"rain still thins new admissions");
+            break;
+        }
+        Console.WriteLine("R4 queue-plan selection: approaching/standing commitment and new-admission checks passed; visible retention pre-existed.");
+    }
     private static void Findings()
     {
         // Observations for E2b triage, deliberately separate from acceptance assertions.
@@ -189,13 +228,14 @@ partial class Harness
             var dry=DwellPlanner.QueueAtOpening(waiting,shop,17,530,false)!.Value;
             var wet=DwellPlanner.QueueAtOpening(waiting,shop,17,530,true);
             if(!wet.HasValue||dry.StartMinute>=535) continue;
-            Console.WriteLine(FormattableString.Invariant($"E2b queue-lead contract observation (not an acceptance assertion): id=queue{i}, seed=17, opening=540; dry start={dry.StartMinute:F4}, wet start={wet.Value.StartMinute:F4}; replan at same wait changes lead; no persisted queue commitment."));
+            Console.WriteLine(FormattableString.Invariant($"E2b queue reload reconstruction limitation: id=queue{i}, seed=17, opening=540; dry start={dry.StartMinute:F4}, wet start={wet.Value.StartMinute:F4}; unbound current-weather plan changes lead; no persisted lead/body/slot. Live commitment is asserted separately."));
             break;
         }
     }
     public static void Main(string[] args)
     {
         SharedSamplingBudget();
+        QueueCommitment();
         PersistentCity.Runtime.NativeDoorHarness.Run();
         ArrivalSequence(); DepartureSequence(true); DepartureSequence(false);
         PairedReturn();

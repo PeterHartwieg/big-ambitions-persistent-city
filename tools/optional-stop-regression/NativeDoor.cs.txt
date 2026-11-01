@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
@@ -21,6 +22,8 @@ namespace PersistentCity.Runtime
     sealed class GameObject { public bool activeInHierarchy = true; }
     sealed class Registration
     {
+        public string StreetName = "Test Street";
+        public int StreetNumber = 1;
         public bool HasEstablishedBusiness = true;
         public bool temporarilyClosed = false;
         public string businessTypeName = "ba:businesstype_nightclub";
@@ -32,13 +35,41 @@ namespace PersistentCity.Runtime
     }
     static class GamePlaces
     {
-        public static bool TryEntrance(CityBuildingController c, out Position p) { p=c.Entrance; return c.HasEntrance; }
+        public static int EntranceReads;
+        public static bool TryEntrance(CityBuildingController c, out Position p) { EntranceReads++; p=c.Entrance; return c.HasEntrance; }
         public static bool BuildingAccessible(CityBuildingController c) => c.Accessible;
     }
+    #if PERFORMANCE
+    sealed class E2aDoorHarness
+    {
+        readonly DwellSpots doors = new DwellSpots();
+        readonly Dictionary<string,CityBuildingController> buildings = new();
+        readonly Dictionary<string,OptionalStopSpot[]> cached = new();
+        readonly Dictionary<string,OptionalStopSpot> validatedSpots = new();
+        IReadOnlyList<OptionalStopSpot> Audience(Place p) => Array.Empty<OptionalStopSpot>();
+        IReadOnlyList<OptionalStopSpot> ParkEdge(Place p,string key) => Array.Empty<OptionalStopSpot>();
+        /* E2A METHOD */
+        public void Publish(IEnumerable<Place> places) { foreach(var place in places) NativeDoorPresent(place,DwellKind.Break); }
+        public bool Read(Place p) => NativeDoorPresent(p,DwellKind.Break);
+    }
+    sealed class ReviewedDoorHarness
+    {
+        readonly DwellSpots doors = new DwellSpots();
+        readonly Dictionary<string,CityBuildingController?> buildings = new();
+        readonly Dictionary<string,OptionalStopSpot[]> cached = new();
+        readonly Dictionary<string,OptionalStopSpot> validatedSpots = new();
+        readonly Dictionary<string,Place> places = new();
+        /* REVIEWED METHOD */
+        public void SetRoster(IEnumerable<Place> venues) { foreach(var p in venues) places[p.Id]=p; }
+        public void Publish() => PublishFrontages(places.Values);
+        public void ReadAll() { foreach(var p in places.Values) NativeDoorPresent(p,DwellKind.Break); }
+        public bool Read(Place p) => NativeDoorPresent(p,DwellKind.Break);
+    }
+    #endif
     sealed class NativeDoorHarness : IOptionalStopEnvironment
     {
         readonly DwellSpots doors = new DwellSpots();
-        readonly Dictionary<string,CityBuildingController> buildings = new Dictionary<string,CityBuildingController>();
+        readonly Dictionary<string,CityBuildingController?> buildings = new Dictionary<string,CityBuildingController?>();
         readonly Dictionary<string,OptionalStopSpot[]> cached = new Dictionary<string,OptionalStopSpot[]>();
         readonly Dictionary<string,OptionalStopSpot> validatedSpots = new Dictionary<string,OptionalStopSpot>();
         readonly Dictionary<string,Place> places = new Dictionary<string,Place>();
@@ -47,6 +78,11 @@ namespace PersistentCity.Runtime
             => NativeDoorPresent(places[stop.PlaceId],stop.Kind) ? GeometryStatus(places[stop.PlaceId],stop) : OptionalStopAvailability.Unavailable;
         IReadOnlyList<OptionalStopSpot> Audience(Place p) => Array.Empty<OptionalStopSpot>();
         IReadOnlyList<OptionalStopSpot> ParkEdge(Place p,string key) => Array.Empty<OptionalStopSpot>();
+        void Publish(IEnumerable<Place> venues)
+        {
+            foreach(var place in venues) places[place.Id]=place;
+            PublishFrontages(places.Values);
+        }
         /* PRODUCTION METHOD */
         static void ReloadMultipleEntrances(bool reverse)
         {
@@ -106,9 +142,11 @@ namespace PersistentCity.Runtime
         public static void Run()
         {
             VenueBoundaries();
+            Findings();
+            IndexedBoundaries();
             ReloadMultipleEntrances(false);
             ReloadMultipleEntrances(true);
-            var h=new NativeDoorHarness(); var p=new Place {Id="shop", Position=new Position(1,0,1)};
+            var h=new NativeDoorHarness(); var p=new Place {Kind=PlaceKind.Work,Id="shop", Position=new Position(1,0,1)};
             var old=new CityBuildingController {Entrance=p.Position}; CityManager.Instance.cityBuildingControllers.Add(old);
             if (!h.NativeDoorPresent(p,DwellKind.WindowShopping)) throw new Exception("Initial native door missing");
             Time.frameCount++; h.doors.TryQueue(p,out var line);
@@ -125,8 +163,10 @@ namespace PersistentCity.Runtime
             replacement.Destroyed=true; CityManager.Instance.cityBuildingControllers.Clear();
             if (h.NativeDoorPresent(p,DwellKind.WindowShopping)) throw new Exception("Missing replacement must fail closed");
             CityManager.Instance.cityBuildingControllers.Add(new CityBuildingController {Entrance=p.Position});
-            if (!h.NativeDoorPresent(p,DwellKind.WindowShopping)) throw new Exception("Later replacement must remain discoverable");
-            Console.WriteLine("Native door replacement: 6 checks passed.");
+            if (h.NativeDoorPresent(p,DwellKind.WindowShopping)) throw new Exception("Cached refusal must not poll for later replacements");
+            h=new NativeDoorHarness();
+            if (!h.NativeDoorPresent(p,DwellKind.WindowShopping)) throw new Exception("Republished environment must discover replacement");
+            Console.WriteLine("Native door replacement/refusal republication: 7 checks passed.");
         }
 
         static void VenueBoundaries()
@@ -136,7 +176,7 @@ namespace PersistentCity.Runtime
             // the unchanged predicate, not asset availability or new chat eligibility.
             foreach(string type in new[] {"nightclub","coffeeshop","fastfoodrestaurant","gym","cinema","theater","school","lawfirm","warehouse","unknown"})
             {
-                var p=new Place {Id="venue:"+type,Position=new Position(40,0,0)};
+                var p=new Place {Kind=PlaceKind.Work,Id="venue:"+type,Position=new Position(40,0,0)};
                 var b=new CityBuildingController {Entrance=p.Position};
                 b.buildingRegistration!.businessTypeName="ba:businesstype_"+type;
                 CityManager.Instance.cityBuildingControllers.Clear(); CityManager.Instance.cityBuildingControllers.Add(b);
@@ -147,7 +187,7 @@ namespace PersistentCity.Runtime
                 foreach(Action<CityBuildingController> damage in new Action<CityBuildingController>[] {
                     x=>x.gameObject.activeInHierarchy=false, x=>x.Accessible=false, x=>x.HasEntrance=false,
                     x=>x.buildingRegistration=null, x=>x.buildingRegistration!.HasEstablishedBusiness=false,
-                    x=>x.buildingRegistration!.temporarilyClosed=true })
+                    x=>x.buildingRegistration!.temporarilyClosed=true, x=>x.buildingRegistration!.StreetName="" })
                 {
                     var bad=new CityBuildingController {Entrance=p.Position};
                     bad.buildingRegistration!.businessTypeName="ba:businesstype_"+type;
@@ -164,40 +204,184 @@ namespace PersistentCity.Runtime
 
         public static void Findings()
         {
-            var p=new Place {Id="ambiguous",Position=new Position(40,0,0)};
+            var p=new Place {Kind=PlaceKind.Work,Id="ambiguous",Position=new Position(40,0,0)};
             var club=new CityBuildingController {Entrance=p.Position};
             var cafe=new CityBuildingController {Entrance=p.Position}; cafe.buildingRegistration!.businessTypeName="ba:businesstype_coffeeshop";
             CityManager.Instance.cityBuildingControllers.Clear(); CityManager.Instance.cityBuildingControllers.AddRange(new[] {club,cafe});
-            bool clubFirst=new NativeDoorHarness().NativeDoorPresent(p,DwellKind.ChatOutsideVenue);
+            var ambiguous=new NativeDoorHarness();
+            bool clubFirst=ambiguous.NativeDoorPresent(p,DwellKind.ChatOutsideVenue);
+            Time.frameCount++; int samples=DwellSpots.SampleCalls;
+            if(ambiguous.Spots(p,DwellKind.Break).Count!=0 || DwellSpots.SampleCalls!=samples)
+                throw new Exception("Refused frontage consumed facade sample budget");
             CityManager.Instance.cityBuildingControllers.Reverse();
             bool cafeFirst=new NativeDoorHarness().NativeDoorPresent(p,DwellKind.ChatOutsideVenue);
-            Console.WriteLine($"E2b ambiguity observation (not an acceptance assertion): expected refuse both; actual club-first={clubFirst}, cafe-first={cafeFirst}.");
+            if(clubFirst || cafeFirst) throw new Exception("R2 shared frontage must fail closed in both orders");
+            var cachedRefusal=new NativeDoorHarness();
+            if(cachedRefusal.NativeDoorPresent(p,DwellKind.Break)) throw new Exception("Ambiguous break accepted");
+            CityManager.Instance.cityBuildingControllers.Remove(cafe);
+            if(cachedRefusal.NativeDoorPresent(p,DwellKind.Break)) throw new Exception("Refusal was polled again");
+            if(!new NativeDoorHarness().NativeDoorPresent(p,DwellKind.ChatOutsideVenue)) throw new Exception("Unique match changed");
+            CityManager.Instance.cityBuildingControllers.Add(club);
+            if(!new NativeDoorHarness().NativeDoorPresent(p,DwellKind.ChatOutsideVenue)) throw new Exception("Repeated reference is not a second owner");
+            var addressed=new Place {Kind=PlaceKind.Work,Id="address:Test%20Street:1:work",Position=p.Position};
+            if(!new NativeDoorHarness().NativeDoorPresent(addressed,DwellKind.Break)) throw new Exception("Unique address refused");
+            club.buildingRegistration!.StreetNumber=2;
+            if(new NativeDoorHarness().NativeDoorPresent(addressed,DwellKind.Break)) throw new Exception("Conflicting address accepted");
+            club.buildingRegistration.StreetNumber=1;
+            cafe.Entrance=new Position(80,0,0);
+            CityManager.Instance.cityBuildingControllers.Add(cafe);
+            foreach(bool reverse in new[]{false,true})
+            {
+                if(reverse) CityManager.Instance.cityBuildingControllers.Reverse();
+                if(new NativeDoorHarness().NativeDoorPresent(addressed,DwellKind.Break)) throw new Exception("Duplicate address at different entrance accepted");
+            }
+            Console.WriteLine($"R2 acceptance: ambiguous club-first={clubFirst}, cafe-first={cafeFirst}; cached refusal, unique/repeated reference and conflicting address checks passed.");
             CityManager.Instance.cityBuildingControllers.Clear();
         }
 
+        static void IndexedBoundaries()
+        {
+            int checks=0;
+            foreach(double origin in new[]{-10.00001,-0.100001,-0.000001,0.099999,10.00001})
+                foreach(int axis in new[]{0,1,2})
+                    foreach(double offset in new[]{-0.10001,-0.09999,0.09999,0.10001})
+                    {
+                        var p=new Place {Id="address:Test%20Street:1:work",Kind=PlaceKind.Work,Position=new Position(origin,origin,origin)};
+                        var own=new CityBuildingController {Entrance=p.Position};
+                        var other=new CityBuildingController {Entrance=new Position(origin+(axis==0?offset:0),origin+(axis==1?offset:0),origin+(axis==2?offset:0))};
+                        other.buildingRegistration!.StreetNumber=2;
+                        foreach(bool reverse in new[]{false,true})
+                        {
+                            CityManager.Instance.cityBuildingControllers.Clear();
+                            CityManager.Instance.cityBuildingControllers.AddRange(reverse?new[]{other,own}:new[]{own,other});
+                            var h=new NativeDoorHarness(); h.Publish(new[]{p});
+                            bool expected=Math.Abs(offset)>0.1;
+                            if(h.NativeDoorPresent(p,DwellKind.Break)!=expected) throw new Exception("Entrance-cell edge changed ownership");
+                            checks++;
+                        }
+                    }
+            CityManager.Instance.cityBuildingControllers.Clear();
+            var roster=Enumerable.Range(0,1000).Select(i=>new Place {Id="address:Test%20Street:"+i+":work",Kind=i<500?PlaceKind.Home:i<600?PlaceKind.Study:PlaceKind.Work,Position=new Position(i*10,0,0)}).ToArray();
+            foreach(var p in roster)
+            {
+                var b=new CityBuildingController {Entrance=p.Position}; b.buildingRegistration!.StreetNumber=CityManager.Instance.cityBuildingControllers.Count;
+                CityManager.Instance.cityBuildingControllers.Add(b);
+            }
+            var env=new NativeDoorHarness(); int before=GamePlaces.EntranceReads; env.Publish(roster);
+            if(env.buildings.Count!=400 || GamePlaces.EntranceReads-before!=1000 || env.FrontageRebindCount!=0) throw new Exception("Non-frontage roles were resolved or publication rescanned native entrances");
+            foreach(var p in roster) if(env.NativeDoorPresent(p,DwellKind.Break)!=(p.Kind==PlaceKind.Work)) throw new Exception("Work break or home/study eligibility changed");
+            foreach(var b in CityManager.Instance.cityBuildingControllers) b.Destroyed=true;
+            CityManager.Instance.cityBuildingControllers.Clear();
+            foreach(var p in roster)
+            {
+                var b=new CityBuildingController {Entrance=p.Position}; b.buildingRegistration!.StreetNumber=CityManager.Instance.cityBuildingControllers.Count;
+                CityManager.Instance.cityBuildingControllers.Add(b);
+            }
+            before=GamePlaces.EntranceReads;
+            foreach(var p in roster) env.NativeDoorPresent(p,DwellKind.Break);
+            if(env.FrontageRebindCount!=1 || GamePlaces.EntranceReads-before!=1000 || env.FrontageRebindLastMilliseconds<0
+                || env.FrontageRebindTotalMilliseconds!=env.FrontageRebindLastMilliseconds
+                || env.FrontageRebindMaximumMilliseconds!=env.FrontageRebindLastMilliseconds) throw new Exception("Rebind count/duration or one-image bound changed");
+            before=GamePlaces.EntranceReads;
+            foreach(var p in roster) env.NativeDoorPresent(p,DwellKind.Break);
+            if(GamePlaces.EntranceReads!=before || env.FrontageRebindCount!=1) throw new Exception("Warm ownership reads republished the image");
+            CityManager.Instance.cityBuildingControllers.Clear();
+            Console.WriteLine($"Indexed frontage: {checks} three-axis negative/boundary/order checks; 1,000-controller mixed-role publish/rebind, work breaks, warm reuse and counters passed.");
+        }
+        #if PERFORMANCE
+        static void CacheCosts(int count)
+        {
+            var venues=Enumerable.Range(0,count).Select(i=>new Place {Kind=PlaceKind.Work,Id="address:Test%20Street:"+i+":work",Position=new Position(i*10,0,0)}).ToArray();
+            CityManager.Instance.cityBuildingControllers.Clear();
+            foreach(var p in venues)
+            {
+                var controller=new CityBuildingController {Entrance=p.Position};
+                controller.buildingRegistration!.StreetNumber=CityManager.Instance.cityBuildingControllers.Count;
+                CityManager.Instance.cityBuildingControllers.Add(controller);
+            }
+            foreach(int model in new[]{0,1,2})
+            {
+                foreach(bool rebind in new[]{false,true})
+                {
+                    var times=new double[200]; long bytes=0; int reads=0;
+                    for(int n=0;n<times.Length;n++)
+                    {
+                        var current=new NativeDoorHarness(); var baseline=new E2aDoorHarness(); var reviewed=new ReviewedDoorHarness();
+                        // Both production constructors already own the place roster before the
+                        // cache publication/rebind being measured. Keep fixture roster setup out.
+                        foreach(var p in venues) current.places[p.Id]=p;
+                        reviewed.SetRoster(venues);
+                        if(rebind)
+                        {
+                            if(model==2) current.PublishFrontages(venues); else if(model==1) reviewed.Publish(); else baseline.Publish(venues);
+                            foreach(var b in CityManager.Instance.cityBuildingControllers) b.Destroyed=true;
+                            CityManager.Instance.cityBuildingControllers.Clear();
+                            foreach(var p in venues)
+                            {
+                                var b=new CityBuildingController {Entrance=p.Position}; b.buildingRegistration!.StreetNumber=CityManager.Instance.cityBuildingControllers.Count;
+                                CityManager.Instance.cityBuildingControllers.Add(b);
+                            }
+                        }
+                        int beforeReads=GamePlaces.EntranceReads;
+                        long before=GC.GetAllocatedBytesForCurrentThread(), start=System.Diagnostics.Stopwatch.GetTimestamp();
+                        if(model==2)
+                        {
+                            if(rebind) foreach(var p in venues) current.NativeDoorPresent(p,DwellKind.Break);
+                            else current.PublishFrontages(venues);
+                        }
+                        else if(model==1) { if(rebind) reviewed.ReadAll(); else reviewed.Publish(); }
+                        else baseline.Publish(venues);
+                        times[n]=System.Diagnostics.Stopwatch.GetElapsedTime(start).TotalMilliseconds;
+                        bytes+=GC.GetAllocatedBytesForCurrentThread()-before; reads+=GamePlaces.EntranceReads-beforeReads;
+                    }
+                    Array.Sort(times);
+                    foreach(double t in times.Where(t=>t>=30)) Console.WriteLine(FormattableString.Invariant($"FLAG >=30ms: cache model={model} rebind={rebind} count={count}; ms={t:F4}"));
+                    Console.WriteLine(FormattableString.Invariant($"Venue cache model={model} rebind={rebind} count={count}: p50={times[99]:F4} p95={times[189]:F4} max={times[199]:F4} ms; bytes/batch={bytes/200.0:F1}; entrance reads/batch={reads/200.0:F1}."));
+                }
+            }
+            // Repeated refusal cost: production verdicts, not a parallel matching algorithm.
+            var absent=new Place {Kind=PlaceKind.Work,Id="missing",Position=new Position(-100,0,0)};
+            var old=new E2aDoorHarness(); var next=new NativeDoorHarness(); next.Publish(new[]{absent});
+            foreach(bool after in new[]{false,true})
+            {
+                int before=GamePlaces.EntranceReads; long bytes=GC.GetAllocatedBytesForCurrentThread();
+                for(int n=0;n<200;n++) { bool value=after?next.NativeDoorPresent(absent,DwellKind.Break):old.Read(absent); if(value) throw new Exception("Missing frontage accepted"); }
+                Console.WriteLine($"Cached refusal after={after} controllers={count}: 200 reads -> native entrance reads={GamePlaces.EntranceReads-before}, bytes={GC.GetAllocatedBytesForCurrentThread()-bytes}.");
+            }
+            CityManager.Instance.cityBuildingControllers.Clear();
+        }
         public static void Performance()
         {
-            foreach(int count in new[] {48,256})
+            foreach(int count in new[] {48,256,1000})
             {
-                CityManager.Instance.cityBuildingControllers.Clear();
-                var h=new NativeDoorHarness();
-                var venues=Enumerable.Range(0,count).Select(i=>new Place {Id="perf:"+i,Position=new Position(i*10,0,0)}).ToArray();
-                foreach(var p in venues) CityManager.Instance.cityBuildingControllers.Add(new CityBuildingController {Entrance=p.Position});
-                int before=DwellSpots.SampleCalls;
-                foreach(var p in venues) { Time.frameCount++; h.Spots(p,DwellKind.Break); }
-                int cold=DwellSpots.SampleCalls-before;
-                var times=new double[200]; long alloc=GC.GetAllocatedBytesForCurrentThread();
-                for(int n=0;n<times.Length;n++)
+                CacheCosts(count);
+                if(count>256) continue;
+                foreach(bool after in new[]{false,true})
                 {
-                    long start=System.Diagnostics.Stopwatch.GetTimestamp();
-                    foreach(var p in venues) h.Spots(p,DwellKind.Break);
-                    times[n]=System.Diagnostics.Stopwatch.GetElapsedTime(start).TotalMilliseconds;
+                    CityManager.Instance.cityBuildingControllers.Clear();
+                    var h=new NativeDoorHarness(); var baseline=new E2aDoorHarness();
+                    var venues=Enumerable.Range(0,count).Select(i=>new Place {Kind=PlaceKind.Work,Id="perf:"+i,Position=new Position(i*10,0,0)}).ToArray();
+                    foreach(var p in venues) CityManager.Instance.cityBuildingControllers.Add(new CityBuildingController {Entrance=p.Position});
+                    if(after) h.Publish(venues); else baseline.Publish(venues);
+                    int before=DwellSpots.SampleCalls;
+                    foreach(var p in venues) { Time.frameCount++; if(after) h.Spots(p,DwellKind.Break); else baseline.Spots(p,DwellKind.Break); }
+                    int cold=DwellSpots.SampleCalls-before;
+                    var times=new double[200]; long alloc=GC.GetAllocatedBytesForCurrentThread();
+                    for(int n=0;n<times.Length;n++)
+                    {
+                        long start=System.Diagnostics.Stopwatch.GetTimestamp();
+                        foreach(var p in venues) { if(after) h.Spots(p,DwellKind.Break); else baseline.Spots(p,DwellKind.Break); }
+                        times[n]=System.Diagnostics.Stopwatch.GetElapsedTime(start).TotalMilliseconds;
+                    }
+                    alloc=GC.GetAllocatedBytesForCurrentThread()-alloc; Array.Sort(times);
+                    if(cold!=count || DwellSpots.SampleCalls-before!=count) throw new Exception("Facade cache sampling bound changed");
+                    foreach(double t in times.Where(t=>t>=30)) Console.WriteLine(FormattableString.Invariant($"FLAG >=30ms: facade doubles cap-batch={count}; ms={t:F4}"));
+                    Console.WriteLine(FormattableString.Invariant($"Facade doubles after={after} cap-batch={count}: cold samples={cold} (one/frame), warm queries={count*200}, new warm samples=0; batch ms p50={times[99]:F4} p95={times[189]:F4} max={times[199]:F4}; bytes/query={alloc/(double)(count*200):F1}; spikes>=30ms={times.Count(t=>t>=30)}."));
                 }
-                alloc=GC.GetAllocatedBytesForCurrentThread()-alloc; Array.Sort(times);
-                if(cold!=count || DwellSpots.SampleCalls-before!=count) throw new Exception("Facade cache sampling bound changed");
-                foreach(double t in times.Where(t=>t>=30)) Console.WriteLine(FormattableString.Invariant($"FLAG >=30ms: facade doubles cap-batch={count}; ms={t:F4}"));
-                Console.WriteLine(FormattableString.Invariant($"Facade doubles cap-batch={count}: cold samples={cold} (one/frame), warm queries={count*200}, new warm samples=0; batch ms p50={times[99]:F4} p95={times[189]:F4} max={times[199]:F4}; bytes/query={alloc/(double)(count*200):F1}; spikes>=30ms={times.Count(t=>t>=30)}."));
             }
         }
+        #else
+        public static void Performance() => throw new InvalidOperationException("Build the harness with --performance.");
+        #endif
     }
 }
