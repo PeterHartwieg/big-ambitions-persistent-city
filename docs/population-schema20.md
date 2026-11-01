@@ -84,6 +84,8 @@ resampling. Only a migrated/pre-existing wait lacking a matching Q capture uses
 the legacy first-lookup fallback. Disabled/pre-activation E1 still captures the
 native queue rain rule at commitment, using its existing five-minute maximum;
 only enabled, activated new commitments use the configured E1 lead.
+Even with E1 disabled or before activation, a new wait freezes the native rain
+sample at commitment instead of re-reading live rain on each physical refresh.
 
 The template and unchanged loader expose flat `WeatherEnabled` (true),
 `WeatherRainOptionalOutingMultiplier` (.7, 0-1),
