@@ -1,0 +1,6 @@
+# F0 performance wins
+
+| Slice | Change | Before | After |
+|---|---|---|---|
+| F0 review r1, 31 Oct | Cache configured bool/full context per frame and use a validated native speed delegate. Frozen pre-r1 adapter versus fixed adapter, actual `FieldInfo.GetValue` before / actual typed accessor after, 36 queries per emulated frame, 300 × 100 batches; native doubles. | p50/p95/max batch means **0.000975/0.001576/0.002240 ms/frame**, **0 B/frame** | **0.000690/0.000941/0.001080 ms/frame**, **0 B/frame**. Same-frame blockers still invalidate immediately; full-context reads 1 per frame rather than per body. `build/f0-review-r1/accessor-verified.txt`; .NET-only partial timings, not Unity/full-mod clearance. |
+| F0, 31 Oct | Skip candidate scan when both body pools are full, after observations and queue movement; same extracted selector with/without this one break, 957 residents, 300 single calls, native doubles. | p50/p95/max **0.1885/0.3179/4.2312 ms**, **96 B/call** | **0.0001/0.0001/0.0022 ms**, **32 B/call** (harness result list); zero candidate position reads versus 957 per full-pool call. No acquisition/cooldown difference in differential fixtures. Unity/full-mod benefit unmeasured. [F0 limits](../plans/track-f-interior-view.md). |
