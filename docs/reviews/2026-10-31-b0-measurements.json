@@ -1,0 +1,919 @@
+{
+  "baselineCommit": "754c2b6",
+  "candidateCommit": "5a3a55c",
+  "date": "2026-10-31T07:03:14.3641362+01:00",
+  "runtime": "10.0.402",
+  "protocol": "Sequential fresh foreground process per fixture; median of 3 at reference/5k, one diagnostic sample for larger fixtures; A3 count-return instrumentation only; no rig/game",
+  "results": [
+    {
+      "mode": "before",
+      "result": {
+        "name": "reference",
+        "schema": 17,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "7E72C3CA6FA70DDD5C06FAF88FB2B87228EA3EDC5487DBB11B5BAD5FDD6B3264",
+        "residents": 957,
+        "representation": 2,
+        "consumers": 1914,
+        "visitsPerResident": 32,
+        "visits": 30624,
+        "placeCount": 9,
+        "extraExistingPlaces": 0,
+        "extraExistingPlaceChars": 0,
+        "extraExistingNameChars": 0,
+        "actualExistingGrowthChars": 0,
+        "existingGrowthAllowanceChars": 0,
+        "memoryEntries": 0,
+        "businessReferences": 0,
+        "tableCharsAndUtf8": 0,
+        "chars": 5372125,
+        "utf8Bytes": 5372125,
+        "streamingRecords": 36473,
+        "semanticRecords": 36470,
+        "runs": 3,
+        "writeMs": 117.4,
+        "readMs": 506.8,
+        "migrationFrom17Ms": 168.5,
+        "migrationSourceChars": 5372125,
+        "migrationRefusal": null,
+        "retainedBytes": 6658912,
+        "readAllocatedBytes": 74993808,
+        "processPeakBytes": 127909888,
+        "syntheticReservation": null
+      }
+    },
+    {
+      "mode": "before",
+      "result": {
+        "name": "5000",
+        "schema": 17,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "C7801E28F05536466200719479CD261724D7154772B7AE23E051F3066899F63A",
+        "residents": 5000,
+        "representation": 2,
+        "consumers": 10000,
+        "visitsPerResident": 32,
+        "visits": 160000,
+        "placeCount": 9,
+        "extraExistingPlaces": 0,
+        "extraExistingPlaceChars": 0,
+        "extraExistingNameChars": 0,
+        "actualExistingGrowthChars": 0,
+        "existingGrowthAllowanceChars": 0,
+        "memoryEntries": 0,
+        "businessReferences": 0,
+        "tableCharsAndUtf8": 0,
+        "chars": 28035405,
+        "utf8Bytes": 28035405,
+        "streamingRecords": 190107,
+        "semanticRecords": 190104,
+        "runs": 3,
+        "writeMs": 213.3,
+        "readMs": 1135.5,
+        "migrationFrom17Ms": 1207.3,
+        "migrationSourceChars": 28035405,
+        "migrationRefusal": null,
+        "retainedBytes": 34813304,
+        "readAllocatedBytes": 391075760,
+        "processPeakBytes": 359632896,
+        "syntheticReservation": null
+      }
+    },
+    {
+      "mode": "before",
+      "result": {
+        "name": "ceiling2",
+        "schema": 17,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "338637B9E231FF79213B9CACAB18620FBF6648DCA06EE8C127D67F8F614330C8",
+        "residents": 50000,
+        "representation": 2,
+        "consumers": 100000,
+        "visitsPerResident": 0,
+        "visits": 0,
+        "placeCount": 9,
+        "extraExistingPlaces": 0,
+        "extraExistingPlaceChars": 0,
+        "extraExistingNameChars": 0,
+        "actualExistingGrowthChars": 0,
+        "existingGrowthAllowanceChars": 0,
+        "memoryEntries": 0,
+        "businessReferences": 0,
+        "tableCharsAndUtf8": 0,
+        "chars": 178427658,
+        "utf8Bytes": 178427658,
+        "streamingRecords": 300107,
+        "semanticRecords": 300104,
+        "runs": 1,
+        "writeMs": 1953.3,
+        "readMs": 6957.8,
+        "migrationFrom17Ms": 7422.0,
+        "migrationSourceChars": 178427658,
+        "migrationRefusal": null,
+        "retainedBytes": 191661872,
+        "readAllocatedBytes": 2268478296,
+        "processPeakBytes": 1810870272,
+        "syntheticReservation": null
+      }
+    },
+    {
+      "mode": "before",
+      "result": {
+        "name": "ceiling",
+        "schema": 17,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "D93EC09E8808B7AE8E05251F905E1F5EADA022E0BF23EC0AD031165507AE1168",
+        "residents": 50000,
+        "representation": 3,
+        "consumers": 150000,
+        "visitsPerResident": 0,
+        "visits": 0,
+        "placeCount": 9,
+        "extraExistingPlaces": 0,
+        "extraExistingPlaceChars": 0,
+        "extraExistingNameChars": 0,
+        "actualExistingGrowthChars": 0,
+        "existingGrowthAllowanceChars": 0,
+        "memoryEntries": 0,
+        "businessReferences": 0,
+        "tableCharsAndUtf8": 0,
+        "chars": 248039560,
+        "utf8Bytes": 248039560,
+        "streamingRecords": 450107,
+        "semanticRecords": 450104,
+        "runs": 1,
+        "writeMs": 3299.3,
+        "readMs": 10121.8,
+        "migrationFrom17Ms": 10547.7,
+        "migrationSourceChars": 248039560,
+        "migrationRefusal": null,
+        "retainedBytes": 272349264,
+        "readAllocatedBytes": 3165072512,
+        "processPeakBytes": 2811969536,
+        "syntheticReservation": null
+      }
+    },
+    {
+      "mode": "before",
+      "result": {
+        "name": "large2",
+        "schema": 17,
+        "residents": 50000,
+        "representation": 2,
+        "visits": 32,
+        "refused": "Serialized state exceeds the input size limit.",
+        "chars": 272427658,
+        "streamingRecords": 1900107,
+        "semanticRecords": 1900104,
+        "utf8Bytes": 272427658,
+        "processPeakMiB": 1407.9765625
+      }
+    },
+    {
+      "mode": "before",
+      "result": {
+        "name": "CF32",
+        "schema": 17,
+        "residents": 50000,
+        "representation": 3,
+        "visits": 32,
+        "refused": "Serialized state exceeds the input size limit.",
+        "chars": 354622472,
+        "streamingRecords": 2050107,
+        "semanticRecords": 2050104,
+        "utf8Bytes": 354622472,
+        "processPeakMiB": 1842.2734375
+      }
+    },
+    {
+      "mode": "before",
+      "result": {
+        "name": "CF64",
+        "schema": 17,
+        "residents": 50000,
+        "representation": 3,
+        "visits": 64,
+        "refused": "Serialized state exceeds the input size limit.",
+        "chars": 449272472,
+        "streamingRecords": 3650107,
+        "semanticRecords": 3650104,
+        "utf8Bytes": 449272472,
+        "processPeakMiB": 4013.35546875
+      }
+    },
+    {
+      "mode": "after",
+      "result": {
+        "name": "reference",
+        "schema": 18,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "4D0D2BDEF89D533CFC53FC76331C33124AC7BF89252BFEA2160D18B1BD0272D4",
+        "residents": 957,
+        "representation": 2,
+        "consumers": 1914,
+        "visitsPerResident": 32,
+        "visits": 30624,
+        "placeCount": 9,
+        "extraExistingPlaces": 0,
+        "extraExistingPlaceChars": 0,
+        "extraExistingNameChars": 0,
+        "actualExistingGrowthChars": 0,
+        "existingGrowthAllowanceChars": 0,
+        "memoryEntries": 7656,
+        "businessReferences": 20000,
+        "tableCharsAndUtf8": 2097152,
+        "chars": 5012736,
+        "utf8Bytes": 5012736,
+        "streamingRecords": 54560,
+        "semanticRecords": 54557,
+        "runs": 3,
+        "writeMs": 113.6,
+        "readMs": 379.1,
+        "migrationFrom17Ms": 341.4,
+        "migrationSourceChars": 5372125,
+        "migrationRefusal": null,
+        "retainedBytes": 11108904,
+        "readAllocatedBytes": 84564216,
+        "processPeakBytes": 168558592,
+        "syntheticReservation": null
+      }
+    },
+    {
+      "mode": "after",
+      "result": {
+        "name": "5000",
+        "schema": 18,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "1C0046A8AA10ED7BA8F350700D932106869E3586950834C35CA0246320EC9135",
+        "residents": 5000,
+        "representation": 2,
+        "consumers": 10000,
+        "visitsPerResident": 32,
+        "visits": 160000,
+        "placeCount": 9,
+        "extraExistingPlaces": 0,
+        "extraExistingPlaceChars": 0,
+        "extraExistingNameChars": 0,
+        "actualExistingGrowthChars": 0,
+        "existingGrowthAllowanceChars": 0,
+        "memoryEntries": 40000,
+        "businessReferences": 20000,
+        "tableCharsAndUtf8": 2097152,
+        "chars": 17297635,
+        "utf8Bytes": 17297635,
+        "streamingRecords": 200108,
+        "semanticRecords": 200105,
+        "runs": 3,
+        "writeMs": 300.0,
+        "readMs": 927.8,
+        "migrationFrom17Ms": 978.5,
+        "migrationSourceChars": 28035405,
+        "migrationRefusal": null,
+        "retainedBytes": 36675776,
+        "readAllocatedBytes": 294611640,
+        "processPeakBytes": 417652736,
+        "syntheticReservation": null
+      }
+    },
+    {
+      "mode": "after",
+      "result": {
+        "name": "ceiling2",
+        "schema": 18,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "8FEAA7BB8CD489CE11F71DC969A5304C206555725D6CB010FA244E559606DE6C",
+        "residents": 50000,
+        "representation": 2,
+        "consumers": 100000,
+        "visitsPerResident": 0,
+        "visits": 0,
+        "placeCount": 9,
+        "extraExistingPlaces": 0,
+        "extraExistingPlaceChars": 0,
+        "extraExistingNameChars": 0,
+        "actualExistingGrowthChars": 0,
+        "existingGrowthAllowanceChars": 0,
+        "memoryEntries": 400000,
+        "businessReferences": 20000,
+        "tableCharsAndUtf8": 2097152,
+        "chars": 107824888,
+        "utf8Bytes": 107824888,
+        "streamingRecords": 220108,
+        "semanticRecords": 220105,
+        "runs": 1,
+        "writeMs": 1091.5,
+        "readMs": 3565.5,
+        "migrationFrom17Ms": 5866.0,
+        "migrationSourceChars": 178427658,
+        "migrationRefusal": null,
+        "retainedBytes": 228724248,
+        "readAllocatedBytes": 1695216432,
+        "processPeakBytes": 1812189184,
+        "syntheticReservation": null
+      }
+    },
+    {
+      "mode": "after",
+      "result": {
+        "name": "ceiling",
+        "schema": 18,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "C107E2F056DB4021264F9DE4EE296F991841113B6902DB37DF56DDEA1F6B39F3",
+        "residents": 50000,
+        "representation": 3,
+        "consumers": 150000,
+        "visitsPerResident": 0,
+        "visits": 0,
+        "placeCount": 9,
+        "extraExistingPlaces": 0,
+        "extraExistingPlaceChars": 0,
+        "extraExistingNameChars": 0,
+        "actualExistingGrowthChars": 0,
+        "existingGrowthAllowanceChars": 0,
+        "memoryEntries": 600000,
+        "businessReferences": 20000,
+        "tableCharsAndUtf8": 2097152,
+        "chars": 141086790,
+        "utf8Bytes": 141086790,
+        "streamingRecords": 320108,
+        "semanticRecords": 320105,
+        "runs": 1,
+        "writeMs": 1357.4,
+        "readMs": 4269.8,
+        "migrationFrom17Ms": 7194.4,
+        "migrationSourceChars": 248039560,
+        "migrationRefusal": null,
+        "retainedBytes": 325411960,
+        "readAllocatedBytes": 2218629872,
+        "processPeakBytes": 2123329536,
+        "syntheticReservation": null
+      }
+    },
+    {
+      "mode": "after",
+      "result": {
+        "name": "large2",
+        "schema": 18,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "A197F000556D761A5219EC6D300254A150D76240E3349E36A256415F1316063A",
+        "residents": 50000,
+        "representation": 2,
+        "consumers": 100000,
+        "visitsPerResident": 32,
+        "visits": 1600000,
+        "placeCount": 9,
+        "extraExistingPlaces": 0,
+        "extraExistingPlaceChars": 0,
+        "extraExistingNameChars": 0,
+        "actualExistingGrowthChars": 0,
+        "existingGrowthAllowanceChars": 0,
+        "memoryEntries": 400000,
+        "businessReferences": 20000,
+        "tableCharsAndUtf8": 2097152,
+        "chars": 146174888,
+        "utf8Bytes": 146174888,
+        "streamingRecords": 1820108,
+        "semanticRecords": 1820105,
+        "runs": 1,
+        "writeMs": 1373.0,
+        "readMs": 4009.6,
+        "migrationFrom17Ms": null,
+        "migrationSourceChars": null,
+        "migrationRefusal": "Serialized state exceeds the input size limit.",
+        "retainedBytes": 306724328,
+        "readAllocatedBytes": 2504841080,
+        "processPeakBytes": 1924292608,
+        "syntheticReservation": null
+      }
+    },
+    {
+      "mode": "after",
+      "result": {
+        "name": "CF32",
+        "schema": 18,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "9FA89C41F29B087287D7C882BC6313BDDD3DFE501F3D085193E7EB8587F2C202",
+        "residents": 50000,
+        "representation": 3,
+        "consumers": 150000,
+        "visitsPerResident": 32,
+        "visits": 1600000,
+        "placeCount": 20000,
+        "extraExistingPlaces": 19991,
+        "extraExistingPlaceChars": 6343907,
+        "extraExistingNameChars": 6239005,
+        "actualExistingGrowthChars": 12582912,
+        "existingGrowthAllowanceChars": 12582912,
+        "memoryEntries": 600000,
+        "businessReferences": 20000,
+        "tableCharsAndUtf8": 2097152,
+        "chars": 192019702,
+        "utf8Bytes": 192019702,
+        "streamingRecords": 1920108,
+        "semanticRecords": 1920105,
+        "runs": 1,
+        "writeMs": 1747.4,
+        "readMs": 6897.1,
+        "migrationFrom17Ms": null,
+        "migrationSourceChars": null,
+        "migrationRefusal": "Serialized state exceeds the input size limit.",
+        "retainedBytes": 426270328,
+        "readAllocatedBytes": 3188244896,
+        "processPeakBytes": 3278450688,
+        "syntheticReservation": {
+          "futureContractChars": 26694664,
+          "alreadyCountedBHeaderChars": 56,
+          "fixedMemoryHeadroomChars": 1950000,
+          "futureContractRecords": 191759,
+          "totalBudgetedChars": 220664366,
+          "totalBudgetedUtf8Bytes": 220664366,
+          "totalBudgetedRecords": 2111867
+        }
+      }
+    },
+    {
+      "mode": "after",
+      "result": {
+        "name": "CF64",
+        "schema": 18,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "9D63AF94401326331AA32534CF95F14EACF13EB933CC7A72A9A31B2755F3C255",
+        "residents": 50000,
+        "representation": 3,
+        "consumers": 150000,
+        "visitsPerResident": 64,
+        "visits": 3200000,
+        "placeCount": 20000,
+        "extraExistingPlaces": 19991,
+        "extraExistingPlaceChars": 6343907,
+        "extraExistingNameChars": 6239005,
+        "actualExistingGrowthChars": 12582912,
+        "existingGrowthAllowanceChars": 12582912,
+        "memoryEntries": 600000,
+        "businessReferences": 20000,
+        "tableCharsAndUtf8": 2097152,
+        "chars": 230419702,
+        "utf8Bytes": 230419702,
+        "streamingRecords": 3520108,
+        "semanticRecords": 3520105,
+        "runs": 1,
+        "writeMs": 3750.4,
+        "readMs": 9465.0,
+        "migrationFrom17Ms": null,
+        "migrationSourceChars": null,
+        "migrationRefusal": "Serialized state exceeds the input size limit.",
+        "retainedBytes": 502545064,
+        "readAllocatedBytes": 3995868416,
+        "processPeakBytes": 3258748928,
+        "syntheticReservation": {
+          "futureContractChars": 26694664,
+          "alreadyCountedBHeaderChars": 56,
+          "fixedMemoryHeadroomChars": 1950000,
+          "futureContractRecords": 191759,
+          "totalBudgetedChars": 259064366,
+          "totalBudgetedUtf8Bytes": 259064366,
+          "totalBudgetedRecords": 3711867
+        }
+      }
+    }
+  ],
+  "baseRecovery": {
+    "residents": 50000,
+    "representation": 3,
+    "beforeChars": 248039560,
+    "afterChars": 132989640,
+    "recoveredChars": 115049920,
+    "beforeUtf8": 248039560,
+    "afterUtf8": 132989640,
+    "streamingAndSemantic": {
+      "Item1": 300108,
+      "Item2": 300105
+    },
+    "bInactive": true,
+    "memoriesEmpty": true
+  },
+  "recordBoundary": {
+    "streamingAtCap": 4000000,
+    "semanticAtCap": 3999997,
+    "oneRecordOver": "read/write/store/session refused and source reference preserved",
+    "chars": 241305950,
+    "utf8Bytes": 241305950
+  },
+  "inputBoundary": {
+    "exactCharactersAndUtf8": 268435456,
+    "oneCharacterOver": "read/store/session preserved",
+    "oneUtf8ByteOver": "read/store/session preserved",
+    "oversizedSources": [
+      13,
+      14,
+      15,
+      16,
+      17
+    ]
+  },
+  "historicalChurn": {
+    "generationsOnOneDay": 280000,
+    "purchasesRetained": 280000,
+    "revenueUnitsRetained": 7516192768000000,
+    "result": "global size refusal; store/session source reference, all history and exact product totals preserved"
+  },
+  "wireOptimizations": {
+    "prototypeAssemblySha256": "0b7a61c201ac7ce3d6067a1cfbe137035ef4cf746b3f137f0cd56d474b1fc248",
+    "prototype": "preserved pre-optimization B0 build in ignored build/b0-pre-shape; identical serialized payloads asserted",
+    "reference": {
+      "residents": 957,
+      "chars": 2105007,
+      "unchangedBytes": true,
+      "samples": 7,
+      "saves": [
+        {
+          "mode": "beforeWrite",
+          "medianMs": 44.9837,
+          "maxMs": 159.1887,
+          "allocationBytes": 16996008
+        },
+        {
+          "mode": "afterWrite",
+          "medianMs": 39.8879,
+          "maxMs": 95.6297,
+          "allocationBytes": 15203696
+        },
+        {
+          "mode": "beforeRead",
+          "medianMs": 108.4298,
+          "maxMs": 160.2638,
+          "allocationBytes": 38372808
+        },
+        {
+          "mode": "afterRead",
+          "medianMs": 99.5551,
+          "maxMs": 139.9333,
+          "allocationBytes": 33364952
+        }
+      ],
+      "outcomeShapeBefore": {
+        "ns": 239.7056,
+        "bytesPerCall": 552.000064
+      },
+      "outcomeShapeAfter": {
+        "ns": 81.5826,
+        "bytesPerCall": 6.4e-05
+      },
+      "countBefore": {
+        "ms": 362.8148,
+        "chars": 268435456,
+        "bytes": 268435456
+      },
+      "countAfter": {
+        "ms": 51.8132,
+        "chars": 268435456,
+        "bytes": 268435456
+      },
+      "memoryShapeBefore": {
+        "ns": 479.3822,
+        "bytesPerCall": 352.000064
+      },
+      "memoryShapeAfter": {
+        "ns": 461.3862,
+        "bytesPerCall": 6.4e-05
+      }
+    },
+    "5000": {
+      "residents": 5000,
+      "chars": 10965485,
+      "unchangedBytes": true,
+      "samples": 7,
+      "saves": [
+        {
+          "mode": "beforeWrite",
+          "medianMs": 109.3613,
+          "maxMs": 154.7897,
+          "allocationBytes": 88360664
+        },
+        {
+          "mode": "afterWrite",
+          "medianMs": 90.3413,
+          "maxMs": 116.6019,
+          "allocationBytes": 79001488
+        },
+        {
+          "mode": "beforeRead",
+          "medianMs": 316.1107,
+          "maxMs": 384.1445,
+          "allocationBytes": 199517384
+        },
+        {
+          "mode": "afterRead",
+          "medianMs": 274.0854,
+          "maxMs": 350.0567,
+          "allocationBytes": 173354440
+        }
+      ],
+      "outcomeShapeBefore": {
+        "ns": 126.1586,
+        "bytesPerCall": 552.000096
+      },
+      "outcomeShapeAfter": {
+        "ns": 50.241,
+        "bytesPerCall": 6.4e-05
+      },
+      "countBefore": {
+        "ms": 249.4319,
+        "chars": 268435456,
+        "bytes": 268435456
+      },
+      "countAfter": {
+        "ms": 5.417,
+        "chars": 268435456,
+        "bytes": 268435456
+      },
+      "memoryShapeBefore": {
+        "ns": 328.317,
+        "bytesPerCall": 352.000064
+      },
+      "memoryShapeAfter": {
+        "ns": 280.6064,
+        "bytesPerCall": 6.4e-05
+      }
+    }
+  },
+  "validation": {
+    "unitTests": 1813,
+    "gateCommands": 34,
+    "allExitCodesZero": true,
+    "commands": [
+      {
+        "exitCode": 0,
+        "command": "python tools/build.py --game-managed C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed",
+        "name": "build",
+        "elapsedSeconds": 2.5554097
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet test tests/PersistentCity.Tests.csproj",
+        "name": "tests",
+        "elapsedSeconds": 122.7859665
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet test tests/PersistentCity.Tests.csproj --no-build --list-tests",
+        "name": "discovery",
+        "elapsedSeconds": 1.2758124
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/core-identity-regression/CoreIdentityRegression.csproj --configuration Release",
+        "name": "core-identity",
+        "elapsedSeconds": 6.0581818
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/diagnostic-response-regression/DiagnosticResponseRegression.csproj --configuration Release",
+        "name": "diagnostic-response",
+        "elapsedSeconds": 1.7012053999999999
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/event-observation-regression/EventObservationRegression.csproj --configuration Release",
+        "name": "event-observation",
+        "elapsedSeconds": 4.7587212
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/food-catalogue-regression/FoodCatalogueRegression.csproj --configuration Release",
+        "name": "food-catalogue",
+        "elapsedSeconds": 2.6217813999999997
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/food-checkout-regression/FoodCheckoutRegression.csproj --configuration Release",
+        "name": "food-checkout",
+        "elapsedSeconds": 4.885584199999999
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/food-hours-regression/FoodHoursRegression.csproj --configuration Release",
+        "name": "food-hours",
+        "elapsedSeconds": 1.778554
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/food-household-catalogue-regression/FoodHouseholdCatalogueRegression.csproj --configuration Release",
+        "name": "food-household-catalogue",
+        "elapsedSeconds": 1.812296
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/food-ownership-regression/FoodOwnershipRegression.csproj --configuration Release",
+        "name": "food-ownership",
+        "elapsedSeconds": 2.9640982
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/food-supply-regression/FoodSupplyRegression.csproj --configuration Release",
+        "name": "food-supply",
+        "elapsedSeconds": 1.967692
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/frame-observation-regression/FrameObservationRegression.csproj --configuration Release",
+        "name": "frame-observation",
+        "elapsedSeconds": 1.8459744
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/gate-access-regression/GateAccessRegression.csproj --configuration Release",
+        "name": "gate-access",
+        "elapsedSeconds": 3.3066142999999997
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/road-ceiling-regression/RoadCeilingRegression.csproj --configuration Release",
+        "name": "road-ceiling",
+        "elapsedSeconds": 2.9551076
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/road-handoff-regression/RoadHandoffRegression.csproj --configuration Release",
+        "name": "road-handoff",
+        "elapsedSeconds": 2.3437609
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/road-invalidation-regression/RoadInvalidationRegression.csproj --configuration Release",
+        "name": "road-invalidation",
+        "elapsedSeconds": 4.2015873
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/road-speed-regression/RoadSpeedRegression.csproj --configuration Release",
+        "name": "road-speed",
+        "elapsedSeconds": 3.0136065999999997
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/route-discovery-regression/RouteDiscoveryRegression.csproj --configuration Release",
+        "name": "route-discovery",
+        "elapsedSeconds": 9.8957616
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/save-contract-regression/SaveContractRegression.csproj --configuration Release",
+        "name": "save-contract",
+        "elapsedSeconds": 3.5791877
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/startup-clock-regression/StartupClockRegression.csproj --configuration Release",
+        "name": "startup-clock",
+        "elapsedSeconds": 3.0875019
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/traffic-closure-regression/TrafficClosureRegression.csproj --configuration Release",
+        "name": "traffic-closure",
+        "elapsedSeconds": 2.7653263999999997
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/traffic-queue-regression/TrafficQueueRegression.csproj --configuration Release",
+        "name": "traffic-queue",
+        "elapsedSeconds": 2.7623116
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/walking-quote-regression/WalkingQuoteRegression.csproj --configuration Release",
+        "name": "walking-quote",
+        "elapsedSeconds": 2.7078336
+      },
+      {
+        "exitCode": 0,
+        "command": "python tools/native-command-regression/run.py",
+        "name": "native-command",
+        "elapsedSeconds": 2.3913995
+      },
+      {
+        "exitCode": 0,
+        "command": "python tools/physical-selection-regression/run.py",
+        "name": "physical-selection",
+        "elapsedSeconds": 2.6880583
+      },
+      {
+        "exitCode": 0,
+        "command": "python tools/vehicle-ownership-regression/run.py",
+        "name": "vehicle-ownership",
+        "elapsedSeconds": 1.7994579
+      },
+      {
+        "exitCode": 0,
+        "command": "python tools/optional-stop-regression/run.py",
+        "name": "optional-stop",
+        "elapsedSeconds": 3.1083574
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/simulate/Simulate.csproj -- 28 build/harness-demo",
+        "name": "simulate",
+        "elapsedSeconds": 5.222804
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/food-routines/FoodRoutines.csproj --configuration Release -- build/harness-food-routines-demo 957",
+        "name": "food-routines",
+        "elapsedSeconds": 5.2604451999999995
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/food-demand/FoodDemand.csproj -- build/harness-food-demand-demo",
+        "name": "food-demand",
+        "elapsedSeconds": 3.1324155
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/food-choice-regression/FoodChoiceRegression.csproj --configuration Release",
+        "name": "food-choice",
+        "elapsedSeconds": 5.182271699999999
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/food-candidate-regression/FoodCandidateRegression.csproj --configuration Release",
+        "name": "food-candidate",
+        "elapsedSeconds": 2.6160578
+      },
+      {
+        "exitCode": 0,
+        "command": "dotnet run --project tools/food-choice-regression/FoodChoiceRegression.csproj --configuration Release -- --rush",
+        "name": "food-rush",
+        "elapsedSeconds": 6.8213002
+      }
+    ],
+    "steamBuildSha256": "bc10b912de532619463b820909b987ccd0427355b4d7f9f0242ae8494eb3b26c"
+  },
+  "earlyAuthorityProof": {
+    "before": "754c2b6 original Runtime/NativeFoodOwnership.cs",
+    "expectedRedExitCode": -532462766,
+    "redAssertion": "unsupported active capability stops earliest native authority bootstrap",
+    "afterChecks": 138,
+    "after": "actual production hooks with callback/field doubles; no Unity/game execution",
+    "sourceReferencePreserved": true
+  },
+  "notes": [
+    "Windows .NET 10 Release; sequential fresh foreground process per capacity case; median of 3 at reference/5k, one diagnostic sample at larger cases; uncontrolled external host load; not native mod-work p95.",
+    "All candidate capacity cases carry four memories per consumer and a full 20,000-entry, 2Mi-character/2MiB UTF-8 table; migration initializes empty/inactive.",
+    "CF uses all 12Mi existing-state characters: 19,991 places cost 6,343,907; 6,239,005 ASCII characters pad existing pc: resident names within the unchanged 512-character limit, adding no record collection.",
+    "Rejected A3 wires are counted by diagnostic serialization/count-return instrumentation only; normal old Write/Read refuse them. They are not migration sources. Before migrationFrom17Ms is same-schema reading; after is actual 17->18 validation, conversion and serialized preflight.",
+    "Retained is managed delta for one loaded state. Peak is fresh-process lifetime peak working set including construction, strings, migration and GC; not an operation-only managed peak.",
+    "Budget max(streaming,semantic). Menu strings cause three extra streaming records in these fixtures; optional-stop members can also differ. Writes enforce the larger count.",
+    "Future contracts are numeric reservations only, never C/D/E DTOs. Deduct the already-counted B header and 104-record held decision image once.",
+    "All offline save timings and prototype save maxima exceed 30ms; flag as separate save/startup/reload latency. No ordinary-play native mod-work or whole-frame pass is claimed."
+  ],
+  "choiceWatch": {
+    "nativeLength1024PolicyP95Ms": 0.19890000000000002,
+    "maxWholeDecisionMs": 8.2277,
+    "nativeGate": "unmeasured; required on rig"
+  }
+}

@@ -41,7 +41,7 @@ Arithmetic means: ten empty-cache builds, thirty warm refreshes, thirty-two cont
 
 Warm refresh originally rebuilt escaped address strings: 227,200 / 4,629,632 allocated bytes at 1,024 / 20,000 places. Reusing an address-tuple index reduces both to 32 bytes for the refresh enumerator; continuation units allocate zero. The index raises managed retention from 422,208 / 8,500,600 to 491,848 / 9,838,136 bytes. These are local microbenchmarks, not Unity performance evidence. [Perf wins log](../roadmap.md#perf-wins-log).
 
-Final full-gate results and measured numbers are recorded in [CHECKS](../../CHECKS.md#d1-rival-food-catalogue-31-october-2026-offline-only). Timing is Windows .NET 10 synthetic main-thread cost, excluding fixture creation and JIT warm-up. Empty-cache build aggregates all continuation units; it is not a single-frame or mod-work p95 sample. Managed retained memory is a forced-GC heap delta, excluding native fixtures and unmanaged weak-handle overhead. The normal combined rig supplies the actual mod-work gate and separate whole-frame evidence.
+Final full-gate results and measured numbers are recorded in [CHECKS](../checks/d1-rival-catalogue.md#d1-rival-food-catalogue-31-october-2026-offline-only). Timing is Windows .NET 10 synthetic main-thread cost, excluding fixture creation and JIT warm-up. Empty-cache build aggregates all continuation units; it is not a single-frame or mod-work p95 sample. Managed retained memory is a forced-GC heap delta, excluding native fixtures and unmanaged weak-handle overhead. The normal combined rig supplies the actual mod-work gate and separate whole-frame evidence.
 
 ## In-game checks for 6 Nov rig
 

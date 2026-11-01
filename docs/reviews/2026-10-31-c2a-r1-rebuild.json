@@ -1,0 +1,627 @@
+{
+  "source": "19289e31f3e2ebe050896f69adf992fcf5eeca1d",
+  "base": "9fa59fa",
+  "redCases": "Five failing cases reproduced before changes; dense present-shop 0/4, diagnostic stop mode, null image and synchronous rebuild/capture.",
+  "redLogSha256": "4d423484d04c45c52e10924ab0523af973c6a778bd8ae257945561573d8dc670",
+  "redCommand": "dotnet test tests/PersistentCity.Tests.csproj --filter FullyQualifiedName~FoodAwarenessReviewTests (new tests against 9fa59fa production source)",
+  "redOutput": "  Determining projects to restore...\n  All projects are up-to-date for restore.\n  PersistentCity.Core -> C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\Core\\bin\\Debug\\netstandard2.1\\PersistentCity.Core.dll\n  PersistentCity.Persistence -> C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\Persistence\\bin\\Debug\\netstandard2.1\\PersistentCity.Persistence.dll\n  PersistentCity.Compatibility -> C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\Compatibility\\bin\\Debug\\netstandard2.1\\PersistentCity.Compatibility.dll\n  PersistentCity.Tests -> C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\tests\\bin\\Debug\\net10.0\\PersistentCity.Tests.dll\nTest run for C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\tests\\bin\\Debug\\net10.0\\PersistentCity.Tests.dll (.NETCoreApp,Version=v10.0)\nA total of 1 test files matched the specified pattern.\ndotnet.exe : [xUnit.net 00:00:00.33]     \nPersistentCity.Tests.FoodAwarenessReviewTests.PresentShopAlwaysOccupiesAnExistingOriginSlotInDenseAtStopContext(draws: \n0) [FAIL]\nAt line:4 char:1\n+ & \"$env:LOCALAPPDATA\\Microsoft\\dotnet\\dotnet.exe\" test tests/Persiste ...\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n    + CategoryInfo          : NotSpecified: ([xUnit.net 00:0...raws: 0) [FAIL]:String) [], RemoteException\n    + FullyQualifiedErrorId : NativeCommandError\n \n[xUnit.net 00:00:00.34]     \nPersistentCity.Tests.FoodAwarenessReviewTests.PresentShopAlwaysOccupiesAnExistingOriginSlotInDenseAtStopContext(draws: \n4) [FAIL]\n[xUnit.net 00:00:00.45]     \nPersistentCity.Tests.FoodAwarenessReviewTests.PostActivationNullImageRefusesButPreActivationHeldImageStillLoads [FAIL]\n[xUnit.net 00:00:00.47]     \nPersistentCity.Tests.FoodAwarenessReviewTests.InvalidationCannotRebuildAndCaptureWithinOneNormalWorkUnit [FAIL]\n[xUnit.net 00:00:00.47]     \nPersistentCity.Tests.FoodAwarenessReviewTests.AtStopDiagnosticMatchesTheHeldSourceImageAndShortlist [FAIL]\n  Failed PersistentCity.Tests.FoodAwarenessReviewTests.PresentShopAlwaysOccupiesAnExistingOriginSlotInDenseAtStopContext(draws: 0) [46 ms]\n  Error Message:\n   Assert.Single() Failure: The collection was empty\n  Stack Trace:\n     at PersistentCity.Tests.FoodAwarenessReviewTests.PresentShopAlwaysOccupiesAnExistingOriginSlotInDenseAtStopContext(Int32 draws) in C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\tests\\FoodAwarenessReviewTests.cs:line 32\n   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)\n   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)\n  Failed PersistentCity.Tests.FoodAwarenessReviewTests.PresentShopAlwaysOccupiesAnExistingOriginSlotInDenseAtStopContext(draws: 4) [4 ms]\n  Error Message:\n   Assert.Single() Failure: The collection was empty\n  Stack Trace:\n     at PersistentCity.Tests.FoodAwarenessReviewTests.PresentShopAlwaysOccupiesAnExistingOriginSlotInDenseAtStopContext(Int32 draws) in C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\tests\\FoodAwarenessReviewTests.cs:line 32\n   at InvokeStub_FoodAwarenessReviewTests.PresentShopAlwaysOccupiesAnExistingOriginSlotInDenseAtStopContext(Object, Span`1)\n   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)\n  Failed PersistentCity.Tests.FoodAwarenessReviewTests.PostActivationNullImageRefusesButPreActivationHeldImageStillLoads [115 ms]\n  Error Message:\n   Assert.Equal() Failure: Values differ\nExpected: Invalid\nActual:   Loaded\n  Stack Trace:\n     at PersistentCity.Tests.FoodAwarenessReviewTests.PostActivationNullImageRefusesButPreActivationHeldImageStillLoads() in C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\tests\\FoodAwarenessReviewTests.cs:line 52\n   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)\n   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)\n  Failed PersistentCity.Tests.FoodAwarenessReviewTests.InvalidationCannotRebuildAndCaptureWithinOneNormalWorkUnit [14 ms]\n  Error Message:\n   Assert.Null() Failure: Value is not null\nExpected: null\nActual:   FoodDecisionState { Attempt = 1, Awareness = FoodAwarenessImage { CatalogueRevision = \"EkwNecnrOtX1JogrsqcwbN3SKnI4SmpC2OL1og0S0eM=\", Union = [\u00b7\u00b7\u00b7] }, BusinessId = \"\", ContextKey = \"trip:CMgtfG84LjP88H/RJ5YmpHyyHzY69Bv9dUmJOjL3VwQ=\", Deadline = 2252, \u00b7\u00b7\u00b7 }\n  Stack Trace:\n     at PersistentCity.Tests.FoodAwarenessReviewTests.InvalidationCannotRebuildAndCaptureWithinOneNormalWorkUnit() in C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\tests\\FoodAwarenessReviewTests.cs:line 63\n   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)\n   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)\n  Failed PersistentCity.Tests.FoodAwarenessReviewTests.AtStopDiagnosticMatchesTheHeldSourceImageAndShortlist [5 ms]\n  Error Message:\n   Assert.Equal() Failure: Strings differ\n                                  \u2193 (pos 121)\nExpected: \u00b7\u00b7\u00b7\"urces\":2,\"Eligible\":false},{\"BusinessId\":\"\u00b7\u00b7\u00b7\nActual:   \u00b7\u00b7\u00b7\"urces\":2,\"Eligible\":true},{\"BusinessId\":\"\"\u00b7\u00b7\u00b7\n                                  \u2191 (pos 121)\n  Stack Trace:\n     at PersistentCity.Tests.FoodAwarenessReviewTests.AtStopDiagnosticMatchesTheHeldSourceImageAndShortlist() in C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\tests\\FoodAwarenessReviewTests.cs:line 42\n   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)\n   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)\n\nFailed!  - Failed:     5, Passed:     0, Skipped:     0, Total:     5, Duration: 182 ms - PersistentCity.Tests.dll (net10.0)\n",
+  "notes": "Three sequential fresh-process runs, six complete builds/layout each. Includes cold/JIT builder creation. unitMs/spikes are per bounded Continue call. totalCpuMs sums all yielded calls for one build; its historical Stats.spikesAtLeast30ms field counts cumulative build totals >=30 ms, not single-unit/frame spikes. System load uncontrolled. Arrays/dictionaries <=20000 alternatives; max 64 explicit item/merge operations per call. Final runs measure the actual managed-scope projection plus place lookup overload, including entry allocation. entryMetadataRuns retain the earlier preprojected-entry experiment separately.",
+  "entryMetadataRuns": [
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/awareness-regression/AwarenessRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--review-rebuild"
+      ],
+      "sha256": "1c60520d80de2a4d2849d72aab50dcf02eb5e206239517c3ffcb7b99eb8e61a5",
+      "data": {
+        "workPerUnit": 64,
+        "cases": [
+          {
+            "alternatives": 1024,
+            "dense": true,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 2454,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0031,
+              "p95": 0.0092,
+              "max": 4.9348,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 1.6818000000000015,
+              "p95": 14.861399999999996,
+              "max": 14.861399999999996,
+              "spikesAtLeast30ms": 0
+            },
+            "spikes": []
+          },
+          {
+            "alternatives": 20000,
+            "dense": true,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 56340,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0022,
+              "p95": 0.008,
+              "max": 8.289,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 30.939700000001153,
+              "p95": 40.39359999999835,
+              "max": 40.39359999999835,
+              "spikesAtLeast30ms": 4
+            },
+            "spikes": []
+          },
+          {
+            "alternatives": 1024,
+            "dense": false,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 2724,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0035,
+              "p95": 0.0093,
+              "max": 0.3932,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 1.9199999999999988,
+              "p95": 2.2776999999999994,
+              "max": 2.2776999999999994,
+              "spikesAtLeast30ms": 0
+            },
+            "spikes": []
+          },
+          {
+            "alternatives": 20000,
+            "dense": false,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 62448,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0031,
+              "p95": 0.0089,
+              "max": 5.8988,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 38.61799999999992,
+              "p95": 48.02790000000144,
+              "max": 48.02790000000144,
+              "spikesAtLeast30ms": 6
+            },
+            "spikes": []
+          }
+        ]
+      }
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/awareness-regression/AwarenessRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--review-rebuild"
+      ],
+      "sha256": "ba91afed134d13c651d96cb701354af9adc3282e8144a27985198992a436626d",
+      "data": {
+        "workPerUnit": 64,
+        "cases": [
+          {
+            "alternatives": 1024,
+            "dense": true,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 2454,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0032,
+              "p95": 0.0085,
+              "max": 4.561,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 1.6182000000000023,
+              "p95": 15.121899999999991,
+              "max": 15.121899999999991,
+              "spikesAtLeast30ms": 0
+            },
+            "spikes": []
+          },
+          {
+            "alternatives": 20000,
+            "dense": true,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 56340,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0028,
+              "p95": 0.0107,
+              "max": 5.575,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 39.868299999999,
+              "p95": 46.86849999999999,
+              "max": 46.86849999999999,
+              "spikesAtLeast30ms": 6
+            },
+            "spikes": []
+          },
+          {
+            "alternatives": 1024,
+            "dense": false,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 2724,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0035,
+              "p95": 0.0109,
+              "max": 0.6484,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 2.320600000000005,
+              "p95": 3.201899999999999,
+              "max": 3.201899999999999,
+              "spikesAtLeast30ms": 0
+            },
+            "spikes": []
+          },
+          {
+            "alternatives": 20000,
+            "dense": false,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 62448,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.002,
+              "p95": 0.0087,
+              "max": 7.9511,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 31.66550000000155,
+              "p95": 51.79050000000077,
+              "max": 51.79050000000077,
+              "spikesAtLeast30ms": 3
+            },
+            "spikes": []
+          }
+        ]
+      }
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/awareness-regression/AwarenessRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--review-rebuild"
+      ],
+      "sha256": "182c46d397e122e71b59a8ab53fd9af4415c1dc15a9318f638b26e48ce9e6ebd",
+      "data": {
+        "workPerUnit": 64,
+        "cases": [
+          {
+            "alternatives": 1024,
+            "dense": true,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 2454,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0032,
+              "p95": 0.0085,
+              "max": 4.5675,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 1.5620000000000023,
+              "p95": 14.916700000000015,
+              "max": 14.916700000000015,
+              "spikesAtLeast30ms": 0
+            },
+            "spikes": []
+          },
+          {
+            "alternatives": 20000,
+            "dense": true,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 56340,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0019,
+              "p95": 0.0073,
+              "max": 6.6818,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 28.58570000000133,
+              "p95": 36.71789999999997,
+              "max": 36.71789999999997,
+              "spikesAtLeast30ms": 2
+            },
+            "spikes": []
+          },
+          {
+            "alternatives": 1024,
+            "dense": false,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 2724,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0035,
+              "p95": 0.0086,
+              "max": 0.5185,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 1.9465000000000041,
+              "p95": 2.6977,
+              "max": 2.6977,
+              "spikesAtLeast30ms": 0
+            },
+            "spikes": []
+          },
+          {
+            "alternatives": 20000,
+            "dense": false,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 62448,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0017,
+              "p95": 0.0068,
+              "max": 4.7959,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 33.49390000000049,
+              "p95": 41.320100000000586,
+              "max": 41.320100000000586,
+              "spikesAtLeast30ms": 5
+            },
+            "spikes": []
+          }
+        ]
+      }
+    }
+  ],
+  "runs": [
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/awareness-regression/AwarenessRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--review-rebuild"
+      ],
+      "sha256": "35c929d9a91dbc5cb53790cfeab8eef77f85cdf28f79a524022890f80a374ec6",
+      "data": {
+        "workPerUnit": 64,
+        "cases": [
+          {
+            "alternatives": 1024,
+            "dense": true,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 2454,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0032,
+              "p95": 0.0118,
+              "max": 5.5345,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 1.922199999999999,
+              "p95": 15.402399999999977,
+              "max": 15.402399999999977,
+              "spikesAtLeast30ms": 0
+            },
+            "spikes": []
+          },
+          {
+            "alternatives": 20000,
+            "dense": true,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 56340,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0026,
+              "p95": 0.009,
+              "max": 3.7794,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 34.624000000002404,
+              "p95": 39.29879999999837,
+              "max": 39.29879999999837,
+              "spikesAtLeast30ms": 6
+            },
+            "spikes": []
+          },
+          {
+            "alternatives": 1024,
+            "dense": false,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 2724,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0034,
+              "p95": 0.0123,
+              "max": 0.3889,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 2.1440999999999995,
+              "p95": 2.6171999999999995,
+              "max": 2.6171999999999995,
+              "spikesAtLeast30ms": 0
+            },
+            "spikes": []
+          },
+          {
+            "alternatives": 20000,
+            "dense": false,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 62448,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0016,
+              "p95": 0.0095,
+              "max": 8.8473,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 41.14630000000088,
+              "p95": 49.55810000000047,
+              "max": 49.55810000000047,
+              "spikesAtLeast30ms": 4
+            },
+            "spikes": []
+          }
+        ]
+      }
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/awareness-regression/AwarenessRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--review-rebuild"
+      ],
+      "sha256": "ae34f591c97f8937c077a843734d7050220ab26b6b337cc1b827bdaa700731c1",
+      "data": {
+        "workPerUnit": 64,
+        "cases": [
+          {
+            "alternatives": 1024,
+            "dense": true,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 2454,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0035,
+              "p95": 0.0125,
+              "max": 4.6221,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 2.216499999999998,
+              "p95": 15.902399999999993,
+              "max": 15.902399999999993,
+              "spikesAtLeast30ms": 0
+            },
+            "spikes": []
+          },
+          {
+            "alternatives": 20000,
+            "dense": true,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 56340,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0027,
+              "p95": 0.009,
+              "max": 2.9626,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 36.572300000001576,
+              "p95": 39.65780000000051,
+              "max": 39.65780000000051,
+              "spikesAtLeast30ms": 6
+            },
+            "spikes": []
+          },
+          {
+            "alternatives": 1024,
+            "dense": false,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 2724,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.004,
+              "p95": 0.0139,
+              "max": 0.3418,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 2.292499999999997,
+              "p95": 2.626700000000001,
+              "max": 2.626700000000001,
+              "spikesAtLeast30ms": 0
+            },
+            "spikes": []
+          },
+          {
+            "alternatives": 20000,
+            "dense": false,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 62448,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0023,
+              "p95": 0.009,
+              "max": 7.2044,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 43.12890000000108,
+              "p95": 53.32000000000032,
+              "max": 53.32000000000032,
+              "spikesAtLeast30ms": 5
+            },
+            "spikes": []
+          }
+        ]
+      }
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/awareness-regression/AwarenessRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--review-rebuild"
+      ],
+      "sha256": "65b7736c6bdc3f3161e2eeaaa230cc2236afd76c598f24bf32ca2064765aa9e6",
+      "data": {
+        "workPerUnit": 64,
+        "cases": [
+          {
+            "alternatives": 1024,
+            "dense": true,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 2454,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0033,
+              "p95": 0.0121,
+              "max": 4.5245,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 1.7751000000000026,
+              "p95": 16.00490000000002,
+              "max": 16.00490000000002,
+              "spikesAtLeast30ms": 0
+            },
+            "spikes": []
+          },
+          {
+            "alternatives": 20000,
+            "dense": true,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 56340,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0027,
+              "p95": 0.0092,
+              "max": 3.4322,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 36.31030000000016,
+              "p95": 42.29909999999668,
+              "max": 42.29909999999668,
+              "spikesAtLeast30ms": 6
+            },
+            "spikes": []
+          },
+          {
+            "alternatives": 1024,
+            "dense": false,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 2724,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0035,
+              "p95": 0.0119,
+              "max": 0.3329,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 1.8525000000000034,
+              "p95": 2.2991000000000046,
+              "max": 2.2991000000000046,
+              "spikesAtLeast30ms": 0
+            },
+            "spikes": []
+          },
+          {
+            "alternatives": 20000,
+            "dense": false,
+            "iterations": 6,
+            "includesColdJit": true,
+            "unitCount": 62448,
+            "maxItems": 64,
+            "unitMs": {
+              "p50": 0.0021,
+              "p95": 0.0103,
+              "max": 11.8403,
+              "spikesAtLeast30ms": 0
+            },
+            "totalCpuMs": {
+              "p50": 41.198400000001136,
+              "p95": 51.87590000000065,
+              "max": 51.87590000000065,
+              "spikesAtLeast30ms": 5
+            },
+            "spikes": []
+          }
+        ]
+      }
+    }
+  ],
+  "benchmarkSource": "f43abc1",
+  "productionSource": "19289e3"
+}

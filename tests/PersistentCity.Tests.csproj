@@ -7,11 +7,14 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../tools/market-research-regression/ResearchFixture.cs" Link="ResearchFixture.cs" />
     <Compile Include="../Runtime/PrototypeSettings.cs" Link="PrototypeSettings.cs" />
+    <Compile Include="../Runtime/InteriorGuardSettings.cs" Link="InteriorGuardSettings.cs" />
     <Compile Include="../Runtime/InteriorViewState.cs" Link="InteriorViewState.cs" />
     <Compile Include="../Runtime/AudienceGeometryCache.cs" Link="AudienceGeometryCache.cs" />
     <Compile Include="../Runtime/NativeCampaignReader.cs" Link="NativeCampaignReader.cs" />
     <Compile Include="../tools/food-demand-audit/EventObservations.cs" Link="EventObservations.cs" />
+    <Compile Include="../tools/save-contract-regression/EconomyScenario.cs" Link="EconomyScenario.cs" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />

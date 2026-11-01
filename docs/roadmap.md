@@ -20,8 +20,10 @@ Replaces the phase order in docs/reviews/2026-10-27-realism-gameplay-roadmap.md 
 
 0. Performance: the 30 October comprehensive review is done and passes the mod-work gate below. Spock agreed: no optimization work now; re-measure as each slice lands. This isn't a release step.
 A. Inspector, traits and probabilistic choice. Start now (Peter 15:24 JST), with the standing performance gate applied to each slice.
-B. Memory, loyalty and regulars.
-C. Marketing awareness and targeting, plus the market research product.
+B. Memory, loyalty and regulars. **B0 is implemented offline:** schema 18, exact old-source migration and history-inclusive capacity; memory remains empty/inactive and the regulars helper is a pure own-shop projection. **B0b is inserted between B0 and B1:** persist the held A3 tuning image and neutral bounded per-candidate contribution; schema 18 is amended before player use. B1 is implemented offline on B0b: per-consumer generation memory, atomic experience watermarks and captured bounded loyalty/curiosity weights; 6 Nov native proof remains pending. B2 is implemented offline on B1: unique-consumer own-shop regular counts, inspector memory words and read-only bridge flags/counts, with zero saved growth and no choice contribution. Default Q7 thresholds are three served visits, positive effective memory and fourteen days. Native proof remains pending the combined 6 Nov session. [B2 checks](checks/b2-regulars-inspector.md#step-b2-regulars-and-inspector-words---31-october-2026-offline-only). [Contract and capacity evidence](population-schema18.md).
+   B1 protected-insertion exception: if recording a new bad visit would evict a competing boost, return chance stays equal (never higher), with a terminal failed watermark and no negative per-shop entry. B2 must not assume every failure leaves a negative entry; `ProtectedInsertions` is session-local, not saved history. [Exact exception](population-schema18.md#b1-execution--31-october-2026).
+
+C. Marketing awareness and targeting, plus the market research product. **C2a implemented offline on B0b:** bounded source/index interface, B1 memory projection/campaign-unknown providers, local/routine and positive daily distant discovery, common eight-slot shortlist, additive schema 19. B1 memory is wired within the existing four source slots and bounded rank; r1 bounds rebuild continuations and restores at-stop observation/diagnostics and strict held-image validation. Combined 6 Nov rig proof pending. [Contract](population-schema19.md). **C4 implemented offline and inactive:** bounded pure research engine/access contract only; paid research stays off because C3 found no safe native fee path. No UI, normal-play computation or saved fields. [Contract and offline proof](market-research.md).
 D. Rivals as alternatives.
 E. Weather, street life, bigger menus and more products.
 Then: re-check the same performance gate for the final release, the hands-on session, and one release.
@@ -31,11 +33,11 @@ Implementation plan for B–E: [memory, marketing, rivals and the wider street](
 
 E3 status, 31 October (offline): [donut](plans/e3-donut.md) and [cupcake feasibility discovery](plans/e3-cupcake.md) share one isolated on-demand raw-field reader with pinned candidates. Loaded equipment and natural checkout/settlement proof remain pending; no additional product certified or enabled.
 
-E3 salad status, 1 November (offline): [salad stop record](plans/e3-salad.md) adds a pinned conditional probe on the cupcake/donut stack. Shipped holder unestablished; no generic holder extension, menu, gameplay or saved change. Existing read branches retained; no additional cheap safe measured perf win identified. Three-candidate offline timing and the combined 6 Nov handoff are in [CHECKS](../CHECKS.md#e3-salad-feasibility---1-november-2026-offline-only).
+E3 salad status, 1 November (offline): [salad stop record](plans/e3-salad.md) adds a pinned conditional probe on the cupcake/donut stack. Shipped holder unestablished; no generic holder extension, menu, gameplay or saved change. Existing read branches retained; no additional cheap safe measured perf win identified. Three-candidate offline timing and the combined 6 Nov handoff are in [CHECKS](checks/e3-salad.md#e3-salad-feasibility---1-november-2026-offline-only).
 
 Peter’s [31 October Q1-Q7 decisions](plans/steps-b-e.md#product-decisions-peter-31-oct-2026) specify tiered paid research as a third native-agency option (proven fee or unavailable), local/distant discovery, estimated rivals, food-first products, no anonymous crowds/night multiplier and own-shop regulars; tier contents/fees remain open.
 
-Track F (Peter, 31 October): independently authored city view from interiors, F0 spike → F1 shop view/customer entry → F2 upper-floor/penthouse view → F3 polish. [F0 findings and plan](plans/track-f-interior-view.md): default-off runtime eligibility/entrance-anchor experiment; **city drawing is a no-op pending F1**, with no save-format change or A-stack dependency. Separate later E2c owns the third-party detection guard. The same mod-work/whole-frame evidence rules apply to F.
+Track F (Peter, 31 October): independently authored city view from interiors, F0 spike → F1 shop view/customer entry → F2 upper-floor/penthouse view → F3 polish. [F0 findings and plan](plans/track-f-interior-view.md): default-off runtime eligibility/entrance-anchor experiment; **city drawing is a no-op pending F1**, with no save-format change or A-stack dependency. E2c (31 Oct, offline) implements only the once-per-load third-party detection guard, forced-off F0 state and read-only bridge verdict; native proof remains pending. [E2c evidence](checks/e2c-interior-guard.md#e2c-third-party-interior-guard---31-october-2026-offline-only). The same mod-work/whole-frame evidence rules apply to F.
 
 ## Performance gate (Peter, 2026-10-30)
 
@@ -54,10 +56,26 @@ Applies to every step A–E slice re-measure and to the final release:
 
 Record every taken win with before/after numbers.
 
-| Slice | Change | Before | After |
-|---|---|---|---|
-| E3 donut (31 Oct, offline) | Remove redundant identity HashSet; ordinal dictionary keys plus matching IDs prove uniqueness; unknown comparers refuse. Both variants use authoring-tag field reads, 1,001 individual reads/native doubles. | 2,000 entries: warm p50/p95/max 0.1253/0.2493/2.5530 ms; 203,288 B/call. Two entries 376 B/call. | 2,000: 0.0853/0.1822/1.5725 ms; 49,104 B/call. Two entries 200 B/call. Zero E3 samples >=30 ms. One cold sample 3.1500 ms/1,144 B to 1.6876 ms/968 B (includes JIT/metadata; no causal cold-time claim). [Method and native limits](../CHECKS.md#e3-donut-feasibility---31-october-2026-offline-only). No per-frame work. |
-| C1 | Cache verified enum/list metadata per bounded shape; replace per-business duplicate hash sets with at most 8 x 8 comparisons (offline .NET, 1,024 businesses x six campaigns, 301 reads) | Warm p50/p95 3.316/5.196 ms; 3,637,080 allocated bytes/read | Warm p50/p95 0.980/2.380 ms; 1,637,960 bytes/read (55% fewer); one-business continuation p50 0.0029 to 0.0008 ms. Cold/read-tail and native limits: [C1 checks](../CHECKS.md#c1-native-campaign-reader---31-october-2026-offline-only). |
-| D1 (31 Oct, offline) | Reuse address-tuple metadata index; no escaped address strings on warm refresh. Zero work when not called. | Warm refresh allocation 227,200 / 4,629,632 B at 1,024 / 20,000 places (0.2286 / 1.9294 ms). | 32 / 32 B (0.1061 / 1.4670 ms); 16-read units 0 B. Retention trade-off: 422,208 / 8,500,600 to 491,848 / 9,838,136 B. [Method, cold/detail costs and limits](reviews/2026-10-31-d1-rival-reader.md#offline-validation-and-performance). No native timing claim. |
-| F0 review r1, 31 Oct | Cache configured bool/full context per frame and use a validated native speed delegate. Frozen pre-r1 adapter versus fixed adapter, actual `FieldInfo.GetValue` before / actual typed accessor after, 36 queries per emulated frame, 300 × 100 batches; native doubles. | p50/p95/max batch means **0.000975/0.001576/0.002240 ms/frame**, **0 B/frame** | **0.000690/0.000941/0.001080 ms/frame**, **0 B/frame**. Same-frame blockers still invalidate immediately; full-context reads 1 per frame rather than per body. `build/f0-review-r1/accessor-verified.txt`; .NET-only partial timings, not Unity/full-mod clearance. |
-| F0, 31 Oct | Skip candidate scan when both body pools are full, after observations and queue movement; same extracted selector with/without this one break, 957 residents, 300 single calls, native doubles. | p50/p95/max **0.1885/0.3179/4.2312 ms**, **96 B/call** | **0.0001/0.0001/0.0022 ms**, **32 B/call** (harness result list); zero candidate position reads versus 957 per full-pool call. No acquisition/cooldown difference in differential fixtures. Unity/full-mod benefit unmeasured. [F0 limits](plans/track-f-interior-view.md). |
+Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index line here. Keep before/after numbers and measurement limits in that file; sync/review-fix notes stay with the slice.
+
+- A2 — [Schema 17, lifestyle traits and base sync evidence](perf/a2-schema17-traits.md).
+- A3 — [Weighted food choices, review fixes and native checklist](perf/a3-weighted-choice.md).
+- B0 — [Schema 18, capacity, review fixes and native checklist](perf/b0-schema18.md).
+- B0b — [Held tuning, base syncs and native checklist](perf/b0b-held-tuning.md).
+- E3 — [Donut feasibility reader](perf/e3-donut.md).
+- C1 — [Native campaign reader and native checklist](perf/c1-campaign-reader.md).
+- D1 — [Read-only rival food catalogue and native checklist](perf/d1-rival-catalogue.md).
+- F0 — [Interior view experiment, reviews and native checklist](perf/f0-interior-view.md).
+- E2c — [Third-party interior guard](perf/e2c-interior-guard.md).
+- B1 — [Shop memory and loyalty v2](perf/b1-memory-loyalty.md).
+
+- B2 — [Observed own-shop regulars and resident memory words](perf/b2-regulars-inspector.md).
+
+- C2a — [Core bounded awareness and yielded index publication](perf/c2a-core-awareness.md).
+- E2b — [Bounded street-life timing and fail-closed frontage ownership](perf/e2b-street-life.md).
+
+- E3 cupcake — [Shared reader timing and allocation evidence](perf/e3-cupcake.md).
+
+- E3 salad — [Conditional shared reader timing and allocation evidence](perf/e3-salad.md).
+
+- C4 — [Bounded inactive research and direct trait validation](perf/c4-market-research.md).

@@ -1,4 +1,5 @@
 """Differential donut output proof against the approved reader; no game/rig access."""
+import hashlib
 import os
 from pathlib import Path
 import subprocess
@@ -6,8 +7,8 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "build/e3-cupcake/differential"
 OUT.mkdir(parents=True, exist_ok=True)
-original = subprocess.check_output(
-    ["git", "show", "462a99d:Runtime/DonutFeasibilityReader.cs"], cwd=ROOT, text=True)
+original = (ROOT / "tools/cupcake-feasibility-regression/approved-donut-reader.cs.txt").read_text(encoding="utf-8")
+assert hashlib.sha256(original.encode()).hexdigest() == "880d062dcbf9a21af4168ac44b25fd1bfc91311830058a26356c4aeca4b30cf1"
 (OUT / "Baseline.cs").write_text(original.replace("DonutFeasibility", "BaselineDonutFeasibility"), encoding="utf-8")
 program = (ROOT / "tools/donut-feasibility-regression/Program.cs").read_text()
 program = program.replace("using CandidateReader = PersistentCity.Runtime.DonutFeasibilityReader;",

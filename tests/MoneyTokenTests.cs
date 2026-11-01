@@ -23,7 +23,7 @@ public sealed partial class FoodCommerceTests
         city = city.RebuildRoutes(routes); city.EnableHouseholdFinances();
         Advance(city, city.State.Food!.Residents.Single().DesiredAt + 30);
         Assert.Equal(MealStatus.Paid, city.State.Food.Residents.Single().Status);
-        return (city, SaveCodec.Write(city.State));
+        return (city, LegacyWire.Write(city.State));
     }
 
     private static string R8_Generation(string current, string generation)
@@ -49,9 +49,9 @@ public sealed partial class FoodCommerceTests
     {
         var (city, _, _) = Ready(); city.EnableHouseholdFinances();
         city.State.Food!.Residents.Single().Allowance = Money.FromCents(2);
-        string current = SaveCodec.Write(city.State);
+        string current = LegacyWire.Write(city.State);
         string encoded = R8_Generation(current, generation);
-        Assert.Equal(current, SaveCodec.Write(SaveCodec.Read(encoded).State!));
+        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(SaveCodec.Read(encoded).State!)));
         string damaged = Regex.Replace(encoded, "\"" + field + "\":[0-9.]+", "\"" + field + "\":" + token);
         Assert.NotEqual(encoded, damaged);
         var read = SaveCodec.Read(damaged);
@@ -70,7 +70,7 @@ public sealed partial class FoodCommerceTests
             .Replace("\": ", "\"   :  ");
         var read = SaveCodec.Read(spaced);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(current, SaveCodec.Write(read.State!));
+        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(read.State!)));
     }
 
     private static ResidentBudget R8_BoundaryBudget(CitySimulator city, long fundedCents)
@@ -84,7 +84,7 @@ public sealed partial class FoodCommerceTests
         b.Balance = Money.FromCents(17179869183);
         b.EssentialsPaid = Money.FromCents(fundedCents) - b.Balance;
         b.HomeFoodPaid = b.PreparedFoodSpent = b.HeldPurchase = b.Arrears = Money.Zero;
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(city.State)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(LegacyWire.Write(city.State)).Status);
         return b;
     }
 
@@ -98,7 +98,7 @@ public sealed partial class FoodCommerceTests
         string before = JsonConvert.SerializeObject(b);
         Assert.Throws<OverflowException>(() => HouseholdFinance.PostDay(b, city.State.Minute, city.State.Citizens.Single()));
         Assert.Equal(before, JsonConvert.SerializeObject(b));
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(city.State)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(LegacyWire.Write(city.State)).Status);
     }
 
     // Control: a posting that reaches exactly the largest whole-cent total still posts and saves.
@@ -109,7 +109,7 @@ public sealed partial class FoodCommerceTests
         var b = R8_BoundaryBudget(city, 34359738367 - 50000);
         HouseholdFinance.PostDay(b, city.State.Minute);
         Assert.Equal(Money.FromCents(34359738367), b.OpeningBalance + b.IncomeReceived);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(city.State)).Status);
+        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(LegacyWire.Write(city.State)).Status);
     }
 
     // Reviewer A N1: the wage refresh from the resident is part of the posting and is not kept

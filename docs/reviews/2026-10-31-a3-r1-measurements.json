@@ -1,0 +1,760 @@
+{
+  "date": "2026-10-31",
+  "scope": "A3 round-1 review fixes; offline synthetic measurements only, no native/rig proof",
+  "baseline": {
+    "commit": "41c870f64f8d5495285026daa99029ea4033bb95",
+    "verifiedSourceFiles": 67,
+    "verification": "Core, Persistence and save regression source files match git objects after newline normalization",
+    "isolatedAssemblySha256": "12cfdcfa92a4ef496497b6936ec248021bf90cc2eb4a8c187475394ff9e3a513"
+  },
+  "reproduction": {
+    "candidate": "dotnet run --project tools/food-candidate-regression/FoodCandidateRegression.csproj --configuration Release",
+    "choice": "dotnet run --project tools/food-choice-regression/FoodChoiceRegression.csproj --configuration Release",
+    "rush": "dotnet run --project tools/food-choice-regression/FoodChoiceRegression.csproj --configuration Release -- --rush",
+    "save": "dotnet run --project tools/save-contract-regression/SaveContractRegression.csproj --configuration Release -- --interleaved-save-bench <isolated-A2-SaveContractRegression.dll>"
+  },
+  "candidates": {
+    "checks": "actual NativeFoodCandidates + NativeFoodHours, synthetic native surfaces",
+    "controllers": 131,
+    "discoveryFrames": [
+      0,
+      1,
+      2,
+      5
+    ],
+    "reload": true,
+    "oldHoursPasses": 8,
+    "newHoursPasses": 1,
+    "oldMedianMs": 0.1041,
+    "newMedianMs": 0.0754
+  },
+  "choice": {
+    "bench": [
+      {
+        "shops": 8,
+        "nativeIds": false,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.1132,
+          "p95": 0.24,
+          "max": 8.7553
+        },
+        "continuationUnitMs": {
+          "p95": 0.0366,
+          "max": 0.4579
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.0479,
+          "max": 0.0852
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.011300000000000001,
+          "p95": 0.0202,
+          "max": 0.0553
+        },
+        "bytesPerDecision": 83960,
+        "logicalRoutes": 16
+      },
+      {
+        "shops": 64,
+        "nativeIds": false,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.1201,
+          "p95": 0.1538,
+          "max": 0.457
+        },
+        "continuationUnitMs": {
+          "p95": 0.035,
+          "max": 0.3192
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.04,
+          "max": 0.0887
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.0206,
+          "p95": 0.0245,
+          "max": 0.043300000000000005
+        },
+        "bytesPerDecision": 84088,
+        "logicalRoutes": 16
+      },
+      {
+        "shops": 1024,
+        "nativeIds": false,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.2401,
+          "p95": 0.4096,
+          "max": 1.3595
+        },
+        "continuationUnitMs": {
+          "p95": 0.0804,
+          "max": 1.1048
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.16940000000000002,
+          "max": 0.24980000000000002
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.0698,
+          "p95": 0.1079,
+          "max": 0.15699999999999997
+        },
+        "bytesPerDecision": 84160,
+        "logicalRoutes": 16
+      }
+    ],
+    "nativeIdBench": [
+      {
+        "shops": 8,
+        "nativeIds": true,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.1398,
+          "p95": 0.2631,
+          "max": 0.6176
+        },
+        "continuationUnitMs": {
+          "p95": 0.0482,
+          "max": 0.4259
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.0404,
+          "max": 0.1639
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.019,
+          "p95": 0.0272,
+          "max": 0.1606
+        },
+        "bytesPerDecision": 83920,
+        "logicalRoutes": 16
+      },
+      {
+        "shops": 64,
+        "nativeIds": true,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.158,
+          "p95": 0.2066,
+          "max": 0.5541
+        },
+        "continuationUnitMs": {
+          "p95": 0.0465,
+          "max": 0.3193
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.056100000000000004,
+          "max": 0.2105
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.0391,
+          "p95": 0.0471,
+          "max": 0.09570000000000001
+        },
+        "bytesPerDecision": 84040,
+        "logicalRoutes": 16
+      },
+      {
+        "shops": 1024,
+        "nativeIds": true,
+        "samples": 512,
+        "fullMs": {
+          "p50": 0.1922,
+          "p95": 0.331,
+          "max": 1.8368
+        },
+        "continuationUnitMs": {
+          "p95": 0.134,
+          "max": 1.764
+        },
+        "shortlistCapturePlusPureSamplingMs": {
+          "p95": 0.23149999999999998,
+          "max": 1.7668
+        },
+        "exactShortlistTraitsSamplingMs": {
+          "p50": 0.135,
+          "p95": 0.1989,
+          "max": 1.7381
+        },
+        "bytesPerDecision": 80568,
+        "logicalRoutes": 16
+      }
+    ]
+  },
+  "rush": {
+    "boundary": "Synthetic simultaneous lunch; stub paths. Frame/backlog estimates at 100 fps, explicit clock-rate scenarios. Not native throughput or path cost.",
+    "results": [
+      {
+        "mode": "all_feasible",
+        "residents": 957,
+        "factor": 2,
+        "consumers": 1914,
+        "beforeEvents": 36366,
+        "events": 34452,
+        "eventsPerDecision": 18,
+        "beforeEventCapFrames": 2273,
+        "eventCapFrames": 2154,
+        "measuredFramesWith16Event2MsLoop": 2160,
+        "estimatedSecondsAt100Fps": 21.6,
+        "offlineCpuMs": 245.8627,
+        "logicalRouteRequests": 30624,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 587
+          }
+        ]
+      },
+      {
+        "mode": "closed",
+        "residents": 957,
+        "factor": 2,
+        "consumers": 1914,
+        "beforeEvents": 36366,
+        "events": 5742,
+        "eventsPerDecision": 3,
+        "beforeEventCapFrames": 2273,
+        "eventCapFrames": 359,
+        "measuredFramesWith16Event2MsLoop": 361,
+        "estimatedSecondsAt100Fps": 3.61,
+        "offlineCpuMs": 99.9847,
+        "logicalRouteRequests": 0,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ]
+      },
+      {
+        "mode": "refused_outward",
+        "residents": 957,
+        "factor": 2,
+        "consumers": 1914,
+        "beforeEvents": 36366,
+        "events": 19140,
+        "eventsPerDecision": 10,
+        "beforeEventCapFrames": 2273,
+        "eventCapFrames": 1197,
+        "measuredFramesWith16Event2MsLoop": 1197,
+        "estimatedSecondsAt100Fps": 11.97,
+        "offlineCpuMs": 133.2284,
+        "logicalRouteRequests": 15312,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ]
+      },
+      {
+        "mode": "existing_shop",
+        "residents": 957,
+        "factor": 1,
+        "consumers": 957,
+        "beforeEvents": 4785,
+        "events": 2871,
+        "eventsPerDecision": 3,
+        "beforeEventCapFrames": 300,
+        "eventCapFrames": 180,
+        "measuredFramesWith16Event2MsLoop": 180,
+        "estimatedSecondsAt100Fps": 1.8,
+        "offlineCpuMs": 17.3579,
+        "logicalRouteRequests": 0,
+        "lunchWindowMinutes": 45,
+        "backlog": [
+          {
+            "gameMinutesPerRealSecond": 0.3333333333333333,
+            "windowFrames": 13500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 1,
+            "windowFrames": 4500,
+            "pendingAtWindowEnd": 0
+          },
+          {
+            "gameMinutesPerRealSecond": 3,
+            "windowFrames": 1500,
+            "pendingAtWindowEnd": 0
+          }
+        ]
+      }
+    ]
+  },
+  "interleavedSave": {
+    "environment": "same .NET 10 process; independent noncollectible A2/current load contexts; identical reflection entry; eight warmups + sixteen alternating rounds",
+    "results": [
+      {
+        "residents": 957,
+        "mode": "A2",
+        "samples": 16,
+        "chars": 3470518,
+        "writeMedianMs": 43.6134,
+        "writeP95Ms": 80.7534,
+        "allocatedBytes": 22200064
+      },
+      {
+        "residents": 957,
+        "mode": "A3_same_payload",
+        "samples": 16,
+        "chars": 3470518,
+        "writeMedianMs": 40.3667,
+        "writeP95Ms": 70.2078,
+        "allocatedBytes": 22200072
+      },
+      {
+        "residents": 957,
+        "mode": "A3_saved_decisions",
+        "samples": 16,
+        "chars": 3572965,
+        "writeMedianMs": 34.6355,
+        "writeP95Ms": 54.5781,
+        "allocatedBytes": 22637144
+      },
+      {
+        "residents": 5000,
+        "mode": "A2",
+        "samples": 16,
+        "chars": 18136744,
+        "writeMedianMs": 200.9806,
+        "writeP95Ms": 224.7598,
+        "allocatedBytes": 115892144
+      },
+      {
+        "residents": 5000,
+        "mode": "A3_same_payload",
+        "samples": 16,
+        "chars": 18136744,
+        "writeMedianMs": 181.4924,
+        "writeP95Ms": 213.8606,
+        "allocatedBytes": 115892152
+      },
+      {
+        "residents": 5000,
+        "mode": "A3_saved_decisions",
+        "samples": 16,
+        "chars": 18635405,
+        "writeMedianMs": 180.2761,
+        "writeP95Ms": 215.3918,
+        "allocatedBytes": 117908176
+      }
+    ]
+  },
+  "gate": {
+    "passedCommands": 34,
+    "unitTests": 1728,
+    "skipped": 0,
+    "buildDllSha256": "c82a8fa6ab8d98de99e38ffd2b5ad50b54e8c801008e2aa0ad43dc35d209da25",
+    "commands": [
+      {
+        "argv": [
+          "python",
+          "tools/build.py",
+          "--game-managed",
+          "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "test",
+          "tests/PersistentCity.Tests.csproj",
+          "--logger",
+          "trx;LogFileName=a3-r1-gate.trx",
+          "--results-directory",
+          "build/test-results"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "test",
+          "tests/PersistentCity.Tests.csproj",
+          "--no-build",
+          "--list-tests"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\core-identity-regression\\CoreIdentityRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\diagnostic-response-regression\\DiagnosticResponseRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\event-observation-regression\\EventObservationRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\food-catalogue-regression\\FoodCatalogueRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\food-checkout-regression\\FoodCheckoutRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\food-hours-regression\\FoodHoursRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\food-household-catalogue-regression\\FoodHouseholdCatalogueRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\food-ownership-regression\\FoodOwnershipRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\food-supply-regression\\FoodSupplyRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\frame-observation-regression\\FrameObservationRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\gate-access-regression\\GateAccessRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\road-ceiling-regression\\RoadCeilingRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\road-handoff-regression\\RoadHandoffRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\road-invalidation-regression\\RoadInvalidationRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\road-speed-regression\\RoadSpeedRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\route-discovery-regression\\RouteDiscoveryRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\save-contract-regression\\SaveContractRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\startup-clock-regression\\StartupClockRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\traffic-closure-regression\\TrafficClosureRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\traffic-queue-regression\\TrafficQueueRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\walking-quote-regression\\WalkingQuoteRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\food-choice-regression\\FoodChoiceRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools\\food-candidate-regression\\FoodCandidateRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "python",
+          "tools/native-command-regression/run.py"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "python",
+          "tools/physical-selection-regression/run.py"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "python",
+          "tools/vehicle-ownership-regression/run.py"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "python",
+          "tools/optional-stop-regression/run.py"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools/simulate/Simulate.csproj",
+          "--",
+          "28",
+          "build/harness-demo"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools/food-routines/FoodRoutines.csproj",
+          "--configuration",
+          "Release",
+          "--",
+          "build/harness-food-routines-demo",
+          "957"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools/food-demand/FoodDemand.csproj",
+          "--",
+          "build/harness-food-demand-demo"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "<USERPROFILE>\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+          "run",
+          "--project",
+          "tools/food-choice-regression/FoodChoiceRegression.csproj",
+          "--configuration",
+          "Release",
+          "--",
+          "--rush"
+        ],
+        "exitCode": 0
+      }
+    ]
+  },
+  "limits": [
+    "Synthetic metadata harness links actual NativeFoodCandidates/NativeFoodHours, with native surfaces and detailed reader stubbed; checkout and ownership have separate actual-code regressions.",
+    "Native frame costs, rush lateness, accounting and Mono replay require the 6 Nov rig proof.",
+    "Full-route simultaneous lunch still leaves 587 pending at fastest modeled clock scenario; other city work excluded.",
+    "Save-write doubling not reproduced; no serialization speedup claimed. Ceiling payload unchanged at 92.4 percent of cap.",
+    "Policy-only p95 at 1024 native-length IDs remains marginal: 0.1989 ms in this run; preceding A3 runs 0.1991/0.2082 ms."
+  ]
+}

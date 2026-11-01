@@ -11,7 +11,7 @@ using Xunit;
 namespace PersistentCity.Tests;
 
 // Base merge of exact integer-unit money into optional stops: schemas 15/16 carry money exactly as
-// schema 14 does, and every earlier city schema reaches 16 under the same strict money rules.
+// schema 14 does, and every earlier city schema reaches the current schema under the same strict money rules.
 public sealed partial class FoodCommerceTests
 {
     // Written verbatim by the optional-stop branch before the merge (4aebca2): schema 16 with decimal
@@ -45,13 +45,13 @@ public sealed partial class FoodCommerceTests
     public void BaseMerge_Schema13MoneyMigratesToSchema16Exactly(float native)
     {
         var (city, current) = R8_Paid(native);
-        Assert.Contains("\"Schema\":16,", current);
+        Assert.Contains("\"Schema\":17,", current);
         string old = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(JObject.Parse(current), wholeCents: true), 13).ToString(Formatting.None);
         var price = city.State.Food!.Residents.Single().Price;
         Assert.Contains("\"PriceCents\":" + price.Units / Money.UnitsPerCent + ",", old);
         var read = SaveCodec.Read(old);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(13, read.SourceSchema);
-        Assert.Equal(current, SaveCodec.Write(read.State!));
+        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(read.State!)));
     }
 
     [Theory]
@@ -60,9 +60,9 @@ public sealed partial class FoodCommerceTests
     {
         var (city, current) = R8_Paid(native);
         Assert.Contains("\"Price\":" + city.State.Food!.Residents.Single().Price.Units + ",", current);
-        var read = SaveCodec.Read(BaseMerge_Label(current, 14));
+        var read = SaveCodec.Read(LegacyMoneyWire.AsSchema(JObject.Parse(current), 14).ToString(Formatting.None));
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(14, read.SourceSchema);
-        Assert.Equal(current, SaveCodec.Write(read.State!));
+        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(read.State!)));
     }
 
     // A development save from the optional-stop branch follows the rule used for earlier schema-14
@@ -75,8 +75,8 @@ public sealed partial class FoodCommerceTests
         var read = SaveCodec.Read(old);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(schema, read.SourceSchema);
         Assert.Equal(Money.FromCents(25), read.State!.Food!.Residents.Single().Price);
-        string written = SaveCodec.Write(read.State);
-        Assert.Contains("\"Schema\":16,", written);
+        string written = LegacyWire.Write(read.State);
+        Assert.Contains("\"Schema\":17,", written);
         int compared = 0;
         foreach (var field in LegacyMoneyWire.Names)
         {
@@ -91,7 +91,7 @@ public sealed partial class FoodCommerceTests
             }
         }
         Assert.True(compared >= 14, "Compared " + compared + " monetary fields.");
-        Assert.Equal(written, SaveCodec.Write(SaveCodec.Read(written).State!));
+        Assert.Equal(written, LegacyWire.Write(SaveCodec.Read(written).State!));
     }
 
     [Theory]
@@ -123,12 +123,13 @@ public sealed partial class FoodCommerceTests
     {
         var (city, _, _) = Ready(); city.EnableHouseholdFinances();
         city.State.Food!.Residents.Single().Allowance = Money.FromCents(2);
-        string current = SaveCodec.Write(city.State);
+        string current = LegacyWire.Write(city.State);
         var wire = JObject.Parse(current);
         if (field.EndsWith("Cents", StringComparison.Ordinal)) LegacyMoneyWire.ToLegacy(wire, wholeCents: false);
         string encoded = LegacyMoneyWire.AsSchema(wire, schema).ToString(Formatting.None);
         var control = SaveCodec.Read(encoded);
-        Assert.True(control.Status == SaveReadStatus.Loaded, control.Error); Assert.Equal(current, SaveCodec.Write(control.State!));
+        Assert.True(control.Status == SaveReadStatus.Loaded, control.Error);
+        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(control.State!)));
         string damaged = Regex.Replace(encoded, "\"" + field + "\":[0-9.]+", "\"" + field + "\":" + token);
         Assert.NotEqual(encoded, damaged);
         BaseMerge_RefusedAndPreserved(damaged, "Invalid state");
@@ -136,10 +137,10 @@ public sealed partial class FoodCommerceTests
 
     [Theory]
     [InlineData(.01f)] [InlineData(.3f)] [InlineData(10.2528f)] [InlineData(12.49f)]
-    public void BaseMerge_Schema16MoneyRoundTripsByteIdentically(float native)
+    public void BaseMerge_CurrentSchemaMoneyRoundTripsByteIdentically(float native)
     {
         var (city, current) = R8_Paid(native);
-        Assert.Contains("\"Schema\":16,", current);
+        Assert.Contains("\"Schema\":17,", current);
         Assert.Contains("\"OptionalStop\":null", current); Assert.Contains("\"OptionalStopChoice\":null", current);
         Assert.Contains("\"Price\":" + city.State.Food!.Residents.Single().Price.Units + ",", current);
         foreach (var field in LegacyMoneyWire.Names)
@@ -148,9 +149,9 @@ public sealed partial class FoodCommerceTests
             Assert.DoesNotMatch("\"" + field.Key + "\":-?[0-9]*[.eE]", current);
         }
         var read = SaveCodec.Read(current);
-        Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(16, read.SourceSchema);
-        Assert.Equal(current, SaveCodec.Write(read.State!));
+        Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(17, read.SourceSchema);
+        Assert.Equal(current, LegacyWire.Write(read.State!));
         var data = new Dictionary<string, string>();
-        Assert.True(SaveStore.WriteTo(data, read.State!).Success); Assert.Equal(current, data[SaveStore.StateKey]);
+        Assert.True(SaveStore.WriteTo(data, read.State!).Success); Assert.Equal(SaveCodec.Write(read.State!), data[SaveStore.StateKey]);
     }
 }
