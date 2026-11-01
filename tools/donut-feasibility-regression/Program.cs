@@ -1,5 +1,7 @@
 #if CUPCAKE
 using CandidateReader = PersistentCity.Runtime.CupcakeFeasibilityReader;
+#elif SALAD
+using CandidateReader = PersistentCity.Runtime.SaladFeasibilityReader;
 #else
 using CandidateReader = PersistentCity.Runtime.DonutFeasibilityReader;
 #endif
@@ -128,6 +130,53 @@ static class Program
         string mixedBefore = Fingerprint(r);
         for (int i = 0; i < 100; i++) { CandidateReader.Read(r); DonutFeasibilityReader.Read(r); }
         Check(mixedBefore == Fingerprint(r), "interleaved candidates share metadata only, never stock or results");
+#endif
+#if SALAD
+        Check(CandidateReader.Product == "ba:itemname_salad" && cold.ProductId == CandidateReader.Product,
+            "pinned salad identity on detached output");
+        Refusal(x => x.retailPrices.Clear(), "advertised product/price");
+        foreach (string input in new[] { "ba:itemname_lettuce", "ba:itemname_tomato",
+            "ba:itemname_slicedlettuce", "ba:itemname_tomatopaste" })
+        {
+            Refusal(x => x.cachedAvailableProducts[0] = input, "advertised product/price");
+            Refusal(x => { ItemsGetter.Items["fixture-shelf"].producerSettings.itemsToProduce = new[] { Product };
+                x.itemInstances["s0"].cargoInstances[0].itemName = input; }, "Converted input");
+        }
+        Refusal(x => x.itemInstances["counter"].cargoInstances.Clear(), "Shared, nested");
+        // Native names identify nothing by themselves. These are conditional type/field doubles,
+        // not assertions that either shipped salad bar is a showcase or a workstation.
+        foreach (string holder in new[] { "ba:itemname_saladbar", "ba:itemname_woodensaladbar" })
+        {
+            r = Fixture();
+            var definition = ItemsGetter.Items["fixture-shelf"];
+            ItemsGetter.Items.Remove("fixture-shelf"); ItemsGetter.Items[holder] = definition;
+            r.itemInstances["s0"].itemName = holder;
+            var direct = CandidateReader.Read(r);
+            Check(direct.DirectStockFieldsVerified && direct.Equipment.Single() == holder,
+                "observed holder name copied only with verified conditional showcase fields");
+            definition.type = ItemType.EmployeeWorkstation;
+            definition.producerSettings.itemsToProduce = new[] { Product };
+            string holderBefore = Fingerprint(r);
+            Check(CandidateReader.Read(r).Refusal == "Workstation/shared or converted input: unsupported",
+                "salad-bar name never authorizes a workstation even with finished salad cargo");
+            Check(holderBefore == Fingerprint(r), "refused named workstation unchanged");
+        }
+        foreach (string other in new[] { DonutFeasibilityReader.Product, CupcakeFeasibilityReader.Product })
+        {
+            Refusal(x => ItemsGetter.Items["fixture-shelf"].itemsThatCanShowcase = new[] { other }, "whitelist mismatch");
+            r = Fixture(); ItemsGetter.Items[other] = new() { type = ItemType.RetailProduct };
+            r.cachedAvailableProducts.Add(other); r.retailPrices.Add(new() { itemName = other, price = 12 });
+            r.itemInstances["s0"].cargoInstances[0].itemName = other;
+            ItemsGetter.Items["fixture-shelf"].itemsThatCanShowcase = new[] { other };
+            Check(CandidateReader.Read(r).Refusal == "No direct stocked candidate showcase shelf observed",
+                "other candidate never substitutes for salad");
+            Check((other == DonutFeasibilityReader.Product ? DonutFeasibilityReader.Read(r).DirectStockFieldsVerified
+                : CupcakeFeasibilityReader.Read(r).DirectStockFieldsVerified), "other descriptor independently reads its cargo");
+            string mixedBefore = Fingerprint(r);
+            for (int i = 0; i < 100; i++)
+            { CandidateReader.Read(r); DonutFeasibilityReader.Read(r); CupcakeFeasibilityReader.Read(r); }
+            Check(mixedBefore == Fingerprint(r), "all three share metadata only, never cargo or results");
+        }
 #endif
         var timings = new List<object>();
         foreach (int size in new[] { 1, 1999 })

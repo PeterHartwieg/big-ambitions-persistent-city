@@ -7,7 +7,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 readers = {ROOT / ("Runtime/" + name + ".cs") for name in
-           ("DonutFeasibilityReader", "CupcakeFeasibilityReader", "DirectStockShowcaseReader")}
+           ("DonutFeasibilityReader", "CupcakeFeasibilityReader", "SaladFeasibilityReader", "DirectStockShowcaseReader")}
 text = "\n".join(path.read_text(encoding="utf-8") for path in sorted(readers))
 code = re.sub(r"//[^\n]*|/\*.*?\*/", "", text, flags=re.S)
 for forbidden in ("Harmony", "SetUp(", "ProcessCustomer", "CustomerEntry", "OrderEntry",
@@ -20,7 +20,7 @@ for directory in ("Core", "Runtime", "Persistence", "Compatibility"):
     for path in (ROOT / directory).glob("*.cs"):
         if path not in readers:
             source = path.read_text(encoding="utf-8-sig")
-            for symbol in ("DonutFeasibility", "CupcakeFeasibility", "DirectStockShowcase", "DirectStockCandidate"):
+            for symbol in ("DonutFeasibility", "CupcakeFeasibility", "SaladFeasibility", "DirectStockShowcase", "DirectStockCandidate"):
                 assert symbol not in source, str(path)
 
 # Pins come from approved cupcake head 682aa77 and landed donut 3f7b885.
@@ -34,8 +34,26 @@ APPROVED_SHA256 = {
     "tools/cupcake-feasibility-regression/CupcakeFeasibilityRegression.csproj": "241d75ac9b97dce8bf72bcf546bb1262eb293973c21fc801a516d2154d724fab",
     "tools/cupcake-feasibility-regression/approved-donut-reader.cs.txt": "880d062dcbf9a21af4168ac44b25fd1bfc91311830058a26356c4aeca4b30cf1"
 }
+def without_salad(path, source):
+    if path == "Runtime/DirectStockShowcaseReader.cs":
+        source = source.replace('        internal static readonly DirectStockCandidate Salad = new DirectStockCandidate("ba:itemname_salad");\n', '')
+        source = source.replace('See the E3 per-product records;', 'See e3-donut.md and e3-cupcake.md;')
+    elif path == "tools/donut-feasibility-regression/Program.cs":
+        source = source.replace('#elif SALAD\nusing CandidateReader = PersistentCity.Runtime.SaladFeasibilityReader;\n', '')
+        source = re.sub(r"#if SALAD\n.*?#endif\n", "", source, flags=re.S)
+    return source
+
+# Preserve the approved complete salad additions as well as the stripped cupcake contract.
+SALAD_SHA256 = {
+    'Runtime/DirectStockShowcaseReader.cs': '999228241ef6a44a17fb0d26dad4961ab4c9cc25f81354f34dee6dd92e5837de',
+    'Runtime/SaladFeasibilityReader.cs': 'aad9c5fdcd83c0e25a622a39cf3dd7c4fc2446c4d75c2b631eda199f971da9fe',
+    'tools/donut-feasibility-regression/Program.cs': '707be922277d715ca17bbf1d38c05c5f608c53ce1c87ef8db545752b67c3f507',
+    'tools/salad-feasibility-regression/SaladFeasibilityRegression.csproj': '21264d538b1754ab431be0a1e689dc843b13c443d91f8fa409cf678434ea0691',
+}
+for path, expected in SALAD_SHA256.items():
+    assert hashlib.sha256((ROOT / path).read_bytes().replace(b"\r\n", b"\n")).hexdigest() == expected, path
 for path, expected in APPROVED_SHA256.items():
-    current = hashlib.sha256((ROOT / path).read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+    current = hashlib.sha256(without_salad(path, (ROOT / path).read_text(encoding="utf-8")).encode()).hexdigest()
     assert current == expected, f"Approved E3 source/harness changed: {path}"
 print("PASS isolation and history-independent approved cupcake/shared-reader/donut fixture pins")
 
@@ -46,6 +64,7 @@ old_body = original[original.index("            if (AuthoredTags == null)"):]
 new_body = shared[shared.index("            if (AuthoredTags == null)"):]
 assert new_body.replace("new DirectStockFields(", "new DonutFeasibilitySnapshot(") == old_body
 current_tests = (ROOT / "tools/donut-feasibility-regression/Program.cs").read_text(encoding="utf-8")
+current_tests = without_salad("tools/donut-feasibility-regression/Program.cs", current_tests)
 current_tests = re.sub(r"#if CUPCAKE\n.*?#endif\n", "", current_tests, flags=re.S)
 original_tests = current_tests.replace("CandidateReader", "DonutFeasibilityReader")
 assert hashlib.sha256(original_tests.encode()).hexdigest() == "32da8b5d093099da5616ee97d7fda3032eb7f92bc3bef22038853e8d145d21d0"
@@ -66,8 +85,14 @@ if args.audit_base:
         metadata, raw_path = entry.split(b"\t", 1)
         path = raw_path.decode("utf-8")
         if path.startswith(("Core/", "Persistence/", "Runtime/", "tests/", "Compatibility/", "tools/", "config/")):
-            if path == "Runtime/DonutFeasibilityReader.cs" or path.startswith("tools/donut-feasibility-regression/"):
-                continue  # Approved shared-reader composition is pinned and compared above.
+            if path in {
+                "Runtime/DirectStockShowcaseReader.cs",
+                "tools/donut-feasibility-regression/Program.cs",
+                "tools/donut-feasibility-regression/source_checks.py",
+                "tools/donut-feasibility-regression/validate.py",
+                "tools/cupcake-feasibility-regression/measure_before.py",
+            }:
+                continue  # Exact reader/case pins above; tool-only integration edits documented in sync review.
             protected.append((path, metadata.split()[2].decode()))
     # One Git process preserves .gitattributes/CRLF filtering without hundreds of child processes.
     actual = subprocess.check_output(["git", "hash-object", "--stdin-paths"], cwd=ROOT,
