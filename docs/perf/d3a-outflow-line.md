@@ -74,3 +74,39 @@ play and meal rush). Whole-frame costs/stalls are tracked separately. The four
 parked hotspots—physical population, closure refresh, optional-stop refresh and
 save serialization—remain parked; required additive schema validation is not a
 serializer rewrite. No separate performance-only rig run was performed or added.
+
+
+## 1 November 2026 - D4 base-sync observation
+
+D3a's history/projection code is unchanged in the D4 composition. First complete
+merged matrix, source `503b57b`, reproduces **282,335 assertions** with the same
+Release protocol. Historical D3a (`88551e8`) and merged shared-host timings are
+independent samples; this is not native or matched whole-frame evidence.
+
+| Operation | Historical p50 / p95 / max ms | Merged p50 / p95 / max ms | B/sample before -> after |
+| --- | ---: | ---: | ---: |
+| Closed | 0.0000 / 0.0001 / 0.0020 | 0.0000 / 0.0001 / 0.0018 | 0 -> 0 |
+| Uncached open control | 0.0138 / 0.0198 / 0.4503 | 0.0135 / 0.0191 / 0.4314 | 14336 -> 14336 |
+| Warm open | 0.0000 / 0.0001 / 0.0001 | 0.0000 / 0.0001 / 0.0001 | 0 -> 0 |
+| 128 late settlements | 0.0494 / 0.0543 / 0.2375 | 0.0509 / 0.0875 / 0.2171 | 32768 -> 32768 |
+| 128 settlements plus open | 0.0621 / 0.0687 / 0.1943 | 0.0614 / 0.1045 / 0.2021 | 47394.8 -> 47394.8 |
+
+No component sample reaches 30 ms. Save history remains **280 characters / 293
+property UTF-8 bytes / 15 charged records**. Managed retained closed/open
+history remains **1,528.656 / 4,768.656 B** in this fixture. The warm open request
+still allocates zero bytes. Native acceptance remains pending the combined rig;
+whole-frame costs are separate. Full command receipts, repeat measurements and
+all positive aggregate spike counters are preserved in the
+[D4 sync manifest](../reviews/2026-11-01-d4-sync-base-results.json).
+
+
+Required repeat observations on unchanged D3a component code:
+
+| Matrix | Warm-open p95 ms | 128-settlement/open p95 / max ms | Warm-open B/request | History characters / property bytes / records |
+| --- | ---: | ---: | ---: | ---: |
+| d4 | 0.0001 | 0.1045 / 0.2021 | 0 | 280 / 293 / 15 |
+| d3a | 0.0001 | 0.1022 / 0.1407 | 0 | 280 / 293 / 15 |
+| d2 | 0.0001 | 0.0674 / 0.1217 | 0 | 280 / 293 / 15 |
+
+No D3a component sample reaches 30 ms in any matrix; all repeat samples and
+allocation/retention fields remain available in the sync manifest.

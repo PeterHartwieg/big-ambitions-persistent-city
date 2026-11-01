@@ -80,7 +80,7 @@ namespace PersistentCity.Persistence
                 Require(meal.Purchases > 0 && meal.Spent >= meal.Price && (meal.Budget?.ExternalFoodSpent ?? meal.LegacyExternalFoodSpent) >= meal.Price
                     && (meal.Budget != null || meal.DayAllowanceUsed >= meal.Price), "Settled rival target lost its outflow account.");
         }
-        internal static void ValidateShop(FoodDecisionShop shop, FoodDecisionState decision)
+        internal static void ValidateShop(FoodDecisionShop shop, FoodDecisionState decision, int schema)
         {
             Require(shop.AlternativeKind == FoodAlternativeKind.Player || shop.AlternativeKind == FoodAlternativeKind.Rival, "Unknown captured target kind.");
             Require(Position.Finite(shop.AlternativeWeight) && shop.AlternativeWeight >= 0 && shop.AlternativeWeight <= 2, "Invalid rival choice weight.");
@@ -89,7 +89,9 @@ namespace PersistentCity.Persistence
             else
             {
                 Require(RivalFoodTerms.Canonical(shop.RivalTerms) && shop.RivalServiceMinutes >= 1 && shop.RivalServiceMinutes <= 30
-                    && shop.MealsPerHour == -1 && shop.AlternativeWeight > 0 && shop.MemoryContribution == 0
+                    && shop.MealsPerHour == -1 && shop.AlternativeWeight > 0
+                    // D4 widens only the current contract; genuine 21/22/23 remain neutral.
+                    && (schema >= 24 || shop.MemoryContribution == 0)
                     && !shop.ServiceUnavailable && shop.DistrictId == "" && shop.NextServiceAt == decision.OriginAt, "Invalid estimated rival candidate.");
                 Require(shop.Offers != null, "Missing rival offers.");
                 foreach (var offer in shop.Offers!) Require(offer != null && offer.Units == -1 && offer.DistrictDemandPercent == -1, "Rival stock/demand must remain unknown.");

@@ -169,29 +169,40 @@ namespace PersistentCity.Core
             && !person.MealOuting.Returning && records.TryGetValue(person.Identity.Id, out var meal)
             && meal.TargetKind == FoodAlternativeKind.Rival && meal.PlaceId == place;
         private bool RivalCommitAllowed(ResidentMeal meal, FoodDecisionShop shop, Money price, double minute)
-            => ExternalFoodSettlement.CanPay(meal, price) && RivalMatches(shop.BusinessId, shop.PlaceId, shop.RivalTerms, shop.Offers, null, minute, out _, requireOpen: false);
+            => ExternalFoodSettlement.CanPay(meal, price) && RivalMatches(shop.BusinessId, shop.PlaceId, shop.RivalTerms, shop.Offers, null, minute, out _, out _, requireOpen: false);
         private bool RivalMatches(string id, string place, string terms, IEnumerable<FoodDecisionOffer>? offers, ResidentMeal? meal, double minute,
-            out Place? hours, bool requireOpen = true)
+            out Place? hours, out ShopExperience? failure, bool requireOpen = true, bool captureHours = false)
         {
-            hours = null;
+            hours = null; failure = null;
             var observation = ObserveRival(id);
-            if (!RivalFoodTerms.Eligible(observation) || observation!.Id != id || observation.PlaceId != place
-                || RivalFoodTerms.Fingerprint(observation) != terms) return false;
+            // One existing detail read supplies both settlement validation and optional memory.
+            // Missing/foreign/changed-price evidence cannot name a bad visit.
+            if (observation == null || observation.Kind != FoodAlternativeKind.Rival
+                || observation.Id != id || observation.PlaceId != place) return false;
             if (meal != null && !observation.Offers.Any(o => o.ProductId == meal.ProductId && o.Price == meal.Price)) return false;
             var snapshot = observation;
             if (offers != null && offers.Any(p => !snapshot.Offers.Any(o => o.ProductId == p.ProductId && o.Price == p.Price))) return false;
+            if (requireOpen && RivalFoodMemory.Closed(observation, minute)) failure = ShopExperience.Closed;
+            if (!RivalFoodTerms.Eligible(observation) || failure.HasValue
+                || RivalFoodTerms.Fingerprint(observation) != terms) return false;
             if (!requireOpen) return true;
-            hours = new Place { WeeklyHours = observation.Hours.Select(h => new OpeningWindow { Day = h.Day, FromMinute = h.FromMinute, ToMinute = h.ToMinute }).ToList(), OpenMinute = 0, CloseMinute = 0 };
-            return DailyRoutine.Open(hours, minute);
+            // Completion needs membership only; only arrival needs the union's next-close boundary.
+            if (captureHours) hours = new Place { WeeklyHours = observation.Hours.Select(h => new OpeningWindow { Day = h.Day, FromMinute = h.FromMinute, ToMinute = h.ToMinute }).ToList(), OpenMinute = 0, CloseMinute = 0 };
+            return true;
         }
         private void ArriveRival(ResidentMeal meal, CitizenState person, double now)
         {
-            if (!RivalMatches(meal.BusinessId, meal.PlaceId, meal.External.Substring(2), null, meal, now, out var hours))
-            { RivalRefusals++; Finish(meal, MealStatus.Missed, "Business no longer accepts this commitment"); return; }
+            if (!RivalMatches(meal.BusinessId, meal.PlaceId, meal.External.Substring(2), null, meal, now, out var hours, out var failure, captureHours: true))
+            { RivalRefusals++; RivalExperience(meal, failure, now); Finish(meal, MealStatus.Missed, "Business no longer accepts this commitment"); return; }
+            if (city.State.Capabilities.Active) memoryStore.CommitStage(meal, ExperienceStage.Reached);
             double finish = now + meal.ServiceMinutes;
             if (finish + MealRhythm.EatingMinutes(meal.Kind) + meal.ReturnMinutes > meal.Deadline
                 || finish >= (DailyRoutine.NextClose(hours!, now) ?? double.NegativeInfinity))
-            { Finish(meal, MealStatus.Missed, "Service no longer fits shop opening hours"); return; }
+            {
+                if (finish + MealRhythm.EatingMinutes(meal.Kind) + meal.ReturnMinutes <= meal.Deadline)
+                    RivalExperience(meal, ShopExperience.Closed, now);
+                Finish(meal, MealStatus.Missed, "Service no longer fits shop opening hours"); return;
+            }
             if (meal.Slot == 0)
             {
                 person.RecentVisits.Add(new VisitRecord { AtMinute = now, PlaceId = meal.PlaceId, Activity = Activity.Shop });
@@ -202,11 +213,12 @@ namespace PersistentCity.Core
         }
         private void CompleteRival(ResidentMeal meal, double now)
         {
-            if (!RivalMatches(meal.BusinessId, meal.PlaceId, meal.External.Substring(2), null, meal, now, out _))
-            { RivalRefusals++; Finish(meal, MealStatus.Missed, "Business no longer accepts this commitment"); return; }
+            if (!RivalMatches(meal.BusinessId, meal.PlaceId, meal.External.Substring(2), null, meal, now, out _, out var failure))
+            { RivalRefusals++; RivalExperience(meal, failure, now); Finish(meal, MealStatus.Missed, "Business no longer accepts this commitment"); return; }
             if (!ExternalFoodSettlement.TryPay(meal, state.Outflow, now))
             { Finish(meal, MealStatus.Missed, "Household funds no longer available at checkout"); return; }
             RivalSettlements++; meal.ServiceAt = now;
+            RivalExperience(meal, ShopExperience.Served, now);
             Finish(meal, MealStatus.Paid, "Modeled rival food purchase; availability estimated");
             MealOutcomes.Record(meal, now, checkout: true);
         }

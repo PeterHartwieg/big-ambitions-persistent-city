@@ -33,7 +33,7 @@ namespace PersistentCity.Core
         }
 
         private double MemoryContribution(ResidentMeal meal, CitizenState person, string business)
-            => awarenessCatalogue?.Find(business)?.Kind != FoodAwarenessAlternativeKind.External && city.State.Capabilities.Active && MemorySettings.FoodMemoryWeight != 0 ? FoodMemoryPolicy.Contribution(meal.Memory, memoryStore.Find(business),
+            => city.State.Capabilities.Active && MemorySettings.FoodMemoryWeight != 0 ? FoodMemoryPolicy.Contribution(meal.Memory, memoryStore.Find(business),
                 (int)(city.State.Minute / 1440), Traits(meal, person), MemorySettings) : 0;
 
         private void Experience(ResidentMeal meal, ShopExperience cause, double at)

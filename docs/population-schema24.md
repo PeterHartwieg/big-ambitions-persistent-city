@@ -2,7 +2,13 @@
 
 Schema 24 adds only `Food.Outflow`, a bounded ASCII scalar. D2's saved consumer
 tuples, external-spend accounts, settlement watermark, prices and receipts are
-unchanged. D4 requires no changes here. No native rival state is written.
+unchanged. D4 uses the existing B1 `MemoryContribution` slot: only schema 24
+accepts the already bounded finite [-8,8] rival scalar. Genuine schema 21/22/23
+sources keep their original neutral-only rule before migration. D4 was never
+merged on its old base; no shared predecessor contract is widened. This is a
+semantic widening of an existing slot, not a second shape or schema 25.
+Pre-D4 binaries refuse nonzero rival contributions; create/read shared fixtures
+on the combined head (Opus-r1-1). No native rival state is written.
 
 Why a new contract is necessary: D2 saves lifetime external spending and the
 current meal's price/watermark, but no dated rival amounts/counts. Current-day

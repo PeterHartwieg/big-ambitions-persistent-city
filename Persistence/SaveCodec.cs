@@ -1116,7 +1116,7 @@ namespace PersistentCity.Persistence
             foreach (var shop in decision.Shops)
             {
                 Require(shop != null && businesses.Add(shop.BusinessId), "Duplicate decision shop.");
-                RivalWire21.ValidateShop(shop!, decision);
+                RivalWire21.ValidateShop(shop!, decision, schema);
                 Require(Position.Finite(shop!.MemoryContribution) && shop.MemoryContribution >= -8 && shop.MemoryContribution <= 8,
                     "Invalid held memory contribution.");
                 // B1 executes the finite B0b scalar; older B0b binaries deliberately refuse it.
