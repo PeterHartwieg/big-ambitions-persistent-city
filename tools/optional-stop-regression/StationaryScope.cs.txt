@@ -1,0 +1,70 @@
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+namespace UnityEngine
+{
+    struct Vector3 { }
+    static class Debug { public static void Log(string s) { } public static void LogWarning(string s) { } }
+}
+namespace HarmonyLib
+{
+    static class AccessTools
+    {
+        public static MethodInfo? Method(Type t,string name,Type[] args) => t.GetMethod(name,BindingFlags.Instance|BindingFlags.NonPublic,null,args,null);
+        public static FieldInfo? Field(Type t,string name) => t.GetField(name,BindingFlags.Instance|BindingFlags.NonPublic);
+    }
+    sealed class HarmonyMethod
+    {
+        public readonly MethodInfo Method;
+        public HarmonyMethod(Type t,string name) { Method=t.GetMethod(name,BindingFlags.Static|BindingFlags.NonPublic)!; }
+    }
+    sealed class Harmony
+    {
+        public static MethodInfo? Patched;
+        public static HarmonyMethod? Prefix;
+        public static int PatchCalls, UnpatchCalls;
+        public Harmony(string owner) { }
+        public static bool HasAnyPatches(string owner) => Patched!=null;
+        public void Patch(MethodInfo method,HarmonyMethod prefix) { Patched=method; Prefix=prefix; PatchCalls++; }
+        public void UnpatchAll(string owner) { Patched=null; Prefix=null; UnpatchCalls++; }
+    }
+}
+sealed class StationaryAiSpawner
+{
+    public static readonly List<StationaryAiSpawner> AllPedestrianSpawners=new();
+    private bool isVisible;
+    public int Clears;
+    public StationaryAiSpawner(bool visible) { isVisible=visible; }
+    public bool Visible => isVisible;
+    public void ClearPedestrians() { Clears++; }
+    private void Spawn(UnityEngine.Vector3 at) { }
+    private void SpawnStreetPerformer(UnityEngine.Vector3 at) { }
+    private void SpawnHomeless(UnityEngine.Vector3 at) { }
+}
+namespace PersistentCity.Runtime
+{
+    static class StationaryScopeHarness
+    {
+        public static void Run()
+        {
+            int checks=0;
+            void Check(bool ok,string message) { checks++; if(!ok) throw new Exception(message); }
+            var visible=new StationaryAiSpawner(true); var hidden=new StationaryAiSpawner(false);
+            StationaryAiSpawner.AllPedestrianSpawners.AddRange(new[]{visible,hidden});
+            var hook=new StationaryCrowds(); hook.Activate();
+            Check(hook.LastError=="","suppression activation failed");
+            var patched=HarmonyLib.Harmony.Patched!;
+            Check(patched.Name=="Spawn"&&patched.DeclaringType==typeof(StationaryAiSpawner)
+                &&patched.GetParameters().Length==1&&patched.GetParameters()[0].ParameterType==typeof(UnityEngine.Vector3),"only ordinary stander overload is patched");
+            Check(HarmonyLib.Harmony.Prefix!.Method.Invoke(null,null) is false,"ordinary standers suppressed");
+            Check(patched.Name!="SpawnStreetPerformer"&&patched.Name!="SpawnHomeless","special spawn paths remain unpatched");
+            Check(visible.Clears==1&&!visible.Visible&&hidden.Clears==0,"visible zones alone are reset for native respawn");
+            hook.Activate();
+            Check(visible.Clears==1&&HarmonyLib.Harmony.PatchCalls==1,"repeat activation does no scan or patch");
+            hook.Dispose(); hook.Dispose();
+            Check(HarmonyLib.Harmony.Patched==null&&HarmonyLib.Harmony.UnpatchCalls==1,"unload restores native hook exactly once");
+            StationaryAiSpawner.AllPedestrianSpawners.Clear();
+            Console.WriteLine($"Stationary suppression patch scope: {checks} checks passed (Harmony/spawner doubles; native special respawn needs rig).");
+        }
+    }
+}

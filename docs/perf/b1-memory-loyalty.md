@@ -1,0 +1,9 @@
+# B1 performance wins
+
+| Slice | Change | Before | After |
+|---|---|---|---|
+| B1 round 4 | Reuse `OpeningPlace` in the physical returning-door closure check | 1,072 allocated bytes per warmed four-site batch after round 3 (one temporary place remains) | 0 bytes/batch; 10,000 batches /10,720,000 -> 0 bytes. Extended `FoodMemoryOpeningCacheTests` also compares all-temporary 4,288 bytes/batch, identical results and hours mutations; offline .NET 10, no native timing claim. |
+| B1 round 3 | Reuse `FoodBusiness.OpeningPlace` for arrival closure, represented admission and reached-stop hours checks | 3,216 allocated bytes per warmed batch across the three sites (three temporary places and interval builds) | 0 bytes per warmed batch; 10,000 batches /32,160,000 -> 0 bytes on offline .NET 10. Identical open/admission/close results and in-place/replacement hours mutation checks pass in `FoodMemoryOpeningCacheTests`; no native timing claim. |
+| B1 | Compare watermark meal codes as integers, avoiding enum boxing | ~120 bytes/commit in boxed prototype | 72 bytes/commit; 48 bytes removed, 0 lookup allocation (40 measured rounds at 1,914/5,000 consumers; offline .NET 10). [Raw measurements](../reviews/2026-10-31-b1-measurements.json) |
+| B1 | Reuse the existing entry and watermark for ordinary repeat-visit commits | 72 allocated bytes/commit after boxing fix | 0 bytes per warmed repeat commit at both populations; first-use state can allocate. Same full suite and canonical replay pass; [final/intermediate measurements](../reviews/2026-10-31-b1-measurements.json) |
+| B1 | Reuse each selected shop's captured memory scalar from shortlisting through final choice | Second generation lookup + up to four entry checks for each of eight shortlisted shops | 8 repeated dictionary lookups / up to 32 repeated entry checks removed per full context; exact scalar replay, no wall-time gain claimed |
