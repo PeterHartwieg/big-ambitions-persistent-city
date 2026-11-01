@@ -27,6 +27,7 @@ namespace PersistentCity.Core
             if (!records.TryGetValue(person.Identity.Id, out var meal) || !AtFoodStop(person)
                 || (meal.Status != MealStatus.Pending && meal.Status != MealStatus.Missed && meal.Status != MealStatus.Declined)
                 || city.State.Minute >= meal.ExpiresAt) return;
+            if(NewChoice(meal) && meal.LastContextKey==Context(ChoiceStop(meal,person),true)) return;
             double at = Math.Max(city.State.Minute, meal.DesiredAt);
             if (at >= Math.Min(person.NextEventMinute, person.ActivityUntilMinute)) return;
             due.Remove(meal);
@@ -37,6 +38,7 @@ namespace PersistentCity.Core
 
         private void DecideAtStop(ResidentMeal meal, CitizenState person)
         {
+            if (NewChoice(meal)) { BeginFoodDecision(meal,person,true); return; }
             city.CancelOptionalStop(person.Identity.Id);
             double now = city.State.Minute;
             var consumer = Consumer(person, AvailableForMeal(meal), meal);

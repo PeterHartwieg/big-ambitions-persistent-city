@@ -106,7 +106,7 @@ public sealed partial class FoodCommerceTests
     {
         var (city, market, _) = Ready(); city.EnableHouseholdFinances();
         Advance(city, city.State.Food!.Residents.Single().DesiredAt + afterDecision);
-        var payload = JObject.Parse(SaveCodec.Write(city.State)); payload["Schema"] = 10; RemoveMealRhythmFields(payload);
+        var payload = JObject.Parse(LegacyWire.Write(city.State)); payload["Schema"] = 10; RemoveMealRhythmFields(payload);
         string source = payload.ToString(); var orders = market.Orders.ToArray();
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = source };
         var read = SaveStore.ReadFrom(data, city.State.PopulationKey);
@@ -187,7 +187,7 @@ public sealed partial class FoodCommerceTests
     public void InvalidMealStateIsRejectedWithoutRepair(string field)
     {
         var (city, _, _) = Ready(threeMeals: true); Advance(city, city.State.Food!.Residents.Single().DesiredAt + 60);
-        var payload = JObject.Parse(SaveCodec.Write(city.State));
+        var payload = JObject.Parse(LegacyWire.Write(city.State));
         if (field == "Kind") payload["Food"]!["Residents"]![0]![field] = 99;
         else if (field == "MealRhythmVersion") payload["Food"]![field] = 99;
         else payload["Food"]!["History"]![0]![field]![1] = 99;

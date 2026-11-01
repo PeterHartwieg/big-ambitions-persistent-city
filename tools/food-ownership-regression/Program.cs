@@ -257,14 +257,32 @@ Check(!NativeFoodOwnership.Find(reg)!.Managed && BusinessSimulatorHelper.Work.Pe
     "customers introduced during required drain are rechecked before acquisition");
 GameManager.DuringNewHour = null; IndoorCustomerSpawner.Customers.Clear(); GameManager.RunMainGameTick(0);
 Check(!NativeFoodOwnership.Find(reg)!.Managed, "drain-time body deferral still cannot acquire midway through the same hour");
+
+// B0 executes the actual earliest native hook, before attaching any population or market.
+foreach (string damage in new[] { "active", "revision", "code", "future" })
+{
+    string supported = PopulationPayload(9);
+    string unsupportedPopulation = damage == "active" ? supported.Replace("\"Active\":false", "\"Active\":true")
+        : damage == "revision" ? supported.Replace("\"Revision\":1", "\"Revision\":2")
+        : damage == "code" ? supported.Replace("\"Code\":\"B\"", "\"Code\":\"C\"")
+        : supported.Replace("\"Schema\":18", "\"Schema\":999");
+    reg = Fresh(9, saved, populationPayload: unsupportedPopulation);
+    Check(NativeFoodOwnership.Error.Length > 0, "unsupported " + damage + " capability stops earliest native authority bootstrap");
+    Check(CustomerEntriesHelper.GetEntriesByAddress(reg.Address).Count == 0, "unsupported capability cannot release native demand");
+    bool blocked = false; try { NativeFoodOwnership.ValidatePopulation(new FoodCommerceState()); } catch (InvalidOperationException) { blocked = true; }
+    Check(blocked, "population startup cannot clear unsupported-capability refusal");
+    Check(ReferenceEquals(unsupportedPopulation, SaveGameManager.Current.modData[SaveStore.StateKey]), "capability refusal preserves exact population payload reference");
+    Check(ReferenceEquals(saved, SaveGameManager.Current.modData[FoodAuthorityStore.Key]), "capability refusal preserves authority manifest");
+}
+
 Console.WriteLine($"PASS {checks} actual ownership-hook checks against native field/callback doubles. No Unity/game execution.");
 
-BuildingRegistration Fresh(int hour = 8, string? payload = null, bool? ownPayload = null, string? receiptKey = null, string? receiptValue = null)
+BuildingRegistration Fresh(int hour = 8, string? payload = null, bool? ownPayload = null, string? receiptKey = null, string? receiptValue = null, string? populationPayload = null)
 {
     var shop = new BuildingRegistration();
     SaveGameManager.Current = new Save { Hour = hour, BuildingRegistrations = new() { shop } };
     if (payload != null) SaveGameManager.Current.modData[FoodAuthorityStore.Key] = payload;
-    if (ownPayload ?? payload != null) SaveGameManager.Current.modData[SaveStore.StateKey] = "opaque population payload, decoded asynchronously by the caller";
+    if (ownPayload ?? payload != null) SaveGameManager.Current.modData[SaveStore.StateKey] = populationPayload ?? PopulationPayload(hour);
     BusinessSimulatorHelper.Work.Pending.Clear(); BusinessSimulatorHelper.Processed.Clear();
     BusinessSimulatorHelper.TimeMachineRunning = false;
     CustomerEntriesHelper.Generated.Clear(); IndoorCustomerSpawner.Customers.Clear();
@@ -272,6 +290,10 @@ BuildingRegistration Fresh(int hour = 8, string? payload = null, bool? ownPayloa
     if (receiptKey != null) SaveGameManager.Current.modData[receiptKey] = receiptValue!;
     NativeFoodOwnership.EnsureSave(); return shop;
 }
+string PopulationPayload(int hour) => SaveCodec.Write(Population.Create(
+    new[] { new CitizenIdentity { Id = "rlo:ownership-fixture", Name = "Ownership fixture", Age = 30 } },
+    new[] { new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 1 } },
+    "ownership-fixture", "test", 11, 1440 + hour * 60));
 void Check(bool value, string message) { checks++; if (!value) throw new InvalidOperationException(message); }
 
 internal static class Hooks

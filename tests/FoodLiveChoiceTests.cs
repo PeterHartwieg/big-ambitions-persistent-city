@@ -8,6 +8,31 @@ namespace PersistentCity.Tests;
 public sealed class FoodLiveChoiceTests
 {
     [Fact]
+    public void WeightedUnknownQualityIsNeutralAndKnownQualityRaisesRelativeWeight()
+    {
+        var traits=new ResidentTraits {Bands="2222222242"};var settings=new FoodChoiceSettings();
+        EvaluatedFoodOffer Offer(int? quality,int? demand)=>new("b",FoodProducts.Burger,Money.FromCents(300),5,0,20,90,quality,demand,MealKind.Lunch);
+        double Weight(int? q,int? d)=>FoodChoicePolicy.Weight(Offer(q,d),traits,Money.FromCents(1000),settings);
+        Assert.Equal(Weight(null,null),Weight(50,50));Assert.True(Weight(100,100)>Weight(null,null));
+        settings.FoodChoiceHealthWeight=3;
+        Assert.Equal(Weight(null,null),FoodChoicePolicy.Weight(Offer(null,null),new ResidentTraits {Bands="2222222042"},Money.FromCents(1000),settings));
+        // Version-1 coefficient vector, independent of sampling (legacy meal fit is neutral).
+        var vector=new EvaluatedFoodOffer("b",FoodProducts.Burger,Money.FromCents(300),5,0,20,90,null,null,MealKind.Legacy);
+        Assert.Equal(.4195804195804196,FoodChoicePolicy.Weight(vector,new ResidentTraits {Bands="2222222222"},Money.FromCents(1000),new FoodChoiceSettings()),12);
+    }
+
+    [Fact]
+    public void BusinessHourCacheSeesEditedAndReplacedOpeningEvidence()
+    {
+        var b=new FoodBusiness {Id="b",PlaceId="s",MealsPerHour=60,Hours=new() {new OpeningWindow {Day=0,FromMinute=0,ToMinute=1440}},
+            Offers=new() {new FoodOffer {ProductId=FoodProducts.Burger,Price=Money.FromCents(100),Units=1}}};
+        var c=new FoodConsumer {DailyAllowance=Money.FromCents(1000)};
+        Assert.Null(FoodDemand.KnownUnavailable(b,c,1440,1500));
+        b.Hours[0].FromMinute=600;Assert.Equal("Closed or too late",FoodDemand.KnownUnavailable(b,c,1440,1500));
+        b.Hours=new() {new OpeningWindow {Day=0,FromMinute=0,ToMinute=1440}};
+        Assert.Null(FoodDemand.KnownUnavailable(b,c,1440,1500));
+    }
+    [Fact]
     public void DirectChoiceMatchesValidatedExperimentAcrossCompetingOffersAndRefusals()
     {
         for (int seed = 0; seed < 240; seed++)
