@@ -3,6 +3,9 @@
 from pathlib import Path
 import argparse, re, subprocess, tempfile
 from xml.sax.saxutils import escape
+import os, shutil
+# Prefer dotnet on PATH; otherwise use the per-user SDK install the offline gate specifies.
+dotnet = shutil.which('dotnet') or str(Path(os.environ.get('LOCALAPPDATA', '')) / 'Microsoft/dotnet/dotnet.exe')
 parser=argparse.ArgumentParser(__doc__)
 parser.add_argument('--source-root',type=Path,default=Path(__file__).resolve().parents[2])
 args=parser.parse_args();root=args.source_root.resolve();here=Path(__file__).resolve().parent
@@ -48,4 +51,4 @@ with tempfile.TemporaryDirectory(prefix='pc-vehicle-ownership-') as temp:
  (p/'Harness.cs').write_text((here/'Harness.cs').read_text())
  (p/'VehicleScriptOwnership.cs').write_text((root/'Runtime/VehicleScriptOwnership.cs').read_text())
  (p/'Harness.csproj').write_text('<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework><OutputType>Exe</OutputType><AssemblyName>BigAmbitions.OwnershipHarness</AssemblyName><Nullable>enable</Nullable><TreatWarningsAsErrors>true</TreatWarningsAsErrors></PropertyGroup><ItemGroup><ProjectReference Include="'+escape(str(root/'Core/PersistentCity.Core.csproj'))+'" /></ItemGroup></Project>')
- subprocess.run(['dotnet','run','--project',str(p/'Harness.csproj'),'--configuration','Release'],check=True)
+ subprocess.run([dotnet,'run','--project',str(p/'Harness.csproj'),'--configuration','Release'],check=True)

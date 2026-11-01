@@ -35,8 +35,9 @@ internal static class LegacyMoneyWire
         return token;
     }
 
-    /// <summary>Labels a current payload as an earlier city schema, dropping the citizen fields that
-    /// schema did not have (optional stops arrived in 15, saved visit choices in 16).</summary>
+    /// <summary>Labels a current payload as an earlier city schema, dropping the fields that schema did
+    /// not have (optional stops arrived in 15, saved visit choices in 16, traits, current-day outcomes,
+    /// the decision contract and the food choice policy header in 17).</summary>
     public static JObject AsSchema(JObject token, int schema)
     {
         token["Schema"] = schema;
@@ -44,7 +45,29 @@ internal static class LegacyMoneyWire
         {
             if (schema < 15) citizen.Remove("OptionalStop");
             if (schema < 16) citizen.Remove("OptionalStopChoice");
+            if (schema < 17) citizen.Remove("Traits");
+        }
+        if (schema < 17 && token["Food"] is JObject food)
+        {
+            food.Remove("ChoicePolicyVersion"); food.Remove("ChoiceStartsDay");
+            foreach (var meal in food["Residents"]!.OfType<JObject>())
+                foreach (string name in Schema17MealFields) meal.Remove(name);
         }
         return token;
+    }
+
+    public static readonly string[] Schema17MealFields = { "RepresentedTraits", "Today", "Decision", "LastContextKey", "ContextAttempts" };
+
+    /// <summary>A schema-17 payload without the facts a 13-16 upgrade synthesizes rather than reads: the policy
+    /// activation day and the current-day outcomes. Everything else must survive an upgrade byte for byte.</summary>
+    public static string WithoutUpgradeFacts(string payload)
+    {
+        var token = JObject.Parse(payload);
+        if (token["Food"] is JObject food)
+        {
+            food.Remove("ChoiceStartsDay");
+            foreach (var meal in food["Residents"]!.OfType<JObject>()) meal.Remove("Today");
+        }
+        return token.ToString(Newtonsoft.Json.Formatting.None);
     }
 }

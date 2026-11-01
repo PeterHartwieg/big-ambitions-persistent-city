@@ -316,7 +316,7 @@ namespace PersistentCity.Runtime
             {
                 if (citizen.Phase != CitizenPhase.WaitingForOpening || !places.TryGetValue(citizen.PlaceId, out var place)
                     || Position.Distance(place.Position, focus) > radius) continue;
-                var dwell = DwellPlanner.QueueAtOpening(citizen, place, simulation.State.Seed, now, raining);
+                var dwell = QueueDwell(citizen, place, now, raining);
                 if (!dwell.HasValue || !dwell.Value.ActiveAt(now) || GaveUp(dwell.Value)) continue;
                 string key = DwellSpots.KeyOf(place);
                 if (!planned.TryGetValue(key, out var line)) planned.Add(key, line = (place, new List<Dwell>()));
@@ -343,6 +343,14 @@ namespace PersistentCity.Runtime
                     if (slots.TryGetValue(dwell.CitizenId, out int slot))
                         queuers[dwell.CitizenId] = new QueuePlanEntry { Dwell = dwell, Line = found, Slot = slot };
             }
+        }
+
+        private Dwell? QueueDwell(CitizenState citizen, Place place, double now, bool raining)
+        {
+            Dwell? committed = bindings.TryGetValue(citizen.Identity.Id, out var bound)
+                && bound.Person != null && bound.Person.Valid && bound.Line != null && bound.Step != QueueStep.Entering
+                ? bound.Queue : null;
+            return DwellPlanner.QueueAtOpening(citizen, place, simulation.State.Seed, now, raining, committed);
         }
 
         private bool GaveUp(Dwell dwell)
@@ -690,6 +698,49 @@ namespace PersistentCity.Runtime
                     binding.CornerHandoff.Begin(sample, updated, binding.ReachedCarMarker);
                 sample = updated;
             }
+            return true;
+        }
+
+        // Inspector picking: read-only, allocation-free projection of active own walkers. Cars,
+        // ambient/RLO-reserved actors and released or reused bodies are never candidates.
+        private const float PickHalfWidthPixels = 8f;
+        public void PickWalker(Camera camera, float mouseX, float mouseY, ref ResidentPickAccumulator best)
+        {
+            if (!active || disposed || camera == null) return;
+            foreach (var binding in bindings.Values)
+            {
+                var body = binding.Person;
+                if (body == null || binding.Car != null || !body.Valid || body.IdentityId != binding.Citizen.Identity.Id
+                    || ambient.IsReserved(body.IdentityId)
+                    || !Project(camera, body, out float footX, out float footY, out float headX, out float headY, out float depth)) continue;
+                if (ResidentPickAccumulator.Hit(mouseX, mouseY, footX, footY, headX, headY, PickHalfWidthPixels, out float score))
+                    best.Consider(body.IdentityId, body.Generation, score, depth);
+            }
+        }
+        /// <summary>Screen rectangle of the selected walker if that exact body (identity and generation) is still active.</summary>
+        public bool TryWalkerRect(Camera camera, string identityId, long generation, out Rect rect)
+        {
+            rect = default;
+            if (!active || disposed || camera == null || identityId == null || !bindings.TryGetValue(identityId, out var binding)) return false;
+            var body = binding.Person;
+            if (body == null || binding.Car != null || body.Generation != generation || !body.Valid || ambient.IsReserved(identityId)
+                || !Project(camera, body, out float footX, out float footY, out float headX, out float headY, out _)) return false;
+            float height = footY - headY, half = Math.Max(PickHalfWidthPixels, height * 0.3f);
+            float centre = (footX + headX) * 0.5f;
+            rect = new Rect(centre - half, headY - height * 0.1f, half * 2, height * 1.2f);
+            return true;
+        }
+        private static bool Project(Camera camera, PhysicalPedestrianBody body, out float footX, out float footY, out float headX, out float headY, out float depth)
+        {
+            footX = footY = headX = headY = depth = 0;
+            var transform = body.Character.transform;
+            Vector3 feet = transform.position;
+            var capsule = body.Capsule;
+            float height = capsule != null ? Math.Max(1.2f, capsule.height * transform.lossyScale.y) : 1.8f;
+            Vector3 foot = camera.WorldToScreenPoint(feet), head = camera.WorldToScreenPoint(feet + Vector3.up * height);
+            if (foot.z <= 0 || head.z <= 0) return false;
+            // IMGUI coordinates grow downwards.
+            footX = foot.x; footY = Screen.height - foot.y; headX = head.x; headY = Screen.height - head.y; depth = foot.z;
             return true;
         }
 

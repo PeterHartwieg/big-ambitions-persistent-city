@@ -176,6 +176,12 @@ namespace PersistentCity.Core
         double MinimumWalkingMinutes(Place from, Place to);
     }
 
+    /// <summary>Current planner pace, used only to bound food searches by a finite meal window.</summary>
+    public interface IFoodWalkingPace
+    {
+        double WalkingMetresPerMinute { get; }
+    }
+
     public interface ICitizenRoutePlanner : IRoutePlanner
     {
         Route? Plan(Place from, Place to, double departureMinute, CitizenState citizen);
@@ -229,6 +235,9 @@ namespace PersistentCity.Core
         public int CompletedJourneys { get; set; }
         public int MissedActivities { get; set; }
         public List<VisitRecord> RecentVisits { get; set; } = new List<VisitRecord>();
+        /// <summary>Lifestyle traits, generated once from the city seed and this stable ID (schema 17).
+        /// Required for every resident, even without a food scope; immutable once generated.</summary>
+        public ResidentTraits? Traits { get; set; }
         // Transient and never serialized: per-resident routine hashes derived from Identity.Id and the
         // city seed. RoutineKeys.For rebuilds it when either differs; event copies share it.
         internal RoutineKeys? RoutineKeys;
@@ -243,7 +252,8 @@ namespace PersistentCity.Core
 
     public sealed class CityState
     {
-        public const int CurrentSchema = 16;
+        public const int CurrentSchema = 18;
+        public PopulationCapabilities Capabilities { get; set; } = new PopulationCapabilities();
         public int Schema { get; set; } = CurrentSchema;
         public int TravelTimingVersion { get; set; } = 1;
         public double TravelClockRate { get; set; } = 1;
