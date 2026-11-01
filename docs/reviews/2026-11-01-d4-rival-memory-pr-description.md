@@ -61,6 +61,41 @@ Rival inspector words explicitly identify modeled experience and unobserved nati
 service, without counting rivals as own-shop regulars. D2/D3a retain independent
 acceptance and acquire no backward prerequisite.
 
+Merged offline validation: **196/196 required foreground matrix steps pass**:
+
+- `python tools/rival-memory-regression/validate.py`: **57/57**.
+- `python tools/run-d3a-checks.py`: **63/63**.
+- `python tools/run-d2-checks.py`: **76/76**.
+
+Each passed the Steam-reference build, **2,556 unit cases** (zero failed/skipped)
+and **2,494 listed test entries**; executed theory cases and listed names differ.
+The matrices include every root regression project, all requested adapters,
+demos, feasibility guards/comparisons, weather, nested continuity, capacity and
+5,000-consumer choice variants. No integration failure required further code
+changes. [Exact commands, log hashes, source audit and raw metrics](2026-11-01-d4-sync-base-results.json)
+record all results. Production/test content is unchanged since merge `d6f883f`;
+runner-only guard changes are `4b7ec96`. Every build produced DLL SHA-256
+`82edbf8fe0c70c95736364109a278fb2cd54fc9f36c70d1f58052b82584e330f`.
+
+Merged save controls are **2,446 B / 8 streaming / 8 semantic records** in all
+three matrices, versus historical **2,422 B / 7 / 7**. The **+24 B / +1 record**
+is D3a's empty `Outflow` property, shared by neutral/active/all-own controls;
+D4's tuple remains 48 characters with four entries/references. Lookup/update p95
+is **0.0003/0.0002 ms** in the first merged matrix, **0.0002/0.0002 ms** in each
+repeat, with **0 B/call** and no D4 sample >=30 ms. Owning slice performance
+notes preserve historical and current numbers separately; no performance
+algorithm changed during sync.
+
+Fresh positive aggregate counters include whole-20k awareness builds, E4 history
+serialization, and two 20-call B2 panel-text batches >=30 ms in D3a's matrix
+(2,500 residents /5,000 consumers; normalized per-call p95/max
+0.918645/1.833810 ms; derived maximum batch 36.6762 ms). Counts, fixture
+conditions and units are retained in the manifest. These are offline aggregate
+operations, separate from native mod-work and whole-frame evidence. No parked
+hotspot changed. All owned foreground runners exited; no worktree dotnet,
+testhost or MSBuild process remains. Final fetch retains base `fb958ae` as an
+ancestor, so the result includes the latest target base. No push or PR action.
+
 Validation and measurements: [D4 checks](../checks/d4-rival-memory.md),
 [performance](../perf/d4-rival-memory.md), [command receipts/raw metrics](2026-11-01-d4-rival-memory-results.json).
 Historical pre-sync **59/59 foreground checks passed**, including production build, **2,540/2,540 unit

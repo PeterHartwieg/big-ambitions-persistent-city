@@ -90,3 +90,22 @@ including aggregate awareness construction and E4 history serialization.
 These are offline component/aggregate timings, separate from mod-work and
 whole-frame evidence. Native mod-work p95 <5 ms and spike attribution remain
 pending the combined rig / Peter's playtest; the four parked hotspots stay parked.
+
+
+Required repeat matrices on identical production/test content:
+
+| Matrix | Mixed lookup p95 ms | Mixed update p95 ms | Control bytes | Streaming / semantic records |
+| --- | ---: | ---: | ---: | ---: |
+| d4 | 0.0003 | 0.0002 | 2,446 | 8 / 8 |
+| d3a | 0.0002 | 0.0002 | 2,446 | 8 / 8 |
+| d2 | 0.0002 | 0.0002 | 2,446 | 8 / 8 |
+
+All three retain zero lookup/update allocation and zero D4 micro-samples >=30 ms.
+All positive aggregate counters (11 counters across the three matrices) retain
+p50/p95/max, count and fixture condition in the sync manifest. Awareness's 20k
+catalogue builds and E4 history serialization remain separate from native frames.
+The additional B2 panel-text observation is **two 20-call batches >=30 ms** at
+2,500 residents/5,000 consumers: normalized per-call p95/max
+**0.918645/1.833810 ms**, maximum batch **36.6762 ms** (derived by multiplying
+its normalized max by 20). It is an aggregate batch counter, not a 30 ms
+individual panel request or native-frame spike. No B2 or other hotspot changed.

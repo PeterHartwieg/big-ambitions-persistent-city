@@ -241,3 +241,33 @@ and the 48-character memory tuple remain fixed. Mixed lookup/update p95 is
 including every component max/spike counter, are kept separately in the
 [owning performance note](../perf/d4-rival-memory.md) and sync manifest.
 Native acceptance remains deferred under merge rule v2 as stated above.
+
+
+Final sync gate: **196/196 foreground matrix steps passed**: D4 `validate.py`
+**57/57**, `python tools/run-d3a-checks.py` **63/63**, and the still-applicable
+`python tools/run-d2-checks.py` **76/76**. Each matrix passed production build,
+**2,556 unit cases with zero failures/skips**, and **2,494 list-tests entries**.
+The full set includes all 45 root regression projects, nested pickup continuity,
+CF32/CF64 capacity, 5,000-consumer integrated choice, save benchmarks/comparisons,
+all five product isolation guards and their documented feasibility comparisons.
+No combination-induced build/test failure required another runtime/Core fix.
+Production/test content is unchanged since merge `d6f883f`; the runner safeguard
+is `4b7ec96` and subsequent commits only document the integration/evidence.
+Production DLL SHA-256: `82edbf8fe0c70c95736364109a278fb2cd54fc9f36c70d1f58052b82584e330f`.
+
+Fresh aggregate flags are retained with exact counts/conditions/units in the
+sync manifest. Whole-20k awareness construction has dense/sparse >=30 ms counts
+**1/1** (D4 matrix), **1/0** (D3a), **1/0** (D2). E4 standalone 4/8-product
+history serialization has **21/21** such operations per arm in every matrix.
+The D3a matrix also records **two 20-call B2 panel-text batches >=30 ms** at
+2,500 residents/5,000 consumers/20,000 entries/16 shops: normalized per-call
+p95/max **0.918645/1.833810 ms**, derived maximum batch **36.6762 ms**.
+These are offline aggregate/batch operations, not native mod-work frames; D4's
+seven microbench arms have no >=30 ms samples in any matrix. No hotspot was
+changed, and no native performance or whole-frame acceptance is inferred.
+
+Final fetch confirms `origin/codex/persistent-city` is still `fb958ae` and an
+ancestor of this branch. Both owned foreground wrappers/monitors exited; process
+inspection found zero worktree dotnet/testhost/MSBuild processes and zero
+validation runners. No game was launched; no rig/profile, bridge/lease, Steam client, WSL or
+ordinary save was accessed. Game DLLs were read-only compiler references. No push or PR action was performed.

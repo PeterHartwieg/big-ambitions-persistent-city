@@ -98,3 +98,15 @@ still allocates zero bytes. Native acceptance remains pending the combined rig;
 whole-frame costs are separate. Full command receipts, repeat measurements and
 all positive aggregate spike counters are preserved in the
 [D4 sync manifest](../reviews/2026-11-01-d4-sync-base-results.json).
+
+
+Required repeat observations on unchanged D3a component code:
+
+| Matrix | Warm-open p95 ms | 128-settlement/open p95 / max ms | Warm-open B/request | History characters / property bytes / records |
+| --- | ---: | ---: | ---: | ---: |
+| d4 | 0.0001 | 0.1045 / 0.2021 | 0 | 280 / 293 / 15 |
+| d3a | 0.0001 | 0.1022 / 0.1407 | 0 | 280 / 293 / 15 |
+| d2 | 0.0001 | 0.0674 / 0.1217 | 0 | 280 / 293 / 15 |
+
+No D3a component sample reaches 30 ms in any matrix; all repeat samples and
+allocation/retention fields remain available in the sync manifest.
