@@ -9,6 +9,9 @@ root = Path(__file__).resolve().parents[2]
 dotnet = Path(os.environ["LOCALAPPDATA"]) / "Microsoft/dotnet/dotnet.exe"
 env = dict(os.environ)
 env["PATH"] = str(dotnet.parent) + os.pathsep + env["PATH"]
+env["DOTNET_CLI_USE_MSBUILD_SERVER"] = "0"
+env["MSBUILDDISABLENODEREUSE"] = "1"
+env["UseSharedCompilation"] = "false"
 out = root / "build/c4/gates"
 out.mkdir(parents=True, exist_ok=True)
 wait = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
@@ -31,8 +34,14 @@ projects = [
     ("save-contract-regression", "SaveContractRegression"), ("startup-clock-regression", "StartupClockRegression"),
     ("traffic-closure-regression", "TrafficClosureRegression"), ("traffic-queue-regression", "TrafficQueueRegression"),
     ("walking-quote-regression", "WalkingQuoteRegression"),
+    ("campaign-reader-regression", "CampaignReaderRegression"),
 ]
 commands += [[str(dotnet), "run", "--project", f"tools/{folder}/{project}.csproj", "--configuration", "Release"] for folder, project in projects]
+listed = {command[command.index("--project") + 1] for command in commands if "--project" in command}
+for project in sorted(root.glob("tools/*-regression/*.csproj")):
+    relative = project.relative_to(root).as_posix()
+    if relative not in listed and project.parent.name != "market-research-regression":
+        commands.append([str(dotnet), "run", "--project", relative, "--configuration", "Release"])
 commands += [[sys.executable, f"tools/{name}/run.py"] for name in [
     "native-command-regression", "physical-selection-regression", "vehicle-ownership-regression", "optional-stop-regression"]]
 commands += [

@@ -9,7 +9,7 @@ namespace PersistentCity.Core
             && person.Activity == Activity.Shop && person.MealOuting == null
             && city.State.Minute < Math.Min(person.NextEventMinute, person.ActivityUntilMinute)
             && DailyRoutine.Open(city.FindPlace(person.PlaceId), city.State.Minute)
-            && state.Shops.Any(s => s.PlaceId == person.PlaceId);
+            && ScopeAtPlace(person.PlaceId)!=null;
 
         // An observed activity transition wakes only this resident. No population scan or
         // per-frame market query. A declined or failed earlier offer does not consume the
@@ -17,6 +17,20 @@ namespace PersistentCity.Core
         internal void ObserveStop(CitizenState person)
         {
             CaptureRoutineStop(person);
+            if (city.State.Capabilities.Active && records.TryGetValue(person.Identity.Id, out var arriving) && arriving.Status == MealStatus.Travelling
+                && person.PlaceId == arriving.PlaceId && person.MealOuting?.Returning == true)
+            {
+                // The native place-hours admission may have refused before a RecentVisit was added.
+                // Reaching the committed door plus named closed hours is evidence; a lost route is not.
+                var business = ReadBusiness(arriving.BusinessId, city.State.Minute);
+                if (business != null && business.PlaceId == arriving.PlaceId && business.Id == arriving.BusinessId
+                    && !DailyRoutine.Open(business.OpeningPlace, city.State.Minute))
+                {
+                    due.Remove(arriving);
+                    try { Finish(arriving, MealStatus.Missed, "Shop closed before admission"); }
+                    finally { due.Add(arriving); }
+                }
+            }
             // A brief home stay can fall entirely between meal windows. Rejoin idle
             // represented consumers when that stay is observed, not at their next meal.
             // An unfinished excursion or uncertain checkout keeps its own ownership.

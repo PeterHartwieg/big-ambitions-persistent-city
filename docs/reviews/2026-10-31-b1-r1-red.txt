@@ -1,0 +1,122 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  PersistentCity.Core -> C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\Core\bin\Debug\netstandard2.1\PersistentCity.Core.dll
+  PersistentCity.Persistence -> C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\Persistence\bin\Debug\netstandard2.1\PersistentCity.Persistence.dll
+  PersistentCity.Compatibility -> C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\Compatibility\bin\Debug\netstandard2.1\PersistentCity.Compatibility.dll
+  PersistentCity.Tests -> C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\bin\Debug\net10.0\PersistentCity.Tests.dll
+Test run for C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\bin\Debug\net10.0\PersistentCity.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+  Failed PersistentCity.Tests.FoodMemoryTests.KnownBagStockoutAtArrivalAndExistingStopCommitsOnceAcrossReload(existingStop: True, reloadBeforeFailure: True) [107 ms]
+  Error Message:
+   Assert.Single() Failure: The collection was empty
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.KnownBagStockoutAtArrivalAndExistingStopCommitsOnceAcrossReload(Boolean existingStop, Boolean reloadBeforeFailure) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs:line 75
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+  Failed PersistentCity.Tests.FoodMemoryTests.KnownBagStockoutAtArrivalAndExistingStopCommitsOnceAcrossReload(existingStop: False, reloadBeforeFailure: False) [13 ms]
+  Error Message:
+   Assert.Single() Failure: The collection was empty
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.KnownBagStockoutAtArrivalAndExistingStopCommitsOnceAcrossReload(Boolean existingStop, Boolean reloadBeforeFailure) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs:line 75
+   at InvokeStub_FoodMemoryTests.KnownBagStockoutAtArrivalAndExistingStopCommitsOnceAcrossReload(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+  Failed PersistentCity.Tests.FoodMemoryTests.KnownBagStockoutAtArrivalAndExistingStopCommitsOnceAcrossReload(existingStop: False, reloadBeforeFailure: True) [12 ms]
+  Error Message:
+   Assert.Single() Failure: The collection was empty
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.KnownBagStockoutAtArrivalAndExistingStopCommitsOnceAcrossReload(Boolean existingStop, Boolean reloadBeforeFailure) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs:line 75
+   at InvokeStub_FoodMemoryTests.KnownBagStockoutAtArrivalAndExistingStopCommitsOnceAcrossReload(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+  Failed PersistentCity.Tests.FoodMemoryTests.KnownBagStockoutAtArrivalAndExistingStopCommitsOnceAcrossReload(existingStop: True, reloadBeforeFailure: False) [< 1 ms]
+  Error Message:
+   Assert.Single() Failure: The collection was empty
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.KnownBagStockoutAtArrivalAndExistingStopCommitsOnceAcrossReload(Boolean existingStop, Boolean reloadBeforeFailure) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs:line 75
+   at InvokeStub_FoodMemoryTests.KnownBagStockoutAtArrivalAndExistingStopCommitsOnceAcrossReload(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+  Failed PersistentCity.Tests.FoodMemoryTests.BadInsertionNeverWinsNewSeedsByEvictingAnotherShopsPositiveMemory(capacity: 2) [75 ms]
+  Error Message:
+   A bad visit gained a returning customer for the same seed.
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.BadInsertionNeverWinsNewSeedsByEvictingAnotherShopsPositiveMemory(Int32 capacity) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs:line 42
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+  Failed PersistentCity.Tests.FoodMemoryTests.BadInsertionNeverWinsNewSeedsByEvictingAnotherShopsPositiveMemory(capacity: 4) [117 ms]
+  Error Message:
+   A bad visit gained a returning customer for the same seed.
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.BadInsertionNeverWinsNewSeedsByEvictingAnotherShopsPositiveMemory(Int32 capacity) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs:line 42
+   at InvokeStub_FoodMemoryTests.BadInsertionNeverWinsNewSeedsByEvictingAnotherShopsPositiveMemory(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+  Failed PersistentCity.Tests.FoodMemoryTests.BadInsertionNeverWinsNewSeedsByEvictingAnotherShopsPositiveMemory(capacity: 3) [62 ms]
+  Error Message:
+   A bad visit gained a returning customer for the same seed.
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.BadInsertionNeverWinsNewSeedsByEvictingAnotherShopsPositiveMemory(Int32 capacity) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs:line 42
+   at InvokeStub_FoodMemoryTests.BadInsertionNeverWinsNewSeedsByEvictingAnotherShopsPositiveMemory(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+  Failed PersistentCity.Tests.FoodMemoryTests.BadInsertionNeverWinsNewSeedsByEvictingAnotherShopsPositiveMemory(capacity: 1) [31 ms]
+  Error Message:
+   capacity=1, loyalty=2, floor=True, lowered=False
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.BadInsertionNeverWinsNewSeedsByEvictingAnotherShopsPositiveMemory(Int32 capacity) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs:line 35
+   at InvokeStub_FoodMemoryTests.BadInsertionNeverWinsNewSeedsByEvictingAnotherShopsPositiveMemory(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+  Failed PersistentCity.Tests.FoodMemoryTests.PhysicalQueueGrowthStillServesWhenItFitsThePreviouslyCommittedBreak(active: True, weight: 0) [3 ms]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 1
+Actual:   0
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.PhysicalQueueGrowthStillServesWhenItFitsThePreviouslyCommittedBreak(Boolean active, Double weight) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs:line 109
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+  Failed PersistentCity.Tests.FoodMemoryTests.PhysicalQueueGrowthStillServesWhenItFitsThePreviouslyCommittedBreak(active: False, weight: 0) [< 1 ms]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 1
+Actual:   0
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.PhysicalQueueGrowthStillServesWhenItFitsThePreviouslyCommittedBreak(Boolean active, Double weight) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs:line 109
+   at InvokeStub_FoodMemoryTests.PhysicalQueueGrowthStillServesWhenItFitsThePreviouslyCommittedBreak(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+  Failed PersistentCity.Tests.FoodMemoryTests.PhysicalQueueGrowthStillServesWhenItFitsThePreviouslyCommittedBreak(active: True, weight: 1) [< 1 ms]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 1
+Actual:   0
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.PhysicalQueueGrowthStillServesWhenItFitsThePreviouslyCommittedBreak(Boolean active, Double weight) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs:line 109
+   at InvokeStub_FoodMemoryTests.PhysicalQueueGrowthStillServesWhenItFitsThePreviouslyCommittedBreak(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+  Failed PersistentCity.Tests.FoodMemoryTests.PhysicalQueueGrowthStillServesWhenItFitsThePreviouslyCommittedBreak(active: False, weight: 1) [< 1 ms]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 1
+Actual:   0
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.PhysicalQueueGrowthStillServesWhenItFitsThePreviouslyCommittedBreak(Boolean active, Double weight) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs:line 109
+   at InvokeStub_FoodMemoryTests.PhysicalQueueGrowthStillServesWhenItFitsThePreviouslyCommittedBreak(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+  Failed PersistentCity.Tests.FoodMemoryTests.UnchosenExistingStopKeepsMealFieldsAndOnlyBlamesAQueueThatDecidesFailure(breakAlreadyTooShort: True) [1 ms]
+  Error Message:
+   Assert.Equal() Failure: Strings differ
+Expected: ""
+Actual:   "b0"
+           ↑ (pos 0)
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.UnchosenExistingStopKeepsMealFieldsAndOnlyBlamesAQueueThatDecidesFailure(Boolean breakAlreadyTooShort) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs:line 124
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+  Failed PersistentCity.Tests.FoodMemoryTests.UnchosenExistingStopKeepsMealFieldsAndOnlyBlamesAQueueThatDecidesFailure(breakAlreadyTooShort: False) [< 1 ms]
+  Error Message:
+   Assert.Equal() Failure: Strings differ
+Expected: ""
+Actual:   "b0"
+           ↑ (pos 0)
+  Stack Trace:
+     at PersistentCity.Tests.FoodMemoryTests.UnchosenExistingStopKeepsMealFieldsAndOnlyBlamesAQueueThatDecidesFailure(Boolean breakAlreadyTooShort) in C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\b1-memory-loyalty-v2\tests\FoodMemoryReviewTests.cs:line 124
+   at InvokeStub_FoodMemoryTests.UnchosenExistingStopKeepsMealFieldsAndOnlyBlamesAQueueThatDecidesFailure(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+
+Failed!  - Failed:    14, Passed:     0, Skipped:     0, Total:    14, Duration: 438 ms - PersistentCity.Tests.dll (net10.0)

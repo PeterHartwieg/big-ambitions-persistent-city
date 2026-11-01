@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 using PersistentCity.Core;
+using PersistentCity.Persistence;
 using Xunit;
 
 namespace PersistentCity.Tests;
@@ -262,8 +264,104 @@ public sealed class DwellPlannerTests
         Assert.Single(DwellPlanner.AssignQueueSlots(duplicate, Array.Empty<Dwell>(), 8));
     }
 
+    [Theory]
+    [InlineData(9, 0)] [InlineData(9, 25)] [InlineData(9, 100)]
+    [InlineData(3, 0)] [InlineData(3, 25)] [InlineData(3, 100)]
+    public void CommittedQueueKeepsLeadButReloadCanOnlyReconstructCurrentWeather(int hour, int rate)
+    {
+        double opening = Day + hour * 60;
+        var shop = new Place { Id = "shop", Name = "Shop", Kind = PlaceKind.Shop, Capacity = 1, OpenMinute = hour * 60, CloseMinute = (hour + 4) * 60 };
+        var home = new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 1 };
+        var state = Population.Create(new[] { new CitizenIdentity { Id = "queue0", Name = "Queue", Age = 30 } }, new[] { home, shop }, "e2b-queue", "0.40.4", 17, opening - 10);
+        var c = state.Citizens.Single(); c.Phase = CitizenPhase.WaitingForOpening; c.PlaceId = c.DestinationId = "shop";
+        c.Activity = c.DestinationActivity = Activity.Shop; c.ActivityUntilMinute = opening + 60; c.NextEventMinute = opening;
+        var dry = DwellPlanner.QueueAtOpening(c, shop, 17, state.Minute, false)!.Value;
+        // Admit only once its deterministic dry lead is active.
+        state.Minute = dry.StartMinute + 0.01;
+        var wet = DwellPlanner.QueueAtOpening(c, shop, 17, state.Minute, true);
+        Assert.NotEqual((Dwell?)dry, wet);
+        Assert.Equal(dry, DwellPlanner.QueueAtOpening(c, shop, 17, state.Minute, true, dry));
+        string saved = SaveCodec.Write(state);
+        var loaded = SaveCodec.Read(saved).State!;
+        var sim = new CitySimulator(loaded, new NoRoutes()); sim.AttachOptionalStops(new NoOptionalGeometry { Raining = true }, rate);
+        Assert.Equal(saved, SaveCodec.Write(loaded));
+        Assert.Equal(wet, DwellPlanner.QueueAtOpening(loaded.Citizens.Single(), shop, 17, loaded.Minute, true));
+        Assert.Equal(dry, DwellPlanner.QueueAtOpening(loaded.Citizens.Single(), shop, 17, loaded.Minute, false));
+        // Identical save supports both histories: no saved weather/lead/body/slot distinguishes them.
+        Assert.Null(DwellPlanner.QueueAtOpening(c, shop, 17, opening, true, dry));
+        var foreign = new Dwell("someone-else", DwellKind.QueueAtOpening, "shop", dry.StartMinute, opening, "shop");
+        Assert.Equal(wet, DwellPlanner.QueueAtOpening(c, shop, 17, state.Minute, true, foreign));
+        sim.AdvanceTo(opening); Assert.Equal(CitizenPhase.AtPlace, loaded.Citizens.Single().Phase); Assert.Single(loaded.Citizens.Single().RecentVisits);
+    }
+
     private sealed class NoRoutes : IRoutePlanner
     {
         public Route? Plan(Place from, Place to, double departureMinute, TravelPreferences preferences) => null;
+    }
+
+    private sealed class NoOptionalGeometry : IOptionalStopEnvironment
+    {
+        public bool Raining { get; set; }
+        public IReadOnlyList<OptionalStopSpot> Spots(Place place, DwellKind kind) => Array.Empty<OptionalStopSpot>();
+        public OptionalStopAvailability Available(OptionalStopState stop) => OptionalStopAvailability.Ready;
+    }
+
+    [Theory]
+    [InlineData(0, false)] [InlineData(25, false)] [InlineData(100, false)]
+    [InlineData(0, true)] [InlineData(25, true)] [InlineData(100, true)]
+    public void OpeningQueueReloadAndAdmissionAreIndependentOfOptionalStopRate(int rate, bool raining)
+    {
+        // Both ordinary morning opening and a night opening, under the same waiting-state contract.
+        foreach (int hour in new[] { 9, 3 })
+        {
+            double opening = Day + hour * 60;
+            var shop = new Place { Id = "shop", Name = "Shop", Kind = PlaceKind.Shop, Capacity = 1,
+                Position = new(10, 0, 0), OpenMinute = hour * 60, CloseMinute = (hour + 4) * 60 };
+            var home = new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 1 };
+            var state = Population.Create(new[] { new CitizenIdentity { Id = "queue0", Name = "Queue visitor", Age = 30, Persona = Persona.Commuter } },
+                new[] { home, shop }, "e2a-queue", "0.40.4", 17, opening - 1);
+            var c = state.Citizens.Single();
+            c.Phase = CitizenPhase.WaitingForOpening; c.PlaceId = c.DestinationId = shop.Id;
+            c.DestinationActivity = c.Activity = Activity.Shop; c.NextEventMinute = opening; c.ActivityUntilMinute = opening + 60;
+            var env = new NoOptionalGeometry { Raining = raining };
+            var sim = new CitySimulator(state, new NoRoutes()); sim.AttachOptionalStops(env, rate);
+            var original = DwellPlanner.QueueAtOpening(c, shop, state.Seed, state.Minute, raining);
+            Assert.NotNull(original);
+            Assert.InRange(opening - original!.Value.StartMinute, 2, raining ? 5 : 10);
+            string saved = SaveCodec.Write(state);
+            var read = SaveCodec.Read(saved); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+            var loaded = new CitySimulator(read.State!, new NoRoutes()); loaded.AttachOptionalStops(env, rate);
+            var restored = DwellPlanner.QueueAtOpening(loaded.State.Citizens.Single(), shop, state.Seed, state.Minute, raining);
+            Assert.Equal(original, restored); Assert.Equal(saved, SaveCodec.Write(loaded.State));
+            sim.AdvanceTo(opening); loaded.AdvanceTo(opening);
+            Assert.Equal(SaveCodec.Write(sim.State), SaveCodec.Write(loaded.State));
+            Assert.Equal(CitizenPhase.AtPlace, loaded.State.Citizens.Single().Phase);
+            Assert.Single(loaded.State.Citizens.Single().RecentVisits);
+            Assert.Null(DwellPlanner.QueueAtOpening(loaded.State.Citizens.Single(), shop, state.Seed, opening, raining));
+            if (rate == 0)
+            {
+                string admitted = SaveCodec.Write(loaded.State);
+                foreach (int otherRate in new[] { 25, 100 })
+                {
+                    // Replay the identical waiting state under the other rates, comparing
+                    // both the queue commitment and the admitted save image.
+                    var other = SaveCodec.Read(saved); Assert.True(other.Status == SaveReadStatus.Loaded, other.Error);
+                    var otherSim = new CitySimulator(other.State!, new NoRoutes()); otherSim.AttachOptionalStops(env, otherRate);
+                    Assert.Equal(original, DwellPlanner.QueueAtOpening(other.State!.Citizens.Single(), shop, state.Seed, opening - 1, raining));
+                    otherSim.AdvanceTo(opening);
+                    string otherAdmitted = SaveCodec.Write(otherSim.State);
+                    if (raining) Assert.Equal(admitted, otherAdmitted);
+                    else
+                    {
+                        // Dry admission also draws an optional-stop chance. That banked
+                        // choice may differ by rate; every other persisted fact must agree.
+                        var baseline = JObject.Parse(admitted); var variant = JObject.Parse(otherAdmitted);
+                        ((JObject)baseline["Citizens"]![0]!).Remove("OptionalStopChoice");
+                        ((JObject)variant["Citizens"]![0]!).Remove("OptionalStopChoice");
+                        Assert.True(JToken.DeepEquals(baseline, variant), "Queue admission changed across optional-stop rates.");
+                    }
+                }
+            }
+        }
     }
 }

@@ -70,6 +70,7 @@ reg.retailPrices.RemoveAt(1); reg.retailPrices[0].price = float.NaN;
 Refuses(() => FoodBusinessCatalogue.Read(new[] { place }, new[] { "food" }), "invalid native price refused");
 Refuses(() => FoodBusinessCatalogue.Read(Array.Empty<string>(), new[] { "food" }), "explicit bounded selection required");
 Console.WriteLine($"{checks} actual catalogue-adapter checks passed against native field doubles. No Unity/game execution.");
+RivalChecks.Run();
 
 public sealed class Save
 {
@@ -84,11 +85,16 @@ public static class SaveGameManager { public static Save Current = new(); }
 public sealed class CityManager
 { public static CityManager Instance = new(); public List<CityBuildingController> cityBuildingControllers = new(); }
 public sealed class CityBuildingController
-{ public Building building = new(); public bool Accessible = true; public BuildingRegistration buildingRegistration = new(); }
+{ public Building building = new(); public List<Entrance> entranceDoors = new() { new() }; public bool Accessible = true; public BuildingRegistration buildingRegistration = new(); }
+public sealed class Entrance { public object doorTransform = new(); }
 public sealed class BuildingRegistration
 {
+    public void Reset(bool resetFields = true) => throw new Exception("FORBIDDEN reset/writer");
+    public void SetupSupply() => throw new Exception("FORBIDDEN supply setup");
+    public void RecalculateDemand() => throw new Exception("FORBIDDEN demand recalculation");
     public string StreetName = "Test Street", businessTypeName = "restaurant", businessOwnerRivalId = "rival", BusinessName = "Test Shop";
     public int StreetNumber = 7, creationDay = 1;
+    public int StockCanary = 123; public long FinanceCanary = 987654321;
     public Satisfaction? satisfaction = new();
     public bool RentedByPlayer, AvailableForRent, temporarilyClosed;
     public bool HasEstablishedBusiness => BusinessName.Length > 0;
@@ -102,3 +108,6 @@ public sealed class ScheduleDay
 public sealed class OpeningSlot { public int startingHour = 10, endingHour = 20; }
 namespace PersistentCity.Runtime
 { internal static class GamePlaces { public static int Checks; public static bool BuildingAccessible(CityBuildingController c) {Checks++;return c.Accessible;} } }
+
+public static class CustomerEntriesHelper { public static void GetEntriesByAddress() => throw new Exception("FORBIDDEN customer entries"); }
+public static class BuildingHelper { public static void GetBuildingRegistration() => throw new Exception("FORBIDDEN registration creation"); }

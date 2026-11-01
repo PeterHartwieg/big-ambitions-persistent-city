@@ -128,15 +128,16 @@ namespace PersistentCity.Persistence
                     var old = LegacyPopulationCodec.Read(source);
                     if (old.Status != SaveReadStatus.Loaded) return old;
                     var upgraded = old.State!;
-                    upgraded.Schema = 18;
+                    upgraded.Schema = CityState.CurrentSchema;
+                    if(upgraded.Food!=null) upgraded.Food.AwarenessStartsDay=(int)(upgraded.Minute/1440)+1;
                     // Constructors initialized empty memory/references and inactive B; infer nothing.
                     ValidateForActivation(upgraded);
                     return new SaveReadResult(SaveReadStatus.Loaded, upgraded, "", schema);
                 }
-                Require(schema == 18, "Unsupported experimental state schema; preserve the original payload.");
+                Require(schema == 18 || schema == 19, "Unsupported experimental state schema; preserve the original payload.");
                 Require(System.Text.Encoding.UTF8.GetByteCount(source) <= MaxInputCharacters, "State exceeds the UTF-8 size limit.");
                 var context = WireContext.FromSource(source);
-                var serializer = JsonSerializer.Create(Settings(context));
+                var serializer = JsonSerializer.Create(SettingsForSchema(context, schema));
                 using (var shape = Reader(source))
                 {
                     Require(shape.Read(), "Missing state.");
@@ -147,6 +148,11 @@ namespace PersistentCity.Persistence
                 using var reader = Reader(source);
                 var state = serializer.Deserialize<CityState>(reader);
                 Require(state != null, "State is null.");
+                if(schema==18)
+                {
+                    state!.Schema=CityState.CurrentSchema;
+                    if(state.Food!=null) state.Food.AwarenessStartsDay=(int)(state.Minute/1440)+1;
+                }
                 Validate(state!);
                 return new SaveReadResult(SaveReadStatus.Loaded, state, "", schema);
             }
@@ -294,7 +300,7 @@ namespace PersistentCity.Persistence
             {
                 Require(token == JsonToken.StartArray, "Expected an array.");
                 var item = array.CollectionItemType!;
-                int limit = item == typeof(BusinessReference) ? MaxPlaces : item == typeof(MealOutcomeRecord) ? MaxMealOutcomes : item == typeof(FoodDecisionShop) ? FoodChoicePolicy.MaximumShortlist
+                int limit = item == typeof(FoodAwarenessCandidate) ? 24 : item == typeof(BusinessReference) ? MaxPlaces : item == typeof(MealOutcomeRecord) ? MaxMealOutcomes : item == typeof(FoodDecisionShop) ? FoodChoicePolicy.MaximumShortlist
                     : item == typeof(FoodDecisionOffer) ? Schema18MaximumOffersPerShop
                     : item == typeof(FoodProductSales) ? 4 : item == typeof(FoodBuyerDistrict) ? 100 : item == typeof(long) ? 24 : item == typeof(FoodShopDay) ? 14 * MaxPlaces : item == typeof(ResidentMeal) ? MaxCitizens * 3 : item == typeof(FoodScope) ? 1024
                     : item == typeof(FoodRoutineStop) ? MaxCitizens
@@ -310,7 +316,7 @@ namespace PersistentCity.Persistence
                 while (reader.Read() && reader.TokenType != JsonToken.EndArray)
                 {
                     Require(++count <= limit, "Oversized collection.");
-                    if (item == typeof(BusinessReference) || item == typeof(RouteLeg) || item == typeof(VisitRecord) || item == typeof(OpeningWindow)
+                    if (item == typeof(FoodAwarenessCandidate) || item == typeof(BusinessReference) || item == typeof(RouteLeg) || item == typeof(VisitRecord) || item == typeof(OpeningWindow)
                         || item == typeof(TrafficRouteLeg) || item == typeof(TrafficVehicleState) || item == typeof(TrafficLinkDefinition)
                         || item == typeof(TrafficLinkState) || item == typeof(TrafficEventState) || item == typeof(int) || item == typeof(string)
                         || item == typeof(MealOutcomeRecord) || item == typeof(FoodDecisionShop) || item == typeof(FoodDecisionOffer))
@@ -345,15 +351,17 @@ namespace PersistentCity.Persistence
         private static bool NullableRecord(Type type) => type == typeof(OptionalStopState) || type == typeof(Route) || type == typeof(CarState)
             || type == typeof(TrafficKernelState) || type == typeof(TrafficSignalSchedule)
             || type == typeof(FoodCommerceState) || type == typeof(MealOuting) || type == typeof(MealExcursion) || type == typeof(ResidentBudget)
-            || type == typeof(FoodDecisionTuning) || type == typeof(ResidentTraits) || type == typeof(ResidentFoodToday) || type == typeof(FoodDecisionState);
+            || type == typeof(FoodAwarenessImage) || type == typeof(FoodDecisionTuning) || type == typeof(ResidentTraits) || type == typeof(ResidentFoodToday) || type == typeof(FoodDecisionState);
         // Contracts depend only on the sealed save DTO types, never a city or serializer setting.
         // DefaultContractResolver owns a thread-safe metadata cache; settings/serializer instances
         // remain per operation, including application-wide JsonConvert defaults.
         private static readonly IContractResolver StateContracts = new StateContractResolver();
-        private static JsonSerializerSettings Settings(WireContext context)
+        private static readonly IContractResolver Schema18Contracts = new StateContractResolver(18);
+        private static JsonSerializerSettings Settings(WireContext context) => SettingsForSchema(context,CityState.CurrentSchema);
+        private static JsonSerializerSettings SettingsForSchema(WireContext context, int schema)
         {
             var settings = new JsonSerializerSettings {
-                ContractResolver = StateContracts, Culture = CultureInfo.InvariantCulture,
+                ContractResolver = schema==18 ? Schema18Contracts : StateContracts, Culture = CultureInfo.InvariantCulture,
                 MissingMemberHandling = MissingMemberHandling.Error, TypeNameHandling = TypeNameHandling.None,
                 MaxDepth = 48, FloatParseHandling = FloatParseHandling.Double
             };
@@ -802,6 +810,7 @@ namespace PersistentCity.Persistence
             int currentDay = (int)Math.Floor(state.Minute / 1440);
             Require(food.ChoicePolicyVersion == FoodChoicePolicy.Version, "Unknown food choice policy.");
             Require(food.ChoiceStartsDay >= 0 && food.ChoiceStartsDay <= currentDay + 1, "Invalid food choice activation day.");
+            Require(food.AwarenessStartsDay>=0 && food.AwarenessStartsDay<=currentDay+1,"Invalid awareness activation day.");
             Require(food.Shops != null && food.Shops.Count <= 1024, "Invalid food scope.");
             Require(food.RepresentationFactor >= 1 && food.RepresentationFactor <= 3, "Invalid consumer representation factor.");
             Require(food.Residents != null && food.Residents.Count == state.Citizens.Count * food.RepresentationFactor, "Meal roster differs from represented population.");
@@ -1029,8 +1038,8 @@ namespace PersistentCity.Persistence
             // The simulator holds one decision, including an empty-shortlist decision. Bound the tuning
             // header as well as routes; otherwise empty images could spend a city-wide tuning history.
             Require(++routeBearing <= FoodChoicePolicy.MaximumRouteBearingDecisions, "More than one held food decision.");
-            if (decision.Shops.Count == 0) return 0;
-            int records = 0;
+            if (decision.Shops.Count == 0) return ValidateAwareness(decision,meal,food);
+            int records = ValidateAwareness(decision,meal,food);
             var businesses = new HashSet<string>(StringComparer.Ordinal);
             bool selected = decision.Result != FoodDecisionResult.Selected;
             int slot = 0;
@@ -1039,7 +1048,7 @@ namespace PersistentCity.Persistence
                 Require(shop != null && businesses.Add(shop.BusinessId), "Duplicate decision shop.");
                 Require(Position.Finite(shop!.MemoryContribution) && shop.MemoryContribution >= -8 && shop.MemoryContribution <= 8,
                     "Invalid held memory contribution.");
-                Require(shop.MemoryContribution == 0, "Held memory contribution requires B1 support.");
+                // B1 executes the finite B0b scalar; older B0b binaries deliberately refuse it.
                 Text(shop!.BusinessId, "Decision shop business", 512);
                 Require(foodPlaces.Contains(shop.PlaceId, (int)PlaceKind.Shop), "Unknown decision shop.");
                 Require(shop.MealsPerHour == -1 || Position.Finite(shop.MealsPerHour) && shop.MealsPerHour >= 0 && shop.MealsPerHour <= 100000,
@@ -1191,7 +1200,9 @@ namespace PersistentCity.Persistence
             public StateContractResolver(int schema = CityState.CurrentSchema) { this.schema = schema; }
             protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
             {
-                return base.CreateProperties(type, memberSerialization).Where(property => property.Writable)
+                return base.CreateProperties(type, memberSerialization).Where(property => property.Writable && !(schema==18 &&
+                    (type==typeof(FoodDecisionState) && property.PropertyName=="Awareness"
+                     || type==typeof(FoodCommerceState) && property.PropertyName=="AwarenessStartsDay")))
                     // These two root headers let the native authority bootstrap stop before the graph.
                     // JSON object order is not a schema change; all old property orders still read.
                     .OrderBy(property => type == typeof(CityState) ? property.PropertyName == "Schema" ? 0 : property.PropertyName == "Capabilities" ? 1 : 2 : 2)

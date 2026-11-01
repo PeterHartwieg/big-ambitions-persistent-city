@@ -1,0 +1,213 @@
+{
+  "date": "2026-10-31",
+  "sourceCommits": [
+    "373304a",
+    "e09c266"
+  ],
+  "offlineOnly": true,
+  "dotnetVersion": "10.0",
+  "unitTests": {
+    "passed": 1637,
+    "failed": 0,
+    "skipped": 0,
+    "newGuardCases": 26
+  },
+  "requestedGateCount": 32,
+  "totalGateCount": 33,
+  "dllSha256": "25c1206ff633f4d3e14aafd57b8d4be3b99b4e369dc01bc702712c10f28071dc",
+  "saveContractOutput": {
+    "digest": "6B9097A2A036A7791F118DDFF0A96530AC4A2EBAFFDFA6BF37C51ADBCC52062C",
+    "length": 113747,
+    "refusals": [
+      "Invalid:Invalid state: Missing state schema.",
+      "Future:State uses a newer schema; preserve the original payload.",
+      "Invalid:Invalid state: Incomplete or trailing JSON content.",
+      "Invalid:Invalid state: Unknown field: UnknownCitizens"
+    ],
+    "writeBytes": 22924624,
+    "readBytes": 63993976
+  },
+  "guardMeasurement": {
+    "coldMs": 1.96,
+    "coldAllocatedBytes": 7088,
+    "samples": 501,
+    "assemblies": 9,
+    "scanP50Ms": 0.0089,
+    "scanP95Ms": 0.0144,
+    "scanMaxMs": 0.8122,
+    "scanAllocatedBytes": 5936,
+    "spikesAtLeast30Ms": 0,
+    "cachedReads": 1000000,
+    "cachedMeanMs": 1.2513e-06,
+    "cachedAllocatedBytes": 0,
+    "perFrameDetectionCalls": 0
+  },
+  "measurementLimits": "Feature-only .NET process scan; first call includes JIT, warm scans simulate new city loads. Not Unity, combined mod-work or whole-frame evidence. Per-frame absence additionally verified by source wiring and actual F0 adapter metadata spies.",
+  "cheapWin": {
+    "beforeBytesPerScan": 6296,
+    "afterBytesPerScan": 5936,
+    "beforeP50P95MaxMs": [
+      0.0084,
+      0.0109,
+      0.0159
+    ],
+    "initialAfterP50P95MaxMs": [
+      0.0085,
+      0.0099,
+      0.0182
+    ],
+    "claimedTimingImprovement": false
+  },
+  "startupAdapterChecks": 3064,
+  "otherDotnetWaitBeforeEachGate": true,
+  "foregroundOnly": true,
+  "initialFailuresCorrected": [
+    "Overbroad source assertion matched cached State.Active; narrowed before full test pass.",
+    "Startup-clock source harness omitted new Runtime file links; updated links, doubles and required log assertion; final run passes."
+  ],
+  "gates": [
+    {
+      "command": "python tools/build.py --game-managed C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed",
+      "exit": 0
+    },
+    {
+      "command": "dotnet test tests/PersistentCity.Tests.csproj",
+      "exit": 0
+    },
+    {
+      "command": "dotnet test tests/PersistentCity.Tests.csproj --no-build --list-tests",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/core-identity-regression/CoreIdentityRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/diagnostic-response-regression/DiagnosticResponseRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/event-observation-regression/EventObservationRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/food-catalogue-regression/FoodCatalogueRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/food-checkout-regression/FoodCheckoutRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/food-hours-regression/FoodHoursRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/food-household-catalogue-regression/FoodHouseholdCatalogueRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/food-ownership-regression/FoodOwnershipRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/food-supply-regression/FoodSupplyRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/frame-observation-regression/FrameObservationRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/gate-access-regression/GateAccessRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/road-ceiling-regression/RoadCeilingRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/road-handoff-regression/RoadHandoffRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/road-invalidation-regression/RoadInvalidationRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/road-speed-regression/RoadSpeedRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/route-discovery-regression/RouteDiscoveryRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/save-contract-regression/SaveContractRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/startup-clock-regression/StartupClockRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/traffic-closure-regression/TrafficClosureRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/traffic-queue-regression/TrafficQueueRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/walking-quote-regression/WalkingQuoteRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/campaign-reader-regression/CampaignReaderRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/interior-guard-regression/InteriorGuardRegression.csproj --configuration Release",
+      "exit": 0
+    },
+    {
+      "command": "python tools/native-command-regression/run.py",
+      "exit": 0
+    },
+    {
+      "command": "python tools/physical-selection-regression/run.py",
+      "exit": 0
+    },
+    {
+      "command": "python tools/vehicle-ownership-regression/run.py",
+      "exit": 0
+    },
+    {
+      "command": "python tools/optional-stop-regression/run.py",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/simulate/Simulate.csproj -- 28 build/harness-demo",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/food-routines/FoodRoutines.csproj --configuration Release -- build/harness-food-routines-demo 957",
+      "exit": 0
+    },
+    {
+      "command": "dotnet run --project tools/food-demand/FoodDemand.csproj -- build/harness-food-demand-demo",
+      "exit": 0
+    }
+  ],
+  "cleanupProcessInventory": {
+    "dotnet": 0,
+    "testhost": 0,
+    "compilerServer": 0
+  },
+  "finalOwnProcessInventory": {
+    "dotnet": 0,
+    "testhost": 0,
+    "compilerServer": 0
+  },
+  "subsequentOtherWorktreeTestsObserved": "e3-first-product; test run/compiler server began after our empty cleanup inventory, left untouched"
+}

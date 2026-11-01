@@ -188,6 +188,7 @@ namespace PersistentCity.Core
     {
         /// <summary>Null only for a migrated/pre-image context; capture live once on first continuation.</summary>
         public FoodDecisionTuning? Tuning { get; set; }
+        public FoodAwarenessImage? Awareness { get; set; }
         public string IntentId { get; set; } = "";
         public int PolicyVersion { get; set; } = FoodChoicePolicy.Version;
         public string ContextKey { get; set; } = "";

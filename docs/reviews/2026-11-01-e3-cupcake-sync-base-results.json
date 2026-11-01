@@ -1,0 +1,1610 @@
+{
+  "boundary": "Offline conflict-resolution/integration only; no native game evidence or deployment clearance.",
+  "recordedUtc": "2026-11-01T05:38:18.943195+00:00",
+  "parents": {
+    "cupcake": "682aa77",
+    "incomingDevelopment": "193c81defd6e11d1484d3aa545b3eb35de83ad59",
+    "mergeBase": "00d1321b257e70e57829cfef2ca823b4d0e25060"
+  },
+  "allPassed": true,
+  "commands": [
+    {
+      "name": "build",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/build.py",
+        "--game-managed",
+        "C:/Program Files (x86)/Steam/steamapps/common/Big Ambitions/Big Ambitions_Data/Managed"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/build.txt",
+      "sha256": "e3668bf34a282774c1c3355a6a7e2a99b566887336fa411133a04c328ffa4f76",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "unit",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/unit.txt",
+      "sha256": "48ac60f662293b11b2abd87f168063661f613c2dceb745ed29ab033e45a06723",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "list",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--no-build",
+        "--list-tests"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/list.txt",
+      "sha256": "8d5dbeb9d804cde1d9971a82629a8f68b5a00bb94c35b6b1267366754e45ff63",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "core-identity",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/core-identity-regression/CoreIdentityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/core-identity.txt",
+      "sha256": "4c787e9c65227d80adc2d686d88c4fed33741019fe78047fdeac5601c2c39fa0",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "diagnostic-response",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/diagnostic-response-regression/DiagnosticResponseRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/diagnostic-response.txt",
+      "sha256": "a89f8e2948c58df6f28f5d0bf439ea876f62fe55dd2f032fb9d77ea4d0a7b103",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "event-observation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/event-observation-regression/EventObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/event-observation.txt",
+      "sha256": "42161e30fac5b62fb9ee46e23bd8e3cd8a6e6cb2b48aa61fc3ec810953881166",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-catalogue",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-catalogue-regression/FoodCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/food-catalogue.txt",
+      "sha256": "690bee8330976c5de6150cc2f9f10329a56ed47b451cc7dceeb2e22224ab43fe",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-checkout",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-checkout-regression/FoodCheckoutRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/food-checkout.txt",
+      "sha256": "d39c8fa9305598c616691bfa3cc51d2f01b52cd9957b42957ecea6e6ffa9cd3d",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-hours",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-hours-regression/FoodHoursRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/food-hours.txt",
+      "sha256": "2410218689a17bf8e5ae868d3025d1a8bd9e449d7fd49d83728819236ce6607c",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-household-catalogue",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-household-catalogue-regression/FoodHouseholdCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/food-household-catalogue.txt",
+      "sha256": "b0f19cfd0acbbded5af38461d6e0bbe596b236cd83207afa0223100fdcfb8609",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-ownership",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-ownership-regression/FoodOwnershipRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/food-ownership.txt",
+      "sha256": "0868149a24cebe8c5801b20d7530b12bc49a633011d2bf039392c6d97de66efa",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-supply",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-supply-regression/FoodSupplyRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/food-supply.txt",
+      "sha256": "bea33031a003404270de233cbd073eb44deacac65f41be406a1eae3b70385683",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "frame-observation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/frame-observation-regression/FrameObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/frame-observation.txt",
+      "sha256": "7e5da72d80f98e71b464d3c9f918cf9457b5350bfcafc294e80e823b646b2d02",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "gate-access",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/gate-access-regression/GateAccessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/gate-access.txt",
+      "sha256": "6e9877acee2b84dfcc2de1b4d7d7236ac991a58c1a89fbe420966d127bf4afae",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "road-ceiling",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-ceiling-regression/RoadCeilingRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/road-ceiling.txt",
+      "sha256": "895bf78ce78f6cceb24e97e6ac8d4cc6c68fa71cfb5b0e54f707e9bf46369762",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "road-handoff",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-handoff-regression/RoadHandoffRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/road-handoff.txt",
+      "sha256": "5de54d90bad9b212aac21705900b22ad270fa18365f1284fc4e988bf67a5f23e",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "road-invalidation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-invalidation-regression/RoadInvalidationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/road-invalidation.txt",
+      "sha256": "11bcbab6bdde92b021b10a41d941aa322629fadbc821906b55ed9aa7d5d7e656",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "road-speed",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-speed-regression/RoadSpeedRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/road-speed.txt",
+      "sha256": "5242c509cd90b21734fe4321b43dcbba531282677f91d66ddc8931b9b07cef19",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "route-discovery",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/route-discovery-regression/RouteDiscoveryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/route-discovery.txt",
+      "sha256": "eff274aaa88d1147e64edb58c0cdfa86bcc9101e03154b3d3a78250ea4b14d8f",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "save-contract",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/save-contract.txt",
+      "sha256": "deafb470c9972f0ae20b432894f024323182609d12d245a4db09ccef05852a77",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "startup-clock",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/startup-clock-regression/StartupClockRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/startup-clock.txt",
+      "sha256": "f251bf3c3132ba090b2d58e439700b5f377aa7968c921bdb6a3425da4ea02e41",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "traffic-closure",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-closure-regression/TrafficClosureRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/traffic-closure.txt",
+      "sha256": "708d6590f5351a9c1adf0b939e6775caa82602e1d6ec261b597977db98e808aa",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "traffic-queue",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-queue-regression/TrafficQueueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/traffic-queue.txt",
+      "sha256": "897d1d2e5c92ef25374e61f7da26e9dea2849c91f3495eb8bc65210eb2e4b9c4",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "walking-quote",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/walking-quote-regression/WalkingQuoteRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/walking-quote.txt",
+      "sha256": "b20b2938933dcf089ca5390b756d89a587ca9d5f003c7440677ccda69bf0d405",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "campaign-reader",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/campaign-reader-regression/CampaignReaderRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/campaign-reader.txt",
+      "sha256": "da47b9160d23b0d78e84935b7be6868dae4c699dcb561ee06f1b3457a64a43fd",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "agency-payment",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/agency-payment-regression/AgencyPaymentRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/agency-payment.txt",
+      "sha256": "f3eaf3e8116c8fc5e9eff3e9d12abec887971240b28f50d74a9fd65d8da265d2",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-candidate",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-candidate-regression/FoodCandidateRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/food-candidate.txt",
+      "sha256": "713f1e85d2e4c6cd519a186d2dac603f9755537eb2c0b0724c7ce04a9512b8c9",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-choice",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/food-choice.txt",
+      "sha256": "cacb84d0de6b56cc29224524c28c71513e709352052577979d33ee776778fe8e",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-memory",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-memory-regression/FoodMemoryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/food-memory.txt",
+      "sha256": "f460ee6ed9545831cdaec5bc2c6a12890c057ac1737d805d8288071e43d198a7",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-regulars",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-regulars-regression/FoodRegularsRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/food-regulars.txt",
+      "sha256": "a48b26c0bac125cb8d8a9ffa847021fa53ca742d0c995eb622620d09f03d2ddc",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "held-tuning",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/held-tuning-regression/HeldTuningRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/held-tuning.txt",
+      "sha256": "1857dbe629d2e859568b2a8131f664309ba2be86316c12569eeecb82371e5335",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "interior-guard",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/interior-guard-regression/InteriorGuardRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/interior-guard.txt",
+      "sha256": "ca9303db70ec2923afc3cd3fea7010de0704cfe2ebe4d0e4dbb0a9155e736cb3",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "native-command",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/native-command-regression/run.py"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/native-command.txt",
+      "sha256": "bd610e1a32a30f6ad7638fc2a65ae7bf8bea9d44baba81884f821aea4ed0a9aa",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "physical-selection",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/physical-selection-regression/run.py"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/physical-selection.txt",
+      "sha256": "adb579019decd1f8f831cf639e31f9f8d95c1c83ee32e33a61fbb53133326372",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "vehicle-ownership",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/vehicle-ownership-regression/run.py"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/vehicle-ownership.txt",
+      "sha256": "7539f54a1b778a54ca9bc75f398a40c0491fb40281611c8c8efbbc473dd32e46",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "optional-stop",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/optional-stop-regression/run.py"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/optional-stop.txt",
+      "sha256": "561690c42502ebc3ed5f50a844443da9c2491e9d92e6bbb5385aeb68e532df0b",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "simulate",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/simulate/Simulate.csproj",
+        "--",
+        "28",
+        "build/harness-demo"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/simulate.txt",
+      "sha256": "b03fcfdb3ccb1241c2c2a066f07a97034f4487376b4a2628f8b769985262213f",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-routines",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-routines/FoodRoutines.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "build/harness-food-routines-demo",
+        "957"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/food-routines.txt",
+      "sha256": "4566e24139e9c64a89a6680f2a74bf05bafed3ef7060808a11b56cecefb28529",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-demand",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-demand/FoodDemand.csproj",
+        "--",
+        "build/harness-food-demand-demo"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/food-demand.txt",
+      "sha256": "92673c4ee0f7f40a864c42f8b88c6b2e92ef34c1e8428b0de7cd9f2cc1773f50",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "donut",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/donut-feasibility-regression/DonutFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/donut.txt",
+      "sha256": "bd58bd7f59e2d88a0b180f667cc6cce78f0f547727a17f1d479214f89963ea6c",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "cupcake",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/cupcake-feasibility-regression/CupcakeFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/cupcake.txt",
+      "sha256": "f4472a7074ac0143f5aead70971d7fe9166184ad4592d3064dfd2c403e0cf659",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "isolation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/donut-feasibility-regression/source_checks.py"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/isolation.txt",
+      "sha256": "cc6c0de139d40371e4fba40e86518707c7a4310b794607cd59d28b78b695852e"
+    },
+    {
+      "name": "donut-differential",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/cupcake-feasibility-regression/compare_donut.py"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/donut-differential.txt",
+      "sha256": "5fb6e4411417fab1253ea041fd0d938efab918d1f1f19215ac1d29df57adadac",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "donut-baseline",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/cupcake-feasibility-regression/measure_before.py"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/donut-baseline.txt",
+      "sha256": "b111e1742d6d73e9ce88e270ec585a78d51e853c6702d62a8bbff5632e2b45f4",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "pickup",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/persistent-continuity/regression/PickupRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/pickup.txt",
+      "sha256": "608eae841ef2ed0f1dbfb45d11a356fef2231fcfe9cee06e68756577f5a0b157",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "optional-stop-performance",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/optional-stop-regression/run.py",
+        "--performance",
+        "--findings"
+      ],
+      "exit": 0,
+      "log": "build/e3-cupcake-sync-base/gates/optional-stop-performance.txt",
+      "sha256": "cd2ebcde3b2d152a3f17cb12a548a7b030f40bab78be97af3b2a380c3d21c412",
+      "waitLogSha256": "55712540f54870174528f75ecfd7171599b1769d3050be48fbbbd3f78ef16ba9"
+    }
+  ],
+  "unitTests": {
+    "passed": 2184,
+    "failed": 0,
+    "skipped": 0,
+    "discovered": 2184
+  },
+  "preservation": {
+    "incomingTrackedFiles": 1207,
+    "protectedIncomingSourceTestToolConfigBlobs": 499,
+    "incomingChecksAndPerfFilesUnchanged": 30,
+    "originalChecksParagraphsRetained": 250,
+    "originalReadmeNoticeBlocksRetained": 25,
+    "cupcakeChecklistItems": 6,
+    "donutChecklistItems": 5,
+    "e3CSharpAndCompiledHarnessUnchangedFromApprovedCupcake": true,
+    "landedDonutBodyRefusalsAndOriginalCasesProjectMatch": true,
+    "persistenceConfigCoreTestsMatchIncoming": true,
+    "auditCommand": [
+      "python",
+      "tools/donut-feasibility-regression/source_checks.py",
+      "--audit-base",
+      "193c81defd6e11d1484d3aa545b3eb35de83ad59"
+    ]
+  },
+  "guardProbes": {
+    "gitDiscoveryRefused": true,
+    "cases": [
+      {
+        "name": "No Git repository or historical objects, LF snapshot",
+        "expectedPass": true,
+        "exit": 0
+      },
+      {
+        "name": "No Git repository, CRLF snapshot",
+        "expectedPass": true,
+        "exit": 0
+      },
+      {
+        "name": "unrelated future development",
+        "expectedPass": true,
+        "exit": 0
+      },
+      {
+        "name": "approved pin rejects mutation: Runtime/DirectStockShowcaseReader.cs",
+        "expectedPass": false,
+        "exit": 1
+      },
+      {
+        "name": "approved pin rejects mutation: Runtime/DonutFeasibilityReader.cs",
+        "expectedPass": false,
+        "exit": 1
+      },
+      {
+        "name": "approved pin rejects mutation: Runtime/CupcakeFeasibilityReader.cs",
+        "expectedPass": false,
+        "exit": 1
+      },
+      {
+        "name": "approved pin rejects mutation: tools/donut-feasibility-regression/Program.cs",
+        "expectedPass": false,
+        "exit": 1
+      },
+      {
+        "name": "approved pin rejects mutation: tools/donut-feasibility-regression/DonutFeasibilityRegression.csproj",
+        "expectedPass": false,
+        "exit": 1
+      },
+      {
+        "name": "approved pin rejects mutation: tools/cupcake-feasibility-regression/CupcakeFeasibilityRegression.csproj",
+        "expectedPass": false,
+        "exit": 1
+      },
+      {
+        "name": "approved pin rejects mutation: tools/cupcake-feasibility-regression/approved-donut-reader.cs.txt",
+        "expectedPass": false,
+        "exit": 1
+      },
+      {
+        "name": "shared candidate substitution",
+        "expectedPass": false,
+        "exit": 1
+      },
+      {
+        "name": "native API call",
+        "expectedPass": false,
+        "exit": 1
+      },
+      {
+        "name": "native field assignment",
+        "expectedPass": false,
+        "exit": 1
+      },
+      {
+        "name": "facade crossover",
+        "expectedPass": false,
+        "exit": 1
+      },
+      {
+        "name": "gameplay caller",
+        "expectedPass": false,
+        "exit": 1
+      }
+    ]
+  },
+  "productionDllSha256": "0388fe14109124d0fafa33b605c160c07863965183e312316c84ae70ae42f57d",
+  "sourceGuardSha256": "5a16684feea83415fbe327b632137c2499e696534c1b603d8585dc6d96af7fee",
+  "measuredOutputs": {
+    "donut": [
+      {
+        "checks": 2082,
+        "cold": {
+          "samples": 1,
+          "coldMs": 1.7396,
+          "coldBytes": 1016
+        },
+        "warm": [
+          {
+            "furniture": 2,
+            "p50Ms": 0.0004,
+            "p95Ms": 0.0007,
+            "maxMs": 0.0072,
+            "bytesPerCall": 200,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2000,
+            "p50Ms": 0.0813,
+            "p95Ms": 0.1016,
+            "maxMs": 1.3626,
+            "bytesPerCall": 49104,
+            "spikesAtLeast30Ms": 0
+          }
+        ]
+      }
+    ],
+    "cupcake": [
+      {
+        "checks": 2098,
+        "cold": {
+          "samples": 1,
+          "coldMs": 1.8394,
+          "coldBytes": 1016
+        },
+        "warm": [
+          {
+            "furniture": 2,
+            "p50Ms": 0.0004,
+            "p95Ms": 0.0005,
+            "maxMs": 0.0078,
+            "bytesPerCall": 200,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2000,
+            "p50Ms": 0.0856,
+            "p95Ms": 0.1116,
+            "maxMs": 1.3355,
+            "bytesPerCall": 49104,
+            "spikesAtLeast30Ms": 0
+          }
+        ]
+      }
+    ],
+    "donut-differential": [
+      {
+        "checks": 2082,
+        "cold": {
+          "samples": 1,
+          "coldMs": 25.3216,
+          "coldBytes": 219064
+        },
+        "warm": [
+          {
+            "furniture": 2,
+            "p50Ms": 0.0038,
+            "p95Ms": 0.0069,
+            "maxMs": 0.0408,
+            "bytesPerCall": 2400,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2000,
+            "p50Ms": 0.3946,
+            "p95Ms": 0.751,
+            "maxMs": 1.7677,
+            "bytesPerCall": 228096,
+            "spikesAtLeast30Ms": 0
+          }
+        ]
+      }
+    ],
+    "donut-baseline": [
+      {
+        "checks": 2082,
+        "cold": {
+          "samples": 1,
+          "coldMs": 1.7045,
+          "coldBytes": 968
+        },
+        "warm": [
+          {
+            "furniture": 2,
+            "p50Ms": 0.0004,
+            "p95Ms": 0.0008,
+            "maxMs": 0.0717,
+            "bytesPerCall": 200,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2000,
+            "p50Ms": 0.0834,
+            "p95Ms": 0.1279,
+            "maxMs": 1.3068,
+            "bytesPerCall": 49104,
+            "spikesAtLeast30Ms": 0
+          }
+        ]
+      }
+    ],
+    "campaign-reader": [
+      {
+        "businesses": 1,
+        "campaignsPerBusiness": 6,
+        "cold": {
+          "p50Ms": 0.0068,
+          "p95Ms": 0.0107,
+          "maxMs": 0.0165,
+          "spikesAtLeast30Ms": 0,
+          "allocatedBytes": 4056
+        },
+        "warm": {
+          "p50Ms": 0.0036,
+          "p95Ms": 0.0084,
+          "maxMs": 0.0187,
+          "spikesAtLeast30Ms": 0,
+          "allocatedBytes": 1912
+        },
+        "continuation": {
+          "p50Ms": 0.0032,
+          "p95Ms": 0.006,
+          "maxMs": 0.0072,
+          "spikesAtLeast30Ms": 0,
+          "allocatedBytesPerUnit": 1621
+        },
+        "retainedBytesPerSnapshot": 880
+      },
+      {
+        "businesses": 8,
+        "campaignsPerBusiness": 6,
+        "cold": {
+          "p50Ms": 0.0337,
+          "p95Ms": 0.0775,
+          "maxMs": 0.1751,
+          "spikesAtLeast30Ms": 0,
+          "allocatedBytes": 15336
+        },
+        "warm": {
+          "p50Ms": 0.0429,
+          "p95Ms": 0.0489,
+          "maxMs": 0.0684,
+          "spikesAtLeast30Ms": 0,
+          "allocatedBytes": 13192
+        },
+        "continuation": {
+          "p50Ms": 0.0028,
+          "p95Ms": 0.0055,
+          "maxMs": 0.0212,
+          "spikesAtLeast30Ms": 0,
+          "allocatedBytesPerUnit": 1543
+        },
+        "retainedBytesPerSnapshot": 6392
+      },
+      {
+        "businesses": 1024,
+        "campaignsPerBusiness": 6,
+        "cold": {
+          "p50Ms": 1.0181,
+          "p95Ms": 6.4013,
+          "maxMs": 10.1929,
+          "spikesAtLeast30Ms": 0,
+          "allocatedBytes": 1639950
+        },
+        "warm": {
+          "p50Ms": 0.9496,
+          "p95Ms": 1.9938,
+          "maxMs": 2.9332,
+          "spikesAtLeast30Ms": 0,
+          "allocatedBytes": 1637896
+        },
+        "continuation": {
+          "p50Ms": 0.0008,
+          "p95Ms": 0.0014,
+          "maxMs": 1.1724,
+          "spikesAtLeast30Ms": 0,
+          "allocatedBytesPerUnit": 1532
+        },
+        "retainedBytesPerSnapshot": 811096
+      }
+    ],
+    "save-contract": [
+      {
+        "schema": 18,
+        "digest": "018FC26676937FEEF88B7D06AE32B522CCE93A1CC265BCDD87A08C7DD91FBB56",
+        "length": 119083,
+        "refusals": [
+          "Invalid:Invalid state: Missing state schema.",
+          "Future:State uses a newer schema; preserve the original payload.",
+          "Invalid:Invalid state: Incomplete or trailing JSON content.",
+          "Invalid:Invalid state: Unknown field: UnknownCitizens"
+        ],
+        "economy": {
+          "orders": 849,
+          "ordersDigest": "1B94987B3158044594B9C4D6A5473BA22BE0D4F3488D769CBBEE23318BB33B91",
+          "purchases": 797,
+          "spentUnits": 107967424757760,
+          "uncertain": 2,
+          "economyDigest": "74D0FE8081EA795D4D56A11B4B955DC6E777E3822C702D3C09BC9477E6679AF9",
+          "reloadDigest": "59B6F14D44CA0F996C5A828E2E538B52C5426347FCFA40767527B72D77F1D4FA"
+        },
+        "writeBytes": 14452712,
+        "readBytes": 38773560,
+        "bench": null,
+        "hot": null
+      }
+    ],
+    "food-memory": [
+      {
+        "boundary": "Offline .NET 10 synthetic paths; feature cost only, no native mod-work or whole-frame gate claim",
+        "populations": [
+          {
+            "residents": 957,
+            "consumers": 1914,
+            "saturatedEntries": 7656,
+            "retainedMemoryBytes": 474024,
+            "populationAllocatedBytes": 475608,
+            "sharedIndexRetainedBytes": 1264,
+            "sharedIndexAllocatedBytes": 2056,
+            "emptySavedBytes": 1325848,
+            "saturatedSavedBytes": 1403235,
+            "savedByteGrowth": 77387,
+            "perConsumerMemoryGrowth": 40,
+            "consumerExtensionInclusiveCeiling": 51,
+            "b0PerConsumerAllocation": 64,
+            "perCandidateLookup": {
+              "p50Ms": 2.039576802507837e-05,
+              "p95Ms": 2.2005616509926857e-05,
+              "maxMs": 2.8396029258098223e-05,
+              "spikesAtLeast30Ms": 0
+            },
+            "lookupAllocatedBytesPerCandidate": 0.0,
+            "perCommit": {
+              "p50Ms": 1.839080459770115e-05,
+              "p95Ms": 2.006269592476489e-05,
+              "maxMs": 3.2497387669801463e-05,
+              "spikesAtLeast30Ms": 0
+            },
+            "allocatedBytesPerCommit": 0.0,
+            "sink": 186885.77946705418
+          },
+          {
+            "residents": 2500,
+            "consumers": 5000,
+            "saturatedEntries": 20000,
+            "retainedMemoryBytes": 1237144,
+            "populationAllocatedBytes": 1240936,
+            "sharedIndexRetainedBytes": 1264,
+            "sharedIndexAllocatedBytes": 2056,
+            "emptySavedBytes": 3463837,
+            "saturatedSavedBytes": 3664664,
+            "savedByteGrowth": 200827,
+            "perConsumerMemoryGrowth": 40,
+            "consumerExtensionInclusiveCeiling": 51,
+            "b0PerConsumerAllocation": 64,
+            "perCandidateLookup": {
+              "p50Ms": 2.0549999999999998e-05,
+              "p95Ms": 2.14325e-05,
+              "maxMs": 2.2446250000000002e-05,
+              "spikesAtLeast30Ms": 0
+            },
+            "lookupAllocatedBytesPerCandidate": 0.0,
+            "perCommit": {
+              "p50Ms": 1.938e-05,
+              "p95Ms": 2.052e-05,
+              "maxMs": 2.236e-05,
+              "spikesAtLeast30Ms": 0
+            },
+            "allocatedBytesPerCommit": 0.0,
+            "sink": 488216.12558160274
+          }
+        ],
+        "rush": [
+          {
+            "residents": 957,
+            "consumers": 1914,
+            "memoryWeight": 1,
+            "unitBudget": 128,
+            "sample": 0,
+            "frames": 271,
+            "events": 34452,
+            "routes": 30624,
+            "decisionsPerSecond": 7882.687164398919,
+            "cpuMs": 242.8106,
+            "offlineModLoop": {
+              "p50Ms": 0.7942,
+              "p95Ms": 1.3218,
+              "maxMs": 5.6621,
+              "spikesAtLeast30Ms": 0
+            },
+            "wholeFrame": "unmeasured; separate native watch item",
+            "modeledCatchupLagMinutesAtFastestClock": 0.0,
+            "savedStateSha256": "217B6F4B411DB926BEA3A5CD42935FCDE84AD8F8EE008D91AF5333A11BCE81E8"
+          },
+          {
+            "residents": 957,
+            "consumers": 1914,
+            "memoryWeight": 0,
+            "unitBudget": 128,
+            "sample": 0,
+            "frames": 271,
+            "events": 34452,
+            "routes": 30624,
+            "decisionsPerSecond": 8111.255574899012,
+            "cpuMs": 235.9684,
+            "offlineModLoop": {
+              "p50Ms": 0.8209,
+              "p95Ms": 1.133,
+              "maxMs": 3.3991,
+              "spikesAtLeast30Ms": 0
+            },
+            "wholeFrame": "unmeasured; separate native watch item",
+            "modeledCatchupLagMinutesAtFastestClock": 0.0,
+            "savedStateSha256": "9FB588D4FFF85695CD5BD5F4B45ED507543860E994C20E518C7812CF12FD5A5D"
+          },
+          {
+            "residents": 957,
+            "consumers": 1914,
+            "memoryWeight": 0,
+            "unitBudget": 128,
+            "sample": 1,
+            "frames": 272,
+            "events": 34452,
+            "routes": 30624,
+            "decisionsPerSecond": 6647.407476353775,
+            "cpuMs": 287.9318,
+            "offlineModLoop": {
+              "p50Ms": 0.9893,
+              "p95Ms": 1.3577,
+              "maxMs": 6.2274,
+              "spikesAtLeast30Ms": 0
+            },
+            "wholeFrame": "unmeasured; separate native watch item",
+            "modeledCatchupLagMinutesAtFastestClock": 0.0,
+            "savedStateSha256": "9FB588D4FFF85695CD5BD5F4B45ED507543860E994C20E518C7812CF12FD5A5D"
+          },
+          {
+            "residents": 957,
+            "consumers": 1914,
+            "memoryWeight": 1,
+            "unitBudget": 128,
+            "sample": 1,
+            "frames": 270,
+            "events": 34452,
+            "routes": 30624,
+            "decisionsPerSecond": 7737.103412814487,
+            "cpuMs": 247.3794,
+            "offlineModLoop": {
+              "p50Ms": 0.8444,
+              "p95Ms": 1.2424,
+              "maxMs": 3.2027,
+              "spikesAtLeast30Ms": 0
+            },
+            "wholeFrame": "unmeasured; separate native watch item",
+            "modeledCatchupLagMinutesAtFastestClock": 0.0,
+            "savedStateSha256": "217B6F4B411DB926BEA3A5CD42935FCDE84AD8F8EE008D91AF5333A11BCE81E8"
+          },
+          {
+            "residents": 957,
+            "consumers": 1914,
+            "memoryWeight": 1,
+            "unitBudget": 128,
+            "sample": 2,
+            "frames": 271,
+            "events": 34452,
+            "routes": 30624,
+            "decisionsPerSecond": 10840.525895773497,
+            "cpuMs": 176.5597,
+            "offlineModLoop": {
+              "p50Ms": 0.5339,
+              "p95Ms": 1.0289,
+              "maxMs": 7.222,
+              "spikesAtLeast30Ms": 0
+            },
+            "wholeFrame": "unmeasured; separate native watch item",
+            "modeledCatchupLagMinutesAtFastestClock": 0.0,
+            "savedStateSha256": "217B6F4B411DB926BEA3A5CD42935FCDE84AD8F8EE008D91AF5333A11BCE81E8"
+          },
+          {
+            "residents": 957,
+            "consumers": 1914,
+            "memoryWeight": 0,
+            "unitBudget": 128,
+            "sample": 2,
+            "frames": 271,
+            "events": 34452,
+            "routes": 30624,
+            "decisionsPerSecond": 15124.05040085845,
+            "cpuMs": 126.5534,
+            "offlineModLoop": {
+              "p50Ms": 0.3884,
+              "p95Ms": 0.6829,
+              "maxMs": 5.324,
+              "spikesAtLeast30Ms": 0
+            },
+            "wholeFrame": "unmeasured; separate native watch item",
+            "modeledCatchupLagMinutesAtFastestClock": 0.0,
+            "savedStateSha256": "9FB588D4FFF85695CD5BD5F4B45ED507543860E994C20E518C7812CF12FD5A5D"
+          },
+          {
+            "residents": 2500,
+            "consumers": 5000,
+            "memoryWeight": 1,
+            "unitBudget": 128,
+            "sample": 0,
+            "frames": 706,
+            "events": 90000,
+            "routes": 80000,
+            "decisionsPerSecond": 25636.673979955198,
+            "cpuMs": 195.0331,
+            "offlineModLoop": {
+              "p50Ms": 0.2054,
+              "p95Ms": 0.3955,
+              "maxMs": 15.4418,
+              "spikesAtLeast30Ms": 0
+            },
+            "wholeFrame": "unmeasured; separate native watch item",
+            "modeledCatchupLagMinutesAtFastestClock": 0.0,
+            "savedStateSha256": "0E48CDC458126DBC08A9E92158CA69806193592BC1CEF969550ED1263345D021"
+          },
+          {
+            "residents": 2500,
+            "consumers": 5000,
+            "memoryWeight": 0,
+            "unitBudget": 128,
+            "sample": 0,
+            "frames": 706,
+            "events": 90000,
+            "routes": 80000,
+            "decisionsPerSecond": 26733.25028203579,
+            "cpuMs": 187.033,
+            "offlineModLoop": {
+              "p50Ms": 0.1795,
+              "p95Ms": 0.3513,
+              "maxMs": 13.2046,
+              "spikesAtLeast30Ms": 0
+            },
+            "wholeFrame": "unmeasured; separate native watch item",
+            "modeledCatchupLagMinutesAtFastestClock": 0.0,
+            "savedStateSha256": "BA1FDB19BAE2380EE8EB4C5450604EF913A681C7EB5C90C1262E29F1A8B06D81"
+          },
+          {
+            "residents": 2500,
+            "consumers": 5000,
+            "memoryWeight": 0,
+            "unitBudget": 128,
+            "sample": 1,
+            "frames": 707,
+            "events": 90000,
+            "routes": 80000,
+            "decisionsPerSecond": 27666.14488317417,
+            "cpuMs": 180.7263,
+            "offlineModLoop": {
+              "p50Ms": 0.1696,
+              "p95Ms": 0.3395,
+              "maxMs": 13.2745,
+              "spikesAtLeast30Ms": 0
+            },
+            "wholeFrame": "unmeasured; separate native watch item",
+            "modeledCatchupLagMinutesAtFastestClock": 0.0,
+            "savedStateSha256": "BA1FDB19BAE2380EE8EB4C5450604EF913A681C7EB5C90C1262E29F1A8B06D81"
+          },
+          {
+            "residents": 2500,
+            "consumers": 5000,
+            "memoryWeight": 1,
+            "unitBudget": 128,
+            "sample": 1,
+            "frames": 706,
+            "events": 90000,
+            "routes": 80000,
+            "decisionsPerSecond": 24147.57840839447,
+            "cpuMs": 207.0601,
+            "offlineModLoop": {
+              "p50Ms": 0.2853,
+              "p95Ms": 0.3901,
+              "maxMs": 8.4638,
+              "spikesAtLeast30Ms": 0
+            },
+            "wholeFrame": "unmeasured; separate native watch item",
+            "modeledCatchupLagMinutesAtFastestClock": 0.0,
+            "savedStateSha256": "0E48CDC458126DBC08A9E92158CA69806193592BC1CEF969550ED1263345D021"
+          },
+          {
+            "residents": 2500,
+            "consumers": 5000,
+            "memoryWeight": 1,
+            "unitBudget": 128,
+            "sample": 2,
+            "frames": 705,
+            "events": 90000,
+            "routes": 80000,
+            "decisionsPerSecond": 33619.11825121415,
+            "cpuMs": 148.7249,
+            "offlineModLoop": {
+              "p50Ms": 0.1633,
+              "p95Ms": 0.3248,
+              "maxMs": 6.5025,
+              "spikesAtLeast30Ms": 0
+            },
+            "wholeFrame": "unmeasured; separate native watch item",
+            "modeledCatchupLagMinutesAtFastestClock": 0.0,
+            "savedStateSha256": "0E48CDC458126DBC08A9E92158CA69806193592BC1CEF969550ED1263345D021"
+          },
+          {
+            "residents": 2500,
+            "consumers": 5000,
+            "memoryWeight": 0,
+            "unitBudget": 128,
+            "sample": 2,
+            "frames": 706,
+            "events": 90000,
+            "routes": 80000,
+            "decisionsPerSecond": 33229.126791714516,
+            "cpuMs": 150.4704,
+            "offlineModLoop": {
+              "p50Ms": 0.1598,
+              "p95Ms": 0.3134,
+              "maxMs": 5.9668,
+              "spikesAtLeast30Ms": 0
+            },
+            "wholeFrame": "unmeasured; separate native watch item",
+            "modeledCatchupLagMinutesAtFastestClock": 0.0,
+            "savedStateSha256": "BA1FDB19BAE2380EE8EB4C5450604EF913A681C7EB5C90C1262E29F1A8B06D81"
+          },
+          {
+            "residents": 957,
+            "consumers": 1914,
+            "memoryWeight": 1,
+            "unitBudget": 1,
+            "sample": 3,
+            "frames": 34452,
+            "events": 34452,
+            "routes": 30624,
+            "decisionsPerSecond": 34367.71661178127,
+            "cpuMs": 55.6918,
+            "offlineModLoop": {
+              "p50Ms": 0.0005,
+              "p95Ms": 0.0052,
+              "maxMs": 2.931,
+              "spikesAtLeast30Ms": 0
+            },
+            "wholeFrame": "unmeasured; separate native watch item",
+            "modeledCatchupLagMinutesAtFastestClock": 988.56,
+            "savedStateSha256": "217B6F4B411DB926BEA3A5CD42935FCDE84AD8F8EE008D91AF5333A11BCE81E8"
+          },
+          {
+            "residents": 957,
+            "consumers": 1914,
+            "memoryWeight": 0,
+            "unitBudget": 1,
+            "sample": 3,
+            "frames": 34452,
+            "events": 34452,
+            "routes": 30624,
+            "decisionsPerSecond": 31662.216752191045,
+            "cpuMs": 60.4506,
+            "offlineModLoop": {
+              "p50Ms": 0.0005,
+              "p95Ms": 0.0051,
+              "maxMs": 11.1772,
+              "spikesAtLeast30Ms": 0
+            },
+            "wholeFrame": "unmeasured; separate native watch item",
+            "modeledCatchupLagMinutesAtFastestClock": 988.56,
+            "savedStateSha256": "9FB588D4FFF85695CD5BD5F4B45ED507543860E994C20E518C7812CF12FD5A5D"
+          }
+        ]
+      }
+    ],
+    "food-regulars": [
+      {
+        "boundary": "Offline .NET 10; 40 normalized batch means after 5 warmups, not individual-call percentiles. Saturated four-entry memory; 16 owned shops. Panel timing covers B2 text including projection; native account reads/Unity GUI excluded. Full Core popup capture/text included. Closed zero cost and zero commit hooks established by call-site/source tests, not a native timing window. Batch spikes flag benchmark batches, not mod-work frames.",
+        "populations": [
+          {
+            "residents": 957,
+            "consumers": 1914,
+            "memoryEntries": 7656,
+            "shops": 16,
+            "projectionRefresh": {
+              "p50Ms": 0.43550500000000003,
+              "p95Ms": 0.631645,
+              "maxMs": 0.644635,
+              "allocatedBytesPerCall": 41840.0,
+              "batchSpikesAtLeast30Ms": 0
+            },
+            "perShopLookup": {
+              "p50Ms": 1.1400000000000001e-05,
+              "p95Ms": 1.172e-05,
+              "maxMs": 1.185e-05,
+              "allocatedBytesPerCall": 0.0,
+              "batchSpikesAtLeast30Ms": 0
+            },
+            "panelB2Text": {
+              "p50Ms": 0.20156000000000002,
+              "p95Ms": 0.83931,
+              "maxMs": 0.869165,
+              "allocatedBytesPerCall": 44496.0,
+              "batchSpikesAtLeast30Ms": 0
+            },
+            "fullCorePopupCaptureAndText": {
+              "p50Ms": 0.006629,
+              "p95Ms": 0.008509,
+              "maxMs": 0.010415,
+              "allocatedBytesPerCall": 9136.0,
+              "batchSpikesAtLeast30Ms": 0
+            },
+            "unchangedB1Commit": {
+              "p50Ms": 0.0001278,
+              "p95Ms": 0.000135,
+              "maxMs": 0.0001384,
+              "allocatedBytesPerCall": 0.0,
+              "batchSpikesAtLeast30Ms": 0
+            },
+            "projectionCommitHooks": 0,
+            "closedProjectionBuilds": 0,
+            "closedTextBuilds": 0,
+            "closedAddedAllocations": 0,
+            "growingDedupSet": {
+              "p50Ms": 0.022095,
+              "p95Ms": 0.026365,
+              "maxMs": 0.199215,
+              "allocatedBytesPerCall": 73152.0,
+              "batchSpikesAtLeast30Ms": 0
+            },
+            "presizedDedupSet": {
+              "p50Ms": 0.018095,
+              "p95Ms": 0.019055,
+              "maxMs": 0.020605000000000002,
+              "allocatedBytesPerCall": 38736.0,
+              "batchSpikesAtLeast30Ms": 0
+            },
+            "savedBytesBefore": 1503076,
+            "savedBytesAfter": 1503076,
+            "savedByteGrowth": 0,
+            "sink": 225885600,
+            "textLength": 418
+          },
+          {
+            "residents": 2500,
+            "consumers": 5000,
+            "memoryEntries": 20000,
+            "shops": 16,
+            "projectionRefresh": {
+              "p50Ms": 0.48909,
+              "p95Ms": 0.6466649999999999,
+              "maxMs": 0.70826,
+              "allocatedBytesPerCall": 120048.94,
+              "batchSpikesAtLeast30Ms": 0
+            },
+            "perShopLookup": {
+              "p50Ms": 5.57e-06,
+              "p95Ms": 5.63e-06,
+              "maxMs": 6.02e-06,
+              "allocatedBytesPerCall": 0.0,
+              "batchSpikesAtLeast30Ms": 0
+            },
+            "panelB2Text": {
+              "p50Ms": 0.49946,
+              "p95Ms": 0.532,
+              "maxMs": 0.6247550000000001,
+              "allocatedBytesPerCall": 122852.01,
+              "batchSpikesAtLeast30Ms": 0
+            },
+            "fullCorePopupCaptureAndText": {
+              "p50Ms": 0.004573,
+              "p95Ms": 0.007157,
+              "maxMs": 0.007581,
+              "allocatedBytesPerCall": 9136.0,
+              "batchSpikesAtLeast30Ms": 0
+            },
+            "unchangedB1Commit": {
+              "p50Ms": 0.0001452,
+              "p95Ms": 0.0002177,
+              "maxMs": 0.0002403,
+              "allocatedBytesPerCall": 0.0,
+              "batchSpikesAtLeast30Ms": 0
+            },
+            "projectionCommitHooks": 0,
+            "closedProjectionBuilds": 0,
+            "closedTextBuilds": 0,
+            "closedAddedAllocations": 0,
+            "growingDedupSet": {
+              "p50Ms": 0.092935,
+              "p95Ms": 0.54827,
+              "maxMs": 0.961375,
+              "allocatedBytesPerCall": 322643.95,
+              "batchSpikesAtLeast30Ms": 0
+            },
+            "presizedDedupSet": {
+              "p50Ms": 0.10432,
+              "p95Ms": 0.14459,
+              "maxMs": 0.22649,
+              "allocatedBytesPerCall": 116930.62,
+              "batchSpikesAtLeast30Ms": 0
+            },
+            "savedBytesBefore": 3925066,
+            "savedBytesAfter": 3925066,
+            "savedByteGrowth": 0,
+            "sink": 589500000,
+            "textLength": 418
+          }
+        ],
+        "nativeModWork": "pending normal combined 6 Nov session: p95 <5 ms, flag >=30 ms; whole-frame separate"
+      }
+    ],
+    "held-tuning": [
+      {
+        "schema": 18,
+        "heldTuning": true,
+        "decisions": [
+          {
+            "shops": 1,
+            "samples": 3000,
+            "capture": {
+              "p50Us": 4.0,
+              "p95Us": 5.4,
+              "maxUs": 31.6,
+              "spikesAtLeast30Ms": 0
+            },
+            "continuation": {
+              "p50Us": 16.1,
+              "p95Us": 19.8,
+              "maxUs": 932.0,
+              "spikesAtLeast30Ms": 0
+            },
+            "captureBytes": 2832.448,
+            "continuationBytes": 11720.776
+          },
+          {
+            "shops": 8,
+            "samples": 3000,
+            "capture": {
+              "p50Us": 12.4,
+              "p95Us": 24.2,
+              "maxUs": 140.9,
+              "spikesAtLeast30Ms": 0
+            },
+            "continuation": {
+              "p50Us": 92.5,
+              "p95Us": 133.2,
+              "maxUs": 654.0,
+              "spikesAtLeast30Ms": 0
+            },
+            "captureBytes": 10673.717333333334,
+            "continuationBytes": 62994.96533333333
+          }
+        ],
+        "retained": [
+          {
+            "shops": 0,
+            "retainedBytesPerHeld": 279.1536,
+            "allocatedBytesPerHeld": 280.0
+          },
+          {
+            "shops": 8,
+            "retainedBytesPerHeld": 1768.412,
+            "allocatedBytesPerHeld": 1832.0
+          }
+        ],
+        "shapePrecheck": {
+          "materializing": {
+            "ns": 1278.561,
+            "bytes": 136.00010666666665
+          },
+          "nonmaterializing": {
+            "ns": 168.31433333333334,
+            "bytes": 0.00010666666666666667
+          }
+        }
+      }
+    ]
+  },
+  "optionalStopPerformanceLines": [
+    "Venue cache model=0 rebind=False count=48: p50=0.0421 p95=0.0478 max=0.3719 ms; bytes/batch=4576.0; entrance reads/batch=1176.0.",
+    "Venue cache model=0 rebind=True count=48: p50=0.0624 p95=0.0750 max=0.1978 ms; bytes/batch=34516.3; entrance reads/batch=1176.0.",
+    "Venue cache model=1 rebind=False count=48: p50=0.1114 p95=0.1210 max=1.8155 ms; bytes/batch=19544.0; entrance reads/batch=48.0.",
+    "Venue cache model=1 rebind=True count=48: p50=0.1321 p95=0.1511 max=0.5254 ms; bytes/batch=44088.6; entrance reads/batch=48.0.",
+    "Venue cache model=2 rebind=False count=48: p50=0.1149 p95=0.1369 max=0.2384 ms; bytes/batch=40928.0; entrance reads/batch=48.0.",
+    "Venue cache model=2 rebind=True count=48: p50=0.1354 p95=0.1764 max=0.2661 ms; bytes/batch=65532.8; entrance reads/batch=48.0.",
+    "Facade doubles after=False cap-batch=48: cold samples=48 (one/frame), warm queries=9600, new warm samples=0; batch ms p50=0.0381 p95=0.0413 max=12.0990; bytes/query=568.0; spikes>=30ms=0.",
+    "Facade doubles after=True cap-batch=48: cold samples=48 (one/frame), warm queries=9600, new warm samples=0; batch ms p50=0.0222 p95=0.0234 max=0.1157; bytes/query=360.0; spikes>=30ms=0.",
+    "Venue cache model=0 rebind=False count=256: p50=0.7125 p95=0.8419 max=1.1818 ms; bytes/batch=22264.0; entrance reads/batch=32896.0.",
+    "Venue cache model=0 rebind=True count=256: p50=0.8338 p95=1.1280 max=1.6713 ms; bytes/batch=177273.9; entrance reads/batch=32896.0.",
+    "Venue cache model=1 rebind=False count=256: p50=1.5925 p95=1.7727 max=2.6899 ms; bytes/batch=95232.0; entrance reads/batch=256.0.",
+    "Venue cache model=1 rebind=True count=256: p50=0.2780 p95=0.4000 max=0.5843 ms; bytes/batch=231074.2; entrance reads/batch=256.0.",
+    "Venue cache model=2 rebind=False count=256: p50=0.6494 p95=0.7948 max=1.2746 ms; bytes/batch=211560.0; entrance reads/batch=256.0.",
+    "Venue cache model=2 rebind=True count=256: p50=0.2661 p95=0.9103 max=1.2186 ms; bytes/batch=347471.1; entrance reads/batch=256.0.",
+    "Facade doubles after=False cap-batch=256: cold samples=256 (one/frame), warm queries=51200, new warm samples=0; batch ms p50=0.0964 p95=0.1307 max=0.3917; bytes/query=592.4; spikes>=30ms=0.",
+    "Facade doubles after=True cap-batch=256: cold samples=256 (one/frame), warm queries=51200, new warm samples=0; batch ms p50=0.0716 p95=0.0823 max=0.3283; bytes/query=374.7; spikes>=30ms=0.",
+    "Venue cache model=0 rebind=False count=1000: p50=0.7079 p95=0.8576 max=1.6490 ms; bytes/batch=102168.0; entrance reads/batch=500500.0.",
+    "Venue cache model=0 rebind=True count=1000: p50=0.9178 p95=1.2568 max=1.8596 ms; bytes/batch=622429.0; entrance reads/batch=500500.0.",
+    "Venue cache model=1 rebind=False count=1000: p50=3.2538 p95=5.5578 max=7.5839 ms; bytes/batch=414160.0; entrance reads/batch=1000.0.",
+    "Venue cache model=1 rebind=True count=1000: p50=3.6055 p95=7.4663 max=8.1317 ms; bytes/batch=934439.8; entrance reads/batch=1000.0.",
+    "Venue cache model=2 rebind=False count=1000: p50=0.5272 p95=1.8775 max=2.4130 ms; bytes/batch=935816.0; entrance reads/batch=1000.0.",
+    "Venue cache model=2 rebind=True count=1000: p50=1.1904 p95=4.0191 max=6.0274 ms; bytes/batch=1456258.8; entrance reads/batch=1000.0.",
+    "Admission tuned=False rate=25 residents=48 realised=13: ms p50=0.1907 p95=0.2348 max=0.2752; bytes/sample=74182.3; spikes>=30ms=0.",
+    "Admission tuned=False rate=25 residents=256 realised=64: ms p50=1.1171 p95=1.2956 max=2.3813; bytes/sample=394157.6; spikes>=30ms=0.",
+    "Admission tuned=False rate=25 residents=957 realised=229: ms p50=5.1543 p95=8.5125 max=9.8953; bytes/sample=1477665.9; spikes>=30ms=0.",
+    "Selector tuned=False rate=25 cap=48 admitted=48/229: ms p50=0.1328 p95=0.1401 max=0.2058; bytes/sample=64.0; spikes>=30ms=0.",
+    "Selector tuned=False rate=25 cap=256 admitted=229/229: ms p50=0.0077 p95=0.0110 max=0.0117; bytes/sample=0.0; spikes>=30ms=0.",
+    "Admission tuned=False rate=100 residents=48 realised=48: ms p50=0.2557 p95=0.4127 max=0.4328; bytes/sample=91868.5; spikes>=30ms=0.",
+    "Admission tuned=False rate=100 residents=256 realised=256: ms p50=2.8863 p95=4.1232 max=5.3650; bytes/sample=490269.6; spikes>=30ms=0.",
+    "FLAG >=30ms: Admission tuned=False rate=100 residents=957 realised=957; sample=0; ms=32.7387",
+    "FLAG >=30ms: Admission tuned=False rate=100 residents=957 realised=957; sample=1; ms=31.4527",
+    "FLAG >=30ms: Admission tuned=False rate=100 residents=957 realised=957; sample=2; ms=33.3107",
+    "Admission tuned=False rate=100 residents=957 realised=957: ms p50=6.9873 p95=20.8439 max=33.3107; bytes/sample=1854190.4; spikes>=30ms=3.",
+    "Selector tuned=False rate=100 cap=48 admitted=48/957: ms p50=1.2486 p95=1.3753 max=5.6354; bytes/sample=64.0; spikes>=30ms=0.",
+    "Selector tuned=False rate=100 cap=256 admitted=256/957: ms p50=0.0392 p95=0.0769 max=0.1230; bytes/sample=64.0; spikes>=30ms=0.",
+    "Admission tuned=True rate=25 residents=48 realised=13: ms p50=0.0295 p95=0.0355 max=0.1469; bytes/sample=74182.3; spikes>=30ms=0.",
+    "Admission tuned=True rate=25 residents=256 realised=64: ms p50=0.2196 p95=0.3711 max=0.9249; bytes/sample=394157.6; spikes>=30ms=0.",
+    "Admission tuned=True rate=25 residents=957 realised=229: ms p50=1.0474 p95=4.5296 max=4.6918; bytes/sample=1477665.9; spikes>=30ms=0.",
+    "Selector tuned=True rate=25 cap=48 admitted=48/229: ms p50=0.0142 p95=0.0150 max=0.0257; bytes/sample=64.0; spikes>=30ms=0.",
+    "Selector tuned=True rate=25 cap=256 admitted=229/229: ms p50=0.0016 p95=0.0018 max=0.0034; bytes/sample=0.0; spikes>=30ms=0.",
+    "Admission tuned=True rate=100 residents=48 realised=48: ms p50=0.0552 p95=0.1092 max=0.4282; bytes/sample=91854.3; spikes>=30ms=0.",
+    "Admission tuned=True rate=100 residents=256 realised=256: ms p50=0.6387 p95=0.9840 max=1.3833; bytes/sample=490283.9; spikes>=30ms=0.",
+    "Admission tuned=True rate=100 residents=957 realised=957: ms p50=10.9292 p95=15.9663 max=16.6326; bytes/sample=1854176.1; spikes>=30ms=0.",
+    "Selector tuned=True rate=100 cap=48 admitted=48/957: ms p50=0.1556 p95=0.1612 max=0.2368; bytes/sample=64.0; spikes>=30ms=0.",
+    "Selector tuned=True rate=100 cap=256 admitted=256/957: ms p50=0.0405 p95=0.0835 max=0.1784; bytes/sample=64.0; spikes>=30ms=0."
+  ],
+  "timingQualification": "Synthetic .NET/native-double costs; no native mod-work/whole-frame claim. No new measured win. All four parked hotspots unchanged. D1 cold aggregate 37.5525 ms, C1 cold p95 6.4013 ms. Optional-stop untuned 957-resident/100% samples 0/1/2: 32.7387/31.4527/33.3107 ms; all other reported optional-stop arms have zero >=30 ms samples. E3 reader samples have zero >=30 ms spikes.",
+  "whitespace": "git diff --check against incoming development passes; first-parent diff retains unchanged incoming whitespace in Core/tests and historical red logs.",
+  "foregroundCompletion": true
+}

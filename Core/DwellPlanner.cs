@@ -84,7 +84,7 @@ namespace PersistentCity.Core
         /// minutes before it opens. Earlier, and for anyone waiting elsewhere, the wait is indoors.
         /// In rain fewer queue and for less time.
         /// </summary>
-        public static Dwell? QueueAtOpening(CitizenState person, Place place, int citySeed, double minute, bool raining)
+        public static Dwell? QueueAtOpening(CitizenState person, Place place, int citySeed, double minute, bool raining, Dwell? committed = null)
         {
             if (person == null) throw new ArgumentNullException(nameof(person));
             if (place == null) throw new ArgumentNullException(nameof(place));
@@ -95,6 +95,11 @@ namespace PersistentCity.Core
                 || person.PlaceId != place.Id || person.DestinationId != place.Id || minute >= person.ActivityUntilMinute) return null;
             double? opening = DailyRoutine.NextOpen(place, minute, person.ActivityUntilMinute);
             if (!opening.HasValue || opening.Value <= minute) return null;
+            // Only a live physical binding supplies this transient commitment. Waiting saves
+            // recover eligibility/opening, but contain no original weather, lead or occupied slot.
+            if (committed.HasValue && committed.Value.Kind == DwellKind.QueueAtOpening
+                && committed.Value.CitizenId == person.Identity.Id && committed.Value.SpotId == place.Id
+                && committed.Value.EndMinute == opening.Value && committed.Value.ActiveAt(minute)) return committed;
             string key = person.Identity.Id + ":queue:" + place.Id + ":" + Day(opening.Value);
             uint dice = StableRandom.Hash(key, citySeed);
             if (raining && (dice & 1) == 0) return null;
