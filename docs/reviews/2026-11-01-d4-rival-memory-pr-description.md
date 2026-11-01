@@ -2,7 +2,9 @@
 
 Sync branch `codex/pc-d4-sync-base` merges D4 head `1be75e5` with
 `origin/codex/persistent-city` (`fb958ae`, D3a). The original D4 implementation
-and its historical measurements used source `eee4dff` on `c85dc19`.
+and its historical measurements used source `eee4dff` on `c85dc19`. The free
+fourteen-day outflow line/history and exact ledger reconciliation remain intact
+alongside D4's existing B1 memory integration.
 
 
 Schema plan: retain writer **24**, owned by D3a. The save-contract rules in
@@ -13,6 +15,11 @@ its existing bounded scalar can therefore widen the current schema-24 contract
 without schema 25. Genuine 21/22/23 still reject nonzero rival contributions.
 The full 18 -> 19 -> 20 -> 21 -> 22 -> 23 -> 24 migration chain, frozen 13-17
 readers, unsupported/foreign refusal and future 25+ refusal remain intact.
+
+Fixture compatibility (Opus-r1-1): pre-D4 binaries, including the uncomposed
+D3a writer, refuse saves with a nonzero rival `MemoryContribution`. Shared
+dev/rig fixtures must be created and read on the combined head; no genuine
+predecessor reader is widened to accept a D4 fixture.
 
 Conflicts reviewed against merge base `c85dc19` on both sides:
 
@@ -47,7 +54,7 @@ commitments remain empty. Protected insertion keeps the documented equal-return
 exception when a new failure would remove a competitor's positive memory.
 
 Schema 24 permits the existing bounded rival scalar; genuine 21/22/23 sources retain
-their neutral-only rule. No DTO/tuple/collection/ledger/migration/schema growth, no native rival transaction,
+their neutral-only rule. D4 adds no DTO/tuple/collection/ledger/migration/schema growth, no native rival transaction,
 extra route or history. Writer is 24 (D3a). Existing generation references and scalar
 budgets are reused; actual experience content can fill the preallocated memory.
 Rival inspector words explicitly identify modeled experience and unobserved native
@@ -63,7 +70,7 @@ E4's existing generated baseline inputs. Every dotnet test/run waits on the
 shared host guard; no execution deadline or background worker. No owned test
 process remains.
 
-| D4 warmed operation | p50 / p95 / max ms | B/call |
+| Historical pre-sync D4 warmed operation | p50 / p95 / max ms | B/call |
 | --- | ---: | ---: |
 | Empty-memory lookup | 0.0001 / 0.0001 / 0.0033 | 0 |
 | Active mixed four-entry lookup, with index | 0.0001 / 0.0002 / 0.0070 | 0 |
@@ -72,7 +79,7 @@ process remains.
 10,000 warmed calls after 2,000 warmups; first insertion/setup excluded. No D4
 sample >=30 ms. Retained entries/references remain four/four. Neutral/active
 contributors and the all-own equal-width-ID control each serialize **2,422 B**,
-**7 streaming / 7 semantic records**, historical pre-sync fixture. The saturated memory tuple
+**7 streaming / 7 semantic records** in the historical pre-sync fixture. The saturated memory tuple
 stays 48 characters/51 inclusive JSON bytes; new experiences use its existing
 allocation rather than adding a format or history. No retained provenance field.
 
@@ -81,7 +88,7 @@ player-generation rejection for inspector words **352 -> 0 B**, p95
 **0.0002 -> 0.0002 ms**. Both before/after arms and limits are in the perf log.
 These microbenchmarks are not a native mod-work or whole-frame result.
 
-Other offline flags: whole 20k awareness builds have **1 dense/5 sparse >=30 ms**
+Historical pre-sync offline flags: whole 20k awareness builds have **1 dense/5 sparse >=30 ms**
 operations, maxima **33.0878/56.8085 ms**; E4 four/eight-product history
 serialization has **21/21 >=30 ms operations per arm**, maxima
 **204.2245/148.8218 ms**. These aggregate construction/save operations are
