@@ -18,6 +18,10 @@ namespace PersistentCity.Core
         public int FoodMemoryCapacity { get; set; } = 4;
         public int FoodMemoryForgetAfterDays { get; set; } = 28;
 
+        // Presentation only: never consumed by capture, contribution or choice.
+        public int FoodMemoryRegularServedVisits { get; set; } = 3;
+        public int FoodMemoryRegularRecentDays { get; set; } = 14;
+
         public void Clamp(Action<string>? log = null)
         {
             double C(double value, double min, double max, double fallback, string key)
@@ -26,6 +30,8 @@ namespace PersistentCity.Core
                 if (result != value) log?.Invoke(key + " clamped to " + result.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 return result;
             }
+            FoodMemoryRegularServedVisits = (int)C(FoodMemoryRegularServedVisits == int.MinValue ? double.NaN : FoodMemoryRegularServedVisits, 2, 10, 3, nameof(FoodMemoryRegularServedVisits));
+            FoodMemoryRegularRecentDays = (int)C(FoodMemoryRegularRecentDays == int.MinValue ? double.NaN : FoodMemoryRegularRecentDays, 1, 28, 14, nameof(FoodMemoryRegularRecentDays));
             FoodMemoryWeight = C(FoodMemoryWeight, 0, 2, 1, nameof(FoodMemoryWeight));
             FoodMemoryLoyalReturnMultiplier = C(FoodMemoryLoyalReturnMultiplier, 1, 3, 2, nameof(FoodMemoryLoyalReturnMultiplier));
             FoodMemoryCuriousNoveltyMultiplier = C(FoodMemoryCuriousNoveltyMultiplier, 1, 3, 1.3, nameof(FoodMemoryCuriousNoveltyMultiplier));
