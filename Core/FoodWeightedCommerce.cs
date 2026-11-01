@@ -167,11 +167,14 @@ namespace PersistentCity.Core
                 if(b==null || b.Id!=scope.BusinessId || b.PlaceId!=scope.PlaceId) continue; // no refill or replacement identity
                 // A smaller configured menu cannot silently discard offers or steal native demand.
                 // Held images retain their captured tuning. The native owner reconciles at its boundary.
-                if(b.Offers.Count>d.Tuning.Settings.FoodMenuMaximumOffersPerShop || b.Offers.Count>FoodMenuPolicy.MaximumOffers) continue;
-                bool supportedMenu=b.Offers.Count==scope.AdditionalProductIds.Count+1;
+                int scopedOffers=scope.AdditionalProductIds.Count+1;
+                if(scopedOffers>d.Tuning.Settings.FoodMenuMaximumOffersPerShop || b.Offers.Count>FoodMenuPolicy.MaximumOffers) continue;
+                // The catalogue has always omitted scoped products without saved retail prices.
+                // Preserve that priced subset; never invent a price or trim a scope to fit a limit.
+                bool supportedMenu=b.Offers.Count<=scopedOffers;
                 foreach(var offer in b.Offers)
                     if(!FoodProducts.Known(offer.ProductId) || !scope.ContainsProduct(offer.ProductId)) supportedMenu=false;
-                if(!supportedMenu) continue; // whole shop; never a silently shortened menu
+                if(!supportedMenu) continue; // unsupported or out-of-scope offers reject the whole shop
                 // Market inputs belong to the provider: capture before subtracting reservations.
                 var shop=new FoodDecisionShop {MemoryContribution=contributions[scopeIndex],BusinessId=b.Id,PlaceId=b.PlaceId,MealsPerHour=b.MealsPerHour ?? -1,
                     NextServiceAt=Math.Max(now,scope.NextServiceAt),ServiceUnavailable=b.ServiceUnavailableReason.Length>0,

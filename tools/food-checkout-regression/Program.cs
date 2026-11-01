@@ -149,6 +149,7 @@ static partial class Program
 
     static void Main()
     {
+        E4MissingPriceChecks();
         E4MenuChecks();
         InvalidPreSalePricesRefuseWithoutUncertainFunds();
         CatalogueRefusalsRefundBeforeSale();
