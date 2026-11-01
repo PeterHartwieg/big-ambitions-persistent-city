@@ -1,5 +1,28 @@
 # E3 salad: merge the current development base into PR #36
 
+## Review round 1: latest C4 base
+
+Fixes **Sol-r1-1** and **Opus-r1-1** together. Development advanced after the initial sync to C4 #30, `1f8f4b4`. Merge it in a third real two-parent commit, **`0a0aca7`**, with parents `2790b40` and `1f8f4b4` and merge base `692b8b5`. No branch switch, rebase, squash, cherry-pick, push or PR merge. The initial C2a validation below remains historical evidence; current validation includes C4.
+
+Both parents' diffs against `692b8b5` were read before resolving the two conflicts:
+
+| Conflicted file | Round-one resolution |
+| --- | --- |
+| `CHECKS.md` | Keep exactly one C4 index entry and one salad index entry, along with every existing slice link. No slice evidence is appended to the index. |
+| `docs/roadmap.md` | Keep the incoming C-track paragraph with both C2a and inactive C4 status, salad's conditional-probe stop status, and both C4/salad performance index entries. All other roadmap prose and links remain unchanged. |
+
+Both donut and salad `source_checks.py --audit-base 1f8f4b4` pass. **527 incoming source/test/tool/config blobs** match outside the existing five documented composition paths; those five paths are unchanged by this review fix. All **36 incoming checks/performance files** remain byte-identical after checkout line-ending normalization. Approved E3 reader/facade C# and harness cases are unchanged. Incoming schema **19**, every migration/refusal and configuration remain unchanged; no code/build integration fix or new behavior was needed. A read-only `git merge-tree --write-tree HEAD origin/codex/persistent-city` preview is conflict-free.
+
+**53/53 round-one foreground gates pass**: every required command, **2,337 unit tests / 2,337 discovered cases** (zero failed/skipped), all **34 top-level Release regression projects** including C4 and salad, nested pickup, four Python harnesses, optional-stop performance/findings, three requested demos, both E3 isolation entry points and all E3 differential/baseline runs, plus C4's literal save-byte comparison. Donut/cupcake/salad retain **2,082 / 2,098 / 2,119 assertions** and byte-identical approved differential outputs. [Round-one commands, exits, hashes, preservation, source audits, C4 proof and timing flags](2026-11-01-e3-salad-sync-base-r1-results.json).
+
+Exact C4 save comparison against pre-C4 `692b8b5`: schema-19 population **41,406 -> 41,406** and food **65,719 -> 65,719** bytes, both zero delta. The existing save-contract fixture retains schema **19**, **119,083 characters**, digest `D7FF8294F56C3B3D5AF736540274E68E9848319B34658859FC15E0D4CDB1F3A2`, **849 orders / 797 purchases / two unconfirmed** and all twelve F0 transitions. DLL SHA-256: `e8bcb37801ff1ac1602cc026efe367d5d4837ac5e04f897d875cc50d3c72b2a9`.
+
+**Round-one offline timing flags:** D1 20,000-place aggregate cold **36.1783 ms (>=30 ms)**; awareness dense 20,000-alternative synchronous complete build **32.3844 ms (one >=30 ms sample)**. Awareness sparse 1,024/20,000 complete-build p95 is **8.6392 / 27.5729 ms**. C4's 50,000-consumer city/catchment full-completion p95 is **7.2814 / 8.3933 ms**, but all **13,200 continuation units** have p95 <=**0.0652 ms**, max **1.0506 ms**, zero >=30 ms unit spikes and zero native/route calls. Existing optional-stop 1,000-venue reuse/rebind p95 is **7.1547 / 7.4176 ms**; untuned 957-resident 25/100% p95 **7.4865 / 10.8065 ms**, tuned 100% p95 **13.8598 ms**, with zero >=30 ms samples in every arm. E3 has zero >=30 ms single-reader samples; warm allocation remains **200 / 49,104 B** for 2 / 2,000 entries. Complete measured conditions and all threshold flags are in the round-one manifest. These are offline aggregate/stress/comparison costs, separate from bounded continuations and native mod-work/whole-frame costs; no new optimization or native clearance is claimed.
+
+The unchanged foreground gate runner was copied to ignored build output with a distinct `r1-gates` directory; it discovers C4 automatically. The only extra command is C4's existing save comparison with its explicit pre-C4 baseline. No tracked regression tool was edited. Every workload used the prescribed other-dotnet wait, no execution deadline and disabled build/compiler server reuse. All invoked workloads completed. A final fetch still resolves development to **1f8f4b4**; read-only merge preview is conflict-free. No push, PR merge, game, rig, profile, lease, Steam/Workshop writes or WSL use.
+
+## Initial integration through C2a
+
 PR #36 contains pre-squash cupcake/donut history and conflicts with development after cupcake #33 landed. Merge incoming `origin/codex/persistent-city` at `3178f3e` into approved salad `4f90a38`, using common ancestor `00d1321`, with a real two-parent merge. This integration targets `codex/pc-e3-salad` and must land with a **merge commit**, so PR #36 can subsequently be squash-merged into `codex/persistent-city`. The harness handles push and PR creation.
 
 C2a #24 landed during validation as `692b8b5`. After all 50 first-base gates passed, it was merged in a second real two-parent commit (`e5a1caf`, parents `003cd25` and `692b8b5`). This second merge is conflict-free; its CHECKS/roadmap insertions retain both slices. Final validation covers the combined C2a tree, including its additional awareness regression.
@@ -36,7 +59,7 @@ The preservation audit confirms **515 final incoming source/test/tool/config blo
 
 **Save schema:** inherit development's existing schema **19** from C2a and all migrations/refusals unchanged (schema 18 at the first merge). Incoming Core, Persistence, Compatibility, tests and configuration match exactly. Salad adds no schema, saved field or persistence change; no schema conflict occurred. Historical schema-16/test/digest statements remain dated evidence of the original implementation, not current merged-tree claims.
 
-## Validation
+## Initial validation through C2a
 
 All **51/51 final foreground gates pass**, covering every requested command: Steam-reference production build, **2,293 unit tests / 2,293 discovered cases** (zero failed/skipped), all **33 top-level Release regression projects**, nested pickup continuity, four Python harnesses, optional-stop `--performance --findings`, three demos with the requested arguments, both E3 isolation entry points, original/shared donut differential, approved donut/cupcake differential and all original-reader baseline runs. Donut/cupcake/salad pass **2,082 / 2,098 / 2,119 assertions**; differential JSON snapshots are byte-identical for every approved functional/timed read. The **21 independent probes** and explicit final whole-tree audit also pass. All **50/50 first-base gates** passed before C2a arrived. [Commands, exits, log hashes, preservation, probes and complete timing flags](2026-11-01-e3-salad-sync-base-results.json).
 
