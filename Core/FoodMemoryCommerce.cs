@@ -27,7 +27,7 @@ namespace PersistentCity.Core
                 if (!owner.city.State.Capabilities.Active || !owner.records.TryGetValue(consumer, out var meal)
                     || slot < 0 || slot >= meal.Memory.Entries.Count) return null;
                 var entry = meal.Memory.Entries[slot];
-                return FoodMemoryPolicy.Expired(entry, day, owner.MemorySettings) ? null
+                return !FoodMemoryPolicy.SuppliesAwareness(entry, day, owner.MemorySettings) ? null
                     : owner.memoryStore.Reference(entry.BusinessRef)?.BusinessId;
             }
         }

@@ -23,3 +23,17 @@ unmeasured; the combined rig gate and parked hotspots remain unchanged.
 
 Full measurements and command hashes are in the
 [sync manifest](../reviews/2026-11-01-c2a-sync-base-results.json).
+
+## Sol-r1-1 validation — 1 November 2026
+
+The admission predicate adds fixed scalar checks per memory slot. The insertion
+guard shares the existing at-most-four-entry eviction work; it adds no collection,
+scan of the city, route request or saved field. B1 scalar contribution/decay and
+the 64-item index continuation are unchanged. No new performance win is claimed.
+
+The review run's explicit synchronous offline `BuildAll` benchmark flags **nine
+samples >=30 ms**: four at 20k dense, maximum **43.1327 ms**, and five at 20k sparse,
+maximum **42.6555 ms**. These complete-build measurements are separate from
+ordinary yielded work units and native mod-work/whole-frame timing. Full benchmark
+data and final checks are in the
+[review manifest](../reviews/2026-11-01-c2a-sync-base-r1-results.json).

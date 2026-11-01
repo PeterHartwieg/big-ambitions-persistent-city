@@ -14,10 +14,21 @@ generation references), home/work-or-study/current origin (up to four draws each
 and eight daily discovery slots. The optional campaign provider is unknown and
 is never called: its eight reserved slots admit nothing. In the synced tree, the
 default memory provider projects B1's four saved generation references while B is
-active, omitting expired entries under B1's existing policy. It never writes memory
+active, admitting only entries with previous successful service, positive stored
+affinity and an unexpired B1 memory. Failure-only, zero and negative entries remain
+inputs to B1's contribution for independently sampled shops; they grant no
+memory admission. Positive stored affinity uses B1's existing preserved age on
+surviving positive failures; a failure that crosses zero cannot extend awareness
+through its refreshed negative-memory age. It never writes memory
 or substitutes a replacement generation. B1's existing bounded contribution applies
 to the common shortlist rank and is captured per selected shop for offer selection;
 held decisions never recompute it. Explicit provider overrides remain supported.
+Failure-only insertion also preserves any competing memory that can supply
+awareness on or after the saved activation day, even if its scalar is below
+novelty or memory strength is zero. It uses B1's existing protected-insertion
+exception: retain the bounded collection and commit the failed watermark without
+inserting the new entry. Memories expired by activation remain reclaimable.
+No wire field, size limit, memory capacity or held-image replay rule changes.
 For an existing
 shop stop, direct observation occupies Origin slot 0 deterministically (including
 when random draws are zero), replacing one of the four origin slots rather than

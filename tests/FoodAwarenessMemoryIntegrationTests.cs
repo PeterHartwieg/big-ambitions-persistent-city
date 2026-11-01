@@ -35,7 +35,7 @@ public sealed class FoodAwarenessMemoryIntegrationTests
         foreach (var meal in city.State.Food!.Residents)
         {
             var dump = city.InspectFoodAwareness(meal.ResidentId)!;
-            Assert.Equal(new[] { "b23", "b22", "b21", "b20" }, dump.Samples.Where(s => s.Source == FoodAwarenessSource.Memory).Select(s => s.BusinessId));
+            Assert.Equal(new[] { "b23", "", "b21", "" }, dump.Samples.Where(s => s.Source == FoodAwarenessSource.Memory).Select(s => s.BusinessId));
             Assert.All(dump.Image.Union.Where(s => (s.Sources & FoodAwarenessSource.Memory) != 0), s => Assert.True(s.Eligible));
             Assert.Equal(8, dump.Samples.Count(s => s.Source == FoodAwarenessSource.Campaign && s.Result == "unknown"));
         }
@@ -49,7 +49,7 @@ public sealed class FoodAwarenessMemoryIntegrationTests
         Assert.DoesNotContain(city.InspectFoodAwareness("r")!.Image.Union, s => s.BusinessId == "replacement" && (s.Sources & FoodAwarenessSource.Memory) != 0);
         city.State.Food.Residents[1].Memory.Entries.Clear();
         Assert.All(city.InspectFoodAwareness(city.State.Food.Residents[1].ResidentId)!.Samples.Where(s => s.Source == FoodAwarenessSource.Memory), s => Assert.Empty(s.BusinessId));
-        Assert.Contains(city.InspectFoodAwareness("r")!.Image.Union, s => s.BusinessId == "b22" && (s.Sources & FoodAwarenessSource.Memory) != 0);
+        Assert.Contains(city.InspectFoodAwareness("r")!.Image.Union, s => s.BusinessId == "b21" && (s.Sources & FoodAwarenessSource.Memory) != 0);
     }
 
     [Theory]

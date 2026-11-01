@@ -1,5 +1,52 @@
 # C2a core bounded awareness
 
+## Sol-r1-1 — failure memory admission (1 November 2026, offline only)
+
+The integration admitted every unexpired B1 entry, so a first failed visit could
+create a guaranteed memory source where the control had no awareness at all.
+A scalar penalty cannot compensate for zero admission becoming positive. A bad
+insertion could also evict a remembered competitor whose scalar was below novelty,
+and refreshed negative-memory age could outlive the control's source expiry.
+
+Fresh memory admission now requires prior successful service, positive **stored**
+affinity and an unexpired entry. B1's existing update/decay and contribution rules
+are unchanged: surviving positive failures retain their old age; entries crossing
+zero cannot reopen admission through a newly dated penalty. Nonpositive entries
+remain available to B1's contribution when other sources sample their shop.
+
+The bounded insertion guard also protects a competitor that could supply memory
+awareness on/after the saved activation day, including zero memory strength and
+lowered capacity. This uses B1's existing protected-insertion exception and failed
+watermark; no new saved field or collection is introduced. Entries expired by
+activation remain reclaimable. Already-held images retain their original inputs.
+Runtime, schema 19, source/shortlist/route limits and native writers are unchanged.
+
+The regression runs 128 matched seeds for each of nine situations, three named
+failures and two reload modes: **54 cases / 6,912 matched comparisons**. Each pair
+uses the real memory store, production awareness capture, held shortlist and final
+commit, including checkpoint reloads before capture and with the captured decision.
+It covers empty insertion, normal/zero-weight/lowered-capacity competitor eviction,
+expiry before activation, failure at/past expiry, repeat failures and usable positive
+habits. Lowered-capacity cases fill the eight-shop shortlist; route requests stay
+within sixteen. The earlier integration test now expects empty source slots for
+negative memories instead of endorsing their admission.
+
+**Final evidence:** the final 54-case regression against original `8d44988` Core
+produces **48 failures / 6 passes**; the passing cases are positive-habit controls.
+With the fix, **2,251/2,251 unit tests and 2,251 discovered cases pass**, including
+all 54 new cases and B1's unchanged strict negative-penalty tests. **41/41 foreground
+gate commands pass**: required game build, all requested commands, plus the other
+regression executables. There are no gained target-choice seeds or new target
+admissions in the 6,912 matched comparisons. The evidence pins the identical
+regression source and restored candidate Core hashes; the manifest embeds the full
+red output, command/source hashes and benchmark data. Game-target DLL SHA-256:
+`8e5d1883347382120ff46b63c301cf0a1cb3ad8ea87912e74ff7bfa788bb7cd2`.
+
+Red/green evidence and the final foreground gate are in the
+[review manifest](../reviews/2026-11-01-c2a-sync-base-r1-results.json).
+Offline evidence is separate from the later combined rig and input-only playtest;
+no game, rig, ordinary profile, bridge lease, Steam/Workshop or WSL was used.
+
 ## Base sync — 1 November 2026 (offline only)
 
 `pc-c2a-sync-base` integrates approved C2a `9b13698` with development head
