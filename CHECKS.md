@@ -20,4 +20,4 @@ Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here
 - pc-docs-checks-split — Documentation structure and preservation audit: [checks](docs/checks/pc-docs-checks-split.md).
 - E2c — Third-party interior guard, base syncs and native checklist: [checks](docs/checks/e2c-interior-guard.md).
 
-- E2b ? [Bounded street-life, reviews, base syncs and native checklist](docs/checks/e2b-street-life.md).
+- E2b — [Bounded street-life, reviews, base syncs and native checklist](docs/checks/e2b-street-life.md).
