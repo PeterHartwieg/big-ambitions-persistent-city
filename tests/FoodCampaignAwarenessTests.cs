@@ -304,7 +304,7 @@ public sealed class FoodCampaignAwarenessTests
         campaign.Publish(Snapshot(hour,state.Food.Shops.Select(s=>Business(s.BusinessId,Campaign())).ToArray()),
             state.Food.Shops.ToDictionary(s=>s.BusinessId,s=>s.PlaceId));
         var city=new CitySimulator(state,planner);
-        city.AttachWeather(new FrameWeatherSource(()=>1,()=>true));city.AttachFoodMarket(market,campaign:campaign);
+        city.AttachWeather(new FrameWeatherSource(()=>1,()=>true));city.AttachFoodMarket(market,campaign:campaign);city.InspectFoodAwareness("r");
         var meal=state.Food.Residents[0];city.AdvanceTo(meal.DesiredAt,1);
         state.Citizens[0].W=new WeatherCommitment(state.Minute,WeatherSample.Rain,true);
         Assert.Equal(FoodDecisionResult.Evaluating,meal.Decision!.Result);
