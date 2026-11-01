@@ -508,3 +508,18 @@ or native mod-work/frame result. All four parked hotspots remain parked.
 The final fetch then caught read-only E3 pizza at `8c6b3f3`. The complete E4
 acceptance above remains on its named source; pizza sync and fresh validation
 follow separately. No game, rig, bridge, Steam/profile, push or PR action occurred.
+
+### Pizza latest-head continuation
+
+The fifth real merge brings in read-only E3 pizza `8c6b3f3`, base `2bd9006`.
+Both sides' diffs were inspected for the checks-index and README conflicts:
+retain both D2 and pizza entries/notices. All incoming pizza source pins, reader,
+tools, checks, plans and perf index remain intact. No Core, persistence, schema,
+food-choice, journey, ledger, settlement, settings or native menu code changes.
+
+The frozen three-reader baseline failed its existing hash assertion because
+the shared file now contains the pizza descriptor. Its fixture now strips only
+that additive descriptor alongside ice cream before checking the unchanged
+approved three-reader hash. Production reader code and pins are unchanged.
+The foreground gate adds pizza's regression and isolation guard; a new complete
+68-command batch validates this head separately from the E4 acceptance.

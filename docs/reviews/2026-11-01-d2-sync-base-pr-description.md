@@ -1,4 +1,4 @@
-# Sync D2 with the E1/F1/A5/E3/E4 integration head
+# Sync D2 with the latest E1/F1/A5/E3/E4 integration head
 
 Target: `codex/pc-d2-rival-outflow`. Merge this PR with a merge commit so its
 integration ancestry survives; PR #58 then squash-merges into
@@ -83,6 +83,17 @@ single outflow across 21 -> 23. The E4 taste benchmark names its argument to
 avoid confusing it with D2's alternative weight. Capacity consumes the fixed menu
 header once from its existing reserve, without raising caps. The sequential gate
 adds E4 preparation, its regression and its exact default-economy comparison.
+
+### Pizza continuation (base `2bd9006`)
+
+The final E4 fetch caught read-only E3 pizza `8c6b3f3`. A fifth real merge retains
+all pizza files unchanged. `CHECKS.md` and `README.md` conflicts keep both D2 and
+pizza entries/notices; all incoming roadmap/perf indices remain. No Core,
+persistence, schema or existing runtime behavior changes in this continuation.
+The old three-reader baseline reproduced a hash failure after pizza added its
+descriptor. Its fixture strips that exact additive line before checking the
+unchanged approved hash, preserving the historical control. The sequential gate
+adds pizza's regression/isolation guard and reruns every command on the new head.
 
 Original E1/F1/A5/E3 Runtime/Core scope: E1's incoming runtime capture/settings/physical queue code is
 retained unchanged. The integration changes D2/E1 Core food scoring only to pass
