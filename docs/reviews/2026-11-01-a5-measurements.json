@@ -2,6 +2,7 @@
   "date": "2026-11-01",
   "baseline": "51ce709",
   "productionCode": "bcc3b00",
+  "provenanceNote": "Historical schema-19 measurements: baseline 51ce709 plus A5 production bcc3b00, before E1 (5877453) and F1 (2f12ae9). All numbers, save sizes/digests and gate counts below belong to that pre-E1 tree, not the schema-20 sync. See docs/checks/a5-integrated-acceptance.md for current validation.",
   "boundary": "Offline, guarded sequential foreground .NET 10; no native mod-work frames, whole-frame data, game or rig activity.",
   "platform": "Windows-11-10.0.26200-SP0",
   "productionDllSha256": "b94a86fd7dbff58b29026160f95f9980af43b68a318d5d16cc6812d22b07c354",

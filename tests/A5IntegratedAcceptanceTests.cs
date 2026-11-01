@@ -10,6 +10,12 @@ namespace PersistentCity.Tests;
 
 public sealed class A5IntegratedAcceptanceTests
 {
+    private sealed class Weather : IWeatherSource
+    {
+        public WeatherSample Value;
+        public WeatherSample ReadWeather() => Value;
+    }
+
     [Fact]
     public void PopupFormatsEachPlaceOnceAndRefreshesItsAddressOnTheNextCapture()
     {
@@ -71,8 +77,11 @@ public sealed class A5IntegratedAcceptanceTests
     }
 
     [Theory]
-    [InlineData(-1)] [InlineData(0)] [InlineData(1)] [InlineData(2)] [InlineData(6)] [InlineData(10)] [InlineData(17)]
-    public void ActiveMemoryAwarenessAndInspectorPreserveHeldChoiceAndExactlyOnceContinuation(int reloadAt)
+    [InlineData(-1, WeatherSample.Rain)] [InlineData(0, WeatherSample.Rain)]
+    [InlineData(1, WeatherSample.Rain)] [InlineData(2, WeatherSample.Rain)]
+    [InlineData(6, WeatherSample.Rain)] [InlineData(10, WeatherSample.Rain)] [InlineData(17, WeatherSample.Rain)]
+    [InlineData(-1, WeatherSample.Dry)] [InlineData(-1, WeatherSample.Unknown)]
+    public void ActiveMemoryAwarenessAndInspectorPreserveHeldChoiceAndExactlyOnceContinuation(int reloadAt, WeatherSample weather)
     {
         (CitySimulator city, WeightedFoodChoiceTests.Market market, WeightedFoodChoiceTests.Planner paths) Ready()
         {
@@ -82,6 +91,7 @@ public sealed class A5IntegratedAcceptanceTests
             x.city.State.Food.BusinessReferences.Add(new() { Slot = 0, BusinessId = "b23", PlaceId = "s23" });
             x.city.State.Food.Residents[0].Memory.Entries.Add(new() { BusinessRef = 0, Day = 1, Served = 3, Affinity = 8, Outcome = ShopExperience.Served });
             var city = new CitySimulator(x.city.State, x.planner); city.AttachFoodMarket(x.market);
+            city.AttachWeather(new Weather { Value = weather });
             return (city, x.market, x.planner);
         }
         var (control, cm, cp) = Ready(); var (candidate, market, paths) = Ready();
@@ -105,6 +115,11 @@ public sealed class A5IntegratedAcceptanceTests
                 var read = SaveSession.Open(data, candidate.State.PopulationKey).InitialReadResult;
                 Assert.Equal(SaveReadStatus.Loaded, read.Status);
                 candidate = new CitySimulator(read.State!, paths); candidate.AttachFoodMarket(market);
+                // A captured E1 input must survive changed live rain/settings. Before
+                // capture, preserve the paired source so both runs start identically.
+                bool captured = candidate.State.Food!.Residents[0].Decision != null;
+                candidate.AttachWeather(new Weather { Value = captured ? WeatherSample.Unknown : weather },
+                    new WeatherSettings { Enabled = !captured, RainTravelWeightMultiplier = captured ? 2 : 1.3 });
                 candidate.FoodDecisionObserved += t => actualDecision = JsonConvert.SerializeObject(t.Decision);
                 Assert.Equal(saved, SaveCodec.Write(candidate.State)); reloaded = true;
             }
@@ -119,6 +134,9 @@ public sealed class A5IntegratedAcceptanceTests
             var held = candidate.State.Food!.Residents[0].Decision;
             if (held != null)
             {
+                Assert.Equal(weather, held.Weather);
+                Assert.Equal(weather == WeatherSample.Rain ? 1.3 : 1, held.WeatherTravelMultiplier);
+                Assert.Equal(weather, candidate.State.Food!.Residents[0].Memory.Weather);
                 maxShops = Math.Max(maxShops, held.Shops.Count); Assert.InRange(held.QuotesDone, 0, 16);
                 savedSelection |= held.Result == FoodDecisionResult.Selected;
             }
@@ -142,13 +160,13 @@ public sealed class A5IntegratedAcceptanceTests
 public sealed partial class FoodCommerceTests
 {
     [Theory]
-    [InlineData(16)] [InlineData(17)] [InlineData(18)]
+    [InlineData(16)] [InlineData(17)] [InlineData(18)] [InlineData(19)]
     public void A5MigrationChainKeepsLegacyFactsAndInspectorReadOnly(int sourceSchema)
     {
         var (city, _, _) = Ready(count: 2, threeMeals: true, representation: 2);
         city.EnableHouseholdFinances();
         string legacy17 = LegacyWire.Write(city.State);
-        string source = sourceSchema == 16 ? S17_Old(legacy17, 16) : sourceSchema == 17 ? legacy17 : SaveCodec.Write(city.State);
+        string source = sourceSchema == 16 ? S17_Old(legacy17, 16) : sourceSchema == 17 ? legacy17 : WeatherTests.As19(SaveCodec.Write(city.State));
         if (sourceSchema == 18)
         {
             var root = Newtonsoft.Json.Linq.JObject.Parse(source); root["Schema"] = 18;
@@ -158,7 +176,10 @@ public sealed partial class FoodCommerceTests
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = source, ["foreign"] = "kept" };
         var read = SaveSession.Open(data, city.State.PopulationKey).InitialReadResult;
         Assert.Equal(SaveReadStatus.Loaded, read.Status); Assert.Equal(sourceSchema, read.SourceSchema);
-        Assert.Equal(19, read.State!.Schema); Assert.Same(source, data[SaveStore.StateKey]);
+        Assert.Equal(20, read.State!.Schema); Assert.Same(source, data[SaveStore.StateKey]);
+        Assert.Equal((int)(city.State.Minute / 1440) + 1, read.State.WeatherStartsDay);
+        Assert.All(read.State.Citizens, p => Assert.Null(p.W));
+        Assert.All(read.State.Food!.Residents, m => Assert.Equal(WeatherSample.Unknown, m.Memory.Weather));
         Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(legacy17), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(read.State)));
         var restored = new CitySimulator(read.State, new WeightedFoodChoiceTests.Planner());
         string before = SaveCodec.Write(restored.State);

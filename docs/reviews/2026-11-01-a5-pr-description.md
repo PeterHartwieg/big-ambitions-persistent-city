@@ -1,5 +1,7 @@
 # Step A5: integrated offline acceptance
 
+Historical description for pre-E1 A5 `f3eb16b` on baseline `51ce709`. Its numbers and schema-19 statements below describe that original run. The schema-20 base sync is documented separately in [A5 checks](../checks/a5-integrated-acceptance.md#1-november-2026--schema-20-base-sync).
+
 Step A's popup and saved-choice invariants are checked against integration baseline `51ce709`, including landed B memory/regulars and C2a awareness. Missing work/study and historical shop locations stay unknown; memory behavior words require active B. One per-capture address cache halves repeated formatter calls (four to two) and reduces the no-food popup refresh allocation from 6,432 to 5,856 bytes. No measured latency gain is claimed.
 
 No new panel, input hook, choice/economic behavior, schema/save-format change or dependency on E1/F1/D2/C2b/E4. No rig/game/bridge/profile/lease or installation work was performed. The full [A1-A3 review and rig closure inventory](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/codex/pc-a5-integrated-acceptance/docs/checks/a5-integrated-acceptance.md#review-closure-inventory) records fixed commits, outdated open threads, declined items and remaining native proof. Two-family A5 review remains with the harness.
