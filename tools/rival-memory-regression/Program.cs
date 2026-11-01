@@ -62,6 +62,15 @@ city.AttachFoodMarket(new EmptyMarket(), memorySettings: settings);
 string active = SaveCodec.Write(state);
 Check(neutral == active, "contributor alone changes no save bytes");
 var counts = SaveCodec.CountRecords(state, active);
+var ownControl = SaveCodec.Read(active);
+Check(ownControl.Status == SaveReadStatus.Loaded, "mixed memory reload");
+foreach (var reference in ownControl.State!.Food!.BusinessReferences)
+    if (reference.BusinessId.StartsWith("rival", StringComparison.Ordinal))
+        reference.BusinessId = "ownxx" + reference.Slot; // equal-length historical own generation
+string ownWire = SaveCodec.Write(ownControl.State);
+var ownCounts = SaveCodec.CountRecords(ownControl.State, ownWire);
+Check(Encoding.UTF8.GetByteCount(ownWire) == Encoding.UTF8.GetByteCount(active)
+    && counts == ownCounts, "mixed provenance adds no byte/record overhead over four own entries");
 var observation = new FoodAlternativeObservation("business:Test:1:1:food:rival", "s0", "Test", 1, 1, "food", "rival", FoodAlternativeKind.Rival,
     true, true, false, null, 0, new[] { new FoodAdvertisedOffer(FoodProducts.Croissant, Money.FromCents(100)) },
     Enumerable.Range(0, 7).Select(d => new FoodAdvertisedHours(d, 0, 1440)));
@@ -77,7 +86,9 @@ Console.WriteLine(JsonConvert.SerializeObject(new { source = "D4 offline .NET 10
     emptyLookup, mixedFourEntryLookup = mixedLookup, mixedFourEntryUpdate = mixedUpdate,
     retainedEntries = meal.Memory.Entries.Count, retainedReferences = food.BusinessReferences.Count,
     saturatedMemoryCharacters = memory.Length, contributorNeutralBytes = Encoding.UTF8.GetByteCount(neutral),
-    contributorActiveBytes = Encoding.UTF8.GetByteCount(active), counts, writer = state.Schema,
+    contributorActiveBytes = Encoding.UTF8.GetByteCount(active), allOwnFourEntryBytes = Encoding.UTF8.GetByteCount(ownWire),
+    streamingRecords = counts.Streaming, semanticRecords = counts.Semantic,
+    allOwnStreamingRecords = ownCounts.Streaming, allOwnSemanticRecords = ownCounts.Semantic, writer = state.Schema,
     beforeOpening, afterOpening, sink }, Formatting.Indented));
 
 sealed class EmptyMarket : IFoodMarket
