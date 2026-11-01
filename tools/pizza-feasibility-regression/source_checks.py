@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 prior = runpy.run_path(str(ROOT / "tools/donut-feasibility-regression/source_checks.py"), run_name="__main__")
 # Combined pizza/icecream reader; the icecream guard changes only its full-reader pin and facade allowlist.
 PINS = {
-    'tools/icecream-feasibility-regression/source_checks.py': 'a1d88eadfa8a37bb119866dc3a4ce1101fc0757d1480917b2b0ddf7edfc04394',
+    'tools/icecream-feasibility-regression/source_checks.py': 'd245b1ba1b9115e23d958c478f2d991f5e878fb6cc8e797e3c1b7844cad4869f',
     'Runtime/DirectStockShowcaseReader.cs': '6aff3daddcb0a47f8bbe652790a8711e984a3994dd89f9c09a5b9ad192c55448',
     'Runtime/PizzaFeasibilityReader.cs': '405c404b3bf5db5a53aaf3499b2cca0ead84b9c310cdbcfcd66dd660aa712031',
     'tools/pizza-feasibility-regression/PizzaFeasibilityRegression.csproj': 'aae90ea4187cb9def744ce5a3c8899abfa78472bab2d665b10e1eaa7bc3a718d',

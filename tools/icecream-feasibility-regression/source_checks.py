@@ -10,7 +10,7 @@ PINS = {'Runtime/DirectStockShowcaseReader.cs': '6aff3daddcb0a47f8bbe652790a8711
  'tools/icecream-feasibility-regression/IcecreamFeasibilityRegression.csproj': 'ba8f10d8a85dd978e631dbe6797bf02616b0e171dc243a57e9676c35a341a79b',
  'tools/icecream-feasibility-regression/Program.cs': '8d1e2ec8792eee607cdc337d25a29cfef1bee9be29e95c6f1b26e7fb367ed582',
  'tools/icecream-feasibility-regression/generate_cases.py': '4b3db341d8bfd6e97a9ebbee6adba1748cb7c97c76c9a5e750f437f03f2d45c0',
- 'tools/icecream-feasibility-regression/measure_baseline.py': '6961c4560cf0ecb9f9ece5a326e704e3d26c9115349296499ad4d05823c37237'}
+ 'tools/icecream-feasibility-regression/measure_baseline.py': 'fc4037a6281b340a3a50e007159db13ba1dce7ef891c4cda6225ccf5636dbd32'}
 for path, expected in PINS.items():
     assert hashlib.sha256((ROOT / path).read_text(encoding="utf-8").encode()).hexdigest() == expected, path
 allowed = {ROOT / ("Runtime/" + name + ".cs") for name in
