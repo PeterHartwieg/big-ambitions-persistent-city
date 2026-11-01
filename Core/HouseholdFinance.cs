@@ -22,6 +22,7 @@ namespace PersistentCity.Core
         public Money EssentialsPaid { get; set; }
         public Money HomeFoodPaid { get; set; }
         public Money PreparedFoodSpent { get; set; }
+        public Money ExternalFoodSpent { get; set; }
         public Money HeldPurchase { get; set; }
         public Money Arrears { get; set; }
         public int LastPostedDay { get; set; } = -1;
@@ -100,7 +101,7 @@ namespace PersistentCity.Core
         /// range throws <see cref="OverflowException"/> even when every component fits. Holds,
         /// confirmations and refunds move money between accounted amounts and leave both totals unchanged.</summary>
         public static bool CashConserved(ResidentBudget b)
-            => b.OpeningBalance + b.IncomeReceived == b.Balance + b.EssentialsPaid + b.HomeFoodPaid + b.PreparedFoodSpent + b.HeldPurchase;
+            => b.OpeningBalance + b.IncomeReceived == b.Balance + b.EssentialsPaid + b.HomeFoodPaid + b.PreparedFoodSpent + b.ExternalFoodSpent + b.HeldPurchase;
 
         private static ResidentIncomeSource IncomeSource(CitizenState person)
             => person.Identity.Persona == Persona.Retiree ? ResidentIncomeSource.ExternalPension

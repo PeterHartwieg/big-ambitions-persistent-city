@@ -31,14 +31,16 @@ public sealed class Schema18ReviewTests
     }
 
     [Theory]
-    [InlineData(typeof(ResidentBudget), 18)]
-    [InlineData(typeof(ResidentMeal), 35)]
+    [InlineData(typeof(ResidentBudget), 19)]
+    [InlineData(typeof(ResidentMeal), 36)]
     public void PublishedTupleLayoutsCoverEveryWritablePropertyExactlyOnce(Type dto, int expected)
     {
         var layout = typeof(SaveCodec).GetNestedType("TupleLayout", BindingFlags.NonPublic)!;
         var instance = layout.GetMethod("For")!.Invoke(null, new object[] { dto })!;
         var fields = (PropertyInfo[])layout.GetField("Properties")!.GetValue(instance)!;
-        var writable = dto.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetSetMethod() != null);
+        // The allowance-only external account uses the existing Budget slot's scalar variant.
+        var writable = dto.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetSetMethod() != null
+            && !(dto == typeof(ResidentMeal) && p.Name == "LegacyExternalFoodSpent"));
         Assert.Equal(expected, fields.Length);
         Assert.Equal(fields.Length, fields.Select(p => p.Name).Distinct(StringComparer.Ordinal).Count());
         Assert.Equal(writable.Select(p => p.Name).OrderBy(n => n, StringComparer.Ordinal), fields.Select(p => p.Name).OrderBy(n => n, StringComparer.Ordinal));
@@ -61,7 +63,7 @@ public sealed class Schema18ReviewTests
         var city = Population.Create(new[] { new CitizenIdentity { Id = "r", Name = "Resident", Age = 30 } },
             new[] { new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 1 } }, "probe-review", "test", 11, 0);
         string current = SaveCodec.Write(city);
-        Assert.StartsWith("{\"Schema\":19,\"Capabilities\":", current);
+        Assert.StartsWith("{\"Schema\":21,\"Capabilities\":", current);
         var root = JObject.Parse(current);
         var oldOrder = new JObject(root.Properties().OrderBy(p => p.Name, StringComparer.Ordinal).Select(p => new JProperty(p.Name, p.Value.DeepClone())));
         string previous = oldOrder.ToString(Formatting.None);

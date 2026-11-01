@@ -129,12 +129,17 @@ namespace PersistentCity.Persistence
                     if (old.Status != SaveReadStatus.Loaded) return old;
                     var upgraded = old.State!;
                     upgraded.Schema = CityState.CurrentSchema;
-                    if(upgraded.Food!=null) upgraded.Food.AwarenessStartsDay=(int)(upgraded.Minute/1440)+1;
+                    if(upgraded.Food!=null)
+                    {
+                        upgraded.Food.AwarenessStartsDay=(int)(upgraded.Minute/1440)+1;
+                        upgraded.Food.RivalStartsDay=(int)(upgraded.Minute/1440)+1;
+                    }
                     // Constructors initialized empty memory/references and inactive B; infer nothing.
                     ValidateForActivation(upgraded);
                     return new SaveReadResult(SaveReadStatus.Loaded, upgraded, "", schema);
                 }
-                Require(schema == 18 || schema == 19, "Unsupported experimental state schema; preserve the original payload.");
+                if (schema == 18 || schema == 19) return RivalWire21.Migrate(source);
+                Require(schema == 21, "Unsupported experimental state schema; preserve the original payload.");
                 Require(System.Text.Encoding.UTF8.GetByteCount(source) <= MaxInputCharacters, "State exceeds the UTF-8 size limit.");
                 var context = WireContext.FromSource(source);
                 var serializer = JsonSerializer.Create(SettingsForSchema(context, schema));
@@ -217,6 +222,7 @@ namespace PersistentCity.Persistence
             Type? nullable = Nullable.GetUnderlyingType(type);
             if (token == JsonToken.Null)
             {
+                Require(type != typeof(ResidentBudget), "Legacy account must use its canonical scalar slot.");
                 Require(nullable != null || NullableRecord(type), "Unexpected null value.");
                 if (type == typeof(ResidentFoodToday)) Charge(ref records); // one rollup slot per consumer, including null
                 return;
@@ -241,12 +247,17 @@ namespace PersistentCity.Persistence
             if (type == typeof(MealOutcomeRecord))
             {
                 Require(token == JsonToken.String && ((string)reader.Value!).Length <= MaxMealOutcomeWire
-                    && MealOutcomeRecord.IsCanonicalWire((string)reader.Value!), "Invalid meal outcome record.");
+                    && RivalWire21.CanonicalOutcome((string)reader.Value!), "Invalid meal outcome record.");
+                return;
+            }
+            if (type == typeof(ResidentBudget) && token == JsonToken.Integer)
+            {
+                Require(IntegerToken(reader.Value, 0, long.MaxValue) && text.CanonicalInteger((IJsonLineInfo)reader), "Invalid legacy external-food account.");
                 return;
             }
             if (TupleLayout.For(type) is TupleLayout tuple)
             {
-                Require(token == JsonToken.StartArray && reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 1, 1) && text.CanonicalInteger((IJsonLineInfo)reader), "Invalid tuple version.");
+                Require(token == JsonToken.StartArray && reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 2, 2) && text.CanonicalInteger((IJsonLineInfo)reader), "Invalid tuple version.");
                 foreach (var slot in tuple.Properties)
                 {
                     Require(reader.Read() && reader.TokenType != JsonToken.EndArray, "Missing tuple slot.");
@@ -811,6 +822,7 @@ namespace PersistentCity.Persistence
             Require(food.ChoicePolicyVersion == FoodChoicePolicy.Version, "Unknown food choice policy.");
             Require(food.ChoiceStartsDay >= 0 && food.ChoiceStartsDay <= currentDay + 1, "Invalid food choice activation day.");
             Require(food.AwarenessStartsDay>=0 && food.AwarenessStartsDay<=currentDay+1,"Invalid awareness activation day.");
+            Require(food.RivalStartsDay>=0 && food.RivalStartsDay<=currentDay+1,"Invalid rival activation day.");
             Require(food.Shops != null && food.Shops.Count <= 1024, "Invalid food scope.");
             Require(food.RepresentationFactor >= 1 && food.RepresentationFactor <= 3, "Invalid consumer representation factor.");
             Require(food.Residents != null && food.Residents.Count == state.Citizens.Count * food.RepresentationFactor, "Meal roster differs from represented population.");
@@ -825,6 +837,7 @@ namespace PersistentCity.Persistence
             var businessIds = new HashSet<string>(StringComparer.Ordinal);
             foreach (var shop in food.Shops)
             {
+                Require(shop != null && shop.AlternativeKind == FoodAlternativeKind.Player, "Native food scopes cannot enroll rivals.");
                 Require(shop != null && shops.Add(shop.PlaceId) && businessIds.Add(shop.BusinessId), "Duplicate food scope.");
                 Text(shop.PlaceId, "Food place", 256); Text(shop.ProductId, "Food product", 256); Text(shop.BusinessId, "Food business", 512);
                 Require(shop.AdditionalProductIds != null && shop.AdditionalProductIds.Count <= 3
@@ -900,6 +913,7 @@ namespace PersistentCity.Persistence
                 Require(meal.DayAllowanceUsed >= Money.Zero && meal.DayAllowanceUsed <= MaximumAllowance, "Invalid daily food allowance use.");
                 Require((meal.Budget != null) == (food.HouseholdFinanceVersion != 0), "Household budget ownership differs from policy.");
                 if (meal.Budget != null) ValidateBudget(meal.Budget, state.Minute);
+                RivalWire21.ValidateMeal(meal, food);
                 Require(meal.Day >= 0 && meal.Day <= 100000 && meal.Allowance >= Money.Zero && meal.Allowance <= MaximumAllowance
                     && meal.Price >= Money.Zero && meal.Price <= meal.Allowance && meal.Purchases >= 0 && meal.Spent >= Money.Zero,
                     "Invalid meal allowance/accounting.");
@@ -966,6 +980,7 @@ namespace PersistentCity.Persistence
             foreach (var record in today.Meals!)
             {
                 Require(record != null, "Null meal outcome.");
+                RivalWire21.ValidateOutcome(record!);
                 Dense((int)record!.Kind, (int)MealKind.Dinner, "Meal outcome kind"); Dense((int)record.Status, (int)MealOutcomeStatus.Unconfirmed, "Meal outcome status");
                 Dense((int)record.Reason, (int)MealReasonCode.FundsUnavailable, "Meal outcome reason");
                 Dense((int)record.Outside, (int)FoodOutsideOption.FundedHouseholdFood, "Meal outcome alternative");
@@ -999,7 +1014,7 @@ namespace PersistentCity.Persistence
                     // advances, the record stays an opaque historical reference.
                     if (purchase)
                         Require(record.PlaceId == meal.PlaceId && record.ProductId == meal.ProductId
-                            && record.CheckoutAt == MealOutcomes.CheckoutMinute(meal, minute), "Purchase outcome differs from its retained meal.");
+                            && record.TargetKind == meal.TargetKind && record.CheckoutAt == MealOutcomes.CheckoutMinute(meal, minute), "Purchase outcome differs from its retained meal.");
                 }
             }
             return 1; // schema 18 fixed current-day tuple (including an empty rollup)
@@ -1012,6 +1027,7 @@ namespace PersistentCity.Persistence
                 && (meal.ContextAttempts == 0) == (meal.LastContextKey.Length == 0), "Invalid decision retry latch.");
             var decision = meal.Decision;
             if (decision == null) return 0;
+            RivalWire21.ValidateAwareness(decision);
             Require(meal.Status == MealStatus.Pending && meal.Day >= food.ChoiceStartsDay, "Decision outside a pending version-1 meal.");
             Require(decision.PolicyVersion == food.ChoicePolicyVersion && decision.IntentId == meal.IntentId, "Decision belongs to another policy or meal.");
             Require(decision.ContextKey.Length > 0 && decision.ContextKey == meal.LastContextKey && decision.Attempt == meal.ContextAttempts,
@@ -1046,6 +1062,7 @@ namespace PersistentCity.Persistence
             foreach (var shop in decision.Shops)
             {
                 Require(shop != null && businesses.Add(shop.BusinessId), "Duplicate decision shop.");
+                RivalWire21.ValidateShop(shop!, decision);
                 Require(Position.Finite(shop!.MemoryContribution) && shop.MemoryContribution >= -8 && shop.MemoryContribution <= 8,
                     "Invalid held memory contribution.");
                 // B1 executes the finite B0b scalar; older B0b binaries deliberately refuse it.
@@ -1152,7 +1169,7 @@ namespace PersistentCity.Persistence
                 && b.DailyHomeFoodCents > 0 && b.DailyHomeFoodCents <= 1000000, "Invalid household policy amounts.");
             Require(b.OpeningBalance >= Money.Zero && b.Balance >= Money.Zero && b.IncomeReceived >= Money.Zero
                 && b.EssentialsPaid >= Money.Zero && b.HomeFoodPaid >= Money.Zero && b.PreparedFoodSpent >= Money.Zero
-                && b.HeldPurchase >= Money.Zero && b.HeldPurchase <= MaximumAllowance && b.Arrears >= Money.Zero,
+                && b.ExternalFoodSpent >= Money.Zero && b.HeldPurchase >= Money.Zero && b.HeldPurchase <= MaximumAllowance && b.Arrears >= Money.Zero,
                 "Negative household accounting.");
             // Checked unit sums: an amount beyond the unit's range is refused (OverflowException), never rounded.
             Require(HouseholdFinance.CashConserved(b), "Household cash is not conserved.");
@@ -1200,7 +1217,8 @@ namespace PersistentCity.Persistence
             public StateContractResolver(int schema = CityState.CurrentSchema) { this.schema = schema; }
             protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
             {
-                return base.CreateProperties(type, memberSerialization).Where(property => property.Writable && !(schema==18 &&
+                return base.CreateProperties(type, memberSerialization).Where(property => property.Writable
+                    && !(type==typeof(FoodScope) && property.PropertyName=="AlternativeKind") && !(schema==18 &&
                     (type==typeof(FoodDecisionState) && property.PropertyName=="Awareness"
                      || type==typeof(FoodCommerceState) && property.PropertyName=="AwarenessStartsDay")))
                     // These two root headers let the native authority bootstrap stop before the graph.
@@ -1223,12 +1241,12 @@ namespace PersistentCity.Persistence
             public override void WriteJson(JsonWriter writer, MealOutcomeRecord? value, JsonSerializer serializer)
             {
                 if (value == null) { writer.WriteNull(); return; }
-                writer.WriteValue(value.ToWire());
+                writer.WriteValue(RivalWire21.Outcome(value));
             }
             public override MealOutcomeRecord ReadJson(JsonReader reader, Type objectType, MealOutcomeRecord? existingValue, bool hasExistingValue, JsonSerializer serializer)
             {
                 MealOutcomeRecord? record = null;
-                if (reader.TokenType != JsonToken.String || !MealOutcomeRecord.TryParse((string)reader.Value!, out record)) Fail("Invalid meal outcome record.");
+                if (reader.TokenType != JsonToken.String || !RivalWire21.ParseOutcome((string)reader.Value!, out record)) Fail("Invalid meal outcome record.");
                 return record!;
             }
         }

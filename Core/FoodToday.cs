@@ -36,6 +36,7 @@ namespace PersistentCity.Core
     /// consumer. PlaceId is last, so it may itself contain '|'; ProductId may not.</summary>
     public sealed class MealOutcomeRecord
     {
+        public FoodAlternativeKind TargetKind { get; set; }
         public MealKind Kind { get; set; }
         public MealOutcomeStatus Status { get; set; }
         public MealReasonCode Reason { get; set; }
@@ -161,6 +162,12 @@ namespace PersistentCity.Core
     /// is present exactly when its slot is Answered.</summary>
     public sealed class FoodDecisionShop
     {
+        public FoodAlternativeKind AlternativeKind { get; set; }
+        public FoodAvailabilityEvidenceKind AvailabilityEvidence => AlternativeKind == FoodAlternativeKind.Rival ? FoodAvailabilityEvidenceKind.EstimatedFromPriceAndHours : FoodAvailabilityEvidenceKind.ObservedPlayerSupply;
+        public string RivalTerms { get; set; } = "";
+        public int RivalServiceMinutes { get; set; }
+        public double AlternativeWeight { get; set; } = 1;
+        public double ServiceMinutes => AlternativeKind == FoodAlternativeKind.Rival ? RivalServiceMinutes : 60 / MealsPerHour;
         /// <summary>Reserved B1 effective per-shop log-weight contribution, bounded -8..8.
         /// Empty/neutral is zero. B0b never populates or applies it.</summary>
         public double MemoryContribution { get; set; }
@@ -291,6 +298,7 @@ namespace PersistentCity.Core
         {
             bool hadPurchase=record.Status==MealOutcomeStatus.Bought || record.Status==MealOutcomeStatus.Unconfirmed;
             record.Status = status;
+            record.TargetKind = meal.TargetKind;
             record.Reason = ReasonFor(meal.Status, meal.Reason, checkout);
             // Only a purchase names its shop and product; a skip or alternative is described by its reason.
             bool purchase = status == MealOutcomeStatus.Bought || status == MealOutcomeStatus.Unconfirmed;

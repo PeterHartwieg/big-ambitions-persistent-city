@@ -9,7 +9,8 @@ namespace PersistentCity.Runtime
     public sealed partial class NativeFoodMarket : IFoodAwarenessRevision
     {
         private int discoveryCursor;
-        public long AwarenessRevision { get; private set; }
+        private long managedAwarenessRevision;
+        public long AwarenessRevision => managedAwarenessRevision + (((object)this as IRivalFoodMarket)?.RivalRevision ?? 0);
         private readonly Dictionary<string,FoodScope> scopesByBusiness = new Dictionary<string,FoodScope>(StringComparer.Ordinal);
         private void Candidate(string id,bool admit)
         {
@@ -114,7 +115,7 @@ namespace PersistentCity.Runtime
                 NativeFoodOwnership.Retire(place);
             }
             bool changed=registrations.Remove(place) | shopControllers.Remove(place);
-            decisionSupply.Remove(place);if(changed) AwarenessRevision++;
+            decisionSupply.Remove(place);if(changed) managedAwarenessRevision++;
         }
         private string DiscoveryPlaceId(int slot, BuildingRegistration reg)
         {
@@ -149,7 +150,7 @@ namespace PersistentCity.Runtime
             // This adapter owns the live list; scopes persist in place when a business/menu changes.
             if(!ReferenceEquals(scopeList,state.Shops) || indexedScopeCount!=state.Shops.Count)
             {
-                AwarenessRevision++;
+                managedAwarenessRevision++;
                 scopesByPlace.Clear();scopesByBusiness.Clear();foreach(var entry in state.Shops) {scopesByPlace.Add(entry.PlaceId,entry);scopesByBusiness[entry.BusinessId]=entry;}
                 scopeList=state.Shops;indexedScopeCount=state.Shops.Count;
             }
@@ -169,7 +170,7 @@ namespace PersistentCity.Runtime
                 Candidate(scope.BusinessId,false);scopesByBusiness.Remove(scope.BusinessId);
                 scope.NextServiceAt = EarliestMinute;
             }
-            AwarenessRevision++;
+            managedAwarenessRevision++;
             scope.BusinessId = authority.BusinessId; scopesByBusiness[scope.BusinessId]=scope; scope.ProductId = products[0]; scope.AdditionalProductIds = products.Skip(1).ToList();
             // AfterNativeTick transfers authority after its last refresh; publish acquisition immediately.
             Candidate(authority.BusinessId,true);

@@ -18,7 +18,7 @@ namespace PersistentCity.Core
         {
             CaptureRoutineStop(person);
             if (city.State.Capabilities.Active && records.TryGetValue(person.Identity.Id, out var arriving) && arriving.Status == MealStatus.Travelling
-                && person.PlaceId == arriving.PlaceId && person.MealOuting?.Returning == true)
+                && arriving.TargetKind == FoodAlternativeKind.Player && person.PlaceId == arriving.PlaceId && person.MealOuting?.Returning == true)
             {
                 // The native place-hours admission may have refused before a RecentVisit was added.
                 // Reaching the committed door plus named closed hours is evidence; a lost route is not.
@@ -38,7 +38,7 @@ namespace PersistentCity.Core
                 for (int slot = 1; slot < state.RepresentationFactor; slot++)
                     if (records.TryGetValue(FoodRepresentation.ConsumerId(person.Identity.Id, slot), out var represented)
                         && represented.Excursion == null) represented.NeedsHomeResync = false;
-            if (!records.TryGetValue(person.Identity.Id, out var meal) || !AtFoodStop(person)
+            if (!records.TryGetValue(person.Identity.Id, out var meal) || meal.TargetKind == FoodAlternativeKind.Rival || !AtFoodStop(person)
                 || (meal.Status != MealStatus.Pending && meal.Status != MealStatus.Missed && meal.Status != MealStatus.Declined)
                 || city.State.Minute >= meal.ExpiresAt) return;
             if(NewChoice(meal) && meal.LastContextKey==Context(ChoiceStop(meal,person),true)) return;

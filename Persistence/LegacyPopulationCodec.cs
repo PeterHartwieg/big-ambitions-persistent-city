@@ -1167,6 +1167,7 @@ namespace PersistentCity.Persistence
         // into an old required-field count or allow-list through the current Core assembly.
         private static bool OriginalProperty(Type type, string name)
         {
+            if (RivalWire21.AddedProperty(type, name)) return false;
             if (type == typeof(FoodDecisionState)) return "|IntentId|PolicyVersion|ContextKey|Attempt|Result|BusinessId|ProductId|Outside|Reason|Factor1|Factor2|OriginAt|Deadline|QuotesDone|Shops|".IndexOf("|" + name + "|", StringComparison.Ordinal) >= 0;
             if (type == typeof(FoodDecisionShop)) return "|BusinessId|PlaceId|MealsPerHour|ServiceUnavailable|NextServiceAt|Hours|CustomerServicePercent|DistrictId|Offers|OutwardQuote|ReturnQuote|Outward|Return|".IndexOf("|" + name + "|", StringComparison.Ordinal) >= 0;
             if (type == typeof(CityState)) return "|Schema|TravelTimingVersion|TravelClockRate|TrafficTopologyId|Traffic|Food|RloVersion|PopulationKey|Seed|Minute|Places|Citizens|SourceIdentities|NextResidentSequence|PopulationTarget|InitialImportedResidents|".IndexOf("|" + name + "|", StringComparison.Ordinal) >= 0;

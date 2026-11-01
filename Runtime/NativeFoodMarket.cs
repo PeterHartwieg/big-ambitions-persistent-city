@@ -24,6 +24,7 @@ namespace PersistentCity.Runtime
         private const string PatchId = "persistentcity.food-routines";
         private static NativeFoodMarket? active;
         private readonly object save;
+        private RivalFoodSettings rivalSettings = new RivalFoodSettings();
         private readonly FoodCommerceState state;
         private readonly Dictionary<string, BuildingRegistration> registrations = new Dictionary<string, BuildingRegistration>(StringComparer.Ordinal);
         private readonly Dictionary<string, CityBuildingController> shopControllers = new Dictionary<string, CityBuildingController>(StringComparer.Ordinal);
@@ -88,10 +89,11 @@ namespace PersistentCity.Runtime
             public IReadOnlyDictionary<string, FoodSupplySnapshot> Supply { get; }
         }
         public double EarliestMinute => SaveGameManager.Current.Day * 1440.0 + SaveGameManager.Current.Hour * 60.0;
-        public NativeFoodMarket(FoodCommerceState state, IReadOnlyList<Place>? places = null, bool enrolling = false)
+        public NativeFoodMarket(FoodCommerceState state, IReadOnlyList<Place>? places = null, bool enrolling = false, RivalFoodSettings? rivalSettings = null)
         {
             if (active != null) throw new InvalidOperationException("A food market already owns the native hooks.");
             save = SaveGameManager.Current; this.state = state;
+            this.rivalSettings = rivalSettings ?? new RivalFoodSettings(); this.rivalSettings.Clamp();
             NativeFoodOwnership.ValidatePopulation(state);
             controllers = CityManager.Instance.cityBuildingControllers.Where(c => c != null).ToArray();
             discoveryRegistrations = new BuildingRegistration?[controllers.Length];
@@ -136,7 +138,7 @@ namespace PersistentCity.Runtime
             return "";
         }
         internal static bool IsBuying(BuildingRegistration reg) => active != null && active.buying && ReferenceEquals(active.buyerShop, reg);
-        public bool IsConfirmedPaid(ResidentMeal meal) => ReferenceEquals(save, SaveGameManager.Current)
+        public bool IsConfirmedPaid(ResidentMeal meal) => meal.TargetKind == FoodAlternativeKind.Player && ReferenceEquals(save, SaveGameManager.Current)
             && FoodSaleReceipts.ReadStatus(SaveGameManager.Current.modData, meal) == FoodReceiptStatus.Paid;
         public bool CanServe(string businessId)
         {
@@ -229,6 +231,7 @@ namespace PersistentCity.Runtime
         }
         public FoodSale Buy(ResidentMeal meal, double minute)
         {
+            if (meal.TargetKind != FoodAlternativeKind.Player) return new FoodSale(false, "Rivals have no native checkout authority");
             // Any checkout attempt may change this shop's native stock, bags or orders.
             try { return BuyLive(meal, minute); }
             finally { decisionSupply.Remove(meal.PlaceId); }
@@ -322,6 +325,7 @@ namespace PersistentCity.Runtime
         }
         public void Dispose()
         {
+            ((object)this as IRivalFoodMarket)?.CloseRivals();
             patches.UnpatchAll(PatchId);
             NativeFoodOwnership.Detach(this);
             if (ReferenceEquals(active, this)) active = null;

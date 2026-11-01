@@ -67,7 +67,9 @@ public sealed class FoodAwarenessMemoryIntegrationTests
         Assert.NotNull(held.Awareness); Assert.NotEmpty(held.Shops);
         Assert.All(held.Shops, s => Assert.NotEqual(0, s.MemoryContribution));
         string memory = JsonConvert.SerializeObject(changed.State.Food.Residents.Select(m => m.Memory));
-        var root = JObject.Parse(SaveCodec.Write(changed.State));
+        changed.State.Schema=19;
+        var root = JObject.Parse(PopulationSchema19.Write(changed.State));
+        changed.State.Schema=21;
         if (legacy18)
         {
             root["Schema"] = 18;
@@ -77,7 +79,7 @@ public sealed class FoodAwarenessMemoryIntegrationTests
         }
         string source = root.ToString(Formatting.None);
         var read = SaveCodec.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(legacy18 ? 18 : 19, read.SourceSchema); Assert.Equal(19, read.State!.Schema);
+        Assert.Equal(legacy18 ? 18 : 19, read.SourceSchema); Assert.Equal(21, read.State!.Schema);
         Assert.Equal(memory, JsonConvert.SerializeObject(read.State.Food!.Residents.Select(m => m.Memory)));
         Assert.Equal(4, read.State.Food.BusinessReferences.Count);
         var migrated = Assert.Single(read.State.Food.Residents, m => m.Decision != null).Decision!;

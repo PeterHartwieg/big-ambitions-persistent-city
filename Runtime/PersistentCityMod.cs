@@ -121,8 +121,8 @@ namespace PersistentCity.Runtime
                 AdditionalProductIds = b.Offers.Skip(1).Select(o => o.ProductId).ToList() }).ToList(),
                 Districts = FoodHouseholdCatalogue.Read(simulation.State.Places.Where(p => p.Kind == PlaceKind.Home)
                     .Select(p => p.District).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct(StringComparer.Ordinal).ToArray()).ToList() };
-            var adapter = new NativeFoodMarket(state, simulation.State.Places, enrolling: true);
-            try { simulation.State.Food = state; simulation.AttachFoodMarket(adapter, settings.FoodChoice, settings.FoodMemory, settings.Awareness); foodMarket = adapter; }
+            var adapter = new NativeFoodMarket(state, simulation.State.Places, enrolling: true, rivalSettings: settings.Rivals);
+            try { simulation.State.Food = state; simulation.AttachFoodMarket(adapter, settings.FoodChoice, settings.FoodMemory, settings.Awareness, rivalSettings: settings.Rivals); foodMarket = adapter; }
             catch { simulation.State.Food = null; adapter.Dispose(); throw; }
         }
         public void EnableHouseholdFinances()
@@ -132,6 +132,7 @@ namespace PersistentCity.Runtime
             simulation.EnableHouseholdFinances();
         }
         public object? FoodAwareness(string consumerId, int? day=null) => simulation?.InspectFoodAwareness(consumerId,day);
+        public object RivalFoodDiagnostics => new { Core=simulation?.DumpRivalFood(), RefreshUnits=foodMarket?.RivalRefreshUnits ?? 0, DetailReads=foodMarket?.RivalDetailReads ?? 0 };
         public object FoodDiagnostics => new { active = foodMarket != null, hourlyCustomerBatchesSuppressed = foodMarket?.SuppressedBatches ?? 0,
             nativeDrawsSuppressed = foodMarket?.SuppressedDraws ?? 0, nativePurchasesThisSession = foodMarket?.NativePurchases ?? 0 };
 
@@ -187,6 +188,8 @@ namespace PersistentCity.Runtime
                 inspector.CurrentOwnShop = ObservedOwnShop;
                 settings.FoodChoice.Clamp(message => log.Info(message));
                 settings.MarketResearch.Clamp(message => log.Info(message));
+                settings.Rivals.Clamp(message => log.Info(message));
+                log.Info("Rival choice revision 1: estimated availability; weight="+settings.RivalChoiceWeight+", service="+settings.RivalAssumedServiceMinutes+", refresh="+settings.RivalRefreshGameMinutes+", reads/unit="+settings.RivalReadsPerUnit);
                 settings.Awareness.Clamp(message => log.Info(message));
                 log.Info("Food awareness v1: radius="+settings.Awareness.RadiusMetres.ToString(System.Globalization.CultureInfo.InvariantCulture)
                     +", draws/anchor="+settings.Awareness.DrawsPerAnchor+", discovery="+settings.Awareness.DiscoveryProbability.ToString(System.Globalization.CultureInfo.InvariantCulture));
@@ -590,8 +593,8 @@ namespace PersistentCity.Runtime
                         .Select(p => p.District).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct(StringComparer.Ordinal).ToArray()).ToList() };
             if (state.Food.HouseholdFinanceVersion != HouseholdFinance.PolicyVersion || state.Food.MealRhythmVersion != MealRhythm.PolicyVersion)
                 throw new InvalidDataException("Unsupported experimental food policy; preserve this city and use a fresh development baseline.");
-            foodMarket = new NativeFoodMarket(state.Food, state.Places);
-            simulation.AttachFoodMarket(foodMarket, settings.FoodChoice, settings.FoodMemory, settings.Awareness);
+            foodMarket = new NativeFoodMarket(state.Food, state.Places, rivalSettings: settings.Rivals);
+            simulation.AttachFoodMarket(foodMarket, settings.FoodChoice, settings.FoodMemory, settings.Awareness, rivalSettings: settings.Rivals);
             saveIdentity = save;
             NativeInteriorCityView.Start(settings, log!, RestoreInterior);
             NativeCityClock.Start(save, settings.GameClockFactor, () => simulation?.IsCaughtUpTo(Now()) == true, () => simulation?.State.Food != null, Now);

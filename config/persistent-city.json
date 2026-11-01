@@ -1,4 +1,8 @@
 {
+  "RivalChoiceWeight": 1.0,
+  "RivalAssumedServiceMinutes": 5,
+  "RivalRefreshGameMinutes": 60,
+  "RivalReadsPerUnit": 16,
   "FoodMarketingNeighbourhoodMetres": 250,
   "FoodMarketingNeighbourhoodDrawsPerAnchor": 4,
   "FoodMarketingDiscoveryDailyProbability": 0.02,

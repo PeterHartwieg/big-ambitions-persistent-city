@@ -23,6 +23,7 @@ namespace PersistentCity.Persistence
         /// Only Paid confirms this exact intention, business, product and agreed price.</summary>
         public static FoodReceiptStatus ReadStatus(IDictionary<string, string> data, ResidentMeal meal)
         {
+            if (meal.TargetKind != FoodAlternativeKind.Player) return FoodReceiptStatus.Missing;
             bool current = data.TryGetValue(Key(meal), out var value);
             bool legacy = data.TryGetValue(LegacyPrefix + meal.IntentId, out var oldValue);
             if (current && legacy) return FoodReceiptStatus.Conflict;
@@ -46,11 +47,13 @@ namespace PersistentCity.Persistence
         }
         public static void Begin(IDictionary<string, string> data, ResidentMeal meal)
         {
+            if (meal.TargetKind != FoodAlternativeKind.Player) throw new InvalidOperationException("Modeled food has no native receipt.");
             if (ReadStatus(data, meal) != FoodReceiptStatus.Missing) throw new InvalidOperationException("Native food intention already has a receipt.");
             data.Add(Key(meal), "pending|" + Identity(meal));
         }
         public static void Confirm(IDictionary<string, string> data, ResidentMeal meal)
         {
+            if (meal.TargetKind != FoodAlternativeKind.Player) throw new InvalidOperationException("Modeled food has no native receipt.");
             if (!data.TryGetValue(Key(meal), out var value) || value != "pending|" + Identity(meal))
                 throw new InvalidOperationException("Native food receipt changed during checkout.");
             data[Key(meal)] = "paid|" + Identity(meal);
