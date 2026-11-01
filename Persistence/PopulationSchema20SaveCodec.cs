@@ -1194,7 +1194,7 @@ namespace PersistentCity.Persistence
             public StateContractResolver(int schema = 20) { this.schema = schema; }
             protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
             {
-                return base.CreateProperties(type, memberSerialization).Where(property => property.Writable && !(type==typeof(FoodCommerceState) && property.PropertyName=="Campaigns") && !(type==typeof(CityState) && property.PropertyName=="MenuPolicy") && !RivalWire21.AddedProperty(type,property.PropertyName!) && !(schema<20 && WeatherProperty(type,property.PropertyName)) && !(schema==18 &&
+                return base.CreateProperties(type, memberSerialization).Where(property => property.Writable && !(type==typeof(FoodCommerceState) && property.PropertyName=="Outflow") && !(type==typeof(FoodCommerceState) && property.PropertyName=="Campaigns") && !(type==typeof(CityState) && property.PropertyName=="MenuPolicy") && !RivalWire21.AddedProperty(type,property.PropertyName!) && !(schema<20 && WeatherProperty(type,property.PropertyName)) && !(schema==18 &&
                     (type==typeof(FoodDecisionState) && property.PropertyName=="Awareness"
                      || type==typeof(FoodCommerceState) && property.PropertyName=="AwarenessStartsDay")))
                     // These two root headers let the native authority bootstrap stop before the graph.

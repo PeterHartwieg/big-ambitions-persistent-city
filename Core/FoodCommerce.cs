@@ -105,6 +105,7 @@ namespace PersistentCity.Core
     }
     public sealed class FoodCommerceState
     {
+        public RivalOutflowHistory? Outflow { get; set; }
         public List<BusinessReference> BusinessReferences { get; set; } = new List<BusinessReference>();
         public int RepresentationFactor { get; set; } = 1;
         public List<FoodRoutineStop> RoutineStops { get; set; } = new List<FoodRoutineStop>();
@@ -196,6 +197,7 @@ namespace PersistentCity.Core
             AwarenessSettings=awarenessSettings ?? new FoodAwarenessSettings(); AwarenessSettings.Clamp();
             MemoryProvider=memory;CampaignProvider=campaign;
             state = city.State.Food ?? throw new InvalidOperationException("No food state.");
+            state.Outflow ??= RivalOutflowHistory.Begin(state, city.State.Minute);
             MemorySettings = memorySettings ?? new FoodMemorySettings(); MemorySettings.Clamp();
             // Share the campaign publisher's current generation index.
             memoryStore = (campaign as FoodCampaignSource)?.ReferencesFor(state) ?? new FoodMemoryStore(state);

@@ -15,8 +15,8 @@ namespace PersistentCity.Persistence
             state.MenuPolicy = FoodMenuPolicy.Wire;
             state.Schema = 23;
         }
-        private static int MenuLimit(int schema) => schema == 23 ? FoodMenuPolicy.MaximumOffers : 4;
-        private static bool KnownMenuProduct(int schema,string product) => schema==23 ? FoodProducts.Known(product) : FoodProducts.KnownLegacy(product);
+        private static int MenuLimit(int schema) => schema >= 23 ? FoodMenuPolicy.MaximumOffers : 4;
+        private static bool KnownMenuProduct(int schema,string product) => schema>=23 ? FoodProducts.Known(product) : FoodProducts.KnownLegacy(product);
         private static void CheckMenuIds23(JsonReader reader,ref int records)
         {
             Require(reader.TokenType==JsonToken.StartArray,"Invalid additional menu IDs.");
