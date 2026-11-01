@@ -33,6 +33,8 @@ Persistence changes make `MenuPredecessorSchema=20`, expose E1's existing next-d
 
 Tests and tools use exact 18/19/20 source fixtures, retain old four-offer bounds, and add an exact schema-20 projection comparison with nonneutral weather captures. Save-contract accounting independently reconciles menu-header and weather deltas against schema 19. Awareness tooling similarly removes both additions only for its legacy projection.
 
+The additional regression sweep exposed a stale partial native double in `tools/food-candidate-regression/Program.cs`: E4's approved `NativeFoodCandidates` calls `SupportedMenu`, but the fixture still defined `Supported`. Rename that fixture method to match the production API, preserving its exact eligibility expression and all assertions. The initial compile failure and rerun are recorded in E4's validation evidence; no production code changes are involved. The C4 save comparison also deliberately pins schema 23 and compares the merged Core/Persistence with the same source excluding C4 files.
+
 ## Validation and measurement provenance
 
 Current results will be recorded in [E4 checks](../checks/e4-wider-menu.md#base-sync-with-e1-and-f1). All original E4 tables/JSON/hash/byte comparisons remain historical measurements of the `51ce709`-based stack **before E1**; neither those results nor E1's archived measurements are relabelled as integrated-tree evidence. The merge adds no per-frame work or claimed performance win; legacy loading now validates the composed migration steps and the saved wire includes both owners' fields.
