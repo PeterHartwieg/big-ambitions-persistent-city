@@ -1,0 +1,38 @@
+# E2b sync2: integrate the current development base
+
+PR #28 conflicts again after the approved street-life branch was synced once. Merge incoming `codex/persistent-city` at `3f7b885` into feature parent `e6f970b`, with merge base `8b05227`, preserving both parents in a real merge commit. This integration targets `codex/pc-e2b-street-life` and must land by **merge commit**; the harness handles push and PR publication, then PR #28 is squash-merged into development.
+
+Conflict resolution and integration only. **No E2b Runtime C# implementation was manually changed.** The one manual Core resolution combines E2b's existing `stopTiming` argument with the base's existing `ChoiceSettings` and `MemorySettings` arguments when rebuilding routes. All other shared source/test/config changes are exact clean three-way merges; no additional behavior fix, feature or performance optimization was introduced.
+
+## Conflict resolution
+
+Both sides' diffs against merge base `8b05227` were read for all four conflicted files. The automatically merged settings, config, runtime entry point, optional-stop tests and street-life plan were also inspected.
+
+| File | Resolution |
+| --- | --- |
+| `Core/CitySimulator.cs` | In `RebuildRoutes`, keep E2b's `AttachOptionalStops(stopEnvironment, stopPercentage, stopTiming)` and incoming `AttachFoodMarket(food.Market, food.ChoiceSettings, food.MemorySettings)`. Retain all incoming A3 bounded decision work, B0 capability activation and B1/B2 memory/inspector behavior. |
+| `CHECKS.md` | Keep the complete incoming short index and add one E2b line. Move all 103 lines of E2b's prior sync, review rounds, implementation evidence, performance detail and seven numbered native checks into `docs/checks/e2b-street-life.md`. Preserve every LOCKED-OK / NEEDS-INPUT / input-only marker, limitation, migration statement and historical claim; repair relative links only. Incoming slice evidence files remain unchanged. |
+| `README.md` | Keep the incoming concise README and its pointer to the checks index. Move E2b's dated opening notice into its own checks file; the other notices already live in the incoming owning files. |
+| `docs/roadmap.md` | Keep the full incoming roadmap, status and shared performance gate. Move E2b's dated status paragraph into its checks file. Move all three E2b before/after performance rows into `docs/perf/e2b-street-life.md` and append one roadmap index line. All incoming performance files and index entries remain. |
+
+The automatically merged flat config retains both E2b's five default-preserving maxima and every incoming food choice, memory and interior-guard key. The street-life plan retains both E2b's R1/R3 deferrals, R2/R4 implementation and reload limitations and incoming E2c's separate guard status. Shared settings and tests retain both slices' additions. The street-life plan's E2b evidence link now reaches the owning checks file rather than a removed monolithic heading.
+
+The preservation audit covers all **1,197 incoming tracked files**. Every incoming checks/performance file, `Persistence/` file and `Core/Model.cs` matches its incoming blob; README matches incoming exactly, and the incoming checks/roadmap indexes remain complete prefixes. Every E2b-exclusive source/test/tool file matches the approved feature parent. All six shared source/test/config files match the expected three-way union, including the single manually combined simulator call site. Every feature-added CHECKS/README/roadmap block is accounted for, with link-only edits when moved. The 103 moved checks lines retain eight LOCKED-OK, four NEEDS-INPUT and one input-only occurrences; all three original performance rows survive. Local file/heading validation passes for 97 links.
+
+**Save schema:** E2b has no independent schema allocation or persistence edit. Incoming `Persistence/` and `Core/Model.cs` are preserved exactly; schema remains **18**, with the base's full B0/B0b/B1 migration, held-tuning and memory contracts. There is no schema conflict, new saved field or migration rule from this sync.
+
+## Validation
+
+All **43/43 foreground local gates pass**: the requested Steam-reference production build with warnings as errors; **2,184 unit tests and 2,184 discovered cases**, zero failed/skipped; all **30 top-level Release regression projects plus nested pickup**; all four Python harnesses; all three demos with the requested arguments; E3 source isolation; and optional-stop `--performance --findings`. Every workload ran sequentially after the prescribed other-dotnet guard, without execution deadlines, with compiler/build-server reuse disabled. The guard waited for another worktree before the frame-observation regression. All invoked workloads completed; no detached process was launched. [Commands, exits, log hashes, observations and preservation/link audits](2026-11-01-e2b-sync2-base-results.json). Full ignored logs: `build/e2b-sync2/gate/`.
+
+The merged-tree save-contract result is schema **18**, **119,083 characters**, digest `018FC26676937FEEF88B7D06AE32B522CCE93A1CC265BCDD87A08C7DD91FBB56`, **849 orders / 797 purchases / two unconfirmed**, matching the base's recorded result. All twelve F0 runtime/save/reload byte-equality transitions pass; the four refusal outputs and economy/order/reload digests are retained in the results. Incoming persistence and migration/refusal tests are unchanged. This is a merged-tree run, not a separately rerun baseline comparison. Production DLL SHA-256: `ba5984093d0ef6ce4ab2c512719f2517b6ae7025ca2b3f71e47d7ed9c7e5f8eb`.
+
+**Offline timing flags:** D1 cold 20,000-place aggregate **35.7630 ms**, flagged across bounded units; C1 1,024-business cold/warm/continuation p95 **6.7996 / 2.1409 / 0.0014 ms**, zero samples >=30 ms. Optional-stop 957-resident admission p95 is **7.6580 / 8.8902 ms** at default 25/100%, **5.2024 / 17.4789 ms** with minimum maxima. Indexed 1,000-frontage publication/rebind p95 is **3.2525 / 5.7818 ms**. All optional-stop timing arms have **zero samples >=30 ms**. Food-routines maximum 16-event batches span **5.5422-17.6057 ms**. These are synthetic batch costs, separate from native mod-work and whole-frame timing; no new performance win or native clearance is claimed. All observation outputs and limits are in the results.
+
+Manual integration/document edits pass whitespace checks. Whole-parent comparisons inherit unchanged historical red-log whitespace and incoming blank-at-EOF warnings, which are preserved with their parent blobs. No source fix was needed after the combined argument resolution.
+
+## Native evidence and scope
+
+Under merge rule v2, in-game checks run later in a batched combined locked `rig_test` session on the development head. Pointer/input-only checks wait for Peter's 6 November playtest. Historical per-PR rig wording is retained as dated evidence; it does not change the current combined-run rule. The complete E2b numbered checklist remains in its [owning checks file](../checks/e2b-street-life.md#in-game-checks-for-6-nov-rig) and [original prepared description](../plans/e2b-pr-description.md#in-game-checks-for-6-nov-rig).
+
+Offline evidence supplies no native behavior, load, visual or performance clearance. R1/R3 and broader venues stay deferred. Native mod-work p95 must remain below 5 ms, every spike of 30 ms or more must be flagged, and whole-frame timings stay separate; physical population, closure refresh, optional-stop refresh and serialization rewrites remain parked. No game launch, rig/profile/bridge lease, Steam/Workshop, normal save or WSL access; no native money movement, deployment, release, push or PR publication.

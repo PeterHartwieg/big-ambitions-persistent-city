@@ -65,9 +65,10 @@ namespace PersistentCity.Core
                 default: throw new ArgumentException("Not an optional stop.", nameof(kind));
             }
         }
-        public static double Duration(string key, DwellKind kind, int seed) => Minimum(kind)
+        public static double Duration(string key, DwellKind kind, int seed) => Duration(key, kind, seed, DwellRules.For(kind).MaximumMinutes);
+        public static double Duration(string key, DwellKind kind, int seed, double maximum) => Minimum(kind)
             + StableRandom.Hash(key + ":duration:" + kind, seed) % 10001 / 10000.0
-                * (DwellRules.For(kind).MaximumMinutes - Minimum(kind));
+                * (maximum - Minimum(kind));
         public static bool Choose(string key, int seed, int percentage)
         {
             if (percentage < 0 || percentage > 100) throw new ArgumentOutOfRangeException(nameof(percentage));
@@ -75,6 +76,35 @@ namespace PersistentCity.Core
         }
         internal static string VisitKey(CitizenState person, double at) => person.Identity.Id + ":" + person.PlaceId
             + ":" + at.ToString("R", CultureInfo.InvariantCulture);
+    }
+
+    public sealed class OptionalStopTiming
+    {
+        public OptionalStopTiming(double @break = 10, double chat = 30, double windowShopping = 3, double audience = 8, double resting = 40)
+        {
+            Break = Clamp(DwellKind.Break, @break); Chat = Clamp(DwellKind.ChatOutsideVenue, chat);
+            WindowShopping = Clamp(DwellKind.WindowShopping, windowShopping); Audience = Clamp(DwellKind.Audience, audience);
+            Resting = Clamp(DwellKind.Resting, resting);
+        }
+        public double Break { get; }
+        public double Chat { get; }
+        public double WindowShopping { get; }
+        public double Audience { get; }
+        public double Resting { get; }
+        public double Maximum(DwellKind kind)
+        {
+            switch (kind)
+            {
+                case DwellKind.Break: return Break;
+                case DwellKind.ChatOutsideVenue: return Chat;
+                case DwellKind.WindowShopping: return WindowShopping;
+                case DwellKind.Audience: return Audience;
+                case DwellKind.Resting: return Resting;
+                default: throw new ArgumentException("Not an optional stop.", nameof(kind));
+            }
+        }
+        private static double Clamp(DwellKind kind, double value) => double.IsNaN(value)
+            ? DwellRules.For(kind).MaximumMinutes : Math.Max(OptionalStopPolicy.Minimum(kind), Math.Min(DwellRules.For(kind).MaximumMinutes, value));
     }
 
     /// <summary>Chance accounting since the last attach (a load, or a route rebuild after the travel clock rate
@@ -90,6 +120,7 @@ namespace PersistentCity.Core
     {
         private IOptionalStopEnvironment? stopEnvironment;
         private int? stopPercentage;
+        private OptionalStopTiming? stopTiming;
         // Derived, in-memory indexes of saved state, rebuilt on attach and kept exact at every change.
         // Pending chances are ordered by stable identity; holders waiting at a leisure venue (possible
         // conversation partners) are kept apart so that other chances are handed on first. Citizens holding
@@ -102,10 +133,10 @@ namespace PersistentCity.Core
         private OptionalStopChanceTally chanceTally;
         /// <summary>Diagnostics since the last attach (not saved): eligible visits, draws, stops, moved and dropped chances.</summary>
         public OptionalStopChanceTally OptionalStopChances => chanceTally;
-        public void AttachOptionalStops(IOptionalStopEnvironment environment, int? percentage)
+        public void AttachOptionalStops(IOptionalStopEnvironment environment, int? percentage, OptionalStopTiming? timing = null)
         {
             if (percentage < 0 || percentage > 100) throw new ArgumentOutOfRangeException(nameof(percentage));
-            stopEnvironment = environment ?? throw new ArgumentNullException(nameof(environment)); stopPercentage = percentage;
+            stopEnvironment = environment ?? throw new ArgumentNullException(nameof(environment)); stopPercentage = percentage; stopTiming = timing;
             bankedChances.Clear(); waitingChances.Clear(); withStops.Clear(); freeOfChances.Clear(); chanceTally = default;
             foreach (var person in State.Citizens) FileOptionalStop(person);
             // Old saves do not acquire new stops just because they were loaded.
@@ -261,7 +292,7 @@ namespace PersistentCity.Core
             planned = null;
             var place = places[person.PlaceId];
             double until = Math.Min(person.NextEventMinute, Math.Min(person.ActivityUntilMinute, DailyRoutine.NextClose(place, start) ?? start));
-            double duration = Math.Min(OptionalStopPolicy.Duration(key, kind, State.Seed), until - start);
+            double duration = Math.Min(OptionalStopPolicy.Duration(key, kind, State.Seed, stopTiming?.Maximum(kind) ?? DwellRules.For(kind).MaximumMinutes), until - start);
             if (duration < OptionalStopPolicy.Minimum(kind)) return false;
             // The first usable spot in ordinal id order, found without sorting or allocating.
             var spots = stopEnvironment!.Spots(place, kind);

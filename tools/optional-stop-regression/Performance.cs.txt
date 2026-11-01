@@ -27,7 +27,7 @@ static class StreetLifePerformance
         public IReadOnlyList<OptionalStopSpot> Spots(Place p,DwellKind k) { Queries++; return k==DwellKind.WindowShopping?cached[p.Id]:Array.Empty<OptionalStopSpot>(); }
         public OptionalStopAvailability Available(OptionalStopState stop) => OptionalStopAvailability.Ready;
     }
-    static (CitySimulator Sim,SpotEnvironment Env) Ready(int rate,int count)
+    static (CitySimulator Sim,SpotEnvironment Env) Ready(int rate,int count, bool tuned = false)
     {
         var home=new Place {Id="home",Name="Home",Kind=PlaceKind.Home,Capacity=count};
         var shops=Enumerable.Range(0,(count+7)/8).Select(i=>new Place {Id="shop:"+i,Name="Shop",Kind=PlaceKind.Shop,Capacity=8,Position=new(i*1000,0,0)}).ToArray();
@@ -41,7 +41,7 @@ static class StreetLifePerformance
             c.NextEventMinute=1450; c.ActivityUntilMinute=1570;
             c.Journey=new Walking().Plan(home,p,1440,c.Preferences);
         }
-        var env=new SpotEnvironment(shops); var sim=new CitySimulator(state,new Walking()); sim.AttachOptionalStops(env,rate);
+        var env=new SpotEnvironment(shops); var sim=new CitySimulator(state,new Walking()); sim.AttachOptionalStops(env,rate, tuned ? new OptionalStopTiming(5,10,1,2,10) : null);
         return (sim,env);
     }
     static void Check(bool value,string message) { if(!value) throw new Exception(message); }
@@ -52,7 +52,7 @@ static class StreetLifePerformance
         Array.Sort(times);
         Console.WriteLine(FormattableString.Invariant($"{label}: ms p50={times[(times.Length-1)/2]:F4} p95={times[(int)Math.Ceiling(times.Length*.95)-1]:F4} max={times[^1]:F4}; bytes/sample={bytes/(double)times.Length:F1}; spikes>=30ms={times.Count(t=>t>=30)}."));
     }
-    static void Caps(CitySimulator sim,int rate)
+    static void Caps(CitySimulator sim,int rate, bool tuned)
     {
         foreach(int cap in new[]{48,256})
         {
@@ -75,20 +75,21 @@ static class StreetLifePerformance
                 Check(f.Select()==0,"cap leaked a body");
                 times[n]=Stopwatch.GetElapsedTime(start).TotalMilliseconds; bytes+=GC.GetAllocatedBytesForCurrentThread()-before;
             }
-            Report($"Selector rate={rate} cap={cap} admitted={f.InitialPeople}/{realised}",times,bytes);
+            Report($"Selector tuned={tuned} rate={rate} cap={cap} admitted={f.InitialPeople}/{realised}",times,bytes);
         }
     }
     public static void Main()
     {
         // Warm JIT independently of measured setup/admission windows.
         for(int i=0;i<5;i++) Ready(100,256).Sim.AdvanceTo(1450);
+        foreach(bool tuned in new[]{false,true})
         foreach(int rate in new[]{25,100})
             foreach(int count in new[]{48,256,957})
             {
                 var times=new double[60]; long bytes=0,queries=0,scans=0,visits=0; CitySimulator? last=null;
                 for(int n=0;n<times.Length;n++)
                 {
-                    var (sim,env)=Ready(rate,count); // fixture and spot allocation excluded
+                    var (sim,env)=Ready(rate,count,tuned); // fixture and spot allocation excluded
                     CitySimulator.OccupancyCalls=CitySimulator.OccupancyVisits=0;
                     long before=GC.GetAllocatedBytesForCurrentThread(),start=Stopwatch.GetTimestamp();
                     sim.AdvanceTo(1450);
@@ -99,9 +100,9 @@ static class StreetLifePerformance
                     Check(tally.Drawn==tally.Realised+sim.State.Citizens.Count(c=>c.OptionalStopChoice==true&&c.OptionalStop==null)+tally.Dropped,"chance accounting changed");
                     last=sim;
                 }
-                Report($"Admission rate={rate} residents={count} realised={last!.OptionalStopChances.Realised}",times,bytes);
+                Report($"Admission tuned={tuned} rate={rate} residents={count} realised={last!.OptionalStopChances.Realised}",times,bytes);
                 Console.WriteLine(FormattableString.Invariant($"  per batch: spot queries={queries/60.0:F1}; occupancy calls={scans/60.0:F1}; occupancy record visits={visits/60.0:F1}"));
-                if(count==957) Caps(last,rate);
+                if(count==957) Caps(last,rate,tuned);
             }
         Console.WriteLine("Offline synthetic costs only; instrumented occupancy counters, .NET JIT and geometry/body doubles are not Unity mod-work or whole-frame evidence.");
     }

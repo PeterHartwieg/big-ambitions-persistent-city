@@ -195,6 +195,7 @@ namespace PersistentCity.Runtime
                     || !Position.Finite(settings.PhysicalRadiusMetres) || settings.PhysicalRadiusMetres < 30 || settings.PhysicalRadiusMetres > 300)
                     throw new InvalidDataException("Physical limits must be 1–256 pedestrians, 1–64 vehicles and a 30–300 metre radius.");
                 settings.ReportInteriorSettings(message => log.Info(message));
+                settings.ReportStreetLifeSettings(message => log.Info(message));
                 if (!settings.Enabled)
                 {
                     Say("Persistent City is disabled by a developer configuration override. Remove the override and reload the city to start it.");
@@ -575,7 +576,7 @@ namespace PersistentCity.Runtime
             routes = new MultimodalRoutes(state.Places, NativeTravelPace.WalkingMetresPerSecond / state.TravelClockRate, state.TravelClockRate, dependency, routeObjects);
             simulation = new CitySimulator(state, routes);
             dwellSpots = new DwellSpots();
-            simulation.AttachOptionalStops(new OptionalStopEnvironment(state.Places, dwellSpots), settings.OptionalStopChoicePercentage);
+            simulation.AttachOptionalStops(new OptionalStopEnvironment(state.Places, dwellSpots), settings.OptionalStopChoicePercentage, settings.StopTiming());
             seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
             if (state.Food == null)
                 state.Food = new FoodCommerceState { MealRhythmVersion = MealRhythm.PolicyVersion, HouseholdFinanceVersion = HouseholdFinance.PolicyVersion,

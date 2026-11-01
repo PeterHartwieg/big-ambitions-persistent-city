@@ -66,3 +66,5 @@ Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index
 - B1 — [Shop memory and loyalty v2](perf/b1-memory-loyalty.md).
 
 - B2 — [Observed own-shop regulars and resident memory words](perf/b2-regulars-inspector.md).
+
+- E2b — [Bounded street-life timing and fail-closed frontage ownership](perf/e2b-street-life.md).

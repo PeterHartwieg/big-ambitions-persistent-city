@@ -19,3 +19,5 @@ Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here
 - Earlier development history — October foundation, food, traffic and performance evidence: [checks](docs/checks/history-2026-10-development.md).
 - pc-docs-checks-split — Documentation structure and preservation audit: [checks](docs/checks/pc-docs-checks-split.md).
 - E2c — Third-party interior guard, base syncs and native checklist: [checks](docs/checks/e2c-interior-guard.md).
+
+- E2b — [Bounded street-life, reviews, base syncs and native checklist](docs/checks/e2b-street-life.md).

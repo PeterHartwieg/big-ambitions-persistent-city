@@ -62,6 +62,58 @@ namespace PersistentCity.Runtime
             get => optionalStopChoicePercentage;
             set => optionalStopChoicePercentage = Math.Max(0, Math.Min(100, value));
         }
+        private readonly bool[] timingAdjusted = new bool[5];
+        private bool timingReported;
+        private int breakMaximum = 10;
+        [JsonConverter(typeof(StreetLifeMinutesConverter), 5, 10)]
+        public int StreetLifeBreakMaximumMinutes
+        {
+            get => breakMaximum;
+            set { int effective = value == int.MinValue ? 10 : Math.Max(5, Math.Min(10, value)); timingAdjusted[0] |= effective != value; breakMaximum = effective; }
+        }
+        private int chatMaximum = 30;
+        [JsonConverter(typeof(StreetLifeMinutesConverter), 10, 30)]
+        public int StreetLifeChatMaximumMinutes
+        {
+            get => chatMaximum;
+            set { int effective = value == int.MinValue ? 30 : Math.Max(10, Math.Min(30, value)); timingAdjusted[1] |= effective != value; chatMaximum = effective; }
+        }
+        private int windowShoppingMaximum = 3;
+        [JsonConverter(typeof(StreetLifeMinutesConverter), 1, 3)]
+        public int StreetLifeWindowShoppingMaximumMinutes
+        {
+            get => windowShoppingMaximum;
+            set { int effective = value == int.MinValue ? 3 : Math.Max(1, Math.Min(3, value)); timingAdjusted[2] |= effective != value; windowShoppingMaximum = effective; }
+        }
+        private int audienceMaximum = 8;
+        [JsonConverter(typeof(StreetLifeMinutesConverter), 2, 8)]
+        public int StreetLifeAudienceMaximumMinutes
+        {
+            get => audienceMaximum;
+            set { int effective = value == int.MinValue ? 8 : Math.Max(2, Math.Min(8, value)); timingAdjusted[3] |= effective != value; audienceMaximum = effective; }
+        }
+        private int restingMaximum = 40;
+        [JsonConverter(typeof(StreetLifeMinutesConverter), 10, 40)]
+        public int StreetLifeRestingMaximumMinutes
+        {
+            get => restingMaximum;
+            set { int effective = value == int.MinValue ? 40 : Math.Max(10, Math.Min(40, value)); timingAdjusted[4] |= effective != value; restingMaximum = effective; }
+        }
+        public OptionalStopTiming StopTiming() => new OptionalStopTiming(StreetLifeBreakMaximumMinutes,
+            StreetLifeChatMaximumMinutes, StreetLifeWindowShoppingMaximumMinutes, StreetLifeAudienceMaximumMinutes, StreetLifeRestingMaximumMinutes);
+        public void ReportStreetLifeSettings(Action<string> report)
+        {
+            if (timingReported) return;
+            timingReported = true;
+            if (timingAdjusted[0]) report("StreetLifeBreakMaximumMinutes adjusted to " + StreetLifeBreakMaximumMinutes + " (default 10, range 5-10).");
+            if (timingAdjusted[1]) report("StreetLifeChatMaximumMinutes adjusted to " + StreetLifeChatMaximumMinutes + " (default 30, range 10-30).");
+            if (timingAdjusted[2]) report("StreetLifeWindowShoppingMaximumMinutes adjusted to " + StreetLifeWindowShoppingMaximumMinutes + " (default 3, range 1-3).");
+            if (timingAdjusted[3]) report("StreetLifeAudienceMaximumMinutes adjusted to " + StreetLifeAudienceMaximumMinutes + " (default 8, range 2-8).");
+            if (timingAdjusted[4]) report("StreetLifeRestingMaximumMinutes adjusted to " + StreetLifeRestingMaximumMinutes + " (default 40, range 10-40).");
+            report("Street-life maxima (game minutes): break=" + StreetLifeBreakMaximumMinutes + ", chat=" + StreetLifeChatMaximumMinutes
+                + ", windowShopping=" + StreetLifeWindowShoppingMaximumMinutes + ", audience=" + StreetLifeAudienceMaximumMinutes
+                + ", resting=" + StreetLifeRestingMaximumMinutes + "; new stops only.");
+        }
         public bool Enabled { get; set; } = true;
         public double GameClockFactor { get; set; } = CityBalance.GameClockFactor;
         public bool PhysicalEnabled { get; set; } = true;
@@ -109,6 +161,33 @@ namespace PersistentCity.Runtime
             report("InteriorCityView=" + interiorCityView + ", radius=" + interiorRadius.ToString(CultureInfo.InvariantCulture)
                 + "m, pedestrians=" + InteriorMaximumPedestrians + ", vehicles=" + InteriorMaximumVehicles + "; city drawing prototype=no-op (F0).");
         }
+    }
+
+    internal sealed class StreetLifeMinutesConverter : JsonConverter<int>
+    {
+        private readonly int minimum, maximum;
+        public StreetLifeMinutesConverter(int minimum, int maximum)
+        { this.minimum = minimum; this.maximum = maximum; }
+        public override int ReadJson(JsonReader reader, Type objectType, int existingValue, bool hasExistingValue, JsonSerializer serializer)
+        {
+            var token = JToken.Load(reader);
+            double value;
+            // Numeric tokens already hold a number. Formatting them as localized text before
+            // invariant parsing changes endpoint clamps under comma-decimal cultures.
+            if (token.Type == JTokenType.Integer || token.Type == JTokenType.Float) value = (double)token;
+            else if (token.Type != JTokenType.String || !double.TryParse(token.ToString(), NumberStyles.Float,
+                CultureInfo.InvariantCulture, out value)) return int.MinValue;
+            if (!double.IsNaN(value))
+            {
+                // Bounds belong to the property, independent of accepted JSON key spelling.
+                // Keep out-of-range values distinguishable for the once-only adjustment report.
+                if (value < minimum) return minimum - 1;
+                if (value > maximum) return maximum + 1;
+                if (value == Math.Truncate(value)) return (int)value;
+            }
+            return int.MinValue; // Invalid individual value: property selects its documented default.
+        }
+        public override void WriteJson(JsonWriter writer, int value, JsonSerializer serializer) => writer.WriteValue(value);
     }
 
     internal sealed class InteriorModeConverter : JsonConverter<string>
