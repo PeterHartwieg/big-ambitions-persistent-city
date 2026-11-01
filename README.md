@@ -18,6 +18,8 @@ E3 frenchfries: [offline feasibility STOP](docs/plans/e3-frenchfries.md); shippe
 
 F1 shop view stopped at the drawing decision: [clean-room NO-GO and smaller geometry probe](docs/plans/f1-shop-view-decision.md). F0 drawing remains a no-op; runtime and save behavior are unchanged.
 
+F1b adds explicit read-only door/transform and capped street-renderer metadata commands. [Evidence and offline checks](docs/checks/f1b-street-proxy.md): renderer NO-GO pending semantic door mapping, independent aperture alignment and bounded native coverage; no renderer or schema change.
+
 An independent Big Ambitions mod that requires Real Life Overhaul. Working name; no public release yet.
 
 The population foundation gives citizens persistent identities, homes, daily activities and journeys even when the player is elsewhere. The current implementation automatically acquires eligible player food businesses at a verified hourly boundary; unsupported businesses remain native. Outside an owned food scope, activity visits have no economic effects. Work destinations create no native employment. The [neighborhood food candidate](docs/neighborhood-economy.md) adds persistent individual balances, explicit outside income/support, essential expenses and a paid home-food alternative.
