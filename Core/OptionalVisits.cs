@@ -7,6 +7,10 @@ namespace PersistentCity.Core
     {
         public bool TryBeginMealVisit(string citizenId, string shopId, Route outward,
             double returnMinutes, double stayMinutes, double latestReturnMinute, bool deferObservation = false)
+            => TryBeginMealVisit(citizenId, shopId, outward, returnMinutes, stayMinutes, latestReturnMinute, deferObservation, null);
+
+        internal bool TryBeginMealVisit(string citizenId, string shopId, Route outward,
+            double returnMinutes, double stayMinutes, double latestReturnMinute, bool deferObservation, Place? capturedHours)
         {
             if (!citizenEvents.TryGetValue(citizenId, out var item) || !places.TryGetValue(shopId, out var shop)
                 || shop.Kind != PlaceKind.Shop || !CurrentCitizenSlot(item, item.Citizen) || InProgress(item)) return false;
@@ -17,9 +21,10 @@ namespace PersistentCity.Core
             if (!Position.Finite(returnMinutes) || returnMinutes <= 0 || !Position.Finite(stayMinutes) || stayMinutes <= 0
                 || stayMinutes > 120 || !Position.Finite(latestReturnMinute)) throw new ArgumentException("Invalid meal outing.");
             ValidateRoute(outward, places[person.PlaceId].Position, shop.Position);
+            var hours = capturedHours ?? shop;
             double arrival = now + outward.Minutes, leave = arrival + stayMinutes;
             if (outward.Legs.Any(l => l.Mode != TravelMode.Walk) || leave + returnMinutes > latestReturnMinute
-                || !DailyRoutine.Open(shop, arrival) || DailyRoutine.NextClose(shop, arrival) < leave) return false;
+                || !DailyRoutine.Open(hours, arrival) || DailyRoutine.NextClose(hours, arrival) < leave) return false;
             var outing = new MealOuting { OriginId = person.PlaceId, OriginActivity = person.Activity,
                 ResumeUntil = person.ActivityUntilMinute, ResumeEvent = person.NextEventMinute };
             if (!due.Remove(item)) throw new InvalidOperationException("Resident has no queued event.");
@@ -65,6 +70,13 @@ namespace PersistentCity.Core
                 person.PlaceId = person.DestinationId; person.Activity = Activity.Shop;
                 person.Phase = CitizenPhase.AtPlace; person.Journey = null; person.DestinationId = "";
                 person.DepartureMinute = 0; person.CompletedJourneys++;
+                if (now < person.ActivityUntilMinute && food?.OwnsRivalMealVisit(person, person.PlaceId) == true)
+                {
+                    // Arrival is at the door; FoodCommerce revalidates the detached terms
+                    // before recording admission or serving. No shared place-hours write.
+                    person.NextEventMinute = person.ActivityUntilMinute;
+                    return MealOutingStep.Handled;
+                }
                 if (now < person.ActivityUntilMinute && DailyRoutine.Open(places[person.PlaceId], now))
                 {
                     person.RecentVisits.Add(new VisitRecord { AtMinute = now, PlaceId = person.PlaceId, Activity = Activity.Shop });
@@ -73,6 +85,9 @@ namespace PersistentCity.Core
                     return MealOutingStep.Handled;
                 }
             }
+            if (!outing.Returning && person.Phase == CitizenPhase.AtPlace && now < person.ActivityUntilMinute
+                && food?.OwnsRivalMealVisit(person, person.PlaceId) == true)
+            { person.NextEventMinute = person.ActivityUntilMinute; return MealOutingStep.Handled; }
             // While admitted, the ordinary event owns the planned eating/stay interval.
             if (!outing.Returning && person.Phase == CitizenPhase.AtPlace && now < person.ActivityUntilMinute
                 && DailyRoutine.Open(places[person.PlaceId], now)) return MealOutingStep.Ordinary;

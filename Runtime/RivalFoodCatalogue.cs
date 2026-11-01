@@ -14,8 +14,8 @@ namespace PersistentCity.Runtime
             = new Dictionary<string, FoodCatalogueRefusal>();
     }
 
-    /// <summary>Explicit main-thread diagnostic reader; no scheduler, hook, authority or gameplay
-    /// consumer. One instance per loaded city. Never retain this instance across save/reload.
+    /// <summary>Main-thread read-only metadata and diagnostic reader; no native sale authority.
+    /// One instance per loaded city. Never retain this instance across save/reload.
     /// Metadata refresh is bounded; detailed reads touch only the requested (at most eight) shops.</summary>
     public sealed class RivalFoodCatalogue : IDisposable
     {
@@ -25,7 +25,7 @@ namespace PersistentCity.Runtime
         {
             internal string Id = "", Place = "", Street = "", Type = "", Owner = "";
             internal int Number, Day, Seen;
-            internal bool Player, Ambiguous;
+            internal bool Player, Ambiguous, AdvertisesFood;
             internal FoodScope Scope = null!;
             internal WeakReference<CityBuildingController> Controller = null!;
             internal WeakReference<BuildingRegistration> Registration = null!;
@@ -37,14 +37,14 @@ namespace PersistentCity.Runtime
         internal long MetadataRevision { get; private set; }
         internal IEnumerable<FoodScope> MetadataScopes
         {
-            get { foreach(var e in entries.Values) yield return !e.Player && !e.Ambiguous ? e.Scope : null!; }
+            get { foreach(var e in entries.Values) yield return !e.Player && !e.Ambiguous && e.AdvertisesFood ? e.Scope : null!; }
         }
-        internal bool RivalAtPlace(string place) => entries.TryGetValue(place, out var e) && !e.Player && !e.Ambiguous;
+        internal bool RivalAtPlace(string place) => entries.TryGetValue(place, out var e) && !e.Player && !e.Ambiguous && e.AdvertisesFood;
         internal bool TryRivalPlace(string id, out string place)
-        { place = ""; if(!byBusiness.TryGetValue(id, out var e) || e.Player || e.Ambiguous) return false; place=e.Place; return true; }
+        { place = ""; if(!byBusiness.TryGetValue(id, out var e) || e.Player || e.Ambiguous || !e.AdvertisesFood) return false; place=e.Place; return true; }
         internal bool Candidate(string id, string place)
         {
-            if(!ready || !byBusiness.TryGetValue(id,out var e) || e.Place!=place || e.Player || e.Ambiguous || e.Seen!=epoch) return false;
+            if(!ready || !byBusiness.TryGetValue(id,out var e) || e.Place!=place || e.Player || e.Ambiguous || !e.AdvertisesFood || e.Seen!=epoch) return false;
             return e.Controller.TryGetTarget(out var c) && c!=null && c.buildingRegistration!=null
                 && Matches(e,c,c.buildingRegistration) && c.buildingRegistration.HasEstablishedBusiness && !c.buildingRegistration.AvailableForRent;
         }
@@ -119,6 +119,12 @@ namespace PersistentCity.Runtime
             else if (entry.Seen == epoch || entry.Seen != epoch - 1 || !Matches(entry, controller, reg))
                 { if(!entry.Ambiguous) MetadataRevision++; entry.Ambiguous = true; } // Quarantined for this city's diagnostic session; no identity transfer.
             if ((!reg.HasEstablishedBusiness || reg.AvailableForRent) && !entry.Ambiguous) { entry.Ambiguous = true; MetadataRevision++; }
+            // Existing advertised fields only, once per bounded refresh unit. A non-food
+            // retailer must never occupy the common source/index or shortlist slots.
+            bool food = false;
+            if (reg.retailPrices != null) foreach (var price in reg.retailPrices)
+                if (price != null && FoodProducts.Known(price.itemName)) { food = true; break; }
+            if (entry.AdvertisesFood != food) { entry.AdvertisesFood = food; MetadataRevision++; }
             entry.Seen = epoch;
         }
 

@@ -111,6 +111,11 @@ choice captures terms; there is no consumer-by-shop table or per-meal catalogue 
 Slot zero uses the original physical outing/return and represented slots use the
 original excursion, deadlines and return safety. Arrival and completion recheck
 readable identity, owner/kind, exact price, hours, closure, door and access.
+Candidate capture never writes the saved `Place.WeeklyHours`. Slot-zero departure
+checks the detached captured schedule; its owned outing reaches the door, then
+the live rival check records admission before service. The original place hours
+still govern ordinary routines and all other residents. These trip-specific
+checks also apply after reload without a new saved field or shared-hours cache.
 Withdrawal/changed terms refuses without a debit or substitute. Ownership changes
 invalidate old authority. D1's conservative quarantine of observed replacements,
 collection replacement, disappearance and ownership change remains in force.

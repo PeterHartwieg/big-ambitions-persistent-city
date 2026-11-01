@@ -344,7 +344,8 @@ namespace PersistentCity.Core
                     && now < meal.Deadline && Position.Distance(city.FindPlace(meal.PlaceId).Position, meal.Excursion.DestinationPosition) <= .01
                     : person.MealOuting != null && !person.MealOuting.Returning
                     && person.Phase == CitizenPhase.AtPlace && person.PlaceId == meal.PlaceId
-                    && person.RecentVisits.Any(v => v.PlaceId == meal.PlaceId && v.Activity == Activity.Shop && v.AtMinute >= meal.DesiredAt);
+                    && (meal.TargetKind == FoodAlternativeKind.Rival
+                        || person.RecentVisits.Any(v => v.PlaceId == meal.PlaceId && v.Activity == Activity.Shop && v.AtMinute >= meal.DesiredAt));
                 if (admitted)
                 {
                     if (meal.TargetKind == FoodAlternativeKind.Rival) { ArriveRival(meal, person, now); return; }

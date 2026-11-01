@@ -171,13 +171,21 @@ public sealed class RivalOutflowTests
         Assert.Equal(FoodAvailabilityEvidenceKind.EstimatedFromPriceAndHours, b.AvailabilityEvidence);
         Assert.Null(b.MealsPerHour); Assert.Null(b.Offers.Single().Units); Assert.Equal(5, b.ServiceMinutes);
     }
-    [Fact]
-    public void FreshRivalCaptureRefreshesThePhysicalPlaceHoursWithoutNativeWrites()
+    [Theory] [InlineData(false)] [InlineData(true)]
+    public void RivalCaptureAndVisitKeepSavedPlaceHoursUnchanged(bool withdraw)
     {
         var (city, market, _) = Ready();
         var place=city.State.Places.Single(p=>p.Id=="s0");place.OpenMinute=place.CloseMinute=0;place.WeeklyHours.Clear();
-        var meal=city.State.Food!.Residents.Single();Advance(city,meal.DesiredAt+7);
-        Assert.Equal(1,meal.Purchases);Assert.Equal(7,place.WeeklyHours.Count);Assert.Equal(0,market.NativeBuys);
+        var hours=place.WeeklyHours;string before=JsonConvert.SerializeObject(place);
+        var meal=city.State.Food!.Residents.Single();city.InspectFoodAwareness("r");
+        for(int units=0;units<512&&meal.Decision==null;units++) city.AdvanceTo(meal.DesiredAt,1);
+        Assert.NotNull(meal.Decision);Assert.Same(hours,place.WeeklyHours);Assert.Equal(before,JsonConvert.SerializeObject(place));
+        if(withdraw) market.Observations.Clear();
+        Advance(city,meal.DesiredAt+7);
+        Assert.Equal(withdraw?0:1,meal.Purchases);Assert.Equal(0,market.NativeBuys);
+        Advance(city,city.State.Minute+20);Assert.Null(city.State.Citizens.Single().MealOuting);
+        Assert.Same(hours,place.WeeklyHours);Assert.Equal(before,JsonConvert.SerializeObject(place));
+        Assert.False(DailyRoutine.Open(place,city.State.Minute));
     }
     static ResidentMeal Payable() => new() { External = "10" + RivalFoodTerms.Fingerprint(Observation()), Status = MealStatus.Serving,
         Price = Money.FromCents(100), Allowance = Money.FromCents(1000), Budget = new ResidentBudget {

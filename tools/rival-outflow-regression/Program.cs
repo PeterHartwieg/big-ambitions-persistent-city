@@ -6,7 +6,7 @@ using PersistentCity.Core;
 using PersistentCity.Persistence;
 using PersistentCity.Runtime;
 
-static class Program
+static partial class Program
 {
     static int checks;
     static void Check(bool ok, string label) { checks++; if (!ok) throw new Exception(label); }
@@ -177,8 +177,11 @@ static class Program
             caughtUp=step.CaughtUp,cityMinute=state.Minute,diagnostic=city.DumpRivalFood()};
         market.CloseRivals();return result;
     }
-    static void Main()
+    static void Main(string[] args)
     {
+        if(args.Length == 1 && args[0].StartsWith("review-", StringComparison.Ordinal))
+        { ReviewCase(args[0]); Console.WriteLine("PASS " + args[0] + ": " + checks + " checks"); return; }
+        ReviewCase("review-non-food"); ReviewCase("review-refresh-failure"); ReviewCase("review-saved-failure");
         OverflowBeforeCommit();NativeProof();var scales=new[]{Scale(1024),Scale(20000)};
         var wholeDay=new[]{WholeDay(1024),WholeDay(20000)};
         Console.WriteLine(JsonConvert.SerializeObject(new {scales,settlement=Settlements(),unknownStockReservations=UnknownStockReservationKeys(),saves=new[]{SaveSize(1914),SaveSize(5000)},wholeDay,checks},Formatting.Indented));

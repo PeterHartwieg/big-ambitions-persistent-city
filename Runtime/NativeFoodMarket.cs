@@ -89,11 +89,12 @@ namespace PersistentCity.Runtime
             public IReadOnlyDictionary<string, FoodSupplySnapshot> Supply { get; }
         }
         public double EarliestMinute => SaveGameManager.Current.Day * 1440.0 + SaveGameManager.Current.Hour * 60.0;
-        public NativeFoodMarket(FoodCommerceState state, IReadOnlyList<Place>? places = null, bool enrolling = false, RivalFoodSettings? rivalSettings = null)
+        public NativeFoodMarket(FoodCommerceState state, IReadOnlyList<Place>? places = null, bool enrolling = false, RivalFoodSettings? rivalSettings = null, Action<string>? rivalWarning = null)
         {
             if (active != null) throw new InvalidOperationException("A food market already owns the native hooks.");
             save = SaveGameManager.Current; this.state = state;
             this.rivalSettings = rivalSettings ?? new RivalFoodSettings(); this.rivalSettings.Clamp();
+            RivalWarning = rivalWarning;
             NativeFoodOwnership.ValidatePopulation(state);
             controllers = CityManager.Instance.cityBuildingControllers.Where(c => c != null).ToArray();
             discoveryRegistrations = new BuildingRegistration?[controllers.Length];

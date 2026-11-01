@@ -158,12 +158,13 @@ namespace PersistentCity.Core
             if (!RivalFoodTerms.Eligible(observation)) return null;
             var business = RivalFoodTerms.Capture(observation!, RivalSettings.RivalAssumedServiceMinutes);
             business.NextServiceMinute = minute;
-            // Refresh only this shortlisted own place's advertised schedule. The existing
-            // physical outing admission reads that schedule as well as the captured terms.
-            // Otherwise a native hours edit could leave slot zero using load-time hours.
-            city.FindPlace(business.PlaceId).WeeklyHours = business.Hours;
             return business;
         }
+        // Only this committed slot-zero outing defers admission to the live rival check.
+        // Ordinary routines and other residents retain the place's original saved hours.
+        internal bool OwnsRivalMealVisit(CitizenState person, string place) => person.MealOuting != null
+            && !person.MealOuting.Returning && records.TryGetValue(person.Identity.Id, out var meal)
+            && meal.TargetKind == FoodAlternativeKind.Rival && meal.PlaceId == place;
         private bool RivalCommitAllowed(ResidentMeal meal, FoodDecisionShop shop, Money price, double minute)
             => ExternalFoodSettlement.CanPay(meal, price) && RivalMatches(shop.BusinessId, shop.PlaceId, shop.RivalTerms, shop.Offers, null, minute, out _, requireOpen: false);
         private bool RivalMatches(string id, string place, string terms, IEnumerable<FoodDecisionOffer>? offers, ResidentMeal? meal, double minute,
@@ -188,7 +189,12 @@ namespace PersistentCity.Core
             if (finish + MealRhythm.EatingMinutes(meal.Kind) + meal.ReturnMinutes > meal.Deadline
                 || finish >= (DailyRoutine.NextClose(hours!, now) ?? double.NegativeInfinity))
             { Finish(meal, MealStatus.Missed, "Service no longer fits shop opening hours"); return; }
-            if (meal.Slot == 0) city.ExtendMealStay(person, finish + MealRhythm.EatingMinutes(meal.Kind));
+            if (meal.Slot == 0)
+            {
+                person.RecentVisits.Add(new VisitRecord { AtMinute = now, PlaceId = meal.PlaceId, Activity = Activity.Shop });
+                if (person.RecentVisits.Count > 32) person.RecentVisits.RemoveAt(0);
+                city.ExtendMealStay(person, finish + MealRhythm.EatingMinutes(meal.Kind));
+            }
             meal.ServiceAt = finish; meal.Status = MealStatus.Serving; meal.DueAt = finish;
         }
         private void CompleteRival(ResidentMeal meal, double now)
