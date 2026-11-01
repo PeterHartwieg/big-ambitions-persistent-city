@@ -38,6 +38,16 @@ public sealed class A5IntegratedAcceptanceTests
     }
 
     [Fact]
+    public void MissingHistoricalShopDoesNotInventAClosure()
+    {
+        var (city, _, _) = WeightedFoodChoiceTests.Ready(79);
+        var meal = city.State.Food!.Residents[0]; meal.Kind = MealKind.Lunch;
+        meal.Today = new() { Day = 1, Meals = { new() { Kind = MealKind.Lunch,
+            Status = MealOutcomeStatus.Bought, PlaceId = "missing-shop", ProductId = FoodProducts.Croissant } } };
+        Assert.Equal("bought croissant at an unknown shop", city.Inspect("r")!.Meals[1].Text);
+    }
+
+    [Fact]
     public void InactiveMemoryDoesNotClaimCuriousBehaviourAndActiveMemoryStaysPersonal()
     {
         var (city, market, paths) = WeightedFoodChoiceTests.Ready(79, representation: 2);
@@ -83,7 +93,11 @@ public sealed class A5IntegratedAcceptanceTests
         bool reloaded = false, savedSelection = false;
         while (!candidate.IsCaughtUpTo(at))
         {
-            if (reloadAt < 0 || units == reloadAt)
+            Assert.InRange(units, 0, 255);
+            // Catalogue preparation is transient, not a saved decision yield. A single
+            // before-capture reload is covered, but repeatedly discarding unpublished
+            // preparation would prevent any runtime from ever reaching capture.
+            if (reloadAt < 0 ? units == 0 || candidate.State.Food!.Residents[0].Decision != null : units == reloadAt)
             {
                 var data = new Dictionary<string, string>();
                 Assert.True(SaveSession.Open(data, candidate.State.PopulationKey).WriteTo(data, candidate.State).Success);

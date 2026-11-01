@@ -379,7 +379,7 @@ namespace PersistentCity.Core
         private static string Describe(MealOutcomeRecord outcome, Func<string, string> label, Func<string, string> productName)
         {
             string shop = outcome.PlaceId.Length == 0 ? "a shop" : label(outcome.PlaceId);
-            if (shop == UnknownPlace) shop = "a shop no longer available";
+            if (shop == UnknownPlace) shop = "an unknown shop";
             string product = productName(outcome.ProductId);
             switch (outcome.Status)
             {
