@@ -1,5 +1,7 @@
 # Sync approved E4 with the latest E1/F1/A5 integration base
 
+Historical handoff for `E4/E1 sync before C2b and D2`. Its schema/refusal and measurement claims apply only to that source. The current supported composition is **20 -> 21 -> 22 -> 23**, with writer 23; see [schema 23](../population-schema23.md) and [current D2 sync handoff](../reviews/2026-11-01-d2-sync2-base-pr-description.md).
+
 Target: `codex/pc-e4-wider-menu`. Merge this PR with a **merge commit** so the real integration merge ancestry is retained; PR #56 can then be squash-merged into `codex/persistent-city`.
 
 Merge `5877453` (E1) and ancestor `2f12ae9` (F1) into the approved E4 head `506e434`, using merge base `51ce709`. When integration advanced to `0ffb819` (A5), merge it again using merge base `5877453`. No rebase, squash, cherry-pick, new feature, game access or deployment. E4 retains schema 23, the eight-offer saved envelope, effective live limit four, reserved product identities and the approved missing-price fix. E1 rain capture/settings/choice inputs, F1's NO-GO stop report and A5's inspector/acceptance changes remain intact.
@@ -18,7 +20,7 @@ Both sides' diffs against `51ce709` were read for each conflicted file:
 | `tests/FoodAwarenessMemoryIntegrationTests.cs` | Retain E1's full 18/19/20 matrix, rain/memory checks and changed-input replay; add current schema 23 and strip only fields absent from each old format. |
 | `tests/FoodAwarenessTests.cs` | Use E1's weather-free legacy fixture plus E4-free legacy header; assert migration reaches 23. |
 | `tests/MarketResearchTests.cs` | Keep unchanged-save assertion and pin current schema 23. |
-| `tests/Schema17Tests.cs` | Pin genuinely future 24/25/1000; reserved 21/22 refusals remain explicitly tested by E4. |
+| `tests/Schema17Tests.cs` | Pin genuinely future 24/25/1000; 21/22 were then reserved/refused by E4; both are now supported predecessors. |
 | `tests/Schema18ReviewTests.cs` | Expect canonical schema-23 header; retain E1's reserved-schema/invalid bootstrap cases. |
 | `tests/Schema18Tests.cs` | Use schema-23 hexadecimal corruption and E1's weather-suffixed escaped-memory corruption; retain exact refusal/source preservation. |
 | `tools/save-contract-regression/AwarenessContracts.cs` | Preserve E1's exact old-format projection and awareness byte equality; project E4's menu header out separately rather than weakening the equality. |

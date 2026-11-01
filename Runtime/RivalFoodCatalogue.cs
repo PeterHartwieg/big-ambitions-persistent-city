@@ -14,8 +14,8 @@ namespace PersistentCity.Runtime
             = new Dictionary<string, FoodCatalogueRefusal>();
     }
 
-    /// <summary>Explicit main-thread diagnostic reader; no scheduler, hook, authority or gameplay
-    /// consumer. One instance per loaded city. Never retain this instance across save/reload.
+    /// <summary>Main-thread read-only metadata and diagnostic reader; no native sale authority.
+    /// One instance per loaded city. Never retain this instance across save/reload.
     /// Metadata refresh is bounded; detailed reads touch only the requested (at most eight) shops.</summary>
     public sealed class RivalFoodCatalogue : IDisposable
     {
@@ -25,12 +25,28 @@ namespace PersistentCity.Runtime
         {
             internal string Id = "", Place = "", Street = "", Type = "", Owner = "";
             internal int Number, Day, Seen;
-            internal bool Player, Ambiguous;
+            internal bool Player, Ambiguous, AdvertisesFood;
+            internal FoodScope Scope = null!;
             internal WeakReference<CityBuildingController> Controller = null!;
             internal WeakReference<BuildingRegistration> Registration = null!;
             // Reset replaces retailPrices even when it reuses the registration object.
             // A mere collection replacement is conservatively ambiguous too.
             internal WeakReference<object>? Prices;
+        }
+        private readonly Dictionary<string, Entry> byBusiness = new Dictionary<string, Entry>(StringComparer.Ordinal);
+        internal long MetadataRevision { get; private set; }
+        internal IEnumerable<FoodScope> MetadataScopes
+        {
+            get { foreach(var e in entries.Values) yield return !e.Player && !e.Ambiguous && e.AdvertisesFood ? e.Scope : null!; }
+        }
+        internal bool RivalAtPlace(string place) => entries.TryGetValue(place, out var e) && !e.Player && !e.Ambiguous && e.AdvertisesFood;
+        internal bool TryRivalPlace(string id, out string place)
+        { place = ""; if(!byBusiness.TryGetValue(id, out var e) || e.Player || e.Ambiguous || !e.AdvertisesFood) return false; place=e.Place; return true; }
+        internal bool Candidate(string id, string place)
+        {
+            if(!ready || !byBusiness.TryGetValue(id,out var e) || e.Place!=place || e.Player || e.Ambiguous || !e.AdvertisesFood || e.Seen!=epoch) return false;
+            return e.Controller.TryGetTarget(out var c) && c!=null && c.buildingRegistration!=null
+                && Matches(e,c,c.buildingRegistration) && c.buildingRegistration.HasEstablishedBusiness && !c.buildingRegistration.AvailableForRent;
         }
         private readonly Dictionary<string, Entry> entries = new Dictionary<string, Entry>(StringComparer.Ordinal);
         private readonly Dictionary<(string Street, int Number), Entry> addresses = new Dictionary<(string, int), Entry>();
@@ -91,12 +107,24 @@ namespace PersistentCity.Runtime
                     Id = FoodBusinessCatalogue.BusinessIdentity(reg), Controller = new WeakReference<CityBuildingController>(controller),
                     Registration = new WeakReference<BuildingRegistration>(reg),
                     Prices = reg.retailPrices == null ? null : new WeakReference<object>(reg.retailPrices) };
+                if(!entry.Player) entry.Scope = new FoodScope { AlternativeKind=FoodAlternativeKind.Rival, BusinessId=entry.Id, PlaceId=place,
+                    ProductId=FoodProducts.Croissant, AdditionalProductIds=new List<string> { FoodProducts.Burger, FoodProducts.HotDog } };
+                // Duplicate complete identities are quarantined rather than inherited.
+                if(byBusiness.TryGetValue(entry.Id,out var duplicate)) { duplicate.Ambiguous=true; entry.Ambiguous=true; }
+                else byBusiness.Add(entry.Id,entry);
+                MetadataRevision++;
                 entries.Add(place, entry);
                 addresses.Add(address, entry);
             }
             else if (entry.Seen == epoch || entry.Seen != epoch - 1 || !Matches(entry, controller, reg))
-                entry.Ambiguous = true; // Quarantined for this city's diagnostic session; no identity transfer.
-            if (!reg.HasEstablishedBusiness || reg.AvailableForRent) entry.Ambiguous = true;
+                { if(!entry.Ambiguous) MetadataRevision++; entry.Ambiguous = true; } // Quarantined for this city's diagnostic session; no identity transfer.
+            if ((!reg.HasEstablishedBusiness || reg.AvailableForRent) && !entry.Ambiguous) { entry.Ambiguous = true; MetadataRevision++; }
+            // Existing advertised fields only, once per bounded refresh unit. A non-food
+            // retailer must never occupy the common source/index or shortlist slots.
+            bool food = false;
+            if (reg.retailPrices != null) foreach (var price in reg.retailPrices)
+                if (price != null && price.itemName != null && FoodProducts.Known(price.itemName)) { food = true; break; }
+            if (entry.AdvertisesFood != food) { entry.AdvertisesFood = food; MetadataRevision++; }
             entry.Seen = epoch;
         }
 
@@ -132,7 +160,7 @@ namespace PersistentCity.Runtime
                 { refused.Add(place, FoodCatalogueRefusal.Missing); continue; }
                 var r = c.buildingRegistration;
                 if (e.Ambiguous || r == null || !Matches(e, c, r))
-                { e.Ambiguous = true; refused.Add(place, FoodCatalogueRefusal.AmbiguousIdentity); continue; }
+                { if(!e.Ambiguous) MetadataRevision++; e.Ambiguous = true; refused.Add(place, FoodCatalogueRefusal.AmbiguousIdentity); continue; }
                 if (!r.HasEstablishedBusiness || r.AvailableForRent || string.IsNullOrWhiteSpace(r.businessTypeName)
                     || r.businessTypeName == "ba:businesstype_empty" || r.creationDay < 0)
                 { refused.Add(place, FoodCatalogueRefusal.Missing); continue; }
@@ -195,6 +223,6 @@ namespace PersistentCity.Runtime
             if (citySave == null) citySave = new WeakReference<object>(current);
         }
 
-        public void Dispose() { pending?.Dispose(); pending = null; entries.Clear(); addresses.Clear(); citySave = null; ready = false; failed = true; }
+        public void Dispose() { pending?.Dispose(); pending = null; entries.Clear(); addresses.Clear(); byBusiness.Clear(); citySave = null; ready = false; failed = true; }
     }
 }

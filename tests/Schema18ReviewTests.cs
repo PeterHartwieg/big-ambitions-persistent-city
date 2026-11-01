@@ -31,14 +31,16 @@ public sealed class Schema18ReviewTests
     }
 
     [Theory]
-    [InlineData(typeof(ResidentBudget), 18)]
-    [InlineData(typeof(ResidentMeal), 35)]
+    [InlineData(typeof(ResidentBudget), 19)]
+    [InlineData(typeof(ResidentMeal), 36)]
     public void PublishedTupleLayoutsCoverEveryWritablePropertyExactlyOnce(Type dto, int expected)
     {
         var layout = typeof(SaveCodec).GetNestedType("TupleLayout", BindingFlags.NonPublic)!;
         var instance = layout.GetMethod("For")!.Invoke(null, new object[] { dto })!;
         var fields = (PropertyInfo[])layout.GetField("Properties")!.GetValue(instance)!;
-        var writable = dto.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetSetMethod() != null);
+        // The allowance-only external account uses the existing Budget slot's scalar variant.
+        var writable = dto.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetSetMethod() != null
+            && !(dto == typeof(ResidentMeal) && p.Name == "LegacyExternalFoodSpent"));
         Assert.Equal(expected, fields.Length);
         Assert.Equal(fields.Length, fields.Select(p => p.Name).Distinct(StringComparer.Ordinal).Count());
         Assert.Equal(writable.Select(p => p.Name).OrderBy(n => n, StringComparer.Ordinal), fields.Select(p => p.Name).OrderBy(n => n, StringComparer.Ordinal));
@@ -75,7 +77,7 @@ public sealed class Schema18ReviewTests
     [InlineData("\"Schema\":18,\"Schema\":18,")]
     [InlineData("\"Schema\":0x12,")]
     [InlineData("\"Schema\":17,")]
-    [InlineData("\"Schema\":21,")]
+    [InlineData("\"Schema\":24,")]
     public void ProbeRefusesDuplicateNoncanonicalLegacyOrFutureHeader(string schema)
     {
         Assert.Throws<SaveValidationException>(() => SaveCodec.RequireExecutableCapabilities("{" + schema + "\"Capabilities\":{\"Active\":false,\"Code\":\"B\",\"Revision\":1}}"));

@@ -10,11 +10,9 @@ PINS = {'Runtime/DirectStockShowcaseReader.cs': '239650040cb06dde4f0d8030e659c90
  'tools/icecream-feasibility-regression/IcecreamFeasibilityRegression.csproj': 'ba8f10d8a85dd978e631dbe6797bf02616b0e171dc243a57e9676c35a341a79b',
  'tools/icecream-feasibility-regression/Program.cs': '8d1e2ec8792eee607cdc337d25a29cfef1bee9be29e95c6f1b26e7fb367ed582',
  'tools/icecream-feasibility-regression/generate_cases.py': '4b3db341d8bfd6e97a9ebbee6adba1748cb7c97c76c9a5e750f437f03f2d45c0',
- 'tools/icecream-feasibility-regression/measure_baseline.py': '6961c4560cf0ecb9f9ece5a326e704e3d26c9115349296499ad4d05823c37237'}
+ 'tools/icecream-feasibility-regression/measure_baseline.py': 'd27d0fe36d8001fa76e2013ac3595a0d22fa7587b3d96b4f412b21b8eadbed66'}
 for path, expected in PINS.items():
     source = (ROOT / path).read_text(encoding="utf-8")
-    if path == "tools/icecream-feasibility-regression/measure_baseline.py":
-        source = source.replace('shared = shared.replace(\'        internal static readonly DirectStockCandidate Pizza = new DirectStockCandidate("ba:itemname_pizza");\\n\', "")\n', "")
     assert hashlib.sha256(source.encode()).hexdigest() == expected, path
 allowed = {ROOT / ("Runtime/" + name + ".cs") for name in
            ("DirectStockShowcaseReader", "DonutFeasibilityReader", "CupcakeFeasibilityReader",

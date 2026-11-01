@@ -33,12 +33,12 @@ namespace PersistentCity.Core
         }
 
         private double MemoryContribution(ResidentMeal meal, CitizenState person, string business)
-            => city.State.Capabilities.Active && MemorySettings.FoodMemoryWeight != 0 ? FoodMemoryPolicy.Contribution(meal.Memory, memoryStore.Find(business),
+            => awarenessCatalogue?.Find(business)?.Kind != FoodAwarenessAlternativeKind.External && city.State.Capabilities.Active && MemorySettings.FoodMemoryWeight != 0 ? FoodMemoryPolicy.Contribution(meal.Memory, memoryStore.Find(business),
                 (int)(city.State.Minute / 1440), Traits(meal, person), MemorySettings) : 0;
 
         private void Experience(ResidentMeal meal, ShopExperience cause, double at)
         {
-            if (city.State.Capabilities.Active)
+            if (meal.TargetKind == FoodAlternativeKind.Player && city.State.Capabilities.Active)
                 memoryStore.Experience(meal, cause, (int)(at / 1440), Traits(meal, city.FindCitizen(meal.AnchorId)!), MemorySettings);
         }
 
@@ -61,6 +61,7 @@ namespace PersistentCity.Core
         {
             if (!city.State.Capabilities.Active || decision.Shops.Count != 1 || person.PlaceId != decision.Shops[0].PlaceId) return;
             var shop = decision.Shops[0];
+            if (shop.AlternativeKind == FoodAlternativeKind.Rival) return;
             if (!shop.Offers.Any(o => o.Price > Money.Zero && o.Price <= AvailableForMeal(meal))) return;
             var business = CapturedBusiness(shop);
             var hours = business.OpeningPlace;

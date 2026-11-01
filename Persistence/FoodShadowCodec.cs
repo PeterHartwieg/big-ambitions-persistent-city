@@ -75,7 +75,7 @@ namespace PersistentCity.Persistence
             }
             Require(token is JObject);
             var obj = (JObject)token;
-            var fields = type.GetProperties().Where(p => p.CanRead && p.CanWrite
+            var fields = type.GetProperties().Where(p => p.CanRead && p.CanWrite && !p.IsDefined(typeof(System.Runtime.Serialization.IgnoreDataMemberAttribute), true)
                 && (schema >= 2 || !AddedInV2(type, p.Name)) && (schema >= 3 || !AddedInV3(type, p.Name))
                 && (schema >= 4 || !AddedInV4(type, p.Name))).ToArray();
             Require(obj.Count == fields.Length);
@@ -142,7 +142,7 @@ namespace PersistentCity.Persistence
             }
             if (!(token is JObject obj)) return;
             object defaults = Activator.CreateInstance(type)!;
-            foreach (var field in type.GetProperties().Where(p => p.CanRead && p.CanWrite))
+            foreach (var field in type.GetProperties().Where(p => p.CanRead && p.CanWrite && !p.IsDefined(typeof(System.Runtime.Serialization.IgnoreDataMemberAttribute), true)))
                 if (schema < 2 && AddedInV2(type, field.Name) || schema < 3 && AddedInV3(type, field.Name)
                     || schema < 4 && AddedInV4(type, field.Name))
                 {

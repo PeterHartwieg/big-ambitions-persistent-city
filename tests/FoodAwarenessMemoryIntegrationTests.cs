@@ -53,7 +53,7 @@ public sealed class FoodAwarenessMemoryIntegrationTests
     }
 
     [Theory]
-    [InlineData(18)] [InlineData(19)] [InlineData(20)] [InlineData(22)] [InlineData(23)]
+    [InlineData(18)] [InlineData(19)] [InlineData(20)] [InlineData(21)] [InlineData(22)] [InlineData(23)]
     public void PopulatedMemoryAndHeldContributionsMigrateWithoutRecapture(int sourceSchema)
     {
         var (control, mc, pc) = Ready();
@@ -74,10 +74,10 @@ public sealed class FoodAwarenessMemoryIntegrationTests
         Assert.Equal(sourceSchema >= 20 ? 1.3 : 1, held.WeatherTravelMultiplier);
         Assert.All(held.Shops, s => Assert.NotEqual(0, s.MemoryContribution));
         string memory = JsonConvert.SerializeObject(changed.State.Food.Residents.Select(m => m.Memory));
-        var root = JObject.Parse(SaveCodec.Write(changed.State));
-        if(sourceSchema<22) ((JObject)root["Food"]!).Remove("Campaigns");
-        if(sourceSchema<23) {root["Schema"]=sourceSchema;root.Remove("MenuPolicy");}
-        if (sourceSchema < 20) root = JObject.Parse(WeatherTests.As19(root.ToString(Formatting.None)));
+        int currentSchema=changed.State.Schema;
+        changed.State.Schema=sourceSchema < 20 ? 19 : sourceSchema;
+        var root = JObject.Parse(sourceSchema == 23 ? SaveCodec.Write(changed.State) : sourceSchema < 20 ? PopulationSchema19.Write(changed.State) : sourceSchema>=21 ? SaveCodec.WriteForSchema(changed.State,sourceSchema) : PopulationSchema20.Write(changed.State));
+        changed.State.Schema=currentSchema;
         bool legacy18 = sourceSchema == 18;
         if (legacy18)
         {

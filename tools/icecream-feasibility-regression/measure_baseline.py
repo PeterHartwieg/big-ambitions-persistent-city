@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 shared = (ROOT / "Runtime/DirectStockShowcaseReader.cs").read_text(encoding="utf-8")
 shared = shared.replace('        internal static readonly DirectStockCandidate Pizza = new DirectStockCandidate("ba:itemname_pizza");\n', "")
 shared = shared.replace('        internal static readonly DirectStockCandidate Icecream = new DirectStockCandidate("ba:itemname_icecream");\n', '')
+shared = shared.replace('        internal static readonly DirectStockCandidate FrenchFries = new DirectStockCandidate("ba:itemname_frenchfries");\n', "")
 assert hashlib.sha256(shared.encode()).hexdigest() == "999228241ef6a44a17fb0d26dad4961ab4c9cc25f81354f34dee6dd92e5837de"
 env = os.environ.copy()
 env.update(DOTNET_CLI_USE_MSBUILD_SERVER="0", MSBUILDDISABLENODEREUSE="1", UseSharedCompilation="false")

@@ -248,19 +248,21 @@ public sealed class FoodAwarenessTests
         while(!changed.AdvanceTo(at+20,1).CaughtUp) {}
         Assert.Equal(SaveCodec.Write(control.State),SaveCodec.Write(changed.State));Assert.Equal(mc.Orders,mm.Orders);Assert.Equal(pc.Out,pm.Out);
     }
-    private static JObject Held()
+    private static JObject Held(bool predecessor=false)
     {
         var (city,_,_)=WeightedFoodChoiceTests.Ready(79,24);city.State.Food!.AwarenessStartsDay=1;city.InspectFoodAwareness("r");
-        city.AdvanceTo(city.State.Food.Residents.Single().DesiredAt,1);return JObject.Parse(SaveCodec.Write(city.State));
+        city.AdvanceTo(city.State.Food.Residents.Single().DesiredAt,1);
+        if(!predecessor) return JObject.Parse(SaveCodec.Write(city.State));
+        city.State.Schema=19;return JObject.Parse(PopulationSchema19.Write(city.State));
     }
     [Fact]
     public void Schema18MigratesOnceAndNeverRecapturesHeldShortlist()
     {
-        var json=JObject.Parse(WeatherTests.As19(Held().ToString(Formatting.None)));json["Schema"]=18;json["Food"]!["AwarenessStartsDay"]!.Parent!.Remove();
+        var json=Held(true);json["Schema"]=18;json["Food"]!["AwarenessStartsDay"]!.Parent!.Remove();
         var decision=json["Food"]!["Residents"]![0]![9]!;decision["Awareness"]!.Parent!.Remove();
         string source=json.ToString(Formatting.None);var data=new Dictionary<string,string> {[SaveStore.StateKey]=source};
         decision["Awareness"]=new JObject();Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(json.ToString(Formatting.None)).Status);((JObject)decision).Remove("Awareness");
-        var read=SaveCodec.Read(source);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);Assert.Equal(18,read.SourceSchema);Assert.Equal(CityState.CurrentSchema,read.State!.Schema);
+        var read=SaveCodec.Read(source);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);Assert.Equal(18,read.SourceSchema);Assert.Equal(23,read.State!.Schema);
         Assert.Equal((int)(read.State.Minute/1440)+1,read.State.Food!.AwarenessStartsDay);Assert.Null(read.State.Food.Residents[0].Decision!.Awareness);
         Assert.Equal(SaveCodec.Write(read.State),SaveCodec.Write(SaveCodec.Read(SaveCodec.Write(read.State)).State!));Assert.Equal(source,data[SaveStore.StateKey]);
     }

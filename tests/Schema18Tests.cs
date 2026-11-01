@@ -98,9 +98,9 @@ public sealed partial class FoodCommerceTests
         string source = SaveCodec.Write(city.State), broken = source;
         switch (damage)
         {
-            case "tuple-octal": broken = source.Replace("\"Residents\":[[1,", "\"Residents\":[[01,"); break;
-            case "tuple-hex": broken = source.Replace("\"Residents\":[[1,", "\"Residents\":[[0x1,"); break;
-            case "schema-hex": broken = source.Replace("\"Schema\":"+CityState.CurrentSchema+",", "\"Schema\":0x13,"); break;
+            case "tuple-octal": broken = source.Replace("\"Residents\":[[2,", "\"Residents\":[[02,"); break;
+            case "tuple-hex": broken = source.Replace("\"Residents\":[[2,", "\"Residents\":[[0x2,"); break;
+            case "schema-hex": broken = source.Replace("\"Schema\":23,", "\"Schema\":0x17,"); break;
             case "revision-octal": broken = source.Replace("\"Revision\":1", "\"Revision\":01"); break;
             case "memory-escaped": broken = source.Replace("\"1-------|0\"", "\"\\u0031-------|0\""); break;
             case "visit-escaped": broken = source.Replace("\"RecentVisits\":[\"1", "\"RecentVisits\":[\"\\u0031"); break;
@@ -148,7 +148,7 @@ public sealed partial class FoodCommerceTests
         var visits = (JArray)root["Citizens"]![0]!["RecentVisits"]!;
         switch (damage)
         {
-            case "version": meal[0] = 2; break;
+            case "version": meal[0] = 3; break;
             case "meal-short": meal.RemoveAt(35); break;
             case "meal-extra": meal.Add(0); break;
             case "budget-short": budget.RemoveAt(18); break;

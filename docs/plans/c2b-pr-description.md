@@ -1,5 +1,7 @@
 # C2b: merge the schema-20 integration base into campaign awareness
 
+Historical handoff for `pre-E4 C2b development head`. Its schema/refusal and measurement claims apply only to that source. The current supported composition is **20 -> 21 -> 22 -> 23**, with writer 23; see [schema 23](../population-schema23.md) and [current D2 sync handoff](../reviews/2026-11-01-d2-sync2-base-pr-description.md).
+
 Under **merge rule v2**, these in-game checks are batched into the combined
 locked `rig_test` (Codex Sol, high) on the `codex/persistent-city` head; no per-PR
 rig proof is required or claimed. Pointer/input-only checks wait for Peter's
@@ -39,7 +41,7 @@ All 16 conflicts and resolutions:
 | `tools/save-contract-regression/CapacityBench.cs` | Deduct both actual weather and campaign bytes/records once from the unchanged future envelope. |
 
 Minimal integration fixes beyond conflict markers: the automatically merged
-bootstrap allow-list now accepts 20 while still refusing reserved 21; repoint the
+bootstrap allow-list now accepts 20 while then refusing reserved 21 (now supported); repoint the
 isolated campaign predecessor to 20; keep the E1 migration as a separate 19 -> 20
 step. Fixture/tool projections now use exact old shapes, and C2b's migration
 case preserves populated weather and a held rainy decision. One regression checks

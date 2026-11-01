@@ -9,7 +9,7 @@ static partial class Program
     {
         var root=JObject.Parse(wire);
         if(root["Food"] is JObject food) food.Remove("Campaigns");
-        root["Schema"]=20;
+        root["Schema"]=21;
         return root.ToString(Formatting.None);
     }
     private static int CampaignChars22(CityState state) => state.Food==null ? 0 : ("\"Campaigns\":"+JsonConvert.SerializeObject(state.Food.Campaigns.Select(i=>i.Encode()))+",").Length;

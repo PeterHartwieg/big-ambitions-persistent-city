@@ -10,6 +10,16 @@ namespace PersistentCity.Runtime
     {
         [JsonIgnore]
         public FoodChoiceSettings FoodChoice { get; } = new FoodChoiceSettings();
+        [JsonIgnore] public RivalFoodSettings Rivals { get; } = new RivalFoodSettings();
+        [JsonConverter(typeof(FoodMemoryNumberConverter))]
+        public double RivalChoiceWeight { get => Rivals.RivalChoiceWeight; set => Rivals.RivalChoiceWeight=value; }
+        [JsonConverter(typeof(FoodMemoryIntegerConverter), 1, 30)]
+        public int RivalAssumedServiceMinutes { get => Rivals.RivalAssumedServiceMinutes; set => Rivals.RivalAssumedServiceMinutes=value; }
+        [JsonConverter(typeof(FoodMemoryIntegerConverter), 15, 240)]
+        public int RivalRefreshGameMinutes { get => Rivals.RivalRefreshGameMinutes; set => Rivals.RivalRefreshGameMinutes=value; }
+        [JsonConverter(typeof(FoodMemoryIntegerConverter), 1, 64)]
+        public int RivalReadsPerUnit { get => Rivals.RivalReadsPerUnit; set => Rivals.RivalReadsPerUnit=value; }
+
         [JsonConverter(typeof(StreetLifeMinutesConverter), 1, 8)]
         public int FoodMenuMaximumOffersPerShop { get => FoodChoice.FoodMenuMaximumOffersPerShop; set => FoodChoice.FoodMenuMaximumOffersPerShop=value; }
         [JsonConverter(typeof(FoodMenuNumberConverter))]

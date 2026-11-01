@@ -8,11 +8,12 @@ namespace PersistentCity.Core
     public readonly struct EvaluatedFoodOffer
     {
         public EvaluatedFoodOffer(string business, string product, Money price, double travel, double queue,
-            double usedTime, double window, int? quality, int? demand, MealKind kind, double memoryContribution = 0, bool campaignActive = false, int newTasteBand = -1)
-        { NewTasteBand=newTasteBand; CampaignActive=campaignActive; MemoryContribution=memoryContribution; BusinessId=business; ProductId=product; Price=price; Travel=travel; Queue=queue; UsedTime=usedTime;
+            double usedTime, double window, int? quality, int? demand, MealKind kind, double memoryContribution = 0, double alternativeWeight = 1, int newTasteBand = -1, bool campaignActive = false)
+        { CampaignActive=campaignActive; NewTasteBand=newTasteBand; AlternativeWeight=alternativeWeight; MemoryContribution=memoryContribution; BusinessId=business; ProductId=product; Price=price; Travel=travel; Queue=queue; UsedTime=usedTime;
           Window=window; Quality=quality; Demand=demand; Kind=kind; }
         public bool CampaignActive { get; }
         public double MemoryContribution { get; }
+        public double AlternativeWeight { get; }
         public int NewTasteBand { get; }
         public string BusinessId { get; }
         public string ProductId { get; }
@@ -129,8 +130,8 @@ namespace PersistentCity.Core
                 Positive(settings.FoodChoiceHouseholdWeight,settings.FoodChoiceWeightFloor,settings.FoodChoiceTemperature)) : double.PositiveInfinity;
             for(int i=0;i<offers.Count;i++)
             {
-                var o=offers[i]; double rank=FoodDrawContext.Rank(draw.OfferHash(o.BusinessId,o.ProductId),Weight(o,traits,allowance,settings,weatherTravelMultiplier));
-                if(o.Price<=Money.Zero || o.Price>allowance) continue;
+                var o=offers[i]; double rank=FoodDrawContext.Rank(draw.OfferHash(o.BusinessId,o.ProductId),Weight(o,traits,allowance,settings,weatherTravelMultiplier)*o.AlternativeWeight);
+                if(o.AlternativeWeight<=0 || o.Price<=Money.Zero || o.Price>allowance) continue;
                 // The reserved empty household IDs precede real IDs in an exact tie.
                 int tie=selected<0 ? 1 : StringComparer.Ordinal.Compare(o.BusinessId,offers[selected].BusinessId);
                 if(tie==0) tie=StringComparer.Ordinal.Compare(o.ProductId,offers[selected].ProductId);

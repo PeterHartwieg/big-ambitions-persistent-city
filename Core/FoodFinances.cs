@@ -20,6 +20,7 @@ namespace PersistentCity.Core
         private double NextBudgetMinute => budgetDue.Count == 0 ? double.PositiveInfinity : budgetDue.Min!.Budget!.NextPostingMinute;
         internal void EnableFinances()
         {
+            if (state.Residents.Any(m => m.LegacyExternalFoodSpent != Money.Zero)) throw new InvalidOperationException("Preserve the legacy external-food ledger; use a household-finance scope before new outside purchases.");
             if (state.HouseholdFinanceVersion != 0) throw new InvalidOperationException("Household finances are already active.");
             if (state.Residents.Any(m => Active(m) || m.Status == MealStatus.Uncertain))
                 throw new InvalidOperationException("Finish current purchases before enabling household finances.");

@@ -43,6 +43,7 @@ namespace PersistentCity.Core
     }
     public sealed class FoodScope
     {
+        public FoodAlternativeKind AlternativeKind { get; set; }
         public string PlaceId { get; set; } = "";
         // Keep the original product identity for existing scopes and pending receipts.
         public string ProductId { get; set; } = "";
@@ -95,6 +96,11 @@ namespace PersistentCity.Core
         public string LastContextKey { get; set; } = "";
         public int ContextAttempts { get; set; }
         public ConsumerMemory Memory { get; set; } = new ConsumerMemory();
+        // Empty is player authority. Rival revision/status plus exact advertised-hours fingerprint.
+        public string External { get; set; } = "";
+        public Money LegacyExternalFoodSpent { get; set; }
+        public FoodAlternativeKind TargetKind => External.Length == 0 ? FoodAlternativeKind.Player : FoodAlternativeKind.Rival;
+        public FoodAvailabilityEvidenceKind AvailabilityEvidence => TargetKind == FoodAlternativeKind.Rival ? FoodAvailabilityEvidenceKind.EstimatedFromPriceAndHours : FoodAvailabilityEvidenceKind.ObservedPlayerSupply;
         public string IntentId => MealRhythm.IntentId(ResidentId, Day, Kind);
     }
     public sealed class FoodCommerceState
@@ -113,6 +119,7 @@ namespace PersistentCity.Core
         public int ChoicePolicyVersion { get; set; } = FoodChoicePolicy.Version;
         public int ChoiceStartsDay { get; set; }
         public int AwarenessStartsDay { get; set; }
+        public int RivalStartsDay { get; set; }
         public List<FoodCampaignImage> Campaigns { get; set; } = new List<FoodCampaignImage>();
     }
     public readonly struct FoodSale
@@ -180,19 +187,19 @@ namespace PersistentCity.Core
             ?? Math.Min(NextBudgetMinute, due.Count == 0 ? double.PositiveInfinity : due.Min!.DueAt);
         internal IFoodMarket Market => market;
         internal ResidentMeal? FindMeal(string consumerId) => records.TryGetValue(consumerId, out var meal) ? meal : null;
-        internal FoodCommerce(CitySimulator city, IFoodMarket market, IRoutePlanner routes, FoodChoiceSettings? choiceSettings = null, FoodMemorySettings? memorySettings = null, FoodAwarenessSettings? awarenessSettings = null, IFoodAwarenessProvider? memory = null, IFoodAwarenessProvider? campaign = null)
+        internal FoodCommerce(CitySimulator city, IFoodMarket market, IRoutePlanner routes, FoodChoiceSettings? choiceSettings = null, FoodMemorySettings? memorySettings = null, FoodAwarenessSettings? awarenessSettings = null, IFoodAwarenessProvider? memory = null, IFoodAwarenessProvider? campaign = null, RivalFoodSettings? rivalSettings = null)
         {
             this.city = city; this.market = market; this.routes = routes;
+            RivalSettings = rivalSettings ?? new RivalFoodSettings(); RivalSettings.Clamp();
             ChoiceSettings = choiceSettings ?? new FoodChoiceSettings();
             ChoiceSettings.Clamp();
             AwarenessSettings=awarenessSettings ?? new FoodAwarenessSettings(); AwarenessSettings.Clamp();
             MemoryProvider=memory;CampaignProvider=campaign;
             state = city.State.Food ?? throw new InvalidOperationException("No food state.");
             MemorySettings = memorySettings ?? new FoodMemorySettings(); MemorySettings.Clamp();
-            // Campaign publication appends generation references at the hour boundary. Share its
-            // already-current index, so the next consumer never inherits a catalogue-sized catch-up.
+            // Share the campaign publisher's current generation index.
             memoryStore = (campaign as FoodCampaignSource)?.ReferencesFor(state) ?? new FoodMemoryStore(state);
-            if(state.Residents.Count==0) { state.ChoiceStartsDay=(int)Math.Floor(city.State.Minute/1440)+1; state.AwarenessStartsDay=state.ChoiceStartsDay; }
+            if(state.Residents.Count==0) { state.ChoiceStartsDay=(int)Math.Floor(city.State.Minute/1440)+1; state.AwarenessStartsDay=state.ChoiceStartsDay; state.RivalStartsDay=state.ChoiceStartsDay; }
             records = state.Residents.ToDictionary(r => r.ResidentId, StringComparer.Ordinal);
             storedMemoryProvider = new StoredMemoryAwareness(this);
             InitializeRepresentation();
@@ -203,12 +210,15 @@ namespace PersistentCity.Core
                 if (entry.Budget != null) budgetDue.Add(entry);
                 if (Active(entry)) Reserve(entry, 1);
                 if (entry.Decision != null) pendingDecision = entry;
+                if (market is IRivalFoodMarket && (Active(entry) && entry.TargetKind == FoodAlternativeKind.Rival
+                    || entry.Decision?.Shops.Any(s => s.AlternativeKind == FoodAlternativeKind.Rival) == true)) rivalResumeNeedsRefresh = true;
             }
         }
         private static bool Active(ResidentMeal m) => m.Status == MealStatus.Travelling || m.Status == MealStatus.Serving;
         private static string ReservationKey(string shop, string product) => shop + "\n" + product;
         private void Reserve(ResidentMeal meal, int delta)
         {
+            if (meal.TargetKind == FoodAlternativeKind.Rival) return;
             string key = ReservationKey(meal.PlaceId, meal.ProductId);
             reservations.TryGetValue(key, out int count); reservations[key] = count + delta;
         }
@@ -248,6 +258,7 @@ namespace PersistentCity.Core
             meal.ExpiresAt = MealRhythm.ExpiresAt(person, city.State.Seed, day, kind);
             meal.DueAt = Math.Max(city.State.Minute, meal.DesiredAt);
             meal.Status = MealStatus.Pending; meal.Reason = ""; meal.PlaceId = meal.BusinessId = meal.ProductId = "";
+            meal.External = "";
             meal.ExistingStop = false;
             meal.Decision = null; meal.LastContextKey = ""; meal.ContextAttempts = 0;
             meal.Price = Money.Zero; meal.ServiceAt = meal.ServiceMinutes = meal.ReturnMinutes = meal.Deadline = 0;
@@ -287,7 +298,7 @@ namespace PersistentCity.Core
                 catch (Exception) { /* Missing proof preserves held funds and the original receipt. */ }
             }
             if (StepExcursion(meal, person)) { return; }
-            if (Active(meal) && market is IFoodBusinessAuthority authority && !authority.CanServe(meal.BusinessId))
+            if (Active(meal) && meal.TargetKind == FoodAlternativeKind.Player && market is IFoodBusinessAuthority authority && !authority.CanServe(meal.BusinessId))
             { Finish(meal, MealStatus.Missed, "Business no longer accepts this commitment"); return; }
             if (!Active(meal) && meal.Status != MealStatus.Pending)
             {
@@ -335,9 +346,11 @@ namespace PersistentCity.Core
                     && now < meal.Deadline && Position.Distance(city.FindPlace(meal.PlaceId).Position, meal.Excursion.DestinationPosition) <= .01
                     : person.MealOuting != null && !person.MealOuting.Returning
                     && person.Phase == CitizenPhase.AtPlace && person.PlaceId == meal.PlaceId
-                    && person.RecentVisits.Any(v => v.PlaceId == meal.PlaceId && v.Activity == Activity.Shop && v.AtMinute >= meal.DesiredAt);
+                    && (meal.TargetKind == FoodAlternativeKind.Rival
+                        || person.RecentVisits.Any(v => v.PlaceId == meal.PlaceId && v.Activity == Activity.Shop && v.AtMinute >= meal.DesiredAt));
                 if (admitted)
                 {
+                    if (meal.TargetKind == FoodAlternativeKind.Rival) { ArriveRival(meal, person, now); return; }
                     memoryStore.CommitStage(meal, ExperienceStage.Reached);
                     var available = ReadBusiness(meal.BusinessId, now);
                     if (available?.PlaceId != meal.PlaceId) available = null;
@@ -402,6 +415,7 @@ namespace PersistentCity.Core
                     Finish(meal, MealStatus.Missed, "Resident left before service");
                 else
                 {
+                    if (meal.TargetKind == FoodAlternativeKind.Rival) { CompleteRival(meal, now); return; }
                     // Every later addition must fit before funds move or native checkout starts.
                     if (!CanSettle(meal))
                     { Finish(meal, MealStatus.Missed, "Purchase would exceed the exact money range"); return; }
@@ -449,7 +463,8 @@ namespace PersistentCity.Core
             if (Active(meal)) Reserve(meal, -1);
             meal.Status = status; meal.Reason = reason;
             MealOutcomes.Record(meal, city.State.Minute, checkout: status == MealStatus.Uncertain, outside);
-            if(status==MealStatus.Uncertain && meal.Today?.Find(meal.Kind) is MealOutcomeRecord outcome)
+            if((status==MealStatus.Uncertain || status==MealStatus.Paid && meal.TargetKind==FoodAlternativeKind.Rival)
+                && meal.Today?.Find(meal.Kind) is MealOutcomeRecord outcome)
             {
                 if(choiceReason.Contains("likes it")) outcome.Factor1=MealFactor.Taste;
                 if(choiceReason.Contains("values quality"))

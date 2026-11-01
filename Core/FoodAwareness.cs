@@ -49,6 +49,7 @@ namespace PersistentCity.Core
     }
     public sealed class FoodAwarenessCandidate
     {
+        public FoodAlternativeKind AlternativeKind { get; set; }
         public string BusinessId { get; set; } = "";
         public FoodAwarenessSource Sources { get; set; }
         public bool Eligible { get; set; }
@@ -107,7 +108,7 @@ namespace PersistentCity.Core
         {
             public Entry(string businessId,string placeId,Position position,FoodAwarenessAlternativeKind kind=FoodAwarenessAlternativeKind.Managed)
             { BusinessId=businessId;PlaceId=placeId;Position=position;Kind=kind; }
-            internal Entry(FoodScope scope,Position position) : this(scope.BusinessId,scope.PlaceId,position) {Scope=scope;}
+            internal Entry(FoodScope scope,Position position) : this(scope.BusinessId,scope.PlaceId,position,scope.AlternativeKind == FoodAlternativeKind.Rival ? FoodAwarenessAlternativeKind.External : FoodAwarenessAlternativeKind.Managed) {Scope=scope;}
             public FoodAwarenessAlternativeKind Kind { get; }
             public string BusinessId { get; }
             public string PlaceId { get; }
@@ -148,6 +149,7 @@ namespace PersistentCity.Core
         private static FoodAwarenessCatalogue BuildAll(Builder builder)
         {using(builder) {while(!builder.Continue()) {} return builder.Result;}}
         public static Builder BeginBuild(IEnumerable<Entry> alternatives) => new Builder(alternatives);
+        internal static Builder BeginSparseBuild(IEnumerable<Entry> alternatives) => new Builder(alternatives,true);
         public static Builder BeginBuild(IEnumerable<FoodScope> scopes,Func<string,Position?> position) => new Builder(Project(scopes,position),true);
         public enum BuildStage { Collect, Copy, Sort, Hash, CountCells, Ranges, Fill, Publish, Complete }
         /// <summary>Private coherent build. Each Continue performs at most 64 input/merge/hash/cell
@@ -329,7 +331,7 @@ namespace PersistentCity.Core
                 if(entry==null) return;
                 foreach(var old in image.Union)
                     if(old.BusinessId==entry.BusinessId) {old.Sources|=source;old.Eligible|=admitted;return;}
-                image.Union.Add(new FoodAwarenessCandidate {BusinessId=entry.BusinessId,Sources=source,Eligible=admitted});
+                image.Union.Add(new FoodAwarenessCandidate {AlternativeKind=entry.Kind==FoodAwarenessAlternativeKind.External ? FoodAlternativeKind.Rival : FoodAlternativeKind.Player,BusinessId=entry.BusinessId,Sources=source,Eligible=admitted});
             }
             for(int i=0;i<4;i++)
             {
@@ -393,7 +395,7 @@ namespace PersistentCity.Core
             if(diagnostic!=null) diagnostic.Image=image;
             return image;
         }
-        public Entry[] Rank(FoodAwarenessImage image,Position origin,ResidentTraits traits,FoodChoiceSettings settings,FoodDrawContext draw,double pace,Func<string,double>? memoryContribution=null,double weatherTravelMultiplier=1)
+        public Entry[] Rank(FoodAwarenessImage image,Position origin,ResidentTraits traits,FoodChoiceSettings settings,FoodDrawContext draw,double pace,Func<string,double>? memoryContribution=null,double rivalWeight=1,double weatherTravelMultiplier=1)
         {
             if(image.CatalogueRevision!=Revision || image.Union.Count>MaximumSourceSlots) throw new ArgumentException("Invalid awareness image.");
             var selected=new Entry[8];var ranks=new double[8];int count=0;
@@ -401,8 +403,8 @@ namespace PersistentCity.Core
             foreach(var candidate in image.Union)
             {
                 if(!candidate.Eligible) continue;
-                var entry=Find(candidate.BusinessId);if(entry==null) continue;
-                double rank=FoodDrawContext.Rank(draw.ShopHash(entry.BusinessId),FoodChoicePolicy.ApplyMemory(preference.Weight(Position.Distance(origin,entry.Position)/pace,true,(candidate.Sources & FoodAwarenessSource.ActiveCampaign)!=0),memoryContribution?.Invoke(entry.BusinessId) ?? 0,settings.FoodChoiceWeightFloor));
+                var entry=Find(candidate.BusinessId);if(entry==null || entry.Kind==FoodAwarenessAlternativeKind.External && rivalWeight==0) continue;
+                double rank=FoodDrawContext.Rank(draw.ShopHash(entry.BusinessId),FoodChoicePolicy.ApplyMemory(preference.Weight(Position.Distance(origin,entry.Position)/pace,true,(candidate.Sources & FoodAwarenessSource.ActiveCampaign)!=0),memoryContribution?.Invoke(entry.BusinessId) ?? 0,settings.FoodChoiceWeightFloor)*(entry.Kind==FoodAwarenessAlternativeKind.External ? rivalWeight : 1));
                 int at=0;while(at<count && (ranks[at]<rank || ranks[at]==rank && StringComparer.Ordinal.Compare(selected[at].BusinessId,entry.BusinessId)<0)) at++;
                 if(at==8) continue;
                 for(int j=Math.Min(count,7);j>at;j--) {selected[j]=selected[j-1];ranks[j]=ranks[j-1];}

@@ -63,7 +63,7 @@ namespace PersistentCity.Persistence
                 {
                     schema = HeaderInteger(requireCanonical: false);
                     if (schema >= 18) Require(canonicalInteger, "Noncanonical population schema.");
-                    Require((schema >= 13 && (schema <= 20 || schema == 22 || schema == 23)), "Unsupported population schema; preserve the payload.");
+                    Require(schema >= 13 && schema <= 23, "Unsupported population schema; preserve the payload.");
                 }
                 else if (name == "Capabilities")
                 {
@@ -144,13 +144,15 @@ namespace PersistentCity.Persistence
         }
 
         /// <summary>Reports both published counting paths; callers must budget the larger.</summary>
-        public static (int Streaming, int Semantic) CountRecords(CityState state, string source)
+        public static (int Streaming, int Semantic) CountRecords(CityState state, string source) => CountRecordsForSchema(state,source,CityState.CurrentSchema);
+
+        internal static (int Streaming, int Semantic) CountRecordsForSchema(CityState state,string source,int schema)
         {
-            int semantic = Validate(state), streaming = 0;
+            int semantic = Validate(state,schema), streaming = 0;
             var context = WireContext.FromSource(source);
             using var reader = Reader(source);
             Require(reader.Read(), "Missing state.");
-            CheckShape(reader, typeof(CityState), StateContracts, ref streaming, new TokenText(source), CityState.CurrentSchema, new FieldNameSets());
+            CheckShape(reader, typeof(CityState), schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : StateContracts, ref streaming, new TokenText(source), schema, new FieldNameSets());
             Require(!reader.Read(), "Trailing content.");
             return (streaming, semantic);
         }
@@ -208,7 +210,7 @@ namespace PersistentCity.Persistence
             private TupleLayout(Type type, string fields)
             {
                 var names = fields.Split(' ');
-                var writable = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetSetMethod() != null).ToArray();
+                var writable = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetSetMethod() != null && !(type == typeof(ResidentMeal) && p.Name == "LegacyExternalFoodSpent")).ToArray();
                 if (names.Length != writable.Length || names.Distinct(StringComparer.Ordinal).Count() != names.Length
                     || !new HashSet<string>(writable.Select(p => p.Name), StringComparer.Ordinal).SetEquals(names))
                     throw new InvalidOperationException(type.Name + " tuple fields must exactly match its public writable properties; change the tuple version and save contract deliberately.");
@@ -242,8 +244,8 @@ namespace PersistentCity.Persistence
                 Create = Expression.Lambda<Func<object>>(Expression.Convert(Expression.New(type), typeof(object))).Compile();
             }
             // Frozen positional contracts, independent of declaration/reflection order. Version 1 is slot zero.
-            private static readonly TupleLayout Budget = new TupleLayout(typeof(ResidentBudget), "Arrears Balance BaseIncomeCents DailyEssentialsCents DailyHomeFoodCents DailyHousingCents DailyIncomeCents DaysWithoutHomeFood EssentialsPaid HeldPurchase HomeFoodFundedDay HomeFoodPaid IncomeReceived IncomeSource LastPostedDay NextPostingMinute OpeningBalance PreparedFoodSpent");
-            private static readonly TupleLayout Meal = new TupleLayout(typeof(ResidentMeal), "Allowance AnchorId Budget BusinessId ContextAttempts Day DayAllowanceUsed Deadline Decision DesiredAt DueAt Excursion ExistingStop ExistingStopPurchases ExpiresAt Kind LastContextKey NeedsHomeResync PlaceId PreferenceBonusCents PreferredProductId Price ProductId Purchases Reason RepresentedTraits ResidentId ReturnMinutes ServiceAt ServiceMinutes Slot Spent Status Today Memory");
+            private static readonly TupleLayout Budget = new TupleLayout(typeof(ResidentBudget), "Arrears Balance BaseIncomeCents DailyEssentialsCents DailyHomeFoodCents DailyHousingCents DailyIncomeCents DaysWithoutHomeFood EssentialsPaid HeldPurchase HomeFoodFundedDay HomeFoodPaid IncomeReceived IncomeSource LastPostedDay NextPostingMinute OpeningBalance PreparedFoodSpent ExternalFoodSpent");
+            private static readonly TupleLayout Meal = new TupleLayout(typeof(ResidentMeal), "Allowance AnchorId Budget BusinessId ContextAttempts Day DayAllowanceUsed Deadline Decision DesiredAt DueAt Excursion ExistingStop ExistingStopPurchases ExpiresAt Kind LastContextKey NeedsHomeResync PlaceId PreferenceBonusCents PreferredProductId Price ProductId Purchases Reason RepresentedTraits ResidentId ReturnMinutes ServiceAt ServiceMinutes Slot Spent Status Today Memory External");
             public static TupleLayout? For(Type type) => type == typeof(ResidentBudget) ? Budget : type == typeof(ResidentMeal) ? Meal : null;
         }
         private static double TupleNumber(JsonReader reader) => reader.Value is double d ? d : reader.Value is long n ? n
@@ -255,20 +257,26 @@ namespace PersistentCity.Persistence
             {
                 if (value == null) { writer.WriteNull(); return; }
                 var tuple = TupleLayout.For(value.GetType())!;
-                writer.WriteStartArray(); writer.WriteValue(1);
-                for (int i = 0; i < tuple.Properties.Length; i++) tuple.Write[i](writer, value, serializer);
+                writer.WriteStartArray(); writer.WriteValue(2);
+                for (int i = 0; i < tuple.Properties.Length; i++)
+                {
+                    if (value is ResidentMeal meal && tuple.Properties[i].Name == "Budget" && meal.Budget == null) writer.WriteValue(meal.LegacyExternalFoodSpent.Units);
+                    else tuple.Write[i](writer, value, serializer);
+                }
                 writer.WriteEndArray();
             }
             public override object? ReadJson(JsonReader reader, Type type, object? existingValue, JsonSerializer serializer)
             {
                 if (reader.TokenType == JsonToken.Null) return null;
                 var tuple = TupleLayout.For(type)!;
-                Require(reader.TokenType == JsonToken.StartArray && reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 1, 1), "Invalid tuple version.");
+                Require(reader.TokenType == JsonToken.StartArray && reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 2, 2), "Invalid tuple version.");
                 var value = tuple.Create();
                 for (int i = 0; i < tuple.Properties.Length; i++)
                 {
                     Require(reader.Read() && reader.TokenType != JsonToken.EndArray, "Missing tuple slot.");
-                    tuple.Read[i](value, reader, serializer);
+                    if (value is ResidentMeal meal && tuple.Properties[i].Name == "Budget" && reader.TokenType == JsonToken.Integer)
+                        meal.LegacyExternalFoodSpent = Money.FromUnits((long)reader.Value!);
+                    else tuple.Read[i](value, reader, serializer);
                 }
                 Require(reader.Read() && reader.TokenType == JsonToken.EndArray, "Surplus tuple slot."); return value;
             }
@@ -279,7 +287,7 @@ namespace PersistentCity.Persistence
             {
                 if (value == null) { writer.WriteNull(); return; }
                 writer.WriteStartArray(); writer.WriteValue(1); writer.WriteValue(value.Day); writer.WriteValue(value.Unrecorded);
-                foreach (var record in value.Meals) writer.WriteValue(record.ToWire());
+                foreach (var record in value.Meals) writer.WriteValue(RivalWire21.Outcome(record));
                 writer.WriteEndArray();
             }
             public override ResidentFoodToday? ReadJson(JsonReader reader, Type type, ResidentFoodToday? existingValue, bool hasExistingValue, JsonSerializer serializer)

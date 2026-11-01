@@ -216,6 +216,7 @@ public sealed partial class FoodCommerceTests
     {
         var types = new HashSet<Type>(); var pending = new Stack<Type>(new[] { typeof(CityState), typeof(FoodShadowState) });
         var moneyNames = new HashSet<string>(LegacyMoneyWire.Names.Keys);
+        moneyNames.UnionWith(new[] { "ExternalFoodSpent", "LegacyExternalFoodSpent" });
         while (pending.Count > 0)
         {
             var type = pending.Pop();

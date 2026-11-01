@@ -1,0 +1,1354 @@
+{
+  "task": "pc-d2-rival-outflow",
+  "date": "2026-11-01",
+  "evidence": "offline only; no game/rig access",
+  "base": "51ce709",
+  "branch": "codex/pc-d2-rival-outflow",
+  "implementationCommits": [
+    "72971d3",
+    "988d4c6"
+  ],
+  "finalSourceSha256": {
+    "Core/CitySimulator.cs": "9d6c409169679fdd1615ef8cd79f816515cd1cd47a487cbce79a97b814e17e81",
+    "Core/FoodAwareness.cs": "ca1a4025f3ac72e7fce6bcb2b02a2301e6711e058fde81c547de4f8b9b291575",
+    "Core/FoodChoicePolicy.cs": "adfefbfb15e93cfb12dd655a12d5452b4c80f7fe17a6a918861ad1aa6f1c9f5e",
+    "Core/FoodCommerce.cs": "966f5894ed5e1ed88ad4cd8323abdbfe445972d3f558751d26111b4126751fa1",
+    "Core/FoodDemand.cs": "e9b51419afaa76466adfe37804e1aaa248e4c8041c78bb27b55ef829667d5d04",
+    "Core/FoodFinances.cs": "9d285ba37361c90b90b6740b93268c499b750b354ab9ccf9dd54c5e40f54ac6c",
+    "Core/FoodMarketHistory.cs": "71e060b7a25be34b34484577c1084bf7a9bb1f50fbdfdffc357c6ce4bb1763cf",
+    "Core/FoodMemoryCommerce.cs": "03bd51e762153777be980c850e29c7bffd3f0800b142bb6c1fbdd10d1ec06fce",
+    "Core/FoodStops.cs": "7962f56ab2431480db9bbb16580acf7d8cb40df691938cc27d801af425122169",
+    "Core/FoodToday.cs": "c6a66424f23edddc2d6463dc1b6d7f199a647dda8f7a9789a24d19cacb222174",
+    "Core/FoodWeightedCommerce.cs": "f453138bdc2743373ab93509331de66c837b2a3de6ca661b82e648934f956488",
+    "Core/HouseholdFinance.cs": "50396999eb1e071569a8551501f9185cff8a8b727c14b1519bd21a346fee4e92",
+    "Core/Model.cs": "e251a80ff0e3f080ea1c52443e5b235448053c026bac728cca236eace2284dd0",
+    "Core/RivalFood.cs": "19237e151170c20c90f81a865653e4d6b3eb367d24f89bb04996e8b39a50034a",
+    "Persistence/FoodSaleReceipts.cs": "198da3de61b434180aa7565763578d6a9e8303543daca6f6bd0ba5f4312ef5b6",
+    "Persistence/FoodShadowCodec.cs": "b132d9414a3c2337c42bf68faa6dc53be87ea422462dfe52d486808152f0634b",
+    "Persistence/LegacyPopulationCodec.cs": "f0cc91898ddcd7a4dcb58f58889f91759508713874249457b3850d8d165d7157",
+    "Persistence/PopulationSchema19AwarenessWire19.cs": "8e8b5ba3884ad4b99f5faf239450197fa82699e9355df34b71a9cdbbb7975327",
+    "Persistence/PopulationSchema19HeldTuningWire.cs": "c3be363db9aed2ec4c620ea664d8c77165a473dafcc3e16db25cbb78978bc33d",
+    "Persistence/PopulationSchema19PopulationWire18.cs": "590a8268ead7791c333f69df4db8868849c66e0d5aa8147eb19fd7500ba7b451",
+    "Persistence/PopulationSchema19SaveCodec.cs": "a011e9ea059601cdeeaccb3df37920493a081565a45b707b3b3c9df537f0795a",
+    "Persistence/PopulationWire18.cs": "974a9f7b2978375c74eb2f22474f9c7c51d828df9a01c2e1460e1175c6e29490",
+    "Persistence/RivalWire21.cs": "caab0e4ebff2fcf2dba4645a35cff0b8c9d39a26aa23c90b5f879b76eb4dc415",
+    "Persistence/SaveCodec.cs": "aa8309b6ade5a8246a3f0324d8d4e3a20d965eac5dbea9b305ce7403a9433a6f",
+    "Runtime/NativeFoodCandidates.cs": "a3d3fb4070752e58aaa97bcd6ee625c2a677301e84e3091da83b6d908b858181",
+    "Runtime/NativeFoodMarket.cs": "4ccba779a81f0db3981dcd846fcd96ba82d3296a73228c97b6e2607daad653d1",
+    "Runtime/NativeRivalFood.cs": "6dee7f79d119da4a94fcfc8e7119db699915c6847ed08ee8a6443ff77780f798",
+    "Runtime/PersistentCityMod.cs": "6344bf632b9054c7e5d88416bdbca45051571d829c29756ac8a0829d3b6465cb",
+    "Runtime/PrototypeSettings.cs": "3e4c4dac5475094037f64a16535b9f0918814e5f4cf54410ed28f9738ebd6ef7",
+    "Runtime/RivalFoodCatalogue.cs": "61e694b6b6d376afc0e2bd7501ec015db1285b48ef2958344957ec1ece3f27f3",
+    "config/persistent-city.json": "b0c783b29529097f16c9b49c3bfc21c6566ceccbd6ef150ac65fcfc0ebfe36ab",
+    "tests/ExactMoneyTests.cs": "c6ac3f4ad78dfffbdbc7214a2c1b365ac6c3211c09a93af4d1bab35a23a7a408",
+    "tests/FoodAwarenessMemoryIntegrationTests.cs": "25543dfd5c32eb4deb41825c69bbb1e7ccd5b6fb34f1345650e2d9d0d7ba0db5",
+    "tests/FoodAwarenessTests.cs": "8efcc5205f8d75fe33632fe20ed1fae15b869050c89882e60b0d57687987e2de",
+    "tests/MarketResearchTests.cs": "e8bcdad06c91576f68e6085b91964d2892c5913966c0ae2e5bfe1ed4d57a5755",
+    "tests/RivalOutflowTests.cs": "5be91bce21c657825c923643808ddf6dfc13dc377356cde4674dc2ca24efd4fa",
+    "tests/Schema17Tests.cs": "5bc88c94104fda1a23ab56ee9ce8e0fcf690994d394866768abcee92bb2afe48",
+    "tests/Schema18ReviewTests.cs": "7193f7c05b324c1f66445394d901eadb6f111c1e65f7ec9bbfff34ca6f5df9c1",
+    "tests/Schema18Tests.cs": "72692e4b7cdbe424581a96fa1c6609d93c7096857d0c7780ceae2f8f365a685a",
+    "tools/awareness-regression/Program.cs": "e30f349f4050b9bd3bfa9a9d75747465efdb55a82583af1b5951b60b77d08078",
+    "tools/rival-outflow-regression/Market.cs": "48503305dafe3502b381e6ca6d24b91b02d7ca43833a010a8f0a58c2a93fa5df",
+    "tools/rival-outflow-regression/NativeDoubles.cs": "a5e6565387c5038f7919606fa0308629d27007b33c129842822c2b7df8262b86",
+    "tools/rival-outflow-regression/Program.cs": "8b4314cbd15c6bb69b9757fbe4c1d92c00a64cf733e2721464a46c9dfd0dd13f",
+    "tools/rival-outflow-regression/RivalOutflowRegression.csproj": "e3e23bb087618deb6bafcb56126602a573dc56bbbd23e19c99434b2a0fb4e5e2",
+    "tools/run-d2-checks.py": "173db730a772a467911d6e5f7f50d06a24156c40fde7f4f4847b5ba7d1afb022",
+    "tools/save-contract-regression/AwarenessContracts.cs": "e828acb14a0e0eff2af2cbd9f5ff40d7e5a004571736133bfd6a76684a1402f8",
+    "tools/save-contract-regression/CapacityBench.cs": "ad3bf27127681abfc0dbd1082e5d6583e49673d4bdfae9be9cd5e72341f3bd4c",
+    "tools/save-contract-regression/RivalContracts.cs": "96e9abf6ea6d1fe7a8c1d6d52428cd750452b8a30b61034dd5c7f6eb63a7b39a"
+  },
+  "finalDllSha256": "72435f39a79abce0bf3ab0b4c9dd3bf349259dccffd6b38fc1ff43480f0e32bc",
+  "gateOrder": "Initial 35-command batch; final production build/full suite/discovery and four capacity cases after the unknown-stock allocation conditional and fractional-price test. Unaffected standalone regressions were not repeated.",
+  "foreground": true,
+  "executionDeadlines": false,
+  "otherDotnetWaitBeforeEveryTestRun": true,
+  "commands": [
+    {
+      "name": "build",
+      "command": [
+        "<python>",
+        "tools/build.py",
+        "--game-managed",
+        "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed"
+      ],
+      "started": "2026-11-01T08:27:42.401251+00:00",
+      "seconds": 2.757370000006631,
+      "exit": 0,
+      "log": "build/d2/gates/build.log",
+      "logSha256": "ffddbfe47c126335dddf0d8d797ba7d735040c404580851e1ac51e7608fc014c"
+    },
+    {
+      "name": "test",
+      "command": [
+        "<dotnet>",
+        "test",
+        "tests/PersistentCity.Tests.csproj"
+      ],
+      "started": "2026-11-01T08:29:46.895658+00:00",
+      "seconds": 158.12833099998534,
+      "exit": 0,
+      "log": "build/d2/gates/test.log",
+      "logSha256": "2f0ed7b07571a6f4e76247392a9aa8df8a0b31a96957af3ae3b87861d66f61fe"
+    },
+    {
+      "name": "list-tests",
+      "command": [
+        "<dotnet>",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--no-build",
+        "--list-tests"
+      ],
+      "started": "2026-11-01T08:32:25.342730+00:00",
+      "seconds": 1.1495135999284685,
+      "exit": 0,
+      "log": "build/d2/gates/list-tests.log",
+      "logSha256": "6dfba671e556d4f216270479042f9dcadaa43032af73ab3a67d20d86937d28ae"
+    },
+    {
+      "name": "core-identity",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\core-identity-regression\\CoreIdentityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T07:49:12.389004+00:00",
+      "seconds": 7.334239699877799,
+      "exit": 0,
+      "log": "build/d2/gates/core-identity.log",
+      "logSha256": "bf4623ab42421b8c06fdbd16e861d58c23f8dae5959cc2ff79f13d978713fee2"
+    },
+    {
+      "name": "diagnostic-response",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\diagnostic-response-regression\\DiagnosticResponseRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T07:49:20.342734+00:00",
+      "seconds": 2.8212432998698205,
+      "exit": 0,
+      "log": "build/d2/gates/diagnostic-response.log",
+      "logSha256": "a89f8e2948c58df6f28f5d0bf439ea876f62fe55dd2f032fb9d77ea4d0a7b103"
+    },
+    {
+      "name": "event-observation",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\event-observation-regression\\EventObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T07:49:24.148670+00:00",
+      "seconds": 4.027679899940267,
+      "exit": 0,
+      "log": "build/d2/gates/event-observation.log",
+      "logSha256": "6a95b412b0e68b5bf4c7a5760b237ad9139e4d94cd5681ac1601df23d1b41024"
+    },
+    {
+      "name": "food-catalogue",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\food-catalogue-regression\\FoodCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T07:49:28.630738+00:00",
+      "seconds": 3.451249400153756,
+      "exit": 0,
+      "log": "build/d2/gates/food-catalogue.log",
+      "logSha256": "a0c603dac2969561d7ae2bb5145d7427690e02208b4223097198576af67121ce"
+    },
+    {
+      "name": "food-checkout",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\food-checkout-regression\\FoodCheckoutRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T07:49:32.604935+00:00",
+      "seconds": 4.02375469985418,
+      "exit": 0,
+      "log": "build/d2/gates/food-checkout.log",
+      "logSha256": "d39c8fa9305598c616691bfa3cc51d2f01b52cd9957b42957ecea6e6ffa9cd3d"
+    },
+    {
+      "name": "food-hours",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\food-hours-regression\\FoodHoursRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T07:49:37.215728+00:00",
+      "seconds": 2.0967794000171125,
+      "exit": 0,
+      "log": "build/d2/gates/food-hours.log",
+      "logSha256": "2410218689a17bf8e5ae868d3025d1a8bd9e449d7fd49d83728819236ce6607c"
+    },
+    {
+      "name": "food-household-catalogue",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\food-household-catalogue-regression\\FoodHouseholdCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T07:56:14.945650+00:00",
+      "seconds": 7.801505899988115,
+      "exit": 0,
+      "log": "build/d2/gates/food-household-catalogue.log",
+      "logSha256": "b0f19cfd0acbbded5af38461d6e0bbe596b236cd83207afa0223100fdcfb8609"
+    },
+    {
+      "name": "food-ownership",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\food-ownership-regression\\FoodOwnershipRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T07:56:54.403501+00:00",
+      "seconds": 9.368683899985626,
+      "exit": 0,
+      "log": "build/d2/gates/food-ownership.log",
+      "logSha256": "0868149a24cebe8c5801b20d7530b12bc49a633011d2bf039392c6d97de66efa"
+    },
+    {
+      "name": "food-supply",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\food-supply-regression\\FoodSupplyRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T08:08:43.974144+00:00",
+      "seconds": 2.2193082000594586,
+      "exit": 0,
+      "log": "build/d2/gates/food-supply.log",
+      "logSha256": "bea33031a003404270de233cbd073eb44deacac65f41be406a1eae3b70385683"
+    },
+    {
+      "name": "frame-observation",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\frame-observation-regression\\FrameObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T08:12:19.566610+00:00",
+      "seconds": 4.963969699805602,
+      "exit": 0,
+      "log": "build/d2/gates/frame-observation.log",
+      "logSha256": "7e5da72d80f98e71b464d3c9f918cf9457b5350bfcafc294e80e823b646b2d02"
+    },
+    {
+      "name": "gate-access",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\gate-access-regression\\GateAccessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T08:12:25.526388+00:00",
+      "seconds": 7.8758794001769274,
+      "exit": 0,
+      "log": "build/d2/gates/gate-access.log",
+      "logSha256": "6e9877acee2b84dfcc2de1b4d7d7236ac991a58c1a89fbe420966d127bf4afae"
+    },
+    {
+      "name": "road-ceiling",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\road-ceiling-regression\\RoadCeilingRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T08:12:34.369780+00:00",
+      "seconds": 7.594432299956679,
+      "exit": 0,
+      "log": "build/d2/gates/road-ceiling.log",
+      "logSha256": "895bf78ce78f6cceb24e97e6ac8d4cc6c68fa71cfb5b0e54f707e9bf46369762"
+    },
+    {
+      "name": "road-handoff",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\road-handoff-regression\\RoadHandoffRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T08:12:44.524123+00:00",
+      "seconds": 6.389206899795681,
+      "exit": 0,
+      "log": "build/d2/gates/road-handoff.log",
+      "logSha256": "5de54d90bad9b212aac21705900b22ad270fa18365f1284fc4e988bf67a5f23e"
+    },
+    {
+      "name": "road-invalidation",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\road-invalidation-regression\\RoadInvalidationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T08:22:58.975214+00:00",
+      "seconds": 5.082943300018087,
+      "exit": 0,
+      "log": "build/d2/gates/road-invalidation.log",
+      "logSha256": "11bcbab6bdde92b021b10a41d941aa322629fadbc821906b55ed9aa7d5d7e656"
+    },
+    {
+      "name": "road-speed",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\road-speed-regression\\RoadSpeedRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T08:23:04.648388+00:00",
+      "seconds": 3.4091548998840153,
+      "exit": 0,
+      "log": "build/d2/gates/road-speed.log",
+      "logSha256": "5242c509cd90b21734fe4321b43dcbba531282677f91d66ddc8931b9b07cef19"
+    },
+    {
+      "name": "route-discovery",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\route-discovery-regression\\RouteDiscoveryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T08:23:08.541511+00:00",
+      "seconds": 10.707224200014025,
+      "exit": 0,
+      "log": "build/d2/gates/route-discovery.log",
+      "logSha256": "7c3684eedaa0bea2266b919908de9f88a5bb82d63511f939d1661ee67c9cd95b"
+    },
+    {
+      "name": "save-contract",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\save-contract-regression\\SaveContractRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T08:23:19.724701+00:00",
+      "seconds": 4.586325800046325,
+      "exit": 0,
+      "log": "build/d2/gates/save-contract.log",
+      "logSha256": "a199775cb8762398535dc10d6fa5855d93293eab9c35ec835d47c71a1e3f7d84"
+    },
+    {
+      "name": "startup-clock",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\startup-clock-regression\\StartupClockRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T08:23:24.790786+00:00",
+      "seconds": 3.9645037001464516,
+      "exit": 0,
+      "log": "build/d2/gates/startup-clock.log",
+      "logSha256": "363e7d8aaba7b8fae7fafcd227f33fd6eb59d16552e6a0b9af6f3c746b6f49b9"
+    },
+    {
+      "name": "traffic-closure",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\traffic-closure-regression\\TrafficClosureRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T08:23:29.197270+00:00",
+      "seconds": 2.906387399882078,
+      "exit": 0,
+      "log": "build/d2/gates/traffic-closure.log",
+      "logSha256": "708d6590f5351a9c1adf0b939e6775caa82602e1d6ec261b597977db98e808aa"
+    },
+    {
+      "name": "traffic-queue",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\traffic-queue-regression\\TrafficQueueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T08:23:32.564163+00:00",
+      "seconds": 3.1402139000128955,
+      "exit": 0,
+      "log": "build/d2/gates/traffic-queue.log",
+      "logSha256": "897d1d2e5c92ef25374e61f7da26e9dea2849c91f3495eb8bc65210eb2e4b9c4"
+    },
+    {
+      "name": "walking-quote",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\walking-quote-regression\\WalkingQuoteRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T08:23:36.057121+00:00",
+      "seconds": 3.0625535000581294,
+      "exit": 0,
+      "log": "build/d2/gates/walking-quote.log",
+      "logSha256": "b20b2938933dcf089ca5390b756d89a587ca9d5f003c7440677ccda69bf0d405"
+    },
+    {
+      "name": "campaign-reader",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\campaign-reader-regression\\CampaignReaderRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T08:23:40.008064+00:00",
+      "seconds": 3.746307799825445,
+      "exit": 0,
+      "log": "build/d2/gates/campaign-reader.log",
+      "logSha256": "e4a1940cf82a50ac686aa2f94a93d40bb1b4de65c1874b3284801d5b8b0b45ee"
+    },
+    {
+      "name": "awareness",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\awareness-regression\\AwarenessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T08:23:44.124228+00:00",
+      "seconds": 21.025890599936247,
+      "exit": 0,
+      "log": "build/d2/gates/awareness.log",
+      "logSha256": "44161e49cdbb7dfd16c749333b16a111c7078c8ade3e0a3af071232ba8ea16cc"
+    },
+    {
+      "name": "food-candidate",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\food-candidate-regression\\FoodCandidateRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T08:24:05.749407+00:00",
+      "seconds": 2.294952900148928,
+      "exit": 0,
+      "log": "build/d2/gates/food-candidate.log",
+      "logSha256": "e2dd0227be30315948a6cb785ec126f9f6bcae66ac17e7e32d03907018bff6e4"
+    },
+    {
+      "name": "rival-outflow",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools\\rival-outflow-regression\\RivalOutflowRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-01T08:24:08.646099+00:00",
+      "seconds": 10.557152800029144,
+      "exit": 0,
+      "log": "build/d2/gates/rival-outflow.log",
+      "logSha256": "78a4c561470bbfa0bc0aff6eb64d0fa2980e42c73efdd95dd7edbbd05126a5ac"
+    },
+    {
+      "name": "native-command",
+      "command": [
+        "<python>",
+        "tools/native-command-regression/run.py"
+      ],
+      "started": "2026-11-01T08:24:20.066653+00:00",
+      "seconds": 2.8543677998241037,
+      "exit": 0,
+      "log": "build/d2/gates/native-command.log",
+      "logSha256": "bd610e1a32a30f6ad7638fc2a65ae7bf8bea9d44baba81884f821aea4ed0a9aa"
+    },
+    {
+      "name": "physical-selection",
+      "command": [
+        "<python>",
+        "tools/physical-selection-regression/run.py"
+      ],
+      "started": "2026-11-01T08:24:23.450889+00:00",
+      "seconds": 3.3916038000024855,
+      "exit": 0,
+      "log": "build/d2/gates/physical-selection.log",
+      "logSha256": "461d6138217a5ed4d668b5f79bf35252646453662150bba7b91dd51b73b981d5"
+    },
+    {
+      "name": "vehicle-ownership",
+      "command": [
+        "<python>",
+        "tools/vehicle-ownership-regression/run.py"
+      ],
+      "started": "2026-11-01T08:24:27.406190+00:00",
+      "seconds": 2.6887156998272985,
+      "exit": 0,
+      "log": "build/d2/gates/vehicle-ownership.log",
+      "logSha256": "7539f54a1b778a54ca9bc75f398a40c0491fb40281611c8c8efbbc473dd32e46"
+    },
+    {
+      "name": "optional-stop",
+      "command": [
+        "<python>",
+        "tools/optional-stop-regression/run.py"
+      ],
+      "started": "2026-11-01T08:24:30.705243+00:00",
+      "seconds": 3.6390964998863637,
+      "exit": 0,
+      "log": "build/d2/gates/optional-stop.log",
+      "logSha256": "561690c42502ebc3ed5f50a844443da9c2491e9d92e6bbb5385aeb68e532df0b"
+    },
+    {
+      "name": "simulate",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/simulate/Simulate.csproj",
+        "--",
+        "28",
+        "build/harness-demo"
+      ],
+      "started": "2026-11-01T08:24:34.832854+00:00",
+      "seconds": 7.040141899837181,
+      "exit": 0,
+      "log": "build/d2/gates/simulate.log",
+      "logSha256": "72740ec0e71df5c1e63d0065d6d85bc96163278b71ba46970dcf71dce85ca765"
+    },
+    {
+      "name": "food-routines",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-routines/FoodRoutines.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "build/harness-food-routines-demo",
+        "957"
+      ],
+      "started": "2026-11-01T08:24:42.221322+00:00",
+      "seconds": 4.597948999842629,
+      "exit": 0,
+      "log": "build/d2/gates/food-routines.log",
+      "logSha256": "6b573f6a7792cd972d55d4e23bceb2f78b9a6f99c1cec3df4fcaf47429386a3e"
+    },
+    {
+      "name": "food-demand",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-demand/FoodDemand.csproj",
+        "--",
+        "build/harness-food-demand-demo"
+      ],
+      "started": "2026-11-01T08:24:47.206789+00:00",
+      "seconds": 2.8513989001512527,
+      "exit": 0,
+      "log": "build/d2/gates/food-demand.log",
+      "logSha256": "0fcad3b67f8d5d30fdd57e0f22bd6a77333278aa86a08cc36638e6d480457223"
+    },
+    {
+      "name": "capacity-reference",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "reference",
+        "1"
+      ],
+      "started": "2026-11-01T08:32:26.815611+00:00",
+      "seconds": 4.999775199918076,
+      "exit": 0,
+      "log": "build/d2/gates/capacity-reference.log",
+      "logSha256": "6fc4d0d89c420fe8c4c3161f95ccee0ea94b6f0db79282b9aeb8591c85480c37"
+    },
+    {
+      "name": "capacity-consumers5000",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "consumers5000",
+        "1"
+      ],
+      "started": "2026-11-01T08:32:32.432222+00:00",
+      "seconds": 5.466755799949169,
+      "exit": 0,
+      "log": "build/d2/gates/capacity-consumers5000.log",
+      "logSha256": "2d96073b4b01dc752c55eedc70bac3910edb979d6e30dd3466b69ee6eb5d7f8a"
+    },
+    {
+      "name": "capacity-CF32",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "CF32",
+        "1"
+      ],
+      "started": "2026-11-01T08:32:38.505973+00:00",
+      "seconds": 38.15360449999571,
+      "exit": 0,
+      "log": "build/d2/gates/capacity-CF32.log",
+      "logSha256": "77cf5843f37c30e9404edeb0819ab0597d79a31287c86a5203c99856019770d5"
+    },
+    {
+      "name": "capacity-CF64",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "CF64",
+        "1"
+      ],
+      "started": "2026-11-01T08:33:17.191134+00:00",
+      "seconds": 46.15816170000471,
+      "exit": 0,
+      "log": "build/d2/gates/capacity-CF64.log",
+      "logSha256": "6b27d04dd7cf512388509c2c8b1a7eed3bcba74418538246dbf8136c6889dc11"
+    }
+  ],
+  "passedGateCount": 39,
+  "unitTests": {
+    "passed": 2380,
+    "failed": 0,
+    "skipped": 0,
+    "listed": 2380
+  },
+  "rivalMeasurements": {
+    "scales": [
+      {
+        "count": 1024,
+        "coldRefresh": {
+          "p50": 0.0174,
+          "p95": 0.0268,
+          "max": 0.322,
+          "spikesAtLeast30ms": 0,
+          "allocatedBytesPerOperation": 19484.30769230769
+        },
+        "warmRefresh": {
+          "p50": 0.0022,
+          "p95": 0.0041,
+          "max": 0.0167,
+          "spikesAtLeast30ms": 0,
+          "allocatedBytesPerOperation": 0.49230769230769234
+        },
+        "retainedReaderBytes": 720464,
+        "indexBuild": {
+          "p50": 0.003,
+          "p95": 0.0099,
+          "max": 0.3124,
+          "spikesAtLeast30ms": 0,
+          "allocatedBytesPerOperation": 1153.799511002445
+        },
+        "coldDecision": {
+          "p50": 0.2928,
+          "p95": 0.2928,
+          "max": 0.2928,
+          "spikesAtLeast30ms": 0,
+          "allocatedBytesPerOperation": 1640.0
+        },
+        "warmDecision": {
+          "p50": 0.0165,
+          "p95": 0.0189,
+          "max": 0.0557,
+          "spikesAtLeast30ms": 0,
+          "allocatedBytesPerOperation": 1563.072
+        },
+        "maxSources": 17,
+        "maxShortlist": 8,
+        "maximumLogicalRouteSlots": 16,
+        "arrivalBeforeTwoReads": {
+          "p50": 0.0073,
+          "p95": 0.0112,
+          "max": 0.0786,
+          "spikesAtLeast30ms": 0,
+          "allocatedBytesPerOperation": 5744.0
+        },
+        "arrivalAfterOneRead": {
+          "p50": 0.0022,
+          "p95": 0.0057,
+          "max": 0.0912,
+          "spikesAtLeast30ms": 0,
+          "allocatedBytesPerOperation": 2872.0
+        }
+      },
+      {
+        "count": 20000,
+        "coldRefresh": {
+          "p50": 0.0193,
+          "p95": 0.0352,
+          "max": 17.9271,
+          "spikesAtLeast30ms": 0,
+          "allocatedBytesPerOperation": 20210.813749000798
+        },
+        "warmRefresh": {
+          "p50": 0.003,
+          "p95": 0.0096,
+          "max": 0.0509,
+          "spikesAtLeast30ms": 0,
+          "allocatedBytesPerOperation": 0.025579536370903277
+        },
+        "retainedReaderBytes": 14092896,
+        "indexBuild": {
+          "p50": 0.0043,
+          "p95": 0.0135,
+          "max": 0.4652,
+          "spikesAtLeast30ms": 0,
+          "allocatedBytesPerOperation": 719.3899893503727
+        },
+        "coldDecision": {
+          "p50": 0.0716,
+          "p95": 0.0716,
+          "max": 0.0716,
+          "spikesAtLeast30ms": 0,
+          "allocatedBytesPerOperation": 1496.0
+        },
+        "warmDecision": {
+          "p50": 0.0251,
+          "p95": 0.0438,
+          "max": 0.2239,
+          "spikesAtLeast30ms": 0,
+          "allocatedBytesPerOperation": 1566.032
+        },
+        "maxSources": 17,
+        "maxShortlist": 8,
+        "maximumLogicalRouteSlots": 16,
+        "arrivalBeforeTwoReads": {
+          "p50": 0.0095,
+          "p95": 0.0151,
+          "max": 5.1026,
+          "spikesAtLeast30ms": 0,
+          "allocatedBytesPerOperation": 5744.0
+        },
+        "arrivalAfterOneRead": {
+          "p50": 0.0042,
+          "p95": 0.0095,
+          "max": 0.0572,
+          "spikesAtLeast30ms": 0,
+          "allocatedBytesPerOperation": 2872.0
+        }
+      }
+    ],
+    "settlement": {
+      "p50": 0.0001,
+      "p95": 0.0001,
+      "max": 0.1223,
+      "spikesAtLeast30ms": 0,
+      "allocatedBytesPerOperation": 192.0
+    },
+    "unknownStockReservations": {
+      "eightUnknownStockOffersBefore": {
+        "p50": 0.0002,
+        "p95": 0.0006,
+        "max": 0.0014,
+        "spikesAtLeast30ms": 0,
+        "allocatedBytesPerOperation": 1024.0
+      },
+      "eightUnknownStockOffersAfter": {
+        "p50": 0.0001,
+        "p95": 0.0001,
+        "max": 0.0002,
+        "spikesAtLeast30ms": 0,
+        "allocatedBytesPerOperation": 0.0
+      }
+    },
+    "saves": [
+      {
+        "consumers": 1914,
+        "baselineBytes": 2263487,
+        "currentBytes": 2273076,
+        "deltaBytes": 9589,
+        "streaming": 3829,
+        "semantic": 3829,
+        "baselineStreaming": 3829,
+        "baselineSemantic": 3829
+      },
+      {
+        "consumers": 5000,
+        "baselineBytes": 5918915,
+        "currentBytes": 5943934,
+        "deltaBytes": 25019,
+        "streaming": 10001,
+        "semantic": 10001,
+        "baselineStreaming": 10001,
+        "baselineSemantic": 10001
+      }
+    ],
+    "wholeDay": [
+      {
+        "alternatives": 1024,
+        "consumers": 1914,
+        "milliseconds": 1525.1898,
+        "allocatedBytes": 655742384,
+        "workUnits": 123120,
+        "continuations": 98652,
+        "advance128UnitSamples": {
+          "p50": 1.3798,
+          "p95": 3.0158,
+          "max": 12.773,
+          "spikesAtLeast30ms": 0,
+          "allocatedBytesPerOperation": 681644.8898128899
+        },
+        "routes": 95401,
+        "RivalRefreshUnits": 845,
+        "RivalDetailReads": 57063,
+        "purchases": 3745,
+        "pendingMeals": 0,
+        "caughtUp": true,
+        "cityMinute": 2869.0,
+        "diagnostic": {
+          "RivalChoices": 3745,
+          "RivalSettlements": 3745,
+          "RivalRefusals": 0,
+          "Availability": "EstimatedFromPriceAndHours",
+          "NativeRivalCheckout": "Unsupported",
+          "ExternalFoodSpentUnits": "100529078272000"
+        }
+      },
+      {
+        "alternatives": 20000,
+        "consumers": 1914,
+        "milliseconds": 1846.1956,
+        "allocatedBytes": 676648888,
+        "workUnits": 147974,
+        "continuations": 123261,
+        "advance128UnitSamples": {
+          "p50": 1.0363,
+          "p95": 3.8581,
+          "max": 47.7935,
+          "spikesAtLeast30ms": 2,
+          "allocatedBytesPerOperation": 584830.4995678479
+        },
+        "routes": 95660,
+        "RivalRefreshUnits": 16263,
+        "RivalDetailReads": 57315,
+        "purchases": 3794,
+        "pendingMeals": 0,
+        "caughtUp": true,
+        "cityMinute": 2869.0,
+        "diagnostic": {
+          "RivalChoices": 3794,
+          "RivalSettlements": 3794,
+          "RivalRefusals": 0,
+          "Availability": "EstimatedFromPriceAndHours",
+          "NativeRivalCheckout": "Unsupported",
+          "ExternalFoodSpentUnits": "101844412006400"
+        }
+      }
+    ],
+    "checks": 19828
+  },
+  "schema19Baseline": {
+    "path": "docs/reviews/2026-11-01-c2a-sync2-base-results.json",
+    "sha256": "6f44482540237ee0dcc184ec72750ad1621f52647e94a5ca114370d6d11b9e57",
+    "saveContract": {
+      "schema": 19,
+      "digest": "D7FF8294F56C3B3D5AF736540274E68E9848319B34658859FC15E0D4CDB1F3A2",
+      "length": 119083,
+      "refusals": [
+        "Invalid:Invalid state: Missing state schema.",
+        "Future:State uses a newer schema; preserve the original payload.",
+        "Invalid:Invalid state: Incomplete or trailing JSON content.",
+        "Invalid:Invalid state: Unknown field: UnknownCitizens"
+      ],
+      "economy": {
+        "orders": 849,
+        "ordersDigest": "1B94987B3158044594B9C4D6A5473BA22BE0D4F3488D769CBBEE23318BB33B91",
+        "purchases": 797,
+        "spentUnits": 107967424757760,
+        "uncertain": 2,
+        "economyDigest": "74D0FE8081EA795D4D56A11B4B955DC6E777E3822C702D3C09BC9477E6679AF9",
+        "reloadDigest": "59B6F14D44CA0F996C5A828E2E538B52C5426347FCFA40767527B72D77F1D4FA"
+      },
+      "writeBytes": 14453904,
+      "readBytes": 38773560,
+      "bench": null,
+      "hot": null
+    }
+  },
+  "schema21SaveContract": {
+    "schema": 21,
+    "digest": "A539618D4C39A93A4C2A58A4A98EDB8461B186130ADBB468BAA42BABEEE1822F",
+    "length": 119083,
+    "refusals": [
+      "Invalid:Invalid state: Missing state schema.",
+      "Future:State uses a newer schema; preserve the original payload.",
+      "Invalid:Invalid state: Incomplete or trailing JSON content.",
+      "Invalid:Invalid state: Unknown field: UnknownCitizens"
+    ],
+    "economy": {
+      "orders": 849,
+      "ordersDigest": "1B94987B3158044594B9C4D6A5473BA22BE0D4F3488D769CBBEE23318BB33B91",
+      "purchases": 797,
+      "spentUnits": 107967424757760,
+      "uncertain": 2,
+      "economyDigest": "74D0FE8081EA795D4D56A11B4B955DC6E777E3822C702D3C09BC9477E6679AF9",
+      "reloadDigest": "59B6F14D44CA0F996C5A828E2E538B52C5426347FCFA40767527B72D77F1D4FA"
+    },
+    "writeBytes": 14458040,
+    "readBytes": 38774752,
+    "bench": null,
+    "hot": null
+  },
+  "economyIdentical": true,
+  "populationOnlyLengthIdentical": true,
+  "capacity": [
+    {
+      "name": "reference",
+      "baseline": {
+        "name": "reference",
+        "schema": 19,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "76CD77A8F8172A159A1B5E1D86AD9EA913500A4EE9412AD20A4B444F46C4886C",
+        "residents": 957,
+        "representation": 2,
+        "consumers": 1914,
+        "visitsPerResident": 32,
+        "visits": 30624,
+        "placeCount": 9,
+        "extraExistingPlaces": 0,
+        "extraExistingPlaceChars": 0,
+        "extraExistingNameChars": 0,
+        "actualExistingGrowthChars": 0,
+        "existingGrowthAllowanceChars": 0,
+        "memoryEntries": 7656,
+        "businessReferences": 20000,
+        "tableCharsAndUtf8": 2097152,
+        "chars": 5022655,
+        "utf8Bytes": 5022655,
+        "streamingRecords": 54584,
+        "semanticRecords": 54581,
+        "runs": 1,
+        "writeMs": 119.2,
+        "readMs": 335.0,
+        "migrationFrom17Ms": 495.2,
+        "migrationSourceChars": 5372125,
+        "migrationRefusal": null,
+        "retainedBytes": 11127432,
+        "readAllocatedBytes": 85030840,
+        "processPeakBytes": 145784832,
+        "syntheticReservation": null
+      },
+      "candidate": {
+        "name": "reference",
+        "schema": 21,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "474F5A0FA97C1F87C49DA29D4D0B07234EB8D8B34CE6A1771298DACCBEFAADD6",
+        "residents": 957,
+        "representation": 2,
+        "consumers": 1914,
+        "visitsPerResident": 32,
+        "visits": 30624,
+        "placeCount": 9,
+        "extraExistingPlaces": 0,
+        "extraExistingPlaceChars": 0,
+        "extraExistingNameChars": 0,
+        "actualExistingGrowthChars": 0,
+        "existingGrowthAllowanceChars": 0,
+        "memoryEntries": 7656,
+        "businessReferences": 20000,
+        "tableCharsAndUtf8": 2097152,
+        "chars": 5033396,
+        "utf8Bytes": 5033396,
+        "streamingRecords": 54584,
+        "semanticRecords": 54581,
+        "runs": 1,
+        "writeMs": 119.9,
+        "readMs": 343.3,
+        "migrationFrom17Ms": 472.8,
+        "migrationSourceChars": 5372125,
+        "migrationRefusal": null,
+        "retainedBytes": 11219720,
+        "readAllocatedBytes": 85187904,
+        "processPeakBytes": 162693120,
+        "syntheticReservation": null
+      },
+      "byteDelta": 10741,
+      "recordsUnchanged": true
+    },
+    {
+      "name": "consumers5000",
+      "baseline": {
+        "name": "consumers5000",
+        "schema": 19,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "D52C5279CFEFA63BDB44C41333613F3E6F74B968EC1A4572D41318E928A7DFD7",
+        "residents": 2500,
+        "representation": 2,
+        "consumers": 5000,
+        "visitsPerResident": 32,
+        "visits": 80000,
+        "placeCount": 9,
+        "extraExistingPlaces": 0,
+        "extraExistingPlaceChars": 0,
+        "extraExistingNameChars": 0,
+        "actualExistingGrowthChars": 0,
+        "existingGrowthAllowanceChars": 0,
+        "memoryEntries": 20000,
+        "businessReferences": 20000,
+        "tableCharsAndUtf8": 2097152,
+        "chars": 9710819,
+        "utf8Bytes": 9710819,
+        "streamingRecords": 110132,
+        "semanticRecords": 110129,
+        "runs": 1,
+        "writeMs": 239.5,
+        "readMs": 747.5,
+        "migrationFrom17Ms": 1893.9,
+        "migrationSourceChars": 14021170,
+        "migrationRefusal": null,
+        "retainedBytes": 20895880,
+        "readAllocatedBytes": 164828832,
+        "processPeakBytes": 211628032,
+        "syntheticReservation": null
+      },
+      "candidate": {
+        "name": "consumers5000",
+        "schema": 21,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "7264090A261784C6744FD5F5D90C50966766BEC535F8E79B2D3B568201029D32",
+        "residents": 2500,
+        "representation": 2,
+        "consumers": 5000,
+        "visitsPerResident": 32,
+        "visits": 80000,
+        "placeCount": 9,
+        "extraExistingPlaces": 0,
+        "extraExistingPlaceChars": 0,
+        "extraExistingNameChars": 0,
+        "actualExistingGrowthChars": 0,
+        "existingGrowthAllowanceChars": 0,
+        "memoryEntries": 20000,
+        "businessReferences": 20000,
+        "tableCharsAndUtf8": 2097152,
+        "chars": 9736990,
+        "utf8Bytes": 9736990,
+        "streamingRecords": 110132,
+        "semanticRecords": 110129,
+        "runs": 1,
+        "writeMs": 212.7,
+        "readMs": 746.2,
+        "migrationFrom17Ms": 1377.8,
+        "migrationSourceChars": 14021170,
+        "migrationRefusal": null,
+        "retainedBytes": 21136168,
+        "readAllocatedBytes": 165208088,
+        "processPeakBytes": 211869696,
+        "syntheticReservation": null
+      },
+      "byteDelta": 26171,
+      "recordsUnchanged": true
+    },
+    {
+      "name": "CF32",
+      "baseline": {
+        "name": "CF32",
+        "schema": 19,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "D55B598BD20821B825BBD5E82FF110C16734215E04D9097C2F0F2EC84FE21928",
+        "residents": 50000,
+        "representation": 3,
+        "consumers": 150000,
+        "visitsPerResident": 32,
+        "visits": 1600000,
+        "placeCount": 20000,
+        "extraExistingPlaces": 19991,
+        "extraExistingPlaceChars": 6343907,
+        "extraExistingNameChars": 6239005,
+        "actualExistingGrowthChars": 12582912,
+        "existingGrowthAllowanceChars": 12582912,
+        "memoryEntries": 600000,
+        "businessReferences": 20000,
+        "tableCharsAndUtf8": 2097152,
+        "chars": 192029621,
+        "utf8Bytes": 192029621,
+        "streamingRecords": 1920132,
+        "semanticRecords": 1920129,
+        "runs": 1,
+        "writeMs": 1768.5,
+        "readMs": 6187.6,
+        "migrationFrom17Ms": null,
+        "migrationSourceChars": null,
+        "migrationRefusal": "Serialized state exceeds the input size limit.",
+        "retainedBytes": 426288856,
+        "readAllocatedBytes": 3188373688,
+        "processPeakBytes": 3267297280,
+        "syntheticReservation": {
+          "futureContractChars": 26684745,
+          "alreadyCountedBHeaderChars": 56,
+          "alreadyCountedHeldTuningChars": 405,
+          "alreadyCountedAwarenessChars": 9514,
+          "alreadyCountedAwarenessRecords": 24,
+          "fixedMemoryHeadroomChars": 1950000,
+          "futureContractRecords": 191735,
+          "totalBudgetedChars": 220664366,
+          "totalBudgetedUtf8Bytes": 220664366,
+          "totalBudgetedRecords": 2111867
+        }
+      },
+      "candidate": {
+        "name": "CF32",
+        "schema": 21,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "63E8575A8FEB6D460DEB60EFDE238F840D6CEA6079A0D9FD0A8982D6FDC6870A",
+        "residents": 50000,
+        "representation": 3,
+        "consumers": 150000,
+        "visitsPerResident": 32,
+        "visits": 1600000,
+        "placeCount": 20000,
+        "extraExistingPlaces": 19991,
+        "extraExistingPlaceChars": 6343907,
+        "extraExistingNameChars": 6239005,
+        "actualExistingGrowthChars": 12582912,
+        "existingGrowthAllowanceChars": 12582912,
+        "memoryEntries": 600000,
+        "businessReferences": 20000,
+        "tableCharsAndUtf8": 2097152,
+        "chars": 192780792,
+        "utf8Bytes": 192780792,
+        "streamingRecords": 1920132,
+        "semanticRecords": 1920129,
+        "runs": 1,
+        "writeMs": 2540.5,
+        "readMs": 9708.8,
+        "migrationFrom17Ms": null,
+        "migrationSourceChars": null,
+        "migrationRefusal": "Serialized state exceeds the input size limit.",
+        "retainedBytes": 432956616,
+        "readAllocatedBytes": 3199192064,
+        "processPeakBytes": 3334504448,
+        "syntheticReservation": {
+          "futureContractChars": 25933574,
+          "alreadyCountedBHeaderChars": 56,
+          "alreadyCountedHeldTuningChars": 405,
+          "alreadyCountedAwarenessChars": 9994,
+          "alreadyCountedAwarenessRecords": 24,
+          "alreadyCountedRivalChars": 750691,
+          "fixedMemoryHeadroomChars": 1950000,
+          "futureContractRecords": 191735,
+          "totalBudgetedChars": 220664366,
+          "totalBudgetedUtf8Bytes": 220664366,
+          "totalBudgetedRecords": 2111867
+        }
+      },
+      "byteDelta": 751171,
+      "recordsUnchanged": true
+    },
+    {
+      "name": "CF64",
+      "baseline": {
+        "name": "CF64",
+        "schema": 19,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "03B9A9DC975C495CC68C4C91C772A849ECE9E75B0F0DB3AB8D250895C21A894C",
+        "residents": 50000,
+        "representation": 3,
+        "consumers": 150000,
+        "visitsPerResident": 64,
+        "visits": 3200000,
+        "placeCount": 20000,
+        "extraExistingPlaces": 19991,
+        "extraExistingPlaceChars": 6343907,
+        "extraExistingNameChars": 6239005,
+        "actualExistingGrowthChars": 12582912,
+        "existingGrowthAllowanceChars": 12582912,
+        "memoryEntries": 600000,
+        "businessReferences": 20000,
+        "tableCharsAndUtf8": 2097152,
+        "chars": 230429621,
+        "utf8Bytes": 230429621,
+        "streamingRecords": 3520132,
+        "semanticRecords": 3520129,
+        "runs": 1,
+        "writeMs": 2617.8,
+        "readMs": 7423.9,
+        "migrationFrom17Ms": null,
+        "migrationSourceChars": null,
+        "migrationRefusal": "Serialized state exceeds the input size limit.",
+        "retainedBytes": 503080648,
+        "readAllocatedBytes": 3995997688,
+        "processPeakBytes": 3221590016,
+        "syntheticReservation": {
+          "futureContractChars": 26684745,
+          "alreadyCountedBHeaderChars": 56,
+          "alreadyCountedHeldTuningChars": 405,
+          "alreadyCountedAwarenessChars": 9514,
+          "alreadyCountedAwarenessRecords": 24,
+          "fixedMemoryHeadroomChars": 1950000,
+          "futureContractRecords": 191735,
+          "totalBudgetedChars": 259064366,
+          "totalBudgetedUtf8Bytes": 259064366,
+          "totalBudgetedRecords": 3711867
+        }
+      },
+      "candidate": {
+        "name": "CF64",
+        "schema": 21,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "E0A600D5940D412BE54124D55EBD3E268918310491F50E7EE871A3D94541FC0B",
+        "residents": 50000,
+        "representation": 3,
+        "consumers": 150000,
+        "visitsPerResident": 64,
+        "visits": 3200000,
+        "placeCount": 20000,
+        "extraExistingPlaces": 19991,
+        "extraExistingPlaceChars": 6343907,
+        "extraExistingNameChars": 6239005,
+        "actualExistingGrowthChars": 12582912,
+        "existingGrowthAllowanceChars": 12582912,
+        "memoryEntries": 600000,
+        "businessReferences": 20000,
+        "tableCharsAndUtf8": 2097152,
+        "chars": 231180792,
+        "utf8Bytes": 231180792,
+        "streamingRecords": 3520132,
+        "semanticRecords": 3520129,
+        "runs": 1,
+        "writeMs": 3285.0,
+        "readMs": 9022.9,
+        "migrationFrom17Ms": null,
+        "migrationSourceChars": null,
+        "migrationRefusal": "Serialized state exceeds the input size limit.",
+        "retainedBytes": 510288024,
+        "readAllocatedBytes": 4006816400,
+        "processPeakBytes": 3290079232,
+        "syntheticReservation": {
+          "futureContractChars": 25933574,
+          "alreadyCountedBHeaderChars": 56,
+          "alreadyCountedHeldTuningChars": 405,
+          "alreadyCountedAwarenessChars": 9994,
+          "alreadyCountedAwarenessRecords": 24,
+          "alreadyCountedRivalChars": 750691,
+          "fixedMemoryHeadroomChars": 1950000,
+          "futureContractRecords": 191735,
+          "totalBudgetedChars": 259064366,
+          "totalBudgetedUtf8Bytes": 259064366,
+          "totalBudgetedRecords": 3711867
+        }
+      },
+      "byteDelta": 751171,
+      "recordsUnchanged": true
+    }
+  ],
+  "limits": [
+    "Shared-host offline timings are not native mod-work or whole-frame proof.",
+    "Two offline 128-unit advancement batches >=30 ms, maximum 47.7935 ms; no finer attribution.",
+    "D1 aggregate cold refresh 47.2054 ms spans many bounded units.",
+    "Standalone capacity write/read/migration latencies >=30 ms are save operations, not mod-work samples.",
+    "Native combined p95 <5 ms, spikes >=30 ms and separate whole-frame evidence remain pending 6 Nov."
+  ]
+}

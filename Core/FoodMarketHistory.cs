@@ -55,6 +55,7 @@ namespace PersistentCity.Core
             foreach (var choice in intent.Choices)
             {
                 var shop = businesses.First(b => b.Id == choice.BusinessId);
+                if (shop.AlternativeKind == FoodAlternativeKind.Rival) continue;
                 var row = ShopDay(shop.PlaceId, shop.Id, intent.Day); row.OffersConsidered++;
                 if (choice.Reason.StartsWith("Chosen:", StringComparison.Ordinal) && intent.Status == FoodIntentStatus.Travelling) row.ChosenOffers++;
                 else if (choice.ScoreCents.HasValue) row.PreferredAlternatives++;

@@ -46,15 +46,8 @@ public sealed class WeatherTests
     { var r=SaveCodec.Read(wire);Assert.True(r.Status==SaveReadStatus.Loaded,r.Error);return r.State!; }
     internal static string As19(string wire)
     {
-        var root=JObject.Parse(wire);root["Schema"]=19;root.Remove("WeatherStartsDay");root.Remove("MenuPolicy");
-        foreach(JObject p in root["Citizens"]!) p.Remove("W");
-        if(root["Food"] is JObject food) { food.Remove("Campaigns"); foreach(JArray m in food["Residents"]!)
-        {
-            string memory=(string)m[35]!;m[35]=memory[..^2];
-            if(m[9] is JObject d) { d.Remove("Weather");d.Remove("WeatherTravelMultiplier"); }
-        }
-        }
-        return root.ToString(Formatting.None);
+        var read=SaveCodec.Read(wire);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
+        read.State!.Schema=19;return PopulationSchema19.Write(read.State);
     }
     [Fact]
     public void Migration19IsNeutralActivatesNextDayAndPreservesSource()

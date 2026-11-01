@@ -25,17 +25,24 @@ namespace PersistentCity.Core
         private long publishedInvalidation=-1;
         // The next logical event stays unprocessed while the shared image builds. A held decision
         // already owns its inputs and is never delayed/rerolled by a later catalogue publication.
-        internal bool NeedsAwarenessPreparation(double minute) => pendingDecision==null && state.ChoicePolicyVersion==FoodChoicePolicy.Version
-            && (int)(minute/1440)>=state.ChoiceStartsDay && (int)(minute/1440)>=state.AwarenessStartsDay && !AwarenessReady;
+        internal bool NeedsAwarenessPreparation(double minute) => rivalResumeNeedsRefresh && NeedsRivalPreparation(minute)
+            || pendingDecision==null && state.ChoicePolicyVersion==FoodChoicePolicy.Version
+            && (int)(minute/1440)>=state.ChoiceStartsDay && (int)(minute/1440)>=state.AwarenessStartsDay && (NeedsRivalPreparation(minute) || !AwarenessReady);
         internal void ContinueAwarenessPreparation()
         {
+            if(NeedsRivalPreparation(city.State.Minute))
+            {
+                var rivals=(IRivalFoodMarket)market; rivals.ContinueRivalRefresh(city.State.Minute);
+                if(!rivals.NeedsRivalRefresh(city.State.Minute)) rivalResumeNeedsRefresh=false;
+                return;
+            }
             long revision=CurrentAwarenessRevision;
             if(awarenessBuilder==null || buildingRevision!=revision || buildingInvalidation!=awarenessInvalidation
                 || !ReferenceEquals(buildingScopes,state.Shops) || buildingCount!=state.Shops.Count)
             {
                 awarenessBuilder?.Dispose();buildingRevision=revision;buildingInvalidation=awarenessInvalidation;
                 buildingScopes=state.Shops;buildingCount=state.Shops.Count;
-                awarenessBuilder=FoodAwarenessCatalogue.BeginBuild(state.Shops,city.FindPosition);
+                awarenessBuilder=FoodAwarenessCatalogue.BeginSparseBuild(AwarenessEntries());
             }
             if(!awarenessBuilder.Continue()) return;
             awarenessCatalogue=awarenessBuilder.Result;awarenessBuilder.Dispose();awarenessBuilder=null;
@@ -56,14 +63,15 @@ namespace PersistentCity.Core
                 campaigns.Prepare(meal.ResidentId,day,city.State.Minute);
             return AwarenessCatalogue().Sample(city.State.Seed,meal.ResidentId,day,Anchor(person.HomeId),Anchor(person.DayPlaceId),Anchor(stop.PlaceId),
                 AwarenessSettings,e=>(!atStop || e.PlaceId==stop.PlaceId) && e.Scope!.BusinessId==e.BusinessId
-                    && (!(market is IFoodCandidateMarket m) || m.IsCandidate(e.Scope!)),MemoryProvider ?? storedMemoryProvider,CampaignProvider,dump,atStop ? stop.PlaceId : null);
+                    && (e.Kind==FoodAwarenessAlternativeKind.External ? RivalSettings.RivalChoiceWeight>0 && RivalCandidate(e.Scope!) : (!(market is IFoodCandidateMarket m) || m.IsCandidate(e.Scope!))),
+                city.State.Capabilities.Active ? MemoryProvider ?? storedMemoryProvider : EmptyFoodAwarenessProvider.Instance,CampaignProvider,dump,atStop ? stop.PlaceId : null);
         }
         internal FoodAwarenessDump? InspectAwareness(string consumerId,int? day)
         {
             if(!records.TryGetValue(consumerId,out var meal)) return null;
             var person=city.FindCitizen(meal.AnchorId);if(person==null) return null;
             // Explicit on-demand inspection may finish the transient index; normal events never drain it inline.
-            while(!AwarenessReady) ContinueAwarenessPreparation();
+            while(NeedsRivalPreparation(city.State.Minute) || !AwarenessReady) ContinueAwarenessPreparation();
             var stop=ChoiceStop(meal,person);bool atStop=meal.Decision!=null
                 ? meal.Decision.ContextKey.StartsWith("stop:",StringComparison.Ordinal) : AtFoodStop(person);
             var dump=new FoodAwarenessDump {ConsumerId=consumerId,Day=day ?? meal.Day,
@@ -72,7 +80,7 @@ namespace PersistentCity.Core
             var context=meal.Decision?.ContextKey ?? Context(stop,atStop);
             dump.Shortlist=AwarenessCatalogue().Rank(image,city.FindPlace(stop.PlaceId).Position,Traits(meal,person),meal.Decision?.Tuning?.Settings ?? ChoiceSettings,
                 new FoodDrawContext(city.State.Seed,meal.ResidentId,day ?? meal.Day,meal.Kind,context,meal.Decision?.Attempt ?? meal.ContextAttempts+1),
-                routes is IFoodWalkingPace walking ? walking.WalkingMetresPerMinute : 120, id=>MemoryContribution(meal,person,id),meal.Decision?.WeatherTravelMultiplier ?? 1).Select(e=>e.BusinessId).ToArray();
+                routes is IFoodWalkingPace walking ? walking.WalkingMetresPerMinute : 120, id=>MemoryContribution(meal,person,id),rivalWeight:RivalSettings.RivalChoiceWeight,weatherTravelMultiplier:meal.Decision?.WeatherTravelMultiplier ?? 1).Select(e=>e.BusinessId).ToArray();
             return dump;
         }
         private ResidentMeal? pendingDecision;
@@ -110,7 +118,7 @@ namespace PersistentCity.Core
         }
         private FoodDrawContext Draw(ResidentMeal meal,FoodDecisionState d) => new FoodDrawContext(city.State.Seed,meal.ResidentId,meal.Day,meal.Kind,d.ContextKey,d.Attempt);
         private static FoodRoutineStop CopyStop(FoodRoutineStop s) => new FoodRoutineStop {PlaceId=s.PlaceId,Activity=s.Activity,CapturedAt=s.CapturedAt,DepartureAt=s.DepartureAt};
-        private static FoodScope FreezeScope(FoodScope s) => new FoodScope {BusinessId=s.BusinessId,PlaceId=s.PlaceId,
+        private static FoodScope FreezeScope(FoodScope s) => new FoodScope {AlternativeKind=s.AlternativeKind,BusinessId=s.BusinessId,PlaceId=s.PlaceId,
             ProductId=s.ProductId,AdditionalProductIds=new List<string>(s.AdditionalProductIds),NextServiceAt=s.NextServiceAt};
         private bool MatchesStop(FoodRoutineStop stop,FoodDecisionState d,bool atStop)
         {
@@ -166,7 +174,7 @@ namespace PersistentCity.Core
             for (int scopeIndex=0; scopeIndex<scopes.Length; scopeIndex++)
             {
                 var scope=scopes[scopeIndex];
-                var b=market is IFoodCandidateMarket capture ? capture.CaptureBusiness(scope.BusinessId,now) : ReadBusiness(scope.BusinessId,now);
+                var b=scope.AlternativeKind==FoodAlternativeKind.Rival ? CaptureRival(scope.BusinessId,now) : market is IFoodCandidateMarket capture ? capture.CaptureBusiness(scope.BusinessId,now) : ReadBusiness(scope.BusinessId,now);
                 if(b==null || b.Id!=scope.BusinessId || b.PlaceId!=scope.PlaceId) continue; // no refill or replacement identity
                 // A smaller configured menu cannot silently discard offers or steal native demand.
                 // Held images retain their captured tuning. The native owner reconciles at its boundary.
@@ -179,13 +187,14 @@ namespace PersistentCity.Core
                     if(!FoodProducts.Known(offer.ProductId) || !scope.ContainsProduct(offer.ProductId)) supportedMenu=false;
                 if(!supportedMenu) continue; // unsupported or out-of-scope offers reject the whole shop
                 // Market inputs belong to the provider: capture before subtracting reservations.
-                var shop=new FoodDecisionShop {MemoryContribution=contributions[scopeIndex],BusinessId=b.Id,PlaceId=b.PlaceId,MealsPerHour=b.MealsPerHour ?? -1,
+                var shop=new FoodDecisionShop {AlternativeKind=b.AlternativeKind,RivalTerms=b.RivalTerms,RivalServiceMinutes=b.RivalServiceMinutes,AlternativeWeight=b.AlternativeKind==FoodAlternativeKind.Rival ? RivalSettings.RivalChoiceWeight : 1,MemoryContribution=contributions[scopeIndex],BusinessId=b.Id,PlaceId=b.PlaceId,MealsPerHour=b.MealsPerHour ?? -1,
                     NextServiceAt=Math.Max(now,scope.NextServiceAt),ServiceUnavailable=b.ServiceUnavailableReason.Length>0,
                     CustomerServicePercent=b.CustomerServicePercent ?? -1,DistrictId=b.DistrictId,
                     Hours=b.Hours.Select(h=>new OpeningWindow {Day=h.Day,FromMinute=h.FromMinute,ToMinute=h.ToMinute}).ToList()};
                 foreach(var offer in b.Offers)
                 {
-                    reservations.TryGetValue(ReservationKey(b.PlaceId,offer.ProductId),out int held);
+                    int held=0;
+                    if(offer.Units.HasValue) reservations.TryGetValue(ReservationKey(b.PlaceId,offer.ProductId),out held);
                     int units=offer.Units.HasValue ? Math.Max(0,offer.Units.Value-held) : -1;
                     shop.Offers.Add(new FoodDecisionOffer {ProductId=offer.ProductId,Price=offer.Price,
                         Units=units,DistrictDemandPercent=offer.DistrictDemandPercent ?? -1});
@@ -204,7 +213,7 @@ namespace PersistentCity.Core
             var catalogue=AwarenessCatalogue();
             decision.Awareness=AwarenessSample(meal,person,stop,meal.Day,atStop);
             double pace=routes is IFoodWalkingPace walking ? walking.WalkingMetresPerMinute : 120;
-            return catalogue.Rank(decision.Awareness,city.FindPlace(stop.PlaceId).Position,Traits(meal,person),decision.Tuning!.Settings,Draw(meal,decision),pace,id=>MemoryContribution(meal,person,id),decision.WeatherTravelMultiplier)
+            return catalogue.Rank(decision.Awareness,city.FindPlace(stop.PlaceId).Position,Traits(meal,person),decision.Tuning!.Settings,Draw(meal,decision),pace,id=>MemoryContribution(meal,person,id),rivalWeight:RivalSettings.RivalChoiceWeight,weatherTravelMultiplier:decision.WeatherTravelMultiplier)
                 .Select(e=>FreezeScope(e.Scope!)).ToArray();
         }
 
@@ -238,9 +247,10 @@ namespace PersistentCity.Core
             return selected;
         }
 
-        private static FoodBusiness Materialize(FoodDecisionShop s) => new FoodBusiness {Id=s.BusinessId,PlaceId=s.PlaceId,Name=s.PlaceId,
+        private static FoodBusiness Materialize(FoodDecisionShop s) => new FoodBusiness {AlternativeKind=s.AlternativeKind,RivalTerms=s.RivalTerms,RivalServiceMinutes=s.RivalServiceMinutes,Id=s.BusinessId,PlaceId=s.PlaceId,Name=s.PlaceId,
             MealsPerHour=s.MealsPerHour<0 ? (int?)null : (int)s.MealsPerHour,NextServiceMinute=s.NextServiceAt,
             ServiceUnavailableReason=s.ServiceUnavailable ? "Service unavailable" : "",Hours=s.Hours,
+            ServiceEvidence=s.AlternativeKind==FoodAlternativeKind.Rival ? "Estimated availability from advertised price/hours; stock unknown" : "Captured player supply",
             CustomerServicePercent=s.CustomerServicePercent<0 ? (int?)null : s.CustomerServicePercent,DistrictId=s.DistrictId,
             Offers=s.Offers.Select(o=>new FoodOffer {ProductId=o.ProductId,Price=o.Price,Units=o.Units<0 ? (int?)null : o.Units,
                 DistrictDemandPercent=o.DistrictDemandPercent<0 ? (int?)null : o.DistrictDemandPercent}).ToList()};
@@ -277,9 +287,9 @@ namespace PersistentCity.Core
                 {
                     var consumer=Consumer(person,AvailableForMeal(meal),meal);
                     string? rejection=FoodDemand.KnownUnavailable(CapturedBusiness(s),consumer,d.OriginAt,d.Deadline);
-                    bool impossible=routes is IWalkingTimeBound bound && s.MealsPerHour>0
+                    bool impossible=routes is IWalkingTimeBound bound && (s.MealsPerHour>0 || s.AlternativeKind==FoodAlternativeKind.Rival)
                         && d.OriginAt+bound.MinimumWalkingMinutes(origin,shop)+bound.MinimumWalkingMinutes(shop,origin)
-                            +60/s.MealsPerHour+MealRhythm.EatingMinutes(meal.Kind)>d.Deadline;
+                            +s.ServiceMinutes+MealRhythm.EatingMinutes(meal.Kind)>d.Deadline;
                     if(rejection!=null || impossible) progress=FoodQuoteState.NotNeeded;
                     else if(atStop) {result=PresentRoute(origin.Position);progress=FoodQuoteState.Answered;}
                     else
@@ -313,8 +323,8 @@ namespace PersistentCity.Core
                 double queue=Math.Max(0,b.NextServiceMinute-c.AdmissionMinute!.Value);
                 evaluated.Add(new EvaluatedFoodOffer(c.BusinessId,c.ProductId,c.Price,c.TravelMinutes!.Value,queue,
                     c.ServiceEndsAt!.Value-d.OriginAt+c.ReturnMinutes!.Value+intent.EatingMinutes,d.Deadline-d.OriginAt,
-                    c.CustomerServicePercent,c.DistrictDemandPercent,meal.Kind,d.Shops.First(s=>s.BusinessId==c.BusinessId).MemoryContribution,d.Awareness?.CampaignActive(c.BusinessId)==true,
-                    FoodMenuPolicy.Code(c.ProductId)>3 ? FoodMenuPolicy.Taste(city.State.Seed,meal.ResidentId,FoodMenuPolicy.Code(c.ProductId)) : -1));
+                    c.CustomerServicePercent,c.DistrictDemandPercent,meal.Kind,d.Shops.First(s=>s.BusinessId==c.BusinessId).MemoryContribution,d.Shops.First(s=>s.BusinessId==c.BusinessId).AlternativeWeight,
+                    FoodMenuPolicy.Code(c.ProductId)>3 ? FoodMenuPolicy.Taste(city.State.Seed,meal.ResidentId,FoodMenuPolicy.Code(c.ProductId)) : -1, campaignActive: d.Awareness?.CampaignActive(c.BusinessId)==true));
             }
             long choiceStarted=city.ObservingFood ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             var pick=FoodChoicePolicy.Select(evaluated,Traits(meal,person),AvailableForMeal(meal),Draw(meal,d),d.Tuning.Settings,intent.OutsideOption!=FoodOutsideOption.None,d.WeatherTravelMultiplier);
@@ -389,24 +399,27 @@ namespace PersistentCity.Core
             {
                 var shop=d.Shops.First(s=>s.BusinessId==d.BusinessId);
                 var choice=intent.Choices.First(c=>c.BusinessId==d.BusinessId && c.ProductId==d.ProductId);
-                if(!choice.ScoreCents.HasValue || market is IFoodBusinessAuthority authority && !authority.CanServe(shop.BusinessId)
+                if(!choice.ScoreCents.HasValue || (shop.AlternativeKind==FoodAlternativeKind.Rival ? !RivalCommitAllowed(meal,shop,choice.Price,d.OriginAt) : market is IFoodBusinessAuthority authority && !authority.CanServe(shop.BusinessId))
                     || !ValidateCapturedRoute(city.FindPlace(stop.PlaceId),city.FindPlace(shop.PlaceId),shop.Outward!,preferences,atStop)
                     || !ValidateCapturedRoute(city.FindPlace(shop.PlaceId),city.FindPlace(stop.PlaceId),shop.Return!,preferences,atStop))
                 {EndDecision(meal);Finish(meal,MealStatus.Missed,"Schedule or shop changed before departure");return;}
                 double stay=choice.ServiceEndsAt!.Value-(d.OriginAt+shop.Outward!.Minutes)+intent.EatingMinutes;
-                if(!atStop && meal.Slot==0 && !city.TryBeginMealVisit(person.Identity.Id,shop.PlaceId,shop.Outward,shop.Return!.Minutes,stay,d.Deadline,deferObservation:true))
+                if(!atStop && meal.Slot==0 && !city.TryBeginMealVisit(person.Identity.Id,shop.PlaceId,shop.Outward,shop.Return!.Minutes,stay,d.Deadline,
+                    deferObservation:true,capturedHours:shop.AlternativeKind==FoodAlternativeKind.Rival ? CapturedBusiness(shop).OpeningPlace : null))
                 {EndDecision(meal);Finish(meal,MealStatus.Missed,"Schedule or shop changed before departure");return;}
                 // Optional presentation changes only after a winner and its feasibility are committed.
                 if(atStop) city.CancelOptionalStop(person.Identity.Id);
                 intent.Status=FoodIntentStatus.Travelling;intent.BusinessId=shop.BusinessId;intent.ProductId=d.ProductId;
                 choice.Reason="Chosen: weighted preference draw";
+                meal.External=shop.AlternativeKind==FoodAlternativeKind.Rival ? "10"+shop.RivalTerms : "";
+                if(shop.AlternativeKind==FoodAlternativeKind.Rival) RivalChoices++;
                 meal.PlaceId=shop.PlaceId;meal.BusinessId=shop.BusinessId;meal.ProductId=d.ProductId;
-                meal.Price=choice.Price;meal.ServiceMinutes=60/shop.MealsPerHour;meal.ReturnMinutes=shop.Return!.Minutes;meal.Deadline=d.Deadline;
+                meal.Price=choice.Price;meal.ServiceMinutes=shop.ServiceMinutes;meal.ReturnMinutes=shop.Return!.Minutes;meal.Deadline=d.Deadline;
                 meal.Reason="Chose "+d.ProductId;meal.ExistingStop=atStop;
                 if(atStop)
                 {
                     meal.ServiceAt=choice.ServiceEndsAt.Value;meal.Status=MealStatus.Serving;meal.DueAt=meal.ServiceAt;
-                    ScopeAtPlace(shop.PlaceId)!.NextServiceAt=meal.ServiceAt;
+                    if(shop.AlternativeKind==FoodAlternativeKind.Player) ScopeAtPlace(shop.PlaceId)!.NextServiceAt=meal.ServiceAt;
                 }
                 else
                 {
@@ -421,7 +434,7 @@ namespace PersistentCity.Core
                     }
                     else meal.DueAt=person.NextEventMinute;
                 }
-                if (city.State.Capabilities.Active) memoryStore.CommitStage(meal,ExperienceStage.Committed);
+                if (shop.AlternativeKind==FoodAlternativeKind.Player && city.State.Capabilities.Active) memoryStore.CommitStage(meal,ExperienceStage.Committed);
                 Reserve(meal,1);
             }
             else

@@ -65,10 +65,10 @@ namespace PersistentCity.Core
             ResidentMeal? meal = food != null ? food.FindMeal(residentId) : State.Food?.Residents.Find(m => m.ResidentId == residentId);
             return ResidentInsight.Capture(State, person, meal, id => places.TryGetValue(id, out var place) ? place : null, productName, formatAddress, food?.MemorySettings, food == null ? null : food.MemoryReference, shopName, currentOwnShop);
         }
-        public void AttachFoodMarket(IFoodMarket market, FoodChoiceSettings? choiceSettings = null, FoodMemorySettings? memorySettings = null, FoodAwarenessSettings? awarenessSettings = null, IFoodAwarenessProvider? memory = null, IFoodAwarenessProvider? campaign = null)
+        public void AttachFoodMarket(IFoodMarket market, FoodChoiceSettings? choiceSettings = null, FoodMemorySettings? memorySettings = null, FoodAwarenessSettings? awarenessSettings = null, IFoodAwarenessProvider? memory = null, IFoodAwarenessProvider? campaign = null, RivalFoodSettings? rivalSettings = null)
         {
             if (food != null) throw new InvalidOperationException("Food market already attached.");
-            food = new FoodCommerce(this, market, routes, choiceSettings, memorySettings, awarenessSettings, memory, campaign);
+            food = new FoodCommerce(this, market, routes, choiceSettings, memorySettings, awarenessSettings, memory, campaign, rivalSettings);
         }
 
         /// <summary>Explicit place/catalogue publication notification for non-versioned Core providers.</summary>
@@ -126,7 +126,7 @@ namespace PersistentCity.Core
             replacement.activityObservers = activityObservers;
             replacement.weatherSource=weatherSource;replacement.weatherSettings=weatherSettings;
             if (stopEnvironment != null) replacement.AttachOptionalStops(stopEnvironment, stopPercentage, stopTiming);
-            if (food != null) replacement.AttachFoodMarket(food.Market, food.ChoiceSettings, food.MemorySettings, food.AwarenessSettings, food.MemoryProvider, food.CampaignProvider);
+            if (food != null) replacement.AttachFoodMarket(food.Market, food.ChoiceSettings, food.MemorySettings, food.AwarenessSettings, food.MemoryProvider, food.CampaignProvider, food.RivalSettings);
             return replacement;
         }
 

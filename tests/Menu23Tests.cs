@@ -15,14 +15,17 @@ public sealed partial class FoodCommerceTests
 {
     private static string E4_Old(CityState city, int schema)
     {
-        var contextType=typeof(SaveCodec).GetNestedType("WireContext",BindingFlags.NonPublic)!;
-        var context=contextType.GetMethod("FromState")!.Invoke(null,new object[]{city});
-        var settings=(JsonSerializerSettings)typeof(SaveCodec).GetMethod("SettingsForSchema",BindingFlags.NonPublic|BindingFlags.Static)!.Invoke(null,new[]{context,(object)schema})!;
-        var root=JObject.Parse(JsonConvert.SerializeObject(city,settings)); root["Schema"]=schema;
+        int current=city.Schema;city.Schema=schema<20 ? 19 : schema;
+        string wire;
+        try { wire=schema>=21 ? SaveCodec.WriteForSchema(city,schema) : schema<20 ? PopulationSchema19.Write(city) : PopulationSchema20.Write(city); }
+        finally { city.Schema=current; }
+        if(schema!=18) return wire;
+        var root=JObject.Parse(wire);root["Schema"]=18;((JObject)root["Food"]!).Remove("AwarenessStartsDay");
+        foreach(var meal in root["Food"]!["Residents"]!) if(meal[9] is JObject decision) decision.Remove("Awareness");
         return root.ToString(Formatting.None);
     }
 
-    [Theory] [InlineData(18)] [InlineData(19)] [InlineData(20)] [InlineData(22)]
+    [Theory] [InlineData(18)] [InlineData(19)] [InlineData(20)] [InlineData(21)] [InlineData(22)]
     public void E4_ExactOldReaderMigrationAndForeignOrNewerShapesPreserveSource(int schema)
     {
         var (city,_)=S17_Full();
@@ -32,7 +35,7 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(FoodMenuPolicy.Wire,read.State.MenuPolicy);
         Assert.Equal(source,E4_Old(read.State,schema));
         Assert.Equal(SaveCodec.Write(read.State),SaveCodec.Write(SaveCodec.Read(SaveCodec.Write(read.State)).State!));
-        foreach(int unknown in new[]{21,24})
+        foreach(int unknown in new[]{24,25,99})
         {
             var root=JObject.Parse(source);root["Schema"]=unknown;
             string bad=root.ToString(Formatting.None);
@@ -45,7 +48,7 @@ public sealed partial class FoodCommerceTests
         B0_Preserve(foreign.ToString(Formatting.None),city.State);
     }
 
-    [Theory] [InlineData(18)] [InlineData(19)] [InlineData(20)] [InlineData(22)]
+    [Theory] [InlineData(18)] [InlineData(19)] [InlineData(20)] [InlineData(21)] [InlineData(22)]
     public void E4_OldContractsRejectFifthScopeHistoryAndCapturedOffers(int schema)
     {
         var (city,_)=S17_Full();

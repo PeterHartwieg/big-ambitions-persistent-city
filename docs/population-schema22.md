@@ -1,11 +1,19 @@
 # Population schema 22: observed campaign images
 
 Owner: `pc-c2b-campaign-awareness`, 1 November 2026. Exact integrated predecessor:
-**20 (E1 weather capture)**. Reserved schema 21 (D2) remains unsupported; schema
-23 (E4) was future on the original C2b head. The current composition writes [schema 23](population-schema23.md) and accepts exact 22 below E4; only >23 is future. The isolated `MigrateCampaigns20To22` step validates the
-complete predecessor before adding empty campaign history. D2 can later supply
-its own predecessor step below 22; E4 now adds its documented 22 -> 23 step above 22. No reserved
-number is used here. Schemas 17-20's documents and frozen validators are retained.
+**21 (D2, after E1 weather capture at 20)**. D2 now supplies its documented
+predecessor step below 22. The isolated `MigrateCampaigns21To22` step validates
+complete schema 21 before adding empty campaign history; E4 retains predecessor
+22. The composed chain is **13-17 frozen -> 18 -> 19 -> 20 -> 21 -> 22 -> 23**,
+and the writer remains 23. Exact 21 includes E1 weather and D2 accounts/targets,
+excludes campaigns/E4 fields and retains four-offer limits. Exact 22 includes
+D2 state and campaigns, excluding E4 fields. Unknown and >23 schemas refuse.
+
+As in C2b's composition below E4 at `6909beb`, required saved fields are not
+backfilled for already-numbered development saves: pre-C2b schema-23 payloads
+without `Campaigns` refused. Pre-D2 schema-22/23 payloads without D2's required
+fields/tuple revision likewise refuse and preserve the original dictionary.
+No new compatibility format or replacement identities are introduced.
 
 The only new saved collection is `FoodCommerceState.Campaigns`, sorted by stable
 business-reference slot, maximum **1,024** images. There are no resident arrays,

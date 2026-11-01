@@ -53,25 +53,29 @@ namespace PersistentCity.Persistence
         private const double MaxMinute = 1000000000;
         private const double MaxCoordinate = 10000000;
 
-        public static string Write(CityState state)
+        public static string Write(CityState state) => WriteForSchema(state,CityState.CurrentSchema);
+
+        internal static string WriteForSchema(CityState state,int schema)
         {
             if (state == null) throw new SaveValidationException("State is null.");
             state.PrepareForSave();
-            Validate(state);
-            var json = JsonConvert.SerializeObject(state, Formatting.None, Settings(WireContext.FromState(state)));
+            Validate(state,schema);
+            var json = JsonConvert.SerializeObject(state, Formatting.None, SettingsForSchema(WireContext.FromState(state),schema));
             Require(json.Length <= MaxInputCharacters, "Serialized state exceeds the input size limit.");
             Require(System.Text.Encoding.UTF8.GetByteCount(json) <= MaxInputCharacters, "Serialized state exceeds the UTF-8 size limit.");
             return json;
         }
 
         /// <summary>Run the save contract without retaining the serialized activation payload.</summary>
-        public static void ValidateForActivation(CityState state)
+        public static void ValidateForActivation(CityState state) => ValidateForActivation(state,CityState.CurrentSchema);
+
+        internal static void ValidateForActivation(CityState state,int schema)
         {
             if (state == null) throw new SaveValidationException("State is null.");
             state.PrepareForSave();
-            Validate(state);
+            Validate(state,schema);
             using var count = new CharacterCountingWriter();
-            var serializer = JsonSerializer.CreateDefault(Settings(WireContext.FromState(state)));
+            var serializer = JsonSerializer.CreateDefault(SettingsForSchema(WireContext.FromState(state),schema));
             // Match JsonConvert.SerializeObject(state, Formatting.None, Settings()), including
             // application-wide defaults that the explicit save settings do not override.
             serializer.Formatting = Formatting.None;
@@ -121,24 +125,17 @@ namespace PersistentCity.Persistence
             {
                 int schema = ReadSchema(source);
                 if (schema > CityState.CurrentSchema) return new SaveReadResult(SaveReadStatus.Future, null, "State uses a newer schema; preserve the original payload.", schema);
-                if (schema <= 17)
+                if (schema <= 20)
                 {
-                    // Original readers, allow-lists, limits, money conversion and semantic/count rules.
-                    var old = LegacyPopulationCodec.Read(source);
-                    if (old.Status != SaveReadStatus.Loaded) return old;
-                    var upgraded = old.State!;
-                    upgraded.Schema = 19; // Existing awareness import, before E1 and E4.
-                    if(upgraded.Food!=null) upgraded.Food.AwarenessStartsDay=(int)(upgraded.Minute/1440)+1;
-                    // Constructors initialized empty memory/references and inactive B; infer nothing.
-                    Validate(upgraded, 19);
-                    MigrateWeather19To20(upgraded);
-                    MigrateCampaigns20To22(upgraded);
-                    Validate(upgraded, 22);
-                    MigrateMenu23(upgraded);
-                    ValidateForActivation(upgraded);
-                    return new SaveReadResult(SaveReadStatus.Loaded, upgraded, "", schema);
+                    var old=RivalWire21.Migrate(source);
+                    if(old.Status!=SaveReadStatus.Loaded) return old;
+                    MigrateCampaigns21To22(old.State!);
+                    Validate(old.State!,22);
+                    MigrateMenu23(old.State!);
+                    ValidateForActivation(old.State!);
+                    return new SaveReadResult(SaveReadStatus.Loaded,old.State,"",old.SourceSchema);
                 }
-                Require(schema == 18 || schema == 19 || schema == 20 || schema == 22 || schema == 23, "Unsupported experimental state schema; preserve the original payload.");
+                Require(schema == 21 || schema == 22 || schema == 23, "Unsupported experimental state schema; preserve the original payload.");
                 Require(System.Text.Encoding.UTF8.GetByteCount(source) <= MaxInputCharacters, "State exceeds the UTF-8 size limit.");
                 var context = WireContext.FromSource(source);
                 var serializer = JsonSerializer.Create(SettingsForSchema(context, schema));
@@ -152,17 +149,9 @@ namespace PersistentCity.Persistence
                 using var reader = Reader(source);
                 var state = serializer.Deserialize<CityState>(reader);
                 Require(state != null, "State is null.");
-                if(schema==18)
-                {
-                    state!.Schema=19;
-                    if(state.Food!=null) state.Food.AwarenessStartsDay=(int)(state.Minute/1440)+1;
-                }
-                Validate(state!, state!.Schema);
-                if(state.Schema == 19) MigrateWeather19To20(state);
-                if(state.Schema == 20) MigrateCampaigns20To22(state);
-                if(state.Schema == 22) Validate(state, 22);
-                if(state.Schema == MenuPredecessorSchema) MigrateMenu23(state);
-                if(schema != CityState.CurrentSchema) ValidateForActivation(state);
+                Validate(state!,schema);
+                if(schema==21) MigrateCampaigns21To22(state!);
+                if(state!.Schema==22) { Validate(state,22); MigrateMenu23(state); ValidateForActivation(state); }
                 return new SaveReadResult(SaveReadStatus.Loaded, state, "", schema);
             }
             catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)
@@ -228,6 +217,7 @@ namespace PersistentCity.Persistence
             Type? nullable = Nullable.GetUnderlyingType(type);
             if (token == JsonToken.Null)
             {
+                Require(type != typeof(ResidentBudget), "Legacy account must use its canonical scalar slot.");
                 Require(nullable != null || NullableRecord(type), "Unexpected null value.");
                 if (type == typeof(ResidentFoodToday)) Charge(ref records); // one rollup slot per consumer, including null
                 return;
@@ -258,12 +248,17 @@ namespace PersistentCity.Persistence
             if (type == typeof(MealOutcomeRecord))
             {
                 Require(token == JsonToken.String && ((string)reader.Value!).Length <= MaxMealOutcomeWire
-                    && MealOutcomeRecord.IsCanonicalWire((string)reader.Value!), "Invalid meal outcome record.");
+                    && RivalWire21.CanonicalOutcome((string)reader.Value!), "Invalid meal outcome record.");
+                return;
+            }
+            if (type == typeof(ResidentBudget) && token == JsonToken.Integer)
+            {
+                Require(IntegerToken(reader.Value, 0, long.MaxValue) && text.CanonicalInteger((IJsonLineInfo)reader), "Invalid legacy external-food account.");
                 return;
             }
             if (TupleLayout.For(type) is TupleLayout tuple)
             {
-                Require(token == JsonToken.StartArray && reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 1, 1) && text.CanonicalInteger((IJsonLineInfo)reader), "Invalid tuple version.");
+                Require(token == JsonToken.StartArray && reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 2, 2) && text.CanonicalInteger((IJsonLineInfo)reader), "Invalid tuple version.");
                 foreach (var slot in tuple.Properties)
                 {
                     Require(reader.Read() && reader.TokenType != JsonToken.EndArray, "Missing tuple slot.");
@@ -386,12 +381,13 @@ namespace PersistentCity.Persistence
         private static readonly IContractResolver Schema19Contracts = new StateContractResolver(19);
         private static readonly IContractResolver Schema18Contracts = new StateContractResolver(18);
         private static readonly IContractResolver Schema20Contracts = new StateContractResolver(20);
+        private static readonly IContractResolver Schema21Contracts = new StateContractResolver(21);
         private static readonly IContractResolver Schema22Contracts = new StateContractResolver(22);
         private static JsonSerializerSettings Settings(WireContext context) => SettingsForSchema(context,CityState.CurrentSchema);
         private static JsonSerializerSettings SettingsForSchema(WireContext context, int schema)
         {
             var settings = new JsonSerializerSettings {
-                ContractResolver = schema==18 ? Schema18Contracts : schema==19 ? Schema19Contracts : schema==20 ? Schema20Contracts : schema==22 ? Schema22Contracts : StateContracts, Culture = CultureInfo.InvariantCulture,
+                ContractResolver = schema==18 ? Schema18Contracts : schema==19 ? Schema19Contracts : schema==20 ? Schema20Contracts : schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : StateContracts, Culture = CultureInfo.InvariantCulture,
                 MissingMemberHandling = MissingMemberHandling.Error, TypeNameHandling = TypeNameHandling.None,
                 MaxDepth = 48, FloatParseHandling = FloatParseHandling.Double
             };
@@ -456,7 +452,7 @@ namespace PersistentCity.Persistence
         private static int Validate(CityState state, int schema = CityState.CurrentSchema)
         {
             Require(state != null, "State is null.");
-            Require(state.Schema == schema && (schema==19 || schema==20 || schema==22 || schema==23), "Unsupported state schema.");
+            Require(state.Schema == schema && (schema==21 || schema==22 || schema==23), "Unsupported state schema.");
             if(schema==23) Require(state.MenuPolicy == FoodMenuPolicy.Wire, "Unsupported menu product policy.");
             Require(state.WeatherStartsDay>=0 && state.WeatherStartsDay<=(int)(state.Minute/1440)+1,"Invalid weather activation day.");
             Require(state.Capabilities != null, "Missing population capabilities.");
@@ -853,6 +849,7 @@ namespace PersistentCity.Persistence
             Require(food.ChoicePolicyVersion == FoodChoicePolicy.Version, "Unknown food choice policy.");
             Require(food.ChoiceStartsDay >= 0 && food.ChoiceStartsDay <= currentDay + 1, "Invalid food choice activation day.");
             Require(food.AwarenessStartsDay>=0 && food.AwarenessStartsDay<=currentDay+1,"Invalid awareness activation day.");
+            Require(food.RivalStartsDay>=0 && food.RivalStartsDay<=currentDay+1,"Invalid rival activation day.");
             Require(food.Shops != null && food.Shops.Count <= 1024, "Invalid food scope.");
             Require(food.RepresentationFactor >= 1 && food.RepresentationFactor <= 3, "Invalid consumer representation factor.");
             Require(food.Residents != null && food.Residents.Count == state.Citizens.Count * food.RepresentationFactor, "Meal roster differs from represented population.");
@@ -867,6 +864,7 @@ namespace PersistentCity.Persistence
             var businessIds = new HashSet<string>(StringComparer.Ordinal);
             foreach (var shop in food.Shops)
             {
+                Require(shop != null && shop.AlternativeKind == FoodAlternativeKind.Player, "Native food scopes cannot enroll rivals.");
                 Require(shop != null && shops.Add(shop.PlaceId) && businessIds.Add(shop.BusinessId), "Duplicate food scope.");
                 Text(shop.PlaceId, "Food place", 256); Text(shop.ProductId, "Food product", 256); Text(shop.BusinessId, "Food business", 512);
                 Require(shop.AdditionalProductIds != null && shop.AdditionalProductIds.Count < MenuLimit(state.Schema)
@@ -946,6 +944,7 @@ namespace PersistentCity.Persistence
                 Require(meal.DayAllowanceUsed >= Money.Zero && meal.DayAllowanceUsed <= MaximumAllowance, "Invalid daily food allowance use.");
                 Require((meal.Budget != null) == (food.HouseholdFinanceVersion != 0), "Household budget ownership differs from policy.");
                 if (meal.Budget != null) ValidateBudget(meal.Budget, state.Minute);
+                RivalWire21.ValidateMeal(meal, food);
                 Require(meal.Day >= 0 && meal.Day <= 100000 && meal.Allowance >= Money.Zero && meal.Allowance <= MaximumAllowance
                     && meal.Price >= Money.Zero && meal.Price <= meal.Allowance && meal.Purchases >= 0 && meal.Spent >= Money.Zero,
                     "Invalid meal allowance/accounting.");
@@ -1012,6 +1011,7 @@ namespace PersistentCity.Persistence
             foreach (var record in today.Meals!)
             {
                 Require(record != null, "Null meal outcome.");
+                RivalWire21.ValidateOutcome(record!);
                 Dense((int)record!.Kind, (int)MealKind.Dinner, "Meal outcome kind"); Dense((int)record.Status, (int)MealOutcomeStatus.Unconfirmed, "Meal outcome status");
                 Dense((int)record.Reason, (int)MealReasonCode.FundsUnavailable, "Meal outcome reason");
                 Dense((int)record.Outside, (int)FoodOutsideOption.FundedHouseholdFood, "Meal outcome alternative");
@@ -1045,7 +1045,7 @@ namespace PersistentCity.Persistence
                     // advances, the record stays an opaque historical reference.
                     if (purchase)
                         Require(record.PlaceId == meal.PlaceId && record.ProductId == meal.ProductId
-                            && record.CheckoutAt == MealOutcomes.CheckoutMinute(meal, minute), "Purchase outcome differs from its retained meal.");
+                            && record.TargetKind == meal.TargetKind && record.CheckoutAt == MealOutcomes.CheckoutMinute(meal, minute), "Purchase outcome differs from its retained meal.");
                 }
             }
             return 1; // schema 18 fixed current-day tuple (including an empty rollup)
@@ -1058,6 +1058,7 @@ namespace PersistentCity.Persistence
                 && (meal.ContextAttempts == 0) == (meal.LastContextKey.Length == 0), "Invalid decision retry latch.");
             var decision = meal.Decision;
             if (decision == null) return 0;
+            RivalWire21.ValidateAwareness(decision);
             Require(meal.Status == MealStatus.Pending && meal.Day >= food.ChoiceStartsDay, "Decision outside a pending version-1 meal.");
             Require(decision.PolicyVersion == food.ChoicePolicyVersion && decision.IntentId == meal.IntentId, "Decision belongs to another policy or meal.");
             Require(decision.ContextKey.Length > 0 && decision.ContextKey == meal.LastContextKey && decision.Attempt == meal.ContextAttempts,
@@ -1095,6 +1096,7 @@ namespace PersistentCity.Persistence
             foreach (var shop in decision.Shops)
             {
                 Require(shop != null && businesses.Add(shop.BusinessId), "Duplicate decision shop.");
+                RivalWire21.ValidateShop(shop!, decision);
                 Require(Position.Finite(shop!.MemoryContribution) && shop.MemoryContribution >= -8 && shop.MemoryContribution <= 8,
                     "Invalid held memory contribution.");
                 // B1 executes the finite B0b scalar; older B0b binaries deliberately refuse it.
@@ -1201,7 +1203,7 @@ namespace PersistentCity.Persistence
                 && b.DailyHomeFoodCents > 0 && b.DailyHomeFoodCents <= 1000000, "Invalid household policy amounts.");
             Require(b.OpeningBalance >= Money.Zero && b.Balance >= Money.Zero && b.IncomeReceived >= Money.Zero
                 && b.EssentialsPaid >= Money.Zero && b.HomeFoodPaid >= Money.Zero && b.PreparedFoodSpent >= Money.Zero
-                && b.HeldPurchase >= Money.Zero && b.HeldPurchase <= MaximumAllowance && b.Arrears >= Money.Zero,
+                && b.ExternalFoodSpent >= Money.Zero && b.HeldPurchase >= Money.Zero && b.HeldPurchase <= MaximumAllowance && b.Arrears >= Money.Zero,
                 "Negative household accounting.");
             // Checked unit sums: an amount beyond the unit's range is refused (OverflowException), never rounded.
             Require(HouseholdFinance.CashConserved(b), "Household cash is not conserved.");
@@ -1251,7 +1253,9 @@ namespace PersistentCity.Persistence
             {
                 return base.CreateProperties(type, memberSerialization).Where(property => property.Writable
                     && !(schema<22 && type==typeof(FoodCommerceState) && property.PropertyName=="Campaigns")
+                    && !(schema<21 && RivalWire21.AddedProperty(type,property.PropertyName!))
                     && !(schema<20 && WeatherProperty(type,property.PropertyName))
+                    && !(type==typeof(FoodScope) && property.PropertyName=="AlternativeKind")
                     && !(schema!=23 && type==typeof(CityState) && property.PropertyName=="MenuPolicy") && !(schema==18 &&
                     (type==typeof(FoodDecisionState) && property.PropertyName=="Awareness"
                      || type==typeof(FoodCommerceState) && property.PropertyName=="AwarenessStartsDay")))
@@ -1275,12 +1279,12 @@ namespace PersistentCity.Persistence
             public override void WriteJson(JsonWriter writer, MealOutcomeRecord? value, JsonSerializer serializer)
             {
                 if (value == null) { writer.WriteNull(); return; }
-                writer.WriteValue(value.ToWire());
+                writer.WriteValue(RivalWire21.Outcome(value));
             }
             public override MealOutcomeRecord ReadJson(JsonReader reader, Type objectType, MealOutcomeRecord? existingValue, bool hasExistingValue, JsonSerializer serializer)
             {
                 MealOutcomeRecord? record = null;
-                if (reader.TokenType != JsonToken.String || !MealOutcomeRecord.TryParse((string)reader.Value!, out record)) Fail("Invalid meal outcome record.");
+                if (reader.TokenType != JsonToken.String || !RivalWire21.ParseOutcome((string)reader.Value!, out record)) Fail("Invalid meal outcome record.");
                 return record!;
             }
         }

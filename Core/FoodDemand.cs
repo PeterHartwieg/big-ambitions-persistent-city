@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.Serialization;
 
 namespace PersistentCity.Core
 {
@@ -12,6 +13,14 @@ namespace PersistentCity.Core
     /// <summary>A detached input to a counterfactual experiment, never native inventory.</summary>
     public sealed class FoodBusiness
     {
+        [IgnoreDataMember] public FoodAlternativeKind AlternativeKind { get; set; }
+        [IgnoreDataMember] public string RivalTerms { get; set; } = "";
+        [IgnoreDataMember] public int RivalServiceMinutes { get; set; }
+        [IgnoreDataMember]
+        public FoodAvailabilityEvidenceKind AvailabilityEvidence => AlternativeKind == FoodAlternativeKind.Rival
+            ? FoodAvailabilityEvidenceKind.EstimatedFromPriceAndHours : FoodAvailabilityEvidenceKind.ObservedPlayerSupply;
+        [IgnoreDataMember] public double ServiceMinutes => AlternativeKind == FoodAlternativeKind.Rival ? RivalServiceMinutes
+            : MealsPerHour > 0 ? 60.0 / MealsPerHour.Value : 0;
         // Reuse the place's exact-hours cache across offers of this observation. It validates mutable
         // windows itself; replacing Hours also changes WeeklyHours here. Never serialized as market evidence.
         private Place? openingPlace;
@@ -323,15 +332,15 @@ namespace PersistentCity.Core
                     double? admission = arrival < intent.Deadline ? DailyRoutine.NextOpen(Place(business), arrival, intent.Deadline) : null;
                     choice.AdmissionMinute = admission;
                     choice.ReturnMinutes = route.ReturnMinutes;
-                    if (!offer.Units.HasValue) choice.Reason = "Stock unknown";
+                    if (!offer.Units.HasValue && business.AlternativeKind != FoodAlternativeKind.Rival) choice.Reason = "Stock unknown";
                     else if (offer.Units == 0) choice.Reason = "Out of stock";
                     else if (offer.Price > person.DailyAllowance) choice.Reason = "Over allowance";
                     else if (!admission.HasValue) choice.Reason = "Closed or too late";
-                    else if (routine && !business.MealsPerHour.HasValue) choice.Reason = "Service unknown";
+                    else if (routine && !business.MealsPerHour.HasValue && business.AlternativeKind != FoodAlternativeKind.Rival) choice.Reason = "Service unknown";
                     else if (routine && business.MealsPerHour == 0) choice.Reason = "Service unavailable";
                     else
                     {
-                        double finish = routine ? Math.Max(admission.Value, business.NextServiceMinute) + 60.0 / business.MealsPerHour!.Value : admission.Value;
+                        double finish = routine ? Math.Max(admission.Value, business.NextServiceMinute) + business.ServiceMinutes : admission.Value;
                         choice.ServiceEndsAt = routine ? finish : (double?)null;
                         double time = finish - minute + (routine ? route.ReturnMinutes!.Value + intent.EatingMinutes : 0);
                         double? close = DailyRoutine.NextClose(Place(business), admission.Value);

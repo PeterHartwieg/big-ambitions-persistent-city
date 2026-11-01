@@ -13,8 +13,8 @@ PINS = {'Runtime/DirectStockShowcaseReader.cs': '239650040cb06dde4f0d8030e659c90
 # Exact integration-tool pins cover every audit exclusion changed in this sync.
 PINS.update({
     'tools/donut-feasibility-regression/source_checks.py': '363604c0f2555206b2646f519a38c5b53f468718eda6a7cc71b702336a52213e',
-    'tools/icecream-feasibility-regression/source_checks.py': '78334d24112652e986130716c1961d4a8d8782e2c046cdfa0c06063e75b81acf',
-    'tools/pizza-feasibility-regression/source_checks.py': '1aeebf858ab7c04ddea7bea0e79b476ac043a851f3de8db33f31ffbe67b1f95c',
+    'tools/icecream-feasibility-regression/source_checks.py': 'd97ba698ae95756a9171f79ce7c910d5104766f3dcd60db479fbaa3d02f5688f',
+    'tools/pizza-feasibility-regression/source_checks.py': 'f008a7cf64f1bcabc087cdab3046ad8ebdd70d496d3997c28b4ab055cd8b55e7',
     'tools/salad-feasibility-regression/compare_baseline.py': 'c7cb36829f96d6a2cc8ab5b84109b79bcdb7b5de7c6cb8f0f6d5667b8732bf85',
     'tools/frenchfries-feasibility-regression/measure_before.py': '790fcc15d5a14ee020893ae64e848c5da6f6fbf675ca15595109c2d09e2b486a',
 })

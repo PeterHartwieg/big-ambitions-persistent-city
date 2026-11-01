@@ -131,9 +131,14 @@ foreach(int count in new[]{1,1024})
     var disabledFood=new FoodCommerceState();var disabled=new NativeFoodMarket(disabledFood,native);
     disabled.AttachCampaignAwareness(79,new() {Enabled=false});
     var off=Measure(()=>disabled.ObserveCampaignBoundary(++runtimeHour),10001);
-    var city=EconomyScenario.Create(1,79);city.Food=EconomyScenario.Food();new CitySimulator(city,new FixturePlanner()).AttachFoodMarket(new FixtureMarket());var baseline=JObject.Parse(SaveCodec.Write(city));baseline["Schema"]=20;baseline.Remove("MenuPolicy");((JObject)baseline["Food"]!).Remove("Campaigns");
+    var city=EconomyScenario.Create(1,79);city.Food=EconomyScenario.Food();new CitySimulator(city,new FixturePlanner()).AttachFoodMarket(new FixtureMarket());
+    // Build a genuine schema-20 source; current D2 tuples cannot be relabelled as 20.
+    city.Schema=20;
+    string baseline=(string)typeof(SaveCodec).Assembly.GetType("PersistentCity.Persistence.PopulationSchema20")!
+        .GetMethod("Write")!.Invoke(null,new object[]{city})!;
+    city.Schema=CityState.CurrentSchema;
     // Shared reference table is separately charged; masks occupy their reserved campaign allocation.
-    var previous=SaveCodec.Read(baseline.ToString(Newtonsoft.Json.Formatting.None));
+    var previous=SaveCodec.Read(baseline);
     if(previous.Status!=SaveReadStatus.Loaded) throw new Exception(previous.Error);
     var imageFood=previous.State!.Food!;imageFood.BusinessReferences.Clear();
     imageFood.BusinessReferences.AddRange(food.BusinessReferences.Select(r=>new BusinessReference {Slot=r.Slot,BusinessId=r.BusinessId,PlaceId="shop-1"}));
@@ -148,7 +153,7 @@ foreach(int count in new[]{1,1024})
         eightUnobservedHourActiveLookups=unobservedActive,
         fullUnionUnobservedHourActiveLookups=unobservedFullUnion,
         productionAllResidentsHourly=production,noCampaignHourlyCountProbes=absent,disabledHourly=off,referenceLookupAfterPublication=referenceLookup,
-        campaignBytesAbove20WithSharedReferences=campaignBytes+15,campaignRecordDelta=count,imageWireCharacters=265,
+        campaignBytesAbove21WithSharedReferences=campaignBytes+15,campaignRecordDelta=count,imageWireCharacters=265,
         nativeStateUnchanged=before==after,notes="Offline .NET only. No native timing evidence. Whole-frame unavailable; count probes are included, not claimed as zero CPU work."}));
 }
 

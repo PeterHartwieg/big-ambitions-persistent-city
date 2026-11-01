@@ -1,10 +1,27 @@
 # Population schema 23 — E4 menu envelope
 
-1 November 2026. Owner: `pc-e4-wider-menu`; integrated predecessor: **22** (C2b, after E1 schema 20). D2 schema 21 remains reserved and refused. Contracts 13-20 and 22 retain their exact source shapes and limits. E4 first landed at `2bd9006` with predecessor 20; this composition follows its documented predecessor rule.
+1 November 2026. Owner: `pc-e4-wider-menu`; integrated predecessor: **22**.
+E4 originally landed on schema 20 at `2bd9006`; C2b repointed it to 22, and
+D2 now supplies its approved predecessor below C2b. The writer remains 23.
 
-`MenuWire23.cs` owns the isolated migration and product-cell converter/precheck. The source is streamed with its exact schema resolver, four-offer limits, token rules, capability checks and semantic validation **before** migration. The menu migration accepts only exact predecessor 22. C2b's isolated 20 -> 22 step validates exact schema 20 and adds empty campaign history first; the composed chain is 19 -> 20 -> 22 -> 23. Existing 18->19 and frozen 13-17 imports reach 19 first, then the isolated `WeatherWire20.cs` migration sets next-day weather activation and schema 20. The exact schema-20 resolver includes all E1 weather fields and excludes campaigns. The exact schema-22 resolver includes C2b campaign images and its 32-source held envelope. Both exclude E4's header, tuning revision 2 and compact history cells. The menu step only sets the fixed product-policy header and schema 23, then validates activation. Existing schema-20 activation day, resident commitments, consumer weather and held decision weather/multiplier remain exact. No identities, tastes, money, outcomes, scopes, orders or historical rows are regenerated. No original dictionary value is changed on failure: `SaveStore`/`SaveSession` validate a complete candidate before replacement.
+`MenuWire23.cs` owns the isolated migration and product-cell converter/precheck.
+The composed chain is **13-17 frozen -> 18 -> 19 -> 20 (E1) -> 21 (D2) -> 22
+(C2b) -> 23 (E4)**. Each source is streamed with its exact resolver, token,
+shape, count, capability and semantic rules before the isolated next step.
+`RivalWire21.Migrate` validates complete schema 20 before initializing D2;
+`MigrateCampaigns21To22` validates complete 21 before adding empty campaigns;
+`MenuPredecessorSchema` stays 22. The menu step only sets the fixed product-policy
+header and schema 23, then validates activation.
 
-`MenuPredecessorSchema` is now 22. C2b campaign images, held ActiveCampaign flags, weather and all prior facts survive the menu step unchanged. D2 still needs its own approved predecessor resolver/migration below this chain; no schema-21 wire shape is inferred.
+Exact 21 includes E1 weather and D2 accounts/targets/outcomes but excludes
+campaigns and E4 fields. Exact 22 includes D2 and campaigns, retaining four offers
+and legacy history/tuning limits; 23 includes everything. Weather activation,
+resident commitments, consumer weather, held weather/multipliers, rival state,
+campaign images and held ActiveCampaign bits survive unchanged. No identities,
+tastes, money, scopes, orders or historical rows are regenerated. SaveStore and
+SaveSession validate a complete candidate before replacement; no original
+dictionary value changes on failure. Pre-D2 development 22/23 saves missing D2
+fields refuse, following C2b's required-field treatment of pre-C2b E4 saves.
 
 ## Header and allocation
 
@@ -14,7 +31,12 @@ Required root string `MenuPolicy` has the exact value:
 
 Version 1 pins the projection and canonical `ba:itemname_…` mapping in `FoodMenuPolicy`. Codes 1–3 retain existing saved A2 tastes; codes 4–6 reserve identities only. They are **not sale permissions**. Codes 7–16 remain unallocated. E5 siblings must coordinate append-only allocation, reviewed priors and product-specific native proof. This executable refuses different tables/versions. Header text is fixed ASCII, well below the 64 Ki character definition/header allocations; there is no growing per-resident table. Both early authority bootstrap and simulator construction check the policy before execution. Root schema/capabilities/menu headers are emitted before the graph. Full startup still validates the entire source, including duplicate/unknown fields.
 
-Schemas 18/19/20/22 exclude `MenuPolicy`, schema-23 tuning images and compact history cells from their allow-lists. They retain four captured offers, four product sales cells and three additional scope IDs. Reserved 21 and foreign shapes refuse as unsupported; >23 reports Future. The frozen 13–17 codec retains its exact shape and semantics; its three product checks now name the explicit immutable `KnownLegacy` list (the identical original three), so future E5 definitions cannot widen an old reader.
+Schemas 18/19/20/21/22 exclude `MenuPolicy`, schema-23 tuning images and compact
+history cells from their allow-lists. They retain four captured offers, four
+product sales cells and three additional scope IDs. Schema 21 is supported;
+unknown/foreign shapes refuse and >23 reports Future. The frozen 13-17 codec
+retains its exact shape and semantics; `KnownLegacy` retains the immutable
+original three product IDs, so future definitions cannot widen an old reader.
 
 ## Menus and tuning
 

@@ -1,5 +1,7 @@
 # C2b: observed campaigns and soft distance preference
 
+Measurements and run counts below belong to the named historical C2b heads (latest `8378efa`); current composed acceptance is in [D2 checks](d2-rival-outflow.md). Schema-chain prose reflects the current supported composition.
+
 ## Round-1 review fixes: latest E4 base - 1 November 2026
 
 Addresses **Sol-r1-1 / Opus-r1-1 / Opus-r1-2**. E4 landed at `2bd9006`
@@ -22,8 +24,8 @@ pizza's guard normalizes precisely that guard edit; **all original hash values
 are retained**, and the original reconstructed-reader hash still executes.
 No production reader branch or Runtime code was changed for this test fix.
 
-The executable writes **schema 23**, following E4's documented composition:
-**19 -> 20 (E1) -> 22 (C2b) -> 23 (E4)**. Schema 21 stays reserved and refused;
+The current executable writes **schema 23**, following E4's documented composition:
+**19 -> 20 (E1) -> 21 (D2) -> 22 (C2b) -> 23 (E4)**. Schema 21 is now supported;
 >23 is future. An exact schema-22 resolver includes campaign images, 32 source
 slots and held ActiveCampaign bits while retaining four menu/history/offer
 limits and revision-1 tuning. E4's menu header, revision-2 tuning and compact
@@ -179,9 +181,9 @@ expectation changes from 20 to 22, preserving all its invariant assertions; the
 C4 byte differential likewise pins schema 22 and retains exact byte equality.
 
 Schema 20 now has an exact filtered reader and bootstrap allow-list entry.
-The isolated 20 -> 22 campaign step validates the predecessor, adds only empty
+At this historical pre-D2 head, the isolated 20 -> 22 campaign step validated the predecessor and added only empty
 campaign history and preserves E1 weather. Older saves use E1's neutral 19 -> 20
-step before 22; reserved 21 and future 23 remain refused. Shortlist and final
+step before 22; at that historical pre-E4/D2 head, 21/23 were refused. The current composition supports both. Shortlist and final
 weights compose E1 rain with C2b's fixed 1.25 preference and half soft distance.
 Tests cover weather commitments/held inputs and changed-source reload.
 
