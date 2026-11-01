@@ -82,6 +82,12 @@ var beforeOpening = Measure(() =>
 });
 var afterOpening = Measure(() => open = !RivalFoodMemory.Closed(observation, 1500));
 Check(open, "opening equivalence");
+const string ownGeneration = "business:Test:1:1:food:player:generation:1";
+bool modeled = true;
+var beforeOwnWords = Measure(() => modeled = ownGeneration.StartsWith("business:", StringComparison.Ordinal)
+    && ownGeneration.Split(':').Length == 6);
+var afterOwnWords = Measure(() => modeled = RivalFoodMemory.ModeledGeneration(ownGeneration));
+Check(!modeled, "player authority is not modeled rival evidence");
 Console.WriteLine(JsonConvert.SerializeObject(new { source = "D4 offline .NET 10 Release; warmed single operations; no native frame gate",
     emptyLookup, mixedFourEntryLookup = mixedLookup, mixedFourEntryUpdate = mixedUpdate,
     retainedEntries = meal.Memory.Entries.Count, retainedReferences = food.BusinessReferences.Count,
@@ -89,7 +95,7 @@ Console.WriteLine(JsonConvert.SerializeObject(new { source = "D4 offline .NET 10
     contributorActiveBytes = Encoding.UTF8.GetByteCount(active), allOwnFourEntryBytes = Encoding.UTF8.GetByteCount(ownWire),
     streamingRecords = counts.Streaming, semanticRecords = counts.Semantic,
     allOwnStreamingRecords = ownCounts.Streaming, allOwnSemanticRecords = ownCounts.Semantic, writer = state.Schema,
-    beforeOpening, afterOpening, sink }, Formatting.Indented));
+    beforeOpening, afterOpening, beforeOwnWords, afterOwnWords, sink }, Formatting.Indented));
 
 sealed class EmptyMarket : IFoodMarket
 {

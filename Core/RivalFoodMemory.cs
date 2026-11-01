@@ -29,6 +29,11 @@ namespace PersistentCity.Core
         public static bool ModeledGeneration(string businessId)
         {
             if (!businessId.StartsWith("business:", StringComparison.Ordinal)) return false;
+            // Reject player authority's longer signature before allocating split fields in
+            // an open inspector. Count delimiters, not words which could be a street/type.
+            int separators = 0;
+            foreach (char c in businessId) if (c == ':' && ++separators > 5) return false;
+            if (separators != 5) return false;
             var fields = businessId.Split(':');
             return fields.Length == 6 && fields[1].Length > 0 && fields[4].Length > 0
                 && fields[5].Length > 0 && fields[5] != "player" && fields[5] != "unknown"
