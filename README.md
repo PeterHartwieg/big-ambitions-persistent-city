@@ -4,6 +4,8 @@ Validation and dated development notices are in the [checks index](CHECKS.md); e
 
 E3 pizza: [feasibility STOP record](docs/plans/e3-pizza.md), conditional shared probe only; shipped holder unestablished, no product enabled or gameplay/save change. [Offline checks and 6 Nov handoff](docs/checks/e3-pizza.md).
 
+E3 ice cream: [feasibility STOP](docs/plans/e3-icecream.md), shipped holder unestablished; conditional read-only probe only ([offline checks](docs/checks/e3-icecream.md)).
+
 A5 integrates Step A's offline acceptance on the schema-20 development line (historical measurements precede E1); [closure, measurements and the 6 Nov in-game checklist](docs/checks/a5-integrated-acceptance.md) keep offline results separate from pending native interaction and final-head proof.
 
 F1 shop view stopped at the drawing decision: [clean-room NO-GO and smaller geometry probe](docs/plans/f1-shop-view-decision.md). F0 drawing remains a no-op; runtime and save behavior are unchanged.
