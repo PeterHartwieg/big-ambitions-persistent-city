@@ -17,7 +17,12 @@ env = os.environ.copy()
 env.update(DOTNET_CLI_USE_MSBUILD_SERVER="0", MSBUILDDISABLENODEREUSE="1", UseSharedCompilation="false")
 dotnet = Path(os.environ["LOCALAPPDATA"]) / "Microsoft/dotnet/dotnet.exe"
 
-APPROVED_SHA256 = {'Runtime/DirectStockShowcaseReader.cs': '614616650dc0ce4db364790c6e2ca91ead009922fb31818b6ff41e6afe705540', 'Runtime/DonutFeasibilityReader.cs': 'df432206c1993f4ad50b0950b50ce5bde1a6e8e6c1b184461813774ee11fb2d1', 'Runtime/CupcakeFeasibilityReader.cs': '971ea51552b7d4d7bd928d699476ef6b75e33935a001c4a7edd81401a0c71429', 'tools/donut-feasibility-regression/Program.cs': '6cb8277b432e45f750882d28693837a5a2fe52811a913ceaf520059b96779962'}
+APPROVED_SHA256 = {
+    "Runtime/DirectStockShowcaseReader.cs": "614616650dc0ce4db364790c6e2ca91ead009922fb31818b6ff41e6afe705540",
+    "Runtime/DonutFeasibilityReader.cs": "df432206c1993f4ad50b0950b50ce5bde1a6e8e6c1b184461813774ee11fb2d1",
+    "Runtime/CupcakeFeasibilityReader.cs": "971ea51552b7d4d7bd928d699476ef6b75e33935a001c4a7edd81401a0c71429",
+    "tools/donut-feasibility-regression/Program.cs": "6cb8277b432e45f750882d28693837a5a2fe52811a913ceaf520059b96779962",
+}
 
 def source(path):
     body = (ROOT / path).read_text(encoding="utf-8")
