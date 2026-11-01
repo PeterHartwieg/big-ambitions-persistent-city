@@ -63,7 +63,7 @@ namespace PersistentCity.Persistence
                 {
                     schema = HeaderInteger(requireCanonical: false);
                     if (schema >= 18) Require(canonicalInteger, "Noncanonical population schema.");
-                    Require(schema >= 13 && (schema <= 20 || schema == 23), "Unsupported population schema; preserve the payload.");
+                    Require((schema >= 13 && (schema <= 20 || schema == 22 || schema == 23)), "Unsupported population schema; preserve the payload.");
                 }
                 else if (name == "Capabilities")
                 {

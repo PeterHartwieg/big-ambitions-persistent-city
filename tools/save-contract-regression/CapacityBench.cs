@@ -134,10 +134,10 @@ static partial class Program
         int memoryHeadroom = state.Food!.Residents.Count * 13; // 51 actual incl. slot overhead -> 64 allocation
         const int futureRecords = 191864; // every non-B row of CF64's published ledger (held image inclusive)
         int heldExistingRecords = 8 * (1 + 3 + 7 + 2); // actual image: shops/offers/windows/two single-leg routes
-        int reservedRecords = futureRecords - heldExistingRecords - 1 - AwarenessRecords(state) - WeatherRecords20(state); // B0 already charges its capability header
+        int reservedRecords = futureRecords - heldExistingRecords - 1 - AwarenessRecords(state) - WeatherRecords20(state) - CampaignRecords22(state); // charge each extension once
         int bHeaderChars = ("\"Capabilities\":" + JsonConvert.SerializeObject(new { Active = false, Code = "B", Revision = 1 }) + ",").Length;
         int heldTuningChars = typeof(FoodDecisionState).GetProperty("Tuning") == null ? 0 : 205 + 8 * 25;
-        int reservedChars = futureChars - bHeaderChars - heldTuningChars - AwarenessChars(state) - WeatherChars20(state); // consume B0b's scalar image once from the existing header allowance
+        int reservedChars = futureChars - bHeaderChars - heldTuningChars - AwarenessChars(state) - WeatherChars20(state) - CampaignChars22(state);
         if (cf && SchemaVersion >= 18)
         {
             Check(json.Length + reservedChars + memoryHeadroom <= SaveCodec.MaxInputCharacters, "CF character budget.");

@@ -41,6 +41,7 @@ static partial class Program
         if(typeof(FoodDecisionState).GetProperty("Awareness")==null) return;
         var state=FoodCity(3,true);PopulateDecisions(state);
         string wire=SaveCodec.Write(state);var root=JObject.Parse(WithoutWeather20(wire));root["Schema"]=18;
+        ((JObject)root["Food"]!).Remove("Campaigns");
         ((JObject)root["Food"]!).Remove("AwarenessStartsDay");((JObject)root["Food"]!["Residents"]![0]![9]!).Remove("Awareness");
         string baseline=root.ToString(Formatting.None);
         Check(WithoutWeather20(wire).Length-baseline.Length==AwarenessChars(state),"Awareness byte allocation mismatch.");

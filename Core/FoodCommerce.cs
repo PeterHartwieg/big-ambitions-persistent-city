@@ -113,6 +113,7 @@ namespace PersistentCity.Core
         public int ChoicePolicyVersion { get; set; } = FoodChoicePolicy.Version;
         public int ChoiceStartsDay { get; set; }
         public int AwarenessStartsDay { get; set; }
+        public List<FoodCampaignImage> Campaigns { get; set; } = new List<FoodCampaignImage>();
     }
     public readonly struct FoodSale
     {
@@ -188,7 +189,9 @@ namespace PersistentCity.Core
             MemoryProvider=memory;CampaignProvider=campaign;
             state = city.State.Food ?? throw new InvalidOperationException("No food state.");
             MemorySettings = memorySettings ?? new FoodMemorySettings(); MemorySettings.Clamp();
-            memoryStore = new FoodMemoryStore(state);
+            // Campaign publication appends generation references at the hour boundary. Share its
+            // already-current index, so the next consumer never inherits a catalogue-sized catch-up.
+            memoryStore = (campaign as FoodCampaignSource)?.ReferencesFor(state) ?? new FoodMemoryStore(state);
             if(state.Residents.Count==0) { state.ChoiceStartsDay=(int)Math.Floor(city.State.Minute/1440)+1; state.AwarenessStartsDay=state.ChoiceStartsDay; }
             records = state.Residents.ToDictionary(r => r.ResidentId, StringComparer.Ordinal);
             storedMemoryProvider = new StoredMemoryAwareness(this);

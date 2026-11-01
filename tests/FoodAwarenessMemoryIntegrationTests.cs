@@ -53,7 +53,7 @@ public sealed class FoodAwarenessMemoryIntegrationTests
     }
 
     [Theory]
-    [InlineData(18)] [InlineData(19)] [InlineData(20)] [InlineData(23)]
+    [InlineData(18)] [InlineData(19)] [InlineData(20)] [InlineData(22)] [InlineData(23)]
     public void PopulatedMemoryAndHeldContributionsMigrateWithoutRecapture(int sourceSchema)
     {
         var (control, mc, pc) = Ready();
@@ -75,19 +75,21 @@ public sealed class FoodAwarenessMemoryIntegrationTests
         Assert.All(held.Shops, s => Assert.NotEqual(0, s.MemoryContribution));
         string memory = JsonConvert.SerializeObject(changed.State.Food.Residents.Select(m => m.Memory));
         var root = JObject.Parse(SaveCodec.Write(changed.State));
-        if (sourceSchema < 23) { root["Schema"] = sourceSchema; root.Remove("MenuPolicy"); }
+        if(sourceSchema<22) ((JObject)root["Food"]!).Remove("Campaigns");
+        if(sourceSchema<23) {root["Schema"]=sourceSchema;root.Remove("MenuPolicy");}
         if (sourceSchema < 20) root = JObject.Parse(WeatherTests.As19(root.ToString(Formatting.None)));
         bool legacy18 = sourceSchema == 18;
         if (legacy18)
         {
             root["Schema"] = 18;
+            ((JObject)root["Food"]!).Remove("Campaigns");
             ((JObject)root["Food"]!).Remove("AwarenessStartsDay");
             foreach (var row in root["Food"]!["Residents"]!)
                 if (row[9] is JObject d) d.Remove("Awareness");
         }
         string source = root.ToString(Formatting.None);
         var read = SaveCodec.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(sourceSchema, read.SourceSchema); Assert.Equal(23, read.State!.Schema);
+        Assert.Equal(sourceSchema, read.SourceSchema); Assert.Equal(CityState.CurrentSchema, read.State!.Schema);
         Assert.True(read.State.Capabilities.Active);
         Assert.Equal(sourceSchema < 20 ? 2 : 0, read.State.WeatherStartsDay);
         Assert.Equal(memory, JsonConvert.SerializeObject(read.State.Food!.Residents.Select(m => m.Memory)));

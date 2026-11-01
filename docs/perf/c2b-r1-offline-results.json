@@ -1,0 +1,192 @@
+{
+  "date": "2026-11-01",
+  "scope": "offline components; native final-head gate pending",
+  "sourceSha256": {
+    "Core/FoodAwareness.cs": "0e9075e164eca76d8570ed223a3cd31296238f582889ae5d9db9f0febf789370",
+    "Core/FoodCampaignSource.cs": "63c375e82ab2fb472ac7e73ff5af96301690152a8f7ed779454add8e3d2fa906",
+    "Core/FoodChoicePolicy.cs": "933daa43ad7b3aca4f29bd7d30bc791cac8412a4a93344553e9a63d97d55ab87",
+    "Core/FoodWeightedCommerce.cs": "825a323d18e238716d2c3f94897c65fce0cefe9b74a6b4744ea2bf1c95011779",
+    "Runtime/NativeCampaignAwareness.cs": "939603a02345597f1d412518f4692cfeab1e42ae9083898520efeaee18ba9078",
+    "Runtime/NativeFoodOwnership.cs": "c9b04348fae20c10e685c079a42d1309b92746377a434b5815c060f5ec6dc0d8",
+    "Persistence/CampaignWire22.cs": "65e6edb2384e441da71820925e4c5f90c405226398a6a92d6cc17226de7968a2",
+    "tools/campaign-awareness-regression/Program.cs": "fc1b9836a291def2542f23815f86162e1408580bc21e721f4077a2719402a2a7"
+  },
+  "beforeActiveBufferReuse": {
+    "businesses": 1024,
+    "hourlyC1AndPublication": {
+      "p50Ms": 4.1502,
+      "p95Ms": 10.0878,
+      "maxMs": 28.8639,
+      "allocatedBytesPerOperation": 2300768,
+      "spikesAtLeast30Ms": 0
+    },
+    "dayTypeIndexRebuild": {
+      "p50Ms": 0.6759,
+      "p95Ms": 3.0879,
+      "maxMs": 8.3095,
+      "allocatedBytesPerOperation": 118656,
+      "spikesAtLeast30Ms": 0
+    },
+    "productionAllResidentsHourly": {
+      "p50Ms": 3.9555,
+      "p95Ms": 8.8877,
+      "maxMs": 14.3554,
+      "allocatedBytesPerOperation": 2460306,
+      "spikesAtLeast30Ms": 0
+    }
+  },
+  "after": [
+    {
+      "businesses": 1,
+      "hourlyC1AndPublication": {
+        "p50Ms": 0.0102,
+        "p95Ms": 0.0151,
+        "maxMs": 0.0183,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 2880
+      },
+      "dayTypeIndexRebuild": {
+        "p50Ms": 0.002,
+        "p95Ms": 0.0032,
+        "maxMs": 0.1667,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 72
+      },
+      "eightSlotDecision": {
+        "p50Ms": 0.0042,
+        "p95Ms": 0.0062,
+        "maxMs": 0.1908,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "productionAllResidentsHourly": {
+        "p50Ms": 0.0091,
+        "p95Ms": 0.0127,
+        "maxMs": 0.0322,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 3244
+      },
+      "noCampaignHourlyCountProbes": {
+        "p50Ms": 0.0001,
+        "p95Ms": 0.0002,
+        "maxMs": 0.015,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "disabledHourly": {
+        "p50Ms": 0,
+        "p95Ms": 0.0001,
+        "maxMs": 0.0001,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "referenceLookupAfterPublication": {
+        "duplicateIndexControl": {
+          "p50Ms": 0.0003,
+          "p95Ms": 0.0005,
+          "maxMs": 0.004,
+          "allocatedBytesPerLookup": 272,
+          "spikesAtLeast30Ms": 0
+        },
+        "sharedProductionIndex": {
+          "p50Ms": 0,
+          "p95Ms": 0.0001,
+          "maxMs": 0.0001,
+          "allocatedBytesPerLookup": 0,
+          "spikesAtLeast30Ms": 0
+        }
+      },
+      "campaignBytesAbove19WithSharedReferences": 282,
+      "campaignRecordDelta": 1,
+      "imageWireCharacters": 265,
+      "nativeStateUnchanged": true,
+      "notes": "Offline .NET only. No native timing evidence. Whole-frame unavailable; count probes are included, not claimed as zero CPU work."
+    },
+    {
+      "businesses": 1024,
+      "hourlyC1AndPublication": {
+        "p50Ms": 1.7897,
+        "p95Ms": 2.6336,
+        "maxMs": 3.3697,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 2198552
+      },
+      "dayTypeIndexRebuild": {
+        "p50Ms": 0.3324,
+        "p95Ms": 0.4893,
+        "maxMs": 0.6301,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 16440
+      },
+      "eightSlotDecision": {
+        "p50Ms": 0.0037,
+        "p95Ms": 0.0065,
+        "maxMs": 0.0358,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "productionAllResidentsHourly": {
+        "p50Ms": 2.8932,
+        "p95Ms": 4.2356,
+        "maxMs": 8.9763,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 2358090
+      },
+      "noCampaignHourlyCountProbes": {
+        "p50Ms": 0.064,
+        "p95Ms": 0.0849,
+        "maxMs": 0.746,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "disabledHourly": {
+        "p50Ms": 0,
+        "p95Ms": 0.0001,
+        "maxMs": 0.0164,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerOperation": 0
+      },
+      "referenceLookupAfterPublication": {
+        "duplicateIndexControl": {
+          "p50Ms": 0.1355,
+          "p95Ms": 0.2219,
+          "maxMs": 1.1491,
+          "allocatedBytesPerLookup": 227440,
+          "spikesAtLeast30Ms": 0
+        },
+        "sharedProductionIndex": {
+          "p50Ms": 0.0001,
+          "p95Ms": 0.0002,
+          "maxMs": 0.0007,
+          "allocatedBytesPerLookup": 0,
+          "spikesAtLeast30Ms": 0
+        }
+      },
+      "campaignBytesAbove19WithSharedReferences": 274446,
+      "campaignRecordDelta": 1024,
+      "imageWireCharacters": 265,
+      "nativeStateUnchanged": true,
+      "notes": "Offline .NET only. No native timing evidence. Whole-frame unavailable; count probes are included, not claimed as zero CPU work."
+    },
+    {
+      "noCampaignHeldModifierLookups": {
+        "shops": 8,
+        "sourceIds": 24,
+        "uncachedControl": {
+          "p50Ms": 0.0019,
+          "p95Ms": 0.0028,
+          "maxMs": 0.465,
+          "spikesAtLeast30Ms": 0,
+          "allocatedBytesPerOperation": 0
+        },
+        "cached": {
+          "p50Ms": 0.0001,
+          "p95Ms": 0.0002,
+          "maxMs": 0.022,
+          "spikesAtLeast30Ms": 0,
+          "allocatedBytesPerOperation": 0
+        }
+      }
+    }
+  ]
+}

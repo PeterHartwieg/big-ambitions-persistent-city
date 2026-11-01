@@ -85,11 +85,11 @@ static class Program
             baselineAdmissionMs=Stats(before),candidateAdmissionMs=Stats(after),baselineAllocatedBytes=baselineBytes.Average(),candidateAllocatedBytes=candidateBytes.Average(),maxUnion,maxShortlist,maxRouteSlots=2*maxShortlist,
             heldImageJsonBytes=System.Text.Encoding.UTF8.GetByteCount(JsonConvert.SerializeObject(held))};
     }
-    // Isolate C2a's added bytes against its frozen schema-18 source shape. E1/E4's
-    // additive weather/menu bytes are reported separately, never passed to the old reader.
+    // Isolate C2a's added bytes against its frozen schema-18 source shape. E1's
+    // additive weather/campaign/menu bytes are reported separately, never passed to the old reader.
     static JObject WithoutWeather20(JObject root)
     {
-        root["Schema"]=19;root.Remove("WeatherStartsDay");root.Remove("MenuPolicy");
+        ((JObject)root["Food"]!).Remove("Campaigns");root["Schema"]=19;root.Remove("WeatherStartsDay");root.Remove("MenuPolicy");
         foreach(JObject citizen in root["Citizens"]!) citizen.Remove("W");
         foreach(JArray row in root["Food"]!["Residents"]!)
         {
@@ -110,7 +110,8 @@ static class Program
         for(int i=0;i<24;i++) image.Union.Add(new FoodAwarenessCandidate {BusinessId="business:ba%3Astreet_thirdstreet:"+i.ToString("D2")+":1:ba%3Abusiness_fastfoodrestaurant:player",Eligible=true,
             Sources=i<4 ? FoodAwarenessSource.Memory : i<8 ? FoodAwarenessSource.Home : i<12 ? FoodAwarenessSource.Routine : i<16 ? FoodAwarenessSource.Origin : FoodAwarenessSource.Discovery});
         for(int i=0;i<8;i++) d.Shops.Add(new FoodDecisionShop {BusinessId=image.Union[i].BusinessId,PlaceId="shop-1",NextServiceAt=state.Minute});
-        var before=WithoutWeather20(JObject.Parse(SaveCodec.Write(state)));before["Schema"]=18;((JObject)before["Food"]!).Remove("AwarenessStartsDay");
+        var before=WithoutWeather20(JObject.Parse(SaveCodec.Write(state)));before["Schema"]=18;
+        ((JObject)before["Food"]!).Remove("Campaigns");((JObject)before["Food"]!).Remove("AwarenessStartsDay");
         ((JObject)before["Food"]!["Residents"]![0]![9]!).Remove("Awareness");
         string baseline=before.ToString(Formatting.None);if(SaveCodec.Read(baseline).Status!=SaveReadStatus.Loaded) throw new Exception("Invalid B0b fixture");
         d.Awareness=image;string candidate=SaveCodec.Write(state);var read=SaveCodec.Read(candidate);
@@ -123,7 +124,7 @@ static class Program
         foreach(var entry in image.Union) clone.Union.Add(new FoodAwarenessCandidate {BusinessId=entry.BusinessId,Eligible=entry.Eligible,Sources=entry.Sources});
         long managedGraphBytes=GC.GetAllocatedBytesForCurrentThread()-allocation;GC.KeepAlive(clone);
         // Equal held image exists once even at the 150k-consumer ceiling. No per-consumer delta.
-        return new {residents,consumers=state.Food.Residents.Count,baselineBytes,candidateBytes=bytes,addedBytes=bytes-baselineBytes,awarenessProjectionSchema=19,currentWireBytes=wireBytes,weatherAndMenuBytes=wireBytes-bytes,managedGraphBytesSharedStrings=managedGraphBytes,heldImageBytes=System.Text.Encoding.UTF8.GetByteCount(JsonConvert.SerializeObject(image)),counts.Streaming,counts.Semantic};
+        return new {residents,consumers=state.Food.Residents.Count,baselineBytes,candidateBytes=bytes,addedBytes=bytes-baselineBytes,awarenessProjectionSchema=19,currentWireBytes=wireBytes,weatherCampaignAndMenuBytes=wireBytes-bytes,managedGraphBytesSharedStrings=managedGraphBytes,heldImageBytes=System.Text.Encoding.UTF8.GetByteCount(JsonConvert.SerializeObject(image)),counts.Streaming,counts.Semantic};
     }
     static object ReviewRebuildUnits(int count,bool dense)
     {

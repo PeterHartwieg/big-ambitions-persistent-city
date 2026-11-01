@@ -22,7 +22,7 @@ public sealed partial class FoodCommerceTests
         return root.ToString(Formatting.None);
     }
 
-    [Theory] [InlineData(18)] [InlineData(19)] [InlineData(20)]
+    [Theory] [InlineData(18)] [InlineData(19)] [InlineData(20)] [InlineData(22)]
     public void E4_ExactOldReaderMigrationAndForeignOrNewerShapesPreserveSource(int schema)
     {
         var (city,_)=S17_Full();
@@ -32,7 +32,7 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(FoodMenuPolicy.Wire,read.State.MenuPolicy);
         Assert.Equal(source,E4_Old(read.State,schema));
         Assert.Equal(SaveCodec.Write(read.State),SaveCodec.Write(SaveCodec.Read(SaveCodec.Write(read.State)).State!));
-        foreach(int unknown in new[]{21,22,24})
+        foreach(int unknown in new[]{21,24})
         {
             var root=JObject.Parse(source);root["Schema"]=unknown;
             string bad=root.ToString(Formatting.None);
@@ -45,7 +45,7 @@ public sealed partial class FoodCommerceTests
         B0_Preserve(foreign.ToString(Formatting.None),city.State);
     }
 
-    [Theory] [InlineData(18)] [InlineData(19)] [InlineData(20)]
+    [Theory] [InlineData(18)] [InlineData(19)] [InlineData(20)] [InlineData(22)]
     public void E4_OldContractsRejectFifthScopeHistoryAndCapturedOffers(int schema)
     {
         var (city,_)=S17_Full();

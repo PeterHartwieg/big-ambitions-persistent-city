@@ -269,7 +269,7 @@ public sealed class FoodAwarenessTests
     {
         var json=Held();var image=json["Food"]!["Residents"]![0]![9]!["Awareness"]!;
         if(corruption==0) image["CatalogueRevision"]="bad";
-        if(corruption==1) image["Union"]![0]!["Sources"]=32;
+        if(corruption==1) image["Union"]![0]!["Sources"]=128;
         if(corruption==2) ((JArray)image["Union"]!).Add(image["Union"]![0]!.DeepClone());
         if(corruption==3) image["Union"]![0]!["BusinessId"]="";
         if(corruption==4) foreach(var x in image["Union"]!) x["Eligible"]=false;

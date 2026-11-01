@@ -16,6 +16,8 @@ BusinessSimulatorHelper.Queue(reg, 7);
 GameManager.RunMainGameTick(60);
 Check(BusinessSimulatorHelper.Processed.SequenceEqual(new[] { 7, 8 }), "old native work drains before acquisition");
 Check(NativeFoodOwnership.Find(reg)!.FromHour == 33, "authority begins exactly at the later native accounting hour");
+Check(market.CampaignFood.Campaigns.Count==1 && market.CampaignFood.Campaigns[0].Mask(1,0)==(1u<<9),
+    "campaign observed at acquisition boundary after scope activation");
 BusinessSimulatorHelper.Work.ForceCompleteAllWork();
 Check(BusinessSimulatorHelper.Processed.SequenceEqual(new[] { 7, 8 }), "new hour native demand suppressed");
 Check(CustomerEntriesHelper.GetEntriesByAddress(reg.Address).Count == 0, "owned hour suppresses indoor draws");
@@ -299,6 +301,10 @@ reg = Fresh(9, saved, populationPayload: activeB);
 Check(NativeFoodOwnership.Error.Length == 0, "active B revision 1 executes at earliest native bootstrap");
 Check(ReferenceEquals(activeB, SaveGameManager.Current.modData[SaveStore.StateKey]), "bootstrap does not rewrite active population");
 
+reg=Fresh();market=new NativeFoodMarket(reg);NativeFoodOwnership.Observe(reg,true);NativeFoodOwnership.Attach(market);
+GameManager.RunMainGameTick(60);market.CampaignRunning=false;GameManager.RunMainGameTick(60);
+Check(market.CampaignObservations==2 && market.CampaignFood.Campaigns.Count==1
+    && market.CampaignFood.Campaigns[0].Mask(1,0)==(1u<<9),"running campaign at acquisition then stop before next hour keeps evidence");
 Console.WriteLine($"PASS {checks} actual ownership-hook checks against native field/callback doubles. No Unity/game execution.");
 
 BuildingRegistration Fresh(int hour = 8, string? payload = null, bool? ownPayload = null, string? receiptKey = null, string? receiptValue = null, string? populationPayload = null)
@@ -426,11 +432,28 @@ namespace PersistentCity.Runtime
     public sealed class NativeFoodMarket
     {
         public BuildingRegistration Reg; public bool Eligible = true;
-        public NativeFoodMarket(BuildingRegistration reg) { Reg = reg; }
+        public bool CampaignRunning=true;
+        public readonly FoodCommerceState CampaignFood=new();
+        private readonly FoodCampaignSource campaign;
+        public int CampaignObservations;
+        public NativeFoodMarket(BuildingRegistration reg) { Reg = reg; campaign=new(CampaignFood,79,new()); }
         public static string PlaceId(BuildingRegistration reg) => "address:" + reg.StreetName + ":" + reg.StreetNumber + ":shop";
         public static bool IsBuying(BuildingRegistration reg) => false;
         public void RefreshKnownOwnership() => NativeFoodOwnership.Observe(Reg, Eligible);
-        public void ActivateScope(FoodAuthority row, BuildingRegistration reg) { }
+        public void ActivateScope(FoodAuthority row, BuildingRegistration reg)
+        {
+            if(!CampaignFood.Shops.Any(s=>s.BusinessId==row.BusinessId))
+                CampaignFood.Shops.Add(new() {BusinessId=row.BusinessId,PlaceId=row.PlaceId});
+        }
+        public void ObserveCampaignBoundary(long hour)
+        {
+            CampaignObservations++;
+            var scope=CampaignFood.Shops.LastOrDefault();
+            if(scope==null) return;
+            var observations=CampaignRunning ? new[]{new CampaignObservation(0,"SmallInternet",true,"agency",CampaignReadStatus.Observed)} : Array.Empty<CampaignObservation>();
+            campaign.Publish(new CampaignSnapshot(hour*60,hour,new[]{new BusinessCampaignSnapshot(scope.BusinessId,CampaignReadStatus.Observed,observations,0,0,0)}),
+                CampaignFood.Shops.ToDictionary(s=>s.BusinessId,s=>s.PlaceId));
+        }
     }
     public static class FoodBusinessCatalogue { public static string BusinessIdentity(BuildingRegistration reg) => reg.Signature; }
 }

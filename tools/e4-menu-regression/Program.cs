@@ -110,7 +110,7 @@ static class Program
     }
     static object Selection(int width)
     {
-        var offers=Enumerable.Range(0,8).SelectMany(shop=>Products.Take(width).Select(product=>new EvaluatedFoodOffer("b"+shop,product,Money.FromCents(100),1,0,4,60,50,50,MealKind.Lunch,0,FoodMenuPolicy.Taste(957,"person",FoodMenuPolicy.Code(product))))).ToArray();
+        var offers=Enumerable.Range(0,8).SelectMany(shop=>Products.Take(width).Select(product=>new EvaluatedFoodOffer("b"+shop,product,Money.FromCents(100),1,0,4,60,50,50,MealKind.Lunch,0,newTasteBand:FoodMenuPolicy.Taste(957,"person",FoodMenuPolicy.Code(product))))).ToArray();
         var traits=ResidentTraits.Generate(957,"person");var settings=new FoodChoiceSettings{FoodMenuMaximumOffersPerShop=width};var draw=new FoodDrawContext(957,"person",14,MealKind.Lunch,"test",1);
         var result=FoodChoicePolicy.Select(offers,traits,Money.FromCents(1000),draw,settings,false);
         Check(result.Index>=0 && offers.Length==8*width,"one product from bounded evaluations");

@@ -189,6 +189,8 @@ namespace PersistentCity.Runtime
                 log.Info("Food menu policy v1: configured="+settings.FoodMenuMaximumOffersPerShop+", effective native maximum="+Math.Min(FoodMenuPolicy.LiveMaximumOffers,settings.FoodMenuMaximumOffersPerShop)+"; reserved product codes grant no sale permission.");
                 settings.MarketResearch.Clamp(message => log.Info(message));
                 settings.Awareness.Clamp(message => log.Info(message));
+                settings.Campaigns.Clamp(message => log.Info(message));
+
                 settings.Weather.Clamp(message => log.Info(message));
                 log.Info("E1 weather revision 1; missing/failed source is unknown (neutral).");
                 log.Info("Food awareness v1: radius="+settings.Awareness.RadiusMetres.ToString(System.Globalization.CultureInfo.InvariantCulture)
@@ -596,7 +598,7 @@ namespace PersistentCity.Runtime
             if (state.Food.HouseholdFinanceVersion != HouseholdFinance.PolicyVersion || state.Food.MealRhythmVersion != MealRhythm.PolicyVersion)
                 throw new InvalidDataException("Unsupported experimental food policy; preserve this city and use a fresh development baseline.");
             foodMarket = new NativeFoodMarket(state.Food, state.Places, maximumOffers: settings.FoodChoice.FoodMenuMaximumOffersPerShop);
-            simulation.AttachFoodMarket(foodMarket, settings.FoodChoice, settings.FoodMemory, settings.Awareness);
+            simulation.AttachFoodMarket(foodMarket, settings.FoodChoice, settings.FoodMemory, settings.Awareness, campaign: foodMarket.AttachCampaignAwareness(state.Seed, settings.Campaigns));
             saveIdentity = save;
             NativeInteriorCityView.Start(settings, log!, RestoreInterior);
             NativeCityClock.Start(save, settings.GameClockFactor, () => simulation?.IsCaughtUpTo(Now()) == true, () => simulation?.State.Food != null, Now);
