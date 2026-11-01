@@ -113,22 +113,31 @@ namespace PersistentCity.Core
             if (person == null) throw new ArgumentNullException(nameof(person));
             if (findPlace == null) throw new ArgumentNullException(nameof(findPlace));
             productName ??= DefaultProductName;
-            Func<string, string> label = id =>
+            // One coherent address image per place during this popup refresh. Home/work, story,
+            // heading and meals often repeat a place; do not repeat native formatting for each line.
+            var addresses = new Dictionary<string, ResidentAddress?>(StringComparer.Ordinal);
+            ResidentAddress? Address(string id)
             {
+                if (string.IsNullOrEmpty(id)) return null;
+                if (addresses.TryGetValue(id, out var cached)) return cached;
                 var place = Find(findPlace, id);
-                return place == null ? UnknownPlace : ResidentAddress.From(place, formatAddress).Label;
-            };
+                var address = place == null ? null : ResidentAddress.From(place, formatAddress);
+                addresses.Add(id, address);
+                return address;
+            }
+            string Label(string id) => Address(id)?.Label ?? UnknownPlace;
+            Func<string, string> label = Label;
             double now = city.Minute;
             var insight = new ResidentInsight { ResidentId = person.Identity.Id, Name = person.Identity.Name, Age = person.Identity.Age, Minute = now };
-            var home = Find(findPlace, person.HomeId);
-            insight.Home = home == null ? null : ResidentAddress.From(home, formatAddress);
+            insight.Home = Address(person.HomeId);
             var day = Find(findPlace, person.DayPlaceId);
-            insight.Work = day == null ? null : ResidentAddress.From(day, formatAddress);
-            insight.WorkRole = day == null ? person.Identity.Persona == Persona.Retiree ? "Retired" : "No regular workplace"
+            insight.Work = Address(person.DayPlaceId);
+            insight.WorkRole = day == null ? person.DayPlaceId.Length > 0 ? "Work or study location unknown"
+                : person.Identity.Persona == Persona.Retiree ? "Retired" : "No regular workplace"
                 : day.Kind == PlaceKind.Study ? "Studies at" : "Works at";
             insight.Personality = DescribePersonality(person, meal, productName);
             var mealToday = meal != null && meal.Slot == 0 && meal.ResidentId == person.Identity.Id ? meal : null;
-            if (mealToday != null && city.Food != null)
+            if (mealToday != null && city.Food != null && city.Capabilities.Active)
                 insight.MemoryWords = ResidentMemoryWords.Capture(city.Food, mealToday, person.Traits, (int)(now / 1440),
                     memorySettings ?? new FoodMemorySettings(),
                     memoryReference ?? (slot => city.Food.BusinessReferences.Find(r => r.Slot == slot)),
@@ -370,7 +379,7 @@ namespace PersistentCity.Core
         private static string Describe(MealOutcomeRecord outcome, Func<string, string> label, Func<string, string> productName)
         {
             string shop = outcome.PlaceId.Length == 0 ? "a shop" : label(outcome.PlaceId);
-            if (shop == UnknownPlace) shop = "a shop no longer available";
+            if (shop == UnknownPlace) shop = "an unknown shop";
             string product = productName(outcome.ProductId);
             switch (outcome.Status)
             {

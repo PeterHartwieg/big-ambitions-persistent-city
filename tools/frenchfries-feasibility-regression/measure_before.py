@@ -22,6 +22,8 @@ PINS = {
 for path, expected in PINS.items():
     source = (ROOT / path).read_text(encoding="utf-8")
     if path == "Runtime/DirectStockShowcaseReader.cs":
+        source = source.replace('        internal static readonly DirectStockCandidate Pizza = new DirectStockCandidate("ba:itemname_pizza");\n', "")
+        source = source.replace('        internal static readonly DirectStockCandidate Icecream = new DirectStockCandidate("ba:itemname_icecream");\n', "")
         assert source.count(FRIES) == 1
         source = source.replace(FRIES, "")
     assert hashlib.sha256(source.encode()).hexdigest() == expected, path

@@ -1,0 +1,2372 @@
+{
+  "scope": "Offline conflict resolution/integration only; no game or rig operations",
+  "approvedIcecream": "89111eff8c1aa9b2bb336b0674d532cdfb9b7403",
+  "incomingBase": "0ffb819353c44a802224b98af673e1085040fc8a",
+  "mergeBase": "587745362a035395efc1a45bbb277799aae5cbdc",
+  "textualConflicts": {
+    "README.md": "Keep both independent status paragraphs and incoming schema-20 correction"
+  },
+  "automaticCompositions": [
+    "CHECKS.md",
+    "docs/roadmap.md"
+  ],
+  "preservation": [
+    {
+      "side": "approvedIcecream",
+      "revision": "89111eff8c1aa9b2bb336b0674d532cdfb9b7403",
+      "preservedPaths": [
+        "Runtime/DirectStockShowcaseReader.cs",
+        "Runtime/IcecreamFeasibilityReader.cs",
+        "docs/checks/e3-icecream-offline-results.json",
+        "docs/checks/e3-icecream.md",
+        "docs/plans/e3-donut.md",
+        "docs/plans/e3-icecream-pr-description.md",
+        "docs/plans/e3-icecream.md",
+        "docs/plans/steps-b-e.md",
+        "tools/donut-feasibility-regression/source_checks.py",
+        "tools/icecream-feasibility-regression/IcecreamFeasibilityRegression.csproj",
+        "tools/icecream-feasibility-regression/Program.cs",
+        "tools/icecream-feasibility-regression/generate_cases.py",
+        "tools/icecream-feasibility-regression/measure_baseline.py",
+        "tools/icecream-feasibility-regression/source_checks.py",
+        "tools/icecream-feasibility-regression/validate.py"
+      ],
+      "appendOnlyPath": "docs/checks/e3-icecream.md"
+    },
+    {
+      "side": "incomingBase",
+      "revision": "0ffb819353c44a802224b98af673e1085040fc8a",
+      "preservedPaths": [
+        "Core/ResidentInsight.cs",
+        "docs/checks/a5-integrated-acceptance.md",
+        "docs/perf/a5-integrated-acceptance.md",
+        "docs/plans/step-a-inspector-traits-choice.md",
+        "docs/reviews/2026-11-01-a5-measurements.json",
+        "docs/reviews/2026-11-01-a5-pr-description.md",
+        "docs/reviews/2026-11-01-a5-sync-base-pickup.json",
+        "docs/reviews/2026-11-01-a5-sync-base-pr-description.md",
+        "docs/reviews/2026-11-01-a5-sync-base-preservation.json",
+        "docs/reviews/2026-11-01-a5-sync-base-results.json",
+        "tests/A5IntegratedAcceptanceTests.cs",
+        "tests/FoodRegularsTests.cs",
+        "tests/ResidentInsightTests.cs",
+        "tools/a5-inspector-regression/A5InspectorRegression.csproj",
+        "tools/a5-inspector-regression/Program.cs",
+        "tools/a5-inspector-regression/gate.py",
+        "tools/a5-inspector-regression/summarize.py",
+        "tools/food-choice-regression/Program.cs",
+        "tools/food-choice-regression/RushBench.cs"
+      ],
+      "appendOnlyPath": null
+    }
+  ],
+  "sourceAuditCommand": [
+    "python",
+    "tools/icecream-feasibility-regression/source_checks.py",
+    "--audit-base",
+    "0ffb819353c44a802224b98af673e1085040fc8a"
+  ],
+  "sourceAuditOutput": [
+    "PASS isolation and history-independent approved cupcake/shared-reader/donut fixture pins",
+    "PASS landed donut read body/refusals, original cases and project after mechanical shared-reader substitutions",
+    "PASS whole-tree preservation: 543 incoming source/test/tool/config blobs match 0ffb819353c44a802224b98af673e1085040fc8a",
+    "PASS icecream SHA-256 pins, conditional facade, no hooks/polls/gameplay caller; old read branches and cases unchanged"
+  ],
+  "pinChanges": [],
+  "integrationCodeChanges": [],
+  "foregroundGates": [
+    {
+      "name": "build",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/build.py",
+        "--game-managed",
+        "C:/Program Files (x86)/Steam/steamapps/common/Big Ambitions/Big Ambitions_Data/Managed"
+      ],
+      "exit": 0,
+      "logSha256": "249a548b44a9c39cf94f9f7d65564930dc273cf58ec559b26a7d1e6573c4b1aa",
+      "waitLogSha256": "16ce015c650df308aa60aa9114b88c618cae9075f49902fd8583389793110257"
+    },
+    {
+      "name": "unit",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj"
+      ],
+      "exit": 0,
+      "logSha256": "6e736ff2971515cc37b073b1964835dc594301ff2358dc322a61296fc7d42a30",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "list",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--no-build",
+        "--list-tests"
+      ],
+      "exit": 0,
+      "logSha256": "0f29adbf4e5bf7ec3342135d6c4f64c624a6592b7ee5d1993a4a67a4d965bec2",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "core-identity",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/core-identity-regression/CoreIdentityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "40c84f2cdb430fc0c60c9c20b937824ae08a0e4167643cdd65654404afbc7ef0",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "diagnostic-response",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/diagnostic-response-regression/DiagnosticResponseRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "a89f8e2948c58df6f28f5d0bf439ea876f62fe55dd2f032fb9d77ea4d0a7b103",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "event-observation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/event-observation-regression/EventObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "57962f674b039cc4c7d6fca4c8e57df0926d3b1adf6370ec2ecf1edcaa9dcbdb",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-catalogue",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-catalogue-regression/FoodCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "ce7c9e835a6a8365cd51028d4f2bf1457955513725450ead1d3ecffe5520ff7c",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-checkout",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-checkout-regression/FoodCheckoutRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "d39c8fa9305598c616691bfa3cc51d2f01b52cd9957b42957ecea6e6ffa9cd3d",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-hours",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-hours-regression/FoodHoursRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "2410218689a17bf8e5ae868d3025d1a8bd9e449d7fd49d83728819236ce6607c",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-household-catalogue",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-household-catalogue-regression/FoodHouseholdCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "b0f19cfd0acbbded5af38461d6e0bbe596b236cd83207afa0223100fdcfb8609",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-ownership",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-ownership-regression/FoodOwnershipRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "0868149a24cebe8c5801b20d7530b12bc49a633011d2bf039392c6d97de66efa",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-supply",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-supply-regression/FoodSupplyRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "bea33031a003404270de233cbd073eb44deacac65f41be406a1eae3b70385683",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "frame-observation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/frame-observation-regression/FrameObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "7e5da72d80f98e71b464d3c9f918cf9457b5350bfcafc294e80e823b646b2d02",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "gate-access",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/gate-access-regression/GateAccessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "6e9877acee2b84dfcc2de1b4d7d7236ac991a58c1a89fbe420966d127bf4afae",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "road-ceiling",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-ceiling-regression/RoadCeilingRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "895bf78ce78f6cceb24e97e6ac8d4cc6c68fa71cfb5b0e54f707e9bf46369762",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "road-handoff",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-handoff-regression/RoadHandoffRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "5de54d90bad9b212aac21705900b22ad270fa18365f1284fc4e988bf67a5f23e",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "road-invalidation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-invalidation-regression/RoadInvalidationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "11bcbab6bdde92b021b10a41d941aa322629fadbc821906b55ed9aa7d5d7e656",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "road-speed",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-speed-regression/RoadSpeedRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "5242c509cd90b21734fe4321b43dcbba531282677f91d66ddc8931b9b07cef19",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "route-discovery",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/route-discovery-regression/RouteDiscoveryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "7c3684eedaa0bea2266b919908de9f88a5bb82d63511f939d1661ee67c9cd95b",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "save-contract",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "81fa964d743bc38030c620de0786c695b989c13f27eba7699cffdd9c9fad3988",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "startup-clock",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/startup-clock-regression/StartupClockRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "e6d4759af0dcdad2d711e5934561f7664d1b71417c15a04adcab1b0d2d6a4678",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "traffic-closure",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-closure-regression/TrafficClosureRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "708d6590f5351a9c1adf0b939e6775caa82602e1d6ec261b597977db98e808aa",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "traffic-queue",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-queue-regression/TrafficQueueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "897d1d2e5c92ef25374e61f7da26e9dea2849c91f3495eb8bc65210eb2e4b9c4",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "walking-quote",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/walking-quote-regression/WalkingQuoteRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "b20b2938933dcf089ca5390b756d89a587ca9d5f003c7440677ccda69bf0d405",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "campaign-reader",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/campaign-reader-regression/CampaignReaderRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "e56e7b1cafe19e86698d445af99058ccfbf6f37ce3a88266f3c3247c27b89743",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "a5-inspector",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/a5-inspector-regression/A5InspectorRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "8d02614e151853f979c3b1e66566ed44b3e8038c6705d34c298cd73f69efcb3b",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "agency-payment",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/agency-payment-regression/AgencyPaymentRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "984fa01b3319cd7614710d19940c6a959b6416286af8ba8d5a0b37dab5e9a58d",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "awareness",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/awareness-regression/AwarenessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "ff8f882eb7df9a00f9e7e453a3cefb7965da6afaaa6df3ec56b54fe930c73efe",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-candidate",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-candidate-regression/FoodCandidateRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "6c4bc871b61dba18ea1aa3d211d367e08565f4b4f46eec6f1edec0928bc9449c",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-choice",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "10c2c1cba469b3b627ae15cf49626ea8b6238a2307022b8d1fb35c721851e872",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-memory",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-memory-regression/FoodMemoryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "eac60293d6d33f041bc8f66a90f75fcca4fc34723da7ee9da42f66a4c2bef9a6",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-regulars",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-regulars-regression/FoodRegularsRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "32ff0a1488a776e02de7216c10629821401b45ccb52d1a3dcff550736d28a7e5",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "held-tuning",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/held-tuning-regression/HeldTuningRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "473d8694f73b7e996964c6a96faa321377488e48ef39a514a91164272ca0ab8e",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "icecream-feasibility",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/icecream-feasibility-regression/IcecreamFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "37854642ddd8448d140505e5bd9b811a1a47bcda6355f1c984b77cd66e3e4178",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "interior-guard",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/interior-guard-regression/InteriorGuardRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "620b0b8da2c13034ee3abb75e5367799818b6fb25902f9a032dec5af34205cd9",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "market-research",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/market-research-regression/MarketResearchRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "8edc312b5a3c9b503dabb46b587796bfb4466dffa85979f952e894d61f788849",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "salad-feasibility",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/salad-feasibility-regression/SaladFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "af36f62ed66acd691ab9cf62fbd35ef3f63edddcab53186da968f612bcd45014",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "weather",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/weather-regression/WeatherRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "7caf0cd4a0188a644376e6fea1895629ecef573fa7136762d370e104f7ce80db",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "native-command",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/native-command-regression/run.py"
+      ],
+      "exit": 0,
+      "logSha256": "bd610e1a32a30f6ad7638fc2a65ae7bf8bea9d44baba81884f821aea4ed0a9aa",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "physical-selection",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/physical-selection-regression/run.py"
+      ],
+      "exit": 0,
+      "logSha256": "d14d739f648c3d7d8009f52825f4a639d45cdee3af925f0c7c5d258f0088417d",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "vehicle-ownership",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/vehicle-ownership-regression/run.py"
+      ],
+      "exit": 0,
+      "logSha256": "7539f54a1b778a54ca9bc75f398a40c0491fb40281611c8c8efbbc473dd32e46",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "optional-stop",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/optional-stop-regression/run.py"
+      ],
+      "exit": 0,
+      "logSha256": "f7d3a55ef6b939ada52be73e50fcae27ead5eb4643a5c9f7516905986ecddaa4",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "pickup",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/persistent-continuity/regression/PickupRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "608eae841ef2ed0f1dbfb45d11a356fef2231fcfe9cee06e68756577f5a0b157",
+      "waitLogSha256": "a6f89955bb5d7f30c2eef40da6cac64415f4e8ef9b5a8ffcb5edae27928ee6d0"
+    },
+    {
+      "name": "optional-stop-performance",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/optional-stop-regression/run.py",
+        "--performance",
+        "--findings"
+      ],
+      "exit": 0,
+      "logSha256": "d61cb6538425f88173f366f81e6df00ba3b7e6b3a5bfefb1e1845cc36948f807",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "simulate",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/simulate/Simulate.csproj",
+        "--",
+        "28",
+        "build/harness-demo"
+      ],
+      "exit": 0,
+      "logSha256": "54f172f00d83086a2e372c11ec7a54f12d43124af9260ad6ac761c827d6e94d4",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-routines",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-routines/FoodRoutines.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "build/harness-food-routines-demo",
+        "957"
+      ],
+      "exit": 0,
+      "logSha256": "5cb76bc9d3eece08574b81faf61f4e0854de7f0ea17166180bf3dee25458974a",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-demand",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-demand/FoodDemand.csproj",
+        "--",
+        "build/harness-food-demand-demo"
+      ],
+      "exit": 0,
+      "logSha256": "c6c18b714f82f1797a5673b2377e13e8ea1ba1d379b91c9717bb902b12dcd991",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "donut",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/donut-feasibility-regression/DonutFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "0dfefb19b0b36af6619d0d5104fce71cb56cea6458505bc387cbbce9727a2fc2",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "cupcake",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/cupcake-feasibility-regression/CupcakeFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "logSha256": "4feb5dee0b5b7126e519c65d2ec3a29e33effaec0983aa08182fde13c3114023",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "isolation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/donut-feasibility-regression/source_checks.py"
+      ],
+      "exit": 0,
+      "logSha256": "cc6c0de139d40371e4fba40e86518707c7a4310b794607cd59d28b78b695852e"
+    },
+    {
+      "name": "salad-isolation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/salad-feasibility-regression/source_checks.py"
+      ],
+      "exit": 0,
+      "logSha256": "320b305ad04a0ccc371ef2a6bea1d1a9a3357023c4ae74105b832eb60f7451b7"
+    },
+    {
+      "name": "icecream-isolation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/icecream-feasibility-regression/source_checks.py"
+      ],
+      "exit": 0,
+      "logSha256": "3216ba55dfb65e001666ba7649eb260eb6b0c0029a72fd76f15379dc3fc93572",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "icecream-baseline",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/icecream-feasibility-regression/measure_baseline.py"
+      ],
+      "exit": 0,
+      "logSha256": "e8c97d0f1fb48244b299b6bbb3c5e88b6dae77b03782f7c3ca8c951b64828ccf",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    }
+  ],
+  "inheritedA5Modes": [
+    {
+      "name": "choice-rush",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--rush"
+      ],
+      "exit": 0,
+      "logSha256": "8ae46bdafa21fabe83042ce7903e0eaa5a872b4b4bbb53eeb8e849dd3fcb4632",
+      "waitLogSha256": "54c2a66c5027243e434838c5a85e0e8b998a18172d959761d5206c554d8eb3b5"
+    },
+    {
+      "name": "choice-integrated",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--integrated"
+      ],
+      "exit": 0,
+      "logSha256": "536fbc10081e85eef4d7238b56d246e7f40553c245bcd636ea6eaa7bc284853e",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "choice-rush-integrated",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--rush",
+        "--integrated"
+      ],
+      "exit": 0,
+      "logSha256": "d1424d0b6056aa8b4e974bdd76ba66340b7ebf8307acfc87c0fe078d9fc3b147",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "choice-rush-integrated-5000",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--rush-5000",
+        "--integrated"
+      ],
+      "exit": 0,
+      "logSha256": "59849d4d3c77b2a23e44e8cd386c796e4aaf0572232ece9805f84ab6c945821c",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "save-bench",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--bench",
+        "--decisions"
+      ],
+      "exit": 0,
+      "logSha256": "d7ab5037713645a755d9eb83af789eb60695d2849e537af60b9a5cb3fd52282d",
+      "waitLogSha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    }
+  ],
+  "unitSummary": "Passed!  - Failed:     0, Passed:  2392, Skipped:     0, Total:  2392, Duration: 1 m 59 s - PersistentCity.Tests.dll (net10.0)",
+  "discoveredTests": 2392,
+  "productionDllSha256": "962b63e6b0886bc9d22ecc7c50222629ce44a983dade5a7b101d858655aa5321",
+  "measurements": {
+    "donut": [
+      {
+        "checks": 2082,
+        "cold": {
+          "samples": 1,
+          "coldMs": 1.7154,
+          "coldBytes": 1064
+        },
+        "warm": [
+          {
+            "furniture": 2,
+            "p50Ms": 0.0004,
+            "p95Ms": 0.0005,
+            "maxMs": 0.0062,
+            "bytesPerCall": 200,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2000,
+            "p50Ms": 0.0823,
+            "p95Ms": 0.1053,
+            "maxMs": 1.3962,
+            "bytesPerCall": 49104,
+            "spikesAtLeast30Ms": 0
+          }
+        ]
+      }
+    ],
+    "cupcake": [
+      {
+        "checks": 2098,
+        "cold": {
+          "samples": 1,
+          "coldMs": 1.6946,
+          "coldBytes": 1064
+        },
+        "warm": [
+          {
+            "furniture": 2,
+            "p50Ms": 0.0004,
+            "p95Ms": 0.0005,
+            "maxMs": 0.0121,
+            "bytesPerCall": 200,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2000,
+            "p50Ms": 0.084,
+            "p95Ms": 0.1037,
+            "maxMs": 1.2995,
+            "bytesPerCall": 49104,
+            "spikesAtLeast30Ms": 0
+          }
+        ]
+      }
+    ],
+    "salad-feasibility": [
+      {
+        "checks": 2119,
+        "cold": {
+          "samples": 1,
+          "coldMs": 1.7243,
+          "coldBytes": 1064
+        },
+        "warm": [
+          {
+            "furniture": 2,
+            "p50Ms": 0.0004,
+            "p95Ms": 0.0005,
+            "maxMs": 0.0047,
+            "bytesPerCall": 200,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2000,
+            "p50Ms": 0.082,
+            "p95Ms": 0.1348,
+            "maxMs": 1.2734,
+            "bytesPerCall": 49104,
+            "spikesAtLeast30Ms": 0
+          }
+        ]
+      }
+    ],
+    "icecream-feasibility": [
+      {
+        "checks": 2127,
+        "cold": {
+          "samples": 1,
+          "coldMs": 1.8032,
+          "coldBytes": 1064
+        },
+        "warm": [
+          {
+            "furniture": 2,
+            "p50Ms": 0.0004,
+            "p95Ms": 0.0005,
+            "maxMs": 0.0056,
+            "bytesPerCall": 200,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2000,
+            "p50Ms": 0.0799,
+            "p95Ms": 0.1031,
+            "maxMs": 1.2936,
+            "bytesPerCall": 49104,
+            "spikesAtLeast30Ms": 0
+          }
+        ]
+      }
+    ],
+    "icecream-baseline": [
+      {
+        "checks": 2082,
+        "cold": {
+          "samples": 1,
+          "coldMs": 1.689,
+          "coldBytes": 1040
+        },
+        "warm": [
+          {
+            "furniture": 2,
+            "p50Ms": 0.0008,
+            "p95Ms": 0.0009,
+            "maxMs": 0.0084,
+            "bytesPerCall": 200,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2000,
+            "p50Ms": 0.0843,
+            "p95Ms": 0.1138,
+            "maxMs": 1.3072,
+            "bytesPerCall": 49104,
+            "spikesAtLeast30Ms": 0
+          }
+        ]
+      },
+      {
+        "checks": 2098,
+        "cold": {
+          "samples": 1,
+          "coldMs": 2.0515,
+          "coldBytes": 1040
+        },
+        "warm": [
+          {
+            "furniture": 2,
+            "p50Ms": 0.0005,
+            "p95Ms": 0.0006,
+            "maxMs": 0.0107,
+            "bytesPerCall": 200,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2000,
+            "p50Ms": 0.0939,
+            "p95Ms": 0.1199,
+            "maxMs": 1.3853,
+            "bytesPerCall": 49104,
+            "spikesAtLeast30Ms": 0
+          }
+        ]
+      },
+      {
+        "checks": 2119,
+        "cold": {
+          "samples": 1,
+          "coldMs": 1.8657,
+          "coldBytes": 1040
+        },
+        "warm": [
+          {
+            "furniture": 2,
+            "p50Ms": 0.0004,
+            "p95Ms": 0.0005,
+            "maxMs": 0.0039,
+            "bytesPerCall": 200,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2000,
+            "p50Ms": 0.0825,
+            "p95Ms": 0.1266,
+            "maxMs": 1.4171,
+            "bytesPerCall": 49104,
+            "spikesAtLeast30Ms": 0
+          }
+        ]
+      }
+    ],
+    "a5-inspector": [
+      {
+        "boundary": "Offline .NET 10 Release, 80 batch means after eight warmups. Closed = pure stationary throttle; hover = scoring 48 preprojected walkers. Unity projection, guards, GUI draw and native formatter excluded. Open = Core capture/text, with absent food or saturated four-entry B memory on two consumers/resident and 16 shops; C2a active header but inspector never samples awareness. Batch flags are not mod-work frames.",
+        "closedStationary": {
+          "p50Ms": 4.13e-06,
+          "p95Ms": 4.52e-06,
+          "maxMs": 5.19e-06,
+          "bytesPerCall": 0,
+          "batchSize": 10000,
+          "batchSpikesAtLeast30Ms": 0
+        },
+        "hoverPicking": {
+          "p50Ms": 0.0005218,
+          "p95Ms": 0.0009505000000000001,
+          "maxMs": 0.0010263,
+          "bytesPerCall": 0,
+          "batchSize": 1000,
+          "batchSpikesAtLeast30Ms": 0
+        },
+        "closedPicks": 0,
+        "populations": [
+          {
+            "residents": 957,
+            "activeMemory": false,
+            "consumers": 0,
+            "popupCaptureAndText": {
+              "p50Ms": 0.002494,
+              "p95Ms": 0.003198,
+              "maxMs": 0.004279,
+              "bytesPerCall": 5856,
+              "batchSize": 100,
+              "batchSpikesAtLeast30Ms": 0
+            },
+            "formatsPerCapture": 2,
+            "textLength": 354,
+            "unchangedPayload": true
+          },
+          {
+            "residents": 5000,
+            "activeMemory": false,
+            "consumers": 0,
+            "popupCaptureAndText": {
+              "p50Ms": 0.003588,
+              "p95Ms": 0.005682,
+              "maxMs": 0.034737,
+              "bytesPerCall": 5856.023,
+              "batchSize": 100,
+              "batchSpikesAtLeast30Ms": 0
+            },
+            "formatsPerCapture": 2,
+            "textLength": 354,
+            "unchangedPayload": true
+          },
+          {
+            "residents": 957,
+            "activeMemory": true,
+            "consumers": 1914,
+            "popupCaptureAndText": {
+              "p50Ms": 0.006241,
+              "p95Ms": 0.007439,
+              "maxMs": 0.009217999999999999,
+              "bytesPerCall": 7728,
+              "batchSize": 100,
+              "batchSpikesAtLeast30Ms": 0
+            },
+            "formatsPerCapture": 2,
+            "textLength": 390,
+            "unchangedPayload": true
+          },
+          {
+            "residents": 5000,
+            "activeMemory": true,
+            "consumers": 10000,
+            "popupCaptureAndText": {
+              "p50Ms": 0.0050290000000000005,
+              "p95Ms": 0.005997,
+              "maxMs": 0.007209,
+              "bytesPerCall": 7728,
+              "batchSize": 100,
+              "batchSpikesAtLeast30Ms": 0
+            },
+            "formatsPerCapture": 2,
+            "textLength": 390,
+            "unchangedPayload": true
+          }
+        ],
+        "nativeModWorkGate": "unverified on this head; requires matched 6 Nov windows"
+      }
+    ],
+    "save-contract": [
+      {
+        "schema": 20,
+        "digest": "39D2E48CD937D1BDD8E183CDB6125461FB44B67784DA935258CC88EC2BC1CAF0",
+        "length": 120184,
+        "weatherProjectionLength": 119083,
+        "weatherProjectionDigest": "D7FF8294F56C3B3D5AF736540274E68E9848319B34658859FC15E0D4CDB1F3A2",
+        "refusals": [
+          "Invalid:Invalid state: Missing state schema.",
+          "Future:State uses a newer schema; preserve the original payload.",
+          "Invalid:Invalid state: Incomplete or trailing JSON content.",
+          "Invalid:Invalid state: Unknown field: UnknownCitizens"
+        ],
+        "economy": {
+          "orders": 849,
+          "ordersDigest": "1B94987B3158044594B9C4D6A5473BA22BE0D4F3488D769CBBEE23318BB33B91",
+          "purchases": 797,
+          "spentUnits": 107967424757760,
+          "uncertain": 2,
+          "economyDigest": "74D0FE8081EA795D4D56A11B4B955DC6E777E3822C702D3C09BC9477E6679AF9",
+          "reloadDigest": "59B6F14D44CA0F996C5A828E2E538B52C5426347FCFA40767527B72D77F1D4FA"
+        },
+        "writeBytes": 14497672,
+        "readBytes": 39004600,
+        "bench": null,
+        "hot": null
+      }
+    ]
+  },
+  "diagnosticTimingFlags": [
+    {
+      "path": "build/e3-icecream/gates/campaign-reader.txt:4.cold.p95Ms",
+      "value": 6.0975,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream/gates/core-identity.txt:1.simulateMs",
+      "value": 2668,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[0].offlineCpuMs",
+      "value": 305.5714,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[1].offlineCpuMs",
+      "value": 344.2718,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[2].offlineCpuMs",
+      "value": 180.0986,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[3].offlineCpuMs",
+      "value": 225.4867,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[4].offlineCpuMs",
+      "value": 236.9977,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[5].offlineCpuMs",
+      "value": 234.7484,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[6].offlineCpuMs",
+      "value": 65.8577,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[7].offlineCpuMs",
+      "value": 77.1834,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[8].offlineCpuMs",
+      "value": 289.0563,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[9].offlineCpuMs",
+      "value": 300.4692,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[10].offlineCpuMs",
+      "value": 167.3084,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[11].offlineCpuMs",
+      "value": 180.3681,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[12].offlineCpuMs",
+      "value": 217.2822,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[13].offlineCpuMs",
+      "value": 263.0794,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[14].offlineCpuMs",
+      "value": 44.93,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[15].offlineCpuMs",
+      "value": 75.1261,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[16].offlineCpuMs",
+      "value": 285.6149,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[17].offlineCpuMs",
+      "value": 368.9485,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[18].offlineCpuMs",
+      "value": 175.2682,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[19].offlineCpuMs",
+      "value": 175.1903,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[20].offlineCpuMs",
+      "value": 240.0773,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[21].offlineCpuMs",
+      "value": 207.9062,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[22].offlineCpuMs",
+      "value": 59.3151,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated-5000.txt:1.results[23].offlineCpuMs",
+      "value": 81.4488,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated.txt:1.results[0].offlineCpuMs",
+      "value": 219.1536,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated.txt:1.results[1].offlineCpuMs",
+      "value": 152.1159,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated.txt:1.results[2].offlineCpuMs",
+      "value": 51.2345,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated.txt:1.results[3].offlineCpuMs",
+      "value": 50.2253,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated.txt:1.results[4].offlineCpuMs",
+      "value": 46.3352,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated.txt:1.results[5].offlineCpuMs",
+      "value": 41.5192,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated.txt:1.results[8].offlineCpuMs",
+      "value": 65.7025,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated.txt:1.results[9].offlineCpuMs",
+      "value": 61.6669,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated.txt:1.results[10].offlineCpuMs",
+      "value": 65.6734,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated.txt:1.results[11].offlineCpuMs",
+      "value": 44.4542,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated.txt:1.results[12].offlineCpuMs",
+      "value": 46.3015,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated.txt:1.results[13].offlineCpuMs",
+      "value": 43.196,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated.txt:1.results[16].offlineCpuMs",
+      "value": 47.9498,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated.txt:1.results[17].offlineCpuMs",
+      "value": 66.6363,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated.txt:1.results[18].offlineCpuMs",
+      "value": 44.8027,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated.txt:1.results[20].offlineCpuMs",
+      "value": 35.9645,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush-integrated.txt:1.results[21].offlineCpuMs",
+      "value": 55.0209,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush.txt:1.results[0].offlineCpuMs",
+      "value": 271.3792,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush.txt:1.results[1].offlineCpuMs",
+      "value": 262.9026,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush.txt:1.results[2].offlineCpuMs",
+      "value": 100.1209,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush.txt:1.results[3].offlineCpuMs",
+      "value": 148.7434,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush.txt:1.results[4].offlineCpuMs",
+      "value": 197.5893,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush.txt:1.results[5].offlineCpuMs",
+      "value": 139.9532,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush.txt:1.results[8].offlineCpuMs",
+      "value": 95.4522,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush.txt:1.results[9].offlineCpuMs",
+      "value": 90.5895,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush.txt:1.results[10].offlineCpuMs",
+      "value": 37.7441,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush.txt:1.results[12].offlineCpuMs",
+      "value": 51.9862,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush.txt:1.results[13].offlineCpuMs",
+      "value": 54.1639,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush.txt:1.results[16].offlineCpuMs",
+      "value": 68.6527,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush.txt:1.results[17].offlineCpuMs",
+      "value": 77.7751,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush.txt:1.results[18].offlineCpuMs",
+      "value": 35.2775,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush.txt:1.results[19].offlineCpuMs",
+      "value": 40.5515,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush.txt:1.results[20].offlineCpuMs",
+      "value": 64.1528,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/choice-rush.txt:1.results[21].offlineCpuMs",
+      "value": 56.7685,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/save-bench.txt:2.bench[0].writeMs",
+      "value": 34.0,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/save-bench.txt:2.bench[0].readMs",
+      "value": 89.7,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/save-bench.txt:2.bench[0].upgradeFrom16Ms",
+      "value": 190.1,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/save-bench.txt:2.bench[1].writeMs",
+      "value": 88.0,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/save-bench.txt:2.bench[1].readMs",
+      "value": 277.7,
+      "kind": "diagnostic milliseconds"
+    },
+    {
+      "path": "build/e3-icecream-sync/a5-extra/save-bench.txt:2.bench[1].upgradeFrom16Ms",
+      "value": 350.4,
+      "kind": "diagnostic milliseconds"
+    }
+  ],
+  "diagnosticTimingText": [
+    {
+      "log": "build/e3-icecream/gates/agency-payment.txt",
+      "line": 2,
+      "text": "4096 marketing records, 2 buildings, 1 statement: cold incl first Capture JIT 1,4406 ms / 19064 B; warm p50/p95/max 0,0388/0,0547/0,1277 ms; 18160 B/call."
+    },
+    {
+      "log": "build/e3-icecream/gates/agency-payment.txt",
+      "line": 3,
+      "text": "Offline dump spikes >=30 ms: 0; closed: zero Capture calls, hooks, retained state or per-frame allocations. Full mod-work and whole-frame unmeasured."
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 17,
+      "text": "        \"p95\": 1.8501,"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 19,
+      "text": "        \"spikesAtLeast30ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 25,
+      "text": "        \"p95\": 0.1371,"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 27,
+      "text": "        \"spikesAtLeast30ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 31,
+      "text": "        \"p95\": 0.0197,"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 33,
+      "text": "        \"spikesAtLeast30ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 48,
+      "text": "        \"p95\": 35.1993,"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 50,
+      "text": "        \"spikesAtLeast30ms\": 1"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 56,
+      "text": "        \"p95\": 2.4496,"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 58,
+      "text": "        \"spikesAtLeast30ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 62,
+      "text": "        \"p95\": 0.0181,"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 64,
+      "text": "        \"spikesAtLeast30ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 79,
+      "text": "        \"p95\": 7.0169,"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 81,
+      "text": "        \"spikesAtLeast30ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 87,
+      "text": "        \"p95\": 0.1225,"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 89,
+      "text": "        \"spikesAtLeast30ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 93,
+      "text": "        \"p95\": 0.0056,"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 95,
+      "text": "        \"spikesAtLeast30ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 110,
+      "text": "        \"p95\": 22.5361,"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 112,
+      "text": "        \"spikesAtLeast30ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 118,
+      "text": "        \"p95\": 2.5049,"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 120,
+      "text": "        \"spikesAtLeast30ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 124,
+      "text": "        \"p95\": 0.0108,"
+    },
+    {
+      "log": "build/e3-icecream/gates/awareness.txt",
+      "line": 126,
+      "text": "        \"spikesAtLeast30ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 20,
+      "text": "        \"p95Ms\": 2.0849660397074187E-05,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 22,
+      "text": "        \"spikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 27,
+      "text": "        \"p95Ms\": 1.9644723092998957E-05,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 29,
+      "text": "        \"spikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 50,
+      "text": "        \"p95Ms\": 4.07725E-05,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 52,
+      "text": "        \"spikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 57,
+      "text": "        \"p95Ms\": 4.778E-05,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 59,
+      "text": "        \"spikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 79,
+      "text": "        \"p95Ms\": 1.1492,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 81,
+      "text": "        \"spikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 100,
+      "text": "        \"p95Ms\": 1.3075,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 102,
+      "text": "        \"spikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 121,
+      "text": "        \"p95Ms\": 1.2355,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 123,
+      "text": "        \"spikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 142,
+      "text": "        \"p95Ms\": 1.1301,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 144,
+      "text": "        \"spikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 163,
+      "text": "        \"p95Ms\": 1.2214,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 165,
+      "text": "        \"spikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 184,
+      "text": "        \"p95Ms\": 1.0312,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 186,
+      "text": "        \"spikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 205,
+      "text": "        \"p95Ms\": 0.5149,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 207,
+      "text": "        \"spikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 226,
+      "text": "        \"p95Ms\": 0.3634,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 228,
+      "text": "        \"spikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 247,
+      "text": "        \"p95Ms\": 0.4914,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 249,
+      "text": "        \"spikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 268,
+      "text": "        \"p95Ms\": 0.2853,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 270,
+      "text": "        \"spikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 289,
+      "text": "        \"p95Ms\": 0.3254,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 291,
+      "text": "        \"spikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 310,
+      "text": "        \"p95Ms\": 0.3506,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 312,
+      "text": "        \"spikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 331,
+      "text": "        \"p95Ms\": 0.0088,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 333,
+      "text": "        \"spikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 352,
+      "text": "        \"p95Ms\": 0.0051,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-memory.txt",
+      "line": 354,
+      "text": "        \"spikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 2,
+      "text": "  \"boundary\": \"Offline .NET 10; 40 normalized batch means after 5 warmups, not individual-call percentiles. Saturated four-entry memory; 16 owned shops. Panel timing covers B2 text including projection; native account reads/Unity GUI excluded. Full Core popup capture/text included. Closed zero cost and zero commit hooks established by call-site/source tests, not a native timing window. Batch spikes flag benchmark batches, not mod-work frames.\","
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 11,
+      "text": "        \"p95Ms\": 0.574905,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 14,
+      "text": "        \"batchSpikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 18,
+      "text": "        \"p95Ms\": 1.668E-05,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 21,
+      "text": "        \"batchSpikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 25,
+      "text": "        \"p95Ms\": 0.869105,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 28,
+      "text": "        \"batchSpikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 32,
+      "text": "        \"p95Ms\": 0.008801,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 35,
+      "text": "        \"batchSpikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 39,
+      "text": "        \"p95Ms\": 0.0001483,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 42,
+      "text": "        \"batchSpikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 50,
+      "text": "        \"p95Ms\": 0.03694,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 53,
+      "text": "        \"batchSpikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 57,
+      "text": "        \"p95Ms\": 0.02214,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 60,
+      "text": "        \"batchSpikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 75,
+      "text": "        \"p95Ms\": 0.551355,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 78,
+      "text": "        \"batchSpikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 82,
+      "text": "        \"p95Ms\": 6.38E-06,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 85,
+      "text": "        \"batchSpikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 89,
+      "text": "        \"p95Ms\": 0.541765,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 92,
+      "text": "        \"batchSpikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 96,
+      "text": "        \"p95Ms\": 0.006662,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 99,
+      "text": "        \"batchSpikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 103,
+      "text": "        \"p95Ms\": 0.0001773,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 106,
+      "text": "        \"batchSpikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 114,
+      "text": "        \"p95Ms\": 0.455745,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 117,
+      "text": "        \"batchSpikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 121,
+      "text": "        \"p95Ms\": 0.081995,"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 124,
+      "text": "        \"batchSpikesAtLeast30Ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/food-regulars.txt",
+      "line": 133,
+      "text": "  \"nativeModWork\": \"pending normal combined 6 Nov session: p95 <5 ms, flag >=30 ms; whole-frame separate\""
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 31,
+      "text": "        \"p95\": 0.0098,"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 36,
+      "text": "        \"p95\": 0.0405,"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 38,
+      "text": "        \"spikesAtLeast30ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 42,
+      "text": "        \"p95\": 0.1579,"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 64,
+      "text": "        \"p95\": 0.0044,"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 69,
+      "text": "        \"p95\": 0.0325,"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 71,
+      "text": "        \"spikesAtLeast30ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 75,
+      "text": "        \"p95\": 0.6341,"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 97,
+      "text": "        \"p95\": 0.0247,"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 102,
+      "text": "        \"p95\": 0.0347,"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 104,
+      "text": "        \"spikesAtLeast30ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 108,
+      "text": "        \"p95\": 6.7963,"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 130,
+      "text": "        \"p95\": 0.0036,"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 135,
+      "text": "        \"p95\": 0.0416,"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 137,
+      "text": "        \"spikesAtLeast30ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 141,
+      "text": "        \"p95\": 0.1567,"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 163,
+      "text": "        \"p95\": 0.0044,"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 168,
+      "text": "        \"p95\": 0.042,"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 170,
+      "text": "        \"spikesAtLeast30ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 174,
+      "text": "        \"p95\": 0.8213,"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 196,
+      "text": "        \"p95\": 0.0207,"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 201,
+      "text": "        \"p95\": 0.0444,"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 203,
+      "text": "        \"spikesAtLeast30ms\": 0"
+    },
+    {
+      "log": "build/e3-icecream/gates/market-research.txt",
+      "line": 207,
+      "text": "        \"p95\": 8.9522,"
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 12,
+      "text": "Venue cache model=0 rebind=False count=48: p50=0.0431 p95=0.0486 max=0.3811 ms; bytes/batch=4576.0; entrance reads/batch=1176.0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 13,
+      "text": "Venue cache model=0 rebind=True count=48: p50=0.0630 p95=0.0746 max=0.0885 ms; bytes/batch=34516.3; entrance reads/batch=1176.0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 14,
+      "text": "Venue cache model=1 rebind=False count=48: p50=0.1111 p95=0.1230 max=1.6340 ms; bytes/batch=19544.0; entrance reads/batch=48.0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 15,
+      "text": "Venue cache model=1 rebind=True count=48: p50=0.1315 p95=0.1364 max=0.4923 ms; bytes/batch=44088.6; entrance reads/batch=48.0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 16,
+      "text": "Venue cache model=2 rebind=False count=48: p50=0.1189 p95=0.1783 max=0.2630 ms; bytes/batch=40928.0; entrance reads/batch=48.0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 17,
+      "text": "Venue cache model=2 rebind=True count=48: p50=0.1350 p95=0.1496 max=0.2523 ms; bytes/batch=65532.8; entrance reads/batch=48.0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 20,
+      "text": "Facade doubles after=False cap-batch=48: cold samples=48 (one/frame), warm queries=9600, new warm samples=0; batch ms p50=0.0375 p95=0.0405 max=11.1587; bytes/query=568.0; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 21,
+      "text": "Facade doubles after=True cap-batch=48: cold samples=48 (one/frame), warm queries=9600, new warm samples=0; batch ms p50=0.0217 p95=0.0236 max=0.0347; bytes/query=360.0; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 22,
+      "text": "Venue cache model=0 rebind=False count=256: p50=0.7119 p95=0.7685 max=1.1482 ms; bytes/batch=22264.0; entrance reads/batch=32896.0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 23,
+      "text": "Venue cache model=0 rebind=True count=256: p50=0.8529 p95=1.1354 max=1.6760 ms; bytes/batch=177757.7; entrance reads/batch=32896.0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 24,
+      "text": "Venue cache model=1 rebind=False count=256: p50=1.5983 p95=1.7336 max=2.6451 ms; bytes/batch=95232.0; entrance reads/batch=256.0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 25,
+      "text": "Venue cache model=1 rebind=True count=256: p50=0.2745 p95=0.3108 max=0.4258 ms; bytes/batch=231074.2; entrance reads/batch=256.0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 26,
+      "text": "Venue cache model=2 rebind=False count=256: p50=0.6422 p95=0.7247 max=1.2141 ms; bytes/batch=211560.0; entrance reads/batch=256.0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 27,
+      "text": "Venue cache model=2 rebind=True count=256: p50=0.2690 p95=0.7182 max=0.9432 ms; bytes/batch=347471.1; entrance reads/batch=256.0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 30,
+      "text": "Facade doubles after=False cap-batch=256: cold samples=256 (one/frame), warm queries=51200, new warm samples=0; batch ms p50=0.0958 p95=0.1048 max=0.3279; bytes/query=592.4; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 31,
+      "text": "Facade doubles after=True cap-batch=256: cold samples=256 (one/frame), warm queries=51200, new warm samples=0; batch ms p50=0.0709 p95=0.0762 max=0.3031; bytes/query=374.6; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 32,
+      "text": "Venue cache model=0 rebind=False count=1000: p50=0.7102 p95=0.8028 max=1.3122 ms; bytes/batch=102168.0; entrance reads/batch=500500.0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 33,
+      "text": "Venue cache model=0 rebind=True count=1000: p50=0.8914 p95=1.0513 max=1.2830 ms; bytes/batch=622429.0; entrance reads/batch=500500.0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 34,
+      "text": "Venue cache model=1 rebind=False count=1000: p50=3.2073 p95=3.5405 max=3.8497 ms; bytes/batch=414160.0; entrance reads/batch=1000.0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 35,
+      "text": "Venue cache model=1 rebind=True count=1000: p50=3.4236 p95=4.1480 max=7.4627 ms; bytes/batch=934439.8; entrance reads/batch=1000.0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 36,
+      "text": "Venue cache model=2 rebind=False count=1000: p50=0.5229 p95=1.6948 max=2.8834 ms; bytes/batch=935816.0; entrance reads/batch=1000.0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 37,
+      "text": "Venue cache model=2 rebind=True count=1000: p50=0.6825 p95=2.4807 max=3.5344 ms; bytes/batch=1456258.8; entrance reads/batch=1000.0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 41,
+      "text": "Admission tuned=False rate=25 residents=48 realised=13: ms p50=0.1869 p95=0.2286 max=1.3080; bytes/sample=74566.3; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 43,
+      "text": "Admission tuned=False rate=25 residents=256 realised=64: ms p50=1.1026 p95=1.6750 max=2.3016; bytes/sample=396205.6; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 45,
+      "text": "Admission tuned=False rate=25 residents=957 realised=229: ms p50=5.0224 p95=8.2156 max=11.0014; bytes/sample=1485336.1; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 47,
+      "text": "Selector tuned=False rate=25 cap=48 admitted=48/229: ms p50=0.1290 p95=0.1335 max=0.1992; bytes/sample=64.0; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 48,
+      "text": "Selector tuned=False rate=25 cap=256 admitted=229/229: ms p50=0.0035 p95=0.0041 max=0.0044; bytes/sample=0.0; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 49,
+      "text": "Admission tuned=False rate=100 residents=48 realised=48: ms p50=0.2104 p95=0.2467 max=0.4756; bytes/sample=92238.3; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 51,
+      "text": "Admission tuned=False rate=100 residents=256 realised=256: ms p50=2.8153 p95=3.0397 max=3.5952; bytes/sample=492317.6; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 53,
+      "text": "Admission tuned=False rate=100 residents=957 realised=957: ms p50=6.7120 p95=9.6358 max=11.0685; bytes/sample=1861846.4; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 55,
+      "text": "Selector tuned=False rate=100 cap=48 admitted=48/957: ms p50=1.2416 p95=1.3448 max=4.9332; bytes/sample=64.0; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 56,
+      "text": "Selector tuned=False rate=100 cap=256 admitted=256/957: ms p50=0.0435 p95=0.0464 max=0.0488; bytes/sample=64.0; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 57,
+      "text": "Admission tuned=True rate=25 residents=48 realised=13: ms p50=0.0300 p95=0.0382 max=0.1373; bytes/sample=74566.3; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 59,
+      "text": "Admission tuned=True rate=25 residents=256 realised=64: ms p50=0.2161 p95=0.2538 max=0.8996; bytes/sample=396205.6; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 61,
+      "text": "Admission tuned=True rate=25 residents=957 realised=229: ms p50=0.9796 p95=3.9731 max=4.4687; bytes/sample=1485321.9; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 63,
+      "text": "Selector tuned=True rate=25 cap=48 admitted=48/229: ms p50=0.0095 p95=0.0134 max=0.0793; bytes/sample=64.0; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 64,
+      "text": "Selector tuned=True rate=25 cap=256 admitted=229/229: ms p50=0.0016 p95=0.0018 max=0.0021; bytes/sample=0.0; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 65,
+      "text": "Admission tuned=True rate=100 residents=48 realised=48: ms p50=0.0476 p95=0.0779 max=0.2851; bytes/sample=92252.5; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 67,
+      "text": "Admission tuned=True rate=100 residents=256 realised=256: ms p50=0.6167 p95=0.7135 max=1.2305; bytes/sample=492317.6; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 69,
+      "text": "Admission tuned=True rate=100 residents=957 realised=957: ms p50=6.9940 p95=11.5168 max=16.0569; bytes/sample=1861846.4; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 71,
+      "text": "Selector tuned=True rate=100 cap=48 admitted=48/957: ms p50=0.1549 p95=0.1612 max=0.3109; bytes/sample=64.0; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/optional-stop-performance.txt",
+      "line": 72,
+      "text": "Selector tuned=True rate=100 cap=256 admitted=256/957: ms p50=0.0411 p95=0.0750 max=0.1071; bytes/sample=64.0; spikes>=30ms=0."
+    },
+    {
+      "log": "build/e3-icecream/gates/physical-selection.txt",
+      "line": 1,
+      "text": "F0 offline street body-retention loop 48/24: ms/update p50=0,001600 p95=0,001700 max=0,005000; bytes/update=0,0; spikes>=30ms=0; 1000 single calls (native doubles)."
+    },
+    {
+      "log": "build/e3-icecream/gates/physical-selection.txt",
+      "line": 2,
+      "text": "F0 offline interior body-retention loop 24/12: ms/update p50=0,001000 p95=0,001100 max=0,001200; bytes/update=0,0; spikes>=30ms=0; 1000 single calls (native doubles)."
+    },
+    {
+      "log": "build/e3-icecream/gates/physical-selection.txt",
+      "line": 4,
+      "text": "F0 offline 957-resident full-pool selection BEFORE F0 cheap break: ms/update p50=0,155000 p95=1,887800 max=3,979500; bytes/update=96,0; spikes>=30ms=0; 300 single calls (native doubles)."
+    },
+    {
+      "log": "build/e3-icecream/gates/physical-selection.txt",
+      "line": 5,
+      "text": "F0 offline 957-resident full-pool selection AFTER F0 cheap break: ms/update p50=0,000100 p95=0,000100 max=0,004800; bytes/update=32,0; spikes>=30ms=0; 300 single calls (native doubles)."
+    },
+    {
+      "log": "build/e3-icecream/gates/startup-clock.txt",
+      "line": 1,
+      "text": "F0 offline cached active predicate: per-call ms p50=0,0000173 p95=0,0000174 max(batch mean)=0,0000244; bytes/call=0,000; batches=300 x 1000."
+    },
+    {
+      "log": "build/e3-icecream/gates/startup-clock.txt",
+      "line": 2,
+      "text": "F0 offline anchor/focus: per-call ms p50=0,0000207 p95=0,0000300 max(batch mean)=0,0000741; bytes/call=0,000; batches=300 x 1000."
+    },
+    {
+      "log": "build/e3-icecream/gates/startup-clock.txt",
+      "line": 3,
+      "text": "F0 offline eligibility refresh (cached floor/anchor): per-call ms p50=0,0000908 p95=0,0001130 max(batch mean)=0,0001686; bytes/call=0,000; batches=300 x 1000."
+    },
+    {
+      "log": "build/e3-icecream/gates/startup-clock.txt",
+      "line": 4,
+      "text": "F0 offline actual validated native speed accessor: per-call ms p50=0,0000049 p95=0,0000050 max(batch mean)=0,0000088; bytes/call=0,000; batches=300 x 1000."
+    },
+    {
+      "log": "build/e3-icecream/gates/startup-clock.txt",
+      "line": 5,
+      "text": "F0 offline pre-r1 Active including real FieldInfo.GetValue: per-call ms p50=0,0000276 p95=0,0000279 max(batch mean)=0,0000388; bytes/call=0,000; batches=300 x 1000."
+    },
+    {
+      "log": "build/e3-icecream/gates/startup-clock.txt",
+      "line": 6,
+      "text": "F0 offline r1 Active including validated field delegate + frame cache: per-call ms p50=0,0000173 p95=0,0000175 max(batch mean)=0,0000284; bytes/call=0,000; batches=300 x 1000."
+    },
+    {
+      "log": "build/e3-icecream/gates/startup-clock.txt",
+      "line": 7,
+      "text": "F0 offline pre-r1 36 body queries/frame: per-call ms p50=0,0010100 p95=0,0010870 max(batch mean)=0,0015650; bytes/call=0,000; batches=300 x 100."
+    },
+    {
+      "log": "build/e3-icecream/gates/startup-clock.txt",
+      "line": 8,
+      "text": "F0 offline r1 36 body queries/frame: per-call ms p50=0,0006440 p95=0,0008790 max(batch mean)=0,0015090; bytes/call=0,000; batches=300 x 100."
+    },
+    {
+      "log": "build/e3-icecream/gates/startup-clock.txt",
+      "line": 9,
+      "text": "F0 offline entry eligibility 512 cached elements + lifecycle log: per-call ms p50=0,0033000 p95=0,0060000 max(batch mean)=0,0141000; bytes/call=553,920; batches=300 x 1."
+    }
+  ],
+  "timingLimits": "Synthetic .NET diagnostics and stress/batch/save operations, not native mod-work frames or whole-frame evidence. No optimization or native performance pass claimed."
+}

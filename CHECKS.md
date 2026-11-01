@@ -2,6 +2,8 @@
 
 Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here; never append slice sections to this file. Sync/review-fix notes go into the slice's own file.
 
+- E3 pizza — 1 November 2026 (offline only), holder STOP; 2,000-entry warm p95 donut/cupcake/salad/pizza **0.1589/0.1338/0.1476/0.1122 ms**, **49,104 B/read** (2 entries **200 B**); cold **1,064 B/read**. [Full cold/warm timings, proof and numbered 6 Nov handoff](docs/checks/e3-pizza.md).
+
 - F1 — Shop-view drawing NO-GO, offline validation and numbered 6 Nov handoff: [checks](docs/checks/f1-shop-view.md).
 - F0 — Interior view experiment, reviews and native checklist: [checks](docs/checks/f0-interior-view.md).
 - D1 — Read-only rival food catalogue and native checklist: [checks](docs/checks/d1-rival-catalogue.md).
@@ -30,6 +32,11 @@ Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here
 
 - C4 — Bounded inactive market research, access contract, base sync and native checklist: [checks](docs/checks/c4-market-research.md).
 
+- E4 — Schema 23 envelope (1 Nov, offline; original pre-E1 measurements): 4/8 choice p95 0.0134/0.0257 ms; supply 1,960 -> 1,552 B; eight-product save 10,135,833 B; 6 Nov checklist: [checks](docs/checks/e4-wider-menu.md).
+- A5 — Integrated acceptance, pre-E1 measurements, schema-20 base sync and 12 numbered rig checks: [checks](docs/checks/a5-integrated-acceptance.md).
+
 - E1 — New-outing and food weather, schema 20, base sync and native checklist: [checks](docs/checks/e1-rain.md).
+
+- E3 ice cream - 1 November 2026, offline STOP; D/C/S/I warm 2,000-entry p95 0.1610 / 0.1474 / 0.1605 / 0.1779 ms, 49,104 B/call; cold/small timings and 6 Nov handoff: [checks](docs/checks/e3-icecream.md).
 
 - E3 frenchfries — 1 November 2026, offline feasibility STOP and numbered 6 Nov handoff: [checks](docs/checks/e3-frenchfries.md).

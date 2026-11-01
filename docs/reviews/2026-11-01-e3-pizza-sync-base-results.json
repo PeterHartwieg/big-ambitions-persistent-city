@@ -1,0 +1,1325 @@
+{
+  "date": "2026-11-01",
+  "task": "pc-e3-pizza-sync-base",
+  "testedMerge": "bf93fdb03a1dc700c32b55a1f4d1a0308f77c1ba",
+  "preservation": {
+    "mergeBase": "587745362a035395efc1a45bbb277799aae5cbdc",
+    "pizzaParent": "710c1aba635e59b92fcfc88d8d43d35cae9729a8",
+    "incomingParent": "0ffb819353c44a802224b98af673e1085040fc8a",
+    "checks": {
+      "incoming": {
+        "exactFiles": [
+          "Core/ResidentInsight.cs",
+          "docs/checks/a5-integrated-acceptance.md",
+          "docs/perf/a5-integrated-acceptance.md",
+          "docs/plans/step-a-inspector-traits-choice.md",
+          "docs/reviews/2026-11-01-a5-measurements.json",
+          "docs/reviews/2026-11-01-a5-pr-description.md",
+          "docs/reviews/2026-11-01-a5-sync-base-pickup.json",
+          "docs/reviews/2026-11-01-a5-sync-base-pr-description.md",
+          "docs/reviews/2026-11-01-a5-sync-base-preservation.json",
+          "docs/reviews/2026-11-01-a5-sync-base-results.json",
+          "tests/A5IntegratedAcceptanceTests.cs",
+          "tests/FoodRegularsTests.cs",
+          "tests/ResidentInsightTests.cs",
+          "tools/a5-inspector-regression/A5InspectorRegression.csproj",
+          "tools/a5-inspector-regression/Program.cs",
+          "tools/a5-inspector-regression/gate.py",
+          "tools/a5-inspector-regression/summarize.py",
+          "tools/food-choice-regression/Program.cs",
+          "tools/food-choice-regression/RushBench.cs"
+        ],
+        "commonAddedLinesPreserved": [
+          "CHECKS.md",
+          "README.md",
+          "docs/roadmap.md"
+        ]
+      },
+      "pizza": {
+        "exactFiles": [
+          "Runtime/DirectStockShowcaseReader.cs",
+          "Runtime/PizzaFeasibilityReader.cs",
+          "docs/perf/e3-pizza.md",
+          "docs/plans/e3-donut.md",
+          "docs/plans/e3-pizza-offline-results.json",
+          "docs/plans/e3-pizza-pr-description.md",
+          "docs/plans/e3-pizza.md",
+          "docs/plans/steps-b-e.md",
+          "tools/donut-feasibility-regression/source_checks.py",
+          "tools/pizza-feasibility-regression/PizzaFeasibilityRegression.csproj",
+          "tools/pizza-feasibility-regression/Program.cs",
+          "tools/pizza-feasibility-regression/source_checks.py"
+        ],
+        "commonAddedLinesPreserved": [
+          "CHECKS.md",
+          "README.md",
+          "docs/roadmap.md"
+        ]
+      }
+    },
+    "pizzaInGameChecklist": "byte-identical complete section",
+    "persistence": "identical to incoming",
+    "runtime": "identical to pizza parent",
+    "sourceRepins": "none"
+  },
+  "boundary": "Offline integration only; no game, rig, profile, bridge or native performance proof.",
+  "unitSummary": "Passed!  - Failed:     0, Passed:  2392, Skipped:     0, Total:  2392, Duration: 1 m 58 s - PersistentCity.Tests.dll (net10.0)",
+  "discovered": 2392,
+  "finalFetchedBase": "0ffb819353c44a802224b98af673e1085040fc8a",
+  "taskOwnedDotnetWorkersAtCleanup": 0,
+  "productionDllSha256": "0cc680fa3f80dddd50a82156acc989547382f58aab2467f7fd9fd1fc267bcec6",
+  "saveContract": {
+    "schema": 20,
+    "digest": "39D2E48CD937D1BDD8E183CDB6125461FB44B67784DA935258CC88EC2BC1CAF0",
+    "length": 120184,
+    "weatherProjectionLength": 119083,
+    "weatherProjectionDigest": "D7FF8294F56C3B3D5AF736540274E68E9848319B34658859FC15E0D4CDB1F3A2",
+    "refusals": [
+      "Invalid:Invalid state: Missing state schema.",
+      "Future:State uses a newer schema; preserve the original payload.",
+      "Invalid:Invalid state: Incomplete or trailing JSON content.",
+      "Invalid:Invalid state: Unknown field: UnknownCitizens"
+    ],
+    "economy": {
+      "orders": 849,
+      "ordersDigest": "1B94987B3158044594B9C4D6A5473BA22BE0D4F3488D769CBBEE23318BB33B91",
+      "purchases": 797,
+      "spentUnits": 107967424757760,
+      "uncertain": 2,
+      "economyDigest": "74D0FE8081EA795D4D56A11B4B955DC6E777E3822C702D3C09BC9477E6679AF9",
+      "reloadDigest": "59B6F14D44CA0F996C5A828E2E538B52C5426347FCFA40767527B72D77F1D4FA"
+    },
+    "writeBytes": 14497672,
+    "readBytes": 39004600,
+    "bench": null,
+    "hot": null
+  },
+  "offlineSpikeFlags": {
+    "a5-inspector-regression": [],
+    "food-choice-regression": [],
+    "choice-rush": [],
+    "choice-integrated": [],
+    "choice-rush-integrated": [],
+    "choice-rush-integrated-5000": []
+  },
+  "saveOperationFlags": [
+    {
+      "residents": 957,
+      "operation": "readMs",
+      "medianMs": 101.1
+    },
+    {
+      "residents": 957,
+      "operation": "upgradeFrom16Ms",
+      "medianMs": 168.2
+    },
+    {
+      "residents": 5000,
+      "operation": "writeMs",
+      "medianMs": 74.8
+    },
+    {
+      "residents": 5000,
+      "operation": "readMs",
+      "medianMs": 268.5
+    },
+    {
+      "residents": 5000,
+      "operation": "upgradeFrom16Ms",
+      "medianMs": 454.9
+    }
+  ],
+  "otherOfflineOperationsAtLeast30Ms": {
+    "core-identity-regression": [
+      {
+        "path": "$.simulateMs",
+        "ms": 2664
+      }
+    ],
+    "food-memory-regression": [
+      {
+        "path": "$.rush[0].cpuMs",
+        "ms": 218.7532
+      },
+      {
+        "path": "$.rush[1].cpuMs",
+        "ms": 266.1422
+      },
+      {
+        "path": "$.rush[2].cpuMs",
+        "ms": 233.4672
+      },
+      {
+        "path": "$.rush[3].cpuMs",
+        "ms": 249.0615
+      },
+      {
+        "path": "$.rush[4].cpuMs",
+        "ms": 237.6184
+      },
+      {
+        "path": "$.rush[5].cpuMs",
+        "ms": 179.5124
+      },
+      {
+        "path": "$.rush[6].cpuMs",
+        "ms": 331.0075
+      },
+      {
+        "path": "$.rush[7].cpuMs",
+        "ms": 225.831
+      },
+      {
+        "path": "$.rush[8].cpuMs",
+        "ms": 178.6801
+      },
+      {
+        "path": "$.rush[9].cpuMs",
+        "ms": 181.8041
+      },
+      {
+        "path": "$.rush[10].cpuMs",
+        "ms": 185.4694
+      },
+      {
+        "path": "$.rush[11].cpuMs",
+        "ms": 154.8968
+      },
+      {
+        "path": "$.rush[12].cpuMs",
+        "ms": 68.4245
+      },
+      {
+        "path": "$.rush[13].cpuMs",
+        "ms": 62.9155
+      }
+    ],
+    "food-routines": [
+      {
+        "path": "$.populationReplayMs",
+        "ms": 214.1067
+      },
+      {
+        "path": "$.opportunityMs",
+        "ms": 32.0434
+      },
+      {
+        "path": "$.scenarios[0].QuoteMs",
+        "ms": 32.881
+      },
+      {
+        "path": "$.scenarios[0].SimulationMs",
+        "ms": 30.8166
+      },
+      {
+        "path": "$.scenarios[1].QuoteMs",
+        "ms": 37.5607
+      },
+      {
+        "path": "$.scenarios[1].SimulationMs",
+        "ms": 36.0728
+      },
+      {
+        "path": "$.scenarios[5].SimulationMs",
+        "ms": 31.5767
+      }
+    ],
+    "choice-rush": [
+      {
+        "path": "$.results[0].offlineCpuMs",
+        "ms": 257.2609
+      },
+      {
+        "path": "$.results[1].offlineCpuMs",
+        "ms": 248.8623
+      },
+      {
+        "path": "$.results[2].offlineCpuMs",
+        "ms": 93.2335
+      },
+      {
+        "path": "$.results[3].offlineCpuMs",
+        "ms": 98.7747
+      },
+      {
+        "path": "$.results[4].offlineCpuMs",
+        "ms": 140.9247
+      },
+      {
+        "path": "$.results[5].offlineCpuMs",
+        "ms": 165.7459
+      },
+      {
+        "path": "$.results[8].offlineCpuMs",
+        "ms": 137.9823
+      },
+      {
+        "path": "$.results[9].offlineCpuMs",
+        "ms": 84.4712
+      },
+      {
+        "path": "$.results[11].offlineCpuMs",
+        "ms": 33.7849
+      },
+      {
+        "path": "$.results[12].offlineCpuMs",
+        "ms": 66.7884
+      },
+      {
+        "path": "$.results[13].offlineCpuMs",
+        "ms": 68.2122
+      },
+      {
+        "path": "$.results[16].offlineCpuMs",
+        "ms": 53.0205
+      },
+      {
+        "path": "$.results[17].offlineCpuMs",
+        "ms": 57.4721
+      },
+      {
+        "path": "$.results[18].offlineCpuMs",
+        "ms": 33.1025
+      },
+      {
+        "path": "$.results[19].offlineCpuMs",
+        "ms": 34.011
+      },
+      {
+        "path": "$.results[20].offlineCpuMs",
+        "ms": 61.0312
+      },
+      {
+        "path": "$.results[21].offlineCpuMs",
+        "ms": 50.0554
+      }
+    ],
+    "choice-rush-integrated": [
+      {
+        "path": "$.results[0].offlineCpuMs",
+        "ms": 224.3211
+      },
+      {
+        "path": "$.results[1].offlineCpuMs",
+        "ms": 210.1305
+      },
+      {
+        "path": "$.results[2].offlineCpuMs",
+        "ms": 45.2469
+      },
+      {
+        "path": "$.results[3].offlineCpuMs",
+        "ms": 43.0109
+      },
+      {
+        "path": "$.results[4].offlineCpuMs",
+        "ms": 69.4902
+      },
+      {
+        "path": "$.results[5].offlineCpuMs",
+        "ms": 63.7607
+      },
+      {
+        "path": "$.results[8].offlineCpuMs",
+        "ms": 75.035
+      },
+      {
+        "path": "$.results[9].offlineCpuMs",
+        "ms": 58.2126
+      },
+      {
+        "path": "$.results[10].offlineCpuMs",
+        "ms": 54.7603
+      },
+      {
+        "path": "$.results[11].offlineCpuMs",
+        "ms": 49.8216
+      },
+      {
+        "path": "$.results[12].offlineCpuMs",
+        "ms": 67.1057
+      },
+      {
+        "path": "$.results[13].offlineCpuMs",
+        "ms": 40.8623
+      },
+      {
+        "path": "$.results[16].offlineCpuMs",
+        "ms": 97.1861
+      },
+      {
+        "path": "$.results[17].offlineCpuMs",
+        "ms": 50.435
+      },
+      {
+        "path": "$.results[18].offlineCpuMs",
+        "ms": 50.2519
+      },
+      {
+        "path": "$.results[19].offlineCpuMs",
+        "ms": 45.4314
+      },
+      {
+        "path": "$.results[20].offlineCpuMs",
+        "ms": 51.9641
+      },
+      {
+        "path": "$.results[21].offlineCpuMs",
+        "ms": 37.6493
+      }
+    ],
+    "choice-rush-integrated-5000": [
+      {
+        "path": "$.results[0].offlineCpuMs",
+        "ms": 348.2763
+      },
+      {
+        "path": "$.results[1].offlineCpuMs",
+        "ms": 293.8685
+      },
+      {
+        "path": "$.results[2].offlineCpuMs",
+        "ms": 170.4
+      },
+      {
+        "path": "$.results[3].offlineCpuMs",
+        "ms": 177.3989
+      },
+      {
+        "path": "$.results[4].offlineCpuMs",
+        "ms": 226.1357
+      },
+      {
+        "path": "$.results[5].offlineCpuMs",
+        "ms": 402.6026
+      },
+      {
+        "path": "$.results[6].offlineCpuMs",
+        "ms": 82.9498
+      },
+      {
+        "path": "$.results[7].offlineCpuMs",
+        "ms": 90.5947
+      },
+      {
+        "path": "$.results[8].offlineCpuMs",
+        "ms": 378.5683
+      },
+      {
+        "path": "$.results[9].offlineCpuMs",
+        "ms": 281.8412
+      },
+      {
+        "path": "$.results[10].offlineCpuMs",
+        "ms": 200.2354
+      },
+      {
+        "path": "$.results[11].offlineCpuMs",
+        "ms": 206.4298
+      },
+      {
+        "path": "$.results[12].offlineCpuMs",
+        "ms": 233.4352
+      },
+      {
+        "path": "$.results[13].offlineCpuMs",
+        "ms": 277.6171
+      },
+      {
+        "path": "$.results[14].offlineCpuMs",
+        "ms": 45.8764
+      },
+      {
+        "path": "$.results[15].offlineCpuMs",
+        "ms": 46.7351
+      },
+      {
+        "path": "$.results[16].offlineCpuMs",
+        "ms": 281.0375
+      },
+      {
+        "path": "$.results[17].offlineCpuMs",
+        "ms": 302.5581
+      },
+      {
+        "path": "$.results[18].offlineCpuMs",
+        "ms": 162.2689
+      },
+      {
+        "path": "$.results[19].offlineCpuMs",
+        "ms": 182.5323
+      },
+      {
+        "path": "$.results[20].offlineCpuMs",
+        "ms": 227.5124
+      },
+      {
+        "path": "$.results[21].offlineCpuMs",
+        "ms": 211.9852
+      },
+      {
+        "path": "$.results[22].offlineCpuMs",
+        "ms": 52.7037
+      },
+      {
+        "path": "$.results[23].offlineCpuMs",
+        "ms": 56.2666
+      }
+    ],
+    "save-bench": [
+      {
+        "path": "$.bench[0].readMs",
+        "ms": 101.1
+      },
+      {
+        "path": "$.bench[0].upgradeFrom16Ms",
+        "ms": 168.2
+      },
+      {
+        "path": "$.bench[1].writeMs",
+        "ms": 74.8
+      },
+      {
+        "path": "$.bench[1].readMs",
+        "ms": 268.5
+      },
+      {
+        "path": "$.bench[1].upgradeFrom16Ms",
+        "ms": 454.9
+      }
+    ]
+  },
+  "commands": [
+    {
+      "name": "build",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/build.py",
+        "--game-managed",
+        "C:/Program Files (x86)/Steam/steamapps/common/Big Ambitions/Big Ambitions_Data/Managed"
+      ],
+      "exit": 0,
+      "seconds": 11.5,
+      "log": "build/a5-gate/build.log",
+      "sha256": "372cff4aa226a6b234344bda51dadb4bfd9f67c9b9e9efb45dde0ebfe7b69319"
+    },
+    {
+      "name": "unit",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj"
+      ],
+      "exit": 0,
+      "seconds": 127.25,
+      "log": "build/a5-gate/unit.log",
+      "sha256": "3a171d49c406314d6e89789aa6a96f51b71fa85b0f668988e650d225e5921a6e"
+    },
+    {
+      "name": "discovery",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--no-build",
+        "--list-tests"
+      ],
+      "exit": 0,
+      "seconds": 1.093,
+      "log": "build/a5-gate/discovery.log",
+      "sha256": "bf820e80786aa0d19fb400832e47f86e8835fb58e2c8b99c396ab76bafc0849b"
+    },
+    {
+      "name": "a5-inspector-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\a5-inspector-regression\\A5InspectorRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 9.204,
+      "log": "build/a5-gate/a5-inspector-regression.log",
+      "sha256": "deed0a866267aaab0699d0f1dcc55e49a49add6fcce4c00357d1e3eacaa7344f"
+    },
+    {
+      "name": "agency-payment-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\agency-payment-regression\\AgencyPaymentRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.829,
+      "log": "build/a5-gate/agency-payment-regression.log",
+      "sha256": "28ea5466e8b40910528e35bd6bf1080d1e735d205ee5965ecdf092b36ad2c10d"
+    },
+    {
+      "name": "awareness-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\awareness-regression\\AwarenessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 19.297,
+      "log": "build/a5-gate/awareness-regression.log",
+      "sha256": "24f5d201c804a0d08f39ff0ce0da3b5b3b889d1af6e29f09a96e3ea5df80a5e9"
+    },
+    {
+      "name": "campaign-reader-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\campaign-reader-regression\\CampaignReaderRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.75,
+      "log": "build/a5-gate/campaign-reader-regression.log",
+      "sha256": "56a12ee4608bf504ad57b6b1bd63ca89e572cafe4349e87ca29d571c04abf021"
+    },
+    {
+      "name": "core-identity-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\core-identity-regression\\CoreIdentityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 6.672,
+      "log": "build/a5-gate/core-identity-regression.log",
+      "sha256": "5d68afac4c66ae8c6e2d7c3e01bff49053e95f00c54d6dc551024f2b0ad295ee"
+    },
+    {
+      "name": "cupcake-feasibility-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\cupcake-feasibility-regression\\CupcakeFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.719,
+      "log": "build/a5-gate/cupcake-feasibility-regression.log",
+      "sha256": "70ca20e269ace5ce8b13f5385973645e45655780688ac35fa650f0eb0f973ec2"
+    },
+    {
+      "name": "diagnostic-response-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\diagnostic-response-regression\\DiagnosticResponseRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.485,
+      "log": "build/a5-gate/diagnostic-response-regression.log",
+      "sha256": "a89f8e2948c58df6f28f5d0bf439ea876f62fe55dd2f032fb9d77ea4d0a7b103"
+    },
+    {
+      "name": "donut-feasibility-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\donut-feasibility-regression\\DonutFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.297,
+      "log": "build/a5-gate/donut-feasibility-regression.log",
+      "sha256": "01bc49fdd5bee458f4eec18ad83426b7ae50c5a7ef4e550b935284cd48bc4fbb"
+    },
+    {
+      "name": "event-observation-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\event-observation-regression\\EventObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.672,
+      "log": "build/a5-gate/event-observation-regression.log",
+      "sha256": "57962f674b039cc4c7d6fca4c8e57df0926d3b1adf6370ec2ecf1edcaa9dcbdb"
+    },
+    {
+      "name": "food-candidate-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-candidate-regression\\FoodCandidateRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.234,
+      "log": "build/a5-gate/food-candidate-regression.log",
+      "sha256": "9c61b03ada1a41abe6838997269bf1d9964b5413a5ef66b821245195dc05e40a"
+    },
+    {
+      "name": "food-catalogue-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-catalogue-regression\\FoodCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.437,
+      "log": "build/a5-gate/food-catalogue-regression.log",
+      "sha256": "3c55e7b1f3b849c10740cc8c4996ec842a59ee7bf64318d32d96a053fce68239"
+    },
+    {
+      "name": "food-checkout-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-checkout-regression\\FoodCheckoutRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.703,
+      "log": "build/a5-gate/food-checkout-regression.log",
+      "sha256": "d39c8fa9305598c616691bfa3cc51d2f01b52cd9957b42957ecea6e6ffa9cd3d"
+    },
+    {
+      "name": "food-choice-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-choice-regression\\FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 5.312,
+      "log": "build/a5-gate/food-choice-regression.log",
+      "sha256": "dcf593b9f2f546939764db77694de617b704e33043d06e10e20111f61b640465"
+    },
+    {
+      "name": "food-hours-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-hours-regression\\FoodHoursRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.438,
+      "log": "build/a5-gate/food-hours-regression.log",
+      "sha256": "2410218689a17bf8e5ae868d3025d1a8bd9e449d7fd49d83728819236ce6607c"
+    },
+    {
+      "name": "food-household-catalogue-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-household-catalogue-regression\\FoodHouseholdCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.438,
+      "log": "build/a5-gate/food-household-catalogue-regression.log",
+      "sha256": "b0f19cfd0acbbded5af38461d6e0bbe596b236cd83207afa0223100fdcfb8609"
+    },
+    {
+      "name": "food-memory-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-memory-regression\\FoodMemoryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 8.313,
+      "log": "build/a5-gate/food-memory-regression.log",
+      "sha256": "3cd227d5ec117c27b3e07bbcd05b3ca2936e4e7cb77a99c268a4e035885209ad"
+    },
+    {
+      "name": "food-ownership-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-ownership-regression\\FoodOwnershipRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.75,
+      "log": "build/a5-gate/food-ownership-regression.log",
+      "sha256": "0868149a24cebe8c5801b20d7530b12bc49a633011d2bf039392c6d97de66efa"
+    },
+    {
+      "name": "food-regulars-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-regulars-regression\\FoodRegularsRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 6.703,
+      "log": "build/a5-gate/food-regulars-regression.log",
+      "sha256": "aa5d3327c2c6857f77505845ba9734faea4fcc172e10d0329a7f888d9966f83c"
+    },
+    {
+      "name": "food-supply-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-supply-regression\\FoodSupplyRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.765,
+      "log": "build/a5-gate/food-supply-regression.log",
+      "sha256": "bea33031a003404270de233cbd073eb44deacac65f41be406a1eae3b70385683"
+    },
+    {
+      "name": "frame-observation-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\frame-observation-regression\\FrameObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.25,
+      "log": "build/a5-gate/frame-observation-regression.log",
+      "sha256": "7e5da72d80f98e71b464d3c9f918cf9457b5350bfcafc294e80e823b646b2d02"
+    },
+    {
+      "name": "gate-access-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\gate-access-regression\\GateAccessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.094,
+      "log": "build/a5-gate/gate-access-regression.log",
+      "sha256": "6e9877acee2b84dfcc2de1b4d7d7236ac991a58c1a89fbe420966d127bf4afae"
+    },
+    {
+      "name": "held-tuning-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\held-tuning-regression\\HeldTuningRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 5.078,
+      "log": "build/a5-gate/held-tuning-regression.log",
+      "sha256": "c93e172b7bf9aad9dbdb022835da99fbedb11bd98e8e144fa5486e78b2a5b05f"
+    },
+    {
+      "name": "interior-guard-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\interior-guard-regression\\InteriorGuardRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.703,
+      "log": "build/a5-gate/interior-guard-regression.log",
+      "sha256": "7dae0d4c226b709c993ef0070605b064f5785b5cee99eab80ce60020431e81f2"
+    },
+    {
+      "name": "market-research-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\market-research-regression\\MarketResearchRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.406,
+      "log": "build/a5-gate/market-research-regression.log",
+      "sha256": "a08daa9d78b5925178a7c8f2ef926c53bf6a35911d53b01d63fd7318460e1797"
+    },
+    {
+      "name": "native-command-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools\\native-command-regression\\run.py"
+      ],
+      "exit": 0,
+      "seconds": 2.703,
+      "log": "build/a5-gate/native-command-regression.log",
+      "sha256": "bd610e1a32a30f6ad7638fc2a65ae7bf8bea9d44baba81884f821aea4ed0a9aa"
+    },
+    {
+      "name": "optional-stop-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools\\optional-stop-regression\\run.py"
+      ],
+      "exit": 0,
+      "seconds": 3.938,
+      "log": "build/a5-gate/optional-stop-regression.log",
+      "sha256": "f7d3a55ef6b939ada52be73e50fcae27ead5eb4643a5c9f7516905986ecddaa4"
+    },
+    {
+      "name": "physical-selection-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools\\physical-selection-regression\\run.py"
+      ],
+      "exit": 0,
+      "seconds": 3.75,
+      "log": "build/a5-gate/physical-selection-regression.log",
+      "sha256": "b08a83534497b2af865b047f73178eb595b4bb0335f62f5f85e2cfc6db127590"
+    },
+    {
+      "name": "pizza-feasibility-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\pizza-feasibility-regression\\PizzaFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.782,
+      "log": "build/a5-gate/pizza-feasibility-regression.log",
+      "sha256": "e088d29af5ef2cbd67422a123793212bc9b387fc313143501faf5fb425b981a0"
+    },
+    {
+      "name": "road-ceiling-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\road-ceiling-regression\\RoadCeilingRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.688,
+      "log": "build/a5-gate/road-ceiling-regression.log",
+      "sha256": "895bf78ce78f6cceb24e97e6ac8d4cc6c68fa71cfb5b0e54f707e9bf46369762"
+    },
+    {
+      "name": "road-handoff-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\road-handoff-regression\\RoadHandoffRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.25,
+      "log": "build/a5-gate/road-handoff-regression.log",
+      "sha256": "5de54d90bad9b212aac21705900b22ad270fa18365f1284fc4e988bf67a5f23e"
+    },
+    {
+      "name": "road-invalidation-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\road-invalidation-regression\\RoadInvalidationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 5.469,
+      "log": "build/a5-gate/road-invalidation-regression.log",
+      "sha256": "11bcbab6bdde92b021b10a41d941aa322629fadbc821906b55ed9aa7d5d7e656"
+    },
+    {
+      "name": "road-speed-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\road-speed-regression\\RoadSpeedRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.5,
+      "log": "build/a5-gate/road-speed-regression.log",
+      "sha256": "5242c509cd90b21734fe4321b43dcbba531282677f91d66ddc8931b9b07cef19"
+    },
+    {
+      "name": "route-discovery-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\route-discovery-regression\\RouteDiscoveryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 10.782,
+      "log": "build/a5-gate/route-discovery-regression.log",
+      "sha256": "eff274aaa88d1147e64edb58c0cdfa86bcc9101e03154b3d3a78250ea4b14d8f"
+    },
+    {
+      "name": "salad-feasibility-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\salad-feasibility-regression\\SaladFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.172,
+      "log": "build/a5-gate/salad-feasibility-regression.log",
+      "sha256": "a907edeac79d94872dcf3d4894f5bf956f966a35acad57f8e02672ad58053093"
+    },
+    {
+      "name": "save-contract-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\save-contract-regression\\SaveContractRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 5.234,
+      "log": "build/a5-gate/save-contract-regression.log",
+      "sha256": "81fa964d743bc38030c620de0786c695b989c13f27eba7699cffdd9c9fad3988"
+    },
+    {
+      "name": "startup-clock-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\startup-clock-regression\\StartupClockRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.891,
+      "log": "build/a5-gate/startup-clock-regression.log",
+      "sha256": "39c354443578ff1d0645a58e316dc261ce07cf74b5b399cbf2c9c4c2c35c9a5a"
+    },
+    {
+      "name": "traffic-closure-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\traffic-closure-regression\\TrafficClosureRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.625,
+      "log": "build/a5-gate/traffic-closure-regression.log",
+      "sha256": "708d6590f5351a9c1adf0b939e6775caa82602e1d6ec261b597977db98e808aa"
+    },
+    {
+      "name": "traffic-queue-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\traffic-queue-regression\\TrafficQueueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.797,
+      "log": "build/a5-gate/traffic-queue-regression.log",
+      "sha256": "897d1d2e5c92ef25374e61f7da26e9dea2849c91f3495eb8bc65210eb2e4b9c4"
+    },
+    {
+      "name": "vehicle-ownership-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools\\vehicle-ownership-regression\\run.py"
+      ],
+      "exit": 0,
+      "seconds": 2.75,
+      "log": "build/a5-gate/vehicle-ownership-regression.log",
+      "sha256": "7539f54a1b778a54ca9bc75f398a40c0491fb40281611c8c8efbbc473dd32e46"
+    },
+    {
+      "name": "walking-quote-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\walking-quote-regression\\WalkingQuoteRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.578,
+      "log": "build/a5-gate/walking-quote-regression.log",
+      "sha256": "b20b2938933dcf089ca5390b756d89a587ca9d5f003c7440677ccda69bf0d405"
+    },
+    {
+      "name": "weather-regression",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\weather-regression\\WeatherRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 5.109,
+      "log": "build/a5-gate/weather-regression.log",
+      "sha256": "cea506997ec0bf9216a3d7accea40639bd2d74a9f82c15a9f320a9c4c06cffb9"
+    },
+    {
+      "name": "simulate",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/simulate/Simulate.csproj",
+        "--",
+        "28",
+        "build/harness-demo"
+      ],
+      "exit": 0,
+      "seconds": 6.031,
+      "log": "build/a5-gate/simulate.log",
+      "sha256": "e56a69d06b3a93cf7b87b8a40cab43df06c67b93cf70d21cc76dbf05507da509"
+    },
+    {
+      "name": "food-routines",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-routines/FoodRoutines.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "build/harness-food-routines-demo",
+        "957"
+      ],
+      "exit": 0,
+      "seconds": 6.359,
+      "log": "build/a5-gate/food-routines.log",
+      "sha256": "564342018be69fed4dbdcc5b652b58c645615fa3df2a39231d4456b280e0eb40"
+    },
+    {
+      "name": "food-demand",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-demand/FoodDemand.csproj",
+        "--",
+        "build/harness-food-demand-demo"
+      ],
+      "exit": 0,
+      "seconds": 4.203,
+      "log": "build/a5-gate/food-demand.log",
+      "sha256": "4c8bd4346efe00411922493a7dd0045806412f1419cfc191dacc56bc16347e1d"
+    },
+    {
+      "name": "choice-rush",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--rush"
+      ],
+      "exit": 0,
+      "seconds": 7.454,
+      "log": "build/a5-gate/choice-rush.log",
+      "sha256": "f34c11fd7655ef45a6aac7d35d23a189dd8037b975b5fefba05f4f75a815cef4"
+    },
+    {
+      "name": "choice-integrated",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--integrated"
+      ],
+      "exit": 0,
+      "seconds": 5.109,
+      "log": "build/a5-gate/choice-integrated.log",
+      "sha256": "8710450a1865b6ea6e567f228c75427f31538f4299c997a6b1fbf09397e5df4d"
+    },
+    {
+      "name": "choice-rush-integrated",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--rush",
+        "--integrated"
+      ],
+      "exit": 0,
+      "seconds": 6.578,
+      "log": "build/a5-gate/choice-rush-integrated.log",
+      "sha256": "8ae779c6b165a2fba8ded8f94b34b147937b873fd17618acf548595d5bf09623"
+    },
+    {
+      "name": "choice-rush-integrated-5000",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--rush-5000",
+        "--integrated"
+      ],
+      "exit": 0,
+      "seconds": 14.828,
+      "log": "build/a5-gate/choice-rush-integrated-5000.log",
+      "sha256": "ced94ae13153f1092b64dbf1cea94053e024ed83020c04a237250751c1ef45f9"
+    },
+    {
+      "name": "save-bench",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--bench",
+        "--decisions"
+      ],
+      "exit": 0,
+      "seconds": 9.438,
+      "log": "build/a5-gate/save-bench.log",
+      "sha256": "0c4fa58938b9568002daf74b9c80a8044ed24bb309ad41dad7678f44a7a69665"
+    },
+    {
+      "name": "sync-pickup",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/persistent-continuity/regression/PickupRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build\\e3-pizza\\gates\\sync-pickup.log",
+      "sha256": "608eae841ef2ed0f1dbfb45d11a356fef2231fcfe9cee06e68756577f5a0b157"
+    },
+    {
+      "name": "sync-donut-source",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/donut-feasibility-regression/source_checks.py"
+      ],
+      "exit": 0,
+      "log": "build\\e3-pizza\\gates\\sync-donut-source.log",
+      "sha256": "cc6c0de139d40371e4fba40e86518707c7a4310b794607cd59d28b78b695852e"
+    },
+    {
+      "name": "sync-salad-source",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/salad-feasibility-regression/source_checks.py"
+      ],
+      "exit": 0,
+      "log": "build\\e3-pizza\\gates\\sync-salad-source.log",
+      "sha256": "320b305ad04a0ccc371ef2a6bea1d1a9a3357023c4ae74105b832eb60f7451b7"
+    },
+    {
+      "name": "sync-pizza-source",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/pizza-feasibility-regression/source_checks.py"
+      ],
+      "exit": 0,
+      "log": "build\\e3-pizza\\gates\\sync-pizza-source.log",
+      "sha256": "87e39693d34d127342f521ea0c46c4e227665c415186cf013daaf05d292665f3"
+    },
+    {
+      "name": "sync-pizza-audit",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/pizza-feasibility-regression/source_checks.py",
+        "--audit-base",
+        "0ffb819"
+      ],
+      "exit": 0,
+      "log": "build\\e3-pizza\\gates\\sync-pizza-audit.log",
+      "sha256": "715014e42e79d50a19d18332f01867a84e902aafad5ebcfb5ab989fd87600f51"
+    }
+  ]
+}
