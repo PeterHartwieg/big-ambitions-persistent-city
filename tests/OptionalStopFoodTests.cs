@@ -8,6 +8,18 @@ using Xunit;
 namespace PersistentCity.Tests;
 public sealed partial class FoodCommerceTests
 {
+    [Theory]
+    [InlineData(0)] [InlineData(25)] [InlineData(100)]
+    public void WeightedFoodUsesTheSameDrawRegardlessOfOptionalStopPercentage(int percentage)
+    {
+        var (plain,_,_)=WeightedFoodChoiceTests.Ready(49,16);
+        var (stops,_,_)=WeightedFoodChoiceTests.Ready(49,16);
+        stops.AttachOptionalStops(new StopEnvironment(),percentage);
+        double at=plain.State.Food!.Residents[0].DesiredAt;
+        Advance(plain,at);Advance(stops,at,1);
+        Assert.Equal(Newtonsoft.Json.JsonConvert.SerializeObject(plain.State.Food),Newtonsoft.Json.JsonConvert.SerializeObject(stops.State.Food));
+        Assert.True(stops.OptionalStopIndexesMatchState());
+    }
     private sealed class StopEnvironment : IOptionalStopEnvironment
     {
         public bool Raining => false;
@@ -15,11 +27,12 @@ public sealed partial class FoodCommerceTests
             Id="spot",TargetId=p.Id,Position=p.Position,Facing=p.Position}};
         public OptionalStopAvailability Available(OptionalStopState stop) => OptionalStopAvailability.Ready;
     }
-    [Fact]
-    public void OptionalStopsCannotOccupyFoodServiceOrChangeItsPurchases()
+    [Theory]
+    [InlineData(0)] [InlineData(25)] [InlineData(100)]
+    public void OptionalStopsCannotOccupyFoodServiceOrChangeItsPurchases(int rate)
     {
         var (plain, a, _) = Ready(); var (stops, b, _) = Ready();
-        stops.AttachOptionalStops(new StopEnvironment(),100);
+        stops.AttachOptionalStops(new StopEnvironment(),rate);
         Advance(plain,1800); Advance(stops,1800);
         Assert.Equal(a.Orders,b.Orders); Assert.Equal(a.Units,b.Units);
         Assert.Equal(SaveCodec.Write(plain.State),SaveCodec.Write(stops.State));

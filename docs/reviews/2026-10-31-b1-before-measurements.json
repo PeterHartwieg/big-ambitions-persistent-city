@@ -1,0 +1,358 @@
+{
+  "boundary": "Offline .NET 10 synthetic paths; feature cost only, no native mod-work or whole-frame gate claim",
+  "populations": [
+    {
+      "residents": 957,
+      "consumers": 1914,
+      "saturatedEntries": 7656,
+      "retainedMemoryBytes": 474024,
+      "populationAllocatedBytes": 475608,
+      "emptySavedBytes": 1325848,
+      "saturatedSavedBytes": 1403235,
+      "savedByteGrowth": 77387,
+      "perConsumerMemoryGrowth": 40,
+      "consumerExtensionInclusiveCeiling": 51,
+      "b0PerConsumerAllocation": 64,
+      "perCandidateLookup": {
+        "p50Ms": 3.971721525600836e-05,
+        "p95Ms": 5.2769070010449324e-05,
+        "maxMs": 5.927703761755486e-05,
+        "spikesAtLeast30Ms": 0
+      },
+      "lookupAllocatedBytesPerCandidate": 0.0009077847439916406,
+      "perCommit": {
+        "p50Ms": 0.00011447230929989551,
+        "p95Ms": 0.0001725705329153605,
+        "maxMs": 0.0011269592476489028,
+        "spikesAtLeast30Ms": 0
+      },
+      "allocatedBytesPerCommit": 120.01452455590386,
+      "sink": 134023.2275458428
+    },
+    {
+      "residents": 2500,
+      "consumers": 5000,
+      "saturatedEntries": 20000,
+      "retainedMemoryBytes": 1237144,
+      "populationAllocatedBytes": 1240936,
+      "emptySavedBytes": 3463837,
+      "saturatedSavedBytes": 3664664,
+      "savedByteGrowth": 200827,
+      "perConsumerMemoryGrowth": 40,
+      "consumerExtensionInclusiveCeiling": 51,
+      "b0PerConsumerAllocation": 64,
+      "perCandidateLookup": {
+        "p50Ms": 4.012125e-05,
+        "p95Ms": 4.885625e-05,
+        "maxMs": 5.59875e-05,
+        "spikesAtLeast30Ms": 0
+      },
+      "lookupAllocatedBytesPerCandidate": 0.0003475,
+      "perCommit": {
+        "p50Ms": 0.00010318000000000001,
+        "p95Ms": 0.00021070000000000003,
+        "maxMs": 0.00132302,
+        "spikesAtLeast30Ms": 0
+      },
+      "allocatedBytesPerCommit": 120.00556,
+      "sink": 350121.68482556444
+    }
+  ],
+  "rush": [
+    {
+      "residents": 957,
+      "consumers": 1914,
+      "memoryWeight": 1,
+      "unitBudget": 128,
+      "sample": 0,
+      "frames": 273,
+      "events": 34452,
+      "routes": 30624,
+      "decisionsPerSecond": 6083.492598576259,
+      "cpuMs": 314.6219,
+      "offlineModLoop": {
+        "p50Ms": 0.9965,
+        "p95Ms": 1.9148,
+        "maxMs": 6.9291,
+        "spikesAtLeast30Ms": 0
+      },
+      "wholeFrame": "unmeasured; separate native watch item",
+      "modeledCatchupLagMinutesAtFastestClock": 0.0,
+      "savedStateSha256": "217B6F4B411DB926BEA3A5CD42935FCDE84AD8F8EE008D91AF5333A11BCE81E8"
+    },
+    {
+      "residents": 957,
+      "consumers": 1914,
+      "memoryWeight": 0,
+      "unitBudget": 128,
+      "sample": 0,
+      "frames": 273,
+      "events": 34452,
+      "routes": 30624,
+      "decisionsPerSecond": 5720.642553092285,
+      "cpuMs": 334.5778,
+      "offlineModLoop": {
+        "p50Ms": 1.1212,
+        "p95Ms": 2.0016,
+        "maxMs": 4.4319,
+        "spikesAtLeast30Ms": 0
+      },
+      "wholeFrame": "unmeasured; separate native watch item",
+      "modeledCatchupLagMinutesAtFastestClock": 0.0,
+      "savedStateSha256": "9FB588D4FFF85695CD5BD5F4B45ED507543860E994C20E518C7812CF12FD5A5D"
+    },
+    {
+      "residents": 957,
+      "consumers": 1914,
+      "memoryWeight": 0,
+      "unitBudget": 128,
+      "sample": 1,
+      "frames": 273,
+      "events": 34452,
+      "routes": 30624,
+      "decisionsPerSecond": 5906.789382222046,
+      "cpuMs": 324.0339,
+      "offlineModLoop": {
+        "p50Ms": 1.0625,
+        "p95Ms": 1.8078,
+        "maxMs": 4.6246,
+        "spikesAtLeast30Ms": 0
+      },
+      "wholeFrame": "unmeasured; separate native watch item",
+      "modeledCatchupLagMinutesAtFastestClock": 0.0,
+      "savedStateSha256": "9FB588D4FFF85695CD5BD5F4B45ED507543860E994C20E518C7812CF12FD5A5D"
+    },
+    {
+      "residents": 957,
+      "consumers": 1914,
+      "memoryWeight": 1,
+      "unitBudget": 128,
+      "sample": 1,
+      "frames": 271,
+      "events": 34452,
+      "routes": 30624,
+      "decisionsPerSecond": 7607.470424666964,
+      "cpuMs": 251.5948,
+      "offlineModLoop": {
+        "p50Ms": 0.8597,
+        "p95Ms": 1.3836,
+        "maxMs": 3.5625,
+        "spikesAtLeast30Ms": 0
+      },
+      "wholeFrame": "unmeasured; separate native watch item",
+      "modeledCatchupLagMinutesAtFastestClock": 0.0,
+      "savedStateSha256": "217B6F4B411DB926BEA3A5CD42935FCDE84AD8F8EE008D91AF5333A11BCE81E8"
+    },
+    {
+      "residents": 957,
+      "consumers": 1914,
+      "memoryWeight": 1,
+      "unitBudget": 128,
+      "sample": 2,
+      "frames": 272,
+      "events": 34452,
+      "routes": 30624,
+      "decisionsPerSecond": 12592.386934970913,
+      "cpuMs": 151.9966,
+      "offlineModLoop": {
+        "p50Ms": 0.4713,
+        "p95Ms": 0.7738,
+        "maxMs": 6.4373,
+        "spikesAtLeast30Ms": 0
+      },
+      "wholeFrame": "unmeasured; separate native watch item",
+      "modeledCatchupLagMinutesAtFastestClock": 0.0,
+      "savedStateSha256": "217B6F4B411DB926BEA3A5CD42935FCDE84AD8F8EE008D91AF5333A11BCE81E8"
+    },
+    {
+      "residents": 957,
+      "consumers": 1914,
+      "memoryWeight": 0,
+      "unitBudget": 128,
+      "sample": 2,
+      "frames": 271,
+      "events": 34452,
+      "routes": 30624,
+      "decisionsPerSecond": 16371.343818748524,
+      "cpuMs": 116.9116,
+      "offlineModLoop": {
+        "p50Ms": 0.3776,
+        "p95Ms": 0.6274,
+        "maxMs": 3.4451,
+        "spikesAtLeast30Ms": 0
+      },
+      "wholeFrame": "unmeasured; separate native watch item",
+      "modeledCatchupLagMinutesAtFastestClock": 0.0,
+      "savedStateSha256": "9FB588D4FFF85695CD5BD5F4B45ED507543860E994C20E518C7812CF12FD5A5D"
+    },
+    {
+      "residents": 2500,
+      "consumers": 5000,
+      "memoryWeight": 1,
+      "unitBudget": 128,
+      "sample": 0,
+      "frames": 707,
+      "events": 90000,
+      "routes": 80000,
+      "decisionsPerSecond": 14881.34655947732,
+      "cpuMs": 335.9911,
+      "offlineModLoop": {
+        "p50Ms": 0.3691,
+        "p95Ms": 0.6362,
+        "maxMs": 16.6885,
+        "spikesAtLeast30Ms": 0
+      },
+      "wholeFrame": "unmeasured; separate native watch item",
+      "modeledCatchupLagMinutesAtFastestClock": 0.0,
+      "savedStateSha256": "0E48CDC458126DBC08A9E92158CA69806193592BC1CEF969550ED1263345D021"
+    },
+    {
+      "residents": 2500,
+      "consumers": 5000,
+      "memoryWeight": 0,
+      "unitBudget": 128,
+      "sample": 0,
+      "frames": 706,
+      "events": 90000,
+      "routes": 80000,
+      "decisionsPerSecond": 15403.274674582717,
+      "cpuMs": 324.6063,
+      "offlineModLoop": {
+        "p50Ms": 0.3526,
+        "p95Ms": 0.6364,
+        "maxMs": 15.6799,
+        "spikesAtLeast30Ms": 0
+      },
+      "wholeFrame": "unmeasured; separate native watch item",
+      "modeledCatchupLagMinutesAtFastestClock": 0.0,
+      "savedStateSha256": "BA1FDB19BAE2380EE8EB4C5450604EF913A681C7EB5C90C1262E29F1A8B06D81"
+    },
+    {
+      "residents": 2500,
+      "consumers": 5000,
+      "memoryWeight": 0,
+      "unitBudget": 128,
+      "sample": 1,
+      "frames": 706,
+      "events": 90000,
+      "routes": 80000,
+      "decisionsPerSecond": 17463.307843889204,
+      "cpuMs": 286.3146,
+      "offlineModLoop": {
+        "p50Ms": 0.3338,
+        "p95Ms": 0.4776,
+        "maxMs": 11.1474,
+        "spikesAtLeast30Ms": 0
+      },
+      "wholeFrame": "unmeasured; separate native watch item",
+      "modeledCatchupLagMinutesAtFastestClock": 0.0,
+      "savedStateSha256": "BA1FDB19BAE2380EE8EB4C5450604EF913A681C7EB5C90C1262E29F1A8B06D81"
+    },
+    {
+      "residents": 2500,
+      "consumers": 5000,
+      "memoryWeight": 1,
+      "unitBudget": 128,
+      "sample": 1,
+      "frames": 705,
+      "events": 90000,
+      "routes": 80000,
+      "decisionsPerSecond": 16081.891564951384,
+      "cpuMs": 310.9087,
+      "offlineModLoop": {
+        "p50Ms": 0.3429,
+        "p95Ms": 0.5452,
+        "maxMs": 17.1153,
+        "spikesAtLeast30Ms": 0
+      },
+      "wholeFrame": "unmeasured; separate native watch item",
+      "modeledCatchupLagMinutesAtFastestClock": 0.0,
+      "savedStateSha256": "0E48CDC458126DBC08A9E92158CA69806193592BC1CEF969550ED1263345D021"
+    },
+    {
+      "residents": 2500,
+      "consumers": 5000,
+      "memoryWeight": 1,
+      "unitBudget": 128,
+      "sample": 2,
+      "frames": 706,
+      "events": 90000,
+      "routes": 80000,
+      "decisionsPerSecond": 16918.807657181645,
+      "cpuMs": 295.5291,
+      "offlineModLoop": {
+        "p50Ms": 0.3395,
+        "p95Ms": 0.5295,
+        "maxMs": 12.9802,
+        "spikesAtLeast30Ms": 0
+      },
+      "wholeFrame": "unmeasured; separate native watch item",
+      "modeledCatchupLagMinutesAtFastestClock": 0.0,
+      "savedStateSha256": "0E48CDC458126DBC08A9E92158CA69806193592BC1CEF969550ED1263345D021"
+    },
+    {
+      "residents": 2500,
+      "consumers": 5000,
+      "memoryWeight": 0,
+      "unitBudget": 128,
+      "sample": 2,
+      "frames": 707,
+      "events": 90000,
+      "routes": 80000,
+      "decisionsPerSecond": 16682.164397391844,
+      "cpuMs": 299.7213,
+      "offlineModLoop": {
+        "p50Ms": 0.3393,
+        "p95Ms": 0.5545,
+        "maxMs": 11.7003,
+        "spikesAtLeast30Ms": 0
+      },
+      "wholeFrame": "unmeasured; separate native watch item",
+      "modeledCatchupLagMinutesAtFastestClock": 0.0,
+      "savedStateSha256": "BA1FDB19BAE2380EE8EB4C5450604EF913A681C7EB5C90C1262E29F1A8B06D81"
+    },
+    {
+      "residents": 957,
+      "consumers": 1914,
+      "memoryWeight": 1,
+      "unitBudget": 1,
+      "sample": 3,
+      "frames": 34452,
+      "events": 34452,
+      "routes": 30624,
+      "decisionsPerSecond": 18014.643250767786,
+      "cpuMs": 106.2469,
+      "offlineModLoop": {
+        "p50Ms": 0.0009,
+        "p95Ms": 0.0106,
+        "maxMs": 5.931,
+        "spikesAtLeast30Ms": 0
+      },
+      "wholeFrame": "unmeasured; separate native watch item",
+      "modeledCatchupLagMinutesAtFastestClock": 988.56,
+      "savedStateSha256": "217B6F4B411DB926BEA3A5CD42935FCDE84AD8F8EE008D91AF5333A11BCE81E8"
+    },
+    {
+      "residents": 957,
+      "consumers": 1914,
+      "memoryWeight": 0,
+      "unitBudget": 1,
+      "sample": 3,
+      "frames": 34452,
+      "events": 34452,
+      "routes": 30624,
+      "decisionsPerSecond": 15840.843388351435,
+      "cpuMs": 120.8269,
+      "offlineModLoop": {
+        "p50Ms": 0.0009,
+        "p95Ms": 0.0106,
+        "maxMs": 14.9501,
+        "spikesAtLeast30Ms": 0
+      },
+      "wholeFrame": "unmeasured; separate native watch item",
+      "modeledCatchupLagMinutesAtFastestClock": 988.56,
+      "savedStateSha256": "9FB588D4FFF85695CD5BD5F4B45ED507543860E994C20E518C7812CF12FD5A5D"
+    }
+  ],
+  "provenance": "Pre-optimization working prototype: boxed watermark enum comparison and allocating replacement DTOs. The tiny allocation excess includes measurement-list growth; compare allocation counts, not timings (the final harness also advances the lookup logical day)."
+}

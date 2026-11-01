@@ -48,9 +48,13 @@ internal static class InteriorViewRegression
         Check(NativeTravelPace.HiddenTravel && !NativeInteriorCityView.Active, "default must stay hidden inside");
         Check(NativeTravelPace.Focus.X == 900, "off focus changed");
         GlobalEvents.Enter(); GlobalEvents.Exit(); GlobalEvents.TimeMachineStarted(); UnityEngine.SceneManagement.SceneManager.Unload();
-        Check(restored == 0 && logger.Lines.Count == 0, "off subscribed or logged discovery");
-        var on = new PrototypeSettings { InteriorCityView = "on" };
+        Check(restored == 0 && logger.Lines.Count == 1 && logger.Lines[0].Contains("not detected; not detected; effective view=off"),
+            "off must log only the guard verdict and subscribe to no view events");
+        logger.Lines.Clear();
+        var on = new PrototypeSettings { InteriorCityView = "on",
+            ThirdPartyInteriorHarmonyOwnerIds = new[] { "persistentcity.fixture.unmatched" } };
         NativeInteriorCityView.Start(on, logger, () => restored++);
+        Check(HarmonyLib.Harmony.MetadataReads == 2, "one metadata read per vanilla target at load");
         on.InteriorCityView = "off";
         Check(NativeInteriorCityView.Configured, "configured bool must be captured at startup");
         on.InteriorCityView = "on";
@@ -58,10 +62,10 @@ internal static class InteriorViewRegression
         Time.frameCount++; Check(!NativeTravelPace.HiddenTravel, "ground floor shop stayed hidden");
         Check(NativeTravelPace.Focus.X == 10 && NativeTravelPace.Focus.Z == 20, "focus must be first entrance, not detached player");
         Check(NativeInteriorCityView.Radius(120) == 60 && NativeInteriorCityView.ReleaseRadius(120) == 60, "strict interior radius");
-        Check(logger.Lines.Count == 1 && logger.Lines[0].Contains("(10,1,20)"), "anchor/cap log missing");
+        Check(logger.Lines.Count == 2 && logger.Lines[1].Contains("(10,1,20)"), "anchor/cap log missing");
         for (int i = 0; i < 1000; i++) Check(NativeInteriorCityView.Active, "cached active changed");
         Check(Time.UnscaledTimeReads == 1, "full context refresh repeated within a frame");
-        Check(logger.Lines.Count == 1, "active log repeated");
+        Check(logger.Lines.Count == 2, "active log repeated");
         manager.cityBuildingController!.entranceDoors![0].doorTransform!.position = new Vector3 { x = 123, y = 1 };
         Time.frameCount++; Time.unscaledTime = 2; Check(NativeTravelPace.Focus.X == 10, "entry anchor was not cached");
         manager.exitZones![0].isElevator = true;
@@ -117,9 +121,38 @@ internal static class InteriorViewRegression
         Check(restored == restoredBeforeScene + 1 && !NativeInteriorCityView.Active, "scene unload did not restore/suspend");
         Time.frameCount++; Check(NativeInteriorCityView.Active, "new scene did not recheck eligibility");
         Bench();
+        Check(HarmonyLib.Harmony.MetadataReads == 2, "metadata must not repeat on frames, queries or building/scene events");
+        GuardRegression(logger, ref restored);
         NativeInteriorCityView.Stop(); Check(!NativeInteriorCityView.Active && NativeTravelPace.HiddenTravel, "disable/load cleanup failed");
         BuildingManager.IsInsideBuilding = false; InstanceBehavior<BuildingManager>.Instance = null;
         Console.WriteLine("PASS " + checks + " F0 actual adapter/anchor/lifecycle checks (Unity doubles).");
+    }
+    private static void GuardRegression(Logger logger, ref int restored)
+    {
+        Shop();
+        int logCount = logger.Lines.Count;
+        var blocked = new PrototypeSettings { InteriorCityView = "on",
+            ThirdPartyInteriorAssemblyPatterns = new[] { typeof(InteriorViewRegression).Assembly.GetName().Name! } };
+        NativeInteriorCityView.Start(blocked, logger, () => { });
+        Check(NativeInteriorGuard.Verdict.Detected && !NativeInteriorCityView.Configured, "matching our own fixture assembly must force F0 off");
+        var bridge = new PopulationRuntime();
+        for (int i = 0; i < 1000; i++)
+        {
+            Time.frameCount++;
+            Check(!NativeInteriorCityView.Active && NativeTravelPace.HiddenTravel, "guarded F0 became active");
+            Check(bridge.InteriorGuardDiagnostics.Contains("effective view=off; active=False"), "guard dump must show cached off state");
+        }
+        GlobalEvents.Enter(); GlobalEvents.Exit();
+        Check(logger.Lines.Count == logCount + 1, "guard should log only once per city load, never per entry/frame/dump");
+        blocked.ThirdPartyInteriorGuard = "off";
+        NativeInteriorCityView.Start(blocked, logger, () => { });
+        Time.frameCount++;
+        Check(NativeInteriorCityView.Configured && NativeInteriorCityView.Active, "off must bypass only detection and retain normal F0 eligibility");
+        Check(HarmonyLib.Harmony.MetadataReads == 2, "assembly match/off must not read patch metadata");
+        // A new city start with the same unmatched owner configuration evaluates once again.
+        NativeInteriorCityView.Start(new PrototypeSettings { InteriorCityView = "on",
+            ThirdPartyInteriorHarmonyOwnerIds = new[] { "persistentcity.fixture.unmatched" } }, logger, () => { });
+        Check(HarmonyLib.Harmony.MetadataReads == 4, "new load must reevaluate both vanilla targets once");
     }
     private static void Measure(string name, Action action, int batch = 1000)
     {

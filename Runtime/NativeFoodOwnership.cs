@@ -81,6 +81,8 @@ namespace PersistentCity.Runtime
             awaitingPopulation = payload == null && current.modData.ContainsKey(SaveStore.StateKey);
             try
             {
+                if (current.modData.TryGetValue(SaveStore.StateKey, out var populationPayload))
+                    SaveCodec.RequireExecutableCapabilities(populationPayload);
                 foreach (var row in FoodAuthorityStore.Read(payload))
                 {
                     if (row.RequestedHour > Hour || row.FromHour > Hour || row.UntilHour > Hour)
@@ -174,6 +176,13 @@ namespace PersistentCity.Runtime
             if (observed.TryGetValue(place, out var reg)) addresses.Remove(reg.Address);
             observed.Remove(place);
         }
+        // Feedback must not call EnsureSave/Find: both maintain authority state.
+        internal static bool ObservedOwnGeneration(BuildingRegistration reg, string businessId)
+            => ReferenceEquals(save, SaveGameManager.Current) && Error.Length == 0
+                && records.TryGetValue(NativeFoodMarket.PlaceId(reg), out var row)
+                && row.BusinessId == businessId && row.Signature == FoodBusinessCatalogue.BusinessIdentity(reg)
+                && observed.TryGetValue(row.PlaceId, out var previous) && ReferenceEquals(previous, reg);
+
         internal static FoodAuthority? Find(BuildingRegistration reg)
         {
             EnsureSave();

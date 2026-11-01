@@ -1,0 +1,134 @@
+{
+  "boundary": "Offline .NET 10; 40 normalized batch means after 5 warmups, not individual-call percentiles. Saturated four-entry memory; 16 owned shops. Panel timing covers B2 text including projection; native account reads/Unity GUI excluded. Full Core popup capture/text included. Closed zero cost and zero commit hooks established by call-site/source tests, not a native timing window. Batch spikes flag benchmark batches, not mod-work frames.",
+  "populations": [
+    {
+      "residents": 957,
+      "consumers": 1914,
+      "memoryEntries": 7656,
+      "shops": 16,
+      "projectionRefresh": {
+        "p50Ms": 0.472265,
+        "p95Ms": 0.629295,
+        "maxMs": 0.678075,
+        "allocatedBytesPerCall": 41840.0,
+        "batchSpikesAtLeast30Ms": 0
+      },
+      "perShopLookup": {
+        "p50Ms": 1.183E-05,
+        "p95Ms": 1.2620000000000001E-05,
+        "maxMs": 1.4910000000000001E-05,
+        "allocatedBytesPerCall": 0.0,
+        "batchSpikesAtLeast30Ms": 0
+      },
+      "panelB2Text": {
+        "p50Ms": 0.218535,
+        "p95Ms": 0.9366,
+        "maxMs": 0.9905799999999999,
+        "allocatedBytesPerCall": 44496.0,
+        "batchSpikesAtLeast30Ms": 0
+      },
+      "fullCorePopupCaptureAndText": {
+        "p50Ms": 0.006324,
+        "p95Ms": 0.00957,
+        "maxMs": 0.010946000000000001,
+        "allocatedBytesPerCall": 9104.0,
+        "batchSpikesAtLeast30Ms": 0
+      },
+      "unchangedB1Commit": {
+        "p50Ms": 0.0001327,
+        "p95Ms": 0.0001861,
+        "maxMs": 0.0002363,
+        "allocatedBytesPerCall": 0.0,
+        "batchSpikesAtLeast30Ms": 0
+      },
+      "projectionCommitHooks": 0,
+      "closedProjectionBuilds": 0,
+      "closedTextBuilds": 0,
+      "closedAddedAllocations": 0,
+      "growingDedupSet": {
+        "p50Ms": 0.02515,
+        "p95Ms": 0.031275,
+        "maxMs": 0.255805,
+        "allocatedBytesPerCall": 73152.0,
+        "batchSpikesAtLeast30Ms": 0
+      },
+      "presizedDedupSet": {
+        "p50Ms": 0.019125,
+        "p95Ms": 0.025490000000000002,
+        "maxMs": 0.03594,
+        "allocatedBytesPerCall": 38736.0,
+        "batchSpikesAtLeast30Ms": 0
+      },
+      "savedBytesBefore": 1503076,
+      "savedBytesAfter": 1503076,
+      "savedByteGrowth": 0,
+      "sink": 225885600,
+      "textLength": 418
+    },
+    {
+      "residents": 2500,
+      "consumers": 5000,
+      "memoryEntries": 20000,
+      "shops": 16,
+      "projectionRefresh": {
+        "p50Ms": 0.530545,
+        "p95Ms": 0.606395,
+        "maxMs": 0.64478,
+        "allocatedBytesPerCall": 120056.86,
+        "batchSpikesAtLeast30Ms": 0
+      },
+      "perShopLookup": {
+        "p50Ms": 5.559999999999999E-06,
+        "p95Ms": 6.270000000000001E-06,
+        "maxMs": 8.200000000000001E-06,
+        "allocatedBytesPerCall": 0.0,
+        "batchSpikesAtLeast30Ms": 0
+      },
+      "panelB2Text": {
+        "p50Ms": 0.989865,
+        "p95Ms": 1.0251350000000001,
+        "maxMs": 1.063585,
+        "allocatedBytesPerCall": 122849.24,
+        "batchSpikesAtLeast30Ms": 0
+      },
+      "fullCorePopupCaptureAndText": {
+        "p50Ms": 0.007078999999999999,
+        "p95Ms": 0.011144000000000001,
+        "maxMs": 0.012646,
+        "allocatedBytesPerCall": 9104.0,
+        "batchSpikesAtLeast30Ms": 0
+      },
+      "unchangedB1Commit": {
+        "p50Ms": 0.0001684,
+        "p95Ms": 0.0001922,
+        "maxMs": 0.0002251,
+        "allocatedBytesPerCall": 0.0,
+        "batchSpikesAtLeast30Ms": 0
+      },
+      "projectionCommitHooks": 0,
+      "closedProjectionBuilds": 0,
+      "closedTextBuilds": 0,
+      "closedAddedAllocations": 0,
+      "growingDedupSet": {
+        "p50Ms": 0.20574499999999998,
+        "p95Ms": 0.45400999999999997,
+        "maxMs": 0.96527,
+        "allocatedBytesPerCall": 322636.28,
+        "batchSpikesAtLeast30Ms": 0
+      },
+      "presizedDedupSet": {
+        "p50Ms": 0.11514500000000001,
+        "p95Ms": 0.14065,
+        "maxMs": 0.21822,
+        "allocatedBytesPerCall": 116939.57,
+        "batchSpikesAtLeast30Ms": 0
+      },
+      "savedBytesBefore": 3925066,
+      "savedBytesAfter": 3925066,
+      "savedByteGrowth": 0,
+      "sink": 589500000,
+      "textLength": 418
+    }
+  ],
+  "nativeModWork": "pending normal combined 6 Nov session: p95 <5 ms, flag >=30 ms; whole-frame separate"
+}

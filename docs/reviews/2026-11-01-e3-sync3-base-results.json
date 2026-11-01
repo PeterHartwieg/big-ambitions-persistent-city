@@ -1,0 +1,874 @@
+{
+  "boundary": "Offline only. Sequential foreground children; prescribed wait before each workload. No deadlines. No game/rig/profile access.",
+  "commands": [
+    {
+      "name": "build",
+      "command": [
+        "python",
+        "tools/build.py",
+        "--game-managed",
+        "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed"
+      ],
+      "exit": 0,
+      "seconds": 2.188,
+      "log": "build/e3-sync3-base-gate/build.txt",
+      "sha256": "8c614219d5ef5e006702539e60856f0d3d297b63ce416bd55da6c0c768dce440"
+    },
+    {
+      "name": "unit",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj"
+      ],
+      "exit": 0,
+      "seconds": 223.171,
+      "log": "build/e3-sync3-base-gate/unit.txt",
+      "sha256": "13f29d4727e05e8587142718230d967378677d188f63d9d7ddf9ffb38b323811",
+      "summary": "Passed!  - Failed:     0, Passed:  2142, Skipped:     0, Total:  2142, Duration: 3 m 32 s - PersistentCity.Tests.dll (net10.0)"
+    },
+    {
+      "name": "list",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--no-build",
+        "--list-tests"
+      ],
+      "exit": 0,
+      "seconds": 1.328,
+      "log": "build/e3-sync3-base-gate/list.txt",
+      "sha256": "7f5f1668f68b59609a69badfd2423d9917fa810843d436545902f8cfd89fe8b6",
+      "discovered": 2142,
+      "countingNote": "All indented listed test names, including the 18 global-namespace AgencyOrdersTests cases; no test filter."
+    },
+    {
+      "name": "agency-payment-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/agency-payment-regression/AgencyPaymentRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.719,
+      "log": "build/e3-sync3-base-gate/agency-payment-regression.txt",
+      "sha256": "b7de72a371cef251311c83346825dd87925d4fb74bf5949a04dec9d6bdf4a640"
+    },
+    {
+      "name": "campaign-reader-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/campaign-reader-regression/CampaignReaderRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.609,
+      "log": "build/e3-sync3-base-gate/campaign-reader-regression.txt",
+      "sha256": "aae528b58b2e06ead91dfd852b07b2044804b3cf4fde8e6242d5ca2bfac2768a"
+    },
+    {
+      "name": "core-identity-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/core-identity-regression/CoreIdentityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 8.75,
+      "log": "build/e3-sync3-base-gate/core-identity-regression.txt",
+      "sha256": "229a043e222d10d211942b738aa4bf7c43a4653f33f19c1a1f90b4b652086ff9"
+    },
+    {
+      "name": "diagnostic-response-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/diagnostic-response-regression/DiagnosticResponseRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.907,
+      "log": "build/e3-sync3-base-gate/diagnostic-response-regression.txt",
+      "sha256": "a89f8e2948c58df6f28f5d0bf439ea876f62fe55dd2f032fb9d77ea4d0a7b103"
+    },
+    {
+      "name": "donut-feasibility-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/donut-feasibility-regression/DonutFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.406,
+      "log": "build/e3-sync3-base-gate/donut-feasibility-regression.txt",
+      "sha256": "56118c9f70d0762a6ec6707d87f21ed2563376c73875986f746f8073c48fe7fc"
+    },
+    {
+      "name": "event-observation-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/event-observation-regression/EventObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 6.015,
+      "log": "build/e3-sync3-base-gate/event-observation-regression.txt",
+      "sha256": "42161e30fac5b62fb9ee46e23bd8e3cd8a6e6cb2b48aa61fc3ec810953881166"
+    },
+    {
+      "name": "food-candidate-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-candidate-regression/FoodCandidateRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 6.219,
+      "log": "build/e3-sync3-base-gate/food-candidate-regression.txt",
+      "sha256": "5476efdaa9e781ba938016909363665cf2e2824eb4d74befe38711196908ca39"
+    },
+    {
+      "name": "food-catalogue-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-catalogue-regression/FoodCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.203,
+      "log": "build/e3-sync3-base-gate/food-catalogue-regression.txt",
+      "sha256": "29151f1420552a2fe45a0c1878b6b269138a057d2806ad421802ec0ec0afcfe5"
+    },
+    {
+      "name": "food-checkout-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-checkout-regression/FoodCheckoutRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 6.609,
+      "log": "build/e3-sync3-base-gate/food-checkout-regression.txt",
+      "sha256": "d39c8fa9305598c616691bfa3cc51d2f01b52cd9957b42957ecea6e6ffa9cd3d"
+    },
+    {
+      "name": "food-choice-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 7.5,
+      "log": "build/e3-sync3-base-gate/food-choice-regression.txt",
+      "sha256": "31bc559d0e6ffcafa3b99f0675118f37ebb4c9d54abcb2929d7bb2dbc81267cd"
+    },
+    {
+      "name": "food-hours-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-hours-regression/FoodHoursRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.078,
+      "log": "build/e3-sync3-base-gate/food-hours-regression.txt",
+      "sha256": "2410218689a17bf8e5ae868d3025d1a8bd9e449d7fd49d83728819236ce6607c"
+    },
+    {
+      "name": "food-household-catalogue-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-household-catalogue-regression/FoodHouseholdCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.0,
+      "log": "build/e3-sync3-base-gate/food-household-catalogue-regression.txt",
+      "sha256": "b0f19cfd0acbbded5af38461d6e0bbe596b236cd83207afa0223100fdcfb8609"
+    },
+    {
+      "name": "food-memory-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-memory-regression/FoodMemoryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 12.141,
+      "log": "build/e3-sync3-base-gate/food-memory-regression.txt",
+      "sha256": "63d5a1ba9af1332569ab8642ce1d4461e462ce22ff0a88fce21c60d27887620d"
+    },
+    {
+      "name": "food-ownership-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-ownership-regression/FoodOwnershipRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.984,
+      "log": "build/e3-sync3-base-gate/food-ownership-regression.txt",
+      "sha256": "0868149a24cebe8c5801b20d7530b12bc49a633011d2bf039392c6d97de66efa"
+    },
+    {
+      "name": "food-regulars-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-regulars-regression/FoodRegularsRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 9.312,
+      "log": "build/e3-sync3-base-gate/food-regulars-regression.txt",
+      "sha256": "b62f5696b84bc93e173e5ae1a9e32850d67ba7ca9bf33f2d6b5aabd35a04b019"
+    },
+    {
+      "name": "food-supply-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-supply-regression/FoodSupplyRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.078,
+      "log": "build/e3-sync3-base-gate/food-supply-regression.txt",
+      "sha256": "bea33031a003404270de233cbd073eb44deacac65f41be406a1eae3b70385683"
+    },
+    {
+      "name": "frame-observation-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/frame-observation-regression/FrameObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.187,
+      "log": "build/e3-sync3-base-gate/frame-observation-regression.txt",
+      "sha256": "7e5da72d80f98e71b464d3c9f918cf9457b5350bfcafc294e80e823b646b2d02"
+    },
+    {
+      "name": "gate-access-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/gate-access-regression/GateAccessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 5.047,
+      "log": "build/e3-sync3-base-gate/gate-access-regression.txt",
+      "sha256": "6e9877acee2b84dfcc2de1b4d7d7236ac991a58c1a89fbe420966d127bf4afae"
+    },
+    {
+      "name": "held-tuning-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/held-tuning-regression/HeldTuningRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 7.266,
+      "log": "build/e3-sync3-base-gate/held-tuning-regression.txt",
+      "sha256": "0033378b266bda468a9c57f3865f0ef7909b68645750cd4bff9dc281fcdb7511"
+    },
+    {
+      "name": "interior-guard-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/interior-guard-regression/InteriorGuardRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.157,
+      "log": "build/e3-sync3-base-gate/interior-guard-regression.txt",
+      "sha256": "400b9181648f04ff68c0a440bf2e148c0a5b324b8d0cdae0c8620adbd5f0dd9f"
+    },
+    {
+      "name": "road-ceiling-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-ceiling-regression/RoadCeilingRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.062,
+      "log": "build/e3-sync3-base-gate/road-ceiling-regression.txt",
+      "sha256": "895bf78ce78f6cceb24e97e6ac8d4cc6c68fa71cfb5b0e54f707e9bf46369762"
+    },
+    {
+      "name": "road-handoff-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-handoff-regression/RoadHandoffRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.859,
+      "log": "build/e3-sync3-base-gate/road-handoff-regression.txt",
+      "sha256": "5de54d90bad9b212aac21705900b22ad270fa18365f1284fc4e988bf67a5f23e"
+    },
+    {
+      "name": "road-invalidation-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-invalidation-regression/RoadInvalidationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 5.75,
+      "log": "build/e3-sync3-base-gate/road-invalidation-regression.txt",
+      "sha256": "11bcbab6bdde92b021b10a41d941aa322629fadbc821906b55ed9aa7d5d7e656"
+    },
+    {
+      "name": "road-speed-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-speed-regression/RoadSpeedRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.734,
+      "log": "build/e3-sync3-base-gate/road-speed-regression.txt",
+      "sha256": "5242c509cd90b21734fe4321b43dcbba531282677f91d66ddc8931b9b07cef19"
+    },
+    {
+      "name": "route-discovery-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/route-discovery-regression/RouteDiscoveryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 12.203,
+      "log": "build/e3-sync3-base-gate/route-discovery-regression.txt",
+      "sha256": "7c3684eedaa0bea2266b919908de9f88a5bb82d63511f939d1661ee67c9cd95b"
+    },
+    {
+      "name": "save-contract-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 5.718,
+      "log": "build/e3-sync3-base-gate/save-contract-regression.txt",
+      "sha256": "deafb470c9972f0ae20b432894f024323182609d12d245a4db09ccef05852a77"
+    },
+    {
+      "name": "startup-clock-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/startup-clock-regression/StartupClockRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 5.032,
+      "log": "build/e3-sync3-base-gate/startup-clock-regression.txt",
+      "sha256": "0c557dd1982db961cb530af4cb182384048e9cb860610cd76fc5dde00e4921f4"
+    },
+    {
+      "name": "traffic-closure-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-closure-regression/TrafficClosureRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.766,
+      "log": "build/e3-sync3-base-gate/traffic-closure-regression.txt",
+      "sha256": "708d6590f5351a9c1adf0b939e6775caa82602e1d6ec261b597977db98e808aa"
+    },
+    {
+      "name": "traffic-queue-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-queue-regression/TrafficQueueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.672,
+      "log": "build/e3-sync3-base-gate/traffic-queue-regression.txt",
+      "sha256": "897d1d2e5c92ef25374e61f7da26e9dea2849c91f3495eb8bc65210eb2e4b9c4"
+    },
+    {
+      "name": "walking-quote-regression",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/walking-quote-regression/WalkingQuoteRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 5.016,
+      "log": "build/e3-sync3-base-gate/walking-quote-regression.txt",
+      "sha256": "b20b2938933dcf089ca5390b756d89a587ca9d5f003c7440677ccda69bf0d405"
+    },
+    {
+      "name": "pickup",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/persistent-continuity/regression/PickupRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.969,
+      "log": "build/e3-sync3-base-gate/pickup.txt",
+      "sha256": "608eae841ef2ed0f1dbfb45d11a356fef2231fcfe9cee06e68756577f5a0b157"
+    },
+    {
+      "name": "native-command",
+      "command": [
+        "python",
+        "tools/native-command-regression/run.py"
+      ],
+      "exit": 0,
+      "seconds": 3.453,
+      "log": "build/e3-sync3-base-gate/native-command.txt",
+      "sha256": "bd610e1a32a30f6ad7638fc2a65ae7bf8bea9d44baba81884f821aea4ed0a9aa"
+    },
+    {
+      "name": "physical-selection",
+      "command": [
+        "python",
+        "tools/physical-selection-regression/run.py"
+      ],
+      "exit": 0,
+      "seconds": 4.907,
+      "log": "build/e3-sync3-base-gate/physical-selection.txt",
+      "sha256": "e303e0984138848a004b65628e2492258eaf286f3572fe6007edaac3eea242d3"
+    },
+    {
+      "name": "vehicle-ownership",
+      "command": [
+        "python",
+        "tools/vehicle-ownership-regression/run.py"
+      ],
+      "exit": 0,
+      "seconds": 3.312,
+      "log": "build/e3-sync3-base-gate/vehicle-ownership.txt",
+      "sha256": "7539f54a1b778a54ca9bc75f398a40c0491fb40281611c8c8efbbc473dd32e46"
+    },
+    {
+      "name": "optional-stop",
+      "command": [
+        "python",
+        "tools/optional-stop-regression/run.py"
+      ],
+      "exit": 0,
+      "seconds": 5.016,
+      "log": "build/e3-sync3-base-gate/optional-stop.txt",
+      "sha256": "83169edd57e839615aaf26b1c484d01efb768209811f4538fa4cfd838a767883"
+    },
+    {
+      "name": "simulate",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/simulate/Simulate.csproj",
+        "--",
+        "28",
+        "build/harness-demo"
+      ],
+      "exit": 0,
+      "seconds": 10.891,
+      "log": "build/e3-sync3-base-gate/simulate.txt",
+      "sha256": "647e269475beea3224877ca8a392767f6be00aa3cb9647fa7c68f991b22a727f"
+    },
+    {
+      "name": "food-routines",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-routines/FoodRoutines.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "build/harness-food-routines-demo",
+        "957"
+      ],
+      "exit": 0,
+      "seconds": 8.109,
+      "log": "build/e3-sync3-base-gate/food-routines.txt",
+      "sha256": "1e8dc458b78f1462ba85defd6de87ff805f01f9de79292c6dfb064f0d5da20a4"
+    },
+    {
+      "name": "food-demand",
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-demand/FoodDemand.csproj",
+        "--",
+        "build/harness-food-demand-demo"
+      ],
+      "exit": 0,
+      "seconds": 5.141,
+      "log": "build/e3-sync3-base-gate/food-demand.txt",
+      "sha256": "c223470b373233f432690c46f311aa045aa548121d84f8d9ae1bfd47dc9d6bd7"
+    },
+    {
+      "name": "isolation",
+      "command": [
+        "python",
+        "tools/donut-feasibility-regression/source_checks.py"
+      ],
+      "exit": 0,
+      "seconds": 0.188,
+      "log": "build/e3-sync3-base-gate/isolation.txt",
+      "sha256": "96f2ba7508541e11ba53ab929031f5c428ab29b38592c4d65400edc35c95e148"
+    },
+    {
+      "name": "optional-stop-performance",
+      "command": [
+        "python",
+        "tools/optional-stop-regression/run.py",
+        "--performance",
+        "--findings"
+      ],
+      "exit": 0,
+      "seconds": 12.062,
+      "log": "build/e3-sync3-base-gate/optional-stop-performance.txt",
+      "sha256": "53329b1e2e095c7fb68435f6ef78f17ed7a47a7e01d124177534c9572ed83f32"
+    }
+  ],
+  "allPassed": true,
+  "recordedUtc": "2026-11-01T04:14:29.578804+00:00",
+  "mergeCommit": "29db5767113e37d0d515fece26414c04e993a6f1",
+  "finalFetchedBase": "81472e637ee058b337a849f4e931f6d80fa4ad44",
+  "preservation": {
+    "incoming": "81472e637ee058b337a849f4e931f6d80fa4ad44",
+    "e3Parent": "fb46f38430850dd05794d911cc47c32b3b5832d0",
+    "mergeBase": "7053a281cfa4d8fb70a0d8cf4e10b056630cfa95",
+    "incomingTrackedFiles": 1179,
+    "incomingSourceTestToolConfigFilesUnchanged": 499,
+    "incomingChecksPerfFilesUnchanged": 26,
+    "incomingModifiedFiles": [
+      "CHECKS.md",
+      "docs/plans/steps-b-e.md",
+      "docs/roadmap.md"
+    ],
+    "incomingFileContentSubsequencePreserved": [
+      "CHECKS.md",
+      "docs/plans/steps-b-e.md",
+      "docs/roadmap.md"
+    ],
+    "previousE3ChecksUnchanged": true,
+    "nativeMarkers": {
+      "LOCKED-OK": 7,
+      "NEEDS-INPUT": 3,
+      "In-game checks": 1
+    },
+    "saveSchema": "18; no E3 persistence changes; incoming Persistence and Core/Model.cs unchanged",
+    "guardProbes": [
+      {
+        "case": "squash destination with no feature commit objects",
+        "expectedPass": true,
+        "exit": 0,
+        "output": "PASS isolation/no native field assignments or gameplay callers\nPASS approved E3 reader and harness bytes match 462a99d8313968a2a1760ac88806b3aed47a0003 (history-independent pins)\n"
+      },
+      {
+        "case": "LF checkout",
+        "expectedPass": true,
+        "exit": 0,
+        "output": "PASS isolation/no native field assignments or gameplay callers\nPASS approved E3 reader and harness bytes match 462a99d8313968a2a1760ac88806b3aed47a0003 (history-independent pins)\n"
+      },
+      {
+        "case": "CRLF checkout",
+        "expectedPass": true,
+        "exit": 0,
+        "output": "PASS isolation/no native field assignments or gameplay callers\nPASS approved E3 reader and harness bytes match 462a99d8313968a2a1760ac88806b3aed47a0003 (history-independent pins)\n"
+      },
+      {
+        "case": "later unrelated base change",
+        "expectedPass": true,
+        "exit": 0,
+        "output": "PASS isolation/no native field assignments or gameplay callers\nPASS approved E3 reader and harness bytes match 462a99d8313968a2a1760ac88806b3aed47a0003 (history-independent pins)\n"
+      },
+      {
+        "case": "new gameplay caller refused",
+        "expectedPass": false,
+        "exit": 1,
+        "output": "Traceback (most recent call last):\n  File \"C:\\Users\\Peter\\AppData\\Local\\Temp\\pc-e3-squash-bs7aeyax\\tools\\donut-feasibility-regression\\source_checks.py\", line 20, in <module>\n    assert \"DonutFeasibility\" not in path.read_text(encoding=\"utf-8-sig\"), str(path)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: C:\\Users\\Peter\\AppData\\Local\\Temp\\pc-e3-squash-bs7aeyax\\Core\\UnrelatedFutureSlice.cs\n"
+      },
+      {
+        "case": "forbidden native API",
+        "expectedPass": false,
+        "exit": 1,
+        "output": "Traceback (most recent call last):\n  File \"C:\\Users\\Peter\\AppData\\Local\\Temp\\pc-e3-squash-bs7aeyax\\tools\\donut-feasibility-regression\\source_checks.py\", line 14, in <module>\n    assert forbidden not in code, forbidden\n           ^^^^^^^^^^^^^^^^^^^^^\nAssertionError: ProcessCustomer\n"
+      },
+      {
+        "case": "native assignment",
+        "expectedPass": false,
+        "exit": 1,
+        "output": "Traceback (most recent call last):\n  File \"C:\\Users\\Peter\\AppData\\Local\\Temp\\pc-e3-squash-bs7aeyax\\tools\\donut-feasibility-regression\\source_checks.py\", line 16, in <module>\n    assert not re.search(r\"\\b(?:registration|instance|item|resource|cargo|type|product|entry)\\.\\w+\\s*=(?!=)\", code)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n"
+      },
+      {
+        "case": "approved blob changed: Runtime/DonutFeasibilityReader.cs",
+        "expectedPass": false,
+        "exit": 1,
+        "output": "PASS isolation/no native field assignments or gameplay callers\nTraceback (most recent call last):\n  File \"C:\\Users\\Peter\\AppData\\Local\\Temp\\pc-e3-squash-bs7aeyax\\tools\\donut-feasibility-regression\\source_checks.py\", line 35, in <module>\n    assert current == expected, f\"Approved E3 source/harness changed: {path}\"\n           ^^^^^^^^^^^^^^^^^^^\nAssertionError: Approved E3 source/harness changed: Runtime/DonutFeasibilityReader.cs\n"
+      },
+      {
+        "case": "approved blob changed: tools/donut-feasibility-regression/Program.cs",
+        "expectedPass": false,
+        "exit": 1,
+        "output": "PASS isolation/no native field assignments or gameplay callers\nTraceback (most recent call last):\n  File \"C:\\Users\\Peter\\AppData\\Local\\Temp\\pc-e3-squash-bs7aeyax\\tools\\donut-feasibility-regression\\source_checks.py\", line 35, in <module>\n    assert current == expected, f\"Approved E3 source/harness changed: {path}\"\n           ^^^^^^^^^^^^^^^^^^^\nAssertionError: Approved E3 source/harness changed: tools/donut-feasibility-regression/Program.cs\n"
+      },
+      {
+        "case": "approved blob changed: tools/donut-feasibility-regression/DonutFeasibilityRegression.csproj",
+        "expectedPass": false,
+        "exit": 1,
+        "output": "PASS isolation/no native field assignments or gameplay callers\nTraceback (most recent call last):\n  File \"C:\\Users\\Peter\\AppData\\Local\\Temp\\pc-e3-squash-bs7aeyax\\tools\\donut-feasibility-regression\\source_checks.py\", line 35, in <module>\n    assert current == expected, f\"Approved E3 source/harness changed: {path}\"\n           ^^^^^^^^^^^^^^^^^^^\nAssertionError: Approved E3 source/harness changed: tools/donut-feasibility-regression/DonutFeasibilityRegression.csproj\n"
+      },
+      {
+        "case": "restored combined snapshot",
+        "expectedPass": true,
+        "exit": 0,
+        "output": "PASS isolation/no native field assignments or gameplay callers\nPASS approved E3 reader and harness bytes match 462a99d8313968a2a1760ac88806b3aed47a0003 (history-independent pins)\n"
+      }
+    ]
+  },
+  "squashGuardRed": "PASS isolation/no native field assignments or gameplay callers\nfatal: path 'Runtime/DonutFeasibilityReader.cs' exists on disk, but not in '462a99d8313968a2a1760ac88806b3aed47a0003'\nTraceback (most recent call last):\n  File \"C:\\Users\\Peter\\AppData\\Local\\Temp\\pc-e3-squash-hn9zgqu8\\tools\\donut-feasibility-regression\\source_checks.py\", line 30, in <module>\n    expected = subprocess.check_output([\"git\", \"rev-parse\", f\"{E3_BASE}:{path}\"], cwd=ROOT, text=True).strip()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\subprocess.py\", line 466, in check_output\n    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\subprocess.py\", line 571, in run\n    raise CalledProcessError(retcode, process.args,\nsubprocess.CalledProcessError: Command '['git', 'rev-parse', '462a99d8313968a2a1760ac88806b3aed47a0003:Runtime/DonutFeasibilityReader.cs']' returned non-zero exit status 128.\n",
+  "productionDllSha256": "e450af412737b2b20e9ef3130b7ca71831d1143d62ce57ca6442bf1a6ac48367",
+  "sourceGuardSha256": "8f38f75b6a965bcd6a52d9ff8c033254bb6b2f082b98d1d7592893eea398c448",
+  "measuredOutputs": {
+    "donut-feasibility-regression": "{\"checks\":2082,\"cold\":{\"samples\":1,\"coldMs\":1.6256,\"coldBytes\":968},\"warm\":[{\"furniture\":2,\"p50Ms\":0.0005,\"p95Ms\":0.0005,\"maxMs\":0.0081,\"bytesPerCall\":200,\"spikesAtLeast30Ms\":0},{\"furniture\":2000,\"p50Ms\":0.0962,\"p95Ms\":0.1494,\"maxMs\":1.376,\"bytesPerCall\":49104,\"spikesAtLeast30Ms\":0}]}\n",
+    "campaign-reader-regression": "Campaign bridge: 20 repeated detached reads unchanged; duplicate scope refused; native helper/money spies untouched.\n{\"businesses\":1,\"campaignsPerBusiness\":6,\"cold\":{\"p50Ms\":0.0081,\"p95Ms\":0.0167,\"maxMs\":0.1099,\"spikesAtLeast30Ms\":0,\"allocatedBytes\":4056},\"warm\":{\"p50Ms\":0.0038,\"p95Ms\":0.0081,\"maxMs\":0.0368,\"spikesAtLeast30Ms\":0,\"allocatedBytes\":1912},\"continuation\":{\"p50Ms\":0.0034,\"p95Ms\":0.0077,\"maxMs\":0.0128,\"spikesAtLeast30Ms\":0,\"allocatedBytesPerUnit\":1621},\"retainedBytesPerSnapshot\":880}\n{\"businesses\":8,\"campaignsPerBusiness\":6,\"cold\":{\"p50Ms\":0.0326,\"p95Ms\":0.0487,\"maxMs\":0.8575,\"spikesAtLeast30Ms\":0,\"allocatedBytes\":15336},\"warm\":{\"p50Ms\":0.0284,\"p95Ms\":0.0564,\"maxMs\":0.1503,\"spikesAtLeast30Ms\":0,\"allocatedBytes\":13192},\"continuation\":{\"p50Ms\":0.0028,\"p95Ms\":0.0069,\"maxMs\":0.025,\"spikesAtLeast30Ms\":0,\"allocatedBytesPerUnit\":1543},\"retainedBytesPerSnapshot\":6392}\n{\"businesses\":1024,\"campaignsPerBusiness\":6,\"cold\":{\"p50Ms\":1.1766,\"p95Ms\":6.9734,\"maxMs\":10.3226,\"spikesAtLeast30Ms\":0,\"allocatedBytes\":1639923},\"warm\":{\"p50Ms\":1.0307,\"p95Ms\":2.2826,\"maxMs\":3.782,\"spikesAtLeast30Ms\":0,\"allocatedBytes\":1637896},\"continuation\":{\"p50Ms\":0.0008,\"p95Ms\":0.0015,\"maxMs\":1.9977,\"spikesAtLeast30Ms\":0,\"allocatedBytesPerUnit\":1532},\"retainedBytesPerSnapshot\":810298}\n",
+    "food-catalogue-regression": "29 actual catalogue-adapter checks passed against native field doubles. No Unity/game execution.\n272 D1 read-only rival catalogue checks passed. No Unity/game execution.\nD1 PERF 1024: empty-cache build 0.9601 ms/967640 B; warm refresh 0.1082 ms/32 B; 16-read unit 0.0043 ms/0 B; eight details 0.0077 ms/11632 B; retained 491848 B (GC estimate; native fixtures excluded).\nD1 PERF 20000: empty-cache build 41.5174 ms/19483780 B; warm refresh 1.0472 ms/32 B; 16-read unit 0.0024 ms/0 B; eight details 0.0101 ms/11632 B; retained 9838136 B (GC estimate; native fixtures excluded).\n",
+    "optional-stop-performance": "Native venue boundaries: 210 checks passed (doubles; no venue enabled).\nSaved facade reload: 9 integration checks passed.\nSaved facade reload: 9 integration checks passed.\nNative door replacement: 6 checks passed.\nStationary suppression patch scope: 7 checks passed (Harmony/spawner doubles; native special respawn needs rig).\nE2b future-break observation (candidate visibility change, not an acceptance assertion): rain at 100, dry at start 160; desired active=True, actual active=False, cancelled=True; saved start/end=160/165.\nE2b queue-lead contract observation (not an acceptance assertion): id=queue0, seed=17, opening=540; dry start=531.7137, wet start=535.6426; replan at same wait changes lead; no persisted queue commitment.\nE2b ambiguity observation (not an acceptance assertion): expected refuse both; actual club-first=True, cafe-first=False.\nFacade doubles cap-batch=48: cold samples=48 (one/frame), warm queries=9600, new warm samples=0; batch ms p50=0.0410 p95=0.0790 max=0.5974; bytes/query=568.0; spikes>=30ms=0.\nFacade doubles cap-batch=256: cold samples=256 (one/frame), warm queries=51200, new warm samples=0; batch ms p50=0.1876 p95=0.3682 max=2.5086; bytes/query=592.4; spikes>=30ms=0.\nOptional stop physical adapter: 223 checks passed.\nAdmission rate=25 residents=48 realised=13: ms p50=0.1964 p95=0.2893 max=0.8546; bytes/sample=74182.3; spikes>=30ms=0.\n  per batch: spot queries=26.0; occupancy calls=23.0; occupancy record visits=140.0\nAdmission rate=25 residents=256 realised=64: ms p50=1.2094 p95=2.0805 max=2.8948; bytes/sample=394157.6; spikes>=30ms=0.\n  per batch: spot queries=128.0; occupancy calls=116.0; occupancy record visits=3581.0\nAdmission rate=25 residents=957 realised=229: ms p50=4.5313 p95=8.8098 max=12.6353; bytes/sample=1477665.9; spikes>=30ms=0.\n  per batch: spot queries=458.0; occupancy calls=416.0; occupancy record visits=46858.0\nSelector rate=25 cap=48 admitted=48/229: ms p50=0.1302 p95=0.1884 max=0.7003; bytes/sample=64.0; spikes>=30ms=0.\nSelector rate=25 cap=256 admitted=229/229: ms p50=0.0034 p95=0.0040 max=0.0043; bytes/sample=0.0; spikes>=30ms=0.\nAdmission rate=100 residents=48 realised=48: ms p50=0.0557 p95=0.1169 max=0.1645; bytes/sample=91868.5; spikes>=30ms=0.\n  per batch: spot queries=96.0; occupancy calls=216.0; occupancy record visits=4992.0\nAdmission rate=100 residents=256 realised=256: ms p50=0.6699 p95=1.4341 max=1.7063; bytes/sample=490269.6; spikes>=30ms=0.\n  per batch: spot queries=512.0; occupancy calls=1152.0; occupancy record visits=146432.0\nAdmission rate=100 residents=957 realised=957: ms p50=7.7559 p95=12.0946 max=12.9535; bytes/sample=1854190.4; spikes>=30ms=0.\n  per batch: spot queries=1914.0; occupancy calls=4299.0; occupancy record visits=2049686.0\nSelector rate=100 cap=48 admitted=48/957: ms p50=1.2306 p95=1.5796 max=6.1048; bytes/sample=64.0; spikes>=30ms=0.\nSelector rate=100 cap=256 admitted=256/957: ms p50=0.0396 p95=0.0653 max=0.9070; bytes/sample=64.0; spikes>=30ms=0.\nOffline synthetic costs only; instrumented occupancy counters, .NET JIT and geometry/body doubles are not Unity mod-work or whole-frame evidence.\n",
+    "save-contract-regression": "PASS F0 off/on runtime state + hidden/save/reload payloads byte-identical (12 transitions); no persistence source changes.\n{\"schema\":18,\"digest\":\"018FC26676937FEEF88B7D06AE32B522CCE93A1CC265BCDD87A08C7DD91FBB56\",\"length\":119083,\"refusals\":[\"Invalid:Invalid state: Missing state schema.\",\"Future:State uses a newer schema; preserve the original payload.\",\"Invalid:Invalid state: Incomplete or trailing JSON content.\",\"Invalid:Invalid state: Unknown field: UnknownCitizens\"],\"economy\":{\"orders\":849,\"ordersDigest\":\"1B94987B3158044594B9C4D6A5473BA22BE0D4F3488D769CBBEE23318BB33B91\",\"purchases\":797,\"spentUnits\":107967424757760,\"uncertain\":2,\"economyDigest\":\"74D0FE8081EA795D4D56A11B4B955DC6E777E3822C702D3C09BC9477E6679AF9\",\"reloadDigest\":\"59B6F14D44CA0F996C5A828E2E538B52C5426347FCFA40767527B72D77F1D4FA\"},\"writeBytes\":14452712,\"readBytes\":38773560,\"bench\":null,\"hot\":null}\n",
+    "food-regulars-regression": {
+      "boundary": "Offline .NET 10; 40 normalized batch means after 5 warmups, not individual-call percentiles. Saturated four-entry memory; 16 owned shops. Panel timing covers B2 text including projection; native account reads/Unity GUI excluded. Full Core popup capture/text included. Closed zero cost and zero commit hooks established by call-site/source tests, not a native timing window. Batch spikes flag benchmark batches, not mod-work frames.",
+      "populations": [
+        {
+          "residents": 957,
+          "consumers": 1914,
+          "memoryEntries": 7656,
+          "shops": 16,
+          "projectionRefresh": {
+            "p50Ms": 0.53513,
+            "p95Ms": 0.69015,
+            "maxMs": 0.76082,
+            "allocatedBytesPerCall": 41840.0,
+            "batchSpikesAtLeast30Ms": 0
+          },
+          "perShopLookup": {
+            "p50Ms": 1.172e-05,
+            "p95Ms": 2.135e-05,
+            "maxMs": 8.219999999999999e-05,
+            "allocatedBytesPerCall": 0.0,
+            "batchSpikesAtLeast30Ms": 0
+          },
+          "panelB2Text": {
+            "p50Ms": 0.21692999999999998,
+            "p95Ms": 0.976585,
+            "maxMs": 0.9975799999999999,
+            "allocatedBytesPerCall": 44496.0,
+            "batchSpikesAtLeast30Ms": 0
+          },
+          "fullCorePopupCaptureAndText": {
+            "p50Ms": 0.006847,
+            "p95Ms": 0.009791,
+            "maxMs": 0.015992,
+            "allocatedBytesPerCall": 9136.0,
+            "batchSpikesAtLeast30Ms": 0
+          },
+          "unchangedB1Commit": {
+            "p50Ms": 0.0001332,
+            "p95Ms": 0.0001744,
+            "maxMs": 0.0002172,
+            "allocatedBytesPerCall": 0.0,
+            "batchSpikesAtLeast30Ms": 0
+          },
+          "projectionCommitHooks": 0,
+          "closedProjectionBuilds": 0,
+          "closedTextBuilds": 0,
+          "closedAddedAllocations": 0,
+          "growingDedupSet": {
+            "p50Ms": 0.026090000000000002,
+            "p95Ms": 0.04096,
+            "maxMs": 0.21888999999999997,
+            "allocatedBytesPerCall": 73152.0,
+            "batchSpikesAtLeast30Ms": 0
+          },
+          "presizedDedupSet": {
+            "p50Ms": 0.01977,
+            "p95Ms": 0.02867,
+            "maxMs": 0.062975,
+            "allocatedBytesPerCall": 38736.0,
+            "batchSpikesAtLeast30Ms": 0
+          },
+          "savedBytesBefore": 1503076,
+          "savedBytesAfter": 1503076,
+          "savedByteGrowth": 0,
+          "sink": 225885600,
+          "textLength": 418
+        },
+        {
+          "residents": 2500,
+          "consumers": 5000,
+          "memoryEntries": 20000,
+          "shops": 16,
+          "projectionRefresh": {
+            "p50Ms": 0.5411050000000001,
+            "p95Ms": 0.97198,
+            "maxMs": 1.0571249999999999,
+            "allocatedBytesPerCall": 120048.94,
+            "batchSpikesAtLeast30Ms": 0
+          },
+          "perShopLookup": {
+            "p50Ms": 1.129e-05,
+            "p95Ms": 1.1799999999999999e-05,
+            "maxMs": 1.217e-05,
+            "allocatedBytesPerCall": 0.0,
+            "batchSpikesAtLeast30Ms": 0
+          },
+          "panelB2Text": {
+            "p50Ms": 1.03443,
+            "p95Ms": 1.079185,
+            "maxMs": 1.105445,
+            "allocatedBytesPerCall": 122852.01,
+            "batchSpikesAtLeast30Ms": 0
+          },
+          "fullCorePopupCaptureAndText": {
+            "p50Ms": 0.0076500000000000005,
+            "p95Ms": 0.012599,
+            "maxMs": 0.016828,
+            "allocatedBytesPerCall": 9136.0,
+            "batchSpikesAtLeast30Ms": 0
+          },
+          "unchangedB1Commit": {
+            "p50Ms": 0.0001513,
+            "p95Ms": 0.00022140000000000001,
+            "maxMs": 0.0008491,
+            "allocatedBytesPerCall": 0.0,
+            "batchSpikesAtLeast30Ms": 0
+          },
+          "projectionCommitHooks": 0,
+          "closedProjectionBuilds": 0,
+          "closedTextBuilds": 0,
+          "closedAddedAllocations": 0,
+          "growingDedupSet": {
+            "p50Ms": 0.25177499999999997,
+            "p95Ms": 0.87844,
+            "maxMs": 1.08874,
+            "allocatedBytesPerCall": 322641.86,
+            "batchSpikesAtLeast30Ms": 0
+          },
+          "presizedDedupSet": {
+            "p50Ms": 0.11470499999999999,
+            "p95Ms": 0.176975,
+            "maxMs": 0.23897,
+            "allocatedBytesPerCall": 116940.78,
+            "batchSpikesAtLeast30Ms": 0
+          },
+          "savedBytesBefore": 3925066,
+          "savedBytesAfter": 3925066,
+          "savedByteGrowth": 0,
+          "sink": 589500000,
+          "textLength": 418
+        }
+      ],
+      "nativeModWork": "pending normal combined 6 Nov session: p95 <5 ms, flag >=30 ms; whole-frame separate"
+    }
+  },
+  "foodMemoryTimingFlags": [],
+  "timingQualification": "Synthetic .NET/double measurements only, not native mod-work or whole-frame. D1 cold aggregate 41.5174 ms flagged across bounded units. C1 1024-business cold p95 6.9734 ms; optional-stop 957-resident admission p95 8.8098/12.0946 ms at 25/100%. No optimization or native clearance claimed; native p95 <5 ms, >=30 ms spike flags and separate whole-frame evidence remain required, four parked hotspots unchanged.",
+  "whitespace": "Integration diff against incoming development passes. First-parent diff inherits unchanged B2 red-test log CRCRLF warnings; no evidence file reformatted.",
+  "foregroundCompletion": "All 43 workloads and their children completed; no background test run, watcher or server was started. DOTNET_CLI_USE_MSBUILD_SERVER=0, MSBUILDDISABLENODEREUSE=1, UseSharedCompilation=false."
+}
