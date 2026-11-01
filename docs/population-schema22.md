@@ -61,12 +61,28 @@ references, malformed wire, unsupported schemas, noncanonical scalars and future
 input refuse without replacing the source. Namespace, money, menu limits,
 receipts, business authority and resident tuples are unchanged.
 
-Native type identity and demographic targeting are different evidence. C1 has
-six verified identifiers but **no verified resident-target mapping**. Production
-therefore retains Unknown groups and zero campaign admission. The explicit PC
-policy interface supports reviewed commuter routines (an assigned work/study
-place, never native employment), health orientation (saved trait band ≥3), and
-their overlap. Synthetic reviewed policies exercise this interface offline;
-they are not native target evidence or an authorization to guess targets.
+## Owner decision 1 - 1 November 2026
+
+Campaign preference applies to all residents with no demographic or native-target
+mapping. A positive observed current-hour mask supplies the active modifier;
+retained masks still support bounded awareness after stopping but do not grant an
+active bonus. Missing reads add no bits and age retained scope generations.
+Only absent/replaced generations retire. The actual runtime observes after safe
+ownership transfers and scope activation, including hours with no transfers.
+
+The existing held `Sources` integer additionally accepts **ActiveCampaign=64**
+as a modifier on an admitted source identity, not another draw/source slot.
+At least one ordinary source bit (1-32) is still required; unknown bits refuse.
+The six admission caps remain 4/4/4/4/8/8 and the union/shortlist/routes remain
+32/8/16. Schema 19's frozen validator still rejects both campaign bits. This is
+an amendment of the unpublished schema-22 candidate; no schema 17-19 contract,
+resident tuple, extra field or schema number is changed.
+
+Active bit 64 captures a fixed 1.25 preference and half soft-distance input in
+both shortlist and final offer weighting. Actual route times, money and
+feasibility are unchanged; stopped/disabled live campaigns cannot rerank a held
+image. The obsolete FoodMarketingTargetMatchMultiplier setting and target-policy
+classes are removed. Reach, retention and daily decay govern awareness draws;
+active known-shop weighting is not gated by a successful extra draw.
 
 See [slice evidence and rig checks](checks/c2b-campaign-awareness.md).

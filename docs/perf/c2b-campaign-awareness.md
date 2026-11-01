@@ -1,5 +1,59 @@
 # C2b campaign evidence performance — 1 November 2026
 
+
+## Round-1 owner decision 1 / review fixes
+
+All residents now use the same observed active-campaign preference (fixed 1.25
+weight factor and half soft-distance input). Group policy and target-match tuning
+are removed. Native sampling follows ownership activation; missing candidate reads
+age retained history without new bits. This run is offline only; final-head
+combined `rig_test` proof remains a merge blocker. The tables after this round-1
+section are historical initial-implementation evidence.
+
+[Raw round-1 results and source fingerprints](c2b-r1-offline-results.json).
+Release .NET 10; same 1/1,024-business C1 doubles, eight saved days, 30 warmups,
+301 hourly/rebuild samples and 10,001 eight-slot queries. No native state changes.
+
+| Final operation, 1 / 1,024 images | p95 ms | Max ms | B/op |
+| --- | --- | --- | ---: |
+| C1 + publication | 0.0151 / 2.6336 | 0.0183 / 3.3697 | 2,880 / 2,198,552 |
+| Day/type index rebuild | 0.0032 / 0.4893 | 0.1667 / 0.6301 | 72 / 16,440 |
+| Eight-slot source | 0.0062 / 0.0065 | 0.1908 / 0.0358 | 0 / 0 |
+| Actual all-resident production adapter | 0.0127 / 4.2356 | 0.0322 / 8.9763 | 3,244 / 2,358,090 |
+| No-campaign count probes | 0.0002 / 0.0849 | 0.0150 / 0.7460 | 0 / 0 |
+| Feature disabled | 0.0001 / 0.0001 | 0.0001 / 0.0164 | 0 / 0 |
+
+**Initial round-1 maximum-size p95 exceeded 5 ms:** C1/publication 10.0878 ms
+(max 28.8639 ms), production adapter 8.8877 ms (max 14.3554 ms); zero >=30 ms
+samples in those series. These results are retained, not pooled into a better
+number. **Taken win:** reuse two private active-hour dictionaries with atomic
+publication, cutting publication allocation **2,300,768 -> 2,198,552 B/op** and
+rebuild allocation **118,656 -> 16,440 B/op**. The repeat gives the table above;
+wall-time differences include host/JIT/GC variability, so only allocation removal
+and eliminated dictionary resizing have direct causal proof.
+
+**Taken neutral-path win:** derive/cache the captured active marker at capture or
+strict decode. Eight known-shop checks over a 24-ID held image previously walked
+the image per offer: p50/p95/max **0.0019/0.0028/0.4650 ms**. Cached checks take
+**0.0001/0.0002/0.0220 ms**, with **0 B/op on both sides** (30 warmups, 10,001
+samples). No campaign-source/index work occurs when absent; no per-offer held-ID
+scan is added to the ordinary path. Day/type rather than group/day/type indexes
+also reduce the four fixed index/work arrays from 512 to 64 slots each, without
+adding an identity or increasing any 32/8/16 cap.
+
+All final round-1 component series above have **zero spikes >=30 ms**. C1's
+separate cold 1,024-business diagnostic still has p95 **6.3118 ms** (max 11.4315
+ms), explicitly above the comparison target; warm p95 2.2145 ms, zero >=30 ms
+samples. Component numbers are not native mod-work or whole-frame gate proof.
+Shared reference lookup still allocates zero (1,024-ref p95 0.0002 ms, max
+0.0007 ms); the duplicate-index control allocates 227,440 B and p95 0.2219 ms.
+Saved images remain 265 ASCII characters and **282 / 274,446 bytes** for field
+plus 1 / 1,024 images with existing shared references, charged once each. Active
+modifier bit 64 reuses the one held Sources scalar, costing at most one extra
+decimal character per union record (<=32/city), with no new field or record.
+
+## Initial measurements (historical)
+
 Offline Release .NET 10, local Windows CPU. These are component measurements,
 not Unity/Mono mod-work or whole-frame results. Foreground only, other-dotnet
 wait before each run. Harness: `tools/campaign-awareness-regression`.

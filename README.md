@@ -2,7 +2,7 @@
 
 Validation and dated development notices are in the [checks index](CHECKS.md); each slice maintains its own evidence file.
 
-C2b has offline campaign evidence/source plumbing and schema 22; native target mappings remain Unknown, so campaign admission awaits reviewed targeting evidence. [Checks and 6 Nov rig list](docs/checks/c2b-campaign-awareness.md).
+C2b has offline campaign evidence/source plumbing and schema 22; active campaigns now raise choice preference and soften distance for every resident under Peter's 1 Nov decision; final-head rig proof remains pending. [Checks and 6 Nov rig list](docs/checks/c2b-campaign-awareness.md).
 
 An independent Big Ambitions mod that requires Real Life Overhaul. Working name; no public release yet.
 

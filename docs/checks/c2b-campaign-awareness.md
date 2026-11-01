@@ -1,6 +1,72 @@
-# C2b: campaign awareness and targeting
+# C2b: observed campaigns and soft distance preference
 
-## 1 November 2026 — offline implementation
+## Round-1 fixes - owner decision 1, 1 November 2026
+
+Peter: "It should simply increase the chance for residents to pick that shop,
+also at greater distance." This supersedes the initial demographic-targeting
+proposal below and in the older B-E plan. Production is active for **all residents**;
+there is no target policy, no Unknown target gate, and no target-match tuning.
+Only C1-verified observed campaign evidence is accepted. Native controls/fees stay
+native; paid research remains unavailable.
+
+For a shop with positive evidence in the captured current logical hour, shortlist
+and final offer preference use half the normal distance input and a fixed 1.25
+preference factor. This modest fixed gameplay prior is the same for every resident
+and campaign type; it neither changes measured journey times nor bypasses existing
+feasibility/traits/outside choice. The held awareness image stores modifier bit
+64, separately from campaign admission bit 32. No new saved field or resident
+array is added. Without a campaign or with the feature disabled, the original
+arithmetic and serialized source flags are unchanged.
+
+Sol-r1-1: sample after ownership transfers and scope activation, including hours
+without transfers. Opus-r1-1: retain and age masks for generations still in saved
+scopes when no current read exists; add no new bit and drop only absent/replaced
+scope generations. Opus-r1-3: catch observer failures, log once, latch that
+observer off for the session, and retain the last complete image. Campaign
+observation cannot skip or abort the hour's ownership transfer.
+
+Sol-r1-2 / Opus-r1-2: the new owner instruction replaces demographic mapping.
+The production adapter uses the universal rule; no target-match boost remains.
+The same trait-independent modifier applies to already-known shops even when the
+eight campaign discovery draws admit nothing. Retained awareness after a stop
+has no active modifier; held decisions keep the modifier they actually captured.
+
+**Validation:** implementation `6de85c6`; final full suite **2,359/2,359**, zero
+failures/skips; all **33/33** foreground gate commands pass, with the required
+other-dotnet wait before every test/run and Python wrapper. The full suite was
+repeated after the private-cache changes and passes. Actual ownership hooks:
+**243 assertions**. Production-adapter fixtures verify all residents, retained
+history with zero current candidates, first-hour evidence and a single latched
+failure without publication. Policy tests prove higher seeded pick probability,
+softer distance decay, unchanged absence, and held-bit replay after stop/disable.
+
+At 1 / 1,024 images: publication p95 **0.0151 / 2.6336 ms**, production adapter
+p95 **0.0127 / 4.2356 ms** (max **0.0322 / 8.9763 ms**), day/type rebuild p95
+**0.0032 / 0.4893 ms**, eight-slot source p95 **0.0062 / 0.0065 ms**, **0 B/query**.
+Absent/disabled steady-state paths allocate zero. Final series have zero >=30 ms
+spikes. Initial round-1 1,024-image publication/adapter p95 **10.0878 / 8.8877 ms**
+remains explicitly above target; private active-buffer reuse removes **102,216
+B/publication** and **102,216 B/rebuild**. The neutral marker cache reduces eight-
+lookup p95 **0.0028 -> 0.0002 ms**, **0 B on both sides**. Fixed index/work arrays
+shrink **512 -> 64** slots. Wall times include host/JIT/GC variability; this is no
+native gate claim. Separate C1 cold diagnostic p95 **6.3118 ms** remains flagged
+above 5 ms. Four parked hotspots are unchanged.
+[Round-1 measurements](../perf/c2b-r1-offline-results.json),
+[method / before-after evidence](../perf/c2b-campaign-awareness.md).
+
+Final save-contract/order/economy/reload digests match the previous candidate
+and its schema-19 base comparison below when campaigns are absent. Population-only
+contract digest remains `70698CB7D21E1ECA6C8D91A3FD3C4835A4EE7BA8EAB2D005592F868DDD308B2C`.
+Final DLL SHA-256: `163a0abab7df999d9542c5eeed44d22813052aa884d706866715af833f046d88`.
+[Command exits and final differential](c2b-r1-offline-gates.json). Local logs:
+ignored `build/c2b-r1/`. Coordinated compiler shutdown succeeded; the final process
+inventory found no owned test/run/testhost processes. No game/rig, ordinary save,
+native campaign/fee mutation, push or merge occurred in this fixer.
+
+Earlier measurements below belong to the initial implementation and remain
+historical evidence, not final-head rig proof.
+
+## Initial 1 November implementation (historical; superseded by owner decision 1)
 
 Branch `codex/pc-c2b-campaign-awareness`, base `51ce709`. No sibling slice,
 schema 20/21/23 implementation or rig files were used. No game launch, native
@@ -115,57 +181,69 @@ Each fixed record is 265 ASCII characters, no per-resident state. Empty field:
 
 ### In-game checks for 6 Nov rig
 
-Pending, normal combined session only. Use a named disposable FT fixture and
-attach before/red → after/green dumps/logs/captures. LOCKED-OK classification
-follows [feasibility commit 84be71a](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/84be71a/docs/reviews/rig/2026-10-31-locked-session-feasibility/README.md).
+**MERGE BLOCKED:** final-head `rig_test` (Codex Sol, high) evidence is still
+pending. Offline fixtures do not establish native hourly ordering, noninterference,
+or combined mod-work cost. Keep PR #55 blocked until the authorized combined
+session attaches final-head before/red -> after/green dumps/logs/screenshots for
+these checks. This fixer performs no game/rig work and grants no merge approval.
+LOCKED-OK classifications follow feasibility commit `84be71a`.
 
-1. **NEEDS-INPUT — prepare one native campaign.** In the agency UI of the named
-   disposable fixture, start one available verified type on one supported player
-   food business. Record type, enabled flag, agency/business generation, native
-   fee and clock. Starting/stopping and visual UI confirmation need the unlocked
-   6 November session. Do not have PC purchase or mutate it.
-2. **LOCKED-OK — hourly complete publication.** From the prepared checkpoint call
-   `ReadCampaignSnapshot` and `CampaignAwareness()`, advance through the next
-   accounting hour using the bridge, then dump again. Verify a single complete
-   image, exact first-observed hour bit, no earlier exposure, ≤8 types/8 days and
-   ≤1,024 images. Repeat across permitted hidden-skip accounting boundaries;
-   show each actual observation, never reconstructed activity or partial images.
-3. **LOCKED-OK — targeted versus untargeted evidence.** Dump known resident and
-   represented-slot traits/routine facts plus `FoodAwareness` raw/held slots and
-   campaign counters. With the current Unknown table both cohorts must admit
-   zero; attach that refusal. Campaign acceptance additionally requires a
-   reviewed type→group policy/evidence, then matched targeted/untargeted dumps,
-   overlapping groups counted once, ≤8 campaign draws, ≤32 union/8 shortlist/16
-   routes, and trait/price/stock/deadline rejection after exposure. Synthetic
-   policy injection alone does not clear this native check.
-4. **NEEDS-INPUT — stop through the native agency UI.** Stop the prepared campaign,
-   record enabled/list state and logical hour. UI action and visual confirmation
-   require input; PC must not issue a campaign write.
-5. **LOCKED-OK — stop/fade over days.** From the stopped checkpoint advance through
-   hours/midnight/day 1–8 via bridge and dump masks/sources/counters. No new stopped
-   bits; retained prior awareness follows saved masks, configured decay and stable
-   reach draws; expired campaign admission is zero. Other awareness sources may
-   still admit the shop. Unknown targets remain zero throughout.
-6. **LOCKED-OK — mid-campaign save/reload and fees.** Save a disposable running-
-   campaign copy outside timing windows, reload via bridge, and compare exact
-   image masks, source flags, held shortlist/quotes/selection and native campaign
-   state. Repeat after stopping and with different event budgets. Compare raw
-   campaign fields, `MarketingExpenses`, native fee/transaction/cash evidence
-   against matched native controls before/after repeated bridge reads and actual
-   daily fee settlement; PC contributes zero native changes. Preserve refused
-   source copies and keep manual saves outside measured windows.
-7. **LOCKED-OK — matched candidate/base performance.** Interleave candidate and
-   base `51ce709` on the same prepared fixture/seed/population/shops/clock/body/
-   graphics/cache/panel state at idle and meal rush, including campaign sampling,
-   retention/rebuild and absent/disabled conditions. Record **mod-work p50/p95/max**,
-   allocations/GC, source touches, lag, and **every spike ≥30 ms** with component;
-   require mod-work p95 <5 ms. Track **whole-frame intervals/stalls separately**.
-   Include `NativeFoodOwnership.AfterNativeTick` / `ObserveCampaignBoundary`
-   sampling/publication cost in that frame's mod-work total; Advance-only timers
-   are incomplete, and component spans must not be double-counted.
-   Record original autosave, disable and verify off before every measured window
-   and after reload; invalidate windows with any save activity. Restore original
-   autosave/preferences/fixtures at cleanup. No special performance-only or save
-   profiling run is implied.
+1. **NEEDS-INPUT - prepare a native campaign and acquisition.** In a named
+   disposable FT fixture, prepare a supported player food business with one
+   running verified native campaign before its safe authority-acquisition hour.
+   Record business generation, campaign type/enabled/agency state, native fee and
+   clock. Start/stop campaigns through the native agency UI only; no PC campaign
+   write or purchase. Native UI setup and visual confirmation wait for input.
+2. **LOCKED-OK - first eligible boundary and stable hours.** Via bridge capture
+   authority FromHour, scope/candidacy, `ReadCampaignSnapshot`, and
+   `CampaignAwareness()` before/after acquisition. Verify campaign publication
+   follows `row.Boundary`/`ActivateScope`, with the first eligible hour bit present.
+   Repeat on an hour with no transfers and during permitted hidden-skip boundaries.
+   No intermediate guessed hours, partial images, or skipped first observations;
+   keep <=1,024 images / eight types / eight days. A failed optional observer must
+   report one latched session error without interrupting native ownership.
+3. **LOCKED-OK - all residents and active probability.** Compare active versus
+   stopped fixture copies across resident/represented-slot traits, including
+   near and distant aware shops. Join `FoodAwareness` proposed/held images to
+   current observed masks: source bit 64 is the captured active modifier, bit 32
+   is bounded campaign awareness. Verify no demographic or type-to-group gate.
+   Active shops get the same 1.25 preference and half soft-distance input for
+   every trait profile in shortlist and offer weighting; price, stock, hours,
+   routes, deadlines, outside choice and traits still decide. Compare seeded
+   selections/weights, without demanding a guaranteed purchase. Preserve
+   <=eight campaign draws / 32 union / eight shortlisted shops / 16 routes.
+4. **NEEDS-INPUT - stop before the next hour.** Stop the acquisition fixture's
+   campaign through the agency UI before its next accounting boundary. Record
+   exact enabled/list state and clock; UI interaction requires unlocked input.
+5. **LOCKED-OK - stop, temporary ineligibility, retirement and fade.** At the next
+   boundary show the acquisition-hour evidence survived but no stopped-hour bit
+   or active modifier was invented. Exercise one boundary with no current
+   candidates while the same generation remains in saved scopes: old masks age
+   without new evidence, and candidacy still refuses admission. Restore candidacy
+   and verify retained awareness. Advance through midnight/day 1-8 to prove
+   retention/decay/expiry. Remove/replace the actual generation and verify only
+   that retired history drops. A stopped campaign retains awareness, not its
+   active choice modifier; other discovery/memory sources remain independent.
+6. **LOCKED-OK - save/reload and native noninterference.** Save/reload disposable
+   running/stopped copies outside timing windows; compare masks, complete IDs,
+   bit-64 held inputs, shortlist/quotes/selection and money under different event
+   budgets. Held decisions must not rerank after live campaign changes or disable.
+   With the clock/commerce held, repeat bridge reads and compare native campaign
+   fields, MarketingExpenses, fee transactions and cash against an idle control.
+   Then compare actual daily native fee settlement separately from legitimate
+   food-sale changes. PC must not purchase/edit campaigns, alter fees or book
+   marketing as sales. Preserve all refused source copies.
+7. **LOCKED-OK - final-head matched performance.** Interleave candidate and base
+   `51ce709` on the same fixture/seed/population/shops/clock/body/graphics/cache/
+   panel setup at idle and meal rush, with running/retained/absent/disabled
+   campaigns. Record mod-work p50/p95/max, allocations/GC, source touches, lag and
+   every spike >=30 ms with component; require mod-work p95 <5 ms. Include
+   `NativeFoodOwnership.AfterNativeTick` / `ObserveCampaignBoundary` in that
+   frame's mod-work total; Advance-only timers are incomplete. Do not double-count
+   component spans. Track whole-frame intervals/stalls separately. Record original
+   autosave, disable/verify off before every window and after reload; invalidate
+   any window with save activity. Keep manual saves outside windows and restore
+   original autosave/preferences/fixtures during cleanup. No separate perf-only
+   or save-profiling run is implied.
 
 [Checks index](../../CHECKS.md).
