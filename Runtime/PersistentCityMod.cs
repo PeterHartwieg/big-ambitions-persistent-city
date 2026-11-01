@@ -186,6 +186,7 @@ namespace PersistentCity.Runtime
                 inspector.ShopName = place => foodMarket?.NameOf(place);
                 inspector.CurrentOwnShop = ObservedOwnShop;
                 settings.FoodChoice.Clamp(message => log.Info(message));
+                settings.MarketResearch.Clamp(message => log.Info(message));
                 settings.Awareness.Clamp(message => log.Info(message));
                 log.Info("Food awareness v1: radius="+settings.Awareness.RadiusMetres.ToString(System.Globalization.CultureInfo.InvariantCulture)
                     +", draws/anchor="+settings.Awareness.DrawsPerAnchor+", discovery="+settings.Awareness.DiscoveryProbability.ToString(System.Globalization.CultureInfo.InvariantCulture));

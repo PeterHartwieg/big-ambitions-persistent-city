@@ -7,6 +7,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../tools/market-research-regression/ResearchFixture.cs" Link="ResearchFixture.cs" />
     <Compile Include="../Runtime/PrototypeSettings.cs" Link="PrototypeSettings.cs" />
     <Compile Include="../Runtime/InteriorGuardSettings.cs" Link="InteriorGuardSettings.cs" />
     <Compile Include="../Runtime/InteriorViewState.cs" Link="InteriorViewState.cs" />

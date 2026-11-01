@@ -48,5 +48,7 @@
   "FoodMemoryMinimumMultiplier": 0.25,
   "FoodMemoryMaximumMultiplier": 2.5,
   "FoodMemoryCapacity": 4,
-  "FoodMemoryForgetAfterDays": 28
+  "FoodMemoryForgetAfterDays": 28,
+  "MarketResearchCatchmentMetres": 500,
+  "MarketResearchConsumersPerUnit": 256
 }
