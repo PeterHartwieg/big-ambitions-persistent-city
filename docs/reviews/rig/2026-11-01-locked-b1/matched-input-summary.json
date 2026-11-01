@@ -1,0 +1,42 @@
+{
+  "role": "rig_test",
+  "sameNativeHsgAcrossAllCandidateWindows": true,
+  "checkpoints": {
+    "cand1-idle": {
+      "name": "FT Food Routines Locked B1 TrainedDay9 20261101",
+      "hsgSha256": "c93f64e0a7a67657bb9f3f747faa14c6cf48445cac52b5dcb499aa06a3ac6b78",
+      "hsgBytes": 2172235
+    },
+    "cand1-meal": {
+      "name": "FT Food Routines Locked B1 TrainedDay9 20261101",
+      "hsgSha256": "c93f64e0a7a67657bb9f3f747faa14c6cf48445cac52b5dcb499aa06a3ac6b78",
+      "hsgBytes": 2172235
+    },
+    "cand2-idle": {
+      "name": "FT Food Routines Locked B1 TrainedDay9 20261101",
+      "hsgSha256": "c93f64e0a7a67657bb9f3f747faa14c6cf48445cac52b5dcb499aa06a3ac6b78",
+      "hsgBytes": 2172235
+    },
+    "cand2-meal": {
+      "name": "FT Food Routines Locked B1 TrainedDay9 20261101",
+      "hsgSha256": "c93f64e0a7a67657bb9f3f747faa14c6cf48445cac52b5dcb499aa06a3ac6b78",
+      "hsgBytes": 2172235
+    }
+  },
+  "configDifferencesFromActive": {
+    "cand1-idle": [],
+    "cand1-meal": [],
+    "cand2-idle": [
+      "FoodMemoryWeight"
+    ],
+    "cand2-meal": [
+      "FoodMemoryWeight"
+    ]
+  },
+  "weights": {
+    "cand1-idle": 1,
+    "cand1-meal": 1,
+    "cand2-idle": 0,
+    "cand2-meal": 0
+  }
+}

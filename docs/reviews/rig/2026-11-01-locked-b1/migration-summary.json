@@ -1,0 +1,31 @@
+{
+  "role": "rig_test",
+  "sourceSchema": 18,
+  "sourceCapabilities": {
+    "Code": "B",
+    "Revision": 1,
+    "Active": false
+  },
+  "loadedCapabilities": {
+    "Code": "B",
+    "Revision": 1,
+    "Active": false
+  },
+  "identitiesEqual": true,
+  "moneyEqual": true,
+  "sourceMemoryEmpty": true,
+  "loadedMemoryEmpty": true,
+  "sourceBusinessReferences": [],
+  "loadedBusinessReferences": [],
+  "sourcePayloadHash": "b9c50c98bf6064aad245df5e233632e8c47de012ca6a6f6d218c7efc41a18988",
+  "beforeMinute": 8985.347206115723,
+  "afterMinute": 8985.68053817749,
+  "firstMidnight": {
+    "minute": 10085.014506340027,
+    "capabilities": {
+      "Code": "B",
+      "Revision": 1,
+      "Active": true
+    }
+  }
+}

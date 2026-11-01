@@ -1,0 +1,208 @@
+{
+  "role": "rig_test",
+  "consumer": "pc:390",
+  "source": "same genuine nonzero partial-quote native checkpoint",
+  "eventBudgets": [
+    1,
+    2
+  ],
+  "targetStateMoneyMemoryTermsExact": true,
+  "unloadedEditTargetStateExact": true,
+  "targetStates": [
+    {
+      "ResidentId": "pc:390",
+      "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+      "ProductId": "ba:itemname_croissant",
+      "Price": {
+        "Units": 275221504000
+      },
+      "Allowance": {
+        "Units": 44064947118080
+      },
+      "ServiceAt": 0.0,
+      "Deadline": 10690.0,
+      "ReturnMinutes": 1.6817434973262164,
+      "Status": 1,
+      "Budget": {
+        "IncomeSource": 0,
+        "BaseIncomeCents": 20922,
+        "DailyIncomeCents": 20922,
+        "DailyHousingCents": 7845,
+        "DailyEssentialsCents": 2153,
+        "DailyHomeFoodCents": 1012,
+        "OpeningBalance": {
+          "Units": 39313446273024
+        },
+        "Balance": {
+          "Units": 47020421488640
+        },
+        "IncomeReceived": {
+          "Units": 16848619831296
+        },
+        "EssentialsPaid": {
+          "Units": 8051453067264
+        },
+        "HomeFoodPaid": {
+          "Units": 814970044416
+        },
+        "PreparedFoodSpent": {
+          "Units": 275221504000
+        },
+        "HeldPurchase": {
+          "Units": 0
+        },
+        "Arrears": {
+          "Units": 0
+        },
+        "LastPostedDay": 7,
+        "HomeFoodFundedDay": 7,
+        "DaysWithoutHomeFood": 0,
+        "NextPostingMinute": 11520.0
+      },
+      "Purchases": 1,
+      "Spent": {
+        "Units": 275221504000
+      },
+      "Memory": {
+        "Watermark": {
+          "Day": 7,
+          "Meal": 1,
+          "Context": 1,
+          "Stage": 1
+        },
+        "Entries": []
+      }
+    },
+    {
+      "ResidentId": "pc:390",
+      "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+      "ProductId": "ba:itemname_croissant",
+      "Price": {
+        "Units": 275221504000
+      },
+      "Allowance": {
+        "Units": 44064947118080
+      },
+      "ServiceAt": 0.0,
+      "Deadline": 10690.0,
+      "ReturnMinutes": 1.6817434973262164,
+      "Status": 1,
+      "Budget": {
+        "IncomeSource": 0,
+        "BaseIncomeCents": 20922,
+        "DailyIncomeCents": 20922,
+        "DailyHousingCents": 7845,
+        "DailyEssentialsCents": 2153,
+        "DailyHomeFoodCents": 1012,
+        "OpeningBalance": {
+          "Units": 39313446273024
+        },
+        "Balance": {
+          "Units": 47020421488640
+        },
+        "IncomeReceived": {
+          "Units": 16848619831296
+        },
+        "EssentialsPaid": {
+          "Units": 8051453067264
+        },
+        "HomeFoodPaid": {
+          "Units": 814970044416
+        },
+        "PreparedFoodSpent": {
+          "Units": 275221504000
+        },
+        "HeldPurchase": {
+          "Units": 0
+        },
+        "Arrears": {
+          "Units": 0
+        },
+        "LastPostedDay": 7,
+        "HomeFoodFundedDay": 7,
+        "DaysWithoutHomeFood": 0,
+        "NextPostingMinute": 11520.0
+      },
+      "Purchases": 1,
+      "Spent": {
+        "Units": 275221504000
+      },
+      "Memory": {
+        "Watermark": {
+          "Day": 7,
+          "Meal": 1,
+          "Context": 1,
+          "Stage": 1
+        },
+        "Entries": []
+      }
+    },
+    {
+      "ResidentId": "pc:390",
+      "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+      "ProductId": "ba:itemname_croissant",
+      "Price": {
+        "Units": 275221504000
+      },
+      "Allowance": {
+        "Units": 44064947118080
+      },
+      "ServiceAt": 0.0,
+      "Deadline": 10690.0,
+      "ReturnMinutes": 1.6817434973262164,
+      "Status": 1,
+      "Budget": {
+        "IncomeSource": 0,
+        "BaseIncomeCents": 20922,
+        "DailyIncomeCents": 20922,
+        "DailyHousingCents": 7845,
+        "DailyEssentialsCents": 2153,
+        "DailyHomeFoodCents": 1012,
+        "OpeningBalance": {
+          "Units": 39313446273024
+        },
+        "Balance": {
+          "Units": 47020421488640
+        },
+        "IncomeReceived": {
+          "Units": 16848619831296
+        },
+        "EssentialsPaid": {
+          "Units": 8051453067264
+        },
+        "HomeFoodPaid": {
+          "Units": 814970044416
+        },
+        "PreparedFoodSpent": {
+          "Units": 275221504000
+        },
+        "HeldPurchase": {
+          "Units": 0
+        },
+        "Arrears": {
+          "Units": 0
+        },
+        "LastPostedDay": 7,
+        "HomeFoodFundedDay": 7,
+        "DaysWithoutHomeFood": 0,
+        "NextPostingMinute": 11520.0
+      },
+      "Purchases": 1,
+      "Spent": {
+        "Units": 275221504000
+      },
+      "Memory": {
+        "Watermark": {
+          "Day": 7,
+          "Meal": 1,
+          "Context": 1,
+          "Stage": 1
+        },
+        "Entries": []
+      }
+    }
+  ],
+  "method": "Budget2 completed past the resolved-save seam before that seam could save; actual completed outcome exported. No checkpoint PASS is inferred for the missed boundary.",
+  "targetJourneyAndOutingExactAcrossBudgets": true,
+  "targetJourneyAndOutingExactAfterEdit": true
+}

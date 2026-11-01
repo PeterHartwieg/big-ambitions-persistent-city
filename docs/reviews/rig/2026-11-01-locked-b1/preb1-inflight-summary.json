@@ -1,0 +1,126 @@
+{
+  "role": "rig_test",
+  "checkpoints": [
+    {
+      "checkpoint": "Eval",
+      "sourceSchema": 18,
+      "sourceCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": false
+      },
+      "loadedCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": false
+      },
+      "identitiesEqual": true,
+      "moneyEqual": true,
+      "loadedMemoryEmpty": true,
+      "sourceMemoryEmpty": true,
+      "committedTerms": [],
+      "allCommittedTermsPreserved": true,
+      "loadedOwnPayloadHash": "2d88d497604625ecfa74d726360f4df07a79c51055532bd01f8914711b21708e",
+      "sourceOwnPayloadHash": "2d88d497604625ecfa74d726360f4df07a79c51055532bd01f8914711b21708e",
+      "nativeObservationHash": "357f9353be7378b03003118e53fb15b465f05741c618b79d5ea24b86e3219c20",
+      "firstUnitLoadedComparison": {
+        "identitiesEqual": true,
+        "moneyEqual": true,
+        "memoryEqual": true,
+        "allResidentTermsEqual": true
+      },
+      "method": "Actual schema18 native file made with B0b control; loaded with B1 candidate, no payload conversion or injected memory"
+    },
+    {
+      "checkpoint": "Partial",
+      "sourceSchema": 18,
+      "sourceCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": false
+      },
+      "loadedCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": false
+      },
+      "identitiesEqual": true,
+      "moneyEqual": true,
+      "loadedMemoryEmpty": true,
+      "sourceMemoryEmpty": true,
+      "committedTerms": [],
+      "allCommittedTermsPreserved": true,
+      "loadedOwnPayloadHash": "2f1400ecaafaa2e9aba6e5f4b738b1d128c82b6c6de7e8eb5c0169b0901cf3db",
+      "sourceOwnPayloadHash": "2f1400ecaafaa2e9aba6e5f4b738b1d128c82b6c6de7e8eb5c0169b0901cf3db",
+      "nativeObservationHash": "357f9353be7378b03003118e53fb15b465f05741c618b79d5ea24b86e3219c20",
+      "firstUnitLoadedComparison": {
+        "identitiesEqual": true,
+        "moneyEqual": true,
+        "memoryEqual": true,
+        "allResidentTermsEqual": true
+      },
+      "method": "Actual schema18 native file made with B0b control; loaded with B1 candidate, no payload conversion or injected memory"
+    },
+    {
+      "checkpoint": "Outward",
+      "sourceSchema": 18,
+      "sourceCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": false
+      },
+      "loadedCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": false
+      },
+      "identitiesEqual": true,
+      "moneyEqual": true,
+      "loadedMemoryEmpty": true,
+      "sourceMemoryEmpty": true,
+      "committedTerms": [
+        {
+          "consumer": "pc:350",
+          "before": {
+            "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+            "ProductId": "ba:itemname_croissant",
+            "Price": {
+              "Units": 275221504000
+            },
+            "Allowance": {
+              "Units": 45230837465088
+            },
+            "ServiceAt": 0.0,
+            "Deadline": 9210.0,
+            "ReturnMinutes": 1.6817435421811255
+          },
+          "after": {
+            "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+            "ProductId": "ba:itemname_croissant",
+            "Price": {
+              "Units": 275221504000
+            },
+            "Allowance": {
+              "Units": 45230837465088
+            },
+            "ServiceAt": 0.0,
+            "Deadline": 9210.0,
+            "ReturnMinutes": 1.6817435421811255
+          },
+          "equal": true
+        }
+      ],
+      "allCommittedTermsPreserved": true,
+      "loadedOwnPayloadHash": "448176cdda601e077a39d1c8a99ce1a2f4982c0f512f8ab18531f56fe7a05f99",
+      "sourceOwnPayloadHash": "448176cdda601e077a39d1c8a99ce1a2f4982c0f512f8ab18531f56fe7a05f99",
+      "nativeObservationHash": "357f9353be7378b03003118e53fb15b465f05741c618b79d5ea24b86e3219c20",
+      "firstUnitLoadedComparison": {
+        "identitiesEqual": true,
+        "moneyEqual": true,
+        "memoryEqual": true,
+        "allResidentTermsEqual": true
+      },
+      "method": "Actual schema18 native file made with B0b control; loaded with B1 candidate, no payload conversion or injected memory"
+    }
+  ]
+}

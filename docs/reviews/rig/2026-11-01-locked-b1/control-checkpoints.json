@@ -1,0 +1,39 @@
+{
+  "role": "rig_test",
+  "checkpoints": [
+    {
+      "label": "control18-source",
+      "schema": 18,
+      "capabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": false
+      },
+      "seed": -1903163055,
+      "minute": 8985.347206115723,
+      "residents": 957,
+      "consumers": 1914,
+      "remembering": 0,
+      "payloadUtf8Bytes": 5322121,
+      "payloadSha256": "b9c50c98bf6064aad245df5e233632e8c47de012ca6a6f6d218c7efc41a18988",
+      "writeMilliseconds": 288.6012
+    },
+    {
+      "label": "control18-day9",
+      "schema": 18,
+      "capabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": false
+      },
+      "seed": -1903163055,
+      "minute": 13305.348205566406,
+      "residents": 957,
+      "consumers": 1914,
+      "remembering": 0,
+      "payloadUtf8Bytes": 5633911,
+      "payloadSha256": "e677df88c92454583aeb43816d3e0bed00fe30b91d375d42424ca303f1e23b0d",
+      "writeMilliseconds": 312.0962
+    }
+  ]
+}

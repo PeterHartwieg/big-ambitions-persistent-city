@@ -1,0 +1,4103 @@
+{
+  "role": "rig_test",
+  "scope": "Same-frame Update/native-authority union plus whole PopulationRuntime.OnGUI, including inspector. Nested component times are not summed. Other hook bodies outside those scopes remain outside this gate measurement.",
+  "percentile": "floor(n*q), raw distributions verified against the bridge report before adding GUI",
+  "windows": [
+    {
+      "inputCheckpoint": {
+        "loadedOwnPayloadSha256": "e677df88c92454583aeb43816d3e0bed00fe30b91d375d42424ca303f1e23b0d",
+        "note": "Initial control driver recorded loaded namespace hash; no pre-window container hash was recorded"
+      },
+      "configuration": {
+        "memory": "B0b absent",
+        "source": "unchanged control package configuration; installed manifest SHA recorded"
+      },
+      "window": "base1-idle",
+      "seconds": 60.2196688,
+      "modWork": {
+        "samples": 5354,
+        "p50": 0.43470000000000003,
+        "p95": 0.6416999999999999,
+        "maximum": 22.7583
+      },
+      "updateAuthorityUnion": {
+        "samples": 5354,
+        "p50": 0.4311,
+        "p95": 0.6377,
+        "maximum": 22.7548
+      },
+      "wholeFrame": {
+        "samples": 5355,
+        "p50": 11.2385,
+        "p95": 12.8209,
+        "maximum": 40.4251
+      },
+      "wholeFrameStalls": {
+        "framesOver50ms": 0,
+        "framesOver100ms": 0,
+        "framesOver250ms": 0
+      },
+      "modSpikesGe30ms": [],
+      "p95GatePass": true,
+      "cleanNoSave": true,
+      "autosaveOffBeforeAfter": true,
+      "nativeMinutes": 20.116304397583008,
+      "populationLag": 0.0,
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321686,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 180.0003,
+            "z": -1.91992863e-11
+          }
+        }
+      },
+      "routesAndQueries": {
+        "before": {
+          "routes": {
+            "WalkingRequests": 35,
+            "WalkingInvalidInputs": 0,
+            "WalkingDistanceRejects": 6,
+            "WalkingCacheHits": 1,
+            "WalkingNegativeCacheHits": 0,
+            "WalkingCacheMisses": 28,
+            "WalkingCacheEvictions": 0,
+            "WalkingCacheClears": 1,
+            "WalkingCalculations": 28,
+            "WalkingFailedCalculations": 12,
+            "WalkingCalculationMilliseconds": 13.6376,
+            "MaximumWalkingCalculationMilliseconds": 1.1087,
+            "NavMeshSampleQueries": 56,
+            "NavMeshPathQueries": 28,
+            "NavMeshPathReuses": 0,
+            "NavMeshPathMilliseconds": 13.144300000000001,
+            "MaximumNavMeshPathMilliseconds": 1.0943,
+            "WalkingQuoteChecks": 0,
+            "WalkingQuoteRejected": 0,
+            "NavMeshRaycastQueries": 0,
+            "WalkingQuoteCheckMilliseconds": 0.0,
+            "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+            "CitizenPlanRequests": 7,
+            "SelectedWalking": 0,
+            "SelectedSubway": 3,
+            "SelectedCar": 0,
+            "NoFeasibleRoute": 4,
+            "SubwayConnectorRequests": 20,
+            "SubwayConnectorCacheHits": 1,
+            "SubwayConnectorCacheMisses": 18,
+            "SubwayCandidates": 8
+          },
+          "marketCalls": {},
+          "PlanningPending": false,
+          "pendingDecisions": 0,
+          "runtime": {
+            "advanceFrames": 1391,
+            "advanceEvents": 7,
+            "advanceMilliseconds": 84.70319999999994,
+            "planningSlices": 20,
+            "planningEvents": 7,
+            "planningPendingFrames": 13,
+            "planningRequests": 7,
+            "planningMilliseconds": 35.882200000000005
+          }
+        },
+        "after": {
+          "routes": {
+            "WalkingRequests": 232,
+            "WalkingInvalidInputs": 0,
+            "WalkingDistanceRejects": 35,
+            "WalkingCacheHits": 1,
+            "WalkingNegativeCacheHits": 0,
+            "WalkingCacheMisses": 196,
+            "WalkingCacheEvictions": 0,
+            "WalkingCacheClears": 4,
+            "WalkingCalculations": 196,
+            "WalkingFailedCalculations": 45,
+            "WalkingCalculationMilliseconds": 83.14400000000002,
+            "MaximumWalkingCalculationMilliseconds": 1.6591,
+            "NavMeshSampleQueries": 392,
+            "NavMeshPathQueries": 196,
+            "NavMeshPathReuses": 0,
+            "NavMeshPathMilliseconds": 77.28459999999998,
+            "MaximumNavMeshPathMilliseconds": 1.3190000000000002,
+            "WalkingQuoteChecks": 0,
+            "WalkingQuoteRejected": 0,
+            "NavMeshRaycastQueries": 0,
+            "WalkingQuoteCheckMilliseconds": 0.0,
+            "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+            "CitizenPlanRequests": 50,
+            "SelectedWalking": 0,
+            "SelectedSubway": 30,
+            "SelectedCar": 0,
+            "NoFeasibleRoute": 20,
+            "SubwayConnectorRequests": 140,
+            "SubwayConnectorCacheHits": 1,
+            "SubwayConnectorCacheMisses": 133,
+            "SubwayCandidates": 95
+          },
+          "marketCalls": {
+            "BeginCapture": 26,
+            "CaptureBusiness": 26
+          },
+          "PlanningPending": false,
+          "pendingDecisions": 0,
+          "runtime": {
+            "advanceFrames": 2712,
+            "advanceEvents": 62,
+            "advanceMilliseconds": 162.92800000000028,
+            "planningSlices": 27,
+            "planningEvents": 14,
+            "planningPendingFrames": 13,
+            "planningRequests": 14,
+            "planningMilliseconds": 38.15990000000001
+          }
+        }
+      },
+      "allocationCounterAvailable": false,
+      "allocationCounterObservedPositive": false,
+      "allocatedBytesPerFrame": {
+        "samples": 0,
+        "mean": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "gcCollections": [
+        2,
+        2,
+        2
+      ],
+      "rawObservations": {
+        "Count": 5355,
+        "Capacity": 65536,
+        "MarshaledStorageEstimateBytes": 7864320,
+        "Dropped": 0,
+        "Duplicates": 0,
+        "InvalidOrder": 0,
+        "SkippedUnityFrames": 0,
+        "stopwatchFrequency": 10000000,
+        "terminationObservedTicks": 11283838485,
+        "discardedLifecycleTailTicks": 0,
+        "unobservedTailTicks": 72222,
+        "initialIntervalPartial": true,
+        "currentModFrameExcluded": true,
+        "outstandingPrimaryScopes": 0
+      },
+      "evidence": {
+        "mod-work": {
+          "file": "frames-mod-work-base1-idle-stop-deded8.csv.gz",
+          "sha256": "0a76f79b3888b851dbf44ae71695700579fa9bec7c508be9421c95557403adc9"
+        },
+        "observations": {
+          "file": "frames-observations-base1-idle-stop-deded8.csv.gz",
+          "sha256": "ad58079a22104144bcf2e21479dbd8f90826648535d8df97f02e6fc9b40af69d"
+        }
+      },
+      "systemLoad": {
+        "load-before": {
+          "utc": "2026-10-31T23:51:14Z",
+          "cpuTotalPercent": 19.9,
+          "counts": {
+            "dotnet": 2,
+            "testhost": 0,
+            "codex": 8,
+            "python": 8
+          },
+          "ramAvailableGiB": 32.897762298583984,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 39.09375,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 14868,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 8.71875,
+              "ramMiB": 916.9375
+            },
+            {
+              "pid": 4672,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.5,
+              "ramMiB": 27.23046875
+            },
+            {
+              "pid": 8,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.1875,
+              "ramMiB": 16.6015625
+            },
+            {
+              "pid": 17952,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.109375,
+              "ramMiB": 1159.54296875
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 42.984375
+            },
+            {
+              "pid": 23812,
+              "name": "explorer.exe",
+              "cpuSecondsDelta": 0.078125,
+              "ramMiB": 343.08984375
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 528.5625
+            },
+            {
+              "pid": 42580,
+              "name": "RouteDiscoveryRegression.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 45.27734375
+            },
+            {
+              "pid": 2064,
+              "name": "tailscaled.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 122.77734375
+            },
+            {
+              "pid": 45224,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 190.12109375
+            },
+            {
+              "pid": 1920,
+              "name": "ChatGPT.exe",
+              "cpuSecondsDelta": 0.015625,
+              "ramMiB": 316.6015625
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-window-start": {
+          "utc": "2026-10-31T23:52:12Z",
+          "cpuTotalPercent": 40.4,
+          "counts": {
+            "dotnet": 2,
+            "testhost": 0,
+            "codex": 8,
+            "python": 8
+          },
+          "ramAvailableGiB": 29.35769271850586,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 35.609375,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 14868,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 14.28125,
+              "ramMiB": 4179.84765625
+            },
+            {
+              "pid": 4672,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.890625,
+              "ramMiB": 27.33203125
+            },
+            {
+              "pid": 11900,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 1.765625,
+              "ramMiB": 222.390625
+            },
+            {
+              "pid": 45224,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.765625,
+              "ramMiB": 209.7265625
+            },
+            {
+              "pid": 47184,
+              "name": "ChatGPT.exe",
+              "cpuSecondsDelta": 0.703125,
+              "ramMiB": 487.22265625
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.421875,
+              "ramMiB": 537.94921875
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.34375,
+              "ramMiB": 42.9921875
+            },
+            {
+              "pid": 44060,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.25,
+              "ramMiB": 51.734375
+            },
+            {
+              "pid": 8156,
+              "name": "SearchIndexer.exe",
+              "cpuSecondsDelta": 0.234375,
+              "ramMiB": 207.48046875
+            },
+            {
+              "pid": 8,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.203125,
+              "ramMiB": 16.6015625
+            },
+            {
+              "pid": 42008,
+              "name": "WmiPrvSE.exe",
+              "cpuSecondsDelta": 0.203125,
+              "ramMiB": 17.4765625
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-after": {
+          "utc": "2026-10-31T23:53:18Z",
+          "cpuTotalPercent": 31.4,
+          "counts": {
+            "dotnet": 2,
+            "testhost": 0,
+            "codex": 10,
+            "python": 8
+          },
+          "ramAvailableGiB": 28.98950958251953,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 37.78125,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 14868,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 9.859375,
+              "ramMiB": 4167.73046875
+            },
+            {
+              "pid": 4672,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.71875,
+              "ramMiB": 28.71484375
+            },
+            {
+              "pid": 8,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.1875,
+              "ramMiB": 16.60546875
+            },
+            {
+              "pid": 17952,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.1875,
+              "ramMiB": 1190.22265625
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.15625,
+              "ramMiB": 43.05859375
+            },
+            {
+              "pid": 23812,
+              "name": "explorer.exe",
+              "cpuSecondsDelta": 0.109375,
+              "ramMiB": 343.1875
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 521.33203125
+            },
+            {
+              "pid": 36200,
+              "name": "Discord.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 400.33203125
+            },
+            {
+              "pid": 36744,
+              "name": "dwm.exe",
+              "cpuSecondsDelta": 0.078125,
+              "ramMiB": 155.0234375
+            },
+            {
+              "pid": 8208,
+              "name": "steam.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 154.63671875
+            },
+            {
+              "pid": 45224,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 188.0625
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        }
+      },
+      "underDotnetOrTesthostLoad": true
+    },
+    {
+      "inputCheckpoint": {
+        "loadedOwnPayloadSha256": "e677df88c92454583aeb43816d3e0bed00fe30b91d375d42424ca303f1e23b0d",
+        "note": "Initial control driver recorded loaded namespace hash; no pre-window container hash was recorded"
+      },
+      "configuration": {
+        "memory": "B0b absent",
+        "source": "unchanged control package configuration; installed manifest SHA recorded"
+      },
+      "window": "base1-meal",
+      "seconds": 60.3421018,
+      "modWork": {
+        "samples": 3028,
+        "p50": 1.6560000000000001,
+        "p95": 4.3668000000000005,
+        "maximum": 297.8757
+      },
+      "updateAuthorityUnion": {
+        "samples": 3028,
+        "p50": 1.6492,
+        "p95": 4.3607,
+        "maximum": 297.8639
+      },
+      "wholeFrame": {
+        "samples": 3029,
+        "p50": 19.6268,
+        "p95": 27.3684,
+        "maximum": 501.2153
+      },
+      "wholeFrameStalls": {
+        "framesOver50ms": 5,
+        "framesOver100ms": 3,
+        "framesOver250ms": 2
+      },
+      "modSpikesGe30ms": [
+        {
+          "window": "base1-meal",
+          "unityFrame": 207090,
+          "modWorkMs": 297.8757,
+          "unionMs": 297.8639,
+          "guiMs": 0.0118,
+          "entryBranch": "traffic-advance",
+          "slowestCitizen": "",
+          "eventMinute": "13445.744398593903",
+          "componentsInclusiveMs": {
+            "RouteObjectDiscovery.StepInclusiveMs": 0.0626,
+            "PhysicalPopulation.BeforeAdvanceInclusiveMs": 0.0257,
+            "PhysicalPopulation.UpdateInclusiveMs": 1.5825,
+            "PopulationRuntime.AdvancePopulationInclusiveMs": 1.531,
+            "MultimodalRoutes.PrepareInclusiveMs": 78.4212,
+            "CitySimulator.RefreshTrafficClosuresInclusiveMs": 15.5947,
+            "PhysicalVehicles.UpdateInclusiveMs": 0.3354,
+            "PhysicalTrafficHooks.FixedStepPrefixInclusiveMs": 0.0038,
+            "PhysicalTrafficHooks.FixedStepPostfixInclusiveMs": 0.773,
+            "PhysicalTrafficHooks.FixedStepFinalizerInclusiveMs": 0.0001,
+            "PhysicalVehicles.DeferNativeForceInclusiveMs": 0.076,
+            "PhysicalVehicles.ApplyNativeRotationInclusiveMs": 0.003,
+            "PhysicalIntersections.UpdatePostfixInclusiveMs": 0.0026,
+            "ResidentInspector.UpdateInclusiveMs": 0.0108,
+            "PopulationRuntime.OnGUIInclusiveMs": 0.0118
+          },
+          "adjacentWholeFrameObservation": {
+            "priorUnityFrame": "207090",
+            "currentUnityFrame": "207091",
+            "gc0Delta": "0",
+            "gc1Delta": "0",
+            "gc2Delta": "0",
+            "allocationBytes": "",
+            "allocationAvailable": "0",
+            "nativeMinute": "13445.862458229065",
+            "paused": "0"
+          }
+        },
+        {
+          "window": "base1-meal",
+          "unityFrame": 207091,
+          "modWorkMs": 125.6572,
+          "unionMs": 125.6482,
+          "guiMs": 0.009,
+          "entryBranch": "traffic-advance",
+          "slowestCitizen": "",
+          "eventMinute": "13445.751347064972",
+          "componentsInclusiveMs": {
+            "RouteObjectDiscovery.StepInclusiveMs": 0.041,
+            "PhysicalPopulation.BeforeAdvanceInclusiveMs": 0.0281,
+            "PhysicalPopulation.UpdateInclusiveMs": 7.2376,
+            "PopulationRuntime.AdvancePopulationInclusiveMs": 2.1655,
+            "MultimodalRoutes.PrepareInclusiveMs": 9.2101,
+            "CitySimulator.RefreshTrafficClosuresInclusiveMs": 0.6775,
+            "PhysicalVehicles.UpdateInclusiveMs": 1.2005,
+            "PhysicalTrafficHooks.FixedStepPrefixInclusiveMs": 0.0434,
+            "PhysicalTrafficHooks.FixedStepPostfixInclusiveMs": 42.4386,
+            "PhysicalTrafficHooks.FixedStepFinalizerInclusiveMs": 0.0013,
+            "PhysicalVehicles.DeferNativeForceInclusiveMs": 0.9784,
+            "PhysicalVehicles.ApplyNativeRotationInclusiveMs": 0.0394,
+            "PhysicalIntersections.UpdatePostfixInclusiveMs": 0.0012,
+            "ResidentInspector.UpdateInclusiveMs": 0.0202,
+            "PopulationRuntime.OnGUIInclusiveMs": 0.009
+          },
+          "adjacentWholeFrameObservation": {
+            "priorUnityFrame": "207091",
+            "currentUnityFrame": "207092",
+            "gc0Delta": "1",
+            "gc1Delta": "1",
+            "gc2Delta": "1",
+            "allocationBytes": "",
+            "allocationAvailable": "0",
+            "nativeMinute": "13445.973569393158",
+            "paused": "0"
+          }
+        }
+      ],
+      "p95GatePass": true,
+      "cleanNoSave": true,
+      "autosaveOffBeforeAfter": true,
+      "nativeMinutes": 20.098712921142578,
+      "populationLag": 0.0,
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321686,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 180.000641,
+            "z": 0.0
+          }
+        }
+      },
+      "routesAndQueries": {
+        "before": {
+          "routes": {
+            "WalkingRequests": 3012,
+            "WalkingInvalidInputs": 0,
+            "WalkingDistanceRejects": 90,
+            "WalkingCacheHits": 182,
+            "WalkingNegativeCacheHits": 1,
+            "WalkingCacheMisses": 2740,
+            "WalkingCacheEvictions": 0,
+            "WalkingCacheClears": 14,
+            "WalkingCalculations": 2740,
+            "WalkingFailedCalculations": 408,
+            "WalkingCalculationMilliseconds": 1043.5950000000034,
+            "MaximumWalkingCalculationMilliseconds": 7.3996,
+            "NavMeshSampleQueries": 5479,
+            "NavMeshPathQueries": 2735,
+            "NavMeshPathReuses": 0,
+            "NavMeshPathMilliseconds": 964.8274999999998,
+            "MaximumNavMeshPathMilliseconds": 7.3811,
+            "WalkingQuoteChecks": 0,
+            "WalkingQuoteRejected": 0,
+            "NavMeshRaycastQueries": 0,
+            "WalkingQuoteCheckMilliseconds": 0.0,
+            "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+            "CitizenPlanRequests": 594,
+            "SelectedWalking": 132,
+            "SelectedSubway": 363,
+            "SelectedCar": 9,
+            "NoFeasibleRoute": 89,
+            "SubwayConnectorRequests": 2024,
+            "SubwayConnectorCacheHits": 171,
+            "SubwayConnectorCacheMisses": 1836,
+            "SubwayCandidates": 1658
+          },
+          "marketCalls": {
+            "BeginCapture": 524,
+            "CaptureBusiness": 524
+          },
+          "PlanningPending": false,
+          "pendingDecisions": 0,
+          "runtime": {
+            "advanceFrames": 2777,
+            "advanceEvents": 775,
+            "advanceMilliseconds": 1025.0963000000004,
+            "planningSlices": 279,
+            "planningEvents": 129,
+            "planningPendingFrames": 151,
+            "planningRequests": 129,
+            "planningMilliseconds": 449.4079999999998
+          }
+        },
+        "after": {
+          "routes": {
+            "WalkingRequests": 3528,
+            "WalkingInvalidInputs": 0,
+            "WalkingDistanceRejects": 100,
+            "WalkingCacheHits": 215,
+            "WalkingNegativeCacheHits": 1,
+            "WalkingCacheMisses": 3213,
+            "WalkingCacheEvictions": 0,
+            "WalkingCacheClears": 17,
+            "WalkingCalculations": 3213,
+            "WalkingFailedCalculations": 446,
+            "WalkingCalculationMilliseconds": 1228.4557000000043,
+            "MaximumWalkingCalculationMilliseconds": 7.3996,
+            "NavMeshSampleQueries": 6425,
+            "NavMeshPathQueries": 3208,
+            "NavMeshPathReuses": 0,
+            "NavMeshPathMilliseconds": 1131.0295,
+            "MaximumNavMeshPathMilliseconds": 7.3811,
+            "WalkingQuoteChecks": 0,
+            "WalkingQuoteRejected": 0,
+            "NavMeshRaycastQueries": 0,
+            "WalkingQuoteCheckMilliseconds": 0.0,
+            "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+            "CitizenPlanRequests": 707,
+            "SelectedWalking": 205,
+            "SelectedSubway": 381,
+            "SelectedCar": 10,
+            "NoFeasibleRoute": 110,
+            "SubwayConnectorRequests": 2376,
+            "SubwayConnectorCacheHits": 204,
+            "SubwayConnectorCacheMisses": 2153,
+            "SubwayCandidates": 1882
+          },
+          "marketCalls": {
+            "BeginCapture": 672,
+            "CaptureBusiness": 672
+          },
+          "PlanningPending": false,
+          "pendingDecisions": 0,
+          "runtime": {
+            "advanceFrames": 357,
+            "advanceEvents": 0,
+            "advanceMilliseconds": 56.66570000000006,
+            "planningSlices": 0,
+            "planningEvents": 0,
+            "planningPendingFrames": 0,
+            "planningRequests": 0,
+            "planningMilliseconds": 0.0
+          }
+        }
+      },
+      "allocationCounterAvailable": false,
+      "allocationCounterObservedPositive": false,
+      "allocatedBytesPerFrame": {
+        "samples": 0,
+        "mean": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "gcCollections": [
+        2,
+        2,
+        2
+      ],
+      "rawObservations": {
+        "Count": 3029,
+        "Capacity": 65536,
+        "MarshaledStorageEstimateBytes": 7864320,
+        "Dropped": 0,
+        "Duplicates": 0,
+        "InvalidOrder": 0,
+        "SkippedUnityFrames": 0,
+        "stopwatchFrequency": 10000000,
+        "terminationObservedTicks": 25579550992,
+        "discardedLifecycleTailTicks": 0,
+        "unobservedTailTicks": 68175,
+        "initialIntervalPartial": true,
+        "currentModFrameExcluded": true,
+        "outstandingPrimaryScopes": 0
+      },
+      "evidence": {
+        "mod-work": {
+          "file": "frames-mod-work-base1-meal-stop-2be992.csv.gz",
+          "sha256": "66dd388e29b5073ca220d8049ef3043d970d2e769c169aa98330bcc3548fe5be"
+        },
+        "observations": {
+          "file": "frames-observations-base1-meal-stop-2be992.csv.gz",
+          "sha256": "5627a60ddc22679e2b2a0c89451ecb7c37089f318cdf657531f3885408f259b9"
+        }
+      },
+      "systemLoad": {
+        "load-before": {
+          "utc": "2026-11-01T00:08:28Z",
+          "cpuTotalPercent": 54.5,
+          "counts": {
+            "dotnet": 5,
+            "testhost": 1,
+            "codex": 12,
+            "python": 9
+          },
+          "ramAvailableGiB": 22.64312744140625,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 30.921875,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 14868,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 16.125,
+              "ramMiB": 1397.31640625
+            },
+            {
+              "pid": 11808,
+              "name": "testhost.exe",
+              "cpuSecondsDelta": 5.953125,
+              "ramMiB": 3533.51171875
+            },
+            {
+              "pid": 32800,
+              "name": "vmmemWSL",
+              "cpuSecondsDelta": 4.96875,
+              "ramMiB": 5219.1875
+            },
+            {
+              "pid": 4672,
+              "name": "python.exe",
+              "cpuSecondsDelta": 2.578125,
+              "ramMiB": 28.89453125
+            },
+            {
+              "pid": 52836,
+              "name": "powershell.exe",
+              "cpuSecondsDelta": 2.0625,
+              "ramMiB": 142.5234375
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 2.046875,
+              "ramMiB": 654.42578125
+            },
+            {
+              "pid": 48156,
+              "name": "codex.exe",
+              "cpuSecondsDelta": 0.59375,
+              "ramMiB": 134.03515625
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.5625,
+              "ramMiB": 43.328125
+            },
+            {
+              "pid": 49488,
+              "name": "bash.exe",
+              "cpuSecondsDelta": 0.5625,
+              "ramMiB": 10.21484375
+            },
+            {
+              "pid": 10044,
+              "name": "svchost.exe",
+              "cpuSecondsDelta": 0.5,
+              "ramMiB": 34.91015625
+            },
+            {
+              "pid": 8,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.25,
+              "ramMiB": 16.8203125
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-window-start": {
+          "utc": "2026-11-01T00:16:01Z",
+          "cpuTotalPercent": 71.2,
+          "counts": {
+            "dotnet": 2,
+            "testhost": 0,
+            "codex": 8,
+            "python": 9
+          },
+          "ramAvailableGiB": 21.00954818725586,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 32800,
+              "name": "vmmemWSL",
+              "cpuSecondsDelta": 36.765625,
+              "ramMiB": 9909.0625
+            },
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 17.171875,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 14868,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 14.765625,
+              "ramMiB": 2293.34375
+            },
+            {
+              "pid": 4672,
+              "name": "python.exe",
+              "cpuSecondsDelta": 2.78125,
+              "ramMiB": 28.94140625
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.453125,
+              "ramMiB": 43.58984375
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.265625,
+              "ramMiB": 526.8125
+            },
+            {
+              "pid": 8,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.25,
+              "ramMiB": 16.734375
+            },
+            {
+              "pid": 3476,
+              "name": "MemCompression",
+              "cpuSecondsDelta": 0.078125,
+              "ramMiB": 1115.51171875
+            },
+            {
+              "pid": 23812,
+              "name": "explorer.exe",
+              "cpuSecondsDelta": 0.078125,
+              "ramMiB": 344.125
+            },
+            {
+              "pid": 33340,
+              "name": "bash.exe",
+              "cpuSecondsDelta": 0.078125,
+              "ramMiB": 10.203125
+            },
+            {
+              "pid": 18452,
+              "name": "agent_cli.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 191.234375
+            },
+            {
+              "pid": 20076,
+              "name": "Grok Bot.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 66.796875
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-after": {
+          "utc": "2026-11-01T00:17:08Z",
+          "cpuTotalPercent": 26.8,
+          "counts": {
+            "dotnet": 1,
+            "testhost": 0,
+            "codex": 8,
+            "python": 9
+          },
+          "ramAvailableGiB": 22.33672332763672,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 37.71875,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 14868,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 12.796875,
+              "ramMiB": 2722.01953125
+            },
+            {
+              "pid": 32800,
+              "name": "vmmemWSL",
+              "cpuSecondsDelta": 3.53125,
+              "ramMiB": 8777.375
+            },
+            {
+              "pid": 4672,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.75,
+              "ramMiB": 28.9921875
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.234375,
+              "ramMiB": 43.58984375
+            },
+            {
+              "pid": 8,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.171875,
+              "ramMiB": 16.8046875
+            },
+            {
+              "pid": 3476,
+              "name": "MemCompression",
+              "cpuSecondsDelta": 0.109375,
+              "ramMiB": 1209.71875
+            },
+            {
+              "pid": 23812,
+              "name": "explorer.exe",
+              "cpuSecondsDelta": 0.078125,
+              "ramMiB": 344.140625
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 534.9296875
+            },
+            {
+              "pid": 48052,
+              "name": "ChatGPT.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 67.8125
+            },
+            {
+              "pid": 2700,
+              "name": "tailscale-ipn.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 51.0234375
+            },
+            {
+              "pid": 8656,
+              "name": "WindowsTerminal.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 139.47265625
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        }
+      },
+      "underDotnetOrTesthostLoad": true
+    },
+    {
+      "inputCheckpoint": {
+        "name": "FT Food Routines Locked B1 TrainedDay9 20261101",
+        "hsgSha256": "c93f64e0a7a67657bb9f3f747faa14c6cf48445cac52b5dcb499aa06a3ac6b78",
+        "hsgBytes": 2172235
+      },
+      "configuration": {
+        "config": {
+          "Enabled": true,
+          "OptionalStopChoicePercentage": 25,
+          "GameClockFactor": 0.3333333333333333,
+          "PhysicalEnabled": true,
+          "MaximumPedestrians": 48,
+          "MaximumVehicles": 24,
+          "PhysicalRadiusMetres": 120,
+          "FoodChoiceTemperature": 1.0,
+          "FoodChoiceWeightFloor": 0.02,
+          "FoodChoiceTasteWeight": 1.0,
+          "FoodChoicePriceWeight": 1.0,
+          "FoodChoiceDistanceWeight": 1.0,
+          "FoodChoiceDistanceScaleMinutes": 10,
+          "FoodChoiceQueueWeight": 1.0,
+          "FoodChoiceQualityWeight": 0.5,
+          "FoodChoiceTimePressureWeight": 1.0,
+          "FoodChoiceHealthWeight": 0.0,
+          "FoodChoiceHouseholdWeight": 1.0,
+          "FoodShortlistTemperature": 1.0,
+          "FoodMemoryWeight": 1,
+          "FoodMemoryLoyalReturnMultiplier": 2,
+          "FoodMemoryCuriousNoveltyMultiplier": 1.3,
+          "FoodMemoryServedGain": 1,
+          "FoodMemoryStockPenalty": 3,
+          "FoodMemoryClosedPenalty": 3,
+          "FoodMemoryQueuePenalty": 2,
+          "FoodMemoryBadVisitTraitWeight": 1,
+          "FoodMemoryDecayDaysPerPoint": 2,
+          "FoodMemoryMinimumMultiplier": 0.25,
+          "FoodMemoryMaximumMultiplier": 2.5,
+          "FoodMemoryCapacity": 4,
+          "FoodMemoryForgetAfterDays": 28
+        },
+        "sha256": "827aa741e16649e9c0ef7d1408e2a09b9ed2f345e8000e8bc79834b400bf6536",
+        "expectedMemoryWeight": 1
+      },
+      "window": "cand1-idle",
+      "seconds": 60.278021,
+      "modWork": {
+        "samples": 4688,
+        "p50": 0.9497,
+        "p95": 1.7426000000000001,
+        "maximum": 36.048
+      },
+      "updateAuthorityUnion": {
+        "samples": 4688,
+        "p50": 0.9454,
+        "p95": 1.7386,
+        "maximum": 36.0432
+      },
+      "wholeFrame": {
+        "samples": 4689,
+        "p50": 12.3608,
+        "p95": 17.1768,
+        "maximum": 174.1967
+      },
+      "wholeFrameStalls": {
+        "framesOver50ms": 3,
+        "framesOver100ms": 1,
+        "framesOver250ms": 0
+      },
+      "modSpikesGe30ms": [
+        {
+          "window": "cand1-idle",
+          "unityFrame": 129573,
+          "modWorkMs": 36.048,
+          "unionMs": 36.0432,
+          "guiMs": 0.0048,
+          "entryBranch": "traffic-advance",
+          "slowestCitizen": "",
+          "eventMinute": "13324.534164428711",
+          "componentsInclusiveMs": {
+            "RouteObjectDiscovery.StepInclusiveMs": 0.0386,
+            "PhysicalPopulation.BeforeAdvanceInclusiveMs": 0.0087,
+            "PhysicalPopulation.UpdateInclusiveMs": 0.7182,
+            "PopulationRuntime.AdvancePopulationInclusiveMs": 34.8199,
+            "MultimodalRoutes.PrepareInclusiveMs": 0.0296,
+            "CitySimulator.RefreshTrafficClosuresInclusiveMs": 0.2116,
+            "PhysicalVehicles.UpdateInclusiveMs": 0.0514,
+            "PhysicalTrafficHooks.FixedStepPrefixInclusiveMs": 0.0117,
+            "PhysicalTrafficHooks.FixedStepPostfixInclusiveMs": 0.2558,
+            "PhysicalTrafficHooks.FixedStepFinalizerInclusiveMs": 0.0001,
+            "PhysicalVehicles.DeferNativeForceInclusiveMs": 0.184,
+            "PhysicalVehicles.ApplyNativeRotationInclusiveMs": 0.0071,
+            "PhysicalIntersections.UpdatePostfixInclusiveMs": 0.0014,
+            "ResidentInspector.UpdateInclusiveMs": 0.0087,
+            "PopulationRuntime.OnGUIInclusiveMs": 0.0048
+          },
+          "adjacentWholeFrameObservation": {
+            "priorUnityFrame": "129573",
+            "currentUnityFrame": "129574",
+            "gc0Delta": "0",
+            "gc1Delta": "0",
+            "gc2Delta": "0",
+            "allocationBytes": "",
+            "allocationAvailable": "0",
+            "nativeMinute": "13324.609184741974",
+            "paused": "0"
+          }
+        }
+      ],
+      "p95GatePass": true,
+      "cleanNoSave": true,
+      "autosaveOffBeforeAfter": true,
+      "nativeMinutes": 20.170053482055664,
+      "populationLag": 0.0,
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321648,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 179.999725,
+            "z": 0.0
+          }
+        }
+      },
+      "routesAndQueries": {
+        "before": {
+          "routes": {
+            "WalkingRequests": 15,
+            "WalkingInvalidInputs": 0,
+            "WalkingDistanceRejects": 3,
+            "WalkingCacheHits": 1,
+            "WalkingNegativeCacheHits": 0,
+            "WalkingCacheMisses": 11,
+            "WalkingCacheEvictions": 0,
+            "WalkingCacheClears": 1,
+            "WalkingCalculations": 11,
+            "WalkingFailedCalculations": 10,
+            "WalkingCalculationMilliseconds": 12.6629,
+            "MaximumWalkingCalculationMilliseconds": 1.4788000000000001,
+            "NavMeshSampleQueries": 22,
+            "NavMeshPathQueries": 11,
+            "NavMeshPathReuses": 0,
+            "NavMeshPathMilliseconds": 12.519200000000001,
+            "MaximumNavMeshPathMilliseconds": 1.465,
+            "WalkingQuoteChecks": 0,
+            "WalkingQuoteRejected": 0,
+            "NavMeshRaycastQueries": 0,
+            "WalkingQuoteCheckMilliseconds": 0.0,
+            "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+            "CitizenPlanRequests": 4,
+            "SelectedWalking": 0,
+            "SelectedSubway": 0,
+            "SelectedCar": 0,
+            "NoFeasibleRoute": 4,
+            "SubwayConnectorRequests": 8,
+            "SubwayConnectorCacheHits": 1,
+            "SubwayConnectorCacheMisses": 6,
+            "SubwayCandidates": 0
+          },
+          "marketCalls": {},
+          "PlanningPending": false,
+          "pendingDecisions": 0,
+          "runtime": {
+            "advanceFrames": 1331,
+            "advanceEvents": 116,
+            "advanceMilliseconds": 201.61470000000017,
+            "planningSlices": 8,
+            "planningEvents": 4,
+            "planningPendingFrames": 4,
+            "planningRequests": 4,
+            "planningMilliseconds": 12.949400000000002
+          }
+        },
+        "after": {
+          "routes": {
+            "WalkingRequests": 97,
+            "WalkingInvalidInputs": 0,
+            "WalkingDistanceRejects": 7,
+            "WalkingCacheHits": 3,
+            "WalkingNegativeCacheHits": 0,
+            "WalkingCacheMisses": 87,
+            "WalkingCacheEvictions": 0,
+            "WalkingCacheClears": 4,
+            "WalkingCalculations": 87,
+            "WalkingFailedCalculations": 38,
+            "WalkingCalculationMilliseconds": 64.00019999999999,
+            "MaximumWalkingCalculationMilliseconds": 2.2119,
+            "NavMeshSampleQueries": 174,
+            "NavMeshPathQueries": 87,
+            "NavMeshPathReuses": 0,
+            "NavMeshPathMilliseconds": 60.885600000000025,
+            "MaximumNavMeshPathMilliseconds": 2.1944,
+            "WalkingQuoteChecks": 0,
+            "WalkingQuoteRejected": 0,
+            "NavMeshRaycastQueries": 0,
+            "WalkingQuoteCheckMilliseconds": 0.0,
+            "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+            "CitizenPlanRequests": 28,
+            "SelectedWalking": 2,
+            "SelectedSubway": 6,
+            "SelectedCar": 0,
+            "NoFeasibleRoute": 20,
+            "SubwayConnectorRequests": 52,
+            "SubwayConnectorCacheHits": 3,
+            "SubwayConnectorCacheMisses": 47,
+            "SubwayCandidates": 26
+          },
+          "marketCalls": {
+            "BeginCapture": 18,
+            "CaptureBusiness": 18
+          },
+          "PlanningPending": false,
+          "pendingDecisions": 0,
+          "runtime": {
+            "advanceFrames": 2418,
+            "advanceEvents": 390,
+            "advanceMilliseconds": 559.7553999999992,
+            "planningSlices": 28,
+            "planningEvents": 12,
+            "planningPendingFrames": 16,
+            "planningRequests": 12,
+            "planningMilliseconds": 44.409400000000005
+          }
+        }
+      },
+      "allocationCounterAvailable": false,
+      "allocationCounterObservedPositive": false,
+      "allocatedBytesPerFrame": {
+        "samples": 0,
+        "mean": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "gcCollections": [
+        1,
+        1,
+        1
+      ],
+      "rawObservations": {
+        "Count": 4689,
+        "Capacity": 65536,
+        "MarshaledStorageEstimateBytes": 7864320,
+        "Dropped": 0,
+        "Duplicates": 0,
+        "InvalidOrder": 0,
+        "SkippedUnityFrames": 0,
+        "stopwatchFrequency": 10000000,
+        "terminationObservedTicks": 18908890511,
+        "discardedLifecycleTailTicks": 0,
+        "unobservedTailTicks": 81655,
+        "initialIntervalPartial": true,
+        "currentModFrameExcluded": true,
+        "outstandingPrimaryScopes": 0
+      },
+      "evidence": {
+        "mod-work": {
+          "file": "frames-mod-work-cand1-idle-stop-179e67.csv.gz",
+          "sha256": "18438873bac9936c22a3802318a7a9aec2493c69985036ff8b68d72a005d8918"
+        },
+        "observations": {
+          "file": "frames-observations-cand1-idle-stop-179e67.csv.gz",
+          "sha256": "b68a19f48c9a4eeafb8262e234406fad894f217f1e49b3b234d351e84cb6a495"
+        }
+      },
+      "systemLoad": {
+        "load-before": {
+          "utc": "2026-11-01T00:55:52Z",
+          "cpuTotalPercent": 28.8,
+          "counts": {
+            "dotnet": 2,
+            "testhost": 0,
+            "codex": 8,
+            "python": 7
+          },
+          "ramAvailableGiB": 26.99881362915039,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 39.515625,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 23256,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 9.78125,
+              "ramMiB": 5168.51953125
+            },
+            {
+              "pid": 17348,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.71875,
+              "ramMiB": 30.61328125
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.828125,
+              "ramMiB": 564.72265625
+            },
+            {
+              "pid": 28832,
+              "name": "dotnet.exe",
+              "cpuSecondsDelta": 0.40625,
+              "ramMiB": 93.671875
+            },
+            {
+              "pid": 3476,
+              "name": "MemCompression",
+              "cpuSecondsDelta": 0.25,
+              "ramMiB": 783.6875
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.21875,
+              "ramMiB": 44.08984375
+            },
+            {
+              "pid": 8156,
+              "name": "SearchIndexer.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 205.70703125
+            },
+            {
+              "pid": 5204,
+              "name": "svchost.exe",
+              "cpuSecondsDelta": 0.078125,
+              "ramMiB": 24.0546875
+            },
+            {
+              "pid": 8,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 16.8515625
+            },
+            {
+              "pid": 10044,
+              "name": "svchost.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 32.359375
+            },
+            {
+              "pid": 44144,
+              "name": "VBCSCompiler.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 491.15234375
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-window-start": {
+          "utc": "2026-11-01T00:56:48Z",
+          "cpuTotalPercent": 29.0,
+          "counts": {
+            "dotnet": 1,
+            "testhost": 0,
+            "codex": 10,
+            "python": 7
+          },
+          "ramAvailableGiB": 28.84060287475586,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 37.703125,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 23256,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 12.703125,
+              "ramMiB": 5343.671875
+            },
+            {
+              "pid": 17348,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.78125,
+              "ramMiB": 31.64453125
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.15625,
+              "ramMiB": 44.09375
+            },
+            {
+              "pid": 8,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 16.859375
+            },
+            {
+              "pid": 23812,
+              "name": "explorer.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 344.3125
+            },
+            {
+              "pid": 48836,
+              "name": "codex.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 169.2578125
+            },
+            {
+              "pid": 11620,
+              "name": "agent_cli.exe",
+              "cpuSecondsDelta": 0.078125,
+              "ramMiB": 253.41796875
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 571.375
+            },
+            {
+              "pid": 14568,
+              "name": "steamwebhelper.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 165.5859375
+            },
+            {
+              "pid": 48284,
+              "name": "ChatGPT.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 370.6640625
+            },
+            {
+              "pid": 1920,
+              "name": "ChatGPT.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 318.75
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-after": {
+          "utc": "2026-11-01T00:57:57Z",
+          "cpuTotalPercent": 58.2,
+          "counts": {
+            "dotnet": 7,
+            "testhost": 2,
+            "codex": 12,
+            "python": 9
+          },
+          "ramAvailableGiB": 21.958110809326172,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 30.828125,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 23256,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 20.890625,
+              "ramMiB": 5346.546875
+            },
+            {
+              "pid": 6492,
+              "name": "testhost.exe",
+              "cpuSecondsDelta": 10.0625,
+              "ramMiB": 2931.87890625
+            },
+            {
+              "pid": 31404,
+              "name": "testhost.exe",
+              "cpuSecondsDelta": 5.59375,
+              "ramMiB": 3547.2265625
+            },
+            {
+              "pid": 17348,
+              "name": "python.exe",
+              "cpuSecondsDelta": 3.046875,
+              "ramMiB": 31.58203125
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 1.640625,
+              "ramMiB": 577.4765625
+            },
+            {
+              "pid": 24896,
+              "name": "python.exe",
+              "cpuSecondsDelta": 0.765625,
+              "ramMiB": 13.4609375
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.71875,
+              "ramMiB": 44.09765625
+            },
+            {
+              "pid": 44144,
+              "name": "VBCSCompiler.exe",
+              "cpuSecondsDelta": 0.296875,
+              "ramMiB": 415.50390625
+            },
+            {
+              "pid": 8,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.1875,
+              "ramMiB": 16.85546875
+            },
+            {
+              "pid": 23812,
+              "name": "explorer.exe",
+              "cpuSecondsDelta": 0.125,
+              "ramMiB": 344.35546875
+            },
+            {
+              "pid": 36200,
+              "name": "Discord.exe",
+              "cpuSecondsDelta": 0.109375,
+              "ramMiB": 401.54296875
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        }
+      },
+      "underDotnetOrTesthostLoad": true
+    },
+    {
+      "inputCheckpoint": {
+        "name": "FT Food Routines Locked B1 TrainedDay9 20261101",
+        "hsgSha256": "c93f64e0a7a67657bb9f3f747faa14c6cf48445cac52b5dcb499aa06a3ac6b78",
+        "hsgBytes": 2172235
+      },
+      "configuration": {
+        "config": {
+          "Enabled": true,
+          "OptionalStopChoicePercentage": 25,
+          "GameClockFactor": 0.3333333333333333,
+          "PhysicalEnabled": true,
+          "MaximumPedestrians": 48,
+          "MaximumVehicles": 24,
+          "PhysicalRadiusMetres": 120,
+          "FoodChoiceTemperature": 1.0,
+          "FoodChoiceWeightFloor": 0.02,
+          "FoodChoiceTasteWeight": 1.0,
+          "FoodChoicePriceWeight": 1.0,
+          "FoodChoiceDistanceWeight": 1.0,
+          "FoodChoiceDistanceScaleMinutes": 10,
+          "FoodChoiceQueueWeight": 1.0,
+          "FoodChoiceQualityWeight": 0.5,
+          "FoodChoiceTimePressureWeight": 1.0,
+          "FoodChoiceHealthWeight": 0.0,
+          "FoodChoiceHouseholdWeight": 1.0,
+          "FoodShortlistTemperature": 1.0,
+          "FoodMemoryWeight": 1,
+          "FoodMemoryLoyalReturnMultiplier": 2,
+          "FoodMemoryCuriousNoveltyMultiplier": 1.3,
+          "FoodMemoryServedGain": 1,
+          "FoodMemoryStockPenalty": 3,
+          "FoodMemoryClosedPenalty": 3,
+          "FoodMemoryQueuePenalty": 2,
+          "FoodMemoryBadVisitTraitWeight": 1,
+          "FoodMemoryDecayDaysPerPoint": 2,
+          "FoodMemoryMinimumMultiplier": 0.25,
+          "FoodMemoryMaximumMultiplier": 2.5,
+          "FoodMemoryCapacity": 4,
+          "FoodMemoryForgetAfterDays": 28
+        },
+        "sha256": "2c6a0f5dba60b13956eea334fae5b0ff2aa78151c24ec0ecf40ee1881b3abbe7",
+        "expectedMemoryWeight": 1
+      },
+      "window": "cand1-meal",
+      "seconds": 60.2180549,
+      "modWork": {
+        "samples": 5364,
+        "p50": 0.6368999999999999,
+        "p95": 1.082,
+        "maximum": 14.1349
+      },
+      "updateAuthorityUnion": {
+        "samples": 5364,
+        "p50": 0.6331,
+        "p95": 1.0789,
+        "maximum": 14.1313
+      },
+      "wholeFrame": {
+        "samples": 5365,
+        "p50": 11.1844,
+        "p95": 12.8667,
+        "maximum": 44.4804
+      },
+      "wholeFrameStalls": {
+        "framesOver50ms": 0,
+        "framesOver100ms": 0,
+        "framesOver250ms": 0
+      },
+      "modSpikesGe30ms": [],
+      "p95GatePass": true,
+      "cleanNoSave": true,
+      "autosaveOffBeforeAfter": true,
+      "nativeMinutes": 20.136271238327026,
+      "populationLag": 0.0,
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321686,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 180.000656,
+            "z": -3.83985656e-11
+          }
+        }
+      },
+      "routesAndQueries": {
+        "before": {
+          "routes": {
+            "WalkingRequests": 508,
+            "WalkingInvalidInputs": 0,
+            "WalkingDistanceRejects": 40,
+            "WalkingCacheHits": 18,
+            "WalkingNegativeCacheHits": 0,
+            "WalkingCacheMisses": 450,
+            "WalkingCacheEvictions": 0,
+            "WalkingCacheClears": 14,
+            "WalkingCalculations": 450,
+            "WalkingFailedCalculations": 166,
+            "WalkingCalculationMilliseconds": 305.41760000000045,
+            "MaximumWalkingCalculationMilliseconds": 6.1610000000000005,
+            "NavMeshSampleQueries": 900,
+            "NavMeshPathQueries": 449,
+            "NavMeshPathReuses": 0,
+            "NavMeshPathMilliseconds": 294.3254999999999,
+            "MaximumNavMeshPathMilliseconds": 6.1414,
+            "WalkingQuoteChecks": 0,
+            "WalkingQuoteRejected": 0,
+            "NavMeshRaycastQueries": 0,
+            "WalkingQuoteCheckMilliseconds": 0.0,
+            "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+            "CitizenPlanRequests": 141,
+            "SelectedWalking": 27,
+            "SelectedSubway": 19,
+            "SelectedCar": 3,
+            "NoFeasibleRoute": 92,
+            "SubwayConnectorRequests": 272,
+            "SubwayConnectorCacheHits": 18,
+            "SubwayConnectorCacheMisses": 242,
+            "SubwayCandidates": 126
+          },
+          "marketCalls": {
+            "BeginCapture": 452,
+            "CaptureBusiness": 452
+          },
+          "PlanningPending": false,
+          "pendingDecisions": 0,
+          "runtime": {
+            "advanceFrames": 4525,
+            "advanceEvents": 517,
+            "advanceMilliseconds": 317.4658000000002,
+            "planningSlices": 47,
+            "planningEvents": 26,
+            "planningPendingFrames": 21,
+            "planningRequests": 26,
+            "planningMilliseconds": 65.5958
+          }
+        },
+        "after": {
+          "routes": {
+            "WalkingRequests": 855,
+            "WalkingInvalidInputs": 0,
+            "WalkingDistanceRejects": 49,
+            "WalkingCacheHits": 35,
+            "WalkingNegativeCacheHits": 2,
+            "WalkingCacheMisses": 771,
+            "WalkingCacheEvictions": 0,
+            "WalkingCacheClears": 17,
+            "WalkingCalculations": 771,
+            "WalkingFailedCalculations": 196,
+            "WalkingCalculationMilliseconds": 406.5683000000004,
+            "MaximumWalkingCalculationMilliseconds": 6.1610000000000005,
+            "NavMeshSampleQueries": 1542,
+            "NavMeshPathQueries": 770,
+            "NavMeshPathReuses": 0,
+            "NavMeshPathMilliseconds": 386.2772000000003,
+            "MaximumNavMeshPathMilliseconds": 6.1414,
+            "WalkingQuoteChecks": 0,
+            "WalkingQuoteRejected": 0,
+            "NavMeshRaycastQueries": 0,
+            "WalkingQuoteCheckMilliseconds": 0.0,
+            "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+            "CitizenPlanRequests": 220,
+            "SelectedWalking": 75,
+            "SelectedSubway": 26,
+            "SelectedCar": 6,
+            "NoFeasibleRoute": 113,
+            "SubwayConnectorRequests": 496,
+            "SubwayConnectorCacheHits": 35,
+            "SubwayConnectorCacheMisses": 447,
+            "SubwayCandidates": 257
+          },
+          "marketCalls": {
+            "BeginCapture": 608,
+            "CaptureBusiness": 608
+          },
+          "PlanningPending": false,
+          "pendingDecisions": 0,
+          "runtime": {
+            "advanceFrames": 276,
+            "advanceEvents": 0,
+            "advanceMilliseconds": 21.262700000000006,
+            "planningSlices": 0,
+            "planningEvents": 0,
+            "planningPendingFrames": 0,
+            "planningRequests": 0,
+            "planningMilliseconds": 0.0
+          }
+        }
+      },
+      "allocationCounterAvailable": false,
+      "allocationCounterObservedPositive": false,
+      "allocatedBytesPerFrame": {
+        "samples": 0,
+        "mean": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "gcCollections": [
+        1,
+        1,
+        1
+      ],
+      "rawObservations": {
+        "Count": 5365,
+        "Capacity": 65536,
+        "MarshaledStorageEstimateBytes": 7864320,
+        "Dropped": 0,
+        "Duplicates": 0,
+        "InvalidOrder": 0,
+        "SkippedUnityFrames": 0,
+        "stopwatchFrequency": 10000000,
+        "terminationObservedTicks": 17938751265,
+        "discardedLifecycleTailTicks": 0,
+        "unobservedTailTicks": 68860,
+        "initialIntervalPartial": true,
+        "currentModFrameExcluded": true,
+        "outstandingPrimaryScopes": 0
+      },
+      "evidence": {
+        "mod-work": {
+          "file": "frames-mod-work-cand1-meal-stop-844064.csv.gz",
+          "sha256": "ae5f3c75db07f12c2a1621eaab403f446a50eeb8d1cafe0b678046f977043f0d"
+        },
+        "observations": {
+          "file": "frames-observations-cand1-meal-stop-844064.csv.gz",
+          "sha256": "1aa3c00e50cfdb8d803e29d8e5ba8d1b94bc2c44e4d1cba77332c703781da923"
+        }
+      },
+      "systemLoad": {
+        "load-before": {
+          "utc": "2026-11-01T01:31:06Z",
+          "cpuTotalPercent": 43.0,
+          "counts": {
+            "dotnet": 5,
+            "testhost": 1,
+            "codex": 10,
+            "python": 7
+          },
+          "ramAvailableGiB": 27.448028564453125,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 42.375,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 21016,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 14.234375,
+              "ramMiB": 1481.796875
+            },
+            {
+              "pid": 48740,
+              "name": "testhost.exe",
+              "cpuSecondsDelta": 4.984375,
+              "ramMiB": 4147.84375
+            },
+            {
+              "pid": 9784,
+              "name": "python.exe",
+              "cpuSecondsDelta": 2.265625,
+              "ramMiB": 65.921875
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 2.109375,
+              "ramMiB": 567.109375
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.28125,
+              "ramMiB": 44.2109375
+            },
+            {
+              "pid": 12672,
+              "name": "WmiPrvSE.exe",
+              "cpuSecondsDelta": 0.203125,
+              "ramMiB": 24.44140625
+            },
+            {
+              "pid": 36744,
+              "name": "dwm.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 155.33984375
+            },
+            {
+              "pid": 51184,
+              "name": "codex.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 90.62109375
+            },
+            {
+              "pid": 9844,
+              "name": "svchost.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 17.38671875
+            },
+            {
+              "pid": 13380,
+              "name": "agent_cli.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 187.6640625
+            },
+            {
+              "pid": 40748,
+              "name": "codex.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 85.21484375
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-window-start": {
+          "utc": "2026-11-01T01:38:34Z",
+          "cpuTotalPercent": 22.2,
+          "counts": {
+            "dotnet": 5,
+            "testhost": 1,
+            "codex": 10,
+            "python": 7
+          },
+          "ramAvailableGiB": 25.812999725341797,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 41.234375,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 21016,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 9.1875,
+              "ramMiB": 2096.03515625
+            },
+            {
+              "pid": 44428,
+              "name": "testhost.exe",
+              "cpuSecondsDelta": 2.640625,
+              "ramMiB": 3889.8046875
+            },
+            {
+              "pid": 9784,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.65625,
+              "ramMiB": 64.91796875
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.328125,
+              "ramMiB": 538.1953125
+            },
+            {
+              "pid": 3476,
+              "name": "MemCompression",
+              "cpuSecondsDelta": 0.140625,
+              "ramMiB": 1183.86328125
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 44.23046875
+            },
+            {
+              "pid": 2700,
+              "name": "tailscale-ipn.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 51.92578125
+            },
+            {
+              "pid": 16788,
+              "name": "codex.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 90.94140625
+            },
+            {
+              "pid": 20076,
+              "name": "Grok Bot.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 67.51953125
+            },
+            {
+              "pid": 36200,
+              "name": "Discord.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 401.359375
+            },
+            {
+              "pid": 38416,
+              "name": "codex.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 103.62109375
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-after": {
+          "utc": "2026-11-01T01:39:40Z",
+          "cpuTotalPercent": 29.6,
+          "counts": {
+            "dotnet": 5,
+            "testhost": 1,
+            "codex": 10,
+            "python": 7
+          },
+          "ramAvailableGiB": 30.88039779663086,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 36.515625,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 21016,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 11.90625,
+              "ramMiB": 2234.22265625
+            },
+            {
+              "pid": 44428,
+              "name": "testhost.exe",
+              "cpuSecondsDelta": 2.6875,
+              "ramMiB": 204.2578125
+            },
+            {
+              "pid": 9784,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.640625,
+              "ramMiB": 64.46875
+            },
+            {
+              "pid": 8156,
+              "name": "SearchIndexer.exe",
+              "cpuSecondsDelta": 0.296875,
+              "ramMiB": 210.515625
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.109375,
+              "ramMiB": 44.23046875
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 539.0546875
+            },
+            {
+              "pid": 15804,
+              "name": "Grok Bot.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 86.0234375
+            },
+            {
+              "pid": 2064,
+              "name": "tailscaled.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 122.53515625
+            },
+            {
+              "pid": 2700,
+              "name": "tailscale-ipn.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 52.07421875
+            },
+            {
+              "pid": 18264,
+              "name": "Discord.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 168.44140625
+            },
+            {
+              "pid": 29708,
+              "name": "Grok Bot.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 58.3203125
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        }
+      },
+      "underDotnetOrTesthostLoad": true
+    },
+    {
+      "inputCheckpoint": {
+        "name": "FT Food Routines Locked B1 ControlDay9 20261101",
+        "hsgSha256": "b9dcc3d44e83e7920eaa7117454ca45e93fc320a32215d5ac161679937160027",
+        "hsgBytes": 1517293
+      },
+      "configuration": {
+        "config": {
+          "Enabled": true,
+          "OptionalStopChoicePercentage": 25,
+          "GameClockFactor": 0.3333333333333333,
+          "PhysicalEnabled": true,
+          "MaximumPedestrians": 48,
+          "MaximumVehicles": 24,
+          "PhysicalRadiusMetres": 120,
+          "FoodChoiceTemperature": 1.0,
+          "FoodChoiceWeightFloor": 0.02,
+          "FoodChoiceTasteWeight": 1.0,
+          "FoodChoicePriceWeight": 1.0,
+          "FoodChoiceDistanceWeight": 1.0,
+          "FoodChoiceDistanceScaleMinutes": 10,
+          "FoodChoiceQueueWeight": 1.0,
+          "FoodChoiceQualityWeight": 0.5,
+          "FoodChoiceTimePressureWeight": 1.0,
+          "FoodChoiceHealthWeight": 0.0,
+          "FoodChoiceHouseholdWeight": 1.0,
+          "FoodShortlistTemperature": 1.0
+        },
+        "sha256": "abc2b4c4a06a4fcf68c6f1ecf25e0d397278748a0a0d6a7244155ac662892fa8",
+        "expectedMemoryWeight": 1
+      },
+      "window": "base2-idle",
+      "seconds": 60.091882,
+      "modWork": {
+        "samples": 5366,
+        "p50": 0.4128,
+        "p95": 0.7101000000000001,
+        "maximum": 12.9799
+      },
+      "updateAuthorityUnion": {
+        "samples": 5366,
+        "p50": 0.4092,
+        "p95": 0.7064,
+        "maximum": 12.9762
+      },
+      "wholeFrame": {
+        "samples": 5367,
+        "p50": 11.1657,
+        "p95": 12.8084,
+        "maximum": 42.0077
+      },
+      "wholeFrameStalls": {
+        "framesOver50ms": 0,
+        "framesOver100ms": 0,
+        "framesOver250ms": 0
+      },
+      "modSpikesGe30ms": [],
+      "p95GatePass": true,
+      "cleanNoSave": true,
+      "autosaveOffBeforeAfter": true,
+      "nativeMinutes": 20.09510326385498,
+      "populationLag": 0.0,
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321686,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 180.0003,
+            "z": -1.91992863e-11
+          }
+        }
+      },
+      "routesAndQueries": {
+        "before": {
+          "routes": {
+            "WalkingRequests": 35,
+            "WalkingInvalidInputs": 0,
+            "WalkingDistanceRejects": 6,
+            "WalkingCacheHits": 1,
+            "WalkingNegativeCacheHits": 0,
+            "WalkingCacheMisses": 28,
+            "WalkingCacheEvictions": 0,
+            "WalkingCacheClears": 1,
+            "WalkingCalculations": 28,
+            "WalkingFailedCalculations": 12,
+            "WalkingCalculationMilliseconds": 14.3947,
+            "MaximumWalkingCalculationMilliseconds": 1.2469000000000001,
+            "NavMeshSampleQueries": 56,
+            "NavMeshPathQueries": 28,
+            "NavMeshPathReuses": 0,
+            "NavMeshPathMilliseconds": 13.8979,
+            "MaximumNavMeshPathMilliseconds": 1.2345000000000002,
+            "WalkingQuoteChecks": 0,
+            "WalkingQuoteRejected": 0,
+            "NavMeshRaycastQueries": 0,
+            "WalkingQuoteCheckMilliseconds": 0.0,
+            "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+            "CitizenPlanRequests": 7,
+            "SelectedWalking": 0,
+            "SelectedSubway": 3,
+            "SelectedCar": 0,
+            "NoFeasibleRoute": 4,
+            "SubwayConnectorRequests": 20,
+            "SubwayConnectorCacheHits": 1,
+            "SubwayConnectorCacheMisses": 18,
+            "SubwayCandidates": 8
+          },
+          "marketCalls": {},
+          "PlanningPending": false,
+          "pendingDecisions": 0,
+          "runtime": {
+            "advanceFrames": 1417,
+            "advanceEvents": 7,
+            "advanceMilliseconds": 88.37239999999986,
+            "planningSlices": 21,
+            "planningEvents": 7,
+            "planningPendingFrames": 14,
+            "planningRequests": 7,
+            "planningMilliseconds": 40.77289999999999
+          }
+        },
+        "after": {
+          "routes": {
+            "WalkingRequests": 232,
+            "WalkingInvalidInputs": 0,
+            "WalkingDistanceRejects": 35,
+            "WalkingCacheHits": 1,
+            "WalkingNegativeCacheHits": 0,
+            "WalkingCacheMisses": 196,
+            "WalkingCacheEvictions": 0,
+            "WalkingCacheClears": 4,
+            "WalkingCalculations": 196,
+            "WalkingFailedCalculations": 45,
+            "WalkingCalculationMilliseconds": 84.9879,
+            "MaximumWalkingCalculationMilliseconds": 1.5961,
+            "NavMeshSampleQueries": 392,
+            "NavMeshPathQueries": 196,
+            "NavMeshPathReuses": 0,
+            "NavMeshPathMilliseconds": 79.29389999999998,
+            "MaximumNavMeshPathMilliseconds": 1.3466,
+            "WalkingQuoteChecks": 0,
+            "WalkingQuoteRejected": 0,
+            "NavMeshRaycastQueries": 0,
+            "WalkingQuoteCheckMilliseconds": 0.0,
+            "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+            "CitizenPlanRequests": 50,
+            "SelectedWalking": 0,
+            "SelectedSubway": 30,
+            "SelectedCar": 0,
+            "NoFeasibleRoute": 20,
+            "SubwayConnectorRequests": 140,
+            "SubwayConnectorCacheHits": 1,
+            "SubwayConnectorCacheMisses": 133,
+            "SubwayCandidates": 95
+          },
+          "marketCalls": {
+            "BeginCapture": 26,
+            "CaptureBusiness": 26
+          },
+          "PlanningPending": false,
+          "pendingDecisions": 0,
+          "runtime": {
+            "advanceFrames": 2705,
+            "advanceEvents": 62,
+            "advanceMilliseconds": 169.64889999999988,
+            "planningSlices": 28,
+            "planningEvents": 14,
+            "planningPendingFrames": 14,
+            "planningRequests": 14,
+            "planningMilliseconds": 42.61390000000001
+          }
+        }
+      },
+      "allocationCounterAvailable": false,
+      "allocationCounterObservedPositive": false,
+      "allocatedBytesPerFrame": {
+        "samples": 0,
+        "mean": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "gcCollections": [
+        1,
+        1,
+        1
+      ],
+      "rawObservations": {
+        "Count": 5367,
+        "Capacity": 65536,
+        "MarshaledStorageEstimateBytes": 7864320,
+        "Dropped": 0,
+        "Duplicates": 0,
+        "InvalidOrder": 0,
+        "SkippedUnityFrames": 0,
+        "stopwatchFrequency": 10000000,
+        "terminationObservedTicks": 4815663432,
+        "discardedLifecycleTailTicks": 0,
+        "unobservedTailTicks": 79991,
+        "initialIntervalPartial": true,
+        "currentModFrameExcluded": true,
+        "outstandingPrimaryScopes": 0
+      },
+      "evidence": {
+        "mod-work": {
+          "file": "frames-mod-work-base2-idle-stop-83af35.csv.gz",
+          "sha256": "b924eedea1331371090ebf1a0347d503f15a5d5a3a6babff11461edd04057725"
+        },
+        "observations": {
+          "file": "frames-observations-base2-idle-stop-83af35.csv.gz",
+          "sha256": "5c75f595b6dd6e7faa94beac3a533b60ff6442451da72cbf6b113f91f0fb498d"
+        }
+      },
+      "systemLoad": {
+        "load-before": {
+          "utc": "2026-11-01T01:46:05Z",
+          "cpuTotalPercent": 29.8,
+          "counts": {
+            "dotnet": 0,
+            "testhost": 0,
+            "codex": 8,
+            "python": 6
+          },
+          "ramAvailableGiB": 25.243114471435547,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 41.125,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 34580,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 12.25,
+              "ramMiB": 4374.33203125
+            },
+            {
+              "pid": 7068,
+              "name": "vmmemWSL",
+              "cpuSecondsDelta": 5.640625,
+              "ramMiB": 3772.61328125
+            },
+            {
+              "pid": 23076,
+              "name": "python.exe",
+              "cpuSecondsDelta": 2.03125,
+              "ramMiB": 28.265625
+            },
+            {
+              "pid": 2312,
+              "name": "svchost.exe",
+              "cpuSecondsDelta": 0.5,
+              "ramMiB": 11.6484375
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.109375,
+              "ramMiB": 44.24609375
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.109375,
+              "ramMiB": 560.359375
+            },
+            {
+              "pid": 8,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 17.01171875
+            },
+            {
+              "pid": 2064,
+              "name": "tailscaled.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 122.5546875
+            },
+            {
+              "pid": 5908,
+              "name": "WmiPrvSE.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 14.85546875
+            },
+            {
+              "pid": 36200,
+              "name": "Discord.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 400.97265625
+            },
+            {
+              "pid": 36744,
+              "name": "dwm.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 155.40234375
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-window-start": {
+          "utc": "2026-11-01T01:47:01Z",
+          "cpuTotalPercent": 33.7,
+          "counts": {
+            "dotnet": 0,
+            "testhost": 0,
+            "codex": 8,
+            "python": 6
+          },
+          "ramAvailableGiB": 25.288341522216797,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 39.21875,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 34580,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 14.21875,
+              "ramMiB": 4407.26953125
+            },
+            {
+              "pid": 23076,
+              "name": "python.exe",
+              "cpuSecondsDelta": 2.0625,
+              "ramMiB": 28.8125
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.765625,
+              "ramMiB": 565.1796875
+            },
+            {
+              "pid": 47184,
+              "name": "ChatGPT.exe",
+              "cpuSecondsDelta": 0.484375,
+              "ramMiB": 483.91015625
+            },
+            {
+              "pid": 28620,
+              "name": "agent_cli.exe",
+              "cpuSecondsDelta": 0.421875,
+              "ramMiB": 249.6015625
+            },
+            {
+              "pid": 51204,
+              "name": "python.exe",
+              "cpuSecondsDelta": 0.28125,
+              "ramMiB": 49.25390625
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.140625,
+              "ramMiB": 44.25
+            },
+            {
+              "pid": 8,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 16.94140625
+            },
+            {
+              "pid": 8156,
+              "name": "SearchIndexer.exe",
+              "cpuSecondsDelta": 0.078125,
+              "ramMiB": 210.96484375
+            },
+            {
+              "pid": 48284,
+              "name": "ChatGPT.exe",
+              "cpuSecondsDelta": 0.078125,
+              "ramMiB": 371.41796875
+            },
+            {
+              "pid": 7068,
+              "name": "vmmemWSL",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 3655.30078125
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-after": {
+          "utc": "2026-11-01T01:48:08Z",
+          "cpuTotalPercent": 29.2,
+          "counts": {
+            "dotnet": 0,
+            "testhost": 0,
+            "codex": 8,
+            "python": 6
+          },
+          "ramAvailableGiB": 25.433879852294922,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 38.859375,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 34580,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 11.703125,
+              "ramMiB": 4341.859375
+            },
+            {
+              "pid": 23076,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.671875,
+              "ramMiB": 28.8671875
+            },
+            {
+              "pid": 7068,
+              "name": "vmmemWSL",
+              "cpuSecondsDelta": 0.234375,
+              "ramMiB": 4195.31640625
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.21875,
+              "ramMiB": 44.25
+            },
+            {
+              "pid": 10520,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.203125,
+              "ramMiB": 102.8515625
+            },
+            {
+              "pid": 8,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.15625,
+              "ramMiB": 17.01171875
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 529.86328125
+            },
+            {
+              "pid": 11900,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 64.41796875
+            },
+            {
+              "pid": 14568,
+              "name": "steamwebhelper.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 165.5859375
+            },
+            {
+              "pid": 23812,
+              "name": "explorer.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 345.16015625
+            },
+            {
+              "pid": 48284,
+              "name": "ChatGPT.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 371.828125
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        }
+      },
+      "underDotnetOrTesthostLoad": false
+    },
+    {
+      "inputCheckpoint": {
+        "name": "FT Food Routines Locked B1 ControlDay9 20261101",
+        "hsgSha256": "b9dcc3d44e83e7920eaa7117454ca45e93fc320a32215d5ac161679937160027",
+        "hsgBytes": 1517293
+      },
+      "configuration": {
+        "config": {
+          "Enabled": true,
+          "OptionalStopChoicePercentage": 25,
+          "GameClockFactor": 0.3333333333333333,
+          "PhysicalEnabled": true,
+          "MaximumPedestrians": 48,
+          "MaximumVehicles": 24,
+          "PhysicalRadiusMetres": 120,
+          "FoodChoiceTemperature": 1.0,
+          "FoodChoiceWeightFloor": 0.02,
+          "FoodChoiceTasteWeight": 1.0,
+          "FoodChoicePriceWeight": 1.0,
+          "FoodChoiceDistanceWeight": 1.0,
+          "FoodChoiceDistanceScaleMinutes": 10,
+          "FoodChoiceQueueWeight": 1.0,
+          "FoodChoiceQualityWeight": 0.5,
+          "FoodChoiceTimePressureWeight": 1.0,
+          "FoodChoiceHealthWeight": 0.0,
+          "FoodChoiceHouseholdWeight": 1.0,
+          "FoodShortlistTemperature": 1.0
+        },
+        "sha256": "abc2b4c4a06a4fcf68c6f1ecf25e0d397278748a0a0d6a7244155ac662892fa8",
+        "expectedMemoryWeight": 1
+      },
+      "window": "base2-meal",
+      "seconds": 60.2211492,
+      "modWork": {
+        "samples": 4771,
+        "p50": 1.0721,
+        "p95": 2.8658,
+        "maximum": 28.9193
+      },
+      "updateAuthorityUnion": {
+        "samples": 4771,
+        "p50": 1.0678,
+        "p95": 2.8628,
+        "maximum": 28.9123
+      },
+      "wholeFrame": {
+        "samples": 4772,
+        "p50": 12.2143,
+        "p95": 19.051,
+        "maximum": 50.7787
+      },
+      "wholeFrameStalls": {
+        "framesOver50ms": 1,
+        "framesOver100ms": 0,
+        "framesOver250ms": 0
+      },
+      "modSpikesGe30ms": [],
+      "p95GatePass": true,
+      "cleanNoSave": true,
+      "autosaveOffBeforeAfter": true,
+      "nativeMinutes": 20.136800527572632,
+      "populationLag": 0.0,
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321667,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 179.999374,
+            "z": 0.0
+          }
+        }
+      },
+      "routesAndQueries": {
+        "before": {
+          "routes": {
+            "WalkingRequests": 3019,
+            "WalkingInvalidInputs": 0,
+            "WalkingDistanceRejects": 90,
+            "WalkingCacheHits": 192,
+            "WalkingNegativeCacheHits": 2,
+            "WalkingCacheMisses": 2737,
+            "WalkingCacheEvictions": 0,
+            "WalkingCacheClears": 14,
+            "WalkingCalculations": 2737,
+            "WalkingFailedCalculations": 407,
+            "WalkingCalculationMilliseconds": 1292.503600000003,
+            "MaximumWalkingCalculationMilliseconds": 3.2520000000000002,
+            "NavMeshSampleQueries": 5473,
+            "NavMeshPathQueries": 2733,
+            "NavMeshPathReuses": 0,
+            "NavMeshPathMilliseconds": 1188.724300000001,
+            "MaximumNavMeshPathMilliseconds": 3.2098,
+            "WalkingQuoteChecks": 0,
+            "WalkingQuoteRejected": 0,
+            "NavMeshRaycastQueries": 0,
+            "WalkingQuoteCheckMilliseconds": 0.0,
+            "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+            "CitizenPlanRequests": 595,
+            "SelectedWalking": 132,
+            "SelectedSubway": 363,
+            "SelectedCar": 9,
+            "NoFeasibleRoute": 89,
+            "SubwayConnectorRequests": 2027,
+            "SubwayConnectorCacheHits": 178,
+            "SubwayConnectorCacheMisses": 1832,
+            "SubwayCandidates": 1659
+          },
+          "marketCalls": {
+            "BeginCapture": 524,
+            "CaptureBusiness": 524
+          },
+          "PlanningPending": false,
+          "pendingDecisions": 0,
+          "runtime": {
+            "advanceFrames": 2411,
+            "advanceEvents": 771,
+            "advanceMilliseconds": 1052.5693999999996,
+            "planningSlices": 300,
+            "planningEvents": 128,
+            "planningPendingFrames": 174,
+            "planningRequests": 129,
+            "planningMilliseconds": 512.5974999999999
+          }
+        },
+        "after": {
+          "routes": {
+            "WalkingRequests": 3545,
+            "WalkingInvalidInputs": 0,
+            "WalkingDistanceRejects": 101,
+            "WalkingCacheHits": 225,
+            "WalkingNegativeCacheHits": 2,
+            "WalkingCacheMisses": 3219,
+            "WalkingCacheEvictions": 0,
+            "WalkingCacheClears": 17,
+            "WalkingCalculations": 3219,
+            "WalkingFailedCalculations": 445,
+            "WalkingCalculationMilliseconds": 1454.132300000001,
+            "MaximumWalkingCalculationMilliseconds": 3.2520000000000002,
+            "NavMeshSampleQueries": 6437,
+            "NavMeshPathQueries": 3215,
+            "NavMeshPathReuses": 0,
+            "NavMeshPathMilliseconds": 1335.0884000000026,
+            "MaximumNavMeshPathMilliseconds": 3.2098,
+            "WalkingQuoteChecks": 0,
+            "WalkingQuoteRejected": 0,
+            "NavMeshRaycastQueries": 0,
+            "WalkingQuoteCheckMilliseconds": 0.0,
+            "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+            "CitizenPlanRequests": 710,
+            "SelectedWalking": 206,
+            "SelectedSubway": 382,
+            "SelectedCar": 10,
+            "NoFeasibleRoute": 110,
+            "SubwayConnectorRequests": 2387,
+            "SubwayConnectorCacheHits": 211,
+            "SubwayConnectorCacheMisses": 2157,
+            "SubwayCandidates": 1889
+          },
+          "marketCalls": {
+            "BeginCapture": 698,
+            "CaptureBusiness": 698
+          },
+          "PlanningPending": false,
+          "pendingDecisions": 0,
+          "runtime": {
+            "advanceFrames": 706,
+            "advanceEvents": 144,
+            "advanceMilliseconds": 162.25300000000013,
+            "planningSlices": 2,
+            "planningEvents": 1,
+            "planningPendingFrames": 1,
+            "planningRequests": 1,
+            "planningMilliseconds": 2.8561
+          }
+        }
+      },
+      "allocationCounterAvailable": false,
+      "allocationCounterObservedPositive": false,
+      "allocatedBytesPerFrame": {
+        "samples": 0,
+        "mean": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "gcCollections": [
+        1,
+        1,
+        1
+      ],
+      "rawObservations": {
+        "Count": 4772,
+        "Capacity": 65536,
+        "MarshaledStorageEstimateBytes": 7864320,
+        "Dropped": 0,
+        "Duplicates": 0,
+        "InvalidOrder": 0,
+        "SkippedUnityFrames": 0,
+        "stopwatchFrequency": 10000000,
+        "terminationObservedTicks": 10077017303,
+        "discardedLifecycleTailTicks": 0,
+        "unobservedTailTicks": 95814,
+        "initialIntervalPartial": true,
+        "currentModFrameExcluded": true,
+        "outstandingPrimaryScopes": 0
+      },
+      "evidence": {
+        "mod-work": {
+          "file": "frames-mod-work-base2-meal-stop-622099.csv.gz",
+          "sha256": "c1c31c9454445dc530daeb148594c7a206363db8fd966194248e31905b258777"
+        },
+        "observations": {
+          "file": "frames-observations-base2-meal-stop-622099.csv.gz",
+          "sha256": "e34b1734af2d053fb6628dcdc97d31a5f41755e2d06c08977ed307f0356a9482"
+        }
+      },
+      "systemLoad": {
+        "load-before": {
+          "utc": "2026-11-01T01:48:16Z",
+          "cpuTotalPercent": 29.4,
+          "counts": {
+            "dotnet": 0,
+            "testhost": 0,
+            "codex": 8,
+            "python": 6
+          },
+          "ramAvailableGiB": 24.88784408569336,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 38.578125,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 34580,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 10.875,
+              "ramMiB": 4384.08984375
+            },
+            {
+              "pid": 7068,
+              "name": "vmmemWSL",
+              "cpuSecondsDelta": 3.578125,
+              "ramMiB": 4652.62890625
+            },
+            {
+              "pid": 23076,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.75,
+              "ramMiB": 28.8671875
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.140625,
+              "ramMiB": 44.25
+            },
+            {
+              "pid": 8,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 17.01171875
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 526.0625
+            },
+            {
+              "pid": 2700,
+              "name": "tailscale-ipn.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 51.203125
+            },
+            {
+              "pid": 17952,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 1150.25390625
+            },
+            {
+              "pid": 1920,
+              "name": "ChatGPT.exe",
+              "cpuSecondsDelta": 0.015625,
+              "ramMiB": 320.48828125
+            },
+            {
+              "pid": 17540,
+              "name": "Grok Bot.exe",
+              "cpuSecondsDelta": 0.015625,
+              "ramMiB": 84.421875
+            },
+            {
+              "pid": 20076,
+              "name": "Grok Bot.exe",
+              "cpuSecondsDelta": 0.015625,
+              "ramMiB": 67.47265625
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-window-start": {
+          "utc": "2026-11-01T01:55:47Z",
+          "cpuTotalPercent": 91.2,
+          "counts": {
+            "dotnet": 1,
+            "testhost": 0,
+            "codex": 12,
+            "python": 11
+          },
+          "ramAvailableGiB": 21.000099182128906,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 7068,
+              "name": "vmmemWSL",
+              "cpuSecondsDelta": 49.71875,
+              "ramMiB": 9919.12890625
+            },
+            {
+              "pid": 34580,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 19.03125,
+              "ramMiB": 2215.26953125
+            },
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 11.78125,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 4.5,
+              "ramMiB": 597.00390625
+            },
+            {
+              "pid": 14532,
+              "name": "dotnet.exe",
+              "cpuSecondsDelta": 3.90625,
+              "ramMiB": 155.6171875
+            },
+            {
+              "pid": 23076,
+              "name": "python.exe",
+              "cpuSecondsDelta": 3.859375,
+              "ramMiB": 30.37109375
+            },
+            {
+              "pid": 37576,
+              "name": "python.exe",
+              "cpuSecondsDelta": 2.46875,
+              "ramMiB": 13.90625
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.953125,
+              "ramMiB": 44.296875
+            },
+            {
+              "pid": 8,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.28125,
+              "ramMiB": 16.9375
+            },
+            {
+              "pid": 40748,
+              "name": "codex.exe",
+              "cpuSecondsDelta": 0.203125,
+              "ramMiB": 89.7421875
+            },
+            {
+              "pid": 8156,
+              "name": "SearchIndexer.exe",
+              "cpuSecondsDelta": 0.15625,
+              "ramMiB": 212.0078125
+            },
+            {
+              "pid": 31888,
+              "name": "csrss.exe",
+              "cpuSecondsDelta": 0.125,
+              "ramMiB": 11.45703125
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-after": {
+          "utc": "2026-11-01T01:56:56Z",
+          "cpuTotalPercent": 52.3,
+          "counts": {
+            "dotnet": 1,
+            "testhost": 0,
+            "codex": 12,
+            "python": 11
+          },
+          "ramAvailableGiB": 29.070152282714844,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 40.703125,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 34580,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 16.96875,
+              "ramMiB": 2697.90625
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 4.734375,
+              "ramMiB": 610.70703125
+            },
+            {
+              "pid": 17952,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 3.328125,
+              "ramMiB": 1134.5625
+            },
+            {
+              "pid": 23076,
+              "name": "python.exe",
+              "cpuSecondsDelta": 2.546875,
+              "ramMiB": 30.28125
+            },
+            {
+              "pid": 37576,
+              "name": "python.exe",
+              "cpuSecondsDelta": 2.421875,
+              "ramMiB": 13.96484375
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.296875,
+              "ramMiB": 44.30078125
+            },
+            {
+              "pid": 8,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.15625,
+              "ramMiB": 16.89453125
+            },
+            {
+              "pid": 9844,
+              "name": "svchost.exe",
+              "cpuSecondsDelta": 0.109375,
+              "ramMiB": 17.09375
+            },
+            {
+              "pid": 6956,
+              "name": "svchost.exe",
+              "cpuSecondsDelta": 0.078125,
+              "ramMiB": 30.484375
+            },
+            {
+              "pid": 23812,
+              "name": "explorer.exe",
+              "cpuSecondsDelta": 0.078125,
+              "ramMiB": 344.20703125
+            },
+            {
+              "pid": 1704,
+              "name": "lsass.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 48.25390625
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        }
+      },
+      "underDotnetOrTesthostLoad": true
+    },
+    {
+      "inputCheckpoint": {
+        "name": "FT Food Routines Locked B1 TrainedDay9 20261101",
+        "hsgSha256": "c93f64e0a7a67657bb9f3f747faa14c6cf48445cac52b5dcb499aa06a3ac6b78",
+        "hsgBytes": 2172235
+      },
+      "configuration": {
+        "config": {
+          "Enabled": true,
+          "OptionalStopChoicePercentage": 25,
+          "GameClockFactor": 0.3333333333333333,
+          "PhysicalEnabled": true,
+          "MaximumPedestrians": 48,
+          "MaximumVehicles": 24,
+          "PhysicalRadiusMetres": 120,
+          "FoodChoiceTemperature": 1.0,
+          "FoodChoiceWeightFloor": 0.02,
+          "FoodChoiceTasteWeight": 1.0,
+          "FoodChoicePriceWeight": 1.0,
+          "FoodChoiceDistanceWeight": 1.0,
+          "FoodChoiceDistanceScaleMinutes": 10,
+          "FoodChoiceQueueWeight": 1.0,
+          "FoodChoiceQualityWeight": 0.5,
+          "FoodChoiceTimePressureWeight": 1.0,
+          "FoodChoiceHealthWeight": 0.0,
+          "FoodChoiceHouseholdWeight": 1.0,
+          "FoodShortlistTemperature": 1.0,
+          "FoodMemoryWeight": 0,
+          "FoodMemoryLoyalReturnMultiplier": 2,
+          "FoodMemoryCuriousNoveltyMultiplier": 1.3,
+          "FoodMemoryServedGain": 1,
+          "FoodMemoryStockPenalty": 3,
+          "FoodMemoryClosedPenalty": 3,
+          "FoodMemoryQueuePenalty": 2,
+          "FoodMemoryBadVisitTraitWeight": 1,
+          "FoodMemoryDecayDaysPerPoint": 2,
+          "FoodMemoryMinimumMultiplier": 0.25,
+          "FoodMemoryMaximumMultiplier": 2.5,
+          "FoodMemoryCapacity": 4,
+          "FoodMemoryForgetAfterDays": 28
+        },
+        "sha256": "a20ddf018d84db76730f41b959f143b85943c1ef6cf9b48533374c4bdf529006",
+        "expectedMemoryWeight": 0
+      },
+      "window": "cand2-idle",
+      "seconds": 60.1060507,
+      "modWork": {
+        "samples": 4924,
+        "p50": 1.0005,
+        "p95": 1.7335,
+        "maximum": 28.4376
+      },
+      "updateAuthorityUnion": {
+        "samples": 4924,
+        "p50": 0.9962,
+        "p95": 1.7294,
+        "maximum": 28.4335
+      },
+      "wholeFrame": {
+        "samples": 4925,
+        "p50": 12.2118,
+        "p95": 15.1685,
+        "maximum": 73.38
+      },
+      "wholeFrameStalls": {
+        "framesOver50ms": 1,
+        "framesOver100ms": 0,
+        "framesOver250ms": 0
+      },
+      "modSpikesGe30ms": [],
+      "p95GatePass": true,
+      "cleanNoSave": true,
+      "autosaveOffBeforeAfter": true,
+      "nativeMinutes": 20.08946418762207,
+      "populationLag": 0.0,
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321686,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 179.99971,
+            "z": 9.599643e-12
+          }
+        }
+      },
+      "routesAndQueries": {
+        "before": {
+          "routes": {
+            "WalkingRequests": 15,
+            "WalkingInvalidInputs": 0,
+            "WalkingDistanceRejects": 3,
+            "WalkingCacheHits": 1,
+            "WalkingNegativeCacheHits": 0,
+            "WalkingCacheMisses": 11,
+            "WalkingCacheEvictions": 0,
+            "WalkingCacheClears": 1,
+            "WalkingCalculations": 11,
+            "WalkingFailedCalculations": 10,
+            "WalkingCalculationMilliseconds": 11.0795,
+            "MaximumWalkingCalculationMilliseconds": 1.2389000000000001,
+            "NavMeshSampleQueries": 22,
+            "NavMeshPathQueries": 11,
+            "NavMeshPathReuses": 0,
+            "NavMeshPathMilliseconds": 10.876100000000001,
+            "MaximumNavMeshPathMilliseconds": 1.2199,
+            "WalkingQuoteChecks": 0,
+            "WalkingQuoteRejected": 0,
+            "NavMeshRaycastQueries": 0,
+            "WalkingQuoteCheckMilliseconds": 0.0,
+            "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+            "CitizenPlanRequests": 4,
+            "SelectedWalking": 0,
+            "SelectedSubway": 0,
+            "SelectedCar": 0,
+            "NoFeasibleRoute": 4,
+            "SubwayConnectorRequests": 8,
+            "SubwayConnectorCacheHits": 1,
+            "SubwayConnectorCacheMisses": 6,
+            "SubwayCandidates": 0
+          },
+          "marketCalls": {},
+          "PlanningPending": false,
+          "pendingDecisions": 0,
+          "runtime": {
+            "advanceFrames": 1283,
+            "advanceEvents": 114,
+            "advanceMilliseconds": 220.3712,
+            "planningSlices": 8,
+            "planningEvents": 4,
+            "planningPendingFrames": 5,
+            "planningRequests": 4,
+            "planningMilliseconds": 17.6347
+          }
+        },
+        "after": {
+          "routes": {
+            "WalkingRequests": 103,
+            "WalkingInvalidInputs": 0,
+            "WalkingDistanceRejects": 7,
+            "WalkingCacheHits": 3,
+            "WalkingNegativeCacheHits": 0,
+            "WalkingCacheMisses": 93,
+            "WalkingCacheEvictions": 0,
+            "WalkingCacheClears": 4,
+            "WalkingCalculations": 93,
+            "WalkingFailedCalculations": 39,
+            "WalkingCalculationMilliseconds": 50.5873,
+            "MaximumWalkingCalculationMilliseconds": 1.4191,
+            "NavMeshSampleQueries": 186,
+            "NavMeshPathQueries": 93,
+            "NavMeshPathReuses": 0,
+            "NavMeshPathMilliseconds": 48.06100000000001,
+            "MaximumNavMeshPathMilliseconds": 1.2789000000000001,
+            "WalkingQuoteChecks": 0,
+            "WalkingQuoteRejected": 0,
+            "NavMeshRaycastQueries": 0,
+            "WalkingQuoteCheckMilliseconds": 0.0,
+            "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+            "CitizenPlanRequests": 30,
+            "SelectedWalking": 3,
+            "SelectedSubway": 6,
+            "SelectedCar": 0,
+            "NoFeasibleRoute": 21,
+            "SubwayConnectorRequests": 56,
+            "SubwayConnectorCacheHits": 3,
+            "SubwayConnectorCacheMisses": 51,
+            "SubwayCandidates": 29
+          },
+          "marketCalls": {
+            "BeginCapture": 18,
+            "CaptureBusiness": 18
+          },
+          "PlanningPending": false,
+          "pendingDecisions": 0,
+          "runtime": {
+            "advanceFrames": 2770,
+            "advanceEvents": 414,
+            "advanceMilliseconds": 559.6076999999988,
+            "planningSlices": 28,
+            "planningEvents": 15,
+            "planningPendingFrames": 13,
+            "planningRequests": 15,
+            "planningMilliseconds": 37.5847
+          }
+        }
+      },
+      "allocationCounterAvailable": false,
+      "allocationCounterObservedPositive": false,
+      "allocatedBytesPerFrame": {
+        "samples": 0,
+        "mean": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "gcCollections": [
+        2,
+        2,
+        2
+      ],
+      "rawObservations": {
+        "Count": 4925,
+        "Capacity": 65536,
+        "MarshaledStorageEstimateBytes": 7864320,
+        "Dropped": 0,
+        "Duplicates": 0,
+        "InvalidOrder": 0,
+        "SkippedUnityFrames": 0,
+        "stopwatchFrequency": 10000000,
+        "terminationObservedTicks": 11084758176,
+        "discardedLifecycleTailTicks": 0,
+        "unobservedTailTicks": 60077,
+        "initialIntervalPartial": true,
+        "currentModFrameExcluded": true,
+        "outstandingPrimaryScopes": 0
+      },
+      "evidence": {
+        "mod-work": {
+          "file": "frames-mod-work-cand2-idle-stop-380ff7.csv.gz",
+          "sha256": "6486722196a4d989c09e844610c6c86ed075094166eee9e7a004a3b29b77a37a"
+        },
+        "observations": {
+          "file": "frames-observations-cand2-idle-stop-380ff7.csv.gz",
+          "sha256": "96ef67f407dd9beb9d9e296b6cc51676dded41d324171ed0f4e5021f6bb83921"
+        }
+      },
+      "systemLoad": {
+        "load-before": {
+          "utc": "2026-11-01T02:13:44Z",
+          "cpuTotalPercent": 55.4,
+          "counts": {
+            "dotnet": 3,
+            "testhost": 0,
+            "codex": 10,
+            "python": 9
+          },
+          "ramAvailableGiB": 31.32927703857422,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 29.59375,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 18140,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 12.78125,
+              "ramMiB": 986.609375
+            },
+            {
+              "pid": 764,
+              "name": "restic.exe",
+              "cpuSecondsDelta": 3.53125,
+              "ramMiB": 295.34375
+            },
+            {
+              "pid": 52136,
+              "name": "dotnet.exe",
+              "cpuSecondsDelta": 2.609375,
+              "ramMiB": 168.48828125
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 2.453125,
+              "ramMiB": 567.01171875
+            },
+            {
+              "pid": 2032,
+              "name": "dotnet.exe",
+              "cpuSecondsDelta": 2.328125,
+              "ramMiB": 156.3359375
+            },
+            {
+              "pid": 50208,
+              "name": "python.exe",
+              "cpuSecondsDelta": 2.0,
+              "ramMiB": 34.87109375
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.671875,
+              "ramMiB": 44.67578125
+            },
+            {
+              "pid": 8156,
+              "name": "SearchIndexer.exe",
+              "cpuSecondsDelta": 0.265625,
+              "ramMiB": 213.7578125
+            },
+            {
+              "pid": 8,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.125,
+              "ramMiB": 16.97265625
+            },
+            {
+              "pid": 1704,
+              "name": "lsass.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 48.515625
+            },
+            {
+              "pid": 15384,
+              "name": "python.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 32.31640625
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-window-start": {
+          "utc": "2026-11-01T02:14:45Z",
+          "cpuTotalPercent": 46.8,
+          "counts": {
+            "dotnet": 1,
+            "testhost": 0,
+            "codex": 10,
+            "python": 8
+          },
+          "ramAvailableGiB": 23.627731323242188,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 31.40625,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 18140,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 13.890625,
+              "ramMiB": 4336.8046875
+            },
+            {
+              "pid": 16084,
+              "name": "vmmemWSL",
+              "cpuSecondsDelta": 4.546875,
+              "ramMiB": 3898.25
+            },
+            {
+              "pid": 764,
+              "name": "restic.exe",
+              "cpuSecondsDelta": 2.953125,
+              "ramMiB": 272.6953125
+            },
+            {
+              "pid": 50208,
+              "name": "python.exe",
+              "cpuSecondsDelta": 2.1875,
+              "ramMiB": 34.8984375
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.78125,
+              "ramMiB": 578.34375
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.28125,
+              "ramMiB": 44.68359375
+            },
+            {
+              "pid": 17952,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.28125,
+              "ramMiB": 1162.2265625
+            },
+            {
+              "pid": 41372,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.1875,
+              "ramMiB": 82.39453125
+            },
+            {
+              "pid": 8,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.109375,
+              "ramMiB": 16.96875
+            },
+            {
+              "pid": 15384,
+              "name": "python.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 32.3046875
+            },
+            {
+              "pid": 23812,
+              "name": "explorer.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 345.3046875
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-after": {
+          "utc": "2026-11-01T02:15:55Z",
+          "cpuTotalPercent": 56.8,
+          "counts": {
+            "dotnet": 1,
+            "testhost": 0,
+            "codex": 12,
+            "python": 9
+          },
+          "ramAvailableGiB": 21.291969299316406,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 32.71875,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 16084,
+              "name": "vmmemWSL",
+              "cpuSecondsDelta": 25.53125,
+              "ramMiB": 6616.375
+            },
+            {
+              "pid": 18140,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 17.40625,
+              "ramMiB": 4365.95703125
+            },
+            {
+              "pid": 764,
+              "name": "restic.exe",
+              "cpuSecondsDelta": 3.703125,
+              "ramMiB": 181.03515625
+            },
+            {
+              "pid": 50208,
+              "name": "python.exe",
+              "cpuSecondsDelta": 3.53125,
+              "ramMiB": 34.65234375
+            },
+            {
+              "pid": 17952,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 2.53125,
+              "ramMiB": 1163.27734375
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 1.75,
+              "ramMiB": 639.0859375
+            },
+            {
+              "pid": 16288,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.296875,
+              "ramMiB": 13.6328125
+            },
+            {
+              "pid": 38536,
+              "name": "bash.exe",
+              "cpuSecondsDelta": 0.84375,
+              "ramMiB": 10.16796875
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.328125,
+              "ramMiB": 44.68359375
+            },
+            {
+              "pid": 8,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.15625,
+              "ramMiB": 16.91796875
+            },
+            {
+              "pid": 19084,
+              "name": "VBCSCompiler.exe",
+              "cpuSecondsDelta": 0.15625,
+              "ramMiB": 343.60546875
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        }
+      },
+      "underDotnetOrTesthostLoad": true
+    },
+    {
+      "inputCheckpoint": {
+        "name": "FT Food Routines Locked B1 TrainedDay9 20261101",
+        "hsgSha256": "c93f64e0a7a67657bb9f3f747faa14c6cf48445cac52b5dcb499aa06a3ac6b78",
+        "hsgBytes": 2172235
+      },
+      "configuration": {
+        "config": {
+          "Enabled": true,
+          "OptionalStopChoicePercentage": 25,
+          "GameClockFactor": 0.3333333333333333,
+          "PhysicalEnabled": true,
+          "MaximumPedestrians": 48,
+          "MaximumVehicles": 24,
+          "PhysicalRadiusMetres": 120,
+          "FoodChoiceTemperature": 1.0,
+          "FoodChoiceWeightFloor": 0.02,
+          "FoodChoiceTasteWeight": 1.0,
+          "FoodChoicePriceWeight": 1.0,
+          "FoodChoiceDistanceWeight": 1.0,
+          "FoodChoiceDistanceScaleMinutes": 10,
+          "FoodChoiceQueueWeight": 1.0,
+          "FoodChoiceQualityWeight": 0.5,
+          "FoodChoiceTimePressureWeight": 1.0,
+          "FoodChoiceHealthWeight": 0.0,
+          "FoodChoiceHouseholdWeight": 1.0,
+          "FoodShortlistTemperature": 1.0,
+          "FoodMemoryWeight": 0,
+          "FoodMemoryLoyalReturnMultiplier": 2,
+          "FoodMemoryCuriousNoveltyMultiplier": 1.3,
+          "FoodMemoryServedGain": 1,
+          "FoodMemoryStockPenalty": 3,
+          "FoodMemoryClosedPenalty": 3,
+          "FoodMemoryQueuePenalty": 2,
+          "FoodMemoryBadVisitTraitWeight": 1,
+          "FoodMemoryDecayDaysPerPoint": 2,
+          "FoodMemoryMinimumMultiplier": 0.25,
+          "FoodMemoryMaximumMultiplier": 2.5,
+          "FoodMemoryCapacity": 4,
+          "FoodMemoryForgetAfterDays": 28
+        },
+        "sha256": "a20ddf018d84db76730f41b959f143b85943c1ef6cf9b48533374c4bdf529006",
+        "expectedMemoryWeight": 0
+      },
+      "window": "cand2-meal",
+      "seconds": 60.3228729,
+      "modWork": {
+        "samples": 5371,
+        "p50": 0.6785,
+        "p95": 1.1292,
+        "maximum": 28.3252
+      },
+      "updateAuthorityUnion": {
+        "samples": 5371,
+        "p50": 0.6749,
+        "p95": 1.1257,
+        "maximum": 28.3215
+      },
+      "wholeFrame": {
+        "samples": 5372,
+        "p50": 11.1997,
+        "p95": 12.9069,
+        "maximum": 55.278
+      },
+      "wholeFrameStalls": {
+        "framesOver50ms": 1,
+        "framesOver100ms": 0,
+        "framesOver250ms": 0
+      },
+      "modSpikesGe30ms": [],
+      "p95GatePass": true,
+      "cleanNoSave": true,
+      "autosaveOffBeforeAfter": true,
+      "nativeMinutes": 20.136417865753174,
+      "populationLag": 0.0,
+      "environment": {
+        "width": 1920,
+        "height": 1080,
+        "quality": "Low",
+        "vSync": 0,
+        "focused": true,
+        "runInBackground": true,
+        "targetFps": 90,
+        "calendarFactor": 0.3333333333333333,
+        "gpu": "NVIDIA GeForce RTX 4070",
+        "cpu": "13th Gen Intel(R) Core(TM) i5-13600KF",
+        "graphicsApi": "Direct3D11",
+        "timeScale": 1.0,
+        "camera": {
+          "position": {
+            "x": 215.0,
+            "y": 25.8321667,
+            "z": 23.7273273
+          },
+          "eulerAngles": {
+            "x": 47.2700729,
+            "y": 180.0007,
+            "z": 0.0
+          }
+        }
+      },
+      "routesAndQueries": {
+        "before": {
+          "routes": {
+            "WalkingRequests": 494,
+            "WalkingInvalidInputs": 0,
+            "WalkingDistanceRejects": 40,
+            "WalkingCacheHits": 18,
+            "WalkingNegativeCacheHits": 0,
+            "WalkingCacheMisses": 436,
+            "WalkingCacheEvictions": 0,
+            "WalkingCacheClears": 14,
+            "WalkingCalculations": 436,
+            "WalkingFailedCalculations": 171,
+            "WalkingCalculationMilliseconds": 304.42090000000024,
+            "MaximumWalkingCalculationMilliseconds": 15.447600000000001,
+            "NavMeshSampleQueries": 872,
+            "NavMeshPathQueries": 430,
+            "NavMeshPathReuses": 0,
+            "NavMeshPathMilliseconds": 294.7967999999998,
+            "MaximumNavMeshPathMilliseconds": 15.430200000000001,
+            "WalkingQuoteChecks": 0,
+            "WalkingQuoteRejected": 0,
+            "NavMeshRaycastQueries": 0,
+            "WalkingQuoteCheckMilliseconds": 0.0,
+            "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+            "CitizenPlanRequests": 140,
+            "SelectedWalking": 26,
+            "SelectedSubway": 19,
+            "SelectedCar": 3,
+            "NoFeasibleRoute": 92,
+            "SubwayConnectorRequests": 272,
+            "SubwayConnectorCacheHits": 18,
+            "SubwayConnectorCacheMisses": 242,
+            "SubwayCandidates": 126
+          },
+          "marketCalls": {
+            "BeginCapture": 452,
+            "CaptureBusiness": 452
+          },
+          "PlanningPending": false,
+          "pendingDecisions": 0,
+          "runtime": {
+            "advanceFrames": 4528,
+            "advanceEvents": 517,
+            "advanceMilliseconds": 298.6749,
+            "planningSlices": 42,
+            "planningEvents": 25,
+            "planningPendingFrames": 17,
+            "planningRequests": 25,
+            "planningMilliseconds": 60.61749999999999
+          }
+        },
+        "after": {
+          "routes": {
+            "WalkingRequests": 844,
+            "WalkingInvalidInputs": 0,
+            "WalkingDistanceRejects": 49,
+            "WalkingCacheHits": 37,
+            "WalkingNegativeCacheHits": 2,
+            "WalkingCacheMisses": 758,
+            "WalkingCacheEvictions": 0,
+            "WalkingCacheClears": 17,
+            "WalkingCalculations": 758,
+            "WalkingFailedCalculations": 202,
+            "WalkingCalculationMilliseconds": 413.14860000000004,
+            "MaximumWalkingCalculationMilliseconds": 15.447600000000001,
+            "NavMeshSampleQueries": 1516,
+            "NavMeshPathQueries": 751,
+            "NavMeshPathReuses": 0,
+            "NavMeshPathMilliseconds": 395.4128000000006,
+            "MaximumNavMeshPathMilliseconds": 15.430200000000001,
+            "WalkingQuoteChecks": 0,
+            "WalkingQuoteRejected": 0,
+            "NavMeshRaycastQueries": 0,
+            "WalkingQuoteCheckMilliseconds": 0.0,
+            "MaximumWalkingQuoteCheckMilliseconds": 0.0,
+            "CitizenPlanRequests": 221,
+            "SelectedWalking": 76,
+            "SelectedSubway": 26,
+            "SelectedCar": 6,
+            "NoFeasibleRoute": 113,
+            "SubwayConnectorRequests": 496,
+            "SubwayConnectorCacheHits": 37,
+            "SubwayConnectorCacheMisses": 445,
+            "SubwayCandidates": 257
+          },
+          "marketCalls": {
+            "BeginCapture": 608,
+            "CaptureBusiness": 608
+          },
+          "PlanningPending": false,
+          "pendingDecisions": 0,
+          "runtime": {
+            "advanceFrames": 294,
+            "advanceEvents": 0,
+            "advanceMilliseconds": 23.89259999999999,
+            "planningSlices": 0,
+            "planningEvents": 0,
+            "planningPendingFrames": 0,
+            "planningRequests": 0,
+            "planningMilliseconds": 0.0
+          }
+        }
+      },
+      "allocationCounterAvailable": false,
+      "allocationCounterObservedPositive": false,
+      "allocatedBytesPerFrame": {
+        "samples": 0,
+        "mean": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "maximum": 0.0
+      },
+      "gcCollections": [
+        2,
+        2,
+        2
+      ],
+      "rawObservations": {
+        "Count": 5372,
+        "Capacity": 65536,
+        "MarshaledStorageEstimateBytes": 7864320,
+        "Dropped": 0,
+        "Duplicates": 0,
+        "InvalidOrder": 0,
+        "SkippedUnityFrames": 0,
+        "stopwatchFrequency": 10000000,
+        "terminationObservedTicks": 25528133833,
+        "discardedLifecycleTailTicks": 0,
+        "unobservedTailTicks": 63698,
+        "initialIntervalPartial": true,
+        "currentModFrameExcluded": true,
+        "outstandingPrimaryScopes": 0
+      },
+      "evidence": {
+        "mod-work": {
+          "file": "frames-mod-work-cand2-meal-stop-e1333a.csv.gz",
+          "sha256": "04ea3c13b78cf75d697ed391106161112e68612a260c5b28e38bda63d977024d"
+        },
+        "observations": {
+          "file": "frames-observations-cand2-meal-stop-e1333a.csv.gz",
+          "sha256": "cf8c87b0d8f91bdccbcf26ec48ff731e943436fa23459f7ad85722a7a8231900"
+        }
+      },
+      "systemLoad": {
+        "load-before": {
+          "utc": "2026-11-01T02:31:22Z",
+          "cpuTotalPercent": 33.7,
+          "counts": {
+            "dotnet": 5,
+            "testhost": 1,
+            "codex": 10,
+            "python": 8
+          },
+          "ramAvailableGiB": 28.37500762939453,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 33.890625,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 18140,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 13.03125,
+              "ramMiB": 1098.67578125
+            },
+            {
+              "pid": 48520,
+              "name": "testhost.exe",
+              "cpuSecondsDelta": 2.65625,
+              "ramMiB": 3890.18359375
+            },
+            {
+              "pid": 50208,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.640625,
+              "ramMiB": 36.3828125
+            },
+            {
+              "pid": 17952,
+              "name": "chrome.exe",
+              "cpuSecondsDelta": 0.515625,
+              "ramMiB": 1163.44140625
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.140625,
+              "ramMiB": 44.7109375
+            },
+            {
+              "pid": 23812,
+              "name": "explorer.exe",
+              "cpuSecondsDelta": 0.140625,
+              "ramMiB": 345.48046875
+            },
+            {
+              "pid": 8,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 16.93359375
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 538.32421875
+            },
+            {
+              "pid": 1920,
+              "name": "ChatGPT.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 322.40234375
+            },
+            {
+              "pid": 3108,
+              "name": "NVDisplay.Container.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 27.18359375
+            },
+            {
+              "pid": 14568,
+              "name": "steamwebhelper.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 165.5078125
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-window-start": {
+          "utc": "2026-11-01T02:38:50Z",
+          "cpuTotalPercent": 28.6,
+          "counts": {
+            "dotnet": 5,
+            "testhost": 1,
+            "codex": 12,
+            "python": 10
+          },
+          "ramAvailableGiB": 30.272476196289062,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 39.5625,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 18140,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 11.90625,
+              "ramMiB": 2143.3203125
+            },
+            {
+              "pid": 13704,
+              "name": "testhost.exe",
+              "cpuSecondsDelta": 2.953125,
+              "ramMiB": 202.0
+            },
+            {
+              "pid": 50208,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.890625,
+              "ramMiB": 36.37890625
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.21875,
+              "ramMiB": 546.41015625
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.109375,
+              "ramMiB": 44.71484375
+            },
+            {
+              "pid": 36200,
+              "name": "Discord.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 401.703125
+            },
+            {
+              "pid": 8,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 16.9296875
+            },
+            {
+              "pid": 3172,
+              "name": "svchost.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 9.5625
+            },
+            {
+              "pid": 33032,
+              "name": "python.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 61.54296875
+            },
+            {
+              "pid": 10624,
+              "name": "olk.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 54.078125
+            },
+            {
+              "pid": 2064,
+              "name": "tailscaled.exe",
+              "cpuSecondsDelta": 0.015625,
+              "ramMiB": 122.58984375
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        },
+        "load-after": {
+          "utc": "2026-11-01T02:39:57Z",
+          "cpuTotalPercent": 31.3,
+          "counts": {
+            "dotnet": 2,
+            "testhost": 0,
+            "codex": 12,
+            "python": 10
+          },
+          "ramAvailableGiB": 30.358718872070312,
+          "ramTotalGiB": 63.83710861206055,
+          "topCpu": [
+            {
+              "pid": 0,
+              "name": "System Idle Process",
+              "cpuSecondsDelta": 38.359375,
+              "ramMiB": 0.0078125
+            },
+            {
+              "pid": 18140,
+              "name": "Big Ambitions Agent Tests.exe",
+              "cpuSecondsDelta": 11.65625,
+              "ramMiB": 2169.42578125
+            },
+            {
+              "pid": 50208,
+              "name": "python.exe",
+              "cpuSecondsDelta": 1.84375,
+              "ramMiB": 35.40625
+            },
+            {
+              "pid": 1312,
+              "name": "MsMpEng.exe",
+              "cpuSecondsDelta": 0.4375,
+              "ramMiB": 563.9921875
+            },
+            {
+              "pid": 4,
+              "name": "System",
+              "cpuSecondsDelta": 0.25,
+              "ramMiB": 44.71875
+            },
+            {
+              "pid": 8,
+              "name": "audiodg.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 16.9296875
+            },
+            {
+              "pid": 8156,
+              "name": "SearchIndexer.exe",
+              "cpuSecondsDelta": 0.09375,
+              "ramMiB": 207.55859375
+            },
+            {
+              "pid": 6956,
+              "name": "svchost.exe",
+              "cpuSecondsDelta": 0.0625,
+              "ramMiB": 30.5703125
+            },
+            {
+              "pid": 23812,
+              "name": "explorer.exe",
+              "cpuSecondsDelta": 0.046875,
+              "ramMiB": 345.3203125
+            },
+            {
+              "pid": 1704,
+              "name": "lsass.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 48.17578125
+            },
+            {
+              "pid": 1920,
+              "name": "ChatGPT.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 321.96875
+            },
+            {
+              "pid": 3172,
+              "name": "svchost.exe",
+              "cpuSecondsDelta": 0.03125,
+              "ramMiB": 9.79296875
+            }
+          ],
+          "processRankingNote": "CPU delta ranking; per-process enumeration is not a synchronized CPU percentage sample"
+        }
+      },
+      "underDotnetOrTesthostLoad": true
+    }
+  ]
+}

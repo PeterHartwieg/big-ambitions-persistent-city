@@ -1,0 +1,835 @@
+{
+  "role": "rig_test",
+  "cohortMethod": "Deterministic equal-size loyal (bands3-4) and curious (bands0-1) samples matched on represented slot, croissant taste, price, travel, time-pressure bands and income bucket; full frozen traits retained. Spatial origin and schedules remain observational confounders.",
+  "cohorts": {
+    "loyal": [
+      "pc:56",
+      "pc:397",
+      "pc:491",
+      "c141",
+      "c353",
+      "c392",
+      "c168",
+      "pc:129",
+      "pc:290",
+      "pc:447",
+      "pc:478",
+      "pc:451",
+      "c46",
+      "pc:272",
+      "pc:349",
+      "pc:313",
+      "c54",
+      "pc:443",
+      "c42",
+      "pc:389",
+      "c202",
+      "pc:495",
+      "pc:275",
+      "pc:340",
+      "c132",
+      "pc:195",
+      "pc:55",
+      "pc:246",
+      "c118",
+      "consumer:c85:1",
+      "consumer:c168:1",
+      "consumer:pc%3A531:1",
+      "consumer:pc%3A100:1",
+      "consumer:pc%3A392:1",
+      "consumer:c296:1",
+      "consumer:pc%3A510:1",
+      "consumer:pc%3A446:1",
+      "consumer:pc%3A526:1",
+      "consumer:c323:1",
+      "consumer:pc%3A9:1",
+      "consumer:pc%3A546:1",
+      "consumer:c319:1",
+      "consumer:c39:1",
+      "consumer:pc%3A327:1",
+      "consumer:c48:1",
+      "consumer:pc%3A23:1",
+      "consumer:c167:1",
+      "consumer:c186:1",
+      "consumer:pc%3A497:1",
+      "consumer:pc%3A92:1",
+      "consumer:pc%3A242:1",
+      "consumer:c290:1",
+      "consumer:pc%3A48:1",
+      "consumer:pc%3A443:1",
+      "consumer:c200:1",
+      "consumer:pc%3A179:1",
+      "consumer:pc%3A254:1",
+      "consumer:c360:1",
+      "consumer:pc%3A129:1"
+    ],
+    "curious": [
+      "pc:335",
+      "pc:382",
+      "c70",
+      "c205",
+      "pc:422",
+      "pc:321",
+      "pc:526",
+      "pc:549",
+      "pc:326",
+      "c250",
+      "c27",
+      "c257",
+      "pc:215",
+      "c34",
+      "c170",
+      "pc:23",
+      "c126",
+      "pc:245",
+      "c197",
+      "pc:318",
+      "pc:348",
+      "pc:224",
+      "c375",
+      "pc:93",
+      "c181",
+      "c219",
+      "pc:197",
+      "c23",
+      "c186",
+      "consumer:pc%3A13:1",
+      "consumer:pc%3A513:1",
+      "consumer:pc%3A330:1",
+      "consumer:c88:1",
+      "consumer:pc%3A33:1",
+      "consumer:c207:1",
+      "consumer:pc%3A170:1",
+      "consumer:c345:1",
+      "consumer:pc%3A185:1",
+      "consumer:pc%3A244:1",
+      "consumer:pc%3A292:1",
+      "consumer:pc%3A122:1",
+      "consumer:c103:1",
+      "consumer:c392:1",
+      "consumer:c261:1",
+      "consumer:pc%3A538:1",
+      "consumer:c283:1",
+      "consumer:c249:1",
+      "consumer:c306:1",
+      "consumer:pc%3A281:1",
+      "consumer:pc%3A55:1",
+      "consumer:pc%3A552:1",
+      "consumer:c260:1",
+      "consumer:pc%3A273:1",
+      "consumer:c251:1",
+      "consumer:pc%3A329:1",
+      "consumer:c12:1",
+      "consumer:c358:1",
+      "consumer:pc%3A243:1",
+      "consumer:c182:1"
+    ]
+  },
+  "snapshots": [
+    {
+      "label": "migration-empty",
+      "day": 6,
+      "consumers": 1914,
+      "remembering": 0,
+      "entries": 0,
+      "maximumEntries": 0,
+      "outcomes": {},
+      "servedSum": 0,
+      "capacityMisses": 0,
+      "protectedInsertions": 0,
+      "cohorts": {
+        "loyal": {
+          "consumers": 59,
+          "remembering": 0,
+          "servedSum": 0,
+          "effectiveAffinitySum": 0,
+          "outcomes": {}
+        },
+        "curious": {
+          "consumers": 59,
+          "remembering": 0,
+          "servedSum": 0,
+          "effectiveAffinitySum": 0,
+          "outcomes": {}
+        }
+      },
+      "evidence": "migration-empty-memory.json.gz",
+      "sha256": "840b242bc4bdd9d477c669b474ea2fbfc556800dcc189bc41833b37b78659911"
+    },
+    {
+      "label": "activation",
+      "day": 7,
+      "consumers": 1914,
+      "remembering": 0,
+      "entries": 0,
+      "maximumEntries": 0,
+      "outcomes": {},
+      "servedSum": 0,
+      "capacityMisses": 0,
+      "protectedInsertions": 0,
+      "cohorts": {
+        "loyal": {
+          "consumers": 59,
+          "remembering": 0,
+          "servedSum": 0,
+          "effectiveAffinitySum": 0,
+          "outcomes": {}
+        },
+        "curious": {
+          "consumers": 59,
+          "remembering": 0,
+          "servedSum": 0,
+          "effectiveAffinitySum": 0,
+          "outcomes": {}
+        }
+      },
+      "evidence": "activation-memory.json.gz",
+      "sha256": "e1c0adb9597e2717eab44804eaaaad4af2232f155ccc99d486548359bc95bba2"
+    },
+    {
+      "label": "served-day7",
+      "day": 8,
+      "consumers": 1914,
+      "remembering": 22,
+      "entries": 22,
+      "maximumEntries": 1,
+      "outcomes": {
+        "1": 18,
+        "4": 4
+      },
+      "servedSum": 18,
+      "capacityMisses": 0,
+      "protectedInsertions": 0,
+      "cohorts": {
+        "loyal": {
+          "consumers": 59,
+          "remembering": 0,
+          "servedSum": 0,
+          "effectiveAffinitySum": 0,
+          "outcomes": {}
+        },
+        "curious": {
+          "consumers": 59,
+          "remembering": 1,
+          "servedSum": 1,
+          "effectiveAffinitySum": 0,
+          "outcomes": {
+            "1": 1
+          }
+        }
+      },
+      "evidence": "served-day7-memory.json.gz",
+      "sha256": "9fc9dc9338e2d00a024a2c4e3637f4813f57d0d2683a6d36aa3ce52705989860"
+    },
+    {
+      "label": "served-day7-reload",
+      "day": 8,
+      "consumers": 1914,
+      "remembering": 22,
+      "entries": 22,
+      "maximumEntries": 1,
+      "outcomes": {
+        "1": 18,
+        "4": 4
+      },
+      "servedSum": 18,
+      "capacityMisses": 0,
+      "protectedInsertions": 0,
+      "cohorts": {
+        "loyal": {
+          "consumers": 59,
+          "remembering": 0,
+          "servedSum": 0,
+          "effectiveAffinitySum": 0,
+          "outcomes": {}
+        },
+        "curious": {
+          "consumers": 59,
+          "remembering": 1,
+          "servedSum": 1,
+          "effectiveAffinitySum": 0,
+          "outcomes": {
+            "1": 1
+          }
+        }
+      },
+      "evidence": "served-day7-reload-memory.json.gz",
+      "sha256": "9fc9dc9338e2d00a024a2c4e3637f4813f57d0d2683a6d36aa3ce52705989860"
+    },
+    {
+      "label": "day7-replay",
+      "day": 8,
+      "consumers": 1914,
+      "remembering": 22,
+      "entries": 22,
+      "maximumEntries": 1,
+      "outcomes": {
+        "1": 18,
+        "4": 4
+      },
+      "servedSum": 18,
+      "capacityMisses": 0,
+      "protectedInsertions": 0,
+      "cohorts": {
+        "loyal": {
+          "consumers": 59,
+          "remembering": 0,
+          "servedSum": 0,
+          "effectiveAffinitySum": 0,
+          "outcomes": {}
+        },
+        "curious": {
+          "consumers": 59,
+          "remembering": 1,
+          "servedSum": 1,
+          "effectiveAffinitySum": 0,
+          "outcomes": {
+            "1": 1
+          }
+        }
+      },
+      "evidence": "day7-replay-memory.json.gz",
+      "sha256": "9fc9dc9338e2d00a024a2c4e3637f4813f57d0d2683a6d36aa3ce52705989860"
+    },
+    {
+      "label": "trained-day9",
+      "day": 9,
+      "consumers": 1914,
+      "remembering": 22,
+      "entries": 22,
+      "maximumEntries": 1,
+      "outcomes": {
+        "1": 18,
+        "4": 4
+      },
+      "servedSum": 18,
+      "capacityMisses": 0,
+      "protectedInsertions": 0,
+      "cohorts": {
+        "loyal": {
+          "consumers": 59,
+          "remembering": 0,
+          "servedSum": 0,
+          "effectiveAffinitySum": 0,
+          "outcomes": {}
+        },
+        "curious": {
+          "consumers": 59,
+          "remembering": 1,
+          "servedSum": 1,
+          "effectiveAffinitySum": 0,
+          "outcomes": {
+            "1": 1
+          }
+        }
+      },
+      "evidence": "trained-day9-memory.json.gz",
+      "sha256": "508468cc7f49053a7c66421ade770c8ee00ead1c464ed6b5004a1f36d28e4db0"
+    },
+    {
+      "label": "failure-before",
+      "day": 9,
+      "consumers": 1914,
+      "remembering": 23,
+      "entries": 23,
+      "maximumEntries": 1,
+      "outcomes": {
+        "1": 19,
+        "4": 4
+      },
+      "servedSum": 19,
+      "capacityMisses": 0,
+      "protectedInsertions": 0,
+      "cohorts": {
+        "loyal": {
+          "consumers": 59,
+          "remembering": 0,
+          "servedSum": 0,
+          "effectiveAffinitySum": 0,
+          "outcomes": {}
+        },
+        "curious": {
+          "consumers": 59,
+          "remembering": 1,
+          "servedSum": 1,
+          "effectiveAffinitySum": 0,
+          "outcomes": {
+            "1": 1
+          }
+        }
+      },
+      "evidence": "failure-before-memory.json.gz",
+      "sha256": "c940eff5be7d839b5f0aa2a23ed02e9693868d756df0904f888a45ab88ae8c3f"
+    },
+    {
+      "label": "failure-after",
+      "day": 9,
+      "consumers": 1914,
+      "remembering": 24,
+      "entries": 24,
+      "maximumEntries": 1,
+      "outcomes": {
+        "1": 19,
+        "3": 1,
+        "4": 4
+      },
+      "servedSum": 19,
+      "capacityMisses": 0,
+      "protectedInsertions": 0,
+      "cohorts": {
+        "loyal": {
+          "consumers": 59,
+          "remembering": 0,
+          "servedSum": 0,
+          "effectiveAffinitySum": 0,
+          "outcomes": {}
+        },
+        "curious": {
+          "consumers": 59,
+          "remembering": 1,
+          "servedSum": 1,
+          "effectiveAffinitySum": 0,
+          "outcomes": {
+            "1": 1
+          }
+        }
+      },
+      "evidence": "failure-after-memory.json.gz",
+      "sha256": "3ebe58357db436a28f7a339244ddbbc0b1a519da41e9f6dfbb6c10554d8d9f96"
+    },
+    {
+      "label": "recovery-day-1",
+      "day": 10,
+      "consumers": 1914,
+      "remembering": 46,
+      "entries": 46,
+      "maximumEntries": 1,
+      "outcomes": {
+        "1": 38,
+        "3": 1,
+        "4": 7
+      },
+      "servedSum": 42,
+      "capacityMisses": 0,
+      "protectedInsertions": 0,
+      "cohorts": {
+        "loyal": {
+          "consumers": 59,
+          "remembering": 1,
+          "servedSum": 2,
+          "effectiveAffinitySum": 2,
+          "outcomes": {
+            "1": 1
+          }
+        },
+        "curious": {
+          "consumers": 59,
+          "remembering": 1,
+          "servedSum": 1,
+          "effectiveAffinitySum": 0,
+          "outcomes": {
+            "1": 1
+          }
+        }
+      },
+      "evidence": "recovery-day-1-memory.json.gz",
+      "sha256": "79e4c69d2c5708d5279ddaf71933c438803280cd9e026ecadc4647d4aeb4a056"
+    },
+    {
+      "label": "recovery-day-2",
+      "day": 11,
+      "consumers": 1914,
+      "remembering": 64,
+      "entries": 64,
+      "maximumEntries": 1,
+      "outcomes": {
+        "1": 51,
+        "4": 13
+      },
+      "servedSum": 68,
+      "capacityMisses": 0,
+      "protectedInsertions": 0,
+      "cohorts": {
+        "loyal": {
+          "consumers": 59,
+          "remembering": 1,
+          "servedSum": 4,
+          "effectiveAffinitySum": 4,
+          "outcomes": {
+            "1": 1
+          }
+        },
+        "curious": {
+          "consumers": 59,
+          "remembering": 1,
+          "servedSum": 1,
+          "effectiveAffinitySum": 0,
+          "outcomes": {
+            "1": 1
+          }
+        }
+      },
+      "evidence": "recovery-day-2-memory.json.gz",
+      "sha256": "f6886414ac66a7a1d83af04a6b20b2c1c03bd5b182c567d2a0215a4a003d330a"
+    },
+    {
+      "label": "recovery-day-3",
+      "day": 12,
+      "consumers": 1914,
+      "remembering": 82,
+      "entries": 82,
+      "maximumEntries": 1,
+      "outcomes": {
+        "1": 70,
+        "4": 12
+      },
+      "servedSum": 94,
+      "capacityMisses": 0,
+      "protectedInsertions": 0,
+      "cohorts": {
+        "loyal": {
+          "consumers": 59,
+          "remembering": 2,
+          "servedSum": 6,
+          "effectiveAffinitySum": 6,
+          "outcomes": {
+            "1": 2
+          }
+        },
+        "curious": {
+          "consumers": 59,
+          "remembering": 1,
+          "servedSum": 1,
+          "effectiveAffinitySum": 0,
+          "outcomes": {
+            "1": 1
+          }
+        }
+      },
+      "evidence": "recovery-day-3-memory.json.gz",
+      "sha256": "022c4bea7b22f1f022fecdf7486dec6c56209454a12db4383eeda80b33f22dc9"
+    },
+    {
+      "label": "recovery-day-4",
+      "day": 13,
+      "consumers": 1914,
+      "remembering": 89,
+      "entries": 89,
+      "maximumEntries": 1,
+      "outcomes": {
+        "1": 76,
+        "4": 13
+      },
+      "servedSum": 110,
+      "capacityMisses": 0,
+      "protectedInsertions": 0,
+      "cohorts": {
+        "loyal": {
+          "consumers": 59,
+          "remembering": 2,
+          "servedSum": 6,
+          "effectiveAffinitySum": 6,
+          "outcomes": {
+            "1": 2
+          }
+        },
+        "curious": {
+          "consumers": 59,
+          "remembering": 2,
+          "servedSum": 3,
+          "effectiveAffinitySum": 1,
+          "outcomes": {
+            "1": 2
+          }
+        }
+      },
+      "evidence": "recovery-day-4-memory.json.gz",
+      "sha256": "eb0ac09f45e32788793523afd036bd4a5af229a948405a14601e2b9015bb8780"
+    }
+  ],
+  "audits": [
+    {
+      "label": "served-day7-audit",
+      "capture": {
+        "recording": false,
+        "decisionsRetained": 5000,
+        "decisionLimit": 5000,
+        "droppedDecisions": 636,
+        "routineDiagnosticsRetained": 4807,
+        "routineDiagnosticLimit": 100000,
+        "droppedRoutineDiagnostics": 0,
+        "truncated": true,
+        "note": "Bounded diagnostic traces only; dropped records do not stop simulation or alter authoritative saved ledgers."
+      },
+      "retainedDecisions": 5000,
+      "maximumRouteCalls": 2,
+      "maximumShortlist": 1,
+      "cohorts": {
+        "loyal": {
+          "retainedChoices": 154,
+          "selectedShopChoices": 0,
+          "outsideOrOtherChoices": 154,
+          "routeCalls": 16,
+          "maximumRouteCalls": 2,
+          "selectedMemoryContributions": []
+        },
+        "curious": {
+          "retainedChoices": 155,
+          "selectedShopChoices": 1,
+          "outsideOrOtherChoices": 154,
+          "routeCalls": 24,
+          "maximumRouteCalls": 2,
+          "selectedMemoryContributions": [
+            0.26236426446749106
+          ]
+        }
+      }
+    },
+    {
+      "label": "day7-replay-audit",
+      "capture": {
+        "recording": false,
+        "decisionsRetained": 5000,
+        "decisionLimit": 5000,
+        "droppedDecisions": 638,
+        "routineDiagnosticsRetained": 4794,
+        "routineDiagnosticLimit": 100000,
+        "droppedRoutineDiagnostics": 0,
+        "truncated": true,
+        "note": "Bounded diagnostic traces only; dropped records do not stop simulation or alter authoritative saved ledgers."
+      },
+      "retainedDecisions": 5000,
+      "maximumRouteCalls": 2,
+      "maximumShortlist": 1,
+      "cohorts": {
+        "loyal": {
+          "retainedChoices": 154,
+          "selectedShopChoices": 0,
+          "outsideOrOtherChoices": 154,
+          "routeCalls": 16,
+          "maximumRouteCalls": 2,
+          "selectedMemoryContributions": []
+        },
+        "curious": {
+          "retainedChoices": 155,
+          "selectedShopChoices": 1,
+          "outsideOrOtherChoices": 154,
+          "routeCalls": 24,
+          "maximumRouteCalls": 2,
+          "selectedMemoryContributions": [
+            0.26236426446749106
+          ]
+        }
+      }
+    },
+    {
+      "label": "stockout-audit",
+      "capture": {
+        "recording": false,
+        "decisionsRetained": 408,
+        "decisionLimit": 5000,
+        "droppedDecisions": 0,
+        "routineDiagnosticsRetained": 143,
+        "routineDiagnosticLimit": 100000,
+        "droppedRoutineDiagnostics": 0,
+        "truncated": false,
+        "note": "Bounded diagnostic traces only; dropped records do not stop simulation or alter authoritative saved ledgers."
+      },
+      "retainedDecisions": 408,
+      "maximumRouteCalls": 0,
+      "maximumShortlist": 1,
+      "cohorts": {
+        "loyal": {
+          "retainedChoices": 15,
+          "selectedShopChoices": 0,
+          "outsideOrOtherChoices": 15,
+          "routeCalls": 0,
+          "maximumRouteCalls": 0,
+          "selectedMemoryContributions": []
+        },
+        "curious": {
+          "retainedChoices": 12,
+          "selectedShopChoices": 0,
+          "outsideOrOtherChoices": 12,
+          "routeCalls": 0,
+          "maximumRouteCalls": 0,
+          "selectedMemoryContributions": []
+        }
+      }
+    },
+    {
+      "label": "recovery-audit-1",
+      "capture": {
+        "recording": false,
+        "decisionsRetained": 5000,
+        "decisionLimit": 5000,
+        "droppedDecisions": 68,
+        "routineDiagnosticsRetained": 4924,
+        "routineDiagnosticLimit": 100000,
+        "droppedRoutineDiagnostics": 0,
+        "truncated": true,
+        "note": "Bounded diagnostic traces only; dropped records do not stop simulation or alter authoritative saved ledgers."
+      },
+      "retainedDecisions": 5000,
+      "maximumRouteCalls": 2,
+      "maximumShortlist": 1,
+      "cohorts": {
+        "loyal": {
+          "retainedChoices": 157,
+          "selectedShopChoices": 2,
+          "outsideOrOtherChoices": 155,
+          "routeCalls": 18,
+          "maximumRouteCalls": 2,
+          "selectedMemoryContributions": [
+            0.07232066157962608,
+            0.09246522767209361
+          ]
+        },
+        "curious": {
+          "retainedChoices": 153,
+          "selectedShopChoices": 0,
+          "outsideOrOtherChoices": 153,
+          "routeCalls": 6,
+          "maximumRouteCalls": 2,
+          "selectedMemoryContributions": []
+        }
+      }
+    },
+    {
+      "label": "recovery-audit-2",
+      "capture": {
+        "recording": false,
+        "decisionsRetained": 5000,
+        "decisionLimit": 5000,
+        "droppedDecisions": 26,
+        "routineDiagnosticsRetained": 4805,
+        "routineDiagnosticLimit": 100000,
+        "droppedRoutineDiagnostics": 0,
+        "truncated": true,
+        "note": "Bounded diagnostic traces only; dropped records do not stop simulation or alter authoritative saved ledgers."
+      },
+      "retainedDecisions": 5000,
+      "maximumRouteCalls": 2,
+      "maximumShortlist": 1,
+      "cohorts": {
+        "loyal": {
+          "retainedChoices": 152,
+          "selectedShopChoices": 2,
+          "outsideOrOtherChoices": 150,
+          "routeCalls": 20,
+          "maximumRouteCalls": 2,
+          "selectedMemoryContributions": [
+            0.17709961281280304,
+            0.25512659716726044
+          ]
+        },
+        "curious": {
+          "retainedChoices": 148,
+          "selectedShopChoices": 0,
+          "outsideOrOtherChoices": 148,
+          "routeCalls": 8,
+          "maximumRouteCalls": 2,
+          "selectedMemoryContributions": []
+        }
+      }
+    },
+    {
+      "label": "recovery-audit-3",
+      "capture": {
+        "recording": false,
+        "decisionsRetained": 5000,
+        "decisionLimit": 5000,
+        "droppedDecisions": 448,
+        "routineDiagnosticsRetained": 4795,
+        "routineDiagnosticLimit": 100000,
+        "droppedRoutineDiagnostics": 0,
+        "truncated": true,
+        "note": "Bounded diagnostic traces only; dropped records do not stop simulation or alter authoritative saved ledgers."
+      },
+      "retainedDecisions": 5000,
+      "maximumRouteCalls": 2,
+      "maximumShortlist": 1,
+      "cohorts": {
+        "loyal": {
+          "retainedChoices": 151,
+          "selectedShopChoices": 1,
+          "outsideOrOtherChoices": 150,
+          "routeCalls": 10,
+          "maximumRouteCalls": 2,
+          "selectedMemoryContributions": [
+            0.3275035666384525
+          ]
+        },
+        "curious": {
+          "retainedChoices": 152,
+          "selectedShopChoices": 0,
+          "outsideOrOtherChoices": 152,
+          "routeCalls": 8,
+          "maximumRouteCalls": 2,
+          "selectedMemoryContributions": []
+        }
+      }
+    },
+    {
+      "label": "recovery-audit-4",
+      "capture": {
+        "recording": false,
+        "decisionsRetained": 5000,
+        "decisionLimit": 5000,
+        "droppedDecisions": 596,
+        "routineDiagnosticsRetained": 5321,
+        "routineDiagnosticLimit": 100000,
+        "droppedRoutineDiagnostics": 0,
+        "truncated": true,
+        "note": "Bounded diagnostic traces only; dropped records do not stop simulation or alter authoritative saved ledgers."
+      },
+      "retainedDecisions": 5000,
+      "maximumRouteCalls": 2,
+      "maximumShortlist": 1,
+      "cohorts": {
+        "loyal": {
+          "retainedChoices": 150,
+          "selectedShopChoices": 0,
+          "outsideOrOtherChoices": 150,
+          "routeCalls": 16,
+          "maximumRouteCalls": 2,
+          "selectedMemoryContributions": []
+        },
+        "curious": {
+          "retainedChoices": 160,
+          "selectedShopChoices": 1,
+          "outsideOrOtherChoices": 159,
+          "routeCalls": 16,
+          "maximumRouteCalls": 2,
+          "selectedMemoryContributions": [
+            0.26236426446749106
+          ]
+        }
+      }
+    }
+  ],
+  "stockoutSeam": [
+    {
+      "consumer": "consumer:c172:1",
+      "loyaltyBand": 4,
+      "before": null,
+      "after": {
+        "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+        "BusinessRef": 0,
+        "Day": 9,
+        "Served": 0,
+        "Affinity": -2,
+        "Outcome": 3,
+        "EffectiveAffinity": -2,
+        "Expired": false
+      },
+      "noPositiveAffinityGain": true,
+      "noServedGain": true
+    }
+  ],
+  "limitations": [
+    "One actual player shop/generation and one seed. No multi-shop novelty-frequency or real business-turnover proof.",
+    "Diagnostic choice traces cap at5000; dropped records are reported and served receipts/ledgers are uncensored.",
+    "Synthetic capacity-vector memories are excluded from these genuine cohort summaries."
+  ]
+}

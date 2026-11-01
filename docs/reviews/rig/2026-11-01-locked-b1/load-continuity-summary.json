@@ -1,0 +1,230 @@
+{
+  "role": "rig_test",
+  "comparisons": [
+    {
+      "source": "B1 Eval",
+      "target": "B1 Partial",
+      "minute": 10601.0,
+      "eventBudget": 1,
+      "identityEqual": true,
+      "moneyEqual": true,
+      "memoryAndWatermarksEqual": true,
+      "heldTermsEqual": true,
+      "sourceMemoryHash": "b0990223c6986e2013578d7cebb96dda8cecd39a8f49db24f1cc712e477d2b85",
+      "loadedMemoryHash": "b0990223c6986e2013578d7cebb96dda8cecd39a8f49db24f1cc712e477d2b85",
+      "sourceTermsHash": "d56f3ec036680cd52d3f30a606364fcc64181c69ec3b14f2c1a998b4ce19591b",
+      "loadedTermsHash": "d56f3ec036680cd52d3f30a606364fcc64181c69ec3b14f2c1a998b4ce19591b",
+      "sourceCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "loadedCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "method": "Actual first simulator unit prefix after native file load, before continuation; no source-state substitution"
+    },
+    {
+      "source": "B1 Selected",
+      "target": "B1 Outward",
+      "minute": 10599.0,
+      "eventBudget": 1,
+      "identityEqual": true,
+      "moneyEqual": true,
+      "memoryAndWatermarksEqual": true,
+      "heldTermsEqual": true,
+      "sourceMemoryHash": "b0990223c6986e2013578d7cebb96dda8cecd39a8f49db24f1cc712e477d2b85",
+      "loadedMemoryHash": "b0990223c6986e2013578d7cebb96dda8cecd39a8f49db24f1cc712e477d2b85",
+      "sourceTermsHash": "b46b7818ef636c419cb7be73b3832233a0014093a7689c384387d8ce939bb794",
+      "loadedTermsHash": "b46b7818ef636c419cb7be73b3832233a0014093a7689c384387d8ce939bb794",
+      "sourceCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "loadedCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "method": "Actual first simulator unit prefix after native file load, before continuation; no source-state substitution"
+    },
+    {
+      "source": "B1 Outward",
+      "target": "B1 Reached",
+      "minute": 10599.0,
+      "eventBudget": 1,
+      "identityEqual": true,
+      "moneyEqual": true,
+      "memoryAndWatermarksEqual": true,
+      "heldTermsEqual": true,
+      "sourceMemoryHash": "a4ac3aa4fb936614e79be56fab0c7405f00b32f83535a0bddc852ff306f52e25",
+      "loadedMemoryHash": "a4ac3aa4fb936614e79be56fab0c7405f00b32f83535a0bddc852ff306f52e25",
+      "sourceTermsHash": "543bd70e6121374bba78728428e7afab63a65b1c2295b10061c9bcf4e4e187be",
+      "loadedTermsHash": "543bd70e6121374bba78728428e7afab63a65b1c2295b10061c9bcf4e4e187be",
+      "sourceCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "loadedCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "method": "Actual first simulator unit prefix after native file load, before continuation; no source-state substitution"
+    },
+    {
+      "source": "B1 Outward",
+      "target": "B1 Paid",
+      "minute": 10599.0,
+      "eventBudget": 1,
+      "identityEqual": true,
+      "moneyEqual": true,
+      "memoryAndWatermarksEqual": true,
+      "heldTermsEqual": true,
+      "sourceMemoryHash": "a4ac3aa4fb936614e79be56fab0c7405f00b32f83535a0bddc852ff306f52e25",
+      "loadedMemoryHash": "a4ac3aa4fb936614e79be56fab0c7405f00b32f83535a0bddc852ff306f52e25",
+      "sourceTermsHash": "543bd70e6121374bba78728428e7afab63a65b1c2295b10061c9bcf4e4e187be",
+      "loadedTermsHash": "543bd70e6121374bba78728428e7afab63a65b1c2295b10061c9bcf4e4e187be",
+      "sourceCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "loadedCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "method": "Actual first simulator unit prefix after native file load, before continuation; no source-state substitution"
+    },
+    {
+      "source": "B1 Outward",
+      "target": "B1 Return",
+      "minute": 10599.0,
+      "eventBudget": 1,
+      "identityEqual": true,
+      "moneyEqual": true,
+      "memoryAndWatermarksEqual": true,
+      "heldTermsEqual": true,
+      "sourceMemoryHash": "a4ac3aa4fb936614e79be56fab0c7405f00b32f83535a0bddc852ff306f52e25",
+      "loadedMemoryHash": "a4ac3aa4fb936614e79be56fab0c7405f00b32f83535a0bddc852ff306f52e25",
+      "sourceTermsHash": "543bd70e6121374bba78728428e7afab63a65b1c2295b10061c9bcf4e4e187be",
+      "loadedTermsHash": "543bd70e6121374bba78728428e7afab63a65b1c2295b10061c9bcf4e4e187be",
+      "sourceCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "loadedCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "method": "Actual first simulator unit prefix after native file load, before continuation; no source-state substitution"
+    },
+    {
+      "source": "Positive Eval",
+      "target": "Positive Partial",
+      "minute": 10645.0,
+      "eventBudget": 1,
+      "identityEqual": true,
+      "moneyEqual": true,
+      "memoryAndWatermarksEqual": true,
+      "heldTermsEqual": true,
+      "sourceMemoryHash": "8e6b749f0ae3dde8560e3b02a05d9c73d3bc3a7989c227d1952d193831d8c802",
+      "loadedMemoryHash": "8e6b749f0ae3dde8560e3b02a05d9c73d3bc3a7989c227d1952d193831d8c802",
+      "sourceTermsHash": "e8e4e77af9f78d690660e8efc40259d0e54c8ad74508fb2732e07b8976468926",
+      "loadedTermsHash": "e8e4e77af9f78d690660e8efc40259d0e54c8ad74508fb2732e07b8976468926",
+      "sourceCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "loadedCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "method": "Actual first simulator unit prefix after native file load, before continuation; no source-state substitution"
+    },
+    {
+      "source": "Positive Partial",
+      "target": "Positive Old",
+      "minute": 10645.0,
+      "eventBudget": 1,
+      "identityEqual": true,
+      "moneyEqual": true,
+      "memoryAndWatermarksEqual": true,
+      "heldTermsEqual": true,
+      "sourceMemoryHash": "8e6b749f0ae3dde8560e3b02a05d9c73d3bc3a7989c227d1952d193831d8c802",
+      "loadedMemoryHash": "8e6b749f0ae3dde8560e3b02a05d9c73d3bc3a7989c227d1952d193831d8c802",
+      "sourceTermsHash": "58fb2c7de9e1fc28d9a32a04328132f76455fd2fe8a9028444647b5f08a5d24c",
+      "loadedTermsHash": "58fb2c7de9e1fc28d9a32a04328132f76455fd2fe8a9028444647b5f08a5d24c",
+      "sourceCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "loadedCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "method": "Actual first simulator unit prefix after native file load, before continuation; no source-state substitution"
+    },
+    {
+      "source": "Positive Partial",
+      "target": "Positive Budget2",
+      "minute": 10645.0,
+      "eventBudget": 2,
+      "identityEqual": true,
+      "moneyEqual": true,
+      "memoryAndWatermarksEqual": true,
+      "heldTermsEqual": true,
+      "sourceMemoryHash": "8e6b749f0ae3dde8560e3b02a05d9c73d3bc3a7989c227d1952d193831d8c802",
+      "loadedMemoryHash": "8e6b749f0ae3dde8560e3b02a05d9c73d3bc3a7989c227d1952d193831d8c802",
+      "sourceTermsHash": "58fb2c7de9e1fc28d9a32a04328132f76455fd2fe8a9028444647b5f08a5d24c",
+      "loadedTermsHash": "58fb2c7de9e1fc28d9a32a04328132f76455fd2fe8a9028444647b5f08a5d24c",
+      "sourceCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "loadedCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "method": "Actual first simulator unit prefix after native file load, before continuation; no source-state substitution"
+    },
+    {
+      "source": "Positive Partial",
+      "target": "Positive Edited",
+      "minute": 10645.0,
+      "eventBudget": 1,
+      "identityEqual": true,
+      "moneyEqual": true,
+      "memoryAndWatermarksEqual": true,
+      "heldTermsEqual": true,
+      "sourceMemoryHash": "8e6b749f0ae3dde8560e3b02a05d9c73d3bc3a7989c227d1952d193831d8c802",
+      "loadedMemoryHash": "8e6b749f0ae3dde8560e3b02a05d9c73d3bc3a7989c227d1952d193831d8c802",
+      "sourceTermsHash": "58fb2c7de9e1fc28d9a32a04328132f76455fd2fe8a9028444647b5f08a5d24c",
+      "loadedTermsHash": "58fb2c7de9e1fc28d9a32a04328132f76455fd2fe8a9028444647b5f08a5d24c",
+      "sourceCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "loadedCapabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "method": "Actual first simulator unit prefix after native file load, before continuation; no source-state substitution"
+    }
+  ]
+}

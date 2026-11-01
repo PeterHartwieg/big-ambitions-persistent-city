@@ -1,0 +1,338 @@
+{
+  "role": "rig_test",
+  "syntheticHistoricalEntries": true,
+  "nativeHistoricalServiceClaim": false,
+  "configCapacity": 1,
+  "sourcePayloadHash": "8a71f6e653c726ca1ae5ef26c380b1a611213e19ffcc9ff7094bc70c7c5a9f41",
+  "loadedPayloadHash": "8a71f6e653c726ca1ae5ef26c380b1a611213e19ffcc9ff7094bc70c7c5a9f41",
+  "selectedConsumers": 18,
+  "allFourEntriesRetainedOnNativeLoad": true,
+  "ordinaryNativeInsertions": 18,
+  "consumers": [
+    {
+      "consumer": "c125",
+      "loadedEntries": 4,
+      "afterEntries": 1,
+      "afterEntriesFacts": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "BusinessRef": 4,
+          "Day": 7,
+          "Served": 1,
+          "Affinity": 1,
+          "Outcome": 1,
+          "EffectiveAffinity": 1,
+          "Expired": false
+        }
+      ],
+      "ordinaryNativeInsertionObserved": true
+    },
+    {
+      "consumer": "consumer:c154:1",
+      "loadedEntries": 4,
+      "afterEntries": 1,
+      "afterEntriesFacts": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "BusinessRef": 4,
+          "Day": 7,
+          "Served": 1,
+          "Affinity": 1,
+          "Outcome": 1,
+          "EffectiveAffinity": 1,
+          "Expired": false
+        }
+      ],
+      "ordinaryNativeInsertionObserved": true
+    },
+    {
+      "consumer": "c282",
+      "loadedEntries": 4,
+      "afterEntries": 1,
+      "afterEntriesFacts": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "BusinessRef": 4,
+          "Day": 7,
+          "Served": 1,
+          "Affinity": 1,
+          "Outcome": 1,
+          "EffectiveAffinity": 1,
+          "Expired": false
+        }
+      ],
+      "ordinaryNativeInsertionObserved": true
+    },
+    {
+      "consumer": "c394",
+      "loadedEntries": 4,
+      "afterEntries": 1,
+      "afterEntriesFacts": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "BusinessRef": 4,
+          "Day": 7,
+          "Served": 1,
+          "Affinity": 1,
+          "Outcome": 1,
+          "EffectiveAffinity": 1,
+          "Expired": false
+        }
+      ],
+      "ordinaryNativeInsertionObserved": true
+    },
+    {
+      "consumer": "c73",
+      "loadedEntries": 4,
+      "afterEntries": 1,
+      "afterEntriesFacts": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "BusinessRef": 4,
+          "Day": 7,
+          "Served": 1,
+          "Affinity": 1,
+          "Outcome": 1,
+          "EffectiveAffinity": 1,
+          "Expired": false
+        }
+      ],
+      "ordinaryNativeInsertionObserved": true
+    },
+    {
+      "consumer": "pc:23",
+      "loadedEntries": 4,
+      "afterEntries": 1,
+      "afterEntriesFacts": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "BusinessRef": 4,
+          "Day": 7,
+          "Served": 1,
+          "Affinity": 1,
+          "Outcome": 1,
+          "EffectiveAffinity": 0,
+          "Expired": false
+        }
+      ],
+      "ordinaryNativeInsertionObserved": true
+    },
+    {
+      "consumer": "consumer:pc%3A144:1",
+      "loadedEntries": 4,
+      "afterEntries": 1,
+      "afterEntriesFacts": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "BusinessRef": 4,
+          "Day": 7,
+          "Served": 1,
+          "Affinity": 1,
+          "Outcome": 1,
+          "EffectiveAffinity": 1,
+          "Expired": false
+        }
+      ],
+      "ordinaryNativeInsertionObserved": true
+    },
+    {
+      "consumer": "pc:161",
+      "loadedEntries": 4,
+      "afterEntries": 1,
+      "afterEntriesFacts": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "BusinessRef": 4,
+          "Day": 7,
+          "Served": 1,
+          "Affinity": 1,
+          "Outcome": 1,
+          "EffectiveAffinity": 1,
+          "Expired": false
+        }
+      ],
+      "ordinaryNativeInsertionObserved": true
+    },
+    {
+      "consumer": "consumer:pc%3A161:1",
+      "loadedEntries": 4,
+      "afterEntries": 1,
+      "afterEntriesFacts": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "BusinessRef": 4,
+          "Day": 7,
+          "Served": 1,
+          "Affinity": 1,
+          "Outcome": 1,
+          "EffectiveAffinity": 1,
+          "Expired": false
+        }
+      ],
+      "ordinaryNativeInsertionObserved": true
+    },
+    {
+      "consumer": "consumer:pc%3A289:1",
+      "loadedEntries": 4,
+      "afterEntries": 1,
+      "afterEntriesFacts": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "BusinessRef": 4,
+          "Day": 7,
+          "Served": 1,
+          "Affinity": 1,
+          "Outcome": 1,
+          "EffectiveAffinity": 1,
+          "Expired": false
+        }
+      ],
+      "ordinaryNativeInsertionObserved": true
+    },
+    {
+      "consumer": "consumer:pc%3A350:1",
+      "loadedEntries": 4,
+      "afterEntries": 1,
+      "afterEntriesFacts": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "BusinessRef": 4,
+          "Day": 7,
+          "Served": 1,
+          "Affinity": 1,
+          "Outcome": 1,
+          "EffectiveAffinity": 1,
+          "Expired": false
+        }
+      ],
+      "ordinaryNativeInsertionObserved": true
+    },
+    {
+      "consumer": "pc:390",
+      "loadedEntries": 4,
+      "afterEntries": 1,
+      "afterEntriesFacts": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "BusinessRef": 4,
+          "Day": 7,
+          "Served": 1,
+          "Affinity": 1,
+          "Outcome": 1,
+          "EffectiveAffinity": 1,
+          "Expired": false
+        }
+      ],
+      "ordinaryNativeInsertionObserved": true
+    },
+    {
+      "consumer": "pc:399",
+      "loadedEntries": 4,
+      "afterEntries": 1,
+      "afterEntriesFacts": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "BusinessRef": 4,
+          "Day": 7,
+          "Served": 1,
+          "Affinity": 1,
+          "Outcome": 1,
+          "EffectiveAffinity": 1,
+          "Expired": false
+        }
+      ],
+      "ordinaryNativeInsertionObserved": true
+    },
+    {
+      "consumer": "consumer:pc%3A399:1",
+      "loadedEntries": 4,
+      "afterEntries": 1,
+      "afterEntriesFacts": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "BusinessRef": 4,
+          "Day": 7,
+          "Served": 1,
+          "Affinity": 1,
+          "Outcome": 1,
+          "EffectiveAffinity": 1,
+          "Expired": false
+        }
+      ],
+      "ordinaryNativeInsertionObserved": true
+    },
+    {
+      "consumer": "pc:489",
+      "loadedEntries": 4,
+      "afterEntries": 1,
+      "afterEntriesFacts": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "BusinessRef": 4,
+          "Day": 7,
+          "Served": 1,
+          "Affinity": 1,
+          "Outcome": 1,
+          "EffectiveAffinity": 1,
+          "Expired": false
+        }
+      ],
+      "ordinaryNativeInsertionObserved": true
+    },
+    {
+      "consumer": "pc:502",
+      "loadedEntries": 4,
+      "afterEntries": 1,
+      "afterEntriesFacts": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "BusinessRef": 4,
+          "Day": 7,
+          "Served": 1,
+          "Affinity": 1,
+          "Outcome": 1,
+          "EffectiveAffinity": 1,
+          "Expired": false
+        }
+      ],
+      "ordinaryNativeInsertionObserved": true
+    },
+    {
+      "consumer": "consumer:pc%3A502:1",
+      "loadedEntries": 4,
+      "afterEntries": 1,
+      "afterEntriesFacts": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "BusinessRef": 4,
+          "Day": 7,
+          "Served": 1,
+          "Affinity": 1,
+          "Outcome": 1,
+          "EffectiveAffinity": 1,
+          "Expired": false
+        }
+      ],
+      "ordinaryNativeInsertionObserved": true
+    },
+    {
+      "consumer": "consumer:pc%3A518:1",
+      "loadedEntries": 4,
+      "afterEntries": 1,
+      "afterEntriesFacts": [
+        {
+          "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+          "BusinessRef": 4,
+          "Day": 7,
+          "Served": 1,
+          "Affinity": 1,
+          "Outcome": 1,
+          "EffectiveAffinity": 1,
+          "Expired": false
+        }
+      ],
+      "ordinaryNativeInsertionObserved": true
+    }
+  ],
+  "method": "Four synthetic historical entries on a detached copy of genuine ActiveDay7; then real game load at capacity one and ordinary native service. No consumer identity, wallet, active authority or receipt was injected."
+}

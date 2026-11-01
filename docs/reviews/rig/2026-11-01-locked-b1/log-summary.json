@@ -1,0 +1,104 @@
+{
+  "role": "rig_test",
+  "logs": [
+    {
+      "file": "base1-Player.private.log",
+      "sha256": "29f688e76b9a89efd92f8f43adb8395e4cbf5f95166081abc4a767c30d416cff",
+      "unexpectedPersistentCityErrors": [],
+      "deliberateRefusalMessages": [],
+      "nativeGameExceptionCount": 17,
+      "nativeGameExceptionOwners": [
+        "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+        "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+        "at StreetLamp+<ChangeLightSetting>d__34.MoveNext () [0x00058] in <fdedeac4e1ad42668c1e57f28d2390d6>:0"
+      ]
+    },
+    {
+      "file": "base2-final-Player.private.log",
+      "sha256": "0ce7f70495e17ef071872c8bfd3214eb499039c5dc8011a4dbbb806148e01b7f",
+      "unexpectedPersistentCityErrors": [],
+      "deliberateRefusalMessages": [],
+      "nativeGameExceptionCount": 12,
+      "nativeGameExceptionOwners": [
+        "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+        "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0"
+      ]
+    },
+    {
+      "file": "cand1-final-Player.private.log",
+      "sha256": "d5ba10061c47f2a9521a3312d1ac7c739af53a1fbc7682e17adb0b10104b0bf6",
+      "unexpectedPersistentCityErrors": [],
+      "deliberateRefusalMessages": [
+        {
+          "line": 11747,
+          "text": "[Persistent City] Food ownership suspended: Unsupported population schema; preserve the payload."
+        },
+        {
+          "line": 11754,
+          "text": "[Mod:PersistentCity] Persistent City stopped: Food ownership suspended: Unsupported population schema; preserve the payload."
+        },
+        {
+          "line": 12536,
+          "text": "[Persistent City] Food ownership suspended: Unsupported active population capability or revision; preserve the payload and suspend simulation."
+        },
+        {
+          "line": 12544,
+          "text": "[Mod:PersistentCity] Persistent City stopped: Food ownership suspended: Unsupported active population capability or revision; preserve the payload and suspend simulation."
+        }
+      ],
+      "nativeGameExceptionCount": 25,
+      "nativeGameExceptionOwners": [
+        "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+        "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+        "at StreetLamp+<ChangeLightSetting>d__34.MoveNext () [0x00058] in <fdedeac4e1ad42668c1e57f28d2390d6>:0"
+      ]
+    },
+    {
+      "file": "cand1-tooling-restart-Player.private.log",
+      "sha256": "4ffef6805e87cc47c96945fa81112fd153151eb6ee4ac2e903c7faa8b8555bbe",
+      "unexpectedPersistentCityErrors": [],
+      "deliberateRefusalMessages": [],
+      "nativeGameExceptionCount": 4,
+      "nativeGameExceptionOwners": [
+        "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+        "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0"
+      ]
+    },
+    {
+      "file": "cand1-unload-tooling-restart-Player.private.log",
+      "sha256": "3f7548c68940e7b7c3ce64ad2a2b40919f941bc95595de9638db6be8ddf305b1",
+      "unexpectedPersistentCityErrors": [],
+      "deliberateRefusalMessages": [],
+      "nativeGameExceptionCount": 55,
+      "nativeGameExceptionOwners": [
+        "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+        "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+        "at StreetLamp+<ChangeLightSetting>d__34.MoveNext () [0x00058] in <fdedeac4e1ad42668c1e57f28d2390d6>:0"
+      ]
+    },
+    {
+      "file": "cand2-final-Player.private.log",
+      "sha256": "217b8acc856329e652cd8f932f6191e4574b2011bd6fe22a5f226757e7d3353d",
+      "unexpectedPersistentCityErrors": [],
+      "deliberateRefusalMessages": [],
+      "nativeGameExceptionCount": 30,
+      "nativeGameExceptionOwners": [
+        "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+        "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0"
+      ]
+    },
+    {
+      "file": "native-final.log",
+      "sha256": "65d3a93869a7411b1243a5caef74674e03cefe4d8ef88dd7cae535f2a7840b3f",
+      "unexpectedPersistentCityErrors": [],
+      "deliberateRefusalMessages": [],
+      "nativeGameExceptionCount": 30,
+      "nativeGameExceptionOwners": [
+        "at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0",
+        "at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0"
+      ]
+    }
+  ],
+  "unexpectedPersistentCityErrorCount": 0,
+  "note": "Expected schema/capability refusals are isolated intentional negative cases. Native game culling exceptions are listed separately. Raw logs remain private; classifier output is manually reviewed."
+}

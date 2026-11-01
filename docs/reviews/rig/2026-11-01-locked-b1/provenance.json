@@ -1,0 +1,172 @@
+{
+  "role": "rig_test",
+  "candidate": "f214cd4a88bb872f9e96233e9616f1bd941abe50",
+  "control": "c0af745b044d9c53d6e0b59f9fd12da0b61fc4fd",
+  "controlBuildMethod": "Unchanged git archive of control into private stage; reused detached control worktree read-only",
+  "buildCommand": "PATH prepended with LOCALAPPDATA/Microsoft/dotnet; python tools/build.py --game-managed C:/BigAmbitions-AgentTests/Big Ambitions Agent Tests_Data/Managed",
+  "dllSha256": {
+    "candidate": "ce13dd20a574e46986438b8684350feee6335150aa468e9c311a9054585a4ecd",
+    "control": "34bbcf02fded476c79b58e84e3a005af38b979694435994e4f9220d2ce73a246"
+  },
+  "seed": -1903163055,
+  "fixture": "FT Food Routines Locked B1 20261101",
+  "schema": 18,
+  "baselineMemory": false,
+  "productionSourceChanged": false,
+  "offlineTestsRun": false,
+  "loadedByArm": {
+    "base1": [
+      {
+        "name": "BigAmbitions",
+        "version": "0.0.0.0",
+        "file": "BigAmbitions.dll",
+        "sha256": "055700fd26a7a6430bbb6a9d79379781909fbc518af760453396947887db5063"
+      },
+      {
+        "name": "0Harmony",
+        "version": "2.4.2.0",
+        "file": "0Harmony.dll",
+        "sha256": "7b9e756306fa3d7620e02a857c8927a6ab04973f9bd8a77d3866700a6deac55c"
+      },
+      {
+        "name": "FoodDemandAuditProbe",
+        "version": "0.0.0.0",
+        "file": "FoodDemandAuditProbe.dll",
+        "sha256": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353"
+      },
+      {
+        "name": "PersistentCity",
+        "version": "0.10.0.0",
+        "file": "PersistentCity.dll",
+        "sha256": "34bbcf02fded476c79b58e84e3a005af38b979694435994e4f9220d2ce73a246"
+      },
+      {
+        "name": "ReviewGuard",
+        "version": "0.0.0.0",
+        "file": "ReviewGuard.dll",
+        "sha256": "2a320dbe0e807ee4a10230fd0c216150b42ee66891aee9e00f6913388a9cb476"
+      },
+      {
+        "name": "RealLifeOverhaul",
+        "version": "0.45.0.0",
+        "file": "RealLifeOverhaul.dll",
+        "sha256": "2f360a365cf7915f012cd62f4fd06214ef5cdaa0498331e05a7c831a3c20ab32"
+      }
+    ],
+    "cand1": [
+      {
+        "name": "BigAmbitions",
+        "version": "0.0.0.0",
+        "file": "BigAmbitions.dll",
+        "sha256": "055700fd26a7a6430bbb6a9d79379781909fbc518af760453396947887db5063"
+      },
+      {
+        "name": "0Harmony",
+        "version": "2.4.2.0",
+        "file": "0Harmony.dll",
+        "sha256": "7b9e756306fa3d7620e02a857c8927a6ab04973f9bd8a77d3866700a6deac55c"
+      },
+      {
+        "name": "FoodDemandAuditProbe",
+        "version": "0.0.0.0",
+        "file": "FoodDemandAuditProbe.dll",
+        "sha256": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353"
+      },
+      {
+        "name": "PersistentCity",
+        "version": "0.10.0.0",
+        "file": "PersistentCity.dll",
+        "sha256": "ce13dd20a574e46986438b8684350feee6335150aa468e9c311a9054585a4ecd"
+      },
+      {
+        "name": "ReviewGuard",
+        "version": "0.0.0.0",
+        "file": "ReviewGuard.dll",
+        "sha256": "c14efc118647043e6dc6672da2e163ee1ff1fa741f78e84bf34b8566c9b093e2"
+      },
+      {
+        "name": "RealLifeOverhaul",
+        "version": "0.45.0.0",
+        "file": "RealLifeOverhaul.dll",
+        "sha256": "2f360a365cf7915f012cd62f4fd06214ef5cdaa0498331e05a7c831a3c20ab32"
+      }
+    ],
+    "base2": [
+      {
+        "name": "BigAmbitions",
+        "version": "0.0.0.0",
+        "file": "BigAmbitions.dll",
+        "sha256": "055700fd26a7a6430bbb6a9d79379781909fbc518af760453396947887db5063"
+      },
+      {
+        "name": "0Harmony",
+        "version": "2.4.2.0",
+        "file": "0Harmony.dll",
+        "sha256": "7b9e756306fa3d7620e02a857c8927a6ab04973f9bd8a77d3866700a6deac55c"
+      },
+      {
+        "name": "FoodDemandAuditProbe",
+        "version": "0.0.0.0",
+        "file": "FoodDemandAuditProbe.dll",
+        "sha256": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353"
+      },
+      {
+        "name": "PersistentCity",
+        "version": "0.10.0.0",
+        "file": "PersistentCity.dll",
+        "sha256": "34bbcf02fded476c79b58e84e3a005af38b979694435994e4f9220d2ce73a246"
+      },
+      {
+        "name": "ReviewGuard",
+        "version": "0.0.0.0",
+        "file": "ReviewGuard.dll",
+        "sha256": "31855dad13f1e902b087b5c1b2a22dd98526ca3f3264e79041ed00b6dd24f06c"
+      },
+      {
+        "name": "RealLifeOverhaul",
+        "version": "0.45.0.0",
+        "file": "RealLifeOverhaul.dll",
+        "sha256": "2f360a365cf7915f012cd62f4fd06214ef5cdaa0498331e05a7c831a3c20ab32"
+      }
+    ],
+    "cand2": [
+      {
+        "name": "BigAmbitions",
+        "version": "0.0.0.0",
+        "file": "BigAmbitions.dll",
+        "sha256": "055700fd26a7a6430bbb6a9d79379781909fbc518af760453396947887db5063"
+      },
+      {
+        "name": "0Harmony",
+        "version": "2.4.2.0",
+        "file": "0Harmony.dll",
+        "sha256": "7b9e756306fa3d7620e02a857c8927a6ab04973f9bd8a77d3866700a6deac55c"
+      },
+      {
+        "name": "FoodDemandAuditProbe",
+        "version": "0.0.0.0",
+        "file": "FoodDemandAuditProbe.dll",
+        "sha256": "05aa6dfdaacb5adc9f7bcd8fc6ac506ef7b2e7f5a62d98da581b086fd691e353"
+      },
+      {
+        "name": "PersistentCity",
+        "version": "0.10.0.0",
+        "file": "PersistentCity.dll",
+        "sha256": "ce13dd20a574e46986438b8684350feee6335150aa468e9c311a9054585a4ecd"
+      },
+      {
+        "name": "ReviewGuard",
+        "version": "0.0.0.0",
+        "file": "ReviewGuard.dll",
+        "sha256": "31855dad13f1e902b087b5c1b2a22dd98526ca3f3264e79041ed00b6dd24f06c"
+      },
+      {
+        "name": "RealLifeOverhaul",
+        "version": "0.45.0.0",
+        "file": "RealLifeOverhaul.dll",
+        "sha256": "2f360a365cf7915f012cd62f4fd06214ef5cdaa0498331e05a7c831a3c20ab32"
+      }
+    ]
+  },
+  "scope": "One actual native player croissant shop/generation, one seed; native model trajectories differ across heads, active-versus-zero uses exact same B1 HSG checkpoint."
+}

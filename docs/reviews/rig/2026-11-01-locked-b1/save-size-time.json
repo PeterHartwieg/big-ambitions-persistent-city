@@ -1,0 +1,180 @@
+{
+  "role": "rig_test",
+  "saves": [
+    {
+      "label": "Control18",
+      "schema": 18,
+      "capabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": false
+      },
+      "residents": 957,
+      "consumers": 1914,
+      "rememberingConsumers": 0,
+      "ownPayloadUtf8Bytes": 5322121,
+      "ownPayloadSha256": "b9c50c98bf6064aad245df5e233632e8c47de012ca6a6f6d218c7efc41a18988",
+      "nativeGzipSaveBytes": 1197676,
+      "nativeSaveSha256": "b2c459e888f20ca71c11ccd3b819815319ea734e02cd9918eb6e3fd0cff4fa2f",
+      "observerCoreWriteMilliseconds": 288.6012,
+      "bridgeNativeSaveWallMilliseconds": 594.0000000409782,
+      "outsideMeasuredWindows": true
+    },
+    {
+      "label": "ControlDay9",
+      "schema": 18,
+      "capabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": false
+      },
+      "residents": 957,
+      "consumers": 1914,
+      "rememberingConsumers": 0,
+      "ownPayloadUtf8Bytes": 5633911,
+      "ownPayloadSha256": "e677df88c92454583aeb43816d3e0bed00fe30b91d375d42424ca303f1e23b0d",
+      "nativeGzipSaveBytes": 1517293,
+      "nativeSaveSha256": "b9dcc3d44e83e7920eaa7117454ca45e93fc320a32215d5ac161679937160027",
+      "observerCoreWriteMilliseconds": 312.0962,
+      "bridgeNativeSaveWallMilliseconds": 577.9999999795109,
+      "outsideMeasuredWindows": true
+    },
+    {
+      "label": "ActiveDay7",
+      "schema": 18,
+      "capabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "residents": 957,
+      "consumers": 1914,
+      "rememberingConsumers": 0,
+      "ownPayloadUtf8Bytes": 5692975,
+      "ownPayloadSha256": "de2bae87eaa36c0453f82b81b955557816e5faa3526bf82e91edf2a5413431ac",
+      "nativeGzipSaveBytes": 1421030,
+      "nativeSaveSha256": "277a31b99ac5fbc35353edcbdd84b4c123c5bcca98163498f3db9ae50721b13a",
+      "observerCoreWriteMilliseconds": 325.5512,
+      "bridgeNativeSaveWallMilliseconds": 547.0000000204891,
+      "outsideMeasuredWindows": true
+    },
+    {
+      "label": "ServedDay7",
+      "schema": 18,
+      "capabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "residents": 957,
+      "consumers": 1914,
+      "rememberingConsumers": 22,
+      "ownPayloadUtf8Bytes": 5683223,
+      "ownPayloadSha256": "c89a91f91e6c658a7913db49dcfa94ebc02962994f475558feba0410b24c6a39",
+      "nativeGzipSaveBytes": 1508115,
+      "nativeSaveSha256": "953eb155522d1e7863e3299d8961835e426bb41fa60a865483b8c70bbf2a2966",
+      "observerCoreWriteMilliseconds": 352.46700000000004,
+      "bridgeNativeSaveWallMilliseconds": 702.9999999795109,
+      "outsideMeasuredWindows": true
+    },
+    {
+      "label": "TrainedDay9",
+      "schema": 18,
+      "capabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "residents": 957,
+      "consumers": 1914,
+      "rememberingConsumers": 22,
+      "ownPayloadUtf8Bytes": 9091714,
+      "ownPayloadSha256": "c68aaff9a875ea5fa97d33df927fad3b3b990852496b9f2c6fdd8999489f3280",
+      "nativeGzipSaveBytes": 2172235,
+      "nativeSaveSha256": "c93f64e0a7a67657bb9f3f747faa14c6cf48445cac52b5dcb499aa06a3ac6b78",
+      "observerCoreWriteMilliseconds": 465.8351,
+      "bridgeNativeSaveWallMilliseconds": 811.9999999180436,
+      "outsideMeasuredWindows": true
+    },
+    {
+      "label": "RecoveryFinal",
+      "schema": 18,
+      "capabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "residents": 957,
+      "consumers": 1914,
+      "rememberingConsumers": 89,
+      "ownPayloadUtf8Bytes": 5619701,
+      "ownPayloadSha256": "9c2c3c859cb30a9e96349def4747dd79c7c2b0285cb009f9943142686b1c6a92",
+      "nativeGzipSaveBytes": 1618431,
+      "nativeSaveSha256": "61d751935f313ab3ad5900842fbe7886c1cf0118bb83368f2f1963e7f6a91263",
+      "observerCoreWriteMilliseconds": 327.55780000000004,
+      "bridgeNativeSaveWallMilliseconds": 577.9999999795109,
+      "outsideMeasuredWindows": true
+    },
+    {
+      "label": "LowerCapacity",
+      "schema": 18,
+      "capabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "residents": 957,
+      "consumers": 1914,
+      "rememberingConsumers": 18,
+      "ownPayloadUtf8Bytes": 5687423,
+      "ownPayloadSha256": "8a71f6e653c726ca1ae5ef26c380b1a611213e19ffcc9ff7094bc70c7c5a9f41",
+      "nativeGzipSaveBytes": 1419837,
+      "nativeSaveSha256": "93cac9ee9236f398f9a5b98c117ace3d212fa54fc28699e1873599d1641a6584",
+      "observerCoreWriteMilliseconds": 310.9971,
+      "bridgeNativeSaveWallMilliseconds": 625.0,
+      "outsideMeasuredWindows": true
+    },
+    {
+      "label": "CapacityInserted",
+      "schema": 18,
+      "capabilities": {
+        "Code": "B",
+        "Revision": 1,
+        "Active": true
+      },
+      "residents": 957,
+      "consumers": 1914,
+      "rememberingConsumers": 22,
+      "ownPayloadUtf8Bytes": 5682470,
+      "ownPayloadSha256": "99b72353a34dff3d98f5c802ec0e1f0a80d4c216bb87e56d74b449ae0afd10b8",
+      "nativeGzipSaveBytes": 1505542,
+      "nativeSaveSha256": "d44f7080a0590a5226720d41a6b25cdfac9bcbef9fc45ebac3a894b703547520",
+      "observerCoreWriteMilliseconds": 317.9605,
+      "bridgeNativeSaveWallMilliseconds": 531.0000001918525,
+      "outsideMeasuredWindows": true
+    }
+  ],
+  "loads": [
+    {
+      "label": "migration-load",
+      "loadToReadyObservedWallMilliseconds": 29546.000000089407
+    },
+    {
+      "label": "served-day7-reload",
+      "loadToReadyObservedWallMilliseconds": 31531.000000191852
+    },
+    {
+      "label": "lower-capacity",
+      "loadToReadyObservedWallMilliseconds": 28422.00000002049
+    },
+    {
+      "label": "preb1-migrate-Eval",
+      "loadToReadyObservedWallMilliseconds": 30968.000000109896
+    },
+    {
+      "label": "preb1-migrate-Outward",
+      "loadToReadyObservedWallMilliseconds": 30062.000000150874
+    }
+  ],
+  "note": "Single ordinary save/read observations during the requested functional tests; no save-specific profiling or extra timing run. Bridge wall times include dispatch/polling; export Core write times exclude native-container writing. All latencies >=30ms are flagged informational save/load latency outside ordinary-play windows. Full payload growth also includes different visits and financial history; it is not isolated memory overhead."
+}

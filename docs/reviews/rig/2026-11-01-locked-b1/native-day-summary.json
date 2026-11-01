@@ -1,0 +1,55 @@
+{
+  "role": "rig_test",
+  "nativeDay": 7,
+  "method": "Genuine native time-machine continuation across one complete shop service and accounting day; no stock/staff fixture changes during this day",
+  "heldPurchaseUnitsAtStart": "0",
+  "heldPurchaseUnitsAtEnd": "0",
+  "purchases": 18,
+  "historyPurchases": 18,
+  "residentPaymentsUnits": "4953987072000",
+  "historyRevenueUnits": "4953987072000",
+  "receiptUnits": "4953987072000",
+  "receiptCount": 18,
+  "receiptSha256": "99a30f590d24dcd532dba4956bef6265a7734767a97fcc0d7dd7eef85359b5b2",
+  "budgetConservationFailures": [],
+  "stockBefore": {
+    "ba:itemname_paperbag": 166,
+    "ba:itemname_croissant": 166
+  },
+  "stockAfter": {
+    "ba:itemname_paperbag": 148,
+    "ba:itemname_croissant": 148
+  },
+  "stockConsumption": {
+    "ba:itemname_paperbag": 18,
+    "ba:itemname_croissant": 18
+  },
+  "completedOrdersPending": 0,
+  "nativeHistoryCustomers": 18,
+  "nativeHistoryRevenue": 184.5504,
+  "nativeAccount": {
+    "Day": 7,
+    "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+    "Name": "Persistent City food routines",
+    "Revenue": 184.5504,
+    "Resources": 36.0,
+    "Wages": 216.239487,
+    "Rent": 0.0,
+    "OtherOperatingCosts": 0.0,
+    "OperatingProfit": -67.68909
+  },
+  "nativeRevenueExpectedFloatBits": "e78c3843",
+  "nativeRevenueActualFloatBits": "e78c3843",
+  "roundedNativeRevenueExact": true,
+  "allPaymentsReconcile": true,
+  "nativeCashBefore": "41C81D46",
+  "nativeCashAfter": "809D1246",
+  "nativeSnapshotUnchangedAfterReload": true,
+  "independentReplay": {
+    "nativeSnapshotEqual": true,
+    "consumerMoneyEqual": true,
+    "memoryEqual": true,
+    "receiptDictionaryEqual": true,
+    "candidateReplayPurchases": 18
+  }
+}
