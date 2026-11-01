@@ -254,18 +254,19 @@ public sealed class FoodCampaignAwarenessTests
         Assert.InRange(planner.Out+planner.Back,0,32); // two matched continuations, <=16 each
     }
     [Fact]
-    public void Exact20MigrationAddsOnlyCampaignAndMenuFieldsAndPreservesSource()
+    public void Exact20MigrationAddsD2CampaignAndMenuFieldsAndPreservesSource()
     {
         var (city,_,_)=WeightedFoodChoiceTests.Ready(79,2);var root=JObject.Parse(SaveCodec.Write(city.State));
         city.State.WeatherStartsDay=1;
         city.State.Citizens[0].W=new WeatherCommitment(city.State.Minute,WeatherSample.Rain,true);
         root=JObject.Parse(SaveCodec.Write(city.State));
-        root["Schema"]=20;root.Remove("MenuPolicy");((JObject)root["Food"]!).Remove("Campaigns");
+        int current=city.State.Schema;city.State.Schema=20;
+        root=JObject.Parse(PopulationSchema20.Write(city.State));city.State.Schema=current;
         string source=root.ToString(Formatting.None);var data=new Dictionary<string,string> {[SaveStore.StateKey]=source};
         SaveCodec.RequireExecutableCapabilities(source);
         var read=SaveSession.Open(data,"weighted").InitialReadResult;Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
         Assert.Equal(20,read.SourceSchema);Assert.Equal(CityState.CurrentSchema,read.State!.Schema);Assert.Empty(read.State.Food!.Campaigns);
-        var expected=(JObject)root.DeepClone();expected["Schema"]=CityState.CurrentSchema;expected["MenuPolicy"]=FoodMenuPolicy.Wire;expected["Food"]!["Campaigns"]=new JArray();
+        var expected=JObject.Parse(SaveCodec.Write(city.State));expected["Food"]!["RivalStartsDay"]=(int)(city.State.Minute/1440)+1;
         Assert.True(JToken.DeepEquals(expected,JObject.Parse(SaveCodec.Write(read.State))));Assert.Equal(source,data[SaveStore.StateKey]);
         foreach(int schema in new[]{24,99})
         {
@@ -279,7 +280,7 @@ public sealed class FoodCampaignAwarenessTests
         var (heldCity,_,_)=WeightedFoodChoiceTests.Ready(79,24);heldCity.State.Food!.AwarenessStartsDay=1;
         heldCity.AttachWeather(new FrameWeatherSource(()=>1,()=>true));
         heldCity.InspectFoodAwareness("r");heldCity.AdvanceTo(heldCity.State.Food.Residents[0].DesiredAt,1);
-        var heldRoot=JObject.Parse(SaveCodec.Write(heldCity.State));heldRoot["Schema"]=20;heldRoot.Remove("MenuPolicy");((JObject)heldRoot["Food"]!).Remove("Campaigns");
+        heldCity.State.Schema=20;var heldRoot=JObject.Parse(PopulationSchema20.Write(heldCity.State));heldCity.State.Schema=current;
         var heldRead=SaveCodec.Read(heldRoot.ToString(Formatting.None));Assert.True(heldRead.Status==SaveReadStatus.Loaded,heldRead.Error);
         Assert.Equal(JsonConvert.SerializeObject(heldCity.State.Food.Residents[0].Decision),JsonConvert.SerializeObject(heldRead.State!.Food!.Residents[0].Decision));
         var legacy19=JObject.Parse(WeatherTests.As19(heldRoot.ToString(Formatting.None)));

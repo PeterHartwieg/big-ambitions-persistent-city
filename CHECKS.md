@@ -2,7 +2,7 @@
 
 Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here; never append slice sections to this file. Sync/review-fix notes go into the slice's own file.
 
-- D2 — Rival choice/outflow, schema 21, E1/F1/A5 base sync, 2,438 tests / 58 offline gates and native checklist: [checks](docs/checks/d2-rival-outflow.md).
+- D2 - Rival choice/outflow, schema 21 below C2b/E4; offline sync evidence and numbered native checklist: [checks](docs/checks/d2-rival-outflow.md).
 
 - E3 pizza — 1 November 2026 (offline only), holder STOP; 2,000-entry warm p95 donut/cupcake/salad/pizza **0.1589/0.1338/0.1476/0.1122 ms**, **49,104 B/read** (2 entries **200 B**); cold **1,064 B/read**. [Full cold/warm timings, proof and numbered 6 Nov handoff](docs/checks/e3-pizza.md).
 

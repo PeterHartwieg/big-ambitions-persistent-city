@@ -54,8 +54,10 @@ for name, project, arguments in [
     steps.append((name, [dotnet, 'run', '--project', 'tools/' + project + '.csproj', '--configuration', 'Release', '--'] + arguments))
 steps.append(('c4-save-comparison', [sys.executable, 'tools/market-research-regression/compare_save_baseline.py', '--baseline', 'HEAD']))
 steps.append(('e4-default-comparison', [sys.executable, 'tools/e4-menu-regression/compare-default.py']))
-for name in ['donut', 'salad', 'icecream', 'pizza']:
+for name in ['donut', 'salad', 'icecream', 'pizza', 'frenchfries']:
     steps.append((name + '-isolation', [sys.executable, 'tools/' + name + '-feasibility-regression/source_checks.py']))
+steps += [('salad-differential', [sys.executable, 'tools/salad-feasibility-regression/compare_baseline.py', 'differential']),
+          ('frenchfries-baseline', [sys.executable, 'tools/frenchfries-feasibility-regression/measure_before.py'])]
 steps.append(('icecream-baseline', [sys.executable, 'tools/icecream-feasibility-regression/measure_baseline.py']))
 selected = set(sys.argv[1:])
 results = []

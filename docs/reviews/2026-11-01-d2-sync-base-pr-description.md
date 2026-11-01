@@ -1,3 +1,7 @@
+# Archived draft from prior sync at `03960b1`
+
+Superseded by [sync2 PR draft](2026-11-01-d2-sync2-base-pr-description.md). Its numbers belong to the explicitly named older commits, not the current merged tree.
+
 # Sync D2 with the latest E1/F1/A5/E3/E4 integration head
 
 Target: `codex/pc-d2-rival-outflow`. Merge this PR with a merge commit so its
@@ -32,8 +36,8 @@ saves traverse E1's neutral next-day weather upgrade before 20 -> 21. Schema 22/
 were future/refused at that source; no reserved number is reassigned.
 
 That describes the archived E3/schema-21 acceptance. The following final fetch
-caught E4 `2bd9006`; the final tree now writes 23, with the chain
-20 -> 21 -> 23 and reserved/unmerged 22 refused. E4's documented predecessor
+caught E4 `2bd9006`; that historical tree wrote 23, with the chain
+20 -> 21 -> 23 and then-unmerged 22 refused (superseded: current chain 20 -> 21 -> 22 -> 23). E4's documented predecessor
 hook advances to 21. D2's isolated migration still produces/validates 21 before
 E4 stamps its own header; a dedicated schema-21 resolver preserves its original
 tuple/history/tuning shape. The frozen 19/20 readers exclude E4's header and

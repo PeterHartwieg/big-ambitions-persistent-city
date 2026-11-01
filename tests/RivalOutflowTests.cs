@@ -323,7 +323,7 @@ public sealed class RivalOutflowTests
         Assert.Equal(schema==20 ? WeatherSample.Rain : WeatherSample.Unknown,read.State.Food!.Residents[0].Memory.Weather);
         Assert.Equal(2, read.State.Food!.RivalStartsDay); Assert.Equal(source, store[SaveCodec.StateKey]);
         string current = SaveCodec.Write(read.State); Assert.Equal(current, SaveCodec.Write(SaveCodec.Read(current).State!));
-        foreach (int futureSchema in new[] { 22, 24, 99 })
+        foreach (int futureSchema in new[] { 24, 99 })
         { var json = JObject.Parse(source); json["Schema"] = futureSchema; Assert.NotEqual(SaveReadStatus.Loaded, SaveCodec.Read(json.ToString(Formatting.None)).Status); }
         var foreign = JObject.Parse(source); foreign["Food"]!["RivalStartsDay"] = 0;
         Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(foreign.ToString(Formatting.None)).Status);
@@ -331,8 +331,8 @@ public sealed class RivalOutflowTests
         Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(foreign.ToString(Formatting.None)).Status);
         Assert.Equal(source, store[SaveCodec.StateKey]);
     }
-    [Theory] [InlineData(false)] [InlineData(true)]
-    public void Schema21MenuMigrationPreservesHeldAndSettledRivalWeatherAndMoney(bool paid)
+    [Theory] [InlineData(false,21)] [InlineData(true,21)] [InlineData(false,22)] [InlineData(true,22)]
+    public void Schema21And22MigrationPreservesHeldAndSettledRivalWeatherAndMoney(bool paid,int schema)
     {
         var (city, market, paths)=Ready();city.InspectFoodAwareness("r");
         city.AttachWeather(new FrameWeatherSource(()=>1,()=>true));
@@ -340,12 +340,12 @@ public sealed class RivalOutflowTests
         if(paid) Advance(city,at+7);else city.AdvanceTo(at,1);
         var meal=city.State.Food.Residents.Single();
         if(paid) Assert.Equal(MealStatus.Paid,meal.Status);else Assert.NotNull(meal.Decision);
-        city.State.Schema=21;
-        string source=SaveCodec.WriteForSchema(city.State,21);
+        city.State.Schema=schema;
+        string source=SaveCodec.WriteForSchema(city.State,schema);
         var read=SaveCodec.Read(source);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
-        Assert.Equal(21,read.SourceSchema);Assert.Equal(23,read.State!.Schema);
+        Assert.Equal(schema,read.SourceSchema);Assert.Equal(23,read.State!.Schema);
         Assert.Equal(FoodMenuPolicy.Wire,read.State.MenuPolicy);
-        read.State.Schema=21;Assert.Equal(source,SaveCodec.WriteForSchema(read.State,21));
+        read.State.Schema=schema;Assert.Equal(source,SaveCodec.WriteForSchema(read.State,schema));
         read.State.Schema=23;
         var resumed=new CitySimulator(read.State,paths);
         resumed.AttachWeather(new FrameWeatherSource(()=>2,()=>throw new Exception("Captured input must survive migration")),

@@ -281,7 +281,7 @@ first validates/upgrades supported predecessors to 20, preserves E1 weather
 activation/citizen commitments/consumer suffix/held food multiplier exactly,
 then adds D2's next-day watermark and zero/empty defaults before validating 21.
 The frozen 19 fixture writer hides E1 fields, and schema-20 bootstrap is accepted.
-Reserved 22/23 and all newer schemas remain refused without overwriting source.
+At that archived pre-E4 head, 22/23 and all newer schemas were refused without overwriting source; the current composition supports 21/22/23.
 
 Integration changes the shared Core shortlist/offer call sites so both captured
 rain travel weighting and rival alternative weighting apply. D2 journey,
@@ -439,11 +439,11 @@ The fourth real merge uses base `75c956c`. Both sides' diffs against that base
 were inspected. All E4 checks, tools, tests, menu/settings/supply behavior and
 indices are retained with D2. The PR draft records every conflict resolution.
 
-The chain is now **20 -> 21 -> 23**: the frozen E1 reader validates/upgrades
+At the archived E4-only sync (`df69679`), the chain was **20 -> 21 -> 23**: the frozen E1 reader validates/upgrades
 earlier sources, D2's isolated step validates schema 21, and E4's documented
 `MenuPredecessorSchema` hook advances to 21. A dedicated schema-21 resolver
 retains D2 tuples, accounts, target kinds and original history/tuning shapes.
-Schema 22 remains reserved/unmerged and refused; >23 is future. No schema
+At that archived head schema 22 remained reserved/unmerged and refused; >23 was future. The current composition supports 21 and 22 in the full 20 -> 21 -> 22 -> 23 chain. No schema
 number is reassigned. Schema-20 weather and all held terms remain exact.
 
 Core combines E4 menu admission/taste with D2's rival weight/unknown-stock

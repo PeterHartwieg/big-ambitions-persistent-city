@@ -1253,7 +1253,7 @@ namespace PersistentCity.Persistence
             {
                 return base.CreateProperties(type, memberSerialization).Where(property => property.Writable
                     && !(schema<22 && type==typeof(FoodCommerceState) && property.PropertyName=="Campaigns")
-                    && !(schema<21 && RivalWire21.AddedProperty(type,property.PropertyName))
+                    && !(schema<21 && RivalWire21.AddedProperty(type,property.PropertyName!))
                     && !(schema<20 && WeatherProperty(type,property.PropertyName))
                     && !(type==typeof(FoodScope) && property.PropertyName=="AlternativeKind")
                     && !(schema!=23 && type==typeof(CityState) && property.PropertyName=="MenuPolicy") && !(schema==18 &&
