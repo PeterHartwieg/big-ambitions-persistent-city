@@ -62,6 +62,28 @@ Check(inv.Renderers[0].OwnerMembership.Length==2 && inv.Renderers[0].OwnerMember
 Check(inv.Environment.Count==2 && !inv.StaticMembershipProven,"volume/light metadata without profile getter");
 Check(inv.ActiveResidents[0]==1 && inv.MovingResidents[0]==1 && inv.MovingOwnedVehicles[0]==1 && inv.MovingNativeTraffic[0]==1,"owned and native counts distinct");
 Check(inv.Bodies.Count==3 && !crossing.enabled && crossing.PropertyBlock && volume.weight==1,"no native mutation");
+// A sibling building's base set is the only ownership path for this renderer.
+int landmarkChildren=layout.transform.childCount;
+var baseOnlyNode=Node(layout.transform);var baseOnly=baseOnlyNode.Add<MeshRenderer>();
+baseOnly.bounds=new Bounds { min=new(19,-1,-1),max=new(21,1,1) };baseOnlyNode.Add<MeshFilter>().sharedMesh=new Mesh();
+var baseOwner=Node(layout.transform).Add<CityBuildingController>();baseOwner.BaseRenderers=new Renderer[] { baseOnly };
+var baseSnapshot=runtime.ReadStreetProxyInventory(true)!;
+var baseRow=baseSnapshot.Renderers.Single(r=>r.Instance==baseOnly.GetInstanceID());
+Check(baseSnapshot.Complete && baseRow.OwnerHints.Length==0 && baseRow.OwnerMembership.Length==1
+    && baseRow.OwnerMembership[0]==$"CityBuildingController#{baseOwner.GetInstanceID()}:lodBase","nonancestor base-only building LOD membership");
+void BaseRefusal(string reason)
+{
+    var refusal=runtime.ReadStreetProxyInventory(true)!;
+    Check(!refusal.Complete && !refusal.CountsComplete && refusal.Refusal.Contains(reason),"base renderer refusal: "+reason);
+}
+baseOwner.BaseRenderers=null!;BaseRefusal("unreadable owner collection");
+baseOwner.BaseRenderers=new Renderer[] { null! };BaseRefusal("missing owner renderer reference");
+baseOwner.BaseRenderers=Enumerable.Repeat<Renderer>(baseOnly,StreetInventoryBudget.MaximumOwnerReferences+1).ToArray();BaseRefusal("owner reference cap");
+baseOwner.BaseRenderers=new Renderer[] { baseOnly };
+for(int i=0;i<StreetInventoryBudget.MaximumOwnersPerRenderer;i++)
+    Node(layout.transform).Add<CityBuildingController>().BaseRenderers=new Renderer[] { baseOnly };
+BaseRefusal("per-renderer owner cap");
+layout.transform.Children.RemoveRange(landmarkChildren,layout.transform.childCount-landmarkChildren);
 // Adversarial fixtures: unknown scripts and row/node/material/ancestry caps publish partial refusals.
 crossing.Shared.AddRange(Enumerable.Range(0,32).Select(_=>new Material()));
 Check(!runtime.ReadStreetProxyInventory(true)!.Complete,"material cap refuses");crossing.Shared.RemoveRange(1,32);

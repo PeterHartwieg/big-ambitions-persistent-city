@@ -140,7 +140,7 @@ namespace PersistentCity.Core
                 {
                     var a = StreetFrame.Sub(edges[j].Exterior, edges[0].Exterior);
                     var b = StreetFrame.Sub(edge.Exterior, edges[0].Exterior);
-                    // Require non-degenerate spatial evidence (>1 cm squared cross-product magnitude).
+                    // Require non-degenerate spatial evidence (cross-product magnitude > 0.01 m^2).
                     double cross2 = StreetFrame.Dot(a,a)*StreetFrame.Dot(b,b) - Math.Pow(StreetFrame.Dot(a,b),2);
                     noncollinear |= cross2 > .0001;
                 }

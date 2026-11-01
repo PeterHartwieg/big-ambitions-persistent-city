@@ -52,7 +52,7 @@ namespace PersistentCity.Runtime
         public string Shadows { get; set; } = "";
         public string[] OwnerHints { get; set; } = Array.Empty<string>();
         public string[] OwnerMembership { get; set; } = Array.Empty<string>();
-        public string Ownership => "Observed loaded-scene LODGroup and ViewBlockingEntity references plus ancestry hints; other owners, property-block values and shader behavior unproven.";
+        public string Ownership => "Observed loaded-scene LODGroup, ViewBlockingEntity fade/hide and CityBuildingController base-LOD references plus ancestry hints; other owners, property-block values and shader behavior unproven.";
     }
 
     public sealed class StreetProxyBodyMetadata

@@ -116,7 +116,8 @@ public static class InstanceBehavior<T> where T : new()
 public class Building { public string Address="30 3rd Street",BuildingSize="small",BuildingType="ba:buildingtype_retail"; public int BuildingVersion=1; }
 public class Registration { public bool HasEstablishedBusiness=true; public string businessTypeName="coffee"; }
 public class BuildingEntranceDoor { public Transform doorTransform=null!; public int doorId; }
-public class ViewBlockingEntity : Behaviour { public List<Renderer> renderersToFade=new(),renderersToHide=new(); }
+public class EntityController : Behaviour { public Renderer[] BaseRenderers=Array.Empty<Renderer>(); public Renderer[] Renderers => BaseRenderers; }
+public class ViewBlockingEntity : EntityController { public List<Renderer> renderersToFade=new(),renderersToHide=new(); }
 public class CityBuildingController : ViewBlockingEntity { public MeshRenderer? lodVersion; public Building building=new(); public BuildingEntranceDoor[] entranceDoors=Array.Empty<BuildingEntranceDoor>(); }
 public class ExitZone : Behaviour { public bool isElevator,isDriveInBay; public ExitZoneDespawner despawner=null!; }
 public class ExitZoneDespawner : Behaviour { public int exitToZoneId; public bool isCasinoExit,isParkingExit,hasSpecialCondition; }

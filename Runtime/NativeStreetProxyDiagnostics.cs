@@ -234,8 +234,12 @@ namespace PersistentCity.Runtime
                     Collection(fade.renderersToFade, label + ":fade");
                     Collection(fade.renderersToHide, label + ":hide");
                 }
-                if (owner is CityBuildingController building && building.lodVersion != null)
-                { Reserve(1); Reference(building.lodVersion, label + ":lodVersion"); }
+                if (owner is CityBuildingController building)
+                {
+                    Collection(building.Renderers, label + ":lodBase");
+                    if (building.lodVersion != null)
+                    { Reserve(1); Reference(building.lodVersion, label + ":lodVersion"); }
+                }
             }
             foreach (var renderer in renderers)
                 if (membership.TryGetValue(renderer.Instance, out var labels)) renderer.OwnerMembership = labels.ToArray();
