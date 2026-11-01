@@ -131,7 +131,7 @@ foreach(int count in new[]{1,1024})
     var disabledFood=new FoodCommerceState();var disabled=new NativeFoodMarket(disabledFood,native);
     disabled.AttachCampaignAwareness(79,new() {Enabled=false});
     var off=Measure(()=>disabled.ObserveCampaignBoundary(++runtimeHour),10001);
-    var city=EconomyScenario.Create(1,79);city.Food=EconomyScenario.Food();new CitySimulator(city,new FixturePlanner()).AttachFoodMarket(new FixtureMarket());var baseline=JObject.Parse(SaveCodec.Write(city));baseline["Schema"]=20;((JObject)baseline["Food"]!).Remove("Campaigns");
+    var city=EconomyScenario.Create(1,79);city.Food=EconomyScenario.Food();new CitySimulator(city,new FixturePlanner()).AttachFoodMarket(new FixtureMarket());var baseline=JObject.Parse(SaveCodec.Write(city));baseline["Schema"]=20;baseline.Remove("MenuPolicy");((JObject)baseline["Food"]!).Remove("Campaigns");
     // Shared reference table is separately charged; masks occupy their reserved campaign allocation.
     var previous=SaveCodec.Read(baseline.ToString(Newtonsoft.Json.Formatting.None));
     if(previous.Status!=SaveReadStatus.Loaded) throw new Exception(previous.Error);

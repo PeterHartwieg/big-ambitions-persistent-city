@@ -253,7 +253,8 @@ namespace PersistentCity.Core
 
     public sealed class CityState
     {
-        public const int CurrentSchema = 22;
+        public const int CurrentSchema = 23;
+        public string MenuPolicy { get; set; } = FoodMenuPolicy.Wire;
         public int WeatherStartsDay { get; set; }
         public PopulationCapabilities Capabilities { get; set; } = new PopulationCapabilities();
         public int Schema { get; set; } = CurrentSchema;

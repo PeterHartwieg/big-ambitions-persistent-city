@@ -1,6 +1,6 @@
 # C2b: observed campaigns and soft distance preference
 
-## Second base sync: E3 ice cream - 1 November 2026
+## Second base sync: E3 ice cream - 1 November 2026 (historical, base 75c956c)
 
 Merged `75c956c` into C2b `ffe85a0` from merge base `0ffb819` as two-parent
 commit `033ba81`. Both sides' diffs against that base were inspected. The sole
@@ -15,7 +15,7 @@ all added documentation lines survive. No integration code fix was needed.
 C2b Core/Runtime/persistence/tests/tools are unchanged; the only Runtime
 additions from its parent are E3's unchanged ice cream facade and shared-reader
 descriptor. Schema remains **22**, with E1 **19 -> 20** then C2b **20 -> 22**;
-21/23 remain refused. Incoming ice cream's schema-20 results and all earlier
+At that head 21/23 remained refused. Incoming ice cream's schema-20 results and all earlier
 measurements below remain historical, with their original limitations.
 
 **60/60 foreground command gates pass** on `033ba81`: production build against
@@ -59,7 +59,7 @@ a new performance win. Combined native mod-work p95 <5 ms, every spike >=30 ms
 flagged and separate whole-frame evidence remain pending; four parked hotspots
 are untouched.
 
-Final fetch still reports base `75c956c`, already an ancestor of this branch.
+That sync's final fetch reported base `75c956c`; E4 landed afterwards at `2bd9006` and is handled in the review-fix record above.
 No game, rig/test profile, bridge lease, Steam/Workshop or WSL operations were
 performed. Native checks remain batched under merge rule v2; pointer/input
 proof waits for Peter's 6 Nov playtest. No release/upload or ordinary-save

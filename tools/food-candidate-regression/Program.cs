@@ -128,7 +128,7 @@ namespace PersistentCity.Runtime
         public int DetailedReads;public bool ThrowRead;
         public double EarliestMinute=>SaveGameManager.Current.Day*1440+SaveGameManager.Current.Hour*60;
         public static string PlaceId(BuildingRegistration r)=>"address:"+r.StreetName+":"+r.StreetNumber+":shop";
-        public static bool Supported(BuildingRegistration r)=>r.RentedByPlayer&&r.Eligible;
+        private static bool SupportedMenu(BuildingRegistration r)=>r.RentedByPlayer&&r.Eligible;
         public NativeFoodMarket(FoodCommerceState state,CityBuildingController[] controllers)
         {
             this.state=state;this.controllers=controllers;

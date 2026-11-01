@@ -1,3 +1,65 @@
+# C2b: compose the latest E4 base (schema 23)
+
+Fixes Sol-r1-1, Opus-r1-1 and Opus-r1-2. Merge development head `2bd9006`
+into prior sync `d2ba6d2` from merge base `75c956c`, retaining two-parent merge
+ancestry. Target remains `codex/pc-c2b-campaign-awareness`; no push or remote PR
+merge is performed here. Both parents' diffs against the base were inspected.
+
+The documented E4 predecessor rule gives **20 -> 22 -> 23**. Schema 21 remains
+reserved; >23 is future. Exact 22 includes bounded campaign images/held source
+bits but excludes the menu header, revision-2 tuning and compact product cells.
+Its menu/history/offer limits remain four. The menu migration validates this
+predecessor before adding E4's policy header; no facts, identities, weather,
+money, campaign masks or held decisions are regenerated.
+
+All 20 textual conflicts and resolutions:
+
+| File | Resolution |
+| --- | --- |
+| `CHECKS.md` | Keep C2b and E4 entries plus every existing slice index line, including ice cream. |
+| `Core/FoodChoicePolicy.cs` | Keep CampaignActive and NewTasteBand; campaign distance/preference and E4 taste weighting both apply. |
+| `Core/FoodWeightedCommerce.cs` | Pass both captured campaign activity and E4 new-taste projection; keep menu capture limits/refusals. |
+| `Core/Model.cs` | Write schema 23 and retain E4 MenuPolicy and E1 weather. |
+| `Persistence/PopulationWire18.cs` | Bootstrap accepts exact 22 and 23; 23 requires its menu policy; reserved 21 refuses. |
+| `Persistence/SaveCodec.cs` | Add exact schema-22 resolver; preserve old limits and campaign checks; migrate 20 -> 22 -> 23; keep E4 cells/tuning/counts. |
+| `Persistence/WeatherWire20.cs` | Retain one equivalent exact 19 -> 20 migration under C2b's existing method name. |
+| `README.md` | Keep C2b/E4/E3/A5/F1 notices; current source writes 23 and accepts predecessors 13-20 and 22. |
+| `Runtime/PersistentCityMod.cs` | Keep E4 maximum-offer constructor input and C2b campaign attachment/clamping. |
+| `docs/roadmap.md` | Keep C2b and E4 perf entries, all status lines and existing performance gates. |
+| `tests/A5IntegratedAcceptanceTests.cs` | Use CurrentSchema while preserving all migration/source/weather invariants. |
+| `tests/FoodAwarenessMemoryIntegrationTests.cs` | Keep 18/19/20/23 and add 22; remove only fields absent in each exact predecessor. |
+| `tests/MarketResearchTests.cs` | Retain exact byte noninterference and CurrentSchema assertion. |
+| `tests/Schema17Tests.cs` | Future refusals remain above CurrentSchema, now 24/25/1000. |
+| `tests/Schema18ReviewTests.cs` | Header assertion follows CurrentSchema; reserved-21 refusal remains. |
+| `tests/Schema18Tests.cs` | Mutate the actual current header for noncanonical refusal; keep all corruption cases. |
+| `tests/WeatherTests.cs` | Preserve current-schema assertions and both menu/campaign removal from old source shapes. |
+| `tools/awareness-regression/Program.cs` | Project out weather, campaigns and menu header for the frozen awareness comparison; label total extension bytes. |
+| `tools/market-research-regression/compare_save_baseline.py` | Use exact schema-23 saved-byte equality without weakening the differential. |
+| `tools/save-contract-regression/WeatherContracts.cs` | Separate menu/campaign/weather projections and ledgers; verify exact 20 migration and unchanged predecessor fields. |
+
+Integration seams do change Core/Runtime/persistence code: the evaluated offer
+carries both existing inputs; runtime construction keeps both settings; exact
+22 validation/conversion sits below E4. `MenuPredecessorSchema` advances to 22.
+No campaign probability, distance factor, menu policy or native supported-product
+rule is redesigned. C2b remains 1.25 preference / half soft distance for all
+residents; E4's effective live maximum remains four. E3 reader/source pins and
+all other slices remain intact.
+
+Fixture-only integration also updates C2b's old-20 shapes, adds 22 to E4's
+migration/old-limit tests, keeps awareness/weather/campaign/menu byte charges
+separate, and names E4's new-taste constructor argument to preserve both inputs.
+A new interrupted-decision regression verifies exact schema-22 campaign/rain
+captures through migration, reload and changed live settings.
+
+Validation results will be added after the full foreground run. Earlier results
+below describe the ice cream-only sync at `75c956c`; they do not describe the
+schema-23 composition or the latest base. Historical evidence is retained.
+Native proof remains batched under merge rule v2 on the combined locked rig;
+input-only proof waits for Peter's 6 Nov playtest. No game/rig/bridge/profile,
+Steam/Workshop or WSL operations, release/upload or normal-save deployment.
+
+## Historical ice cream-only sync (base 75c956c; superseded by the E4 integration above)
+
 # C2b: sync the E3 ice cream integration base
 
 Merge `75c956c` (`codex/persistent-city`) into C2b head `ffe85a0` with a real
