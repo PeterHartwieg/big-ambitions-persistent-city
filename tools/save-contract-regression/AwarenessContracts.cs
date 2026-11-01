@@ -43,7 +43,7 @@ static partial class Program
         string wire=SaveCodec.Write(state);var removed=JObject.Parse(wire);
         ((JObject)removed["Food"]!).Remove("AwarenessStartsDay");((JObject)removed["Food"]!["Residents"]![0]![9]!).Remove("Awareness");
         Check(wire.Length-removed.ToString(Formatting.None).Length==AwarenessChars(state),"Awareness byte allocation mismatch.");
-        var root=JObject.Parse(PreRivalWire(state));root["Schema"]=18;
+        var root=JObject.Parse(WithoutWeather20(PreRivalWire(state)));root["Schema"]=18;
         ((JObject)root["Food"]!).Remove("AwarenessStartsDay");((JObject)root["Food"]!["Residents"]![0]![9]!).Remove("Awareness");
         string baseline=root.ToString(Formatting.None);
         var old=SaveCodec.Read(baseline);Check(old.Status==SaveReadStatus.Loaded && old.SourceSchema==18,"Schema-18 migration refused.");

@@ -3,8 +3,8 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    // D2's only predecessor hook. Integration may replace this call with the newly landed,
-    // frozen predecessor without changing schema 21's isolated wire/validation contract.
+    // Isolated schema-20 -> 21 step. The frozen E1 reader first upgrades older
+    // payloads through 20 and preserves captured weather without resampling.
     internal static class RivalWire21
     {
         internal static bool AddedProperty(Type type, string name)
@@ -18,7 +18,7 @@ namespace PersistentCity.Persistence
 
         internal static SaveReadResult Migrate(string source)
         {
-            var old = PopulationSchema19.Read(source);
+            var old = PopulationSchema20.Read(source);
             if (old.Status != SaveReadStatus.Loaded) return old;
             var state = old.State!;
             state.Schema = 21;

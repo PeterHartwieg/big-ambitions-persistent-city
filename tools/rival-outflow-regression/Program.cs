@@ -86,9 +86,9 @@ static partial class Program
     {
         var state=State(consumers);state.Food=new();var city=new CitySimulator(state,new Paths());
         var native=new NativeFoodMarket(Fixtures(1));city.AttachFoodMarket(native);city.EnableHouseholdFinances();
-        state.Schema=19;string baseline=PopulationSchema19.Write(state);state.Schema=21;
+        state.Schema=20;string baseline=PopulationSchema20.Write(state);state.Schema=21;
         string current=SaveCodec.Write(state);var counts=SaveCodec.CountRecords(state,current);
-        state.Schema=19;var oldCounts=PopulationSchema19.CountRecords(state,baseline);state.Schema=21;
+        state.Schema=20;var oldCounts=PopulationSchema20.CountRecords(state,baseline);state.Schema=21;
         var read=SaveCodec.Read(baseline);Check(read.Status==SaveReadStatus.Loaded,read.Error);
         return new {consumers,baselineBytes=System.Text.Encoding.UTF8.GetByteCount(baseline),currentBytes=System.Text.Encoding.UTF8.GetByteCount(current),
             deltaBytes=System.Text.Encoding.UTF8.GetByteCount(current)-System.Text.Encoding.UTF8.GetByteCount(baseline),

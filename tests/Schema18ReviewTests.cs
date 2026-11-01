@@ -77,7 +77,7 @@ public sealed class Schema18ReviewTests
     [InlineData("\"Schema\":18,\"Schema\":18,")]
     [InlineData("\"Schema\":0x12,")]
     [InlineData("\"Schema\":17,")]
-    [InlineData("\"Schema\":20,")]
+    [InlineData("\"Schema\":22,")]
     public void ProbeRefusesDuplicateNoncanonicalLegacyOrFutureHeader(string schema)
     {
         Assert.Throws<SaveValidationException>(() => SaveCodec.RequireExecutableCapabilities("{" + schema + "\"Capabilities\":{\"Active\":false,\"Code\":\"B\",\"Revision\":1}}"));

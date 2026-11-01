@@ -36,6 +36,13 @@ steps += [('simulate', [dotnet, 'run', '--project', 'tools/simulate/Simulate.csp
 for case in ['reference', 'consumers5000', 'CF32', 'CF64']:
     steps.append(('capacity-' + case, [dotnet, 'run', '--project', 'tools/save-contract-regression/SaveContractRegression.csproj',
                                     '--configuration', 'Release', '--', '--capacity', case, '1']))
+known = {name for name, _ in steps}
+for directory in sorted((root / 'tools').glob('*-regression')):
+    name = directory.name.removesuffix('-regression')
+    projects_here = list(directory.glob('*.csproj'))
+    if name not in known and len(projects_here) == 1:
+        steps.append((name, [dotnet, 'run', '--project', str(projects_here[0].relative_to(root)), '--configuration', 'Release']))
+steps.append(('pickup-continuity', [dotnet, 'run', '--project', 'tools/persistent-continuity/regression/PickupRegression.csproj', '--configuration', 'Release']))
 selected = set(sys.argv[1:])
 results = []
 for name, command in steps:

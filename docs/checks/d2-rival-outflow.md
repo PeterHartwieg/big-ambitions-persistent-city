@@ -1,5 +1,10 @@
 # D2: rival choice and own-ledger outflow
 
+Measurement provenance: the original D2 timings/byte tables and round-one repair
+results below were measured on the D2 line based on `51ce709`, before E1 schema
+20. They remain historical evidence, not current merged-head measurements. The
+base-sync results are recorded separately in D2 checks; no old number is relabelled.
+
 ## 1 November 2026 — offline implementation
 
 Base `51ce709`; branch `codex/pc-d2-rival-outflow`. D2 adds read-only rivals to
@@ -253,3 +258,50 @@ use independent native observations as proof of native non-mutation.
 8. **NEEDS-INPUT — visible continuity and fixture UI.** In the unlocked session, select/follow a rival customer through outward walk, door/service and return; confirm continuous appearance, no second body and agreement with bridge state. Visually check price/hour edits, the player control and UI-only diagnostic/performance variants. Establishing a missing shop fixture through normal UI also waits for input.
 
 [Checks index](../../CHECKS.md).
+
+## Base integration - 1 November 2026
+
+Task `pc-d2-sync-base` merges D2 `ef2d72e` with integration `5877453`, using
+merge base `51ce709` and preserving both parents. No feature scope changed.
+F1's drawing NO-GO report and E1's weather/settings/tests/tools/checks/perf index
+are retained, as are all older slice entries. The [preservation audit](../reviews/2026-11-01-d2-sync-base-preservation.json)
+checks every incoming CHECKS index line, both parents' slice-document presence,
+test-method preservation (including two deliberately expanded theories) and the
+mechanically frozen E1 reader. The [PR handoff](../reviews/2026-11-01-d2-sync-base-pr-description.md)
+lists all 18 textual conflicts and their resolutions.
+
+Schema 21 now builds on schema 20. `PopulationSchema20*` retains E1's exact
+reader/tuple/semantic contract; its object resolver and strict tuple-property
+guard exclude only D2-added DTO fields. The equality/arity guard is not loosened.
+The tuple-number delegate binds to the frozen codec itself. `RivalWire21.Migrate`
+first validates/upgrades supported predecessors to 20, preserves E1 weather
+activation/citizen commitments/consumer suffix/held food multiplier exactly,
+then adds D2's next-day watermark and zero/empty defaults before validating 21.
+The frozen 19 fixture writer hides E1 fields, and schema-20 bootstrap is accepted.
+Reserved 22/23 and all newer schemas remain refused without overwriting source.
+
+Integration changes the shared Core shortlist/offer call sites so both captured
+rain travel weighting and rival alternative weighting apply. D2 journey,
+settlement, ledger, catalogue and native-sales policy stay intact. Incoming E1
+runtime capture/queue/settings code is unchanged. Combined weighting invariants,
+19/20 migration/source preservation and held rival reload under changed rain and
+rival settings extend the existing tests. The first test build found a local
+name collision in that expanded theory; corrected. The next run's 116 failures
+all reproduced the frozen tuple-property guard mismatch; 2,305 other tests
+passed. The guard now filters only D2 additions and keeps exact predecessor
+validation; final rerun results follow below.
+
+Byte/perf provenance: all original D2 tables above and both original D2 JSON
+measurement artifacts describe the pre-E1 line based on `51ce709`. They are not
+silently relabelled. The rival native-double size tool now compares genuine
+schema-20 bytes to 21; awareness/weather fixtures likewise use the correct
+predecessor shapes and separate slice byte charges. The capacity benchmark
+consumes both weather and rival scalar/image allocations once, retaining every
+existing byte/record cap. The C4 comparator pins schema 21 explicitly.
+
+Validation is offline only. No game, rig directory, bridge lease, Steam/Workshop
+or ordinary profile was used. Merge rule v2 leaves native behavior and combined
+mod-work p95 <5 ms / spikes >=30 ms evidence for the later batched locked-head
+rig; pointer/input-only checks wait for Peter's 6 Nov playtest. Whole-frame cost
+remains separate. No new optimization was taken and all four parked hotspots
+remain parked.

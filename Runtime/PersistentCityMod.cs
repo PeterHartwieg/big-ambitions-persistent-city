@@ -191,6 +191,8 @@ namespace PersistentCity.Runtime
                 settings.Rivals.Clamp(message => log.Info(message));
                 log.Info("Rival choice revision 1: estimated availability; weight="+settings.RivalChoiceWeight+", service="+settings.RivalAssumedServiceMinutes+", refresh="+settings.RivalRefreshGameMinutes+", reads/unit="+settings.RivalReadsPerUnit);
                 settings.Awareness.Clamp(message => log.Info(message));
+                settings.Weather.Clamp(message => log.Info(message));
+                log.Info("E1 weather revision 1; missing/failed source is unknown (neutral).");
                 log.Info("Food awareness v1: radius="+settings.Awareness.RadiusMetres.ToString(System.Globalization.CultureInfo.InvariantCulture)
                     +", draws/anchor="+settings.Awareness.DrawsPerAnchor+", discovery="+settings.Awareness.DiscoveryProbability.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 settings.FoodMemory.Clamp(message => log.Info(message));
@@ -584,7 +586,9 @@ namespace PersistentCity.Runtime
             routes = new MultimodalRoutes(state.Places, NativeTravelPace.WalkingMetresPerSecond / state.TravelClockRate, state.TravelClockRate, dependency, routeObjects);
             simulation = new CitySimulator(state, routes);
             dwellSpots = new DwellSpots();
-            simulation.AttachOptionalStops(new OptionalStopEnvironment(state.Places, dwellSpots), settings.OptionalStopChoicePercentage, settings.StopTiming());
+            var stopEnvironment=new OptionalStopEnvironment(state.Places,dwellSpots);
+            simulation.AttachOptionalStops(stopEnvironment, settings.OptionalStopChoicePercentage, settings.StopTiming());
+            simulation.AttachWeather(new FrameWeatherSource(()=>UnityEngine.Time.frameCount,()=>stopEnvironment.Raining),settings.Weather);
             seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
             if (state.Food == null)
                 state.Food = new FoodCommerceState { MealRhythmVersion = MealRhythm.PolicyVersion, HouseholdFinanceVersion = HouseholdFinance.PolicyVersion,

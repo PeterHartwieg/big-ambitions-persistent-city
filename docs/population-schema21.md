@@ -1,30 +1,37 @@
 # Population schema 21: D2 rival choice and own-ledger outflow
 
-Owner: `pc-d2-rival-outflow`, 1 November 2026. Predecessor on this branch:
-schema 19 at `51ce709`. Schema 20 belongs to the independent rain slice and is
-not read, rewritten, implemented or renumbered here. The isolated migration hook
-is `RivalWire21.Migrate`; integration can point it to a later frozen predecessor.
-Schemas 17–19 documentation and published wire contracts are unchanged.
+Owner: `pc-d2-rival-outflow`, 1 November 2026. D2 builds on E1's schema 20
+at `5877453`. The initial D2 measurements used schema 19 at `51ce709`, before
+E1; those archived numbers are not merged-head measurements. The isolated
+migration hook is `RivalWire21.Migrate`. Schemas 22 (C2b) and 23 (E4) remain
+reserved, unsupported future schemas on this tree.
 
 ## Migration and authority
 
-`PopulationSchema19*` preserves the predecessor's complete streaming reader,
-tuple arities, limits, converters and semantic validation. Its resolver excludes
-only the newly introduced D2 DTO members. Source schema 18 still uses its own
-filtered resolver; schemas 13–17 still pass the original `LegacyPopulationCodec`.
-All source validation completes before migration. A successful upgrade sets 21,
+`PopulationSchema20*` freezes E1's complete streaming reader, tuple arities,
+limits, converters and semantic validation, excluding D2's added DTO members.
+Schema 20 upgrades to 21 without changing weather activation, citizen commitments,
+held decision weather/travel multipliers or the consumer-memory weather suffix.
+Schemas 18/19 first upgrade to 20 with E1's next-day neutral weather activation;
+schemas 13-17 pass the original `LegacyPopulationCodec` before that step.
+`PopulationSchema19*` retains the original pre-weather fixture writer and reader;
+its resolver excludes both later slices' added fields.
+
+All source validation completes before the isolated 20 -> 21 migration. That step
 initializes external accounts to zero and target variants to empty, and sets
 `Food.RivalStartsDay` to the next logical day. Existing held player choices,
-quotes, money, receipts, B1 memory and excursions retain their original terms.
-Ordinary config changes apply to the next uncaptured context that same day.
+quotes, money, receipts, B1 memory, weather captures and excursions retain their
+original terms. Ordinary config changes apply to the next uncaptured context
+that same day. Future slices can use this validated predecessor without changing
+the 20 -> 21 step.
 
-Unknown/future schemas, schema 20, foreign fields, bad enum codes, malformed
-tuples and noncanonical money refuse without overwriting the source. Early
-native-authority bootstrap accepts only the implemented schemas 13–19 and 21;
-older binaries reject 21 before resuming authority. Native authority keys,
-`persistentcity:state_v1`, `FoodSaleReceipts` keys/content and the detached shadow
-schema are unchanged. Transient D2 `FoodBusiness` evidence is excluded from the
-unchanged shadow format; it never authorizes shadow sales.
+Unknown/future schemas, foreign fields, bad enum codes, malformed tuples and
+noncanonical money refuse without overwriting the source. Early native-authority
+bootstrap accepts only supported schemas 13-21; older binaries reject 21 before
+resuming authority. Native authority keys, `persistentcity:state_v1`,
+`FoodSaleReceipts` keys/content and the detached shadow schema are unchanged.
+Transient D2 `FoodBusiness` evidence is excluded from the unchanged shadow format;
+it never authorizes shadow sales.
 
 ## Fixed tuples and exact accounts
 

@@ -1,5 +1,10 @@
 # D2 performance measurements (offline only)
 
+Measurement provenance: the original D2 timings/byte tables and round-one repair
+results below were measured on the D2 line based on `51ce709`, before E1 schema
+20. They remain historical evidence, not current merged-head measurements. The
+base-sync results are recorded separately in D2 checks; no old number is relabelled.
+
 1 November 2026; base `51ce709`. Foreground .NET 10 on the shared Windows host,
 actual D1/D2 reader code against native field doubles, no game/Unity execution.
 The benchmark is `tools/rival-outflow-regression`; raw JSON is in ignored
@@ -90,3 +95,24 @@ component attribution; D1 aggregate cold 20k mean **53.2260 ms** is also flagged
 Individual D2 micro-samples remain below 30 ms. The preceding first-rerun values
 and raw JSON are retained separately in the round-one manifest. These shared-host
 measurements do not establish a speedup or the native mod-work/whole-frame gate.
+
+## Base sync re-measure, 1 November 2026
+
+No new optimization in `pc-d2-sync-base`. The unchanged D2 Release native-double
+harness was rerun on the merged E1/F1 tree (parents `ef2d72e` / `5877453`). Warm
+source/rank p95 was 0.0179 / 0.0212 ms at 1,024 / 20,000 alternatives;
+settlement p95 0.0004 ms. The 128-event offline batch p95 was 2.1625 / 1.7941 ms,
+with one >=30 ms sample (35.5058 ms, 20,000-alternative whole-day arm). That is
+an offline batch spike; component attribution and native mod-work/whole-frame
+proof remain unavailable. No matched speedup/regression is inferred from these
+shared-host reruns versus the archived pre-E1 measurements above.
+
+The genuine schema-20 -> 21 idle-fixture comparison measured 2,284,562 ->
+2,294,151 bytes for 1,914 consumers (+9,589), and 5,973,936 -> 5,998,955 bytes
+for 5,000 consumers (+25,019): exactly +5 bytes/consumer +19 header. Streaming
+and semantic records are unchanged (3,829 / 3,829 and 10,001 / 10,001).
+Population-only save-contract output is now 120,184 bytes; its weather-stripped
+projection is 119,083 bytes. These are named synthetic fixtures, not raw game
+save sizes. The original tables remain pre-E1 evidence, with their original
+numbers intact. Current raw output is retained with the sync validation results.
+The four parked hotspots remain parked; no native timing gate is claimed.

@@ -143,6 +143,35 @@ public sealed class RivalOutflowTests
         Assert.Empty(city.State.Food.Shops);
     }
     [Fact]
+    public void RainAndRivalWeightBothApplyToShortlistAndFinalChoice()
+    {
+        var traits=new ResidentTraits {Bands="2222222222"};var settings=new FoodChoiceSettings();
+        var entries=Enumerable.Range(0,16).Select(i=>new FoodAwarenessCatalogue.Entry("b"+i,"p"+i,
+            new Position(i<8 ? 120 : 10800,0,0),i<8 ? FoodAwarenessAlternativeKind.Managed : FoodAwarenessAlternativeKind.External)).ToArray();
+        var catalogue=new FoodAwarenessCatalogue(entries);
+        var image=new FoodAwarenessImage {CatalogueRevision=catalogue.Revision,Union=entries.Select(e=>new FoodAwarenessCandidate {BusinessId=e.BusinessId,Eligible=true}).ToList()};
+        int drySlots=0,rainSlots=0,lightSlots=0,dryWins=0,rainWins=0,lightWins=0;
+        EvaluatedFoodOffer[] Offers(double weight)=>new[] {
+            new EvaluatedFoodOffer("near",FoodProducts.Croissant,Money.FromCents(100),1,0,1,200,null,null,MealKind.Lunch),
+            new EvaluatedFoodOffer("rival",FoodProducts.Croissant,Money.FromCents(100),90,0,1,200,null,null,MealKind.Lunch,0,weight)};
+        for(int seed=0;seed<2000;seed++)
+        {
+            var draw=new FoodDrawContext(seed,"consumer",1,MealKind.Lunch,"context",1);
+            int Slots(double weight,double rain)=>catalogue.Rank(image,new Position(0,0,0),traits,settings,draw,120,
+                rivalWeight:weight,weatherTravelMultiplier:rain).Count(e=>e.Kind==FoodAwarenessAlternativeKind.External);
+            int dry=Slots(1,1),rain=Slots(1,1.3),light=Slots(.5,1.3);
+            Assert.True(light<=rain && rain<=dry);Assert.Equal(0,Slots(0,1.3));
+            drySlots+=dry;rainSlots+=rain;lightSlots+=light;
+            int d=FoodChoicePolicy.Select(Offers(1),traits,Money.FromCents(1000),draw,settings,false).Index;
+            int r=FoodChoicePolicy.Select(Offers(1),traits,Money.FromCents(1000),draw,settings,false,1.3).Index;
+            int l=FoodChoicePolicy.Select(Offers(.5),traits,Money.FromCents(1000),draw,settings,false,1.3).Index;
+            if(d==1) dryWins++;if(r==1) {rainWins++;Assert.Equal(1,d);}if(l==1) {lightWins++;Assert.Equal(1,r);}
+            Assert.Equal(0,FoodChoicePolicy.Select(Offers(0),traits,Money.FromCents(1000),draw,settings,false,1.3).Index);
+        }
+        Assert.InRange(rainSlots,1,drySlots-1);Assert.InRange(lightSlots,1,rainSlots-1);
+        Assert.InRange(rainWins,1,dryWins-1);Assert.InRange(lightWins,1,rainWins-1);
+    }
+    [Fact]
     public void ZeroWeightDoesNoNewRivalWork()
     {
         var (city, market, _) = Ready(weight: 0); var m = city.State.Food!.Residents.Single();
@@ -154,11 +183,15 @@ public sealed class RivalOutflowTests
     public void HeldRivalContextRetainsItsWeightAndServiceEstimateWhenReloadDisablesNewChoices(int units)
     {
         var (city, market, paths) = Ready(); city.InspectFoodAwareness("r");
+        city.AttachWeather(new FrameWeatherSource(()=>1,()=>true));
         double at=city.State.Food!.Residents.Single().DesiredAt;
         for(int i=0;i<units;i++) city.AdvanceTo(at,1);
         Assert.NotNull(city.State.Food.Residents[0].Decision);
+        Assert.Equal(WeatherSample.Rain,city.State.Food.Residents[0].Decision!.Weather);
+        Assert.Equal(1.3,city.State.Food.Residents[0].Decision!.WeatherTravelMultiplier);
         var read=SaveCodec.Read(SaveCodec.Write(city.State)); Assert.Equal(SaveReadStatus.Loaded,read.Status);
         city=new CitySimulator(read.State!,paths);
+        city.AttachWeather(new FrameWeatherSource(()=>2,()=>throw new Exception("Held decision must not reread weather")),new WeatherSettings {Enabled=false,RainTravelWeightMultiplier=2});
         city.AttachFoodMarket(market,rivalSettings:new RivalFoodSettings {RivalChoiceWeight=0,RivalAssumedServiceMinutes=30});
         Advance(city,at+7);
         var meal=city.State.Food!.Residents.Single();Assert.Equal(1,meal.Purchases);Assert.Equal(5,meal.ServiceMinutes);
@@ -270,18 +303,28 @@ public sealed class RivalOutflowTests
         Assert.False(FoodSaleReceipts.AlreadyPaid(receipts, m)); Assert.Equal(saved, receipts.Single().Value);
         Assert.Throws<InvalidOperationException>(() => FoodSaleReceipts.Begin(new Dictionary<string, string>(), m));
     }
-    [Fact]
-    public void ExactSchema19MigrationAndForeignOrFutureRefusalsPreserveSource()
+    [Theory] [InlineData(19)] [InlineData(20)]
+    public void ExactPredecessorMigrationAndForeignOrFutureRefusalsPreserveSource(int schema)
     {
-        var (city, _, _) = Ready(); city.State.Schema = 19;
-        string source = PopulationSchema19.Write(city.State);
+        var (city, _, _) = Ready(); city.State.Schema = schema;
+        if(schema==20)
+        {
+            city.State.WeatherStartsDay=1;
+            city.State.Citizens[0].W=new WeatherCommitment(city.State.Minute,WeatherSample.Rain,true);
+            city.State.Food!.Residents[0].Memory.Weather=WeatherSample.Rain;
+        }
+        string weather=JsonConvert.SerializeObject(city.State.Citizens[0].W);
+        string source = schema==20 ? PopulationSchema20.Write(city.State) : PopulationSchema19.Write(city.State);
         var store = new Dictionary<string, string> { [SaveCodec.StateKey] = source };
         var read = SaveCodec.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(21, read.State!.Schema); Assert.Equal(19, read.SourceSchema);
+        Assert.Equal(21, read.State!.Schema); Assert.Equal(schema, read.SourceSchema);
+        Assert.Equal(schema==20 ? 1 : 2,read.State.WeatherStartsDay);
+        Assert.Equal(weather,JsonConvert.SerializeObject(read.State.Citizens[0].W));
+        Assert.Equal(schema==20 ? WeatherSample.Rain : WeatherSample.Unknown,read.State.Food!.Residents[0].Memory.Weather);
         Assert.Equal(2, read.State.Food!.RivalStartsDay); Assert.Equal(source, store[SaveCodec.StateKey]);
         string current = SaveCodec.Write(read.State); Assert.Equal(current, SaveCodec.Write(SaveCodec.Read(current).State!));
-        foreach (int schema in new[] { 20, 22, 23, 99 })
-        { var json = JObject.Parse(source); json["Schema"] = schema; Assert.NotEqual(SaveReadStatus.Loaded, SaveCodec.Read(json.ToString(Formatting.None)).Status); }
+        foreach (int futureSchema in new[] { 22, 23, 99 })
+        { var json = JObject.Parse(source); json["Schema"] = futureSchema; Assert.NotEqual(SaveReadStatus.Loaded, SaveCodec.Read(json.ToString(Formatting.None)).Status); }
         var foreign = JObject.Parse(source); foreign["Food"]!["RivalStartsDay"] = 0;
         Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(foreign.ToString(Formatting.None)).Status);
         foreign = JObject.Parse(source); ((JArray)foreign["Food"]!["Residents"]![0]!).Add("");

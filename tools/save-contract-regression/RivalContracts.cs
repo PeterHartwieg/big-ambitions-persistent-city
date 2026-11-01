@@ -11,10 +11,10 @@ static partial class Program
     // tuple as an older source. The actual frozen reader/writer owns its shape.
     private static string PreRivalWire(CityState state)
     {
-        var predecessor=typeof(SaveCodec).Assembly.GetType("PersistentCity.Persistence.PopulationSchema19");
+        var predecessor=typeof(SaveCodec).Assembly.GetType("PersistentCity.Persistence.PopulationSchema20");
         if(predecessor==null) return SaveCodec.Write(state);
         int schema=state.Schema;
-        try {state.Schema=19;return (string)predecessor.GetMethod("Write")!.Invoke(null,new object[]{state})!;}
+        try {state.Schema=20;return (string)predecessor.GetMethod("Write")!.Invoke(null,new object[]{state})!;}
         finally {state.Schema=schema;}
     }
     private static int RivalChars(CityState state)

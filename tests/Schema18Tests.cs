@@ -102,7 +102,7 @@ public sealed partial class FoodCommerceTests
             case "tuple-hex": broken = source.Replace("\"Residents\":[[2,", "\"Residents\":[[0x2,"); break;
             case "schema-hex": broken = source.Replace("\"Schema\":21,", "\"Schema\":0x15,"); break;
             case "revision-octal": broken = source.Replace("\"Revision\":1", "\"Revision\":01"); break;
-            case "memory-escaped": broken = source.Replace("\"1-------\"", "\"\\u0031-------\""); break;
+            case "memory-escaped": broken = source.Replace("\"1-------|0\"", "\"\\u0031-------|0\""); break;
             case "visit-escaped": broken = source.Replace("\"RecentVisits\":[\"1", "\"RecentVisits\":[\"\\u0031"); break;
         }
         Assert.NotEqual(source, broken); B0_Preserve(broken, city.State);
