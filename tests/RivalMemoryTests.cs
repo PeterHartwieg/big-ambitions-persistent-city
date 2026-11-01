@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
 using Xunit;
@@ -168,6 +169,37 @@ public sealed class RivalMemoryTests
         city.AttachFoodMarket(market, memorySettings: new FoodMemorySettings { FoodMemoryWeight = 0 });
         Assert.Equal(held, SaveCodec.Write(city.State));
         Assert.Equal(shop.MemoryContribution, city.State.Food!.Residents.Single().Decision!.Shops.Single().MemoryContribution);
+    }
+
+    [Fact]
+    public void Source23AcceptsBoundedModeledScalarButRejectsNonfiniteWithoutChangingShape()
+    {
+        var (city, _, _) = RivalOutflowTests.Ready(); city.InspectFoodAwareness("r");
+        city.AdvanceTo(city.State.Food!.Residents[0].DesiredAt, 1);
+        var shop = city.State.Food.Residents[0].Decision!.Shops.Single();
+        foreach (double contribution in new[] { -8d, -1d, 0d, 1d, 8d })
+        {
+            shop.MemoryContribution = contribution;
+            Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(city.State)).Status);
+        }
+        foreach (double contribution in new[] { double.NaN, double.NegativeInfinity, double.PositiveInfinity, -9d, 9d })
+        {
+            shop.MemoryContribution = contribution;
+            Assert.Throws<SaveValidationException>(() => SaveCodec.Write(city.State));
+        }
+    }
+
+    [Theory] [InlineData(21)] [InlineData(22)]
+    public void OlderSourceValidatorsKeepTheirNeutralOnlyRivalContract(int schema)
+    {
+        var (city, _, _) = RivalOutflowTests.Ready(); city.InspectFoodAwareness("r");
+        city.AdvanceTo(city.State.Food!.Residents[0].DesiredAt, 1);
+        city.State.Schema = schema;
+        string neutral = SaveCodec.WriteForSchema(city.State, schema);
+        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(neutral).Status);
+        var root = JObject.Parse(neutral);
+        root["Food"]!["Residents"]![0]![9]!["Shops"]![0]!["MemoryContribution"] = 1;
+        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(root.ToString(Formatting.None)).Status);
     }
 
     [Fact]
