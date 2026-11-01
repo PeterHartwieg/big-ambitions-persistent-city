@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings><TreatWarningsAsErrors>true</TreatWarningsAsErrors></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../Core/PersistentCity.Core.csproj" />
+    <ProjectReference Include="../../Persistence/PersistentCity.Persistence.csproj" />
+    <Compile Include="../../Runtime/NativeCampaignReader.cs" Link="NativeCampaignReader.cs" />
+    <Compile Include="../../Runtime/NativeCampaignDiagnostics.cs" Link="NativeCampaignDiagnostics.cs" />
+    <Compile Include="../../Runtime/NativeCampaignAwareness.cs" Link="NativeCampaignAwareness.cs" />
+    <Compile Include="../campaign-reader-regression/Doubles.cs" Link="Doubles.cs" />
+    <Compile Include="../save-contract-regression/EconomyScenario.cs" Link="EconomyScenario.cs" />
+  </ItemGroup>
+</Project>

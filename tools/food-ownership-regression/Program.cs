@@ -431,6 +431,7 @@ namespace PersistentCity.Runtime
         public static bool IsBuying(BuildingRegistration reg) => false;
         public void RefreshKnownOwnership() => NativeFoodOwnership.Observe(Reg, Eligible);
         public void ActivateScope(FoodAuthority row, BuildingRegistration reg) { }
+        public void ObserveCampaignBoundary(long hour) { }
     }
     public static class FoodBusinessCatalogue { public static string BusinessIdentity(BuildingRegistration reg) => reg.Signature; }
 }

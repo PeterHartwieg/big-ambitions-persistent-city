@@ -249,6 +249,7 @@ namespace PersistentCity.Runtime
             // the native ending-hour batch available for its normal distributed processing.
             market.RefreshKnownOwnership();
             lastBoundaryHour = Hour;
+            market.ObserveCampaignBoundary(Hour);
             if (!records.Values.Any(row => Hour > row.RequestedHour && (row.Desired != row.Managed || row.Suspended)
                 && (!row.Desired || !HasNativeCustomers(row)))) return;
             boundary = true;

@@ -1,0 +1,203 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using PersistentCity.Core;
+using PersistentCity.Persistence;
+using PersistentCity.Runtime;
+using Xunit;
+
+namespace PersistentCity.Tests;
+
+public sealed class FoodCampaignAwarenessTests
+{
+    private static readonly ResidentTraits Health = new() { Bands = "2222222322" };
+    private static readonly ResidentTraits Neutral = new() { Bands = "2222222222" };
+    private static FoodCampaignTargetPolicy Targets(FoodCampaignGroup group = FoodCampaignGroup.HealthOriented)
+        => new(group, group, group, group, group, group);
+    private static BusinessCampaignSnapshot Business(string id, params CampaignObservation[] campaigns)
+        => new(id, CampaignReadStatus.Observed, campaigns, 100, 100, 100);
+    private static CampaignObservation Campaign(int type = 0, bool enabled = true, string? name = null, CampaignReadStatus status = CampaignReadStatus.Observed)
+        => new(type, name ?? CampaignTypeGroups.VerifiedName(type), enabled, "agency", status);
+    private static CampaignSnapshot Snapshot(int hour, params BusinessCampaignSnapshot[] businesses) => new(hour * 60, hour, businesses);
+    private static Dictionary<string,string> Places(params string[] ids) => ids.ToDictionary(id => id, id => "place:" + id);
+    private static FoodCampaignSource Source(FoodCommerceState food, FoodCampaignTargetPolicy? policy = null, FoodCampaignSettings? settings = null)
+        => new(food, 79, settings ?? new() { ReachProbability = 1, DailyReachDecay = 1 }, policy ?? Targets());
+    private static string?[] Draw(FoodCampaignSource source, int day, double minute, ResidentTraits? traits = null, bool commute = false, string consumer = "r")
+    {
+        source.Prepare(consumer, day, minute, traits ?? Health, commute);
+        return Enumerable.Range(0,8).Select(i => source.Reference(consumer,day,i)).ToArray();
+    }
+
+    [Fact]
+    public void OnlyActuallyObservedHoursSurviveToggleMidnightReloadAndStop()
+    {
+        var food = new FoodCommerceState(); var source = Source(food); var places = Places("b");
+        source.Publish(Snapshot(22,Business("b",Campaign())),places);
+        source.Publish(Snapshot(23,Business("b",Campaign(enabled:false))),places);
+        source.Publish(Snapshot(24,Business("b",Campaign())),places);
+        var image = Assert.Single(food.Campaigns);
+        Assert.Equal(1u << 22,image.Mask(0,0)); Assert.Equal(1u,image.Mask(1,0));
+        Assert.Null(Draw(source,0,21*60).FirstOrDefault(x=>x!=null));
+        Assert.Contains("b",Draw(source,0,22*60));
+        food.Campaigns = food.Campaigns.Select(i=>FoodCampaignImage.Decode(i.Encode())).ToList();
+        source = Source(food); Assert.Contains("b",Draw(source,1,24*60));
+        source.Publish(Snapshot(25,Business("b")),places); Assert.Contains("b",Draw(source,1,25*60));
+        // Missed boundaries add no bits, including when a later sample observes enabled again.
+        source.Publish(Snapshot(50,Business("b",Campaign())),places);
+        image=Assert.Single(food.Campaigns);Assert.Equal(1u << 2,image.Mask(2,0)); Assert.Equal(1u,image.Mask(1,0));
+        Assert.Equal(image.Encode(),FoodCampaignImage.Decode(image.Encode()).Encode());
+    }
+    [Fact]
+    public void RetentionDecayAndExpiryUseStableSharedReachDraws()
+    {
+        var food = new FoodCommerceState(); var settings = new FoodCampaignSettings { ReachProbability=1,TargetMatchMultiplier=1,DailyReachDecay=.5 };
+        var source = Source(food,settings:settings); source.Publish(Snapshot(0,Business("b",Campaign())),Places("b"));
+        int yesterday=0,today=0;
+        for(int consumer=0;consumer<1000;consumer++)
+        {
+            bool one=Draw(source,1,1440,consumer:"r"+consumer).Contains("b");
+            bool two=Draw(source,2,2880,consumer:"r"+consumer).Contains("b");
+            if(one) yesterday++; if(two) today++; Assert.False(two && !one);
+        }
+        Assert.InRange(yesterday,400,600);Assert.InRange(today,180,320);
+    }
+    [Fact]
+    public void EightDayHardHistoryAndConfigurableRetentionAreIndependentOfNativeStop()
+    {
+        var food=new FoodCommerceState();var source=Source(food);source.Publish(Snapshot(0,Business("b",Campaign())),Places("b"));
+        Assert.Contains("b",Draw(source,7,7*1440));Assert.All(Draw(source,8,8*1440),Assert.Null);
+        var shortSource=Source(food,settings:new() {ReachProbability=1,DailyReachDecay=1,RetentionDays=1});
+        Assert.Contains("b",Draw(shortSource,1,1440));Assert.All(Draw(shortSource,2,2880),Assert.Null);
+        source.Publish(Snapshot(8*24,Business("b")),Places("b"));Assert.Empty(food.Campaigns);Assert.False(source.HasEvidence);
+    }
+    [Fact]
+    public void OverlappingGroupsAndTypesCountOneConsumerBusinessOnceAndNeverBoostReach()
+    {
+        var food=new FoodCommerceState();var source=Source(food,Targets(FoodCampaignGroup.Commuters|FoodCampaignGroup.HealthOriented));
+        source.Publish(Snapshot(1,Business("b",Campaign(0),Campaign(1))),Places("b"));
+        Assert.Single(Draw(source,0,60,commute:true),id=>id!=null);
+        Assert.Equal(1,source.Admitted);Assert.Equal(7,source.Refused);
+        Assert.All(Draw(source,0,60,Neutral),Assert.Null);
+        Assert.Contains("b",Draw(source,0,60,Neutral,true));Assert.Contains("b",Draw(source,0,60,Health,false));
+        Assert.Equal(FoodCampaignGroup.Everyone,FoodCampaignTargetPolicy.Membership(Neutral,false));
+    }
+    [Theory]
+    [InlineData(0)] [InlineData(1)] [InlineData(2)] [InlineData(3)] [InlineData(4)] [InlineData(5)]
+    public void UnknownTypeTargetDisabledMalformedAndDuplicateEvidenceAddZero(int fault)
+    {
+        var food=new FoodCommerceState();var source=Source(food,fault==0 ? FoodCampaignTargetPolicy.Unknown : Targets());
+        var campaign=fault==1 ? Campaign(6) : fault==2 ? Campaign(name:"unverified") : fault==3 ? Campaign(enabled:false)
+            : fault==4 ? Campaign(status:CampaignReadStatus.Unknown) : Campaign();
+        source.Publish(Snapshot(1,Business("b",fault==5 ? new[]{campaign,campaign} : new[]{campaign})),Places("b"));
+        Assert.All(Draw(source,0,60),Assert.Null);Assert.False(source.HasEvidence);Assert.Equal(0,source.Admitted);
+    }
+    [Fact]
+    public void PublicationRejectsIncompleteForeignDuplicateOrBackdatedImagesAtomically()
+    {
+        var food=new FoodCommerceState();var source=Source(food);source.Publish(Snapshot(1,Business("b",Campaign())),Places("b"));
+        string before=food.Campaigns[0].Encode();
+        foreach(var bad in new[]{Snapshot(2,Business("foreign",Campaign())),Snapshot(2,Business("b",Campaign()),Business("b",Campaign())),Snapshot(1,Business("b",Campaign()))})
+        {
+            Assert.Throws<ArgumentException>(()=>source.Publish(bad,Places("b")));
+            Assert.Equal(before,food.Campaigns[0].Encode());Assert.Contains("b",Draw(source,0,60));
+        }
+        Assert.Throws<ArgumentException>(()=>source.Publish(new CampaignSnapshot(61,0,new[]{Business("b",Campaign())}),Places("b")));
+    }
+    [Fact]
+    public void PermutationReloadAndCadenceDoNotChangeEvidenceOrEightDrawsAt1024Images()
+    {
+        var ids=Enumerable.Range(0,1024).Select(i=>"b"+i.ToString("D4")).ToArray();var places=Places(ids);
+        var a=new FoodCommerceState();var b=new FoodCommerceState();var sa=Source(a);var sb=Source(b);
+        foreach(int hour in new[]{22,23,24,25,48})
+        {
+            var observations=ids.Select(id=>Business(id,Campaign(hour%6))).ToArray();
+            sa.Publish(Snapshot(hour,observations),places);sb.Publish(Snapshot(hour,observations.Reverse().ToArray()),places);
+            b.Campaigns=b.Campaigns.Select(i=>FoodCampaignImage.Decode(i.Encode())).ToList();sb=Source(b);
+            Assert.Equal(a.Campaigns.Select(i=>i.Encode()),b.Campaigns.Select(i=>i.Encode()));
+            Assert.Equal(Draw(sa,hour/24,hour*60),Draw(sb,hour/24,hour*60));
+            Assert.InRange(Draw(sa,hour/24,hour*60).Count(id=>id!=null),1,8);
+        }
+        Assert.Equal(1024,a.Campaigns.Count);Assert.All(a.Campaigns,i=>Assert.Equal(265,i.Encode().Length));
+    }
+    [Theory] [InlineData(false)] [InlineData(true)]
+    public void NoCampaignsOrDisabledAreByteIdenticalToC2aAndAllocateNothingOnTheSourcePath(bool disabled)
+    {
+        var food=new FoodCommerceState();var source=Source(food,settings:new() {Enabled=!disabled});
+        if(disabled) source.Publish(Snapshot(1,Business("b",Campaign())),Places("b"));
+        Assert.False(source.HasEvidence);
+        source.Prepare("r",0,60,Health,true); // warm up before allocation counter
+        long before=GC.GetAllocatedBytesForCurrentThread();
+        for(int i=0;i<1000;i++) {source.Prepare("r",0,60,Health,true);source.Reference("r",0,0);}
+        Assert.Equal(0,GC.GetAllocatedBytesForCurrentThread()-before);
+        var catalogue=new FoodAwarenessCatalogue(Enumerable.Range(0,32).Select(i=>new FoodAwarenessCatalogue.Entry("b"+i,"p"+i,new(0,0,0))));
+        FoodAwarenessImage Sample(IFoodAwarenessProvider? campaign)=>catalogue.Sample(79,"r",0,new Position(),null,null,new(),_=>true,campaign:campaign);
+        Assert.Equal(JsonConvert.SerializeObject(Sample(null)),JsonConvert.SerializeObject(Sample(source)));
+    }
+    [Fact]
+    public void CampaignsCompeteInUnchangedEnvelopeAndHeldCaptureSurvivesDisableReload()
+    {
+        var (prepared,market,planner)=WeightedFoodChoiceTests.Ready(79,64);var state=prepared.State;state.Food!.AwarenessStartsDay=1;
+        var source=Source(state.Food);var ids=state.Food.Shops.Select(s=>s.BusinessId).ToArray();
+        source.Publish(Snapshot(24,ids.Select(id=>Business(id,Campaign())).ToArray()),state.Food.Shops.ToDictionary(s=>s.BusinessId,s=>s.PlaceId));
+        // Apply the reviewed policy to all traits just for this synthetic source/held fixture.
+        source=Source(state.Food,Targets(FoodCampaignGroup.Everyone));
+        var city=new CitySimulator(state,planner);city.AttachFoodMarket(market,campaign:source);city.InspectFoodAwareness("r");
+        var meal=state.Food.Residents[0];city.AdvanceTo(meal.DesiredAt,1);var decision=meal.Decision!;
+        Assert.InRange(decision.Awareness!.Union.Count,1,32);Assert.InRange(decision.Shops.Count,0,8);
+        Assert.Contains(decision.Awareness.Union,c=>(c.Sources&FoodAwarenessSource.Campaign)!=0);
+        string held=JsonConvert.SerializeObject(decision);var loaded=SaveCodec.Read(SaveCodec.Write(state));Assert.True(loaded.Status==SaveReadStatus.Loaded,loaded.Error);
+        Assert.Equal(held,JsonConvert.SerializeObject(loaded.State!.Food!.Residents[0].Decision));
+        var other=new CitySimulator(loaded.State,planner);other.AttachFoodMarket(market,campaign:Source(loaded.State.Food,settings:new() {Enabled=false}));
+        while(decision.Result==FoodDecisionResult.Evaluating) city.AdvanceTo(meal.DesiredAt,1);
+        var otherDecision=loaded.State.Food.Residents[0].Decision!;
+        while(otherDecision.Result==FoodDecisionResult.Evaluating) other.AdvanceTo(meal.DesiredAt,128);
+        Assert.Equal(JsonConvert.SerializeObject(decision),JsonConvert.SerializeObject(otherDecision));
+        Assert.InRange(planner.Out+planner.Back,0,32); // two matched continuations, <=16 each
+    }
+    [Fact]
+    public void Exact19MigrationHasOnly22AdditionsAndRefusesForeignOrMalformedShapesPreservingSource()
+    {
+        var (city,_,_)=WeightedFoodChoiceTests.Ready(79,2);var root=JObject.Parse(SaveCodec.Write(city.State));
+        root["Schema"]=19;((JObject)root["Food"]!).Remove("Campaigns");
+        string source=root.ToString(Formatting.None);var data=new Dictionary<string,string> {[SaveStore.StateKey]=source};
+        var read=SaveSession.Open(data,"weighted").InitialReadResult;Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
+        Assert.Equal(19,read.SourceSchema);Assert.Equal(22,read.State!.Schema);Assert.Empty(read.State.Food!.Campaigns);
+        var expected=(JObject)root.DeepClone();expected["Schema"]=22;expected["Food"]!["Campaigns"]=new JArray();
+        Assert.True(JToken.DeepEquals(expected,JObject.Parse(SaveCodec.Write(read.State))));Assert.Equal(source,data[SaveStore.StateKey]);
+        foreach(int schema in new[]{20,21,23,99})
+        {
+            root["Schema"]=schema;var wire=root.ToString(Formatting.None);data[SaveStore.StateKey]=wire;
+            Assert.NotEqual(SaveReadStatus.Loaded,SaveSession.Open(data,"weighted").InitialReadResult.Status);Assert.Equal(wire,data[SaveStore.StateKey]);
+            Assert.Throws<SaveValidationException>(()=>SaveCodec.RequireExecutableCapabilities(wire));
+        }
+        root["Schema"]=19;root["Food"]!["Campaigns"]=new JArray();Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(root.ToString(Formatting.None)).Status);
+        ((JObject)root["Food"]!).Remove("Campaigns");root["Food"]!["AwarenessStartsDay"]=-1;
+        Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(root.ToString(Formatting.None)).Status);
+    }
+    [Fact]
+    public void CampaignImageCountsExactlyOnceAndRejectsCorruptOrForeignReferences()
+    {
+        var (city,_,_)=WeightedFoodChoiceTests.Ready(79,2);var state=city.State;string before=SaveCodec.Write(state);
+        var source=Source(state.Food!);var shop=state.Food!.Shops[0];source.Publish(Snapshot(24,Business(shop.BusinessId,Campaign())),new Dictionary<string,string>{{shop.BusinessId,shop.PlaceId}});
+        string wire=SaveCodec.Write(state);var read=SaveCodec.Read(wire);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);Assert.Equal(wire,SaveCodec.Write(read.State!));
+        var counts=SaveCodec.CountRecords(state,wire);var previous=SaveCodec.Read(before).State!;var oldCounts=SaveCodec.CountRecords(previous,before);
+        Assert.Equal(2,counts.Streaming-oldCounts.Streaming);Assert.Equal(2,counts.Semantic-oldCounts.Semantic); // image plus shared generation
+        var root=JObject.Parse(wire);var image=root["Food"]!["Campaigns"]![0]!;
+        root["Food"]!["Campaigns"]![0]="bad";Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(root.ToString(Formatting.None)).Status);
+        root["Food"]!["Campaigns"]![0]="1ZZZ"+image.ToString().Substring(4);Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(root.ToString(Formatting.None)).Status);
+        Assert.Throws<ArgumentException>(()=>new FoodCampaignImage(0,0,new uint[64]));
+        var masks=new uint[64];masks[6]=1;Assert.Throws<ArgumentException>(()=>new FoodCampaignImage(0,0,masks));
+        masks=new uint[64];masks[0]=2;Assert.Throws<ArgumentException>(()=>new FoodCampaignImage(0,0,masks));
+    }
+    [Fact]
+    public void FlatTunablesClampAndLogOnceWithoutChangingOtherSettings()
+    {
+        var settings=JsonConvert.DeserializeObject<PrototypeSettings>("{\"FoodMarketingCampaignReachProbability\":2,\"FoodMarketingTargetMatchMultiplier\":0,\"FoodMarketingRetentionDays\":99,\"FoodMarketingDailyReachDecay\":false}")!;
+        var logs=new List<string>();settings.Campaigns.Clamp(logs.Add);settings.Campaigns.Clamp(logs.Add);
+        Assert.Equal(4,logs.Count);Assert.Equal(1,settings.Campaigns.ReachProbability);Assert.Equal(1,settings.Campaigns.TargetMatchMultiplier);
+        Assert.Equal(7,settings.Campaigns.RetentionDays);Assert.Equal(.5,settings.Campaigns.DailyReachDecay);
+    }
+}
+

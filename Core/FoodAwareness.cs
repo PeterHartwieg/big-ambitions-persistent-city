@@ -357,8 +357,14 @@ namespace PersistentCity.Core
                 Add(exposed ? entry : null,FoodAwarenessSource.Discovery,i,exposed,"not discovered");
                 if(diagnostic!=null && !exposed) diagnostic.Samples[diagnostic.Samples.Count-1].BusinessId=entry?.BusinessId ?? "";
             }
-            // Do not ask a provider for native campaign data in C2a. This reserved seam admits zero.
-            if(diagnostic!=null) for(int i=0;i<8;i++) diagnostic.Samples.Add(new FoodAwarenessSample {Source=FoodAwarenessSource.Campaign,Slot=i,Result="unknown"});
+            // Only a prepared C2b provider can supply evidence. Unavailable/foreign providers remain Unknown.
+            if(campaign is IFoodCampaignAwarenessProvider verified && verified.HasEvidence)
+                for(int i=0;i<8;i++)
+                {
+                    string? id=verified.Reference(consumer,day,i);
+                    Add(id==null ? null : Find(id),FoodAwarenessSource.Campaign,i,true,"unexposed, duplicate or ineligible");
+                }
+            else if(diagnostic!=null) for(int i=0;i<8;i++) diagnostic.Samples.Add(new FoodAwarenessSample {Source=FoodAwarenessSource.Campaign,Slot=i,Result="unknown"});
             image.Union.Sort((a,b)=>StringComparer.Ordinal.Compare(a.BusinessId,b.BusinessId));
             if(diagnostic!=null) diagnostic.Image=image;
             return image;

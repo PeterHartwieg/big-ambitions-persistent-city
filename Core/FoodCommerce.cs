@@ -113,6 +113,7 @@ namespace PersistentCity.Core
         public int ChoicePolicyVersion { get; set; } = FoodChoicePolicy.Version;
         public int ChoiceStartsDay { get; set; }
         public int AwarenessStartsDay { get; set; }
+        public List<FoodCampaignImage> Campaigns { get; set; } = new List<FoodCampaignImage>();
     }
     public readonly struct FoodSale
     {

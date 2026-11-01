@@ -71,13 +71,14 @@ public sealed class FoodAwarenessMemoryIntegrationTests
         if (legacy18)
         {
             root["Schema"] = 18;
+            ((JObject)root["Food"]!).Remove("Campaigns");
             ((JObject)root["Food"]!).Remove("AwarenessStartsDay");
             foreach (var row in root["Food"]!["Residents"]!)
                 if (row[9] is JObject d) d.Remove("Awareness");
         }
         string source = root.ToString(Formatting.None);
         var read = SaveCodec.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(legacy18 ? 18 : 19, read.SourceSchema); Assert.Equal(19, read.State!.Schema);
+        Assert.Equal(legacy18 ? 18 : CityState.CurrentSchema, read.SourceSchema); Assert.Equal(CityState.CurrentSchema, read.State!.Schema);
         Assert.Equal(memory, JsonConvert.SerializeObject(read.State.Food!.Residents.Select(m => m.Memory)));
         Assert.Equal(4, read.State.Food.BusinessReferences.Count);
         var migrated = Assert.Single(read.State.Food.Residents, m => m.Decision != null).Decision!;

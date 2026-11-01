@@ -97,7 +97,8 @@ static class Program
         for(int i=0;i<24;i++) image.Union.Add(new FoodAwarenessCandidate {BusinessId="business:ba%3Astreet_thirdstreet:"+i.ToString("D2")+":1:ba%3Abusiness_fastfoodrestaurant:player",Eligible=true,
             Sources=i<4 ? FoodAwarenessSource.Memory : i<8 ? FoodAwarenessSource.Home : i<12 ? FoodAwarenessSource.Routine : i<16 ? FoodAwarenessSource.Origin : FoodAwarenessSource.Discovery});
         for(int i=0;i<8;i++) d.Shops.Add(new FoodDecisionShop {BusinessId=image.Union[i].BusinessId,PlaceId="shop-1",NextServiceAt=state.Minute});
-        var before=JObject.Parse(SaveCodec.Write(state));before["Schema"]=18;((JObject)before["Food"]!).Remove("AwarenessStartsDay");
+        var before=JObject.Parse(SaveCodec.Write(state));before["Schema"]=18;
+        ((JObject)before["Food"]!).Remove("Campaigns");((JObject)before["Food"]!).Remove("AwarenessStartsDay");
         ((JObject)before["Food"]!["Residents"]![0]![9]!).Remove("Awareness");
         string baseline=before.ToString(Formatting.None);if(SaveCodec.Read(baseline).Status!=SaveReadStatus.Loaded) throw new Exception("Invalid B0b fixture");
         d.Awareness=image;string candidate=SaveCodec.Write(state);var read=SaveCodec.Read(candidate);

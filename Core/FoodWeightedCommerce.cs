@@ -52,6 +52,8 @@ namespace PersistentCity.Core
         private Position? Anchor(string id) => id.Length==0 ? (Position?)null : city.FindPlace(id).Position;
         private FoodAwarenessImage AwarenessSample(ResidentMeal meal,CitizenState person,FoodRoutineStop stop,int day,bool atStop,FoodAwarenessDump? dump=null)
         {
+            if(CampaignProvider is IFoodCampaignAwarenessProvider campaigns && campaigns.HasEvidence)
+                campaigns.Prepare(meal.ResidentId,day,city.State.Minute,Traits(meal,person),person.DayPlaceId.Length>0);
             return AwarenessCatalogue().Sample(city.State.Seed,meal.ResidentId,day,Anchor(person.HomeId),Anchor(person.DayPlaceId),Anchor(stop.PlaceId),
                 AwarenessSettings,e=>(!atStop || e.PlaceId==stop.PlaceId) && e.Scope!.BusinessId==e.BusinessId
                     && (!(market is IFoodCandidateMarket m) || m.IsCandidate(e.Scope!)),MemoryProvider ?? storedMemoryProvider,CampaignProvider,dump,atStop ? stop.PlaceId : null);

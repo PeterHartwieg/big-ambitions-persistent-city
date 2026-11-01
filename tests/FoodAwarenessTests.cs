@@ -256,11 +256,11 @@ public sealed class FoodAwarenessTests
     [Fact]
     public void Schema18MigratesOnceAndNeverRecapturesHeldShortlist()
     {
-        var json=Held();json["Schema"]=18;json["Food"]!["AwarenessStartsDay"]!.Parent!.Remove();
+        var json=Held();json["Schema"]=18;((JObject)json["Food"]!).Remove("Campaigns");json["Food"]!["AwarenessStartsDay"]!.Parent!.Remove();
         var decision=json["Food"]!["Residents"]![0]![9]!;decision["Awareness"]!.Parent!.Remove();
         string source=json.ToString(Formatting.None);var data=new Dictionary<string,string> {[SaveStore.StateKey]=source};
         decision["Awareness"]=new JObject();Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(json.ToString(Formatting.None)).Status);((JObject)decision).Remove("Awareness");
-        var read=SaveCodec.Read(source);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);Assert.Equal(18,read.SourceSchema);Assert.Equal(19,read.State!.Schema);
+        var read=SaveCodec.Read(source);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);Assert.Equal(18,read.SourceSchema);Assert.Equal(CityState.CurrentSchema,read.State!.Schema);
         Assert.Equal((int)(read.State.Minute/1440)+1,read.State.Food!.AwarenessStartsDay);Assert.Null(read.State.Food.Residents[0].Decision!.Awareness);
         Assert.Equal(SaveCodec.Write(read.State),SaveCodec.Write(SaveCodec.Read(SaveCodec.Write(read.State)).State!));Assert.Equal(source,data[SaveStore.StateKey]);
     }
@@ -269,7 +269,7 @@ public sealed class FoodAwarenessTests
     {
         var json=Held();var image=json["Food"]!["Residents"]![0]![9]!["Awareness"]!;
         if(corruption==0) image["CatalogueRevision"]="bad";
-        if(corruption==1) image["Union"]![0]!["Sources"]=32;
+        if(corruption==1) image["Union"]![0]!["Sources"]=64;
         if(corruption==2) ((JArray)image["Union"]!).Add(image["Union"]![0]!.DeepClone());
         if(corruption==3) image["Union"]![0]!["BusinessId"]="";
         if(corruption==4) foreach(var x in image["Union"]!) x["Eligible"]=false;

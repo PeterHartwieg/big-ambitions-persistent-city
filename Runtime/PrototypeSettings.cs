@@ -30,6 +30,17 @@ namespace PersistentCity.Runtime
         public double FoodShortlistTemperature { get => FoodChoice.FoodShortlistTemperature; set => FoodChoice.FoodShortlistTemperature=value; }
         [JsonIgnore]
         public FoodAwarenessSettings Awareness { get; } = new FoodAwarenessSettings();
+        [JsonIgnore]
+        public FoodCampaignSettings Campaigns { get; } = new FoodCampaignSettings();
+        public bool FoodMarketingCampaignEnabled { get => Campaigns.Enabled; set => Campaigns.Enabled=value; }
+        [JsonConverter(typeof(AwarenessNumberConverter))]
+        public double FoodMarketingCampaignReachProbability { get => Campaigns.ReachProbability; set => Campaigns.ReachProbability=value; }
+        [JsonConverter(typeof(AwarenessNumberConverter))]
+        public double FoodMarketingTargetMatchMultiplier { get => Campaigns.TargetMatchMultiplier; set => Campaigns.TargetMatchMultiplier=value; }
+        [JsonConverter(typeof(FoodMemoryIntegerConverter), 1, 7)]
+        public int FoodMarketingRetentionDays { get => Campaigns.RetentionDays; set => Campaigns.RetentionDays=value; }
+        [JsonConverter(typeof(AwarenessNumberConverter))]
+        public double FoodMarketingDailyReachDecay { get => Campaigns.DailyReachDecay; set => Campaigns.DailyReachDecay=value; }
         [JsonConverter(typeof(AwarenessNumberConverter))]
         public double FoodMarketingNeighbourhoodMetres { get => Awareness.RadiusMetres; set => Awareness.RadiusMetres=value; }
         [JsonConverter(typeof(AwarenessNumberConverter))]
