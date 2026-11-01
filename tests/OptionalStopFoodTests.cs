@@ -8,6 +8,18 @@ using Xunit;
 namespace PersistentCity.Tests;
 public sealed partial class FoodCommerceTests
 {
+    [Theory]
+    [InlineData(0)] [InlineData(25)] [InlineData(100)]
+    public void WeightedFoodUsesTheSameDrawRegardlessOfOptionalStopPercentage(int percentage)
+    {
+        var (plain,_,_)=WeightedFoodChoiceTests.Ready(49,16);
+        var (stops,_,_)=WeightedFoodChoiceTests.Ready(49,16);
+        stops.AttachOptionalStops(new StopEnvironment(),percentage);
+        double at=plain.State.Food!.Residents[0].DesiredAt;
+        Advance(plain,at);Advance(stops,at,1);
+        Assert.Equal(Newtonsoft.Json.JsonConvert.SerializeObject(plain.State.Food),Newtonsoft.Json.JsonConvert.SerializeObject(stops.State.Food));
+        Assert.True(stops.OptionalStopIndexesMatchState());
+    }
     private sealed class StopEnvironment : IOptionalStopEnvironment
     {
         public bool Raining => false;

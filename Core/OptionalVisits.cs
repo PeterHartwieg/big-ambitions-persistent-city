@@ -6,7 +6,7 @@ namespace PersistentCity.Core
     public sealed partial class CitySimulator
     {
         public bool TryBeginMealVisit(string citizenId, string shopId, Route outward,
-            double returnMinutes, double stayMinutes, double latestReturnMinute)
+            double returnMinutes, double stayMinutes, double latestReturnMinute, bool deferObservation = false)
         {
             if (!citizenEvents.TryGetValue(citizenId, out var item) || !places.TryGetValue(shopId, out var shop)
                 || shop.Kind != PlaceKind.Shop || !CurrentCitizenSlot(item, item.Citizen) || InProgress(item)) return false;
@@ -30,8 +30,10 @@ namespace PersistentCity.Core
                 Minutes = l.Minutes, Mode = l.Mode, ServiceId = l.ServiceId }).ToList() };
             person.DepartureMinute = now; person.NextEventMinute = arrival;
             item.Minute = ScheduledMinute(person); due.Add(item); FileOptionalStop(person);
-            activityObservers.Handlers?.Invoke(citizenId, person, now); SynchronizeSnapshot(); return true;
+            if(!deferObservation) ObserveFoodDeparture(person);
+            SynchronizeSnapshot(); return true;
         }
+        internal void ObserveFoodDeparture(CitizenState person) => activityObservers.Handlers?.Invoke(person.Identity.Id,person,State.Minute);
 
         internal void ExtendMealStay(CitizenState person, double until)
         {

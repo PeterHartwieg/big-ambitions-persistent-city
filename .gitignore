@@ -32,3 +32,6 @@ UserSettings/
 *.dll
 *.pdb
 *.exe
+
+# Offline test runner artifacts
+tests/TestResults/
