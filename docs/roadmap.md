@@ -41,6 +41,8 @@ Track F (Peter, 31 October): independently authored city view from interiors, F0
 
 ## Performance gate (Peter, 2026-10-30)
 
+F1 status, 1 November (offline): **NO-GO at drawing step 1**; no proven detached-space projection/culling approach, no renderer or customer hand-off added. [Decision and smaller read-only probe](plans/f1-shop-view-decision.md); [offline checks and 6 Nov handoff](checks/f1-shop-view.md). F0/E2c and all runtime/save behavior remain unchanged.
+
 Applies to every step A–E slice re-measure and to the final release:
 
 - **Mod-work p95 must stay under 5 ms**, leaving a buffer under the 10 ms frame budget for 100 fps.
