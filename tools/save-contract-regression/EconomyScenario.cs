@@ -104,7 +104,7 @@ public static class EconomyScenario
     };
 
     /// <summary>Run the fixed scenario and return the order log and economy digests.</summary>
-    public static object Run(int residents = 60, int seed = 23)
+    public static object Run(int residents = 60, int seed = 23, bool legacyChoice = false)
     {
         var state = Create(residents, seed);
         state.Food = Food();
@@ -113,6 +113,9 @@ public static class EconomyScenario
         string? reloaded = null;
         for (double at = state.Minute + 60; at <= 4 * 1440; at += 60)
         {
+            // Historical differential probe stays before policy activation. Reflection also lets the
+            // same fixture compile against the schema-16 baseline, which had no choice header.
+            if(legacyChoice) typeof(FoodCommerceState).GetProperty("ChoiceStartsDay")?.SetValue(city.State.Food,(int)(at/1440)+1);
             while (!city.AdvanceTo(at, 64).CaughtUp) { }
             if (reloaded == null && at >= 2 * 1440 + 750)
             {
@@ -138,6 +141,13 @@ public static class EconomyScenario
 
     public static string WithoutSchema17(string payload)
     {
+        if (typeof(CityState).GetProperty("Capabilities") != null && (int)JObject.Parse(payload)["Schema"]! == 18)
+        {
+            var state = SaveCodec.Read(payload).State!;
+            state.Schema = 17;
+            payload = (string)typeof(SaveCodec).Assembly.GetType("PersistentCity.Persistence.LegacyPopulationCodec")!
+                .GetMethod("Write")!.Invoke(null, new object[] {state})!;
+        }
         var token = JObject.Parse(payload);
         token.Remove("Schema");
         foreach (var property in token.Descendants().OfType<JProperty>().Where(p => Schema17Fields.Contains(p.Name)).ToList()) property.Remove();

@@ -81,6 +81,8 @@ namespace PersistentCity.Runtime
             awaitingPopulation = payload == null && current.modData.ContainsKey(SaveStore.StateKey);
             try
             {
+                if (current.modData.TryGetValue(SaveStore.StateKey, out var populationPayload))
+                    SaveCodec.RequireExecutableCapabilities(populationPayload);
                 foreach (var row in FoodAuthorityStore.Read(payload))
                 {
                     if (row.RequestedHour > Hour || row.FromHour > Hour || row.UntilHour > Hour)

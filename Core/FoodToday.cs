@@ -4,9 +4,8 @@ using System.Collections.Generic;
 namespace PersistentCity.Core
 {
     /// <summary>Fixed bounds of the version-1 food choice contract. Size bounds are not tunables:
-    /// they cap route work and saved state. Version 1 behaviour arrives with the weighted choice; until
-    /// then the legacy choice runs unchanged and only the header and wire contracts exist.</summary>
-    public static class FoodChoicePolicy
+    /// they cap route work and saved state. Before the saved activation day the legacy choice runs unchanged.</summary>
+    public static partial class FoodChoicePolicy
     {
         public const int Version = 1;
         public const int MaximumShortlist = 8;
@@ -81,6 +80,29 @@ namespace PersistentCity.Core
             record.At = numbers[6]; record.CheckoutAt = numbers[7];
             record.ProductId = parts[8]; record.PlaceId = parts[9];
             return true;
+        }
+
+        /// <summary>Schema-18 streaming precheck. Does not create child records before the enclosing
+        /// rollup's complete arity has passed. The frozen schema-17 reader keeps its original TryParse.</summary>
+        public static bool IsCanonicalWire(string? wire)
+        {
+            if (wire == null || wire.Length > 600) return false;
+            int start = 0;
+            for (int field = 0; field < 8; field++)
+            {
+                int end = wire.IndexOf('|', start), length = end - start;
+                if (length < 1 || length > 10 || length > 1 && wire[start] == '0') return false;
+                long value = 0;
+                for (int i = start; i < end; i++)
+                {
+                    char c = wire[i]; if (c < '0' || c > '9') return false;
+                    value = value * 10 + c - '0';
+                }
+                if (value > int.MaxValue) return false;
+                start = end + 1;
+            }
+            int productEnd = wire.IndexOf('|', start);
+            return productEnd >= start && productEnd - start <= 256 && wire.Length - productEnd - 1 <= 256;
         }
 
         private static bool Canonical(string text, out int value)
@@ -261,13 +283,16 @@ namespace PersistentCity.Core
 
         private static void Fill(MealOutcomeRecord record, ResidentMeal meal, MealOutcomeStatus status, int minute, bool checkout, int checkoutAt, FoodOutsideOption outside)
         {
+            bool hadPurchase=record.Status==MealOutcomeStatus.Bought || record.Status==MealOutcomeStatus.Unconfirmed;
             record.Status = status;
             record.Reason = ReasonFor(meal.Status, meal.Reason, checkout);
             // Only a purchase names its shop and product; a skip or alternative is described by its reason.
             bool purchase = status == MealOutcomeStatus.Bought || status == MealOutcomeStatus.Unconfirmed;
             record.PlaceId = purchase ? meal.PlaceId : ""; record.ProductId = purchase ? meal.ProductId : "";
             record.Outside = status == MealOutcomeStatus.ChoseAlternative ? outside : FoodOutsideOption.None;
-            record.Factor1 = record.Factor2 = MealFactor.None;
+            // The unconfirmed checkout already holds the saved choice factors. Confirmation/refusal
+            // changes transaction evidence, not why that purchase was selected.
+            if(!purchase || !hadPurchase || record.Factor1==MealFactor.Household) record.Factor1 = record.Factor2 = MealFactor.None;
             record.At = minute;
             record.CheckoutAt = checkoutAt;
         }
