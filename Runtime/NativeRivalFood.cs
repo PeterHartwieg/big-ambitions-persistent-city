@@ -8,7 +8,6 @@ namespace PersistentCity.Runtime
     {
         private RivalFoodCatalogue? rivalCatalogue;
         private long unavailableRivalRevision;
-        internal Action<string>? RivalWarning { private get; set; }
         public string RivalUnavailable { get; private set; } = "";
         public long RivalRevision => RivalUnavailable.Length > 0 ? unavailableRivalRevision : rivalCatalogue?.MetadataRevision ?? 0;
         public void CloseRivals() { rivalCatalogue?.Dispose(); rivalCatalogue=null; }
@@ -36,7 +35,7 @@ namespace PersistentCity.Runtime
                 RivalUnavailable = error.GetType().Name + ": " + error.Message;
                 try { rivalCatalogue?.Dispose(); } catch (Exception) { }
                 rivalCatalogue = null;
-                try { RivalWarning?.Invoke("Rival food source unavailable for this city; player commerce and population continue: " + RivalUnavailable); }
+                try { rivalWarning?.Invoke("Rival food source unavailable for this city; player commerce and population continue: " + RivalUnavailable); }
                 catch (Exception) { } // A diagnostic sink cannot revoke player/population ownership.
             }
         }

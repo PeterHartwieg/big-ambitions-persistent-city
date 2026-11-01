@@ -25,6 +25,7 @@ namespace PersistentCity.Runtime
         private static NativeFoodMarket? active;
         private readonly object save;
         private RivalFoodSettings rivalSettings = new RivalFoodSettings();
+        private readonly Action<string>? rivalWarning;
         private readonly FoodCommerceState state;
         private readonly Dictionary<string, BuildingRegistration> registrations = new Dictionary<string, BuildingRegistration>(StringComparer.Ordinal);
         private readonly Dictionary<string, CityBuildingController> shopControllers = new Dictionary<string, CityBuildingController>(StringComparer.Ordinal);
@@ -94,7 +95,7 @@ namespace PersistentCity.Runtime
             if (active != null) throw new InvalidOperationException("A food market already owns the native hooks.");
             save = SaveGameManager.Current; this.state = state;
             this.rivalSettings = rivalSettings ?? new RivalFoodSettings(); this.rivalSettings.Clamp();
-            RivalWarning = rivalWarning;
+            this.rivalWarning = rivalWarning;
             NativeFoodOwnership.ValidatePopulation(state);
             controllers = CityManager.Instance.cityBuildingControllers.Where(c => c != null).ToArray();
             discoveryRegistrations = new BuildingRegistration?[controllers.Length];

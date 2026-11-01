@@ -8,6 +8,7 @@ public sealed partial class NativeFoodMarket : IFoodMarket, IFoodCandidateMarket
 {
     readonly IEnumerable<CityBuildingController> controllers;
     readonly RivalFoodSettings rivalSettings;
+    internal Action<string>? rivalWarning;
     public NativeFoodMarket(IEnumerable<CityBuildingController> controllers, RivalFoodSettings? settings = null)
     { this.controllers = controllers; rivalSettings = settings ?? new(); }
     public double EarliestMinute => 0;

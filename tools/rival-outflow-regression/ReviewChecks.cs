@@ -44,7 +44,7 @@ static partial class Program
         if(name=="review-refresh-failure")
         {
             var (city,market)=PlayerControl(ThrowingControllers());
-            var warnings=new List<string>();market.RivalWarning=warnings.Add;
+            var warnings=new List<string>();market.rivalWarning=warnings.Add;
             var meal=city.State.Food!.Residents.Single();Advance(city,meal.DesiredAt+10);
             Check(market.PlayerBuys==1,"player checkout continues after rival catalogue failure");
             Check(!market.NeedsRivalRefresh(city.State.Minute+1000)&&!market.RivalScopes.Any(s=>s!=null),"failed rival source stays unavailable");
