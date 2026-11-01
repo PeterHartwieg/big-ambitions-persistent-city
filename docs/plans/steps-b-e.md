@@ -101,6 +101,8 @@ Show an explicit “food bought outside managed businesses” outflow line, sepa
 
 ### E: extend verified behavior in small increments
 
+E3 frenchfries status, 1 November (offline): [STOP record](e3-frenchfries.md); shipped holder unestablished. Independent pinned conditional probe, unchanged shared read branches, no product/menu/schema/gameplay change; [offline checks and 6 Nov handoff](../checks/e3-frenchfries.md).
+
 E3 status, 31 October (offline): [donut](e3-donut.md) and [cupcake feasibility records](e3-cupcake.md) share one isolated on-demand raw-field reader, stacked on the donut proof only. Loaded equipment/resource and natural checkout/settlement proof remain pending; no additional product certified/enabled, menu expansion or saved change.
 
 E3 salad status, 1 November (offline): [salad stop record](e3-salad.md), stacked only on cupcake/donut, adds a conditional pinned probe without changing the shared read branches. Shipped holder unestablished; workstation/converted/shared inputs refused, no product enabled, menu expansion or saved change. Native proof remains pending for the combined 6 Nov session.

@@ -44,6 +44,8 @@ E3 salad status, 1 November (offline): [salad stop record](plans/e3-salad.md) ad
 
 E3 ice cream status, 1 November (offline): [independent feasibility STOP](plans/e3-icecream.md); shipped holder/resource contract unestablished, shared read branches unchanged, no product/menu/save/gameplay change. [Offline timings and 6 Nov handoff](checks/e3-icecream.md).
 
+E3 frenchfries status, 1 November (offline): [STOP record](plans/e3-frenchfries.md); shipped holder unestablished, pinned conditional probe with unchanged shared read branches. No gameplay/menu/save change; [four-reader timing and 6 Nov handoff](checks/e3-frenchfries.md). No additional cheap safe measured perf win identified.
+
 Peter’s [31 October Q1-Q7 decisions](plans/steps-b-e.md#product-decisions-peter-31-oct-2026) specify tiered paid research as a third native-agency option (proven fee or unavailable), local/distant discovery, estimated rivals, food-first products, no anonymous crowds/night multiplier and own-shop regulars; tier contents/fees remain open.
 
 Track F (Peter, 31 October): independently authored city view from interiors, F0 spike → F1 shop view/customer entry → F2 upper-floor/penthouse view → F3 polish. [F0 findings and plan](plans/track-f-interior-view.md): default-off runtime eligibility/entrance-anchor experiment; **city drawing is a no-op pending F1**, with no save-format change or A-stack dependency. E2c (31 Oct, offline) implements only the once-per-load third-party detection guard, forced-off F0 state and read-only bridge verdict; native proof remains pending. [E2c evidence](checks/e2c-interior-guard.md#e2c-third-party-interior-guard---31-october-2026-offline-only). The same mod-work/whole-frame evidence rules apply to F.
