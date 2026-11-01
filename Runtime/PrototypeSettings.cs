@@ -6,7 +6,7 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Runtime
 {
-    internal sealed class PrototypeSettings
+    internal sealed partial class PrototypeSettings
     {
         [JsonIgnore]
         public FoodChoiceSettings FoodChoice { get; } = new FoodChoiceSettings();
