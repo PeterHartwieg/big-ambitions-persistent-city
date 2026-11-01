@@ -374,6 +374,7 @@ public sealed class PersistenceTests
                 new CitizenState
                 {
                     Identity = new CitizenIdentity { Id = "resident-101", Name = "Ada Resident", District = "Midtown", Age = 36, Persona = Persona.Commuter, AppearanceSeed = 912 },
+                    Traits = ResidentTraits.Generate(42, "resident-101"),
                     HomeId = "home", DayPlaceId = "work", ShopId = "shop", LeisureId = "leisure", PlaceId = "home", DestinationId = "work",
                     Phase = CitizenPhase.Travelling, Activity = Activity.Home, DestinationActivity = Activity.Work,
                     DepartureMinute = 5.25, NextEventMinute = 35.75, ActivityUntilMinute = 480,

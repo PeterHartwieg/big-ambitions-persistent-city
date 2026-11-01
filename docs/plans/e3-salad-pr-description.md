@@ -1,3 +1,5 @@
+Historical 1 November implementation handoff. PR #36 now targets `codex/persistent-city`; see the [current base-sync conflict resolutions and validation](../reviews/2026-11-01-e3-salad-sync-base-pr-description.md). The original evidence below remains dated history.
+
 # E3 salad: record native feasibility stop and reuse isolated field probe
 
 Base/target: `codex/pc-e3-cupcake` (approved `682aa77`, PR #33), above donut PR #23. Retarget down this named stack as prerequisites merge; no A-stack/sibling code dependency.

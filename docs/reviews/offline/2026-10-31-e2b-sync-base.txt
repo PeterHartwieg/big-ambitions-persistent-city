@@ -1,0 +1,145 @@
+E2b base sync offline evidence - 31 October 2026
+Parents: approved E2b 8aec702 + development base 8b05227; merge base 9b1b89c.
+32/32 required gate commands + 2/2 integration extras pass (34/34).
+Unit tests: 1833 passed, 0 failed, 0 skipped. Separate discovery passes.
+All 34 commands ran sequentially in the foreground after the prescribed dotnet guard.
+No execution deadline set. MSBuild/compiler-server reuse disabled in child environments.
+Ignored full logs: build/e2b-sync-base-gate/.
+Production DLL SHA-256: e16d0b1f99ae16180cdbf4bb6effe6ec39fa8766cb6151fdccb4e2e87957d833
+Schema: 17. Save-contract SHA-256: 7B95E73969CAFBE2FB1BD964258D74638061BA5C3C57DD04827A5CD3D4F333D9; 119027 characters.
+A2 baseline 8b05227 vs merged candidate: same save bytes/refusals/economy/reload; 849 orders, 797 purchases, 2 unconfirmed.
+F0: 12 off/on/hidden/save/reload byte-equality transitions pass.
+No game, rig/profile/lease, ordinary-save deployment, release, Steam/Workshop or WSL activity.
+
+Per-command exits:
+01. exit 0: python tools/build.py --game-managed "C:\Program Files (x86)\Steam\steamapps\common\Big Ambitions\Big Ambitions_Data\Managed"
+02. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe test tests/PersistentCity.Tests.csproj
+03. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe test tests/PersistentCity.Tests.csproj --no-build --list-tests
+04. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\campaign-reader-regression\CampaignReaderRegression.csproj --configuration Release
+05. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\core-identity-regression\CoreIdentityRegression.csproj --configuration Release
+06. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\diagnostic-response-regression\DiagnosticResponseRegression.csproj --configuration Release
+07. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\event-observation-regression\EventObservationRegression.csproj --configuration Release
+08. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\food-catalogue-regression\FoodCatalogueRegression.csproj --configuration Release
+09. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\food-checkout-regression\FoodCheckoutRegression.csproj --configuration Release
+10. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\food-hours-regression\FoodHoursRegression.csproj --configuration Release
+11. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\food-household-catalogue-regression\FoodHouseholdCatalogueRegression.csproj --configuration Release
+12. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\food-ownership-regression\FoodOwnershipRegression.csproj --configuration Release
+13. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\food-supply-regression\FoodSupplyRegression.csproj --configuration Release
+14. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\frame-observation-regression\FrameObservationRegression.csproj --configuration Release
+15. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\gate-access-regression\GateAccessRegression.csproj --configuration Release
+16. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\road-ceiling-regression\RoadCeilingRegression.csproj --configuration Release
+17. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\road-handoff-regression\RoadHandoffRegression.csproj --configuration Release
+18. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\road-invalidation-regression\RoadInvalidationRegression.csproj --configuration Release
+19. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\road-speed-regression\RoadSpeedRegression.csproj --configuration Release
+20. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\route-discovery-regression\RouteDiscoveryRegression.csproj --configuration Release
+21. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\save-contract-regression\SaveContractRegression.csproj --configuration Release
+22. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\startup-clock-regression\StartupClockRegression.csproj --configuration Release
+23. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\traffic-closure-regression\TrafficClosureRegression.csproj --configuration Release
+24. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\traffic-queue-regression\TrafficQueueRegression.csproj --configuration Release
+25. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools\walking-quote-regression\WalkingQuoteRegression.csproj --configuration Release
+26. exit 0: python tools/native-command-regression/run.py
+27. exit 0: python tools/physical-selection-regression/run.py
+28. exit 0: python tools/vehicle-ownership-regression/run.py
+29. exit 0: python tools/optional-stop-regression/run.py
+30. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools/simulate/Simulate.csproj -- 28 build/harness-demo
+31. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools/food-routines/FoodRoutines.csproj --configuration Release -- build/harness-food-routines-demo 957
+32. exit 0: %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe run --project tools/food-demand/FoodDemand.csproj -- build/harness-food-demand-demo
+33. exit 0: python tools/optional-stop-regression/run.py --performance --findings
+34. exit 0: python tools/save-contract-regression/compare.py --baseline C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\e2b-sync-base\build\e2b-sync-base-gate\base-a2 --output C:\Users\Peter\Coding_Projects\big-ambitions\big-ambitions-persistent-city-worktrees\e2b-sync-base\build\e2b-sync-base-gate\save-comparison --dotnet C:\Users\Peter\AppData\Local\Microsoft\dotnet\dotnet.exe
+
+Source/content audit:
+HEAD: 15 exclusive changed files match parent exactly
+origin/codex/persistent-city: 33 exclusive changed files match parent exactly
+Core/CitySimulator.cs: exact clean three-way merge, no manual runtime edit
+Runtime/PersistentCityMod.cs: exact clean three-way merge, no manual runtime edit
+Runtime/PhysicalPopulation.cs: exact clean three-way merge, no manual runtime edit
+tests/OptionalStopSchedulingTests.cs: exact clean three-way merge, no manual runtime edit
+CHECKS.md: both complete parent additions retained in order
+README.md: both complete parent additions retained in order
+docs/roadmap.md: both complete parent additions retained in order
+HEAD: all 56 test method declarations in changed test files retained
+origin/codex/persistent-city: all 136 test method declarations in changed test files retained
+SaveCodec/Model/Population/schema-17 tests match merged A2 exactly; no schema conflict.
+
+Offline performance flags (synthetic batches, not native frames):
+D1 aggregate cold build at 20000 places: 38.8589 ms across bounded units.
+C1 1024-business synchronous cold p95: 7.0536 ms; warm 2.2100 ms; continuation 0.0019 ms; zero samples >=30 ms.
+Optional-stop default 957-resident simultaneous admission p95: 8.2633/11.7493 ms (25/100%).
+Tuned 957-resident simultaneous admission p95: 5.8726/17.1885 ms (25/100%).
+Zero >=30 ms samples in all optional-stop facade/admission/selector/cache arms.
+No new optimization or native performance claim; p95 <5 ms native mod-work target and parked hotspots unchanged.
+
+Complete optional-stop findings/performance output:
+R4 queue-plan selection: approaching/standing commitment and new-admission checks passed; visible retention pre-existed.
+Native venue boundaries: 240 checks passed (doubles; no venue enabled).
+R2 acceptance: ambiguous club-first=False, cafe-first=False; cached refusal, unique/repeated reference and conflicting address checks passed.
+Indexed frontage: 120 three-axis negative/boundary/order checks; 1,000-controller mixed-role publish/rebind, work breaks, warm reuse and counters passed.
+Saved facade reload: 9 integration checks passed.
+Saved facade reload: 9 integration checks passed.
+Native door replacement/refusal republication: 7 checks passed.
+Stationary suppression patch scope: 7 checks passed (Harmony/spawner doubles; native special respawn needs rig).
+E2b future-break observation (candidate visibility change, not an acceptance assertion): rain at 100, dry at start 160; desired active=True, actual active=False, cancelled=True; saved start/end=160/165.
+E2b queue reload reconstruction limitation: id=queue0, seed=17, opening=540; dry start=531.7137, wet start=535.6426; unbound current-weather plan changes lead; no persisted lead/body/slot. Live commitment is asserted separately.
+R2 acceptance: ambiguous club-first=False, cafe-first=False; cached refusal, unique/repeated reference and conflicting address checks passed.
+Venue cache model=0 rebind=False count=48: p50=0.0451 p95=0.0589 max=0.3590 ms; bytes/batch=4576.0; entrance reads/batch=1176.0.
+Venue cache model=0 rebind=True count=48: p50=0.0678 p95=0.1810 max=3.7285 ms; bytes/batch=34516.3; entrance reads/batch=1176.0.
+Venue cache model=1 rebind=False count=48: p50=0.1173 p95=0.2909 max=1.3130 ms; bytes/batch=19544.0; entrance reads/batch=48.0.
+Venue cache model=1 rebind=True count=48: p50=0.1382 p95=0.3064 max=0.6951 ms; bytes/batch=44088.6; entrance reads/batch=48.0.
+Venue cache model=2 rebind=False count=48: p50=0.1164 p95=0.1765 max=0.5867 ms; bytes/batch=40928.0; entrance reads/batch=48.0.
+Venue cache model=2 rebind=True count=48: p50=0.1394 p95=0.3416 max=0.7286 ms; bytes/batch=65532.8; entrance reads/batch=48.0.
+Cached refusal after=False controllers=48: 200 reads -> native entrance reads=9600, bytes=24.
+Cached refusal after=True controllers=48: 200 reads -> native entrance reads=0, bytes=24.
+Facade doubles after=False cap-batch=48: cold samples=48 (one/frame), warm queries=9600, new warm samples=0; batch ms p50=0.0327 p95=0.0352 max=15.4288; bytes/query=568.0; spikes>=30ms=0.
+Facade doubles after=True cap-batch=48: cold samples=48 (one/frame), warm queries=9600, new warm samples=0; batch ms p50=0.0205 p95=0.0222 max=0.0371; bytes/query=360.0; spikes>=30ms=0.
+Venue cache model=0 rebind=False count=256: p50=1.0147 p95=1.5794 max=2.9185 ms; bytes/batch=22264.0; entrance reads/batch=32896.0.
+Venue cache model=0 rebind=True count=256: p50=0.9075 p95=1.6174 max=2.5727 ms; bytes/batch=180911.6; entrance reads/batch=32896.0.
+Venue cache model=1 rebind=False count=256: p50=1.8822 p95=2.9997 max=3.5262 ms; bytes/batch=95232.0; entrance reads/batch=256.0.
+Venue cache model=1 rebind=True count=256: p50=0.2766 p95=0.3725 max=1.0186 ms; bytes/batch=231074.2; entrance reads/batch=256.0.
+Venue cache model=2 rebind=False count=256: p50=0.6792 p95=1.1642 max=1.8667 ms; bytes/batch=211560.0; entrance reads/batch=256.0.
+Venue cache model=2 rebind=True count=256: p50=0.2902 p95=0.8890 max=1.1524 ms; bytes/batch=347471.1; entrance reads/batch=256.0.
+Cached refusal after=False controllers=256: 200 reads -> native entrance reads=51200, bytes=24.
+Cached refusal after=True controllers=256: 200 reads -> native entrance reads=0, bytes=24.
+Facade doubles after=False cap-batch=256: cold samples=256 (one/frame), warm queries=51200, new warm samples=0; batch ms p50=0.1026 p95=0.2353 max=0.5793; bytes/query=592.4; spikes>=30ms=0.
+Facade doubles after=True cap-batch=256: cold samples=256 (one/frame), warm queries=51200, new warm samples=0; batch ms p50=0.0750 p95=0.1578 max=0.4935; bytes/query=374.6; spikes>=30ms=0.
+Venue cache model=0 rebind=False count=1000: p50=0.7191 p95=1.2749 max=2.1781 ms; bytes/batch=102168.0; entrance reads/batch=500500.0.
+Venue cache model=0 rebind=True count=1000: p50=0.9141 p95=1.6954 max=2.3800 ms; bytes/batch=622429.0; entrance reads/batch=500500.0.
+Venue cache model=1 rebind=False count=1000: p50=3.4258 p95=7.2159 max=8.6755 ms; bytes/batch=414160.0; entrance reads/batch=1000.0.
+Venue cache model=1 rebind=True count=1000: p50=3.3918 p95=7.4957 max=10.3988 ms; bytes/batch=934439.8; entrance reads/batch=1000.0.
+Venue cache model=2 rebind=False count=1000: p50=0.8947 p95=2.2120 max=5.0197 ms; bytes/batch=935816.0; entrance reads/batch=1000.0.
+Venue cache model=2 rebind=True count=1000: p50=0.7477 p95=3.6718 max=6.0493 ms; bytes/batch=1456258.8; entrance reads/batch=1000.0.
+Cached refusal after=False controllers=1000: 200 reads -> native entrance reads=200000, bytes=24.
+Cached refusal after=True controllers=1000: 200 reads -> native entrance reads=0, bytes=24.
+Optional stop physical adapter: 234 checks passed.
+Admission tuned=False rate=25 residents=48 realised=13: ms p50=0.2336 p95=0.3203 max=0.4254; bytes/sample=74182.3; spikes>=30ms=0.
+  per batch: spot queries=26.0; occupancy calls=23.0; occupancy record visits=140.0
+Admission tuned=False rate=25 residents=256 realised=64: ms p50=1.1383 p95=1.4715 max=2.4856; bytes/sample=394157.6; spikes>=30ms=0.
+  per batch: spot queries=128.0; occupancy calls=116.0; occupancy record visits=3581.0
+Admission tuned=False rate=25 residents=957 realised=229: ms p50=4.9782 p95=8.2633 max=16.9131; bytes/sample=1477665.9; spikes>=30ms=0.
+  per batch: spot queries=458.0; occupancy calls=416.0; occupancy record visits=46858.0
+Selector tuned=False rate=25 cap=48 admitted=48/229: ms p50=0.1341 p95=0.2116 max=0.3869; bytes/sample=64.0; spikes>=30ms=0.
+Selector tuned=False rate=25 cap=256 admitted=229/229: ms p50=0.0043 p95=0.0069 max=0.0275; bytes/sample=0.0; spikes>=30ms=0.
+Admission tuned=False rate=100 residents=48 realised=48: ms p50=0.2109 p95=0.3225 max=0.4030; bytes/sample=91868.5; spikes>=30ms=0.
+  per batch: spot queries=96.0; occupancy calls=216.0; occupancy record visits=4992.0
+Admission tuned=False rate=100 residents=256 realised=256: ms p50=2.8928 p95=3.6737 max=4.3289; bytes/sample=490269.6; spikes>=30ms=0.
+  per batch: spot queries=512.0; occupancy calls=1152.0; occupancy record visits=146432.0
+Admission tuned=False rate=100 residents=957 realised=957: ms p50=7.4820 p95=11.7493 max=13.8242; bytes/sample=1854190.4; spikes>=30ms=0.
+  per batch: spot queries=1914.0; occupancy calls=4299.0; occupancy record visits=2049686.0
+Selector tuned=False rate=100 cap=48 admitted=48/957: ms p50=1.2955 p95=1.6765 max=7.6712; bytes/sample=64.0; spikes>=30ms=0.
+Selector tuned=False rate=100 cap=256 admitted=256/957: ms p50=0.0416 p95=0.0889 max=0.1822; bytes/sample=64.0; spikes>=30ms=0.
+Admission tuned=True rate=25 residents=48 realised=13: ms p50=0.0299 p95=0.0529 max=0.1441; bytes/sample=74182.3; spikes>=30ms=0.
+  per batch: spot queries=26.0; occupancy calls=23.0; occupancy record visits=140.0
+Admission tuned=True rate=25 residents=256 realised=64: ms p50=0.2311 p95=0.4072 max=1.3989; bytes/sample=394157.6; spikes>=30ms=0.
+  per batch: spot queries=128.0; occupancy calls=116.0; occupancy record visits=3581.0
+Admission tuned=True rate=25 residents=957 realised=229: ms p50=1.1563 p95=5.8726 max=6.6475; bytes/sample=1477665.9; spikes>=30ms=0.
+  per batch: spot queries=458.0; occupancy calls=416.0; occupancy record visits=46858.0
+Selector tuned=True rate=25 cap=48 admitted=48/229: ms p50=0.0095 p95=0.0109 max=0.0497; bytes/sample=64.0; spikes>=30ms=0.
+Selector tuned=True rate=25 cap=256 admitted=229/229: ms p50=0.0011 p95=0.0013 max=0.0026; bytes/sample=0.0; spikes>=30ms=0.
+Admission tuned=True rate=100 residents=48 realised=48: ms p50=0.0497 p95=0.0898 max=0.5836; bytes/sample=91854.3; spikes>=30ms=0.
+  per batch: spot queries=96.0; occupancy calls=216.0; occupancy record visits=4992.0
+Admission tuned=True rate=100 residents=256 realised=256: ms p50=0.6680 p95=1.0439 max=1.8827; bytes/sample=490283.9; spikes>=30ms=0.
+  per batch: spot queries=512.0; occupancy calls=1152.0; occupancy record visits=146432.0
+Admission tuned=True rate=100 residents=957 realised=957: ms p50=11.7510 p95=17.1885 max=18.4601; bytes/sample=1854176.1; spikes>=30ms=0.
+  per batch: spot queries=1914.0; occupancy calls=4299.0; occupancy record visits=2049686.0
+Selector tuned=True rate=100 cap=48 admitted=48/957: ms p50=0.1601 p95=0.2034 max=0.2519; bytes/sample=64.0; spikes>=30ms=0.
+Selector tuned=True rate=100 cap=256 admitted=256/957: ms p50=0.0766 p95=0.1019 max=0.1924; bytes/sample=64.0; spikes>=30ms=0.
+Offline synthetic costs only; instrumented occupancy counters, .NET JIT and geometry/body doubles are not Unity mod-work or whole-frame evidence.

@@ -15,6 +15,10 @@ namespace PersistentCity.Runtime
         private string economyText = "";
         private Vector2 economyScroll;
         private GUIStyle? economyLabel;
+        private Rect economyRect;
+        /// <summary>Rig diagnostic: inspector cost by mode (closed / hover / open), picks and popup builds.</summary>
+        public object InspectorTiming => inspector.Timing;
+        public void ResetInspectorTiming() => inspector.ResetTiming();
         private static string LocalizedName(string id) => string.IsNullOrWhiteSpace(id) ? "Unspecified"
             : LocalizorManager.Localize(id, (object?)null).ToString();
         public object EconomyOverview => simulation == null || simulation.State.Food == null
@@ -44,10 +48,15 @@ namespace PersistentCity.Runtime
             var input = Event.current;
             if (input.type == EventType.KeyDown && input.control && input.keyCode == KeyCode.F8)
             { showEconomy = !showEconomy; nextEconomyText = 0; input.Use(); }
-            if (!showEconomy) return;
+            GUI.depth = -10000;
+            if (showEconomy) DrawEconomy(); else economyRect = default;
+            if (!inspectorFailed) inspector.Draw();
+        }
+        private void DrawEconomy()
+        {
             float width = Math.Min(760, Screen.width - 40), height = Math.Min(620, Screen.height - 40);
             var panel = new Rect(20, 20, width, height);
-            GUI.depth = -10000;
+            economyRect = panel;
             var previousColor = GUI.color;
             GUI.color = new Color(.075f, .085f, .105f, 1);
             GUI.DrawTexture(panel, Texture2D.whiteTexture);
@@ -57,7 +66,7 @@ namespace PersistentCity.Runtime
             if (GUILayout.Button("Close · Ctrl+F8", GUILayout.Width(140))) showEconomy = false;
             GUILayout.EndHorizontal();
             economyLabel ??= new GUIStyle(GUI.skin.label) { wordWrap = true, fontSize = 16 };
-            if (simulation.State.Food == null)
+            if (simulation!.State.Food == null)
             {
                 GUILayout.Label("Preparing resident food demand. Eligible player businesses are managed automatically once the city is ready.", economyLabel);
                 GUILayout.EndArea(); return;
@@ -84,11 +93,14 @@ namespace PersistentCity.Runtime
                 foreach (string explanation in foodMarket.UnmanagedShopStatuses()) text.AppendLine(explanation);
             text.AppendLine();
             var nativeAccounts = foodMarket?.ReadAccounts() ?? Array.Empty<NativeFoodAccount>();
+            var regulars = simulation.ProjectRegulars(ObservedOwnShop);
             foreach (var scope in food.Shops)
             {
+                string? regularText = regulars?.OwnShopText(scope.BusinessId);
                 var place = city.Places.First(p => p.Id == scope.PlaceId);
                 var observed = food.History.Where(h => h.PlaceId == scope.PlaceId && h.BusinessId == scope.BusinessId).OrderByDescending(h => h.Day).FirstOrDefault();
                 text.AppendLine(foodMarket?.NameOf(scope.PlaceId) ?? (place.Name.Length > 0 ? place.Name : scope.PlaceId));
+                if (regularText != null) text.AppendLine(regularText);
                 var excluded = foodMarket?.ScopeStatus(scope.PlaceId) ?? "Waiting for business ownership";
                 if (excluded.Length > 0) text.AppendLine(excluded + ". Resident sales are paused for this shop.");
                 if (observed == null) text.AppendLine("No evaluated food offers recorded yet.");
@@ -103,8 +115,6 @@ namespace PersistentCity.Runtime
                     text.AppendLine("Observed offer outcomes: " + observed.PriceRejections + " unaffordable, " + observed.AccessRejections + " travel/time, "
                         + observed.ClosedRejections + " closed/late, " + observed.StockRejections + " stock unavailable, " + observed.StaffRejections + " no staffed counter, " + observed.ServiceRejections + " service/queue, "
                         + observed.PreferredAlternatives + " preferred another option, " + observed.UnknownEvidence + " unknown.");
-                    text.AppendLine("Customer home districts: " + string.Join(", ", observed.BuyerDistricts.OrderByDescending(d => d.Purchases)
-                        .Select(d => LocalizedName(d.DistrictId) + " " + d.Purchases)));
                     text.AppendLine("Purchase hours: " + string.Join(", ", observed.PurchaseHours.Select((n, h) => new { n, h })
                         .Where(p => p.n > 0).Select(p => p.h.ToString("00") + ":00 " + p.n)));
                 }
