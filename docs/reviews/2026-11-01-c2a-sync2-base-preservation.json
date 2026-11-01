@@ -1,0 +1,448 @@
+{
+  "source": "09f645772cb24af675309f25671568c1e3bc40bc",
+  "mergeBase": "81472e6",
+  "c2aParent": "0aa41ff",
+  "baseParent": "193c81d",
+  "oneSidedFiles": [
+    {
+      "side": "c2a",
+      "path": "Core/FoodAwareness.cs",
+      "blob": "03832f8f5cbf55a54cc5ef7c48df9305d81d2c95"
+    },
+    {
+      "side": "c2a",
+      "path": "Core/FoodCommerce.cs",
+      "blob": "a5854b657e09d686398392e33e45031d8571cf4f"
+    },
+    {
+      "side": "c2a",
+      "path": "Core/FoodMemoryCommerce.cs",
+      "blob": "e3fb85d00d136d8544c75cda409eacb5eaa05985"
+    },
+    {
+      "side": "c2a",
+      "path": "Core/FoodMemoryPolicy.cs",
+      "blob": "0743c600fc0ff95499edbc2f0ed99d162e4f72d5"
+    },
+    {
+      "side": "c2a",
+      "path": "Core/FoodMemoryStore.cs",
+      "blob": "3db93e239b25bd62d6ea7d3b746a91ee0c4b7a10"
+    },
+    {
+      "side": "c2a",
+      "path": "Core/FoodStops.cs",
+      "blob": "c82c28f66011b6719b3919e488c143068a698356"
+    },
+    {
+      "side": "c2a",
+      "path": "Core/FoodToday.cs",
+      "blob": "13f35297f3df772aea21559f97768ec7b1aca679"
+    },
+    {
+      "side": "c2a",
+      "path": "Core/FoodWeightedCommerce.cs",
+      "blob": "81f9d530690ebaaea38a1eb29da788cd87c67782"
+    },
+    {
+      "side": "c2a",
+      "path": "Core/Model.cs",
+      "blob": "95bb5814643f462c470f2ec37f6b39e76c7718c5"
+    },
+    {
+      "side": "c2a",
+      "path": "Persistence/AwarenessWire19.cs",
+      "blob": "1b7854b0aba14fc2472da3b3a92df544dc2104cc"
+    },
+    {
+      "side": "c2a",
+      "path": "Persistence/PopulationWire18.cs",
+      "blob": "71cb42173ca1ef5cc8c57f685bdab7e744cffca3"
+    },
+    {
+      "side": "c2a",
+      "path": "Persistence/SaveCodec.cs",
+      "blob": "d652bb470c6e0055e1c6d5cc2ccdcc52e048541d"
+    },
+    {
+      "side": "c2a",
+      "path": "Runtime/NativeFoodCandidates.cs",
+      "blob": "87ff61b8161339cb36859793a9e49f5e90f180bd"
+    },
+    {
+      "side": "c2a",
+      "path": "Runtime/NativeFoodMarket.cs",
+      "blob": "4eed58afe67d1f6933ca742363612d8b09c709a0"
+    },
+    {
+      "side": "c2a",
+      "path": "docs/checks/c2a-core-awareness.md",
+      "blob": "40da80615c5cbad3d4d617054ecb093d34969837"
+    },
+    {
+      "side": "c2a",
+      "path": "docs/perf/c2a-core-awareness.md",
+      "blob": "99b5f5f31d48ab1d90581b159b0aaebba998586f"
+    },
+    {
+      "side": "c2a",
+      "path": "docs/population-schema19.md",
+      "blob": "ce9fc239cf6c38c327fef7617e892b2fc930e339"
+    },
+    {
+      "side": "c2a",
+      "path": "docs/reviews/2026-10-31-c2a-measurements.json",
+      "blob": "0d9bf11c3338c8506b042b58b56b17ad38a3d5f8"
+    },
+    {
+      "side": "c2a",
+      "path": "docs/reviews/2026-10-31-c2a-offline-checks.json",
+      "blob": "42c022ec1a362fa034b4764ced3583970748d9ff"
+    },
+    {
+      "side": "c2a",
+      "path": "docs/reviews/2026-10-31-c2a-pr-description.md",
+      "blob": "fc574bfc90c24d5bfe05b391bc92963f8d1e9b29"
+    },
+    {
+      "side": "c2a",
+      "path": "docs/reviews/2026-10-31-c2a-r1-offline-checks.json",
+      "blob": "cbe7eab1f16f2d7df30416fce1b18889580fcafb"
+    },
+    {
+      "side": "c2a",
+      "path": "docs/reviews/2026-10-31-c2a-r1-rebuild.json",
+      "blob": "9148f22dfc79671b7f117ddf5a344d8edf4407e0"
+    },
+    {
+      "side": "c2a",
+      "path": "docs/reviews/2026-10-31-c2a-r2-offline-checks.json",
+      "blob": "07c5e8521386bd593386ce383b3a1d178867f52c"
+    },
+    {
+      "side": "c2a",
+      "path": "docs/reviews/2026-11-01-c2a-sync-base-pr-description.md",
+      "blob": "1248e8c3a2cd510d08feedb87332082192fd73cf"
+    },
+    {
+      "side": "c2a",
+      "path": "docs/reviews/2026-11-01-c2a-sync-base-r1-results.json",
+      "blob": "1acc60c9da075de6e36e8b2a6efb6f9db9d45666"
+    },
+    {
+      "side": "c2a",
+      "path": "docs/reviews/2026-11-01-c2a-sync-base-results.json",
+      "blob": "6338e079909c605afd04e6a7d64bcf21c9774f80"
+    },
+    {
+      "side": "c2a",
+      "path": "tests/FoodAwarenessFailureOddsTests.cs",
+      "blob": "8b3007084f3e8ef148de0d6ae087a59232f07ece"
+    },
+    {
+      "side": "c2a",
+      "path": "tests/FoodAwarenessMemoryIntegrationTests.cs",
+      "blob": "0bb8ed5aba6472892228965478799fb224fa44db"
+    },
+    {
+      "side": "c2a",
+      "path": "tests/FoodAwarenessReviewTests.cs",
+      "blob": "4377c218dc94f935635200d0938cc94bf2429815"
+    },
+    {
+      "side": "c2a",
+      "path": "tests/FoodAwarenessTests.cs",
+      "blob": "7967752e08af723b738711f7b6067ab70989b371"
+    },
+    {
+      "side": "c2a",
+      "path": "tests/LegacyWire.cs",
+      "blob": "e2afd588b3a4eb225d2e90c8d96aa703004a9937"
+    },
+    {
+      "side": "c2a",
+      "path": "tests/Schema17Tests.cs",
+      "blob": "b60d35bea739211af6ac1ecb64a1311574227e93"
+    },
+    {
+      "side": "c2a",
+      "path": "tests/Schema18ChoiceReplayTests.cs",
+      "blob": "13d0074a1f0975a42c793d8deefd0e672494aecc"
+    },
+    {
+      "side": "c2a",
+      "path": "tests/Schema18ReviewTests.cs",
+      "blob": "cefc751ca8811e013887cdfbfd0167002176982c"
+    },
+    {
+      "side": "c2a",
+      "path": "tests/Schema18Tests.cs",
+      "blob": "91fe24d5e17605c2dd74335eacd472abc028596c"
+    },
+    {
+      "side": "c2a",
+      "path": "tools/awareness-regression/AwarenessRegression.csproj",
+      "blob": "db3f514f5e2037d1a2b34928eb7c68bc5e0f17b8"
+    },
+    {
+      "side": "c2a",
+      "path": "tools/awareness-regression/Program.cs",
+      "blob": "9489db6ceba01625f8f88ccf6864843b99869e78"
+    },
+    {
+      "side": "c2a",
+      "path": "tools/awareness-regression/checks.py",
+      "blob": "b069107bee34b15b6e3b878970f693f511585a04"
+    },
+    {
+      "side": "c2a",
+      "path": "tools/food-candidate-regression/Program.cs",
+      "blob": "65586a81cc3ea0ddea4ed73bae31ed57be560f20"
+    },
+    {
+      "side": "c2a",
+      "path": "tools/food-ownership-regression/Program.cs",
+      "blob": "487b5ec9880aa5e730890073846d69681f20b5c2"
+    },
+    {
+      "side": "c2a",
+      "path": "tools/save-contract-regression/AwarenessContracts.cs",
+      "blob": "e7a36c70a5b41cd23a77c9755458d0526de34e40"
+    },
+    {
+      "side": "c2a",
+      "path": "tools/save-contract-regression/B0Contracts.cs",
+      "blob": "c9655fcfa1d977caba0830814995f6011f01f04b"
+    },
+    {
+      "side": "c2a",
+      "path": "tools/save-contract-regression/CapacityBench.cs",
+      "blob": "47d383ee2fb3accb6a6e9362dbdf915aaece5e1b"
+    },
+    {
+      "side": "c2a",
+      "path": "tools/save-contract-regression/EconomyScenario.cs",
+      "blob": "e492fc7b317e9c62cf0a94ea10edaa81c4eecadb"
+    },
+    {
+      "side": "c2a",
+      "path": "tools/save-contract-regression/Program.cs",
+      "blob": "1befc62b4df7331ba1ebe04fca6aaec4d0518cc5"
+    },
+    {
+      "side": "base",
+      "path": "Core/DwellPlanner.cs",
+      "blob": "0164518e83607f2a8b6e63def94220afbe2a4e87"
+    },
+    {
+      "side": "base",
+      "path": "Core/OptionalStopScheduling.cs",
+      "blob": "f4ceeadeef69d8ccd773191d78008ef61871f707"
+    },
+    {
+      "side": "base",
+      "path": "Runtime/DonutFeasibilityReader.cs",
+      "blob": "e20066aa43d52a47390a62a928996d7b05ab1663"
+    },
+    {
+      "side": "base",
+      "path": "Runtime/OptionalStopEnvironment.cs",
+      "blob": "ae677e6a743abeba14fa922c5805c45b1acb5609"
+    },
+    {
+      "side": "base",
+      "path": "Runtime/PhysicalPopulation.cs",
+      "blob": "7a4f371d5b66b761cb302d3667d8de3f1b520a34"
+    },
+    {
+      "side": "base",
+      "path": "docs/checks/e2b-street-life.md",
+      "blob": "5ac4528d5d382e2a6831c262f6d0ca12dc1d7877"
+    },
+    {
+      "side": "base",
+      "path": "docs/checks/e3-donut.md",
+      "blob": "50aeb6b1dfd00ccfd42af9a622681416aed8e122"
+    },
+    {
+      "side": "base",
+      "path": "docs/perf/e2b-street-life.md",
+      "blob": "04aad8cf53afa2ea9592186b73302cf0d5eb6228"
+    },
+    {
+      "side": "base",
+      "path": "docs/perf/e3-donut.md",
+      "blob": "18a5ae730a611883274bb6bef5e68b042068b8bf"
+    },
+    {
+      "side": "base",
+      "path": "docs/plans/e2-street-life.md",
+      "blob": "5c478ff135101246ce92e108f7cb53b0b9830de4"
+    },
+    {
+      "side": "base",
+      "path": "docs/plans/e2b-pr-description.md",
+      "blob": "552f11b2d4f5f79d08862f4bee7384f6078d55f3"
+    },
+    {
+      "side": "base",
+      "path": "docs/plans/e3-donut-offline-results.json",
+      "blob": "e3bc419f201a4100186c8e76afbf46e18393c1ca"
+    },
+    {
+      "side": "base",
+      "path": "docs/plans/e3-donut-pr-description.md",
+      "blob": "d3cb3e8fc6e55e6dfe84b0bf5447b8de404752b0"
+    },
+    {
+      "side": "base",
+      "path": "docs/plans/e3-donut.md",
+      "blob": "1dce64ff7d44bcecf7c63eb9cfd6c2543b3d0245"
+    },
+    {
+      "side": "base",
+      "path": "docs/plans/steps-b-e.md",
+      "blob": "ab375e4bd81a82b2b6ad9ae356b136ecfb753581"
+    },
+    {
+      "side": "base",
+      "path": "docs/reviews/2026-10-31-e2b-sync-base-pr-description.md",
+      "blob": "09686f67fae8e99d960e48d78b19ce85ee921bc3"
+    },
+    {
+      "side": "base",
+      "path": "docs/reviews/2026-10-31-e3-sync-base-pr-description.md",
+      "blob": "e4e07e0f9d97be27ff02eb0908f59e50f3d0c7f0"
+    },
+    {
+      "side": "base",
+      "path": "docs/reviews/2026-11-01-e2b-sync2-base-pr-description.md",
+      "blob": "d634a3f51790d1fd6928dc948a93e1a5bfe6d4de"
+    },
+    {
+      "side": "base",
+      "path": "docs/reviews/2026-11-01-e2b-sync2-base-results.json",
+      "blob": "6e15e678135a5feaeecb1d3056f3ae70392b0e1a"
+    },
+    {
+      "side": "base",
+      "path": "docs/reviews/2026-11-01-e3-sync2-base-pr-description.md",
+      "blob": "5e507772aab2601d4a2fa19a6cc8c32b82adc218"
+    },
+    {
+      "side": "base",
+      "path": "docs/reviews/2026-11-01-e3-sync2-base-r1-results.json",
+      "blob": "186d127a521ff2a4a4c182d5021c3e8dbff84134"
+    },
+    {
+      "side": "base",
+      "path": "docs/reviews/2026-11-01-e3-sync2-base-r2-results.json",
+      "blob": "0dc3789ae0baa775b9b4db763d29faf4e61694e8"
+    },
+    {
+      "side": "base",
+      "path": "docs/reviews/2026-11-01-e3-sync2-base-results.json",
+      "blob": "9653b482fc347913efa7bd66e052a4bb50997de7"
+    },
+    {
+      "side": "base",
+      "path": "docs/reviews/2026-11-01-e3-sync3-base-pr-description.md",
+      "blob": "1dba02ca0390c1751705ecf1278c2e901c46e326"
+    },
+    {
+      "side": "base",
+      "path": "docs/reviews/2026-11-01-e3-sync3-base-results.json",
+      "blob": "854d476eca0156b3095b4b8b76d78ada70b4fc91"
+    },
+    {
+      "side": "base",
+      "path": "docs/reviews/offline/2026-10-31-e2b-r1.txt",
+      "blob": "cce589ca04a70caabd9f49205cac9b62f4259ae1"
+    },
+    {
+      "side": "base",
+      "path": "docs/reviews/offline/2026-10-31-e2b-r2.txt",
+      "blob": "a4117ccce17682bff5c3d786df4b093c50ae4d8f"
+    },
+    {
+      "side": "base",
+      "path": "docs/reviews/offline/2026-10-31-e2b-sync-base.txt",
+      "blob": "f4d57dcc326ed2d9ade3cd4cf2859c1e8c169e37"
+    },
+    {
+      "side": "base",
+      "path": "docs/reviews/offline/2026-10-31-e2b.txt",
+      "blob": "a07fc8b6385a94c258d696bf7dfcc029013d2021"
+    },
+    {
+      "side": "base",
+      "path": "docs/reviews/offline/2026-10-31-e3-sync-base.json",
+      "blob": "6005caf80a27b7e1dffa1398e832d9d0a1e5e5c0"
+    },
+    {
+      "side": "base",
+      "path": "tests/DwellPlannerTests.cs",
+      "blob": "2e0efe7082f1b0a9fb0b25d51cdff1da225907d6"
+    },
+    {
+      "side": "base",
+      "path": "tests/OptionalStopSchedulingTests.cs",
+      "blob": "a7bb9876aeb997ac5fe544c1953551e5886f8c2c"
+    },
+    {
+      "side": "base",
+      "path": "tests/OptionalStopSettingsTests.cs",
+      "blob": "d29b7aba2dbb7e3e5a252b93097f42c0ace747f9"
+    },
+    {
+      "side": "base",
+      "path": "tools/donut-feasibility-regression/DonutFeasibilityRegression.csproj",
+      "blob": "24c9f35be2669ab0fe49e12872f62ea8af48cf8f"
+    },
+    {
+      "side": "base",
+      "path": "tools/donut-feasibility-regression/Program.cs",
+      "blob": "c877c1939a51cf08bb92093d68d2e0190d359270"
+    },
+    {
+      "side": "base",
+      "path": "tools/donut-feasibility-regression/source_checks.py",
+      "blob": "0ff67b2cf2341c838c9e51683fd07687e5b8c2ad"
+    },
+    {
+      "side": "base",
+      "path": "tools/donut-feasibility-regression/validate.py",
+      "blob": "3992a3b9e2c90c17be830362a9f6de040b3909ec"
+    },
+    {
+      "side": "base",
+      "path": "tools/optional-stop-regression/Harness.cs.txt",
+      "blob": "0c37c62ef22d61be171cf45e84198ff47701f170"
+    },
+    {
+      "side": "base",
+      "path": "tools/optional-stop-regression/NativeDoor.cs.txt",
+      "blob": "be6da81fba93a90cac3064644c54009ce00f121a"
+    },
+    {
+      "side": "base",
+      "path": "tools/optional-stop-regression/Performance.cs.txt",
+      "blob": "34bedfda29ba54ff4a2315f6c1ae48ab0dcf801d"
+    },
+    {
+      "side": "base",
+      "path": "tools/optional-stop-regression/run.py",
+      "blob": "788c957ab1e4532ba1a7460104fa8a8ceadfb31c"
+    }
+  ],
+  "sharedPaths": [
+    "CHECKS.md",
+    "Core/CitySimulator.cs",
+    "Runtime/PersistentCityMod.cs",
+    "Runtime/PrototypeSettings.cs",
+    "config/persistent-city.json",
+    "docs/roadmap.md"
+  ],
+  "indexesPreserved": true,
+  "e3SourceGuardsUnchanged": true
+}

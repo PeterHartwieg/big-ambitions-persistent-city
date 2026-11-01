@@ -61,8 +61,8 @@ namespace PersistentCity.Persistence
                 if (name == "Schema")
                 {
                     schema = HeaderInteger(requireCanonical: false);
-                    if (schema == 18) Require(canonicalInteger, "Noncanonical population schema.");
-                    Require(schema >= 13 && schema <= 18, "Unsupported population schema; preserve the payload.");
+                    if (schema >= 18) Require(canonicalInteger, "Noncanonical population schema.");
+                    Require(schema >= 13 && schema <= CityState.CurrentSchema, "Unsupported population schema; preserve the payload.");
                 }
                 else if (name == "Capabilities")
                 {
@@ -87,7 +87,7 @@ namespace PersistentCity.Persistence
                 else reader.Skip();
                 if (schema.HasValue && capabilities != null)
                 {
-                    Require(schema == 18, "Unknown capability header in a legacy population schema.");
+                    Require(schema >= 18, "Unknown capability header in a legacy population schema.");
                     return; // Full population startup still validates all fields, duplicates and trailing content.
                 }
             }

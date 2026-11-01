@@ -149,7 +149,7 @@ public sealed partial class FoodCommerceTests
         }
         // The upgraded payload is now writable through the normal save path, and reads back as 17.
         Assert.True(SaveStore.WriteTo(data, migrated).Success);
-        Assert.Equal(18, SaveCodec.Read(data[SaveStore.StateKey]).SourceSchema);
+        Assert.Equal(CityState.CurrentSchema, SaveCodec.Read(data[SaveStore.StateKey]).SourceSchema);
         // Continue both: identical orders and economy, the meal in progress finishing on its legacy terms.
         var twin = new Market { Units = market.Units }; twin.Orders.AddRange(market.Orders); twin.Times.AddRange(market.Times);
         var resumed = new CitySimulator(migrated, routes); resumed.AttachFoodMarket(twin);
@@ -534,7 +534,7 @@ public sealed partial class FoodCommerceTests
     public void S17_FutureSchemasAreRefusedAsFutureAndPreserved()
     {
         var (city, json) = S17_Full();
-        foreach (int schema in new[] { 19, 20, 1000 })
+        foreach (int schema in new[] { 20, 21, 1000 })
         {
             var wire = JObject.Parse(json); wire["Schema"] = schema; string payload = wire.ToString(Formatting.None);
             Assert.Equal(SaveReadStatus.Future, SaveCodec.Read(payload).Status);

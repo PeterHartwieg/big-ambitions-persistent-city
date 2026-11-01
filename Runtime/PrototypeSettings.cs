@@ -23,6 +23,14 @@ namespace PersistentCity.Runtime
         public double FoodChoiceHouseholdWeight { get => FoodChoice.FoodChoiceHouseholdWeight; set => FoodChoice.FoodChoiceHouseholdWeight=value; }
         public double FoodShortlistTemperature { get => FoodChoice.FoodShortlistTemperature; set => FoodChoice.FoodShortlistTemperature=value; }
         [JsonIgnore]
+        public FoodAwarenessSettings Awareness { get; } = new FoodAwarenessSettings();
+        [JsonConverter(typeof(AwarenessNumberConverter))]
+        public double FoodMarketingNeighbourhoodMetres { get => Awareness.RadiusMetres; set => Awareness.RadiusMetres=value; }
+        [JsonConverter(typeof(AwarenessNumberConverter))]
+        public double FoodMarketingDiscoveryDailyProbability { get => Awareness.DiscoveryProbability; set => Awareness.DiscoveryProbability=value; }
+        [JsonConverter(typeof(AwarenessNumberConverter))]
+        public int FoodMarketingNeighbourhoodDrawsPerAnchor { get => Awareness.DrawsPerAnchor; set => Awareness.DrawsPerAnchor=value; }
+        [JsonIgnore]
         public FoodMemorySettings FoodMemory { get; } = new FoodMemorySettings();
         [JsonConverter(typeof(FoodMemoryNumberConverter))]
         public double FoodMemoryWeight { get => FoodMemory.FoodMemoryWeight; set => FoodMemory.FoodMemoryWeight=value; }
@@ -242,6 +250,30 @@ namespace PersistentCity.Runtime
             return value == Math.Truncate(value) ? (int)value : int.MinValue;
         }
         public override void WriteJson(JsonWriter writer, int value, JsonSerializer serializer) => writer.WriteValue(value);
+    }
+
+    // Preserve A's numeric-string/endpoint conventions without letting an unusable awareness
+    // key discard unrelated configuration. Sentinels reach Clamp exactly once for bounded logging.
+    internal sealed class AwarenessNumberConverter : JsonConverter
+    {
+        public override bool CanConvert(Type type) => type==typeof(int) || type==typeof(double);
+        public override object ReadJson(JsonReader reader,Type type,object? existing,JsonSerializer serializer)
+        {
+            var token=JToken.Load(reader);
+            string raw=token.Type==JTokenType.String ? (string)token! : token.ToString(Formatting.None);
+            bool valid=(token.Type==JTokenType.Integer || token.Type==JTokenType.Float || token.Type==JTokenType.String)
+                && double.TryParse(raw,NumberStyles.Float,CultureInfo.InvariantCulture,out _);
+            // Json.NET quotes nonfinite floats when formatting JSON. Read a numeric float directly
+            // so infinities clamp to endpoints and finite radius precision is retained.
+            double value=token.Type==JTokenType.Float ? (double)token
+                : valid ? double.Parse(raw,NumberStyles.Float,CultureInfo.InvariantCulture) : double.NaN;
+            if(type==typeof(double)) return value;
+            if(double.IsNaN(value)) return int.MinValue;
+            if(value<=0) return value==0 ? 0 : int.MinValue+1;
+            if(value>=4) return value==4 ? 4 : int.MaxValue;
+            return value==Math.Truncate(value) ? (int)value : int.MinValue;
+        }
+        public override void WriteJson(JsonWriter writer,object? value,JsonSerializer serializer) => writer.WriteValue(value);
     }
 
     // Invalid individual values fall back without discarding unrelated settings.

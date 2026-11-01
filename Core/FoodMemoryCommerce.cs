@@ -14,6 +14,23 @@ namespace PersistentCity.Core
     {
         internal FoodMemorySettings MemorySettings { get; }
         private readonly FoodMemoryStore memoryStore;
+        private readonly IFoodAwarenessProvider storedMemoryProvider;
+
+        // Four fixed source slots project B1's saved generations through C2a's existing bound.
+        // Lookup is O(1); no city scan, memory write, new identity or campaign read.
+        private sealed class StoredMemoryAwareness : IFoodAwarenessProvider
+        {
+            private readonly FoodCommerce owner;
+            internal StoredMemoryAwareness(FoodCommerce owner) { this.owner = owner; }
+            public string? Reference(string consumer, int day, int slot)
+            {
+                if (!owner.city.State.Capabilities.Active || !owner.records.TryGetValue(consumer, out var meal)
+                    || slot < 0 || slot >= meal.Memory.Entries.Count) return null;
+                var entry = meal.Memory.Entries[slot];
+                return !FoodMemoryPolicy.SuppliesAwareness(entry, day, owner.MemorySettings) ? null
+                    : owner.memoryStore.Reference(entry.BusinessRef)?.BusinessId;
+            }
+        }
 
         private double MemoryContribution(ResidentMeal meal, CitizenState person, string business)
             => city.State.Capabilities.Active && MemorySettings.FoodMemoryWeight != 0 ? FoodMemoryPolicy.Contribution(meal.Memory, memoryStore.Find(business),

@@ -141,7 +141,7 @@ public static class EconomyScenario
 
     public static string WithoutSchema17(string payload)
     {
-        if (typeof(CityState).GetProperty("Capabilities") != null && (int)JObject.Parse(payload)["Schema"]! == 18)
+        if (typeof(CityState).GetProperty("Capabilities") != null && (int)JObject.Parse(payload)["Schema"]! >= 18)
         {
             var state = SaveCodec.Read(payload).State!;
             state.Schema = 17;

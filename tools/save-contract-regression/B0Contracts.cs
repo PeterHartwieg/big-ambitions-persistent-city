@@ -42,7 +42,7 @@ static partial class Program
     {
         var state = FoodCity(50000, true, 3); PopulateDecisions(state); AddReferencePlaces(state); RetainVisits(state, 64);
         // 300,000 consumer tuple slots + 104 captured decision records + 3 menu strings + 1 B header.
-        int remaining = SaveCodec.MaxEmbeddedRecords - 300108 - 50000 * 64;
+        int remaining = SaveCodec.MaxEmbeddedRecords - 300108 - AwarenessRecords(state) - 50000 * 64;
         foreach (var place in state.Places)
             for (int i = 0, n = Math.Min(40, remaining); i < n; i++, remaining--)
                 place.WeeklyHours.Add(new OpeningWindow { Day = 0, FromMinute = 1, ToMinute = 2 });

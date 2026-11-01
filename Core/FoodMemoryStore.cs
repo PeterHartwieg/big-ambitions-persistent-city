@@ -159,7 +159,10 @@ namespace PersistentCity.Core
                 for (int i = 0; i < memory.Entries.Count; i++)
                     if ((removed & (1 << i)) == 0 && (victim < 0 || FoodMemoryPolicy.CompareEviction(memory.Entries[i], Identity(memory.Entries[i].BusinessRef),
                         memory.Entries[victim], Identity(memory.Entries[victim].BusinessRef), day, traits, settings) < 0)) victim = i;
-                if (FoodMemoryPolicy.Contribution(memory, memory.Entries[victim].BusinessRef, day, traits, settings) > forgotten) return false;
+                // Losing a known competitor's admission can raise return odds even if its scalar
+                // was below novelty (or memory weight is zero). Also protect future activation.
+                if (FoodMemoryPolicy.SuppliesAwareness(memory.Entries[victim], Math.Max(day, food.AwarenessStartsDay), settings)
+                    || FoodMemoryPolicy.Contribution(memory, memory.Entries[victim].BusinessRef, day, traits, settings) > forgotten) return false;
                 removed |= 1 << victim; count--;
             }
             return true;

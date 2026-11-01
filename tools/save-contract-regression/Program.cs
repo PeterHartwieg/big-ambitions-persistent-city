@@ -148,6 +148,7 @@ static partial class Program
                 Offers=FoodProducts.Ids.Select(p=>new FoodDecisionOffer {ProductId=p,Price=Money.FromCents(100),Units=100}).ToList(),
                 OutwardQuote=FoodQuoteState.Answered,ReturnQuote=FoodQuoteState.Answered,Outward=Path(home.Position,shop.Position),Return=Path(shop.Position,home.Position)});
             first.Decision.QuotesDone=16;
+            PopulateAwareness(first.Decision);
     }
 
     // Candidate only: trait generation and the outcome updater's hot cost (no-ops on a schema-16 tree).
@@ -194,7 +195,7 @@ static partial class Program
         { Console.WriteLine(JsonConvert.SerializeObject(CapacityBench(args[1], args.Length > 2 ? int.Parse(args[2]) : 1))); return; }
         if(args.Length==2 && args[0]=="--interleaved-save-bench")
         { Console.WriteLine(JsonConvert.SerializeObject(InterleavedSaveBench(args[1])));return; }
-        B0ContractChecks(); HeldTuningContractChecks();
+        B0ContractChecks(); HeldTuningContractChecks(); AwarenessContractChecks();
         var city = City(120);
         string expected = SaveCodec.Write(city);
         foreach (string mode in new[] { "off", "on" })

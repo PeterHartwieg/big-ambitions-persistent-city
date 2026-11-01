@@ -24,9 +24,11 @@ static class Program
             }
             var last=state.Shops.Single(s=>s.PlaceId.EndsWith(":130:shop",StringComparison.Ordinal));
             Require(market.IsCandidate(last),"acquisition must publish eligibility without another discovery frame");
+            long geometryVersion=market.AwarenessRevision;
             controllers[129].Accessible=false;
             controllers[128].buildingRegistration!.Eligible=false;
             for(int f=0;f<frames;f++) market.RefreshDiscovery();
+            Require(market.AwarenessRevision==geometryVersion,"eligibility-only changes must not rebuild geometry");
             if(reload)
             {
                 NativeFoodOwnership.Reload();
@@ -40,6 +42,7 @@ static class Program
                 Require(!eligible.Any(id=>id.EndsWith(":129:shop",StringComparison.Ordinal)||id.EndsWith(":128:shop",StringComparison.Ordinal)),"withdrawn shops cannot consume sample slots");
                 Require(eligible.Contains(last.PlaceId),"newly acquired distant controller remains eligible");
                 Require(market.DetailedReads==0,"preparation must not read detailed supply");
+                Require(market.CaptureMetadataPasses==0 && market.CaptureBatches>0,"no all-controller metadata pass per capture");
             }
         }
         // Exercise the actual capture/hours implementation, with only the native detailed reader stubbed.
@@ -53,7 +56,7 @@ static class Program
         string oldEvidence=JsonConvert.SerializeObject(oldImage);
         before=sample.HoursRefreshPasses;FoodBusiness?[] image;
         using(sample.BeginCapture(2160)) image=ids.Select(id=>sample.CaptureBusiness(id,2160)).ToArray();
-        Require(oldPasses==8 && sample.HoursRefreshPasses-before==1,"one hours pass per batch, formerly eight");
+        Require(oldPasses==8 && sample.HoursRefreshPasses-before==0,"captured native hours need no catalogue-wide refresh");
         Require(oldEvidence==JsonConvert.SerializeObject(image),"batch must preserve captured evidence");
         int reads=sample.DetailedReads;
         try {using(sample.BeginCapture(2160)) {sample.ThrowRead=true;sample.CaptureBusiness(ids[0],2160);}} catch(InvalidOperationException) {}
@@ -73,7 +76,7 @@ static class Program
             if(i%2==0) {Run(false,oldTimes);Run(true,newTimes);} else {Run(true,newTimes);Run(false,oldTimes);}
         }
         oldTimes.Sort();newTimes.Sort();
-        Console.WriteLine(JsonConvert.SerializeObject(new {checks="actual NativeFoodCandidates + NativeFoodHours, synthetic native surfaces",controllers=131,discoveryFrames=new[]{0,1,2,5},reload=true,oldHoursPasses=oldPasses,newHoursPasses=1,oldMedianMs=oldTimes[oldTimes.Count/2],newMedianMs=newTimes[newTimes.Count/2]}));
+        Console.WriteLine(JsonConvert.SerializeObject(new {checks="actual NativeFoodCandidates + NativeFoodHours, synthetic native surfaces",controllers=131,discoveryFrames=new[]{0,1,2,5},reload=true,oldHoursPasses=oldPasses,newHoursPasses=0,oldMedianMs=oldTimes[oldTimes.Count/2],newMedianMs=newTimes[newTimes.Count/2]}));
     }
 }
 

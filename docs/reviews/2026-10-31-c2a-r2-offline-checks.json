@@ -1,0 +1,515 @@
+{
+  "source": "49158aa4cb1bc5ac93196e7683bf5fa6865d0ace",
+  "startedUtc": "2026-10-31T19:09:23.696104+00:00",
+  "commands": [
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/build.py",
+        "--game-managed",
+        "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed"
+      ],
+      "exitCode": 0,
+      "seconds": 1.816,
+      "log": "build\\c2a-checks-r2\\01.log",
+      "sha256": "9e5efb4b12c5e7a2e6b3540e0c19a5898e65633e6e5cbb014a9aec8c61439a1d",
+      "tail": "Package: C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\build\\PersistentCity\r\nDLL SHA256: 57190653928d0a6c82ab4aeb283565beab99a2097040c6d26a1d9e02da14beb6\r\nGame assemblies and RLO are referenced externally; neither is copied into this package.\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj"
+      ],
+      "exitCode": 0,
+      "seconds": 188.699,
+      "log": "build\\c2a-checks-r2\\02.log",
+      "sha256": "e97514d7c790f85bba104131d3993f5c00d5382f564683b731503f738f96f90f",
+      "tail": "no other dotnet test load; continuing\r\n  Determining projects to restore...\r\n  All projects are up-to-date for restore.\r\n  PersistentCity.Core -> C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\Core\\bin\\Debug\\netstandard2.1\\PersistentCity.Core.dll\r\n  PersistentCity.Compatibility -> C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\Compatibility\\bin\\Debug\\netstandard2.1\\PersistentCity.Compatibility.dll\r\n  PersistentCity.Persistence -> C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\Persistence\\bin\\Debug\\netstandard2.1\\PersistentCity.Persistence.dll\r\n  PersistentCity.Tests -> C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\tests\\bin\\Debug\\net10.0\\PersistentCity.Tests.dll\r\nTest run for C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\tests\\bin\\Debug\\net10.0\\PersistentCity.Tests.dll (.NETCoreApp,Version=v10.0)\r\nA total of 1 test files matched the specified pattern.\r\n\r\nPassed!  - Failed:     0, Passed:  1914, Skipped:     0, Total:  1914, Duration: 3 m 1 s - PersistentCity.Tests.dll (net10.0)\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--no-build",
+        "--list-tests"
+      ],
+      "exitCode": 0,
+      "seconds": 2.5,
+      "log": "build\\c2a-checks-r2\\03.log",
+      "sha256": "ca892b4e8a294c50c2c52c450b9162faf0b0594c45e64f000cdd1f7a66683367",
+      "tail": "dFoodChoiceTests.BusinessReplacementDuringCaptureCannotInheritAnotherIdentitysShortlistSlot\r\n    PersistentCity.Tests.WeightedFoodChoiceTests.ThreeMealsWithoutFinanceRespectRemainingAllowanceAcrossDecisionReload(laterPrice: 50, orders: 2)\r\n    PersistentCity.Tests.WeightedFoodChoiceTests.ThreeMealsWithoutFinanceRespectRemainingAllowanceAcrossDecisionReload(laterPrice: 100, orders: 1)\r\n    PersistentCity.Tests.WeightedFoodChoiceTests.DecisionUnitsSkipNoWorkSlotsAndSelectWithTheLastQuote(closed: False, refused: False, expectedUnits: 18)\r\n    PersistentCity.Tests.WeightedFoodChoiceTests.DecisionUnitsSkipNoWorkSlotsAndSelectWithTheLastQuote(closed: True, refused: False, expectedUnits: 3)\r\n    PersistentCity.Tests.WeightedFoodChoiceTests.DecisionUnitsSkipNoWorkSlotsAndSelectWithTheLastQuote(closed: False, refused: True, expectedUnits: 10)\r\n    PersistentCity.Tests.WeightedFoodChoiceTests.FoodDecisionCountsOnceAcrossFrameBatchesAndRealSessionReload(boundary: 0)\r\n    PersistentCity.Tests.WeightedFoodChoiceTests.FoodDecisionCountsOnceAcrossFrameBatchesAndRealSessionReload(boundary: 1)\r\n    PersistentCity.Tests.WeightedFoodChoiceTests.FoodDecisionCountsOnceAcrossFrameBatchesAndRealSessionReload(boundary: 8)\r\n    PersistentCity.Tests.WeightedFoodChoiceTests.FoodDecisionCountsOnceAcrossFrameBatchesAndRealSessionReload(boundary: 17)\r\n    PersistentCity.Tests.WeightedFoodChoiceTests.FoodContinuationsStillConsumeTheTotalUnitBudget\r\n    PersistentCity.Tests.WeightedFoodChoiceTests.LegacyFoodDecisionStillCountsAsOneCitizenEventWithoutContinuationUnits\r\n    PersistentCity.Tests.WeightedFoodChoiceTests.ExistingShopNeedsOnlyCaptureSelectAndCommitWithoutRouteUnits\r\n    PersistentCity.Tests.WeightedFoodChoiceTests.NonBudgetCheckoutRechecksRemainingAllowanceBeforeNativeEntry\r\n    PersistentCity.Tests.WeightedFoodChoiceTests.CorePreparesCurrentCandidatesBeforeRankingAndSharesOneBatch\r\n    PersistentCity.Tests.WeightedFoodChoiceTests.InspectorRendersChoiceFactorsWithoutRepeatingChoseFood\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/core-identity-regression/CoreIdentityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 10.912,
+      "log": "build\\c2a-checks-r2\\04.log",
+      "sha256": "9381a509860625fcda5b2d4ecdee50a1375848087e0a87e09358cdcd82164a34",
+      "tail": "no other dotnet test load; continuing\r\n{\"residents\":600,\"places\":1011,\"days\":6,\"events\":38924,\"eventDigest\":\"d5337f2a6c665cb1\",\"advanceEvents\":101968,\"frames\":35438,\"residentsWithCars\":186,\"trafficEvents\":63044,\"routeRequests\":16452,\"carRoutes\":3293,\"trafficVehiclesAtSaves\":[0,0,3,0,0,0,0],\"saves\":[\"8d43c8a99d0330c484fd7aca3178e8519913b22a1ad25c0572e289f05b3ff9d9\",\"544ba2c34c6510b5acce77bd487c943890387bba53bed48f14b93ed309c53301\",\"367eec9617063ed5f924bc80facfb1aad389969d49f260d1006e394f096a9db9\",\"8f9a582560ba1f77143d63aaaae690903458fd1ddf2685f2424896f1906531eb\",\"c0af7f3deaf7d053685509e14d929353ee33ea8198544eb4a0e659431348c580\",\"ef325ef21bd5ef2eef836ddc33a0e2023742dd392fc95d9f985fd34bb3cee9a0\",\"af94cf36e65eaf460c42d23fda1b6ace2ec010a6f164566dc80183dc144ad147\"],\"routineDigest\":\"0631e52806483d91\",\"openingDigest\":\"7104ba65ac720db5\",\"choiceDigest\":\"4cfd8693c5de0c00\",\"mappingDigest\":\"6dc5adecf1d31d33\",\"bytes\":{\"advance\":121860216,\"planner\":31022368,\"routine\":107720,\"opening\":1627592,\"choice\":705600,\"mapping\":1146608},\"simulateMs\":5070}\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/diagnostic-response-regression/DiagnosticResponseRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 5.841,
+      "log": "build\\c2a-checks-r2\\05.log",
+      "sha256": "3deb939d72d84eb43d06b5bbef3e246cfae36b2f91404ef10e26093d85b0f680",
+      "tail": "no other dotnet test load; continuing\r\n14 diagnostic response invariants passed.\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/event-observation-regression/EventObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 9.123,
+      "log": "build\\c2a-checks-r2\\06.log",
+      "sha256": "4ac238eb84f77c866c56c138b101cfdf792319ce91fd6ec935be85cf4bf735e1",
+      "tail": "no other dotnet test load; continuing\r\nfail=False;events=680;save=8E62F81BAF4CE0C589601B0AA68C386D5B0B8291F2B785DDAB310D7AC31361D9\r\nfail=True;events=680;save=8E62F81BAF4CE0C589601B0AA68C386D5B0B8291F2B785DDAB310D7AC31361D9\r\nobserverFault=event-prefix;nativeFailure=False;events=680;outputs=identical\r\nobserverFault=event-prefix;nativeFailure=True;events=680;outputs=identical\r\nobserverFault=event-finalizer;nativeFailure=False;events=680;outputs=identical\r\nobserverFault=event-finalizer;nativeFailure=True;events=680;outputs=identical\r\nobserverFault=query-prefix;nativeFailure=False;events=680;outputs=identical\r\nobserverFault=query-prefix;nativeFailure=True;events=680;outputs=identical\r\nobserverFault=query-finalizer;nativeFailure=False;events=680;outputs=identical\r\nobserverFault=query-finalizer;nativeFailure=True;events=680;outputs=identical\r\nBoth diagnostic finalizers preserve the exact original exception on observer failure.\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-catalogue-regression/FoodCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 6.587,
+      "log": "build\\c2a-checks-r2\\07.log",
+      "sha256": "76d453be6e1a0abdaf3d30b287f1c8629cfe27c6626097d26cc21bcf30a31cf7",
+      "tail": "no other dotnet test load; continuing\r\n29 actual catalogue-adapter checks passed against native field doubles. No Unity/game execution.\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-checkout-regression/FoodCheckoutRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 8.796,
+      "log": "build\\c2a-checks-r2\\08.log",
+      "sha256": "736abf51e97cf38bd47eada19b2492e13c1d6eedd8da4fabcff6ad6bcb0a83ca",
+      "tail": "no other dotnet test load; continuing\r\nDecision workload: 123 reads over 8 shops, 3 checkouts; decision cache 957 hits / 27 misses; supply-reader setups 33 (uncached: 990)\r\n330 actual NativeFoodMarket checkout checks passed (synthetic native surfaces, not game execution).\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-hours-regression/FoodHoursRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 5.591,
+      "log": "build\\c2a-checks-r2\\09.log",
+      "sha256": "01b8fae5678ea07ec2ebc856d6532d1b17941c6e3e1adda677e59514fd330d24",
+      "tail": "no other dotnet test load; continuing\r\nPASS live enrolled-shop hours: extension, closure, reopening, stable identity, unchanged schedule allocation and save ownership.\r\nPASS actual GamePlaces + NativeFoodHours: five retail study/leisure roles stay dormant, convert in place, return dormant; vacant retail has no fake Work role.\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-household-catalogue-regression/FoodHouseholdCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 3.608,
+      "log": "build\\c2a-checks-r2\\10.log",
+      "sha256": "7febe39e53f9bd94d6780ed02a126117004ec715167015122d8d06363e9d89ae",
+      "tail": "no other dotnet test load; continuing\r\n11 actual native household-reader checks passed against field doubles; no game execution.\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-ownership-regression/FoodOwnershipRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 5.085,
+      "log": "build\\c2a-checks-r2\\11.log",
+      "sha256": "740d65619520970d79418182cfa174bba4b8363a890caaa821adc44ee3e82a63",
+      "tail": "no other dotnet test load; continuing\r\nPASS 138 actual ownership-hook checks against native field/callback doubles. No Unity/game execution.\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-supply-regression/FoodSupplyRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 3.166,
+      "log": "build\\c2a-checks-r2\\12.log",
+      "sha256": "e171fe5e79a23d24ed8366896fe46818c30e08008e197ffcd556f1a623c23d3d",
+      "tail": "no other dotnet test load; continuing\r\n19 actual FoodSupplyReader checks passed (synthetic native surfaces, not game execution).\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/frame-observation-regression/FrameObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 2.766,
+      "log": "build\\c2a-checks-r2\\13.log",
+      "sha256": "e357050ed713270cb8cd1e2c97379e24224348107ade8be2986ab329b47c7e28",
+      "tail": "no other dotnet test load; continuing\r\n40 checks passed; marshaled row estimate bytes=120; default marshaled storage estimate=7864320\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/gate-access-regression/GateAccessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 4.521,
+      "log": "build\\c2a-checks-r2\\14.log",
+      "sha256": "2c223411b49934b1c93d6880fe7466f5d15d8b9baa82d3938d390f903b9fc05f",
+      "tail": "no other dotnet test load; continuing\r\nPASS 213884 gate-access checks against actual Runtime PublicRoadAccess; offline only.\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-ceiling-regression/RoadCeilingRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 5.413,
+      "log": "build\\c2a-checks-r2\\15.log",
+      "sha256": "a4558a867147a11d8cca21aec5103911d4e4f4fe04dca21a3dd3caea78f64359",
+      "tail": "\"fingerprint\":\"null\",\"slices\":14,\"nativeReads\":126},{\"name\":\"tie\",\"fingerprint\":\"5BBA7835CA8A9DE7FD4B691F125FF0DB2745DDA16683390511C6A94CE5053AA4\",\"slices\":16,\"nativeReads\":72},{\"name\":\"ulp-car-win\",\"fingerprint\":\"13543B40ED91C893EFC0B4E23793D1B4F25425D371393C27E565FA6B572EBDF0\",\"slices\":16,\"nativeReads\":72},{\"name\":\"ulp-walk-win\",\"fingerprint\":\"3A48571431FA3A267699F8AC2A708BB9319E4F0718C129F5E38C95729FEBE752\",\"slices\":16,\"nativeReads\":72},{\"name\":\"connectors-tie\",\"fingerprint\":\"A28642D9237ACB684F9FE4B1D01677ED08C1AF1592359F37E41DB9570B24C05F\",\"slices\":16,\"nativeReads\":72},{\"name\":\"connectors-ulp-car-win\",\"fingerprint\":\"6BE1A547F86240D68B41D18A5629F713CB909CE3FD851089EE5FDC546E427B0B\",\"slices\":16,\"nativeReads\":72},{\"name\":\"connectors-ulp-walk-win\",\"fingerprint\":\"D63B1A8F7BFC764EB38ADD2D8D63C60916AED0FAE1F90D1961D78042DE358E12\",\"slices\":16,\"nativeReads\":72},{\"name\":\"second-curb-car-wins\",\"fingerprint\":\"2F697DDC4E70CED20AE8E44B77B4DB6577A198E3AC6380729984C9381BCF485A\",\"slices\":18,\"nativeReads\":348},{\"name\":\"subway-ceiling-during-car-search\",\"fingerprint\":\"D75E50D29AC6BE3AABFFA651EA8D7886ACFCB407E868DE66CF8FA354CB76570A\",\"slices\":16,\"nativeReads\":144},{\"name\":\"unreachable-walk\",\"fingerprint\":\"AB52E139F6E42376969341E53C805DB122692D8130F2312583F18346F780059A\",\"slices\":16,\"nativeReads\":252},{\"name\":\"unreachable-no-alternative\",\"fingerprint\":\"null\",\"slices\":34,\"nativeReads\":7362},{\"name\":\"search-generation-restart\",\"fingerprint\":\"125B7B2452E59A6229C9F811636A4E5FC7CD9B158043C12E117DC2BCA3220526\",\"slices\":20,\"nativeReads\":0},{\"name\":\"snapshot-replacement-restart\",\"fingerprint\":\"7D32A79462F6F6B67DB14E9C419B3AC7CD224E3BF527B64CDBF04441809C6C51\",\"slices\":16,\"nativeReads\":0},{\"name\":\"snapshot-replacement-before-first-slice\",\"fingerprint\":\"7D32A79462F6F6B67DB14E9C419B3AC7CD224E3BF527B64CDBF04441809C6C51\",\"slices\":16,\"nativeReads\":0},{\"name\":\"home-car-snapshot-restart\",\"fingerprint\":\"F89850F0256F83B8BEF00AB7895F11473E09413BEF6B7DFB4F6D20AB96C771C8\",\"slices\":18,\"nativeReads\":0}]}\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-handoff-regression/RoadHandoffRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 5.14,
+      "log": "build\\c2a-checks-r2\\16.log",
+      "sha256": "6faac04b27bd99a8f5703b130939c53063ea5d4583730b80e9218acf13f5fb95",
+      "tail": "no other dotnet test load; continuing\r\nPASS staged snapshot sweep: unchanged snapshot kept; excluded node, interrupted sweep, neighbour nullness and stop flag detected.\r\nPASS public gates: leaf poses neither open a road nor repeat a change; replaced doors are recorded; a moved frame is a change.\r\nPASS sample scope: each node/junction validated once per sample; public resolve live; same-frame closures, contract changes, reentrancy, exceptions and generation wrap detected.\r\nPASS actual RoadRoutes: current fragments rejected; later full run sampled; malformed/unknown history rejected; future fragment bounded; junction identities/history/admission preserved.\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-invalidation-regression/RoadInvalidationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 6.497,
+      "log": "build\\c2a-checks-r2\\17.log",
+      "sha256": "aa2a2493ea52c6809acf436ef58a91e25846b3b9d67fcf819c948241bda5733e",
+      "tail": "no other dotnet test load; continuing\r\nPASS 265 road invalidation checks; 40 signal cycles preserve network; 20 genuine rebuilds perform zero additional global road-scene searches.\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-speed-regression/RoadSpeedRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 5.802,
+      "log": "build\\c2a-checks-r2\\18.log",
+      "sha256": "33c913a61158eef3cbeda6259085a6f6ad3f5f779a55ba71f7f791fa489854c0",
+      "tail": "no other dotnet test load; continuing\r\nPASS slowdown during staged preflight on both sides of the copied-node cursor\r\nPASS unexplained raw/original/observed speed mutations fail closed\r\nPASS canonical topology, initial-active overlay, old queue immutability, SaveCodec/rebind/restoration: native=824bd5ba73d50953231f3c2a14ba83b2feb08004df74b2abc0cb6f47c41f4409, traffic=88b88ec4817e749052ed4d49e16ea1f8cfd8089ce99eeabb4e48fc412427af41, links=1, capacity=13, baseline=9.6, slowed=10.200000000000001, partial40m=5.1\r\nPASS actual Runtime mapping preserves 6m FIFO storage spacing with heterogeneous native speed overlay\r\nPASS 602 offline assertions using actual Runtime/Core/Persistence and synthetic Unity/native surfaces; no rig or RLO mutation.\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/route-discovery-regression/RouteDiscoveryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 11.886,
+      "log": "build\\c2a-checks-r2\\19.log",
+      "sha256": "6953dd85283d232b00e9816765ed0cd84d4ca196fc8e89a9575b906a0d32250e",
+      "tail": "no other dotnet test load; continuing\r\nPASS 675 discovery assertions, including zero steady-state hierarchy queries, load/reset discovery, explicit invalidation, mutation, persistent/additive scenes, bounded initialization and disposal.\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 218.291,
+      "log": "build\\c2a-checks-r2\\20.log",
+      "sha256": "dfd671d7998c30d7f007d716f758bcee8796a57b7e9c6ed64317cbd072dc3e8d",
+      "tail": "2026-10-31T20:14:17 waiting for other dotnet load: pids 6540\r\n2026-10-31T20:14:47 waiting for other dotnet load: pids 6540,40544\r\n2026-10-31T20:15:18 waiting for other dotnet load: pids 6540,40544\r\n2026-10-31T20:15:48 waiting for other dotnet load: pids 6540,40544\r\n2026-10-31T20:16:18 waiting for other dotnet load: pids 6540,40544\r\n2026-10-31T20:16:48 waiting for other dotnet load: pids 6540,40544\r\n2026-10-31T20:17:19 waiting for other dotnet load: pids 6540,40544\r\nno other dotnet test load; continuing\r\n{\"schema\":19,\"digest\":\"D7FF8294F56C3B3D5AF736540274E68E9848319B34658859FC15E0D4CDB1F3A2\",\"length\":119083,\"refusals\":[\"Invalid:Invalid state: Missing state schema.\",\"Future:State uses a newer schema; preserve the original payload.\",\"Invalid:Invalid state: Incomplete or trailing JSON content.\",\"Invalid:Invalid state: Unknown field: UnknownCitizens\"],\"economy\":{\"orders\":849,\"ordersDigest\":\"1B94987B3158044594B9C4D6A5473BA22BE0D4F3488D769CBBEE23318BB33B91\",\"purchases\":797,\"spentUnits\":107967424757760,\"uncertain\":2,\"economyDigest\":\"74D0FE8081EA795D4D56A11B4B955DC6E777E3822C702D3C09BC9477E6679AF9\",\"reloadDigest\":\"59B6F14D44CA0F996C5A828E2E538B52C5426347FCFA40767527B72D77F1D4FA\"},\"writeBytes\":14452712,\"readBytes\":38773560,\"bench\":null,\"hot\":null}\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/startup-clock-regression/StartupClockRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 5.281,
+      "log": "build\\c2a-checks-r2\\21.log",
+      "sha256": "a6e2a3ad7b8a2a430b2b748ec112e0fe113db4d2e3898f648add54c6d7decc61",
+      "tail": "no other dotnet test load; continuing\r\nPASS 17 actual startup-clock source checks; native clock/UI doubles, no Unity execution.\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-closure-regression/TrafficClosureRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 4.887,
+      "log": "build\\c2a-checks-r2\\22.log",
+      "sha256": "7eb0f9793dac6c841fae5712f40cb2f42ef4d200c9a270e407f73d47a1e0cc35",
+      "tail": "317949315F97CE67CFEFCBDBE15BCD86E34\",\"nativeReads\":255},{\"name\":\"gate-removed\",\"fingerprint\":\"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D\",\"nativeReads\":255},{\"name\":\"after-read-exception\",\"fingerprint\":\"4642CBB939E2E9A03D8AE5F833AECDD12FF4D7F3EA8730C898C74D6256B2D190\",\"nativeReads\":255},{\"name\":\"exception-reopened\",\"fingerprint\":\"AF3558291CFCDA74074DDF7F26B7400A33C66CFCDFC01CD46F5B7638C89D8C9D\",\"nativeReads\":255},{\"name\":\"agents\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":25},{\"name\":\"cars\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":25},{\"name\":\"neighbours\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":25},{\"name\":\"position\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":26},{\"name\":\"flags\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":29},{\"name\":\"road-id\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":31},{\"name\":\"association\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":29},{\"name\":\"lanes\",\"fingerprint\":\"9A5A25040FD8D54EE864FBEFC518CCEFF14CD30115D8BBC6982A39009599DCBB\",\"nativeReads\":31},{\"name\":\"junction-group\",\"fingerprint\":\"E7AC5253D23F99A544FBC74509CF1D0E057A0926A274B8B4FC0DE9190A6AA968\",\"nativeReads\":7},{\"name\":\"junction-name\",\"fingerprint\":\"E7AC5253D23F99A544FBC74509CF1D0E057A0926A274B8B4FC0DE9190A6AA968\",\"nativeReads\":6},{\"name\":\"junction-array\",\"fingerprint\":\"E7AC5253D23F99A544FBC74509CF1D0E057A0926A274B8B4FC0DE9190A6AA968\",\"nativeReads\":0},{\"name\":\"waypoint-array\",\"fingerprint\":\"E7AC5253D23F99A544FBC74509CF1D0E057A0926A274B8B4FC0DE9190A6AA968\",\"nativeReads\":0},{\"name\":\"empty-closed-reopened\",\"fingerprint\":\"A1472043595E769929FCBD6110FDB92A22D96208FCC97C32EC271FF018702B9E\",\"nativeReads\":13}]}\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-queue-regression/TrafficQueueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 5.214,
+      "log": "build\\c2a-checks-r2\\23.log",
+      "sha256": "323db2caf4c069a3c52c45f6d81d5ec348922fcc09628bbc0b396bdf23fdc373",
+      "tail": "no other dotnet test load; continuing\r\n32414 observations; SHA256=D328799A130E4BF1834A448B46765F4D5BC1750A21DF86B879B42B97307ABAFE\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/walking-quote-regression/WalkingQuoteRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 7.044,
+      "log": "build\\c2a-checks-r2\\24.log",
+      "sha256": "7ae1ae85cbacb138973ae19be7a2157c53f5ce52b7b720a75567ae6946afb493",
+      "tail": "no other dotnet test load; continuing\r\nWalking quote regression: 28 checks passed (actual Runtime source; native calls replaced by controlled doubles).\r\nIntegrated K=2 walking requests: native path queries 488 unscoped, 448 scoped (40 reused); quote checks 454, rejected 16; purchases identical.\r\nWalking quote operation: 48 checks passed (actual Core FoodCommerce and Runtime WalkingRoutes; native calls replaced by controlled doubles).\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/native-command-regression/run.py"
+      ],
+      "exitCode": 0,
+      "seconds": 5.843,
+      "log": "build\\c2a-checks-r2\\25.log",
+      "sha256": "101f981b3395edc9607934a718d4e6b86214a80556d13203bb3d53c08c274cb6",
+      "tail": "no other dotnet test load; continuing\r\nPASS 72 native command/step checks; actual production method source, deferred physics test doubles (not game evidence).\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/physical-selection-regression/run.py"
+      ],
+      "exitCode": 0,
+      "seconds": 5.684,
+      "log": "build\\c2a-checks-r2\\26.log",
+      "sha256": "dd113e48b4ee814fb8a10bdf40c413251b3c92a7df78324929e75e482f9a2521",
+      "tail": "no other dotnet test load; continuing\r\nPASS 27567 checks; positions 93665->55737; hierarchy 88308->33300\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/vehicle-ownership-regression/run.py"
+      ],
+      "exitCode": 0,
+      "seconds": 4.014,
+      "log": "build\\c2a-checks-r2\\27.log",
+      "sha256": "892044ee7c48133756dfb5d67eea8acfe4b6c9bac85cf2b84925bfefba0764af",
+      "tail": "no other dotnet test load; continuing\r\nPASS 361 actual Runtime vehicle ownership assertions\r\nPASS epoch call sites: Update, BeginNativeFixedStep and Release advance first; 5 native mutation wrappers advance in finally; no raw native mutation elsewhere\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/optional-stop-regression/run.py"
+      ],
+      "exitCode": 0,
+      "seconds": 3.717,
+      "log": "build\\c2a-checks-r2\\28.log",
+      "sha256": "eeae12b2d4d82d8b638f4875b797ee58f7c7dbc2b9d3465bf492202bac366855",
+      "tail": "no other dotnet test load; continuing\r\nSaved facade reload: 9 integration checks passed.\r\nSaved facade reload: 9 integration checks passed.\r\nNative door replacement: 6 checks passed.\r\nOptional stop physical adapter: 213 checks passed.\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/simulate/Simulate.csproj",
+        "--",
+        "28",
+        "build/harness-demo"
+      ],
+      "exitCode": 0,
+      "seconds": 6.232,
+      "log": "build\\c2a-checks-r2\\29.log",
+      "sha256": "5b9d260c064f15a5c03bde2af67c17dbd8b48fe62c56163b940d4a4bf8ea9d17",
+      "tail": "no other dotnet test load; continuing\r\n{\r\n  \"Scenario\": \"Synthetic connected grid, not game performance or RLO population evidence\",\r\n  \"Citizens\": 400,\r\n  \"Days\": 28,\r\n  \"Events\": 97156,\r\n  \"BoundedBatches\": 486,\r\n  \"ElapsedMilliseconds\": 2658.5191,\r\n  \"CompletedJourneys\": 44266,\r\n  \"MissedActivities\": 88,\r\n  \"RouteRequests\": 45205,\r\n  \"Unreachable\": 916,\r\n  \"PlannedModeCounts\": {\r\n    \"Walk\": 39630,\r\n    \"Bus\": 4659\r\n  },\r\n  \"SnapshotBytes\": 732516,\r\n  \"SaveRoundTrip\": \"Exact\",\r\n  \"EconomyTransactions\": \"Not implemented in this project\"\r\n}\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-routines/FoodRoutines.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "build/harness-food-routines-demo",
+        "957"
+      ],
+      "exitCode": 0,
+      "seconds": 7.612,
+      "log": "build\\c2a-checks-r2\\30.log",
+      "sha256": "633e295856ebf429f3ad6cd509767c9ba497a5b7e008398d7b2a5153f5a04d25",
+      "tail": ": 959\r\n      },\r\n      \"MeanOutingMinutes\": 33.699572471324764,\r\n      \"MeanQueueMinutes\": 11.906141814390034,\r\n      \"RouteCalls\": 6692,\r\n      \"MaximumRouteCallsPerBatch\": 2,\r\n      \"QuoteMs\": 33.0784,\r\n      \"SimulationMs\": 71.9705,\r\n      \"Maximum16EventBatchMs\": 20.5817,\r\n      \"Batches\": 610\r\n    },\r\n    {\r\n      \"Name\": \"two-same-location\",\r\n      \"Fulfilled\": 952,\r\n      \"Unmet\": 5747,\r\n      \"Unresolved\": 0,\r\n      \"ShopMeals\": {\r\n        \"a\": 506,\r\n        \"a2\": 446\r\n      },\r\n      \"MeanOutingMinutes\": 34.97413865546264,\r\n      \"MeanQueueMinutes\": 11.173865546218535,\r\n      \"RouteCalls\": 13384,\r\n      \"MaximumRouteCallsPerBatch\": 2,\r\n      \"QuoteMs\": 48.4504,\r\n      \"SimulationMs\": 67.9459,\r\n      \"Maximum16EventBatchMs\": 17.486,\r\n      \"Batches\": 644\r\n    },\r\n    {\r\n      \"Name\": \"second-unavailable\",\r\n      \"Fulfilled\": 535,\r\n      \"Unmet\": 6164,\r\n      \"Unresolved\": 0,\r\n      \"ShopMeals\": {\r\n        \"a\": 535,\r\n        \"b\": 0\r\n      },\r\n      \"MeanOutingMinutes\": 36.78355140186918,\r\n      \"MeanQueueMinutes\": 12.95102803738317,\r\n      \"RouteCalls\": 13398,\r\n      \"MaximumRouteCallsPerBatch\": 2,\r\n      \"QuoteMs\": 79.0551,\r\n      \"SimulationMs\": 47.1422,\r\n      \"Maximum16EventBatchMs\": 8.1572,\r\n      \"Batches\": 542\r\n    },\r\n    {\r\n      \"Name\": \"second-price-plus-25pct\",\r\n      \"Fulfilled\": 1045,\r\n      \"Unmet\": 5654,\r\n      \"Unresolved\": 0,\r\n      \"ShopMeals\": {\r\n        \"a\": 535,\r\n        \"b\": 510\r\n      },\r\n      \"MeanOutingMinutes\": 36.76513875598104,\r\n      \"MeanQueueMinutes\": 12.93564593301436,\r\n      \"RouteCalls\": 13398,\r\n      \"MaximumRouteCallsPerBatch\": 2,\r\n      \"QuoteMs\": 85.4145,\r\n      \"SimulationMs\": 30.915,\r\n      \"Maximum16EventBatchMs\": 7.5119,\r\n      \"Batches\": 664\r\n    }\r\n  ],\r\n  \"limitations\": \"One purchased meal/day; provisional lunch breaks; hourly service smoothing; walking outings; no home food, wages, operating costs or live native stock/service validation. Timings are offline .NET measurements, not Unity frame-time evidence.\"\r\n}\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-demand/FoodDemand.csproj",
+        "--",
+        "build/harness-food-demand-demo"
+      ],
+      "exitCode": 0,
+      "seconds": 3.163,
+      "log": "build\\c2a-checks-r2\\31.log",
+      "sha256": "a17598bea67997674e521e1b095c1c60d3c5ec7ac400cb0b8466fbe859bd7163",
+      "tail": "no other dotnet test load; continuing\r\n{\r\n  \"Evidence\": \"Synthetic demonstration: 24 fictional residents and two fictional shops. No live city was read.\",\r\n  \"Consumers\": 24,\r\n  \"Days\": 2,\r\n  \"Comparisons\": 4,\r\n  \"NativeSalesChanged\": 0\r\n}\r\nComparison and saved intentions: C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\build\\harness-food-demand-demo\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-candidate-regression/FoodCandidateRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 2.596,
+      "log": "build\\c2a-checks-r2\\32.log",
+      "sha256": "8d602be4675ac5906bd91e6e81d266f27dcb667890828dfc3a520c3e1686716f",
+      "tail": "no other dotnet test load; continuing\r\n{\"checks\":\"actual NativeFoodCandidates + NativeFoodHours, synthetic native surfaces\",\"controllers\":131,\"discoveryFrames\":[0,1,2,5],\"reload\":true,\"oldHoursPasses\":8,\"newHoursPasses\":0,\"oldMedianMs\":0.1094,\"newMedianMs\":0.0092}\r\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 5.025,
+      "log": "build\\c2a-checks-r2\\33.log",
+      "sha256": "8063a2ff97e5248da5a9570b359e26386f7eb8c6e3e57960b6ec6fe5db0ecab7",
+      "tail": "\"max\":8.9818},\"continuationUnitMs\":{\"p95\":0.0384,\"max\":0.9073},\"shortlistCapturePlusPureSamplingMs\":{\"p95\":0.0528,\"max\":0.8991},\"exactShortlistTraitsSamplingMs\":{\"p50\":0.011899999999999999,\"p95\":0.020900000000000002,\"max\":0.632},\"bytesPerDecision\":84128,\"logicalRoutes\":16},{\"shops\":64,\"nativeIds\":false,\"samples\":512,\"fullMs\":{\"p50\":0.1333,\"p95\":0.2578,\"max\":1.0405},\"continuationUnitMs\":{\"p95\":0.0389,\"max\":0.942},\"shortlistCapturePlusPureSamplingMs\":{\"p95\":0.06470000000000001,\"max\":0.178},\"exactShortlistTraitsSamplingMs\":{\"p50\":0.0216,\"p95\":0.0347,\"max\":0.5996999999999999},\"bytesPerDecision\":84248,\"logicalRoutes\":16},{\"shops\":1024,\"nativeIds\":false,\"samples\":512,\"fullMs\":{\"p50\":0.2584,\"p95\":0.4222,\"max\":3.1836},\"continuationUnitMs\":{\"p95\":0.0847,\"max\":3.0105},\"shortlistCapturePlusPureSamplingMs\":{\"p95\":0.1857,\"max\":3.0198},\"exactShortlistTraitsSamplingMs\":{\"p50\":0.0707,\"p95\":0.1201,\"max\":2.9934},\"bytesPerDecision\":84328,\"logicalRoutes\":16}],\"nativeIdBench\":[{\"shops\":8,\"nativeIds\":true,\"samples\":512,\"fullMs\":{\"p50\":0.1459,\"p95\":0.2391,\"max\":1.0005},\"continuationUnitMs\":{\"p95\":0.049,\"max\":0.8923},\"shortlistCapturePlusPureSamplingMs\":{\"p95\":0.041,\"max\":0.21700000000000003},\"exactShortlistTraitsSamplingMs\":{\"p50\":0.019200000000000002,\"p95\":0.0313,\"max\":0.0726},\"bytesPerDecision\":84088,\"logicalRoutes\":16},{\"shops\":64,\"nativeIds\":true,\"samples\":512,\"fullMs\":{\"p50\":0.1541,\"p95\":0.2612,\"max\":1.889},\"continuationUnitMs\":{\"p95\":0.0444,\"max\":1.7079},\"shortlistCapturePlusPureSamplingMs\":{\"p95\":0.07619999999999999,\"max\":1.7174},\"exactShortlistTraitsSamplingMs\":{\"p50\":0.0292,\"p95\":0.0611,\"max\":0.732},\"bytesPerDecision\":84208,\"logicalRoutes\":16},{\"shops\":1024,\"nativeIds\":true,\"samples\":512,\"fullMs\":{\"p50\":0.1816,\"p95\":0.2784,\"max\":1.8201},\"continuationUnitMs\":{\"p95\":0.1291,\"max\":1.645},\"shortlistCapturePlusPureSamplingMs\":{\"p95\":0.21159999999999998,\"max\":1.072},\"exactShortlistTraitsSamplingMs\":{\"p50\":0.1352,\"p95\":0.1804,\"max\":1.0646},\"bytesPerDecision\":83152,\"logicalRoutes\":16}]}\r\n"
+    }
+  ],
+  "finishedUtc": "2026-10-31T19:19:02.090873+00:00",
+  "reviewRegression": {
+    "ids": [
+      "Sol-r2-1",
+      "Opus-r2-1"
+    ],
+    "notes": "Three pre-activation cases compare uninterrupted, reloaded and diagnostic-inspected execution after late authority acquisition. Red baseline includes the new test only; production code is unchanged. The reloaded branch captures the stop decision before the baseline fails on inspected/uninterrupted execution. Green decisions, final saves and orders match; route requests remain zero. No schema or wire change.",
+    "runs": [
+      {
+        "phase": "red",
+        "source": "508e42c2f8d7cd6a809e89fa573f810ad82d3d6b",
+        "command": "dotnet test tests/PersistentCity.Tests.csproj --filter FullyQualifiedName~LatePreActivationScope --logger console;verbosity=normal",
+        "expectedCases": 3,
+        "passed": 0,
+        "failed": 3,
+        "log": "build\\c2a-r2-red.log",
+        "sha256": "86636528780a483c9647ae8c6ac5dba7a692028b9a2713007e860bd8e102740a",
+        "output": "  Determining projects to restore...\r\n  All projects are up-to-date for restore.\r\n  PersistentCity.Core -> C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\Core\\bin\\Debug\\netstandard2.1\\PersistentCity.Core.dll\r\n  PersistentCity.Persistence -> C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\Persistence\\bin\\Debug\\netstandard2.1\\PersistentCity.Persistence.dll\r\n  PersistentCity.Compatibility -> C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\Compatibility\\bin\\Debug\\netstandard2.1\\PersistentCity.Compatibility.dll\r\n  PersistentCity.Tests -> C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\tests\\bin\\Debug\\net10.0\\PersistentCity.Tests.dll\r\nTest run for C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\tests\\bin\\Debug\\net10.0\\PersistentCity.Tests.dll (.NETCoreApp,Version=v10.0)\r\nA total of 1 test files matched the specified pattern.\r\n[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 10.0.13)\r\n[xUnit.net 00:00:00.07]   Discovering: PersistentCity.Tests\r\n[xUnit.net 00:00:00.23]   Discovered:  PersistentCity.Tests\r\n[xUnit.net 00:00:00.23]   Starting:    PersistentCity.Tests\r\ndotnet.exe : [xUnit.net 00:00:00.40]     PersistentCity.Tests.FoodAwarenessReviewTests.LatePreActivationScopeHasIdentic\r\nalStopDecisionAcrossReloadAndInspection(inspection: 2) [FAIL]\r\nAt line:9 char:1\r\n+ & \"$env:LOCALAPPDATA\\Microsoft\\dotnet\\dotnet.exe\" test tests/Persiste ...\r\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n    + CategoryInfo          : NotSpecified: ([xUnit.net 00:0...tion: 2) [FAIL]:String) [], RemoteException\r\n    + FullyQualifiedErrorId : NativeCommandError\r\n \r\n[xUnit.net 00:00:00.40]       Assert.NotNull() Failure: Value is null\r\n[xUnit.net 00:00:00.40]       Stack Trace:\r\n[xUnit.net 00:00:00.40]         C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\tests\\FoodAwarenessReviewTests.cs(133,0): at PersistentCity.Tests.FoodAwarenessReviewTests.LatePreActivationScopeHasIdenticalStopDecisionAcrossReloadAndInspection(Int32 inspection)\r\n[xUnit.net 00:00:00.40]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)\r\n[xUnit.net 00:00:00.40]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)\r\n[xUnit.net 00:00:00.40]     PersistentCity.Tests.FoodAwarenessReviewTests.LatePreActivationScopeHasIdenticalStopDecisio\r\nnAcrossReloadAndInspection(inspection: 1) [FAIL]\r\n[xUnit.net 00:00:00.40]       Assert.NotNull() Failure: Value is null\r\n[xUnit.net 00:00:00.40]       Stack Trace:\r\n[xUnit.net 00:00:00.40]         C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\tests\\FoodAwarenessReviewTests.cs(133,0): at PersistentCity.Tests.FoodAwarenessReviewTests.LatePreActivationScopeHasIdenticalStopDecisionAcrossReloadAndInspection(Int32 inspection)\r\n[xUnit.net 00:00:00.40]            at InvokeStub_FoodAwarenessReviewTests.LatePreActivationScopeHasIdenticalStopDecisionAcrossReloadAndInspection(Object, Span`1)\r\n[xUnit.net 00:00:00.40]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)\r\n[xUnit.net 00:00:00.40]     PersistentCity.Tests.FoodAwarenessReviewTests.LatePreActivationScopeHasIdenticalStopDecisio\r\nnAcrossReloadAndInspection(inspection: 0) [FAIL]\r\n[xUnit.net 00:00:00.40]       Assert.NotNull() Failure: Value is null\r\n[xUnit.net 00:00:00.40]       Stack Trace:\r\n[xUnit.net 00:00:00.40]         C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\tests\\FoodAwarenessReviewTests.cs(133,0): at PersistentCity.Tests.FoodAwarenessReviewTests.LatePreActivationScopeHasIdenticalStopDecisionAcrossReloadAndInspection(Int32 inspection)\r\n[xUnit.net 00:00:00.40]            at InvokeStub_FoodAwarenessReviewTests.LatePreActivationScopeHasIdenticalStopDecisionAcrossReloadAndInspection(Object, Span`1)\r\n[xUnit.net 00:00:00.40]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)\r\n[xUnit.net 00:00:00.40]   Finished:    PersistentCity.Tests\r\n  Failed PersistentCity.Tests.FoodAwarenessReviewTests.LatePreActivationScopeHasIdenticalStopDecisionAcrossReloadAndInspection(inspection: 2) [125 ms]\r\n  Error Message:\r\n   Assert.NotNull() Failure: Value is null\r\n  Stack Trace:\r\n     at PersistentCity.Tests.FoodAwarenessReviewTests.LatePreActivationScopeHasIdenticalStopDecisionAcrossReloadAndInspection(Int32 inspection) in C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\tests\\FoodAwarenessReviewTests.cs:line 133\r\n   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)\r\n   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)\r\n  Failed PersistentCity.Tests.FoodAwarenessReviewTests.LatePreActivationScopeHasIdenticalStopDecisionAcrossReloadAndInspection(inspection: 1) [1 ms]\r\n  Error Message:\r\n   Assert.NotNull() Failure: Value is null\r\n  Stack Trace:\r\n     at PersistentCity.Tests.FoodAwarenessReviewTests.LatePreActivationScopeHasIdenticalStopDecisionAcrossReloadAndInspection(Int32 inspection) in C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\tests\\FoodAwarenessReviewTests.cs:line 133\r\n   at InvokeStub_FoodAwarenessReviewTests.LatePreActivationScopeHasIdenticalStopDecisionAcrossReloadAndInspection(Object, Span`1)\r\n   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)\r\n  Failed PersistentCity.Tests.FoodAwarenessReviewTests.LatePreActivationScopeHasIdenticalStopDecisionAcrossReloadAndInspection(inspection: 0) [< 1 ms]\r\n  Error Message:\r\n   Assert.NotNull() Failure: Value is null\r\n  Stack Trace:\r\n     at PersistentCity.Tests.FoodAwarenessReviewTests.LatePreActivationScopeHasIdenticalStopDecisionAcrossReloadAndInspection(Int32 inspection) in C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\tests\\FoodAwarenessReviewTests.cs:line 133\r\n   at InvokeStub_FoodAwarenessReviewTests.LatePreActivationScopeHasIdenticalStopDecisionAcrossReloadAndInspection(Object, Span`1)\r\n   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)\r\n\r\nTest Run Failed.\r\nTotal tests: 3\r\n     Failed: 3\r\n Total time: 0,8108 Seconds\r\n"
+      },
+      {
+        "phase": "green",
+        "source": "49158aa4cb1bc5ac93196e7683bf5fa6865d0ace",
+        "command": "dotnet test tests/PersistentCity.Tests.csproj --filter FullyQualifiedName~LatePreActivationScope --logger console;verbosity=normal",
+        "expectedCases": 3,
+        "passed": 3,
+        "failed": 0,
+        "log": "build\\c2a-r2-green.log",
+        "sha256": "d7c083829ff0689cebd9e778c4c597cb55b866549d8d0e520861d07ed3bc58a5",
+        "output": "  Determining projects to restore...\r\n  All projects are up-to-date for restore.\r\n  PersistentCity.Core -> C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\Core\\bin\\Debug\\netstandard2.1\\PersistentCity.Core.dll\r\n  PersistentCity.Compatibility -> C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\Compatibility\\bin\\Debug\\netstandard2.1\\PersistentCity.Compatibility.dll\r\n  PersistentCity.Persistence -> C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\Persistence\\bin\\Debug\\netstandard2.1\\PersistentCity.Persistence.dll\r\n  PersistentCity.Tests -> C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\tests\\bin\\Debug\\net10.0\\PersistentCity.Tests.dll\r\nTest run for C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\c2a-core-awareness\\tests\\bin\\Debug\\net10.0\\PersistentCity.Tests.dll (.NETCoreApp,Version=v10.0)\r\nA total of 1 test files matched the specified pattern.\r\n[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 10.0.13)\r\n[xUnit.net 00:00:00.23]   Discovering: PersistentCity.Tests\r\n[xUnit.net 00:00:01.06]   Discovered:  PersistentCity.Tests\r\n[xUnit.net 00:00:01.06]   Starting:    PersistentCity.Tests\r\n[xUnit.net 00:00:01.27]   Finished:    PersistentCity.Tests\r\n  Passed PersistentCity.Tests.FoodAwarenessReviewTests.LatePreActivationScopeHasIdenticalStopDecisionAcrossReloadAndInspection(inspection: 2) [166 ms]\r\n  Passed PersistentCity.Tests.FoodAwarenessReviewTests.LatePreActivationScopeHasIdenticalStopDecisionAcrossReloadAndInspection(inspection: 1) [4 ms]\r\n  Passed PersistentCity.Tests.FoodAwarenessReviewTests.LatePreActivationScopeHasIdenticalStopDecisionAcrossReloadAndInspection(inspection: 0) [3 ms]\r\n\r\nTest Run Successful.\r\nTotal tests: 3\r\n     Passed: 3\r\n Total time: 1,6436 Seconds\r\n"
+      }
+    ]
+  }
+}
