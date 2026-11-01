@@ -1,5 +1,47 @@
 # C2b: observed campaigns and soft distance preference
 
+## Round-2 fix - Sol-r2-2, 1 November 2026
+
+Active preference now checks the saved mask at the meal's captured logical hour,
+using a generation-keyed image lookup and at most eight type bits. A later native
+publication, including a stopped/missing read, cannot remove an earlier observed
+hour's modifier while that hour remains in the eight-day image. Stopped,
+unobserved, future and expired hours remain inactive. Both derived index buffers
+are reused and published with the complete image; there is no per-resident
+business scan, new saved field, schema change or change to the 32/8/16 envelope.
+
+Implementation: `0a58a8b`. Before the fix the new regression reproduced
+`Sources=66 -> Sources=2` for an identical delayed meal after another publication.
+After the fix all 23 campaign tests pass. The full suite passes **2,360/2,360**,
+zero failures/skips. The replay compares complete timely/delayed captures across
+midnight, continuous campaigns, a stop, an unobserved gap, restart, encoded-image
+reload and explicit index rebuild. It also checks no active-lookup allocation.
+
+All **33/33** foreground command gates pass, including the Steam-reference build,
+test discovery, all requested regressions and three simulation commands, plus the
+C2b production-adapter/performance harness. The other-dotnet wait preceded every
+test/run and Python wrapper. Ownership-hook fixtures pass 243 assertions.
+Schema, save-contract digest/length/refusals and order/economy/reload results are
+unchanged from round 1. DLL SHA-256:
+`711f314146c759e348151e69f8079fde2682bd3f36333a5dea739395ea4bc0d4`.
+[Command exits, save differential and fingerprints](c2b-r2-offline-gates.json).
+Local foreground logs are in ignored `build/c2b-r2/`.
+Coordinated MSBuild/compiler-server shutdown succeeded; the final inventory found
+no C2b dotnet/testhost processes. All foreground test and simulation runs ended.
+
+At 1 / 1,024 images, eight delayed-hour active lookups have p95
+**0.0004 / 0.0002 ms**, with **0 B** allocated. The maximum 32-lookup,
+eight-type unobserved-hour workload has p95 **0.0047 / 0.0009 ms**, also **0 B**.
+C1/publication p95 is **0.0142 / 3.1701 ms**, production-adapter p95
+**0.0167 / 4.5993 ms** (max **0.0636 / 8.2773 ms**). All round-2 component
+series have zero spikes >=30 ms. **Separate cold C1-reader p95 6.3476 ms is
+above 5 ms** and remains flagged. Absent/disabled paths still allocate zero;
+saved campaign bytes/records are unchanged. [Method and full results](../perf/c2b-campaign-awareness.md).
+
+Native final-head rig evidence remains pending and merge blocked; this offline
+replay does not certify native clock ordering or combined mod-work. Whole-frame
+timing remains separate. No game/rig work, native campaign mutation, push or merge.
+
 ## Round-1 fixes - owner decision 1, 1 November 2026
 
 Peter: "It should simply increase the chance for residents to pick that shop,
@@ -9,7 +51,7 @@ there is no target policy, no Unknown target gate, and no target-match tuning.
 Only C1-verified observed campaign evidence is accepted. Native controls/fees stay
 native; paid research remains unavailable.
 
-For a shop with positive evidence in the captured current logical hour, shortlist
+For a shop with positive evidence in the meal's captured logical hour, shortlist
 and final offer preference use half the normal distance input and a fixed 1.25
 preference factor. This modest fixed gameplay prior is the same for every resident
 and campaign type; it neither changes measured journey times nor bypasses existing
@@ -28,8 +70,9 @@ observation cannot skip or abort the hour's ownership transfer.
 Sol-r1-2 / Opus-r1-2: the new owner instruction replaces demographic mapping.
 The production adapter uses the universal rule; no target-match boost remains.
 The same trait-independent modifier applies to already-known shops even when the
-eight campaign discovery draws admit nothing. Retained awareness after a stop
-has no active modifier; held decisions keep the modifier they actually captured.
+eight campaign discovery draws admit nothing. At a stopped or unobserved meal
+hour, retained awareness has no active modifier; held decisions keep the modifier
+they actually captured.
 
 **Validation:** implementation `6de85c6`; final full suite **2,359/2,359**, zero
 failures/skips; all **33/33** foreground gate commands pass, with the required

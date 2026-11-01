@@ -1,6 +1,39 @@
 # C2b campaign evidence performance — 1 November 2026
 
 
+## Round-2 captured-hour fix / Sol-r2-2
+
+The generation index now holds immutable saved images instead of only their
+latest active hour. Each candidate needs one dictionary lookup and at most eight
+type-mask checks at the meal's hour, including after a newer publication or
+reload. Both private buffers still reuse capacity. No new performance-only
+optimization is claimed; the change fixes replay while keeping the existing
+source/shortlist/route bounds. Saved bytes and records are unchanged.
+
+[Raw results, reader timings and source fingerprints](c2b-r2-offline-results.json).
+Same offline Release .NET 10 fixture/method as round 1: 30 warmups, 301 hourly
+and rebuild samples, 10,001 query samples; 1 then 1,024 images in one foreground
+run. Sequential tiered JIT, host and GC effects limit cross-size/time comparisons.
+The 32-lookup workload uses distinct businesses at 1,024 images and repeats the
+single ID at one image to exercise the full union's maximum mask-probe count.
+
+| Operation, 1 / 1,024 images | p95 ms | Max ms | B/op |
+| --- | --- | --- | ---: |
+| Eight current-hour active lookups | 0.0004 / 0.0003 | 0.0292 / 0.0094 | 0 / 0 |
+| Eight delayed-hour active lookups | 0.0004 / 0.0002 | 0.0153 / 0.0146 | 0 / 0 |
+| Eight unobserved-hour lookups, all eight types checked | 0.0013 / 0.0003 | 0.1741 / 0.0172 | 0 / 0 |
+| 32 unobserved-hour lookups (union bound) | 0.0047 / 0.0009 | 0.2338 / 0.0199 | 0 / 0 |
+| C1 + publication | 0.0142 / 3.1701 | 0.0241 / 4.6240 | 2,880 / 2,198,552 |
+| Day/type index rebuild | 0.0031 / 0.5375 | 0.0141 / 0.6897 | 72 / 16,440 |
+| Eight-slot source | 0.0074 / 0.0032 | 0.2362 / 0.1695 | 0 / 0 |
+| Production adapter | 0.0167 / 4.5993 | 0.0636 / 8.2773 | 3,244 / 2,358,090 |
+
+Absent/disabled paths still allocate zero. All round-2 component series have
+zero spikes >=30 ms. **Separate cold C1 reader p95 6.3476 ms remains above
+5 ms**, max 10.1882 ms; warm p95 2.1562 ms, max 2.7177 ms. These component
+numbers do not certify combined native mod-work p95 <5 ms. Whole-frame timing
+was not measured and remains separate. Final-head rig proof remains pending.
+
 ## Round-1 owner decision 1 / review fixes
 
 All residents now use the same observed active-campaign preference (fixed 1.25
