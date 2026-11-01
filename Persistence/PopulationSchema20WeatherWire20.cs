@@ -6,6 +6,13 @@ namespace PersistentCity.Persistence
 {
     internal static partial class PopulationSchema20
     {
+        private static void MigrateWeather19To20(CityState state)
+        {
+            Require(state.Schema == 19, "Weather migration requires exact schema 19.");
+            state.WeatherStartsDay=(int)(state.Minute/1440)+1;
+            state.Schema=20;
+        }
+
         private static bool WeatherProperty(Type type,string? name) => type==typeof(CityState) && name=="WeatherStartsDay"
             || type==typeof(CitizenState) && name=="W"
             || type==typeof(FoodDecisionState) && (name=="Weather" || name=="WeatherTravelMultiplier");

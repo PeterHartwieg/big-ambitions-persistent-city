@@ -53,7 +53,7 @@ public sealed class FoodAwarenessMemoryIntegrationTests
     }
 
     [Theory]
-    [InlineData(18)] [InlineData(19)] [InlineData(20)] [InlineData(22)] [InlineData(23)]
+    [InlineData(18)] [InlineData(19)] [InlineData(20)] [InlineData(21)] [InlineData(22)] [InlineData(23)]
     public void PopulatedMemoryAndHeldContributionsMigrateWithoutRecapture(int sourceSchema)
     {
         var (control, mc, pc) = Ready();

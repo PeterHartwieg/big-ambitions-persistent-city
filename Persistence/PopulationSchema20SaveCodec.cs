@@ -104,20 +104,17 @@ namespace PersistentCity.Persistence
             {
                 int schema = ReadSchema(source);
                 if (schema > 20) return new SaveReadResult(SaveReadStatus.Future, null, "State uses a newer schema; preserve the original payload.", schema);
-                if (schema <= 17)
+                if (schema < 20)
                 {
-                    // Original readers, allow-lists, limits, money conversion and semantic/count rules.
-                    var old = LegacyPopulationCodec.Read(source);
+                    // Reuse the exact predecessor's full shape, semantic and activation checks.
+                    // Do not stamp weather/schema 20 before validating schema 19.
+                    var old = PopulationSchema19.Read(source);
                     if (old.Status != SaveReadStatus.Loaded) return old;
-                    var upgraded = old.State!;
-                    upgraded.Schema = 20;
-                    upgraded.WeatherStartsDay=(int)(upgraded.Minute/1440)+1;
-                    if(upgraded.Food!=null) upgraded.Food.AwarenessStartsDay=(int)(upgraded.Minute/1440)+1;
-                    // Constructors initialized empty memory/references and inactive B; infer nothing.
-                    ValidateForActivation(upgraded);
-                    return new SaveReadResult(SaveReadStatus.Loaded, upgraded, "", schema);
+                    MigrateWeather19To20(old.State!);
+                    ValidateForActivation(old.State!);
+                    return new SaveReadResult(SaveReadStatus.Loaded, old.State, "", old.SourceSchema);
                 }
-                Require(schema == 18 || schema == 19 || schema == 20, "Unsupported experimental state schema; preserve the original payload.");
+                Require(schema == 20, "Unsupported experimental state schema; preserve the original payload.");
                 Require(System.Text.Encoding.UTF8.GetByteCount(source) <= MaxInputCharacters, "State exceeds the UTF-8 size limit.");
                 var context = WireContext.FromSource(source);
                 var serializer = JsonSerializer.Create(SettingsForSchema(context, schema));
@@ -131,17 +128,7 @@ namespace PersistentCity.Persistence
                 using var reader = Reader(source);
                 var state = serializer.Deserialize<CityState>(reader);
                 Require(state != null, "State is null.");
-                if(schema==18)
-                {
-                    state!.Schema=20;
-                    if(state.Food!=null) state.Food.AwarenessStartsDay=(int)(state.Minute/1440)+1;
-                }
-                if(schema<20)
-                {
-                    state!.Schema=20;state.WeatherStartsDay=(int)(state.Minute/1440)+1;
-                    ValidateForActivation(state); // new required weather bytes must fit before publishing an upgrade
-                }
-                else Validate(state!);
+                Validate(state!);
                 return new SaveReadResult(SaveReadStatus.Loaded, state, "", schema);
             }
             catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)

@@ -37,7 +37,7 @@ Followed C2b's existing strict required-field policy at `6909beb`: it required
 `Campaigns` in an already-numbered schema-23 payload, rather than backfilling
 pre-C2b E4 development saves. Pre-D2 development schema-22/23 saves missing D2
 fields or carrying tuple revision 1 similarly refuse with the source preserved.
-There is no new compatibility scheme. Frozen 19/20 resolvers now explicitly
+There is no new compatibility scheme. Re-checking the prior draft also found that its frozen-20 wrapper stamped older payloads as 20 before executing the complete schema-19 validator. It now delegates older sources to the frozen-19 reader first, then applies the isolated, unchanged E1 weather stamp and validates 20. This is a required migration-order integration repair, with no weather policy change. Frozen 19/20 resolvers now explicitly
 exclude the new `Campaigns` DTO property so their original shape stays frozen.
 
 ## Conflict resolutions
@@ -68,7 +68,7 @@ exclude the new `Campaigns` DTO property so their original shape stays frozen.
 Auto-merged CHECKS retains exactly one D2 line and every incoming line. All other
 slices' checks and numbered in-game sections remain. C2b, E4, E3 icecream/pizza/
 frenchfries, A5, E1, F1 and earlier slices' tools/tests/docs remain present.
-Schema 21/22 docs, refusal tests and historical draft claims were deliberately
+The campaign-awareness regression now uses the genuine frozen-20 writer instead of relabelling current D2 tuples; its campaign-only byte delta is labelled above predecessor 21. Schema 21/22 docs, refusal tests and historical draft claims were deliberately
 updated or explicitly qualified with the source where the old statement applied.
 
 ## Runtime/Core scope and integration fixes
