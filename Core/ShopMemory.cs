@@ -134,37 +134,4 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>Lazy day-specific index of retained consumer evidence. Caller supplies B1's effective affinity;
-    /// B0 has no decay policy. One scan per index, O(1) per owned-shop query, never residents × shops.</summary>
-    public sealed class RegularsProjection
-    {
-        public const int RegularMinServedVisits = 3;
-        public const int RegularMaxDaysSinceVisit = 14;
-        private readonly FoodCommerceState food;
-        private readonly int day;
-        private readonly Func<ShopMemory, int, int> effectiveAffinity;
-        private Dictionary<string, int>? counts;
-        private readonly HashSet<string> owned;
-        public RegularsProjection(FoodCommerceState food, int day, Func<ShopMemory, int, int> effectiveAffinity)
-        {
-            this.food = food; this.day = day; this.effectiveAffinity = effectiveAffinity;
-            // Only saved player scopes are eligible for free observed feedback.
-            owned = new HashSet<string>(food.Shops.Select(s => s.BusinessId), StringComparer.Ordinal);
-        }
-        public int CountOwnShop(string businessId)
-        {
-            if (!owned.Contains(businessId)) return 0;
-            if (counts == null)
-            {
-                counts = new Dictionary<string, int>(StringComparer.Ordinal);
-                var refs = food.BusinessReferences.ToDictionary(r => r.Slot, r => r.BusinessId);
-                foreach (var consumer in food.Residents)
-                    foreach (var e in consumer.Memory.Entries)
-                        if (e.Served >= RegularMinServedVisits && e.Day <= day && day - e.Day <= RegularMaxDaysSinceVisit
-                            && effectiveAffinity(e, day) > 0 && refs.TryGetValue(e.BusinessRef, out var id) && owned.Contains(id))
-                            counts[id] = counts.TryGetValue(id, out int n) ? n + 1 : 1;
-            }
-            return counts.TryGetValue(businessId, out int result) ? result : 0;
-        }
-    }
 }

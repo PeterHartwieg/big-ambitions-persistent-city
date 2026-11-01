@@ -1,0 +1,626 @@
+{
+  "boundary": "Offline only, foreground sequential. Wait script before each dotnet test/run. No rig.",
+  "commands": [
+    {
+      "command": [
+        "python",
+        "tools/build.py",
+        "--game-managed",
+        "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed"
+      ],
+      "exitCode": 0,
+      "seconds": 1.5,
+      "outputSha256": "7e737ff675509fb9fc275ced2fdab336b2eca67c7474498a7f897ae4f088aebe"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj"
+      ],
+      "exitCode": 0,
+      "seconds": 219.141,
+      "outputSha256": "b0006205d5fb60f59334243f856330d633656b77df2cb2afb14084ee1b550308",
+      "testResult": "Passed!  - Failed:     0, Passed:  1973, Skipped:     0, Total:  1973, Duration: 3 m 32 s - PersistentCity.Tests.dll (net10.0)"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--no-build",
+        "--list-tests"
+      ],
+      "exitCode": 0,
+      "seconds": 2.047,
+      "outputSha256": "cfa27a9082108fb1ba2e0408ffd437cee77544595266db0a44574e625a3c864b",
+      "discoveredTests": 1973
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/core-identity-regression/CoreIdentityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 7.906,
+      "outputSha256": "5c0cc1a8017c5fed845800c33314cfaf08731d8c08beeabba8d9c1ab6799f7b5"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/diagnostic-response-regression/DiagnosticResponseRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 1.641,
+      "outputSha256": "b2b102622ecddb2a88fa553816177a0dfae3fdb45d7b2be26e8870a33da22439"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/event-observation-regression/EventObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 4.047,
+      "outputSha256": "92ecfa458064aa998a9fdd505a9c3f670567d8ee6edaa1c2e0b2a380d21cdb5c"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-catalogue-regression/FoodCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 2.828,
+      "outputSha256": "6c5ac3e42c8b0a32038a048c694dc63e01984868da8a8e614b73b49cdff08c00"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-checkout-regression/FoodCheckoutRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 3.562,
+      "outputSha256": "27b304d4a55b81d9db248b11ec8dab32fff0f1cfae14de9ea152a83a16cff24a"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-hours-regression/FoodHoursRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 2.031,
+      "outputSha256": "fc65a7b6696e6d8bbc9f603cb28fbd5c4820dd84a52aed55f157bf0d5ae8881f"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-household-catalogue-regression/FoodHouseholdCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 1.938,
+      "outputSha256": "ed2d10b201c7a086b01851dd3a12c61d4033405ffa8601876f110f5578f75400"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-ownership-regression/FoodOwnershipRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 3.219,
+      "outputSha256": "2b6a6e5f58a8187ca921edf872116903a56ce17735fb1a406e2817bb5abbb780"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-supply-regression/FoodSupplyRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 2.157,
+      "outputSha256": "7c4bca8046f0d6977984556f6aadb4e5be55bb5505b2c38ec863050c7e325773"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/frame-observation-regression/FrameObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 1.61,
+      "outputSha256": "04cea50d8ca338b9a15ed3fddf0617953cf47d55a4235f14d5dc9a97b5c4e998"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/gate-access-regression/GateAccessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 3.328,
+      "outputSha256": "fdfaa2a2a21a5688b62929495eb695f36146ec1ba8fdfd2db47a710b072ce585"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-ceiling-regression/RoadCeilingRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 3.312,
+      "outputSha256": "0fd7491c851b48a1570bbef51ed48fb70101fb893ad012bc8bb9aa7eee027b45"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-handoff-regression/RoadHandoffRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 2.593,
+      "outputSha256": "916a446cb8bbf61de5ccace5251db815a2191e14a3712e9bbba81d3bd0c79c4b"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-invalidation-regression/RoadInvalidationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 4.485,
+      "outputSha256": "48952f39ad8e108bb9486976f9006ff00e48b6d6a7c7e8426c2b63769b71d534"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-speed-regression/RoadSpeedRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 2.859,
+      "outputSha256": "2a66735de942a0d98866692a3d98a9b8598be36a095ebb3749a6d436b8cedc76"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/route-discovery-regression/RouteDiscoveryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 10.562,
+      "outputSha256": "a0bdfd1f6603517726483314d91b960e53998b47ffc19bc0bb615ae07fd86a3c"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 3.922,
+      "outputSha256": "6f5d80e3223afbb8857d12d6b4fcc5a6e7d29db99c422d228c8d99bb52230617"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/startup-clock-regression/StartupClockRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 2.625,
+      "outputSha256": "92f48d683d51708859450bea5fad244eeb86f3149c6d201072d02637841a22d0"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-closure-regression/TrafficClosureRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 2.984,
+      "outputSha256": "09953823b47809d7666903ce0aa33e007ba5714f1d50cfbcd72847f63f26b4aa"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-queue-regression/TrafficQueueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 3.047,
+      "outputSha256": "c93849749108c308435291a21f3a561743d468a7dcc62c9e610f7539d9c49f13"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/walking-quote-regression/WalkingQuoteRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 2.844,
+      "outputSha256": "50ab224bb5f5a418ff877a85d1da09933ef7edd07699b6060f7021c949c999b1"
+    },
+    {
+      "command": [
+        "python",
+        "tools/native-command-regression/run.py"
+      ],
+      "exitCode": 0,
+      "seconds": 2.656,
+      "outputSha256": "c50cef6504d9dab2d432dd3348458560521d4bb638fced569b4d15cac8bd06f3"
+    },
+    {
+      "command": [
+        "python",
+        "tools/physical-selection-regression/run.py"
+      ],
+      "exitCode": 0,
+      "seconds": 3.234,
+      "outputSha256": "b0eef2f931f56d2f5a1412fcd3339b4e2880bdbf9d4d701342449466f9f2c37b"
+    },
+    {
+      "command": [
+        "python",
+        "tools/vehicle-ownership-regression/run.py"
+      ],
+      "exitCode": 0,
+      "seconds": 2.469,
+      "outputSha256": "0dde57a8771f70727153de1ce862f1ae2cb4690ec4682d9c28af03e8f2d4266e"
+    },
+    {
+      "command": [
+        "python",
+        "tools/optional-stop-regression/run.py"
+      ],
+      "exitCode": 0,
+      "seconds": 3.578,
+      "outputSha256": "6df2d117dd8d33431aa1045e1a6884ffc27e03515e7a8593f266b5b2a546bccc"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/simulate/Simulate.csproj",
+        "--",
+        "28",
+        "build/harness-demo"
+      ],
+      "exitCode": 0,
+      "seconds": 6.844,
+      "outputSha256": "54638a9b06fcb36ff3fd5c63b006e6c7c8e1ec4b98298bf6bb93fd3243057caf"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-routines/FoodRoutines.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "build/harness-food-routines-demo",
+        "957"
+      ],
+      "exitCode": 0,
+      "seconds": 6.407,
+      "outputSha256": "38743a0ef820f760650bd3443697787198eab6d99b3796f6a87f58e8ba5c9890"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-demand/FoodDemand.csproj",
+        "--",
+        "build/harness-food-demand-demo"
+      ],
+      "exitCode": 0,
+      "seconds": 3.0,
+      "outputSha256": "222cb1795aa4acc2fc3accb0db910b8da397cca41709664e51cf9b320be4d17e"
+    },
+    {
+      "command": [
+        "%LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-regulars-regression/FoodRegularsRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "seconds": 7.203,
+      "outputSha256": "c0f980f685d536732c987268fae200bf4cb503d257673d6b681dbc4bc75a6b90"
+    }
+  ],
+  "sourceSha256": {
+    "Core/CatalogueMigration.cs": "b61f345ef1db371f0e36c52ea711ad308526beaeae5ebdc0e3486d83a09cfbc6",
+    "Core/CityBalance.cs": "9b9b20cc06c92f92956bf987ca3f9235d68ac540a753a4893a51a11197665805",
+    "Core/CitySimulator.cs": "55efa787247dc5e78fdcbf2ba80f7a134f297277d0cf477f837b28edeeae15e2",
+    "Core/ClockRateTracker.cs": "e444b80b959eb1857198e6586919a5a867b774d85f7e19ea97059b5846ab331b",
+    "Core/DailyRhythm.cs": "b1f47a556b4d86bc01388f918ee48709cae57b27bcbffc81d93635628ad0eb56",
+    "Core/DailyRoutine.cs": "65bf5a22cf06ec9f8c43952e26d3ef3c410b1ee7f69ad749e8cad8be2b4df3aa",
+    "Core/DestinationChoice.cs": "b4e3388faa9010c94bf1b4982b5e6dd919d780efefe829cf3b41f73af9a439be",
+    "Core/DwellPlanner.cs": "0ed27a4b3aea49a5ec087a6771cf26d2b34f5231dc9fd891c5e94d9ce3ffac20",
+    "Core/EconomySkipClock.cs": "5710e251893cc943b36ec3fff58578b2685476f03a757be3d7e76b99939e9340",
+    "Core/FoodAuthority.cs": "068fb33ba7b7f1cac49830d50d8a67b495c5dd41d44c1433109635bb74e77853",
+    "Core/FoodChoicePolicy.cs": "436ed185d1d83bb5d62c504295afbc0db7ea3e8c42ad425036b7834a585faaa0",
+    "Core/FoodChoiceSettings.cs": "cf3e253cd48b7145dc8ea9a453856e6b11fc806b70cb17b02d775d8dc944d104",
+    "Core/FoodCommerce.cs": "9dd93b0e5821534afa5250d5002b29ed395b7a0ebbe1b9e80291ac2774b8819d",
+    "Core/FoodDecisionTuning.cs": "a464eec5695629fd42fd8843bb5b73b396744e283383233345cbedfde8eb1cc1",
+    "Core/FoodDemand.cs": "41c0a1c8865bcd5fee24eb8a3e06023db7603cbb96d93349f53a3a1865cd67ac",
+    "Core/FoodFinances.cs": "f51e0a13664729c627cf31b21bf8d3dbe36ddd67c8f6d31f0fcc75ba6fe08bd6",
+    "Core/FoodHouseholdPolicy.cs": "c3d9a1fee0d4498f2023dede58daea9dfd74cdb97d0d7b8627e3407b77bdcbfc",
+    "Core/FoodMarketHistory.cs": "99fc5128889394a40b8c4f363f83b04b2b65d8d664076d1355ab8a04d592e56c",
+    "Core/FoodMemoryCommerce.cs": "efc4dc0414575012ee62521b12f21e106f5196ba6619f7c4419589e1af37b3fe",
+    "Core/FoodMemoryPolicy.cs": "3dc5e04a9672386d122d1c697c1fa3c427c7a72fc4e0fdd14f35d61572da3e84",
+    "Core/FoodMemorySettings.cs": "3b66b5a934f1653c02ff96ddc291cef47abeb604f46984d28504999cefd96d8f",
+    "Core/FoodMemoryStore.cs": "e1a369dd80ff11263bb93b67b2f0a8172b3d99bdfaebb57170c1dcfdbb3c6200",
+    "Core/FoodMoney.cs": "8ab52ccd2b39ee9d8ad5ca5e52d70560e005e471e8bf4adb0aa9f87f17bdf079",
+    "Core/FoodProducts.cs": "7e9d47c63db262785502dc14383e4e599914b4f156bb6953670626e838323b89",
+    "Core/FoodRepresentation.cs": "e1f24cf54901514ffa252044af633595c7dc34eb443a7b0d4d0186a9ac59f55a",
+    "Core/FoodRouteBatch.cs": "dfd61fcc2ae25ac3193199fbb8e238dab51d95498cadd105cc71a7978472190d",
+    "Core/FoodRoutines.cs": "5e0fc1f767ac00e761f00d1ee44248b18206d4ad20cfa1c4b2faa584e1f67971",
+    "Core/FoodStops.cs": "43d213e8b533e0e9da96a0433698ae27050908fb20806f97bf54494a8cf907bb",
+    "Core/FoodToday.cs": "5754a87046b44ccbfc3641e84e56bb05b014a43598957c5e73c6cca29f84b815",
+    "Core/FoodWeightedCommerce.cs": "c131b56e0a6f9a3d27be9e47fd27373e6fe6c98292886d481a047989e5b42cfd",
+    "Core/HouseholdFinance.cs": "128ee7bb95ac140fdd2bec3dad7831823501d798c0f03a057eb48764ece64a69",
+    "Core/HousingPolicy.cs": "5bac425a36709aa0b05b2038e82ab5f706b659cc2b9fa108409d53ef3568cbc4",
+    "Core/MealRhythm.cs": "a94c2b790a1c169fa302dae7be8d07ca9cdca13d90ddb0a605e607058999e28f",
+    "Core/Model.cs": "8213120defbdbb4e43c4682feed642e25345790d5b77b5a60fbe1478eaa45c88",
+    "Core/OptionalDestinations.cs": "843646cf4cb000315ecc84aff491a33ed45d7864924c8c846a6e7b6e9e8ae685",
+    "Core/OptionalStops.cs": "159af9e740149496c4e5b35cf03cec4270aac7d156e480a2e97754cef204afab",
+    "Core/OptionalStopScheduling.cs": "91b6388d52913ed3164386d00fd5821f13a572c9340b4d1d6919099bb4c51331",
+    "Core/OptionalVisits.cs": "f7cf1253c48b0de6447f9ce59f805b5514e6d687fc09bd0d0d22285d3c8705f6",
+    "Core/PhysicalCornerHandoff.cs": "5374191bd6d9e498a4f778caac47ae93d02a57704c57bfddce8bcc5d8418ae2d",
+    "Core/PhysicalJourneys.cs": "53fef217509e4f58760a03b8bf7df35b701c3d0e1bcd25f5cf842e1bde108e6f",
+    "Core/PhysicalProgress.cs": "935284d973b72301f68a2003ff897f840c8cade8aa7b5637d84ebc2e8add8e0d",
+    "Core/PhysicalRoadAdmission.cs": "b11c0f58f7824121e7cb093c4787c52d8991f86b25a002140cc33143809d0087",
+    "Core/PhysicalTrafficCornerPermission.cs": "2bd27022039cb2b13f764d994baee18f3dddcc0d1be7c77f01d417c33021a955",
+    "Core/PhysicalTrafficMotion.cs": "07ff2a57a1a45a3373812e98ca0d2b5be3828106323c7b7a36912057a01db481",
+    "Core/PhysicalTrafficPrecision.cs": "0df389a065d7e421acb44c30fdbbe0eac6e6ee6f096a6575328a14fde7e63253",
+    "Core/PhysicalVehicleReference.cs": "0cf528d4a329e0bde4450b139c6997c9bfb3c5cbd486fed20962cbc3d9e0f317",
+    "Core/Population.cs": "24b45315d7322bab67407f046bac250dc2f8bcfbdc2890c7cf3578ebfc432630",
+    "Core/RegularsProjection.cs": "e9f0e9224491142218f55fe60dcb1bc12321805aaf7891b080c7b3b553d20b7b",
+    "Core/ResidentInsight.cs": "8e431577ce1bac69dc67b132f38372075734e5317f921dacea2782be2a2518d6",
+    "Core/ResidentLifecycle.cs": "32e39763d0fd7010d93563cf95227e53bba5a1c594b10c92ba9cf1af0e12ec78",
+    "Core/ResidentMemoryWords.cs": "a1f53bb92231b53d289333a51fd962dc2b48f79b1f50492d1f0c201fc046f09e",
+    "Core/ResidentPicking.cs": "ff188607663fc78bce75464f80d07f13504ecd2e8bc1179d09ee152de9109d06",
+    "Core/ResidentTraits.cs": "03496bd3aff6b1b458279167329be1ce89f46fb2e7244c125f72dd6f00e4d935",
+    "Core/RoadSearchWorkspace.cs": "b64db4525e713d410cfbb253deb9c6e9820744138980499c25b120d59ffef6e2",
+    "Core/RoutePlanning.cs": "f17ca8fba1a32e7f0c4107e837c4a4a108ab993e2c353b30114ef2f2d47a76c9",
+    "Core/RoutineDiagnostic.cs": "9d3b406e092ad1b54507208ea8a37e0c8883908ea68e814950c44c9e117c6188",
+    "Core/Routing.cs": "bd598cbea6fb139031a22dc725dfd3b6cf6d9d77da36b113e57a0855ccc47a45",
+    "Core/ShopMemory.cs": "cc83808c4f04736e4ce26c498bde1f2ca3f942662a3767c41beb2d371127a1b7",
+    "Core/TrafficContracts.cs": "962a0f04ce08ffad67d93c3e66a17933d5bf029487c0b9e62cf81941d85185cb",
+    "Core/TrafficJourneys.cs": "ebcafe5f9583728992cf5076cc32e8292e7b84d4feeb9f9b050db80599ec83c2",
+    "Core/TrafficKernel.cs": "ee9780dbc186e076adb12f7ddf540d412069189f7a44ca3c441f1fbc57b8bb42",
+    "Core/TrafficNetwork.cs": "289859052e4c76f967aefd1ae32f65be3662ed040ca29436c2d3ba797c260562",
+    "Core/TransportComposition.cs": "b8c14c3313554b70df1cdd95670e2cd5cdd8fe618656be92e9b3dcd18b33302c",
+    "Core/TravelTiming.cs": "298411ce5005c458505c18432548cff0c34d2ed669597d9211afde1fac3b6312",
+    "Persistence/AssemblyInfo.cs": "56f04a6033c3e0927b963c0800f35eba87f027559b0f827875abe5a999efd05b",
+    "Persistence/FoodAuthorityStore.cs": "9a0b7fb77d00f5bc949ee5cf07028cfe2d4f57b953d0be4b0a4a4859899f249e",
+    "Persistence/FoodSaleReceipts.cs": "67799d076176f0dc6023fee8960a9761c56d0c395fde7b74425a8af681ed4a17",
+    "Persistence/FoodShadowCodec.cs": "eaaf1d22ed6338c8a45065bdb5c461a7a98ef1f9b9ad70dc2d04b05d99fc3b2c",
+    "Persistence/HeldTuningWire.cs": "3b52198ee1abcefd18dab66801e4301f8c261bbab8ec6bfb43b5c34452b4bbb9",
+    "Persistence/LegacyPopulationCodec.cs": "a432f796a74b866eb7c6126476a9751f86d5306969a699413daff2262188f012",
+    "Persistence/MoneyJson.cs": "974ea2864be2527d8a83fbd47e0bed001be1bdd13621ea6c321d445b9c57e266",
+    "Persistence/PopulationWire18.cs": "e7175beba390098bcbd22dbd46d483d63320b2f475940079244c2880471fde69",
+    "Persistence/SaveCodec.cs": "a2a46ab45283172a9fb4395a096a6e5e7dc0371e766e2cda07423183c369f835",
+    "Persistence/SaveSession.cs": "644903a731453213838a35be47bba75eb956186409c663001c824d610be25415",
+    "Persistence/SaveStore.cs": "e7653f93b7fc4dbbc69f1d9281f13dfa2376312c23c8e791bfbc6c5412fa8f73",
+    "Runtime/AmbientPedestrians.cs": "f29263f75da0b11954090f5f93de9b93a4d191357bd821da81be5e71e924907e",
+    "Runtime/AudienceGeometryCache.cs": "c4dff4c176a4c250abac487290fbd522a92537488d5cbb0eba6cc72e3ae54334",
+    "Runtime/DwellSpots.cs": "f635a76e42caa749959bfbd0ea569c93beb542e70eba865856ed5fc4a3d7f7d8",
+    "Runtime/FoodBusinessCatalogue.cs": "853064b8b170f039ec29ad9d1413234930b8a16574759d31ab7612748ad6d8cf",
+    "Runtime/FoodEconomyPanel.cs": "32b1df0abd9e1bf8f36f12892b3c9b65830f48ab3cd3adea9b819c527e811d92",
+    "Runtime/FoodHouseholdCatalogue.cs": "39aa42c80de7ce17a312629ec4b3c1b5b3cfbc81bb063f9eae6c9e67ea0b506e",
+    "Runtime/FoodMemoryDiagnostics.cs": "552619503f93ab098fc3c410c2001c617c2f5619965ae6c30e250d8563bf573b",
+    "Runtime/FoodSupplyReader.cs": "70619275b74999546f49378d2eca2d7715f2918265a6aa82a6a0d9da8a2afedf",
+    "Runtime/GamePlaces.cs": "21987ceeaf441156b18987536aaf6f99c62a86fd32e0b4c13af9d61ff3a47fca",
+    "Runtime/MultimodalRoutes.cs": "621d326519cd3782567664de82a9e920b6714146c1dd47f70c46b90d1f364e72",
+    "Runtime/NativeCityClock.cs": "507e160de8d459d3d7fe34df2c3e98421b6742fefa475f1455615923e9ca6eb1",
+    "Runtime/NativeFoodAccounts.cs": "a083a3c771e7c461505505be5e9f250fc3b1b84bb5279e54bab6854cd166a447",
+    "Runtime/NativeFoodCandidates.cs": "e054c125cee8c0a09a375d960c0962f2a03d8bd3c4b3a96e91d8a5f3d4587425",
+    "Runtime/NativeFoodHours.cs": "49d3fbb6d97ba2cfea0a533f965e9a3faa421710f47051182f9a080d37f89804",
+    "Runtime/NativeFoodMarket.cs": "bf6e8327233cc7dba9b0c5eda607fe115d517dc2ae1bd805f8e661592e3b943b",
+    "Runtime/NativeFoodOwnership.cs": "b99550f1e0fae0d1c541860a594ee89ee117de1676176a73ae1de44e9ae81d78",
+    "Runtime/NativeMap.cs": "2c77947e23958d13f5ff8bab00d5bb871e0a284c7c41808e1960cd7dc84f6654",
+    "Runtime/NativeRoadSpeeds.cs": "4a67895e978c8ce0448a597f25c69079aab489d2f0135c2966a46480a53a3c71",
+    "Runtime/NativeRouteMetrics.cs": "a3ff8d681dc276fa289f1784b081dc64fac7ba321d5690a156996d321ce173a6",
+    "Runtime/NativeTravelPace.cs": "0523de599a9b2f7973da173b899197ea0a509bafb7ae9a85554410975c8f158f",
+    "Runtime/OptionalStopEnvironment.cs": "3d1f39d00f6d4db923760b36268a749b68e3513495341446e9456fe13ed64c6d",
+    "Runtime/OutdoorPlaces.cs": "1c82174a28079443e5df030ca8a7d969de03386ef8adf3ecc0ccfcc6297576a4",
+    "Runtime/PersistentCityMod.cs": "9932f898669a0d9b0fec0eb0fba6e74679ae4a0896ec8e86a9adce3e55df3d89",
+    "Runtime/PhysicalIntersections.cs": "473a9e6a82b6a0667d37c2effaffc2c9b355199ed475ecc7bae4b3552ec9ca1f",
+    "Runtime/PhysicalPedestrians.cs": "6cdd0a703c8e683de2f32ff7968a38bb3b72dff2a2e059d1c602c5af393c5abd",
+    "Runtime/PhysicalPopulation.cs": "908795cea82c115e1dec3d4256ad2a13781c09ec180c96f03d16bdea69294584",
+    "Runtime/PhysicalTrafficHooks.cs": "bbc9ed4d183e2ec8d040284dd5ec93470519d87827d321f66ce46cf91db4ade1",
+    "Runtime/PhysicalVehicles.cs": "a16bdb23b024619581aac148d4ed98149b555972da29fe08275cac811ade184d",
+    "Runtime/PrototypeSettings.cs": "a27b01d34d04bf55c21529aede5da6311cdd3a29d8ecc8cfbe77089c1144cee3",
+    "Runtime/ResidentInspector.cs": "261c2236bd3c9e824d38711d384859a9d07754d7ec1c2f2004e079492f05f4c1",
+    "Runtime/RoadRoutes.cs": "21a23db04322d89ad174ef360c06833a4fb068f463879ab8fc683d62fd1daa31",
+    "Runtime/RouteObjectDiscovery.cs": "74624828380a6704150ea26b7b09e9fa86a3d615591bb132d50be1b91e1ba9c4",
+    "Runtime/StationaryCrowds.cs": "e3e2fa3eeecc709b7c06eefdc2a90edff7aebd9e05a278af05821f7489675716",
+    "Runtime/TrafficRoadNetwork.cs": "6bab4171681ec01d6161ba1bcb0c29e8c9fbe218c517434b677eca0fe71debf2",
+    "Runtime/VehicleScriptOwnership.cs": "45ef2c381733b842edc4489e29bb0e5762118e9d7d0957ac18b9af06a7fb9d69",
+    "Runtime/WalkingRoutes.cs": "6a51f12dbd217469a0cbac8ec89ab5b4d3e249a657cfe48e7fc1fffc6d25bb51",
+    "tests/ActivationValidationTests.cs": "c36c8e6bd61b620afdbad255b400a2095337ed9b65804db44ec1c2dca11be010",
+    "tests/AudienceGeometryCacheTests.cs": "388610fe3c0a65cc52021cc0946cfa5790fc8a805ea96dd399a23452a8c3cbaa",
+    "tests/BaseMergeMoneyMigrationTests.cs": "199a45b073366b27f601dfce6f2aecde6c6da96a324b4ad19478b42dd765a7c0",
+    "tests/ClockRateTrackerTests.cs": "4c91c0faa0c5d2db2b4e0f238f0567eed7110f47cab864e0e80309bee9ce1094",
+    "tests/CommuteTimingTests.cs": "63256e8b152a516997f6f0e9b323eef9c0d214956641825b08e8e171fae28d71",
+    "tests/ContinuityRegressionTests.cs": "719e9949a4d9d10d6c7152dc7337589f55fdf277d3945c51e7963043a2600243",
+    "tests/CoreIdentityReference.cs": "34933ee87e18bd386580ca87527ab7da43e7b2ad5d1cf6074dd0fe2db1e03723",
+    "tests/CoreIdentityTests.cs": "2f49610b32719b30d53f3c6af1e203d7688279bb9cf9dc92cbb79433472b4e0b",
+    "tests/CurrentSchemaOnlyTests.cs": "6ffe8f7e82135f9e80f7b6b9239df2f2433868f669e465ec686caec292dedadd",
+    "tests/DailyRhythmTests.cs": "a6f127421a0f72429843fcc36dd0ba66b6695c35fd64023ad0f6e5548c6e23f2",
+    "tests/DwellPlannerTests.cs": "25b8bae51d5c92e8876a40c7c36981449265cd7f9b084f2f9b0e7c58cc0a452b",
+    "tests/EtaModeChoiceTests.cs": "c20dfe14fb2bacd0589dd383fd10afa3052641e137c6e757991ad92d21f2f554",
+    "tests/EventObservationTests.cs": "d96aa9923f7d9e01f0fc7131908ef918571c497413b4ed1f37a5d6b541ded738",
+    "tests/ExactMoneyTests.cs": "4b9c34d38e713c073ead0e6af14cf4293b712f91f6d3a0a596a2ff8e7c5b947c",
+    "tests/ExpansionPersistenceTests.cs": "a9788906dd5d9645462ac13bfaff00a36a486b9ba7919f8155336fa7592ecde9",
+    "tests/FoodActivationValidationTests.cs": "3f4f4083504284671dd8a9a5ba9d920908420a43f4a933d67da052e637b529ab",
+    "tests/FoodAuthorityTests.cs": "47d238529e6af2e736477f2c61ff8a481d60b5514deb0224ad4de1371e48fddd",
+    "tests/FoodBudgetBatchTests.cs": "3c0b5970448ebb951a09796aa7c20a5b0a3d2b4e3eeb40442bd4c1dce50f94d3",
+    "tests/FoodCommerceTests.cs": "a48a482b9e31381a647ad699a31f8a8a7d20a6c3ee48ffeb25fa617f8bfe1ea1",
+    "tests/FoodDemandTests.cs": "a2b734ad60ff125a7eefba4966d134f8bfae8f9ffe3690aa6c795cbe941d0261",
+    "tests/FoodHomeResyncTests.cs": "2221e26ec40d09a10edc4f6f4f8672d7449c6e89bf0e99032735252919fe2674",
+    "tests/FoodHouseholdTests.cs": "a16b0c45c6bfe73a2f04d3fcb1b6c7109ec0a6dacfd87640b47a505c2d57342a",
+    "tests/FoodLiveChoiceTests.cs": "f0c26c6d6b8d5f98130cb6999a8132e71a18a2df2b9da07de3c7873dcfa2385e",
+    "tests/FoodMemoryOpeningCacheTests.cs": "2c329791c10383d28f2255c1a674994d8010936f908c0afdcad478a31eeae2c6",
+    "tests/FoodMemoryReviewTests.cs": "e64d609fb34c9484237b6d41025280f3d44b8ed541d021da6213dcf5c488ef62",
+    "tests/FoodMemoryTests.cs": "1e6c4583d76ccb72e7e54bb89025a70769bccba4bd2c85409d1290937768704c",
+    "tests/FoodMenuTests.cs": "9b4e951716405e1870cade1df050112519acc05a8ed6a1ef069173be688cf98d",
+    "tests/FoodQualityDemandTests.cs": "4599077ce5ec29cfba872c53d6fd048a1af1486e3cf49648456cf975afcaadda",
+    "tests/FoodReceiptEvidenceTests.cs": "690d46f63c1e783db97819211969b22d3183d1e516dd95384d1a08894f20b76d",
+    "tests/FoodReconciliationTests.cs": "78484c7e91727cd6583b1ac0e0ecf3c072afd4e750ab4f4e4d73fe68515e9141",
+    "tests/FoodRegularsTests.cs": "641a3b75be7a73aa2a8fc583998a5a860f8eae046233b90428677d29dc9c633e",
+    "tests/FoodRepresentationTests.cs": "7665fa2eced24607caf26202b0971edc66fac59340f482fd3567cef61e1f3c8a",
+    "tests/FoodReturnReplanningTests.cs": "01de2f91c15cc3d976dd8768bbdb4a315c87c6519612d657190dc7f9d4657c0d",
+    "tests/FoodRoutineTests.cs": "4e231628c303df51aefca6f9f5556d6a66c63bdbd5ce768a24fdbfeccab4d197",
+    "tests/FractionalMoneyTests.cs": "ed974f93b4f99ecb3bb092be22d69dca480aea4fce796903d218b0eaa07a804b",
+    "tests/HeldFoodTuningTests.cs": "7b27dee50b55e31bba20a4562d50db64d788c87b04cae9aa52f860518c5bde91",
+    "tests/HouseholdFinanceTests.cs": "54c0f372e5436711d593e6ceedfd78ee3b29fb9e6faad7d4e20d84a7db920589",
+    "tests/HousingCatalogueMigrationTests.cs": "2186bec51a8c20963edc6b7445c9745f29268d87b0c741b21fb72de7613de00a",
+    "tests/HousingPersistenceTests.cs": "7da57333d4fb3e642c2dae8fca8ba90c6492eefc3397dccdc7997b2ef7f8036f",
+    "tests/HousingPopulationTests.cs": "d405900dbd404bfa5ecfe007a28c38a36a9e73019573b58fba9d7cced9fd4742",
+    "tests/LegacyMoneyWire.cs": "15a4fb17c6d439179f64dc828d99430f80cf939168eb414f9056e3cb32844ba9",
+    "tests/LegacyWire.cs": "a170417ae8f1081f354b14aeb4cf7fdb7ce99603f09d04b9d500ba9233e99549",
+    "tests/MealRhythmTests.cs": "6d97b9431dace37e153710101a5d3697406fc873ba212745827d7a5bb35d26ae",
+    "tests/MoneyTokenTests.cs": "6b0bec8052e7c498fcddfd8c19aadfc163af57a45c41c6dd5faf64e2541d37e9",
+    "tests/MultimodalTests.cs": "bb5fd8b40e32c24067d1e67aef78c2f50bd90777f183323226b5daa9c2b1a019",
+    "tests/OptionalDestinationTests.cs": "ee956ded5aa55b2857aa23343ec187efd6d5ce1ae7a8e62c656b8ae67e93874c",
+    "tests/OptionalStopFoodTests.cs": "d401bb1e2b2a9b204286debbd9162214e384901b79d0ae1ccb55e514350a21f8",
+    "tests/OptionalStopHandoffTests.cs": "853208aa2e0ba58ae234d71f921144ec13d153d4148563215a1c3c64070e31ed",
+    "tests/OptionalStopRoutineTests.cs": "d7269ffade4299bbdaec9e063297a8f707f951e90147481c71fb92a47ba8efe4",
+    "tests/OptionalStopSchedulingTests.cs": "09f06b1508dab7062664d09f0c861b93c349affe45bfccf15fd7f508cd90a557",
+    "tests/OptionalStopSettingsTests.cs": "013ef8d9e67b907a70a3711b7c897d5a0dd3ce3815cb6aeafa9a555ecf7cfa98",
+    "tests/OptionalStopShareTests.cs": "45ffc66f3f6f1ac8e1f105fb52308e3fac2b5330b8131dfb43a7c68a492071d0",
+    "tests/OptionalStopTests.cs": "517f97560f03c8a18a6530fd79d90f44a1dbe2656ad5923953b629ea1fed390f",
+    "tests/OptionalVisitTests.cs": "2509ce8050b7e6228fec7148d569c16b5ea2bff69fd41ac0bcd7008c2ba68674",
+    "tests/PendingEventQueueTests.cs": "0d76387f6fcae10aa7708ab590d9945bf9639195c3c3b3efaae01ad2332564a5",
+    "tests/PersistenceTests.cs": "ba20ec47fb8a6c7b763b41f6087ff8ba8255bd87e24ec412163f3382df9fac73",
+    "tests/PhysicalCornerHandoffTests.cs": "8d90afc8faeabb33e08a8fe38757d27dd43d23add5ae3a4c3b91bc7db5450051",
+    "tests/PhysicalJourneyTests.cs": "f6969600bc2592bf5208440ff34a05beaf0f5d499508fe9f57c820820c6cc602",
+    "tests/PhysicalPersistenceTests.cs": "503c311d935788d07942474c2b3b820c92ea6e09e07f7d27b202ee1cf4d6cc62",
+    "tests/PhysicalProgressTests.cs": "506676bf979811bbcdbbdeba4ed30ce26eab3e5d30c59f3811a3579f8170620c",
+    "tests/PhysicalRoadAdmissionTests.cs": "c933a9f82b6cdcd14acf8d558c05aef0013c37ea6833a1b18ed783db075bac0f",
+    "tests/PhysicalTrafficCornerPermissionTests.cs": "cc38a14802f585cc85a79714d190dcde9f1393df98d18443955229c2c18b2667",
+    "tests/PhysicalTrafficEndpointReconciliationTests.cs": "9bdf775fa3f6bd687b1fc556ddbc61a14b6cbccd02fdce27124db8c0ed75f60d",
+    "tests/PhysicalTrafficMotionTests.cs": "7a1a3ac318b2ccd747883ecfbcaf61fb68ab18da6adadae4cd76abc32304b9d1",
+    "tests/PhysicalTrafficPrecisionTests.cs": "980cf80403714233a53009322b1fa9d7f606decf4731979bdee8cd61a98da2fe",
+    "tests/PhysicalVehicleReferenceTests.cs": "2ae5414dc480be7aa4429f7d5371b9a8acc3c1ee3aae4972a1ec9903c62994e0",
+    "tests/PopulationExpansionTests.cs": "c3c20c842f526b8d4be1c0feadbbc3293ce5df111f8d100c88939728098d1065",
+    "tests/ResidentEmploymentTests.cs": "7c2e88429bb1920f3be20aadc6d113dbce4d0e7a8caa2731f416c8cc1f348fb6",
+    "tests/ResidentInsightTests.cs": "f3bbe5b5934a8b91dff2cf0bec3ee28ac159ca11646440efa059f91b572b1199",
+    "tests/ResumablePlanningTests.cs": "dfdd215f34dcb5e2396acf7c8bba26f572b2306c33b0efa660395974894a6518",
+    "tests/RhythmContinuityTests.cs": "3dc9f2c6eba0f06171fe897b67f1ba1c8fbfa582de65b52b4b484c620d38bbf7",
+    "tests/RhythmPersistenceTests.cs": "54863be11bdfca210d819dc2cd086ff39d1604e821c846b9bc15dc636a888964",
+    "tests/RloBridgeTests.cs": "b1148b089086e110d319ce9f999cafd70f62d5cc2187d7670047add39e401b27",
+    "tests/RloCompatibilityTests.cs": "065335bef5cc74d073521bde7144b8c7c8dbf894bf781a8895553979f477458f",
+    "tests/RloPhysicalReservationsTests.cs": "b21b8ab282bc52ec1ef782431f7952d43a5fd2546c6602f1b1d2eb029b620c6c",
+    "tests/RloRoadSpeedOverridesTests.cs": "262ab4ea54dbeff83a4212ab595b7591ba6bb7b7f46537271a4d43e70313858a",
+    "tests/RoadSearchCeilingTests.cs": "0480b862fe9ec417537471d8e955a94a4e41d28eb40a28898407c90a41780c25",
+    "tests/RoadSearchSlicingTests.cs": "7ed03d032f8c92e2cc07ad1e32bf7231af95f6468cc7e0bba37bb101e526a59f",
+    "tests/RoutingTests.cs": "cfbc3fb619056e30d4fd4e051c6af34c7bee2e86bccf043ae37b6b85898926f5",
+    "tests/SaveSessionTests.cs": "e05b9b12a0608df273f21430c8c368b2b06ec865f90659e6eebd8f78b6848cca",
+    "tests/Schema17Tests.cs": "7a569c5cf74d99f5431216281663007457db76a102cf1e5e08fcf15202865f68",
+    "tests/Schema18ChoiceReplayTests.cs": "73eb2c0ee05489f9d89b5e979cb8d657d8a4fa61f0fc7220b52b6b008347a2e8",
+    "tests/Schema18ReviewTests.cs": "0ef9349ee0ed9d9242d77420efee601a3ddc69bcc56c7878a76e92da4b7fd9cc",
+    "tests/Schema18Tests.cs": "c80a920fe1f1c60deae5f500db85aa99f2186380fb2647b69850d476e8f22587",
+    "tests/SimulationTests.cs": "cafbec1726bdf96367bd118116ae31ef1e8fe6182e803c704afe21f7e218c985",
+    "tests/TrafficAdversarialTests.cs": "5d1a3afe331f2e4907866870ef9bb20d1895875994f85cfb38b3c4040c91f9b8",
+    "tests/TrafficBoundaryTests.cs": "dc8846cf2b7428cf7e7f14b472b5afdf04468680e07b7cecdf7aac93cadb044d",
+    "tests/TrafficClosureRefreshTests.cs": "7af3a8df286414cc8cc308eff2bc765d2b2ca3f92733d4dc9a3467b1078e652c",
+    "tests/TrafficFragmentPersistenceTests.cs": "4a60464a4e97f95570c2fceb3459580b5efcd6df22b6b36c9dfc465fc0dab5ce",
+    "tests/TrafficJourneyTests.cs": "d675cf59979c02ce0267f1780321e9ef9e75d674d216bff87157c85f920398ca",
+    "tests/TrafficKernelTests.cs": "056902399fc533d62b7ad60db5df7b67edf40bc63a1f7eca74dcfcdecf7b4614",
+    "tests/TrafficMappingValidationTests.cs": "3cdbb00c7584c05febd0b4ff38adb36a8c68f5ebb456f2e0b8efe299951a7637",
+    "tests/TrafficNetworkTests.cs": "2a66dc8711bf8512741d66603634b2190b9ba77a063653fa8d316c7c7e1c08cb",
+    "tests/TrafficPersistenceTests.cs": "3078a9bd89101aac89223c865a5ab5e13d64340067249e9e1620cb4d716f5ab7",
+    "tests/TrafficQueueReferenceTests.cs": "ceb5a1531de5b2202623997228b3bf86dfb681c47e62ce819e7b3660bf6b698d",
+    "tests/TrafficRetimingPrecisionTests.cs": "57cea2dba849369d45edfb77c51008eb7546d986865065bbe8a238e937b1437f",
+    "tests/TrafficSignalMigrationTests.cs": "1428dec2a9a2afe2c56ac767259cfb2be197ea03fff163f57dda49ff09cabef2",
+    "tests/TrafficSignalPrecisionTests.cs": "44fa00b9754dca396fc3b0ad1f1970df6716e03d0ccc956d34e3c80e4a568cb1",
+    "tests/TrafficTraversalMappingTests.cs": "26888e9e64b6f58f20a6ee1b247958a63534e2172ea5627a68c3be8ce1295168",
+    "tests/TransportRoadSearchParityTests.cs": "e4dfe75e1c290217484f568f0b26d75da35d09962ed109d4f2123f2a2d689250",
+    "tests/TransportRoadTraversalTests.cs": "1922fa2d66c3ee15888d1e9feb5fe56a809c3e7353423ed92272664bfc8171e9",
+    "tests/TravelTimingCollapsedNativeTailTests.cs": "638c2dfb87401fa903a3144759b1941faa842dfdc527053893f8f22a97cfdbe7",
+    "tests/TravelTimingTests.cs": "1d4a4e6a57f7958df05e32e83c2a09213aaca13e8c27a28d2fba7741801b0e9d",
+    "tests/WeightedFoodChoiceTests.cs": "0cae8bdfc2f60ccd906607e099ec3151926653632670c415d56601fd0cb97e07",
+    "tools/food-ownership-regression/Ownership.cs": "4c62882c59f8ffb29dbf6edf6115abad93b5512e8c30d1cb035b0032f13fdfae",
+    "tools/food-ownership-regression/Program.cs": "5e64ec5c8bbca0c99bd8202f07757f1fa8e240c35d2104aa8e3f2c652181659f",
+    "tools/food-regulars-regression/Program.cs": "5c09265b189921b518ba50de1c5ef99bbaf5be2da8a18e92c831b426715cc58c"
+  },
+  "allPassed": true
+}
