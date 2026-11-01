@@ -7,7 +7,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 readers = {ROOT / ("Runtime/" + name + ".cs") for name in
-           ("DonutFeasibilityReader", "CupcakeFeasibilityReader", "SaladFeasibilityReader", "FrenchFriesFeasibilityReader", "DirectStockShowcaseReader")}
+           ("DonutFeasibilityReader", "CupcakeFeasibilityReader", "SaladFeasibilityReader", "PizzaFeasibilityReader", "IcecreamFeasibilityReader", "FrenchFriesFeasibilityReader", "DirectStockShowcaseReader")}
 text = "\n".join(path.read_text(encoding="utf-8") for path in sorted(readers))
 code = re.sub(r"//[^\n]*|/\*.*?\*/", "", text, flags=re.S)
 for forbidden in ("Harmony", "SetUp(", "ProcessCustomer", "CustomerEntry", "OrderEntry",
@@ -20,7 +20,7 @@ for directory in ("Core", "Runtime", "Persistence", "Compatibility"):
     for path in (ROOT / directory).glob("*.cs"):
         if path not in readers:
             source = path.read_text(encoding="utf-8-sig")
-            for symbol in ("DonutFeasibility", "CupcakeFeasibility", "SaladFeasibility", "FrenchFriesFeasibility", "DirectStockShowcase", "DirectStockCandidate"):
+            for symbol in ("DonutFeasibility", "CupcakeFeasibility", "SaladFeasibility", "PizzaFeasibility", "IcecreamFeasibility", "FrenchFriesFeasibility", "DirectStockShowcase", "DirectStockCandidate"):
                 assert symbol not in source, str(path)
 
 # Pins come from approved cupcake head 682aa77 and landed donut 3f7b885.
@@ -34,7 +34,16 @@ APPROVED_SHA256 = {
     "tools/cupcake-feasibility-regression/CupcakeFeasibilityRegression.csproj": "241d75ac9b97dce8bf72bcf546bb1262eb293973c21fc801a516d2154d724fab",
     "tools/cupcake-feasibility-regression/approved-donut-reader.cs.txt": "880d062dcbf9a21af4168ac44b25fd1bfc91311830058a26356c4aeca4b30cf1"
 }
+def without_pizza(path, source):
+    if path == "Runtime/DirectStockShowcaseReader.cs":
+        source = source.replace('        internal static readonly DirectStockCandidate Pizza = new DirectStockCandidate("ba:itemname_pizza");\n', '')
+    return source
+
+def without_icecream(source):
+    return source.replace('        internal static readonly DirectStockCandidate Icecream = new DirectStockCandidate("ba:itemname_icecream");\n', '')
+
 def without_salad(path, source):
+    source = without_icecream(without_pizza(path, source))
     if path == "Runtime/DirectStockShowcaseReader.cs":
         source = source.replace('        internal static readonly DirectStockCandidate Salad = new DirectStockCandidate("ba:itemname_salad");\n', '')
         source = source.replace('See the E3 per-product records;', 'See e3-donut.md and e3-cupcake.md;')
@@ -58,7 +67,7 @@ SALAD_SHA256 = {
     'tools/salad-feasibility-regression/SaladFeasibilityRegression.csproj': '21264d538b1754ab431be0a1e689dc843b13c443d91f8fa409cf678434ea0691',
 }
 for path, expected in SALAD_SHA256.items():
-    assert hashlib.sha256(approved_source(path).encode()).hexdigest() == expected, path
+    assert hashlib.sha256(without_icecream(without_pizza(path, approved_source(path))).encode()).hexdigest() == expected, path
 for path, expected in APPROVED_SHA256.items():
     current = hashlib.sha256(without_salad(path, approved_source(path)).encode()).hexdigest()
     assert current == expected, f"Approved E3 source/harness changed: {path}"
@@ -94,6 +103,9 @@ if args.audit_base:
         if path.startswith(("Core/", "Persistence/", "Runtime/", "tests/", "Compatibility/", "tools/", "config/")):
             if path in {
                 "Runtime/DirectStockShowcaseReader.cs",
+                "tools/icecream-feasibility-regression/source_checks.py",
+                "tools/pizza-feasibility-regression/source_checks.py",
+                "tools/salad-feasibility-regression/compare_baseline.py",
                 "tools/donut-feasibility-regression/Program.cs",
                 "tools/donut-feasibility-regression/source_checks.py",
                 "tools/donut-feasibility-regression/validate.py",

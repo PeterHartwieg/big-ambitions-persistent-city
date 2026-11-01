@@ -46,7 +46,7 @@ public sealed class WeatherTests
     { var r=SaveCodec.Read(wire);Assert.True(r.Status==SaveReadStatus.Loaded,r.Error);return r.State!; }
     internal static string As19(string wire)
     {
-        var root=JObject.Parse(wire);root["Schema"]=19;root.Remove("WeatherStartsDay");
+        var root=JObject.Parse(wire);root["Schema"]=19;root.Remove("WeatherStartsDay");root.Remove("MenuPolicy");
         foreach(JObject p in root["Citizens"]!) p.Remove("W");
         if(root["Food"] is JObject food) foreach(JArray m in food["Residents"]!)
         {
@@ -59,7 +59,7 @@ public sealed class WeatherTests
     public void Migration19IsNeutralActivatesNextDayAndPreservesSource()
     {
         var state=State();string old=As19(SaveCodec.Write(state));var read=Read(old);
-        Assert.Equal(20,read.Schema);Assert.Equal(2,read.WeatherStartsDay);Assert.Null(read.Citizens[0].W);
+        Assert.Equal(23,read.Schema);Assert.Equal(2,read.WeatherStartsDay);Assert.Null(read.Citizens[0].W);
         var rain=new Source {Value=WeatherSample.Rain};var city=new CitySimulator(read,new Paths());
         city.AttachWeather(rain,new WeatherSettings {RainOptionalOutingMultiplier=0});city.AdvanceTo(state.Minute);
         Assert.Equal(WeatherSample.Unknown,read.Citizens[0].W!.Weather);Assert.Equal(0,rain.Calls);
@@ -67,7 +67,7 @@ public sealed class WeatherTests
         city.AdvanceTo(state.Minute+1440);Assert.Equal(WeatherSample.Rain,read.Citizens[0].W!.Weather);Assert.True(rain.Calls>0);
         var forbidden=JObject.Parse(old);forbidden["WeatherStartsDay"]=0;
         Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(forbidden.ToString()).Status);
-        forbidden=JObject.Parse(old);forbidden["Schema"]=21;Assert.Equal(SaveReadStatus.Future,SaveCodec.Read(forbidden.ToString()).Status);
+        forbidden=JObject.Parse(old);forbidden["Schema"]=24;Assert.Equal(SaveReadStatus.Future,SaveCodec.Read(forbidden.ToString()).Status);
         forbidden["Schema"]=12;Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(forbidden.ToString()).Status);
     }
     [Theory] [InlineData(WeatherSample.Dry)] [InlineData(WeatherSample.Rain)] [InlineData(WeatherSample.Unknown)]

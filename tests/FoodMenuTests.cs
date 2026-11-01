@@ -76,7 +76,7 @@ public sealed partial class FoodCommerceTests
         var (city, _, _) = Ready(); var payload = JObject.Parse(SaveCodec.Write(city.State));
         var shop = (JObject)payload["Food"]!["Shops"]![0]!;
         if (error == "duplicate") shop["AdditionalProductIds"] = new JArray(FoodProducts.Croissant);
-        if (error == "too-many") shop["AdditionalProductIds"] = new JArray("a", "b", "c", "d");
+        if (error == "too-many") shop["AdditionalProductIds"] = new JArray("a", "b", "c", "d", "e", "f", "g", "h");
         if (error == "null") shop["AdditionalProductIds"] = null;
         if (error == "missing") shop.Remove("AdditionalProductIds");
         Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(payload.ToString()).Status);
@@ -87,7 +87,7 @@ public sealed partial class FoodCommerceTests
         var (city, _, _) = Ready(threeMeals: true); Advance(city, 2860);
         var row = city.State.Food!.History.Single(); Assert.Equal(3, row.ProductSales.Single().Purchases);
         var payload = JObject.Parse(SaveCodec.Write(city.State));
-        payload["Food"]!["History"]![0]!["ProductSales"]![0]!["Revenue"] = 1;
+        payload["Food"]!["History"]![0]!["ProductSales"]![0]![2] = 1;
         Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(payload.ToString()).Status);
     }
     private sealed class MenuMarket : IFoodMarket
