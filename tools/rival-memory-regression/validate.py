@@ -1,5 +1,6 @@
 """Foreground offline acceptance; serialize all dotnet work with the shared host guard."""
 import hashlib
+import argparse
 import json
 import os
 from pathlib import Path
@@ -9,6 +10,16 @@ import sys
 root = Path(__file__).resolve().parents[2]
 out = root / "build/d4-validation"
 out.mkdir(parents=True, exist_ok=True)
+parser = argparse.ArgumentParser()
+parser.add_argument("--start-at", type=int, default=1, help="Resume a stopped foreground batch at this command number")
+args = parser.parse_args()
+# E4 deliberately generates its frozen comparison inputs into ignored build storage.
+preparation = subprocess.run([sys.executable, "tools/e4-menu-regression/prepare.py"], cwd=root,
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+(out / "preparation.txt").write_bytes(preparation.stdout)
+if preparation.returncode:
+    print(preparation.stdout.decode("utf-8", errors="replace"))
+    sys.exit(preparation.returncode)
 dotnet = str(Path(os.environ["LOCALAPPDATA"]) / "Microsoft/dotnet/dotnet.exe")
 guard = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
          r"C:\Users\Peter\Coding_Projects\.agent-logs\wait-other-dotnet.ps1", "-Repo", str(root)]
@@ -24,9 +35,11 @@ commands += [[dotnet, "run", "--project", "tools/simulate/Simulate.csproj", "--d
              [dotnet, "run", "--project", "tools/food-routines/FoodRoutines.csproj", "--configuration", "Release", "--disable-build-servers", "--", "build/harness-food-routines-demo", "957"],
              [dotnet, "run", "--project", "tools/food-demand/FoodDemand.csproj", "--disable-build-servers", "--", "build/harness-food-demand-demo"]]
 commands += [[sys.executable, "tools/" + p + "/source_checks.py"] for p in ("donut-feasibility-regression", "salad-feasibility-regression")]
-results = []
+results = json.loads((out / "results.json").read_text())[:args.start_at - 1] if args.start_at > 1 else []
 env = dict(os.environ, DOTNET_CLI_USE_MSBUILD_SERVER="0", MSBUILDDISABLENODEREUSE="1")
 for i, command in enumerate(commands):
+    if i + 1 < args.start_at:
+        continue
     label = " ".join(command[1:])
     print(f"[{i+1}/{len(commands)}] {label}", flush=True)
     if command[0] == dotnet:
