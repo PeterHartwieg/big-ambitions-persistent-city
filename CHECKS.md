@@ -31,3 +31,5 @@ Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here
 - C4 — Bounded inactive market research, access contract, base sync and native checklist: [checks](docs/checks/c4-market-research.md).
 
 - E1 — New-outing and food weather, schema 20, base sync and native checklist: [checks](docs/checks/e1-rain.md).
+
+- E3 frenchfries — 1 November 2026, offline feasibility STOP and numbered 6 Nov handoff: [checks](docs/checks/e3-frenchfries.md).

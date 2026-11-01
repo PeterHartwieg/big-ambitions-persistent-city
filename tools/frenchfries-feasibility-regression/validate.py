@@ -63,7 +63,8 @@ for project, args in (("simulate/Simulate", ["28", "build/harness-demo"]),
     commands.append([DOTNET, "run", "--project", "tools/" + project + ".csproj",
                      "-p:UseSharedCompilation=false", "--disable-build-servers"]
                     + (["--configuration", "Release"] if project.startswith("food-routines/") else []) + ["--"] + args)
-commands += [[sys.executable, "tools/cupcake-feasibility-regression/compare_donut.py"],
+commands += [[sys.executable, "tools/frenchfries-feasibility-regression/measure_before.py"],
+             [sys.executable, "tools/cupcake-feasibility-regression/compare_donut.py"],
              [sys.executable, "tools/salad-feasibility-regression/compare_baseline.py", "differential"]]
 results = []
 for i, command in enumerate(commands, 1):
