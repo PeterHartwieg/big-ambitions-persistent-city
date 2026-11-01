@@ -63,10 +63,10 @@ namespace PersistentCity.Core
             ResidentMeal? meal = food != null ? food.FindMeal(residentId) : State.Food?.Residents.Find(m => m.ResidentId == residentId);
             return ResidentInsight.Capture(State, person, meal, id => places.TryGetValue(id, out var place) ? place : null, productName, formatAddress);
         }
-        public void AttachFoodMarket(IFoodMarket market, FoodChoiceSettings? choiceSettings = null)
+        public void AttachFoodMarket(IFoodMarket market, FoodChoiceSettings? choiceSettings = null, FoodMemorySettings? memorySettings = null)
         {
             if (food != null) throw new InvalidOperationException("Food market already attached.");
-            food = new FoodCommerce(this, market, routes, choiceSettings);
+            food = new FoodCommerce(this, market, routes, choiceSettings, memorySettings);
         }
 
         private sealed class ActivityObservers
@@ -117,7 +117,7 @@ namespace PersistentCity.Core
             var replacement = new CitySimulator(State, replacementRoutes);
             replacement.activityObservers = activityObservers;
             if (stopEnvironment != null) replacement.AttachOptionalStops(stopEnvironment, stopPercentage);
-            if (food != null) replacement.AttachFoodMarket(food.Market, food.ChoiceSettings);
+            if (food != null) replacement.AttachFoodMarket(food.Market, food.ChoiceSettings, food.MemorySettings);
             return replacement;
         }
 
@@ -162,7 +162,8 @@ namespace PersistentCity.Core
         private bool NoEventsThrough(double targetMinute) => pending == null && food?.HasPendingDecision != true
             && (due.Count == 0 || due.Min!.Minute > targetMinute)
             && (traffic == null || traffic.NextEventMinute > targetMinute)
-            && (State.Food == null || (food != null && food.NextMinute > targetMinute));
+            && (State.Food == null || (food != null && food.NextMinute > targetMinute))
+            && (State.Capabilities.Active || (Math.Floor(State.Minute / 1440) + 1) * 1440 > targetMinute);
 
         private AdvanceResult AdvanceCore(double targetMinute, int eventBudget, bool publishSnapshot)
         {
@@ -187,9 +188,11 @@ namespace PersistentCity.Core
                 double citizenMinute = due.Count == 0 ? double.PositiveInfinity : due.Min!.Minute;
                 double trafficMinute = traffic?.NextEventMinute ?? double.PositiveInfinity;
                 double foodMinute = food?.NextMinute ?? double.PositiveInfinity;
-                double next = Math.Min(foodMinute, Math.Min(citizenMinute, trafficMinute));
+                double activation = State.Capabilities.Active ? double.PositiveInfinity : (Math.Floor(State.Minute / 1440) + 1) * 1440;
+                double next = Math.Min(activation, Math.Min(foodMinute, Math.Min(citizenMinute, trafficMinute)));
                 if (next > targetMinute) break;
                 State.Minute = next;
+                if (next == activation) { State.Capabilities.Active = true; count++; continue; }
                 if (food?.HasPendingDecision == true || foodMinute < citizenMinute && foodMinute < trafficMinute)
                 {
                     traffic?.AdvanceTo(next, 0);

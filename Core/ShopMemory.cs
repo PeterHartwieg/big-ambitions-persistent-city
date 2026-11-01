@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace PersistentCity.Core
 {
-    /// <summary>B0 publishes a contract only. This binary cannot execute B experience/loyalty.</summary>
+    /// <summary>Revision 1 executes bounded B experience/loyalty; unknown revisions refuse.</summary>
     public sealed class PopulationCapabilities
     {
         public string Code { get; set; } = "B";
@@ -12,7 +12,7 @@ namespace PersistentCity.Core
         public bool Active { get; set; }
         public void RequireExecutable()
         {
-            if (Code != "B" || Revision != 1 || Active)
+            if (Code != "B" || Revision != 1)
                 throw new InvalidOperationException("Unsupported active population capability or revision; preserve the payload and suspend simulation.");
         }
     }

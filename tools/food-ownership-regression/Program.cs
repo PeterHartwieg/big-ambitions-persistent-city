@@ -259,11 +259,10 @@ GameManager.DuringNewHour = null; IndoorCustomerSpawner.Customers.Clear(); GameM
 Check(!NativeFoodOwnership.Find(reg)!.Managed, "drain-time body deferral still cannot acquire midway through the same hour");
 
 // B0 executes the actual earliest native hook, before attaching any population or market.
-foreach (string damage in new[] { "active", "revision", "code", "future" })
+foreach (string damage in new[] { "revision", "code", "future" })
 {
     string supported = PopulationPayload(9);
-    string unsupportedPopulation = damage == "active" ? supported.Replace("\"Active\":false", "\"Active\":true")
-        : damage == "revision" ? supported.Replace("\"Revision\":1", "\"Revision\":2")
+    string unsupportedPopulation = damage == "revision" ? supported.Replace("\"Revision\":1", "\"Revision\":2")
         : damage == "code" ? supported.Replace("\"Code\":\"B\"", "\"Code\":\"C\"")
         : supported.Replace("\"Schema\":18", "\"Schema\":999");
     reg = Fresh(9, saved, populationPayload: unsupportedPopulation);
@@ -274,6 +273,12 @@ foreach (string damage in new[] { "active", "revision", "code", "future" })
     Check(ReferenceEquals(unsupportedPopulation, SaveGameManager.Current.modData[SaveStore.StateKey]), "capability refusal preserves exact population payload reference");
     Check(ReferenceEquals(saved, SaveGameManager.Current.modData[FoodAuthorityStore.Key]), "capability refusal preserves authority manifest");
 }
+
+// B1 explicitly supports active B revision 1 at the same earliest bootstrap hook.
+string activeB = PopulationPayload(9).Replace("\"Active\":false", "\"Active\":true");
+reg = Fresh(9, saved, populationPayload: activeB);
+Check(NativeFoodOwnership.Error.Length == 0, "active B revision 1 executes at earliest native bootstrap");
+Check(ReferenceEquals(activeB, SaveGameManager.Current.modData[SaveStore.StateKey]), "bootstrap does not rewrite active population");
 
 Console.WriteLine($"PASS {checks} actual ownership-hook checks against native field/callback doubles. No Unity/game execution.");
 
