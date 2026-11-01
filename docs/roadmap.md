@@ -20,12 +20,26 @@ Replaces the phase order in docs/reviews/2026-10-27-realism-gameplay-roadmap.md 
 
 0. Performance: the 30 October comprehensive review is done and passes the mod-work gate below. Spock agreed: no optimization work now; re-measure as each slice lands. This isn't a release step.
 A. Inspector, traits and probabilistic choice. Start now (Peter 15:24 JST), with the standing performance gate applied to each slice.
-B. Memory, loyalty and regulars. **B0 is implemented offline:** schema 18, exact old-source migration and history-inclusive capacity; memory remains empty/inactive and the regulars helper is a pure own-shop projection. **B0b is inserted between B0 and B1:** persist the held A3 tuning image and neutral bounded per-candidate contribution; schema 18 is amended before player use. B1 resumes on top of B0b; B2 UI remains pending. [Contract and capacity evidence](population-schema18.md).
-C. Marketing awareness and targeting, plus the market research product. **C2a implemented offline on B0b:** bounded source/index interface, empty memory/campaign providers, local/routine and positive daily distant discovery, common eight-slot shortlist, additive schema 19. No C1/B1/B2 dependency; r1 bounds rebuild continuations and restores at-stop observation/diagnostics and strict held-image validation. Combined 6 Nov rig proof pending. [Contract](population-schema19.md).
+B. Memory, loyalty and regulars. **B0 is implemented offline:** schema 18, exact old-source migration and history-inclusive capacity; memory remains empty/inactive and the regulars helper is a pure own-shop projection. **B0b is inserted between B0 and B1:** persist the held A3 tuning image and neutral bounded per-candidate contribution; schema 18 is amended before player use. B1 is implemented offline on B0b: per-consumer generation memory, atomic experience watermarks and captured bounded loyalty/curiosity weights; 6 Nov native proof remains pending. B2 is implemented offline on B1: unique-consumer own-shop regular counts, inspector memory words and read-only bridge flags/counts, with zero saved growth and no choice contribution. Default Q7 thresholds are three served visits, positive effective memory and fourteen days. Native proof remains pending the combined 6 Nov session. [B2 checks](checks/b2-regulars-inspector.md#step-b2-regulars-and-inspector-words---31-october-2026-offline-only). [Contract and capacity evidence](population-schema18.md).
+   B1 protected-insertion exception: if recording a new bad visit would evict a competing boost, return chance stays equal (never higher), with a terminal failed watermark and no negative per-shop entry. B2 must not assume every failure leaves a negative entry; `ProtectedInsertions` is session-local, not saved history. [Exact exception](population-schema18.md#b1-execution--31-october-2026).
+
+C. Marketing awareness and targeting, plus the market research product. **C2a implemented offline on B0b:** bounded source/index interface, B1 memory projection/campaign-unknown providers, local/routine and positive daily distant discovery, common eight-slot shortlist, additive schema 19. B1 memory is wired within the existing four source slots and bounded rank; r1 bounds rebuild continuations and restores at-stop observation/diagnostics and strict held-image validation. Combined 6 Nov rig proof pending. [Contract](population-schema19.md). **C4 implemented offline and inactive:** bounded pure research engine/access contract only; paid research stays off because C3 found no safe native fee path. No UI, normal-play computation or saved fields. [Contract and offline proof](market-research.md).
 D. Rivals as alternatives.
-E. Weather, street life, bigger menus and more products. **E1 implemented offline on C2a `9b13698`:** new-context weather capture, soft rain effects, queue commitment replay and additive schema 20; no E2b timing keys or menu changes. Combined 6 Nov rig checks remain pending. [Contract/budget](population-schema20.md).
+E. Weather, street life, bigger menus and more products. **E1 implemented offline:** new-context weather capture, soft rain effects, frozen queue commitment replay and additive schema 20 on the merged C2a/B1 contract; E2b timing and menu feasibility remain intact. Combined-head native checks remain pending. [Contract/budget](population-schema20.md).
 Then: re-check the same performance gate for the final release, the hands-on session, and one release.
 Later: residents as employees, households.
+
+Implementation plan for B–E: [memory, marketing, rivals and the wider street](plans/steps-b-e.md).
+
+E3 status, 31 October (offline): [donut](plans/e3-donut.md) and [cupcake feasibility discovery](plans/e3-cupcake.md) share one isolated on-demand raw-field reader with pinned candidates. Loaded equipment and natural checkout/settlement proof remain pending; no additional product certified or enabled.
+
+E3 salad status, 1 November (offline): [salad stop record](plans/e3-salad.md) adds a pinned conditional probe on the cupcake/donut stack. Shipped holder unestablished; no generic holder extension, menu, gameplay or saved change. Existing read branches retained; no additional cheap safe measured perf win identified. Three-candidate offline timing and the combined 6 Nov handoff are in [CHECKS](checks/e3-salad.md#e3-salad-feasibility---1-november-2026-offline-only).
+
+Peter’s [31 October Q1-Q7 decisions](plans/steps-b-e.md#product-decisions-peter-31-oct-2026) specify tiered paid research as a third native-agency option (proven fee or unavailable), local/distant discovery, estimated rivals, food-first products, no anonymous crowds/night multiplier and own-shop regulars; tier contents/fees remain open.
+
+Track F (Peter, 31 October): independently authored city view from interiors, F0 spike → F1 shop view/customer entry → F2 upper-floor/penthouse view → F3 polish. [F0 findings and plan](plans/track-f-interior-view.md): default-off runtime eligibility/entrance-anchor experiment; **city drawing is a no-op pending F1**, with no save-format change or A-stack dependency. E2c (31 Oct, offline) implements only the once-per-load third-party detection guard, forced-off F0 state and read-only bridge verdict; native proof remains pending. [E2c evidence](checks/e2c-interior-guard.md#e2c-third-party-interior-guard---31-october-2026-offline-only). The same mod-work/whole-frame evidence rules apply to F.
+
+F1 status, 1 November (offline): **NO-GO at drawing step 1**; no proven detached-space projection/culling approach, no renderer or customer hand-off added. [Decision and smaller read-only probe](plans/f1-shop-view-decision.md); [offline checks and 6 Nov handoff](checks/f1-shop-view.md). F0/E2c and all runtime/save behavior remain unchanged.
 
 ## Performance gate (Peter, 2026-10-30)
 
@@ -44,31 +58,28 @@ Applies to every step A–E slice re-measure and to the final release:
 
 Record every taken win with before/after numbers.
 
-| Slice | Change | Before | After |
-|---|---|---|---|
-| E1 | Lazy verified-rain frame cache, called only by new boundaries | Uncached E1 control: 50,000 reads/sweep; 6,000,000 over 120 capture sweeps | 1 read/sweep; 120 reads, cached failures/unknown too. Resident capture 40 bytes/boundary, held food fields 0 bytes; no new per-resident per-frame rain read |
-| E1 | Incremental admission-key hash with the original finalizer; skip hash for neutral weather | Concatenation control: 127.84 bytes/rain admission, median 43.07 ns at 50k | 0 bytes, 33.63 ns; exact original-key equality asserted across all measured keys and independent seeded/Unicode tests. Same draw domain |
-| E1 | Direct schema-20 consumer-prefix shape check without substring | 120 bytes/check; median 326.82 ns | 0 bytes/check; 301.58 ns. Frozen 18/19 memory wire unchanged; [raw E1 measurements](reviews/2026-11-01-e1-measurements.json) |
-| C2a r1 | Bound geometry publication with 64-item continuation; keep eligibility-only changes out of geometry revision | Synchronous 20k rebuild: 40 measured >=30 ms samples, max78.1916 ms; eligibility flips could rebuild identical geometry | 371,898 measured units incl. cold/JIT: p95 <=0.0123 ms, max11.8403 ms, zero >=30 ms; eligibility flips perform zero builds. 20k complete build uses 9,390–10,408 units with clock/event ordering held. [r1 evidence](reviews/2026-10-31-c2a-r1-rebuild.json) |
-| C2a | Reuse source draw prefixes, use bounded linear dedup and size the one source list | First dense prototype: 4,564 / 4,413 bytes/context (1,024 / 20k) | Final three-process median 987 / 885 bytes/context; keys preserved by independent original-key test. Offline only; [measurements](reviews/2026-10-31-c2a-measurements.json) |
-| C2a | Stream binary catalogue revision through 64 KiB buffer; one indexed ordinal array/ranges per spatial scale | 20k dense / sparse builds allocate 17,479,416 / 31,995,973 bytes | 4,254,290 / 13,475,542 bytes. Wall time variable; **40 measured rebuild spikes >=30 ms**, max78.1916 ms, retained in CHECKS; no native gate claim |
-| C2a | Remove full metadata and routine-hours sweeps from each native decision capture; direct generation/scope lookup | B0b batch: all controllers + one full hours pass per context | Zero full capture sweeps; <=24 sampled eligibility predicates and <=8 detailed captures. Synthetic eight-unbatched-read control 0.1105 ms ->0.0094 ms batch (not a native B0b frame comparison) |
-| B0b | Nonmaterializing streaming shape precheck for the new held tuning image, before full graph decode | Materializing prototype: 136 bytes/check, median 1,375.69 ns | 0 bytes/check, 187.79 ns (three fresh processes, 300k calls/run; offline .NET 10). Continuation allocation unchanged; [raw B0b measurements](reviews/2026-10-31-b0b-measurements.json) |
-| A2 | Save validation builds error text only on failure (`Text`/`Bounded`/`Known`/duplicate/unknown-field checks); runs on every save and load | Validation alloc per save **8.39 MiB** (957 residents with journeys, offline .NET 10) | **1.31 MiB** |
-| A2 | Read shape check: one reusable duplicate-field set per JSON depth, bit flags per position, integer range from the token value; positions streamed instead of one `JObject` each | Read alloc **83.3 MiB**, read median **119.7 ms**; write alloc **26.1 MiB** (same payload) | **38.8 MiB**, **89.2 ms**; **19.1 MiB** |
-| A2 r2 | Schema-17 outcome records as one compact string each (no field names) | 4,038,976 chars at 957 residents end of day; 50,000 × factor 3 above the input cap | 3,470,518 chars (−14.1%); 50,000 × factor 3 at 89.7% of the cap |
-| A2 r2 | Unboxed range checks for schema-17 enums in save validation | Validation 1.83 MiB alloc, 4.3 ms per save (957 residents, end of day) | 1.04 MiB, 2.7 ms |
-| A2 r1 | Schema-17 outcomes: whole-minute integer times, shop/product kept only for purchases | Bought record 210 chars, skipped 196 (full-precision minutes, shop/product on skips) | 182 and 122 chars (−13% / −38% per record) |
-| A2 | Schema-17 traits stored as one 0–4 digit per trait (`{"Bands":"…","Version":1}`) instead of ten named integer fields | 208 chars per trait record (+333,036 chars at 957 residents × 2 consumers) | 34 chars per record (174 fewer; 1.74 M chars saved at 5,000, 17.4 M at 50,000) |
-| A3 | Reuse the existing exact-hours place cache per business observation across menu feasibility checks; mutable/replaced hours still invalidate | 8-shop decision: 254,728 bytes; p95 0.735 ms | 117,704 bytes; p95 0.300 ms (offline .NET 10; synthetic routes) |
-| A3 | Compare pinned logical-stay fields across quote units instead of repeating SHA-256; reload checks the canonical key once | 117,704 bytes; 8-shop p95 0.300 ms | 104,656 bytes; p95 0.169 ms in that run; larger-market timings noisy (offline, same harness) |
-| A3 | Avoid exponentiation by one for default weights/temperatures, preserving exact weights | 1,024-shop + 24-offer default decision: 1,072 `Math.Pow` calls | 0 calls; non-unit config still uses `Math.Pow` (call-count reduction; no noisy wall-time claim) |
-| A3 | Project immutable travel bands/coefficients once before shortlist iteration | 1,024 projections per 1,024-shop decision | 1 projection (1,023 repeated projections removed); exact coefficient vector and seed winners remain pinned |
-| A3 r1 | Refresh ownership/hours once per atomic eight-shop capture; cache owned scope lookup and unchanged menus during the fresh full metadata pass | 8 full hours passes; interleaved 131-controller capture median 0.1041 ms | 1 pass; 0.0754 ms (64 warmed samples, synthetic native surfaces, actual metadata/hours code). Stable scope lookup changes 131 list scans to 131 dictionary lookups; no repeated stable-menu arrays |
-| A3 r1 | Coalesce no-work/refused-return/present-route slots and select with the last quote; retain selected-before-commit save boundary | Full / closed / refused-outward / existing-shop decisions: 19 / 19 / 19 / 5 events | 18 / 3 / 10 / 3 events. At 957 residents: event-cap frames 2,273 -> 2,154 full, 2,273 -> 359 closed, 2,273 -> 1,197 refused, 300 -> 180 existing; fastest synthetic full-route lunch still has backlog |
-| A3 r1 | Reuse bounded materialized captured businesses and their exact-hours caches through evaluation/selection; fewer continuation units | Prior native-length-ID decision allocation at 8 / 64 / 1,024 scopes: 99,280 / 99,400 / 105,400 bytes | 83,920 / 84,040 / 80,568 bytes with observer enabled. Full-decision p95 0.263 / 0.207 / 0.331 ms; no wall-time gain claimed across noisy runs. [R1 measurements](reviews/2026-10-31-a3-r1-measurements.json) |
-| A3 r2 | Count a food decision once as a citizen event; report bounded quote/selection/commit units separately under the unchanged 128-unit/2 ms caps | Matched 957-resident full-route lunch median 2,157 frames; fastest modeled clock pending [583, 583, 583] | 274 frames; pending [0, 0, 0]. All four scenarios drain under every modeled clock rate; exact saved-state hashes and <=1 food quote/unit preserved. [R2 measurements](reviews/2026-10-31-a3-r2-measurements.json); native timing still required |
-| B0 | Nonmaterializing outcome and memory shape prechecks; validate bounded tuple arity before creating children | 552 bytes/outcome and 352 bytes/memory precheck in the preserved prototype | 0 bytes for both new shape prechecks (500k calls); outcome 126.16 -> 50.24 ns, memory 328.32 -> 280.61 ns in the 5k comparison; no native timing claim |
-| B0 | Cached typed primitive access in the new budget/meal tuple converters; direct scalar writer/reader dispatch | Equal-wire 5k prototype: write/read alloc 88,360,664 / 199,517,384 bytes; medians 109.36 / 316.11 ms | 79,001,488 / 173,354,440 bytes; 90.34 / 274.09 ms, seven interleaved measured rounds; byte equality asserted; [raw measurements](reviews/2026-10-31-b0-measurements.json) |
-| B0 | Count UTF-8 in bulk string/array writes with tested split-surrogate carry, instead of per-character loops | 256 Mi ASCII-character count: 249.43 ms | 5.42 ms in the 5k comparison; same 268,435,456 chars/bytes; save preflight only, not a serializer traversal rewrite |
-| B0 r1 | One-pass early capability probe, bounded direct header validation, and Schema/Capabilities first in new root writes; full decode unchanged | Actual previous-order reference/ceiling probe median **31.8863 / 1,827.6675 ms**, allocation **27,121,800 / 801,032,696 bytes** | New header-first **0.0201 / 0.0255 ms**, **2,968 bytes** each; fresh-context first calls **6.5292 / 11.7447 ms**. Previous-order fallback **16.1228 / 848.7131 ms**, >=30 ms calls flagged as load latency. [R1 measurements](reviews/2026-10-31-b0-r1-measurements.json); no native timing claim |
+Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index line here. Keep before/after numbers and measurement limits in that file; sync/review-fix notes stay with the slice.
+
+- A2 — [Schema 17, lifestyle traits and base sync evidence](perf/a2-schema17-traits.md).
+- A3 — [Weighted food choices, review fixes and native checklist](perf/a3-weighted-choice.md).
+- B0 — [Schema 18, capacity, review fixes and native checklist](perf/b0-schema18.md).
+- B0b — [Held tuning, base syncs and native checklist](perf/b0b-held-tuning.md).
+- E3 — [Donut feasibility reader](perf/e3-donut.md).
+- C1 — [Native campaign reader and native checklist](perf/c1-campaign-reader.md).
+- D1 — [Read-only rival food catalogue and native checklist](perf/d1-rival-catalogue.md).
+- F0 — [Interior view experiment, reviews and native checklist](perf/f0-interior-view.md).
+- E2c — [Third-party interior guard](perf/e2c-interior-guard.md).
+- B1 — [Shop memory and loyalty v2](perf/b1-memory-loyalty.md).
+
+- B2 — [Observed own-shop regulars and resident memory words](perf/b2-regulars-inspector.md).
+
+- C2a — [Core bounded awareness and yielded index publication](perf/c2a-core-awareness.md).
+- E2b — [Bounded street-life timing and fail-closed frontage ownership](perf/e2b-street-life.md).
+
+- E3 cupcake — [Shared reader timing and allocation evidence](perf/e3-cupcake.md).
+
+- E3 salad — [Conditional shared reader timing and allocation evidence](perf/e3-salad.md).
+
+- C4 — [Bounded inactive research and direct trait validation](perf/c4-market-research.md).
+
+- E1 — [Weather capture, admission and consumer precheck](perf/e1-rain.md).

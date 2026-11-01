@@ -1,0 +1,7 @@
+# E2b performance wins
+
+| Slice | Change | Before | After |
+|---|---|---|---|
+| E2b review r1 (31 Oct, offline) | Address/entrance-cell indexes; skip Home/Study, retain assigned-work frontages; no refresh rewrite. Actual reviewed/current methods, 1,000 places × 1,000 controllers, 200 batches/arm. | Publish 7.1134/8.0621/8.6583 ms, 414160.0 B; rebind 7.6673/8.5979/9.2397 ms, 934439.8 B. | Publish 0.9492/3.2639/4.8519 ms, 935816.0 B; rebind 1.3145/6.0477/8.1665 ms, 1456258.8 B. Native calls unchanged; allocation trade-off and all >=30 ms flags in [review proof](../checks/e2b-street-life.md#e2b-review-round-1--31-october-2026-offline-only). Native gate pending. |
+| E2b (31 Oct, offline) | Share one native frontage image at publication/rebind; cache refusals. | 48/256-frontage batches: 1,176/32,896 native entrance reads; 200 misses: 9,600/51,200 reads. | 48/256 entrance reads per batch; **zero** reads for 200 cached refusals. Cold snapshot allocation increases; [full costs and limits](../checks/e2b-street-life.md#e2b-bounded-street-life--31-october-2026-offline-only). Native calls counted with doubles, not NavMesh CPU measured. |
+| E2b (31 Oct, offline) | Check cached ownership before sampling; remove the duplicate facade lookup, preserving the one-cold-door/frame budget. | Warm 48/256-query batch p50/p95: 0.0433/0.0885 and 0.1005/0.1963 ms; 568.1/592.4 B/query. | 0.0275/0.0483 and 0.0720/0.1713 ms; **360.0/374.7 B/query**; zero extra warm samples. Actual E2a/current extracted methods, same doubles; native benefit unmeasured. |

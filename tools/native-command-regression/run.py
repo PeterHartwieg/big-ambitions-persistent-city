@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 """Run exact production command methods with deferred Unity-command test doubles."""
 from pathlib import Path
+import os
+import shutil
 import subprocess
 import tempfile
 import sys
 from xml.sax.saxutils import escape
-import os, shutil
-# Prefer dotnet on PATH; otherwise use the per-user SDK install the offline gate specifies.
-dotnet = shutil.which('dotnet') or str(Path(os.environ.get('LOCALAPPDATA', '')) / 'Microsoft/dotnet/dotnet.exe')
+dotnet = shutil.which('dotnet')
+if dotnet is None and os.name == 'nt' and os.environ.get('LOCALAPPDATA'):
+    local_host = Path(os.environ['LOCALAPPDATA']) / 'Microsoft/dotnet/dotnet.exe'
+    if local_host.is_file():
+        dotnet = str(local_host)
+if dotnet is None:
+    raise SystemExit('Cannot find dotnet. Add the .NET SDK to PATH; Windows also checks %LOCALAPPDATA%/Microsoft/dotnet/dotnet.exe.')
 root = Path(__file__).resolve().parents[2]
 source = (root / 'Runtime/PhysicalVehicles.cs').read_text()
 start = source.index('        internal void BeginNativeFixedStep()')

@@ -1,0 +1,413 @@
+{
+  "baseline": "c0af745",
+  "candidateSourceCommit": "b23f053",
+  "pureCoreCommit": "87776a1",
+  "gameManaged": "read-only local Steam Managed inputs",
+  "productionDllSha256": "665b9e04c321424b91fc858c94fb02024c1cb76d1a539128b0bff13b3b8d0c77",
+  "finalUnitTests": {
+    "passed": 1891,
+    "failed": 0,
+    "skipped": 0,
+    "c4Cases": 29,
+    "log": "build/c4/final-tests.log",
+    "testList": "build/c4/final-list-tests.log"
+  },
+  "checks": [
+    {
+      "command": [
+        "<python>",
+        "tools/build.py",
+        "--game-managed",
+        "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/01.log"
+    },
+    {
+      "command": [
+        "powershell",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Users\\Peter\\Coding_Projects\\.agent-logs\\wait-other-dotnet.ps1",
+        "-Repo",
+        "<repo>"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/02.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "test",
+        "tests/PersistentCity.Tests.csproj"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/03.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--no-build",
+        "--list-tests"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/04.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/core-identity-regression/CoreIdentityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/05.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/diagnostic-response-regression/DiagnosticResponseRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/06.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/event-observation-regression/EventObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/07.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-catalogue-regression/FoodCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/08.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-checkout-regression/FoodCheckoutRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/09.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-hours-regression/FoodHoursRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/10.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-household-catalogue-regression/FoodHouseholdCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/11.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-ownership-regression/FoodOwnershipRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/12.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-supply-regression/FoodSupplyRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/13.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/frame-observation-regression/FrameObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/14.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/gate-access-regression/GateAccessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/15.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/road-ceiling-regression/RoadCeilingRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/16.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/road-handoff-regression/RoadHandoffRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/17.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/road-invalidation-regression/RoadInvalidationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/18.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/road-speed-regression/RoadSpeedRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/19.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/route-discovery-regression/RouteDiscoveryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/20.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/21.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/startup-clock-regression/StartupClockRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/22.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/traffic-closure-regression/TrafficClosureRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/23.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/traffic-queue-regression/TrafficQueueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/24.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/walking-quote-regression/WalkingQuoteRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/25.log"
+    },
+    {
+      "command": [
+        "<python>",
+        "tools/native-command-regression/run.py"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/26.log"
+    },
+    {
+      "command": [
+        "<python>",
+        "tools/physical-selection-regression/run.py"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/27.log"
+    },
+    {
+      "command": [
+        "<python>",
+        "tools/vehicle-ownership-regression/run.py"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/28.log"
+    },
+    {
+      "command": [
+        "<python>",
+        "tools/optional-stop-regression/run.py"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/29.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/simulate/Simulate.csproj",
+        "--",
+        "28",
+        "build/harness-demo"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/30.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-routines/FoodRoutines.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "build/harness-food-routines-demo",
+        "957"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/31.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/food-demand/FoodDemand.csproj",
+        "--",
+        "build/harness-food-demand-demo"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/32.log"
+    },
+    {
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/market-research-regression/MarketResearchRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "build/c4/measurements.json"
+      ],
+      "exitCode": 0,
+      "log": "build/c4/gates/33.log"
+    }
+  ],
+  "additional": {
+    "literalB0bByteComparison": {
+      "status": "pass",
+      "populationBytes": 41406,
+      "foodBytes": 65696,
+      "byteDelta": 0,
+      "command": "python tools/market-research-regression/compare_save_baseline.py"
+    },
+    "finalBuild": "pass",
+    "finalUnitTests": "pass",
+    "finalTestListing": "pass"
+  },
+  "protocol": "Sequential foreground only; wait-other-dotnet guard before each test/run and Python child harness; no time limits or background tests; no game/rig/profile access. Final build and unit/list checks repeated after final bounds test.",
+  "nativeEvidence": "Not performed. Combined mod-work p50/p95/max, >=30ms spike flags and separate whole-frame timing remain pending the combined 6 Nov session."
+}

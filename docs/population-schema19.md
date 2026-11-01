@@ -2,7 +2,8 @@
 
 Contract owner: pc-c2a-core-awareness, 31 October 2026. Base: B0b `c0af745`.
 The B?E plan is read from `codex/persistent-city` at `6d43276`; it is not merged
-into this branch. B1/B2, C1, D1 and F0 are absent. Schema 18's B and tuning
+into the original C2a branch. The 1 November sync incorporates the landed B1/B2,
+C1, C3, D1, F0 and E2c slices; their contracts remain intact. Schema 18's B and tuning
 contracts stay unchanged. `persistentcity:state_v1`, receipt and authority keys,
 exact money, the four-offer menu limit and the global input/record caps stay fixed.
 
@@ -11,8 +12,24 @@ exact money, the four-offer menu limit and the global input/record caps stay fix
 After activation, the one logical capture samples memory (four direct complete
 generation references), home/work-or-study/current origin (up to four draws each),
 and eight daily discovery slots. The optional campaign provider is unknown and
-is never called: its eight reserved slots admit nothing. Memory defaults to empty;
-there is no B1 experience, decay or loyalty implementation here. For an existing
+is never called: its eight reserved slots admit nothing. In the synced tree, the
+default memory provider projects B1's four saved generation references while B is
+active, admitting only entries with previous successful service, positive stored
+affinity and an unexpired B1 memory. Failure-only, zero and negative entries remain
+inputs to B1's contribution for independently sampled shops; they grant no
+memory admission. Positive stored affinity uses B1's existing preserved age on
+surviving positive failures; a failure that crosses zero cannot extend awareness
+through its refreshed negative-memory age. It never writes memory
+or substitutes a replacement generation. B1's existing bounded contribution applies
+to the common shortlist rank and is captured per selected shop for offer selection;
+held decisions never recompute it. Explicit provider overrides remain supported.
+Failure-only insertion also preserves any competing memory that can supply
+awareness on or after the saved activation day, even if its scalar is below
+novelty or memory strength is zero. It uses B1's existing protected-insertion
+exception: retain the bounded collection and commit the failed watermark without
+inserting the new entry. Memories expired by activation remain reclaimable.
+No wire field, size limit, memory capacity or held-image replay rule changes.
+For an existing
 shop stop, direct observation occupies Origin slot 0 deterministically (including
 when random draws are zero), replacing one of the four origin slots rather than
 adding slots. The same eligibility and complete feasibility checks still apply.
@@ -133,4 +150,6 @@ creates no meal context or route, reads no campaigns/supply, and writes no state
 A day override derives a hypothetical day's sources; it is not a journey or sale.
 
 Offline proof does not certify native accounting, timing or visible journeys.
-The numbered 6 November rig checklist in CHECKS remains pending.
+The numbered [6 November rig checklist](checks/c2a-core-awareness.md#in-game-checks-for-6-nov-rig)
+remains pending under the combined-head batched rig rule; its sync amendments
+cover B1's populated memory and Peter's input-only playtest checks.

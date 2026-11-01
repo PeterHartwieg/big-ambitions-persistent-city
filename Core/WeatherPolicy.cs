@@ -124,7 +124,7 @@ namespace PersistentCity.Core
             }
             return capture;
         }
-        public Dwell? QueueAtOpening(CitizenState person,Place place,double now)
+        public Dwell? QueueAtOpening(CitizenState person,Place place,double now,Dwell? committed=null)
         {
             // Normal refresh only reads the event's capture. No camera-dependent sampling or new terms.
             if(person.Phase!=CitizenPhase.WaitingForOpening || person.PlaceId!=place.Id || person.DestinationId!=place.Id
@@ -133,7 +133,7 @@ namespace PersistentCity.Core
             var capture=person.W;
             if(capture==null || !capture.Queue || capture.Boundary!=person.NextEventMinute)
                 capture=CaptureQueueWeather(person,now); // migrated/pre-existing wait without a queue capture
-            return DwellPlanner.QueueAtOpening(person,place,State.Seed,now,capture.Weather==WeatherSample.Rain,capture.Value);
+            return DwellPlanner.QueueAtOpening(person,place,State.Seed,now,capture.Weather==WeatherSample.Rain,committed,capture.Value);
         }
     }
 }

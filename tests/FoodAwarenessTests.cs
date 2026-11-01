@@ -75,12 +75,12 @@ public sealed class FoodAwarenessTests
     [Fact]
     public void ManagedAndFutureExternalMetadataShareTheSameEightSlotsWithoutAuthorityEnrollment()
     {
-        var entries=Enumerable.Range(0,16).Select(i=>new FoodAwarenessCatalogue.Entry("generation:"+i.ToString("D5"),"p"+i,new Position(0,0,0),i<8 ? FoodAlternativeKind.Managed : FoodAlternativeKind.External));
+        var entries=Enumerable.Range(0,16).Select(i=>new FoodAwarenessCatalogue.Entry("generation:"+i.ToString("D5"),"p"+i,new Position(0,0,0),i<8 ? FoodAwarenessAlternativeKind.Managed : FoodAwarenessAlternativeKind.External));
         var c=new FoodAwarenessCatalogue(entries);bool external=false,managed=false;
         for(int day=0;day<20;day++)
         {
             var selected=c.Rank(Sample(c,day),new(0,0,0),new ResidentTraits {Bands="2222222222"},new(),new(77,"consumer",day,MealKind.Lunch,"stay",1),120);
-            Assert.InRange(selected.Length,1,8);external|=selected.Any(e=>e.Kind==FoodAlternativeKind.External);managed|=selected.Any(e=>e.Kind==FoodAlternativeKind.Managed);
+            Assert.InRange(selected.Length,1,8);external|=selected.Any(e=>e.Kind==FoodAwarenessAlternativeKind.External);managed|=selected.Any(e=>e.Kind==FoodAwarenessAlternativeKind.Managed);
         }
         Assert.True(external && managed);
     }

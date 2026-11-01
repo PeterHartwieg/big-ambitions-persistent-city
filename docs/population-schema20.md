@@ -1,9 +1,10 @@
 # Population schema 20 - E1 weather
 
-Allocated after C2a schema 19 at `9b13698`. Only population weather fields change.
+Allocated after C2a schema 19, integrated against merged C2a `692b8b5` and C4 base `1f8f4b4`, refreshed through development `2f12ae9` (read-only E3 salad and docs-only F1). Only population weather fields change.
 The source 13-17 codec, schema-18 tuple/memory/tuning contracts and schema-19
-awareness contract retain their wire shapes and refusal rules. No other slice's
-fields, formulas or migrations are imported.
+awareness contract retain their wire shapes and refusal rules. The merged schema-19 wire is identical to E1's `9b13698` source shape; B1's
+active revision-1 capability and bounded nonzero held memory contributions remain
+executable. The strict 19->20 reader adds no source field or tuple allowance.
 
 `WeatherStartsDay` is one required root integer, 0 through saved logical day + 1.
 On migration from 19 (also through older supported sources), initialize weather
@@ -63,7 +64,7 @@ two scalars on the single held image consume the existing 1 MiB decision allowan
 They are constant per city, never daily configuration snapshots. The capacity tool
 subtracts their actual bytes and every physical/consumer weather byte from the
 existing future reservation, so none is charged twice. It populates real captures
-in its capacity fixtures. Actual CF32/CF64 results are recorded in CHECKS.
+in its capacity fixtures. Actual CF32/CF64 results are recorded in [E1 checks](checks/e1-rain.md).
 
 A nonnull W charges one record in both counters, bounded by the existing E1 50,000
 physical-resident reservation. Null W charges zero. The two consumer suffix bytes

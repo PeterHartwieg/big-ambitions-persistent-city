@@ -122,7 +122,7 @@ namespace PersistentCity.Runtime
                 Districts = FoodHouseholdCatalogue.Read(simulation.State.Places.Where(p => p.Kind == PlaceKind.Home)
                     .Select(p => p.District).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct(StringComparer.Ordinal).ToArray()).ToList() };
             var adapter = new NativeFoodMarket(state, simulation.State.Places, enrolling: true);
-            try { simulation.State.Food = state; simulation.AttachFoodMarket(adapter, settings.FoodChoice, settings.Awareness); foodMarket = adapter; }
+            try { simulation.State.Food = state; simulation.AttachFoodMarket(adapter, settings.FoodChoice, settings.FoodMemory, settings.Awareness); foodMarket = adapter; }
             catch { simulation.State.Food = null; adapter.Dispose(); throw; }
         }
         public void EnableHouseholdFinances()
@@ -183,17 +183,26 @@ namespace PersistentCity.Runtime
                 if (NativeFoodOwnership.Error.Length > 0) throw new InvalidDataException(NativeFoodOwnership.Error);
                 string path = Path.Combine(context.ModRootPath, "persistent-city.json");
                 if (File.Exists(path)) settings = JsonConvert.DeserializeObject<PrototypeSettings>(File.ReadAllText(path)) ?? throw new InvalidDataException("Configuration is null.");
+                inspector.ShopName = place => foodMarket?.NameOf(place);
+                inspector.CurrentOwnShop = ObservedOwnShop;
                 settings.FoodChoice.Clamp(message => log.Info(message));
+                settings.MarketResearch.Clamp(message => log.Info(message));
                 settings.Awareness.Clamp(message => log.Info(message));
                 settings.Weather.Clamp(message => log.Info(message));
                 log.Info("E1 weather revision 1; missing/failed source is unknown (neutral).");
                 log.Info("Food awareness v1: radius="+settings.Awareness.RadiusMetres.ToString(System.Globalization.CultureInfo.InvariantCulture)
                     +", draws/anchor="+settings.Awareness.DrawsPerAnchor+", discovery="+settings.Awareness.DiscoveryProbability.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                settings.FoodMemory.Clamp(message => log.Info(message));
+                log.Info("Regulars projection: served visits=" + settings.FoodMemoryRegularServedVisits
+                    + ", recent days=" + settings.FoodMemoryRegularRecentDays + "; read-only observed feedback.");
+                log.Info("Food memory policy B revision 1; next-boundary activation, captured decision contributions.");
                 if (!Position.Finite(settings.GameClockFactor) || settings.GameClockFactor < .1 || settings.GameClockFactor > 1)
                     throw new InvalidDataException("GameClockFactor must be between 0.1 and 1 (one third gives three times as much travel time per day).");
                 if (settings.MaximumPedestrians < 1 || settings.MaximumPedestrians > 256 || settings.MaximumVehicles < 1 || settings.MaximumVehicles > 64
                     || !Position.Finite(settings.PhysicalRadiusMetres) || settings.PhysicalRadiusMetres < 30 || settings.PhysicalRadiusMetres > 300)
                     throw new InvalidDataException("Physical limits must be 1–256 pedestrians, 1–64 vehicles and a 30–300 metre radius.");
+                settings.ReportInteriorSettings(message => log.Info(message));
+                settings.ReportStreetLifeSettings(message => log.Info(message));
                 if (!settings.Enabled)
                 {
                     Say("Persistent City is disabled by a developer configuration override. Remove the override and reload the city to start it.");
@@ -209,6 +218,8 @@ namespace PersistentCity.Runtime
             try
             {
                 var save = SaveGameManager.Current;
+                if (NativeInteriorCityView.Configured && (save == null || UI.Load.LoadScene.isLoading
+                    || saveIdentity != null && !ReferenceEquals(saveIdentity, save))) RestoreInterior();
                 if (save == null) return;
                 if (saveIdentity != null && !ReferenceEquals(saveIdentity, save))
                 {
@@ -305,12 +316,13 @@ namespace PersistentCity.Runtime
                 maxClosureMilliseconds = Math.Max(maxClosureMilliseconds, closureElapsed);
                 RecordRoutingFrame(prepareElapsed, closureElapsed, true);
                 AdvancePopulation(Math.Max(target, simulation.State.Minute));
-                if (settings.PhysicalEnabled && !physicalFailed && physical == null && !NativeTravelPace.HiddenTravel)
+                if (settings.PhysicalEnabled && !physicalFailed && physical == null && !BuildingManager.IsInsideBuilding && !NativeTravelPace.HiddenTravel)
                 {
                     try { physical = new PhysicalPopulation(transform, simulation, routes!, dependency!, log!, settings.MaximumPedestrians, settings.MaximumVehicles, settings.PhysicalRadiusMetres, dwellSpots); }
                     catch (Exception error)
                     {
                         physicalFailed = true;
+                        if (NativeInteriorCityView.Configured) NativeInteriorCityView.FailClosed();
                         log?.Warn("Physical population unavailable; ordinary spawning restored, persistent background simulation remains active: " + error);
                     }
                 }
@@ -456,6 +468,7 @@ namespace PersistentCity.Runtime
                 // A failed view adapter must not stop the valid background population. If cleanup
                 // itself fails, propagate to the outer stop path so uncertain state is not saved.
                 physicalFailed = true;
+                if (NativeInteriorCityView.Configured) NativeInteriorCityView.FailClosed();
                 // Commerce remains attached to the background population. Only a full
                 // runtime stop may release its native price and ownership hooks.
                 try { physical?.Dispose(); }
@@ -571,7 +584,7 @@ namespace PersistentCity.Runtime
             simulation = new CitySimulator(state, routes);
             dwellSpots = new DwellSpots();
             var stopEnvironment=new OptionalStopEnvironment(state.Places,dwellSpots);
-            simulation.AttachOptionalStops(stopEnvironment, settings.OptionalStopChoicePercentage);
+            simulation.AttachOptionalStops(stopEnvironment, settings.OptionalStopChoicePercentage, settings.StopTiming());
             simulation.AttachWeather(new FrameWeatherSource(()=>UnityEngine.Time.frameCount,()=>stopEnvironment.Raining),settings.Weather);
             seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
             if (state.Food == null)
@@ -582,8 +595,9 @@ namespace PersistentCity.Runtime
             if (state.Food.HouseholdFinanceVersion != HouseholdFinance.PolicyVersion || state.Food.MealRhythmVersion != MealRhythm.PolicyVersion)
                 throw new InvalidDataException("Unsupported experimental food policy; preserve this city and use a fresh development baseline.");
             foodMarket = new NativeFoodMarket(state.Food, state.Places);
-            simulation.AttachFoodMarket(foodMarket, settings.FoodChoice, settings.Awareness);
+            simulation.AttachFoodMarket(foodMarket, settings.FoodChoice, settings.FoodMemory, settings.Awareness);
             saveIdentity = save;
+            NativeInteriorCityView.Start(settings, log!, RestoreInterior);
             NativeCityClock.Start(save, settings.GameClockFactor, () => simulation?.IsCaughtUpTo(Now()) == true, () => simulation?.State.Food != null, Now);
             NativeTravelPace.ResetReading();
             log?.Info("City clock factor=" + settings.GameClockFactor.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
@@ -625,7 +639,7 @@ namespace PersistentCity.Runtime
                 var source = ReadRlo("save");
                 if (!source.MatchesPopulation(simulation.State))
                 { Fail("RLO changed before saving; original population payload retained."); return; }
-                RunPhysical(() => physical?.ObserveForSave());
+                RunPhysical(() => physical?.BeforeSave());
                 foodMarket?.RefreshKnownOwnership();
                 // A partially caught-up snapshot is valid: replay continues from its recorded minute after load.
                 var result = (saveSession ?? throw new InvalidOperationException("Save session is missing."))
@@ -633,6 +647,17 @@ namespace PersistentCity.Runtime
                 if (!result.Success) Fail("Population save refused: " + result.Error);
             }
             catch (Exception error) { Fail("Population save failed: " + error.Message); }
+        }
+
+        private void RestoreInterior()
+        {
+            try
+            {
+                if (NativeInteriorCityView.State.Active || physical?.HasBodies == true)
+                    RunPhysical(() => physical?.RestoreInterior());
+            }
+            catch (Exception error) { Fail("Interior view restoration failed: " + error.Message); }
+            finally { NativeInteriorCityView.Suspend(); }
         }
 
         private void Say(string message)
@@ -652,6 +677,7 @@ namespace PersistentCity.Runtime
 
         private void Detach()
         {
+            NativeInteriorCityView.Stop();
             foodMarket?.Dispose(); foodMarket = null;
             inspector.Detach();
             try { physical?.Dispose(); }
