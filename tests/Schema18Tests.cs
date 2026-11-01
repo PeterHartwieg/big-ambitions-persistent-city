@@ -100,7 +100,7 @@ public sealed partial class FoodCommerceTests
         {
             case "tuple-octal": broken = source.Replace("\"Residents\":[[1,", "\"Residents\":[[01,"); break;
             case "tuple-hex": broken = source.Replace("\"Residents\":[[1,", "\"Residents\":[[0x1,"); break;
-            case "schema-hex": broken = source.Replace("\"Schema\":20,", "\"Schema\":0x14,"); break;
+            case "schema-hex": broken = source.Replace("\"Schema\":23,", "\"Schema\":0x17,"); break;
             case "revision-octal": broken = source.Replace("\"Revision\":1", "\"Revision\":01"); break;
             case "memory-escaped": broken = source.Replace("\"1-------|0\"", "\"\\u0031-------|0\""); break;
             case "visit-escaped": broken = source.Replace("\"RecentVisits\":[\"1", "\"RecentVisits\":[\"\\u0031"); break;

@@ -248,7 +248,7 @@ public sealed class ResidentInsightTests
         // A finished meal is read from its record, including a shop that has since left the catalogue.
         meal.Status = MealStatus.Paid;
         meal.Today.Meals[0] = Outcome(MealKind.Lunch, MealOutcomeStatus.Bought, MealReasonCode.Bought, place: "address:Gone%20Street:1:shop");
-        Assert.Equal("bought croissant at a shop no longer available", Capture(city, person, meal, places).Meals[1].Text);
+        Assert.Equal("bought croissant at an unknown shop", Capture(city, person, meal, places).Meals[1].Text);
     }
 
     [Fact]

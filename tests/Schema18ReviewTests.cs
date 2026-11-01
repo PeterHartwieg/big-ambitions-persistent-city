@@ -61,7 +61,7 @@ public sealed class Schema18ReviewTests
         var city = Population.Create(new[] { new CitizenIdentity { Id = "r", Name = "Resident", Age = 30 } },
             new[] { new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 1 } }, "probe-review", "test", 11, 0);
         string current = SaveCodec.Write(city);
-        Assert.StartsWith("{\"Schema\":20,\"Capabilities\":", current);
+        Assert.StartsWith("{\"Schema\":23,\"Capabilities\":", current);
         var root = JObject.Parse(current);
         var oldOrder = new JObject(root.Properties().OrderBy(p => p.Name, StringComparer.Ordinal).Select(p => new JProperty(p.Name, p.Value.DeepClone())));
         string previous = oldOrder.ToString(Formatting.None);

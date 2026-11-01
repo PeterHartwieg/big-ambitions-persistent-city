@@ -43,7 +43,7 @@ if __name__ == "__main__":
                 "--configuration", "Release"], True))
     elif phase == "audit":
         records.append(run("pizza-audit", [sys.executable, "tools/pizza-feasibility-regression/source_checks.py",
-            "--audit-base", "5877453"]))
+            "--audit-base", "2bd9006"]))
     elif phase == "all":
         records.append(run("build", [sys.executable, "tools/build.py", "--game-managed",
             r"C:\Program Files (x86)\Steam\steamapps\common\Big Ambitions\Big Ambitions_Data\Managed"], True))
@@ -62,7 +62,8 @@ if __name__ == "__main__":
             ("traffic-closure", "TrafficClosure"), ("traffic-queue", "TrafficQueue"),
             ("walking-quote", "WalkingQuote"), ("campaign-reader", "CampaignReader"),
             ("donut-feasibility", "DonutFeasibility"), ("cupcake-feasibility", "CupcakeFeasibility"),
-            ("salad-feasibility", "SaladFeasibility"), ("pizza-feasibility", "PizzaFeasibility")]:
+            ("salad-feasibility", "SaladFeasibility"), ("pizza-feasibility", "PizzaFeasibility"),
+            ("icecream-feasibility", "IcecreamFeasibility")]:
             records.append(run(folder, [DOTNET, "run", "--project",
                 f"tools/{folder}-regression/{name}Regression.csproj", "--configuration", "Release"], True))
         for folder in ["native-command", "physical-selection", "vehicle-ownership", "optional-stop"]:
@@ -72,7 +73,7 @@ if __name__ == "__main__":
             ("food-routines", [DOTNET, "run", "--project", "tools/food-routines/FoodRoutines.csproj", "--configuration", "Release", "--", "build/harness-food-routines-demo", "957"]),
             ("food-demand", [DOTNET, "run", "--project", "tools/food-demand/FoodDemand.csproj", "--", "build/harness-food-demand-demo"])]:
             records.append(run(name, command, True))
-        for product in ["donut", "salad", "pizza"]:
+        for product in ["donut", "salad", "pizza", "icecream"]:
             records.append(run(product + "-source", [sys.executable, f"tools/{product}-feasibility-regression/source_checks.py"]))
     else:
         raise SystemExit("Expected before, pizza, audit or all")

@@ -18,7 +18,8 @@ namespace PersistentCity.Core
         }
         public string ToWire()
         {
-            var text = new StringBuilder(WireLength); text.Append('1');
+            bool extended=Settings.FoodMenuMaximumOffersPerShop!=4 || Settings.FoodMenuNewTasteWeight!=1 || Settings.FoodMenuHealthWeight!=0;
+            var text = new StringBuilder(extended ? 241 : WireLength); text.Append(extended ? '2' : '1');
             void Add(double value) => text.Append(BitConverter.DoubleToInt64Bits(value).ToString("X16", CultureInfo.InvariantCulture));
             Add(Settings.FoodChoiceTemperature);
             Add(Settings.FoodChoiceWeightFloor);
@@ -32,6 +33,7 @@ namespace PersistentCity.Core
             Add(Settings.FoodChoiceHealthWeight);
             Add(Settings.FoodChoiceHouseholdWeight);
             Add(Settings.FoodShortlistTemperature);
+            if(extended) { Add(Settings.FoodMenuMaximumOffersPerShop); Add(Settings.FoodMenuNewTasteWeight); Add(Settings.FoodMenuHealthWeight); }
             return text.ToString();
         }
         public static bool TryParse(string? wire, out FoodDecisionTuning? tuning)
@@ -53,12 +55,13 @@ namespace PersistentCity.Core
                 FoodChoiceHealthWeight = Read(),
                 FoodChoiceHouseholdWeight = Read(),
                 FoodShortlistTemperature = Read() };
+            if(wire![0]=='2') { settings.FoodMenuMaximumOffersPerShop=(int)Read(); settings.FoodMenuNewTasteWeight=Read(); settings.FoodMenuHealthWeight=Read(); }
             tuning = new FoodDecisionTuning(settings); return true;
         }
         /// <summary>Allocation-free streaming shape precheck; no image is created until the full graph passes.</summary>
         public static bool IsCanonicalWire(string? wire)
         {
-            if (wire == null || wire.Length != WireLength || wire[0] != '1') return false;
+            if (wire == null || !(wire.Length == WireLength && wire[0] == '1' || wire.Length == 241 && wire[0] == '2')) return false;
             for (int i = 1; i < wire.Length; i++)
                 if (!(wire[i] >= '0' && wire[i] <= '9' || wire[i] >= 'A' && wire[i] <= 'F')) return false;
             if (!In(ReadWord(wire, 1), 0.25, 4)) return false; // FoodChoiceTemperature
@@ -73,6 +76,9 @@ namespace PersistentCity.Core
             if (!In(ReadWord(wire, 145), 0, 3)) return false; // FoodChoiceHealthWeight
             if (!In(ReadWord(wire, 161), 0.1, 5)) return false; // FoodChoiceHouseholdWeight
             if (!In(ReadWord(wire, 177), 0.25, 4)) return false; // FoodShortlistTemperature
+            if(wire[0]=='2' && (!In(ReadWord(wire,193),1,8) || ReadWord(wire,193)!=Math.Truncate(ReadWord(wire,193))
+                || !In(ReadWord(wire,209),0,2) || !In(ReadWord(wire,225),0,2))) return false;
+            if(wire[0]=='2' && ReadWord(wire,193)==4 && ReadWord(wire,209)==1 && ReadWord(wire,225)==0) return false;
             return true;
         }
         private static double ReadWord(string wire, int at)
