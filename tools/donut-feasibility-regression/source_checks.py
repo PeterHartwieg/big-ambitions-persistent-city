@@ -5,9 +5,9 @@ import re
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
-# The second sync imports approved A3/B0/C3/E2c and documentation changes.
+# The review sync also imports approved B0b held-tuning changes.
 # Pin the incoming tree; independently retain the approved E3 reader below.
-BASE = "b17e4a919e7a5499ffa22730752d63addbf3e082"
+BASE = "a7ab5bc51ffaabae28697efad7b35411553f03a7"
 E3_BASE = "462a99d8313968a2a1760ac88806b3aed47a0003"
 reader = ROOT / "Runtime/DonutFeasibilityReader.cs"
 text = reader.read_text(encoding="utf-8")

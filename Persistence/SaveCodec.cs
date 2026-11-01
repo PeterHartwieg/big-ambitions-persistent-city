@@ -216,6 +216,11 @@ namespace PersistentCity.Persistence
                 return;
             }
             if (nullable != null) type = nullable;
+            if (type == typeof(FoodDecisionTuning))
+            {
+                Require(token == JsonToken.String && FoodDecisionTuning.IsCanonicalWire((string)reader.Value!), "Invalid held tuning image.");
+                return;
+            }
             if (type == typeof(string)) { Require(token == JsonToken.String, "Expected a string."); Require(((string)reader.Value!).Length <= 512, "Oversized string."); return; }
             if (type == typeof(bool)) { Require(token == JsonToken.Boolean, "Expected a boolean."); return; }
             if (type == typeof(int) || type.IsEnum) { Require(token == JsonToken.Integer, "Expected an integer."); Require(IntegerToken(reader.Value, int.MinValue, int.MaxValue) && text.CanonicalInteger((IJsonLineInfo)reader), "Integer is out of range or noncanonical."); return; }
@@ -333,13 +338,14 @@ namespace PersistentCity.Persistence
                 Require(reader.Read(), "Missing field value.");
                 CheckShape(reader, property.PropertyType!, resolver, ref records, text, schema, fieldNames);
             }
-            Require(reader.TokenType == JsonToken.EndObject && names.Count == properties.Count, "Missing object fields.");
+            Require(reader.TokenType == JsonToken.EndObject && names.Count == properties.Count - (type == typeof(FoodDecisionState) && !names.Contains("Tuning") ? 1 : 0)
+                - (type == typeof(FoodDecisionShop) && !names.Contains("MemoryContribution") ? 1 : 0), "Missing object fields.");
         }
 
         private static bool NullableRecord(Type type) => type == typeof(OptionalStopState) || type == typeof(Route) || type == typeof(CarState)
             || type == typeof(TrafficKernelState) || type == typeof(TrafficSignalSchedule)
             || type == typeof(FoodCommerceState) || type == typeof(MealOuting) || type == typeof(MealExcursion) || type == typeof(ResidentBudget)
-            || type == typeof(ResidentTraits) || type == typeof(ResidentFoodToday) || type == typeof(FoodDecisionState);
+            || type == typeof(FoodDecisionTuning) || type == typeof(ResidentTraits) || type == typeof(ResidentFoodToday) || type == typeof(FoodDecisionState);
         // Contracts depend only on the sealed save DTO types, never a city or serializer setting.
         // DefaultContractResolver owns a thread-safe metadata cache; settings/serializer instances
         // remain per operation, including application-wide JsonConvert defaults.
@@ -352,7 +358,7 @@ namespace PersistentCity.Persistence
                 MaxDepth = 48, FloatParseHandling = FloatParseHandling.Double
             };
             settings.Converters.Add(new PositionConverter()); settings.Converters.Add(new MoneyJsonConverter());
-            settings.Converters.Add(new MealOutcomeConverter()); settings.Converters.Add(new TupleConverter());
+            settings.Converters.Add(new TuningConverter()); settings.Converters.Add(new MealOutcomeConverter()); settings.Converters.Add(new TupleConverter());
             settings.Converters.Add(new TodayConverter()); settings.Converters.Add(new MemoryConverter());
             settings.Converters.Add(new VisitConverter(context)); settings.Converters.Add(new BusinessReferenceConverter(context));
             return settings;
@@ -1020,8 +1026,10 @@ namespace PersistentCity.Persistence
             // Choosing follows every feasibility answer; an undecided image may stop at any slot.
             Require(decision.Result == FoodDecisionResult.Evaluating || decision.QuotesDone == 2 * decision.Shops.Count,
                 "Decision chose before its quotes were settled.");
+            // The simulator holds one decision, including an empty-shortlist decision. Bound the tuning
+            // header as well as routes; otherwise empty images could spend a city-wide tuning history.
+            Require(++routeBearing <= FoodChoicePolicy.MaximumRouteBearingDecisions, "More than one held food decision.");
             if (decision.Shops.Count == 0) return 0;
-            Require(++routeBearing <= FoodChoicePolicy.MaximumRouteBearingDecisions, "More than one route-bearing food decision.");
             int records = 0;
             var businesses = new HashSet<string>(StringComparer.Ordinal);
             bool selected = decision.Result != FoodDecisionResult.Selected;
@@ -1029,6 +1037,9 @@ namespace PersistentCity.Persistence
             foreach (var shop in decision.Shops)
             {
                 Require(shop != null && businesses.Add(shop.BusinessId), "Duplicate decision shop.");
+                Require(Position.Finite(shop!.MemoryContribution) && shop.MemoryContribution >= -8 && shop.MemoryContribution <= 8,
+                    "Invalid held memory contribution.");
+                Require(shop.MemoryContribution == 0, "Held memory contribution requires B1 support.");
                 Text(shop!.BusinessId, "Decision shop business", 512);
                 Require(foodPlaces.Contains(shop.PlaceId, (int)PlaceKind.Shop), "Unknown decision shop.");
                 Require(shop.MealsPerHour == -1 || Position.Finite(shop.MealsPerHour) && shop.MealsPerHour >= 0 && shop.MealsPerHour <= 100000,
@@ -1186,6 +1197,9 @@ namespace PersistentCity.Persistence
                     .OrderBy(property => type == typeof(CityState) ? property.PropertyName == "Schema" ? 0 : property.PropertyName == "Capabilities" ? 1 : 2 : 2)
                     .ThenBy(property => property.PropertyName, StringComparer.Ordinal).Select(property =>
                 {
+                    if (type == typeof(FoodDecisionState) && property.PropertyName == "Tuning"
+                        || type == typeof(FoodDecisionShop) && property.PropertyName == "MemoryContribution")
+                    { property.Required = Required.Default; return property; } // pre-image 18
                     property.Required = NullableRecord(property.PropertyType!) || Nullable.GetUnderlyingType(property.PropertyType!) != null ? Required.AllowNull : Required.Always;
                     return property;
                 }).ToList();

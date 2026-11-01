@@ -20,7 +20,7 @@ Replaces the phase order in docs/reviews/2026-10-27-realism-gameplay-roadmap.md 
 
 0. Performance: the 30 October comprehensive review is done and passes the mod-work gate below. Spock agreed: no optimization work now; re-measure as each slice lands. This isn't a release step.
 A. Inspector, traits and probabilistic choice. Start now (Peter 15:24 JST), with the standing performance gate applied to each slice.
-B. Memory, loyalty and regulars. **B0 is implemented offline:** schema 18, exact old-source migration and history-inclusive capacity; memory remains empty/inactive and the regulars helper is a pure own-shop projection. B1 capture/choice and B2 UI remain pending. [Contract and capacity evidence](population-schema18.md).
+B. Memory, loyalty and regulars. **B0 is implemented offline:** schema 18, exact old-source migration and history-inclusive capacity; memory remains empty/inactive and the regulars helper is a pure own-shop projection. **B0b is inserted between B0 and B1:** persist the held A3 tuning image and neutral bounded per-candidate contribution; schema 18 is amended before player use. B1 resumes on top of B0b; B2 UI remains pending. [Contract and capacity evidence](population-schema18.md).
 
 C. Marketing awareness and targeting, plus the market research product.
 D. Rivals as alternatives.
@@ -56,8 +56,9 @@ Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index
 - A2 — [Schema 17, lifestyle traits and base sync evidence](perf/a2-schema17-traits.md).
 - A3 — [Weighted food choices, review fixes and native checklist](perf/a3-weighted-choice.md).
 - B0 — [Schema 18, capacity, review fixes and native checklist](perf/b0-schema18.md).
+- B0b — [Held tuning, base syncs and native checklist](perf/b0b-held-tuning.md).
+- E3 — [Donut feasibility reader](perf/e3-donut.md).
 - C1 — [Native campaign reader and native checklist](perf/c1-campaign-reader.md).
 - D1 — [Read-only rival food catalogue and native checklist](perf/d1-rival-catalogue.md).
 - F0 — [Interior view experiment, reviews and native checklist](perf/f0-interior-view.md).
 - E2c — [Third-party interior guard](perf/e2c-interior-guard.md).
-- E3 ? [Donut feasibility reader](perf/e3-donut.md).

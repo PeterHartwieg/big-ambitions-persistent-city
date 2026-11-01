@@ -1,5 +1,27 @@
 # Sync the development base and split documentation into approved E3
 
+## Review round 1: incorporate B0b and preserve UTF-8 indexes
+
+Fixes **Opus-r1-1** and **Opus-r1-2**. Fetch development at `a7ab5bc51ffaabae28697efad7b35411553f03a7` (B0b #16), then make a second real two-parent ancestry merge into E3 sync `aa6d72a`; common ancestor `b17e4a9`. The local merge is conflict-free. This preserves B0b ancestry for the harness's later merge into `codex/pc-e3-first-product`; no PR is merged or pushed by this session.
+
+**Opus-r1-1:** the old `BASE=b17e4a9` guard is red on the combined tree (`Existing source/contract changed: Core/FoodChoiceSettings.cs`). Pin `BASE` to `a7ab5bc`; leave `E3_BASE=462a99d` and all isolation/native-write/caller checks unchanged. B0b's held-image implementation, schema-18 amendment, frozen legacy contracts, migration/refusal cases, `HeldFoodTuningTests`, held-tuning regression and all other incoming files are imported unchanged. E3's reader, compiled harness and project are unchanged. No E3 production integration edit, new schema allocation or competing persistence contract. This update inherits B0b's already approved schema-18 amendment.
+
+**Opus-r1-2:** replace the two literal question-mark E3 separators with Unicode **U+2014**, writing UTF-8 explicitly. B0b's checks and performance documents remain unchanged; the CHECKS and roadmap indexes retain exactly one B0b line followed immediately by exactly one E3 line. All existing evidence, native checklist markers, performance qualifications and historical test results below remain.
+
+**Preservation:** all 483 incoming source/test/tool/config files and all 22 incoming checks/performance files remain unchanged. The independent E3 base pin and three approved E3 compiled-source/project blobs remain unchanged. Red/green guard evidence, index/codepoint checks and preservation receipts are retained in ignored `build/e3-sync2-base-r1-gate/`.
+
+**Validation: all 42/42 foreground offline checks pass**, including all 32 requested commands, **2,028/2,028 unit tests / 2,028 discovered cases** (zero failed/skipped, including all **30 HeldFoodTuningTests**), all **29 Release regression projects**, four Python harnesses and three demos. The held-tuning regression runs 3,000 decisions per one/eight-shop case and passes with schema 18 and `heldTuning=true`; the source guard verifies **249 incoming blobs** and the unchanged approved E3 reader/project/harness. E3 passes **2,082 reader assertions**. [Commands, exits, log hashes, preservation and measurements](2026-11-01-e3-sync2-base-r1-results.json).
+
+The newly executed fixed-scenario comparison against `a7ab5bc` preserves exact schema-18 save bytes, length, refusal outcomes and economy/reload results: digest `018FC26676937FEEF88B7D06AE32B522CCE93A1CC265BCDD87A08C7DD91FBB56`, **119,083 characters**, **849 orders / 797 purchases / two unconfirmed / 107,967,424,757,760 spent units**. All twelve F0 state/save/reload transitions pass. Production DLL SHA-256: `a02b6130b3774a3e173875bcfef6bad1cef8988bb8d20a55abad4873c9eb5cff`. This comparison uses synthetic offline fixtures, not native saves.
+
+**Offline timing flags:** D1's cold 20,000-place aggregate **45.1547 ms** exceeds 30 ms across bounded units. C1's 1,024-business cold p95 **6.3816 ms** exceeds 5 ms; warm/continuation p95 **2.0014 / 0.0014 ms**, zero >=30 ms samples. Optional-stop 957-resident admission p95 **7.6742 / 8.5343 ms** at 25/100%, zero >=30 ms samples in all reported arms. Held eight-shop capture/continuation p95 **40.4 / 201.9 microseconds**, with zero >=30 ms samples in either stage at either size. E3 warm 2,000-entry reader p50/p95/max **0.0954 / 0.1394 / 1.4892 ms**, **49,104 B/read**, zero >=30 ms samples. No new performance win or native timing clearance is claimed. The native mod-work p95 <5 ms gate, flagging every >=30 ms spike, separate whole-frame tracking and four parked hotspots remain unchanged.
+
+Every workload ran sequentially in the foreground after the prescribed other-dotnet guard, which waited for unrelated worktree load before the final regressions. Build/compiler-server reuse was disabled and no command deadline was set. Full logs, the red/green guard evidence and baseline extraction remain ignored under `build/e3-sync2-base-r1-gate/`. The integration whitespace checks pass.
+
+The batched combined locked development-head rig and Peter's 6 Nov input-only playtest remain the native evidence path under merge rule v2. No game, rig/profile/lease, Steam/Workshop writes, WSL, ordinary-save deployment, push or PR publication.
+
+## Original sync to b17e4a9 (historical validation)
+
 PR #23 conflicts again after development gained A3 (`831637c`), B0 (`3b8f7ec`), C3 (`c6d7535`), the documentation split (`8c24f24`) and E2c (`b17e4a9`). Merge development `b17e4a919e7a5499ffa22730752d63addbf3e082` into approved E3 `7c1c5f2`, with common ancestor `8b05227`. This integration targets `codex/pc-e3-first-product` and must land by **merge commit** so its ancestry remains before PR #23 is squash-merged into `codex/persistent-city`. The harness handles pushing and PR publication.
 
 Conflict resolution and integration only. **No E3 Runtime code changed.** Its read-only donut reader, compiled regression harness and project remain byte-identical to the approved E3 sources. All incoming production, persistence, test, configuration and regression sources remain unchanged. There are no new gameplay callers, products, native writes, enrollment rules or performance changes.

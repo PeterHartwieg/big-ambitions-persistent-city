@@ -88,7 +88,7 @@ static partial class Program
     private static object CapacityBench(string name, int runs)
     {
         bool cf = name.StartsWith("CF", StringComparison.Ordinal);
-        int residents = name == "reference" ? 957 : name == "5000" ? 5000 : 50000;
+        int residents = name == "reference" ? 957 : name == "consumers5000" ? 2500 : name == "5000" ? 5000 : 50000;
         int representation = name == "ceiling2" || name == "large2" ? 2 : residents < 50000 ? 2 : 3;
         int visits = name == "ceiling" || name == "ceiling2" ? 0 : name == "CF64" ? 64 : 32;
         var state = FoodCity(residents, true, representation); PopulateDecisions(state);
@@ -135,7 +135,8 @@ static partial class Program
         int heldExistingRecords = 8 * (1 + 3 + 7 + 2); // actual image: shops/offers/windows/two single-leg routes
         int reservedRecords = futureRecords - heldExistingRecords - 1; // B0 already charges its capability header
         int bHeaderChars = ("\"Capabilities\":" + JsonConvert.SerializeObject(new { Active = false, Code = "B", Revision = 1 }) + ",").Length;
-        int reservedChars = futureChars - bHeaderChars; // aggregate policy/header row already contains B0's header
+        int heldTuningChars = typeof(FoodDecisionState).GetProperty("Tuning") == null ? 0 : 205 + 8 * 25;
+        int reservedChars = futureChars - bHeaderChars - heldTuningChars; // consume B0b's scalar image once from the existing header allowance
         if (cf && SchemaVersion >= 18)
         {
             Check(json.Length + reservedChars + memoryHeadroom <= SaveCodec.MaxInputCharacters, "CF character budget.");
@@ -163,7 +164,7 @@ static partial class Program
             runs, writeMs = write, readMs = read, migrationFrom17Ms = migration, migrationSourceChars = old?.Length, migrationRefusal,
             retainedBytes, readAllocatedBytes = readAllocated, processPeakBytes = Process.GetCurrentProcess().PeakWorkingSet64,
             syntheticReservation = cf && SchemaVersion >= 18 ? new {
-                futureContractChars = reservedChars, alreadyCountedBHeaderChars = bHeaderChars, fixedMemoryHeadroomChars = memoryHeadroom,
+                futureContractChars = reservedChars, alreadyCountedBHeaderChars = bHeaderChars, alreadyCountedHeldTuningChars = heldTuningChars, fixedMemoryHeadroomChars = memoryHeadroom,
                 futureContractRecords = reservedRecords,
                 totalBudgetedChars = json.Length + reservedChars + memoryHeadroom,
                 totalBudgetedUtf8Bytes = Encoding.UTF8.GetByteCount(json) + reservedChars + memoryHeadroom,
