@@ -83,13 +83,13 @@ namespace PersistentCity.Core
             double now=city.State.Minute;
             double deadline=atStop ? Math.Min(meal.ExpiresAt,stop.DepartureAt) : Math.Min(meal.ExpiresAt,
                 Math.Min(stop.DepartureAt,now+(meal.Slot==0 ? MealRhythm.BreakMinutes(person,city.State.Seed,meal.Kind) : RepresentedBreak(person,stop,meal.Kind))));
-            var d=new FoodDecisionState {IntentId=meal.IntentId,ContextKey=context,Attempt=meal.ContextAttempts+1,OriginAt=now,Deadline=deadline};
+            var d=new FoodDecisionState {Tuning=FoodDecisionTuning.Capture(ChoiceSettings),IntentId=meal.IntentId,ContextKey=context,Attempt=meal.ContextAttempts+1,OriginAt=now,Deadline=deadline};
             // Capture into a private image first. Exceptions cannot publish a partial sample or consume an attempt.
             using(var captureBatch=(market as IFoodCandidateMarket)?.BeginCapture(now))
             {
             long choiceStarted=city.ObservingFood ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             var scopes=atStop ? state.Shops.Where(s=>s.PlaceId==stop.PlaceId).Select(FreezeScope).ToArray()
-                : Shortlist(meal,person,stop,Draw(meal,d));
+                : Shortlist(meal,person,stop,Draw(meal,d),d.Tuning.Settings);
             choiceMilliseconds=city.ObservingFood ? (System.Diagnostics.Stopwatch.GetTimestamp()-choiceStarted)*1000.0/System.Diagnostics.Stopwatch.Frequency : (double?)null;
             foreach(var scope in scopes)
             {
@@ -115,13 +115,13 @@ namespace PersistentCity.Core
             // No reservations, optional-stop cancellation, purchases or outcomes before commit.
         }
 
-        private FoodScope[] Shortlist(ResidentMeal meal,CitizenState person,FoodRoutineStop stop,FoodDrawContext draw)
+        private FoodScope[] Shortlist(ResidentMeal meal,CitizenState person,FoodRoutineStop stop,FoodDrawContext draw,FoodChoiceSettings tuning)
         {
             var selected=new FoodScope[FoodChoicePolicy.MaximumShortlist];
             var ranks=new double[FoodChoicePolicy.MaximumShortlist];int count=0;
             var origin=city.FindPlace(stop.PlaceId);
             var traits=Traits(meal,person);
-            var distancePreference=new FoodChoicePolicy.DistancePreference(traits,ChoiceSettings);
+            var distancePreference=new FoodChoicePolicy.DistancePreference(traits,tuning);
             double pace=routes is IFoodWalkingPace walking ? walking.WalkingMetresPerMinute : 120;
             foreach(var scope in state.Shops)
             {
@@ -163,7 +163,9 @@ namespace PersistentCity.Core
 
         private void ContinueFoodDecision(ResidentMeal meal,CitizenState person)
         {
-            var d=meal.Decision!; bool atStop=d.ContextKey.StartsWith("stop:",StringComparison.Ordinal);
+            var d=meal.Decision!;
+            if(d.Tuning==null) d.Tuning=FoodDecisionTuning.Capture(ChoiceSettings); // legacy image: capture exactly once
+            bool atStop=d.ContextKey.StartsWith("stop:",StringComparison.Ordinal);
             var stop=ChoiceStop(meal,person);
             if(!MatchesStop(stop,d,atStop) || city.State.Minute!=d.OriginAt)
             {EndDecision(meal);Finish(meal,MealStatus.Missed,"Schedule or shop changed before departure");return;}
@@ -219,7 +221,7 @@ namespace PersistentCity.Core
                     c.CustomerServicePercent,c.DistrictDemandPercent,meal.Kind));
             }
             long choiceStarted=city.ObservingFood ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
-            var pick=FoodChoicePolicy.Select(evaluated,Traits(meal,person),AvailableForMeal(meal),Draw(meal,d),ChoiceSettings,intent.OutsideOption!=FoodOutsideOption.None);
+            var pick=FoodChoicePolicy.Select(evaluated,Traits(meal,person),AvailableForMeal(meal),Draw(meal,d),d.Tuning.Settings,intent.OutsideOption!=FoodOutsideOption.None);
             if(choiceMilliseconds.HasValue) choiceMilliseconds+=(System.Diagnostics.Stopwatch.GetTimestamp()-choiceStarted)*1000.0/System.Diagnostics.Stopwatch.Frequency;
             d.Result=pick.Outside ? FoodDecisionResult.Outside : pick.Index>=0 ? FoodDecisionResult.Selected : FoodDecisionResult.NoFeasible;
             d.Reason=pick.Reason;d.Factor1=pick.Factor1;d.Factor2=pick.Factor2;

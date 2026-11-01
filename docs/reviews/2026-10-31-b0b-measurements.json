@@ -1,0 +1,1174 @@
+{
+  "date": "2026-10-31",
+  "baseline": "192037b1975a0ee39247f6ff197a2a2310cf90ba",
+  "productionSource": "9c06dd932e48227ebb450cfa324c1a3737689a06",
+  "benchmarkSource": "05517ca780d814578d94b398044191a58339f573",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "runtime": "Windows .NET 10 Release; sequential foreground only; other-dotnet wait before each test/run",
+  "methodology": "Three fresh decision processes per head, alternating before/after, after/before, before/after. 300 warmups + 3000 measured decisions per shop count per process. Per-stage p50/p95 median across runs; global maximum. Setup outside timers; zero checkouts; exactly two routes per candidate. Capacity cases one diagnostic fresh process per head/case, matching B0 full-memory/table fixtures, never native save timings. External machine load uncontrolled. Retained graph measurement uses 20000 individual DTO graphs, not a valid city with 20000 held contexts.",
+  "decisionSummary": [
+    {
+      "shops": 1,
+      "before": {
+        "capture": {
+          "medianOfRunP50Us": 3.7,
+          "medianOfRunP95Us": 8.3,
+          "maxUs": 112.2,
+          "spikesAtLeast30Ms": 0
+        },
+        "continuation": {
+          "medianOfRunP50Us": 15.6,
+          "medianOfRunP95Us": 26.5,
+          "maxUs": 999.5,
+          "spikesAtLeast30Ms": 0
+        },
+        "captureBytes": 2568.448,
+        "continuationBytes": 11560.72
+      },
+      "after": {
+        "capture": {
+          "medianOfRunP50Us": 3.9,
+          "medianOfRunP95Us": 6.6,
+          "maxUs": 90.5,
+          "spikesAtLeast30Ms": 0
+        },
+        "continuation": {
+          "medianOfRunP50Us": 15.7,
+          "medianOfRunP95Us": 21.6,
+          "maxUs": 1017.8,
+          "spikesAtLeast30Ms": 0
+        },
+        "captureBytes": 2720.448,
+        "continuationBytes": 11560.832
+      }
+    },
+    {
+      "shops": 8,
+      "before": {
+        "capture": {
+          "medianOfRunP50Us": 11.9,
+          "medianOfRunP95Us": 23.1,
+          "maxUs": 528.8,
+          "spikesAtLeast30Ms": 0
+        },
+        "continuation": {
+          "medianOfRunP50Us": 97.2,
+          "medianOfRunP95Us": 147.7,
+          "maxUs": 813.0,
+          "spikesAtLeast30Ms": 0
+        },
+        "captureBytes": 10353.717333333334,
+        "continuationBytes": 61747.02133333333
+      },
+      "after": {
+        "capture": {
+          "medianOfRunP50Us": 12.3,
+          "medianOfRunP95Us": 24.5,
+          "maxUs": 450.6,
+          "spikesAtLeast30Ms": 0
+        },
+        "continuation": {
+          "medianOfRunP50Us": 89.1,
+          "medianOfRunP95Us": 151.9,
+          "maxUs": 600.6,
+          "spikesAtLeast30Ms": 0
+        },
+        "captureBytes": 10561.717333333334,
+        "continuationBytes": 61747.077333333335
+      }
+    }
+  ],
+  "shapePrecheckSummary": {
+    "materializing": {
+      "medianNs": 1375.6903333333332,
+      "medianBytes": 136.00010666666665
+    },
+    "nonmaterializing": {
+      "medianNs": 187.787,
+      "medianBytes": 0.00010666666666666667
+    }
+  },
+  "results": {
+    "capacity-5000-after": {
+      "name": "5000",
+      "schema": 18,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "BE7360559F08B4B97BB838173482DEB076C15642EF13052DC8B8EF36E39E744F",
+      "residents": 5000,
+      "representation": 2,
+      "consumers": 10000,
+      "visitsPerResident": 32,
+      "visits": 160000,
+      "placeCount": 9,
+      "extraExistingPlaces": 0,
+      "extraExistingPlaceChars": 0,
+      "extraExistingNameChars": 0,
+      "actualExistingGrowthChars": 0,
+      "existingGrowthAllowanceChars": 0,
+      "memoryEntries": 40000,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 17298040,
+      "utf8Bytes": 17298040,
+      "streamingRecords": 200108,
+      "semanticRecords": 200105,
+      "runs": 1,
+      "writeMs": 447.3,
+      "readMs": 963.9,
+      "migrationFrom17Ms": 1350.5,
+      "migrationSourceChars": 28035405,
+      "migrationRefusal": null,
+      "retainedBytes": 36675984,
+      "readAllocatedBytes": 294633296,
+      "processPeakBytes": 382484480,
+      "syntheticReservation": null
+    },
+    "capacity-5000-before": {
+      "name": "5000",
+      "schema": 18,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "EA7AC4154A8D7615DA47F2117EBF4368348F8490BF27DD043342410F2AF73033",
+      "residents": 5000,
+      "representation": 2,
+      "consumers": 10000,
+      "visitsPerResident": 32,
+      "visits": 160000,
+      "placeCount": 9,
+      "extraExistingPlaces": 0,
+      "extraExistingPlaceChars": 0,
+      "extraExistingNameChars": 0,
+      "actualExistingGrowthChars": 0,
+      "existingGrowthAllowanceChars": 0,
+      "memoryEntries": 40000,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 17297635,
+      "utf8Bytes": 17297635,
+      "streamingRecords": 200108,
+      "semanticRecords": 200105,
+      "runs": 1,
+      "writeMs": 555.4,
+      "readMs": 1097.8,
+      "migrationFrom17Ms": 1767.1,
+      "migrationSourceChars": 28035405,
+      "migrationRefusal": null,
+      "retainedBytes": 36675776,
+      "readAllocatedBytes": 294612664,
+      "processPeakBytes": 382742528,
+      "syntheticReservation": null
+    },
+    "capacity-CF32-after": {
+      "name": "CF32",
+      "schema": 18,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "1CB6BAB5285F5DF8214B0D750DDCA023BE62DF53B8837159E2C9E9320EC1147F",
+      "residents": 50000,
+      "representation": 3,
+      "consumers": 150000,
+      "visitsPerResident": 32,
+      "visits": 1600000,
+      "placeCount": 20000,
+      "extraExistingPlaces": 19991,
+      "extraExistingPlaceChars": 6343907,
+      "extraExistingNameChars": 6239005,
+      "actualExistingGrowthChars": 12582912,
+      "existingGrowthAllowanceChars": 12582912,
+      "memoryEntries": 600000,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 192020107,
+      "utf8Bytes": 192020107,
+      "streamingRecords": 1920108,
+      "semanticRecords": 1920105,
+      "runs": 1,
+      "writeMs": 2738.5,
+      "readMs": 8960.2,
+      "migrationFrom17Ms": null,
+      "migrationSourceChars": null,
+      "migrationRefusal": "Serialized state exceeds the input size limit.",
+      "retainedBytes": 425737880,
+      "readAllocatedBytes": 3188250184,
+      "processPeakBytes": 3251974144,
+      "syntheticReservation": {
+        "futureContractChars": 26694259,
+        "alreadyCountedBHeaderChars": 56,
+        "alreadyCountedHeldTuningChars": 405,
+        "fixedMemoryHeadroomChars": 1950000,
+        "futureContractRecords": 191759,
+        "totalBudgetedChars": 220664366,
+        "totalBudgetedUtf8Bytes": 220664366,
+        "totalBudgetedRecords": 2111867
+      }
+    },
+    "capacity-CF32-before": {
+      "name": "CF32",
+      "schema": 18,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "CCEB2E75B11A4ECC2B6C068ECC6C2E2CFF81E06F5742240D8632BDA8D7713B5C",
+      "residents": 50000,
+      "representation": 3,
+      "consumers": 150000,
+      "visitsPerResident": 32,
+      "visits": 1600000,
+      "placeCount": 20000,
+      "extraExistingPlaces": 19991,
+      "extraExistingPlaceChars": 6343907,
+      "extraExistingNameChars": 6239005,
+      "actualExistingGrowthChars": 12582912,
+      "existingGrowthAllowanceChars": 12582912,
+      "memoryEntries": 600000,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 192019702,
+      "utf8Bytes": 192019702,
+      "streamingRecords": 1920108,
+      "semanticRecords": 1920105,
+      "runs": 1,
+      "writeMs": 2661.9,
+      "readMs": 8772.3,
+      "migrationFrom17Ms": null,
+      "migrationSourceChars": null,
+      "migrationRefusal": "Serialized state exceeds the input size limit.",
+      "retainedBytes": 425737672,
+      "readAllocatedBytes": 3188244888,
+      "processPeakBytes": 3260506112,
+      "syntheticReservation": {
+        "futureContractChars": 26694664,
+        "alreadyCountedBHeaderChars": 56,
+        "alreadyCountedHeldTuningChars": 0,
+        "fixedMemoryHeadroomChars": 1950000,
+        "futureContractRecords": 191759,
+        "totalBudgetedChars": 220664366,
+        "totalBudgetedUtf8Bytes": 220664366,
+        "totalBudgetedRecords": 2111867
+      }
+    },
+    "capacity-CF64-after": {
+      "name": "CF64",
+      "schema": 18,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "BBFAF24D7C663DCBB6B5B620BC0406E74A12796A59D330410DEBF2361844A08D",
+      "residents": 50000,
+      "representation": 3,
+      "consumers": 150000,
+      "visitsPerResident": 64,
+      "visits": 3200000,
+      "placeCount": 20000,
+      "extraExistingPlaces": 19991,
+      "extraExistingPlaceChars": 6343907,
+      "extraExistingNameChars": 6239005,
+      "actualExistingGrowthChars": 12582912,
+      "existingGrowthAllowanceChars": 12582912,
+      "memoryEntries": 600000,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 230420107,
+      "utf8Bytes": 230420107,
+      "streamingRecords": 3520108,
+      "semanticRecords": 3520105,
+      "runs": 1,
+      "writeMs": 2066.3,
+      "readMs": 6635.1,
+      "migrationFrom17Ms": null,
+      "migrationSourceChars": null,
+      "migrationRefusal": "Serialized state exceeds the input size limit.",
+      "retainedBytes": 503070536,
+      "readAllocatedBytes": 3995873096,
+      "processPeakBytes": 3203547136,
+      "syntheticReservation": {
+        "futureContractChars": 26694259,
+        "alreadyCountedBHeaderChars": 56,
+        "alreadyCountedHeldTuningChars": 405,
+        "fixedMemoryHeadroomChars": 1950000,
+        "futureContractRecords": 191759,
+        "totalBudgetedChars": 259064366,
+        "totalBudgetedUtf8Bytes": 259064366,
+        "totalBudgetedRecords": 3711867
+      }
+    },
+    "capacity-CF64-before": {
+      "name": "CF64",
+      "schema": 18,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "BD68A305EDB5A5DDC27E7CA791D393ADF3A021745BB1A8CACD29BF1C4AD49BEE",
+      "residents": 50000,
+      "representation": 3,
+      "consumers": 150000,
+      "visitsPerResident": 64,
+      "visits": 3200000,
+      "placeCount": 20000,
+      "extraExistingPlaces": 19991,
+      "extraExistingPlaceChars": 6343907,
+      "extraExistingNameChars": 6239005,
+      "actualExistingGrowthChars": 12582912,
+      "existingGrowthAllowanceChars": 12582912,
+      "memoryEntries": 600000,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 230419702,
+      "utf8Bytes": 230419702,
+      "streamingRecords": 3520108,
+      "semanticRecords": 3520105,
+      "runs": 1,
+      "writeMs": 3288.1,
+      "readMs": 7477.5,
+      "migrationFrom17Ms": null,
+      "migrationSourceChars": null,
+      "migrationRefusal": "Serialized state exceeds the input size limit.",
+      "retainedBytes": 502537672,
+      "readAllocatedBytes": 3995867976,
+      "processPeakBytes": 3256172544,
+      "syntheticReservation": {
+        "futureContractChars": 26694664,
+        "alreadyCountedBHeaderChars": 56,
+        "alreadyCountedHeldTuningChars": 0,
+        "fixedMemoryHeadroomChars": 1950000,
+        "futureContractRecords": 191759,
+        "totalBudgetedChars": 259064366,
+        "totalBudgetedUtf8Bytes": 259064366,
+        "totalBudgetedRecords": 3711867
+      }
+    },
+    "capacity-consumers5000-after": {
+      "name": "consumers5000",
+      "schema": 18,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "E0A6FB7457805003F1FF3DFC1E2F2DEC58DE72551C77B5C50884170A98F8F15E",
+      "residents": 2500,
+      "representation": 2,
+      "consumers": 5000,
+      "visitsPerResident": 32,
+      "visits": 80000,
+      "placeCount": 9,
+      "extraExistingPlaces": 0,
+      "extraExistingPlaceChars": 0,
+      "extraExistingNameChars": 0,
+      "actualExistingGrowthChars": 0,
+      "existingGrowthAllowanceChars": 0,
+      "memoryEntries": 20000,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 9701305,
+      "utf8Bytes": 9701305,
+      "streamingRecords": 110108,
+      "semanticRecords": 110105,
+      "runs": 1,
+      "writeMs": 186.4,
+      "readMs": 702.7,
+      "migrationFrom17Ms": 1631.6,
+      "migrationSourceChars": 14021170,
+      "migrationRefusal": null,
+      "retainedBytes": 20877560,
+      "readAllocatedBytes": 164688936,
+      "processPeakBytes": 211873792,
+      "syntheticReservation": null
+    },
+    "capacity-consumers5000-before": {
+      "name": "consumers5000",
+      "schema": 18,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "02E9C13C33C887D2461241D1DF5844777CD3584B4DC090872C2C878FF5977EE3",
+      "residents": 2500,
+      "representation": 2,
+      "consumers": 5000,
+      "visitsPerResident": 32,
+      "visits": 80000,
+      "placeCount": 9,
+      "extraExistingPlaces": 0,
+      "extraExistingPlaceChars": 0,
+      "extraExistingNameChars": 0,
+      "actualExistingGrowthChars": 0,
+      "existingGrowthAllowanceChars": 0,
+      "memoryEntries": 20000,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 9700900,
+      "utf8Bytes": 9700900,
+      "streamingRecords": 110108,
+      "semanticRecords": 110105,
+      "runs": 1,
+      "writeMs": 246.7,
+      "readMs": 747.2,
+      "migrationFrom17Ms": 1462.8,
+      "migrationSourceChars": 14021170,
+      "migrationRefusal": null,
+      "retainedBytes": 20877224,
+      "readAllocatedBytes": 164683760,
+      "processPeakBytes": 209539072,
+      "syntheticReservation": null
+    },
+    "capacity-reference-after": {
+      "name": "reference",
+      "schema": 18,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "F697C9B56A02775D6AE966E17C310062551B0C4A30D1546AA7E058F801652413",
+      "residents": 957,
+      "representation": 2,
+      "consumers": 1914,
+      "visitsPerResident": 32,
+      "visits": 30624,
+      "placeCount": 9,
+      "extraExistingPlaces": 0,
+      "extraExistingPlaceChars": 0,
+      "extraExistingNameChars": 0,
+      "actualExistingGrowthChars": 0,
+      "existingGrowthAllowanceChars": 0,
+      "memoryEntries": 7656,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 5013141,
+      "utf8Bytes": 5013141,
+      "streamingRecords": 54560,
+      "semanticRecords": 54557,
+      "runs": 1,
+      "writeMs": 121.2,
+      "readMs": 363.2,
+      "migrationFrom17Ms": 452.4,
+      "migrationSourceChars": 5372125,
+      "migrationRefusal": null,
+      "retainedBytes": 11109240,
+      "readAllocatedBytes": 84907424,
+      "processPeakBytes": 144080896,
+      "syntheticReservation": null
+    },
+    "capacity-reference-before": {
+      "name": "reference",
+      "schema": 18,
+      "fixtureSeed": 11,
+      "cityMinute": 1740.0,
+      "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+      "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+      "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+      "payloadSha256": "B385A80B4B66E752D6F96A21B46D8A354AD3961098CBF8ECC028CDDBA0FF8E70",
+      "residents": 957,
+      "representation": 2,
+      "consumers": 1914,
+      "visitsPerResident": 32,
+      "visits": 30624,
+      "placeCount": 9,
+      "extraExistingPlaces": 0,
+      "extraExistingPlaceChars": 0,
+      "extraExistingNameChars": 0,
+      "actualExistingGrowthChars": 0,
+      "existingGrowthAllowanceChars": 0,
+      "memoryEntries": 7656,
+      "businessReferences": 20000,
+      "tableCharsAndUtf8": 2097152,
+      "chars": 5012736,
+      "utf8Bytes": 5012736,
+      "streamingRecords": 54560,
+      "semanticRecords": 54557,
+      "runs": 1,
+      "writeMs": 110.9,
+      "readMs": 329.0,
+      "migrationFrom17Ms": 439.2,
+      "migrationSourceChars": 5372125,
+      "migrationRefusal": null,
+      "retainedBytes": 11109032,
+      "readAllocatedBytes": 84885768,
+      "processPeakBytes": 144900096,
+      "syntheticReservation": null
+    },
+    "decision-after-0": {
+      "schema": 18,
+      "heldTuning": true,
+      "decisions": [
+        {
+          "shops": 1,
+          "samples": 3000,
+          "capture": {
+            "p50Us": 4.0,
+            "p95Us": 6.6,
+            "maxUs": 83.8,
+            "spikesAtLeast30Ms": 0
+          },
+          "continuation": {
+            "p50Us": 15.8,
+            "p95Us": 21.6,
+            "maxUs": 947.9,
+            "spikesAtLeast30Ms": 0
+          },
+          "captureBytes": 2720.448,
+          "continuationBytes": 11560.832
+        },
+        {
+          "shops": 8,
+          "samples": 3000,
+          "capture": {
+            "p50Us": 12.3,
+            "p95Us": 24.5,
+            "maxUs": 186.5,
+            "spikesAtLeast30Ms": 0
+          },
+          "continuation": {
+            "p50Us": 89.1,
+            "p95Us": 151.9,
+            "maxUs": 600.6,
+            "spikesAtLeast30Ms": 0
+          },
+          "captureBytes": 10561.717333333334,
+          "continuationBytes": 61747.077333333335
+        }
+      ],
+      "retained": [
+        {
+          "shops": 0,
+          "retainedBytesPerHeld": 279.1536,
+          "allocatedBytesPerHeld": 280.0
+        },
+        {
+          "shops": 8,
+          "retainedBytesPerHeld": 1768.412,
+          "allocatedBytesPerHeld": 1832.0
+        }
+      ],
+      "shapePrecheck": {
+        "materializing": {
+          "ns": 1369.7003333333334,
+          "bytes": 136.00010666666665
+        },
+        "nonmaterializing": {
+          "ns": 159.087,
+          "bytes": 0.00010666666666666667
+        }
+      }
+    },
+    "decision-after-1": {
+      "schema": 18,
+      "heldTuning": true,
+      "decisions": [
+        {
+          "shops": 1,
+          "samples": 3000,
+          "capture": {
+            "p50Us": 3.9,
+            "p95Us": 20.9,
+            "maxUs": 90.5,
+            "spikesAtLeast30Ms": 0
+          },
+          "continuation": {
+            "p50Us": 15.7,
+            "p95Us": 58.6,
+            "maxUs": 1017.8,
+            "spikesAtLeast30Ms": 0
+          },
+          "captureBytes": 2720.448,
+          "continuationBytes": 11560.832
+        },
+        {
+          "shops": 8,
+          "samples": 3000,
+          "capture": {
+            "p50Us": 12.8,
+            "p95Us": 26.8,
+            "maxUs": 450.6,
+            "spikesAtLeast30Ms": 0
+          },
+          "continuation": {
+            "p50Us": 98.3,
+            "p95Us": 169.3,
+            "maxUs": 390.3,
+            "spikesAtLeast30Ms": 0
+          },
+          "captureBytes": 10561.717333333334,
+          "continuationBytes": 61747.02133333333
+        }
+      ],
+      "retained": [
+        {
+          "shops": 0,
+          "retainedBytesPerHeld": 279.1536,
+          "allocatedBytesPerHeld": 280.0
+        },
+        {
+          "shops": 8,
+          "retainedBytesPerHeld": 1768.412,
+          "allocatedBytesPerHeld": 1832.0
+        }
+      ],
+      "shapePrecheck": {
+        "materializing": {
+          "ns": 1375.6903333333332,
+          "bytes": 136.00010666666665
+        },
+        "nonmaterializing": {
+          "ns": 187.787,
+          "bytes": 0.00010666666666666667
+        }
+      }
+    },
+    "decision-after-2": {
+      "schema": 18,
+      "heldTuning": true,
+      "decisions": [
+        {
+          "shops": 1,
+          "samples": 3000,
+          "capture": {
+            "p50Us": 3.8,
+            "p95Us": 5.7,
+            "maxUs": 80.8,
+            "spikesAtLeast30Ms": 0
+          },
+          "continuation": {
+            "p50Us": 15.5,
+            "p95Us": 19.8,
+            "maxUs": 959.0,
+            "spikesAtLeast30Ms": 0
+          },
+          "captureBytes": 2720.448,
+          "continuationBytes": 11560.832
+        },
+        {
+          "shops": 8,
+          "samples": 3000,
+          "capture": {
+            "p50Us": 11.9,
+            "p95Us": 22.0,
+            "maxUs": 172.3,
+            "spikesAtLeast30Ms": 0
+          },
+          "continuation": {
+            "p50Us": 87.1,
+            "p95Us": 112.6,
+            "maxUs": 592.6,
+            "spikesAtLeast30Ms": 0
+          },
+          "captureBytes": 10561.717333333334,
+          "continuationBytes": 61747.077333333335
+        }
+      ],
+      "retained": [
+        {
+          "shops": 0,
+          "retainedBytesPerHeld": 279.1536,
+          "allocatedBytesPerHeld": 280.0
+        },
+        {
+          "shops": 8,
+          "retainedBytesPerHeld": 1768.412,
+          "allocatedBytesPerHeld": 1832.0
+        }
+      ],
+      "shapePrecheck": {
+        "materializing": {
+          "ns": 1467.2986666666666,
+          "bytes": 136.00010666666665
+        },
+        "nonmaterializing": {
+          "ns": 201.48633333333333,
+          "bytes": 0.00010666666666666667
+        }
+      }
+    },
+    "decision-before-0": {
+      "schema": 18,
+      "heldTuning": false,
+      "decisions": [
+        {
+          "shops": 1,
+          "samples": 3000,
+          "capture": {
+            "p50Us": 4.3,
+            "p95Us": 15.3,
+            "maxUs": 112.2,
+            "spikesAtLeast30Ms": 0
+          },
+          "continuation": {
+            "p50Us": 16.8,
+            "p95Us": 40.2,
+            "maxUs": 988.9,
+            "spikesAtLeast30Ms": 0
+          },
+          "captureBytes": 2568.448,
+          "continuationBytes": 11560.72
+        },
+        {
+          "shops": 8,
+          "samples": 3000,
+          "capture": {
+            "p50Us": 14.3,
+            "p95Us": 39.3,
+            "maxUs": 194.7,
+            "spikesAtLeast30Ms": 0
+          },
+          "continuation": {
+            "p50Us": 98.8,
+            "p95Us": 210.7,
+            "maxUs": 813.0,
+            "spikesAtLeast30Ms": 0
+          },
+          "captureBytes": 10353.717333333334,
+          "continuationBytes": 61747.02133333333
+        }
+      ],
+      "retained": [
+        {
+          "shops": 0,
+          "retainedBytesPerHeld": 135.5892,
+          "allocatedBytesPerHeld": 136.0
+        },
+        {
+          "shops": 8,
+          "retainedBytesPerHeld": 1562.53,
+          "allocatedBytesPerHeld": 1624.0
+        }
+      ],
+      "shapePrecheck": {
+        "available": false
+      }
+    },
+    "decision-before-1": {
+      "schema": 18,
+      "heldTuning": false,
+      "decisions": [
+        {
+          "shops": 1,
+          "samples": 3000,
+          "capture": {
+            "p50Us": 3.7,
+            "p95Us": 8.3,
+            "maxUs": 43.8,
+            "spikesAtLeast30Ms": 0
+          },
+          "continuation": {
+            "p50Us": 15.6,
+            "p95Us": 26.5,
+            "maxUs": 896.6,
+            "spikesAtLeast30Ms": 0
+          },
+          "captureBytes": 2568.448,
+          "continuationBytes": 11560.72
+        },
+        {
+          "shops": 8,
+          "samples": 3000,
+          "capture": {
+            "p50Us": 11.5,
+            "p95Us": 23.1,
+            "maxUs": 528.8,
+            "spikesAtLeast30Ms": 0
+          },
+          "continuation": {
+            "p50Us": 84.8,
+            "p95Us": 147.7,
+            "maxUs": 630.2,
+            "spikesAtLeast30Ms": 0
+          },
+          "captureBytes": 10353.717333333334,
+          "continuationBytes": 61747.02133333333
+        }
+      ],
+      "retained": [
+        {
+          "shops": 0,
+          "retainedBytesPerHeld": 135.5892,
+          "allocatedBytesPerHeld": 136.0
+        },
+        {
+          "shops": 8,
+          "retainedBytesPerHeld": 1562.53,
+          "allocatedBytesPerHeld": 1624.0
+        }
+      ],
+      "shapePrecheck": {
+        "available": false
+      }
+    },
+    "decision-before-2": {
+      "schema": 18,
+      "heldTuning": false,
+      "decisions": [
+        {
+          "shops": 1,
+          "samples": 3000,
+          "capture": {
+            "p50Us": 3.6,
+            "p95Us": 6.0,
+            "maxUs": 31.1,
+            "spikesAtLeast30Ms": 0
+          },
+          "continuation": {
+            "p50Us": 15.1,
+            "p95Us": 21.1,
+            "maxUs": 999.5,
+            "spikesAtLeast30Ms": 0
+          },
+          "captureBytes": 2568.448,
+          "continuationBytes": 11560.72
+        },
+        {
+          "shops": 8,
+          "samples": 3000,
+          "capture": {
+            "p50Us": 11.9,
+            "p95Us": 18.7,
+            "maxUs": 228.6,
+            "spikesAtLeast30Ms": 0
+          },
+          "continuation": {
+            "p50Us": 97.2,
+            "p95Us": 116.2,
+            "maxUs": 653.5,
+            "spikesAtLeast30Ms": 0
+          },
+          "captureBytes": 10353.717333333334,
+          "continuationBytes": 61746.96533333333
+        }
+      ],
+      "retained": [
+        {
+          "shops": 0,
+          "retainedBytesPerHeld": 135.5892,
+          "allocatedBytesPerHeld": 136.0
+        },
+        {
+          "shops": 8,
+          "retainedBytesPerHeld": 1562.53,
+          "allocatedBytesPerHeld": 1624.0
+        }
+      ],
+      "shapePrecheck": {
+        "available": false
+      }
+    },
+    "original-b1-probe": {
+      "baseline": "192037b",
+      "schema": 18,
+      "b1Implemented": false,
+      "heldContextCounterexample": {
+        "seed": 2,
+        "captureTasteWeight": 0,
+        "resumeTasteWeight": 3,
+        "unchangedProduct": "ba:itemname_burger",
+        "editedProduct": "ba:itemname_croissant",
+        "routesPerResume": 2,
+        "nativeCheckoutCalls": 0,
+        "unchangedConfigReplayMatches": true
+      },
+      "extensionRefusals": [
+        {
+          "name": "held memory/config input",
+          "status": "Invalid",
+          "error": "Invalid state: Unknown field: MemoryInputs",
+          "sourceReferencePreserved": true
+        },
+        {
+          "name": "B activation day",
+          "status": "Invalid",
+          "error": "Invalid state: Unknown field: StartsDay",
+          "sourceReferencePreserved": true
+        }
+      ]
+    }
+  },
+  "commands": [
+    {
+      "name": "original-b1-probe",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "build/b0b-original-probe/Probe.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.7340000001713634
+    },
+    {
+      "name": "decision-before-0",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/held-tuning-regression/HeldTuningRegression.csproj",
+        "--configuration",
+        "Release",
+        "-p:SourceRoot=<repo>\\build\\b0b-baseline"
+      ],
+      "exit": 0,
+      "seconds": 3.625
+    },
+    {
+      "name": "decision-after-0",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/held-tuning-regression/HeldTuningRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 4.562000000150874
+    },
+    {
+      "name": "decision-after-1",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/held-tuning-regression/HeldTuningRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 2.5
+    },
+    {
+      "name": "decision-before-1",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/held-tuning-regression/HeldTuningRegression.csproj",
+        "--configuration",
+        "Release",
+        "-p:SourceRoot=<repo>\\build\\b0b-baseline"
+      ],
+      "exit": 0,
+      "seconds": 3.125
+    },
+    {
+      "name": "decision-before-2",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/held-tuning-regression/HeldTuningRegression.csproj",
+        "--configuration",
+        "Release",
+        "-p:SourceRoot=<repo>\\build\\b0b-baseline"
+      ],
+      "exit": 0,
+      "seconds": 1.7809999999590218
+    },
+    {
+      "name": "decision-after-2",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/held-tuning-regression/HeldTuningRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "seconds": 3.327999999979511
+    },
+    {
+      "name": "capacity-reference-before",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "-p:SourceRoot=<repo>\\build\\b0b-baseline",
+        "--",
+        "--capacity",
+        "reference"
+      ],
+      "exit": 0,
+      "seconds": 4.047000000020489
+    },
+    {
+      "name": "capacity-reference-after",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "reference"
+      ],
+      "exit": 0,
+      "seconds": 3.530999999959022
+    },
+    {
+      "name": "capacity-consumers5000-before",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "-p:SourceRoot=<repo>\\build\\b0b-baseline",
+        "--",
+        "--capacity",
+        "consumers5000"
+      ],
+      "exit": 0,
+      "seconds": 6.25
+    },
+    {
+      "name": "capacity-consumers5000-after",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "consumers5000"
+      ],
+      "exit": 0,
+      "seconds": 6.172000000020489
+    },
+    {
+      "name": "capacity-5000-before",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "-p:SourceRoot=<repo>\\build\\b0b-baseline",
+        "--",
+        "--capacity",
+        "5000"
+      ],
+      "exit": 0,
+      "seconds": 8.844000000040978
+    },
+    {
+      "name": "capacity-5000-after",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "5000"
+      ],
+      "exit": 0,
+      "seconds": 8.578999999910593
+    },
+    {
+      "name": "capacity-CF32-before",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "-p:SourceRoot=<repo>\\build\\b0b-baseline",
+        "--",
+        "--capacity",
+        "CF32"
+      ],
+      "exit": 0,
+      "seconds": 39.01599999982864
+    },
+    {
+      "name": "capacity-CF32-after",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "CF32"
+      ],
+      "exit": 0,
+      "seconds": 39.95299999997951
+    },
+    {
+      "name": "capacity-CF64-before",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "-p:SourceRoot=<repo>\\build\\b0b-baseline",
+        "--",
+        "--capacity",
+        "CF64"
+      ],
+      "exit": 0,
+      "seconds": 36.17200000002049
+    },
+    {
+      "name": "capacity-CF64-after",
+      "command": [
+        "<dotnet>",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "CF64"
+      ],
+      "exit": 0,
+      "seconds": 31.234999999869615
+    }
+  ],
+  "redMutation": {
+    "change": "Temporarily restored the inherited Select(... ChoiceSettings ...) lookup, retaining image capture, then restored the fix in finally.",
+    "failed": 5,
+    "passedSelectedControls": 2,
+    "output": "  Determining projects to restore...\n  All projects are up-to-date for restore.\n  PersistentCity.Core -> <repo>\\Core\\bin\\Debug\\netstandard2.1\\PersistentCity.Core.dll\n  PersistentCity.Compatibility -> <repo>\\Compatibility\\bin\\Debug\\netstandard2.1\\PersistentCity.Compatibility.dll\n  PersistentCity.Persistence -> <repo>\\Persistence\\bin\\Debug\\netstandard2.1\\PersistentCity.Persistence.dll\n  PersistentCity.Tests -> <repo>\\tests\\bin\\Debug\\net10.0\\PersistentCity.Tests.dll\nTest run for <repo>\\tests\\bin\\Debug\\net10.0\\PersistentCity.Tests.dll (.NETCoreApp,Version=v10.0)\nA total of 1 test files matched the specified pattern.\n  Failed PersistentCity.Tests.HeldFoodTuningTests.EvaluatingQuoteAndSelectedReloadKeepCapturedTuning(units: 1, budget: 2) [180 ms]\n  Error Message:\n   Assert.Equal() Failure: Values differ\nExpected: Tuple (\"ba:itemname_burger\", 2, 0, \"{\\\"Schema\\\":18,\\\"Capabilities\\\":{\\\"Active\\\":false,\"\u00b7\u00b7\u00b7)\nActual:   Tuple (\"ba:itemname_croissant\", 2, 0, \"{\\\"Schema\\\":18,\\\"Capabilities\\\":{\\\"Active\\\":false,\"\u00b7\u00b7\u00b7)\n  Stack Trace:\n     at PersistentCity.Tests.HeldFoodTuningTests.EvaluatingQuoteAndSelectedReloadKeepCapturedTuning(Int32 units, Int32 budget) in <repo>\\tests\\HeldFoodTuningTests.cs:line 79\n   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)\n   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)\n  Failed PersistentCity.Tests.HeldFoodTuningTests.EvaluatingQuoteAndSelectedReloadKeepCapturedTuning(units: 1, budget: 128) [11 ms]\n  Error Message:\n   Assert.Equal() Failure: Values differ\nExpected: Tuple (\"ba:itemname_burger\", 2, 0, \"{\\\"Schema\\\":18,\\\"Capabilities\\\":{\\\"Active\\\":false,\"\u00b7\u00b7\u00b7)\nActual:   Tuple (\"ba:itemname_croissant\", 2, 0, \"{\\\"Schema\\\":18,\\\"Capabilities\\\":{\\\"Active\\\":false,\"\u00b7\u00b7\u00b7)\n  Stack Trace:\n     at PersistentCity.Tests.HeldFoodTuningTests.EvaluatingQuoteAndSelectedReloadKeepCapturedTuning(Int32 units, Int32 budget) in <repo>\\tests\\HeldFoodTuningTests.cs:line 79\n   at InvokeStub_HeldFoodTuningTests.EvaluatingQuoteAndSelectedReloadKeepCapturedTuning(Object, Span`1)\n   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)\n  Failed PersistentCity.Tests.HeldFoodTuningTests.EvaluatingQuoteAndSelectedReloadKeepCapturedTuning(units: 2, budget: 128) [5 ms]\n  Error Message:\n   Assert.Equal() Failure: Values differ\nExpected: Tuple (\"ba:itemname_burger\", 1, 0, \"{\\\"Schema\\\":18,\\\"Capabilities\\\":{\\\"Active\\\":false,\"\u00b7\u00b7\u00b7)\nActual:   Tuple (\"ba:itemname_croissant\", 1, 0, \"{\\\"Schema\\\":18,\\\"Capabilities\\\":{\\\"Active\\\":false,\"\u00b7\u00b7\u00b7)\n  Stack Trace:\n     at PersistentCity.Tests.HeldFoodTuningTests.EvaluatingQuoteAndSelectedReloadKeepCapturedTuning(Int32 units, Int32 budget) in <repo>\\tests\\HeldFoodTuningTests.cs:line 79\n   at InvokeStub_HeldFoodTuningTests.EvaluatingQuoteAndSelectedReloadKeepCapturedTuning(Object, Span`1)\n   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)\n  Failed PersistentCity.Tests.HeldFoodTuningTests.EvaluatingQuoteAndSelectedReloadKeepCapturedTuning(units: 1, budget: 1) [2 ms]\n  Error Message:\n   Assert.Equal() Failure: Values differ\nExpected: Tuple (\"ba:itemname_burger\", 2, 0, \"{\\\"Schema\\\":18,\\\"Capabilities\\\":{\\\"Active\\\":false,\"\u00b7\u00b7\u00b7)\nActual:   Tuple (\"ba:itemname_croissant\", 2, 0, \"{\\\"Schema\\\":18,\\\"Capabilities\\\":{\\\"Active\\\":false,\"\u00b7\u00b7\u00b7)\n  Stack Trace:\n     at PersistentCity.Tests.HeldFoodTuningTests.EvaluatingQuoteAndSelectedReloadKeepCapturedTuning(Int32 units, Int32 budget) in <repo>\\tests\\HeldFoodTuningTests.cs:line 79\n   at InvokeStub_HeldFoodTuningTests.EvaluatingQuoteAndSelectedReloadKeepCapturedTuning(Object, Span`1)\n   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)\n  Failed PersistentCity.Tests.HeldFoodTuningTests.EvaluatingQuoteAndSelectedReloadKeepCapturedTuning(units: 2, budget: 1) [3 ms]\n  Error Message:\n   Assert.Equal() Failure: Values differ\nExpected: Tuple (\"ba:itemname_burger\", 1, 0, \"{\\\"Schema\\\":18,\\\"Capabilities\\\":{\\\"Active\\\":false,\"\u00b7\u00b7\u00b7)\nActual:   Tuple (\"ba:itemname_croissant\", 1, 0, \"{\\\"Schema\\\":18,\\\"Capabilities\\\":{\\\"Active\\\":false,\"\u00b7\u00b7\u00b7)\n  Stack Trace:\n     at PersistentCity.Tests.HeldFoodTuningTests.EvaluatingQuoteAndSelectedReloadKeepCapturedTuning(Int32 units, Int32 budget) in <repo>\\tests\\HeldFoodTuningTests.cs:line 79\n   at InvokeStub_HeldFoodTuningTests.EvaluatingQuoteAndSelectedReloadKeepCapturedTuning(Object, Span`1)\n   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)\n\nFailed!  - Failed:     5, Passed:     2, Skipped:     0, Total:     7, Duration: 207 ms - PersistentCity.Tests.dll (net10.0)\n[xUnit.net 00:00:01.31]     PersistentCity.Tests.HeldFoodTuningTests.EvaluatingQuoteAndSelectedReloadKeepCapturedTuning(units: 1, budget: 2) [FAIL]\n[xUnit.net 00:00:01.32]     PersistentCity.Tests.HeldFoodTuningTests.EvaluatingQuoteAndSelectedReloadKeepCapturedTuning(units: 1, budget: 128) [FAIL]\n[xUnit.net 00:00:01.32]     PersistentCity.Tests.HeldFoodTuningTests.EvaluatingQuoteAndSelectedReloadKeepCapturedTuning(units: 2, budget: 128) [FAIL]\n[xUnit.net 00:00:01.33]     PersistentCity.Tests.HeldFoodTuningTests.EvaluatingQuoteAndSelectedReloadKeepCapturedTuning(units: 1, budget: 1) [FAIL]\n[xUnit.net 00:00:01.33]     PersistentCity.Tests.HeldFoodTuningTests.EvaluatingQuoteAndSelectedReloadKeepCapturedTuning(units: 2, budget: 1) [FAIL]\n"
+  },
+  "warnings": [
+    "No native mod-work/whole-frame gate measurement.",
+    "Every capacity write/read/migration timing >=30ms is flagged separate save/load latency.",
+    "No decision stage >=30ms among 36000 measured before/after decisions.",
+    "CF32/CF64 old-17 source compositions remain oversized and are refusal fixtures, never valid migration sources."
+  ]
+}

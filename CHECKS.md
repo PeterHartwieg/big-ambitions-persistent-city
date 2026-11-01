@@ -10,6 +10,7 @@ Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here
 - A2 — Schema 17, lifestyle traits and base sync evidence: [checks](docs/checks/a2-schema17-traits.md).
 - A3 — Weighted food choices, review fixes and native checklist: [checks](docs/checks/a3-weighted-choice.md).
 - B0 — Schema 18, capacity, review fixes and native checklist: [checks](docs/checks/b0-schema18.md).
+- B0b — Held tuning, base syncs and native checklist: [checks](docs/checks/b0b-held-tuning.md).
 - C3 — Agency/payment discovery, base syncs and native checklist: [checks](docs/checks/c3-agency-payment.md).
 - PR #1–#3 history — October accounting, optional stops, reviews and rig evidence: [checks](docs/checks/history-2026-10-pr1-pr3.md).
 - Earlier development history — October foundation, food, traffic and performance evidence: [checks](docs/checks/history-2026-10-development.md).
