@@ -4,6 +4,8 @@ Validation and dated development notices are in the [checks index](CHECKS.md); e
 
 C2b has offline campaign evidence/source plumbing and schema 22; active campaigns now raise choice preference and soften distance for every resident under Peter's 1 Nov decision; in-game checks are batched into the combined locked rig under merge rule v2; no rig proof is claimed. [Checks and 6 Nov rig list](docs/checks/c2b-campaign-awareness.md).
 
+E3 pizza: [feasibility STOP record](docs/plans/e3-pizza.md), conditional shared probe only; shipped holder unestablished, no product enabled or gameplay/save change. [Offline checks and 6 Nov handoff](docs/checks/e3-pizza.md).
+
 E4 implements the [schema 23 wider-menu envelope](docs/population-schema23.md) with offline coverage; the effective live menu limit stays four and no additional native product is enabled. [Evidence and pending 6 Nov checks](docs/checks/e4-wider-menu.md).
 
 E3 ice cream: [feasibility STOP](docs/plans/e3-icecream.md), shipped holder unestablished; conditional read-only probe only ([offline checks](docs/checks/e3-icecream.md)).
