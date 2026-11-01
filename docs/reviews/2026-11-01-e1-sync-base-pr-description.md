@@ -1,10 +1,26 @@
 # E1 base sync: conflict resolution and integration
 
-Merge approved E1 `72f1cbd` with development `1f8f4b4` (including final C2a `692b8b5`, B1/B2, C3/C4, E2b/E2c and shared donut/cupcake feasibility). This is a real two-parent merge on `codex/pc-e1-sync-base`; no rebase, squash or cherry-pick. The actual common ancestor is `7a6153c`; both conflicted-file diffs against it were inspected, with `9b13698..72f1cbd` isolating the approved E1 delta from shared squash ancestry.
+Merge approved E1 `72f1cbd` with development `1f8f4b4` (including final C2a `692b8b5`, B1/B2, C3/C4, E2b/E2c and shared donut/cupcake feasibility), then refresh to `51ce709` including read-only E3 salad. This is a real two-parent merge on `codex/pc-e1-sync-base`; no rebase, squash or cherry-pick. The actual common ancestor is `7a6153c`; both conflicted-file diffs against it were inspected, with `9b13698..72f1cbd` isolating the approved E1 delta from shared squash ancestry.
+
+## Latest base refresh
+
+The final fetch found development had moved from `1f8f4b4` to `51ce709` while
+validation ran. Second two-parent merge `d146f90` retains that complete update:
+salad's pinned descriptor/facade, cases, source/differential tools, plans/checks
+and both index lines. It merged cleanly; there are no new conflicted files.
+The landed shared reader and salad tools match the base exactly, and that refresh
+changes no Core/Persistence source. Initial merge/repair evidence remains below;
+the latest full gate and preservation audit are recorded separately.
 
 ## Runtime/Core scope
 
 **Runtime/Core code changes only compose existing approved behavior.** Shared food ranking now accepts both the merged B1 memory callback/contributions and E1 weather distance coefficient. Route rebuild retains B1 settings, E2b timing and E1 source/settings. Queue planning keeps E2b valid physical-binding precedence while forwarding the logical E1 Q capture and rain lead; capture still belongs to WaitingForOpening. No new feature, draw key, source slot, route/context allowance, native writer, menu support or C4 caller is introduced. The failure-only C2a memory fix, inactive C4 engine, B1/B2, E2b timings and native checkout remain intact.
+
+E1's `Core/WeatherPolicy.cs` also changes its queue API to accept/forward the
+optional existing dwell. This is the minimal adapter for E2b's preserved physical
+commitment argument; its weather policy, keys, capture boundary and settings do
+not change. No Runtime/Core fix was added in response to a test failure: all such
+repairs were schema literals or synthetic old-format fixtures/tools.
 
 ## Save contract
 

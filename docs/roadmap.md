@@ -80,4 +80,4 @@ Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index
 
 - C4 — [Bounded inactive research and direct trait validation](perf/c4-market-research.md).
 
-- E1 ? [Weather capture, admission and consumer precheck](perf/e1-rain.md).
+- E1 — [Weather capture, admission and consumer precheck](perf/e1-rain.md).

@@ -29,4 +29,4 @@ Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here
 
 - C4 — Bounded inactive market research, access contract, base sync and native checklist: [checks](docs/checks/c4-market-research.md).
 
-- E1 ? New-outing and food weather, schema 20, base sync and native checklist: [checks](docs/checks/e1-rain.md).
+- E1 — New-outing and food weather, schema 20, base sync and native checklist: [checks](docs/checks/e1-rain.md).
