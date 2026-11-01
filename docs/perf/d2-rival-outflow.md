@@ -148,3 +148,39 @@ Current bytes, whole-save/aggregate timing flags and limits are in
 and the [raw E4-head results](../reviews/2026-11-01-d2-sync-base-e4-results.json).
 Native mod-work and whole-frame proof remain pending the combined head;
 the four parked hotspots are unchanged.
+
+## Sync2 fresh before/after comparison
+
+No optimization in this integration. Same Windows host, .NET 10 Release D2
+native-double harness; exported `03960b1` source is the freshly rerun before arm,
+final source `246c24e` is the after arm. Runs are sequential, not randomized or
+interleaved. Setup/JIT/sample protocol is the unchanged harness; this is neither
+native mod-work nor whole-frame evidence. The old worktree was untouched.
+[Raw outputs, commands, source/log hashes and limits](../reviews/2026-11-01-d2-sync2-base-results.json).
+
+| Alternatives | Source/rank p95 ms before -> after | Bytes/context before -> after | 128-unit batch p95 ms before -> after |
+| --- | ---: | ---: | ---: |
+| 1,024 | 0.0185 -> 0.0279 | 1,587.072 -> 1,595.072 | 2.1086 -> 2.0173 |
+| 20,000 | 0.0236 -> 0.0236 | 1,590.032 -> 1,598.032 | 1.4965 -> 1.7952 |
+
+The +8 bytes/context reflects the added C2b held-image cache field; both approved
+slices remain composed. Timing differences are shared-host samples, not a measured
+optimization or causal regression claim. Settlement p95 is **0.0004 -> 0.0005 ms**,
+max **0.1045 -> 0.0923 ms**, with **192 bytes/payment** in both arms. No individual
+D2 source/read/index/settlement micro-sample is >=30 ms.
+
+The paired 20k batch arm has **1 -> 2** samples >=30 ms, max **41.7655 -> 36.5147 ms**;
+the 1,024 arm has zero in both. The full 73-gate acceptance's separate D2 run has
+one 20k batch >=30 ms, max **32.9809 ms**. These are whole offline AdvanceTo batches,
+without finer component attribution, not individual game frames.
+
+Genuine schema-20 -> 21 idle bytes remain **2,284,562 -> 2,294,151** at 1,914
+consumers and **5,973,936 -> 5,998,955** at 5,000: +5/consumer +19 header,
+zero record delta. Schema-23 capacity fixtures add the measured **15-byte empty
+Campaigns collection** versus the explicitly named historical E4/D2 table;
+all record totals and future envelopes stay unchanged. Current raw history,
+capacity and whole-save measurements plus all >=30 ms flags are in
+[D2 checks](../checks/d2-rival-outflow.md#sync2-c2bfrenchfries-composition-and-final-offline-acceptance---1-november-2026).
+Cold C1 p95 **6.0459 ms** remains flagged; whole catalogue setup, day/rush and
+serialization costs are tracked separately. No native p95 <5 ms or whole-frame
+gate is claimed; the four parked hotspots remain parked.

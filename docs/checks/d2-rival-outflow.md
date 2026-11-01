@@ -523,3 +523,110 @@ that additive descriptor alongside ice cream before checking the unchanged
 approved three-reader hash. Production reader code and pins are unchanged.
 The foreground gate adds pizza's regression and isolation guard; a new complete
 68-command batch validates this head separately from the E4 acceptance.
+
+## Sync2: C2b/frenchfries composition and final offline acceptance - 1 November 2026
+
+Reused verified draft ancestry `03960b1` by fast-forward, then real two-parent
+merge `d901057` integrates `04b502c` from base `8c6b3f3`. No old worktree was
+modified. Both sides' conflicted-file diffs were inspected; the [current PR
+handoff](../reviews/2026-11-01-d2-sync2-base-pr-description.md) lists all 20
+conflicts and their resolutions. Earlier sync measurements above retain their
+named source commits; they are not fresh merged-head results.
+
+The writer remains **23**; the chain is **13-17 frozen -> 18 -> 19 -> 20 (E1)
+-> 21 (D2) -> 22 (C2b) -> 23 (E4)**. D2's exact 20-source migration preserves
+E1 weather. C2b's isolated predecessor is repointed to 21; E4 stays at 22.
+Exact 21 excludes campaign/E4 fields, exact 22 includes D2/campaigns but retains
+old menu/tuning/history limits, and 23 contains everything. Pre-D2 development
+22/23 payloads missing D2 fields/tuple revision refuse unchanged, following
+C2b's required-field precedent for pre-C2b E4 saves. Unknown/future, foreign,
+malformed and incomplete sources retain strict refusal and original dictionary
+values. Frozen 19/20 resolvers explicitly exclude Campaigns. Rechecking the
+reused draft found its old-source weather wrapper bypassed full schema-19
+validation before stamping 20: it now runs the frozen-19 reader before the
+unchanged isolated E1 weather stamp and schema-20 activation validation.
+
+Core combines rival weight with C2b's 1.25 preference and half soft distance in
+both shortlist and final offers, retaining rain and E4 taste. Campaign reference
+index reuse remains. Runtime startup retains campaign attachment, rival settings/
+warnings and the live-four menu limit. All D2 review fixes, bounded paths, own
+accounts, native-double tests and other slices remain; no journey/settlement or
+native finance policy is redesigned. Historical E3 baseline reconstruction now
+excludes the later pizza/frenchfries descriptors and keeps the original reconstructed
+reader hash; full exact tool hashes replace normalization guards. The production
+E3 readers/facades are byte-identical to `04b502c`.
+
+Final source fingerprint is recorded against `246c24e`; subsequent commits before
+handoff change documentation only. **73/73 foreground gates passed**, including
+production build, **2,492/2,492 unit tests**, zero failed/skipped, **2,492 discovered
+tests**, all **42 root regression projects**, four Python adapters, three demos,
+four capacities, pickup continuity, combined rush/integrated/save modes, C4 exact
+bytes, E4 default-economy comparison, five E3 isolation guards and the documented
+salad/icecream/frenchfries baseline comparisons. Every test/run waits on the
+shared dotnet guard; no command deadline or detached worker was used. Eight
+focused mixed/schema replay cases passed separately. The [machine record](../reviews/2026-11-01-d2-sync2-base-results.json)
+retains commands/exits/log hashes, source fingerprint, raw benchmark output,
+initial failures and timing flags. Initial nullable fixture and relabelled
+schema-20 campaign harness failures were fixed with canonical null/genuine frozen
+writer fixtures; the final batch is entirely green.
+
+The preservation audit finds **1,401 incoming tracked paths**, **1,347 exact
+inherited blobs**, no missing paths, no missing exact checks-index lines and no
+changed in-game-check sections. Three test methods were renamed/expanded with
+their original checks retained, as recorded in the machine audit. D2's numbered
+LOCKED-OK/NEEDS-INPUT section above and the PR copy remain verbatim.
+
+The population-only fixture remains **120,257 bytes**, with the exact **119,083-byte
+schema-19 projection** and unchanged population/economy/order/reload digests:
+**849 orders, 797 purchases, 107,967,424,757,760 spent units, two uncertain meals**.
+D2's genuine 20 -> 21 idle deltas still measure +5 bytes/consumer +19 header,
+with zero added records; campaigns/menu are charged separately. C2b's 1/1,024-image
+fixtures add **282/274,446 bytes** and **1/1,024 records** above 21 with shared
+references. C4 with/without-engine controls are identical at **41,860 population /
+66,767 food bytes**. E4 passes **25,165 assertions**; its raw eight-product history
+fixture is now **10,135,900 UTF-8 bytes**, 14,336 rows / 114,688 cells. This is
+separate from timed serialization variants. D2's native-double harness passes
+**19,844 assertions**.
+
+| Final capacity fixture | UTF-8 bytes | Streaming / semantic records | Future envelope bytes / records |
+| --- | ---: | ---: | ---: |
+| reference | 5,058,429 | 55,541 / 55,538 | - |
+| consumers5000 | 9,802,141 | 112,632 / 112,629 | - |
+| CF32 | 194,180,943 | 1,970,132 / 1,970,129 | 220,664,366 / 2,111,867 |
+| CF64 | 232,580,943 | 3,570,132 / 3,570,129 | 259,064,366 / 3,711,867 |
+
+The +15 bytes versus the named prior E4/D2 capacity table are the empty Campaigns
+collection; record totals and full future envelopes are unchanged. No cap grows.
+The oversized schema-17 CF imports still refuse under the original limit.
+Standalone write/read/import timings (all >=30 ms, outside ordinary frames) are:
+
+- reference: **131.7 / 368.4 / 924.3 ms**.
+
+- consumers5000: **175.3 / 720.1 / 2,533.9 ms**.
+
+- CF32: **1,903.2 / 6,458.9 / refused ms**.
+
+- CF64: **2,483.7 / 6,462.2 / refused ms**.
+
+A fresh sequential Release before/after comparison exports `03960b1` into ignored
+build storage and reruns the same D2 harness on the final source; no prior draft
+number is treated as a fresh baseline. Detailed before/after values and limits
+are in [D2 performance](../perf/d2-rival-outflow.md#sync2-fresh-beforeafter-comparison).
+No optimization or matched native speedup is claimed.
+
+**Timing flags:** final 20k D2 offline 128-unit batches have one >=30 ms sample,
+max **32.9809 ms**; the separate paired after-run has two, max **36.5147 ms**
+(before: one, **41.7655 ms**). Dense/sparse 20k whole catalogue builds have one
+each, maxima **35.3386/32.3132 ms**. D1's aggregate cold 20k build mean is
+**44.5442 ms** across bounded units. E4's separate four/eight-product timed
+serialization arms have **21/21 >=30 ms** operations each, max **153.1385 /
+224.8181 ms**. Cold C1 1,024-business p95 is **6.0459 ms**, explicitly above 5 ms;
+C2b publication/production-adapter p95 is **2.5310/3.2422 ms**, query allocation
+**0 B**, with no >=30 ms samples. Aggregate rush/day/save timings are retained
+separately in the machine record. These shared-host synthetic operations do not
+establish native mod-work p95 <5 ms or whole-frame behavior. Both remain pending
+for the combined locked rig; the four parked hotspots stay parked.
+
+No game, rig directory, lease, ordinary profile, Steam/Workshop or WSL action,
+push, PR creation, release or deployment was performed. Offline acceptance does
+not replace the preserved 6 Nov native/input checks.

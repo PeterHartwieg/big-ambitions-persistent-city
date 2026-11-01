@@ -92,10 +92,37 @@ frenchfries isolation and the documented salad/frenchfries baselines as well.
 
 ## Offline validation
 
-Pending final batch; command exits, source/log hashes, byte counts and measurements
-will be recorded before handoff. Historical perf/byte values remain attributed
-to their original commits. No native mod-work/whole-frame performance claim or
-release approval is made. The four parked hotspots stay parked.
+**73/73 foreground gates passed** on the final source fingerprint (`246c24e`):
+production build, **2,492 passing and discovered tests** (zero failed/skipped),
+all 42 root regression projects including weather/campaign-awareness/campaign-reader/
+E4/rival/awareness/food-candidate/all six E3 probes, four Python adapters, three
+demos, four capacities, pickup continuity, combined rush/integrated/save modes,
+C4 exact bytes, E4 default-economy comparison, five E3 isolation guards and the
+salad/icecream/frenchfries historical comparisons. Eight focused integration cases
+also passed. Every test/run used the required dotnet guard, foreground execution
+and no command deadline. [Commands, hashes, full measurements and initial fixes](2026-11-01-d2-sync2-base-results.json).
+
+Fresh exported-`03960b1` / final-source D2 benchmarks passed separately. Source/rank
+p95 before -> after is **0.0185 -> 0.0279 ms** (1,024) and **0.0236 -> 0.0236 ms**
+(20k); allocation increases **8 B/context** with C2b's held-image cache. The paired
+20k offline batch has **1 -> 2** >=30 ms samples, max **41.7655 -> 36.5147 ms**;
+the full gate's separate D2 run has one, **32.9809 ms**. No speedup is claimed.
+Whole-build/serialization/save/aggregate costs remain separately flagged, including
+cold C1 p95 **6.0459 ms**. [Detailed before/after and limits](../perf/d2-rival-outflow.md#sync2-fresh-beforeafter-comparison).
+
+Population fixture **120,257 B** and schema-19 projection **119,083 B** retain
+exact digests and economy (**849 orders / 797 purchases / two uncertain meals**).
+Current reference/5k/CF32/CF64 capacity bytes are **5,058,429 / 9,802,141 /
+194,180,943 / 232,580,943**, +15 for empty campaigns versus the named prior E4/D2
+table, unchanged record counts and full future envelopes. E4's raw eight-product
+history is **10,135,900 B**, separate from timed serialization. D2/E4 assertions:
+**19,844 / 25,165**. All measurements and limitations are in [D2 checks](../checks/d2-rival-outflow.md).
+
+Audit: **1,401 incoming paths**, **1,347 exact inherited blobs**, no missing paths
+or exact checks-index lines; no changed native-check sections or E3 production
+readers. Historical perf/byte claims remain explicitly tied to their source commits.
+No native mod-work/whole-frame gate or release approval is claimed. The four parked
+hotspots stay parked. Game/rig/profile/lease/Steam/Workshop/WSL were not used.
 
 ## In-game checks for 6 Nov rig
 
