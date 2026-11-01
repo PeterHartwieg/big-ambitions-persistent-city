@@ -24,7 +24,7 @@ B. Memory, loyalty and regulars. **B0 is implemented offline:** schema 18, exact
    B1 protected-insertion exception: if recording a new bad visit would evict a competing boost, return chance stays equal (never higher), with a terminal failed watermark and no negative per-shop entry. B2 must not assume every failure leaves a negative entry; `ProtectedInsertions` is session-local, not saved history. [Exact exception](population-schema18.md#b1-execution--31-october-2026).
 
 C. Marketing awareness and targeting, plus the market research product. **C2a implemented offline on B0b:** bounded source/index interface, B1 memory projection/campaign-unknown providers, local/routine and positive daily distant discovery, common eight-slot shortlist, additive schema 19. B1 memory is wired within the existing four source slots and bounded rank; r1 bounds rebuild continuations and restores at-stop observation/diagnostics and strict held-image validation. Combined 6 Nov rig proof pending. [Contract](population-schema19.md). **C4 implemented offline and inactive:** bounded pure research engine/access contract only; paid research stays off because C3 found no safe native fee path. No UI, normal-play computation or saved fields. [Contract and offline proof](market-research.md).
-D. Rivals as alternatives.
+D. Rivals as alternatives. **D2 implemented offline, schema 21:** bounded rival choices and atomic external-food spending; combined 6 Nov proof pending. [D2 checks](checks/d2-rival-outflow.md).
 E. Weather, street life, bigger menus and more products.
 Then: re-check the same performance gate for the final release, the hands-on session, and one release.
 Later: residents as employees, households.
@@ -57,6 +57,8 @@ Applies to every step A–E slice re-measure and to the final release:
 Record every taken win with before/after numbers.
 
 Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index line here. Keep before/after numbers and measurement limits in that file; sync/review-fix notes stay with the slice.
+
+- D2 — [Bounded rival choice, refresh and settlement measurements](perf/d2-rival-outflow.md).
 
 - A2 — [Schema 17, lifestyle traits and base sync evidence](perf/a2-schema17-traits.md).
 - A3 — [Weighted food choices, review fixes and native checklist](perf/a3-weighted-choice.md).
