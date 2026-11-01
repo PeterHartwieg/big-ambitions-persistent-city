@@ -51,7 +51,7 @@ public sealed partial class FoodCommerceTests
         Assert.Contains("\"PriceCents\":" + price.Units / Money.UnitsPerCent + ",", old);
         var read = SaveCodec.Read(old);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(13, read.SourceSchema);
-        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(SaveCodec.Write(read.State!)));
+        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(read.State!)));
     }
 
     [Theory]
@@ -62,7 +62,7 @@ public sealed partial class FoodCommerceTests
         Assert.Contains("\"Price\":" + city.State.Food!.Residents.Single().Price.Units + ",", current);
         var read = SaveCodec.Read(LegacyMoneyWire.AsSchema(JObject.Parse(current), 14).ToString(Formatting.None));
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(14, read.SourceSchema);
-        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(SaveCodec.Write(read.State!)));
+        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(read.State!)));
     }
 
     // A development save from the optional-stop branch follows the rule used for earlier schema-14
@@ -75,7 +75,7 @@ public sealed partial class FoodCommerceTests
         var read = SaveCodec.Read(old);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(schema, read.SourceSchema);
         Assert.Equal(Money.FromCents(25), read.State!.Food!.Residents.Single().Price);
-        string written = SaveCodec.Write(read.State);
+        string written = LegacyWire.Write(read.State);
         Assert.Contains("\"Schema\":17,", written);
         int compared = 0;
         foreach (var field in LegacyMoneyWire.Names)
@@ -91,7 +91,7 @@ public sealed partial class FoodCommerceTests
             }
         }
         Assert.True(compared >= 14, "Compared " + compared + " monetary fields.");
-        Assert.Equal(written, SaveCodec.Write(SaveCodec.Read(written).State!));
+        Assert.Equal(written, LegacyWire.Write(SaveCodec.Read(written).State!));
     }
 
     [Theory]
@@ -123,13 +123,13 @@ public sealed partial class FoodCommerceTests
     {
         var (city, _, _) = Ready(); city.EnableHouseholdFinances();
         city.State.Food!.Residents.Single().Allowance = Money.FromCents(2);
-        string current = SaveCodec.Write(city.State);
+        string current = LegacyWire.Write(city.State);
         var wire = JObject.Parse(current);
         if (field.EndsWith("Cents", StringComparison.Ordinal)) LegacyMoneyWire.ToLegacy(wire, wholeCents: false);
         string encoded = LegacyMoneyWire.AsSchema(wire, schema).ToString(Formatting.None);
         var control = SaveCodec.Read(encoded);
         Assert.True(control.Status == SaveReadStatus.Loaded, control.Error);
-        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(SaveCodec.Write(control.State!)));
+        Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(control.State!)));
         string damaged = Regex.Replace(encoded, "\"" + field + "\":[0-9.]+", "\"" + field + "\":" + token);
         Assert.NotEqual(encoded, damaged);
         BaseMerge_RefusedAndPreserved(damaged, "Invalid state");
@@ -150,8 +150,8 @@ public sealed partial class FoodCommerceTests
         }
         var read = SaveCodec.Read(current);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(17, read.SourceSchema);
-        Assert.Equal(current, SaveCodec.Write(read.State!));
+        Assert.Equal(current, LegacyWire.Write(read.State!));
         var data = new Dictionary<string, string>();
-        Assert.True(SaveStore.WriteTo(data, read.State!).Success); Assert.Equal(current, data[SaveStore.StateKey]);
+        Assert.True(SaveStore.WriteTo(data, read.State!).Success); Assert.Equal(SaveCodec.Write(read.State!), data[SaveStore.StateKey]);
     }
 }

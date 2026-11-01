@@ -1,0 +1,942 @@
+{
+  "task": "pc-e3-sync2-base",
+  "first_parent": "7c1c5f29f57c46ad7b56613d62d45e0d134a7738",
+  "incoming_parent": "b17e4a919e7a5499ffa22730752d63addbf3e082",
+  "merge_base": "8b05227d80e150404669d6d8243537a8acfb688b",
+  "scope": "Conflict resolution and integration only. No E3 C# changes; tool-only incoming source-guard pin update. B0 schema 18 inherited unchanged; no new persistence contract.",
+  "gate_count": 41,
+  "unit": {
+    "passed": 1998,
+    "failed": 0,
+    "skipped": 0,
+    "discovered": 1998
+  },
+  "dll_sha256": "062b16d0f2d30f75934aa921358988f11adaa0c332e562e3e53f4768dc77816a",
+  "save_contract": {
+    "schema": 18,
+    "digest": "018FC26676937FEEF88B7D06AE32B522CCE93A1CC265BCDD87A08C7DD91FBB56",
+    "length": 119083,
+    "refusals": [
+      "Invalid:Invalid state: Missing state schema.",
+      "Future:State uses a newer schema; preserve the original payload.",
+      "Invalid:Invalid state: Incomplete or trailing JSON content.",
+      "Invalid:Invalid state: Unknown field: UnknownCitizens"
+    ],
+    "economy": {
+      "orders": 849,
+      "ordersDigest": "1B94987B3158044594B9C4D6A5473BA22BE0D4F3488D769CBBEE23318BB33B91",
+      "purchases": 797,
+      "spentUnits": 107967424757760,
+      "uncertain": 2,
+      "economyDigest": "74D0FE8081EA795D4D56A11B4B955DC6E777E3822C702D3C09BC9477E6679AF9",
+      "reloadDigest": "59B6F14D44CA0F996C5A828E2E538B52C5426347FCFA40767527B72D77F1D4FA"
+    },
+    "writeBytes": 14446152,
+    "readBytes": 38767000,
+    "bench": null,
+    "hot": null
+  },
+  "same_schema_baseline_comparison": {
+    "passed": true,
+    "compared_to": "b17e4a919e7a5499ffa22730752d63addbf3e082",
+    "equal_fields": [
+      "schema",
+      "digest",
+      "length",
+      "refusals",
+      "economy"
+    ]
+  },
+  "preservation": {
+    "incoming_head": "b17e4a919e7a5499ffa22730752d63addbf3e082",
+    "incoming_evidence_files_unchanged": 20,
+    "base_check_paragraphs_preserved": 390,
+    "e3_checks_notices_status_and_perf_preserved": true,
+    "e3_checklist_markers": {
+      "LOCKED-OK": 6,
+      "NEEDS-INPUT": 2,
+      "input-only": 0
+    },
+    "base_readme_notice_blocks_preserved": 26,
+    "e3_parent_perf_rows_preserved": 11,
+    "incoming_source_test_tool_config_files_unchanged": 476
+  },
+  "source_guard_red": {
+    "expected_exit": 1,
+    "failure": "Existing source/contract changed: Core/CitySimulator.cs",
+    "log_sha256": "006541d135c491585ae9b9746eadbfafc11ad313e7bf83cfeda19e41a41f9dcb"
+  },
+  "source_guard_green": [
+    "PASS isolation/no native field assignments; 245 existing blobs byte-identical to b17e4a919e7a5499ffa22730752d63addbf3e082",
+    "PASS approved E3 reader and harness blobs byte-identical to 462a99d8313968a2a1760ac88806b3aed47a0003"
+  ],
+  "performance": {
+    "donut": {
+      "checks": 2082,
+      "cold": {
+        "samples": 1,
+        "coldMs": 1.6688,
+        "coldBytes": 968
+      },
+      "warm": [
+        {
+          "furniture": 2,
+          "p50Ms": 0.0005,
+          "p95Ms": 0.0005,
+          "maxMs": 0.0076,
+          "bytesPerCall": 200,
+          "spikesAtLeast30Ms": 0
+        },
+        {
+          "furniture": 2000,
+          "p50Ms": 0.099,
+          "p95Ms": 0.1786,
+          "maxMs": 1.4693,
+          "bytesPerCall": 49104,
+          "spikesAtLeast30Ms": 0
+        }
+      ]
+    },
+    "campaign_reader": {
+      "businesses": 1024,
+      "campaignsPerBusiness": 6,
+      "cold": {
+        "p50Ms": 1.3177,
+        "p95Ms": 7.3537,
+        "maxMs": 9.3988,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytes": 1639976
+      },
+      "warm": {
+        "p50Ms": 1.1673,
+        "p95Ms": 2.403,
+        "maxMs": 4.2611,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytes": 1637960
+      },
+      "continuation": {
+        "p50Ms": 0.0008,
+        "p95Ms": 0.0016,
+        "maxMs": 1.5472,
+        "spikesAtLeast30Ms": 0,
+        "allocatedBytesPerUnit": 1532
+      },
+      "retainedBytesPerSnapshot": 811096
+    },
+    "food_choice": {
+      "bench": [
+        {
+          "shops": 8,
+          "nativeIds": false,
+          "samples": 512,
+          "fullMs": {
+            "p50": 0.1073,
+            "p95": 0.2038,
+            "max": 8.0807
+          },
+          "continuationUnitMs": {
+            "p95": 0.0344,
+            "max": 0.7264
+          },
+          "shortlistCapturePlusPureSamplingMs": {
+            "p95": 0.0343,
+            "max": 0.2953
+          },
+          "exactShortlistTraitsSamplingMs": {
+            "p50": 0.011,
+            "p95": 0.0152,
+            "max": 0.0784
+          },
+          "bytesPerDecision": 83960,
+          "logicalRoutes": 16
+        },
+        {
+          "shops": 64,
+          "nativeIds": false,
+          "samples": 512,
+          "fullMs": {
+            "p50": 0.1558,
+            "p95": 0.2263,
+            "max": 0.8784
+          },
+          "continuationUnitMs": {
+            "p95": 0.0467,
+            "max": 0.5883
+          },
+          "shortlistCapturePlusPureSamplingMs": {
+            "p95": 0.057100000000000005,
+            "max": 0.3528
+          },
+          "exactShortlistTraitsSamplingMs": {
+            "p50": 0.024,
+            "p95": 0.0338,
+            "max": 0.5481
+          },
+          "bytesPerDecision": 84088,
+          "logicalRoutes": 16
+        },
+        {
+          "shops": 1024,
+          "nativeIds": false,
+          "samples": 512,
+          "fullMs": {
+            "p50": 0.2018,
+            "p95": 0.2897,
+            "max": 3.1802
+          },
+          "continuationUnitMs": {
+            "p95": 0.0722,
+            "max": 3.056
+          },
+          "shortlistCapturePlusPureSamplingMs": {
+            "p95": 0.1207,
+            "max": 3.0642
+          },
+          "exactShortlistTraitsSamplingMs": {
+            "p50": 0.0711,
+            "p95": 0.0899,
+            "max": 3.0433999999999997
+          },
+          "bytesPerDecision": 84152,
+          "logicalRoutes": 16
+        }
+      ],
+      "nativeIdBench": [
+        {
+          "shops": 8,
+          "nativeIds": true,
+          "samples": 512,
+          "fullMs": {
+            "p50": 0.0892,
+            "p95": 0.104,
+            "max": 0.255
+          },
+          "continuationUnitMs": {
+            "p95": 0.0237,
+            "max": 0.1795
+          },
+          "shortlistCapturePlusPureSamplingMs": {
+            "p95": 0.017,
+            "max": 0.0609
+          },
+          "exactShortlistTraitsSamplingMs": {
+            "p50": 0.0071,
+            "p95": 0.008,
+            "max": 0.0215
+          },
+          "bytesPerDecision": 83920,
+          "logicalRoutes": 16
+        },
+        {
+          "shops": 64,
+          "nativeIds": true,
+          "samples": 512,
+          "fullMs": {
+            "p50": 0.0982,
+            "p95": 0.1163,
+            "max": 1.4761
+          },
+          "continuationUnitMs": {
+            "p95": 0.0236,
+            "max": 1.3737
+          },
+          "shortlistCapturePlusPureSamplingMs": {
+            "p95": 0.0294,
+            "max": 0.0461
+          },
+          "exactShortlistTraitsSamplingMs": {
+            "p50": 0.0177,
+            "p95": 0.0194,
+            "max": 0.0278
+          },
+          "bytesPerDecision": 84040,
+          "logicalRoutes": 16
+        },
+        {
+          "shops": 1024,
+          "nativeIds": true,
+          "samples": 512,
+          "fullMs": {
+            "p50": 0.1716,
+            "p95": 0.262,
+            "max": 1.1311
+          },
+          "continuationUnitMs": {
+            "p95": 0.1304,
+            "max": 1.0249
+          },
+          "shortlistCapturePlusPureSamplingMs": {
+            "p95": 0.1891,
+            "max": 1.0264
+          },
+          "exactShortlistTraitsSamplingMs": {
+            "p50": 0.1313,
+            "p95": 0.1708,
+            "max": 1.0201
+          },
+          "bytesPerDecision": 82936,
+          "logicalRoutes": 16
+        }
+      ]
+    },
+    "interior_guard": {
+      "coldMs": 1.3305,
+      "coldAllocatedBytes": 7072,
+      "samples": 501,
+      "assemblies": 9,
+      "scanP50Ms": 0.0083,
+      "scanP95Ms": 0.0093,
+      "scanMaxMs": 0.015,
+      "scanAllocatedBytes": 5920,
+      "spikesAtLeast30Ms": 0,
+      "cachedReads": 1000000,
+      "cachedMeanMs": 1.0111000000000002e-06,
+      "cachedAllocatedBytes": 0,
+      "perFrameDetectionCalls": 0
+    },
+    "agency_payment_lines": [
+      "C3 1437 actual-source/double/IL/isolation checks passed; no native proof.",
+      "4096 marketing records, 2 buildings, 1 statement: cold incl first Capture JIT 1,6524 ms / 19064 B; warm p50/p95/max 0,0374/0,0414/1,8162 ms; 18160 B/call.",
+      "Offline dump spikes >=30 ms: 0; closed: zero Capture calls, hooks, retained state or per-frame allocations. Full mod-work and whole-frame unmeasured."
+    ],
+    "d1_lines": [
+      "D1 PERF 1024: empty-cache build 1.0097 ms/967640 B; warm refresh 0.1101 ms/32 B; 16-read unit 0.0058 ms/0 B; eight details 0.0091 ms/11632 B; retained 491848 B (GC estimate; native fixtures excluded).",
+      "D1 PERF 20000: empty-cache build 46.8879 ms/19483769 B; warm refresh 1.3393 ms/32 B; 16-read unit 0.0025 ms/0 B; eight details 0.0112 ms/11632 B; retained 9838136 B (GC estimate; native fixtures excluded)."
+    ],
+    "optional_stop_lines": [
+      "E2b future-break observation (candidate visibility change, not an acceptance assertion): rain at 100, dry at start 160; desired active=True, actual active=False, cancelled=True; saved start/end=160/165.",
+      "E2b queue-lead contract observation (not an acceptance assertion): id=queue0, seed=17, opening=540; dry start=531.7137, wet start=535.6426; replan at same wait changes lead; no persisted queue commitment.",
+      "E2b ambiguity observation (not an acceptance assertion): expected refuse both; actual club-first=True, cafe-first=False.",
+      "Facade doubles cap-batch=48: cold samples=48 (one/frame), warm queries=9600, new warm samples=0; batch ms p50=0.0398 p95=0.0443 max=0.0642; bytes/query=568.0; spikes>=30ms=0.",
+      "Facade doubles cap-batch=256: cold samples=256 (one/frame), warm queries=51200, new warm samples=0; batch ms p50=0.1844 p95=0.2612 max=2.7111; bytes/query=592.4; spikes>=30ms=0.",
+      "Admission rate=25 residents=48 realised=13: ms p50=0.1851 p95=0.2311 max=0.2814; bytes/sample=74182.3; spikes>=30ms=0.",
+      "Admission rate=25 residents=256 realised=64: ms p50=1.0757 p95=1.2435 max=2.2617; bytes/sample=394157.6; spikes>=30ms=0.",
+      "Admission rate=25 residents=957 realised=229: ms p50=4.8916 p95=8.2129 max=8.8582; bytes/sample=1477665.9; spikes>=30ms=0.",
+      "Selector rate=25 cap=48 admitted=48/229: ms p50=0.1320 p95=0.1376 max=0.1637; bytes/sample=64.0; spikes>=30ms=0.",
+      "Selector rate=25 cap=256 admitted=229/229: ms p50=0.0078 p95=0.0085 max=0.0151; bytes/sample=0.0; spikes>=30ms=0.",
+      "Admission rate=100 residents=48 realised=48: ms p50=0.2501 p95=0.2714 max=1.3051; bytes/sample=91868.5; spikes>=30ms=0.",
+      "Admission rate=100 residents=256 realised=256: ms p50=3.0241 p95=3.6816 max=4.7281; bytes/sample=490269.6; spikes>=30ms=0.",
+      "FLAG >=30ms: Admission rate=100 residents=957 realised=957; sample=0; ms=30.1723",
+      "Admission rate=100 residents=957 realised=957: ms p50=6.8310 p95=9.1965 max=30.1723; bytes/sample=1854190.4; spikes>=30ms=1.",
+      "Selector rate=100 cap=48 admitted=48/957: ms p50=1.2268 p95=1.3191 max=4.8896; bytes/sample=64.0; spikes>=30ms=0.",
+      "Selector rate=100 cap=256 admitted=256/957: ms p50=0.0393 p95=0.0821 max=4.1686; bytes/sample=64.0; spikes>=30ms=0."
+    ],
+    "food_routine_batch_maxima_ms": [
+      9.4322,
+      4.2879,
+      15.6926,
+      16.78,
+      5.261,
+      17.9659
+    ]
+  },
+  "execution": "Sequential foreground workloads; required other-dotnet guard before each dotnet/Python harness workload; build/compiler-server reuse disabled; no execution timeout set. No game, rig/profile/lease, Steam/Workshop writes or WSL.",
+  "commands": [
+    {
+      "name": "build",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/build.py",
+        "--game-managed",
+        "C:/Program Files (x86)/Steam/steamapps/common/Big Ambitions/Big Ambitions_Data/Managed"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/build.txt",
+      "log_sha256": "6ea2f764145db300e23f4e931f99cb23998e2a57b6a337a9312577b42a06eeb6",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "unit",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/unit.txt",
+      "log_sha256": "82eeac9184cbf13f474a4e8e818bca85a09161e94fc57dd513f5d422e478a69a",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "list",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--no-build",
+        "--list-tests"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/list.txt",
+      "log_sha256": "1edb454d76fcc6034080f2770415a525069fba02ccf401fb1aeb886fce39ace4",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "core-identity",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/core-identity-regression/CoreIdentityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/core-identity.txt",
+      "log_sha256": "e8ddf1fb0fd8ccb8af262c6f73a2c7ae4f4ecf47d0e9e8750c72ca8c77d5aefb",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "diagnostic-response",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/diagnostic-response-regression/DiagnosticResponseRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/diagnostic-response.txt",
+      "log_sha256": "a89f8e2948c58df6f28f5d0bf439ea876f62fe55dd2f032fb9d77ea4d0a7b103",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "event-observation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/event-observation-regression/EventObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/event-observation.txt",
+      "log_sha256": "82b58b06f198ca7c7cce6e7e2762d4b9dd0b65dc6236280d7f2492451c3b241a",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-catalogue",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-catalogue-regression/FoodCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/food-catalogue.txt",
+      "log_sha256": "b82f7f4ce6a85d06ed02b7f70679466e997509d871309ea150d000ade11a734e",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-checkout",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-checkout-regression/FoodCheckoutRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/food-checkout.txt",
+      "log_sha256": "626485385041a389bb403270834bbc781cd73720968862e32075a1871fdf1fe6",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-hours",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-hours-regression/FoodHoursRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/food-hours.txt",
+      "log_sha256": "2410218689a17bf8e5ae868d3025d1a8bd9e449d7fd49d83728819236ce6607c",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-household-catalogue",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-household-catalogue-regression/FoodHouseholdCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/food-household-catalogue.txt",
+      "log_sha256": "b0f19cfd0acbbded5af38461d6e0bbe596b236cd83207afa0223100fdcfb8609",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-ownership",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-ownership-regression/FoodOwnershipRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/food-ownership.txt",
+      "log_sha256": "56c5c7195031985612e50f09a118926a8cebe0e7e8f48e10163c331dbeb02525",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-supply",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-supply-regression/FoodSupplyRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/food-supply.txt",
+      "log_sha256": "bea33031a003404270de233cbd073eb44deacac65f41be406a1eae3b70385683",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "frame-observation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/frame-observation-regression/FrameObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/frame-observation.txt",
+      "log_sha256": "7e5da72d80f98e71b464d3c9f918cf9457b5350bfcafc294e80e823b646b2d02",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "gate-access",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/gate-access-regression/GateAccessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/gate-access.txt",
+      "log_sha256": "6e9877acee2b84dfcc2de1b4d7d7236ac991a58c1a89fbe420966d127bf4afae",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "road-ceiling",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-ceiling-regression/RoadCeilingRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/road-ceiling.txt",
+      "log_sha256": "895bf78ce78f6cceb24e97e6ac8d4cc6c68fa71cfb5b0e54f707e9bf46369762",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "road-handoff",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-handoff-regression/RoadHandoffRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/road-handoff.txt",
+      "log_sha256": "5de54d90bad9b212aac21705900b22ad270fa18365f1284fc4e988bf67a5f23e",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "road-invalidation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-invalidation-regression/RoadInvalidationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/road-invalidation.txt",
+      "log_sha256": "11bcbab6bdde92b021b10a41d941aa322629fadbc821906b55ed9aa7d5d7e656",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "road-speed",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-speed-regression/RoadSpeedRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/road-speed.txt",
+      "log_sha256": "5242c509cd90b21734fe4321b43dcbba531282677f91d66ddc8931b9b07cef19",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "route-discovery",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/route-discovery-regression/RouteDiscoveryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/route-discovery.txt",
+      "log_sha256": "7c3684eedaa0bea2266b919908de9f88a5bb82d63511f939d1661ee67c9cd95b",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "save-contract",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/save-contract.txt",
+      "log_sha256": "942aa35bbad68b5125786839fc038127d02218181658cebb7db064da12979bf4",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "startup-clock",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/startup-clock-regression/StartupClockRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/startup-clock.txt",
+      "log_sha256": "911814086ff8b9162e8eabba73e9238b5d0d8822b204d3582b9bd71ca6a37e7e",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "traffic-closure",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-closure-regression/TrafficClosureRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/traffic-closure.txt",
+      "log_sha256": "708d6590f5351a9c1adf0b939e6775caa82602e1d6ec261b597977db98e808aa",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "traffic-queue",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-queue-regression/TrafficQueueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/traffic-queue.txt",
+      "log_sha256": "897d1d2e5c92ef25374e61f7da26e9dea2849c91f3495eb8bc65210eb2e4b9c4",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "walking-quote",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/walking-quote-regression/WalkingQuoteRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/walking-quote.txt",
+      "log_sha256": "b20b2938933dcf089ca5390b756d89a587ca9d5f003c7440677ccda69bf0d405",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "campaign-reader",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/campaign-reader-regression/CampaignReaderRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/campaign-reader.txt",
+      "log_sha256": "a7106d2e7f7bdd1988c197f11624d34dfdd8a3eb1df222e6a20e9a9fa04815da",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "native-command",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/native-command-regression/run.py"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/native-command.txt",
+      "log_sha256": "bd610e1a32a30f6ad7638fc2a65ae7bf8bea9d44baba81884f821aea4ed0a9aa",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "physical-selection",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/physical-selection-regression/run.py"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/physical-selection.txt",
+      "log_sha256": "ec610c3a859479db4551c205179d3656e8059319c4008c0bb883336a1b2cb1d5",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "vehicle-ownership",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/vehicle-ownership-regression/run.py"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/vehicle-ownership.txt",
+      "log_sha256": "7539f54a1b778a54ca9bc75f398a40c0491fb40281611c8c8efbbc473dd32e46",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "optional-stop",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/optional-stop-regression/run.py"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/optional-stop.txt",
+      "log_sha256": "83169edd57e839615aaf26b1c484d01efb768209811f4538fa4cfd838a767883",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "simulate",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/simulate/Simulate.csproj",
+        "--",
+        "28",
+        "build/harness-demo"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/simulate.txt",
+      "log_sha256": "6c1844129783258f93095183c3be1d966c11b0322c02e0ca1659fbd9a913e26e",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-routines",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-routines/FoodRoutines.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "build/harness-food-routines-demo",
+        "957"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/food-routines.txt",
+      "log_sha256": "7e781027dd0b6d2b52fdda173ee0d2095093087191cbb0d8d33143f3da6dcd44",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "food-demand",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-demand/FoodDemand.csproj",
+        "--",
+        "build/harness-food-demand-demo"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/food-demand.txt",
+      "log_sha256": "4591d3628fc548578f7d035d3374936fc19297992c5cce5257f8b13187aadecd",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "donut",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/donut-feasibility-regression/DonutFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/donut.txt",
+      "log_sha256": "7dc07d88cd221a906e5a8ee8ec0ad3b31d008055aa1eea7679c8b25b92b8eae2",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "isolation",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/donut-feasibility-regression/source_checks.py"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/isolation.txt",
+      "log_sha256": "db06daa5768673d8601a1ba6f10b8440de7778c1b54bf93d80f7a85bd4c1be62"
+    },
+    {
+      "name": "food-choice",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/food-choice.txt",
+      "log_sha256": "2fff017777c36931fa8f6a1d72f930e01a70c4935604766153b683de5b81f188",
+      "wait_log_sha256": "b0676245b0c693cc04dbbd5bf8ea2489708a02e4390b0fd7f4b6a7d15489b071"
+    },
+    {
+      "name": "food-candidate",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-candidate-regression/FoodCandidateRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/food-candidate.txt",
+      "log_sha256": "9959837b505ea003bf439238c48c54b7a2fbbd29b34ec3356d8dc30fef106137",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "agency-payment",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/agency-payment-regression/AgencyPaymentRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/agency-payment.txt",
+      "log_sha256": "5c45093c97e6135b23e061047196d77a406e9b89e8f7a5475524b1d72c3ecb34",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "interior-guard",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/interior-guard-regression/InteriorGuardRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/interior-guard.txt",
+      "log_sha256": "729364a7650f08c9e1da3cd029ea756f74d5cbdef214fd64fb524226bdd59687",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "pickup",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/persistent-continuity/regression/PickupRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/pickup.txt",
+      "log_sha256": "608eae841ef2ed0f1dbfb45d11a356fef2231fcfe9cee06e68756577f5a0b157",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "save-compare",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/save-contract-regression/compare.py",
+        "--baseline",
+        "C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\e3-sync2-base\\build\\e3-sync2-base-gate\\incoming-baseline",
+        "--output",
+        "C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\e3-sync2-base\\build\\e3-sync2-base-gate\\save-comparison",
+        "--dotnet",
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/save-compare.txt",
+      "log_sha256": "d1c5b94e298593cba4702605a6e0a3ef98895f5b5f4ea77345a6f0c9ff529801",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    },
+    {
+      "name": "optional-perf",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/optional-stop-regression/run.py",
+        "--performance",
+        "--findings"
+      ],
+      "exit": 0,
+      "log": "build/e3-sync2-base-gate/optional-perf.txt",
+      "log_sha256": "59718cd8b0c1d4d7c0d7d342d90a8b76e903c0c33dfd0679556dd3d36472053c",
+      "wait_log_sha256": "c0c028ffe4059cb83829592af6df432715133e4d48a60837ce4473a39ca80b65"
+    }
+  ],
+  "local_links": {
+    "status": "PASS",
+    "local_links_checked": 52,
+    "files": [
+      "CHECKS.md",
+      "docs/roadmap.md",
+      "docs/checks/e3-donut.md",
+      "docs/perf/e3-donut.md",
+      "docs/plans/e3-donut.md",
+      "docs/plans/e3-donut-pr-description.md",
+      "docs/reviews/2026-10-31-e3-sync-base-pr-description.md",
+      "docs/reviews/2026-11-01-e3-sync2-base-pr-description.md"
+    ]
+  }
+}

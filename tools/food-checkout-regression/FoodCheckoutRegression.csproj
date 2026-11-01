@@ -3,6 +3,7 @@
 <ItemGroup>
   <Compile Include="../../Runtime/FoodBusinessCatalogue.cs" Link="FoodBusinessCatalogue.cs"/>
   <Compile Include="../../Runtime/NativeFoodMarket.cs" Link="NativeFoodMarket.cs"/>
+  <Compile Include="../../Runtime/NativeFoodCandidates.cs" Link="NativeFoodCandidates.cs"/>
   <Compile Include="../../Runtime/NativeFoodHours.cs" Link="NativeFoodHours.cs"/>
   <Compile Include="../../Runtime/FoodSupplyReader.cs" Link="FoodSupplyReader.cs"/>
   <ProjectReference Include="../../Core/PersistentCity.Core.csproj"/>

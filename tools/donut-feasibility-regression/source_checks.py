@@ -5,9 +5,9 @@ import re
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
-# The sync imports approved A1/A2/E2a changes. Pin that incoming tree rather
-# than rejecting those changes against E3's older schema-16 ancestor.
-BASE = "8b05227d80e150404669d6d8243537a8acfb688b"
+# The second sync imports approved A3/B0/C3/E2c and documentation changes.
+# Pin the incoming tree; independently retain the approved E3 reader below.
+BASE = "b17e4a919e7a5499ffa22730752d63addbf3e082"
 E3_BASE = "462a99d8313968a2a1760ac88806b3aed47a0003"
 reader = ROOT / "Runtime/DonutFeasibilityReader.cs"
 text = reader.read_text(encoding="utf-8")

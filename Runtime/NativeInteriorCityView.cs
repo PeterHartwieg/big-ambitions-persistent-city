@@ -28,14 +28,16 @@ namespace PersistentCity.Runtime
         {
             Stop();
             settings = loaded; log = logger; restoreBodies = restore;
-            Configured = loaded.InteriorCityView == "on";
-            if (!Configured) return;
-            if (!NativeGameSpeed.Prepare())
+            NativeInteriorGuard.Start(loaded);
+            Configured = NativeInteriorGuard.Verdict.AllowsView(loaded.InteriorCityView == "on");
+            if (Configured && !NativeGameSpeed.Prepare())
             {
                 Configured = false;
                 log.Warn("InteriorCityView hidden fallback: native speed accessor unavailable; feature disabled for this city.");
-                return;
             }
+            log.Info("ThirdPartyInteriorGuard: " + (NativeInteriorGuard.Verdict.Detected ? "detected" : "not detected")
+                + "; " + NativeInteriorGuard.Verdict.Reason + "; effective view=" + (Configured ? "on" : "off") + ".");
+            if (!Configured) return;
             GlobalEvents.onEnterBuilding += OnBuildingChanged;
             GlobalEvents.onExitBuilding += OnBuildingChanged;
             GlobalEvents.onTimeMachineStarted += OnTimeMachineStarted;
@@ -66,6 +68,7 @@ namespace PersistentCity.Runtime
         }
         public static void Stop()
         {
+            NativeInteriorGuard.Stop();
             GlobalEvents.onEnterBuilding -= OnBuildingChanged;
             GlobalEvents.onExitBuilding -= OnBuildingChanged;
             GlobalEvents.onTimeMachineStarted -= OnTimeMachineStarted;
