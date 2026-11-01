@@ -129,12 +129,13 @@ namespace PersistentCity.Persistence
                     if (old.Status != SaveReadStatus.Loaded) return old;
                     var upgraded = old.State!;
                     upgraded.Schema = CityState.CurrentSchema;
+                    upgraded.WeatherStartsDay=(int)(upgraded.Minute/1440)+1;
                     if(upgraded.Food!=null) upgraded.Food.AwarenessStartsDay=(int)(upgraded.Minute/1440)+1;
                     // Constructors initialized empty memory/references and inactive B; infer nothing.
                     ValidateForActivation(upgraded);
                     return new SaveReadResult(SaveReadStatus.Loaded, upgraded, "", schema);
                 }
-                Require(schema == 18 || schema == 19, "Unsupported experimental state schema; preserve the original payload.");
+                Require(schema == 18 || schema == 19 || schema == 20, "Unsupported experimental state schema; preserve the original payload.");
                 Require(System.Text.Encoding.UTF8.GetByteCount(source) <= MaxInputCharacters, "State exceeds the UTF-8 size limit.");
                 var context = WireContext.FromSource(source);
                 var serializer = JsonSerializer.Create(SettingsForSchema(context, schema));
@@ -153,7 +154,12 @@ namespace PersistentCity.Persistence
                     state!.Schema=CityState.CurrentSchema;
                     if(state.Food!=null) state.Food.AwarenessStartsDay=(int)(state.Minute/1440)+1;
                 }
-                Validate(state!);
+                if(schema<20)
+                {
+                    state!.Schema=CityState.CurrentSchema;state.WeatherStartsDay=(int)(state.Minute/1440)+1;
+                    ValidateForActivation(state); // new required weather bytes must fit before publishing an upgrade
+                }
+                else Validate(state!);
                 return new SaveReadResult(SaveReadStatus.Loaded, state, "", schema);
             }
             catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)
@@ -269,10 +275,16 @@ namespace PersistentCity.Persistence
                 Charge(ref records); // one bounded rollup, never its scalar slots
                 return;
             }
+            if (type == typeof(WeatherCommitment))
+            {
+                if(reader.TokenType==JsonToken.Null) return;
+                Require(reader.TokenType==JsonToken.String && text.LiteralAsciiString((IJsonLineInfo)reader,(string)reader.Value!),"Invalid weather encoding.");
+                WeatherCommitment.Parse((string)reader.Value!);Charge(ref records);return;
+            }
             if (type == typeof(ConsumerMemory))
             {
-                Require(token == JsonToken.String && ((string)reader.Value!).Length <= 48 && text.LiteralAsciiString((IJsonLineInfo)reader, (string)reader.Value!), "Invalid memory length/encoding.");
-                MemoryWire.CheckWire((string)reader.Value!);
+                Require(token == JsonToken.String && ((string)reader.Value!).Length <= (schema>=20 ? 50 : 48) && text.LiteralAsciiString((IJsonLineInfo)reader, (string)reader.Value!), "Invalid memory length/encoding.");
+                if(schema>=20) CheckMemory20((string)reader.Value!);else MemoryWire.CheckWire((string)reader.Value!);
                 Charge(ref records); // four fixed memories + watermark are ONE extension
                 return;
             }
@@ -351,23 +363,24 @@ namespace PersistentCity.Persistence
         private static bool NullableRecord(Type type) => type == typeof(OptionalStopState) || type == typeof(Route) || type == typeof(CarState)
             || type == typeof(TrafficKernelState) || type == typeof(TrafficSignalSchedule)
             || type == typeof(FoodCommerceState) || type == typeof(MealOuting) || type == typeof(MealExcursion) || type == typeof(ResidentBudget)
-            || type == typeof(FoodAwarenessImage) || type == typeof(FoodDecisionTuning) || type == typeof(ResidentTraits) || type == typeof(ResidentFoodToday) || type == typeof(FoodDecisionState);
+            || type == typeof(WeatherCommitment) || type == typeof(FoodAwarenessImage) || type == typeof(FoodDecisionTuning) || type == typeof(ResidentTraits) || type == typeof(ResidentFoodToday) || type == typeof(FoodDecisionState);
         // Contracts depend only on the sealed save DTO types, never a city or serializer setting.
         // DefaultContractResolver owns a thread-safe metadata cache; settings/serializer instances
         // remain per operation, including application-wide JsonConvert defaults.
         private static readonly IContractResolver StateContracts = new StateContractResolver();
+        private static readonly IContractResolver Schema19Contracts = new StateContractResolver(19);
         private static readonly IContractResolver Schema18Contracts = new StateContractResolver(18);
         private static JsonSerializerSettings Settings(WireContext context) => SettingsForSchema(context,CityState.CurrentSchema);
         private static JsonSerializerSettings SettingsForSchema(WireContext context, int schema)
         {
             var settings = new JsonSerializerSettings {
-                ContractResolver = schema==18 ? Schema18Contracts : StateContracts, Culture = CultureInfo.InvariantCulture,
+                ContractResolver = schema==18 ? Schema18Contracts : schema==19 ? Schema19Contracts : StateContracts, Culture = CultureInfo.InvariantCulture,
                 MissingMemberHandling = MissingMemberHandling.Error, TypeNameHandling = TypeNameHandling.None,
                 MaxDepth = 48, FloatParseHandling = FloatParseHandling.Double
             };
-            settings.Converters.Add(new PositionConverter()); settings.Converters.Add(new MoneyJsonConverter());
+            settings.Converters.Add(new WeatherConverter()); settings.Converters.Add(new PositionConverter()); settings.Converters.Add(new MoneyJsonConverter());
             settings.Converters.Add(new TuningConverter()); settings.Converters.Add(new MealOutcomeConverter()); settings.Converters.Add(new TupleConverter());
-            settings.Converters.Add(new TodayConverter()); settings.Converters.Add(new MemoryConverter());
+            settings.Converters.Add(new TodayConverter()); settings.Converters.Add(new MemoryConverter(schema));
             settings.Converters.Add(new VisitConverter(context)); settings.Converters.Add(new BusinessReferenceConverter(context));
             return settings;
         }
@@ -425,6 +438,7 @@ namespace PersistentCity.Persistence
         {
             Require(state != null, "State is null.");
             Require(state.Schema == CityState.CurrentSchema, "Unsupported state schema.");
+            Require(state.WeatherStartsDay>=0 && state.WeatherStartsDay<=(int)(state.Minute/1440)+1,"Invalid weather activation day.");
             Require(state.Capabilities != null, "Missing population capabilities.");
             ValidateCapabilities(state.Capabilities);
             int embeddedRecords = 1 + ValidateFood(state);
@@ -471,6 +485,14 @@ namespace PersistentCity.Persistence
                 Text(identity.Id, "Citizen ID", 256); Text(identity.Name, "Citizen name", 512); Text(identity.District, "Citizen district", 256, true);
                 if (!ids.Add(identity.Id)) Fail("Duplicate citizen ID: " + identity.Id);
                 Require(identity.Age >= 0 && identity.Age <= 130, "Invalid citizen age."); Known(identity.Persona, "Persona");
+                if(citizen.W!=null)
+                {
+                    Minute(citizen.W.Boundary,"Weather boundary");Dense((int)citizen.W.Weather,2,"resident weather");
+                    Require(citizen.W.Queue ? citizen.W.Value>=2 && citizen.W.Value<=10 : citizen.W.Value==0 || citizen.W.Value==1,"Invalid weather commitment value.");
+                    Require(citizen.W.Queue || citizen.W.Weather==WeatherSample.Rain || citizen.W.Value==1,"Nonneutral dry/unknown outing capture.");
+                    Require(citizen.W.Queue ? citizen.W.Boundary<=citizen.ActivityUntilMinute : citizen.W.Boundary<=state.Minute,"Invalid resident weather boundary.");
+                    Charge(ref embeddedRecords);
+                }
                 Traits(citizen.Traits, "resident");
                 Reference(places, citizen.HomeId, PlaceKind.Home);
                 // DailyRoutine derives the activity from persona. A mismatched assignment would
@@ -1037,6 +1059,9 @@ namespace PersistentCity.Persistence
                 "Decision chose before its quotes were settled.");
             // The simulator holds one decision, including an empty-shortlist decision. Bound the tuning
             // header as well as routes; otherwise empty images could spend a city-wide tuning history.
+            Dense((int)decision.Weather,2,"decision weather");
+            Bounded(decision.WeatherTravelMultiplier,1,2,"weather travel multiplier");
+            Require(decision.Weather==WeatherSample.Rain || decision.WeatherTravelMultiplier==1,"Nonneutral dry/unknown weather.");
             Require(++routeBearing <= FoodChoicePolicy.MaximumRouteBearingDecisions, "More than one held food decision.");
             if (decision.Shops.Count == 0) return ValidateAwareness(decision,meal,food);
             int records = ValidateAwareness(decision,meal,food);
@@ -1200,7 +1225,7 @@ namespace PersistentCity.Persistence
             public StateContractResolver(int schema = CityState.CurrentSchema) { this.schema = schema; }
             protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
             {
-                return base.CreateProperties(type, memberSerialization).Where(property => property.Writable && !(schema==18 &&
+                return base.CreateProperties(type, memberSerialization).Where(property => property.Writable && !(schema<20 && WeatherProperty(type,property.PropertyName)) && !(schema==18 &&
                     (type==typeof(FoodDecisionState) && property.PropertyName=="Awareness"
                      || type==typeof(FoodCommerceState) && property.PropertyName=="AwarenessStartsDay")))
                     // These two root headers let the native authority bootstrap stop before the graph.

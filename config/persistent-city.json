@@ -1,4 +1,8 @@
 {
+  "WeatherEnabled": true,
+  "WeatherRainOptionalOutingMultiplier": 0.7,
+  "WeatherRainTravelWeightMultiplier": 1.3,
+  "WeatherQueueRainLeadMinutes": 5,
   "FoodMarketingNeighbourhoodMetres": 250,
   "FoodMarketingNeighbourhoodDrawsPerAnchor": 4,
   "FoodMarketingDiscoveryDailyProbability": 0.02,

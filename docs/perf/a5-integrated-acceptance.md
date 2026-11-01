@@ -1,6 +1,6 @@
 # A5 integrated acceptance performance
 
-1 November 2026, offline .NET 10 Release. [Integrated report, historical comparisons and remaining work](../checks/a5-integrated-acceptance.md#integrated-offline-performance). No Unity/Mono frame-time or native formatter measurement is claimed.
+1 November 2026, historical pre-E1 schema-19 offline .NET 10 Release, baseline `51ce709` plus A5 production `bcc3b00`. These numbers were not remeasured for the schema-20 sync and do not describe its performance or save ledger. [Integrated report, historical comparisons and remaining work](../checks/a5-integrated-acceptance.md#integrated-offline-performance). No Unity/Mono frame-time or native formatter measurement is claimed.
 
 One cheap win in the touched popup code: reuse each place's address image within `ResidentInsight.Capture`. The image is local to that one open-popup refresh; it adds no closed/hover/per-frame work and caches neither success nor failure into the next refresh. Raw map keys and place state remain unchanged. The existing one-second Runtime refresh cadence and input hooks are unchanged. Tests check reformatting on the next capture and byte-identical inspector/simulation replay.
 
