@@ -1,5 +1,7 @@
 # C2b: compose the latest base (E4 schema 23 and E3 pizza)
 
+Historical handoff for `8378efa`. Its schema/refusal and measurement claims apply only to that source. The current supported composition is **20 -> 21 -> 22 -> 23**, with writer 23; see [schema 23](../population-schema23.md) and [current D2 sync handoff](../reviews/2026-11-01-d2-sync2-base-pr-description.md).
+
 Fixes Sol-r1-1, Opus-r1-1 and Opus-r1-2. Merge development head `2bd9006`
 into prior sync `d2ba6d2` from merge base `75c956c`, retaining two-parent merge
 ancestry. Target remains `codex/pc-c2b-campaign-awareness`; no push or remote PR
@@ -19,8 +21,8 @@ This is a test-tool integration fix, with no production reader changes. All
 Runtime E3 files match `8c6b3f3`; the E4/Core/persistence composition below is
 unchanged by the second merge.
 
-The documented E4 predecessor rule gives **20 -> 22 -> 23**. Schema 21 remains
-reserved; >23 is future. Exact 22 includes bounded campaign images/held source
+At this historical C2b handoff, the E4 predecessor rule gave **20 -> 22 -> 23**. Schema 21 was then
+reserved (now supported below C2b); >23 is future. Exact 22 includes bounded campaign images/held source
 bits but excludes the menu header, revision-2 tuning and compact product cells.
 Its menu/history/offer limits remain four. The menu migration validates this
 predecessor before adding E4's policy header; no facts, identities, weather,
@@ -34,7 +36,7 @@ The E4 merge's 20 textual conflicts and resolutions (plus the subsequent README 
 | `Core/FoodChoicePolicy.cs` | Keep CampaignActive and NewTasteBand; campaign distance/preference and E4 taste weighting both apply. |
 | `Core/FoodWeightedCommerce.cs` | Pass both captured campaign activity and E4 new-taste projection; keep menu capture limits/refusals. |
 | `Core/Model.cs` | Write schema 23 and retain E4 MenuPolicy and E1 weather. |
-| `Persistence/PopulationWire18.cs` | Bootstrap accepts exact 22 and 23; 23 requires its menu policy; reserved 21 refuses. |
+| `Persistence/PopulationWire18.cs` | Bootstrap accepts exact 22 and 23; 23 requires its menu policy; 21 refused at that historical head (now supported). |
 | `Persistence/SaveCodec.cs` | Add exact schema-22 resolver; preserve old limits and campaign checks; migrate 20 -> 22 -> 23; keep E4 cells/tuning/counts. |
 | `Persistence/WeatherWire20.cs` | Retain one equivalent exact 19 -> 20 migration under C2b's existing method name. |
 | `README.md` | Keep C2b/E4/E3/A5/F1 notices; current source writes 23 and accepts predecessors 13-20 and 22. |
@@ -44,7 +46,7 @@ The E4 merge's 20 textual conflicts and resolutions (plus the subsequent README 
 | `tests/FoodAwarenessMemoryIntegrationTests.cs` | Keep 18/19/20/23 and add 22; remove only fields absent in each exact predecessor. |
 | `tests/MarketResearchTests.cs` | Retain exact byte noninterference and CurrentSchema assertion. |
 | `tests/Schema17Tests.cs` | Future refusals remain above CurrentSchema, now 24/25/1000. |
-| `tests/Schema18ReviewTests.cs` | Header assertion follows CurrentSchema; reserved-21 refusal remains. |
+| `tests/Schema18ReviewTests.cs` | Header assertion follows CurrentSchema; historical reserved-21 refusal; current tests instead refuse 24. |
 | `tests/Schema18Tests.cs` | Mutate the actual current header for noncanonical refusal; keep all corruption cases. |
 | `tests/WeatherTests.cs` | Preserve current-schema assertions and both menu/campaign removal from old source shapes. |
 | `tools/awareness-regression/Program.cs` | Project out weather, campaigns and menu header for the frozen awareness comparison; label total extension bytes. |
@@ -119,7 +121,7 @@ persistence, test or harness code changed. The only Runtime differences from
 the C2b parent are the incoming, unchanged E3 ice cream facade and its single
 shared-reader descriptor; every E3 source/tool file matches `75c956c`.
 No other slice code changed. Schema remains 22 with the approved E1 19 -> 20
-then C2b 20 -> 22 chain; reserved 21 and future 23 stay refused. Campaign
+then C2b 20 -> 22 chain at that historical pre-E4 head; 21 and 23 were then refused (both now supported). Campaign
 preference remains 1.25 with half soft distance for all residents in shortlist
 and final weighting under Peter's decision, with the existing observation,
 failure-isolation, bounds and held-input contracts preserved.

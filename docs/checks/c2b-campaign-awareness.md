@@ -181,7 +181,7 @@ expectation changes from 20 to 22, preserving all its invariant assertions; the
 C4 byte differential likewise pins schema 22 and retains exact byte equality.
 
 Schema 20 now has an exact filtered reader and bootstrap allow-list entry.
-The isolated 20 -> 22 campaign step validates the predecessor, adds only empty
+At this historical pre-D2 head, the isolated 20 -> 22 campaign step validated the predecessor and added only empty
 campaign history and preserves E1 weather. Older saves use E1's neutral 19 -> 20
 step before 22; at that historical pre-E4/D2 head, 21/23 were refused. The current composition supports both. Shortlist and final
 weights compose E1 rain with C2b's fixed 1.25 preference and half soft distance.
