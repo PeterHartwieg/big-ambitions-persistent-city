@@ -31,7 +31,7 @@ public sealed partial class FoodCommerceTests
         var (city,_)=S17_Full();
         string source=E4_Old(city.State,schema);
         var read=SaveCodec.Read(source); Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
-        Assert.Equal(schema,read.SourceSchema); Assert.Equal(23,read.State!.Schema);
+        Assert.Equal(schema,read.SourceSchema); Assert.Equal(CityState.CurrentSchema,read.State!.Schema);
         Assert.Equal(FoodMenuPolicy.Wire,read.State.MenuPolicy);
         Assert.Equal(source,E4_Old(read.State,schema));
         Assert.Equal(SaveCodec.Write(read.State),SaveCodec.Write(SaveCodec.Read(SaveCodec.Write(read.State)).State!));
@@ -90,7 +90,7 @@ public sealed partial class FoodCommerceTests
         string source = E4_Old(city.State, 20);
         var read = SaveCodec.Read(source);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(20, read.SourceSchema); Assert.Equal(23, read.State!.Schema);
+        Assert.Equal(20, read.SourceSchema); Assert.Equal(CityState.CurrentSchema, read.State!.Schema);
         Assert.Equal(source, E4_Old(read.State, 20)); // every predecessor field, including held weather, is exact
         Assert.Equal(1, read.State.WeatherStartsDay);
         Assert.Equal(person.W.ToWire(), read.State.Citizens[0].W!.ToWire());

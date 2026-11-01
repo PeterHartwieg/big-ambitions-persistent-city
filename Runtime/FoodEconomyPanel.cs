@@ -91,6 +91,7 @@ namespace PersistentCity.Runtime
             if (food.Shops.Count == 0) text.AppendLine("No supported player food businesses are currently managed. Unsupported menus retain the game's customer demand.");
             if (foodMarket != null)
                 foreach (string explanation in foodMarket.UnmanagedShopStatuses()) text.AppendLine(explanation);
+            text.AppendLine(simulation.FreeRivalOutflow()?.Text() ?? "Rival food outflow: unknown (history not recorded).");
             text.AppendLine();
             var nativeAccounts = foodMarket?.ReadAccounts() ?? Array.Empty<NativeFoodAccount>();
             var regulars = simulation.ProjectRegulars(ObservedOwnShop);

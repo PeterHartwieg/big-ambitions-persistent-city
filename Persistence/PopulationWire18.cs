@@ -63,7 +63,7 @@ namespace PersistentCity.Persistence
                 {
                     schema = HeaderInteger(requireCanonical: false);
                     if (schema >= 18) Require(canonicalInteger, "Noncanonical population schema.");
-                    Require(schema >= 13 && schema <= 23, "Unsupported population schema; preserve the payload.");
+                    Require(schema >= 13 && schema <= 24, "Unsupported population schema; preserve the payload.");
                 }
                 else if (name == "Capabilities")
                 {
@@ -91,10 +91,10 @@ namespace PersistentCity.Persistence
                     menuPolicy = true;
                 }
                 else reader.Skip();
-                if (schema.HasValue && capabilities != null && (schema != 23 || menuPolicy))
+                if (schema.HasValue && capabilities != null && (schema < 23 || menuPolicy))
                 {
                     Require(schema >= 18, "Unknown capability header in a legacy population schema.");
-                    Require(schema == 23 || !menuPolicy, "Menu policy in an old schema.");
+                    Require(schema >= 23 || !menuPolicy, "Menu policy in an old schema.");
                     return; // Full population startup still validates all fields, duplicates and trailing content.
                 }
             }
@@ -152,7 +152,7 @@ namespace PersistentCity.Persistence
             var context = WireContext.FromSource(source);
             using var reader = Reader(source);
             Require(reader.Read(), "Missing state.");
-            CheckShape(reader, typeof(CityState), schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : StateContracts, ref streaming, new TokenText(source), schema, new FieldNameSets());
+            CheckShape(reader, typeof(CityState), schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : schema==23 ? Schema23Contracts : StateContracts, ref streaming, new TokenText(source), schema, new FieldNameSets());
             Require(!reader.Read(), "Trailing content.");
             return (streaming, semantic);
         }

@@ -317,7 +317,7 @@ public sealed class RivalOutflowTests
         string source = schema==20 ? PopulationSchema20.Write(city.State) : PopulationSchema19.Write(city.State);
         var store = new Dictionary<string, string> { [SaveCodec.StateKey] = source };
         var read = SaveCodec.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(23, read.State!.Schema); Assert.Equal(schema, read.SourceSchema);
+        Assert.Equal(CityState.CurrentSchema, read.State!.Schema); Assert.Equal(schema, read.SourceSchema);
         Assert.Equal(schema==20 ? 1 : 2,read.State.WeatherStartsDay);
         Assert.Equal(weather,JsonConvert.SerializeObject(read.State.Citizens[0].W));
         Assert.Equal(schema==20 ? WeatherSample.Rain : WeatherSample.Unknown,read.State.Food!.Residents[0].Memory.Weather);
@@ -343,7 +343,7 @@ public sealed class RivalOutflowTests
         city.State.Schema=schema;
         string source=SaveCodec.WriteForSchema(city.State,schema);
         var read=SaveCodec.Read(source);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
-        Assert.Equal(schema,read.SourceSchema);Assert.Equal(23,read.State!.Schema);
+        Assert.Equal(schema,read.SourceSchema);Assert.Equal(CityState.CurrentSchema,read.State!.Schema);
         Assert.Equal(FoodMenuPolicy.Wire,read.State.MenuPolicy);
         read.State.Schema=schema;Assert.Equal(source,SaveCodec.WriteForSchema(read.State,schema));
         read.State.Schema=23;

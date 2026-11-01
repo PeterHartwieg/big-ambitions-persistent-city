@@ -27,7 +27,7 @@ B. Memory, loyalty and regulars. **B0 is implemented offline:** schema 18, exact
 
 C. Marketing awareness and targeting, plus the market research product. **C2a implemented offline on B0b:** bounded source/index interface, B1 memory projection/campaign-unknown providers, local/routine and positive daily distant discovery, common eight-slot shortlist, additive schema 19. B1 memory is wired within the existing four source slots and bounded rank; r1 bounds rebuild continuations and restores at-stop observation/diagnostics and strict held-image validation. Combined 6 Nov rig proof pending. [Contract](population-schema19.md). **C4 implemented offline and inactive:** bounded pure research engine/access contract only; paid research stays off because C3 found no safe native fee path. No UI, normal-play computation or saved fields. [Contract and offline proof](market-research.md).
    C2b (1 Nov, offline): hourly observed campaign images, bounded source/index and schema 22 implemented; Peter's 1 Nov rule now applies active preference/softer distance for all residents; native checks batched into the combined locked rig under merge rule v2, no rig proof claimed. [Checks](checks/c2b-campaign-awareness.md).
-D. Rivals as alternatives. **D2 implemented offline, schema 21:** bounded rival choices and atomic external-food spending; combined 6 Nov proof pending. [D2 checks](checks/d2-rival-outflow.md).
+D. Rivals as alternatives. **D2 implemented offline, schema 21:** bounded rival choices and atomic external-food spending; combined 6 Nov proof pending. [D2 checks](checks/d2-rival-outflow.md). **D3a implemented offline, schema 24:** free fourteen-day totals/counts and exact ledger reconciliation; combined 6 Nov native proof pending. [D3a checks](checks/d3a-outflow-line.md).
 E. Weather, street life, bigger menus and more products. **E1 implemented offline:** new-context weather capture, soft rain effects, frozen queue commitment replay and additive schema 20 on the merged C2a/B1 contract; E2b timing and menu feasibility remain intact. Combined-head native checks remain pending. [Contract/budget](population-schema20.md).
 Then: re-check the same performance gate for the final release, the hands-on session, and one release.
 Later: residents as employees, households.
@@ -72,6 +72,8 @@ Applies to every step A–E slice re-measure and to the final release:
 Record every taken win with before/after numbers.
 
 - F1b — [Reuse the one-shot inventory's shared-material buffer](perf/f1b-street-proxy.md): 129-renderer offline mean allocation 80,838.96 →69,547.73 B/call; no frame work added.
+
+- D3a — [Cache immutable free projections/text](perf/d3a-outflow-line.md): unchanged open request 14,336 → 0 B; offline p95 0.0198 → 0.0001 ms (component only).
 
 Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index line here. Keep before/after numbers and measurement limits in that file; sync/review-fix notes stay with the slice.
 
