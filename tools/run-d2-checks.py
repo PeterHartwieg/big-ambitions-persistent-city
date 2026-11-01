@@ -52,13 +52,16 @@ for name, project, arguments in [
 ]:
     steps.append((name, [dotnet, 'run', '--project', 'tools/' + project + '.csproj', '--configuration', 'Release', '--'] + arguments))
 steps.append(('c4-save-comparison', [sys.executable, 'tools/market-research-regression/compare_save_baseline.py', '--baseline', 'HEAD']))
+for name in ['donut', 'salad', 'icecream']:
+    steps.append((name + '-isolation', [sys.executable, 'tools/' + name + '-feasibility-regression/source_checks.py']))
+steps.append(('icecream-baseline', [sys.executable, 'tools/icecream-feasibility-regression/measure_baseline.py']))
 selected = set(sys.argv[1:])
 results = []
 for name, command in steps:
     if selected and name not in selected:
         continue
     # Python regression harnesses also invoke dotnet run internally.
-    if name != 'build':
+    if name != 'build' and name not in {'donut-isolation', 'salad-isolation', 'icecream-isolation'}:
         if subprocess.run(wait, cwd=root).returncode != 0:
             raise SystemExit('Other-dotnet wait refused; no dependent test/run was started.')
     started = datetime.datetime.now(datetime.timezone.utc).isoformat()

@@ -17,6 +17,14 @@ from 20 to 21, preserving all source/money/identity/read-only checks. The full
 batch is rerun on this latest tree, including A5's integrated/rush/save-bench
 modes and the nested pickup regression.
 
+
+The last fetch caught E3 ice cream `75c956c` after A5 acceptance. A third real
+merge brings it into local head `9ffc990`, using base `0ffb819`. Its sole README
+conflict keeps both D2 and ice cream STOP notices. All E3 source pins, reader,
+tools, checks and indices are retained unchanged. No Core/persistence/schema or
+D2/E1 integration code changes for this continuation. The complete gate is rerun,
+adding the new regression, three isolation guards and frozen reader baseline.
+
 D2 now builds on E1 schema 20. Its isolated `RivalWire21.Migrate` uses the frozen
 E1 reader (`PopulationSchema20*`), validates the source, preserves all captured
 weather, and adds the schema-21 rival watermark/account defaults. Older supported

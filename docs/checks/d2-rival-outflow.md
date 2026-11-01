@@ -384,3 +384,18 @@ fixture comparison, not ordinary-save or native release proof.
 Archived pre-E1 index record (measurements preserved):
 
 > - D2 — 1 November 2026 (offline, original pre-E1 measurements): schema 21, 39/39 gates, 2,380 tests; source/rank p95 0.0189/0.0438 ms at 1,024/20k, settlement p95 0.0001 ms, +5 bytes/idle consumer +19 header with no records; two offline batch spikes >=30 ms (max 47.7935), native gate pending: [measurements and 6 Nov rig checks](#).
+
+### Final-fetch E3 ice cream continuation
+
+The final fetch after A5 acceptance advanced integration from `0ffb819` to
+`75c956c` (E3 ice cream feasibility). Merge base is `0ffb819`. The only textual
+conflict is README: retain both D2 and ice cream STOP notices. Checks/roadmap/plan
+indices merge automatically, retaining every slice. Incoming ice cream reader,
+shared descriptor, tools, exact source pins and documents are unchanged. No Core,
+persistence, schema, choice, journey, ledger, settlement or menu integration
+change is required. Schema 21 and its isolated 20 -> 21 step remain intact.
+
+The 2,438-test / 58-gate A5 acceptance above remains archived evidence on its
+named source. A fresh complete batch for the ice cream head adds the new reader
+regression, donut/salad/ice cream isolation guards and frozen three-reader baseline.
+Final results are recorded below before handoff; no game/rig/profile action occurs.

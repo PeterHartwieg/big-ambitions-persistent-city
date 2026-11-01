@@ -145,7 +145,7 @@
     "Exclude exactly D2-added DTO properties from the frozen tuple property guard; retain equality and arity checks",
     "Bind the frozen tuple-number delegate to PopulationSchema20, not the current codec"
   ],
-  "latestIntegration": "0ffb819353c44a802224b98af673e1085040fc8a",
+  "latestIntegration": "75c956ccf8cd20205964e4e6b0fce6352bc0c73b",
   "secondMerge": {
     "firstParent": "e263af6",
     "secondParent": "0ffb819353c44a802224b98af673e1085040fc8a",
@@ -256,6 +256,10 @@
     {
       "line": "- E1 \u2014 New-outing and food weather, schema 20, base sync and native checklist: [checks](docs/checks/e1-rain.md).",
       "preserved": true
+    },
+    {
+      "line": "- E3 ice cream - 1 November 2026, offline STOP; D/C/S/I warm 2,000-entry p95 0.1610 / 0.1474 / 0.1605 / 0.1779 ms, 49,104 B/call; cold/small timings and 6 Nov handoff: [checks](docs/checks/e3-icecream.md).",
+      "preserved": true
     }
   ],
   "a5CoreUnmodified": true,
@@ -286,5 +290,19 @@
     "foregroundGates": 58,
     "failures": 0,
     "rawResults": "2026-11-01-d2-sync-base-results.json"
+  },
+  "thirdMerge": {
+    "firstParent": "9ffc990",
+    "secondParent": "75c956ccf8cd20205964e4e6b0fce6352bc0c73b",
+    "mergeBase": "0ffb819",
+    "conflicts": [
+      "README.md"
+    ],
+    "resolution": "Both D2 and E3 icecream STOP notices retained; no integration source changes"
+  },
+  "icecreamSourcesUnmodified": {
+    "Runtime/DirectStockShowcaseReader.cs": true,
+    "Runtime/IcecreamFeasibilityReader.cs": true,
+    "tools/donut-feasibility-regression/source_checks.py": true
   }
 }
