@@ -1,0 +1,1550 @@
+{
+  "source": "ad1cd9ca0b6acaa25be8ca2b70de21fe38529ca7",
+  "prototype": {
+    "schema": 19,
+    "runtime": ".NET 10.0.13",
+    "baseline": "c0af745 A3/B0b metadata rank loop; native reads/routes excluded",
+    "policy": {
+      "radiusMetres": 250,
+      "drawsPerAnchor": 4,
+      "discoveryDailyProbability": 0.02
+    },
+    "stages": [
+      {
+        "alternatives": 1024,
+        "seed": 77,
+        "dense": true,
+        "buildMs": {
+          "p50": 0.8871,
+          "p95": 13.6891,
+          "max": 13.6891,
+          "spikesAtLeast30ms": 0
+        },
+        "buildAllocatedBytes": 846862.4,
+        "samples": 3000,
+        "baselineAdmissionMs": {
+          "p50": 0.1326,
+          "p95": 0.1446,
+          "max": 3.2073,
+          "spikesAtLeast30ms": 0
+        },
+        "candidateAdmissionMs": {
+          "p50": 0.0205,
+          "p95": 0.0266,
+          "max": 0.529,
+          "spikesAtLeast30ms": 0
+        },
+        "baselineAllocatedBytes": 368.0,
+        "candidateAllocatedBytes": 4563.544,
+        "maxUnion": 19,
+        "maxShortlist": 8,
+        "maxRouteSlots": 16,
+        "heldImageJsonBytes": 2055
+      },
+      {
+        "alternatives": 20000,
+        "seed": 77,
+        "dense": true,
+        "buildMs": {
+          "p50": 17.5466,
+          "p95": 19.9552,
+          "max": 19.9552,
+          "spikesAtLeast30ms": 0
+        },
+        "buildAllocatedBytes": 17480734.4,
+        "samples": 3000,
+        "baselineAdmissionMs": {
+          "p50": 1.6851,
+          "p95": 2.5847,
+          "max": 4.4871,
+          "spikesAtLeast30ms": 0
+        },
+        "candidateAdmissionMs": {
+          "p50": 0.0126,
+          "p95": 0.0204,
+          "max": 1.709,
+          "spikesAtLeast30ms": 0
+        },
+        "baselineAllocatedBytes": 280.0,
+        "candidateAllocatedBytes": 4412.717333333333,
+        "maxUnion": 19,
+        "maxShortlist": 8,
+        "maxRouteSlots": 16,
+        "heldImageJsonBytes": 2071
+      }
+    ],
+    "saved": [
+      {
+        "residents": 957,
+        "consumers": 1914,
+        "baselineBytes": 1338075,
+        "candidateBytes": 1341149,
+        "addedBytes": 3074,
+        "heldImageBytes": 3038,
+        "Streaming": 3864,
+        "Semantic": 3861
+      },
+      {
+        "residents": 2500,
+        "consumers": 5000,
+        "baselineBytes": 3491673,
+        "candidateBytes": 3494747,
+        "addedBytes": 3074,
+        "heldImageBytes": 3038,
+        "Streaming": 10036,
+        "Semantic": 10033
+      }
+    ]
+  },
+  "capacity": [
+    {
+      "case": "reference",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "reference",
+        "1"
+      ],
+      "seconds": 4.352587100118399,
+      "sha256": "740fca49857c058dbc30c0b60fe9fc57a3dd08d08908ab62a2d9628b29681d42",
+      "data": {
+        "name": "reference",
+        "schema": 19,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "76CD77A8F8172A159A1B5E1D86AD9EA913500A4EE9412AD20A4B444F46C4886C",
+        "residents": 957,
+        "representation": 2,
+        "consumers": 1914,
+        "visitsPerResident": 32,
+        "visits": 30624,
+        "placeCount": 9,
+        "extraExistingPlaces": 0,
+        "extraExistingPlaceChars": 0,
+        "extraExistingNameChars": 0,
+        "actualExistingGrowthChars": 0,
+        "existingGrowthAllowanceChars": 0,
+        "memoryEntries": 7656,
+        "businessReferences": 20000,
+        "tableCharsAndUtf8": 2097152,
+        "chars": 5022655,
+        "utf8Bytes": 5022655,
+        "streamingRecords": 54584,
+        "semanticRecords": 54581,
+        "runs": 1,
+        "writeMs": 129.3,
+        "readMs": 371.2,
+        "migrationFrom17Ms": 559.3,
+        "migrationSourceChars": 5372125,
+        "migrationRefusal": null,
+        "retainedBytes": 11127560,
+        "readAllocatedBytes": 85030840,
+        "processPeakBytes": 145649664,
+        "syntheticReservation": null
+      }
+    },
+    {
+      "case": "consumers5000",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "consumers5000",
+        "1"
+      ],
+      "seconds": 7.063938899897039,
+      "sha256": "ffe6cf2ccb9b0c34e6a16555989b610f9434f4fc13cedddb2545f0c0dbce254d",
+      "data": {
+        "name": "consumers5000",
+        "schema": 19,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "D52C5279CFEFA63BDB44C41333613F3E6F74B968EC1A4572D41318E928A7DFD7",
+        "residents": 2500,
+        "representation": 2,
+        "consumers": 5000,
+        "visitsPerResident": 32,
+        "visits": 80000,
+        "placeCount": 9,
+        "extraExistingPlaces": 0,
+        "extraExistingPlaceChars": 0,
+        "extraExistingNameChars": 0,
+        "actualExistingGrowthChars": 0,
+        "existingGrowthAllowanceChars": 0,
+        "memoryEntries": 20000,
+        "businessReferences": 20000,
+        "tableCharsAndUtf8": 2097152,
+        "chars": 9710819,
+        "utf8Bytes": 9710819,
+        "streamingRecords": 110132,
+        "semanticRecords": 110129,
+        "runs": 1,
+        "writeMs": 383.8,
+        "readMs": 946.7,
+        "migrationFrom17Ms": 1944.0,
+        "migrationSourceChars": 14021170,
+        "migrationRefusal": null,
+        "retainedBytes": 20895752,
+        "readAllocatedBytes": 164828832,
+        "processPeakBytes": 212750336,
+        "syntheticReservation": null
+      }
+    },
+    {
+      "case": "CF32",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "CF32",
+        "1"
+      ],
+      "seconds": 40.55759679991752,
+      "sha256": "83afb76e9bfe3f6ec46582ce4ac6e76074936a089d78f6c5d36c7c439db90cf7",
+      "data": {
+        "name": "CF32",
+        "schema": 19,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "D55B598BD20821B825BBD5E82FF110C16734215E04D9097C2F0F2EC84FE21928",
+        "residents": 50000,
+        "representation": 3,
+        "consumers": 150000,
+        "visitsPerResident": 32,
+        "visits": 1600000,
+        "placeCount": 20000,
+        "extraExistingPlaces": 19991,
+        "extraExistingPlaceChars": 6343907,
+        "extraExistingNameChars": 6239005,
+        "actualExistingGrowthChars": 12582912,
+        "existingGrowthAllowanceChars": 12582912,
+        "memoryEntries": 600000,
+        "businessReferences": 20000,
+        "tableCharsAndUtf8": 2097152,
+        "chars": 192029621,
+        "utf8Bytes": 192029621,
+        "streamingRecords": 1920132,
+        "semanticRecords": 1920129,
+        "runs": 1,
+        "writeMs": 2757.4,
+        "readMs": 9066.3,
+        "migrationFrom17Ms": null,
+        "migrationSourceChars": null,
+        "migrationRefusal": "Serialized state exceeds the input size limit.",
+        "retainedBytes": 425756200,
+        "readAllocatedBytes": 3188373488,
+        "processPeakBytes": 3262590976,
+        "syntheticReservation": {
+          "futureContractChars": 26684745,
+          "alreadyCountedBHeaderChars": 56,
+          "alreadyCountedHeldTuningChars": 405,
+          "alreadyCountedAwarenessChars": 9514,
+          "alreadyCountedAwarenessRecords": 24,
+          "fixedMemoryHeadroomChars": 1950000,
+          "futureContractRecords": 191735,
+          "totalBudgetedChars": 220664366,
+          "totalBudgetedUtf8Bytes": 220664366,
+          "totalBudgetedRecords": 2111867
+        }
+      }
+    },
+    {
+      "case": "CF64",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "--capacity",
+        "CF64",
+        "1"
+      ],
+      "seconds": 46.15234599984251,
+      "sha256": "6f6badd759774a10345ef0742154fa35607988a2b6b53a2d96100929396adb99",
+      "data": {
+        "name": "CF64",
+        "schema": 19,
+        "fixtureSeed": 11,
+        "cityMinute": 1740.0,
+        "visitTimeFormula": "j*17.125+0.123456789; j=0..visits-1; even=assigned home/Home, odd=shop-1/Shop",
+        "identityPolicy": "EconomyScenario.Create; donors <=5000, 1000 donors plus stable pc: housing expansion at 50k",
+        "referenceIdentityPolicy": "business:fixture:00000..19999:created:17:food:player:generation:1 plus bounded X padding to exactly 2Mi table",
+        "payloadSha256": "03B9A9DC975C495CC68C4C91C772A849ECE9E75B0F0DB3AB8D250895C21A894C",
+        "residents": 50000,
+        "representation": 3,
+        "consumers": 150000,
+        "visitsPerResident": 64,
+        "visits": 3200000,
+        "placeCount": 20000,
+        "extraExistingPlaces": 19991,
+        "extraExistingPlaceChars": 6343907,
+        "extraExistingNameChars": 6239005,
+        "actualExistingGrowthChars": 12582912,
+        "existingGrowthAllowanceChars": 12582912,
+        "memoryEntries": 600000,
+        "businessReferences": 20000,
+        "tableCharsAndUtf8": 2097152,
+        "chars": 230429621,
+        "utf8Bytes": 230429621,
+        "streamingRecords": 3520132,
+        "semanticRecords": 3520129,
+        "runs": 1,
+        "writeMs": 3512.3,
+        "readMs": 10453.1,
+        "migrationFrom17Ms": null,
+        "migrationSourceChars": null,
+        "migrationRefusal": "Serialized state exceeds the input size limit.",
+        "retainedBytes": 503087608,
+        "readAllocatedBytes": 3995997656,
+        "processPeakBytes": 3247468544,
+        "syntheticReservation": {
+          "futureContractChars": 26684745,
+          "alreadyCountedBHeaderChars": 56,
+          "alreadyCountedHeldTuningChars": 405,
+          "alreadyCountedAwarenessChars": 9514,
+          "alreadyCountedAwarenessRecords": 24,
+          "fixedMemoryHeadroomChars": 1950000,
+          "futureContractRecords": 191735,
+          "totalBudgetedChars": 259064366,
+          "totalBudgetedUtf8Bytes": 259064366,
+          "totalBudgetedRecords": 3711867
+        }
+      }
+    }
+  ],
+  "preIndexCandidateRuns": [
+    {
+      "case": 0,
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/awareness-regression/AwarenessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "seconds": 23.65233900002204,
+      "sha256": "195a55e3a3827c41d5b9947cc3cae13fdc72822609d7338e9dc6ea1c215691fb",
+      "data": {
+        "schema": 19,
+        "runtime": ".NET 10.0.13",
+        "baseline": "c0af745 A3/B0b metadata rank loop; native reads/routes excluded",
+        "policy": {
+          "radiusMetres": 250,
+          "drawsPerAnchor": 4,
+          "discoveryDailyProbability": 0.02
+        },
+        "stages": [
+          {
+            "alternatives": 1024,
+            "seed": 77,
+            "dense": true,
+            "buildMs": {
+              "p50": 1.2108,
+              "p95": 12.9385,
+              "max": 12.9385,
+              "spikesAtLeast30ms": 0
+            },
+            "buildAllocatedBytes": 846862.4,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 0.133,
+              "p95": 0.1918,
+              "max": 3.5583,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.0188,
+              "p95": 0.0357,
+              "max": 0.5417,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 349.49066666666664,
+            "candidateAllocatedBytes": 1150.848,
+            "maxUnion": 19,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 2055
+          },
+          {
+            "alternatives": 20000,
+            "seed": 77,
+            "dense": true,
+            "buildMs": {
+              "p50": 22.7806,
+              "p95": 28.2933,
+              "max": 28.2933,
+              "spikesAtLeast30ms": 0
+            },
+            "buildAllocatedBytes": 17480848.8,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 2.5148,
+              "p95": 2.9292,
+              "max": 5.4408,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.018,
+              "p95": 0.0291,
+              "max": 0.6069,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 280.0,
+            "candidateAllocatedBytes": 885.3546666666666,
+            "maxUnion": 19,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 2071
+          },
+          {
+            "alternatives": 1024,
+            "seed": 77,
+            "dense": false,
+            "buildMs": {
+              "p50": 2.8127,
+              "p95": 9.631,
+              "max": 9.631,
+              "spikesAtLeast30ms": 0
+            },
+            "buildAllocatedBytes": 1554414.4,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 0.1221,
+              "p95": 0.1379,
+              "max": 0.6656,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.0045,
+              "p95": 0.0079,
+              "max": 0.5299,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 280.0,
+            "candidateAllocatedBytes": 828.2693333333333,
+            "maxUnion": 17,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 1441
+          },
+          {
+            "alternatives": 20000,
+            "seed": 77,
+            "dense": false,
+            "buildMs": {
+              "p50": 51.403,
+              "p95": 96.0488,
+              "max": 96.0488,
+              "spikesAtLeast30ms": 10
+            },
+            "buildAllocatedBytes": 31996887.2,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 2.5345,
+              "p95": 2.9015,
+              "max": 6.4178,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.0103,
+              "p95": 0.0194,
+              "max": 11.4451,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 280.0,
+            "candidateAllocatedBytes": 825.832,
+            "maxUnion": 17,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 1566
+          }
+        ],
+        "saved": [
+          {
+            "residents": 957,
+            "consumers": 1914,
+            "baselineBytes": 1338075,
+            "candidateBytes": 1341149,
+            "addedBytes": 3074,
+            "managedGraphBytesSharedStrings": 1048,
+            "heldImageBytes": 3038,
+            "Streaming": 3864,
+            "Semantic": 3861
+          },
+          {
+            "residents": 2500,
+            "consumers": 5000,
+            "baselineBytes": 3491673,
+            "candidateBytes": 3494747,
+            "addedBytes": 3074,
+            "managedGraphBytesSharedStrings": 1048,
+            "heldImageBytes": 3038,
+            "Streaming": 10036,
+            "Semantic": 10033
+          }
+        ]
+      }
+    },
+    {
+      "case": 1,
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/awareness-regression/AwarenessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "seconds": 22.32072199997492,
+      "sha256": "534c3dbc1d92eeb12e95c3bc51a6ec24e7ca536461c68f4cb8baf38c261e9e33",
+      "data": {
+        "schema": 19,
+        "runtime": ".NET 10.0.13",
+        "baseline": "c0af745 A3/B0b metadata rank loop; native reads/routes excluded",
+        "policy": {
+          "radiusMetres": 250,
+          "drawsPerAnchor": 4,
+          "discoveryDailyProbability": 0.02
+        },
+        "stages": [
+          {
+            "alternatives": 1024,
+            "seed": 77,
+            "dense": true,
+            "buildMs": {
+              "p50": 0.9596,
+              "p95": 14.1927,
+              "max": 14.1927,
+              "spikesAtLeast30ms": 0
+            },
+            "buildAllocatedBytes": 847481.6,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 0.1303,
+              "p95": 0.1718,
+              "max": 3.3903,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.0177,
+              "p95": 0.0281,
+              "max": 0.1121,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 350.1653333333333,
+            "candidateAllocatedBytes": 1149.7173333333333,
+            "maxUnion": 19,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 2055
+          },
+          {
+            "alternatives": 20000,
+            "seed": 77,
+            "dense": true,
+            "buildMs": {
+              "p50": 17.607,
+              "p95": 21.2775,
+              "max": 21.2775,
+              "spikesAtLeast30ms": 0
+            },
+            "buildAllocatedBytes": 17479416.0,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 2.4839,
+              "p95": 2.8999,
+              "max": 6.7475,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.0174,
+              "p95": 0.0288,
+              "max": 0.1202,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 280.0,
+            "candidateAllocatedBytes": 885.3546666666666,
+            "maxUnion": 19,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 2071
+          },
+          {
+            "alternatives": 1024,
+            "seed": 77,
+            "dense": false,
+            "buildMs": {
+              "p50": 2.8848,
+              "p95": 9.3173,
+              "max": 9.3173,
+              "spikesAtLeast30ms": 0
+            },
+            "buildAllocatedBytes": 1554414.4,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 0.1219,
+              "p95": 0.1372,
+              "max": 0.6132,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.0045,
+              "p95": 0.0075,
+              "max": 0.7728,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 280.0,
+            "candidateAllocatedBytes": 828.2693333333333,
+            "maxUnion": 17,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 1441
+          },
+          {
+            "alternatives": 20000,
+            "seed": 77,
+            "dense": false,
+            "buildMs": {
+              "p50": 58.7659,
+              "p95": 71.0187,
+              "max": 71.0187,
+              "spikesAtLeast30ms": 10
+            },
+            "buildAllocatedBytes": 31994992.8,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 2.5258,
+              "p95": 2.8966,
+              "max": 4.4427,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.0098,
+              "p95": 0.0196,
+              "max": 0.084,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 280.0,
+            "candidateAllocatedBytes": 825.832,
+            "maxUnion": 17,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 1566
+          }
+        ],
+        "saved": [
+          {
+            "residents": 957,
+            "consumers": 1914,
+            "baselineBytes": 1338075,
+            "candidateBytes": 1341149,
+            "addedBytes": 3074,
+            "managedGraphBytesSharedStrings": 1048,
+            "heldImageBytes": 3038,
+            "Streaming": 3864,
+            "Semantic": 3861
+          },
+          {
+            "residents": 2500,
+            "consumers": 5000,
+            "baselineBytes": 3491673,
+            "candidateBytes": 3494747,
+            "addedBytes": 3074,
+            "managedGraphBytesSharedStrings": 1048,
+            "heldImageBytes": 3038,
+            "Streaming": 10036,
+            "Semantic": 10033
+          }
+        ]
+      }
+    },
+    {
+      "case": 2,
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/awareness-regression/AwarenessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "seconds": 22.495759299956262,
+      "sha256": "a2bb5022bc3a266369f3164a5ce608000e11fd8bb4d519bc9ac6dbb8079b1843",
+      "data": {
+        "schema": 19,
+        "runtime": ".NET 10.0.13",
+        "baseline": "c0af745 A3/B0b metadata rank loop; native reads/routes excluded",
+        "policy": {
+          "radiusMetres": 250,
+          "drawsPerAnchor": 4,
+          "discoveryDailyProbability": 0.02
+        },
+        "stages": [
+          {
+            "alternatives": 1024,
+            "seed": 77,
+            "dense": true,
+            "buildMs": {
+              "p50": 0.947,
+              "p95": 13.5265,
+              "max": 13.5265,
+              "spikesAtLeast30ms": 0
+            },
+            "buildAllocatedBytes": 847481.6,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 0.1315,
+              "p95": 0.1705,
+              "max": 4.0071,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.018,
+              "p95": 0.0284,
+              "max": 0.4473,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 347.2026666666667,
+            "candidateAllocatedBytes": 1138.8053333333332,
+            "maxUnion": 19,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 2055
+          },
+          {
+            "alternatives": 20000,
+            "seed": 77,
+            "dense": true,
+            "buildMs": {
+              "p50": 19.8019,
+              "p95": 39.1895,
+              "max": 39.1895,
+              "spikesAtLeast30ms": 3
+            },
+            "buildAllocatedBytes": 17479322.4,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 2.4881,
+              "p95": 2.9101,
+              "max": 3.4994,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.0179,
+              "p95": 0.0295,
+              "max": 0.2182,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 280.0,
+            "candidateAllocatedBytes": 885.3546666666666,
+            "maxUnion": 19,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 2071
+          },
+          {
+            "alternatives": 1024,
+            "seed": 77,
+            "dense": false,
+            "buildMs": {
+              "p50": 2.755,
+              "p95": 9.4337,
+              "max": 9.4337,
+              "spikesAtLeast30ms": 0
+            },
+            "buildAllocatedBytes": 1554414.4,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 0.1216,
+              "p95": 0.1353,
+              "max": 0.5629,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.0045,
+              "p95": 0.0075,
+              "max": 0.4109,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 280.0,
+            "candidateAllocatedBytes": 828.2693333333333,
+            "maxUnion": 17,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 1441
+          },
+          {
+            "alternatives": 20000,
+            "seed": 77,
+            "dense": false,
+            "buildMs": {
+              "p50": 59.87,
+              "p95": 81.7609,
+              "max": 81.7609,
+              "spikesAtLeast30ms": 10
+            },
+            "buildAllocatedBytes": 31995972.8,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 2.5299,
+              "p95": 2.8776,
+              "max": 4.3674,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.0107,
+              "p95": 0.0204,
+              "max": 8.7609,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 280.0,
+            "candidateAllocatedBytes": 825.832,
+            "maxUnion": 17,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 1566
+          }
+        ],
+        "saved": [
+          {
+            "residents": 957,
+            "consumers": 1914,
+            "baselineBytes": 1338075,
+            "candidateBytes": 1341149,
+            "addedBytes": 3074,
+            "managedGraphBytesSharedStrings": 1048,
+            "heldImageBytes": 3038,
+            "Streaming": 3864,
+            "Semantic": 3861
+          },
+          {
+            "residents": 2500,
+            "consumers": 5000,
+            "baselineBytes": 3491673,
+            "candidateBytes": 3494747,
+            "addedBytes": 3074,
+            "managedGraphBytesSharedStrings": 1048,
+            "heldImageBytes": 3038,
+            "Streaming": 10036,
+            "Semantic": 10033
+          }
+        ]
+      }
+    }
+  ],
+  "candidateRuns": [
+    {
+      "case": 0,
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/awareness-regression/AwarenessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "seconds": 33.799598100129515,
+      "sha256": "4dcd59419913e4404848923ac376c38a1dd8aeed68980fab3e3f45b25610de6f",
+      "data": {
+        "schema": 19,
+        "runtime": ".NET 10.0.13",
+        "baseline": "c0af745 A3/B0b metadata rank loop; native reads/routes excluded",
+        "policy": {
+          "radiusMetres": 250,
+          "drawsPerAnchor": 4,
+          "discoveryDailyProbability": 0.02
+        },
+        "stages": [
+          {
+            "alternatives": 1024,
+            "seed": 77,
+            "dense": true,
+            "buildMs": {
+              "p50": 2.1656,
+              "p95": 26.4999,
+              "max": 26.4999,
+              "spikesAtLeast30ms": 0
+            },
+            "buildAllocatedBytes": 275640.0,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 0.1073,
+              "p95": 0.2393,
+              "max": 5.5627,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.0117,
+              "p95": 0.0475,
+              "max": 0.7377,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 317.048,
+            "candidateAllocatedBytes": 1040.2346666666667,
+            "maxUnion": 18,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 2052
+          },
+          {
+            "alternatives": 20000,
+            "seed": 77,
+            "dense": true,
+            "buildMs": {
+              "p50": 30.7147,
+              "p95": 41.7452,
+              "max": 41.7452,
+              "spikesAtLeast30ms": 6
+            },
+            "buildAllocatedBytes": 4254289.6,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 3.5486,
+              "p95": 4.5085,
+              "max": 6.0392,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.029,
+              "p95": 0.0486,
+              "max": 0.8597,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 280.0,
+            "candidateAllocatedBytes": 884.64,
+            "maxUnion": 19,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 2067
+          },
+          {
+            "alternatives": 1024,
+            "seed": 77,
+            "dense": false,
+            "buildMs": {
+              "p50": 2.4136,
+              "p95": 10.4809,
+              "max": 10.4809,
+              "spikesAtLeast30ms": 0
+            },
+            "buildAllocatedBytes": 692054.4,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 0.1249,
+              "p95": 0.1613,
+              "max": 0.9289,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.0057,
+              "p95": 0.012,
+              "max": 0.1252,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 280.0,
+            "candidateAllocatedBytes": 827.064,
+            "maxUnion": 17,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 1566
+          },
+          {
+            "alternatives": 20000,
+            "seed": 77,
+            "dense": false,
+            "buildMs": {
+              "p50": 50.0406,
+              "p95": 73.423,
+              "max": 73.423,
+              "spikesAtLeast30ms": 10
+            },
+            "buildAllocatedBytes": 13475541.6,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 3.5047,
+              "p95": 4.2679,
+              "max": 5.4623,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.0175,
+              "p95": 0.0322,
+              "max": 0.6042,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 280.0,
+            "candidateAllocatedBytes": 827.0986666666666,
+            "maxUnion": 17,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 1440
+          }
+        ],
+        "saved": [
+          {
+            "residents": 957,
+            "consumers": 1914,
+            "baselineBytes": 1338075,
+            "candidateBytes": 1341149,
+            "addedBytes": 3074,
+            "managedGraphBytesSharedStrings": 1048,
+            "heldImageBytes": 3038,
+            "Streaming": 3864,
+            "Semantic": 3861
+          },
+          {
+            "residents": 2500,
+            "consumers": 5000,
+            "baselineBytes": 3491673,
+            "candidateBytes": 3494747,
+            "addedBytes": 3074,
+            "managedGraphBytesSharedStrings": 1048,
+            "heldImageBytes": 3038,
+            "Streaming": 10036,
+            "Semantic": 10033
+          }
+        ]
+      }
+    },
+    {
+      "case": 1,
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/awareness-regression/AwarenessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "seconds": 33.963291299995035,
+      "sha256": "475de90dcf4e24dcaaccc8840b6846dafbfaf4f479604301918c21f2d639c17f",
+      "data": {
+        "schema": 19,
+        "runtime": ".NET 10.0.13",
+        "baseline": "c0af745 A3/B0b metadata rank loop; native reads/routes excluded",
+        "policy": {
+          "radiusMetres": 250,
+          "drawsPerAnchor": 4,
+          "discoveryDailyProbability": 0.02
+        },
+        "stages": [
+          {
+            "alternatives": 1024,
+            "seed": 77,
+            "dense": true,
+            "buildMs": {
+              "p50": 2.0451,
+              "p95": 27.2204,
+              "max": 27.2204,
+              "spikesAtLeast30ms": 0
+            },
+            "buildAllocatedBytes": 275640.0,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 0.1083,
+              "p95": 0.2451,
+              "max": 5.1655,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.0116,
+              "p95": 0.0436,
+              "max": 0.8222,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 306.19466666666665,
+            "candidateAllocatedBytes": 972.3146666666667,
+            "maxUnion": 18,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 2052
+          },
+          {
+            "alternatives": 20000,
+            "seed": 77,
+            "dense": true,
+            "buildMs": {
+              "p50": 36.6467,
+              "p95": 72.9799,
+              "max": 72.9799,
+              "spikesAtLeast30ms": 10
+            },
+            "buildAllocatedBytes": 4254014.4,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 3.5884,
+              "p95": 4.6184,
+              "max": 8.5244,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.0293,
+              "p95": 0.05,
+              "max": 0.6974,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 280.0,
+            "candidateAllocatedBytes": 884.64,
+            "maxUnion": 19,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 2067
+          },
+          {
+            "alternatives": 1024,
+            "seed": 77,
+            "dense": false,
+            "buildMs": {
+              "p50": 1.7481,
+              "p95": 9.4777,
+              "max": 9.4777,
+              "spikesAtLeast30ms": 0
+            },
+            "buildAllocatedBytes": 692054.4,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 0.1251,
+              "p95": 0.1674,
+              "max": 1.0213,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.0057,
+              "p95": 0.0123,
+              "max": 0.1534,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 280.0,
+            "candidateAllocatedBytes": 827.064,
+            "maxUnion": 17,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 1566
+          },
+          {
+            "alternatives": 20000,
+            "seed": 77,
+            "dense": false,
+            "buildMs": {
+              "p50": 43.2643,
+              "p95": 78.1916,
+              "max": 78.1916,
+              "spikesAtLeast30ms": 10
+            },
+            "buildAllocatedBytes": 13473777.6,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 3.6505,
+              "p95": 4.6302,
+              "max": 6.292,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.0185,
+              "p95": 0.0347,
+              "max": 0.7737,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 280.0,
+            "candidateAllocatedBytes": 827.0986666666666,
+            "maxUnion": 17,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 1440
+          }
+        ],
+        "saved": [
+          {
+            "residents": 957,
+            "consumers": 1914,
+            "baselineBytes": 1338075,
+            "candidateBytes": 1341149,
+            "addedBytes": 3074,
+            "managedGraphBytesSharedStrings": 1048,
+            "heldImageBytes": 3038,
+            "Streaming": 3864,
+            "Semantic": 3861
+          },
+          {
+            "residents": 2500,
+            "consumers": 5000,
+            "baselineBytes": 3491673,
+            "candidateBytes": 3494747,
+            "addedBytes": 3074,
+            "managedGraphBytesSharedStrings": 1048,
+            "heldImageBytes": 3038,
+            "Streaming": 10036,
+            "Semantic": 10033
+          }
+        ]
+      }
+    },
+    {
+      "case": 2,
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/awareness-regression/AwarenessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "seconds": 23.21520969993435,
+      "sha256": "c508eed48826ac794809998c21c76c16dded41735904daef7a1725977768ad61",
+      "data": {
+        "schema": 19,
+        "runtime": ".NET 10.0.13",
+        "baseline": "c0af745 A3/B0b metadata rank loop; native reads/routes excluded",
+        "policy": {
+          "radiusMetres": 250,
+          "drawsPerAnchor": 4,
+          "discoveryDailyProbability": 0.02
+        },
+        "stages": [
+          {
+            "alternatives": 1024,
+            "seed": 77,
+            "dense": true,
+            "buildMs": {
+              "p50": 1.2555,
+              "p95": 14.14,
+              "max": 14.14,
+              "spikesAtLeast30ms": 0
+            },
+            "buildAllocatedBytes": 275640.0,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 0.0802,
+              "p95": 0.1431,
+              "max": 4.2477,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.0054,
+              "p95": 0.0226,
+              "max": 0.5021,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 306.19466666666665,
+            "candidateAllocatedBytes": 987.136,
+            "maxUnion": 18,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 2052
+          },
+          {
+            "alternatives": 20000,
+            "seed": 77,
+            "dense": true,
+            "buildMs": {
+              "p50": 18.9791,
+              "p95": 23.7472,
+              "max": 23.7472,
+              "spikesAtLeast30ms": 0
+            },
+            "buildAllocatedBytes": 4254988.8,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 2.4879,
+              "p95": 2.9258,
+              "max": 3.7247,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.0178,
+              "p95": 0.0289,
+              "max": 0.3212,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 280.0,
+            "candidateAllocatedBytes": 884.64,
+            "maxUnion": 19,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 2067
+          },
+          {
+            "alternatives": 1024,
+            "seed": 77,
+            "dense": false,
+            "buildMs": {
+              "p50": 2.3263,
+              "p95": 7.0944,
+              "max": 7.0944,
+              "spikesAtLeast30ms": 0
+            },
+            "buildAllocatedBytes": 692054.4,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 0.1222,
+              "p95": 0.1369,
+              "max": 0.3465,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.0046,
+              "p95": 0.0081,
+              "max": 0.0612,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 280.0,
+            "candidateAllocatedBytes": 827.064,
+            "maxUnion": 17,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 1566
+          },
+          {
+            "alternatives": 20000,
+            "seed": 77,
+            "dense": false,
+            "buildMs": {
+              "p50": 24.2566,
+              "p95": 49.0084,
+              "max": 49.0084,
+              "spikesAtLeast30ms": 4
+            },
+            "buildAllocatedBytes": 13475612.8,
+            "samples": 3000,
+            "baselineAdmissionMs": {
+              "p50": 2.5676,
+              "p95": 3.0614,
+              "max": 4.0683,
+              "spikesAtLeast30ms": 0
+            },
+            "candidateAdmissionMs": {
+              "p50": 0.0115,
+              "p95": 0.0225,
+              "max": 0.1409,
+              "spikesAtLeast30ms": 0
+            },
+            "baselineAllocatedBytes": 280.0,
+            "candidateAllocatedBytes": 827.0986666666666,
+            "maxUnion": 17,
+            "maxShortlist": 8,
+            "maxRouteSlots": 16,
+            "heldImageJsonBytes": 1440
+          }
+        ],
+        "saved": [
+          {
+            "residents": 957,
+            "consumers": 1914,
+            "baselineBytes": 1338075,
+            "candidateBytes": 1341149,
+            "addedBytes": 3074,
+            "managedGraphBytesSharedStrings": 1048,
+            "heldImageBytes": 3038,
+            "Streaming": 3864,
+            "Semantic": 3861
+          },
+          {
+            "residents": 2500,
+            "consumers": 5000,
+            "baselineBytes": 3491673,
+            "candidateBytes": 3494747,
+            "addedBytes": 3074,
+            "managedGraphBytesSharedStrings": 1048,
+            "heldImageBytes": 3038,
+            "Streaming": 10036,
+            "Semantic": 10033
+          }
+        ]
+      }
+    }
+  ],
+  "finalProductionSource": "0d79664",
+  "intermediateIndexPrototype": {
+    "schema": 19,
+    "runtime": ".NET 10.0.13",
+    "baseline": "c0af745 A3/B0b metadata rank loop; native reads/routes excluded",
+    "policy": {
+      "radiusMetres": 250,
+      "drawsPerAnchor": 4,
+      "discoveryDailyProbability": 0.02
+    },
+    "stages": [
+      {
+        "alternatives": 1024,
+        "seed": 77,
+        "dense": true,
+        "buildMs": {
+          "p50": 0.8278,
+          "p95": 15.689,
+          "max": 15.689,
+          "spikesAtLeast30ms": 0
+        },
+        "buildAllocatedBytes": 275788.8,
+        "samples": 3000,
+        "baselineAdmissionMs": {
+          "p50": 0.1338,
+          "p95": 0.1875,
+          "max": 2.994,
+          "spikesAtLeast30ms": 0
+        },
+        "candidateAdmissionMs": {
+          "p50": 0.0189,
+          "p95": 0.0331,
+          "max": 0.1284,
+          "spikesAtLeast30ms": 0
+        },
+        "baselineAllocatedBytes": 353.2746666666667,
+        "candidateAllocatedBytes": 1167.824,
+        "maxUnion": 18,
+        "maxShortlist": 8,
+        "maxRouteSlots": 16,
+        "heldImageJsonBytes": 2052
+      },
+      {
+        "alternatives": 20000,
+        "seed": 77,
+        "dense": true,
+        "buildMs": {
+          "p50": 14.8026,
+          "p95": 19.5693,
+          "max": 19.5693,
+          "spikesAtLeast30ms": 0
+        },
+        "buildAllocatedBytes": 4255025.6,
+        "samples": 3000,
+        "baselineAdmissionMs": {
+          "p50": 2.4987,
+          "p95": 2.8716,
+          "max": 3.4838,
+          "spikesAtLeast30ms": 0
+        },
+        "candidateAdmissionMs": {
+          "p50": 0.0175,
+          "p95": 0.0281,
+          "max": 0.1296,
+          "spikesAtLeast30ms": 0
+        },
+        "baselineAllocatedBytes": 280.0,
+        "candidateAllocatedBytes": 884.64,
+        "maxUnion": 19,
+        "maxShortlist": 8,
+        "maxRouteSlots": 16,
+        "heldImageJsonBytes": 2067
+      },
+      {
+        "alternatives": 1024,
+        "seed": 77,
+        "dense": false,
+        "buildMs": {
+          "p50": 2.1154,
+          "p95": 8.1282,
+          "max": 8.1282,
+          "spikesAtLeast30ms": 0
+        },
+        "buildAllocatedBytes": 838302.4,
+        "samples": 3000,
+        "baselineAdmissionMs": {
+          "p50": 0.1219,
+          "p95": 0.1367,
+          "max": 0.6006,
+          "spikesAtLeast30ms": 0
+        },
+        "candidateAdmissionMs": {
+          "p50": 0.0044,
+          "p95": 0.0073,
+          "max": 0.0626,
+          "spikesAtLeast30ms": 0
+        },
+        "baselineAllocatedBytes": 280.0,
+        "candidateAllocatedBytes": 827.064,
+        "maxUnion": 17,
+        "maxShortlist": 8,
+        "maxRouteSlots": 16,
+        "heldImageJsonBytes": 1566
+      },
+      {
+        "alternatives": 20000,
+        "seed": 77,
+        "dense": false,
+        "buildMs": {
+          "p50": 35.3983,
+          "p95": 69.9579,
+          "max": 69.9579,
+          "spikesAtLeast30ms": 6
+        },
+        "buildAllocatedBytes": 16545210.4,
+        "samples": 3000,
+        "baselineAdmissionMs": {
+          "p50": 2.5599,
+          "p95": 3.0338,
+          "max": 6.7084,
+          "spikesAtLeast30ms": 0
+        },
+        "candidateAdmissionMs": {
+          "p50": 0.0111,
+          "p95": 0.0281,
+          "max": 0.1946,
+          "spikesAtLeast30ms": 0
+        },
+        "baselineAllocatedBytes": 280.0,
+        "candidateAllocatedBytes": 827.0986666666666,
+        "maxUnion": 17,
+        "maxShortlist": 8,
+        "maxRouteSlots": 16,
+        "heldImageJsonBytes": 1440
+      }
+    ],
+    "saved": [
+      {
+        "residents": 957,
+        "consumers": 1914,
+        "baselineBytes": 1338075,
+        "candidateBytes": 1341149,
+        "addedBytes": 3074,
+        "managedGraphBytesSharedStrings": 1048,
+        "heldImageBytes": 3038,
+        "Streaming": 3864,
+        "Semantic": 3861
+      },
+      {
+        "residents": 2500,
+        "consumers": 5000,
+        "baselineBytes": 3491673,
+        "candidateBytes": 3494747,
+        "addedBytes": 3074,
+        "managedGraphBytesSharedStrings": 1048,
+        "heldImageBytes": 3038,
+        "Streaming": 10036,
+        "Semantic": 10033
+      }
+    ]
+  },
+  "finalCoreSource": "b50c756",
+  "capacitySource": "ad1cd9c",
+  "prototypeSource": "a06fada",
+  "notes": "Core timing at b50c756, unchanged by final 0d79664 config-only parsing/test refinement. Capacity DTO/codec unchanged since ad1cd9c. Context warmups 300 and first 2 build/JIT warmups excluded; measured build >=30ms samples flagged by layout/count/max. Intermediate index prototype was an uncommitted streamed-hash/per-cell-array experiment superseded by b50c756. CPU load uncontrolled; allocation wins do not imply a universal wall-time win."
+}

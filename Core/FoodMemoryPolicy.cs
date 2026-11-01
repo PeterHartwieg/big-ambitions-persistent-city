@@ -8,6 +8,10 @@ namespace PersistentCity.Core
         public static bool Expired(ShopMemory entry, int day, FoodMemorySettings settings)
             => day - entry.Day > settings.FoodMemoryForgetAfterDays;
 
+        // Failure-only evidence can penalize a sampled shop, but cannot create its own admission.
+        internal static bool SuppliesAwareness(ShopMemory entry, int day, FoodMemorySettings settings)
+            => entry.Served > 0 && entry.Affinity > 0 && !Expired(entry, day, settings);
+
         public static int EffectiveAffinity(ShopMemory entry, int day, ResidentTraits traits, FoodMemorySettings settings)
         {
             if (Expired(entry, day, settings)) return 0;

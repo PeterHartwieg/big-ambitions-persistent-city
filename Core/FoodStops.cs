@@ -9,7 +9,7 @@ namespace PersistentCity.Core
             && person.Activity == Activity.Shop && person.MealOuting == null
             && city.State.Minute < Math.Min(person.NextEventMinute, person.ActivityUntilMinute)
             && DailyRoutine.Open(city.FindPlace(person.PlaceId), city.State.Minute)
-            && state.Shops.Any(s => s.PlaceId == person.PlaceId);
+            && ScopeAtPlace(person.PlaceId)!=null;
 
         // An observed activity transition wakes only this resident. No population scan or
         // per-frame market query. A declined or failed earlier offer does not consume the

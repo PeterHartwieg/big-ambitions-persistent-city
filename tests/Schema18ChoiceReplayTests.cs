@@ -15,7 +15,7 @@ public sealed class Schema18ChoiceReplayTests
         var session = SaveSession.Open(data, city.State.PopulationKey); var read = session.InitialReadResult;
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(17, read.SourceSchema);
         Assert.Equal(source, LegacyWire.Write(read.State!)); Assert.Same(source, data[SaveStore.StateKey]);
-        Assert.True(session.WriteTo(data, read.State!).Success); Assert.Equal(18, SaveCodec.Read(data[SaveStore.StateKey]).SourceSchema);
+        Assert.True(session.WriteTo(data, read.State!).Success); Assert.Equal(CityState.CurrentSchema, SaveCodec.Read(data[SaveStore.StateKey]).SourceSchema);
         Assert.Equal("untouched authority", data[FoodAuthorityStore.Key]); Assert.Equal("untouched receipt", data["persistentcity:food-receipt:test"]);
         var restored = new CitySimulator(SaveCodec.Read(data[SaveStore.StateKey]).State!, planner); restored.AttachFoodMarket(market); return restored;
     }

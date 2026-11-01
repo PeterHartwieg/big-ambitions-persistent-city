@@ -8,7 +8,7 @@ internal static class LegacyWire
     internal static string Write(CityState state)
     {
         int schema = state.Schema;
-        try { if (schema == 18) state.Schema = 17; return LegacyPopulationCodec.Write(state); }
+        try { if (schema >= 18) state.Schema = 17; return LegacyPopulationCodec.Write(state); }
         finally { state.Schema = schema; }
     }
 }
