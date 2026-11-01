@@ -6,7 +6,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / "build/e3-cupcake-sync-base/gates"
+OUT = ROOT / "build/e3-salad-sync-base/gates"
 OUT.mkdir(parents=True, exist_ok=True)
 DOTNET = str(Path(os.environ["LOCALAPPDATA"]) / "Microsoft/dotnet/dotnet.exe")
 WAIT = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
@@ -56,13 +56,16 @@ gates += [
     ("cupcake", [DOTNET, "run", "--project", "tools/cupcake-feasibility-regression/CupcakeFeasibilityRegression.csproj", "--configuration", "Release"]),
     ("isolation", [sys.executable, "tools/donut-feasibility-regression/source_checks.py"]),
     ("donut-differential", [sys.executable, "tools/cupcake-feasibility-regression/compare_donut.py"]),
+    ("salad-isolation", [sys.executable, "tools/salad-feasibility-regression/source_checks.py"]),
+    ("salad-differential", [sys.executable, "tools/salad-feasibility-regression/compare_baseline.py", "differential"]),
+    ("salad-baseline", [sys.executable, "tools/salad-feasibility-regression/compare_baseline.py", "before"]),
     ("donut-baseline", [sys.executable, "tools/cupcake-feasibility-regression/measure_before.py"]),
 ]
 results = []
 for name, command in gates:
     print(f"START {name}", flush=True)
     # Python harnesses also launch dotnet; serialize those too. No tests are detached.
-    if name != "isolation":
+    if name not in ("isolation", "salad-isolation"):
         wait = subprocess.run(WAIT, cwd=ROOT, env=env, capture_output=True, text=True)
         (OUT / f"{name}-wait.txt").write_text(wait.stdout + wait.stderr, encoding="utf-8")
         if wait.returncode:

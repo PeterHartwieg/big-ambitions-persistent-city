@@ -12,6 +12,8 @@ original = (ROOT / "tools/cupcake-feasibility-regression/approved-donut-reader.c
 assert hashlib.sha256(original.encode()).hexdigest() == "880d062dcbf9a21af4168ac44b25fd1bfc91311830058a26356c4aeca4b30cf1"
 (OUT / "DonutFeasibilityReader.cs").write_text(original, encoding="utf-8")
 program = (ROOT / "tools/donut-feasibility-regression/Program.cs").read_text(encoding="utf-8")
+program = program.replace("#elif SALAD\nusing CandidateReader = PersistentCity.Runtime.SaladFeasibilityReader;\n", "")
+program = re.sub(r"#if SALAD\n.*?#endif\n", "", program, flags=re.S)
 program = re.sub(r"#if CUPCAKE\n.*?#endif\n", "", program, flags=re.S).replace("CandidateReader", "DonutFeasibilityReader")
 assert hashlib.sha256(program.encode()).hexdigest() == "32da8b5d093099da5616ee97d7fda3032eb7f92bc3bef22038853e8d145d21d0"
 (OUT / "Program.cs").write_text(program, encoding="utf-8")

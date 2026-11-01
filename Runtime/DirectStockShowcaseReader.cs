@@ -36,6 +36,7 @@ namespace PersistentCity.Runtime
         internal string ProductId { get; }
         internal static readonly DirectStockCandidate Donut = new DirectStockCandidate("ba:itemname_donut");
         internal static readonly DirectStockCandidate Cupcake = new DirectStockCandidate("ba:itemname_cupcake");
+        internal static readonly DirectStockCandidate Salad = new DirectStockCandidate("ba:itemname_salad");
     }
 
     // Stack result lets candidate facades retain their API with no intermediate snapshot allocation.
@@ -51,7 +52,7 @@ namespace PersistentCity.Runtime
     }
 
     /// <summary>Explicit main-thread field diagnostic. No scheduled or gameplay caller.
-    /// See e3-donut.md and e3-cupcake.md; bags/counters are shared business observations.</summary>
+    /// See the E3 per-product records; bags/counters are shared business observations.</summary>
     internal static class DirectStockShowcaseReader
     {
         private static readonly FieldInfo? AuthoredTags;
