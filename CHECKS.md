@@ -35,3 +35,5 @@ Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here
 - A5 — Integrated acceptance, pre-E1 measurements, schema-20 base sync and 12 numbered rig checks: [checks](docs/checks/a5-integrated-acceptance.md).
 
 - E1 — New-outing and food weather, schema 20, base sync and native checklist: [checks](docs/checks/e1-rain.md).
+
+- E3 ice cream - 1 November 2026, offline STOP; D/C/S/I warm 2,000-entry p95 0.1610 / 0.1474 / 0.1605 / 0.1779 ms, 49,104 B/call; cold/small timings and 6 Nov handoff: [checks](docs/checks/e3-icecream.md).

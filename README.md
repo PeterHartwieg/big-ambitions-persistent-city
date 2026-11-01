@@ -4,6 +4,8 @@ Validation and dated development notices are in the [checks index](CHECKS.md); e
 
 C2b has offline campaign evidence/source plumbing and schema 22; active campaigns now raise choice preference and soften distance for every resident under Peter's 1 Nov decision; in-game checks are batched into the combined locked rig under merge rule v2; no rig proof is claimed. [Checks and 6 Nov rig list](docs/checks/c2b-campaign-awareness.md).
 
+E3 ice cream: [feasibility STOP](docs/plans/e3-icecream.md), shipped holder unestablished; conditional read-only probe only ([offline checks](docs/checks/e3-icecream.md)).
+
 A5 integrates Step A's offline acceptance on the schema-20 development line (historical measurements precede E1); [closure, measurements and the 6 Nov in-game checklist](docs/checks/a5-integrated-acceptance.md) keep offline results separate from pending native interaction and final-head proof.
 
 F1 shop view stopped at the drawing decision: [clean-room NO-GO and smaller geometry probe](docs/plans/f1-shop-view-decision.md). F0 drawing remains a no-op; runtime and save behavior are unchanged.
