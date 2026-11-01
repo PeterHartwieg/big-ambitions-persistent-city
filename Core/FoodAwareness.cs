@@ -8,7 +8,7 @@ using System.Text;
 
 namespace PersistentCity.Core
 {
-    public enum FoodAlternativeKind { Managed, External }
+    public enum FoodAwarenessAlternativeKind { Managed, External }
 
     [Flags]
     public enum FoodAwarenessSource { Memory=1, Home=2, Routine=4, Origin=8, Discovery=16, Campaign=32 }
@@ -87,10 +87,10 @@ namespace PersistentCity.Core
         public const int MaximumAlternatives=20000, MaximumSourceSlots=32, CoreSourceSlots=24;
         public sealed class Entry
         {
-            public Entry(string businessId,string placeId,Position position,FoodAlternativeKind kind=FoodAlternativeKind.Managed)
+            public Entry(string businessId,string placeId,Position position,FoodAwarenessAlternativeKind kind=FoodAwarenessAlternativeKind.Managed)
             { BusinessId=businessId;PlaceId=placeId;Position=position;Kind=kind; }
             internal Entry(FoodScope scope,Position position) : this(scope.BusinessId,scope.PlaceId,position) {Scope=scope;}
-            public FoodAlternativeKind Kind { get; }
+            public FoodAwarenessAlternativeKind Kind { get; }
             public string BusinessId { get; }
             public string PlaceId { get; }
             public Position Position { get; }
@@ -363,7 +363,7 @@ namespace PersistentCity.Core
             if(diagnostic!=null) diagnostic.Image=image;
             return image;
         }
-        public Entry[] Rank(FoodAwarenessImage image,Position origin,ResidentTraits traits,FoodChoiceSettings settings,FoodDrawContext draw,double pace)
+        public Entry[] Rank(FoodAwarenessImage image,Position origin,ResidentTraits traits,FoodChoiceSettings settings,FoodDrawContext draw,double pace,Func<string,double>? memoryContribution=null)
         {
             if(image.CatalogueRevision!=Revision || image.Union.Count>MaximumSourceSlots) throw new ArgumentException("Invalid awareness image.");
             var selected=new Entry[8];var ranks=new double[8];int count=0;
@@ -372,7 +372,7 @@ namespace PersistentCity.Core
             {
                 if(!candidate.Eligible) continue;
                 var entry=Find(candidate.BusinessId);if(entry==null) continue;
-                double rank=FoodDrawContext.Rank(draw.ShopHash(entry.BusinessId),preference.Weight(Position.Distance(origin,entry.Position)/pace,true));
+                double rank=FoodDrawContext.Rank(draw.ShopHash(entry.BusinessId),FoodChoicePolicy.ApplyMemory(preference.Weight(Position.Distance(origin,entry.Position)/pace,true),memoryContribution?.Invoke(entry.BusinessId) ?? 0,settings.FoodChoiceWeightFloor));
                 int at=0;while(at<count && (ranks[at]<rank || ranks[at]==rank && StringComparer.Ordinal.Compare(selected[at].BusinessId,entry.BusinessId)<0)) at++;
                 if(at==8) continue;
                 for(int j=Math.Min(count,7);j>at;j--) {selected[j]=selected[j-1];ranks[j]=ranks[j-1];}

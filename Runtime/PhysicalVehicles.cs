@@ -212,7 +212,7 @@ namespace PersistentCity.Runtime
         internal static Position Point(Vector3 p) => new Position(p.x, p.y, p.z);
         internal static Vector3 Vector(Position p) => new Vector3((float)p.X, (float)p.Y, (float)p.Z);
         private static bool NativeReady => TrafficManager.IsInitialized && TrafficManager.HasInstance
-            && TrafficManager.Instance.enabled && !BuildingManager.IsInsideBuilding && Time.timeScale > 0;
+            && TrafficManager.Instance.enabled && (!BuildingManager.IsInsideBuilding || NativeInteriorCityView.Active) && Time.timeScale > 0;
         internal PhysicalVehicleBody? Owned(int index) => bodies.TryGetValue(index, out var body) && body.Valid ? body : null;
         internal bool Owns(GameObject obj) => obj != null && obj.GetComponentInParent<VehicleComponent>() is VehicleComponent vehicle && Owned(vehicle.GetIndex()) != null;
         internal static bool Ordinary(VehicleComponent vehicle) => vehicle != null && vehicle.vehicleType == VehicleTypes.Car && RandomAmbient(vehicle);

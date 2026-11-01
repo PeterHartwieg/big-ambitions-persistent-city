@@ -26,6 +26,15 @@ static partial class Program
             decision["Tuning"] = bad; PreserveB0(root.ToString(Formatting.None), state);
         }
         decision["Tuning"] = image;
+        // B1 deliberately lifts B0b's neutral-only semantic gate. No wire fields,
+        // tuple arities, record charges or frozen source resolvers change.
+        foreach (JObject shop in decision["Shops"]!) shop["MemoryContribution"] = -4.605170185988091;
+        string nonzero = root.ToString(Formatting.None);
+        var accepted = SaveCodec.Read(nonzero);
+        Check(accepted.Status == SaveReadStatus.Loaded, "B1 bounded nonzero contribution refused.");
+        Check(nonzero.Length - previous.Length <= 589, "B1 exceeded B0b scalar allowance.");
+        Check(SaveCodec.CountRecords(accepted.State!, nonzero) == SaveCodec.CountRecords(state, wire), "B1 scalar changed record counting.");
+        foreach (JObject shop in decision["Shops"]!) shop["MemoryContribution"] = 0.0;
         decision["Shops"]![0]!["MemoryContribution"] = 8.01;
         PreserveB0(root.ToString(Formatting.None), state);
     }

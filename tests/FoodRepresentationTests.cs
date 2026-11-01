@@ -92,7 +92,8 @@ public sealed partial class FoodCommerceTests
         // replacement plan and its validation. Ordinary journeys plan outside any scope.
         var scopes = string.Join(" ", scoped.Log.Where(e => e != "unscoped-plan")).Split('[').Skip(1).Select(part => part.Split(']')[0].Trim()).ToList();
         Assert.Equal(scoped.Begins, scopes.Count);
-        var allowed = new[] { "valid", "plan valid", "plan invalid", "invalid plan valid", "invalid plan invalid" };
+        // A3 selected-route commit can refuse a stale quote without replacement; B1 may choose that candidate.
+        var allowed = new[] { "invalid", "valid", "plan valid", "plan invalid", "invalid plan valid", "invalid plan invalid" };
         Assert.All(scopes, scope => Assert.Contains(scope, allowed));
         Assert.Contains("invalid plan valid", scopes); Assert.Contains("valid", scopes); Assert.Contains("plan valid", scopes);
         Assert.False(scoped.Open);

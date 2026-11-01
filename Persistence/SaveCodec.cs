@@ -1048,7 +1048,7 @@ namespace PersistentCity.Persistence
                 Require(shop != null && businesses.Add(shop.BusinessId), "Duplicate decision shop.");
                 Require(Position.Finite(shop!.MemoryContribution) && shop.MemoryContribution >= -8 && shop.MemoryContribution <= 8,
                     "Invalid held memory contribution.");
-                Require(shop.MemoryContribution == 0, "Held memory contribution requires B1 support.");
+                // B1 executes the finite B0b scalar; older B0b binaries deliberately refuse it.
                 Text(shop!.BusinessId, "Decision shop business", 512);
                 Require(foodPlaces.Contains(shop.PlaceId, (int)PlaceKind.Shop), "Unknown decision shop.");
                 Require(shop.MealsPerHour == -1 || Position.Finite(shop.MealsPerHour) && shop.MealsPerHour >= 0 && shop.MealsPerHour <= 100000,
