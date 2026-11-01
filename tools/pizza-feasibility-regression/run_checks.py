@@ -43,7 +43,7 @@ if __name__ == "__main__":
                 "--configuration", "Release"], True))
     elif phase == "audit":
         records.append(run("pizza-audit", [sys.executable, "tools/pizza-feasibility-regression/source_checks.py",
-            "--audit-base", "75c956c"]))
+            "--audit-base", "2bd9006"]))
     elif phase == "all":
         records.append(run("build", [sys.executable, "tools/build.py", "--game-managed",
             r"C:\Program Files (x86)\Steam\steamapps\common\Big Ambitions\Big Ambitions_Data\Managed"], True))

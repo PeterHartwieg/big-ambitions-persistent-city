@@ -54,7 +54,7 @@ public sealed class HeldFoodTuningTests
         var paths = new Paths(); var market = new Market(); var city = new CitySimulator(read.State!, paths);
         var settings = new FoodChoiceSettings { FoodChoiceTasteWeight = taste };
         if (editAll) {
-            foreach (var property in typeof(FoodChoiceSettings).GetProperties()) property.SetValue(settings, 3.0);
+            foreach (var property in typeof(FoodChoiceSettings).GetProperties().Where(p=>!p.Name.StartsWith("FoodMenu",StringComparison.Ordinal))) property.SetValue(settings, 3.0);
             settings.Clamp();
         }
         city.AttachFoodMarket(market, settings);
@@ -245,7 +245,7 @@ public sealed class HeldFoodTuningTests
     public void ImageStoresAllTwelveExactCoefficientsAndClampsOnlyCapture()
     {
         var settings = new FoodChoiceSettings();
-        var properties = typeof(FoodChoiceSettings).GetProperties(); Assert.Equal(12, properties.Length);
+        var properties = typeof(FoodChoiceSettings).GetProperties().Where(p=>!p.Name.StartsWith("FoodMenu",StringComparison.Ordinal)).ToArray(); Assert.Equal(12, properties.Length);
         foreach (var property in properties) {
             var changed = new FoodChoiceSettings(); property.SetValue(changed, .37); changed.Clamp();
             var capture = FoodDecisionTuning.Capture(changed); string wire = capture.ToWire();

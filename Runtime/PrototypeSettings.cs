@@ -10,6 +10,12 @@ namespace PersistentCity.Runtime
     {
         [JsonIgnore]
         public FoodChoiceSettings FoodChoice { get; } = new FoodChoiceSettings();
+        [JsonConverter(typeof(StreetLifeMinutesConverter), 1, 8)]
+        public int FoodMenuMaximumOffersPerShop { get => FoodChoice.FoodMenuMaximumOffersPerShop; set => FoodChoice.FoodMenuMaximumOffersPerShop=value; }
+        [JsonConverter(typeof(FoodMenuNumberConverter))]
+        public double FoodMenuNewTasteWeight { get => FoodChoice.FoodMenuNewTasteWeight; set => FoodChoice.FoodMenuNewTasteWeight=value; }
+        [JsonConverter(typeof(FoodMenuNumberConverter))]
+        public double FoodMenuHealthWeight { get => FoodChoice.FoodMenuHealthWeight; set => FoodChoice.FoodMenuHealthWeight=value; }
         [JsonIgnore]
         public MarketResearchSettings MarketResearch { get; } = new MarketResearchSettings();
         [JsonConverter(typeof(ResearchCatchmentSettingConverter))]
@@ -252,6 +258,16 @@ namespace PersistentCity.Runtime
         }
         public override double ReadJson(JsonReader reader, Type type, double existing, bool hasExisting, JsonSerializer serializer) => Number(reader);
         public override void WriteJson(JsonWriter writer, double value, JsonSerializer serializer) => writer.WriteValue(value);
+    }
+    internal sealed class FoodMenuNumberConverter : JsonConverter<double>
+    {
+        public override double ReadJson(JsonReader reader, Type type, double existing, bool hasExisting, JsonSerializer serializer)
+        {
+            var token=JToken.Load(reader);
+            if(token.Type==JTokenType.Integer || token.Type==JTokenType.Float) return (double)token;
+            return token.Type==JTokenType.String && double.TryParse((string)token!,NumberStyles.Float,CultureInfo.InvariantCulture,out double value) ? value : double.NaN;
+        }
+        public override void WriteJson(JsonWriter writer,double value,JsonSerializer serializer) => writer.WriteValue(value);
     }
     internal sealed class FoodMemoryIntegerConverter : JsonConverter<int>
     {
