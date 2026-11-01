@@ -1,9 +1,23 @@
-# C2b: compose the latest E4 base (schema 23)
+# C2b: compose the latest base (E4 schema 23 and E3 pizza)
 
 Fixes Sol-r1-1, Opus-r1-1 and Opus-r1-2. Merge development head `2bd9006`
 into prior sync `d2ba6d2` from merge base `75c956c`, retaining two-parent merge
 ancestry. Target remains `codex/pc-c2b-campaign-awareness`; no push or remote PR
 merge is performed here. Both parents' diffs against the base were inspected.
+
+The base advanced again during validation to **`8c6b3f3` (E3 pizza)**. A second
+real merge, `84348e1` (parents `4dc81d1`, `8c6b3f3`), includes that latest head.
+Its sole conflict was README's adjacent C2b/pizza notices; keep both plus all
+E4/E3/A5/F1 notices and all checks/perf/plan lines. Both sides' diffs against
+`2bd9006` were inspected. The pizza import is read-only and adds no schema.
+
+Pizza's descriptor exposed a frozen ice cream baseline reconstruction assertion.
+The harness now strips only the pizza descriptor before applying the original
+three-candidate hash. Ice cream/pizza guards normalize only that exact harness
+and guard edit; original hash values remain and all other code is still pinned.
+This is a test-tool integration fix, with no production reader changes. All
+Runtime E3 files match `8c6b3f3`; the E4/Core/persistence composition below is
+unchanged by the second merge.
 
 The documented E4 predecessor rule gives **20 -> 22 -> 23**. Schema 21 remains
 reserved; >23 is future. Exact 22 includes bounded campaign images/held source
@@ -12,7 +26,7 @@ Its menu/history/offer limits remain four. The menu migration validates this
 predecessor before adding E4's policy header; no facts, identities, weather,
 money, campaign masks or held decisions are regenerated.
 
-All 20 textual conflicts and resolutions:
+The E4 merge's 20 textual conflicts and resolutions (plus the subsequent README conflict above):
 
 | File | Resolution |
 | --- | --- |
@@ -51,9 +65,33 @@ separate, and names E4's new-taste constructor argument to preserve both inputs.
 A new interrupted-decision regression verifies exact schema-22 campaign/rain
 captures through migration, reload and changed live settings.
 
-Validation results will be added after the full foreground run. Earlier results
-below describe the ice cream-only sync at `75c956c`; they do not describe the
-schema-23 composition or the latest base. Historical evidence is retained.
+Final validation on **`8378efa`**: **65/65 foreground gates pass**, **2,435 tests
+passing and discoverable**, zero failed/skipped; production build, all **40
+top-level regression projects**, four Python adapters, three simulations,
+continuity/optional-stop checks, frozen reader baselines/source guards, C4 exact
+saved bytes, five A5 combined modes and E4's exact default-economy comparison
+against `51ce709`. All gates used the prescribed other-dotnet guard; no command
+time limit or detached tests. The initial new-test setup failure, its focused
+retest, the successful E4-only 63-gate intermediate run and the later frozen-
+baseline assertion/fix are all retained in the evidence.
+
+Current schema-23 population fixture: **120,257 characters**, digest
+`E9ACB14208DFFB98500039FE30CDDA3545CFAE3DAA2EE8CAA45A08FEC810F974`;
+stripped projection **119,083 characters**, with unchanged prior digest.
+Economy/order/reload digests and twelve F0 transitions are unchanged. C4's
+**41,860 / 66,348-byte** fixtures are equal with/without its engine. E4's raw
+8-product history fixture measures **10,135,880 B** (14,336 rows / 114,688 cells).
+Campaign byte/record charges remain unchanged. Current C1 cold p95 **6.0568 ms**
+above 5 ms, C2a setup >=30 ms samples, E4 timed serialization >=30 ms and separate
+aggregate/save timings remain qualified in the [owning checks](../checks/c2b-campaign-awareness.md)
+and [machine record](../checks/c2b-e4-sync-r1-results.json). None is a native
+mod-work/whole-frame result or a new performance win; parked hotspots remain.
+
+Final fetch still reports **`8c6b3f3`**, already included; the working tree's only
+post-validation edits are evidence/documentation. Foreground runners exited and
+no owned test process remains. No push or remote PR merge. Earlier results
+below are historical ice cream-only measurements at `75c956c`, not this current
+schema-23 composition. All prior evidence and its limitations are retained.
 Native proof remains batched under merge rule v2 on the combined locked rig;
 input-only proof waits for Peter's 6 Nov playtest. No game/rig/bridge/profile,
 Steam/Workshop or WSL operations, release/upload or normal-save deployment.

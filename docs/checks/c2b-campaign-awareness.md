@@ -1,5 +1,107 @@
 # C2b: observed campaigns and soft distance preference
 
+## Round-1 review fixes: latest E4 base - 1 November 2026
+
+Addresses **Sol-r1-1 / Opus-r1-1 / Opus-r1-2**. E4 landed at `2bd9006`
+after the ice cream-only sync's final fetch. Real two-parent merge `beb3eae`
+integrates that head into `d2ba6d2`, based on `75c956c`; no rebase, squash or
+cherry-pick. Both parents' diffs were inspected. All **20 textual conflicts**
+and their resolutions are listed in the [current PR description](../plans/c2b-sync2-base-pr-description.md).
+
+The next final fetch found **`8c6b3f3` (E3 pizza)**. Two-parent merge `84348e1`
+then integrates it into `4dc81d1` from base `2bd9006`; only README conflicted,
+and both C2b/pizza notices remain. All incoming pizza checks/plan/perf/status
+entries survive. Pizza adds no schema or gameplay behavior. Its production
+reader/facade are byte-exact to the incoming head.
+
+The imported pizza descriptor exposed an existing frozen-baseline reconstruction
+failure in `icecream-feasibility-regression/measure_baseline.py`. A one-line
+harness fix removes that descriptor when reconstructing the exact old three-
+candidate reader. Ice cream's guard normalizes precisely that added line, and
+pizza's guard normalizes precisely that guard edit; **all original hash values
+are retained**, and the original reconstructed-reader hash still executes.
+No production reader branch or Runtime code was changed for this test fix.
+
+The executable writes **schema 23**, following E4's documented composition:
+**19 -> 20 (E1) -> 22 (C2b) -> 23 (E4)**. Schema 21 stays reserved and refused;
+>23 is future. An exact schema-22 resolver includes campaign images, 32 source
+slots and held ActiveCampaign bits while retaining four menu/history/offer
+limits and revision-1 tuning. E4's menu header, revision-2 tuning and compact
+history cells are excluded from that predecessor. Migration validates the
+complete predecessor and preserves campaign masks, weather, held decisions,
+money and identities before applying the menu header. A new interrupted
+schema-22 decision test covers rain/campaign captures, exact source retention,
+reload and different live settings; E4 predecessor/old-limit cases now include 22.
+
+Core/Runtime/persistence integration seams changed as documented; no policy
+redesign was needed. Campaign preference remains 1.25 / half soft distance for
+all residents in shortlist and final weighting; E4's taste input and native
+effective four-offer limit remain. The E4 merge retained the E3 reader unchanged; the subsequent pizza import
+and exact baseline/guard normalization are described above. The merge audit verifies **1,341 exact inherited paths** outside
+the documented seams, every checks-index entry and all existing performance
+evidence files. C2b/E4/A5 perf entries and ice cream status/checklist remain.
+
+### Final latest-head offline validation
+
+**65/65 foreground command gates pass on `8378efa`**, including the production
+build, **2,435/2,435 tests** with zero failed/skipped, **2,435 discovered tests**,
+all **40 top-level regression projects**, four Python adapters, three simulations,
+continuity pickup, optional-stop performance/findings, all reader/source guards,
+frozen baselines, C4 exact bytes, five A5 combined modes and E4's exact default-
+economy comparison against `51ce709`. That comparison finds identical legacy and weighted economy outputs and exact
+digests. Every gate used the prescribed
+other-dotnet guard; all tests were foreground with no command time limit.
+
+The first E4-only unit run had one new-test fixture failure (2,434 tests passed):
+awareness preparation was missing before requesting its held decision. Adding
+`InspectFoodAwareness` as in the existing replay test fixes only that setup.
+The focused case and full suite then pass. The intermediate E4-only run passed
+63 gates on `4dc81d1`; the final run above supersedes it after the pizza merge.
+The separate pizza baseline assertion/fix described above is also retained.
+No assertion was weakened or skipped. [Commands, all run exits/log hashes,
+preservation audits, failures and current measurements](c2b-e4-sync-r1-results.json).
+Raw logs remain ignored under `build/c2b-e4-sync/`.
+
+Current population fixture: **schema 23, 120,257 characters**, digest
+`E9ACB14208DFFB98500039FE30CDDA3545CFAE3DAA2EE8CAA45A08FEC810F974`.
+The weather/campaign/menu-stripped schema-19 projection remains **119,083
+characters**, digest `D7FF8294F56C3B3D5AF736540274E68E9848319B34658859FC15E0D4CDB1F3A2`.
+Economy/order/reload digests remain unchanged, including **849 orders / 797
+purchases / two uncertain meals**; all twelve F0 transitions pass. C4 fixtures
+with/without its engine are exactly equal at **41,860 / 66,348 bytes**.
+E4 passes **25,165 assertions**; its raw eight-product history fixture is
+**10,135,880 UTF-8 bytes**, with **14,336 rows / 114,688 product cells**. That
+raw sizing fixture is separate from its timed serialization variant. Pizza's
+reader harness passes **2,423 assertions**. Production DLL SHA-256:
+`3a1c07f87ba7c9a524d72a513e308bfc86cee2418cde84171e337dd3abb091a1`.
+
+Campaign charges remain **282 / 274,446 bytes** and **1 / 1,024 records** above
+schema 20, with 265-character images. At 1,024 images, publication p95/max is
+**2.4388 / 3.921 ms**, production adapter **2.7404 / 5.0597 ms**; both have zero
+>=30 ms samples, and eight-slot queries remain **0 B**. Cold C1 1,024-business
+p95 **6.0568 ms** remains flagged above 5 ms. C2a's 20,000-place setup has **one
+dense / one sparse** sample >=30 ms, max **40.9454 / 36.1882 ms**; sparse 1,024
+setup p95 is **12.1316 ms**. Candidate admission has zero >=30 ms samples.
+E4's separate four/eight-product timed serialization variants each have **21
+of 21 operations >=30 ms**, max **200.1293 / 226.4955 ms**; these are save
+operations, not ordinary frames or the raw sizing fixture. All aggregate rush,
+save/read/migration and component timing flags are retained in the machine
+record, with whole-frame/native mod-work evidence explicitly absent.
+
+The final audit covers **1,388 tracked paths**, with **1,352 exact inherited
+paths** outside documented seams. Both parents' index/performance entries and
+all E3 production files are preserved. Final fetch reports **`8c6b3f3`**, an
+ancestor of this branch. Foreground runners exited; inspection found no owned
+test/run/compiler left behind. No push or PR merge was performed.
+
+All older measurements below retain their original head/schema scope. In particular,
+the old schema-22/23-refusal and `75c956c` final-fetch statements describe the
+ice cream-only sync, not this current composition. No new performance win,
+native mod-work or whole-frame result is claimed; the four parked hotspots
+remain untouched. No game, test rig/profile, bridge lease, Steam/Workshop or
+WSL operations. Native proof remains batched under merge rule v2; input-only
+checks wait for Peter's 6 Nov playtest. No release or deployment approval.
+
 ## Second base sync: E3 ice cream - 1 November 2026 (historical, base 75c956c)
 
 Merged `75c956c` into C2b `ffe85a0` from merge base `0ffb819` as two-parent
