@@ -41,6 +41,9 @@ if __name__ == "__main__":
             records.append(run(phase + "-" + product, [DOTNET, "run", "--project",
                 f"tools/{product}-feasibility-regression/{product.title()}FeasibilityRegression.csproj",
                 "--configuration", "Release"], True))
+    elif phase == "audit":
+        records.append(run("pizza-audit", [sys.executable, "tools/pizza-feasibility-regression/source_checks.py",
+            "--audit-base", "5877453"]))
     elif phase == "all":
         records.append(run("build", [sys.executable, "tools/build.py", "--game-managed",
             r"C:\Program Files (x86)\Steam\steamapps\common\Big Ambitions\Big Ambitions_Data\Managed"], True))
@@ -72,5 +75,5 @@ if __name__ == "__main__":
         for product in ["donut", "salad", "pizza"]:
             records.append(run(product + "-source", [sys.executable, f"tools/{product}-feasibility-regression/source_checks.py"]))
     else:
-        raise SystemExit("Expected before, pizza or all")
+        raise SystemExit("Expected before, pizza, audit or all")
     (OUT / (phase + "-results.json")).write_text(json.dumps(records, indent=2) + "\n", encoding="utf-8")
