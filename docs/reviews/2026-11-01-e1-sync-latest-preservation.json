@@ -1,0 +1,127 @@
+{
+  "initialMerge": "c332825",
+  "latestMerge": "d146f9007d15bf6361a73836653f5ebdc230918f",
+  "latestBase": "51ce709e2696648a189a17f09890561446b2d75d",
+  "latestMergeParents": [
+    "86be96018a0b6fb93dcd24c3df795327bd897d15",
+    "51ce709e2696648a189a17f09890561446b2d75d"
+  ],
+  "newConflicts": [],
+  "baseTrackedFiles": 1278,
+  "missingBaseFiles": [],
+  "unchangedBaseProductionFiles": 124,
+  "preservation": {
+    "allLatestBaseChecksLines": true,
+    "allLatestBasePerfIndicesAndGates": true,
+    "saladReaderAndToolsExact": true,
+    "CoreAndPersistenceUnchangedBySaladRefresh": true
+  },
+  "changedVsLatestBase": [
+    "CHECKS.md",
+    "Core/CitySimulator.cs",
+    "Core/DwellPlanner.cs",
+    "Core/FoodAwareness.cs",
+    "Core/FoodChoicePolicy.cs",
+    "Core/FoodToday.cs",
+    "Core/FoodWeightedCommerce.cs",
+    "Core/Model.cs",
+    "Core/OptionalDestinations.cs",
+    "Core/ShopMemory.cs",
+    "Core/WeatherPolicy.cs",
+    "Persistence/PopulationWire18.cs",
+    "Persistence/SaveCodec.cs",
+    "Persistence/WeatherWire20.cs",
+    "Runtime/PersistentCityMod.cs",
+    "Runtime/PhysicalPopulation.cs",
+    "Runtime/PrototypeSettings.cs",
+    "Runtime/WeatherDiagnostics.cs",
+    "config/persistent-city.json",
+    "docs/checks/e1-rain.md",
+    "docs/perf/e1-rain.md",
+    "docs/population-schema18.md",
+    "docs/population-schema20.md",
+    "docs/reviews/2026-11-01-e1-measurements.json",
+    "docs/reviews/2026-11-01-e1-offline-checks.json",
+    "docs/reviews/2026-11-01-e1-pr-description.md",
+    "docs/reviews/2026-11-01-e1-r1-offline-checks.json",
+    "docs/reviews/2026-11-01-e1-sync-base-measurements.json",
+    "docs/reviews/2026-11-01-e1-sync-base-pr-description.md",
+    "docs/reviews/2026-11-01-e1-sync-base-preservation.json",
+    "docs/reviews/2026-11-01-e1-sync-base-results.json",
+    "docs/roadmap.md",
+    "tests/FoodAwarenessMemoryIntegrationTests.cs",
+    "tests/FoodAwarenessTests.cs",
+    "tests/MarketResearchTests.cs",
+    "tests/OptionalStopSchedulingTests.cs",
+    "tests/ResumablePlanningTests.cs",
+    "tests/Schema17Tests.cs",
+    "tests/Schema18ChoiceReplayTests.cs",
+    "tests/Schema18ReviewTests.cs",
+    "tests/Schema18Tests.cs",
+    "tests/WeatherTests.cs",
+    "tools/awareness-regression/Program.cs",
+    "tools/market-research-regression/compare_save_baseline.py",
+    "tools/optional-stop-regression/Harness.cs.txt",
+    "tools/save-contract-regression/AwarenessContracts.cs",
+    "tools/save-contract-regression/CapacityBench.cs",
+    "tools/save-contract-regression/Program.cs",
+    "tools/save-contract-regression/WeatherContracts.cs",
+    "tools/weather-regression/Program.cs",
+    "tools/weather-regression/WeatherRegression.csproj"
+  ],
+  "finalDocsOnlyRefresh": {
+    "merge": "11600fde3e1d88ca2ddd2b8554e2946d54555289",
+    "base": "2f12ae94a51c1983cd101c8df3839bdc03da1ef6",
+    "parents": [
+      "bedbf7338719b936d91485759377720104f09fe7",
+      "2f12ae94a51c1983cd101c8df3839bdc03da1ef6"
+    ],
+    "newConflicts": [],
+    "baseDeltaFiles": [
+      "CHECKS.md",
+      "README.md",
+      "docs/checks/f1-shop-view.md",
+      "docs/plans/f1-shop-view-decision.md",
+      "docs/plans/track-f-interior-view.md",
+      "docs/reviews/2026-11-01-f1-offline-results.json",
+      "docs/reviews/2026-11-01-f1-pr-description.md",
+      "docs/roadmap.md"
+    ],
+    "baseTrackedFileCount": 1282,
+    "missingBaseFiles": [],
+    "testedSourceTrees": {
+      "Core": {
+        "tested": "7a4e8260463ccb7f415a5f2dcfb06dfc0c6a2d85",
+        "final": "7a4e8260463ccb7f415a5f2dcfb06dfc0c6a2d85"
+      },
+      "Persistence": {
+        "tested": "e14166084e042bd3335b33620e819b8b63d1a55f",
+        "final": "e14166084e042bd3335b33620e819b8b63d1a55f"
+      },
+      "Runtime": {
+        "tested": "75eae66018f558b7d67894cefee343f01a4b7c5a",
+        "final": "75eae66018f558b7d67894cefee343f01a4b7c5a"
+      },
+      "tests": {
+        "tested": "b0c613ffbd55299b2c0c2b5ff0bdafa00a96037f",
+        "final": "b0c613ffbd55299b2c0c2b5ff0bdafa00a96037f"
+      },
+      "tools": {
+        "tested": "a805b5df053b6a2723c6476033c603b355a89378",
+        "final": "a805b5df053b6a2723c6476033c603b355a89378"
+      },
+      "config": {
+        "tested": "ef495dc8f31ebb439debf0169d11baaeb18eec7d",
+        "final": "ef495dc8f31ebb439debf0169d11baaeb18eec7d"
+      }
+    },
+    "allSourceTreesIdenticalTo61CommandGate": true,
+    "allCurrentBaseChecksLinesRetained": true,
+    "allCurrentBasePerfIndicesAndGatesRetained": true,
+    "exactlyOneE1ChecksIndex": true,
+    "everyOriginalE1CheckLineRetainedWithRelocatedLinks": true,
+    "originalLockedOkItems": 5,
+    "originalNeedsInputItems": 1,
+    "all61CommandLogHashesVerified": true
+  }
+}

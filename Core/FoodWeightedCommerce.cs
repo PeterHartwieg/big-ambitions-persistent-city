@@ -70,7 +70,7 @@ namespace PersistentCity.Core
             var context=meal.Decision?.ContextKey ?? Context(stop,atStop);
             dump.Shortlist=AwarenessCatalogue().Rank(image,city.FindPlace(stop.PlaceId).Position,Traits(meal,person),meal.Decision?.Tuning?.Settings ?? ChoiceSettings,
                 new FoodDrawContext(city.State.Seed,meal.ResidentId,day ?? meal.Day,meal.Kind,context,meal.Decision?.Attempt ?? meal.ContextAttempts+1),
-                routes is IFoodWalkingPace walking ? walking.WalkingMetresPerMinute : 120, id=>MemoryContribution(meal,person,id)).Select(e=>e.BusinessId).ToArray();
+                routes is IFoodWalkingPace walking ? walking.WalkingMetresPerMinute : 120, id=>MemoryContribution(meal,person,id),meal.Decision?.WeatherTravelMultiplier ?? 1).Select(e=>e.BusinessId).ToArray();
             return dump;
         }
         private ResidentMeal? pendingDecision;
@@ -153,11 +153,12 @@ namespace PersistentCity.Core
             // A provider may publish replacement metadata at its capture boundary. Retry this
             // unconsumed event after bounded preparation; never sample a stale/partial image.
             if(meal.Day>=state.AwarenessStartsDay && !AwarenessReady) return;
+            d.Weather=city.CaptureWeather(now);d.WeatherTravelMultiplier=city.RainTravelMultiplier(d.Weather);
             long choiceStarted=city.ObservingFood ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             double[] contributions=Array.Empty<double>();
             var scopes=meal.Day>=state.AwarenessStartsDay ? AwareShortlist(meal,person,stop,d,atStop)
                 : atStop ? state.Shops.Where(s=>s.PlaceId==stop.PlaceId).Select(FreezeScope).ToArray()
-                : Shortlist(meal,person,stop,Draw(meal,d),d.Tuning.Settings,out contributions);
+                : Shortlist(meal,person,stop,Draw(meal,d),d.Tuning.Settings,out contributions,d.WeatherTravelMultiplier);
             if (atStop || meal.Day>=state.AwarenessStartsDay) contributions=scopes.Select(s=>MemoryContribution(meal,person,s.BusinessId)).ToArray();
             choiceMilliseconds=city.ObservingFood ? (System.Diagnostics.Stopwatch.GetTimestamp()-choiceStarted)*1000.0/System.Diagnostics.Stopwatch.Frequency : (double?)null;
             for (int scopeIndex=0; scopeIndex<scopes.Length; scopeIndex++)
@@ -190,6 +191,7 @@ namespace PersistentCity.Core
                 d.Shops.Add(shop);
             }
             }
+            meal.Memory.Weather=d.Weather;
             meal.ContextAttempts=d.Attempt;meal.LastContextKey=context;meal.Decision=d;pendingDecision=meal;
             capturedStop=CopyStop(stop);
             // No reservations, optional-stop cancellation, purchases or outcomes before commit.
@@ -200,18 +202,18 @@ namespace PersistentCity.Core
             var catalogue=AwarenessCatalogue();
             decision.Awareness=AwarenessSample(meal,person,stop,meal.Day,atStop);
             double pace=routes is IFoodWalkingPace walking ? walking.WalkingMetresPerMinute : 120;
-            return catalogue.Rank(decision.Awareness,city.FindPlace(stop.PlaceId).Position,Traits(meal,person),decision.Tuning!.Settings,Draw(meal,decision),pace,id=>MemoryContribution(meal,person,id))
+            return catalogue.Rank(decision.Awareness,city.FindPlace(stop.PlaceId).Position,Traits(meal,person),decision.Tuning!.Settings,Draw(meal,decision),pace,id=>MemoryContribution(meal,person,id),decision.WeatherTravelMultiplier)
                 .Select(e=>FreezeScope(e.Scope!)).ToArray();
         }
 
-        private FoodScope[] Shortlist(ResidentMeal meal,CitizenState person,FoodRoutineStop stop,FoodDrawContext draw,FoodChoiceSettings tuning,out double[] contributions)
+        private FoodScope[] Shortlist(ResidentMeal meal,CitizenState person,FoodRoutineStop stop,FoodDrawContext draw,FoodChoiceSettings tuning,out double[] contributions,double weatherTravelMultiplier)
         {
             var selected=new FoodScope[FoodChoicePolicy.MaximumShortlist];
             contributions=new double[FoodChoicePolicy.MaximumShortlist];
             var ranks=new double[FoodChoicePolicy.MaximumShortlist];int count=0;
             var origin=city.FindPlace(stop.PlaceId);
             var traits=Traits(meal,person);
-            var distancePreference=new FoodChoicePolicy.DistancePreference(traits,tuning);
+            var distancePreference=new FoodChoicePolicy.DistancePreference(traits,tuning,weatherTravelMultiplier);
             double pace=routes is IFoodWalkingPace walking ? walking.WalkingMetresPerMinute : 120;
             foreach(var scope in state.Shops)
             {
@@ -313,7 +315,7 @@ namespace PersistentCity.Core
                     FoodMenuPolicy.Code(c.ProductId)>3 ? FoodMenuPolicy.Taste(city.State.Seed,meal.ResidentId,FoodMenuPolicy.Code(c.ProductId)) : -1));
             }
             long choiceStarted=city.ObservingFood ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
-            var pick=FoodChoicePolicy.Select(evaluated,Traits(meal,person),AvailableForMeal(meal),Draw(meal,d),d.Tuning.Settings,intent.OutsideOption!=FoodOutsideOption.None);
+            var pick=FoodChoicePolicy.Select(evaluated,Traits(meal,person),AvailableForMeal(meal),Draw(meal,d),d.Tuning.Settings,intent.OutsideOption!=FoodOutsideOption.None,d.WeatherTravelMultiplier);
             if(choiceMilliseconds.HasValue) choiceMilliseconds+=(System.Diagnostics.Stopwatch.GetTimestamp()-choiceStarted)*1000.0/System.Diagnostics.Stopwatch.Frequency;
             d.Result=pick.Outside ? FoodDecisionResult.Outside : pick.Index>=0 ? FoodDecisionResult.Selected : FoodDecisionResult.NoFeasible;
             d.Reason=pick.Reason;d.Factor1=pick.Factor1;d.Factor2=pick.Factor2;

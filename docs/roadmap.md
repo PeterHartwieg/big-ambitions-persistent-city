@@ -20,12 +20,14 @@ Replaces the phase order in docs/reviews/2026-10-27-realism-gameplay-roadmap.md 
 
 0. Performance: the 30 October comprehensive review is done and passes the mod-work gate below. Spock agreed: no optimization work now; re-measure as each slice lands. This isn't a release step.
 A. Inspector, traits and probabilistic choice. Start now (Peter 15:24 JST), with the standing performance gate applied to each slice.
+
+   A5 (1 Nov): integrated offline gate complete on the original pre-E1 A/B/C line (2,351 tests /50 commands); [schema-20 base-sync validation, review closure, invariant gate, historical performance report and 6 Nov handoff](checks/a5-integrated-acceptance.md). Native interaction and final-head matched proof remain pending.
 B. Memory, loyalty and regulars. **B0 is implemented offline:** schema 18, exact old-source migration and history-inclusive capacity; memory remains empty/inactive and the regulars helper is a pure own-shop projection. **B0b is inserted between B0 and B1:** persist the held A3 tuning image and neutral bounded per-candidate contribution; schema 18 is amended before player use. B1 is implemented offline on B0b: per-consumer generation memory, atomic experience watermarks and captured bounded loyalty/curiosity weights; 6 Nov native proof remains pending. B2 is implemented offline on B1: unique-consumer own-shop regular counts, inspector memory words and read-only bridge flags/counts, with zero saved growth and no choice contribution. Default Q7 thresholds are three served visits, positive effective memory and fourteen days. Native proof remains pending the combined 6 Nov session. [B2 checks](checks/b2-regulars-inspector.md#step-b2-regulars-and-inspector-words---31-october-2026-offline-only). [Contract and capacity evidence](population-schema18.md).
    B1 protected-insertion exception: if recording a new bad visit would evict a competing boost, return chance stays equal (never higher), with a terminal failed watermark and no negative per-shop entry. B2 must not assume every failure leaves a negative entry; `ProtectedInsertions` is session-local, not saved history. [Exact exception](population-schema18.md#b1-execution--31-october-2026).
 
 C. Marketing awareness and targeting, plus the market research product. **C2a implemented offline on B0b:** bounded source/index interface, B1 memory projection/campaign-unknown providers, local/routine and positive daily distant discovery, common eight-slot shortlist, additive schema 19. B1 memory is wired within the existing four source slots and bounded rank; r1 bounds rebuild continuations and restores at-stop observation/diagnostics and strict held-image validation. Combined 6 Nov rig proof pending. [Contract](population-schema19.md). **C4 implemented offline and inactive:** bounded pure research engine/access contract only; paid research stays off because C3 found no safe native fee path. No UI, normal-play computation or saved fields. [Contract and offline proof](market-research.md).
 D. Rivals as alternatives.
-E. Weather, street life, bigger menus and more products.
+E. Weather, street life, bigger menus and more products. **E1 implemented offline:** new-context weather capture, soft rain effects, frozen queue commitment replay and additive schema 20 on the merged C2a/B1 contract; E2b timing and menu feasibility remain intact. Combined-head native checks remain pending. [Contract/budget](population-schema20.md).
 Then: re-check the same performance gate for the final release, the hands-on session, and one release.
 Later: residents as employees, households.
 
@@ -37,9 +39,13 @@ E3 status, 31 October (offline): [donut](plans/e3-donut.md) and [cupcake feasibi
 
 E3 salad status, 1 November (offline): [salad stop record](plans/e3-salad.md) adds a pinned conditional probe on the cupcake/donut stack. Shipped holder unestablished; no generic holder extension, menu, gameplay or saved change. Existing read branches retained; no additional cheap safe measured perf win identified. Three-candidate offline timing and the combined 6 Nov handoff are in [CHECKS](checks/e3-salad.md#e3-salad-feasibility---1-november-2026-offline-only).
 
+E3 ice cream status, 1 November (offline): [independent feasibility STOP](plans/e3-icecream.md); shipped holder/resource contract unestablished, shared read branches unchanged, no product/menu/save/gameplay change. [Offline timings and 6 Nov handoff](checks/e3-icecream.md).
+
 Peter’s [31 October Q1-Q7 decisions](plans/steps-b-e.md#product-decisions-peter-31-oct-2026) specify tiered paid research as a third native-agency option (proven fee or unavailable), local/distant discovery, estimated rivals, food-first products, no anonymous crowds/night multiplier and own-shop regulars; tier contents/fees remain open.
 
 Track F (Peter, 31 October): independently authored city view from interiors, F0 spike → F1 shop view/customer entry → F2 upper-floor/penthouse view → F3 polish. [F0 findings and plan](plans/track-f-interior-view.md): default-off runtime eligibility/entrance-anchor experiment; **city drawing is a no-op pending F1**, with no save-format change or A-stack dependency. E2c (31 Oct, offline) implements only the once-per-load third-party detection guard, forced-off F0 state and read-only bridge verdict; native proof remains pending. [E2c evidence](checks/e2c-interior-guard.md#e2c-third-party-interior-guard---31-october-2026-offline-only). The same mod-work/whole-frame evidence rules apply to F.
+
+F1 status, 1 November (offline): **NO-GO at drawing step 1**; no proven detached-space projection/culling approach, no renderer or customer hand-off added. [Decision and smaller read-only probe](plans/f1-shop-view-decision.md); [offline checks and 6 Nov handoff](checks/f1-shop-view.md). F0/E2c and all runtime/save behavior remain unchanged.
 
 ## Performance gate (Peter, 2026-10-30)
 
@@ -61,6 +67,7 @@ Record every taken win with before/after numbers.
 Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index line here. Keep before/after numbers and measurement limits in that file; sync/review-fix notes stay with the slice.
 
 - E4 — [Supply-refresh allocation win and four/eight-offer offline measurements](perf/e4-wider-menu.md).
+- A5 — [Popup address reuse: four → two formatter calls, 6,432 → 5,856 bytes per refresh; offline limits](perf/a5-integrated-acceptance.md).
 
 - A2 — [Schema 17, lifestyle traits and base sync evidence](perf/a2-schema17-traits.md).
 - A3 — [Weighted food choices, review fixes and native checklist](perf/a3-weighted-choice.md).
@@ -83,3 +90,5 @@ Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index
 - E3 salad — [Conditional shared reader timing and allocation evidence](perf/e3-salad.md).
 
 - C4 — [Bounded inactive research and direct trait validation](perf/c4-market-research.md).
+
+- E1 — [Weather capture, admission and consumer precheck](perf/e1-rain.md).

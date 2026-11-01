@@ -1,6 +1,8 @@
 # E4: freeze schema 23 wider-menu framework
 
-Adds the bounded eight-offer/product/history contract while retaining the effective native limit of four and the same three supported native products. Donut, cupcake and salad remain disabled; no synthetic code is compiled into the production package. Includes exact schema-19 migration, immutable old limits, pure derived tastes, held tuning, compact history and a lower-allocation supply refresh.
+Adds the bounded eight-offer/product/history contract while retaining the effective native limit of four and the same three supported native products. Donut, cupcake and salad remain disabled; no synthetic code is compiled into the production package. Includes exact schema-20 migration after base sync, immutable old limits, pure derived tastes, held tuning, compact history and a lower-allocation supply refresh.
+
+**Provenance:** the original validation totals, timings, allocations, byte counts and hashes below describe E4 on `51ce709` before E1. Current integration validation is recorded in [the sync PR description](e4-sync-base-pr-description.md) and the owning [E4 checks](../checks/e4-wider-menu.md#base-sync-with-e1-and-f1).
 
 Scope audit and offline results: [E4 checks](../checks/e4-wider-menu.md). Wire contract: [schema 23](../population-schema23.md). Performance details: [E4 measurements](../perf/e4-wider-menu.md).
 

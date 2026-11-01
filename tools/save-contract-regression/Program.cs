@@ -195,7 +195,7 @@ static partial class Program
         { Console.WriteLine(JsonConvert.SerializeObject(CapacityBench(args[1], args.Length > 2 ? int.Parse(args[2]) : 1))); return; }
         if(args.Length==2 && args[0]=="--interleaved-save-bench")
         { Console.WriteLine(JsonConvert.SerializeObject(InterleavedSaveBench(args[1])));return; }
-        B0ContractChecks(); HeldTuningContractChecks(); AwarenessContractChecks();
+        B0ContractChecks(); HeldTuningContractChecks(); AwarenessContractChecks(); WeatherContractChecks();
         var city = City(120);
         string expected = SaveCodec.Write(city);
         foreach (string mode in new[] { "off", "on" })
@@ -242,6 +242,6 @@ static partial class Program
             bench = sizes; hot = Hot();
         }
         Console.WriteLine(JsonConvert.SerializeObject(new { schema = CityState.CurrentSchema, digest = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(expected))),
-            length = expected.Length, refusals, economy, writeBytes, readBytes, bench, hot }));
+            length = expected.Length, weatherProjectionLength=WithoutWeather20(expected).Length, weatherProjectionDigest=EconomyScenario.Digest(WithoutWeather20(expected)), refusals, economy, writeBytes, readBytes, bench, hot }));
     }
 }
