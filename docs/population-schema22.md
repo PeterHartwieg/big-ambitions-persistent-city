@@ -1,10 +1,11 @@
 # Population schema 22: observed campaign images
 
-Owner: `pc-c2b-campaign-awareness`, 1 November 2026. Exact predecessor on this
-branch: **19**. Reserved schemas 20/21 are foreign here; 23 and newer refuse.
-Integration can repoint the isolated `MigrateCampaigns19To22` step after reviewing
-the intervening predecessor. This branch never interprets those foreign shapes.
-Schemas 17–19's documents and schema-19 awareness validator remain unchanged.
+Owner: `pc-c2b-campaign-awareness`, 1 November 2026. Exact integrated predecessor:
+**20 (E1 weather capture)**. Reserved schema 21 (D2) remains unsupported; schema
+23 (E4) and newer refuse. The isolated `MigrateCampaigns20To22` step validates the
+complete predecessor before adding empty campaign history. D2 can later supply
+its own predecessor step below 22; E4 can add its step above 22. No reserved
+number is used here. Schemas 17-20's documents and frozen validators are retained.
 
 The only new saved collection is `FoodCommerceState.Campaigns`, sorted by stable
 business-reference slot, maximum **1,024** images. There are no resident arrays,
@@ -38,9 +39,11 @@ drop on the next complete publication. Runtime also refuses evidence ahead of
 the native saved clock at attachment; a lagging Core clock cannot backdate a
 mask's eligibility.
 
+The original byte measurements below used the `51ce709` schema-19 base before
+E1; merged-tree verification is recorded in the C2b checks file.
 An empty campaign collection adds **15 bytes**, zero records. One image adds
 **282 bytes** including that field; 1,024 add **274,446 bytes / 1,024 records**
-versus schema 19 when generation references are already present. New shared
+versus schema 20 when generation references are already present. New shared
 generation references additionally consume their existing 2 MiB/20,000-reference
 allocation; they are not hidden in the campaign byte figure. No global cap grows.
 Capacity tooling deducts actual campaign field/records once from the existing
@@ -52,11 +55,13 @@ decision field is needed: eligibility and source remain captured in that image,
 with the existing complete native terms, quotes and selection. Held decisions
 never consult fresh campaigns, groups or tuning on reload/continuation.
 
-Schema 19 first passes its exact filtered shape and complete original semantic
+Schema 20 first passes its exact filtered shape and complete original semantic
 contract, including the 24-member union and forbidden campaign bit. Only then
 does the isolated migration set schema 22 and retain an empty campaign list.
-Schema 18 and 13–17 keep their existing frozen readers/activation behavior and
-acquire an empty list. Unknown fields, mixed old/new shapes, duplicate/foreign
+E1's WeatherStartsDay, citizen commitments, consumer weather suffix and held
+Weather/WeatherTravelMultiplier are preserved exactly. Schema 19 and older saves
+first acquire neutral E1 weather through 20, then the empty campaign list through
+22; schemas 18 and 13-17 retain their frozen readers and activation behavior. Unknown fields, mixed old/new shapes, duplicate/foreign
 references, malformed wire, unsupported schemas, noncanonical scalars and future
 input refuse without replacing the source. Namespace, money, menu limits,
 receipts, business authority and resident tuples are unchanged.
@@ -75,7 +80,7 @@ The existing held `Sources` integer additionally accepts **ActiveCampaign=64**
 as a modifier on an admitted source identity, not another draw/source slot.
 At least one ordinary source bit (1-32) is still required; unknown bits refuse.
 The six admission caps remain 4/4/4/4/8/8 and the union/shortlist/routes remain
-32/8/16. Schema 19's frozen validator still rejects both campaign bits. This is
+32/8/16. The schema-19 awareness validator, also used by schema 20, rejects both campaign bits. This is
 an amendment of the unpublished schema-22 candidate; no schema 17-19 contract,
 resident tuple, extra field or schema number is changed.
 

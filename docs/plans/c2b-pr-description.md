@@ -1,9 +1,75 @@
-# C2b: observed campaigns raise choice preference for every resident
+# C2b: merge the schema-20 integration base into campaign awareness
 
-**MERGE BLOCKED - final-head rig_test proof pending.** Do not merge until the
-authorized combined rig session attaches final-head before/red -> after/green
-evidence for hourly ordering, active preference, stop/reload, native fee/state
-noninterference and matched combined mod-work. This fixer is offline only.
+Under **merge rule v2**, these in-game checks are batched into the combined
+locked `rig_test` (Codex Sol, high) on the `codex/persistent-city` head; no per-PR
+rig proof is required or claimed. Pointer/input-only checks wait for Peter's
+6 November playtest. Offline fixtures do not establish native hourly ordering,
+noninterference or combined mod-work cost. The combined session must attach
+before/red -> after/green dumps/logs/screenshots; this sync performs no game/rig
+work and grants no release/upload approval. LOCKED-OK classifications follow
+feasibility commit `84be71a`.
+
+
+## Sync-base integration (1 November 2026)
+
+Target: `codex/pc-c2b-campaign-awareness`; keep the merge commit ancestry when
+landing this sync. Merges integration head `0ffb819` into C2b `992291e`, based
+on merge base `51ce709`. Both sides' diffs against that base were inspected for
+every conflicted file. No rebase, squash, cherry-pick, push or game launch.
+
+All 16 conflicts and resolutions:
+
+| File | Resolution |
+| --- | --- |
+| `CHECKS.md` | Keep C2b, A5 and E1 entries together; preserve every existing entry including F1. |
+| `README.md` | Keep C2b notice plus A5 acceptance and F1 NO-GO notices; move sync evidence into C2b checks. |
+| `docs/roadmap.md` | Keep both C2b and A5 perf index entries and all incoming F1 roadmap work. |
+| `Core/Model.cs` | Current schema stays reserved 22; retain E1 WeatherStartsDay and citizen weather. |
+| `Persistence/SaveCodec.cs` | Exact schema-20 resolver, both converters/filters/validators; older schemas go through E1 20, then isolated 22. |
+| `Core/FoodChoicePolicy.cs` | Compose weather distance weight with half distance and fixed 1.25 active preference; preserve both call forms. |
+| `Runtime/PersistentCityMod.cs` | Clamp both weather and campaign settings; retain weather attachment and campaign market hook. |
+| `tests/FoodAwarenessMemoryIntegrationTests.cs` | Keep 18/19/20 cases, held rain/contributions/replay and exact predecessor field removal. |
+| `tests/FoodAwarenessTests.cs` | Remove both campaign and weather additions from legacy-18 fixtures; keep current corruption tests. |
+| `tests/MarketResearchTests.cs` | Compare city schema with CurrentSchema while retaining byte-identical research noninterference. |
+| `tests/Schema17Tests.cs` | Future refusal uses schemas above current 22; old fixture/refusal contracts retained. |
+| `tests/Schema18ReviewTests.cs` | Current header follows CurrentSchema; unsupported 21 still refuses. |
+| `tests/Schema18Tests.cs` | Mutate current schema for noncanonical-header test; retain E1's weather-suffixed memory corruption. |
+| `tools/awareness-regression/Program.cs` | Project out weather and campaigns only for the frozen awareness-19/legacy-18 byte comparison; label total new wire delta. |
+| `tools/save-contract-regression/AwarenessContracts.cs` | Keep weather projection and charge empty campaign field exactly once; preserve record/refusal assertions. |
+| `tools/save-contract-regression/CapacityBench.cs` | Deduct both actual weather and campaign bytes/records once from the unchanged future envelope. |
+
+Minimal integration fixes beyond conflict markers: the automatically merged
+bootstrap allow-list now accepts 20 while still refusing reserved 21; repoint the
+isolated campaign predecessor to 20; keep the E1 migration as a separate 19 -> 20
+step. Fixture/tool projections now use exact old shapes, and C2b's migration
+case preserves populated weather and a held rainy decision. One regression checks
+both factors together; held campaign replay also captures rain. A5's four legacy migration cases also update their current-schema expectation
+from 20 to 22; all facts, money, inspector and source-preservation assertions
+remain. The C4 exact-byte differential now pins merged schema 22 instead of 20;
+its zero-byte-difference assertion stays exact. No cap, native
+ownership rule, campaign observation/buffer logic, accounting or A5 behavior changes.
+
+Runtime/Core code did change at the integration seams: `FoodChoicePolicy` combines
+both existing factors, `Model` retains both schema/weather additions, and startup
+retains both settings/attachments. Other E1/A5 code and all C2b ownership sampling,
+one-shot isolation and private-buffer implementations are preserved from their
+parents. Persistence and offline fixtures/tools changed as detailed above.
+No new feature or slice policy/design change is introduced.
+
+Final offline validation on `c455851`: **2,416/2,416 tests**, zero failures/skips;
+all **48 distinct gates pass** (build, unit/discovery, 37 regression projects,
+four Python adapters, three simulations and C4's exact-byte differential).
+The first run's four stale A5 schema expectations were corrected and the full
+suite rerun. Current save contract: 120,184 characters; schema-19 weather
+projection 119,083. Economy/order/reload digests match the original base. Schema-20
+campaign byte/record deltas re-verified. Cold C1-reader p95 6.4337 ms remains
+flagged above 5 ms; inherited C2a setup/baseline >=30 ms samples are retained in
+the checks. No new perf win or native/whole-frame proof is claimed. All runs
+ended; no owned test process remains.
+
+Validation results and source preservation: [C2b owning checks](../checks/c2b-campaign-awareness.md).
+All older numbers below are historical C2b measurements against `51ce709` before
+E1 and A5, including digests/byte counts; they are not merged-head measurements.
 
 Peter's decision 1 (1 November): "It should simply increase the chance for
 residents to pick that shop, also at greater distance." This supersedes the
@@ -26,9 +92,9 @@ held fields. ActiveCampaign=64 reuses the held Sources scalar as a modifier,
 separate from at most eight campaign admission draws (bit 32). Existing 32-source /
 eight-shortlist / 16-route bounds remain. The modifier is captured once and
 survives stop/disable/reload without reranking. Schemas 17-19 remain unchanged;
-exact 19->22 migration and strict unknown/future/source preservation remain.
+exact 20->22 migration, after E1's 19->20 step and strict unknown/future/source preservation remain.
 
-Offline validation: 2,359 tests and all 33 foreground gate commands pass. The final full-suite recheck after the private cache optimization also passes;
+Historical pre-E1 offline validation: 2,359 tests and all 33 foreground gate commands pass. The final full-suite recheck after the private cache optimization also passes;
 production build and save-contract/order/economy/reload digests remain green.
 The actual production adapter harness covers all residents, retained history
 with zero candidates, native-state read noninterference and one-shot failure
@@ -37,7 +103,7 @@ acquisition with a running campaign and stopping before the next hour. Core
 checks show higher seeded pick probability, weaker distance decay, neutral
 absent/disabled behavior, packed-modifier replay and unchanged bounds.
 
-Final offline Release .NET 10 at 1 / 1,024 images:
+Historical pre-E1 offline Release .NET 10 at 1 / 1,024 images:
 
 | Component | p95 ms | Max ms | Allocation B/op |
 | --- | --- | --- | ---: |
@@ -73,12 +139,14 @@ spikes <30 ms. Whole-frame intervals/stalls must be measured separately.
 
 ### In-game checks for 6 Nov rig
 
-**MERGE BLOCKED:** final-head `rig_test` (Codex Sol, high) evidence is still
-pending. Offline fixtures do not establish native hourly ordering, noninterference,
-or combined mod-work cost. Keep PR #55 blocked until the authorized combined
-session attaches final-head before/red -> after/green dumps/logs/screenshots for
-these checks. This fixer performs no game/rig work and grants no merge approval.
-LOCKED-OK classifications follow feasibility commit `84be71a`.
+Under **merge rule v2**, these in-game checks are batched into the combined
+locked `rig_test` (Codex Sol, high) on the `codex/persistent-city` head; no per-PR
+rig proof is required or claimed. Pointer/input-only checks wait for Peter's
+6 November playtest. Offline fixtures do not establish native hourly ordering,
+noninterference or combined mod-work cost. The combined session must attach
+before/red -> after/green dumps/logs/screenshots; this sync performs no game/rig
+work and grants no release/upload approval. LOCKED-OK classifications follow
+feasibility commit `84be71a`.
 
 1. **NEEDS-INPUT - prepare a native campaign and acquisition.** In a named
    disposable FT fixture, prepare a supported player food business with one

@@ -256,7 +256,7 @@ public sealed class FoodAwarenessTests
     [Fact]
     public void Schema18MigratesOnceAndNeverRecapturesHeldShortlist()
     {
-        var json=Held();json["Schema"]=18;((JObject)json["Food"]!).Remove("Campaigns");json["Food"]!["AwarenessStartsDay"]!.Parent!.Remove();
+        var json=JObject.Parse(WeatherTests.As19(Held().ToString(Formatting.None)));json["Schema"]=18;json["Food"]!["AwarenessStartsDay"]!.Parent!.Remove();
         var decision=json["Food"]!["Residents"]![0]![9]!;decision["Awareness"]!.Parent!.Remove();
         string source=json.ToString(Formatting.None);var data=new Dictionary<string,string> {[SaveStore.StateKey]=source};
         decision["Awareness"]=new JObject();Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(json.ToString(Formatting.None)).Status);((JObject)decision).Remove("Awareness");

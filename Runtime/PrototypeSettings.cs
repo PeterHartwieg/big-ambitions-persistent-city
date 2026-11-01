@@ -77,6 +77,16 @@ namespace PersistentCity.Runtime
         public int FoodMemoryRegularServedVisits { get => FoodMemory.FoodMemoryRegularServedVisits; set => FoodMemory.FoodMemoryRegularServedVisits=value; }
         [JsonConverter(typeof(FoodMemoryIntegerConverter), 1, 28)]
         public int FoodMemoryRegularRecentDays { get => FoodMemory.FoodMemoryRegularRecentDays; set => FoodMemory.FoodMemoryRegularRecentDays=value; }
+        [JsonIgnore]
+        public WeatherSettings Weather { get; } = new WeatherSettings();
+        [JsonConverter(typeof(WeatherBooleanConverter))]
+        public bool? WeatherEnabled { get => Weather.Enabled; set => Weather.SetEnabled(value); }
+        [JsonConverter(typeof(AwarenessNumberConverter))]
+        public double WeatherRainOptionalOutingMultiplier { get => Weather.RainOptionalOutingMultiplier; set => Weather.RainOptionalOutingMultiplier=value; }
+        [JsonConverter(typeof(AwarenessNumberConverter))]
+        public double WeatherRainTravelWeightMultiplier { get => Weather.RainTravelWeightMultiplier; set => Weather.RainTravelWeightMultiplier=value; }
+        [JsonConverter(typeof(WeatherLeadConverter))]
+        public int WeatherQueueRainLeadMinutes { get => Weather.QueueRainLeadMinutes; set => Weather.QueueRainLeadMinutes=value; }
         // Optional developer overrides; normal installation needs no configuration.
         private int optionalStopChoicePercentage = OptionalStopPolicy.ApprovedChoicePercentage;
         [JsonConverter(typeof(OptionalStopPercentageConverter))]
@@ -322,6 +332,35 @@ namespace PersistentCity.Runtime
     internal sealed class ResearchUnitSettingConverter : ResearchIntegerSettingConverter
     {
         public ResearchUnitSettingConverter() : base(16, 1024, 256) { }
+    }
+
+    internal sealed class WeatherBooleanConverter : JsonConverter<bool?>
+    {
+        public override bool? ReadJson(JsonReader reader,Type type,bool? old,bool exists,JsonSerializer serializer)
+        {
+            var token=JToken.Load(reader);
+            if(token.Type==JTokenType.Boolean) return (bool)token;
+            if(token.Type==JTokenType.String && bool.TryParse((string)token!,out bool value)) return value;
+            return null;
+        }
+        public override void WriteJson(JsonWriter writer,bool? value,JsonSerializer serializer) => writer.WriteValue(value);
+    }
+
+    internal sealed class WeatherLeadConverter : JsonConverter<int>
+    {
+        public override int ReadJson(JsonReader reader, Type type, int old, bool exists, JsonSerializer serializer)
+        {
+            var token=JToken.Load(reader);
+            if((token.Type==JTokenType.Integer || token.Type==JTokenType.Float || token.Type==JTokenType.String)
+                && double.TryParse(token.ToString(),NumberStyles.Float,CultureInfo.InvariantCulture,out double value) && !double.IsNaN(value))
+            {
+                if(value<2) return 1;
+                if(value>10) return 11;
+                if(value==Math.Truncate(value)) return (int)value;
+            }
+            return int.MinValue;
+        }
+        public override void WriteJson(JsonWriter writer,int value,JsonSerializer serializer) => writer.WriteValue(value);
     }
 
     // Invalid individual values fall back without discarding unrelated settings.

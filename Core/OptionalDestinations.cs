@@ -34,6 +34,13 @@ namespace PersistentCity.Core
             var origin = places[person.PlaceId];
             var kind = proposed.Activity == Activity.Shop ? PlaceKind.Shop : PlaceKind.Leisure;
             string key = person.Identity.Id + ":optional:" + proposed.Activity + ":" + proposed.EndsAt.ToString("R", CultureInfo.InvariantCulture);
+            var weather=CaptureOuting(person,now,key);
+            if(weather.Value==0)
+            {
+                choice.Slot=new RoutineSlot(person.HomeId,Activity.Home,proposed.EndsAt);
+                ObserveRoutine(person,proposed,now,"weather-declined","captured-rain");
+                yield break;
+            }
             var candidates = new List<Place>();
             // The familiar shop remains a first choice; leisure keeps its seeded daily variety.
             if (places.TryGetValue(proposed.PlaceId, out var preferred) && preferred.Kind == kind && preferred.Capacity > 0)

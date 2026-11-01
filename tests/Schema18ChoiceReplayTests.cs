@@ -31,6 +31,7 @@ public sealed class Schema18ChoiceReplayTests
         double at = changed.State.Food!.Residents.Single().DesiredAt;
         for (int i = 0; i < units; i++) changed.AdvanceTo(at, 1);
         changed = Migrate(changed, mm, pm);
+        control.State.WeatherStartsDay=changed.State.WeatherStartsDay; // additive next-day weather capability, economy stays exact
         while (!control.AdvanceTo(at + 30, 128).CaughtUp) { }
         while (!changed.AdvanceTo(at + 30, 1).CaughtUp) { }
         Assert.Equal(SaveCodec.Write(control.State), SaveCodec.Write(changed.State));
@@ -47,6 +48,7 @@ public sealed class Schema18ChoiceReplayTests
         double at = changed.State.Food!.Residents.Single().DesiredAt;
         while (!changed.AdvanceTo(at + offset, 1).CaughtUp) { }
         changed = Migrate(changed, mm, pm);
+        control.State.WeatherStartsDay=changed.State.WeatherStartsDay; // additive next-day weather capability, economy stays exact
         while (!control.AdvanceTo(at + 30, 128).CaughtUp) { }
         while (!changed.AdvanceTo(at + 30, 1).CaughtUp) { }
         Assert.Equal(SaveCodec.Write(control.State), SaveCodec.Write(changed.State));

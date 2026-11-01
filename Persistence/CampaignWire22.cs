@@ -9,17 +9,17 @@ namespace PersistentCity.Persistence
     {
         // Self-contained predecessor step. Integration may repoint this exact predecessor only;
         // no renumbering or acceptance of reserved/foreign schemas.
-        private static void MigrateCampaigns19To22(CityState state)
+        private static void MigrateCampaigns20To22(CityState state)
         {
-            Require(state.Schema == 19, "Campaign migration requires exact schema 19.");
+            Require(state.Schema == 20, "Campaign migration requires exact schema 20.");
             if (state.Food != null)
             {
-                Require(state.Food.Campaigns.Count == 0, "Schema 19 cannot contain campaign evidence.");
+                Require(state.Food.Campaigns.Count == 0, "Schema 20 cannot contain campaign evidence.");
                 foreach (var meal in state.Food.Residents)
                     if (meal.Decision != null) ValidateAwareness(meal.Decision, meal, state.Food);
             }
             // Full predecessor semantics execute before changing the in-memory schema.
-            Validate(state, 19);
+            Validate(state, 20);
             state.Schema = 22;
         }
         private static int ValidateCampaigns22(FoodCommerceState food)
