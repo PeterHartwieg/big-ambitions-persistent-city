@@ -26,3 +26,5 @@ Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here
 - E3 cupcake — Shared direct-stock reader, feasibility and native checklist: [checks](docs/checks/e3-cupcake.md).
 
 - E3 salad — Conditional direct-stock probe, feasibility stop, base sync and native checklist: [checks](docs/checks/e3-salad.md).
+
+- C4 — Bounded inactive market research, access contract, base sync and native checklist: [checks](docs/checks/c4-market-research.md).

@@ -1,0 +1,263 @@
+{
+  "runtime": ".NET 10.0.13",
+  "os": "Microsoft Windows 10.0.26200",
+  "configuration": "Release",
+  "fixture": "seed-independent frozen ordinal rows, logical day 3",
+  "proof": {
+    "schema": 18,
+    "savedBytes": 41406,
+    "savedSha256": "8BF9E8EA0B35D5EF27A8D950724E8061548BEDFDC9DACE655566DBF84D5E326F",
+    "savedByteDelta": 0,
+    "nativeCalls": 0,
+    "routeRequests": 0
+  },
+  "traitValidationWin": {
+    "iterationsPerSample": 100000,
+    "samplesPerImplementation": 10,
+    "prototypeObjectValidationBytesPerRow": 32,
+    "finalDirectValidationBytesPerRow": 0,
+    "prototypeMedianNs": 7.16,
+    "finalMedianNs": 3.946
+  },
+  "benchmarks": [
+    {
+      "consumers": 957,
+      "coverage": "city",
+      "unitSize": 256,
+      "runs": 30,
+      "unitSamples": 120,
+      "requestConstructionMs": {
+        "p50": 0.0012,
+        "p95": 0.0055,
+        "max": 0.0139
+      },
+      "unitMs": {
+        "p50": 0.0362,
+        "p95": 0.0413,
+        "max": 0.0953,
+        "spikesAtLeast30ms": 0
+      },
+      "completionMs": {
+        "p50": 0.1386,
+        "p95": 0.1594,
+        "max": 0.2275
+      },
+      "nonfinalUnitAllocatedBytes": 0,
+      "finalUnitAllocatedBytes": 2664,
+      "completionAllocatedBytesMedian": 2664,
+      "engineConstructionAllocatedBytes": 1416,
+      "engineCounterPayloadBytes": 256,
+      "engineRetainedBytesMean": 520.0,
+      "borrowedFrozenFixtureRetainedBytes": 143808,
+      "idleReads": 0,
+      "idleAllocatedBytes": 0,
+      "routeRequests": 0
+    },
+    {
+      "consumers": 5000,
+      "coverage": "city",
+      "unitSize": 256,
+      "runs": 30,
+      "unitSamples": 600,
+      "requestConstructionMs": {
+        "p50": 0.0016,
+        "p95": 0.0044,
+        "max": 0.0089
+      },
+      "unitMs": {
+        "p50": 0.0307,
+        "p95": 0.032,
+        "max": 0.0712,
+        "spikesAtLeast30ms": 0
+      },
+      "completionMs": {
+        "p50": 0.6033,
+        "p95": 0.624,
+        "max": 0.6776
+      },
+      "nonfinalUnitAllocatedBytes": 0,
+      "finalUnitAllocatedBytes": 2664,
+      "completionAllocatedBytesMedian": 2664,
+      "engineConstructionAllocatedBytes": 1424,
+      "engineCounterPayloadBytes": 256,
+      "engineRetainedBytesMean": 520.0,
+      "borrowedFrozenFixtureRetainedBytes": 800208,
+      "idleReads": 0,
+      "idleAllocatedBytes": 0,
+      "routeRequests": 0
+    },
+    {
+      "consumers": 50000,
+      "coverage": "city",
+      "unitSize": 256,
+      "runs": 30,
+      "unitSamples": 5880,
+      "requestConstructionMs": {
+        "p50": 0.0318,
+        "p95": 0.0483,
+        "max": 0.058
+      },
+      "unitMs": {
+        "p50": 0.0313,
+        "p95": 0.0521,
+        "max": 0.8286,
+        "spikesAtLeast30ms": 0
+      },
+      "completionMs": {
+        "p50": 6.2365,
+        "p95": 8.6335,
+        "max": 10.1995
+      },
+      "nonfinalUnitAllocatedBytes": 0,
+      "finalUnitAllocatedBytes": 2664,
+      "completionAllocatedBytesMedian": 2664,
+      "engineConstructionAllocatedBytes": 1432,
+      "engineCounterPayloadBytes": 256,
+      "engineRetainedBytesMean": 520.096,
+      "borrowedFrozenFixtureRetainedBytes": 8000208,
+      "idleReads": 0,
+      "idleAllocatedBytes": 0,
+      "routeRequests": 0
+    },
+    {
+      "consumers": 957,
+      "coverage": "address catchment, 2000m, all rows eligible",
+      "unitSize": 256,
+      "runs": 30,
+      "unitSamples": 120,
+      "requestConstructionMs": {
+        "p50": 0.0014,
+        "p95": 0.0039,
+        "max": 0.0039
+      },
+      "unitMs": {
+        "p50": 0.0359,
+        "p95": 0.0428,
+        "max": 0.0482,
+        "spikesAtLeast30ms": 0
+      },
+      "completionMs": {
+        "p50": 0.1364,
+        "p95": 0.1621,
+        "max": 0.1625
+      },
+      "nonfinalUnitAllocatedBytes": 0,
+      "finalUnitAllocatedBytes": 2664,
+      "completionAllocatedBytesMedian": 2664,
+      "engineConstructionAllocatedBytes": 1504,
+      "engineCounterPayloadBytes": 256,
+      "engineRetainedBytesMean": 520.0,
+      "borrowedFrozenFixtureRetainedBytes": 152032,
+      "idleReads": 0,
+      "idleAllocatedBytes": 0,
+      "routeRequests": 0
+    },
+    {
+      "consumers": 5000,
+      "coverage": "address catchment, 2000m, all rows eligible",
+      "unitSize": 256,
+      "runs": 30,
+      "unitSamples": 600,
+      "requestConstructionMs": {
+        "p50": 0.0053,
+        "p95": 0.023,
+        "max": 0.0231
+      },
+      "unitMs": {
+        "p50": 0.0363,
+        "p95": 0.0658,
+        "max": 0.0799,
+        "spikesAtLeast30ms": 0
+      },
+      "completionMs": {
+        "p50": 0.7131,
+        "p95": 1.2865,
+        "max": 1.396
+      },
+      "nonfinalUnitAllocatedBytes": 0,
+      "finalUnitAllocatedBytes": 2664,
+      "completionAllocatedBytesMedian": 2664,
+      "engineConstructionAllocatedBytes": 1504,
+      "engineCounterPayloadBytes": 256,
+      "engineRetainedBytesMean": 520.0,
+      "borrowedFrozenFixtureRetainedBytes": 800208,
+      "idleReads": 0,
+      "idleAllocatedBytes": 0,
+      "routeRequests": 0
+    },
+    {
+      "consumers": 50000,
+      "coverage": "address catchment, 2000m, all rows eligible",
+      "unitSize": 256,
+      "runs": 30,
+      "unitSamples": 5880,
+      "requestConstructionMs": {
+        "p50": 0.0275,
+        "p95": 0.0383,
+        "max": 0.0384
+      },
+      "unitMs": {
+        "p50": 0.0369,
+        "p95": 0.0447,
+        "max": 0.12,
+        "spikesAtLeast30ms": 0
+      },
+      "completionMs": {
+        "p50": 7.3176,
+        "p95": 9.4725,
+        "max": 11.5649
+      },
+      "nonfinalUnitAllocatedBytes": 0,
+      "finalUnitAllocatedBytes": 2664,
+      "completionAllocatedBytesMedian": 2664,
+      "engineConstructionAllocatedBytes": 1504,
+      "engineCounterPayloadBytes": 256,
+      "engineRetainedBytesMean": 520.048,
+      "borrowedFrozenFixtureRetainedBytes": 8000208,
+      "idleReads": 0,
+      "idleAllocatedBytes": 0,
+      "routeRequests": 0
+    }
+  ],
+  "source": {
+    "baseline": "c0af745",
+    "coreCommit": "87776a1",
+    "toolCommit": "b23f053",
+    "unitBudget": "256 consumers, clamped 16-1024",
+    "timing": "Stopwatch ticks; 10 warmups then 30 completions per size/coverage; setup excluded from unit timers; total includes loop instrumentation; external system load uncontrolled",
+    "retained": "GC.GetTotalMemory(true) delta; mean over 1000 held engines, approximate fixture delta; source arrays belong to offline fixture, reducer borrows them",
+    "idle": "100000 dormant-fixture iterations: no source reads/allocation; Runtime source guard proves no caller/hook",
+    "wholeFrame": "not measured offline; combined native mod-work gate pending",
+    "sha256": {
+      "Core/MarketResearchAccess.cs": "5e4b6126c48a59727fcfc4d435af4e833cf0402394eef788e8462692b444f999",
+      "Core/MarketResearchEngine.cs": "a8961a09396b1cd3bd708f8ae01647759e62fdb83217baeefa472f2e6453164a",
+      "Core/MarketResearchSettings.cs": "aecec841fcf90fabfc5ae7cd1b5ac3c1ad0d9069484037ae08be92f15da26c2a",
+      "Core/MarketResearchFriends.cs": "432c6dcde950aa182f1e9df8fa306bdfe600d0534739171293f4a5e672a97150",
+      "tests/MarketResearchTests.cs": "e321d771f7b2f07c54adf6fd09d188046dcb4cdc1b5a17db4a2ea4b9311829e7",
+      "tools/market-research-regression/Program.cs": "bf267a5c90a4ad034461487749c7f34fe8106c630982ab19e28031672388742c",
+      "tools/market-research-regression/ResearchFixture.cs": "b70df266d7a06a8acfbfb0fcdc54c616e369d9cd987605001aaa00d47b8d226d"
+    }
+  },
+  "saveBaselineComparison": {
+    "baseline": "c0af745",
+    "candidateCoreCommit": "b23f053d60968ad0e6e2220f281624c2c1875346",
+    "fixtures": [
+      {
+        "fixture": "population.json",
+        "baselineBytes": 41406,
+        "candidateBytes": 41406,
+        "delta": 0,
+        "identicalBytes": true,
+        "sha256": "8bf9e8ea0b35d5ef27a8d950724e8061548bedfdc9dace655566dbf84d5e326f"
+      },
+      {
+        "fixture": "food.json",
+        "baselineBytes": 65696,
+        "candidateBytes": 65696,
+        "delta": 0,
+        "identicalBytes": true,
+        "sha256": "4b000bc0f85c4ac241690a7263bb50753ae93746fc20197d3c8c49c08a944e1f"
+      }
+    ]
+  }
+}
