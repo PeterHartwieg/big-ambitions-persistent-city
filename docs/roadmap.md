@@ -31,6 +31,8 @@ Later: residents as employees, households.
 
 Implementation plan for B–E: [memory, marketing, rivals and the wider street](plans/steps-b-e.md).
 
+C3 status, 31 October (offline): [agency/payment discovery](plans/c3-agency-payment.md) is **PARTIAL**. DLL-verified recurring fee candidate; durable request identity/third-option integration await proof. Inactive typed contract and read-only dump only; Runtime payment refuses. No schema or A/B-stack dependency. [Offline evidence and 6 Nov checklist](../CHECKS.md#c3-agency-payment-31-october-2026-offline-only). New code does no per-frame work; no existing hot path was changed or optimization claimed. Four parked hotspots remain parked.
+
 E2a offline street-life proof and read-only venue findings: [coverage and E2b cases](plans/e2-street-life.md), including Peter's 31 October Q6 decision (existing identified residents/caps and 25% semantics; no new anonymous crowds or night multiplier). Native evidence remains on the combined 6 Nov checklist.
 
 Peter’s [31 October Q1-Q7 decisions](plans/steps-b-e.md#product-decisions-peter-31-oct-2026) specify tiered paid research as a third native-agency option (proven fee or unavailable), local/distant discovery, estimated rivals, food-first products, no anonymous crowds/night multiplier and own-shop regulars; tier contents/fees remain open.
