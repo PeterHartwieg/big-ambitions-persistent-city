@@ -58,6 +58,7 @@ Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index
 - A3 — [Weighted food choices, review fixes and native checklist](perf/a3-weighted-choice.md).
 - B0 — [Schema 18, capacity, review fixes and native checklist](perf/b0-schema18.md).
 - B0b — [Held tuning, base syncs and native checklist](perf/b0b-held-tuning.md).
+- E3 — [Donut feasibility reader](perf/e3-donut.md).
 - C1 — [Native campaign reader and native checklist](perf/c1-campaign-reader.md).
 - D1 — [Read-only rival food catalogue and native checklist](perf/d1-rival-catalogue.md).
 - F0 — [Interior view experiment, reviews and native checklist](perf/f0-interior-view.md).

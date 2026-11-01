@@ -13,6 +13,7 @@ Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here
 - B0b — Held tuning, base syncs and native checklist: [checks](docs/checks/b0b-held-tuning.md).
 - B1 — Shop memory, loyalty v2, review fixes and native checklist: [checks](docs/checks/b1-memory-loyalty.md).
 - B2 — Observed own-shop regulars, resident memory words and native checklist: [checks](docs/checks/b2-regulars-inspector.md).
+- E3 — Donut feasibility, base syncs and native checklist: [checks](docs/checks/e3-donut.md).
 - C3 — Agency/payment discovery, base syncs and native checklist: [checks](docs/checks/c3-agency-payment.md).
 - PR #1–#3 history — October accounting, optional stops, reviews and rig evidence: [checks](docs/checks/history-2026-10-pr1-pr3.md).
 - Earlier development history — October foundation, food, traffic and performance evidence: [checks](docs/checks/history-2026-10-development.md).
