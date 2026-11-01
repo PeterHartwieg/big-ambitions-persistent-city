@@ -302,3 +302,16 @@ The full 12 Mi-character existing-state allowance uses 6,343,907 characters for
 19,991 added places and 6,239,005 ASCII characters in existing pc: resident names,
 each within its unchanged string limit. `--record-boundary`, `--input-boundary`,
 `--history-churn` and `--base-recovery` reproduce the independent cap/refusal proofs.
+
+## E1 budget consumption - 1 November 2026
+
+[Schema 20](population-schema20.md) consumes E1's existing allocation without
+amending the 18/19 source formats. Resident W costs at most **22/24** ASCII bytes
+including field/quotes/separator; the consumer extension adds **2/8** bytes inside
+its existing charge. At 50,000 x3, **1,400,000/2,400,000** weather bytes are used,
+leaving **1,000,000**. A nonnull W charges one of the reserved 50,000 physical
+weather records; consumers add zero records. The root activation and single held
+food image use the existing header/decision reserves. CapacityBench populates real
+weather captures and deducts these bytes/records from future reservations once;
+the full-memory headroom stays charged. Measured CF32/CF64 totals are in the dated
+[E1 checks](checks/e1-rain.md). All existing caps remain fixed.

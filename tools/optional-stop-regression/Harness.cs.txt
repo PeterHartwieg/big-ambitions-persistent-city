@@ -176,39 +176,51 @@ partial class Harness
         var h=new Harness(); var c=h.simulation.State.Citizens[0];
         var p=new Place {Id="shop",Kind=PlaceKind.Shop,OpenMinute=540,CloseMinute=1080};
         c.Identity.Id="queue0"; c.Phase=CitizenPhase.WaitingForOpening; c.PlaceId=c.DestinationId="shop";
-        c.DestinationActivity=Activity.Shop; c.ActivityUntilMinute=900;
-        var dry=h.QueueDwell(c,p,530,false)!.Value; double now=dry.StartMinute+0.01;
-        var wet=h.QueueDwell(c,p,now,true);
+        c.DestinationActivity=Activity.Shop; c.ActivityUntilMinute=900; c.NextEventMinute=540;
+        bool raining=false; long frame=0; int reads=0;
+        h.simulation.AttachWeather(new FrameWeatherSource(()=>++frame,()=> { reads++; return raining; }));
+        var dry=h.QueueDwell(c,p,530)!.Value; double now=dry.StartMinute+0.01;
+        raining=true;
+        Check(Equals(h.QueueDwell(c,p,now),dry)&&reads==1,"E1 logical dry wait survives rain before body admission without resampling");
+        // A prior physical commitment remains authoritative even for an inherited wait
+        // whose fallback Q differs. Invalid/leaving bodies use the saved Q instead.
+        c.W=new WeatherCommitment(540,WeatherSample.Rain,5);
+        var wet=h.QueueDwell(c,p,now);
         foreach(var step in new[]{QueueStep.Approaching,QueueStep.Standing})
         {
             var bound=new Binding {Citizen=c,Person=new Body(),Line=new DoorQueue(),Queue=dry,Step=step};
             h.bindings[c.Identity.Id]=bound;
-            Check(Equals(h.QueueDwell(c,p,now,true),dry),"R4 committed binding retained through rain");
+            Check(Equals(h.QueueDwell(c,p,now),dry),"R4 committed binding retained through rain");
             bound.Person.Valid=false;
-            Check(Equals(h.QueueDwell(c,p,now,true),wet),"invalid body is a new admission");
+            Check(Equals(h.QueueDwell(c,p,now),wet),"invalid body uses captured rain");
             bound.Person.Valid=true; bound.Step=QueueStep.Entering;
-            Check(Equals(h.QueueDwell(c,p,now,true),wet),"leaving body has no queue commitment");
+            Check(Equals(h.QueueDwell(c,p,now),wet),"leaving body has no physical queue commitment");
         }
-        h.bindings.Clear(); Check(Equals(h.QueueDwell(c,p,now,true),wet),"unbound admission uses current rain");
+        h.bindings.Clear(); c.W=null;
+        Check(Equals(h.QueueDwell(c,p,now),wet),"inherited wait without Q captures current rain once");
         if(wet.HasValue)
         {
             var bound=new Binding {Citizen=c,Person=new Body(),Line=new DoorQueue(),Queue=wet,Step=QueueStep.Standing};
-            h.bindings[c.Identity.Id]=bound;
-            Check(Equals(h.QueueDwell(c,p,wet.Value.StartMinute+0.01,false),wet),"rain clearing keeps the shorter committed lead");
+            h.bindings[c.Identity.Id]=bound; raining=false;
+            Check(Equals(h.QueueDwell(c,p,wet.Value.StartMinute+0.01),wet),"rain clearing keeps the shorter committed lead");
             h.bindings.Clear();
-            Check(Equals(h.QueueDwell(c,p,wet.Value.StartMinute+0.01,false),dry),"new dry admission uses dry lead");
+            Check(Equals(h.QueueDwell(c,p,wet.Value.StartMinute+0.01),wet),"E1 same logical wait retains rain after body release");
+            c.W=null;
+            Check(Equals(h.QueueDwell(c,p,wet.Value.StartMinute+0.01),dry),"new uncaptured dry wait uses dry lead");
         }
         for(int i=1;i<100;i++)
         {
-            c.Identity.Id="thinned"+i;
-            if(h.QueueDwell(c,p,530,true).HasValue) continue;
-            var original=h.QueueDwell(c,p,530,false)!.Value;
+            c.Identity.Id="thinned"+i; c.W=null; raining=true;
+            if(h.QueueDwell(c,p,530).HasValue) continue;
+            c.W=null; raining=false;
+            var original=h.QueueDwell(c,p,530)!.Value;
+            c.W=new WeatherCommitment(540,WeatherSample.Rain,5);
             h.bindings[c.Identity.Id]=new Binding {Citizen=c,Person=new Body(),Line=new DoorQueue(),Queue=original,Step=QueueStep.Standing};
-            Check(Equals(h.QueueDwell(c,p,original.StartMinute+0.01,true),original),"rain thinning never removes an existing commitment");
-            h.bindings.Clear(); Check(!h.QueueDwell(c,p,original.StartMinute+0.01,true).HasValue,"rain still thins new admissions");
+            Check(Equals(h.QueueDwell(c,p,original.StartMinute+0.01),original),"rain thinning never removes an existing physical commitment");
+            h.bindings.Clear(); Check(!h.QueueDwell(c,p,original.StartMinute+0.01).HasValue,"rain still thins uncaptured admissions");
             break;
         }
-        Console.WriteLine("R4 queue-plan selection: approaching/standing commitment and new-admission checks passed; visible retention pre-existed.");
+        Console.WriteLine("R4 + E1 queue-plan selection: physical commitment and saved logical weather checks passed; visible retention pre-existed.");
     }
     private static void Findings()
     {

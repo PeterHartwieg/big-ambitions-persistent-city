@@ -393,11 +393,11 @@ namespace PersistentCity.Core
             if(diagnostic!=null) diagnostic.Image=image;
             return image;
         }
-        public Entry[] Rank(FoodAwarenessImage image,Position origin,ResidentTraits traits,FoodChoiceSettings settings,FoodDrawContext draw,double pace,Func<string,double>? memoryContribution=null)
+        public Entry[] Rank(FoodAwarenessImage image,Position origin,ResidentTraits traits,FoodChoiceSettings settings,FoodDrawContext draw,double pace,Func<string,double>? memoryContribution=null,double weatherTravelMultiplier=1)
         {
             if(image.CatalogueRevision!=Revision || image.Union.Count>MaximumSourceSlots) throw new ArgumentException("Invalid awareness image.");
             var selected=new Entry[8];var ranks=new double[8];int count=0;
-            var preference=new FoodChoicePolicy.DistancePreference(traits,settings);
+            var preference=new FoodChoicePolicy.DistancePreference(traits,settings,weatherTravelMultiplier);
             foreach(var candidate in image.Union)
             {
                 if(!candidate.Eligible) continue;

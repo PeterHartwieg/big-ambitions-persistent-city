@@ -1,6 +1,11 @@
 # C2b campaign evidence performance — 1 November 2026
 
 
+All measurements below were made on C2b based on `51ce709`, before E1 weather
+and A5 integration. They remain historical evidence; this sync claims no new
+performance win or native proof. Merged-tree offline results are recorded in
+[the owning checks file](../checks/c2b-campaign-awareness.md).
+
 ## Round-2 captured-hour fix / Sol-r2-2
 
 The generation index now holds immutable saved images instead of only their
@@ -40,7 +45,8 @@ All residents now use the same observed active-campaign preference (fixed 1.25
 weight factor and half soft-distance input). Group policy and target-match tuning
 are removed. Native sampling follows ownership activation; missing candidate reads
 age retained history without new bits. This run is offline only; final-head
-combined `rig_test` proof remains a merge blocker. The tables after this round-1
+checks are batched into the combined locked rig under merge rule v2; no rig
+proof is claimed. The tables after this round-1
 section are historical initial-implementation evidence.
 
 [Raw round-1 results and source fingerprints](c2b-r1-offline-results.json).

@@ -2,6 +2,7 @@
 
 Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here; never append slice sections to this file. Sync/review-fix notes go into the slice's own file.
 
+- F1 — Shop-view drawing NO-GO, offline validation and numbered 6 Nov handoff: [checks](docs/checks/f1-shop-view.md).
 - F0 — Interior view experiment, reviews and native checklist: [checks](docs/checks/f0-interior-view.md).
 - D1 — Read-only rival food catalogue and native checklist: [checks](docs/checks/d1-rival-catalogue.md).
 - C1 — Native campaign reader and native checklist: [checks](docs/checks/c1-campaign-reader.md).
@@ -29,4 +30,8 @@ Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here
 
 - C4 — Bounded inactive market research, access contract, base sync and native checklist: [checks](docs/checks/c4-market-research.md).
 
-- C2b - 1 November 2026 (offline): schema 22; hourly/query p95 at 1,024 images 2.6336/0.0065 ms, query/absent/disabled 0 B; owner decision 1 active for all residents; final-head rig proof pending. [Checks and rig list](docs/checks/c2b-campaign-awareness.md).
+- C2b - 1 November 2026 (offline): schema 22; hourly/query p95 at 1,024 images 2.6336/0.0065 ms, query/absent/disabled 0 B; owner decision 1 active for all residents; pre-E1 measurements; in-game checks batched under merge rule v2, no rig proof claimed. [Checks and rig list](docs/checks/c2b-campaign-awareness.md).
+
+- A5 — Integrated acceptance, pre-E1 measurements, schema-20 base sync and 12 numbered rig checks: [checks](docs/checks/a5-integrated-acceptance.md).
+
+- E1 — New-outing and food weather, schema 20, base sync and native checklist: [checks](docs/checks/e1-rain.md).

@@ -1,5 +1,29 @@
 # C2b: observed campaigns and soft distance preference
 
+## Schema-20 base sync - 1 November 2026
+
+Merged integration base `0ffb819` (F1, E1 and A5) into C2b `992291e` using a
+real two-parent merge from `51ce709`. All 16 conflict resolutions are listed in
+the [prepared PR description](../plans/c2b-pr-description.md#sync-base-integration-1-november-2026).
+All preexisting checks/perf index lines and both parents' slice files are retained.
+The 54 incoming-only files outside integration seams were compared with their
+parent and match exactly after newline normalization. A5's test-only current-schema
+expectation changes from 20 to 22, preserving all its invariant assertions.
+
+Schema 20 now has an exact filtered reader and bootstrap allow-list entry.
+The isolated 20 -> 22 campaign step validates the predecessor, adds only empty
+campaign history and preserves E1 weather. Older saves use E1's neutral 19 -> 20
+step before 22; reserved 21 and future 23 remain refused. Shortlist and final
+weights compose E1 rain with C2b's fixed 1.25 preference and half soft distance.
+Tests cover weather commitments/held inputs and changed-source reload.
+
+All numbers, byte counts, fingerprints and command counts in the earlier rounds
+below were measured on C2b based on `51ce709` before E1/A5. They are preserved as
+historical evidence and do not describe this merged tree. No new perf win is
+claimed. In-game checks are batched into the combined locked rig under merge
+rule v2; no rig proof is claimed, and input-only checks wait for Peter's 6 Nov
+playtest. This sync does not authorize release/upload or normal-save deployment.
+
 ## Round-2 fix - Sol-r2-2, 1 November 2026
 
 Active preference now checks the saved mask at the meal's captured logical hour,
@@ -38,8 +62,9 @@ series have zero spikes >=30 ms. **Separate cold C1-reader p95 6.3476 ms is
 above 5 ms** and remains flagged. Absent/disabled paths still allocate zero;
 saved campaign bytes/records are unchanged. [Method and full results](../perf/c2b-campaign-awareness.md).
 
-Native final-head rig evidence remains pending and merge blocked; this offline
-replay does not certify native clock ordering or combined mod-work. Whole-frame
+In-game checks are batched into the combined locked rig under merge rule v2;
+no rig proof is claimed. This offline replay does not certify native clock
+ordering or combined mod-work. Whole-frame
 timing remains separate. No game/rig work, native campaign mutation, push or merge.
 
 ## Round-1 fixes - owner decision 1, 1 November 2026
@@ -141,7 +166,8 @@ combined cost still needs the rig gate. With no campaigns only allocation-free
 hourly count probes remain; source/index/decision work is zero. Literal zero
 native detection work cannot be claimed because UI starts must be discovered.
 
-[Schema 22 contract](../population-schema22.md): exact 19→22 migration, strict
+The original pre-E1 [schema 22 contract](../population-schema22.md) used exact
+19-to-22 migration (now 20-to-22 after E1), strict
 old/new shape separation and source preservation. Only campaign images are added;
 held awareness reuses its existing fields. Schemas 17–19 contracts are untouched.
 Campaign publication and food memory share one current reference index, so
@@ -224,12 +250,14 @@ Each fixed record is 265 ASCII characters, no per-resident state. Empty field:
 
 ### In-game checks for 6 Nov rig
 
-**MERGE BLOCKED:** final-head `rig_test` (Codex Sol, high) evidence is still
-pending. Offline fixtures do not establish native hourly ordering, noninterference,
-or combined mod-work cost. Keep PR #55 blocked until the authorized combined
-session attaches final-head before/red -> after/green dumps/logs/screenshots for
-these checks. This fixer performs no game/rig work and grants no merge approval.
-LOCKED-OK classifications follow feasibility commit `84be71a`.
+Under **merge rule v2**, these in-game checks are batched into the combined
+locked `rig_test` (Codex Sol, high) on the `codex/persistent-city` head; no per-PR
+rig proof is required or claimed. Pointer/input-only checks wait for Peter's
+6 November playtest. Offline fixtures do not establish native hourly ordering,
+noninterference or combined mod-work cost. The combined session must attach
+before/red -> after/green dumps/logs/screenshots; this sync performs no game/rig
+work and grants no release/upload approval. LOCKED-OK classifications follow
+feasibility commit `84be71a`.
 
 1. **NEEDS-INPUT - prepare a native campaign and acquisition.** In a named
    disposable FT fixture, prepare a supported player food business with one

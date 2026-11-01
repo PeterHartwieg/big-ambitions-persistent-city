@@ -237,8 +237,9 @@ public sealed class FoodCampaignAwarenessTests
         source.Publish(Snapshot(observationHour,ids.Select(id=>Business(id,Campaign())).ToArray()),state.Food.Shops.ToDictionary(s=>s.BusinessId,s=>s.PlaceId));
         // Production uses the same universal rule; replay retains the captured active modifier.
         source=Source(state.Food);
-        var city=new CitySimulator(state,planner);city.AttachFoodMarket(market,campaign:source);city.InspectFoodAwareness("r");
+        var city=new CitySimulator(state,planner);city.AttachWeather(new FrameWeatherSource(()=>1,()=>true));city.AttachFoodMarket(market,campaign:source);city.InspectFoodAwareness("r");
         var meal=state.Food.Residents[0];city.AdvanceTo(meal.DesiredAt,1);var decision=meal.Decision!;
+        Assert.Equal(WeatherSample.Rain,decision.Weather);Assert.Equal(1.3,decision.WeatherTravelMultiplier);
         Assert.InRange(decision.Awareness!.Union.Count,1,32);Assert.InRange(decision.Shops.Count,0,8);
         Assert.Contains(decision.Awareness.Union,c=>(c.Sources&FoodAwarenessSource.Campaign)!=0);
         Assert.Contains(decision.Awareness.Union,c=>(c.Sources&FoodAwarenessSource.ActiveCampaign)!=0);
@@ -252,31 +253,61 @@ public sealed class FoodCampaignAwarenessTests
         Assert.InRange(planner.Out+planner.Back,0,32); // two matched continuations, <=16 each
     }
     [Fact]
-    public void Exact19MigrationHasOnly22AdditionsAndRefusesForeignOrMalformedShapesPreservingSource()
+    public void Exact20MigrationHasOnly22AdditionsAndRefusesForeignOrMalformedShapesPreservingSource()
     {
         var (city,_,_)=WeightedFoodChoiceTests.Ready(79,2);var root=JObject.Parse(SaveCodec.Write(city.State));
-        root["Schema"]=19;((JObject)root["Food"]!).Remove("Campaigns");
+        city.State.WeatherStartsDay=1;
+        city.State.Citizens[0].W=new WeatherCommitment(city.State.Minute,WeatherSample.Rain,true);
+        root=JObject.Parse(SaveCodec.Write(city.State));
+        root["Schema"]=20;((JObject)root["Food"]!).Remove("Campaigns");
         string source=root.ToString(Formatting.None);var data=new Dictionary<string,string> {[SaveStore.StateKey]=source};
+        SaveCodec.RequireExecutableCapabilities(source);
         var read=SaveSession.Open(data,"weighted").InitialReadResult;Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
-        Assert.Equal(19,read.SourceSchema);Assert.Equal(22,read.State!.Schema);Assert.Empty(read.State.Food!.Campaigns);
+        Assert.Equal(20,read.SourceSchema);Assert.Equal(22,read.State!.Schema);Assert.Empty(read.State.Food!.Campaigns);
         var expected=(JObject)root.DeepClone();expected["Schema"]=22;expected["Food"]!["Campaigns"]=new JArray();
         Assert.True(JToken.DeepEquals(expected,JObject.Parse(SaveCodec.Write(read.State))));Assert.Equal(source,data[SaveStore.StateKey]);
-        foreach(int schema in new[]{20,21,23,99})
+        foreach(int schema in new[]{21,23,99})
         {
             root["Schema"]=schema;var wire=root.ToString(Formatting.None);data[SaveStore.StateKey]=wire;
             Assert.NotEqual(SaveReadStatus.Loaded,SaveSession.Open(data,"weighted").InitialReadResult.Status);Assert.Equal(wire,data[SaveStore.StateKey]);
             Assert.Throws<SaveValidationException>(()=>SaveCodec.RequireExecutableCapabilities(wire));
         }
-        root["Schema"]=19;root["Food"]!["Campaigns"]=new JArray();Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(root.ToString(Formatting.None)).Status);
+        root["Schema"]=20;root["Food"]!["Campaigns"]=new JArray();Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(root.ToString(Formatting.None)).Status);
         ((JObject)root["Food"]!).Remove("Campaigns");root["Food"]!["AwarenessStartsDay"]=-1;
         Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(root.ToString(Formatting.None)).Status);
         var (heldCity,_,_)=WeightedFoodChoiceTests.Ready(79,24);heldCity.State.Food!.AwarenessStartsDay=1;
+        heldCity.AttachWeather(new FrameWeatherSource(()=>1,()=>true));
         heldCity.InspectFoodAwareness("r");heldCity.AdvanceTo(heldCity.State.Food.Residents[0].DesiredAt,1);
-        var heldRoot=JObject.Parse(SaveCodec.Write(heldCity.State));heldRoot["Schema"]=19;((JObject)heldRoot["Food"]!).Remove("Campaigns");
+        var heldRoot=JObject.Parse(SaveCodec.Write(heldCity.State));heldRoot["Schema"]=20;((JObject)heldRoot["Food"]!).Remove("Campaigns");
         var heldRead=SaveCodec.Read(heldRoot.ToString(Formatting.None));Assert.True(heldRead.Status==SaveReadStatus.Loaded,heldRead.Error);
         Assert.Equal(JsonConvert.SerializeObject(heldCity.State.Food.Residents[0].Decision),JsonConvert.SerializeObject(heldRead.State!.Food!.Residents[0].Decision));
+        var legacy19=JObject.Parse(WeatherTests.As19(heldRoot.ToString(Formatting.None)));
+        string legacySource=legacy19.ToString(Formatting.None);data[SaveStore.StateKey]=legacySource;
+        var legacyRead=SaveSession.Open(data,"weighted").InitialReadResult;
+        Assert.True(legacyRead.Status==SaveReadStatus.Loaded,legacyRead.Error);
+        Assert.Equal(19,legacyRead.SourceSchema);Assert.Equal(22,legacyRead.State!.Schema);
+        Assert.Equal((int)(heldCity.State.Minute/1440)+1,legacyRead.State.WeatherStartsDay);
+        Assert.Equal(WeatherSample.Unknown,legacyRead.State.Food!.Residents[0].Decision!.Weather);
+        Assert.Equal(legacySource,data[SaveStore.StateKey]);
+        legacy19["Food"]!["Residents"]![0]![9]!["Awareness"]!["Union"]![0]!["Sources"]=32;
+        Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(legacy19.ToString(Formatting.None)).Status);
         heldRoot["Food"]!["Residents"]![0]![9]!["Awareness"]!["Union"]![0]!["Sources"]=32;
-        Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(heldRoot.ToString(Formatting.None)).Status); // old 19 still forbids campaigns
+        Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(heldRoot.ToString(Formatting.None)).Status); // predecessor 20 still forbids campaigns
+    }
+    [Fact]
+    public void RainAndActiveCampaignComposeInShortlistAndFinalOfferWithoutChangingTravel()
+    {
+        var traits=new ResidentTraits {Bands="2222222222"};var settings=new FoodChoiceSettings();
+        var plain=new EvaluatedFoodOffer("b",FoodProducts.Croissant,Money.FromCents(100),40,0,1,200,null,null,MealKind.Lunch);
+        var active=new EvaluatedFoodOffer("b",FoodProducts.Croissant,Money.FromCents(100),40,0,1,200,null,null,MealKind.Lunch,0,true);
+        var half=new EvaluatedFoodOffer("b",FoodProducts.Croissant,Money.FromCents(100),20,0,1,200,null,null,MealKind.Lunch);
+        double weight=FoodChoicePolicy.Weight(active,traits,Money.FromCents(1000),settings,1.3);
+        Assert.Equal(1.25*FoodChoicePolicy.Weight(half,traits,Money.FromCents(1000),settings,1.3),weight,12);
+        Assert.True(weight>FoodChoicePolicy.Weight(plain,traits,Money.FromCents(1000),settings,1.3));
+        Assert.True(weight<FoodChoicePolicy.Weight(active,traits,Money.FromCents(1000),settings));
+        Assert.Equal(40,active.Travel);
+        Assert.Equal(1.25*FoodChoicePolicy.DistanceWeight(20,traits,settings,true,1.3),
+            FoodChoicePolicy.DistanceWeight(40,traits,settings,true,1.3,true),12);
     }
     [Fact]
     public void CampaignImageCountsExactlyOnceAndRejectsCorruptOrForeignReferences()

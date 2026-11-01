@@ -67,9 +67,9 @@ namespace PersistentCity.Core
         internal readonly struct DistancePreference
         {
             private readonly double weight,scale,divisor,floor,temperature;
-            internal DistancePreference(ResidentTraits traits,FoodChoiceSettings settings)
+            internal DistancePreference(ResidentTraits traits,FoodChoiceSettings settings,double weatherTravelMultiplier=1)
             {
-                weight=settings.FoodChoiceDistanceWeight;scale=settings.FoodChoiceDistanceScaleMinutes;
+                weight=settings.FoodChoiceDistanceWeight*weatherTravelMultiplier;scale=settings.FoodChoiceDistanceScaleMinutes;
                 divisor=1+traits.Band(ResidentTrait.TravelWillingness)/2.0;
                 floor=settings.FoodChoiceWeightFloor;temperature=settings.FoodShortlistTemperature;
             }
@@ -88,13 +88,13 @@ namespace PersistentCity.Core
 
         // Bounded rational signals; unknown quality/demand are neutral. Health, loyalty and brand have no signal.
         // Meal suitability retains the verified MealRhythm table, scaled by the taste coefficient.
-        public static double Weight(EvaluatedFoodOffer o, ResidentTraits t, Money allowance, FoodChoiceSettings s)
+        public static double Weight(EvaluatedFoodOffer o, ResidentTraits t, Money allowance, FoodChoiceSettings s,double weatherTravelMultiplier=1)
         {
             double taste=TasteRatios[Taste(t,o.ProductId)];
             double w=s.FoodChoiceTasteWeight==1 ? taste : Math.Pow(taste,s.FoodChoiceTasteWeight);
             w/=1+s.FoodChoicePriceWeight*(.5+.25*t.Band(ResidentTrait.PriceSensitivity))
                 *o.Price.ApproximateCents()/Math.Max(1,allowance.ApproximateCents());
-            w*=DistanceWeight(o.Travel,t,s,false,o.CampaignActive);
+            w*=DistanceWeight(o.Travel,t,s,false,weatherTravelMultiplier,o.CampaignActive);
             w/=1+s.FoodChoiceQueueWeight*o.Queue/(2+3*t.Band(ResidentTrait.QueuePatience));
             double quality=(o.Quality.HasValue ? (o.Quality.Value-50)/100.0 : 0)
                 +(o.Demand.HasValue ? (o.Demand.Value-50)/100.0 : 0);
@@ -103,8 +103,10 @@ namespace PersistentCity.Core
             w/=1+s.FoodChoiceTasteWeight*MealRhythm.ProductPenalty(o.Kind,o.ProductId)/200.0;
             return ApplyMemory(Positive(w,s.FoodChoiceWeightFloor,s.FoodChoiceTemperature), o.MemoryContribution, s.FoodChoiceWeightFloor);
         }
-        public static double DistanceWeight(double minutes,ResidentTraits t,FoodChoiceSettings s,bool shortlist,bool campaignActive=false)
-            => new DistancePreference(t,s).Weight(minutes,shortlist,campaignActive);
+        public static double DistanceWeight(double minutes,ResidentTraits t,FoodChoiceSettings s,bool shortlist,double weatherTravelMultiplier=1,bool campaignActive=false)
+            => new DistancePreference(t,s,weatherTravelMultiplier).Weight(minutes,shortlist,campaignActive);
+        public static double DistanceWeight(double minutes,ResidentTraits t,FoodChoiceSettings s,bool shortlist,bool campaignActive)
+            => DistanceWeight(minutes,t,s,shortlist,1,campaignActive);
         internal static double ApplyMemory(double weight, double contribution, double floor)
             => Math.Max(floor, Math.Min(64, weight * Math.Exp(contribution)));
         private static double Positive(double w,double floor,double temperature)
@@ -116,7 +118,7 @@ namespace PersistentCity.Core
         }
 
         public static FoodPolicyResult Select(IReadOnlyList<EvaluatedFoodOffer> offers,ResidentTraits traits,Money allowance,
-            FoodDrawContext draw,FoodChoiceSettings settings,bool fundedHousehold)
+            FoodDrawContext draw,FoodChoiceSettings settings,bool fundedHousehold,double weatherTravelMultiplier=1)
         {
             if (offers.Count>MaximumShortlist*MaximumOffersPerShop || !traits.IsValid) throw new ArgumentException("Invalid policy inputs.");
             int selected=-1;
@@ -124,7 +126,7 @@ namespace PersistentCity.Core
                 Positive(settings.FoodChoiceHouseholdWeight,settings.FoodChoiceWeightFloor,settings.FoodChoiceTemperature)) : double.PositiveInfinity;
             for(int i=0;i<offers.Count;i++)
             {
-                var o=offers[i]; double rank=FoodDrawContext.Rank(draw.OfferHash(o.BusinessId,o.ProductId),Weight(o,traits,allowance,settings));
+                var o=offers[i]; double rank=FoodDrawContext.Rank(draw.OfferHash(o.BusinessId,o.ProductId),Weight(o,traits,allowance,settings,weatherTravelMultiplier));
                 if(o.Price<=Money.Zero || o.Price>allowance) continue;
                 // The reserved empty household IDs precede real IDs in an exact tie.
                 int tie=selected<0 ? 1 : StringComparer.Ordinal.Compare(o.BusinessId,offers[selected].BusinessId);

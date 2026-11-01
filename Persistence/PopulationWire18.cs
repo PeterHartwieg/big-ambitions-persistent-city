@@ -62,7 +62,7 @@ namespace PersistentCity.Persistence
                 {
                     schema = HeaderInteger(requireCanonical: false);
                     if (schema >= 18) Require(canonicalInteger, "Noncanonical population schema.");
-                    Require((schema >= 13 && schema <= 19 || schema == 22), "Unsupported population schema; preserve the payload.");
+                    Require((schema >= 13 && schema <= 20 || schema == 22), "Unsupported population schema; preserve the payload.");
                 }
                 else if (name == "Capabilities")
                 {
@@ -99,6 +99,7 @@ namespace PersistentCity.Persistence
 
         private static int ValidateMemory(ConsumerMemory memory, int day, ISet<int> references)
         {
+            Dense((int)memory.Weather,2,"consumer weather");
             try { MemoryWire.Check(memory, day, references); }
             catch (FormatException e) { throw new SaveValidationException(e.Message); }
             return 1;
@@ -287,8 +288,15 @@ namespace PersistentCity.Persistence
         }
         private sealed class MemoryConverter : JsonConverter<ConsumerMemory>
         {
-            public override void WriteJson(JsonWriter writer, ConsumerMemory? value, JsonSerializer serializer) => writer.WriteValue(MemoryWire.Encode(value!));
-            public override ConsumerMemory ReadJson(JsonReader reader, Type type, ConsumerMemory? existingValue, bool hasExistingValue, JsonSerializer serializer) => MemoryWire.Decode((string)reader.Value!);
+            private readonly int schema;
+            public MemoryConverter(int schema) { this.schema=schema; }
+            public override void WriteJson(JsonWriter writer, ConsumerMemory? value, JsonSerializer serializer) => writer.WriteValue(MemoryWire.Encode(value!)+(schema>=20 ? "|"+(char)('0'+(int)value!.Weather) : ""));
+            public override ConsumerMemory ReadJson(JsonReader reader, Type type, ConsumerMemory? existingValue, bool hasExistingValue, JsonSerializer serializer) {
+                string wire=(string)reader.Value!;
+                if(schema>=20) CheckMemory20(wire);
+                var memory=MemoryWire.Decode(schema>=20 ? wire.Substring(0,wire.Length-2) : wire);
+                if(schema>=20) memory.Weather=(WeatherSample)(wire[wire.Length-1]-'0');return memory;
+            }
         }
         private sealed class VisitConverter : JsonConverter<VisitRecord>
         {

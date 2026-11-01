@@ -53,11 +53,16 @@ public sealed class FoodAwarenessMemoryIntegrationTests
     }
 
     [Theory]
-    [InlineData(false)] [InlineData(true)]
-    public void PopulatedSchema18MemoryAndHeldContributionsMigrateWithoutRecapture(bool legacy18)
+    [InlineData(18)] [InlineData(19)] [InlineData(20)]
+    public void PopulatedMemoryAndHeldContributionsMigrateWithoutRecapture(int sourceSchema)
     {
         var (control, mc, pc) = Ready();
         var (changed, mm, pm) = Ready();
+        if (sourceSchema == 20)
+        {
+            control.AttachWeather(new FrameWeatherSource(() => 1, () => true));
+            changed.AttachWeather(new FrameWeatherSource(() => 1, () => true));
+        }
         double at = changed.State.Food!.Residents.Min(m => m.DesiredAt);
         control.InspectFoodAwareness("r");
         control.AdvanceTo(at, 1);
@@ -65,11 +70,14 @@ public sealed class FoodAwarenessMemoryIntegrationTests
         changed.AdvanceTo(at, 1);
         var held = Assert.Single(changed.State.Food.Residents, m => m.Decision != null).Decision!;
         Assert.NotNull(held.Awareness); Assert.NotEmpty(held.Shops);
+        Assert.Equal(sourceSchema == 20 ? WeatherSample.Rain : WeatherSample.Unknown, held.Weather);
+        Assert.Equal(sourceSchema == 20 ? 1.3 : 1, held.WeatherTravelMultiplier);
         Assert.All(held.Shops, s => Assert.NotEqual(0, s.MemoryContribution));
         string memory = JsonConvert.SerializeObject(changed.State.Food.Residents.Select(m => m.Memory));
         var root = JObject.Parse(SaveCodec.Write(changed.State));
-        root["Schema"] = 19;
-        ((JObject)root["Food"]!).Remove("Campaigns");
+        ((JObject)root["Food"]!).Remove("Campaigns");root["Schema"]=sourceSchema;
+        if (sourceSchema < 20) root = JObject.Parse(WeatherTests.As19(root.ToString(Formatting.None)));
+        bool legacy18 = sourceSchema == 18;
         if (legacy18)
         {
             root["Schema"] = 18;
@@ -80,7 +88,9 @@ public sealed class FoodAwarenessMemoryIntegrationTests
         }
         string source = root.ToString(Formatting.None);
         var read = SaveCodec.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(legacy18 ? 18 : 19, read.SourceSchema); Assert.Equal(CityState.CurrentSchema, read.State!.Schema);
+        Assert.Equal(sourceSchema, read.SourceSchema); Assert.Equal(CityState.CurrentSchema, read.State!.Schema);
+        Assert.True(read.State.Capabilities.Active);
+        Assert.Equal(sourceSchema < 20 ? 2 : 0, read.State.WeatherStartsDay);
         Assert.Equal(memory, JsonConvert.SerializeObject(read.State.Food!.Residents.Select(m => m.Memory)));
         Assert.Equal(4, read.State.Food.BusinessReferences.Count);
         var migrated = Assert.Single(read.State.Food.Residents, m => m.Decision != null).Decision!;
@@ -90,6 +100,7 @@ public sealed class FoodAwarenessMemoryIntegrationTests
         string upgraded = SaveCodec.Write(read.State);
         Assert.Equal(upgraded, SaveCodec.Write(SaveCodec.Read(upgraded).State!));
         changed = new CitySimulator(read.State, pm);
+        changed.AttachWeather(new FrameWeatherSource(() => 2, () => false), new WeatherSettings { Enabled = false });
         changed.AttachFoodMarket(mm, memorySettings: new FoodMemorySettings { FoodMemoryWeight = 0 },
             awarenessSettings: new FoodAwarenessSettings { DrawsPerAnchor = 0 });
         Assert.Equal(upgraded, SaveCodec.Write(changed.State));
