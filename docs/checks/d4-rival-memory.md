@@ -1,5 +1,13 @@
 # D4: optional modeled rival-experience memory
 
+**MERGE BLOCKED — native proof pending (Sol-r1-1).** Before merge, the authorized
+combined `rig_test` session (Codex Sol, high) must attach verifiable before/red
+and after/green evidence to PR #73 for native memory replay, rival nonmutation
+and combined performance. Evidence must include mod-work p50/p95/max, p95 <5 ms,
+every spike >=30 ms with count/condition/component, and whole-frame timing/stalls
+tracked separately. Offline checks and microbenchmarks do not clear this block.
+This review-fix run performs no rig work.
+
 ## 1 November 2026 — offline implementation
 
 Base `c85dc19`; branch `codex/pc-d4-rival-memory`. D4 composes the existing B1
@@ -17,6 +25,9 @@ schema-21/22 source validation retains its neutral-only rival rule. Tests exerci
 those genuine predecessor writers and refusal paths, plus finite endpoints and
 nonfinite/out-of-range refusal at 23. The malformed-scalar test now uses 9 rather
 than valid 1.
+Pre-D4 schema-23 binaries (including the base and uncomposed D3a sibling) refuse
+D4-written saves holding a nonzero rival `MemoryContribution`, so shared dev/rig
+fixtures must be created and read on the combined head (Opus-r1-1).
 No new DTO, tuple slot, collection, ledger, schema, migration, capability revision,
 route request, native rival write or outcome history. Writer stays **23** and the
 18 -> 19 -> 20 -> 21 -> 22 -> 23 chain is unchanged. Frozen 13-20 readers are untouched; 21/22 retain their prior scalar gate.
@@ -170,3 +181,25 @@ LOCKED-OK denotes bridge-only feasibility, not completed native proof. These
 checks require the combined fixture/session; this offline task performs none.
 Classifications follow the [locked-session feasibility report at 84be71a](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/84be71a/docs/reviews/rig/2026-10-31-locked-session-feasibility/README.md),
 read through Git; no UI capability or fixture mutation helper is presumed.
+
+
+## 1 November 2026 - round-one review follow-up (offline only)
+
+Sol-r1-1: the explicit merge block above remains in force until the authorized
+combined native session attaches the required before/red and after/green proof.
+Opus-r1-1: the schema-23 compatibility note requires shared fixtures to be created
+and read on the combined head. Neither change alters code, schemas or downgrade
+behavior; no native evidence is claimed and no rig work was performed.
+
+Fresh review-fix validation: **40/40 required foreground checks pass**, including
+the game-reference build, **2,540/2,540 tests**, **2,540 discovered cases**, all
+requested regression tools, Python guards and demos. The prescribed host guard
+preceded every dotnet test/run, with no execution deadline. Production sources
+are unchanged from `9106790`; the built DLL retains the SHA-256 recorded above.
+Raw command receipts/log hashes are in ignored `build/d4-review-r1/results.json`:
+`df3862f809c320f2657b263a6de901468b69e0a0c8ea88a9d18e63c4c4893042`.
+
+Fresh offline aggregate flags: 20k whole-catalogue awareness construction has
+**two dense samples >=30 ms, max 34.4564 ms**, and **one sparse sample >=30 ms,
+max 30.9823 ms**. These are whole catalogue builds, not native mod-work frames;
+they do not replace the historical measurements or satisfy the native gate.
