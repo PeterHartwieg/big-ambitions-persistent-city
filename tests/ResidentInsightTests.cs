@@ -311,6 +311,31 @@ public sealed class ResidentInsightTests
     [Fact]
     public void NativeStreetKeysAreLocalizedForDisplayButKeptRawForTheMap()
     {
+        // Retain A2's street-key case using A1's corrected complete-address callback.
+        const string home = "address:ba%3Astreet_thirdstreet:30:home", work = "address:ba%3Astreet_pier:7:work";
+        var (city, person, places) = Fixture();
+        places[home] = new Place { Id = home, Name = "ba:street_thirdstreet 30", Kind = PlaceKind.Home };
+        places[work] = new Place { Id = work, Name = "ba:street_pier 7", Kind = PlaceKind.Work };
+        person.HomeId = home; person.DayPlaceId = work; person.PlaceId = home;
+        person.Activity = Activity.Home; person.Phase = CitizenPhase.AtPlace;
+        var names = new Dictionary<string, string> { ["ba:street_thirdstreet"] = "Third Street", ["ba:street_pier"] = "Pier Road" };
+        var insight = ResidentInsight.Capture(city, person, null, id => places.GetValueOrDefault(id),
+            formatAddress: (key, number) => number + " " + names[key]);
+        Assert.Equal("30 Third Street", insight.Home!.Label);
+        Assert.Equal("7 Pier Road", insight.Work!.Label);
+        Assert.Equal(("ba:street_thirdstreet", 30), (insight.Home.Street, insight.Home.Number));
+        Assert.Contains("Lives at 30 Third Street.", insight.Story);
+        Assert.Contains("Works at 7 Pier Road.", insight.Story);
+        Assert.Contains("at home", insight.Story);
+        Assert.DoesNotContain("ba:street", insight.Text());
+        Assert.DoesNotContain("ba:street", insight.Story);
+        Assert.Equal("30 Third Street", ResidentAddress.From(places[home]).Label);
+        Assert.Equal("7 Pier", ResidentAddress.From(places[work], (_, _) => " ").Label);
+    }
+
+    [Fact]
+    public void CompleteNativeAddressFormatIsUsedButMapArgumentsStayRaw()
+    {
         // GamePlaces names homes by their raw native address, e.g. "ba:street_thirdstreet 30".
         const string home = "address:ba%3Astreet_thirdstreet:30:home", work = "address:ba%3Astreet_pier:7:work";
         var places = new[] {
@@ -319,20 +344,86 @@ public sealed class ResidentInsightTests
         var person = new CitizenState { Identity = new CitizenIdentity { Id = "pc:9", Name = "Lee", Age = 40, Persona = Persona.Commuter },
             HomeId = home, DayPlaceId = work, PlaceId = home, Activity = Activity.Home, Phase = CitizenPhase.AtPlace };
         var city = new CityState { Minute = 1440 + 600, Places = places.Values.ToList(), Citizens = new() { person } };
-        var names = new Dictionary<string, string> { ["ba:street_thirdstreet"] = "Third Street", ["ba:street_pier"] = "Pier Road" };
+        var names = new Dictionary<string, string> { ["ba:street_thirdstreet"] = "3rd Street", ["ba:street_pier"] = "Pier Road" };
         var insight = ResidentInsight.Capture(city, person, null, id => places.TryGetValue(id, out var p) ? p : null,
-            localize: key => names.TryGetValue(key, out var name) ? name : key);
-        Assert.Equal("Third Street 30", insight.Home!.Label);
-        Assert.Equal("Pier Road 7", insight.Work!.Label);
+            formatAddress: (key, number) => number + " " + names[key]);
+        Assert.Equal("30 3rd Street", insight.Home!.Label);
+        Assert.Equal("7 Pier Road", insight.Work!.Label);
         Assert.Equal(("ba:street_thirdstreet", 30), (insight.Home.Street, insight.Home.Number)); // the map link matches the native key
-        Assert.Contains("Lives at Third Street 30.", insight.Story);
-        Assert.Contains("Works at Pier Road 7.", insight.Story);
+        Assert.Equal(home, insight.Home.PlaceId);
+        Assert.Equal((work, "ba:street_pier", 7), (insight.Work.PlaceId, insight.Work.Street, insight.Work.Number));
+        Assert.Contains("Lives at 30 3rd Street.", insight.Story);
+        Assert.Contains("Works at 7 Pier Road.", insight.Story);
         Assert.Contains("at home", insight.Story);
         Assert.DoesNotContain("ba:street", insight.Text());
         Assert.DoesNotContain("ba:street", insight.Story);
-        // Without a localizer (and for a blank translation) the raw key remains visible rather than empty.
-        Assert.Equal("ba:street_thirdstreet 30", ResidentAddress.From(places[home]).Label);
-        Assert.Equal("ba:street_pier 7", ResidentAddress.From(places[work], _ => " ").Label);
+        Assert.Equal("30 Third Street", ResidentAddress.From(places[home]).Label);
+        Assert.Equal("7 Pier", ResidentAddress.From(places[work], (_, _) => " ").Label);
+        // Preserve other native address orders verbatim too; never parse/reassemble the result.
+        Assert.Equal("Third Street, no. 30", ResidentAddress.From(places[home], (_, _) => "Third Street, no. 30").Label);
+    }
+
+    [Fact]
+    public void MissingStreetTranslationNeverLeaksAKeyIntoInspectorText()
+    {
+        const string home = "address:ba%3Astreet_ninthstreet:18:home";
+        var (city, person, places) = Fixture();
+        places[home] = new Place { Id = home, Name = "ba:street_ninthstreet 18", Kind = PlaceKind.Home };
+        person.HomeId = home; person.DayPlaceId = home; person.DestinationId = home;
+        person.Phase = CitizenPhase.Travelling;
+        var meal = Meal(MealKind.Breakfast, MealStatus.Travelling); meal.PlaceId = home;
+        var insight = Capture(city, person, meal, places);
+        foreach (string shown in new[] { insight.Home!.Label, insight.Work!.Label, insight.Story, insight.Heading, insight.Meals[0].Text, insight.Text() })
+            Assert.DoesNotContain("ba:street_", shown);
+    }
+
+    [Theory]
+    [InlineData("native")]
+    [InlineData("absent")]
+    [InlineData("blank")]
+    [InlineData("unknown")]
+    [InlineData("exception")]
+    public void EveryAddressBearingInspectorStringUsesSafeDisplayText(string mode)
+    {
+        const string home = "address:ba%3Astreet_ninthstreet:18:home";
+        const string work = "address:ba%3Astreet_fourthavenue:7:study";
+        const string shop = "address:ba%3Astreet_thirdstreet:30:shop";
+        var (city, person, places) = Fixture();
+        places[home] = new Place { Id = home, Name = "ba:street_ninthstreet 18", Kind = PlaceKind.Home };
+        places[work] = new Place { Id = work, Name = "Manhattan Business School", Kind = PlaceKind.Study };
+        places[shop] = new Place { Id = shop, Name = "Food routines, ba:street_thirdstreet 30", Kind = PlaceKind.Shop };
+        person.HomeId = home; person.DayPlaceId = work; person.PlaceId = home; person.DestinationId = shop;
+        person.Phase = CitizenPhase.Travelling; person.DestinationActivity = Activity.Shop;
+        var names = new Dictionary<string, string> { ["ba:street_ninthstreet"] = "9th Street",
+            ["ba:street_fourthavenue"] = "4th Avenue", ["ba:street_thirdstreet"] = "3rd Street" };
+        Func<string, int, string>? formatter = mode == "absent" ? null : (key, number) => mode switch
+        {
+            "native" => number + " " + names[key], "blank" => " ",
+            "unknown" => number + " " + key, _ => throw new InvalidOperationException("not loaded")
+        };
+        string homeText = mode == "native" ? "18 9th Street" : "18 Ninth Street";
+        string workText = mode == "native" ? "7 4th Avenue" : "7 Fourth Avenue";
+        string shopText = mode == "native" ? "30 3rd Street" : "30 Third Street";
+        foreach (var status in new[] { MealStatus.Travelling, MealStatus.Serving, MealStatus.Paid, MealStatus.Uncertain })
+        foreach (var kind in new[] { MealKind.Breakfast, MealKind.Lunch, MealKind.Dinner })
+        {
+            var meal = Meal(kind, status); meal.PlaceId = shop;
+            var insight = ResidentInsight.Capture(city, person, meal, id => places.GetValueOrDefault(id), formatAddress: formatter);
+            Assert.Equal(homeText, insight.Home!.Label);
+            Assert.Equal("Manhattan Business School, " + workText, insight.Work!.Label);
+            Assert.Equal("Studies at", insight.WorkRole);
+            Assert.Contains("Lives at " + homeText, insight.Story);
+            Assert.Contains("Right now: walking to ", insight.Story);
+            Assert.Contains(shopText, insight.Story);
+            Assert.Contains(shopText, insight.Heading);
+            Assert.Contains(shopText, insight.Meals[(int)kind - (int)MealKind.Breakfast].Text);
+            foreach (var shown in new[] { insight.Home.Label, insight.Work.Label, insight.Story, insight.Heading, insight.Text() }
+                .Concat(insight.Meals.Select(m => m.Text))) Assert.DoesNotContain("ba:street_", shown);
+            Assert.Equal((home, "ba:street_ninthstreet", 18), (insight.Home.PlaceId, insight.Home.Street, insight.Home.Number));
+            Assert.Equal((work, "ba:street_fourthavenue", 7), (insight.Work.PlaceId, insight.Work.Street, insight.Work.Number));
+            Assert.Equal(shop, meal.PlaceId);
+            Assert.Equal("ba:street_ninthstreet 18", places[home].Name);
+        }
     }
 
     [Fact]
@@ -513,7 +604,7 @@ public sealed class ResidentInsightTests
             foreach (var person in inspected.State.Citizens.ToArray())
             {
                 // Inspect before and after each slice, with a product-name callback, as the popup refresh would.
-                var view = inspected.Inspect(person.Identity.Id, id => id.ToUpperInvariant());
+                var view = inspected.Inspect(person.Identity.Id, id => id.ToUpperInvariant(), (street, number) => number + " " + street);
                 Assert.NotNull(view); texts.Add(view!.Heading + "|" + view.HeadingReason + "|" + string.Join(";", view.Meals.Select(m => m.Text)));
             }
             while (!inspected.AdvanceTo(minute, 64).CaughtUp)
