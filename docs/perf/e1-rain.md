@@ -7,3 +7,13 @@
 | E1 | Direct schema-20 consumer-prefix shape check without substring | 120 bytes/check; median 326.82 ns | 0 bytes/check; 301.58 ns. Frozen 18/19 memory wire unchanged; [raw E1 measurements](../reviews/2026-11-01-e1-measurements.json) |
 
 Offline policy/capture microbenchmarks only; native mod-work and whole-frame costs remain pending. The four parked hotspots stay parked.
+
+## Base sync re-measure, 1 November 2026
+
+Unchanged E1 kernels, three fresh Release processes: 0 >=30 ms across 5,100
+measured sweeps, maximum 3.6095 ms; 40 B/resident capture, 0 B/food capture,
+0 B/admission and 0 B/direct precheck. Frame cache remains one read per capture
+sweep/frame. [Raw measurements, aggregate >=30 ms flags and capacity](../reviews/2026-11-01-e1-sync-base-measurements.json).
+This is synthetic offline evidence; native combined mod-work and whole-frame
+results remain pending. No new performance-affecting production change or parked
+hotspot rewrite was made by the integration.

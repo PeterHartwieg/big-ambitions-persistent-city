@@ -1,5 +1,74 @@
 # E1: Weather capture, integration and native checklist
 
+## Base sync — 1 November 2026 (offline only)
+
+Integrates approved E1 `72f1cbd` with development `1f8f4b4` (final C2a
+`692b8b5`, B1/B2, C3/C4, E2b/E2c and donut/cupcake feasibility) through a real
+two-parent merge, `c332825`. All 42 per-file conflict resolutions and the narrow
+Runtime/Core composition are recorded in the [sync description](../reviews/2026-11-01-e1-sync-base-pr-description.md).
+The [preservation audit](../reviews/2026-11-01-e1-sync-base-preservation.json)
+checks every development index line, the complete original E1 evidence/checklist
+and all three performance rows. No base file is missing. C2a's failure-only B1
+awareness source, E2b scheduling and C4 engine/access source remain unchanged.
+
+Schema 20 stacks on the final merged schema-19 wire. B1 active revision-1
+capabilities and bounded nonzero held contributions remain executable; no old
+shape is relaxed. The populated-memory fixture explicitly exercises 18/19/20,
+including rainy held replay with changed/disabled settings. C4 save neutrality
+still pins the literal current schema, now 20, and requires zero raw-byte delta.
+Queue fixtures distinguish E2b physical commitments from E1 logical Q captures.
+The awareness benchmark's schema-18 input strips only weather additions and
+reports those bytes separately; `5089748` fixes this tool-only stale fixture.
+
+**Final offline validation:** **2,375/2,375 unit tests**, discovery and all
+**57/57 gate commands pass** after the strict awareness-fixture repair (58 gate
+attempts, with the original failed attempt and successful rerun both retained).
+Includes the game-target build, every standalone regression project, the four
+Python regression harnesses, pickup continuity, optional-stop performance,
+interior wiring, donut differential/source/baseline checks, all three demos,
+base save comparison, C4 literal save neutrality, yielded awareness rebuild,
+CF32/CF64 and three fresh weather processes. The one-dotnet guard ran before
+every command; shared-machine waits are included in command wall times.
+[Commands, hashes and final outcomes](../reviews/2026-11-01-e1-sync-base-results.json)
+and [raw structured measurements](../reviews/2026-11-01-e1-sync-base-measurements.json).
+
+The weather-only projection exactly matches merged schema 19: **119,083** bytes,
+SHA-256 `D7FF8294F56C3B3D5AF736540274E68E9848319B34658859FC15E0D4CDB1F3A2`.
+Schema 20 is **120,184** bytes (+1,101); historical economy remains **849 orders /
+797 purchases / 107,967,424,757,760 exact units**, with all order/economy/reload
+digests equal to development. C4 adds **0 bytes**: population **41,787 -> 41,787**,
+food **66,260 -> 66,260**, raw schema-20 UTF-8 equality with C4 source excluded
+from the baseline export. C2a awareness still adds exactly **3,074 bytes** at
+both 1,914 and 5,000 consumers, with weather counted separately.
+
+CF32/CF64 actual bytes remain **193,429,684 / 231,829,684**; full planned totals
+remain **220,664,366 / 259,064,366**, leaving **47,771,090 / 9,371,090** bytes.
+Full planned records remain **2,111,867 / 3,711,867**. Weather still consumes
+1,400,000 bytes plus 63 header/held-image bytes and 50,000 physical records;
+consumer weather adds zero records. All fixed caps/headroom reservations remain.
+
+Three weather processes report **0 >=30 ms across 5,100 measured sweeps**, max
+**3.6095 ms**. Capture costs stay 40 B/resident boundary and 0 B/food boundary;
+admission and the direct consumer precheck allocate 0 B. Native reads stay one
+per capture sweep/frame. **Flagged offline aggregate costs:** 20k D1 build
+**36.7610 ms**, one whole awareness-build sample **33.1729 ms**, CF32 write/read
+**1,940.4 / 5,869.0 ms**, CF64 **2,266.7 / 7,220.6 ms**. Other aggregate/batch
+metrics >=30 ms are enumerated in the structured measurements. These are synthetic
+whole-build/save or batch totals, not native mod-work/frame samples; the yielded
+awareness units and native gate remain distinct. Whole-frame timing is unmeasured.
+The four parked hotspots remain unchanged.
+
+Game-target DLL SHA-256:
+`cf3122c2856c80632d760963d35a28555428deb9ec9490bd846bf702e54a92aa`.
+
+The original dated entries below retain their historical baselines and results.
+For pending checklist item 5, use integrated development `1f8f4b4` without E1 as
+the matched baseline rather than the original `9b13698`; the schema-19 migration
+checkpoint in item 4 still applies. Merge rule v2 uses a batched combined locked
+rig on the development head, with pointer/input-only checks waiting for Peter's
+6 Nov playtest. No per-PR rig, game launch, release or ordinary-save clearance is
+claimed. All six original LOCKED-OK / NEEDS-INPUT items remain below.
+
 ## E1 review round 1 - 1 November 2026 (offline only)
 
 **Opus-r1-1**, fix **ff11168** on reviewed **8fa4d27**. Queue weather was first
@@ -182,4 +251,4 @@ No rig work was performed in this implementation run.
 
 ## Development notice
 
-> **E1 development status - 1 November 2026 (offline only):** captured dry/rain/unknown inputs for new discretionary outings and food contexts, soft rain travel preference and frozen new-queue leads; additive schema 20 on C2a. [Contract and byte ledger](../population-schema20.md). Offline measurements and the numbered 6 Nov rig handoff are in [CHECKS](../../CHECKS.md#e1-rain---1-november-2026-offline-only). Native combined performance/behavior proof remains pending.
+> **E1 development status - 1 November 2026 (offline only):** captured dry/rain/unknown inputs for new discretionary outings and food contexts, soft rain travel preference and frozen new-queue leads; additive schema 20 on C2a. [Contract and byte ledger](../population-schema20.md). Offline measurements and the numbered 6 Nov rig handoff are in [CHECKS](#e1-rain---1-november-2026-offline-only). Native combined performance/behavior proof remains pending.
