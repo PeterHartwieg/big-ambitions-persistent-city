@@ -99,7 +99,7 @@ Show an explicit “food bought outside managed businesses” outflow line, sepa
 
 ### E: extend verified behavior in small increments
 
-E3 status, 31 October (offline): [donut-specific feasibility record](e3-donut.md) and isolated raw-field reader are implemented independently from the base. Loaded equipment/resource and natural checkout/settlement proof remain pending; no additional product certified/enabled, menu expansion or saved change.
+E3 status, 31 October (offline): [donut](e3-donut.md) and [cupcake feasibility records](e3-cupcake.md) share one isolated on-demand raw-field reader, stacked on the donut proof only. Loaded equipment/resource and natural checkout/settlement proof remain pending; no additional product certified/enabled, menu expansion or saved change.
 
 Capture dry/rain/unknown at a new optional outing or food context. Rain reduces new discretionary outing admission and soft travel preference; preserve a positive chance for distant aware shops and do not reintroduce A's removed hard walking cutoff. Unknown weather is neutral and stated. Work/study, paid food, existing journeys, road capacity and movement speed stay under existing rules. Already committed opening queues keep their existing lead; existing optional-stop cancellation/paired continuation rules still apply. There is no native weather write or new season model. A new weather sample cannot trigger another decision attempt by itself.
 

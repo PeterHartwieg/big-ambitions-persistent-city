@@ -1,3 +1,8 @@
+#if CUPCAKE
+using CandidateReader = PersistentCity.Runtime.CupcakeFeasibilityReader;
+#else
+using CandidateReader = PersistentCity.Runtime.DonutFeasibilityReader;
+#endif
 using System.Diagnostics;
 using System.Text.Json;
 using BigAmbitions.Items;
@@ -8,7 +13,7 @@ using PersistentCity.Runtime;
 // Fixture asset values are conditional examples, NOT proof of shipped donut equipment.
 static class Program
 {
-    const string Product = DonutFeasibilityReader.Product;
+    const string Product = CandidateReader.Product;
     static int checks;
     static void Check(bool ok, string why) { if (!ok) throw new Exception(why); checks++; }
     static BuildingRegistration Fixture(int shelves = 1)
@@ -33,7 +38,7 @@ static class Program
     static void Refusal(Action<BuildingRegistration> change, string expected)
     {
         var r = Fixture(); change(r); string before = Fingerprint(r);
-        var result = DonutFeasibilityReader.Read(r);
+        var result = CandidateReader.Read(r);
         Check(!result.DirectStockFieldsVerified && result.Refusal.Contains(expected), "specific refusal: " + expected + ": " + result.Refusal);
         Check(Fingerprint(r) == before, "refusal leaves native double unchanged");
     }
@@ -42,19 +47,19 @@ static class Program
         // First explicit call includes this process's first reader JIT. Fixture/JIT of measuring APIs excluded.
         var r = Fixture(); var clock = Stopwatch.StartNew(); clock.Stop();
         long allocation = GC.GetAllocatedBytesForCurrentThread(); clock.Restart();
-        var cold = DonutFeasibilityReader.Read(r); clock.Stop();
+        var cold = CandidateReader.Read(r); clock.Stop();
         long coldBytes = GC.GetAllocatedBytesForCurrentThread() - allocation;
         double coldMs = clock.Elapsed.TotalMilliseconds;
         Check(cold.DirectStockFieldsVerified && cold.RawProductUnits == 7 && cold.RawBagUnits == 3 && cold.RawCounters == 1,
             "direct raw stock and shared bag fields");
         Check(cold.Price == Money.FromNative(10.2528f), "exact binary32 price");
         string before = Fingerprint(r);
-        for (int i = 0; i < 100; i++) DonutFeasibilityReader.Read(r);
+        for (int i = 0; i < 100; i++) CandidateReader.Read(r);
         Check(before == Fingerprint(r), "100 reads preserve complete fixture fields");
         r.itemInstances["s0"].cargoInstances[0].amount = 0;
-        Check(DonutFeasibilityReader.Read(r).RawProductUnits == 0, "known empty direct stock");
+        Check(CandidateReader.Read(r).RawProductUnits == 0, "known empty direct stock");
         r.itemInstances["counter"].cargoInstances[0].amount = 0;
-        Check(DonutFeasibilityReader.Read(r).RawBagUnits == 0, "known bag shortage");
+        Check(CandidateReader.Read(r).RawBagUnits == 0, "known bag shortage");
         Check(cold.RawProductUnits == 7 && cold.Equipment[0] == "fixture-shelf", "old image detached after native mutation");
         Check(cold.Eligibility.StartsWith("Unknown"), "raw counters never assert staffing/capacity");
         Refusal(x => x.RentedByPlayer = false, "player business");
@@ -92,24 +97,47 @@ static class Program
         Refusal(x => ItemsGetter.Items.Clear(), "retail product");
         Refusal(x => { for (int i = 0; i < 129; i++) x.cachedAvailableProducts.Add("other"); }, "oversized");
         r = Fixture(2);
-        var shared = DonutFeasibilityReader.Read(r);
+        var shared = CandidateReader.Read(r);
         Check(shared.RawProductUnits == 14 && shared.RawBagUnits == 3 && shared.RawCounters == 1,
             "two producers do not multiply the business bag/counter pool");
         r.itemInstances["s0"].cargoInstances[0].amount = int.MaxValue;
-        Check(DonutFeasibilityReader.Read(r).Refusal.Contains("overflow"), "overflow refused");
+        Check(CandidateReader.Read(r).Refusal.Contains("overflow"), "overflow refused");
         r = Fixture(); ItemsGetter.Items["fixture-storage"] = new();
         r.itemInstances.Add("storage", new() { id = "storage", itemName = "fixture-storage",
             cargoInstances = new() { new() { itemName = Product, amount = 1000 } } });
-        Check(DonutFeasibilityReader.Read(r).RawProductUnits == 7, "storage excluded from native direct-stock evidence");
+        Check(CandidateReader.Read(r).RawProductUnits == 7, "storage excluded from native direct-stock evidence");
+#if CUPCAKE
+        Check(CandidateReader.Product == "ba:itemname_cupcake" && cold.ProductId == CandidateReader.Product,
+            "pinned cupcake identity on detached output");
+        Refusal(x => x.retailPrices.Clear(), "advertised product/price");
+        Refusal(x => x.cachedAvailableProducts[0] = "ba:itemname_plaincupcake", "advertised product/price");
+        foreach (string input in new[] { "ba:itemname_plaincupcake", "ba:itemname_frosting" })
+            Refusal(x => { ItemsGetter.Items["fixture-shelf"].producerSettings.itemsToProduce = new[] { Product };
+                x.itemInstances["s0"].cargoInstances[0].itemName = input; }, "Converted input");
+        Refusal(x => ItemsGetter.Items["fixture-shelf"].itemsThatCanShowcase = new[] { "ba:itemname_donut" }, "whitelist mismatch");
+        Refusal(x => x.itemInstances["counter"].cargoInstances.Clear(), "Shared, nested");
+        r = Fixture();
+        ItemsGetter.Items[DonutFeasibilityReader.Product] = new() { type = ItemType.RetailProduct };
+        r.cachedAvailableProducts.Add(DonutFeasibilityReader.Product);
+        r.retailPrices.Add(new() { itemName = DonutFeasibilityReader.Product, price = 12 });
+        r.itemInstances["s0"].cargoInstances[0].itemName = DonutFeasibilityReader.Product;
+        ItemsGetter.Items["fixture-shelf"].itemsThatCanShowcase = new[] { DonutFeasibilityReader.Product };
+        Check(CandidateReader.Read(r).Refusal == "No direct stocked candidate showcase shelf observed",
+            "donut never substitutes for cupcake");
+        Check(DonutFeasibilityReader.Read(r).DirectStockFieldsVerified, "descriptor switch reads donut independently");
+        string mixedBefore = Fingerprint(r);
+        for (int i = 0; i < 100; i++) { CandidateReader.Read(r); DonutFeasibilityReader.Read(r); }
+        Check(mixedBefore == Fingerprint(r), "interleaved candidates share metadata only, never stock or results");
+#endif
         var timings = new List<object>();
         foreach (int size in new[] { 1, 1999 })
         {
-            r = Fixture(size); for (int i = 0; i < 30; i++) DonutFeasibilityReader.Read(r);
+            r = Fixture(size); for (int i = 0; i < 30; i++) CandidateReader.Read(r);
             var samples = new double[1001]; long bytes = 0;
             for (int i = 0; i < samples.Length; i++)
             {
                 allocation = GC.GetAllocatedBytesForCurrentThread(); long start = Stopwatch.GetTimestamp();
-                var value = DonutFeasibilityReader.Read(r);
+                var value = CandidateReader.Read(r);
                 samples[i] = Stopwatch.GetElapsedTime(start).TotalMilliseconds;
                 bytes += GC.GetAllocatedBytesForCurrentThread() - allocation;
                 Check(value.DirectStockFieldsVerified, "benchmark fixture readable");
@@ -126,8 +154,8 @@ public sealed class BuildingRegistration
 {
     public bool RentedByPlayer = true, HasEstablishedBusiness = true, AvailableForRent, temporarilyClosed;
     public string businessTypeName = "fixture-full";
-    public List<string> cachedAvailableProducts = new() { DonutFeasibilityReader.Product };
-    public List<RetailPrice> retailPrices = new() { new() { itemName = DonutFeasibilityReader.Product, price = 10.2528f } };
+    public List<string> cachedAvailableProducts = new() { CandidateReader.Product };
+    public List<RetailPrice> retailPrices = new() { new() { itemName = CandidateReader.Product, price = 10.2528f } };
     public Dictionary<string, ItemInstance> itemInstances = new();
 }
 public sealed class RetailPrice { public string itemName = ""; public float price; }
