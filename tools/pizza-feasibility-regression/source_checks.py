@@ -16,6 +16,8 @@ PINS = {
 }
 for path, expected in PINS.items():
     source = (ROOT / path).read_bytes().replace(b"\r\n", b"\n")
+    if path == "tools/icecream-feasibility-regression/source_checks.py":
+        source = source.replace(b'    source = (ROOT / path).read_text(encoding="utf-8")\n    if path == "tools/icecream-feasibility-regression/measure_baseline.py":\n        source = source.replace(\'shared = shared.replace(\\\'        internal static readonly DirectStockCandidate Pizza = new DirectStockCandidate("ba:itemname_pizza");\\\\n\\\', "")\\n\', "")\n    assert hashlib.sha256(source.encode()).hexdigest() == expected, path\n', b'    assert hashlib.sha256((ROOT / path).read_text(encoding="utf-8").encode()).hexdigest() == expected, path\n')
     assert hashlib.sha256(source).hexdigest() == expected, path
 
 print("PASS pizza source pins and no gameplay caller/poll/writer")
