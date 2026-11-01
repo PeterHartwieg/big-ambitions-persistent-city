@@ -52,6 +52,8 @@ Track F (Peter, 31 October): independently authored city view from interiors, F0
 
 F1 status, 1 November (offline): **NO-GO at drawing step 1**; no proven detached-space projection/culling approach, no renderer or customer hand-off added. [Decision and smaller read-only probe](plans/f1-shop-view-decision.md); [offline checks and 6 Nov handoff](checks/f1-shop-view.md). F0/E2c and all runtime/save behavior remain unchanged.
 
+F1b status (offline): renderer **NO-GO**; explicit read-only door/transform and capped street metadata diagnostics implement the smaller investigation. [Decision, refresh/invalidation limits](plans/f1b-street-proxy.md) and [offline evidence/6 Nov checks](checks/f1b-street-proxy.md). No frame participant, renderer, customer path or schema change.
+
 ## Performance gate (Peter, 2026-10-30)
 
 Applies to every step A–E slice re-measure and to the final release:
@@ -68,6 +70,8 @@ Applies to every step A–E slice re-measure and to the final release:
 ### Perf wins log
 
 Record every taken win with before/after numbers.
+
+- F1b — [Reuse the one-shot inventory's shared-material buffer](perf/f1b-street-proxy.md): 129-renderer offline mean allocation 80,838.96 →69,547.73 B/call; no frame work added.
 
 Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index line here. Keep before/after numbers and measurement limits in that file; sync/review-fix notes stay with the slice.
 

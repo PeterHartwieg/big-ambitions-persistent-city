@@ -6,6 +6,7 @@ Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here
 
 - E3 pizza — 1 November 2026 (offline only), holder STOP; 2,000-entry warm p95 donut/cupcake/salad/pizza **0.1589/0.1338/0.1476/0.1122 ms**, **49,104 B/read** (2 entries **200 B**); cold **1,064 B/read**. [Full cold/warm timings, proof and numbered 6 Nov handoff](docs/checks/e3-pizza.md).
 
+- F1b — 1 November 2026, offline: renderer NO-GO; one-shot doors/inventory p95 0.0043/0.2010 ms (native doubles); disabled 0 B, no frame calls. [Dated checks and In-game checks for 6 Nov rig](docs/checks/f1b-street-proxy.md).
 - F1 — Shop-view drawing NO-GO, offline validation and numbered 6 Nov handoff: [checks](docs/checks/f1-shop-view.md).
 - F0 — Interior view experiment, reviews and native checklist: [checks](docs/checks/f0-interior-view.md).
 - D1 — Read-only rival food catalogue and native checklist: [checks](docs/checks/d1-rival-catalogue.md).

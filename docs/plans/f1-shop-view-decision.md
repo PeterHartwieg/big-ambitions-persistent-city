@@ -6,6 +6,8 @@
 
 ## Inputs and evidence boundary
 
+**F1b follow-up, 1 November (offline): renderer remains NO-GO; read-only diagnostics implemented.** Rig #2 C8 establishes one F0-eligible small own shop, not semantic `doorId`/`exitToZoneId` correspondence or independent aperture residuals. The smaller probe now has explicit one-shot bridge commands, bounded metadata inventory and pure geometry refusal tests; no renderer/customer path/patch/schema change. [Evidence, command contract, refresh/invalidation proposal and exact unknowns](f1b-street-proxy.md); [offline results and numbered 6 Nov handoff](../checks/f1b-street-proxy.md). The original stop and its no-new-diagnostics statement above describe the earlier F1 attempt.
+
 Read AGENTS, CHECKS, README, roadmap, design, B-E plan, the complete Track F plan, F0/E2c checks and the current interior adapter/state. Independently inspected only vanilla types in the supplied Steam Managed directory using local ILSpy. Selected output stays ignored under `build/f1/vanilla/`; no decompiled source or assemblies belong in Git. No game, scene/Addressables inventory, raw save, rig/profile/bridge/lease or foreign mod implementation was accessed. No E1 branch or code was used.
 
 | Read-only vanilla input | SHA-256 |
