@@ -112,12 +112,8 @@ namespace PersistentCity.Core
             }
             return capture;
         }
-        public Dwell? QueueAtOpening(CitizenState person,Place place,double now)
+        private WeatherCommitment CaptureQueueWeather(CitizenState person,double now)
         {
-            // The scheduled opening already identifies this commitment. No extra hours/dice pass on refresh.
-            if(person.Phase!=CitizenPhase.WaitingForOpening || person.PlaceId!=place.Id || person.DestinationId!=place.Id
-                || (person.DestinationActivity!=Activity.Shop && person.DestinationActivity!=Activity.Leisure)
-                || now>=person.NextEventMinute) return null;
             var capture=person.W;
             if(capture==null || !capture.Queue || capture.Boundary!=person.NextEventMinute)
             {
@@ -126,6 +122,17 @@ namespace PersistentCity.Core
                 int lead=weatherSettings.Enabled && (int)(now/1440)>=State.WeatherStartsDay ? weatherSettings.QueueRainLeadMinutes : (int)DwellPlanner.RainQueueLeadMinutes;
                 person.W=capture=new WeatherCommitment(person.NextEventMinute,sample,lead);
             }
+            return capture;
+        }
+        public Dwell? QueueAtOpening(CitizenState person,Place place,double now)
+        {
+            // Normal refresh only reads the event's capture. No camera-dependent sampling or new terms.
+            if(person.Phase!=CitizenPhase.WaitingForOpening || person.PlaceId!=place.Id || person.DestinationId!=place.Id
+                || (person.DestinationActivity!=Activity.Shop && person.DestinationActivity!=Activity.Leisure)
+                || now>=person.NextEventMinute) return null;
+            var capture=person.W;
+            if(capture==null || !capture.Queue || capture.Boundary!=person.NextEventMinute)
+                capture=CaptureQueueWeather(person,now); // migrated/pre-existing wait without a queue capture
             return DwellPlanner.QueueAtOpening(person,place,State.Seed,now,capture.Weather==WeatherSample.Rain,capture.Value);
         }
     }

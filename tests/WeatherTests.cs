@@ -209,6 +209,48 @@ public sealed class WeatherTests
         string payload=root.ToString(Formatting.None);var store=new Dictionary<string,string> {[SaveStore.StateKey]=payload};
         Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(payload).Status);Assert.False(SaveStore.WriteTo(store,city.State).Success);Assert.Same(payload,store[SaveStore.StateKey]);
     }
+    [Theory]
+    [InlineData(true,false)] [InlineData(true,true)]
+    [InlineData(false,false)] [InlineData(false,true)]
+    public void QueueCommitmentPrecedesFirstPhysicalRefreshAndSurvivesRainAndReload(bool enabled,bool reload)
+    {
+        var state=State();double start=state.Minute;var shop=state.Places[1];shop.OpenMinute=(int)(start%1440)+8;
+        var source=new Source {Value=WeatherSample.Dry};var paths=new Paths();
+        var settings=new WeatherSettings {Enabled=enabled,QueueRainLeadMinutes=2};
+        var city=new CitySimulator(state,paths);city.AttachWeather(source,settings);
+        city.AdvanceTo(start+1);
+        var person=state.Citizens[0];Assert.Equal(CitizenPhase.WaitingForOpening,person.Phase);
+        var dry=DwellPlanner.QueueAtOpening(person,shop,state.Seed,state.Minute,false);Assert.NotNull(dry);
+        var committed=person.W;
+        string wire=SaveCodec.Write(state);
+        source.Value=WeatherSample.Rain;
+        if(reload)
+        {
+            state=Read(wire);person=state.Citizens[0];shop=state.Places[1];committed=person.W;
+            city=new CitySimulator(state,paths);city.AttachWeather(source,new WeatherSettings {Enabled=enabled,QueueRainLeadMinutes=10});
+        }
+        int capturedReads=source.Calls;
+        // No earlier QueueAtOpening call: camera admission/physical observation happens only after rain starts.
+        Assert.Equal(dry,city.QueueAtOpening(person,shop,state.Minute));
+        Assert.NotNull(person.W);Assert.True(person.W!.Queue);Assert.Equal(WeatherSample.Dry,person.W.Weather);
+        Assert.Same(committed,person.W);Assert.Equal(capturedReads,source.Calls);
+        Assert.Equal(1,paths.Calls);Assert.Equal(wire,SaveCodec.Write(state));
+    }
+    [Theory]
+    [InlineData(true,0,2)] [InlineData(false,0,5)] [InlineData(true,2,5)]
+    public void QueueEventCapturesCachedNativeRainAndGatesOnlyNewLeadTuning(bool enabled,int startsDay,int lead)
+    {
+        var state=State();double start=state.Minute;state.WeatherStartsDay=startsDay;
+        state.Places[1].OpenMinute=(int)(start%1440)+8;
+        int reads=0;var source=new FrameWeatherSource(()=>1,()=> {reads++;return true;});
+        var city=new CitySimulator(state,new Paths());
+        city.AttachWeather(source,new WeatherSettings {Enabled=enabled,RainOptionalOutingMultiplier=1,QueueRainLeadMinutes=2});
+        city.AdvanceTo(start+1);
+        var person=state.Citizens[0];Assert.Equal(CitizenPhase.WaitingForOpening,person.Phase);
+        Assert.NotNull(person.W);Assert.True(person.W!.Queue);Assert.Equal(person.NextEventMinute,person.W.Boundary);
+        Assert.Equal(WeatherSample.Rain,person.W.Weather);Assert.Equal(lead,person.W.Value);Assert.Equal(1,reads);
+        city.QueueAtOpening(person,state.Places[1],state.Minute);Assert.Equal(1,reads);
+    }
     [Fact]
     public void QueueCaptureRetainsLeadAcrossRainConfigAndReload()
     {

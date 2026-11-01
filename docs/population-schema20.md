@@ -77,8 +77,13 @@ The native source reads only `OptionalStopEnvironment.Raining => RainHelper.isRa
 lazily cached by Unity frame for new boundaries. Missing/throwing/unknown input is
 neutral. Work/study, committed travel, paid food, road capacity and speed have no
 weather branch. Existing optional-stop native-rain cancellation and paired
-continuation rules remain intact. Queue commitments freeze their weather and lead;
-refresh does not resample them.
+continuation rules remain intact. A customer already at the destination captures
+its Q weather/lead when the logical event commits `WaitingForOpening`, regardless
+of camera radius or body allocation. Physical refresh reads that capture without
+resampling. Only a migrated/pre-existing wait lacking a matching Q capture uses
+the legacy first-lookup fallback. Disabled/pre-activation E1 still captures the
+native queue rain rule at commitment, using its existing five-minute maximum;
+only enabled, activated new commitments use the configured E1 lead.
 
 The template and unchanged loader expose flat `WeatherEnabled` (true),
 `WeatherRainOptionalOutingMultiplier` (.7, 0-1),

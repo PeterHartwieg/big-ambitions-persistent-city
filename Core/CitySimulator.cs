@@ -879,7 +879,7 @@ namespace PersistentCity.Core
             return next;
         }
 
-        private static void WaitForOpening(CitizenState person, RoutineSlot slot, double opening)
+        private void WaitForOpening(CitizenState person, RoutineSlot slot, double opening)
         {
             // Wait at the current entrance; retain the intended destination and full deadline.
             // In particular, do not invent a return-home trip that can consume the activity.
@@ -888,6 +888,9 @@ namespace PersistentCity.Core
             person.DestinationActivity = slot.Activity;
             person.ActivityUntilMinute = slot.EndsAt;
             person.NextEventMinute = opening;
+            // The event owns this queue even when no physical body/camera has observed the door.
+            if (person.PlaceId == slot.PlaceId && (slot.Activity == Activity.Shop || slot.Activity == Activity.Leisure))
+                CaptureQueueWeather(person, State.Minute);
             person.Journey = null;
             person.DepartureMinute = 0;
         }
