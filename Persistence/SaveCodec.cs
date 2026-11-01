@@ -127,10 +127,10 @@ namespace PersistentCity.Persistence
                     var old = LegacyPopulationCodec.Read(source);
                     if (old.Status != SaveReadStatus.Loaded) return old;
                     var upgraded = old.State!;
-                    upgraded.Schema = MenuPredecessorSchema;
+                    upgraded.Schema = 19; // Existing awareness import; do not jump to a future E4 predecessor.
                     if(upgraded.Food!=null) upgraded.Food.AwarenessStartsDay=(int)(upgraded.Minute/1440)+1;
                     // Constructors initialized empty memory/references and inactive B; infer nothing.
-                    Validate(upgraded, MenuPredecessorSchema);
+                    Validate(upgraded, 19);
                     MigrateMenu23(upgraded);
                     ValidateForActivation(upgraded);
                     return new SaveReadResult(SaveReadStatus.Loaded, upgraded, "", schema);
@@ -348,6 +348,8 @@ namespace PersistentCity.Persistence
                 var property = properties.GetProperty(name, StringComparison.Ordinal);
                 if (property == null) Fail("Unknown field: " + name);
                 Require(reader.Read(), "Missing field value.");
+                if(schema==23 && type==typeof(FoodProductSales) && name=="ProductId")
+                    Require(reader.TokenType==JsonToken.String && FoodMenuPolicy.Code((string)reader.Value!)==0,"Reviewed product history requires a compact cell.");
                 if(schema==23 && type==typeof(FoodScope) && name=="AdditionalProductIds") CheckMenuIds23(reader,ref records);
                 else CheckShape(reader, property.PropertyType!, resolver, ref records, text, schema, fieldNames);
             }

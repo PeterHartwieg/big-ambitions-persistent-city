@@ -37,6 +37,59 @@ static class Program
         public IReadOnlyList<FoodBusiness> Read(double minute)=>Shops;
         public FoodSale Buy(ResidentMeal meal,double minute)=>throw new Exception("No native checkout in envelope fixture.");
     }
+    sealed class QueueMarket : IFoodMarket
+    {
+        public double EarliestMinute=>0;
+        public readonly Dictionary<string,int> Stock;
+        public int Bags;
+        public readonly List<(string Intent,double At,string Product)> Orders=new();
+        public QueueMarket(int width) {Stock=Products.Take(width).ToDictionary(p=>p,_=>1);Bags=width;}
+        public IReadOnlyList<FoodBusiness> Read(double minute)=>new[]{new FoodBusiness{Id="b0",PlaceId="s0",MealsPerHour=60,
+            Hours=Enumerable.Range(0,7).Select(d=>new OpeningWindow{Day=d,FromMinute=0,ToMinute=1440}).ToList(),
+            Offers=Stock.Select(p=>new FoodOffer{ProductId=p.Key,Price=Money.FromCents(100),Units=Math.Min(p.Value,Bags)}).ToList()}};
+        public FoodSale Buy(ResidentMeal meal,double minute)
+        {
+            if(Bags==0 || Stock[meal.ProductId]==0) return new FoodSale(false,"Shared shortage");
+            Check(!Orders.Any(o=>o.Intent==meal.IntentId),"one payment per intention");
+            Stock[meal.ProductId]--;Bags--;Orders.Add((meal.IntentId,minute,meal.ProductId));return new FoodSale(true,"Offline model confirmed");
+        }
+    }
+    static object SharedQueue(int width)
+    {
+        var seed=957;
+        CityState Create()
+        {
+            var state=Population.Create(Enumerable.Range(0,width).Select(i=>new CitizenIdentity{Id="p"+i,Name="Person",Age=30,Persona=Persona.Foodie}),
+                new[]{new Place{Id="home",Name="Home",Kind=PlaceKind.Home,Capacity=width},new Place{Id="s0",Name="Shop",Kind=PlaceKind.Shop,Position=new Position(1,0,0)}},"e4-shared", "test",seed,1440);
+            state.Food=new FoodCommerceState{Shops={new FoodScope{PlaceId="s0",BusinessId="b0",ProductId=Products[0],AdditionalProductIds=Products.Skip(1).Take(width-1).ToList()}}};
+            foreach(var citizen in state.Citizens) citizen.NextEventMinute=citizen.ActivityUntilMinute=2870;
+            return state;
+        }
+        string Run(bool reload,out QueueMarket market)
+        {
+            var state=Create();market=new QueueMarket(width);var routes=new Routes();var city=new CitySimulator(state,routes);
+            var settings=new FoodChoiceSettings{FoodMenuMaximumOffersPerShop=width};city.AttachFoodMarket(market,settings);
+            state.Food!.ChoiceStartsDay=1;state.Food.AwarenessStartsDay=2;
+            var first=state.Food.Residents[0];double at=first.DesiredAt;
+            foreach(var meal in state.Food.Residents) {meal.DesiredAt=at;meal.DueAt=at;meal.ExpiresAt=first.ExpiresAt;}
+            city=new CitySimulator(state,routes);city.AttachFoodMarket(market,settings);
+            bool restored=false;
+            while(!city.AdvanceTo(at+60,1).CaughtUp)
+            {
+                if(reload && !restored && city.State.Food!.Residents.Any(m=>m.Status==MealStatus.Travelling))
+                {
+                    var read=SaveCodec.Read(SaveCodec.Write(city.State));Check(read.Status==SaveReadStatus.Loaded,"shared reservation reload: "+read.Error);
+                    city=new CitySimulator(read.State!,routes);city.AttachFoodMarket(market,settings);restored=true;
+                }
+            }
+            Check(market.Orders.Count==width && market.Bags==0 && market.Stock.Values.All(n=>n==0),"independent product reservations consume one shared pool exactly");
+            Check(market.Orders.Select(o=>o.At).Distinct().Count()==width,"one sequential service clock across products");
+            return SaveCodec.Write(city.State);
+        }
+        string normal=Run(false,out var a),restored=Run(true,out var b);
+        Check(normal==restored && a.Orders.SequenceEqual(b.Orders),"shared queue/reservations are byte identical across interrupted reload");
+        return new{width,purchases=b.Orders.Count,bags=b.Bags,uniqueServiceTimes=b.Orders.Select(o=>o.At).Distinct().Count()};
+    }
     static FoodShopDay Row(int day,int shop,string generation,int width)
     {
         var row=new FoodShopDay{Day=day,PlaceId="s"+shop,BusinessId=generation,Purchases=width,Revenue=Money.FromCents(width),
@@ -61,6 +114,7 @@ static class Program
         var traits=ResidentTraits.Generate(957,"person");var settings=new FoodChoiceSettings{FoodMenuMaximumOffersPerShop=width};var draw=new FoodDrawContext(957,"person",14,MealKind.Lunch,"test",1);
         var result=FoodChoicePolicy.Select(offers,traits,Money.FromCents(1000),draw,settings,false);
         Check(result.Index>=0 && offers.Length==8*width,"one product from bounded evaluations");
+        if(width==8) Check(Throws(()=>FoodChoicePolicyBefore.Select(offers,traits,Money.FromCents(1000),draw,settings,false)),"baseline refuses the eight-offer envelope");
         return new {width,evaluations=offers.Length,routeSlots=8*2,measurement=Bench(1001,()=>FoodChoicePolicy.Select(offers,traits,Money.FromCents(1000),draw,settings,false))};
     }
     static object LiveDefault()
@@ -87,7 +141,11 @@ static class Program
             Offers=scope.Products().Select(p=>new FoodOffer{ProductId=p,Price=Money.FromCents(100),Units=100}).ToList()}).ToArray()};
         var routes=new Routes();var city=new CitySimulator(state,routes);city.AttachFoodMarket(market,new FoodChoiceSettings{FoodMenuMaximumOffersPerShop=width});
         var meal=state.Food.Residents.Single();
-        while(meal.Decision==null) city.AdvanceTo(meal.DesiredAt,1);
+        while(meal.Decision==null)
+        {
+            var step=city.AdvanceTo(meal.DesiredAt,1);
+            Check(!step.CaughtUp || meal.Decision!=null,"fixture reached desired minute without capturing a decision");
+        }
         Check(meal.Decision.Shops.Count==8 && meal.Decision.Shops.All(s=>s.Offers.Count==width),"complete bounded A3 capture");
         int boundaries=0;
         while(meal.Decision!=null)
@@ -109,6 +167,7 @@ static class Program
         var reg=new BuildingRegistration();reg.Counters.Add(new PointOfSale{instance=Stock("bag",1)});
         foreach(string product in Products) reg.Producers[product]=new(){Stock(product,20)};
         var eight=FoodSupplyReader.ReadMenu(reg,Products);
+        Check(Throws(()=>FoodSupplyReaderBefore.ReadMenu(reg,Products)),"baseline refuses eight supply offers before setup");
         Check(eight.Count==8 && eight.Values.All(v=>v.Units==1 && v.BagUnits==1 && v.MealsPerHour==15),"eight offers use ONE bag/counter pool");
         reg.Counters[0].instance.cargoInstances![0].amount=0;
         Check(FoodSupplyReader.ReadMenu(reg,Products).Values.All(v=>v.Units==0 && v.MealsPerHour==0),"shared bag shortage blocks all products");
@@ -141,12 +200,12 @@ static class Program
         state.Food.History[0].ProductSales.RemoveAt(width);
         state.Food.History.RemoveAt(14336); // churn is tested separately; timing uses the exact named allocation
         return new {width,rows=14336,cells=14336*width,characters=wire.Length,utf8=Encoding.UTF8.GetByteCount(wire),counts,
-            update=Bench(101,()=>{foreach(var row in state.Food.History){row.Purchases++;row.PurchaseHours[0]++;row.PurchaseMeals[0]++;row.Revenue+=Money.FromCents(1);var p=row.ProductSales[0];p.Purchases++;p.PurchaseMeals[0]++;p.Revenue+=Money.FromCents(1);}}),
-            serialize=Bench(21,()=>SaveCodec.Write(state))};
+            update=Bench(101,()=>{foreach(var row in state.Food.History){row.Purchases++;row.PurchaseHours[0]++;row.PurchaseMeals[0]++;row.BuyerDistricts[0].Purchases++;row.Revenue+=Money.FromCents(1);var p=row.ProductSales[0];p.Purchases++;p.PurchaseMeals[0]++;p.Revenue+=Money.FromCents(1);}}),
+            serialize=Bench(21,()=>SaveCodec.Write(state)),timedCharacters=SaveCodec.Write(state).Length};
     }
     static void Main()
     {
-        var output=new {baseCommit="51ce709",policy=FoodMenuPolicy.Wire,liveDefault=LiveDefault(),captured=new[]{Captured(4),Captured(8)},selection=new[]{Selection(4),Selection(8)},supply=Supply(),history=new[]{History(4),History(8)}};
+        var output=new {baseCommit="51ce709",policy=FoodMenuPolicy.Wire,liveDefault=LiveDefault(),captured=new[]{Captured(4),Captured(8)},sharedQueue=new[]{SharedQueue(4),SharedQueue(8)},selection=new[]{Selection(4),Selection(8)},supply=Supply(),history=new[]{History(4),History(8)}};
         Console.WriteLine(JsonConvert.SerializeObject(new{checks,results=output},Formatting.Indented));
     }
 }

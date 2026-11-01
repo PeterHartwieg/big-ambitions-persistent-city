@@ -47,7 +47,9 @@ namespace PersistentCity.Persistence
             {
                 if (reader.TokenType == JsonToken.StartObject)
                 {
-                    var value = new FoodProductSales(); serializer.Populate(reader, value); return value;
+                    var value = new FoodProductSales(); serializer.Populate(reader, value);
+                    Require(FoodMenuPolicy.Code(value.ProductId)==0,"Reviewed product history requires a compact cell.");
+                    return value;
                 }
                 long ReadNumber()
                 {
@@ -55,9 +57,10 @@ namespace PersistentCity.Persistence
                     return Convert.ToInt64(reader.Value,CultureInfo.InvariantCulture);
                 }
                 int code=checked((int)ReadNumber());long purchases=ReadNumber(),revenue=ReadNumber();
-                var meals=new[]{ReadNumber(),ReadNumber(),ReadNumber(),ReadNumber()};
+                var result=new FoodProductSales { ProductId=FoodMenuPolicy.Product(code)!,Purchases=purchases,Revenue=Money.FromUnits(revenue) };
+                for(int meal=0;meal<4;meal++) result.PurchaseMeals[meal]=ReadNumber();
                 Require(reader.Read() && reader.TokenType == JsonToken.EndArray, "Invalid product cell arity.");
-                return new FoodProductSales { ProductId = FoodMenuPolicy.Product(code)!, Purchases = purchases, Revenue = Money.FromUnits(revenue), PurchaseMeals = meals };
+                return result;
             }
         }
         private static void WriteLegacyProduct(JsonWriter writer, FoodProductSales value, JsonSerializer serializer)

@@ -161,5 +161,8 @@ public sealed partial class FoodCommerceTests
         Assert.Throws<SaveValidationException>(()=>SaveCodec.RequireExecutableCapabilities(missing));
         root=JObject.Parse(original);root["Food"]!["Shops"]![0]!["AdditionalProductIds"]=new JArray(Enumerable.Range(0,8).Select(i=>"p"+i));
         Assert.Contains("additional menu",SaveCodec.Read(root.ToString(Formatting.None)).Error);
+        root=JObject.Parse(original);root["Food"]!["History"]![0]!["ProductSales"]![0]=new JObject{
+            ["ProductId"]=FoodProducts.Croissant,["PurchaseMeals"]=new JArray(1,0,0,0),["Purchases"]=1,["Revenue"]=0};
+        B0_Preserve(root.ToString(Formatting.None),city.State);
     }
 }

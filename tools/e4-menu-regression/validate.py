@@ -3,10 +3,11 @@ from pathlib import Path
 import json
 import os
 import subprocess
+import sys
 import time
 
 root = Path(__file__).resolve().parents[2]
-out = root / "build/e4-menu/validation"
+out = root / ("build/e4-menu/final-validation" if "--final" in sys.argv else "build/e4-menu/validation")
 out.mkdir(parents=True, exist_ok=True)
 dotnet = str(Path(os.environ["LOCALAPPDATA"]) / "Microsoft/dotnet/dotnet.exe")
 guard = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
@@ -29,6 +30,9 @@ commands += [[dotnet,"run","--project","tools/simulate/Simulate.csproj","--","28
              [dotnet,"run","--project","tools/food-routines/FoodRoutines.csproj","--configuration","Release","--","build/harness-food-routines-demo","957"],
              [dotnet,"run","--project","tools/food-demand/FoodDemand.csproj","--","build/harness-food-demand-demo"],
              [dotnet,"run","--project","tools/e4-menu-regression/E4MenuRegression.csproj","--configuration","Release"]]
+if "--final" in sys.argv:
+    save_contract=next(command for command in commands if any("/SaveContractRegression.csproj" in arg for arg in command))
+    commands=[*commands[:3],save_contract,commands[-1],["python","tools/e4-menu-regression/compare-default.py"]]
 results=[]
 for index, command in enumerate(commands):
     print(f"[{index+1}/{len(commands)}] {' '.join(command)}",flush=True)

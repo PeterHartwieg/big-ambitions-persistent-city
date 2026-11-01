@@ -10,13 +10,14 @@ namespace PersistentCity.Core
     public static partial class FoodProducts
     {
         static partial void AddTestFits(Dictionary<string,int[]> fits)
-        { for(int code=7;code<=14;code++) fits.Add("test:e4:"+code,new[]{0,0,0}); }
+        { for(int code=7;code<=14;code++) fits.Add(FoodMenuPolicy.Product(code)!,new[]{0,0,0}); }
     }
     public static partial class FoodMenuPolicy
     {
+        private static readonly string[] TestIds={"test:e4:7","test:e4:8","test:e4:9","test:e4:10","test:e4:11","test:e4:12","test:e4:13","test:e4:14"};
         static partial void TestCode(string product,ref int code)
-        { for(int i=7;i<=14;i++) if(product=="test:e4:"+i) {code=i;return;} }
+        { for(int i=0;i<TestIds.Length;i++) if(product==TestIds[i]) {code=i+7;return;} }
         static partial void TestProduct(int code,ref string? product)
-        { if(code>=7 && code<=14) product="test:e4:"+code; }
+        { if(code>=7 && code<=14) product=TestIds[code-7]; }
     }
 }
