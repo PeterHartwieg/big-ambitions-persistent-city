@@ -43,6 +43,15 @@ for directory in sorted((root / 'tools').glob('*-regression')):
     if name not in known and len(projects_here) == 1:
         steps.append((name, [dotnet, 'run', '--project', str(projects_here[0].relative_to(root)), '--configuration', 'Release']))
 steps.append(('pickup-continuity', [dotnet, 'run', '--project', 'tools/persistent-continuity/regression/PickupRegression.csproj', '--configuration', 'Release']))
+for name, project, arguments in [
+    ('choice-rush', 'food-choice-regression/FoodChoiceRegression', ['--rush']),
+    ('choice-integrated', 'food-choice-regression/FoodChoiceRegression', ['--integrated']),
+    ('choice-rush-integrated', 'food-choice-regression/FoodChoiceRegression', ['--rush', '--integrated']),
+    ('choice-rush-integrated-5000', 'food-choice-regression/FoodChoiceRegression', ['--rush-5000', '--integrated']),
+    ('save-bench', 'save-contract-regression/SaveContractRegression', ['--bench', '--decisions']),
+]:
+    steps.append((name, [dotnet, 'run', '--project', 'tools/' + project + '.csproj', '--configuration', 'Release', '--'] + arguments))
+steps.append(('c4-save-comparison', [sys.executable, 'tools/market-research-regression/compare_save_baseline.py', '--baseline', 'HEAD']))
 selected = set(sys.argv[1:])
 results = []
 for name, command in steps:

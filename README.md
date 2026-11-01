@@ -4,6 +4,8 @@ Validation and dated development notices are in the [checks index](CHECKS.md); e
 
 D2 adds bounded read-only rival food choices, timed outings and exact own-ledger external spending with schema 21. Offline evidence and the pending combined 6 Nov checks are in [D2 checks](docs/checks/d2-rival-outflow.md).
 
+A5 integrates Step A's offline acceptance on the schema-20 development line (historical measurements precede E1); [closure, measurements and the 6 Nov in-game checklist](docs/checks/a5-integrated-acceptance.md) keep offline results separate from pending native interaction and final-head proof.
+
 F1 shop view stopped at the drawing decision: [clean-room NO-GO and smaller geometry probe](docs/plans/f1-shop-view-decision.md). F0 drawing remains a no-op; runtime and save behavior are unchanged.
 
 An independent Big Ambitions mod that requires Real Life Overhaul. Working name; no public release yet.

@@ -7,6 +7,16 @@ integration ancestry survives; PR #58 then squash-merges into
 Merge parents: D2 `ef2d72e` and integration `5877453`; merge base `51ce709`.
 Both sides' diffs against that base were inspected for the conflicted files.
 
+During validation the integration head advanced to A5 `0ffb819`. A second real
+merge takes it into the E1/F1 merge `e263af6`, with merge base `5877453`.
+README conflicts retain both D2/A5 notices and current schema 21; the roadmap
+perf-log conflict retains both D2 and A5 entries. Every A5 check/document/tool,
+its incoming `ResidentInsight` changes and formatter optimization are retained.
+The sole A5 test integration fix updates its current migration result assertion
+from 20 to 21, preserving all source/money/identity/read-only checks. The full
+batch is rerun on this latest tree, including A5's integrated/rush/save-bench
+modes and the nested pickup regression.
+
 D2 now builds on E1 schema 20. Its isolated `RivalWire21.Migrate` uses the frozen
 E1 reader (`PopulationSchema20*`), validates the source, preserves all captured
 weather, and adds the schema-21 rival watermark/account defaults. Older supported
@@ -17,7 +27,7 @@ Runtime/Core scope: E1's incoming runtime capture/settings/physical queue code i
 retained unchanged. The integration changes D2/E1 Core food scoring only to pass
 both independent weights: captured rain travel weighting and D2's rival weight
 apply in the bounded shortlist and final offer selection. `CurrentSchema` stays
-21 alongside E1's weather fields. No journey, ledger, settlement, rival catalogue,
+21 alongside E1's weather fields. A5's incoming `ResidentInsight` Core changes are retained without modification. No journey, ledger, settlement, rival catalogue,
 native checkout or other slice policy is redesigned. Persistence changes are the
 predecessor hook, frozen schema-20 reader (its strict tuple-property guard excludes only D2 additions), schema-19 fixture field exclusions,
 current weather wire support and early schema-20 authority acceptance.

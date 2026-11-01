@@ -144,5 +144,124 @@
     "Exclude D2-added DTO properties from frozen object contracts",
     "Exclude exactly D2-added DTO properties from the frozen tuple property guard; retain equality and arity checks",
     "Bind the frozen tuple-number delegate to PopulationSchema20, not the current codec"
-  ]
+  ],
+  "latestIntegration": "0ffb819353c44a802224b98af673e1085040fc8a",
+  "secondMerge": {
+    "firstParent": "e263af6",
+    "secondParent": "0ffb819353c44a802224b98af673e1085040fc8a",
+    "mergeBase": "5877453",
+    "conflicts": [
+      "README.md",
+      "docs/roadmap.md"
+    ],
+    "integrationTestPin": "A5 migration result 20 -> 21"
+  },
+  "latestIncomingChecksIndexLines": [
+    {
+      "line": "- F1 \u2014 Shop-view drawing NO-GO, offline validation and numbered 6 Nov handoff: [checks](docs/checks/f1-shop-view.md).",
+      "preserved": true
+    },
+    {
+      "line": "- F0 \u2014 Interior view experiment, reviews and native checklist: [checks](docs/checks/f0-interior-view.md).",
+      "preserved": true
+    },
+    {
+      "line": "- D1 \u2014 Read-only rival food catalogue and native checklist: [checks](docs/checks/d1-rival-catalogue.md).",
+      "preserved": true
+    },
+    {
+      "line": "- C1 \u2014 Native campaign reader and native checklist: [checks](docs/checks/c1-campaign-reader.md).",
+      "preserved": true
+    },
+    {
+      "line": "- E2a \u2014 Street-life proof, coverage and native checklist: [checks](docs/checks/e2a-street-life.md).",
+      "preserved": true
+    },
+    {
+      "line": "- A1 \u2014 Resident inspector and base sync evidence: [checks](docs/checks/a1-resident-inspector.md).",
+      "preserved": true
+    },
+    {
+      "line": "- A2 \u2014 Schema 17, lifestyle traits and base sync evidence: [checks](docs/checks/a2-schema17-traits.md).",
+      "preserved": true
+    },
+    {
+      "line": "- A3 \u2014 Weighted food choices, review fixes and native checklist: [checks](docs/checks/a3-weighted-choice.md).",
+      "preserved": true
+    },
+    {
+      "line": "- B0 \u2014 Schema 18, capacity, review fixes and native checklist: [checks](docs/checks/b0-schema18.md).",
+      "preserved": true
+    },
+    {
+      "line": "- B0b \u2014 Held tuning, base syncs and native checklist: [checks](docs/checks/b0b-held-tuning.md).",
+      "preserved": true
+    },
+    {
+      "line": "- B1 \u2014 Shop memory, loyalty v2, review fixes and native checklist: [checks](docs/checks/b1-memory-loyalty.md).",
+      "preserved": true
+    },
+    {
+      "line": "- B2 \u2014 Observed own-shop regulars, resident memory words and native checklist: [checks](docs/checks/b2-regulars-inspector.md).",
+      "preserved": true
+    },
+    {
+      "line": "- E3 \u2014 Donut feasibility, base syncs and native checklist: [checks](docs/checks/e3-donut.md).",
+      "preserved": true
+    },
+    {
+      "line": "- C3 \u2014 Agency/payment discovery, base syncs and native checklist: [checks](docs/checks/c3-agency-payment.md).",
+      "preserved": true
+    },
+    {
+      "line": "- PR #1\u2013#3 history \u2014 October accounting, optional stops, reviews and rig evidence: [checks](docs/checks/history-2026-10-pr1-pr3.md).",
+      "preserved": true
+    },
+    {
+      "line": "- Earlier development history \u2014 October foundation, food, traffic and performance evidence: [checks](docs/checks/history-2026-10-development.md).",
+      "preserved": true
+    },
+    {
+      "line": "- pc-docs-checks-split \u2014 Documentation structure and preservation audit: [checks](docs/checks/pc-docs-checks-split.md).",
+      "preserved": true
+    },
+    {
+      "line": "- E2c \u2014 Third-party interior guard, base syncs and native checklist: [checks](docs/checks/e2c-interior-guard.md).",
+      "preserved": true
+    },
+    {
+      "line": "- C2a \u2014 Core bounded awareness, reviews, schema 19 and native checklist: [checks](docs/checks/c2a-core-awareness.md).",
+      "preserved": true
+    },
+    {
+      "line": "- E2b \u2014 [Bounded street-life, reviews, base syncs and native checklist](docs/checks/e2b-street-life.md).",
+      "preserved": true
+    },
+    {
+      "line": "- E3 cupcake \u2014 Shared direct-stock reader, feasibility and native checklist: [checks](docs/checks/e3-cupcake.md).",
+      "preserved": true
+    },
+    {
+      "line": "- E3 salad \u2014 Conditional direct-stock probe, feasibility stop, base sync and native checklist: [checks](docs/checks/e3-salad.md).",
+      "preserved": true
+    },
+    {
+      "line": "- C4 \u2014 Bounded inactive market research, access contract, base sync and native checklist: [checks](docs/checks/c4-market-research.md).",
+      "preserved": true
+    },
+    {
+      "line": "- A5 \u2014 Integrated acceptance, pre-E1 measurements, schema-20 base sync and 12 numbered rig checks: [checks](docs/checks/a5-integrated-acceptance.md).",
+      "preserved": true
+    },
+    {
+      "line": "- E1 \u2014 New-outing and food weather, schema 20, base sync and native checklist: [checks](docs/checks/e1-rain.md).",
+      "preserved": true
+    }
+  ],
+  "a5CoreUnmodified": true,
+  "a5SliceDocumentsUnmodified": {
+    "docs/checks/a5-integrated-acceptance.md": true,
+    "docs/perf/a5-integrated-acceptance.md": true,
+    "docs/plans/step-a-inspector-traits-choice.md": true
+  }
 }

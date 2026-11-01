@@ -305,3 +305,14 @@ mod-work p95 <5 ms / spikes >=30 ms evidence for the later batched locked-head
 rig; pointer/input-only checks wait for Peter's 6 Nov playtest. Whole-frame cost
 remains separate. No new optimization was taken and all four parked hotspots
 remain parked.
+
+### A5 latest-head continuation
+
+Integration advanced to A5 `0ffb819` while the first offline batch was running.
+The completed first merge is `e263af6` (parents `ef2d72e` / `5877453`); a second
+real merge uses base `5877453` to bring in A5. Both sides' diffs were inspected
+for README and roadmap conflicts: keep both notices, current schema 21 and both
+perf index entries. All A5 documents/checks/tests/tools and its incoming Core
+inspector changes are retained. Only A5's migration-result assertion needs 20
+changed to 21. Full final validation is rerun after this sync; first-batch
+measurements above remain identified by their E1/F1 merge parents.
