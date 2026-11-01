@@ -23,7 +23,7 @@ public sealed class D2CompositionTests
             if(damage=="campaign" && schema>=22 || damage=="menu" && schema==23) continue;
             var root=JObject.Parse(source);
             var food=(JObject)root["Food"]!;
-            if(damage=="tuple") {var row=(JArray)food["Residents"]![0]!;row[0]=1;row.RemoveAt(36);row[3]=null;food.Remove("RivalStartsDay");}
+            if(damage=="tuple") {var row=(JArray)food["Residents"]![0]!;row[0]=1;row.RemoveAt(36);row[3]=JValue.CreateNull();food.Remove("RivalStartsDay");}
             if(damage=="account") food.Remove("RivalStartsDay");
             if(damage=="foreign") root["ForeignPopulation"]=true;
             if(damage=="campaign") food["Campaigns"]=new JArray();

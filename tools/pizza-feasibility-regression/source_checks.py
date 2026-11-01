@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 prior = runpy.run_path(str(ROOT / "tools/donut-feasibility-regression/source_checks.py"), run_name="__main__")
 # Combined pizza/icecream reader; the icecream guard changes only its full-reader pin and facade allowlist.
 PINS = {
-    'tools/icecream-feasibility-regression/source_checks.py': '78334d24112652e986130716c1961d4a8d8782e2c046cdfa0c06063e75b81acf',
+    'tools/icecream-feasibility-regression/source_checks.py': 'd97ba698ae95756a9171f79ce7c910d5104766f3dcd60db479fbaa3d02f5688f',
     'Runtime/DirectStockShowcaseReader.cs': '239650040cb06dde4f0d8030e659c906a5fe09c8b37ea7be9dc763162ddb880d',
     'Runtime/PizzaFeasibilityReader.cs': '405c404b3bf5db5a53aaf3499b2cca0ead84b9c310cdbcfcd66dd660aa712031',
     'tools/pizza-feasibility-regression/PizzaFeasibilityRegression.csproj': 'aae90ea4187cb9def744ce5a3c8899abfa78472bab2d665b10e1eaa7bc3a718d',
@@ -16,8 +16,6 @@ PINS = {
 }
 for path, expected in PINS.items():
     source = (ROOT / path).read_bytes().replace(b"\r\n", b"\n")
-    if path == "tools/icecream-feasibility-regression/source_checks.py":
-        source = source.replace(b'    source = (ROOT / path).read_text(encoding="utf-8")\n    if path == "tools/icecream-feasibility-regression/measure_baseline.py":\n        source = source.replace(\'shared = shared.replace(\\\'        internal static readonly DirectStockCandidate Pizza = new DirectStockCandidate("ba:itemname_pizza");\\\\n\\\', "")\\n\', "")\n    assert hashlib.sha256(source.encode()).hexdigest() == expected, path\n', b'    assert hashlib.sha256((ROOT / path).read_text(encoding="utf-8").encode()).hexdigest() == expected, path\n')
     assert hashlib.sha256(source).hexdigest() == expected, path
 
 print("PASS pizza source pins and no gameplay caller/poll/writer")

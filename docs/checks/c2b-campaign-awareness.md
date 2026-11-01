@@ -1,5 +1,7 @@
 # C2b: observed campaigns and soft distance preference
 
+Measurements and run counts below belong to the named historical C2b heads (latest `8378efa`); current composed acceptance is in [D2 checks](d2-rival-outflow.md). Schema-chain prose reflects the current supported composition.
+
 ## Round-1 review fixes: latest E4 base - 1 November 2026
 
 Addresses **Sol-r1-1 / Opus-r1-1 / Opus-r1-2**. E4 landed at `2bd9006`
