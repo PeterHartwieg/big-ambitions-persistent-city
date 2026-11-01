@@ -4,6 +4,41 @@ Sync branch `codex/pc-d4-sync-base` merges D4 head `1be75e5` with
 `origin/codex/persistent-city` (`fb958ae`, D3a). The original D4 implementation
 and its historical measurements used source `eee4dff` on `c85dc19`.
 
+
+Schema plan: retain writer **24**, owned by D3a. The save-contract rules in
+`docs/plans/steps-b-e.md` ("One owner per additive schema") allocate numbers at
+shape freeze, forbid different formats under one number, and preserve published
+version-specific readers. D4 adds no shape and was never merged on its old base;
+its existing bounded scalar can therefore widen the current schema-24 contract
+without schema 25. Genuine 21/22/23 still reject nonzero rival contributions.
+The full 18 -> 19 -> 20 -> 21 -> 22 -> 23 -> 24 migration chain, frozen 13-17
+readers, unsupported/foreign refusal and future 25+ refusal remain intact.
+
+Conflicts reviewed against merge base `c85dc19` on both sides:
+
+| File | Resolution |
+| --- | --- |
+| `CHECKS.md` | Keep D3a, D4 and every existing index line; D4 stays a single link to its slice file. |
+| `README.md` | Keep both D3a's free outflow line and D4's memory notice; use current writer 24 and merge rule v2. |
+| `docs/roadmap.md` | Keep D2/D3a/D4 status and both D3a/D4 performance links, with all existing entries. |
+| `Core/RivalFood.cs` | Keep D4 closure/served memory calls and D3a `TryPay(meal, state.Outflow, now)` together. One exact payment records its debit day before served memory; failure paths retain D4 neutrality. |
+
+Clean automatic merges were also inspected: `SaveCodec.cs` keeps D3a's isolated
+readers/converters/migrations plus D4's schema-aware validator call;
+`RivalWire21.cs` needed a manual integration adjustment to move the nonzero gate
+from 23 to 24. `RivalOutflowTests.cs` retains both sides' assertions and the
+out-of-range scalar case; the plan table and regression tools retain both slices.
+D4 tests now cover neutral-only schema 23, atomic refusal/preservation, and
+combined memory/history under interrupted versus uninterrupted event budgets.
+
+Runtime/Core scope: only `Core/RivalFood.cs` combines D3a and D4 behavior in their
+shared settlement call; no other new runtime/Core behavior is introduced by
+conflict resolution. D3a's other Core/Runtime changes are retained as approved.
+Persistence only re-anchors D4's existing semantic widening on 24. The D4 runner
+also guards Python wrappers that invoke dotnet and disables compiler-server reuse.
+No performance algorithm changed during sync; historical measurements below are
+kept as historical, with merged measurements recorded in the owning slice files.
+
 Committed rival outings now use B1's existing watermark, record a modeled purchase
 or known closure once, and apply the same trait-weighted return contribution as
 own-shop visits. Captured nonzero rival contributions survive held-decision reload.

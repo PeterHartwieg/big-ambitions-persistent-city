@@ -36,14 +36,14 @@ commands += [[dotnet, "run", "--project", "tools/simulate/Simulate.csproj", "--d
              [dotnet, "run", "--project", "tools/food-demand/FoodDemand.csproj", "--disable-build-servers", "--", "build/harness-food-demand-demo"]]
 commands += [[sys.executable, "tools/" + p + "/source_checks.py"] for p in ("donut-feasibility-regression", "salad-feasibility-regression")]
 results = json.loads((out / "results.json").read_text())[:args.start_at - 1] if args.start_at > 1 else []
-env = dict(os.environ, DOTNET_CLI_USE_MSBUILD_SERVER="0", MSBUILDDISABLENODEREUSE="1")
+env = dict(os.environ, DOTNET_CLI_USE_MSBUILD_SERVER="0", MSBUILDDISABLENODEREUSE="1", UseSharedCompilation="false")
 for i, command in enumerate(commands):
     if i + 1 < args.start_at:
         continue
     label = " ".join(command[1:])
     print(f"[{i+1}/{len(commands)}] {label}", flush=True)
-    if command[0] == dotnet:
-        subprocess.run(guard, cwd=root, env=env, check=True)
+    # Python adapters/source guards can invoke dotnet internally, too.
+    subprocess.run(guard, cwd=root, env=env, check=True)
     run = subprocess.run(command, cwd=root, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     log = out / f"{i+1:02}.txt"
     log.write_bytes(run.stdout)
