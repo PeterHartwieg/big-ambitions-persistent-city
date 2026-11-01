@@ -1,6 +1,6 @@
 # E1 base sync: conflict resolution and integration
 
-Merge approved E1 `72f1cbd` with development `1f8f4b4` (including final C2a `692b8b5`, B1/B2, C3/C4, E2b/E2c and shared donut/cupcake feasibility), then refresh to `51ce709` including read-only E3 salad. This is a real two-parent merge on `codex/pc-e1-sync-base`; no rebase, squash or cherry-pick. The actual common ancestor is `7a6153c`; both conflicted-file diffs against it were inspected, with `9b13698..72f1cbd` isolating the approved E1 delta from shared squash ancestry.
+Merge approved E1 `72f1cbd` with development `1f8f4b4` (including final C2a `692b8b5`, B1/B2, C3/C4, E2b/E2c and shared donut/cupcake feasibility), then refresh to `51ce709` including read-only E3 salad and `2f12ae9` including the docs-only F1 report. This is a real two-parent merge on `codex/pc-e1-sync-base`; no rebase, squash or cherry-pick. The actual common ancestor is `7a6153c`; both conflicted-file diffs against it were inspected, with `9b13698..72f1cbd` isolating the approved E1 delta from shared squash ancestry.
 
 ## Latest base refresh
 
@@ -11,6 +11,24 @@ and both index lines. It merged cleanly; there are no new conflicted files.
 The landed shared reader and salad tools match the base exactly, and that refresh
 changes no Core/Persistence source. Initial merge/repair evidence remains below;
 the latest full gate and preservation audit are recorded separately.
+
+**Latest validation:** **2,375 tests and 61/61 foreground commands pass** on
+`d146f90` / development `51ce709`, including every regression and all three salad
+source/differential/baseline checks. No failed attempt in the refreshed gate.
+Exact schema-19 projection/economy digests, C4 zero raw-byte delta, CF32/CF64 and
+three fresh weather samples all pass. [Latest checks](../checks/e1-rain.md#latest-base-refresh--1-november-2026-offline-only),
+[commands/hashes](2026-11-01-e1-sync-latest-results.json),
+[measurements/flags](2026-11-01-e1-sync-latest-measurements.json) and
+[preservation](2026-11-01-e1-sync-latest-preservation.json).
+The initial integration evidence below remains separately qualified.
+
+Final docs-only refresh **`11600fd`** merges development **`2f12ae9`** with
+no conflicts, retaining the F1 report, plan/status and index entries. All six
+source/config/test/tool trees are identical to `d146f90`, validated by the 61
+commands above; the final three salad checks finished after this refresh.
+The preservation audit records both merge parents, exact tree IDs, every current
+base index line, all 1,282 base files, every original E1 check and log hashes.
+No production or fixture change followed the successful gate.
 
 ## Runtime/Core scope
 

@@ -15,5 +15,14 @@ measured sweeps, maximum 3.6095 ms; 40 B/resident capture, 0 B/food capture,
 0 B/admission and 0 B/direct precheck. Frame cache remains one read per capture
 sweep/frame. [Raw measurements, aggregate >=30 ms flags and capacity](../reviews/2026-11-01-e1-sync-base-measurements.json).
 This is synthetic offline evidence; native combined mod-work and whole-frame
-results remain pending. No new performance-affecting production change or parked
-hotspot rewrite was made by the integration.
+results remain pending. No new optimization or parked-hotspot rewrite was made by the integration.
+
+## Latest base re-measure, 1 November 2026
+
+Refreshed through `51ce709`; no new performance-affecting integration change.
+Three fresh Release processes: 0 >=30 ms across 5,100
+weather/control sweeps, maximum 5.6037 ms including the old concatenation control.
+Implemented kernels: 3,900 sweeps, maximum 3.8871 ms, largest process/case p95
+3.6779 ms. Byte/record budgets and capture/read bounds
+remain unchanged. [Latest measurements and all aggregate/batch >=30 ms flags](../reviews/2026-11-01-e1-sync-latest-measurements.json).
+Native mod-work and whole-frame evidence remain pending under the combined rig rule.

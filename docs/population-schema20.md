@@ -1,6 +1,6 @@
 # Population schema 20 - E1 weather
 
-Allocated after C2a schema 19, integrated against merged C2a `692b8b5` and C4 base `1f8f4b4`, refreshed through development `51ce709` (read-only E3 salad). Only population weather fields change.
+Allocated after C2a schema 19, integrated against merged C2a `692b8b5` and C4 base `1f8f4b4`, refreshed through development `2f12ae9` (read-only E3 salad and docs-only F1). Only population weather fields change.
 The source 13-17 codec, schema-18 tuple/memory/tuning contracts and schema-19
 awareness contract retain their wire shapes and refusal rules. The merged schema-19 wire is identical to E1's `9b13698` source shape; B1's
 active revision-1 capability and bounded nonzero held memory contributions remain

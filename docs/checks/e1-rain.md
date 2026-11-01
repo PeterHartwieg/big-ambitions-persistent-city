@@ -1,5 +1,66 @@
 # E1: Weather capture, integration and native checklist
 
+## Final docs-only base refresh ? 1 November 2026
+
+Third two-parent merge **`11600fd`** includes latest development **`2f12ae9`**,
+F1's docs-only NO-GO report. It merged without conflicts. Every current base
+index line is retained, including F1, and E1 still has exactly one checks/perf
+index. Core, Persistence, Runtime, tests, tools and config have identical Git
+tree IDs to **`d146f90`**, the source validated by the **61/61-command gate**
+below; no additional code or fixture change needed another test run. The final
+three salad commands finished after this refresh. All command-log hashes were
+verified. [Final refresh and source-tree audit](../reviews/2026-11-01-e1-sync-latest-preservation.json).
+
+The matched native baseline for pending item 5 is now **`2f12ae9` without E1**;
+its production source equals the earlier `51ce709` baseline. Native evidence
+remains pending under the combined-head rig rule.
+
+## Latest base refresh — 1 November 2026 (offline only)
+
+Development advanced to **`51ce709`** (read-only E3 salad) during the initial gate.
+Second two-parent merge **`d146f90`** keeps that complete update with no conflicts
+or additional integration code changes. Core/Persistence are unchanged by this
+refresh; the shared reader, salad facade, cases and tools match the landed base.
+All 1,278 base files and every checks/perf index line are retained.
+[Latest preservation audit](../reviews/2026-11-01-e1-sync-latest-preservation.json).
+
+**Final refreshed gate: 2,375/2,375 tests and 61/61 foreground commands pass,
+with no failed attempts in this run.** This reruns the full original gate on the
+latest merged tree, plus the salad project, isolation guard and approved
+salad/donut/cupcake differential/baseline checks. Each command used the required
+one-dotnet guard; command wall times include shared-machine waits.
+[Full commands/hashes/outcomes](../reviews/2026-11-01-e1-sync-latest-results.json)
+and [structured measurements](../reviews/2026-11-01-e1-sync-latest-measurements.json).
+The initial 57-check gate and fixture-fix history below remain historical evidence.
+
+The exact schema-19 projection remains **119,083 bytes**, digest
+`D7FF8294F56C3B3D5AF736540274E68E9848319B34658859FC15E0D4CDB1F3A2`;
+schema 20 remains **120,184 bytes**. All economy/order/reload digests match the
+latest base: **849 orders, 797 purchases, 107,967,424,757,760 exact units**.
+C4 still adds zero raw schema-20 UTF-8 bytes: population **41,787 -> 41,787**,
+food **66,260 -> 66,260**. C2a still adds exactly **3,074 bytes** with weather
+counted separately. Strict 18/19 readers and W/consumer/record ledgers are intact.
+CF32/CF64 actual bytes, planned totals and record headroom match the initial table.
+
+Latest weather re-measure: **0 >=30 ms across
+5,100 measured sweeps**, maximum **5.6037 ms** including the old concatenation
+control. Implemented kernels alone cover 3,900 sweeps, maximum **3.8871 ms**,
+largest process/case p95 **3.6779 ms**.
+Offline whole-save/aggregate/batch metrics >=30 ms are explicitly flagged in the
+structured measurements; CF32 write/read **2204.0 / 8033.9 ms**,
+CF64 **4615.4 / 15171.3 ms**. These are not native
+mod-work or whole-frame measurements. No new performance-affecting production
+change or parked-hotspot rewrite is introduced by this sync.
+
+Pending native checklist item 5 now uses **`51ce709` without E1** as the matched
+baseline, superseding the earlier sync's `1f8f4b4` reference. The schema-19 source
+checkpoint in item 4 still applies. All original LOCKED-OK / NEEDS-INPUT items
+remain below; combined-head batched rig and Peter's input-only 6 Nov playtest
+remain pending. No game/rig/profile/bridge/Steam/Workshop activity or release
+clearance is claimed.
+
+Latest game-target DLL SHA-256: `51f2d49c8ff0b206571998dcae44c7ca567b8f73f7afbef2510dc71cc758520c`.
+
 ## Base sync — 1 November 2026 (offline only)
 
 Integrates approved E1 `72f1cbd` with development `1f8f4b4` (final C2a
