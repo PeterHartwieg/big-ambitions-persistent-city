@@ -534,7 +534,7 @@ public sealed partial class FoodCommerceTests
     public void S17_FutureSchemasAreRefusedAsFutureAndPreserved()
     {
         var (city, json) = S17_Full();
-        foreach (int schema in new[] { 21, 22, 1000 })
+        foreach (int schema in new[] { 24, 25, 1000 })
         {
             var wire = JObject.Parse(json); wire["Schema"] = schema; string payload = wire.ToString(Formatting.None);
             Assert.Equal(SaveReadStatus.Future, SaveCodec.Read(payload).Status);

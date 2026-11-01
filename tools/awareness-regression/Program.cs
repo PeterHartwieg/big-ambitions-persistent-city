@@ -85,11 +85,11 @@ static class Program
             baselineAdmissionMs=Stats(before),candidateAdmissionMs=Stats(after),baselineAllocatedBytes=baselineBytes.Average(),candidateAllocatedBytes=candidateBytes.Average(),maxUnion,maxShortlist,maxRouteSlots=2*maxShortlist,
             heldImageJsonBytes=System.Text.Encoding.UTF8.GetByteCount(JsonConvert.SerializeObject(held))};
     }
-    // Isolate C2a's added bytes against its frozen schema-18 source shape. E1's
-    // additive weather bytes are reported separately, never passed to the old reader.
+    // Isolate C2a's added bytes against its frozen schema-18 source shape. E1/E4's
+    // additive weather/menu bytes are reported separately, never passed to the old reader.
     static JObject WithoutWeather20(JObject root)
     {
-        root["Schema"]=19;root.Remove("WeatherStartsDay");
+        root["Schema"]=19;root.Remove("WeatherStartsDay");root.Remove("MenuPolicy");
         foreach(JObject citizen in root["Citizens"]!) citizen.Remove("W");
         foreach(JArray row in root["Food"]!["Residents"]!)
         {
@@ -123,7 +123,7 @@ static class Program
         foreach(var entry in image.Union) clone.Union.Add(new FoodAwarenessCandidate {BusinessId=entry.BusinessId,Eligible=entry.Eligible,Sources=entry.Sources});
         long managedGraphBytes=GC.GetAllocatedBytesForCurrentThread()-allocation;GC.KeepAlive(clone);
         // Equal held image exists once even at the 150k-consumer ceiling. No per-consumer delta.
-        return new {residents,consumers=state.Food.Residents.Count,baselineBytes,candidateBytes=bytes,addedBytes=bytes-baselineBytes,awarenessProjectionSchema=19,currentWireBytes=wireBytes,weatherBytes=wireBytes-bytes,managedGraphBytesSharedStrings=managedGraphBytes,heldImageBytes=System.Text.Encoding.UTF8.GetByteCount(JsonConvert.SerializeObject(image)),counts.Streaming,counts.Semantic};
+        return new {residents,consumers=state.Food.Residents.Count,baselineBytes,candidateBytes=bytes,addedBytes=bytes-baselineBytes,awarenessProjectionSchema=19,currentWireBytes=wireBytes,weatherAndMenuBytes=wireBytes-bytes,managedGraphBytesSharedStrings=managedGraphBytes,heldImageBytes=System.Text.Encoding.UTF8.GetByteCount(JsonConvert.SerializeObject(image)),counts.Streaming,counts.Semantic};
     }
     static object ReviewRebuildUnits(int count,bool dense)
     {

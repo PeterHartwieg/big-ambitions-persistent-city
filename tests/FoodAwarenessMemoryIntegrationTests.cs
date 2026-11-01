@@ -53,12 +53,12 @@ public sealed class FoodAwarenessMemoryIntegrationTests
     }
 
     [Theory]
-    [InlineData(18)] [InlineData(19)] [InlineData(20)]
+    [InlineData(18)] [InlineData(19)] [InlineData(20)] [InlineData(23)]
     public void PopulatedMemoryAndHeldContributionsMigrateWithoutRecapture(int sourceSchema)
     {
         var (control, mc, pc) = Ready();
         var (changed, mm, pm) = Ready();
-        if (sourceSchema == 20)
+        if (sourceSchema >= 20)
         {
             control.AttachWeather(new FrameWeatherSource(() => 1, () => true));
             changed.AttachWeather(new FrameWeatherSource(() => 1, () => true));
@@ -70,11 +70,12 @@ public sealed class FoodAwarenessMemoryIntegrationTests
         changed.AdvanceTo(at, 1);
         var held = Assert.Single(changed.State.Food.Residents, m => m.Decision != null).Decision!;
         Assert.NotNull(held.Awareness); Assert.NotEmpty(held.Shops);
-        Assert.Equal(sourceSchema == 20 ? WeatherSample.Rain : WeatherSample.Unknown, held.Weather);
-        Assert.Equal(sourceSchema == 20 ? 1.3 : 1, held.WeatherTravelMultiplier);
+        Assert.Equal(sourceSchema >= 20 ? WeatherSample.Rain : WeatherSample.Unknown, held.Weather);
+        Assert.Equal(sourceSchema >= 20 ? 1.3 : 1, held.WeatherTravelMultiplier);
         Assert.All(held.Shops, s => Assert.NotEqual(0, s.MemoryContribution));
         string memory = JsonConvert.SerializeObject(changed.State.Food.Residents.Select(m => m.Memory));
         var root = JObject.Parse(SaveCodec.Write(changed.State));
+        if (sourceSchema < 23) { root["Schema"] = sourceSchema; root.Remove("MenuPolicy"); }
         if (sourceSchema < 20) root = JObject.Parse(WeatherTests.As19(root.ToString(Formatting.None)));
         bool legacy18 = sourceSchema == 18;
         if (legacy18)
@@ -86,7 +87,7 @@ public sealed class FoodAwarenessMemoryIntegrationTests
         }
         string source = root.ToString(Formatting.None);
         var read = SaveCodec.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(sourceSchema, read.SourceSchema); Assert.Equal(20, read.State!.Schema);
+        Assert.Equal(sourceSchema, read.SourceSchema); Assert.Equal(23, read.State!.Schema);
         Assert.True(read.State.Capabilities.Active);
         Assert.Equal(sourceSchema < 20 ? 2 : 0, read.State.WeatherStartsDay);
         Assert.Equal(memory, JsonConvert.SerializeObject(read.State.Food!.Residents.Select(m => m.Memory)));
