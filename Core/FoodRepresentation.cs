@@ -185,7 +185,7 @@ namespace PersistentCity.Core
                 if (now < excursion.ReturnStartsAt) { meal.DueAt = excursion.ReturnStartsAt; return true; }
                 var origin = city.FindPlace(excursion.OriginId); var shop = city.FindPlace(excursion.DestinationId);
                 var preferences = new TravelPreferences { AllowTransit = false, OwnsCar = false,
-                    WalkingToleranceMetres = person.Preferences.WalkingToleranceMetres };
+                    WalkingToleranceMetres = ReturnPreferences(person,meal).WalkingToleranceMetres };
                 // A changed endpoint must not teleport an away consumer to a replacement place.
                 var back = Position.Distance(origin.Position, excursion.OriginPosition) > .01
                     || Position.Distance(shop.Position, excursion.DestinationPosition) > .01 ? null

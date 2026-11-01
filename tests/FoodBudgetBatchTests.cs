@@ -35,7 +35,7 @@ public sealed class FoodBudgetBatchTests
             Trace?.Invoke("read");
             return new[] { new FoodBusiness { Id = "b", PlaceId = "shop", Name = "Bakery", MealsPerHour = 15,
                 Hours = Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = 0, ToMinute = 1440 }).ToList(),
-                Offers = new() { new FoodOffer { ProductId = "pastry", Price = Money.FromCents(100), Units = Units } } } };
+                Offers = new() { new FoodOffer { ProductId = FoodProducts.Croissant, Price = Money.FromCents(100), Units = Units } } } };
         }
         public FoodSale Buy(ResidentMeal meal, double at)
         {
@@ -71,7 +71,7 @@ public sealed class FoodBudgetBatchTests
             c.NextEventMinute = c.ActivityUntilMinute = int.Parse(c.Identity.Id.Substring(1)) % 2 == 0 ? Midnight : 2870;
         }
         state.Food = new FoodCommerceState { RepresentationFactor = 1, MealRhythmVersion = MealRhythm.PolicyVersion,
-            Shops = new() { new FoodScope { PlaceId = "shop", BusinessId = "b", ProductId = "pastry" } } };
+            Shops = new() { new FoodScope { PlaceId = "shop", BusinessId = "b", ProductId = FoodProducts.Croissant } } };
         var run = new Run { Legacy = legacy };
         run.Market.ThrowForResident = "r5";
         run.City = new CitySimulator(state, run.Routes);

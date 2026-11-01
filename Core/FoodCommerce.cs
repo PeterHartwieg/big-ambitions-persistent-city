@@ -27,6 +27,10 @@ namespace PersistentCity.Core
         });
         public int RouteCalls { get; set; }
         public double ElapsedMilliseconds { get; set; }
+        public FoodDecisionState? Decision { get; set; }
+        /// <summary>Shortlist/hash/traits/sampling work only, excluding supply capture, feasibility and routes.
+        /// Null if this diagnostic did not observe the initial capture (for example after reload).</summary>
+        public double? ChoiceMilliseconds { get; set; }
     }
     public enum MealStatus { Pending, Travelling, Serving, Paid, Declined, Missed, Uncertain }
     public sealed class MealOuting
@@ -90,10 +94,12 @@ namespace PersistentCity.Core
         /// contexts this meal has used (at most FoodChoicePolicy.MaximumContextsPerMeal). Same-context polling reuses it.</summary>
         public string LastContextKey { get; set; } = "";
         public int ContextAttempts { get; set; }
+        public ConsumerMemory Memory { get; set; } = new ConsumerMemory();
         public string IntentId => MealRhythm.IntentId(ResidentId, Day, Kind);
     }
     public sealed class FoodCommerceState
     {
+        public List<BusinessReference> BusinessReferences { get; set; } = new List<BusinessReference>();
         public int RepresentationFactor { get; set; } = 1;
         public List<FoodRoutineStop> RoutineStops { get; set; } = new List<FoodRoutineStop>();
         public List<FoodShopDay> History { get; set; } = new List<FoodShopDay>();
@@ -102,14 +108,15 @@ namespace PersistentCity.Core
         public List<FoodScope> Shops { get; set; } = new List<FoodScope>();
         public List<ResidentMeal> Residents { get; set; } = new List<ResidentMeal>();
         public List<FoodDistrictBudgetMix> Districts { get; set; } = new List<FoodDistrictBudgetMix>();
-        /// <summary>Food choice policy header. A new food scope uses version 1 from day 0 (immediately); a city migrated
-        /// to schema 17 activates it on the next in-game day. No runtime setting changes either value.</summary>
+        /// <summary>Food choice policy header. New scopes and migrated cities activate on the next in-game day.
+        /// No runtime setting changes either value; committed legacy meals retain their own terms.</summary>
         public int ChoicePolicyVersion { get; set; } = FoodChoicePolicy.Version;
         public int ChoiceStartsDay { get; set; }
     }
     public readonly struct FoodSale
     {
-        public FoodSale(bool paid, string reason) { Paid = paid; Reason = reason; }
+        public FoodSale(bool paid, string reason, ShopExperience? failure = null) { Paid = paid; Reason = reason; Failure = failure; }
+        public ShopExperience? Failure { get; }
         public bool Paid { get; }
         public string Reason { get; }
     }
@@ -127,6 +134,14 @@ namespace PersistentCity.Core
     {
         IReadOnlyList<FoodBusiness> ReadLocal(Place origin, double minute, double walkingToleranceMetres, int maximumCandidates);
         FoodBusiness? ReadBusiness(string businessId, double minute);
+    }
+    /// <summary>Metadata only; the scope catalogue and cached entrances are ranked before any supply read.</summary>
+    public interface IFoodCandidateMarket
+    {
+        /// <summary>Refresh metadata before ranking, then share it across this atomic capture. No yield or checkout.</summary>
+        IDisposable BeginCapture(double minute);
+        bool IsCandidate(FoodScope scope);
+        FoodBusiness? CaptureBusiness(string businessId, double minute);
     }
     public interface IFoodBusinessAuthority
     {
@@ -159,13 +174,19 @@ namespace PersistentCity.Core
         private readonly Dictionary<string, ResidentMeal> records;
         private readonly SortedSet<ResidentMeal> due = new SortedSet<ResidentMeal>(new Order());
         private readonly Dictionary<string, int> reservations = new Dictionary<string, int>(StringComparer.Ordinal);
-        public double NextMinute => Math.Min(NextBudgetMinute, due.Count == 0 ? double.PositiveInfinity : due.Min!.DueAt);
+        public double NextMinute => pendingDecision?.Decision?.OriginAt
+            ?? Math.Min(NextBudgetMinute, due.Count == 0 ? double.PositiveInfinity : due.Min!.DueAt);
         internal IFoodMarket Market => market;
         internal ResidentMeal? FindMeal(string consumerId) => records.TryGetValue(consumerId, out var meal) ? meal : null;
-        internal FoodCommerce(CitySimulator city, IFoodMarket market, IRoutePlanner routes)
+        internal FoodCommerce(CitySimulator city, IFoodMarket market, IRoutePlanner routes, FoodChoiceSettings? choiceSettings = null, FoodMemorySettings? memorySettings = null)
         {
             this.city = city; this.market = market; this.routes = routes;
+            ChoiceSettings = choiceSettings ?? new FoodChoiceSettings();
+            ChoiceSettings.Clamp();
             state = city.State.Food ?? throw new InvalidOperationException("No food state.");
+            MemorySettings = memorySettings ?? new FoodMemorySettings(); MemorySettings.Clamp();
+            memoryStore = new FoodMemoryStore(state);
+            if(state.Residents.Count==0) state.ChoiceStartsDay=(int)Math.Floor(city.State.Minute/1440)+1;
             records = state.Residents.ToDictionary(r => r.ResidentId, StringComparer.Ordinal);
             InitializeRepresentation();
             foreach (var entry in state.Residents)
@@ -174,6 +195,7 @@ namespace PersistentCity.Core
                 due.Add(entry);
                 if (entry.Budget != null) budgetDue.Add(entry);
                 if (Active(entry)) Reserve(entry, 1);
+                if (entry.Decision != null) pendingDecision = entry;
             }
         }
         private static bool Active(ResidentMeal m) => m.Status == MealStatus.Travelling || m.Status == MealStatus.Serving;
@@ -225,8 +247,21 @@ namespace PersistentCity.Core
         }
         internal void Step()
         {
+            if (pendingDecision != null)
+            {
+                var pendingMeal=pendingDecision;
+                due.Remove(pendingMeal);
+                try { ContinueFoodDecision(pendingMeal,city.FindCitizen(pendingMeal.AnchorId)!); }
+                finally { due.Add(pendingMeal); }
+                return;
+            }
             if (StepBudget()) return;
             var meal = due.Min!; due.Remove(meal);
+            try { StepMeal(meal); }
+            finally { due.Add(meal); }
+        }
+        private void StepMeal(ResidentMeal meal)
+        {
             var person = city.FindCitizen(meal.AnchorId);
             if (person == null) throw new InvalidOperationException("Meal has no resident.");
             double now = city.State.Minute;
@@ -244,9 +279,9 @@ namespace PersistentCity.Core
                 }
                 catch (Exception) { /* Missing proof preserves held funds and the original receipt. */ }
             }
-            if (StepExcursion(meal, person)) { due.Add(meal); return; }
+            if (StepExcursion(meal, person)) { return; }
             if (Active(meal) && market is IFoodBusinessAuthority authority && !authority.CanServe(meal.BusinessId))
-            { Finish(meal, MealStatus.Missed, "Business no longer accepts this commitment"); due.Add(meal); return; }
+            { Finish(meal, MealStatus.Missed, "Business no longer accepts this commitment"); return; }
             if (!Active(meal) && meal.Status != MealStatus.Pending)
             {
                 // Retain the exact unresolved receipt and any held money across later meals.
@@ -262,10 +297,10 @@ namespace PersistentCity.Core
                         meal.DueAt = now + .001;
                     }
                     else meal.DueAt = (Math.Floor(now / 1440) + 1) * 1440;
-                    due.Add(meal); return;
+                    return;
                 }
                 if (meal.Slot == 0 && person.MealOuting != null)
-                { meal.DueAt = Math.Max(now + 1, person.NextEventMinute); due.Add(meal); return; }
+                { meal.DueAt = Math.Max(now + 1, person.NextEventMinute); return; }
                 NextMeal(meal, out int day, out MealKind kind);
                 if (day < (int)(now / 1440)) { day = (int)(now / 1440); kind = state.MealRhythmVersion == 0 ? MealKind.Legacy : MealKind.Breakfast; }
                 StartMeal(meal, person, day, kind);
@@ -296,19 +331,32 @@ namespace PersistentCity.Core
                     && person.RecentVisits.Any(v => v.PlaceId == meal.PlaceId && v.Activity == Activity.Shop && v.AtMinute >= meal.DesiredAt);
                 if (admitted)
                 {
+                    memoryStore.CommitStage(meal, ExperienceStage.Reached);
                     var available = ReadBusiness(meal.BusinessId, now);
                     if (available?.PlaceId != meal.PlaceId) available = null;
+                    if (city.State.Capabilities.Active && NewChoice(meal) && available != null
+                        && !DailyRoutine.Open(available.OpeningPlace, now))
+                    { Finish(meal, MealStatus.Missed, "Shop closed before admission"); return; }
                     if (available?.MealsPerHour == null || available.MealsPerHour <= 0)
-                    { Finish(meal, MealStatus.Missed, "Service unavailable on arrival"); due.Add(meal); return; }
+                    {
+                        if (city.State.Capabilities.Active && available?.ServiceUnavailableReason == "Out of stock")
+                        {
+                            var live = FailureEvidence(meal.BusinessId, meal.PlaceId, now, available);
+                            if (live?.Id == meal.BusinessId && live.PlaceId == meal.PlaceId && live.ServiceUnavailableReason == "Out of stock"
+                                && live.Offers.Any(o => o.ProductId == meal.ProductId && o.Units == 0))
+                                Experience(meal, ShopExperience.Stockout, now);
+                        }
+                        Finish(meal, MealStatus.Missed, "Service unavailable on arrival"); return;
+                    }
                     double? close = null;
                     if (meal.Slot > 0)
                     {
-                        var hours = new Place { Id = available.PlaceId, Kind = PlaceKind.Shop, OpenMinute = 0, CloseMinute = 0, WeeklyHours = available.Hours };
+                        var hours = available.OpeningPlace;
                         var open = DailyRoutine.NextOpen(hours, now, meal.Deadline);
                         if (!open.HasValue)
-                        { Finish(meal, MealStatus.Missed, "Shop closed before admission"); due.Add(meal); return; }
+                        { Finish(meal, MealStatus.Missed, "Shop closed before admission"); return; }
                         if (open.Value > now)
-                        { meal.Excursion!.AdmissionAt = open.Value; meal.DueAt = open.Value; due.Add(meal); return; }
+                        { meal.Excursion!.AdmissionAt = open.Value; meal.DueAt = open.Value; return; }
                         close = DailyRoutine.NextClose(hours, now);
                     }
                     meal.ServiceMinutes = 60.0 / available.MealsPerHour.Value;
@@ -319,7 +367,13 @@ namespace PersistentCity.Core
                     else if (meal.Slot > 0 && (!close.HasValue || meal.ServiceAt >= close.Value))
                         Finish(meal, MealStatus.Missed, "Service no longer fits shop opening hours");
                     else if (meal.ServiceAt + MealRhythm.EatingMinutes(meal.Kind) + meal.ReturnMinutes > meal.Deadline)
+                    {
+                        // Preserve the existing refusal and accounts. Attribute queue disappointment
+                        // only when removing the observed wait would have made this break fit.
+                        if (scope.NextServiceAt > now && now + meal.ServiceMinutes + MealRhythm.EatingMinutes(meal.Kind) + meal.ReturnMinutes <= meal.Deadline)
+                            Experience(meal, ShopExperience.Queue, now);
                         Finish(meal, MealStatus.Missed, "Arrival or queue no longer fits the break");
+                    }
                     else
                     {
                         if (meal.Slot == 0) city.ExtendMealStay(person, meal.ServiceAt + MealRhythm.EatingMinutes(meal.Kind));
@@ -343,9 +397,11 @@ namespace PersistentCity.Core
                 {
                     // Every later addition must fit before funds move or native checkout starts.
                     if (!CanSettle(meal))
-                    { Finish(meal, MealStatus.Missed, "Purchase would exceed the exact money range"); due.Add(meal); return; }
+                    { Finish(meal, MealStatus.Missed, "Purchase would exceed the exact money range"); return; }
+                    if (meal.Budget == null && meal.Price > AvailableForMeal(meal))
+                    { Finish(meal, MealStatus.Missed, "Household funds no longer available at checkout"); return; }
                     if (meal.Budget != null && !HouseholdFinance.HoldPurchase(meal.Budget, meal.Price))
-                    { Finish(meal, MealStatus.Missed, "Household funds no longer available at checkout"); due.Add(meal); return; }
+                    { Finish(meal, MealStatus.Missed, "Household funds no longer available at checkout"); return; }
                     if (meal.Budget == null) meal.DayAllowanceUsed += meal.Price;
                     // Persist uncertainty before entering native code. No exception can trigger a replay.
                     meal.ServiceAt = now;
@@ -360,16 +416,20 @@ namespace PersistentCity.Core
                         else if (!result.Paid) meal.DayAllowanceUsed -= meal.Price;
                         meal.Status = result.Paid ? MealStatus.Paid : MealStatus.Missed; meal.Reason = result.Reason;
                         if (result.Paid) ConfirmPurchase(meal, result.Reason);
-                        else MealOutcomes.Record(meal, now, checkout: true);
+                        else {
+                            if (result.Failure == ShopExperience.Closed || result.Failure == ShopExperience.Stockout || result.Failure == ShopExperience.Queue)
+                                Experience(meal, result.Failure.Value, now);
+                            MealOutcomes.Record(meal, now, checkout: true);
+                        }
                         if (meal.Slot > 0 && meal.Excursion != null) ScheduleReturn(meal);
                     }
                     catch (Exception) { /* Retain uncertain ownership; never issue a second order. */ }
                 }
             }
-            due.Add(meal);
         }
         private void ConfirmPurchase(ResidentMeal meal, string reason)
         {
+            Experience(meal, ShopExperience.Served, meal.ServiceAt);
             RecordPurchase(meal); meal.Purchases++; meal.Spent += meal.Price;
             if (meal.ExistingStop) meal.ExistingStopPurchases++;
             meal.Status = MealStatus.Paid; meal.Reason = reason;
@@ -377,9 +437,17 @@ namespace PersistentCity.Core
         }
         private void Finish(ResidentMeal meal, MealStatus status, string reason, FoodOutsideOption outside = FoodOutsideOption.None)
         {
+            if (status == MealStatus.Missed && Active(meal)) FailedVisit(meal, reason);
+            string choiceReason=meal.Reason;
             if (Active(meal)) Reserve(meal, -1);
             meal.Status = status; meal.Reason = reason;
             MealOutcomes.Record(meal, city.State.Minute, checkout: status == MealStatus.Uncertain, outside);
+            if(status==MealStatus.Uncertain && meal.Today?.Find(meal.Kind) is MealOutcomeRecord outcome)
+            {
+                if(choiceReason.Contains("likes it")) outcome.Factor1=MealFactor.Taste;
+                if(choiceReason.Contains("values quality"))
+                {if(outcome.Factor1==MealFactor.None) outcome.Factor1=MealFactor.Quality;else outcome.Factor2=MealFactor.Quality;}
+            }
             var person = city.FindCitizen(meal.AnchorId)!;
             NextMeal(meal, out int day, out MealKind kind);
             meal.DueAt = Math.Max(city.State.Minute + .001, MealRhythm.DesiredAt(person, city.State.Seed, day, kind));
@@ -401,6 +469,7 @@ namespace PersistentCity.Core
             DistrictAppealValueCents = 50 + (int)(StableRandom.Hash((meal?.ResidentId ?? p.Identity.Id) + ":food-district", city.State.Seed) % 151) };
         private void Decide(ResidentMeal meal, CitizenState person)
         {
+            if (NewChoice(meal)) { BeginFoodDecision(meal,person,false); return; }
             long started = city.ObservingFood ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             var trace = city.ObservingFood ? new FoodDecisionTrace() : null;
             double now = city.State.Minute;

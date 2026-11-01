@@ -20,6 +20,20 @@ public sealed class ActivationValidationTests
     private static long Count(TextWriter writer) => (long)writer.GetType().GetProperty("Count")!.GetValue(writer)!;
 
     [Fact]
+    public void Utf8CounterMatchesEncoderAcrossEverySurrogateChunkBoundary()
+    {
+        foreach (string text in new[] { "ascii", "界é😀", "\ud800\ud800\udc00\udc00", "\udc00\ud800", "\ud800", "\udc00" })
+        for (int cut = 0; cut <= text.Length; cut++)
+        {
+            using var counter = Counter();
+            counter.Write(text.Substring(0, cut));
+            counter.Write(text.ToCharArray(), cut, text.Length - cut);
+            Assert.Equal(text.Length, Count(counter));
+            Assert.Equal(System.Text.Encoding.UTF8.GetByteCount(text), (long)counter.GetType().GetProperty("Bytes")!.GetValue(counter)!);
+        }
+    }
+
+    [Fact]
     public void ActivationMatchesWriteAndPreservesInterruptedJourneyAndEscapedText()
     {
         var state = Example();
@@ -32,7 +46,8 @@ public sealed class ActivationValidationTests
         SaveCodec.ValidateForActivation(resumed.State!);
         Assert.Equal(before, SaveCodec.Write(resumed.State!));
         using var counter = Counter();
-        var settings = (JsonSerializerSettings)typeof(SaveCodec).GetMethod("Settings", BindingFlags.Static | BindingFlags.NonPublic)!.Invoke(null, null)!;
+        var context = typeof(SaveCodec).GetNestedType("WireContext", BindingFlags.NonPublic)!.GetMethod("FromState")!.Invoke(null, new object[] { state });
+        var settings = (JsonSerializerSettings)typeof(SaveCodec).GetMethod("Settings", BindingFlags.Static | BindingFlags.NonPublic)!.Invoke(null, new[] { context })!;
         using (var json = new JsonTextWriter(counter)) JsonSerializer.CreateDefault(settings).Serialize(json, state);
         Assert.Equal(before.Length, Count(counter));
     }

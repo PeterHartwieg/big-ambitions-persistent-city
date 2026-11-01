@@ -122,7 +122,7 @@ namespace PersistentCity.Runtime
                 Districts = FoodHouseholdCatalogue.Read(simulation.State.Places.Where(p => p.Kind == PlaceKind.Home)
                     .Select(p => p.District).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct(StringComparer.Ordinal).ToArray()).ToList() };
             var adapter = new NativeFoodMarket(state, simulation.State.Places, enrolling: true);
-            try { simulation.State.Food = state; simulation.AttachFoodMarket(adapter); foodMarket = adapter; }
+            try { simulation.State.Food = state; simulation.AttachFoodMarket(adapter, settings.FoodChoice, settings.FoodMemory); foodMarket = adapter; }
             catch { simulation.State.Food = null; adapter.Dispose(); throw; }
         }
         public void EnableHouseholdFinances()
@@ -182,6 +182,13 @@ namespace PersistentCity.Runtime
                 if (NativeFoodOwnership.Error.Length > 0) throw new InvalidDataException(NativeFoodOwnership.Error);
                 string path = Path.Combine(context.ModRootPath, "persistent-city.json");
                 if (File.Exists(path)) settings = JsonConvert.DeserializeObject<PrototypeSettings>(File.ReadAllText(path)) ?? throw new InvalidDataException("Configuration is null.");
+                inspector.ShopName = place => foodMarket?.NameOf(place);
+                inspector.CurrentOwnShop = ObservedOwnShop;
+                settings.FoodChoice.Clamp(message => log.Info(message));
+                settings.FoodMemory.Clamp(message => log.Info(message));
+                log.Info("Regulars projection: served visits=" + settings.FoodMemoryRegularServedVisits
+                    + ", recent days=" + settings.FoodMemoryRegularRecentDays + "; read-only observed feedback.");
+                log.Info("Food memory policy B revision 1; next-boundary activation, captured decision contributions.");
                 if (!Position.Finite(settings.GameClockFactor) || settings.GameClockFactor < .1 || settings.GameClockFactor > 1)
                     throw new InvalidDataException("GameClockFactor must be between 0.1 and 1 (one third gives three times as much travel time per day).");
                 if (settings.MaximumPedestrians < 1 || settings.MaximumPedestrians > 256 || settings.MaximumVehicles < 1 || settings.MaximumVehicles > 64
@@ -410,7 +417,9 @@ namespace PersistentCity.Runtime
                     }
                     var result = active.AdvanceFrameSlice(target, 1);
                     events += result.Events;
-                    citizenEvents += result.Events - result.TrafficEvents;
+                    // Food decisions count once at begin; their bounded continuation units run
+                    // under the time and total-unit caps without spending another citizen slot.
+                    citizenEvents += result.CitizenEvents;
                     elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
                     if (result.PlanningPending) { pendingAtEnd = elapsed >= timeBudget; if (pendingAtEnd) break; continue; }
                     if (result.CaughtUp || citizenEvents >= citizenLimit || elapsed >= timeBudget) break;
@@ -577,7 +586,7 @@ namespace PersistentCity.Runtime
             if (state.Food.HouseholdFinanceVersion != HouseholdFinance.PolicyVersion || state.Food.MealRhythmVersion != MealRhythm.PolicyVersion)
                 throw new InvalidDataException("Unsupported experimental food policy; preserve this city and use a fresh development baseline.");
             foodMarket = new NativeFoodMarket(state.Food, state.Places);
-            simulation.AttachFoodMarket(foodMarket);
+            simulation.AttachFoodMarket(foodMarket, settings.FoodChoice, settings.FoodMemory);
             saveIdentity = save;
             NativeInteriorCityView.Start(settings, log!, RestoreInterior);
             NativeCityClock.Start(save, settings.GameClockFactor, () => simulation?.IsCaughtUpTo(Now()) == true, () => simulation?.State.Food != null, Now);
