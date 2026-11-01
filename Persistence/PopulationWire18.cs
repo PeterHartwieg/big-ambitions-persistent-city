@@ -29,6 +29,7 @@ namespace PersistentCity.Persistence
             Require(reader.Read() && reader.TokenType == JsonToken.StartObject, "Expected population object.");
             int? schema = null;
             PopulationCapabilities? capabilities = null;
+            bool menuPolicy = false;
             var names = new HashSet<string>(StringComparer.Ordinal);
             // Resolve token offsets only as far as a header requires; TokenText(source) would scan
             // every character even when both headers precede the population graph.
@@ -62,7 +63,7 @@ namespace PersistentCity.Persistence
                 {
                     schema = HeaderInteger(requireCanonical: false);
                     if (schema >= 18) Require(canonicalInteger, "Noncanonical population schema.");
-                    Require(schema >= 13 && schema <= CityState.CurrentSchema, "Unsupported population schema; preserve the payload.");
+                    Require(schema >= 13 && (schema <= 21 || schema == 23), "Unsupported population schema; preserve the payload.");
                 }
                 else if (name == "Capabilities")
                 {
@@ -84,10 +85,16 @@ namespace PersistentCity.Persistence
                     Require(reader.TokenType == JsonToken.EndObject && seen == 7, "Missing capability fields.");
                     ValidateCapabilities(capabilities);
                 }
+                else if (name == "MenuPolicy")
+                {
+                    Require(reader.TokenType == JsonToken.String && (string)reader.Value! == FoodMenuPolicy.Wire, "Unsupported menu product policy.");
+                    menuPolicy = true;
+                }
                 else reader.Skip();
-                if (schema.HasValue && capabilities != null)
+                if (schema.HasValue && capabilities != null && (schema != 23 || menuPolicy))
                 {
                     Require(schema >= 18, "Unknown capability header in a legacy population schema.");
+                    Require(schema == 23 || !menuPolicy, "Menu policy in an old schema.");
                     return; // Full population startup still validates all fields, duplicates and trailing content.
                 }
             }
@@ -137,13 +144,15 @@ namespace PersistentCity.Persistence
         }
 
         /// <summary>Reports both published counting paths; callers must budget the larger.</summary>
-        public static (int Streaming, int Semantic) CountRecords(CityState state, string source)
+        public static (int Streaming, int Semantic) CountRecords(CityState state, string source) => CountRecordsForSchema(state,source,CityState.CurrentSchema);
+
+        internal static (int Streaming, int Semantic) CountRecordsForSchema(CityState state,string source,int schema)
         {
-            int semantic = Validate(state), streaming = 0;
+            int semantic = Validate(state,schema), streaming = 0;
             var context = WireContext.FromSource(source);
             using var reader = Reader(source);
             Require(reader.Read(), "Missing state.");
-            CheckShape(reader, typeof(CityState), StateContracts, ref streaming, new TokenText(source), CityState.CurrentSchema, new FieldNameSets());
+            CheckShape(reader, typeof(CityState), schema==21 ? Schema21Contracts : StateContracts, ref streaming, new TokenText(source), schema, new FieldNameSets());
             Require(!reader.Read(), "Trailing content.");
             return (streaming, semantic);
         }

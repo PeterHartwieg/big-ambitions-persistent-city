@@ -33,6 +33,8 @@ Later: residents as employees, households.
 
 Implementation plan for B–E: [memory, marketing, rivals and the wider street](plans/steps-b-e.md).
 
+E4 status, 1 November (offline): schema 23 menu/product/history envelope implemented; effective live limit four, no extra product enabled. [Validation and numbered 6 Nov handoff](checks/e4-wider-menu.md).
+
 E3 status, 31 October (offline): [donut](plans/e3-donut.md) and [cupcake feasibility discovery](plans/e3-cupcake.md) share one isolated on-demand raw-field reader with pinned candidates. Loaded equipment and natural checkout/settlement proof remain pending; no additional product certified or enabled.
 
 E3 salad status, 1 November (offline): [salad stop record](plans/e3-salad.md) adds a pinned conditional probe on the cupcake/donut stack. Shipped holder unestablished; no generic holder extension, menu, gameplay or saved change. Existing read branches retained; no additional cheap safe measured perf win identified. Three-candidate offline timing and the combined 6 Nov handoff are in [CHECKS](checks/e3-salad.md#e3-salad-feasibility---1-november-2026-offline-only).
@@ -66,6 +68,8 @@ Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index
 
 - D2 — [Bounded rival choice, refresh and settlement measurements](perf/d2-rival-outflow.md).
 
+
+- E4 — [Supply-refresh allocation win and four/eight-offer offline measurements](perf/e4-wider-menu.md).
 - A5 — [Popup address reuse: four → two formatter calls, 6,432 → 5,856 bytes per refresh; offline limits](perf/a5-integrated-acceptance.md).
 
 - A2 — [Schema 17, lifestyle traits and base sync evidence](perf/a2-schema17-traits.md).

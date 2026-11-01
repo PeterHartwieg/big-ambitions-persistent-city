@@ -431,3 +431,39 @@ population/food controls remain 41,787 / 66,679 bytes. Caps are unchanged.
 The final fetch after this acceptance caught E4 at `2bd9006`, schema 23.
 These results remain evidence for the named E3/schema-21 head; E4 integration
 requires a separate acceptance run. No game, rig, profile or release action occurred.
+
+### E4 latest-head continuation
+
+Integration advanced to `2bd9006` (E4 schema 23) after the E3 acceptance.
+The fourth real merge uses base `75c956c`. Both sides' diffs against that base
+were inspected. All E4 checks, tools, tests, menu/settings/supply behavior and
+indices are retained with D2. The PR draft records every conflict resolution.
+
+The chain is now **20 -> 21 -> 23**: the frozen E1 reader validates/upgrades
+earlier sources, D2's isolated step validates schema 21, and E4's documented
+`MenuPredecessorSchema` hook advances to 21. A dedicated schema-21 resolver
+retains D2 tuples, accounts, target kinds and original history/tuning shapes.
+Schema 22 remains reserved/unmerged and refused; >23 is future. No schema
+number is reassigned. Schema-20 weather and all held terms remain exact.
+
+Core combines E4 menu admission/taste with D2's rival weight/unknown-stock
+shortcut and E1 rain. Runtime constructors/startup retain rival settings/warnings
+alongside E4's effective live-four menu limit. No product is newly native-supported
+by this sync and no journey, settlement or catalogue policy is redesigned.
+Frozen 19/20 contracts exclude the new menu header, retain the old tuning width
+and pin the original three-product vocabulary. Genuine predecessor fixtures
+replace relabelled current tuples. Held and settled schema-21 rival migration
+coverage checks exact replay, weather and one own-ledger outflow after migration.
+
+D2's idle byte tool still isolates genuine 20 -> 21; the final 23 payload and
+menu-header delta are measured separately. Capacity consumes the fixed menu
+header once from its existing reserve; no byte/record cap is raised. The full
+gate includes E4 preparation, envelope regression and default-economy comparison.
+Fresh acceptance results follow below; earlier measured tables retain their
+named source and do not substitute for E4-head validation.
+
+The first E4 unit compile found CS8604 in the new schema-specific record-count
+helper. Selecting the explicit non-null resolver fixes the annotation and avoids
+creating serializer settings there. The package rebuild passes; full unit and
+remaining regressions must finish before acceptance. No game/rig/profile action
+or native performance/release claim is made.

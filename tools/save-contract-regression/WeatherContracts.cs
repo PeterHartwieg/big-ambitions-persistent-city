@@ -7,12 +7,18 @@ using PersistentCity.Persistence;
 
 static partial class Program
 {
-    // Keep this driver usable against the archived stack. Only E1 fields are projected out.
+    // Keep this driver usable against the archived stack; each projection removes only its owned fields.
     private static bool Weather20 => typeof(CityState).GetProperty("WeatherStartsDay")!=null;
+    private static string WithoutMenu23(string wire)
+    {
+        if(typeof(CityState).GetProperty("MenuPolicy")==null) return wire;
+        var root=JObject.Parse(wire);root["Schema"]=21;root.Remove("MenuPolicy");
+        return root.ToString(Formatting.None);
+    }
     private static string WithoutWeather20(string wire)
     {
         if(!Weather20) return wire;
-        var root=JObject.Parse(wire);root["Schema"]=19;root.Remove("WeatherStartsDay");
+        var root=JObject.Parse(WithoutMenu23(wire));root["Schema"]=19;root.Remove("WeatherStartsDay");
         foreach(JObject p in root["Citizens"]!) p.Remove("W");
         if(root["Food"] is JObject food) foreach(JArray m in food["Residents"]!)
         {
@@ -57,12 +63,19 @@ static partial class Program
         }
         return count;
     }
+    private static int MenuHeaderChars23(CityState state) => typeof(CityState).GetProperty("MenuPolicy") is System.Reflection.PropertyInfo menu
+        ? ("\"MenuPolicy\":"+JsonConvert.SerializeObject(menu.GetValue(state))+",").Length : 0;
     private static void WeatherContractChecks()
     {
         if(!Weather20) return;
         var state=FoodCity(3,true);PopulateDecisions(state);PopulateWeather20(state);
         string wire=SaveCodec.Write(state),old=WithoutWeather20(PreRivalWire(state));
         Check(PreRivalWire(state).Length-old.Length==WeatherChars20(state),"Schema-20 additive weather byte ledger mismatch.");
+        Check(wire.Length-WithoutMenu23(wire).Length==MenuHeaderChars23(state),"Schema-23 menu header byte ledger mismatch.");
+        string schema20=PreRivalWire(state);
+        var from20=SaveCodec.Read(schema20);
+        Check(from20.Status==SaveReadStatus.Loaded && from20.SourceSchema==20,"Schema-20 migration refused.");
+        Check(PreRivalWire(from20.State!)==schema20,"Schema-20 fields changed during migration.");
         var migrated=SaveCodec.Read(old);Check(migrated.Status==SaveReadStatus.Loaded && migrated.SourceSchema==19,"Schema-19 migration refused.");
         Check((int)typeof(CityState).GetProperty("WeatherStartsDay")!.GetValue(migrated.State!)! == (int)(state.Minute/1440)+1,"Weather migration did not defer activation.");
         Check(SaveCodec.Write(SaveCodec.Read(wire).State!)==wire,"Weather roundtrip changed terms.");

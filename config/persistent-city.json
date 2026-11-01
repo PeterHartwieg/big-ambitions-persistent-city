@@ -3,6 +3,10 @@
   "RivalAssumedServiceMinutes": 5,
   "RivalRefreshGameMinutes": 60,
   "RivalReadsPerUnit": 16,
+
+  "FoodMenuMaximumOffersPerShop": 4,
+  "FoodMenuNewTasteWeight": 1.0,
+  "FoodMenuHealthWeight": 0,
   "WeatherEnabled": true,
   "WeatherRainOptionalOutingMultiplier": 0.7,
   "WeatherRainTravelWeightMultiplier": 1.3,

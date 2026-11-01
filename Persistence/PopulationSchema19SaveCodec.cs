@@ -206,7 +206,7 @@ namespace PersistentCity.Persistence
             if (nullable != null) type = nullable;
             if (type == typeof(FoodDecisionTuning))
             {
-                Require(token == JsonToken.String && FoodDecisionTuning.IsCanonicalWire((string)reader.Value!), "Invalid held tuning image.");
+                Require(token == JsonToken.String && FoodDecisionTuning.IsCanonicalWire((string)reader.Value!) && ((string)reader.Value!).Length==FoodDecisionTuning.WireLength, "Invalid held tuning image.");
                 return;
             }
             if (type == typeof(string)) { Require(token == JsonToken.String, "Expected a string."); Require(((string)reader.Value!).Length <= 512, "Oversized string."); return; }
@@ -871,7 +871,7 @@ namespace PersistentCity.Persistence
                     && meal.Slot >= 0 && meal.Slot < food.RepresentationFactor
                     && meal.ResidentId == FoodRepresentation.ConsumerId(meal.AnchorId, meal.Slot), "Unknown or duplicate consumer/anchor slot.");
                 Require(meal.PreferenceBonusCents >= 0 && meal.PreferenceBonusCents <= 150
-                    && (meal.PreferredProductId.Length == 0 ? meal.PreferenceBonusCents == 0 : FoodProducts.Known(meal.PreferredProductId)), "Invalid consumer taste.");
+                    && (meal.PreferredProductId.Length == 0 ? meal.PreferenceBonusCents == 0 : FoodProducts.KnownLegacy(meal.PreferredProductId)), "Invalid consumer taste.");
                 Require(meal.Slot > 0 || meal.Excursion == null && !meal.NeedsHomeResync, "Physical anchor cannot own an abstract excursion.");
                 Require(meal.Slot == 0 || !meal.ExistingStop, "Represented consumer cannot claim anchor's existing-stop purchase.");
                 if (meal.Slot == 0) Require(meal.RepresentedTraits == null, "Slot zero duplicates its anchor's traits.");
@@ -1011,7 +1011,7 @@ namespace PersistentCity.Persistence
                 "Decision selection differs from its result.");
             Require((decision.Result == FoodDecisionResult.Outside) == (decision.Outside != FoodOutsideOption.None), "Decision alternative differs from its result.");
             // Also for a compact decision without its shortlist image.
-            Require(decision.ProductId.Length == 0 || FoodProducts.Known(decision.ProductId), "Unknown live product code.");
+            Require(decision.ProductId.Length == 0 || FoodProducts.KnownLegacy(decision.ProductId), "Unknown live product code.");
             Require(decision.Shops != null && decision.Shops.Count <= FoodChoicePolicy.MaximumShortlist, "Oversized decision shortlist.");
             Require(decision.QuotesDone >= 0 && decision.QuotesDone <= 2 * decision.Shops!.Count, "Invalid decision quote progress.");
             // Choosing follows every feasibility answer; an undecided image may stop at any slot.
@@ -1046,7 +1046,7 @@ namespace PersistentCity.Persistence
                 foreach (var offer in shop.Offers!)
                 {
                     Require(offer != null && products.Add(offer.ProductId), "Duplicate decision offer.");
-                    Require(FoodProducts.Known(offer!.ProductId), "Unknown live product code.");
+                    Require(FoodProducts.KnownLegacy(offer!.ProductId), "Unknown live product code.");
                     Require(offer.Price >= Money.Zero && offer.Price <= MaximumAllowance && offer.Units >= -1, "Invalid decision offer evidence.");
                     Require(offer.DistrictDemandPercent >= -1 && offer.DistrictDemandPercent <= 100
                         && (offer.DistrictDemandPercent == -1 || shop.DistrictId.Length > 0), "Invalid decision district evidence.");
@@ -1182,7 +1182,7 @@ namespace PersistentCity.Persistence
             public StateContractResolver(int schema = 19) { this.schema = schema; }
             protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
             {
-                return base.CreateProperties(type, memberSerialization).Where(property => property.Writable && !(type==typeof(CityState) && property.PropertyName=="WeatherStartsDay" || type==typeof(CitizenState) && property.PropertyName=="W" || type==typeof(FoodDecisionState) && (property.PropertyName=="Weather" || property.PropertyName=="WeatherTravelMultiplier")) && !RivalWire21.AddedProperty(type, property.PropertyName!) && !(schema==18 &&
+                return base.CreateProperties(type, memberSerialization).Where(property => property.Writable && !(type==typeof(CityState) && property.PropertyName=="MenuPolicy") && !(type==typeof(CityState) && property.PropertyName=="WeatherStartsDay" || type==typeof(CitizenState) && property.PropertyName=="W" || type==typeof(FoodDecisionState) && (property.PropertyName=="Weather" || property.PropertyName=="WeatherTravelMultiplier")) && !RivalWire21.AddedProperty(type, property.PropertyName!) && !(schema==18 &&
                     (type==typeof(FoodDecisionState) && property.PropertyName=="Awareness"
                      || type==typeof(FoodCommerceState) && property.PropertyName=="AwarenessStartsDay")))
                     // These two root headers let the native authority bootstrap stop before the graph.

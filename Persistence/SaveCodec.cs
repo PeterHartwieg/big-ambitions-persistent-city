@@ -46,7 +46,6 @@ namespace PersistentCity.Persistence
         public const int MaxTrafficLinkCapacity = 1024;
         // Schema 17 current-day outcomes per consumer; decision bounds come from FoodChoicePolicy.
         public const int MaxMealOutcomes = 3;
-        private const int Schema18MaximumOffersPerShop = 4;
         // A compact outcome record that validation accepts is at most 553 characters: six enum fields of at most two
         // digits, two whole minutes of at most ten, nine separators and two 256-character IDs. The reader's cap
         // must not be tighter, or a save Write accepted could not be read back.
@@ -54,25 +53,29 @@ namespace PersistentCity.Persistence
         private const double MaxMinute = 1000000000;
         private const double MaxCoordinate = 10000000;
 
-        public static string Write(CityState state)
+        public static string Write(CityState state) => WriteForSchema(state,CityState.CurrentSchema);
+
+        internal static string WriteForSchema(CityState state,int schema)
         {
             if (state == null) throw new SaveValidationException("State is null.");
             state.PrepareForSave();
-            Validate(state);
-            var json = JsonConvert.SerializeObject(state, Formatting.None, Settings(WireContext.FromState(state)));
+            Validate(state,schema);
+            var json = JsonConvert.SerializeObject(state, Formatting.None, SettingsForSchema(WireContext.FromState(state),schema));
             Require(json.Length <= MaxInputCharacters, "Serialized state exceeds the input size limit.");
             Require(System.Text.Encoding.UTF8.GetByteCount(json) <= MaxInputCharacters, "Serialized state exceeds the UTF-8 size limit.");
             return json;
         }
 
         /// <summary>Run the save contract without retaining the serialized activation payload.</summary>
-        public static void ValidateForActivation(CityState state)
+        public static void ValidateForActivation(CityState state) => ValidateForActivation(state,CityState.CurrentSchema);
+
+        internal static void ValidateForActivation(CityState state,int schema)
         {
             if (state == null) throw new SaveValidationException("State is null.");
             state.PrepareForSave();
-            Validate(state);
+            Validate(state,schema);
             using var count = new CharacterCountingWriter();
-            var serializer = JsonSerializer.CreateDefault(Settings(WireContext.FromState(state)));
+            var serializer = JsonSerializer.CreateDefault(SettingsForSchema(WireContext.FromState(state),schema));
             // Match JsonConvert.SerializeObject(state, Formatting.None, Settings()), including
             // application-wide defaults that the explicit save settings do not override.
             serializer.Formatting = Formatting.None;
@@ -122,8 +125,15 @@ namespace PersistentCity.Persistence
             {
                 int schema = ReadSchema(source);
                 if (schema > CityState.CurrentSchema) return new SaveReadResult(SaveReadStatus.Future, null, "State uses a newer schema; preserve the original payload.", schema);
-                if (schema <= 20) return RivalWire21.Migrate(source);
-                Require(schema == 21, "Unsupported experimental state schema; preserve the original payload.");
+                if (schema <= 20)
+                {
+                    var old=RivalWire21.Migrate(source);
+                    if(old.Status!=SaveReadStatus.Loaded) return old;
+                    MigrateMenu23(old.State!);
+                    ValidateForActivation(old.State!);
+                    return new SaveReadResult(SaveReadStatus.Loaded,old.State,"",old.SourceSchema);
+                }
+                Require(schema == 21 || schema == 23, "Unsupported experimental state schema; preserve the original payload.");
                 Require(System.Text.Encoding.UTF8.GetByteCount(source) <= MaxInputCharacters, "State exceeds the UTF-8 size limit.");
                 var context = WireContext.FromSource(source);
                 var serializer = JsonSerializer.Create(SettingsForSchema(context, schema));
@@ -137,7 +147,8 @@ namespace PersistentCity.Persistence
                 using var reader = Reader(source);
                 var state = serializer.Deserialize<CityState>(reader);
                 Require(state != null, "State is null.");
-                Validate(state!);
+                Validate(state!,schema);
+                if(schema==21) { MigrateMenu23(state!); ValidateForActivation(state!); }
                 return new SaveReadResult(SaveReadStatus.Loaded, state, "", schema);
             }
             catch (Exception exception) when (exception is JsonException || exception is SaveValidationException || exception is OverflowException || exception is FormatException || exception is ArgumentException)
@@ -198,6 +209,8 @@ namespace PersistentCity.Persistence
         private static void CheckShape(JsonReader reader, Type type, IContractResolver resolver, ref int records, TokenText text, int schema, FieldNameSets fieldNames)
         {
             var token = reader.TokenType;
+            if (schema == 23 && type == typeof(FoodProductSales) && token == JsonToken.StartArray)
+            { CheckProductCell23(reader, text); return; }
             Type? nullable = Nullable.GetUnderlyingType(type);
             if (token == JsonToken.Null)
             {
@@ -209,7 +222,8 @@ namespace PersistentCity.Persistence
             if (nullable != null) type = nullable;
             if (type == typeof(FoodDecisionTuning))
             {
-                Require(token == JsonToken.String && FoodDecisionTuning.IsCanonicalWire((string)reader.Value!), "Invalid held tuning image.");
+                Require(token == JsonToken.String && FoodDecisionTuning.IsCanonicalWire((string)reader.Value!)
+                    && (schema == 23 || ((string)reader.Value!).Length == FoodDecisionTuning.WireLength), "Invalid held tuning image.");
                 return;
             }
             if (type == typeof(string)) { Require(token == JsonToken.String, "Expected a string."); Require(((string)reader.Value!).Length <= 512, "Oversized string."); return; }
@@ -297,8 +311,8 @@ namespace PersistentCity.Persistence
                 Require(token == JsonToken.StartArray, "Expected an array.");
                 var item = array.CollectionItemType!;
                 int limit = item == typeof(FoodAwarenessCandidate) ? 24 : item == typeof(BusinessReference) ? MaxPlaces : item == typeof(MealOutcomeRecord) ? MaxMealOutcomes : item == typeof(FoodDecisionShop) ? FoodChoicePolicy.MaximumShortlist
-                    : item == typeof(FoodDecisionOffer) ? Schema18MaximumOffersPerShop
-                    : item == typeof(FoodProductSales) ? 4 : item == typeof(FoodBuyerDistrict) ? 100 : item == typeof(long) ? 24 : item == typeof(FoodShopDay) ? 14 * MaxPlaces : item == typeof(ResidentMeal) ? MaxCitizens * 3 : item == typeof(FoodScope) ? 1024
+                    : item == typeof(FoodDecisionOffer) ? MenuLimit(schema)
+                    : item == typeof(FoodProductSales) ? MenuLimit(schema) : item == typeof(FoodBuyerDistrict) ? 100 : item == typeof(long) ? 24 : item == typeof(FoodShopDay) ? 14 * MaxPlaces : item == typeof(ResidentMeal) ? MaxCitizens * 3 : item == typeof(FoodScope) ? 1024
                     : item == typeof(FoodRoutineStop) ? MaxCitizens
                     : item == typeof(FoodDistrictBudgetMix) ? 100 : item == typeof(CitizenState) ? MaxCitizens
                     : item == typeof(Place) ? MaxPlaces : item == typeof(CitizenIdentity) ? 5000
@@ -312,6 +326,7 @@ namespace PersistentCity.Persistence
                 while (reader.Read() && reader.TokenType != JsonToken.EndArray)
                 {
                     Require(++count <= limit, "Oversized collection.");
+                    if (schema==23 && (item==typeof(FoodShopDay) || item==typeof(FoodProductSales))) Charge(ref records);
                     if (item == typeof(FoodAwarenessCandidate) || item == typeof(BusinessReference) || item == typeof(RouteLeg) || item == typeof(VisitRecord) || item == typeof(OpeningWindow)
                         || item == typeof(TrafficRouteLeg) || item == typeof(TrafficVehicleState) || item == typeof(TrafficLinkDefinition)
                         || item == typeof(TrafficLinkState) || item == typeof(TrafficEventState) || item == typeof(int) || item == typeof(string)
@@ -338,7 +353,10 @@ namespace PersistentCity.Persistence
                 var property = properties.GetProperty(name, StringComparison.Ordinal);
                 if (property == null) Fail("Unknown field: " + name);
                 Require(reader.Read(), "Missing field value.");
-                CheckShape(reader, property.PropertyType!, resolver, ref records, text, schema, fieldNames);
+                if(schema==23 && type==typeof(FoodProductSales) && name=="ProductId")
+                    Require(reader.TokenType==JsonToken.String && FoodMenuPolicy.Code((string)reader.Value!)==0,"Reviewed product history requires a compact cell.");
+                if(schema==23 && type==typeof(FoodScope) && name=="AdditionalProductIds") CheckMenuIds23(reader,ref records);
+                else CheckShape(reader, property.PropertyType!, resolver, ref records, text, schema, fieldNames);
             }
             Require(reader.TokenType == JsonToken.EndObject && names.Count == properties.Count - (type == typeof(FoodDecisionState) && !names.Contains("Tuning") ? 1 : 0)
                 - (type == typeof(FoodDecisionShop) && !names.Contains("MemoryContribution") ? 1 : 0), "Missing object fields.");
@@ -354,11 +372,13 @@ namespace PersistentCity.Persistence
         private static readonly IContractResolver StateContracts = new StateContractResolver();
         private static readonly IContractResolver Schema19Contracts = new StateContractResolver(19);
         private static readonly IContractResolver Schema18Contracts = new StateContractResolver(18);
+        private static readonly IContractResolver Schema20Contracts = new StateContractResolver(20);
+        private static readonly IContractResolver Schema21Contracts = new StateContractResolver(21);
         private static JsonSerializerSettings Settings(WireContext context) => SettingsForSchema(context,CityState.CurrentSchema);
         private static JsonSerializerSettings SettingsForSchema(WireContext context, int schema)
         {
             var settings = new JsonSerializerSettings {
-                ContractResolver = schema==18 ? Schema18Contracts : schema==19 ? Schema19Contracts : StateContracts, Culture = CultureInfo.InvariantCulture,
+                ContractResolver = schema==18 ? Schema18Contracts : schema==19 ? Schema19Contracts : schema==20 ? Schema20Contracts : schema==21 ? Schema21Contracts : StateContracts, Culture = CultureInfo.InvariantCulture,
                 MissingMemberHandling = MissingMemberHandling.Error, TypeNameHandling = TypeNameHandling.None,
                 MaxDepth = 48, FloatParseHandling = FloatParseHandling.Double
             };
@@ -366,6 +386,7 @@ namespace PersistentCity.Persistence
             settings.Converters.Add(new TuningConverter()); settings.Converters.Add(new MealOutcomeConverter()); settings.Converters.Add(new TupleConverter());
             settings.Converters.Add(new TodayConverter()); settings.Converters.Add(new MemoryConverter(schema));
             settings.Converters.Add(new VisitConverter(context)); settings.Converters.Add(new BusinessReferenceConverter(context));
+            if(schema==23) settings.Converters.Add(new ProductSales23Converter());
             return settings;
         }
 
@@ -418,10 +439,11 @@ namespace PersistentCity.Persistence
 
         private static readonly Money MaximumAllowance = Money.FromCents(1000000);
 
-        private static int Validate(CityState state)
+        private static int Validate(CityState state, int schema = CityState.CurrentSchema)
         {
             Require(state != null, "State is null.");
-            Require(state.Schema == CityState.CurrentSchema, "Unsupported state schema.");
+            Require(state.Schema == schema && (schema==21 || schema==23), "Unsupported state schema.");
+            if(schema==23) Require(state.MenuPolicy == FoodMenuPolicy.Wire, "Unsupported menu product policy.");
             Require(state.WeatherStartsDay>=0 && state.WeatherStartsDay<=(int)(state.Minute/1440)+1,"Invalid weather activation day.");
             Require(state.Capabilities != null, "Missing population capabilities.");
             ValidateCapabilities(state.Capabilities);
@@ -835,7 +857,7 @@ namespace PersistentCity.Persistence
                 Require(shop != null && shop.AlternativeKind == FoodAlternativeKind.Player, "Native food scopes cannot enroll rivals.");
                 Require(shop != null && shops.Add(shop.PlaceId) && businessIds.Add(shop.BusinessId), "Duplicate food scope.");
                 Text(shop.PlaceId, "Food place", 256); Text(shop.ProductId, "Food product", 256); Text(shop.BusinessId, "Food business", 512);
-                Require(shop.AdditionalProductIds != null && shop.AdditionalProductIds.Count <= 3
+                Require(shop.AdditionalProductIds != null && shop.AdditionalProductIds.Count < MenuLimit(state.Schema)
                     && shop.Products().Distinct(StringComparer.Ordinal).Count() == shop.AdditionalProductIds.Count + 1, "Invalid food menu.");
                 foreach (var product in shop.AdditionalProductIds) Text(product, "Food menu product", 256);
                 Require(foodPlaces.Contains(shop.PlaceId, (int)PlaceKind.Shop), "Unknown food shop.");
@@ -845,6 +867,7 @@ namespace PersistentCity.Persistence
             var historyKeys = new HashSet<string>(StringComparer.Ordinal);
             foreach (var row in food.History)
             {
+                if(state.Schema==23) records+=1+(row?.ProductSales?.Count ?? 0);
                 Require(row != null && row.Day >= 0 && row.Day <= (int)(state.Minute / 1440) && foodPlaces.Contains(row.PlaceId, (int)PlaceKind.Shop)
                     && historyKeys.Add(row.Day + ":" + row.PlaceId + "\n" + row.BusinessId), "Invalid market history ownership.");
                 Text(row.BusinessId, "Historical business", 512);
@@ -860,14 +883,17 @@ namespace PersistentCity.Persistence
                     && row.PurchaseHours.Sum() == row.Purchases, "Hourly purchases do not reconcile.");
                 Require(row.PurchaseMeals != null && row.PurchaseMeals.Length == 4 && row.PurchaseMeals.All(n => n >= 0)
                     && row.PurchaseMeals.Sum() == row.Purchases, "Meal purchases do not reconcile.");
-                Require(row.ProductSales != null && row.ProductSales.Count <= 4 && row.ProductSales.All(p => p != null)
+                Require(row.ProductSales != null && row.ProductSales.Count <= MenuLimit(state.Schema) && row.ProductSales.All(p => p != null)
                     && row.ProductSales.Select(p => p.ProductId).Distinct(StringComparer.Ordinal).Count() == row.ProductSales.Count,
                     "Invalid product sales history.");
                 foreach (var product in row.ProductSales)
+                {
                     Require(product != null && !string.IsNullOrWhiteSpace(product.ProductId)
                         && product.Purchases > 0 && product.Revenue >= Money.Zero && product.PurchaseMeals != null
                         && product.PurchaseMeals.Length == 4 && product.PurchaseMeals.All(n => n >= 0)
                         && product.PurchaseMeals.Sum() == product.Purchases, "Invalid product purchase counters.");
+                    Text(product.ProductId,"Historical product",512);
+                }
                 Require(row.ProductSales.Sum(p => p.Purchases) == row.Purchases
                     && Money.Sum(row.ProductSales.Select(p => p.Revenue)) == row.Revenue
                     && Enumerable.Range(0, 4).All(k => row.ProductSales.Sum(p => p.PurchaseMeals[k]) == row.PurchaseMeals[k]),
@@ -897,7 +923,7 @@ namespace PersistentCity.Persistence
                     && meal.Slot >= 0 && meal.Slot < food.RepresentationFactor
                     && meal.ResidentId == FoodRepresentation.ConsumerId(meal.AnchorId, meal.Slot), "Unknown or duplicate consumer/anchor slot.");
                 Require(meal.PreferenceBonusCents >= 0 && meal.PreferenceBonusCents <= 150
-                    && (meal.PreferredProductId.Length == 0 ? meal.PreferenceBonusCents == 0 : FoodProducts.Known(meal.PreferredProductId)), "Invalid consumer taste.");
+                    && (meal.PreferredProductId.Length == 0 ? meal.PreferenceBonusCents == 0 : KnownMenuProduct(state.Schema,meal.PreferredProductId)), "Invalid consumer taste.");
                 Require(meal.Slot > 0 || meal.Excursion == null && !meal.NeedsHomeResync, "Physical anchor cannot own an abstract excursion.");
                 Require(meal.Slot == 0 || !meal.ExistingStop, "Represented consumer cannot claim anchor's existing-stop purchase.");
                 if (meal.Slot == 0) Require(meal.RepresentedTraits == null, "Slot zero duplicates its anchor's traits.");
@@ -931,7 +957,7 @@ namespace PersistentCity.Persistence
                 ValidateExcursion(meal, state, foodPlaces);
                 records += ValidateToday(meal, food, currentDay, state.Minute);
                 records += ValidateMemory(meal.Memory, currentDay, memoryReferences);
-                records += ValidateDecision(meal, food, foodPlaces, ref routeBearing);
+                records += ValidateDecision(meal, food, foodPlaces, ref routeBearing, state.Schema);
                 Require(records <= MaxEmbeddedRecords, "Too many embedded food records.");
                 var outing = meal.Slot == 0 ? citizens[meal.AnchorId].MealOuting : null;
                 Require(!meal.ExistingStop || outing == null, "Existing-stop purchase also owns an outing.");
@@ -1015,7 +1041,7 @@ namespace PersistentCity.Persistence
             return 1; // schema 18 fixed current-day tuple (including an empty rollup)
         }
 
-        private static int ValidateDecision(ResidentMeal meal, FoodCommerceState food, FoodPlaceLookup foodPlaces, ref int routeBearing)
+        private static int ValidateDecision(ResidentMeal meal, FoodCommerceState food, FoodPlaceLookup foodPlaces, ref int routeBearing, int schema)
         {
             Text(meal.LastContextKey, "Decision context", 256, true);
             Require(meal.ContextAttempts >= 0 && meal.ContextAttempts <= FoodChoicePolicy.MaximumContextsPerMeal
@@ -1040,7 +1066,7 @@ namespace PersistentCity.Persistence
                 "Decision selection differs from its result.");
             Require((decision.Result == FoodDecisionResult.Outside) == (decision.Outside != FoodOutsideOption.None), "Decision alternative differs from its result.");
             // Also for a compact decision without its shortlist image.
-            Require(decision.ProductId.Length == 0 || FoodProducts.Known(decision.ProductId), "Unknown live product code.");
+            Require(decision.ProductId.Length == 0 || KnownMenuProduct(schema,decision.ProductId), "Unknown live product code.");
             Require(decision.Shops != null && decision.Shops.Count <= FoodChoicePolicy.MaximumShortlist, "Oversized decision shortlist.");
             Require(decision.QuotesDone >= 0 && decision.QuotesDone <= 2 * decision.Shops!.Count, "Invalid decision quote progress.");
             // Choosing follows every feasibility answer; an undecided image may stop at any slot.
@@ -1074,12 +1100,12 @@ namespace PersistentCity.Persistence
                 Require(shop.Hours != null && shop.Hours.Count <= MaxOpeningWindows, "Invalid decision opening evidence.");
                 foreach (var window in shop.Hours!) OpeningWindowRules(window);
                 records += shop.Hours.Count;
-                Require(shop.Offers != null && shop.Offers.Count <= Schema18MaximumOffersPerShop, "Oversized decision menu.");
+                Require(shop.Offers != null && shop.Offers.Count <= MenuLimit(schema), "Oversized decision menu.");
                 var products = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var offer in shop.Offers!)
                 {
                     Require(offer != null && products.Add(offer.ProductId), "Duplicate decision offer.");
-                    Require(FoodProducts.Known(offer!.ProductId), "Unknown live product code.");
+                    Require(KnownMenuProduct(schema,offer!.ProductId), "Unknown live product code.");
                     Require(offer.Price >= Money.Zero && offer.Price <= MaximumAllowance && offer.Units >= -1, "Invalid decision offer evidence.");
                     Require(offer.DistrictDemandPercent >= -1 && offer.DistrictDemandPercent <= 100
                         && (offer.DistrictDemandPercent == -1 || shop.DistrictId.Length > 0), "Invalid decision district evidence.");
@@ -1215,13 +1241,15 @@ namespace PersistentCity.Persistence
             public StateContractResolver(int schema = CityState.CurrentSchema) { this.schema = schema; }
             protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
             {
-                return base.CreateProperties(type, memberSerialization).Where(property => property.Writable && !(schema<20 && WeatherProperty(type,property.PropertyName))
-                    && !(type==typeof(FoodScope) && property.PropertyName=="AlternativeKind") && !(schema==18 &&
+                return base.CreateProperties(type, memberSerialization).Where(property => property.Writable
+                    && !(schema<20 && WeatherProperty(type,property.PropertyName))
+                    && !(type==typeof(FoodScope) && property.PropertyName=="AlternativeKind")
+                    && !(schema!=23 && type==typeof(CityState) && property.PropertyName=="MenuPolicy") && !(schema==18 &&
                     (type==typeof(FoodDecisionState) && property.PropertyName=="Awareness"
                      || type==typeof(FoodCommerceState) && property.PropertyName=="AwarenessStartsDay")))
                     // These two root headers let the native authority bootstrap stop before the graph.
                     // JSON object order is not a schema change; all old property orders still read.
-                    .OrderBy(property => type == typeof(CityState) ? property.PropertyName == "Schema" ? 0 : property.PropertyName == "Capabilities" ? 1 : 2 : 2)
+                    .OrderBy(property => type == typeof(CityState) ? property.PropertyName == "Schema" ? 0 : property.PropertyName == "Capabilities" ? 1 : property.PropertyName == "MenuPolicy" ? 2 : 3 : 3)
                     .ThenBy(property => property.PropertyName, StringComparer.Ordinal).Select(property =>
                 {
                     if (type == typeof(FoodDecisionState) && property.PropertyName == "Tuning"

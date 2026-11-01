@@ -1,4 +1,4 @@
-# Sync D2 with the E1/F1/A5/E3 integration head
+# Sync D2 with the E1/F1/A5/E3/E4 integration head
 
 Target: `codex/pc-d2-rival-outflow`. Merge this PR with a merge commit so its
 integration ancestry survives; PR #58 then squash-merges into
@@ -25,13 +25,66 @@ tools, checks and indices are retained unchanged. No Core/persistence/schema or
 D2/E1 integration code changes for this continuation. The complete gate is rerun,
 adding the new regression, three isolation guards and frozen reader baseline.
 
-D2 now builds on E1 schema 20. Its isolated `RivalWire21.Migrate` uses the frozen
+At the archived E3 acceptance, D2 builds on E1 schema 20. Its isolated `RivalWire21.Migrate` uses the frozen
 E1 reader (`PopulationSchema20*`), validates the source, preserves all captured
 weather, and adds the schema-21 rival watermark/account defaults. Older supported
 saves traverse E1's neutral next-day weather upgrade before 20 -> 21. Schema 22/23
-remain future/refused; no reserved number is reassigned.
+were future/refused at that source; no reserved number is reassigned.
 
-Runtime/Core scope: E1's incoming runtime capture/settings/physical queue code is
+That describes the archived E3/schema-21 acceptance. The following final fetch
+caught E4 `2bd9006`; the final tree now writes 23, with the chain
+20 -> 21 -> 23 and reserved/unmerged 22 refused. E4's documented predecessor
+hook advances to 21. D2's isolated migration still produces/validates 21 before
+E4 stamps its own header; a dedicated schema-21 resolver preserves its original
+tuple/history/tuning shape. The frozen 19/20 readers exclude E4's header and
+retain the original tuning width and three-product vocabulary. No number is
+reassigned, and no schema-22 shape is inferred.
+
+Runtime/Core changes for this E4 sync are limited to combining constructor and
+startup arguments (rival settings/warnings plus E4's native menu limit), both
+settings groups, E4's whole-menu admission guards plus D2's unknown-stock shortcut,
+and both final-offer values (rival alternative weight and E4 new-product taste).
+Rain weighting remains applied. Incoming E4 supply, native checkout, product
+policy and live-four limit are retained. No journey/settlement/catalogue policy
+is redesigned. Internal schema-specific write/count/activation helpers keep
+predecessor fixtures and the 20 -> 21 byte comparison exact.
+
+### E4 continuation conflicts (base `75c956c`)
+
+Both sides' changes against the merge base were inspected.
+
+| File | Resolution |
+| --- | --- |
+| `Core/FoodChoicePolicy.cs` | Keep both optional offer terms; rain and rival weights still compose with E4 taste. |
+| `Core/FoodWeightedCommerce.cs` | Keep whole-menu guards, conditional unknown-stock lookup, captured rival weight and E4 taste. |
+| `Core/Model.cs` | Current schema 23 and menu header; retain weather and D2 fields. |
+| `Persistence/SaveCodec.cs` | Frozen <=20 import -> isolated D2 21 -> isolated E4 23; dedicated strict 21 resolver; both validators retained. |
+| `README.md` | Both D2/E4 notices; current 23, supported predecessors 13-21. |
+| `Runtime/NativeFoodMarket.cs` | Constructor retains rival settings/warning and E4's clamped native menu limit. |
+| `Runtime/PersistentCityMod.cs` | Both constructor/startup argument groups at fresh/resume paths. |
+| `Runtime/PrototypeSettings.cs` | Both flat settings groups. |
+| `config/persistent-city.json` | Both defaults groups, all weather settings retained. |
+| `docs/roadmap.md` | Both perf index links; all incoming slice entries retained. |
+| `tests/A5IntegratedAcceptanceTests.cs` | Current migration result 23; source/money/read-only assertions unchanged. |
+| `tests/FoodAwarenessMemoryIntegrationTests.cs` | Genuine 18/19/20 writers plus E4's current-23 case; held capture assertions retained. |
+| `tests/MarketResearchTests.cs` | Current schema 23; exact byte-invariance check unchanged. |
+| `tests/Schema17Tests.cs` | Actual future 24/25/1000 refusals; reserved-22 refusal also covered by menu/D2 tests. |
+| `tests/Schema18ReviewTests.cs` | Current header 23; strict tuple coverage and unsupported header tests retained. |
+| `tests/Schema18Tests.cs` | D2 tuple revision 2 corruption probes plus schema-23 hex corruption. |
+| `tests/WeatherTests.cs` | Genuine frozen 19 writer; current 23 and actual future 24. |
+| `tools/awareness-regression/Program.cs` | Frozen 19 fixture; separate rival and weather/menu byte projections. |
+| `tools/market-research-regression/compare_save_baseline.py` | Current schema 23, identical exact-byte control. |
+| `tools/save-contract-regression/WeatherContracts.cs` | Genuine 20 source, exact weather delta and menu-header delta; all checks retained. |
+
+Additional integration fixtures use genuine old writers instead of relabelled
+current tuples; E4's predecessor matrix now includes 21, with unknown 22/24/25
+refusals. A held/paid rival migration test preserves weather, exact fields and
+single outflow across 21 -> 23. The E4 taste benchmark names its argument to
+avoid confusing it with D2's alternative weight. Capacity consumes the fixed menu
+header once from its existing reserve, without raising caps. The sequential gate
+adds E4 preparation, its regression and its exact default-economy comparison.
+
+Original E1/F1/A5/E3 Runtime/Core scope: E1's incoming runtime capture/settings/physical queue code is
 retained unchanged. The integration changes D2/E1 Core food scoring only to pass
 both independent weights: captured rain travel weighting and D2's rival weight
 apply in the bounded shortlist and final offer selection. `CurrentSchema` stays

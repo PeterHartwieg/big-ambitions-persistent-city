@@ -317,19 +317,44 @@ public sealed class RivalOutflowTests
         string source = schema==20 ? PopulationSchema20.Write(city.State) : PopulationSchema19.Write(city.State);
         var store = new Dictionary<string, string> { [SaveCodec.StateKey] = source };
         var read = SaveCodec.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(21, read.State!.Schema); Assert.Equal(schema, read.SourceSchema);
+        Assert.Equal(23, read.State!.Schema); Assert.Equal(schema, read.SourceSchema);
         Assert.Equal(schema==20 ? 1 : 2,read.State.WeatherStartsDay);
         Assert.Equal(weather,JsonConvert.SerializeObject(read.State.Citizens[0].W));
         Assert.Equal(schema==20 ? WeatherSample.Rain : WeatherSample.Unknown,read.State.Food!.Residents[0].Memory.Weather);
         Assert.Equal(2, read.State.Food!.RivalStartsDay); Assert.Equal(source, store[SaveCodec.StateKey]);
         string current = SaveCodec.Write(read.State); Assert.Equal(current, SaveCodec.Write(SaveCodec.Read(current).State!));
-        foreach (int futureSchema in new[] { 22, 23, 99 })
+        foreach (int futureSchema in new[] { 22, 24, 99 })
         { var json = JObject.Parse(source); json["Schema"] = futureSchema; Assert.NotEqual(SaveReadStatus.Loaded, SaveCodec.Read(json.ToString(Formatting.None)).Status); }
         var foreign = JObject.Parse(source); foreign["Food"]!["RivalStartsDay"] = 0;
         Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(foreign.ToString(Formatting.None)).Status);
         foreign = JObject.Parse(source); ((JArray)foreign["Food"]!["Residents"]![0]!).Add("");
         Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(foreign.ToString(Formatting.None)).Status);
         Assert.Equal(source, store[SaveCodec.StateKey]);
+    }
+    [Theory] [InlineData(false)] [InlineData(true)]
+    public void Schema21MenuMigrationPreservesHeldAndSettledRivalWeatherAndMoney(bool paid)
+    {
+        var (city, market, paths)=Ready();city.InspectFoodAwareness("r");
+        city.AttachWeather(new FrameWeatherSource(()=>1,()=>true));
+        double at=city.State.Food!.Residents.Single().DesiredAt;
+        if(paid) Advance(city,at+7);else city.AdvanceTo(at,1);
+        var meal=city.State.Food.Residents.Single();
+        if(paid) Assert.Equal(MealStatus.Paid,meal.Status);else Assert.NotNull(meal.Decision);
+        city.State.Schema=21;
+        string source=SaveCodec.WriteForSchema(city.State,21);
+        var read=SaveCodec.Read(source);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
+        Assert.Equal(21,read.SourceSchema);Assert.Equal(23,read.State!.Schema);
+        Assert.Equal(FoodMenuPolicy.Wire,read.State.MenuPolicy);
+        read.State.Schema=21;Assert.Equal(source,SaveCodec.WriteForSchema(read.State,21));
+        read.State.Schema=23;
+        var resumed=new CitySimulator(read.State,paths);
+        resumed.AttachWeather(new FrameWeatherSource(()=>2,()=>throw new Exception("Captured input must survive migration")),
+            new WeatherSettings {Enabled=false,RainTravelWeightMultiplier=2});
+        resumed.AttachFoodMarket(market,rivalSettings:new RivalFoodSettings {RivalChoiceWeight=0,RivalAssumedServiceMinutes=30});
+        Advance(resumed,at+7);
+        var after=resumed.State.Food!.Residents.Single();
+        Assert.Equal(1,after.Purchases);Assert.Equal(Money.FromCents(100),after.LegacyExternalFoodSpent);
+        Assert.Equal(0,market.NativeBuys);
     }
     [Fact]
     public void FlatSettingsClampOnceAndRetainExistingNumericConventions()

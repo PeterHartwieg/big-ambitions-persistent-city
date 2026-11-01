@@ -23,7 +23,7 @@ namespace PersistentCity.Persistence
             var state = old.State!;
             state.Schema = 21;
             if (state.Food != null) state.Food.RivalStartsDay = (int)(state.Minute / 1440) + 1;
-            SaveCodec.ValidateForActivation(state);
+            SaveCodec.ValidateForActivation(state,21);
             return new SaveReadResult(SaveReadStatus.Loaded, state, "", old.SourceSchema);
         }
         private static void Require(bool condition, string reason)

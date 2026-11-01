@@ -1,4 +1,4 @@
-"""Compare exact schema-21 UTF-8 fixture bytes with and without C4.
+"""Compare exact schema-23 UTF-8 fixture bytes with and without C4.
 
 No checkout/branch changes, game input, save installation or background commands.
 """
@@ -13,7 +13,7 @@ root = Path(__file__).resolve().parents[2]
 out = root / "build/c4/save-comparison"
 parser = argparse.ArgumentParser(__doc__)
 parser.add_argument("--baseline", default="HEAD",
-                    help="Current schema-21 source; C4 engine/access files are excluded from the export")
+                    help="Current schema-23 source; C4 engine/access files are excluded from the export")
 args = parser.parse_args()
 ref = subprocess.check_output(["git", "rev-parse", args.baseline], cwd=root, text=True).strip()
 baseline = out / "source" / ref
@@ -34,9 +34,9 @@ result = {"baseline": ref, "candidateCoreCommit": subprocess.check_output(["git"
 for name in ["population.json", "food.json"]:
     before = (out / "baseline" / name).read_bytes()
     after = (out / "candidate" / name).read_bytes()
-    assert json.loads(before)["Schema"] == json.loads(after)["Schema"] == 21, "Expected current population schema 21"
+    assert json.loads(before)["Schema"] == json.loads(after)["Schema"] == 23, "Expected current population schema 23"
     assert before == after, f"Changed saved bytes: {name}"
-    result["fixtures"].append({"fixture": name, "schema": 21, "baselineBytes": len(before), "candidateBytes": len(after), "delta": 0,
+    result["fixtures"].append({"fixture": name, "schema": 23, "baselineBytes": len(before), "candidateBytes": len(after), "delta": 0,
                                "identicalBytes": True, "sha256": hashlib.sha256(after).hexdigest()})
 json_text = json.dumps(result, indent=2) + "\n"
 (out / "result.json").write_text(json_text, encoding="utf-8")

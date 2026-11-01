@@ -258,7 +258,7 @@ public sealed class MarketResearchTests
         var c=JsonConvert.DeserializeObject<MarketResearchCursor>(JsonConvert.SerializeObject(job.Checkpoint()))!;
         job=new MarketResearchEngine(source,new MarketResearchScope(),MarketResearchTier.InDepth,c);
         while(job.Completed==null) job.Continue(source,16);
-        Assert.Equal(before,SaveCodec.Write(city)); Assert.Equal(21,CityState.CurrentSchema); Assert.Equal(21,city.Schema);
+        Assert.Equal(before,SaveCodec.Write(city)); Assert.Equal(23,CityState.CurrentSchema); Assert.Equal(23,city.Schema);
     }
 
     [Fact]

@@ -8,11 +8,12 @@ namespace PersistentCity.Core
     public readonly struct EvaluatedFoodOffer
     {
         public EvaluatedFoodOffer(string business, string product, Money price, double travel, double queue,
-            double usedTime, double window, int? quality, int? demand, MealKind kind, double memoryContribution = 0, double alternativeWeight = 1)
-        { AlternativeWeight=alternativeWeight; MemoryContribution=memoryContribution; BusinessId=business; ProductId=product; Price=price; Travel=travel; Queue=queue; UsedTime=usedTime;
+            double usedTime, double window, int? quality, int? demand, MealKind kind, double memoryContribution = 0, double alternativeWeight = 1, int newTasteBand = -1)
+        { NewTasteBand=newTasteBand; AlternativeWeight=alternativeWeight; MemoryContribution=memoryContribution; BusinessId=business; ProductId=product; Price=price; Travel=travel; Queue=queue; UsedTime=usedTime;
           Window=window; Quality=quality; Demand=demand; Kind=kind; }
         public double MemoryContribution { get; }
         public double AlternativeWeight { get; }
+        public int NewTasteBand { get; }
         public string BusinessId { get; }
         public string ProductId { get; }
         public Money Price { get; }
@@ -79,15 +80,17 @@ namespace PersistentCity.Core
                 return shortlist ? Positive(w,floor,temperature) : w;
             }
         }
-        public static int Taste(ResidentTraits t,string product) => t.Band(product==FoodProducts.Croissant ? ResidentTrait.CroissantTaste
-            : product==FoodProducts.Burger ? ResidentTrait.BurgerTaste : ResidentTrait.HotDogTaste);
+        public static int Taste(ResidentTraits t,string product) => product==FoodProducts.Croissant ? t.Band(ResidentTrait.CroissantTaste)
+            : product==FoodProducts.Burger ? t.Band(ResidentTrait.BurgerTaste) : product==FoodProducts.HotDog ? t.Band(ResidentTrait.HotDogTaste) : ResidentTraits.Neutral;
+        private static int OfferTaste(EvaluatedFoodOffer offer,ResidentTraits traits) => offer.NewTasteBand<0 ? Taste(traits,offer.ProductId) : offer.NewTasteBand;
 
         // Bounded rational signals; unknown quality/demand are neutral. Health, loyalty and brand have no signal.
         // Meal suitability retains the verified MealRhythm table, scaled by the taste coefficient.
         public static double Weight(EvaluatedFoodOffer o, ResidentTraits t, Money allowance, FoodChoiceSettings s,double weatherTravelMultiplier=1)
         {
-            double taste=TasteRatios[Taste(t,o.ProductId)];
-            double w=s.FoodChoiceTasteWeight==1 ? taste : Math.Pow(taste,s.FoodChoiceTasteWeight);
+            double taste=TasteRatios[OfferTaste(o,t)];
+            double tasteWeight=o.NewTasteBand<0 ? s.FoodChoiceTasteWeight : s.FoodMenuNewTasteWeight;
+            double w=tasteWeight==1 ? taste : Math.Pow(taste,tasteWeight);
             w/=1+s.FoodChoicePriceWeight*(.5+.25*t.Band(ResidentTrait.PriceSensitivity))
                 *o.Price.ApproximateCents()/Math.Max(1,allowance.ApproximateCents());
             w*=DistanceWeight(o.Travel,t,s,false,weatherTravelMultiplier);
@@ -130,7 +133,7 @@ namespace PersistentCity.Core
             if(selected<0) return new FoodPolicyResult(-1,fundedHousehold,fundedHousehold ? MealReasonCode.PrefersAlternative : MealReasonCode.NoFeasibleOffer,
                 fundedHousehold ? MealFactor.Household : MealFactor.None);
             var chosen=offers[selected];
-            MealFactor first=Taste(traits,chosen.ProductId)>2 && settings.FoodChoiceTasteWeight>0 ? MealFactor.Taste : MealFactor.None;
+            MealFactor first=OfferTaste(chosen,traits)>2 && (chosen.NewTasteBand<0 ? settings.FoodChoiceTasteWeight : settings.FoodMenuNewTasteWeight)>0 ? MealFactor.Taste : MealFactor.None;
             MealFactor second=chosen.Quality>50 && traits.Band(ResidentTrait.QualityOrientation)>2 && settings.FoodChoiceQualityWeight>0 ? MealFactor.Quality : MealFactor.None;
             if(first==MealFactor.None) {first=second;second=MealFactor.None;}
             return new FoodPolicyResult(selected,false,MealReasonCode.Bought,first,second);

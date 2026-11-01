@@ -174,6 +174,16 @@ namespace PersistentCity.Core
                 var scope=scopes[scopeIndex];
                 var b=scope.AlternativeKind==FoodAlternativeKind.Rival ? CaptureRival(scope.BusinessId,now) : market is IFoodCandidateMarket capture ? capture.CaptureBusiness(scope.BusinessId,now) : ReadBusiness(scope.BusinessId,now);
                 if(b==null || b.Id!=scope.BusinessId || b.PlaceId!=scope.PlaceId) continue; // no refill or replacement identity
+                // A smaller configured menu cannot silently discard offers or steal native demand.
+                // Held images retain their captured tuning. The native owner reconciles at its boundary.
+                int scopedOffers=scope.AdditionalProductIds.Count+1;
+                if(scopedOffers>d.Tuning.Settings.FoodMenuMaximumOffersPerShop || b.Offers.Count>FoodMenuPolicy.MaximumOffers) continue;
+                // The catalogue has always omitted scoped products without saved retail prices.
+                // Preserve that priced subset; never invent a price or trim a scope to fit a limit.
+                bool supportedMenu=b.Offers.Count<=scopedOffers;
+                foreach(var offer in b.Offers)
+                    if(!FoodProducts.Known(offer.ProductId) || !scope.ContainsProduct(offer.ProductId)) supportedMenu=false;
+                if(!supportedMenu) continue; // unsupported or out-of-scope offers reject the whole shop
                 // Market inputs belong to the provider: capture before subtracting reservations.
                 var shop=new FoodDecisionShop {AlternativeKind=b.AlternativeKind,RivalTerms=b.RivalTerms,RivalServiceMinutes=b.RivalServiceMinutes,AlternativeWeight=b.AlternativeKind==FoodAlternativeKind.Rival ? RivalSettings.RivalChoiceWeight : 1,MemoryContribution=contributions[scopeIndex],BusinessId=b.Id,PlaceId=b.PlaceId,MealsPerHour=b.MealsPerHour ?? -1,
                     NextServiceAt=Math.Max(now,scope.NextServiceAt),ServiceUnavailable=b.ServiceUnavailableReason.Length>0,
@@ -181,11 +191,11 @@ namespace PersistentCity.Core
                     Hours=b.Hours.Select(h=>new OpeningWindow {Day=h.Day,FromMinute=h.FromMinute,ToMinute=h.ToMinute}).ToList()};
                 foreach(var offer in b.Offers)
                 {
-                    if(!FoodProducts.Known(offer.ProductId) || !scope.ContainsProduct(offer.ProductId)) continue;
                     int held=0;
                     if(offer.Units.HasValue) reservations.TryGetValue(ReservationKey(b.PlaceId,offer.ProductId),out held);
+                    int units=offer.Units.HasValue ? Math.Max(0,offer.Units.Value-held) : -1;
                     shop.Offers.Add(new FoodDecisionOffer {ProductId=offer.ProductId,Price=offer.Price,
-                        Units=offer.Units.HasValue ? Math.Max(0,offer.Units.Value-held) : -1,DistrictDemandPercent=offer.DistrictDemandPercent ?? -1});
+                        Units=units,DistrictDemandPercent=offer.DistrictDemandPercent ?? -1});
                 }
                 d.Shops.Add(shop);
             }
@@ -311,7 +321,8 @@ namespace PersistentCity.Core
                 double queue=Math.Max(0,b.NextServiceMinute-c.AdmissionMinute!.Value);
                 evaluated.Add(new EvaluatedFoodOffer(c.BusinessId,c.ProductId,c.Price,c.TravelMinutes!.Value,queue,
                     c.ServiceEndsAt!.Value-d.OriginAt+c.ReturnMinutes!.Value+intent.EatingMinutes,d.Deadline-d.OriginAt,
-                    c.CustomerServicePercent,c.DistrictDemandPercent,meal.Kind,d.Shops.First(s=>s.BusinessId==c.BusinessId).MemoryContribution,d.Shops.First(s=>s.BusinessId==c.BusinessId).AlternativeWeight));
+                    c.CustomerServicePercent,c.DistrictDemandPercent,meal.Kind,d.Shops.First(s=>s.BusinessId==c.BusinessId).MemoryContribution,d.Shops.First(s=>s.BusinessId==c.BusinessId).AlternativeWeight,
+                    FoodMenuPolicy.Code(c.ProductId)>3 ? FoodMenuPolicy.Taste(city.State.Seed,meal.ResidentId,FoodMenuPolicy.Code(c.ProductId)) : -1));
             }
             long choiceStarted=city.ObservingFood ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             var pick=FoodChoicePolicy.Select(evaluated,Traits(meal,person),AvailableForMeal(meal),Draw(meal,d),d.Tuning.Settings,intent.OutsideOption!=FoodOutsideOption.None,d.WeatherTravelMultiplier);

@@ -53,7 +53,7 @@ namespace PersistentCity.Runtime
             if(!candidateBusinesses.Contains(scope.BusinessId) || !shopControllers.TryGetValue(scope.PlaceId,out var controller)) return false;
             var reg=controller.buildingRegistration;
             if(reg==null || !registrations.TryGetValue(scope.PlaceId,out var observed) || !ReferenceEquals(reg,observed)
-                || !Supported(reg) || !GamePlaces.BuildingAccessible(controller)) return false;
+                || !SupportedMenu(reg) || !GamePlaces.BuildingAccessible(controller)) return false;
             var authority=NativeFoodOwnership.Find(reg);
             return authority?.BusinessId==scope.BusinessId && authority.CanServe;
         }
@@ -101,7 +101,7 @@ namespace PersistentCity.Runtime
                 if (!routinePlaces.ContainsKey(place)) {WithdrawAddress(place);continue;}
                 if (!reg.RentedByPlayer && !registrations.ContainsKey(place)) continue;
                 registrations[place] = reg; shopControllers[place] = controller;
-                var authority = NativeFoodOwnership.Observe(reg, Supported(reg) && GamePlaces.BuildingAccessible(controller));
+                var authority = NativeFoodOwnership.Observe(reg, SupportedMenu(reg) && GamePlaces.BuildingAccessible(controller));
                 if (authority.CanServe) { ActivateScope(authority, reg); Candidate(authority.BusinessId,true); }
                 else Candidate(authority.BusinessId,false);
             }
@@ -139,14 +139,14 @@ namespace PersistentCity.Runtime
                     NativeFoodOwnership.Retire(pair.Key);registrations.Remove(pair.Key);continue;
                 }
                 registrations[pair.Key] = reg;
-                var authority = NativeFoodOwnership.Observe(reg, Supported(reg) && GamePlaces.BuildingAccessible(pair.Value));
+                var authority = NativeFoodOwnership.Observe(reg, SupportedMenu(reg) && GamePlaces.BuildingAccessible(pair.Value));
                 if (authority.CanServe) { ActivateScope(authority, reg); Candidate(authority.BusinessId,true); }
                 else Candidate(authority.BusinessId,false);
             }
         }
         internal void ActivateScope(FoodAuthority authority, BuildingRegistration reg)
         {
-            if (!authority.CanServe || !Supported(reg)) {Candidate(authority.BusinessId,false);return;}
+            if (!authority.CanServe || !SupportedMenu(reg)) {Candidate(authority.BusinessId,false);return;}
             // This adapter owns the live list; scopes persist in place when a business/menu changes.
             if(!ReferenceEquals(scopeList,state.Shops) || indexedScopeCount!=state.Shops.Count)
             {

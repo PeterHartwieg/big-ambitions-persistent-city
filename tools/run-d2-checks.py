@@ -21,7 +21,8 @@ projects = ['core-identity', 'diagnostic-response', 'event-observation', 'food-c
             'road-invalidation', 'road-speed', 'route-discovery', 'save-contract', 'startup-clock',
             'traffic-closure', 'traffic-queue', 'walking-quote', 'campaign-reader',
             'awareness', 'food-candidate', 'rival-outflow']
-steps = [('build', [sys.executable, 'tools/build.py', '--game-managed',
+steps = [('e4-prepare', [sys.executable, 'tools/e4-menu-regression/prepare.py']),
+         ('build', [sys.executable, 'tools/build.py', '--game-managed',
                    r'C:\Program Files (x86)\Steam\steamapps\common\Big Ambitions\Big Ambitions_Data\Managed'])]
 steps += [('test', [dotnet, 'test', 'tests/PersistentCity.Tests.csproj']),
           ('list-tests', [dotnet, 'test', 'tests/PersistentCity.Tests.csproj', '--no-build', '--list-tests'])]
@@ -52,6 +53,7 @@ for name, project, arguments in [
 ]:
     steps.append((name, [dotnet, 'run', '--project', 'tools/' + project + '.csproj', '--configuration', 'Release', '--'] + arguments))
 steps.append(('c4-save-comparison', [sys.executable, 'tools/market-research-regression/compare_save_baseline.py', '--baseline', 'HEAD']))
+steps.append(('e4-default-comparison', [sys.executable, 'tools/e4-menu-regression/compare-default.py']))
 for name in ['donut', 'salad', 'icecream']:
     steps.append((name + '-isolation', [sys.executable, 'tools/' + name + '-feasibility-regression/source_checks.py']))
 steps.append(('icecream-baseline', [sys.executable, 'tools/icecream-feasibility-regression/measure_baseline.py']))
@@ -61,7 +63,7 @@ for name, command in steps:
     if selected and name not in selected:
         continue
     # Python regression harnesses also invoke dotnet run internally.
-    if name != 'build' and name not in {'donut-isolation', 'salad-isolation', 'icecream-isolation'}:
+    if name not in {'build', 'e4-prepare', 'donut-isolation', 'salad-isolation', 'icecream-isolation'}:
         if subprocess.run(wait, cwd=root).returncode != 0:
             raise SystemExit('Other-dotnet wait refused; no dependent test/run was started.')
     started = datetime.datetime.now(datetime.timezone.utc).isoformat()

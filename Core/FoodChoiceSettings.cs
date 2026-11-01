@@ -5,6 +5,9 @@ namespace PersistentCity.Core
     /// <summary>Clamped once at configuration load. Absent keys retain defaults; no tunable enters a draw key.</summary>
     public sealed class FoodChoiceSettings
     {
+        public int FoodMenuMaximumOffersPerShop { get; set; }=4;
+        public double FoodMenuNewTasteWeight { get; set; }=1;
+        public double FoodMenuHealthWeight { get; set; }
         public double FoodChoiceTemperature { get; set; }=1;
         public double FoodChoiceWeightFloor { get; set; }=.02;
         public double FoodChoiceTasteWeight { get; set; }=1;
@@ -22,6 +25,9 @@ namespace PersistentCity.Core
 
         public void Clamp(Action<string>? log=null)
         {
+            int limit=FoodMenuMaximumOffersPerShop==int.MinValue ? 4 : Math.Max(1,Math.Min(FoodMenuPolicy.MaximumOffers,FoodMenuMaximumOffersPerShop));
+            if(limit!=FoodMenuMaximumOffersPerShop) log?.Invoke("FoodMenuMaximumOffersPerShop clamped to "+limit);
+            FoodMenuMaximumOffersPerShop=limit;
             double C(double v,double min,double max,double fallback,string key)
             {
                 double c=double.IsNaN(v) ? fallback : Math.Max(min,Math.Min(max,v));
@@ -29,6 +35,8 @@ namespace PersistentCity.Core
                 return c;
             }
             FoodChoiceTemperature=C(FoodChoiceTemperature,.25,4,1,nameof(FoodChoiceTemperature));
+            FoodMenuNewTasteWeight=C(FoodMenuNewTasteWeight,0,2,1,nameof(FoodMenuNewTasteWeight));
+            FoodMenuHealthWeight=C(FoodMenuHealthWeight,0,2,0,nameof(FoodMenuHealthWeight));
             FoodChoiceWeightFloor=C(FoodChoiceWeightFloor,.001,.25,.02,nameof(FoodChoiceWeightFloor));
             FoodChoiceTasteWeight=C(FoodChoiceTasteWeight,0,3,1,nameof(FoodChoiceTasteWeight));
             FoodChoicePriceWeight=C(FoodChoicePriceWeight,0,3,1,nameof(FoodChoicePriceWeight));
