@@ -8,9 +8,10 @@ namespace PersistentCity.Core
     public readonly struct EvaluatedFoodOffer
     {
         public EvaluatedFoodOffer(string business, string product, Money price, double travel, double queue,
-            double usedTime, double window, int? quality, int? demand, MealKind kind)
-        { BusinessId=business; ProductId=product; Price=price; Travel=travel; Queue=queue; UsedTime=usedTime;
+            double usedTime, double window, int? quality, int? demand, MealKind kind, double memoryContribution = 0)
+        { MemoryContribution=memoryContribution; BusinessId=business; ProductId=product; Price=price; Travel=travel; Queue=queue; UsedTime=usedTime;
           Window=window; Quality=quality; Demand=demand; Kind=kind; }
+        public double MemoryContribution { get; }
         public string BusinessId { get; }
         public string ProductId { get; }
         public Money Price { get; }
@@ -95,10 +96,12 @@ namespace PersistentCity.Core
             w*=Math.Max(.25,1+s.FoodChoiceQualityWeight*t.Band(ResidentTrait.QualityOrientation)/4.0*quality);
             w/=1+s.FoodChoiceTimePressureWeight*(.5+.25*t.Band(ResidentTrait.TimePressure))*o.UsedTime/Math.Max(1,o.Window);
             w/=1+s.FoodChoiceTasteWeight*MealRhythm.ProductPenalty(o.Kind,o.ProductId)/200.0;
-            return Positive(w,s.FoodChoiceWeightFloor,s.FoodChoiceTemperature);
+            return ApplyMemory(Positive(w,s.FoodChoiceWeightFloor,s.FoodChoiceTemperature), o.MemoryContribution, s.FoodChoiceWeightFloor);
         }
         public static double DistanceWeight(double minutes,ResidentTraits t,FoodChoiceSettings s,bool shortlist)
             => new DistancePreference(t,s).Weight(minutes,shortlist);
+        internal static double ApplyMemory(double weight, double contribution, double floor)
+            => Math.Max(floor, Math.Min(64, weight * Math.Exp(contribution)));
         private static double Positive(double w,double floor,double temperature)
         {
             if(!Position.Finite(w)) w=floor;

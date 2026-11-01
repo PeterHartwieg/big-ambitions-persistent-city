@@ -18,7 +18,7 @@ namespace PersistentCity.Runtime
 {
     /// <summary>Automatic whole-business food authority. Saves use the same native snapshot
     /// as population/meal records. Native code owns inventory, orders and daily accounting.</summary>
-    public sealed partial class NativeFoodMarket : IFoodMarket, IFoodSaleEvidence, IFoodBusinessAuthority, ILocalFoodMarket, IFoodCandidateMarket, IDisposable
+    public sealed partial class NativeFoodMarket : IFoodMarket, IFoodSaleEvidence, IFoodBusinessAuthority, ILocalFoodMarket, IFoodCandidateMarket, IFoodFailureMarket, IDisposable
     {
         public const string Product = "ba:itemname_croissant";
         private const string PatchId = "persistentcity.food-routines";
@@ -158,6 +158,8 @@ namespace PersistentCity.Runtime
             scopesByBusiness.TryGetValue(businessId,out var scope);
             return scope == null ? null : ReadSelected(minute, new[] { scope.PlaceId }).SingleOrDefault(b => b.Id == businessId);
         }
+        public FoodBusiness? ReadFailureBusiness(string businessId, string placeId, double minute)
+            => ReadSelected(minute, new[] { placeId }, capture: true).SingleOrDefault(b => b.Id == businessId && b.PlaceId == placeId);
         public IReadOnlyList<FoodBusiness> ReadLocal(Place origin, double minute, double walkingToleranceMetres, int maximumCandidates)
         {
             if (maximumCandidates < 1 || maximumCandidates > 8 || !Position.Finite(walkingToleranceMetres) || walkingToleranceMetres < 0)
@@ -260,12 +262,18 @@ namespace PersistentCity.Runtime
             string exclusion = ScopeStatus(meal.PlaceId);
             if (exclusion.Length > 0) return new FoodSale(false, exclusion);
             if (offer != null && offer.Price != meal.Price) return new FoodSale(false, "Approved price changed");
+            var reg = registrations[meal.PlaceId];
+            if (!BusinessHelper.IsBusinessOpen(reg)) return new FoodSale(false, "Shop closed before service", ShopExperience.Closed);
+            // A zero sellable-unit count can also mean no staffed counter. Name stockout only
+            // when this same live read proves empty product stock or empty bags at a staffed counter.
+            if (offer != null && offer.Units == 0 && observed.TryGetValue(meal.PlaceId, out var liveSupply)
+                && liveSupply.Supply.TryGetValue(meal.ProductId, out var supply) && supply.Units == 0
+                && (supply.ProducerUnits == 0 || supply.StaffedCounters > 0 && supply.BagUnits == 0))
+                return new FoodSale(false, "Confirmed stockout before service", ShopExperience.Stockout);
             if (offer == null || !offer.Units.HasValue || offer.Units <= 0 || !business!.MealsPerHour.HasValue || business.MealsPerHour <= 0
                 || offer.Price != meal.Price || meal.Price > meal.Allowance
                 || meal.ServiceMinutes + 1e-7 < 60.0 / business.MealsPerHour.Value)
                 return new FoodSale(false, "Stock or staffing changed");
-            var reg = registrations[meal.PlaceId];
-            if (!BusinessHelper.IsBusinessOpen(reg)) return new FoodSale(false, "Shop closed before service");
             var scope = state.Shops.Single(s => s.PlaceId == meal.PlaceId);
             var products = scope.Products().ToArray();
             // The pre-sale image is the supply ReadSelected read above, in this same call, for this registration and

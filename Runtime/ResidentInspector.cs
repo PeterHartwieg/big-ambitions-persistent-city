@@ -265,7 +265,7 @@ namespace PersistentCity.Runtime
                         }
                     }
                 }
-                if (selectedId != null && Time.unscaledTime >= nextRefresh) Refresh(simulation);
+                if (visible && selectedId != null && Time.unscaledTime >= nextRefresh) Refresh(simulation);
                 updatedFrame = Time.frameCount;
             }
             finally
@@ -275,11 +275,14 @@ namespace PersistentCity.Runtime
             }
         }
 
+        internal string PopupText => selectedId == null ? "" : body;
+        internal Func<string, string?>? ShopName { get; set; }
+        internal Func<FoodScope, bool>? CurrentOwnShop { get; set; }
         private void Refresh(CitySimulator simulation)
         {
             long started = Stopwatch.GetTimestamp();
             nextRefresh = Time.unscaledTime + RefreshSeconds;
-            insight = simulation.Inspect(selectedId!, null, LocalizedStreet);
+            insight = simulation.Inspect(selectedId!, null, FormattedAddress, ShopName, CurrentOwnShop);
             if (insight == null) { body = "This resident has left the city."; personality = homeLabel = workLabel = ""; header = "Resident"; }
             else
             {
@@ -405,12 +408,10 @@ namespace PersistentCity.Runtime
             GUILayout.EndHorizontal();
         }
 
-        // Native street names are localization keys ("ba:street_..."); display the game's own text.
-        private static readonly Func<string, string> LocalizedStreet = key =>
-        {
-            try { return Localizor.LocalizorManager.Localize(key, (object?)null).ToString() ?? key; }
-            catch (Exception) { return key; }
-        };
+        // Same formatter as BizManBuildingInfo.ShowInfo: StreetData lookup, not Localizor keys.
+        // Called only by the popup build/refresh above. Core guards missing data and exceptions.
+        private static readonly Func<string, int, string> FormattedAddress = (street, number) =>
+            Streets.AddressHelper.ToFormattedString(new Address(street, number));
 
         private static double Milliseconds(long ticks) => ticks * 1000.0 / Stopwatch.Frequency;
         private static object Modes(long[] ticks, long[] calls, long[] max) => new

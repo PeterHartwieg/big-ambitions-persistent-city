@@ -136,7 +136,7 @@ public sealed partial class FoodCommerceTests
     [InlineData("memory-null")] [InlineData("memory-extra")] [InlineData("memory-alphabet")] [InlineData("memory-day")]
     [InlineData("memory-ref")] [InlineData("memory-affinity")] [InlineData("memory-outcome")] [InlineData("memory-watermark")]
     [InlineData("table-extra")] [InlineData("table-place")] [InlineData("table-duplicate")] [InlineData("table-reused")]
-    [InlineData("capability")] [InlineData("revision")] [InlineData("active")] [InlineData("unknown")]
+    [InlineData("capability")] [InlineData("revision")] [InlineData("unknown")]
     [InlineData("visit-length")] [InlineData("visit-alphabet")] [InlineData("visit-nonfinite")] [InlineData("visit-place")] [InlineData("visit-activity")]
     public void B0_BadTokensSlotsReferencesAndCapabilitiesRefuseAndPreserve(string damage)
     {
@@ -183,13 +183,15 @@ public sealed partial class FoodCommerceTests
     }
 
     [Fact]
-    public void B0_ActiveCapabilityIsBlockedAtEarlyBootstrapAndSimulationConstruction()
+    public void B1_ActiveCapabilityExecutesAtEarlyBootstrapAndSimulationConstruction()
     {
-        var (city, _) = S17_Full(); string supported = SaveCodec.Write(city.State);
-        SaveCodec.RequireExecutableCapabilities(supported);
-        string active = supported.Replace("\"Active\":false", "\"Active\":true");
-        Assert.Throws<SaveValidationException>(() => SaveCodec.RequireExecutableCapabilities(active)); B0_Preserve(active, city.State);
+        var (city, _) = S17_Full();
         city.State.Capabilities.Active = true;
+        string active = SaveCodec.Write(city.State);
+        SaveCodec.RequireExecutableCapabilities(active);
+        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(active).Status);
+        _ = new CitySimulator(city.State, new Walking());
+        city.State.Capabilities.Revision = 2;
         Assert.Throws<InvalidOperationException>(() => new CitySimulator(city.State, new Walking()));
         Assert.Throws<SaveValidationException>(() => SaveCodec.Write(city.State));
     }
@@ -229,7 +231,7 @@ public sealed partial class FoodCommerceTests
         var food = new FoodCommerceState { Shops = { new FoodScope { BusinessId = "own" } }, BusinessReferences = {
             new BusinessReference { Slot = 0, BusinessId = "own" }, new BusinessReference { Slot = 1, BusinessId = "rival" } } };
         foreach (var (served, affinity, day) in new[] { (3, 1, 6), (2, 1, 20), (35, 0, 20), (3, -1, 20), (3, 1, 5), (3, 1, 20) })
-            food.Residents.Add(new ResidentMeal { Memory = new ConsumerMemory { Entries = { new ShopMemory { BusinessRef = 0, Served = served, Affinity = affinity, Day = day } } } });
+            food.Residents.Add(new ResidentMeal { ResidentId = "r" + food.Residents.Count, Memory = new ConsumerMemory { Entries = { new ShopMemory { BusinessRef = 0, Served = served, Affinity = affinity, Day = day } } } });
         int calls = 0;
         var index = new RegularsProjection(food, 20, (m, d) => { calls++; return m.Affinity; });
         Assert.Equal(0, calls); Assert.Equal(0, index.CountOwnShop("rival")); Assert.Equal(0, calls);
