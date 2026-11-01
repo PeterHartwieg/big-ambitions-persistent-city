@@ -1,12 +1,12 @@
 # D4: optional modeled rival-experience memory
 
-**MERGE BLOCKED — native proof pending (Sol-r1-1).** Before merge, the authorized
-combined `rig_test` session (Codex Sol, high) must attach verifiable before/red
-and after/green evidence to PR #73 for native memory replay, rival nonmutation
-and combined performance. Evidence must include mod-work p50/p95/max, p95 <5 ms,
-every spike >=30 ms with count/condition/component, and whole-frame timing/stalls
-tracked separately. Offline checks and microbenchmarks do not clear this block.
-This review-fix run performs no rig work.
+Native acceptance checks are deferred to the next batched combined rig / Peter's
+playtest per merge rule v2, are recorded in `rig-2026-11-06-checklist.md`, and do
+not gate merge. Pending evidence still includes native memory replay, rival
+nonmutation, mod-work p50/p95/max (p95 <5 ms), every spike >=30 ms with
+count/condition/component, and separate whole-frame timing/stalls. Offline
+checks and microbenchmarks do not establish native acceptance. No rig work was
+performed in this integration task.
 
 ## 1 November 2026 — offline implementation
 
@@ -20,17 +20,22 @@ keeps entries and watermark empty. No D2/D3a prerequisite is added.
 
 Rival choice captures B1's existing contribution before shortlisting and holds
 that scalar across reload/tuning edits, just as player choices do. The current
-rival validator permits that already bounded scalar in current schema 23;
-schema-21/22 source validation retains its neutral-only rival rule. Tests exercise
+rival validator permits that already bounded scalar in current schema 24;
+schema-21/22/23 source validation retains its neutral-only rival rule. Tests exercise
 those genuine predecessor writers and refusal paths, plus finite endpoints and
-nonfinite/out-of-range refusal at 23. The malformed-scalar test now uses 9 rather
+nonfinite/out-of-range refusal at 24. The malformed-scalar test now uses 9 rather
 than valid 1.
-Pre-D4 schema-23 binaries (including the base and uncomposed D3a sibling) refuse
-D4-written saves holding a nonzero rival `MemoryContribution`, so shared dev/rig
-fixtures must be created and read on the combined head (Opus-r1-1).
-No new DTO, tuple slot, collection, ledger, schema, migration, capability revision,
-route request, native rival write or outcome history. Writer stays **23** and the
-18 -> 19 -> 20 -> 21 -> 22 -> 23 chain is unchanged. Frozen 13-20 readers are untouched; 21/22 retain their prior scalar gate.
+Pre-D4 binaries, including the uncomposed D3a writer, refuse D4-written saves
+holding a nonzero rival `MemoryContribution`, so shared dev/rig fixtures must be
+created and read on the combined head (Opus-r1-1).
+D4 adds no DTO, tuple slot, collection, ledger, schema, migration, capability
+revision, route request, native rival write or outcome history. The merged
+writer is **24**, owned by D3a's outflow shape; the complete chain remains
+18 -> 19 -> 20 -> 21 -> 22 -> 23 -> 24. Frozen 13-20 readers are untouched;
+21/22/23 retain their original neutral-only rival scalar gate. D4's unmerged
+semantic widening is re-anchored on 24, not backported into genuine sources.
+The save contracts allocate numbers for new shapes and require exact predecessor
+validation; this existing finite [-8,8] slot adds no shape requiring schema 25.
 
 Known advertised closure is the only rival failure cause: no native stockout or
 queue is invented. Missing/unreadable reads, ownership/generation/place changes,
@@ -62,7 +67,7 @@ from advertised hours, household declines, neutral refusals, old commitments,
 identical full snapshots under budgets 1/128, captured nonzero contributions,
 mixed eviction/decay, late replay, protected insertion and honest words.
 
-Final source **`eee4dff`** passes **59/59 foreground acceptance commands**:
+Historical pre-sync source **`eee4dff`** passed **59/59 foreground acceptance commands**:
 Steam-reference build, **2,540/2,540 unit tests** (zero failed/skipped), **2,540
 discovered cases**, all **44 root regression projects**, four Python adapters,
 three demos and all five product-reader isolation guards. E4's existing frozen
@@ -93,7 +98,7 @@ The empty lookup has no retained entries; the active lookup includes generation
 index lookup and the four-entry policy. Measurements are synthetic .NET 10,
 separate from native mod-work and whole-frame timing.
 
-Final warmed results (milliseconds per call):
+Historical pre-sync warmed results at `eee4dff` (milliseconds per call):
 
 | Operation | p50 | p95 | Max | Allocation |
 | --- | ---: | ---: | ---: | ---: |
@@ -102,7 +107,7 @@ Final warmed results (milliseconds per call):
 | Mixed four-entry repeat update | 0.0002 | 0.0002 | 0.0058 | 0 B |
 
 No D4 micro-sample is >=30 ms. Timer resolution and shared-host/JIT noise limit
-interpretation at this scale. Saturated fixture bytes are **2,422 / 2,422** for
+interpretation at this scale. Historical pre-sync saturated fixture bytes were **2,422 / 2,422** for
 neutral/active contributors and **2,422** for the all-own equal-width-ID control;
 streaming/semantic records are **7/7** in every arm. Four retained entries and
 four shared references stay fixed through 12,000 repeat updates.
@@ -185,9 +190,10 @@ read through Git; no UI capability or fixture mutation helper is presumed.
 
 ## 1 November 2026 - round-one review follow-up (offline only)
 
-Sol-r1-1: the explicit merge block above remains in force until the authorized
-combined native session attaches the required before/red and after/green proof.
-Opus-r1-1: the schema-23 compatibility note requires shared fixtures to be created
+Sol-r1-1: native acceptance is deferred to the next batched combined rig /
+Peter's playtest per merge rule v2, recorded in `rig-2026-11-06-checklist.md`,
+and does not gate merge. The before/red and after/green proof remains pending.
+Opus-r1-1: the fixture compatibility note requires shared fixtures to be created
 and read on the combined head. Neither change alters code, schemas or downgrade
 behavior; no native evidence is claimed and no rig work was performed.
 
@@ -203,3 +209,65 @@ Fresh offline aggregate flags: 20k whole-catalogue awareness construction has
 **two dense samples >=30 ms, max 34.4564 ms**, and **one sparse sample >=30 ms,
 max 30.9823 ms**. These are whole catalogue builds, not native mod-work frames;
 they do not replace the historical measurements or satisfy the native gate.
+
+
+## 1 November 2026 - D4/D3a base sync (offline)
+
+Two-parent merge `d6f883f` retains D4 `1be75e5` and D3a `fb958ae`.
+Schema 24 remains D3a's writer; D4 widens only its existing bounded scalar.
+Genuine 21/22/23 remain neutral-only, including refusal without replacing the
+source; every predecessor migration and future-schema refusal remain intact.
+The paired source audit retains all checks/performance index entries and D4's
+numbered in-game checks, including those in the PR description. D3a history,
+wire, UI, tests and regression runner are retained unchanged. The only Core
+combination is D4's memory outcomes around D3a's history-aware payment call.
+No other runtime/Core behavior changes were needed.
+
+First merged foreground matrix on source `503b57b`: **57/57 commands passed**,
+including Steam-reference build, **2,556/2,556 unit cases** (no failures/skips),
+**2,494 listed test entries** (theory discovery and executed cases differ), all
+**45 root regression projects**, four Python adapters, three demos and the
+specified source guards. There are now **28 D4 cases**, including schema 23's
+original neutral-only rule and combined three-consumer memory/outflow replay.
+The D3a/D2 wrapper receipts and complete command/log hashes are recorded in
+[the sync manifest](../reviews/2026-11-01-d4-sync-base-results.json).
+
+The first merged D4 fixture is **2,446 B / 8 streaming / 8 semantic records**
+for all three equal-width-ID controls, versus historical **2,422 B / 7 / 7**.
+The **+24 B / +1 record** is D3a's empty `Outflow` field, present identically in
+neutral/active/all-own arms. D4 adds no format overhead; four entries/references
+and the 48-character memory tuple remain fixed. Mixed lookup/update p95 is
+**0.0003/0.0002 ms**, still **0 B/call**. Historical and merged measurements,
+including every component max/spike counter, are kept separately in the
+[owning performance note](../perf/d4-rival-memory.md) and sync manifest.
+Native acceptance remains deferred under merge rule v2 as stated above.
+
+
+Final sync gate: **196/196 foreground matrix steps passed**: D4 `validate.py`
+**57/57**, `python tools/run-d3a-checks.py` **63/63**, and the still-applicable
+`python tools/run-d2-checks.py` **76/76**. Each matrix passed production build,
+**2,556 unit cases with zero failures/skips**, and **2,494 list-tests entries**.
+The full set includes all 45 root regression projects, nested pickup continuity,
+CF32/CF64 capacity, 5,000-consumer integrated choice, save benchmarks/comparisons,
+all five product isolation guards and their documented feasibility comparisons.
+No combination-induced build/test failure required another runtime/Core fix.
+Production/test content is unchanged since merge `d6f883f`; the runner safeguard
+is `4b7ec96` and subsequent commits only document the integration/evidence.
+Production DLL SHA-256: `82edbf8fe0c70c95736364109a278fb2cd54fc9f36c70d1f58052b82584e330f`.
+
+Fresh aggregate flags are retained with exact counts/conditions/units in the
+sync manifest. Whole-20k awareness construction has dense/sparse >=30 ms counts
+**1/1** (D4 matrix), **1/0** (D3a), **1/0** (D2). E4 standalone 4/8-product
+history serialization has **21/21** such operations per arm in every matrix.
+The D3a matrix also records **two 20-call B2 panel-text batches >=30 ms** at
+2,500 residents/5,000 consumers/20,000 entries/16 shops: normalized per-call
+p95/max **0.918645/1.833810 ms**, derived maximum batch **36.6762 ms**.
+These are offline aggregate/batch operations, not native mod-work frames; D4's
+seven microbench arms have no >=30 ms samples in any matrix. No hotspot was
+changed, and no native performance or whole-frame acceptance is inferred.
+
+Final fetch confirms `origin/codex/persistent-city` is still `fb958ae` and an
+ancestor of this branch. Both owned foreground wrappers/monitors exited; process
+inspection found zero worktree dotnet/testhost/MSBuild processes and zero
+validation runners. No game was launched; no rig/profile, bridge/lease, Steam client, WSL or
+ordinary save was accessed. Game DLLs were read-only compiler references. No push or PR action was performed.

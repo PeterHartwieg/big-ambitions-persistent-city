@@ -324,7 +324,7 @@ public sealed class FoodCampaignAwarenessTests
         SaveCodec.RequireExecutableCapabilities(source);
         var read=SaveSession.Open(data,"weighted").InitialReadResult;
         Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);Assert.Equal(22,read.SourceSchema);
-        Assert.Equal(23,read.State!.Schema);Assert.Equal(FoodMenuPolicy.Wire,read.State.MenuPolicy);
+        Assert.Equal(CityState.CurrentSchema,read.State!.Schema);Assert.Equal(FoodMenuPolicy.Wire,read.State.MenuPolicy);
         Assert.Equal(source,As22(read.State));Assert.Same(source,data[SaveStore.StateKey]);
         Assert.Equal(state.Citizens[0].W!.ToWire(),read.State.Citizens[0].W!.ToWire());
         Assert.Equal(WeatherSample.Rain,read.State.Food!.Residents[0].Decision!.Weather);

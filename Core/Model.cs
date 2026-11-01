@@ -253,7 +253,7 @@ namespace PersistentCity.Core
 
     public sealed class CityState
     {
-        public const int CurrentSchema = 23;
+        public const int CurrentSchema = 24;
         public string MenuPolicy { get; set; } = FoodMenuPolicy.Wire;
         public int WeatherStartsDay { get; set; }
         public PopulationCapabilities Capabilities { get; set; } = new PopulationCapabilities();
@@ -265,7 +265,11 @@ namespace PersistentCity.Core
         public FoodCommerceState? Food { get; set; }
         // The live event engine owns mutable queues; serialization asks it for one coherent snapshot.
         internal Action? SnapshotSynchronizer;
-        public void PrepareForSave() => SnapshotSynchronizer?.Invoke();
+        public void PrepareForSave()
+        {
+            SnapshotSynchronizer?.Invoke();
+            Food?.Outflow?.Advance((int)(Minute / 1440));
+        }
         public string RloVersion { get; set; } = "";
         public string PopulationKey { get; set; } = "";
         public int Seed { get; set; }
