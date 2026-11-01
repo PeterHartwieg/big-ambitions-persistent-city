@@ -1,4 +1,4 @@
-# Sync D2 with the E1/F1 integration head
+# Sync D2 with the E1/F1/A5/E3 integration head
 
 Target: `codex/pc-d2-rival-outflow`. Merge this PR with a merge commit so its
 integration ancestry survives; PR #58 then squash-merges into
@@ -70,7 +70,7 @@ root regression projects, including weather. Existing D2 held-reload tests also
 exercise changed rain settings, predecessor migration covers 19 and 20, and a
 combined weighting invariant checks rain, rival weight and zero-weight exclusion.
 
-## Validation and limits
+## A5-head validation and limits (archived)
 
 Acceptance source `29147ee` includes latest integration `0ffb819`. The installed-game
 assembly build, all **2,438 unit tests** (0 skipped), discovery of all 2,438 tests,

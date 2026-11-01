@@ -14,8 +14,10 @@ native stock/capacity remains unknown; availability and service duration are
 explicit estimates. Rival payments cannot create native sale receipts, native
 history revenue or B1 experience. Campaigns remain unknown and unused.
 
-Schema **21** has an isolated, frozen 19-source reader/migration. Schema 20 belongs
-to the separate rain slice and is refused here. The [contract](../population-schema21.md)
+At the initial pre-E1 implementation, schema **21** used an isolated, frozen
+19-source reader/migration and refused the then-unmerged schema 20. The merged
+tree instead preserves E1 through the isolated 20 -> 21 step described below.
+The [current contract](../population-schema21.md)
 records the compact target/account/outcome variants, exact conservation identity,
 unchanged caps and zero extra consumer-record charge. Schema 17–19 contract
 documents, native receipt formats, menus and RLO source are unchanged.
@@ -216,8 +218,9 @@ The two full future envelopes remain **82.204% / 96.509%** of 256 MiB,
 identical to the schema-19 allocation; the 480 additional awareness bytes and
 750,691 actual rival bytes at CF scale consume their existing reserves once.
 Record budgets are unchanged. CF32/CF64 retain the existing oversized schema-17
-migration refusal; current-schema reload succeeds. Strict direct 19→21 migration
-and source preservation are exercised separately by unit tests.
+migration refusal; current-schema reload succeeds. This historical run exercised
+direct 19→21 migration and source preservation; merged-tree tests exercise
+19 -> 20 -> 21 and 20 -> 21 instead.
 
 **Save latency >=30 ms is flagged separately:** one foreground sample each,
 write/read/migration-from-17 milliseconds: reference **119.9/343.3/472.8**,
@@ -399,3 +402,32 @@ The 2,438-test / 58-gate A5 acceptance above remains archived evidence on its
 named source. A fresh complete batch for the ice cream head adds the new reader
 regression, donut/salad/ice cream isolation guards and frozen three-reader baseline.
 Final results are recorded below before handoff; no game/rig/profile action occurs.
+
+### E3-head acceptance before the E4 landing
+
+Source `5ecc426` includes integration `75c956c`. All **63/63 foreground gates**
+pass, including the game-assembly build, **2,438 unit tests** (zero failed/skipped),
+discovery of all 2,438 tests, every root regression project, required Python
+regressions/demos, four capacity cases, pickup, A5 modes, exact-byte comparator,
+three isolation guards and the frozen-reader baseline. Required dotnet guards
+were used; no execution deadlines or background tests were introduced.
+[Commands, hashes and raw measurements](../reviews/2026-11-01-d2-sync-base-latest-results.json)
+identify this source, whose code was unchanged throughout the batch.
+
+Warm source/rank p95 is 0.0353 / 0.0505 ms at 1,024 / 20,000 alternatives;
+settlement p95 is 0.0004 ms. Offline 128-unit batch p95 is 3.6489 / 3.2030 ms.
+The 20,000-alternative arm flags **five >=30 ms batches, max 70.0504 ms**.
+Whole awareness builds separately flag one sparse and four dense samples
+(max 35.6457 / 39.4568 ms). These shared-host synthetic operations do not
+establish native mod-work or whole-frame performance. Whole-save/aggregate
+timings are retained separately in the raw evidence; no speedup is claimed.
+
+Population-only bytes remain **120,184**, weather-stripped **119,083**; the
+genuine 20 -> 21 idle delta remains +5/consumer +19 header, with zero added
+records. All four capacity byte/record totals match the A5-head table above;
+CF64's future envelope stays 259,064,366 bytes / 3,711,867 records. C4's exact
+population/food controls remain 41,787 / 66,679 bytes. Caps are unchanged.
+
+The final fetch after this acceptance caught E4 at `2bd9006`, schema 23.
+These results remain evidence for the named E3/schema-21 head; E4 integration
+requires a separate acceptance run. No game, rig, profile or release action occurred.
