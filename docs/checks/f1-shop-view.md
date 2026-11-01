@@ -1,5 +1,13 @@
 # F1: Shop-view drawing stop and rig handoff
 
+## F1 review r1 roadmap status - 1 November 2026 (offline only)
+
+**Opus-r1-1:** moved the unchanged F1 status paragraph directly after Track F and before the Performance gate heading. An exact-text comparison verifies this is the only roadmap change; gate wording, thresholds and the perf log remain intact. No production, configuration, test, tool or prepared-description changes.
+
+**Validation:** all **32/32 required foreground workload commands pass**, including the read-only Steam-reference build, **2,337 unit tests /2,337 discovered** (zero failed/skipped), 22 standalone Release regressions, four Python harnesses and three demos. Every command followed the required other-dotnet wait; compiler/build-server reuse was disabled, and no owned runner/dotnet/testhost/compiler remains. DLL SHA-256 remains `e8bcb37801ff1ac1602cc026efe367d5d4837ac5e04f897d875cc50d3c72b2a9`; canonical schema-19 save digest remains `D7FF8294F56C3B3D5AF736540274E68E9848319B34658859FC15E0D4CDB1F3A2`, with all twelve F0 payload transitions passing. Command exits/log hashes are retained under ignored `build/f1-review-r1/gate/`; whitespace and paragraph-order checks pass.
+
+Fresh unchanged-workload timing flags: C1 cold 1,024-business snapshot **p95 7.4973 ms /max 13.0997 ms**, zero samples >=30 ms; bounded continuation p95 0.0023 ms/unit. Food-routines' largest reported 16-event batch is **26.5397 ms**, in `second-price-plus-25pct`. These synthetic component costs leave native combined mod-work/whole-frame gates unmeasured. The original **33.6147 ms** batch flag and all earlier evidence/qualifications below are preserved; no performance improvement or runtime change is claimed. No game or rig work.
+
 ## F1 drawing decision - 1 November 2026 (offline only)
 
 **NO-GO at task step 1.** [Independent decision and vanilla cache audit](../plans/f1-shop-view-decision.md). Main-camera culling or translation cannot align detached interior/street geometry. Relocation has unrebuilt native caches; a render-only street proxy is a plausible smaller investigation but has unproven door mapping, renderer/material completeness, depth, lighting and restore behavior. No working drawing approach was established. Stop before implementation steps 2-4 as instructed.

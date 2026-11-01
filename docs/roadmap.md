@@ -39,9 +39,9 @@ Peter’s [31 October Q1-Q7 decisions](plans/steps-b-e.md#product-decisions-pete
 
 Track F (Peter, 31 October): independently authored city view from interiors, F0 spike → F1 shop view/customer entry → F2 upper-floor/penthouse view → F3 polish. [F0 findings and plan](plans/track-f-interior-view.md): default-off runtime eligibility/entrance-anchor experiment; **city drawing is a no-op pending F1**, with no save-format change or A-stack dependency. E2c (31 Oct, offline) implements only the once-per-load third-party detection guard, forced-off F0 state and read-only bridge verdict; native proof remains pending. [E2c evidence](checks/e2c-interior-guard.md#e2c-third-party-interior-guard---31-october-2026-offline-only). The same mod-work/whole-frame evidence rules apply to F.
 
-## Performance gate (Peter, 2026-10-30)
-
 F1 status, 1 November (offline): **NO-GO at drawing step 1**; no proven detached-space projection/culling approach, no renderer or customer hand-off added. [Decision and smaller read-only probe](plans/f1-shop-view-decision.md); [offline checks and 6 Nov handoff](checks/f1-shop-view.md). F0/E2c and all runtime/save behavior remain unchanged.
+
+## Performance gate (Peter, 2026-10-30)
 
 Applies to every step A–E slice re-measure and to the final release:
 
