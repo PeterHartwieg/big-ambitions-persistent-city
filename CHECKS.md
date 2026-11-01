@@ -2,6 +2,7 @@
 
 Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here; never append slice sections to this file. Sync/review-fix notes go into the slice's own file.
 
+- F1 — Shop-view drawing NO-GO, offline validation and numbered 6 Nov handoff: [checks](docs/checks/f1-shop-view.md).
 - F0 — Interior view experiment, reviews and native checklist: [checks](docs/checks/f0-interior-view.md).
 - D1 — Read-only rival food catalogue and native checklist: [checks](docs/checks/d1-rival-catalogue.md).
 - C1 — Native campaign reader and native checklist: [checks](docs/checks/c1-campaign-reader.md).
