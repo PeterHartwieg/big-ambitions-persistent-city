@@ -40,8 +40,24 @@ if sys.argv[1:] == ["--sync-base"]:
     assert current["weatherProjectionLength"] == old["length"]
     assert current["weatherProjectionDigest"] == old["digest"]
     assert current["economy"] == old["economy"] and current["refusals"] == old["refusals"]
+    def flagged(value, path="$"):
+        if isinstance(value, dict):
+            if any(value.get(key, 0) > 0 for key in ("spikesAtLeast30Ms", "batchSpikesAtLeast30Ms")):
+                yield dict(path=path, distribution=value)
+            for key, item in value.items():
+                yield from flagged(item, path + "." + key)
+        elif isinstance(value, list):
+            for index, item in enumerate(value):
+                yield from flagged(item, path + "[" + str(index) + "]")
+    spike_flags = {name: list(flagged(output(name + ".log"))) for name in (
+        "a5-inspector-regression", "food-choice-regression", "choice-integrated",
+        "choice-rush", "choice-rush-integrated", "choice-rush-integrated-5000")}
+    save_flags = [dict(residents=row["residents"], operation=key, medianMs=row[key])
+                  for row in output("save-bench.log")["bench"]
+                  for key in ("writeMs", "readMs", "upgradeFrom16Ms") if row[key] >= 30]
     report = dict(
         date="2026-11-01", a5Head="f3eb16b", mergedBase="5877453",
+        testedHead=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
         boundary="Offline foreground correctness gate only. Historical A5 timings remain pre-E1; no native performance or rig proof.",
         unitSummary=next(line for line in (LOG / "unit.log").read_text(encoding="utf-8").splitlines() if "Passed!" in line),
         productionDllSha256=hashlib.sha256((ROOT / "build/PersistentCity/PersistentCity.dll").read_bytes()).hexdigest(),
@@ -49,6 +65,8 @@ if sys.argv[1:] == ["--sync-base"]:
                    logSha256=hashlib.sha256((LOG / (r["name"] + ".log")).read_bytes()).hexdigest()) for r in results],
         schema20StableContractMatchesE1=True, schema19ProjectionAndEconomyMatchHistoricalA5=True,
         saveContract=current,
+        rerunDiagnostics=dict(boundary="Synthetic rerun flags only, not native frames or a causal performance comparison. Nested counts must not be summed; save medians are separate operations.",
+                              flaggedDistributionsAtLeast30Ms=spike_flags, separateSaveMediansAtLeast30Ms=save_flags),
         historicalMeasurements="docs/reviews/2026-11-01-a5-measurements.json",
     )
     target = ROOT / "docs/reviews/2026-11-01-a5-sync-base-results.json"
