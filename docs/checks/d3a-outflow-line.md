@@ -77,6 +77,31 @@ in each four/eight-product arm**: p50/p95/max **143.7052/202.0061/202.1156 ms**
 and **156.7238/201.2296/205.8757 ms**. These whole-save offline operations are
 separate from normal mod-work/frame cost; serialization remains parked.
 
+## 1 November 2026 — round-one review gate (Sol-r1-1, offline only)
+
+**MERGE BLOCKED: PR #72 must not merge until the authorized combined 6 Nov
+`rig_test` session (Codex Sol, high) attaches verifiable before → red and
+after → green evidence to the PR.** That proof must cover exact accounting
+and native rival non-mutation, interrupted/repeated settlement replay, the
+totals-only free-output boundary, and combined mod-work performance with the
+free panel closed/open and during rush/late-settlement bursts. The numbered
+handoff below defines the concrete checks.
+
+Combined mod-work p95 must remain below 5 ms; flag every mod-work spike ≥30 ms
+with its condition/component where attributable. Whole-frame cost and stalls
+remain separate. Offline results above do not satisfy this native gate and do
+not make the PR ready to merge. The review remains an evidence requirement;
+this offline fix performs no rig action and claims no native acceptance.
+
+Round-one verification on unchanged production code: **40/40 required
+foreground commands passed**, including the game-assembly build,
+**2,528/2,528 unit cases**, discovery, regressions, Python wrappers and demos.
+The required other-dotnet wait ran before every test/run. This rerun flags
+one **38.8685 ms D2 128-unit batch** and one **33.5306 ms awareness whole-index
+build** as offline aggregate operations, with no finer attribution or native
+mod-work/frame conclusion. Historical measurements above remain unchanged;
+these passes do not remove the native merge block.
+
 ## In-game checks for 6 Nov rig
 
 Pending combined-head evidence in an existing named disposable FT fixture.
