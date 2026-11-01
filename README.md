@@ -2,7 +2,7 @@
 
 Validation and dated development notices are in the [checks index](CHECKS.md); each slice maintains its own evidence file.
 
-D2 adds bounded read-only rival food choices, timed outings and exact own-ledger external spending with schema 21. Offline evidence and the pending combined 6 Nov checks are in [D2 checks](docs/checks/d2-rival-outflow.md).
+D2 adds bounded read-only rival food choices, timed outings and exact own-ledger external spending with schema 21. Offline evidence and the pending combined 6 Nov checks are in [D2 checks](docs/checks/d2-rival-outflow.md). D4 now connects modeled rival experiences to B1's existing four-entry memory without a schema change; [offline checks and pending combined rig proof](docs/checks/d4-rival-memory.md).
 
 C2b has offline campaign evidence/source plumbing and schema 22; active campaigns now raise choice preference and soften distance for every resident under Peter's 1 Nov decision; in-game checks are batched into the combined locked rig under merge rule v2; no rig proof is claimed. [Checks and 6 Nov rig list](docs/checks/c2b-campaign-awareness.md).
 

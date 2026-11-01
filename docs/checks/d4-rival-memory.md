@@ -1,0 +1,172 @@
+# D4: optional modeled rival-experience memory
+
+## 1 November 2026 — offline implementation
+
+Base `c85dc19`; branch `codex/pc-d4-rival-memory`. D4 composes the existing B1
+and D2 contracts. A committed rival outing now carries B1's existing watermark;
+successful modeled settlement or a generation/place/price-matched known closure
+updates the same four-entry consumer memory atomically. The existing terminal
+watermark rejects repeats and older contexts even after decay, eviction or reload.
+Pre-integration commitments without that watermark finish neutrally. B1 inactive
+keeps entries and watermark empty. No D2/D3a prerequisite is added.
+
+Rival choice captures B1's existing contribution before shortlisting and holds
+that scalar across reload/tuning edits, just as player choices do. The current
+rival validator permits that already bounded scalar in current schema 23;
+schema-21/22 source validation retains its neutral-only rival rule. Tests exercise
+those genuine predecessor writers and refusal paths, plus finite endpoints and
+nonfinite/out-of-range refusal at 23. The malformed-scalar test now uses 9 rather
+than valid 1.
+No new DTO, tuple slot, collection, ledger, schema, migration, capability revision,
+route request, native rival write or outcome history. Writer stays **23** and the
+18 -> 19 -> 20 -> 21 -> 22 -> 23 chain is unchanged. Frozen 13-20 readers are untouched; 21/22 retain their prior scalar gate.
+
+Known advertised closure is the only rival failure cause: no native stockout or
+queue is invented. Missing/unreadable reads, ownership/generation/place changes,
+changed prices, changed hours while still open, lost funds, route/schedule loss
+and household declines stay neutral. The same detail read D2 already performs
+supplies closure evidence. A personal deadline failure does not become a closure.
+Modeled settlement remains exclusively own-ledger spending.
+
+B1's protected-insertion exception is preserved unchanged: when a new failure
+would evict a competing positive habit/admission, only the terminal failed
+watermark is saved. The failed shop keeps its previous novelty/return odds;
+there is no negative entry or persisted failure diary in that exceptional case.
+Mixed own/rival entries share the existing decay, expiry, capacity and ordering.
+
+Inspector words explicitly say **modeled** and **native service unobserved**.
+They recognize D1's complete six-field escaped rival signature; player authority
+adds `:generation:N`, so a retired player scope is never inferred to be a rival.
+Words use retained evidence, including historical rival generations, without
+native reads. Rival memories never become free own-shop regular counts. Formatting
+and identity parsing run only for the open inspector/explicit diagnostic.
+
+### Offline validation
+
+Initial focused integration checks: **74 passed**, including D2's retained independent
+checks, with no failures/skips. The final full suite includes **27 D4 cases**
+(the original 24 plus three current/predecessor scalar-validation cases). New
+cases cover all continuation/service/return reload boundaries, represented consumers, arrival/completion closures, closure
+from advertised hours, household declines, neutral refusals, old commitments,
+identical full snapshots under budgets 1/128, captured nonzero contributions,
+mixed eviction/decay, late replay, protected insertion and honest words.
+
+Final source **`eee4dff`** passes **59/59 foreground acceptance commands**:
+Steam-reference build, **2,540/2,540 unit tests** (zero failed/skipped), **2,540
+discovered cases**, all **44 root regression projects**, four Python adapters,
+three demos and all five product-reader isolation guards. E4's existing frozen
+baseline preparation ran first; its initial missing-generated-file failure was
+a runner prerequisite error, resolved without changing E4 or gameplay code.
+The complete final batch reran after the schema-source safeguard and UI allocation
+win, so earlier mixed-head receipts are not used as final evidence.
+
+[Commands, output hashes, source-preservation audit and raw metrics](../reviews/2026-11-01-d4-rival-memory-results.json)
+identify every final run. Reproduce the 56-command main matrix with
+`python tools/rival-memory-regression/validate.py`; the three extra isolation
+commands are listed in that manifest. Raw logs remain in ignored
+`build/d4-validation/`. Production DLL SHA-256:
+`96826062e2ec7c0805a93c6fad0f1e63461085d2b736f87d54116ee1db0c4f52`.
+All owned foreground commands exited; no process command line points at this
+worktree. Other worktrees' processes were left untouched.
+No game, rig, lease, bridge profile or ordinary save was accessed. Game DLLs were
+read-only compiler inputs. All dotnet test/run commands use the shared wait guard,
+run in the foreground and have no execution deadline.
+
+### Performance and retained format
+
+The reproducible Release harness is `tools/rival-memory-regression`. It times
+10,000 warmed individual operations after 2,000 warmups; setup, serialization,
+first insertion and index construction are outside those timers. The mixed
+fixture contains two own and two rival entries, not another memory collection.
+The empty lookup has no retained entries; the active lookup includes generation
+index lookup and the four-entry policy. Measurements are synthetic .NET 10,
+separate from native mod-work and whole-frame timing.
+
+Final warmed results (milliseconds per call):
+
+| Operation | p50 | p95 | Max | Allocation |
+| --- | ---: | ---: | ---: | ---: |
+| Empty-memory lookup | 0.0001 | 0.0001 | 0.0033 | 0 B |
+| Mixed four-entry lookup, including index | 0.0001 | 0.0002 | 0.0070 | 0 B |
+| Mixed four-entry repeat update | 0.0002 | 0.0002 | 0.0058 | 0 B |
+
+No D4 micro-sample is >=30 ms. Timer resolution and shared-host/JIT noise limit
+interpretation at this scale. Saturated fixture bytes are **2,422 / 2,422** for
+neutral/active contributors and **2,422** for the all-own equal-width-ID control;
+streaming/semantic records are **7/7** in every arm. Four retained entries and
+four shared references stay fixed through 12,000 repeat updates.
+
+Full four-entry memory remains 48 ASCII characters (51 inclusive JSON bytes),
+40 more than empty memory, within B1's existing allocation. References and held
+nonzero scalar text consume their existing bounds; there is zero new format
+overhead, not a claim that recording an experience changes no saved content.
+The same saturated fixture with the contributor neutral/active has identical
+bytes and record counts; an all-own control with equal-length generation IDs has
+the same size/counts as mixed own/rival memory. No retained provenance field or
+replay-ID set is added.
+
+The low-risk completion win removes the temporary Place/opening-cache tree:
+**1,464 -> 0 B/check**, p95 **0.0030 -> 0.0001 ms**; arrival still uses the general
+union's next-close boundary. Player-generation rejection for open-inspector words
+also avoids splitting fields: **352 -> 0 B/check**, p95 **0.0002 -> 0.0002 ms**.
+These are isolated allocation wins, not matched native frame speedups. [Before/after measurements and limits](../perf/d4-rival-memory.md).
+No per-frame reflection, polling, catalogue scan or new frame participant; the
+four parked hotspots remain parked.
+
+The native combined gate remains pending: **mod-work p95 <5 ms**, flag every
+mod-work spike **>=30 ms** with count/condition/component. Whole-frame costs and
+stalls are recorded separately and cannot substitute for mod-work p95. No
+special performance-only rig run is proposed.
+
+
+Broader offline timing flags, separate from D4's zero >=30 ms samples: the
+20,000-alternative awareness **whole-catalogue construction** has **one dense
+sample, max 33.0878 ms**, and **five sparse samples, max 56.8085 ms**. E4's
+standalone four/eight-product **history serialization** has **21/21 operations
+>=30 ms** in each arm, maxima **204.2245/148.8218 ms**. These are aggregate
+construction/save operations, not measured native frame samples. The manifest
+retains each counter and its p50/p95/max; no native attribution or new gate pass
+is inferred. The four parked hotspots are unchanged.
+
+### In-game checks for 6 Nov rig
+
+1. **LOCKED-OK** — In a disposable combined B1+D2 fixture with B active, retain
+   two own and two rival memories for physical and represented consumers. Use
+   bridge state dumps before/after repeated rival service; each modeled purchase
+   increments the existing served count once and changes the captured return
+   contribution. Reload at commitment, service, settlement and return boundaries;
+   compare watermarks, generations, counts and exact outflow against uninterrupted
+   replay. With B inactive, repeat and verify empty memory.
+2. **NEEDS-INPUT** — Use normal fixture UI to induce a known rival closure after
+   commitment and restore it for recovery; D4 must never write native rival terms.
+   Prepare before-closure/closed/recovered checkpoints for the same generation.
+   Verify the closure lowers its later return contribution and subsequent modeled
+   service recovers it. If the native fixture cannot induce this sequence, record
+   the unproved scenario explicitly rather than substituting offline evidence.
+3. **LOCKED-OK** — Replay the prepared closure/recovery checkpoints from item 2.
+   Dump memory before/after each outcome, save/reload at each boundary and compare
+   with uninterrupted replay: one penalty or served increment per context. Check
+   a full-memory protected insertion keeps competing boosts and commits only a
+   failed watermark; changed-price/unreadable observations remain neutral.
+4. **LOCKED-OK** — Compare bridge reads of rival native stock, cash, sales,
+   customer/receipt state and advertised terms before/after both service and
+   failure arms. Assert no native rival write or native rival receipt, unchanged
+   own-shop accounting authority, exact resident-money conservation, four entries
+   maximum and the existing 32-source/8-shop/16-route-slot envelope.
+5. **LOCKED-OK** — During the normal combined session, record original autosave,
+   disable and verify it before every measured idle/rush/soak window and again
+   after reload. Keep manual saves outside windows; discard any window containing
+   save activity. Compare active/empty rival contributors with matched setup:
+   mod-work p50/p95/max, all >=30 ms spikes, allocations/retained records,
+   route counts and catch-up lag. Require p95 <5 ms; track whole-frame stalls
+   separately. Restore autosave and fixture state during cleanup.
+6. **NEEDS-INPUT** — Open the resident inspector for a repeatedly served rival
+   visitor and a closure visitor in the unlocked session. Visually confirm the
+   modeled/native-unobserved wording is readable, own-shop words still describe
+   native evidence, represented stories are not attributed to the visible anchor,
+   and rival visits are not displayed as own-shop regulars.
+
+LOCKED-OK denotes bridge-only feasibility, not completed native proof. These
+checks require the combined fixture/session; this offline task performs none.
+Classifications follow the [locked-session feasibility report at 84be71a](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/84be71a/docs/reviews/rig/2026-10-31-locked-session-feasibility/README.md),
+read through Git; no UI capability or fixture mutation helper is presumed.
