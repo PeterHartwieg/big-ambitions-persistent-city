@@ -200,4 +200,3 @@ public sealed class FoodCampaignAwarenessTests
         Assert.Equal(7,settings.Campaigns.RetentionDays);Assert.Equal(.5,settings.Campaigns.DailyReachDecay);
     }
 }
-
