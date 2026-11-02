@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings><TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <StartupObject>RemainingRegression</StartupObject>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../Core/PersistentCity.Core.csproj" />
+    <Compile Include="obj/ApprovedNativeDoubles.cs" />
+    <Compile Include="../../Runtime/DirectStockShowcaseReader.cs" />
+    <Compile Include="../../Runtime/*FeasibilityReader.cs" />
+    <Compile Include="../../Runtime/RemainingBatchFeasibilityReaders.cs" />
+  </ItemGroup>
+  <Target Name="GenerateNativeDoubles" BeforeTargets="BeforeCompile">
+    <Exec Command="python &quot;$(MSBuildProjectDirectory)/generate_doubles.py&quot; &quot;$(MSBuildProjectDirectory)/obj/ApprovedNativeDoubles.cs&quot;" />
+  </Target>
+</Project>

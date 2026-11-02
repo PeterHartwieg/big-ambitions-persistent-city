@@ -5,12 +5,14 @@ stay under ignored build/e3-frenchfries; no game or rig access.
 """
 from pathlib import Path
 import hashlib
+import runpy
 import json
 import os
 import subprocess
 from xml.sax.saxutils import escape
 
 ROOT = Path(__file__).resolve().parents[2]
+batch_source = runpy.run_path(str(ROOT / "tools/e3-remaining-feasibility-regression/historical.py"))["source"]
 OUT = ROOT / "build/e3-frenchfries/pinned-before-donut"
 OUT.mkdir(parents=True, exist_ok=True)
 FRIES = '        internal static readonly DirectStockCandidate FrenchFries = new DirectStockCandidate("ba:itemname_frenchfries");\n'
@@ -20,7 +22,7 @@ PINS = {
     "tools/donut-feasibility-regression/Program.cs": "707be922277d715ca17bbf1d38c05c5f608c53ce1c87ef8db545752b67c3f507",
 }
 for path, expected in PINS.items():
-    source = (ROOT / path).read_text(encoding="utf-8")
+    source = batch_source(path)
     if path == "Runtime/DirectStockShowcaseReader.cs":
         source = source.replace('        internal static readonly DirectStockCandidate Pizza = new DirectStockCandidate("ba:itemname_pizza");\n', "")
         source = source.replace('        internal static readonly DirectStockCandidate Icecream = new DirectStockCandidate("ba:itemname_icecream");\n', "")

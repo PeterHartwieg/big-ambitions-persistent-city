@@ -35,6 +35,7 @@ Later: residents as employees, households.
 Implementation plan for B–E: [memory, marketing, rivals and the wider street](plans/steps-b-e.md).
 
 E3 pizza status (offline): [STOP record](plans/e3-pizza.md); pinned conditional shared probe, shipped holder unestablished, no menu/gameplay/save change. [Validation and 6 Nov handoff](checks/e3-pizza.md).
+E3 remaining batch status, 2 November (offline): Peter chose one batch of remaining E3 records; [all six named candidates STOP](plans/e3-remaining-batch.md), isolated probes only, no menu/gameplay/save change; drinks/bundles/carts remain deferred. [Checks and 6 Nov handoff](checks/e3-remaining-batch.md).
 
 E4 status, 1 November (offline): schema 23 menu/product/history envelope implemented; effective live limit four, no extra product enabled. [Validation and numbered 6 Nov handoff](checks/e4-wider-menu.md).
 
@@ -71,6 +72,7 @@ Applies to every step A–E slice re-measure and to the final release:
 
 Record every taken win with before/after numbers.
 
+- E3 remaining batch — [Typed seasonal field gate](perf/e3-remaining-batch.md): 248 -> 200 B/read (2 entries), 49,152 -> 49,104 B/read (2,000); no per-frame work.
 - D4 - [Advertised-hours completion check and four-entry rival memory measurements](perf/d4-rival-memory.md): 1,464 -> 0 B/completion check and 352 -> 0 B/own-generation word check offline.
 
 - F1b — [Reuse the one-shot inventory's shared-material buffer](perf/f1b-street-proxy.md): 129-renderer offline mean allocation 80,838.96 →69,547.73 B/call; no frame work added.

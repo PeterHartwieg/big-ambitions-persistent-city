@@ -8,6 +8,7 @@ import re
 import runpy
 
 ROOT = Path(__file__).resolve().parents[2]
+batch_source = runpy.run_path(str(ROOT / "tools/e3-remaining-feasibility-regression/historical.py"))["source"]
 PINS = {'Runtime/DirectStockShowcaseReader.cs': '239650040cb06dde4f0d8030e659c906a5fe09c8b37ea7be9dc763162ddb880d', 'Runtime/FrenchFriesFeasibilityReader.cs': 'd1e9ed8b023dc9d2d848a1565af138e8d5f1618fb8402433b79dd57ed592e873', 'tools/frenchfries-feasibility-regression/Program.cs': '7b0940480af5afddaedc52d78e1cc8ad3a533732284e362a327d08c49ee02f9b', 'tools/frenchfries-feasibility-regression/FrenchFriesFeasibilityRegression.csproj': 'cd6d3ca634edb3428a458fede8e4d68939e19eef73e1155574f61dd57aea96e1'}
 
 # Exact integration-tool pins cover every audit exclusion changed in this sync.
@@ -19,12 +20,13 @@ PINS.update({
     'tools/frenchfries-feasibility-regression/measure_before.py': '790fcc15d5a14ee020893ae64e848c5da6f6fbf675ca15595109c2d09e2b486a',
 })
 for path, expected in PINS.items():
-    assert hashlib.sha256((ROOT / path).read_text(encoding="utf-8").encode()).hexdigest() == expected, path
+    assert hashlib.sha256(batch_source(path).encode()).hexdigest() == expected, path
 runpy.run_path(str(ROOT / "tools/donut-feasibility-regression/source_checks.py"), run_name="__main__")
 
 readers = {ROOT / "Runtime" / (name + ".cs") for name in (
     "DirectStockShowcaseReader", "DonutFeasibilityReader", "CupcakeFeasibilityReader",
     "SaladFeasibilityReader", "FrenchFriesFeasibilityReader", "IcecreamFeasibilityReader", "PizzaFeasibilityReader")}
+readers.add(ROOT / "Runtime/RemainingBatchFeasibilityReaders.cs")
 # Recursively cover future nested runtime/core sources as well as today's flat tree.
 for folder in ("Core", "Runtime", "Persistence", "Compatibility"):
     for path in (ROOT / folder).rglob("*.cs"):

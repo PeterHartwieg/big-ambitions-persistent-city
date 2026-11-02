@@ -2,10 +2,12 @@
 from pathlib import Path
 import argparse
 import hashlib
+import runpy
 import re
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
+batch_source = runpy.run_path(str(ROOT / "tools/e3-remaining-feasibility-regression/historical.py"))["source"]
 readers = {ROOT / ("Runtime/" + name + ".cs") for name in
            ("DonutFeasibilityReader", "CupcakeFeasibilityReader", "SaladFeasibilityReader", "PizzaFeasibilityReader", "IcecreamFeasibilityReader", "FrenchFriesFeasibilityReader", "DirectStockShowcaseReader")}
 text = "\n".join(path.read_text(encoding="utf-8") for path in sorted(readers))
@@ -18,9 +20,9 @@ assert code.count('GetField("tags",') == 1 and code.count('.GetValue(') == 1
 assert not re.search(r"\b(?:registration|instance|item|resource|cargo|type|product|entry)\.\w+\s*=(?!=)", code)
 for directory in ("Core", "Runtime", "Persistence", "Compatibility"):
     for path in (ROOT / directory).glob("*.cs"):
-        if path not in readers:
+        if path not in readers and path != ROOT / "Runtime/RemainingBatchFeasibilityReaders.cs":
             source = path.read_text(encoding="utf-8-sig")
-            for symbol in ("DonutFeasibility", "CupcakeFeasibility", "SaladFeasibility", "PizzaFeasibility", "IcecreamFeasibility", "FrenchFriesFeasibility", "DirectStockShowcase", "DirectStockCandidate"):
+            for symbol in ("DonutFeasibility", "CupcakeFeasibility", "SaladFeasibility", "PizzaFeasibility", "IcecreamFeasibility", "FrenchFriesFeasibility", "CheesePlatterFeasibility", "CottonCandyFeasibility", "PopcornFeasibility", "KabobFeasibility", "CandyCaneFeasibility", "ChristmasCookiesFeasibility", "RemainingSeasonalStockProbe", "DirectStockShowcase", "DirectStockCandidate"):
                 assert symbol not in source, str(path)
 
 # Pins come from approved cupcake head 682aa77 and landed donut 3f7b885.
@@ -56,7 +58,7 @@ def without_salad(path, source):
 # Full frenchfries descriptor/facade pins and all-caller isolation live in its own guard.
 FRIES_DESCRIPTOR = '        internal static readonly DirectStockCandidate FrenchFries = new DirectStockCandidate("ba:itemname_frenchfries");\n'
 def approved_source(path):
-    source = (ROOT / path).read_text(encoding="utf-8")
+    source = batch_source(path)
     return source.replace(FRIES_DESCRIPTOR, "") if path == "Runtime/DirectStockShowcaseReader.cs" else source
 
 # Preserve the approved complete salad additions as well as the stripped cupcake contract.
