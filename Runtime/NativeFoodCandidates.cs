@@ -139,6 +139,7 @@ namespace PersistentCity.Runtime
                     NativeFoodOwnership.Retire(pair.Key);registrations.Remove(pair.Key);continue;
                 }
                 registrations[pair.Key] = reg;
+                CacheBagPolicy(reg);
                 var authority = NativeFoodOwnership.Observe(reg, SupportedMenu(reg) && GamePlaces.BuildingAccessible(pair.Value));
                 if (authority.CanServe) { ActivateScope(authority, reg); Candidate(authority.BusinessId,true); }
                 else Candidate(authority.BusinessId,false);

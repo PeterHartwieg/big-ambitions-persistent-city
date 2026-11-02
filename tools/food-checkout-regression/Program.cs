@@ -43,10 +43,11 @@ static partial class Program
         public readonly NativeFoodMarket Market;
         public readonly string PlaceId;
         public BuildingRegistration Reg => Controller.buildingRegistration!;
-        public Fixture(int croissants = 5, int burgers = 7, int bags = 3, int maximumOffers = 4)
+        public Fixture(int croissants = 5, int burgers = 7, int bags = 3, int maximumOffers = 4, bool authoredBags = true)
         {
             Hooks.Reset(); SaveGameManager.Current.modData.Clear(); SaveGameManager.Current.Minute = 0;
             Controller = new CityBuildingController { buildingRegistration = Registration(1, croissants, burgers, bags) };
+            if (!authoredBags) Helpers.BusinessTypeHelper.GetData(Reg.businessTypeName).AuthoredTags.Clear();
             CityManager.Instance.cityBuildingControllers = new[] { Controller };
             PlaceId = NativeFoodMarket.PlaceId(Reg);
             Market = new NativeFoodMarket(State, new[] { new Place { Id = PlaceId, Kind = PlaceKind.Shop } }, maximumOffers: maximumOffers);
@@ -150,6 +151,7 @@ static partial class Program
     static void Main()
     {
         E4MissingPriceChecks();
+        CachedBagPolicyChecks();
         E4MenuChecks();
         InvalidPreSalePricesRefuseWithoutUncertainFunds();
         CatalogueRefusalsRefundBeforeSale();
@@ -242,7 +244,7 @@ static partial class Program
         var unverified = f.Market.Buy(f.Meal("r9"), Minute);
         Check(!unverified.Paid && unverified.Reason.Contains("unverified"), "malformed shelf excludes the menu: " + unverified.Reason);
         f.Reg.Shelves[0].cargoInstances!.RemoveAt(1);
-        Check(f.Market.Buy(f.Meal("r10"), Minute).Paid, "repaired shelf sells again");
+        Check(!f.Market.Buy(f.Meal("r10"), Minute).Paid, "unverified contract repair cannot bypass safe whole-business handoff");
     }
 
     static void ReplacedRegistrationIsReadAfresh()
@@ -398,6 +400,7 @@ static partial class Program
         f.Reg.temporarilyClosed = false;
         Expect(true, "reopening is read afresh");
         f.Reg.businessTypeName = "full-renamed";
+        f.Market.RefreshKnownOwnership(); // New authored business definitions warm only outside frame discovery.
         Expect(true, "a changed business type is read afresh");
         f.Reg.businessTypeName = "full";
         Expect(true, "the restored business type is read afresh");
@@ -488,7 +491,7 @@ static class Hooks
     public static int PriceChecks;
     public static bool LastPriceAccepted;
     public static System.Reflection.MethodInfo? PricePrefix;
-    public static void Reset() { Fault = ""; OpenCheck = null; PriceChecks = 0; LastPriceAccepted = false; }
+    public static void Reset() { Fault = ""; OpenCheck = null; PriceChecks = 0; LastPriceAccepted = false; Helpers.BusinessTypeHelper.Reset(); }
 }
 
 public sealed class Save { public List<ProductMarketEntry>? productMarketEntries; public int Day = 3, Hour = 12; public float Minute; public Dictionary<string, string> modData = new(); }
@@ -609,8 +612,21 @@ namespace BigAmbitions.Items
 }
 namespace Helpers
 {
-    public sealed class BusinessType { public object simulator = new FullServiceBusinessSimulator(); public bool hasEntranceFee; public bool HasTag(BigAmbitions.Tags.TagRef.Businesstag tag) => true; }
-    public static class BusinessTypeHelper { public static BusinessType GetData(string name) => new(); }
+    public sealed class BusinessType
+    {
+        public object simulator = new FullServiceBusinessSimulator(); public bool hasEntranceFee;
+        private readonly List<string> tags = new() { "ba:businesstag_customersneedpaperbags" };
+        public bool NativeBags = true;
+        public long TagCalls;
+        public bool HasTag(BigAmbitions.Tags.TagRef.Businesstag tag) { TagCalls++; return NativeBags; }
+        public List<string> AuthoredTags => tags;
+    }
+    public static class BusinessTypeHelper
+    {
+        private static readonly Dictionary<string,BusinessType> data = new();
+        public static void Reset() => data.Clear();
+        public static BusinessType GetData(string name) { if(!data.TryGetValue(name,out var type)) data[name]=type=new(); return type; }
+    }
     public static class BusinessHelper
     {
         public static bool IsBusinessOpen(BuildingRegistration reg) { Hooks.OpenCheck?.Invoke(); return reg.Open && !reg.temporarilyClosed; }

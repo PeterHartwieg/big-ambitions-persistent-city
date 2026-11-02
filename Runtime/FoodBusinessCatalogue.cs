@@ -51,16 +51,29 @@ namespace PersistentCity.Runtime
 
         internal static FoodCatalogueObservation ReadSelected(IReadOnlyCollection<string> shopPlaceIds,
             IReadOnlyCollection<string> foodProductIds, IEnumerable<CityBuildingController> controllers, Func<BuildingRegistration, string>? identity = null)
+            => ReadSelectedCore(shopPlaceIds, foodProductIds, controllers, identity, null);
+
+        // Gameplay selects each shop's own complete bounded menu. The diagnostic overload
+        // retains its historical explicit product-filter semantics.
+        internal static FoodCatalogueObservation ReadCompleteMenus(IReadOnlyCollection<string> shopPlaceIds,
+            IEnumerable<CityBuildingController> controllers, Func<BuildingRegistration, IReadOnlyCollection<string>> menu,
+            Func<BuildingRegistration, string>? identity = null)
+            => ReadSelectedCore(shopPlaceIds, null, controllers, identity, menu);
+
+        private static FoodCatalogueObservation ReadSelectedCore(IReadOnlyCollection<string> shopPlaceIds,
+            IReadOnlyCollection<string>? foodProductIds, IEnumerable<CityBuildingController> controllers,
+            Func<BuildingRegistration, string>? identity, Func<BuildingRegistration, IReadOnlyCollection<string>>? menu)
         {
             if (shopPlaceIds == null || shopPlaceIds.Count < 1 || shopPlaceIds.Count > 20000
-                || foodProductIds == null || foodProductIds.Count < 1 || foodProductIds.Count > 16
-                || shopPlaceIds.Any(string.IsNullOrWhiteSpace) || foodProductIds.Any(string.IsNullOrWhiteSpace))
+                || menu == null && (foodProductIds == null || foodProductIds.Count < 1 || foodProductIds.Count > 16
+                    || foodProductIds.Any(string.IsNullOrWhiteSpace))
+                || shopPlaceIds.Any(string.IsNullOrWhiteSpace))
                 throw new ArgumentException("Select one to twenty thousand shop places and one to sixteen reviewed food product IDs.");
             var save = SaveGameManager.Current;
             if (save == null)
                 throw new InvalidOperationException("No live city catalogue is available.");
             var selected = new HashSet<string>(shopPlaceIds, StringComparer.Ordinal);
-            var products = new HashSet<string>(foodProductIds, StringComparer.Ordinal);
+            var selectedProducts = foodProductIds == null ? null : new HashSet<string>(foodProductIds, StringComparer.Ordinal);
             var found = new HashSet<string>(StringComparer.Ordinal);
             var result = new FoodCatalogueObservation { AtMinute = save.Day * 1440.0 + save.Hour * 60.0 + save.Minute };
             foreach (var controller in controllers)
@@ -74,6 +87,13 @@ namespace PersistentCity.Runtime
                 if (!selected.Contains(place) || !reg.HasEstablishedBusiness || reg.AvailableForRent
                     || string.IsNullOrWhiteSpace(reg.businessTypeName) || reg.businessTypeName == "ba:businesstype_empty") continue;
                 if (!found.Add(place)) throw new CatalogueRefusalException("Duplicate live shop address; observation refused.");
+                IReadOnlyCollection<string> products = menu == null ? selectedProducts! : menu(reg);
+                if (menu != null && (products == null || products.Count < 1 || products.Count > FoodMenuPolicy.MaximumOffers
+                    || reg.cachedAvailableProducts == null || reg.cachedAvailableProducts.Count != products.Count
+                    || products.Any(p => !FoodNameIdentity.IsCanonical(p) || !reg.cachedAvailableProducts.Contains(p))
+                    || products.Distinct(StringComparer.Ordinal).Count() != products.Count
+                    || reg.retailPrices == null || reg.retailPrices.Count > 128))
+                    throw new CatalogueRefusalException("Complete food menu changed or is outside its bounds.");
                 var business = new FoodBusiness { Id = identity?.Invoke(reg) ?? BusinessIdentity(reg),
                     PlaceId = place, Name = reg.BusinessName, DistrictId = controller.building.Neighbourhood ?? "" };
                 if (reg.satisfaction != null)
@@ -121,6 +141,8 @@ namespace PersistentCity.Runtime
                             }
                         business.Offers.Add(offer);
                     }
+                if (menu != null && business.Offers.Count != products.Count)
+                    throw new CatalogueRefusalException("Complete food menu requires one explicit price for every advertised product.");
                 business.Offers.Sort((a, b) => StringComparer.Ordinal.Compare(a.ProductId, b.ProductId));
                 business.Hours = business.Hours.OrderBy(h => h.Day).ThenBy(h => h.FromMinute).ThenBy(h => h.ToMinute).ToList();
                 result.Businesses.Add(business);
