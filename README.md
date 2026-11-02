@@ -2,6 +2,8 @@
 
 Validation and dated development notices are in the [checks index](CHECKS.md); each slice maintains its own evidence file.
 
+E3 remaining batch: [six named candidates STOP](docs/plans/e3-remaining-batch.md), per Peter's 2 November batch-check decision; isolated conditional probes only, no gameplay/menu/save change. [Offline checks and 6 Nov handoff](docs/checks/e3-remaining-batch.md).
+
 D3a adds a free totals-only fourteen-day rival outflow line to Ctrl+F8 and D2 diagnostics, with schema 24 exact ledger reconciliation. [Offline evidence and pending 6 Nov checks](docs/checks/d3a-outflow-line.md).
 
 D2 adds bounded read-only rival food choices, timed outings and exact own-ledger external spending with schema 21. Offline evidence and the pending combined 6 Nov checks are in [D2 checks](docs/checks/d2-rival-outflow.md). D4 now connects modeled rival experiences to B1's existing four-entry memory without a schema change; [offline checks](docs/checks/d4-rival-memory.md). Native acceptance is deferred to the next batched combined rig / Peter's playtest per merge rule v2, recorded in `rig-2026-11-06-checklist.md`, and does not gate merge.
