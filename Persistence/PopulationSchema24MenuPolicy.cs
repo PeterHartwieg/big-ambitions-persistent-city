@@ -28,26 +28,5 @@ namespace PersistentCity.Persistence
             return product;
         }
 
-        // Reserved identifiers establish no equipment, taste/fit/health/quality prior or sale permission.
-        // Health and quality remain unknown for all entries. Existing meal fits live in FoodProducts.
-        public static int? HealthTag(int code) => null;
-        public static int? QualityTag(int code) => null;
-        public static int Taste(int seed, string consumerId, int code)
-        {
-            if (string.IsNullOrEmpty(consumerId) || code < 1 || code > MaximumDefinitions) throw new ArgumentException("Invalid product taste identity.");
-            uint hash = StableRandom.Append(StableRandom.Begin(seed), "pc:product-taste:v1|");
-            hash = StableRandom.Append(StableRandom.AppendDecimal(hash, consumerId.Length), ':');
-            hash = StableRandom.Append(StableRandom.Append(hash, consumerId), '|');
-            uint percentile = StableRandom.Finish(StableRandom.AppendDecimal(hash, code)) % 100;
-            return percentile < 10 ? 0 : percentile < 30 ? 1 : percentile < 70 ? 2 : percentile < 90 ? 3 : 4;
-        }
-        public static int Taste(ResidentTraits traits, int seed, string consumer, string product)
-        {
-            if (product == FoodProducts.Croissant) return traits.Band(ResidentTrait.CroissantTaste);
-            if (product == FoodProducts.Burger) return traits.Band(ResidentTrait.BurgerTaste);
-            if (product == FoodProducts.HotDog) return traits.Band(ResidentTrait.HotDogTaste);
-            int code = Code(product);
-            return code == 0 ? ResidentTraits.Neutral : Taste(seed, consumer, code);
-        }
     }
 }

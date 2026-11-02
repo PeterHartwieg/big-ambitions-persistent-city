@@ -9,7 +9,7 @@ namespace PersistentCity.Persistence
     {
         private static void InitializeOutflow24(CityState state, int schema)
         {
-            if (schema != 24 || state.Food == null || state.Food.Outflow != null) return;
+            if (schema < 24 || state.Food == null || state.Food.Outflow != null) return;
             Require(Position.Finite(state.Minute) && state.Minute >= 0 && state.Minute <= 1000000000
                 && state.Food.Residents != null && state.Food.Residents.All(m => m != null), "Invalid outflow source roster/clock.");
             state.Food.Outflow = RivalOutflowHistory.Begin(state.Food, state.Minute);

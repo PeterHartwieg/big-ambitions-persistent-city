@@ -15,7 +15,7 @@ public sealed class D2CompositionTests
     public void ExactContractsRejectForeignFieldsAndPreD2TuplesWithoutReplacingSource(int schema)
     {
         var (city,_,_)=WeightedFoodChoiceTests.Ready(79);
-        city.State.Schema=schema;
+        city.State.Schema=schema; city.State.MenuPolicy=FoodMenuPolicy.Wire;
         string source=SaveCodec.WriteForSchema(city.State,schema);
         Assert.Equal(SaveReadStatus.Loaded,SaveCodec.Read(source).Status);
         foreach(string damage in new[]{"tuple","account","foreign","campaign","menu"})

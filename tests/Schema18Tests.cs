@@ -127,7 +127,10 @@ public sealed partial class FoodCommerceTests
         meal.Today = new ResidentFoodToday { Day = 0 }; var emptyToday = SaveCodec.CountRecords(state, SaveCodec.Write(state));
         Assert.Equal(noToday, emptyToday); // absence, empty and saturated rollups all charge one consumer unit
         meal.Today = threeOutcomes;
-        Assert.Equal(emptyToday, SaveCodec.CountRecords(state, SaveCodec.Write(state)));
+        var restoredToday = SaveCodec.CountRecords(state, SaveCodec.Write(state));
+        // The schema-25 table regains the historical "pastry" identity; the rollup is still one unit.
+        Assert.Equal(emptyToday.Streaming + 1, restoredToday.Streaming);
+        Assert.Equal(emptyToday.Semantic + 1, restoredToday.Semantic);
     }
 
     [Theory]
