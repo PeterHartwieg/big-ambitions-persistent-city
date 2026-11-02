@@ -149,9 +149,14 @@ public sealed class FoodProductMetadataTests
         string Table(int count,int length=1) => "{"+string.Join(",",Enumerable.Range(0,count).Select(i=>JsonConvert.ToString(i.ToString(CultureInfo.InvariantCulture)+new string('x',length))+":{}"))+"}";
         Assert.Equal(256,Parse(Table(256)).FoodProductOverrides.Resolver.Count);
         Assert.Equal(0,Parse(Table(257)).FoodProductOverrides.Resolver.Count);
+        string escapedMaximum="{"+string.Join(",",Enumerable.Range(0,256).Select(i=>JsonConvert.ToString(i.ToString(CultureInfo.InvariantCulture).PadLeft(3,'0')+new string('\u2028',253))
+            +":{\"MealClass\":\"Food\",\"TasteBand\":2,\"BreakfastFitCents\":900,\"LunchFitCents\":100,\"DinnerFitCents\":450}"))+"}";
+        Assert.Equal(256,Parse(escapedMaximum).FoodProductOverrides.Resolver.Count);
         Assert.Equal(1,Parse(Entry("",new string('x',256))).FoodProductOverrides.Resolver.Count);
         Assert.Equal(0,Parse(Entry("",new string('x',257))).FoodProductOverrides.Resolver.Count);
         Assert.Equal(0,Parse(Entry("\"unknown\":"+JsonConvert.ToString(new string('x',524288)))).FoodProductOverrides.Resolver.Count);
+        Assert.Equal(0,Parse(Entry("\"unknown\":"+JsonConvert.ToString(new string('\u4e00',180000)))).FoodProductOverrides.Resolver.Count);
+        Assert.Equal(0,Parse(Entry("\"unknown\":"+JsonConvert.ToString(new string('\u2028',90000)))).FoodProductOverrides.Resolver.Count);
         Assert.True(FoodProductMetadataResolver.ValidName("mod:🍲"));
         Assert.False(FoodProductMetadataResolver.ValidName("mod:\ud800"));
         Assert.False(FoodProductMetadataResolver.ValidName("mod:\udc00"));
@@ -159,6 +164,34 @@ public sealed class FoodProductMetadataTests
         var duplicate=JsonConvert.DeserializeObject<PrototypeSettings>("{\"FoodProductOverrides\":"+Entry("")+",\"FoodProductOverrides\":{},\"MaximumPedestrians\":37}")!;
         Assert.Equal(0,duplicate.FoodProductOverrides.Resolver.Count); Assert.Equal(37,duplicate.MaximumPedestrians);
         Assert.ThrowsAny<JsonException>(()=>Parse("{"));
+    }
+    [Fact]
+    public void EmptyAndAbsentTablesHaveNoAdjustmentDiagnostics()
+    {
+        foreach(var settings in new[]{Parse("{}"),JsonConvert.DeserializeObject<PrototypeSettings>("{}")!})
+        {
+            var logs=new List<string>();settings.FoodProductOverrides.ReportOnce(logs.Add);
+            settings.FoodProductOverrides.ReportOnce(logs.Add);Assert.Empty(logs);
+            Assert.Equal(FoodProductMetadataResolver.Neutral,settings.FoodProductOverrides.Resolver.Resolve(Dumplings,Traits));
+        }
+    }
+    [Fact]
+    public void EnumerationOrderAndUnusedMetadataGrowthDoNotChangeWeightsOrWinner()
+    {
+        string small="{"+JsonConvert.ToString(Dumplings)+":{\"MealClass\":\"Food\"},"+JsonConvert.ToString(ChoppedCheese)+":{\"MealClass\":\"Food\",\"TasteBand\":3}}";
+        string large="{"+string.Join(",",Enumerable.Range(0,254).Select(i=>JsonConvert.ToString("unused:"+i)+":{}"))+","+small.Substring(1);
+        var a=Parse(small).FoodProductOverrides.Resolver;
+        var b=Parse(large).FoodProductOverrides.Resolver;
+        var names=new[]{FoodProducts.Croissant,FoodProducts.Burger,FoodProducts.HotDog,Dumplings,ChoppedCheese};
+        for(int seed=0;seed<50;seed++)
+        {
+            var traits=ResidentTraits.Generate(seed,"resident");var draw=new FoodDrawContext(seed,"resident",1,MealKind.Lunch,"home",1);
+            string Winner(IEnumerable<string> products,FoodProductMetadataResolver resolver) => products.Select(p=>new {Product=p,
+                Rank=FoodDrawContext.Rank(draw.OfferHash("shop",p),FoodChoicePolicy.Weight(Offer(p,MealKind.Lunch),traits,Money.FromCents(1000),new FoodChoiceSettings(),resolver.Resolve(p,traits)))})
+                .OrderBy(x=>x.Rank).ThenBy(x=>x.Product,StringComparer.Ordinal).First().Product;
+            Assert.Equal(Winner(names,a),Winner(names.Reverse(),b));
+            foreach(string name in names) Assert.Equal(a.Resolve(name,traits),b.Resolve(name,traits));
+        }
     }
     [Fact]
     public void ConfigAndCatalogueMetadataChangesCannotCreateMemoryOrNoveltyEvents()

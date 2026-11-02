@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using Newtonsoft.Json;
 using PersistentCity.Core;
 
@@ -59,14 +60,27 @@ namespace PersistentCity.Runtime
     {
         private sealed class Budget
         {
-            private long escaped;
+            private long escaped, utf8;
             internal bool Read(JsonReader reader)
             {
                 if (!reader.Read()) throw new JsonSerializationException("Incomplete food metadata table.");
-                // Conservative escaped-JSON and UTF-8 charge, including quotes/separators. Each
-                // UTF-16 code unit needs at most six escaped ASCII bytes. No reserialized table.
-                escaped += reader.Value is string text ? 6L*text.Length+4 : 32;
-                return escaped <= FoodProductMetadataResolver.MaximumTableCharactersAndBytes;
+                // Charge canonical escaped JSON and UTF-8 independently, including punctuation.
+                // One spare separator per token makes the bound conservative without serializing
+                // or retaining a second table. Raw source whitespace is not retained metadata.
+                if (reader.Value is string text)
+                {
+                    escaped+=text.Length+3; utf8+=Encoding.UTF8.GetByteCount(text)+3;
+                    foreach(char c in text)
+                    {
+                        int extra=c=='"' || c=='\\' || c=='\b' || c=='\t' || c=='\n' || c=='\f' || c=='\r' ? 1
+                            : c<32 || c=='\u0085' || c=='\u2028' || c=='\u2029' ? 5 : 0;
+                        escaped+=extra;
+                        utf8+=extra-(c=='\u0085' ? 1 : c=='\u2028' || c=='\u2029' ? 2 : 0);
+                    }
+                }
+                else { escaped+=32; utf8+=32; } // bounded numeric spelling plus separator
+                return escaped <= FoodProductMetadataResolver.MaximumTableCharactersAndBytes
+                    && utf8 <= FoodProductMetadataResolver.MaximumTableCharactersAndBytes;
             }
         }
         public override FoodProductOverrideTable ReadJson(JsonReader reader, Type type, FoodProductOverrideTable? old, bool exists, JsonSerializer serializer)
@@ -96,14 +110,17 @@ namespace PersistentCity.Runtime
                 }
                 else
                 {
-                    var fields=new HashSet<string>(StringComparer.Ordinal);
+                    int fields=0;
                     while (true)
                     {
                         if (!budget.Read(reader)) return Reject(reader,rootDepth,result);
                         if (reader.TokenType==JsonToken.EndObject) break;
                         if (reader.TokenType!=JsonToken.PropertyName) throw new JsonSerializationException("Invalid food metadata entry.");
                         string field=(string)reader.Value!;
-                        if (!fields.Add(field)) invalid=true;
+                        int bit=field=="MealClass" ? 1 : field=="TasteBand" ? 2 : field=="BreakfastFitCents" ? 4
+                            : field=="LunchFitCents" ? 8 : field=="DinnerFitCents" ? 16 : 0;
+                        if (bit==0 || (fields&bit)!=0) invalid=true;
+                        fields|=bit;
                         if (!budget.Read(reader)) return Reject(reader,rootDepth,result);
                         switch (field)
                         {
