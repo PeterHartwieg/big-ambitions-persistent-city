@@ -95,3 +95,104 @@ The same numbered list is supplied in the prepared PR description. Loaded
 eligibility, missing-mod handoff and native replay proof remain pending the
 appropriate combined implementation; offline success never certifies a product
 in game.
+
+## Sync-base integration - 2 November 2026 (offline only)
+
+Task `pc-e5d-sync-base` joins approved E5d `61dd722` and current
+`codex/persistent-city` `f353e87` through real two-parent merge `c7a7228`,
+with merge base `034bb76`. Both parent diffs for every conflicted file were
+read before resolution. `CHECKS.md` keeps one adjacent index line each for
+E5a/E5c/E5d; `README.md` keeps all three notices and current schema-25 wording;
+the roadmap keeps all three statuses/perf entries plus the owner-decision
+revision and E6 scope. The metadata-file add/add retains both complete DTO
+contracts: E5c's effective/default/override types and E5d's revisioned held
+inputs and separate wire-facing enum. No field, migration, test, tool,
+checklist item or historical evidence section was removed.
+
+E5c's `FoodProductMetadataResolver.ValidName` now delegates to E5d's
+`FoodNameIdentity.IsCanonical`; its maximum length references the same
+constant. The two reviewed validators already accepted the same names.
+Exact ordinal UTF-16 text, maximum 256 units, controls/pipe/surrogate checks
+and whitespace-only refusal are unchanged. No trimming, normalization,
+case folding, aliasing, hash algorithm or hash input changes. E5c's existing
+tests retain their meaning. E5a code is unchanged. E5d's DTOs are unchanged
+apart from co-location with E5c's types; the entire Persistence tree,
+`FoodNameIdentity`, model, legacy capture and journey/weighted-commerce
+implementations remain byte-identical to E5d. Writer **25**, `NameWire25`,
+every frozen `PopulationSchema24*` codec and older migration path remain
+exactly as reviewed. No further behavior fix was required.
+
+The three-tree preservation audit covers **682** source/test/tool/config
+files. Only the combined DTO file and shared-validator resolver differ from
+both parents in production. All slice tests/config and every tool except the
+report-only fix below match their owning parent. Peter's final 18:02 JST Food-default, seeded resident taste, config
+precedence and deferred-bundle decisions supersede the historical
+open-question wording above. E5e owns the metadata API; native eligibility
+and dynamic held-policy execution still require the appropriate E5b work.
+
+The complete measurement driver passed **26/26 arms**, including the real
+archived 24 controls, exact full payload/hash/count comparisons, 24 projection,
+CF32/64 cold images, churn, encoding/input/record bounds and the separate
+20,000-place control. Report generation then exposed a combination-only tool
+failure: E5c's `firstUseMaxConfig` records a single `milliseconds` interval and
+spike count, while E5d's report assumed `p50/p95/max`. The original failure is
+retained. Commit `2df0511` changes only report rendering to label that single
+interval and leave percentiles unreported; all raw metrics and spike counts
+remain intact. The report rerun passes on the completed measurements, with
+identical production trees. No production, codec, migration or test fix was
+needed. The actual incoming startup intervals **56.2576 / 59.0333 ms** remain
+explicitly flagged, alongside every bulk/save spike.
+
+E5a's historical whole-tree audit bases (`034bb76` / `22ab92b`) predate these
+approved sibling changes. Equivalent documented stages use the unchanged
+isolation guard plus `source_checks.py --audit-base 2df0511` for this combined
+tree, supported by the independent parent audit above. No guard or runner was
+weakened. Direct Release E5a/E5c runs, E5a's reconstructed-before workload and
+E5c comparator preparation pass.
+
+Final foreground validation passes: **67/67 D3a commands**, **61/61
+rival-memory validator commands**, all **26 E5d measurement arms** and the
+passing report rerun, E3 source guards, and **7/7 focused E5a/E5c commands**.
+Three full unit runs pass **2,743/2,743** with zero failures/skips; separate
+discovery retains **2,743** cases. The matrices include every standalone
+regression, Python adapters, all three simulations and C4/E4 comparisons.
+E5a retains **2,758 assertions**. Two fresh processes match the independent
+200-band dumplings/chopped-cheese reference, SHA-256
+`937617912baf43dfdc29f75444d394ee4505fa89bea2dbc72c3f938194b3949e`.
+[Complete commands, log hashes, parent audit, report red/green and measurements](e5d-sync-base-results.json).
+[Prepared integration PR description](../reviews/2026-11-02-e5d-sync-base-pr-description.md).
+
+Both save-contract passes retain schema **25**, **120,279** characters,
+digest `22E3C1955D296E91322F2AD2D950C8B9E181234F3E67825D0DE9A3A2537F3294`,
+**849 orders / 797 purchases / two uncertain receipts** and all twelve F0
+transitions. All eight ordinary/CF pairs retain the reviewed **6,138-byte /
+280-record** migration increase and exact predecessor projection. CF32/64
+budgets remain **223,716,156 / 262,116,156 B** and **2,119,712 / 3,719,712
+records**, with the original CF32 85% / CF64 hard-cap-only qualifications.
+The separate 20,000-place source remains **247,807,024 -> 247,813,162 B**,
+without future-reserve clearance. Historical perf documents/receipts remain
+unchanged; this run is recorded separately.
+
+No new performance change or win is claimed. Focused E5c 4/8-offer resolved
+weight p95 is **0.003369 / 0.004668 ms**, **0 B/call**; its **58.6609 ms**
+first-use config interval is flagged separately from warm work. Focused E5a
+eight-offer/2,000-holder rebuild p95 is **0.4168 ms**, **129,144 B**;
+backlog-unit p95/max is **0.1158 / 19.7226 ms**, zero units >=30 ms.
+The **450.1278 ms** complete backlog is an aggregate, not a unit/frame spike.
+Every measured bulk/save/startup spike and all regression timing flags remain
+in the receipt. No ordinary-play or whole-frame gate result is inferred; the
+four parked hotspots remain untouched.
+
+The latest final fetch still resolves `codex/persistent-city` to `f353e87`,
+already an ancestor. All test/run workloads were foreground and serialized
+with the prescribed other-dotnet guard, without execution deadlines or
+background watchers/servers. Final mod DLL SHA-256:
+`3ec3fed2ad84cb268db07d9f3c35e34e1b96c2b7d6643c333dce6f5a70aa12ee`.
+`git diff --check` passes.
+
+All six numbered E5d In-game checks above and the full E5a/E5c checklists
+remain **rig-automated**, **locked-PC / input-only** checks on the next
+combined-head batched rig under merge rule v2; no check waits for Peter.
+No native evidence or product certification is claimed. No game, rig/profile,
+bridge lease, Steam/Workshop write, ordinary-save deployment or WSL work
+occurred. No push, PR creation or target-branch merge was performed.

@@ -2,6 +2,10 @@
 
 Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here; never append slice sections to this file. Sync/review-fix notes go into the slice's own file.
 
+- E5a — 2 November 2026, offline: detached loaded-catalogue/stock-contract reader, writer 24; 2,556 unit tests / 2,744 E5a assertions; 8-offer/2,000-holder rebuild p95 0.4434 ms, backlog unit p95 0.1777 ms; rebuild 300,280 -> 129,144 B, clean reads 0 B/scans; initial backlog spike 32.5793 ms flagged. [Checks, full measurements and In-game checks for the next batched rig](docs/checks/e5a-catalogue-eligibility.md).
+
+- E5c - 2 November 2026, offline: Food default/seeded resident tastes, 2,687 tests; 4/8 weights p95 0.003344/0.004805 ms, 0 B; max-name fresh config p95 1.5955 ms; first-use 59.0058 ms (earlier 57.6619 ms) startup intervals flagged. [Full resolver/config numbers, validation and next batched rig](docs/checks/e5c-neutral-metadata.md).
+
 - E5d - 2 November 2026, offline: writer 25, exact 24 migration, 2,612 unit cases; stress save +6,138 B / 280 records; CF32/64 budgets 223,716,156 / 262,116,156 B; [full bytes/counts/latency/memory](docs/perf/e5d-name-identity-save.md) and [In-game checks for the next batched rig](docs/checks/e5d-name-identity-save.md#in-game-checks-for-the-next-batched-rig).
 
 - E3 remaining batch - 2 November 2026, offline: all six named candidates STOP; twelve-reader worst warm 2,000-entry p95 0.1441 ms, 200 / 49,104 B/read; existing cold 1,112 -> 1,256 B, zero reader spikes >=30 ms; [full timings, proof and 6 Nov rig/PR handoff](docs/checks/e3-remaining-batch.md).

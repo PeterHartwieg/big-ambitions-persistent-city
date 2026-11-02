@@ -1,4 +1,5 @@
 {
+  "FoodProductOverrides": {},
   "RivalChoiceWeight": 1.0,
   "RivalAssumedServiceMinutes": 5,
   "RivalRefreshGameMinutes": 60,
