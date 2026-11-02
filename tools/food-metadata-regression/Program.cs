@@ -36,12 +36,24 @@ static class Program
         return before ? new FoodProductOverrideConverterBefore().ReadJson(reader,typeof(FoodProductOverrideTable),null,false,serializer)
             : new FoodProductOverrideConverter().ReadJson(reader,typeof(FoodProductOverrideTable),null,false,serializer);
     }
+    private static long Retained(string table)
+    {
+        // Whole managed heap estimate, isolated from timed samples and excluding retained input JSON.
+        _=ParseTable(table,false);
+        long before=GC.GetTotalMemory(true);
+        var loaded=ParseTable(table,false);
+        long delta=GC.GetTotalMemory(true)-before;
+        GC.KeepAlive(loaded); GC.KeepAlive(table);
+        return delta;
+    }
     private static object Resolver(int count)
     {
         var resolver=ParseTable(Table(count),false).Resolver;
         string name=count==0 ? "foodtrucks:itemname_dumplings" : "foodtrucks:itemname_"+(count-1);
-        return new {count,lookup=Measure(()=>sink+=resolver.Resolve(name,Traits,957,"consumer").BreakfastFitCents),
-            miss=Measure(()=>sink+=resolver.Resolve("missing:item",Traits,957,"consumer").LunchFitCents)};
+        string maximumName=new string('x',256);
+        return new {count,retainedTableBytesEstimate=Retained(Table(count)),lookup=Measure(()=>sink+=resolver.Resolve(name,Traits,957,"consumer").BreakfastFitCents),
+            miss=Measure(()=>sink+=resolver.Resolve("missing:item",Traits,957,"consumer").LunchFitCents),
+            maximumNameMiss=Measure(()=>sink+=resolver.Resolve(maximumName,Traits,957,"consumer").DinnerFitCents)};
     }
     private static object Weights(int width)
     {
@@ -63,7 +75,7 @@ static class Program
         string table=maximumNames ? "{"+string.Join(",",Enumerable.Range(0,count).Select(i=>JsonConvert.ToString(i.ToString("D3")+new string('\u2028',253))+":{\"MealClass\":\"Food\",\"TasteBand\":2}"))+"}" : Table(count);
         string config="{\"FoodProductOverrides\":"+table+"}";
         if(ParseTable(table,false).Resolver.Count!=count) throw new Exception("Config count mismatch.");
-        return new {count,maximumNames,characters=config.Length,utf8=System.Text.Encoding.UTF8.GetByteCount(config),
+        return new {count,maximumNames,retainedTableBytesEstimate=Retained(table),characters=config.Length,utf8=System.Text.Encoding.UTF8.GetByteCount(config),
             tableBefore=Measure(()=>sink+=ParseTable(table,true).Resolver.Count,101,1),
             tableAfter=Measure(()=>sink+=ParseTable(table,false).Resolver.Count,101,1),
             coldConfig=Measure(()=>sink+=JsonConvert.DeserializeObject<PrototypeSettings>(config)!.FoodProductOverrides.Resolver.Count,101,1)};
@@ -72,7 +84,7 @@ static class Program
     {
         if(args.Length==1 && args[0]=="--taste-vector")
         {
-            Console.WriteLine(string.Join(",",Enumerable.Range(0,100).Select(i=>FoodProductMetadataResolver.DefaultTaste(957,"pc:"+i,"foodtrucks:itemname_dumplings"))));
+            Console.WriteLine(string.Join(",",Enumerable.Range(0,100).SelectMany(i=>new[]{"foodtrucks:itemname_dumplings","foodtrucks:itemname_choppedcheese"}.Select(name=>FoodProductMetadataResolver.DefaultTaste(957,"pc:"+i,name)))));
             return;
         }
         string firstConfig="{\"FoodProductOverrides\":"+Table(256)+"}";

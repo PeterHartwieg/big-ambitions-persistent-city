@@ -78,7 +78,14 @@ namespace PersistentCity.Runtime
                         utf8+=extra-(c=='\u0085' ? 1 : c=='\u2028' || c=='\u2029' ? 2 : 0);
                     }
                 }
-                else { escaped+=32; utf8+=32; } // bounded numeric spelling plus separator
+                else
+                {
+                    // Json.NET exposes large integer tokens as BigInteger. Charge their actual
+                    // canonical spelling before clamping; many large fields must not evade the table bound.
+                    int charge=reader.Value is System.Numerics.BigInteger integer
+                        ? Math.Max(32,integer.ToString(CultureInfo.InvariantCulture).Length+1) : 32;
+                    escaped+=charge; utf8+=charge;
+                }
                 return escaped <= FoodProductMetadataResolver.MaximumTableCharactersAndBytes
                     && utf8 <= FoodProductMetadataResolver.MaximumTableCharactersAndBytes;
             }

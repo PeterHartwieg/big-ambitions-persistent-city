@@ -18,5 +18,5 @@ parser = parser.replace('int fields=0;', 'var fields=new HashSet<string>(StringC
 parser = parser.replace('if (bit==0 || (fields&bit)!=0) invalid=true;\n                        fields|=bit;', 'if (bit==0 || !fields.Add(field)) invalid=true;')
 parser = parser[parser.index('    internal sealed class FoodProductOverrideConverter'):]
 parser = parser.replace('class FoodProductOverrideConverter', 'class FoodProductOverrideConverterBefore', 1)
-(out / 'FoodProductOverrideConverterBefore.cs').write_text('using System;\nusing System.Collections.Generic;\nusing System.Globalization;\nusing System.Linq;\nusing Newtonsoft.Json;\nusing PersistentCity.Core;\nnamespace PersistentCity.Runtime\n{\n'+parser)
+(out / 'FoodProductOverrideConverterBefore.cs').write_text('using System;\nusing System.Collections.Generic;\nusing System.Globalization;\nusing System.Linq;\nusing System.Text;\nusing Newtonsoft.Json;\nusing PersistentCity.Core;\nnamespace PersistentCity.Runtime\n{\n'+parser)
 print('Prepared pinned 034bb76 choices and policy-matched pre-bitmask config parser.')

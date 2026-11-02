@@ -191,10 +191,10 @@ public sealed class FoodProductMetadataTests
         {
             var traits=ResidentTraits.Generate(seed,"resident");var draw=new FoodDrawContext(seed,"resident",1,MealKind.Lunch,"home",1);
             string Winner(IEnumerable<string> products,FoodProductMetadataResolver resolver) => products.Select(p=>new {Product=p,
-                Rank=FoodDrawContext.Rank(draw.OfferHash("shop",p),FoodChoicePolicy.Weight(Offer(p,MealKind.Lunch),traits,Money.FromCents(1000),new FoodChoiceSettings(),resolver.Resolve(p,traits,seed,"consumer")))})
+                Rank=FoodDrawContext.Rank(draw.OfferHash("shop",p),FoodChoicePolicy.Weight(Offer(p,MealKind.Lunch),traits,Money.FromCents(1000),new FoodChoiceSettings(),resolver.Resolve(p,traits,seed,"resident")))})
                 .OrderBy(x=>x.Rank).ThenBy(x=>x.Product,StringComparer.Ordinal).First().Product;
             Assert.Equal(Winner(names,a),Winner(names.Reverse(),b));
-            foreach(string name in names) Assert.Equal(a.Resolve(name,traits,seed,"consumer"),b.Resolve(name,traits,seed,"consumer"));
+            foreach(string name in names) Assert.Equal(a.Resolve(name,traits,seed,"resident"),b.Resolve(name,traits,seed,"resident"));
         }
     }
     [Fact]
@@ -272,8 +272,8 @@ public sealed class FoodProductMetadataTests
     {
         // Reference strings intentionally allocate here; production streams the same UTF-16 units.
         foreach(int seed in new[]{0,957,-1,int.MaxValue})
-        foreach(string id in new[]{"pc:1","pc:20","a|b:","resident:??"})
-        foreach(string name in new[]{Dumplings,ChoppedCheese,"mod:??","x"})
+        foreach(string id in new[]{"pc:1","pc:20","a|b:","resident:\uD83C\uDF72"})
+        foreach(string name in new[]{Dumplings,ChoppedCheese,"mod:\uD83C\uDF72","x"})
         {
             string key="pc:product-name-taste:v1|"+id.Length.ToString(CultureInfo.InvariantCulture)+":"+id+"|"+name.Length.ToString(CultureInfo.InvariantCulture)+":"+name;
             uint hash=unchecked(2166136261u^(uint)seed);
@@ -282,6 +282,22 @@ public sealed class FoodProductMetadataTests
             int expected=percentile<10 ? 0 : percentile<30 ? 1 : percentile<70 ? 2 : percentile<90 ? 3 : 4;
             Assert.Equal(expected,FoodProductMetadataResolver.DefaultTaste(seed,id,name));
         }
+    }
+
+    [Fact]
+    public void LargeIntegerTokensCannotBypassEscapedTableBudgetBeforeClamping()
+    {
+        Assert.Equal(4,Read("\"TasteBand\":184467440737095516160").TasteBand);
+        string numericFields=string.Join(",",new[]{"TasteBand","BreakfastFitCents","LunchFitCents","DinnerFitCents"}
+            .Select(field=>JsonConvert.ToString(field)+":"+new string('9',300)));
+        string table="{"+string.Join(",",Enumerable.Range(0,256).Select(i=>JsonConvert.ToString(i.ToString("D3",CultureInfo.InvariantCulture)
+            +new string('\u2028',253))+":{"+numericFields+"}"))+"}";
+        Assert.True(table.Length>FoodProductMetadataResolver.MaximumTableCharactersAndBytes);
+        var settings=Parse(table); var logs=new List<string>();
+        Assert.Equal(37,settings.MaximumPedestrians);
+        Assert.Equal(0,settings.FoodProductOverrides.Resolver.Count);
+        settings.FoodProductOverrides.ReportOnce(logs.Add); settings.FoodProductOverrides.ReportOnce(logs.Add);
+        Assert.Single(logs);
     }
 
 }

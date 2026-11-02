@@ -15,7 +15,8 @@ commands = [[sys.executable, 'tools/food-metadata-regression/prepare.py']]
 if not args.finish:
     commands.append([sys.executable, 'tools/run-d3a-checks.py'])
 commands += [[sys.executable, 'tools/rival-memory-regression/validate.py'],
-             [sys.executable, 'tools/e3-remaining-feasibility-regression/source_checks.py']]
+             [sys.executable, 'tools/e3-remaining-feasibility-regression/source_checks.py'],
+             [sys.executable, 'tools/food-metadata-regression/verify_taste.py']]
 env = dict(os.environ, DOTNET_CLI_USE_MSBUILD_SERVER='0', MSBUILDDISABLENODEREUSE='1', UseSharedCompilation='false')
 for command in commands:
     print(' '.join(command), flush=True)
