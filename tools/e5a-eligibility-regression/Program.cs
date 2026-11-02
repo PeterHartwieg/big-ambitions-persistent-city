@@ -227,8 +227,10 @@ static class Regression
         shop = Fixture(new[] { Modded[0] }, 2001); Check(!Read(shop).StockContractMatched, "2001 rejects before scan");
         shop = Fixture(new[] { Modded[0] }, 2, 16385); using (var cache = new LoadedCatalogueEligibilityReader())
         {
+            var enumeration = new CountedCatalogue(ItemsGetter.Items.Values); ItemsGetter.View = enumeration;
             cache.MarkShopDirty("s", shop); Drain(cache);
-            Check(cache.CatalogueRefusal == FoodEligibilityRefusal.CatalogueBounds && cache.DefinitionsRead == 16384, "16385 detected with one extra enumeration only");
+            Check(cache.CatalogueRefusal == FoodEligibilityRefusal.CatalogueBounds && cache.DefinitionsRead == 16384
+                && enumeration.MoveNextCalls == 16385 && enumeration.CurrentReads == 16384, "16385 detected with one extra enumeration only");
         }
         foreach (string field in new[] { "menu", "prices", "cargo", "whitelist", "outputs" })
             Refusal("129 " + field, r => {
@@ -265,6 +267,24 @@ static class Regression
         Check(pure.Finish().Refusal == FoodEligibilityRefusal.FurnitureIdentity, "pure callers still refuse duplicate identity");
     }
     static IEnumerable<Item> ThrowingView() { yield return ItemsGetter.Items.Values.First(); throw new Exception("enumeration interrupted"); }
+    sealed class CountedCatalogue : IEnumerable<Item>
+    {
+        readonly IEnumerable<Item> source;
+        internal int MoveNextCalls, CurrentReads;
+        internal CountedCatalogue(IEnumerable<Item> source) { this.source = source; }
+        public IEnumerator<Item> GetEnumerator() => new Cursor(this, source.GetEnumerator());
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+        sealed class Cursor : IEnumerator<Item>
+        {
+            readonly CountedCatalogue owner; readonly IEnumerator<Item> cursor;
+            internal Cursor(CountedCatalogue owner, IEnumerator<Item> cursor) { this.owner = owner; this.cursor = cursor; }
+            public Item Current { get { owner.CurrentReads++; return cursor.Current; } }
+            object System.Collections.IEnumerator.Current => Current;
+            public bool MoveNext() { owner.MoveNextCalls++; return cursor.MoveNext(); }
+            public void Reset() => cursor.Reset();
+            public void Dispose() => cursor.Dispose();
+        }
+    }
     static void Differential()
     {
         for (int i = 0; i < AllNames.Length; i++)
@@ -323,18 +343,20 @@ static class Regression
             using var reader = new LoadedCatalogueEligibilityReader(); reader.MarkShopDirty("s", r); Drain(reader);
             long cacheRetainedBytes = GC.GetTotalMemory(true) - cacheBaseline;
             var rebuild = Distribution(() => { reader.MarkShopDirty("s", r); while (reader.Continue()) { } });
+            var catalogueRebuild = Distribution(() => { reader.MarkCatalogueDirty(); while (reader.Continue()) { } }, 21);
             long before = GC.GetTotalMemory(true); reader.MarkShopDirty("s", r); while (reader.Continue()) { }
             long retained = GC.GetTotalMemory(true) - before;
             long scans = reader.HoldersRead + reader.DefinitionsRead;
             var clean = Distribution(() => { reader.TryGet("s", out _); reader.Continue(); }, 1001);
             Check(scans == reader.HoldersRead + reader.DefinitionsRead, "warm clean scans unchanged");
-            warm.Add(new { products = count, holders = size, definitions, rebuild, clean, cacheRetainedBytes, retainedRebuildDeltaBytes = retained });
+            warm.Add(new { products = count, holders = size, definitions, rebuild, catalogueRebuild, clean, cacheRetainedBytes, retainedRebuildDeltaBytes = retained });
         }
         var fixture = Fixture(Eight, 2000, 16);
         var eightScans = Distribution(() => { foreach (var reader in Old) reader(fixture); });
         using var one = new LoadedCatalogueEligibilityReader(); one.MarkShopDirty("s", fixture); Drain(one);
         var onePass = Distribution(() => { one.MarkShopDirty("s", fixture); while (one.Continue()) { } });
         var storm = Distribution(() => { for (int i = 0; i < 1000; i++) one.MarkShopDirty("s", fixture); while (one.Continue()) { } });
+        var catalogueStorm = Distribution(() => { for (int i = 0; i < 1000; i++) one.MarkCatalogueDirty(); while (one.Continue()) { } });
         var valid = new List<object>();
         foreach (int n in new[] { 3, 8 })
         {
@@ -351,7 +373,7 @@ static class Regression
         long allocationBytes = GC.GetAllocatedBytesForCurrentThread() - bytesStart;
         long retainedBytes = GC.GetTotalMemory(true) - baseline;
         units.Sort();
-        return new { cold, warm, valid, eightScans, onePass, storm,
+        return new { cold, warm, valid, eightScans, onePass, storm, catalogueStorm,
             backlog = new { shops = 1024, units = units.Count, elapsedMs = elapsed, shopsPerSecond = 1024 * 1000 / elapsed,
                 p50Ms = units[units.Count / 2], p95Ms = units[(int)(units.Count * .95)], maxMs = units[^1],
                 spikesAtLeast30Ms = units.Count(t => t >= 30), allocationBytes, retainedBytes, pending = backlog.PendingShops },
