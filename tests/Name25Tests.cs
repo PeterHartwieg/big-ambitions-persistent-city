@@ -326,4 +326,34 @@ public sealed partial class FoodCommerceTests
         E5d_Refused(bad, city.State);
         Assert.DoesNotContain("product:", string.Join(",", FoodProducts.Ids)); // no live definition was registered
     }
+
+    [Theory]
+    [InlineData("ProductNames", false)] [InlineData("ProductNames", true)]
+    [InlineData("Metadata", false)] [InlineData("Metadata", true)]
+    public void E5d_RawImageBudgetsIncludeEscapedFieldNamesAndWhitespaceBeforeTheValue(string field, bool escaped)
+    {
+        var (city, _) = S17_Full(); string source = SaveCodec.Write(city.State);
+        string key = "\"" + field + "\":";
+        int cap = field == "ProductNames" ? FoodNameIdentity.MaximumTableWire : FoodNameIdentity.MaximumHeldWire;
+        var root = JObject.Parse(source);
+        int used = field == "ProductNames" ? root[field]!.ToString(Formatting.None).Length + 16
+            : 2 + root["Food"]!["Residents"]!.Select(m => m[9]).OfType<JObject>()
+                .SelectMany(d => d["Shops"]!).SelectMany(s => s["Offers"]!)
+                .Sum(o => o["Metadata"]!.ToString(Formatting.None).Length + 12);
+        if (escaped)
+        {
+            string raw = "\"" + string.Concat(field.Select(c => "\\u" + ((int)c).ToString("x4"))) + "\":";
+            // Only one field changes spelling; the decoded DTO key remains identical.
+            int first = source.IndexOf(key, StringComparison.Ordinal);
+            source = source.Remove(first, key.Length).Insert(first, raw);
+            used += raw.Length - key.Length; key = raw;
+        }
+        int at = source.IndexOf(key, StringComparison.Ordinal) + key.Length;
+        string exact = source.Insert(at, new string(' ', cap - used));
+        var read = SaveCodec.Read(exact); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(SaveCodec.Write(city.State), SaveCodec.Write(read.State!));
+        string bad = exact.Insert(at, " ");
+        E5d_Refused(bad, city.State);
+        Assert.Contains("character/UTF-8", SaveCodec.Read(bad).Error);
+    }
 }

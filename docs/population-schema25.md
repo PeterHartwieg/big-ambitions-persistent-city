@@ -103,6 +103,10 @@ history object can contain its old up-to-512-character product text, including
 text invalid for a new table, and remains an object even when another reference
 to the same text is canonical. Such history grants no native authority.
 
+Source budgets include the actual escaped field spelling, separator and
+whitespace before the array value. Exact-limit images are accepted; one extra
+character refuses without replacing the source, including escaped field names.
+
 ## History and held image
 
 A compact schema-25 product history cell is exactly:

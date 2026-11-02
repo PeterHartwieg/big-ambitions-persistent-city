@@ -374,6 +374,10 @@ namespace PersistentCity.Persistence
             Require(token == JsonToken.StartObject && contract is JsonObjectContract, "Expected an object.");
             var properties = ((JsonObjectContract)contract).Properties;
             var names = fieldNames.At(reader.Depth);
+            // Only these two object types contain the new bounded images. Include their raw
+            // field spelling, separator and whitespace, without extra offset work elsewhere.
+            bool bounded25 = schema >= 25 && (type == typeof(CityState) || type == typeof(FoodDecisionOffer));
+            int fieldStart25 = bounded25 ? text.End((IJsonLineInfo)reader) : -1;
             while (reader.Read() && reader.TokenType != JsonToken.EndObject)
             {
                 Require(reader.TokenType == JsonToken.PropertyName, "Expected a field.");
@@ -384,9 +388,11 @@ namespace PersistentCity.Persistence
                 Require(reader.Read(), "Missing field value.");
                 if(schema==23 && type==typeof(FoodProductSales) && name=="ProductId")
                     Require(reader.TokenType==JsonToken.String && FoodMenuPolicy.Code((string)reader.Value!)==0,"Reviewed product history requires a compact cell.");
-                if (schema >= 25 && type == typeof(CityState) && name == "ProductNames") CheckNameTable25(reader, text, ref records);
+                if (schema >= 25 && type == typeof(CityState) && name == "ProductNames") CheckNameTable25(reader, text, ref records, fieldStart25);
+                else if (schema >= 25 && type == typeof(FoodDecisionOffer) && name == "Metadata") CheckMetadata25(reader, text, ref records, fieldNames, fieldStart25);
                 else if(schema>=23 && type==typeof(FoodScope) && name=="AdditionalProductIds") CheckMenuIds23(reader,ref records, schema >= 25 ? text : null);
                 else CheckShape(reader, property.PropertyType!, resolver, ref records, text, schema, fieldNames);
+                if (bounded25) fieldStart25 = text.End((IJsonLineInfo)reader);
             }
             Require(reader.TokenType == JsonToken.EndObject && names.Count == properties.Count - (type == typeof(FoodDecisionState) && !names.Contains("Tuning") ? 1 : 0)
                 - (type == typeof(FoodDecisionShop) && !names.Contains("MemoryContribution") ? 1 : 0), "Missing object fields.");

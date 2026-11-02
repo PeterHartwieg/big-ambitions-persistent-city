@@ -132,7 +132,7 @@ namespace PersistentCity.Persistence
                 && value.LunchFitCents >= 0 && value.LunchFitCents <= 5000
                 && value.DinnerFitCents >= 0 && value.DinnerFitCents <= 5000, "Invalid held product metadata.");
         }
-        private static List<string> CheckNameTable25(JsonReader reader, TokenText text, ref int records)
+        private static List<string> CheckNameTable25(JsonReader reader, TokenText text, ref int records, int fieldStart = -1)
         {
             Require(reader.TokenType == JsonToken.StartArray, "Invalid product name table.");
             int start = text.End((IJsonLineInfo)reader) - 1;
@@ -147,9 +147,11 @@ namespace PersistentCity.Persistence
                 names.Add(name); previous = name; Charge(ref records);
             }
             Require(reader.TokenType == JsonToken.EndArray, "Incomplete product name table.");
-            int length = text.End((IJsonLineInfo)reader) - start;
-            Require(length + 16 <= FoodNameIdentity.MaximumTableWire
-                && System.Text.Encoding.UTF8.GetByteCount(text.Source.AsSpan(start, length)) + 16 <= FoodNameIdentity.MaximumTableWire,
+            int end = text.End((IJsonLineInfo)reader);
+            int length = end - (fieldStart >= 0 ? fieldStart : start);
+            int overhead = fieldStart >= 0 ? 0 : 16;
+            Require(length + overhead <= FoodNameIdentity.MaximumTableWire
+                && System.Text.Encoding.UTF8.GetByteCount(text.Source.AsSpan(fieldStart >= 0 ? fieldStart : start, length)) + overhead <= FoodNameIdentity.MaximumTableWire,
                 "Product name table exceeds its character/UTF-8 budget.");
             return names;
         }
@@ -193,7 +195,7 @@ namespace PersistentCity.Persistence
             }
             return decoded == value.Length;
         }
-        private static void CheckMetadata25(JsonReader reader, TokenText text, ref int records, FieldNameSets fields)
+        private static void CheckMetadata25(JsonReader reader, TokenText text, ref int records, FieldNameSets fields, int fieldStart = -1)
         {
             Require(reader.TokenType == JsonToken.StartArray, "Invalid held metadata tuple.");
             Require(++fields.Metadata25Count <= 64, "Oversized held metadata image.");
@@ -203,9 +205,10 @@ namespace PersistentCity.Persistence
                     && IntegerToken(reader.Value, i == 0 ? 1 : 0, i == 0 ? 2 : i <= 2 ? 4 : 5000)
                     && text.CanonicalInteger((IJsonLineInfo)reader), "Invalid held metadata scalar.");
             Require(reader.Read() && reader.TokenType == JsonToken.EndArray, "Invalid held metadata arity.");
-            int length = text.End((IJsonLineInfo)reader) - start;
-            fields.Metadata25Characters += length + 12;
-            fields.Metadata25Bytes += System.Text.Encoding.UTF8.GetByteCount(text.Source.AsSpan(start, length)) + 12;
+            int length = text.End((IJsonLineInfo)reader) - (fieldStart >= 0 ? fieldStart : start);
+            int overhead = fieldStart >= 0 ? 0 : 12;
+            fields.Metadata25Characters += length + overhead;
+            fields.Metadata25Bytes += System.Text.Encoding.UTF8.GetByteCount(text.Source.AsSpan(fieldStart >= 0 ? fieldStart : start, length)) + overhead;
             Require(fields.Metadata25Characters <= FoodNameIdentity.MaximumHeldWire
                 && fields.Metadata25Bytes <= FoodNameIdentity.MaximumHeldWire, "Oversized held metadata character/UTF-8 image.");
             Charge(ref records);

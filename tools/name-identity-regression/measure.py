@@ -37,6 +37,7 @@ for case in cases:
             raise SystemExit(f"{key}: exit {code}")
         payload = json.loads(next(line for line in reversed(lines) if line.startswith("{")))
         results[key] = dict(command=command, started=started, seconds=time.perf_counter() - tick,
+                            sourceHead=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(),
                             exit=code, log=str(log.relative_to(root)), result=payload)
         if arm == "candidate" and "baseline" in arms:
             baseline = results[f"{case}-baseline"]["result"]

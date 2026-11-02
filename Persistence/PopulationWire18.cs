@@ -194,6 +194,8 @@ namespace PersistentCity.Persistence
                 Require(reader.Read() && reader.TokenType == JsonToken.StartObject, "Expected root.");
                 var ids = new List<string>(); bool found = false;
                 List<string>? products = null;
+                var text = tokenText ?? new TokenText(source);
+                int fieldStart = text.End((IJsonLineInfo)reader);
                 while (reader.Read() && reader.TokenType != JsonToken.EndObject)
                 {
                     Require(reader.TokenType == JsonToken.PropertyName, "Expected root field.");
@@ -202,10 +204,11 @@ namespace PersistentCity.Persistence
                     {
                         Require(products == null, "Duplicate product name table.");
                         int records = 0;
-                        products = CheckNameTable25(reader, tokenText ?? new TokenText(source), ref records);
+                        products = CheckNameTable25(reader, text, ref records, fieldStart);
+                        fieldStart = text.End((IJsonLineInfo)reader);
                         continue;
                     }
-                    if (name != "Places") { reader.Skip(); continue; }
+                    if (name != "Places") { reader.Skip(); fieldStart = text.End((IJsonLineInfo)reader); continue; }
                     Require(!found && reader.TokenType == JsonToken.StartArray, "Invalid Places."); found = true;
                     int count = 0;
                     while (reader.Read() && reader.TokenType != JsonToken.EndArray)
@@ -221,6 +224,7 @@ namespace PersistentCity.Persistence
                         }
                         Require(id != null, "Missing place ID."); ids.Add(id!);
                     }
+                    fieldStart = text.End((IJsonLineInfo)reader);
                 }
                 Require(found, "Missing Places.");
                 var result = new WireContext(ids);
