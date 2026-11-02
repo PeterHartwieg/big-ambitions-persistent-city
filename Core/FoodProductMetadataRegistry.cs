@@ -16,6 +16,25 @@ namespace PersistentCity.Core
         public int? DinnerFitCents { get; set; }
     }
 
+    /// <summary>Host-owned loaded-name evidence, copied once at catalogue publication, not per
+    /// frame/context. Null at Publish means unavailable. Presence is never sale permission.</summary>
+    public sealed class FoodProductMetadataLoadedNames
+    {
+        public const int MaximumNames = 16384;
+        private readonly HashSet<string> names = new HashSet<string>(StringComparer.Ordinal);
+        public FoodProductMetadataLoadedNames(IEnumerable<string> loadedNames)
+        {
+            if (loadedNames == null) throw new ArgumentNullException(nameof(loadedNames));
+            foreach (string name in loadedNames)
+            {
+                if (names.Count == MaximumNames || !FoodProductMetadataResolver.ValidName(name) || !names.Add(name))
+                    throw new ArgumentException("Invalid, duplicate or overbound loaded-name image.");
+            }
+        }
+        public int Count => names.Count;
+        public bool Contains(string name) => names.Contains(name);
+    }
+
     /// <summary>Provider-scoped lifetime. Dispose unregisters all its names; old handles cannot
     /// register again after disposal or registry unload. No provider code is called by PC.</summary>
     public sealed class FoodProductMetadataProvider : IDisposable
@@ -44,7 +63,7 @@ namespace PersistentCity.Core
         private readonly Dictionary<string, int> names = new Dictionary<string, int>(StringComparer.Ordinal);
         private int characters = 2, bytes = 2, mainThread;
         private long revision, publishedRevision = -1;
-        private LoadedStockCatalogue? publishedCatalogue;
+        private FoodProductMetadataLoadedNames? publishedCatalogue;
         private FoodProductMetadataSnapshot published = FoodProductMetadataSnapshot.Empty;
 
         public int ProviderCount { get { lock (gate) return providers.Count; } }
@@ -148,22 +167,22 @@ namespace PersistentCity.Core
                 if (hadEntries) revision++;
             }
         }
-        /// <summary>Atomic immutable publication at a host context boundary. A sealed E5a detached
+        /// <summary>Atomic immutable publication at a host context boundary. A immutable detached
         /// catalogue proves name presence only, never stock/eligibility. At most 256 name lookups,
         /// and bounded claims; no full catalogue scan. Repeated clean calls return the same image.</summary>
-        public FoodProductMetadataSnapshot Publish(LoadedStockCatalogue? catalogue)
+        public FoodProductMetadataSnapshot Publish(FoodProductMetadataLoadedNames? catalogue)
         {
             lock (gate)
             {
                 RequireMainThread();
-                var ready = catalogue?.Ready == true ? catalogue : null;
+                var ready = catalogue;
                 if (publishedRevision == revision && ReferenceEquals(publishedCatalogue, ready)) return published;
                 var values = new Dictionary<string, FoodProductMetadataOverride>(StringComparer.Ordinal);
                 var reasons = new Dictionary<string, string>(StringComparer.Ordinal);
                 foreach (var entry in names)
                 {
                     if (entry.Value > 1) reasons.Add(entry.Key, ConflictReason);
-                    else if (ready == null || !ready.TryGet(entry.Key, out _)) reasons.Add(entry.Key, "unloaded-product");
+                    else if (ready == null || !ready.Contains(entry.Key)) reasons.Add(entry.Key, "unloaded-product");
                 }
                 // No claim can contribute when every name is conflicted/unloaded. Avoid a
                 // redundant walk of up to the full registry budget during conflict bursts.

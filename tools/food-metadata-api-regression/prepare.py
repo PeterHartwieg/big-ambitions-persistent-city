@@ -2,6 +2,9 @@
 from pathlib import Path
 root = Path(__file__).resolve().parents[2]
 source = (root / 'Core/FoodProductMetadataRegistry.cs').read_text()
+start = source.index('    /// <summary>Host-owned loaded-name evidence')
+end = source.index('    /// <summary>Provider-scoped lifetime')
+source = source[:start] + source[end:]  # Shared immutable host input, identical in both arms.
 assert source.count('if (reasons.Count < names.Count)') == 1
 source = source.replace('if (reasons.Count < names.Count)', '')
 source = source.replace('providers.Add(providerId, provider); characters += c; bytes += b;',

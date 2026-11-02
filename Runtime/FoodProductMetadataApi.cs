@@ -13,15 +13,15 @@ namespace PersistentCity.Runtime
             => Registry.TryCreateProvider(providerId, out provider, out reason);
         internal static void BindMainThread() => Registry.BindPublicationThread();
         internal static void Unload() => Registry.ClearOnUnload();
-        // E5b supplies its already sealed E5a catalogue at a new uncaptured context, never a native scan.
-        internal static FoodProductMetadataResolver Publish(FoodProductMetadataResolver config, LoadedStockCatalogue? catalogue)
+        // E5b supplies its already copied loaded-name image at a new uncaptured context, never a native scan.
+        internal static FoodProductMetadataResolver Publish(FoodProductMetadataResolver config, FoodProductMetadataLoadedNames? catalogue)
             => config.WithApi(Registry.Publish(catalogue));
     }
     public sealed partial class PopulationRuntime
     {
         /// <summary>Main-thread resolver composition seam for E5b and explicit rig diagnostics.
         /// Does not capture/rewrite a held decision or grant native eligibility.</summary>
-        public FoodProductMetadataResolver PublishFoodProductMetadata(LoadedStockCatalogue? catalogue)
+        public FoodProductMetadataResolver PublishFoodProductMetadata(FoodProductMetadataLoadedNames? catalogue)
             => FoodProductMetadataApi.Publish(settings.FoodProductOverrides.Resolver, catalogue);
     }
 }

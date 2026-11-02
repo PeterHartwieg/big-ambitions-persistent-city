@@ -13,12 +13,7 @@ public sealed class FoodMetadataApiTests
 {
     internal const string Dumplings = "foodtrucks:itemname_dumplings", ChoppedCheese = "foodtrucks:itemname_choppedcheese";
     internal static readonly ResidentTraits Traits = new() { Bands = "0123401234" };
-    internal static LoadedStockCatalogue Catalogue(params string[] names)
-    {
-        var result = new LoadedStockCatalogue(1);
-        foreach (string name in names) Assert.True(result.Add(new LoadedStockDefinition(name, true, false, false, false, true, true, false, false, true, null, null)));
-        result.Seal(); return result;
-    }
+    internal static FoodProductMetadataLoadedNames Catalogue(params string[] names) => new(names);
     internal static FoodProductMetadataRegistry Registry()
     { var registry = new FoodProductMetadataRegistry(); registry.BindPublicationThread(); return registry; }
     internal static FoodProductMetadataProvider Provider(FoodProductMetadataRegistry registry, string id = "test:provider")
@@ -113,10 +108,10 @@ public sealed class FoodMetadataApiTests
         var registry=Registry(); using var p=Provider(registry);
         Register(p,Dumplings,new(){MealClass=MealClass.Food});
         var catalogue=new LoadedStockCatalogue(1);
-        Assert.Equal(0,catalogue.Count); Assert.Equal(0,registry.Publish(catalogue).Count);
+        Assert.Equal(0,catalogue.Count); Assert.Equal(0,registry.Publish(null).Count);
         catalogue.Add(new LoadedStockDefinition(Dumplings,false,true,false,false,true,true,false,false,false,null,null));
         catalogue.Seal();
-        Assert.Equal(MealClass.Food,Resolve(registry.Publish(catalogue)).MealClass);
+        Assert.Equal(MealClass.Food,Resolve(registry.Publish(Catalogue(Dumplings))).MealClass);
         var menu=new LoadedStockMenuBuilder(catalogue,1,true,new[]{Dumplings},new[]{new StockPriceFields(Dumplings,1)},furnitureCount:0);
         Assert.Equal(FoodEligibilityRefusal.RetailType,menu.Finish().Refusal);
         Assert.Equal(1,catalogue.Count);
@@ -313,5 +308,18 @@ public sealed class FoodMetadataApiTests
         var active=registry.Publish(catalogue);Assert.NotSame(image,active);
         using var other=Provider(registry,"other");Assert.Same(active,registry.Publish(catalogue));
         other.Dispose();Assert.Same(active,registry.Publish(catalogue));
+    }
+    [Fact]
+    public void LoadedNameImageIsCopiedBoundedAndReplacedWithoutCatalogueBuilderReachability()
+    {
+        var names=new[]{Dumplings};var image=new FoodProductMetadataLoadedNames(names);names[0]=ChoppedCheese;
+        Assert.True(image.Contains(Dumplings));Assert.False(image.Contains(ChoppedCheese));
+        Assert.Throws<ArgumentException>(()=>new FoodProductMetadataLoadedNames(new[]{Dumplings,Dumplings}));
+        Assert.Throws<ArgumentException>(()=>new FoodProductMetadataLoadedNames(new[]{"bad|name"}));
+        Assert.Throws<ArgumentNullException>(()=>new FoodProductMetadataLoadedNames(null!));
+        Assert.Equal(16384,new FoodProductMetadataLoadedNames(Enumerable.Range(0,16384).Select(i=>"loaded:"+i)).Count);
+        int visited=0;
+        IEnumerable<string> TooMany() {for(int i=0;i<20000;i++) {visited++;yield return "loaded:"+i;}}
+        Assert.Throws<ArgumentException>(()=>new FoodProductMetadataLoadedNames(TooMany()));Assert.Equal(16385,visited);
     }
 }

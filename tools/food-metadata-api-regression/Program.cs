@@ -10,12 +10,7 @@ static class Program
     private static readonly string[] Names = Enumerable.Range(0,256).Select(i=>"metadata:product:"+i.ToString("D3")).ToArray();
     private static readonly FoodProductMetadataInput Input = new() { MealClass=MealClass.Drink, TasteBand=4, BreakfastFitCents=12, LunchFitCents=34, DinnerFitCents=56 };
     private static readonly Before.FoodProductMetadataInput BeforeInput = new() { MealClass=MealClass.Drink, TasteBand=4, BreakfastFitCents=12, LunchFitCents=34, DinnerFitCents=56 };
-    private static LoadedStockCatalogue Catalogue()
-    {
-        var catalogue=new LoadedStockCatalogue(1);
-        foreach(string n in Names) catalogue.Add(new(n,true,false,false,false,true,true,false,false,true,null,null));
-        catalogue.Seal(); return catalogue;
-    }
+    private static FoodProductMetadataLoadedNames Catalogue() => new(Names);
     private static FoodProductMetadataRegistry Registry()
     { var r=new FoodProductMetadataRegistry(); r.BindPublicationThread(); return r; }
     private static FoodProductMetadataProvider Provider(FoodProductMetadataRegistry r,string id)
@@ -109,6 +104,21 @@ static class Program
             boundedPublication=Measure(()=>{edited.TasteBand=(change++%2)*4;marker.TryRegisterProductMetadata(Names[0],edited,1,out _);sink+=r.Publish(catalogue).Count;}),
             cleanPublication=Measure(()=>sink+=r.Publish(catalogue).Count,1001,100)};
     }
+    private static object MaximumProviderCount()
+    {
+        var r=Registry();var catalogue=Catalogue();var providers=new FoodProductMetadataProvider[256];
+        void RegisterAll()
+        {
+            for(int i=0;i<256;i++)
+            { providers[i]=Provider(r,Names[i]);if(!providers[i].TryRegisterProductMetadata(Names[i],Input,1,out var reason)) throw new Exception(reason); }
+        }
+        RegisterAll();var resolver=FoodProductMetadataResolver.Empty.WithApi(r.Publish(catalogue));
+        var edited=new FoodProductMetadataInput {TasteBand=0};int changes=0;
+        return new {providers=r.ProviderCount,products=r.ProductCount,characters=r.BudgetCharacters,
+            resolve=Measure(()=>sink+=resolver.Resolve(Names[0],Traits,957,"pc:1").TasteBand,1001,100),
+            publication=Measure(()=>{edited.TasteBand=(changes++%2)*4;providers[0].TryRegisterProductMetadata(Names[0],edited,1,out _);sink+=r.Publish(catalogue).Count;}),
+            allProviderUnregisterRegisterBurst=Measure(()=>{foreach(var p in providers) p.Dispose();sink+=r.Publish(catalogue).Count;RegisterAll();sink+=r.Publish(catalogue).Count;})};
+    }
     private static object BeforeAfterConflictWalk()
     {
         var before=new Before.FoodProductMetadataRegistry();before.BindPublicationThread(); var after=Registry();
@@ -150,6 +160,14 @@ static class Program
         GC.KeepAlive(r);GC.KeepAlive(image);GC.KeepAlive(catalogue);
         return new {count,maximum,bytes,providers=r.ProviderCount,budgetCharacters=r.BudgetCharacters};
     }
+    private static object LoadedNames(int count)
+    {
+        string[] names=Enumerable.Range(0,count).Select(i=>"loaded:product:"+i).ToArray();
+        var timing=Measure(()=>sink+=new FoodProductMetadataLoadedNames(names).Count,101,1);
+        long start=GC.GetTotalMemory(true);var image=new FoodProductMetadataLoadedNames(names);
+        long retained=GC.GetTotalMemory(true)-start;GC.KeepAlive(image);GC.KeepAlive(names);
+        return new {count,copyAtCataloguePublication=timing,retainedBytesEstimate=retained};
+    }
     public static void Main()
     {
         long start=Stopwatch.GetTimestamp(),bytes=GC.GetAllocatedBytesForCurrentThread();
@@ -158,8 +176,10 @@ static class Program
         Console.WriteLine(JsonSerializer.Serialize(new {nativeEvidence=false,units="ms/call; windows measured separately for >=30ms flags",firstUse,
             emptyAndFull=new[]{ResolveAndRegister(0),ResolveAndRegister(256)},bursts=new[]{Burst(0),Burst(1),Burst(256)},
             individualMutations=new[]{IndividualMutations(0),IndividualMutations(256)},
-            conflict=Conflict(),maximumBudget=MaximumBudget(),allRefusedWin=BeforeAfterConflictWalk(),emptyProviderWin=BeforeAfterEmptyProvider(),
+            conflict=Conflict(),maximumBudget=MaximumBudget(),maximumProviderCount=MaximumProviderCount(),
+            allRefusedWin=BeforeAfterConflictWalk(),emptyProviderWin=BeforeAfterEmptyProvider(),
             retained=new[]{Retained(0,false),Retained(256,false),Retained(256,true)},
+            loadedNameImages=new[]{LoadedNames(0),LoadedNames(256),LoadedNames(16384)},
             nativeSetupCalls=0,routeCalls=0,providerCallbacks=0,frameParticipant=false,sink},new JsonSerializerOptions {WriteIndented=true}));
     }
 }
