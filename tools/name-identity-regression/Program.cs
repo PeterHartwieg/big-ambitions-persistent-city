@@ -67,12 +67,15 @@ static partial class Program
         for (int i = 0; i < (cf ? 1024 : 32); i++) state.Food.Shops.Add(new FoodScope { PlaceId = places[i].Id,
             BusinessId = "name25:scope:" + i, ProductId = names[(i % 32) * 8], AdditionalProductIds = names.Skip((i % 32) * 8 + 1).Take(7).ToList() });
         int scopeGrowthChars = ScopeCharacters25(state.Food.Shops) - originalScopeChars;
+        state.Schema = 24; state.MenuPolicy = FoodMenuPolicy.Wire;
+        var historySize = HistorySize25(state);
         if (cf)
         {
-            // Scope growth shares the same 12 Mi existing-state allowance. Replace X padding
-            // rather than adding a second allowance on top of the maximal place/name fixture.
+            Check(historySize.Cells <= 114688 * 128, "CF history exceeds its cell-byte allocation.");
+            // All row structure and scope growth share the same 12 Mi existing-state allowance.
+            // Cell payloads consume the separate E4 allowance only by their measured byte cost.
             var own = state.Citizens.Where(c => c.Identity.Id.StartsWith("pc:", StringComparison.Ordinal)).ToArray();
-            int remaining = scopeGrowthChars;
+            int remaining = scopeGrowthChars + historySize.Rows;
             for (int i = 0; i < own.Length; i++)
             {
                 int take = remaining / (own.Length - i); remaining -= take;
@@ -80,9 +83,8 @@ static partial class Program
                 Check(take <= value.Length && value.Skip(value.Length - take).All(c => c == 'X'), "Existing-state padding reduction.");
                 own[i].Identity.Name = value.Substring(0, value.Length - take);
             }
-            Check(remaining == 0, "Scope growth was not charged to existing-state allowance.");
+            Check(remaining == 0, "History-row/scope growth was not charged to existing-state allowance.");
         }
-        state.Schema = 24; state.MenuPolicy = FoodMenuPolicy.Wire;
         string before = NameBaselineCodec.Write(state);
         var beforeCounts = NameBaselineCodec.CountRecordsForSchema(state, before, 24);
         object baseline = name.EndsWith("-limits", StringComparison.Ordinal) ? "not timed" : Measure25(samples, () => NameBaselineCodec.Write(state), () => NameBaselineCodec.Read(before),
@@ -91,7 +93,7 @@ static partial class Program
 #if NAME_SCHEMA24
         Console.WriteLine(JsonConvert.SerializeObject(new { name, residents, factor, samples, source = "034bb7629391ef0fedb61d7122b0d6ee3c451ff9", schema = CityState.CurrentSchema,
             scopes = state.Food!.Shops.Count,
-            scopeGrowthChars,
+            scopeGrowthChars, historyRowGrowthChars = historySize.Rows, historyCellChars = historySize.Cells,
             before = new { chars = before.Length, bytes = Encoding.UTF8.GetByteCount(before), beforeCounts.Streaming, beforeCounts.Semantic,
                 retainedBytes = baselineRetained, timing = baseline }, sha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(before))) }));
         return;
@@ -121,10 +123,10 @@ static partial class Program
         int reservedChars = 26694720 - ("\"Capabilities\":" + JsonConvert.SerializeObject(new { Active = false, Code = "B", Revision = 1 }) + ",").Length
             - (205 + 8 * 25) - AwarenessChars(state) - RivalChars(state) - WeatherChars20(state)
             - CampaignChars22(state) - ("\"MenuPolicy\":" + JsonConvert.ToString(FoodMenuPolicy.Wire) + ",").Length - OutflowChars24(state)
-            - HistoryReserveUsed25(state);
+            - historySize.Cells;
         int reservedRecords = 191864 - 8 * (1 + 3 + 7 + 2) - 1 - AwarenessRecords(state) - WeatherRecords20(state)
             - CampaignRecords22(state) - OutflowRecords24(state) - state.Food.History.Sum(r => 1 + r.ProductSales.Count);
-        // The history byte/cell reservation has been materialized above; do not double-charge it.
+        // Retain the unspent E4 cell-byte allowance; full cell cardinality alone does not spend it.
         long totalChars = budgetWire.Length + reservedChars + memoryHeadroom + 540672;
         long totalBytes = Encoding.UTF8.GetByteCount(budgetWire) + reservedChars + memoryHeadroom + 540672;
         int totalRecords = Math.Max(budgetCounts.Streaming, budgetCounts.Semantic) + reservedRecords + 320;
@@ -136,7 +138,7 @@ static partial class Program
         }
         Console.WriteLine(JsonConvert.SerializeObject(new { name, residents, factor, samples, seed = state.Seed,
             scopes = state.Food!.Shops.Count,
-            scopeGrowthChars,
+            scopeGrowthChars, historyRowGrowthChars = historySize.Rows, historyCellChars = historySize.Cells,
             fixture = "32/64 retained visits; full 20k business references/four memories; 14x1024x8 history; 256 names; 8x3 legacy held offers",
             before = new { chars = before.Length, bytes = Encoding.UTF8.GetByteCount(before), beforeCounts.Streaming, beforeCounts.Semantic, retainedBytes = baselineRetained, timing = baseline },
             after = new { chars = after.Length, bytes = Encoding.UTF8.GetByteCount(after), afterCounts.Streaming, afterCounts.Semantic, retainedBytes = candidateRetained, timing = candidate },
@@ -145,18 +147,27 @@ static partial class Program
             afterSha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(after))), maximumHeld,
             rows = state.Food.History.Count, cells = state.Food.History.Sum(r => r.ProductSales.Count),
             composition = cf ? new { reservedChars, reservedRecords, memoryHeadroom, e5dConservativeChars = 540672, e5dRecords = 320,
-                existingPlaceGrowthChars = 6343907, existingNameGrowthChars = 6239005 - scopeGrowthChars, existingScopeGrowthChars = scopeGrowthChars,
+                existingPlaceGrowthChars = 6343907, existingNameGrowthChars = 6239005 - scopeGrowthChars - historySize.Rows,
+                existingScopeGrowthChars = scopeGrowthChars, existingHistoryRowGrowthChars = historySize.Rows,
                 existingGrowthChars = 12582912, totalChars, totalBytes, totalRecords } : null,
             processPeakBytes = Process.GetCurrentProcess().PeakWorkingSet64 }));
 #endif
     }
     static int ScopeCharacters25(IEnumerable<FoodScope> scopes) => JsonConvert.SerializeObject(scopes.Select(s => new {
         s.AdditionalProductIds, s.BusinessId, s.NextServiceAt, s.PlaceId, s.ProductId }), Formatting.None).Length;
-    static int HistoryReserveUsed25(CityState state)
+    static (int Cells, int Rows) HistorySize25(CityState state)
     {
-        // Materialize E4's 114,688-cell reservation once. Row text remains actual
-        // additional existing state; no invented per-row character reserve is reclaimed.
-        return 114688 * 128;
+        // Fixture accounting only: use the exact frozen writer, including compact versus opaque
+        // cells. Row keys, counters, array brackets and separators consume existing-state space.
+        var codec = typeof(NameBaselineCodec);
+        object context = codec.GetNestedType("WireContext", System.Reflection.BindingFlags.NonPublic)!
+            .GetMethod("FromState")!.Invoke(null, new object[] { state })!;
+        var settings = (JsonSerializerSettings)codec.GetMethod("Settings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+            .Invoke(null, new[] { context })!;
+        var history = state.Food!.History;
+        string wire = JsonConvert.SerializeObject(history, Formatting.None, settings);
+        int cells = history.Sum(r => JsonConvert.SerializeObject(r.ProductSales, Formatting.None, settings).Length - 2);
+        return (cells, wire.Length - 2 - cells);
     }
     static void Shift25(CityState state, double shift)
     {

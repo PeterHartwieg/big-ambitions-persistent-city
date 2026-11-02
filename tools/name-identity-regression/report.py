@@ -22,7 +22,7 @@ text += "| Fixture | Bytes 24 → 25 | Streaming / semantic 24 → 25 | Retained
 for name in cases:
     a, b = before[name], after[name]["after"]
     text += f"| {name} | {number(a['bytes'])} → {number(b['bytes'])} | {number(a['Streaming'])}/{number(a['Semantic'])} → {number(b['Streaming'])}/{number(b['Semantic'])} | {a['retainedBytes']/1048576:.3f} → {b['retainedBytes']/1048576:.3f} |\n"
-text += "\nThe normal matrix uses 32 scopes covering all 256 names. CF materializes all **1,024 scopes × eight IDs** and charges that scope growth to the same 12 Mi-character existing-state allowance by reducing only synthetic X padding. No second allowance is added. Each ordinary migration adds **6,138 bytes and 280 records** (256 names + 24 tuples); full maximum-held cold storage is separate. The provenance bit adds bounded per-history-cell managed memory, included above; it is not serialized.\n\n"
+text += "\nThe normal matrix uses 32 scopes covering all 256 names. CF materializes all **1,024 scopes × eight IDs** and charges both scope growth and exact history row structure to the same 12 Mi-character existing-state allowance by reducing only synthetic X padding. Only measured cell bytes consume the E4 cell allowance; its unspent bytes remain reserved. No second allowance is added. Each ordinary migration adds **6,138 bytes and 280 records** (256 names + 24 tuples); full maximum-held cold storage is separate. The provenance bit adds bounded per-history-cell managed memory, included above; it is not serialized.\n\n"
 text += "| Fixture | Write 24 → 25, p50/p95/max ms | Read 24 → 25, p50/p95/max ms | Activation 24 → 25, p50/p95/max ms |\n| --- | ---: | ---: | ---: |\n"
 for name in cases:
     a, b = before[name]["timing"], after[name]["after"]["timing"]
@@ -39,7 +39,7 @@ for name in ("CF32", "CF64"):
 text += "\nThe complete CF composition includes every outstanding reserve, including the entire extra 540,672 bytes/chars and 320 records on top of the actual image. CF32 passes the 85% target; CF64 passes hard caps only. These are reproducible specified compositions, not clearance for every simultaneous Unicode, opaque-history and churn maximum. Each cold image round-trips; its early/full execution attempts **refuse**. Cold p50/p95/max, allocations and refusal latencies are in the linked JSON.\n\n"
 for name in ("CF32", "CF64"):
     c = after[name]["composition"]
-    text += f"- {name}: existing growth {number(c['existingPlaceGrowthChars'])} place + {number(c['existingScopeGrowthChars'])} scope + {number(c['existingNameGrowthChars'])} name = **{number(c['existingGrowthChars'])}** chars; remaining B–E reserve **{number(c['reservedChars'])} chars / {number(c['reservedRecords'])} records**; memory-field headroom **{number(c['memoryHeadroom'])}** chars.\n"
+    text += f"- {name}: existing growth {number(c['existingPlaceGrowthChars'])} place + {number(c['existingScopeGrowthChars'])} scope + {number(c['existingHistoryRowGrowthChars'])} history row structure + {number(c['existingNameGrowthChars'])} name = **{number(c['existingGrowthChars'])}** chars; remaining B–E reserve **{number(c['reservedChars'])} chars / {number(c['reservedRecords'])} records**; memory-field headroom **{number(c['memoryHeadroom'])}** chars.\n"
 encoding = data["encoding-candidate"]["result"]
 timing = encoding["timing"]["read"]
 saved = 8285000 - timing["allocatedBytes"]
