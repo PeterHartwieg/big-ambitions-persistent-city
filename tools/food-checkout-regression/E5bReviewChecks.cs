@@ -51,6 +51,7 @@ static partial class Program
 
     static void ReviewRecoveryChecks()
     {
+        ReviewClosedRecoveryChecks();
         foreach(string fault in new[]{"price","unknown","native-bag","empty-shelf"})
         {
         using var f=new Fixture();var price=f.Reg.retailPrices.Single(p=>p.itemName==Burger);
@@ -97,6 +98,57 @@ static partial class Program
             Check(f.Market.Buy(meal,now).Paid && f.Reg.unprocessedCompletedOrders.Count==1,"replayed recovered sale never duplicates its order");
         }
         finally {SaveGameManager.Current.Hour=originalHour;}
+        }
+    }
+
+    static void ReviewClosedRecoveryChecks()
+    {
+        foreach(string fault in new[]{"unknown","native-bag"})
+        foreach(bool unestablished in new[]{false,true})
+        {
+            using var f=new Fixture();
+            var cargo=f.Reg.Shelves[0].cargoInstances!.ToList();
+            string businessName=f.Reg.BusinessName;
+            if(fault=="unknown") f.Reg.Shelves[0].cargoInstances!.Add(new BigAmbitions.Items.Cargo {itemName=Croissant,amount=1});
+            else Helpers.BusinessTypeHelper.GetData(f.Reg.businessTypeName).NativeBags=false;
+            Check(f.Market.CaptureBusiness(f.BusinessId,Minute)==null,"supply fault refuses before closure: "+fault);
+            var row=NativeFoodOwnership.Find(f.Reg)!;
+            long hour=SaveGameManager.Current.Day*24L+SaveGameManager.Current.Hour;
+            int originalHour=SaveGameManager.Current.Hour;
+            try
+            {
+                if(unestablished) f.Reg.BusinessName=""; else f.Reg.temporarilyClosed=true;
+                SaveGameManager.Current.Hour++;
+                f.Market.RefreshKnownOwnership();
+                Check(row.Boundary(hour+1,true,false,true),"closed refused shop hands off after drain");
+                long setups=FoodSupplyReader.Setups;
+                for(int offset=2;offset<=3;offset++)
+                {
+                    SaveGameManager.Current.Hour++;
+                    f.Market.RefreshKnownOwnership();
+                    Check(!row.Desired && !row.Managed,"closed shortcut must not clear unrepaired supply refusal");
+                    Check(!row.Boundary(hour+offset,true,false,true),"closed unrepaired shop remains native-owned across boundaries");
+                }
+                Check(FoodSupplyReader.Setups==setups,"closed recovery performs no supply setup");
+                f.Reg.temporarilyClosed=false;f.Reg.BusinessName=businessName;
+                SaveGameManager.Current.Hour++;
+                f.Market.RefreshKnownOwnership();
+                Check(!row.Desired && !row.Managed,"reopening without repair still fails genuine supply validation");
+                f.Reg.Shelves[0].cargoInstances=cargo;
+                Helpers.BusinessTypeHelper.GetData(f.Reg.businessTypeName).NativeBags=true;
+                SaveGameManager.Current.Hour++;
+                f.Market.RefreshKnownOwnership();
+                Check(row.Desired && !row.Managed,"open repaired contract requests future acquisition");
+                Check(!row.Boundary(hour+5,true,false,true),"repair cannot acquire current native hour");
+                SaveGameManager.Current.Hour++;
+                Check(row.Boundary(hour+6,true,false,true),"genuinely repaired shop reacquires at later boundary");
+                f.Market.RefreshKnownOwnership();
+                var meal=f.Meal("closed-repaired-"+fault);
+                Check(f.Market.Buy(meal,f.Market.EarliestMinute).Paid,"open repaired shop serves after safe recovery");
+                Check(f.Market.Buy(meal,f.Market.EarliestMinute).Paid && f.Reg.unprocessedCompletedOrders.Count==1,
+                    "closed recovery receipt replay never duplicates native order");
+            }
+            finally {SaveGameManager.Current.Hour=originalHour;}
         }
     }
 }
