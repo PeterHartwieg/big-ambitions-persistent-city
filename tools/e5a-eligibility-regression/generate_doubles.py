@@ -76,6 +76,8 @@ source = source.replace('        public string id = "", itemName = "";', '''    
         public void MergeCargo(CargoInstance a, CargoInstance b, int n) => throw new Exception("Native mutation reached");''')
 source = source.replace('        public string itemName = ""; public int amount;', '''        public string itemName = ""; public int amount;
         public void MergeAmount(CargoInstance c, int n) => throw new Exception("Native mutation reached");''')
+source = source.replace('        public static BusinessType GetData(string name) => Data;', '''        public static bool ThrowOnRead;
+        public static BusinessType GetData(string name) => ThrowOnRead ? throw new Exception("Native business read failed") : Data;''')
 out = Path(sys.argv[1])
 out.parent.mkdir(parents=True, exist_ok=True)
 out.write_text("#nullable enable\nusing System;\nusing System.Collections.Generic;\nusing BigAmbitions.Items;\n" + source, encoding="utf-8")

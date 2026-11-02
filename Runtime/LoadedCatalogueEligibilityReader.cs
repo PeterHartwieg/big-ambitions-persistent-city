@@ -196,8 +196,7 @@ namespace PersistentCity.Runtime
             }
             catch (Exception)
             {
-                menu = new LoadedStockMenuBuilder(catalogue!, scanningRevision, false, null, null);
-                menu.Fail(FoodEligibilityRefusal.NativeRead);
+                menu = LoadedStockMenuBuilder.Refused(catalogue!, scanningRevision, FoodEligibilityRefusal.NativeRead);
             }
         }
         private void ContinueShop()

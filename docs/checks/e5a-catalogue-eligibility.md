@@ -59,6 +59,19 @@ Final eight-product / 2,000-holder rebuild p50/p95/max **0.4046/0.4434/3.6855 ms
 
 [Performance evidence](../perf/e5a-catalogue-eligibility.md) separates continuation costs, full rebuild/load totals, GC/cache retention and eight unchanged E3 scans from future native combined mod-work. No native/whole-frame timing or in-game product proof is claimed. Physical population, closure refresh, optional-stop refresh and save serialization remain untouched.
 
+## Review round 1 — 2 November 2026, offline only
+
+**Opus-r1-1:** `StartShop` constructed a normally validated builder in its catch path. That constructor recorded `BusinessContract` (or the catalogue refusal) before `Fail(NativeRead)`, whose first-refusal rule then preserved the wrong diagnostic. The catch now uses an explicitly refused builder that records `NativeRead` without running normal business/catalogue validation. Normal validation and first-refusal precedence remain unchanged.
+
+The new harness cases throw from the existing business-type lookup inside `StartShop`, with both ready and unavailable catalogue images. Before the fix, the ready-catalogue case failed with `StartShop native exception must remain NativeRead, catalogue unready=False; got BusinessContract`. After the fix, the full targeted harness passes **2,758 assertions**, including exact `NativeRead`, empty refused offers/holders/raw counters and unchanged fixture fingerprints in both catalogue states. The double's throwing switch is reset between cases. The original 2,744-assertion implementation evidence above remains a dated record.
+
+No `Supported`, checkout, ownership, schema, product policy, E3 facade or native mutation path changed. Writer remains **24**; all proof here is offline.
+
+**Review-fix validation:** all **65/65 D3a commands**, **59/59 D4 commands** and **five outer stages** passed after the fix. Both unit runs passed **2,556/2,556**, zero failed/skipped; separate discovery found 2,556 cases. The E5a harness passed **2,758 assertions** in its targeted run and both required regression batches, then again in the final standalone stage. All E3 source guards/pins and the explicit 641-blob incoming audit pass; the E5 plan is untouched. [Fresh command/log hashes, red/green proof, final measurements and process audit](e5a-review-r1-results.json). Every recorded command/log was checked to postdate the red reproduction, excluding stale implementation results.
+
+Production DLL SHA-256 is now `82afba6da86a7ae9b1ef5612f015e340b860ef48765723f47ab51bc88f18e9d6`. The new factory is used only on caught read failures; the normal path is unchanged. Final eight-product/2,000-holder rebuild p50/p95/max **0.2214/0.2600/2.2674 ms**, **129,144 B**, zero >=30 ms samples. The 1,024-shop backlog drains 16,449 units in **392.5026 ms**, unit p95/max **0.1113/19.5035 ms**, zero >=30 ms units and zero remaining work. These are offline observations, not a new latency-win or native-frame claim; aggregate catalogue rebuild flags remain separate in the receipt, and the original 32.5793 ms spike above remains historical evidence. Final process audit found **zero current-checkout dotnet/testhost/compiler/apphost processes**; unrelated worktree processes were left alone. No game, rig/profile/lease or ordinary-save work occurred.
+
+
 ## In-game checks for the next batched rig
 
 All checks are pending and executed by the **headless agent rig**, in named disposable FT cities. No check is delegated to Peter, a playtest, an unlocked console or a by-hand visual check. Extend the rig where a capability is missing. These feed E5 plan section 8 checks **1 (catalogue/definition truth)** and **6 (noninterference/performance)**; E5b ownership/checkout and E5c/E5d persistence proof are separate. No rig files, lease, ModsLocal or bridge/profile directories were accessed here.

@@ -103,6 +103,15 @@ namespace PersistentCity.Core
         private readonly HashSet<string>? identities;
         private int bags, counters, furniture;
         private bool finished;
+        public static LoadedStockMenuBuilder Refused(LoadedStockCatalogue catalogue, long shopRevision, FoodEligibilityRefusal reason)
+            => new LoadedStockMenuBuilder(catalogue, shopRevision, reason);
+        private LoadedStockMenuBuilder(LoadedStockCatalogue catalogue, long shopRevision, FoodEligibilityRefusal reason)
+        {
+            if (reason == FoodEligibilityRefusal.None) throw new ArgumentOutOfRangeException(nameof(reason));
+            this.catalogue = catalogue; revision = shopRevision; refusal = reason;
+            products = Array.Empty<string>(); prices = Array.Empty<Money>(); stock = observed = Array.Empty<int>();
+            holders = new List<FoodHolderResourceImage>();
+        }
         public LoadedStockMenuBuilder(LoadedStockCatalogue catalogue, long shopRevision, bool businessContract,
             IReadOnlyList<string>? menu, IReadOnlyList<StockPriceFields>? priceRows, int maximumOffers = LoadedStockLimits.Offers,
             int furnitureCount = 0, bool uniqueOrdinalDictionaryKeys = false)

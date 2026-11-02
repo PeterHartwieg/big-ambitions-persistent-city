@@ -27,6 +27,7 @@ static class Regression
         products ??= Modded;
         ItemsGetter.Items = new(StringComparer.Ordinal); ItemsGetter.View = null; ItemsGetter.Unready = false;
         Helpers.BusinessTypeHelper.Data = new();
+        Helpers.BusinessTypeHelper.ThrowOnRead = false;
         foreach (string id in products) ItemsGetter.Items[id] = Def(id, ItemType.RetailProduct);
         ItemsGetter.Items["fixture:holder"] = new() { itemName = "fixture:holder", type = ItemType.ShowcaseShelf, itemsThatCanShowcase = products.ToArray() };
         ItemsGetter.Items["fixture:counter"] = new() { itemName = "fixture:counter", AuthoredTags = { "ba:itemtag_isfullservicecashregister" } };
@@ -68,8 +69,27 @@ static class Regression
     {
         if (args.Length > 0 && args[0] == "cold")
         { Cold(int.Parse(args[1]), int.Parse(args[2]), int.Parse(args[3])); return; }
-        Cases(); Lifecycle(); Bounds(); Differential();
+        NativeReadFailure(); Cases(); Lifecycle(); Bounds(); Differential();
         Console.WriteLine(JsonSerializer.Serialize(new { checks, measurements = Measure() }));
+    }
+    static void NativeReadFailure()
+    {
+        foreach (bool unready in new[] { false, true })
+        {
+            var r = Fixture(); ItemsGetter.Unready = unready;
+            string before = Fingerprint(r);
+            Helpers.BusinessTypeHelper.ThrowOnRead = true;
+            try
+            {
+                var image = Read(r);
+                Check(image.Refusal == FoodEligibilityRefusal.NativeRead,
+                    "StartShop native exception must remain NativeRead, catalogue unready=" + unready + "; got " + image.Refusal);
+                Check(!image.StockContractMatched && image.Offers.Count == 0 && image.Holders.Count == 0
+                    && image.RawBagUnits == 0 && image.RawCounters == 0, "native failure publishes only refused evidence");
+                Check(before == Fingerprint(r), "native failure preserves fixture fields");
+            }
+            finally { Helpers.BusinessTypeHelper.ThrowOnRead = false; }
+        }
     }
     static void Cases()
     {
