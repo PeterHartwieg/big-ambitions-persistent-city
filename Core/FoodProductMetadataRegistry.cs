@@ -30,7 +30,7 @@ namespace PersistentCity.Core
             names = new HashSet<string>(capacity, StringComparer.Ordinal);
             foreach (string name in loadedNames)
             {
-                if (names.Count == MaximumNames || !FoodProductMetadataResolver.ValidName(name) || !names.Add(name))
+                if (names.Count == MaximumNames || !FoodProductMetadataRegistry.ValidApiName(name) || !names.Add(name))
                     throw new ArgumentException("Invalid, duplicate or overbound loaded-name image.");
             }
         }
@@ -65,7 +65,7 @@ namespace PersistentCity.Core
         private readonly Dictionary<string, FoodProductMetadataProvider> providers = new Dictionary<string, FoodProductMetadataProvider>(StringComparer.Ordinal);
         private readonly Dictionary<string, int> names = new Dictionary<string, int>(StringComparer.Ordinal);
         private int characters = 2, bytes = 2, mainThread;
-        private long revision, publishedRevision = -1;
+        private long revision, publishedRevision = -1, publications;
         private FoodProductMetadataLoadedNames? publishedCatalogue;
         private FoodProductMetadataSnapshot published = FoodProductMetadataSnapshot.Empty;
 
@@ -73,7 +73,9 @@ namespace PersistentCity.Core
         public int ProductCount { get { lock (gate) return names.Count; } }
         public int BudgetCharacters { get { lock (gate) return characters; } }
         public int BudgetUtf8Bytes { get { lock (gate) return bytes; } }
-        public long Publications { get; private set; }
+        public long Publications { get { lock (gate) return publications; } }
+        // API input policy only; E5c config/taste and E5d saved identity keep their canonical seam.
+        internal static bool ValidApiName(string? name) => FoodProductMetadataResolver.ValidName(name) && name!.IndexOf('\\') < 0;
         public void BindPublicationThread()
         {
             lock (gate)
@@ -93,7 +95,7 @@ namespace PersistentCity.Core
             provider = null!;
             lock (gate)
             {
-                if (!FoodProductMetadataResolver.ValidName(providerId)) { reason = "invalid-provider-id"; return false; }
+                if (!ValidApiName(providerId)) { reason = "invalid-provider-id"; return false; }
                 if (providers.ContainsKey(providerId)) { reason = "provider-already-registered"; return false; }
                 if (providers.Count == MaximumProviders) { reason = "provider-bound"; return false; }
                 Cost(providerId, out int c, out int b);
@@ -110,7 +112,7 @@ namespace PersistentCity.Core
             {
                 if (!provider.Active) { reason = "provider-unregistered"; return false; }
                 if (version != ApiVersion) { reason = "incompatible-api-version"; return false; }
-                if (!FoodProductMetadataResolver.ValidName(name)) { reason = "invalid-product-name"; return false; }
+                if (!ValidApiName(name)) { reason = "invalid-product-name"; return false; }
                 if (input == null) { reason = "invalid-metadata"; return false; }
                 FoodProductMetadataOverride metadata;
                 try { metadata = new FoodProductMetadataOverride(input.MealClass, input.TasteBand,
@@ -194,7 +196,7 @@ namespace PersistentCity.Core
                         foreach (var entry in provider.Entries)
                             if (!reasons.ContainsKey(entry.Key)) values.Add(entry.Key, entry.Value);
                 published = new FoodProductMetadataSnapshot(values, reasons);
-                publishedRevision = revision; publishedCatalogue = ready; Publications++;
+                publishedRevision = revision; publishedCatalogue = ready; publications++;
                 return published;
             }
         }

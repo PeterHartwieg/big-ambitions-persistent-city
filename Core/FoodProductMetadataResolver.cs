@@ -83,6 +83,6 @@ namespace PersistentCity.Core
         }
         public bool TryGetOverride(string canonicalName, out FoodProductMetadataOverride metadata)
             => overrides.TryGetValue(canonicalName, out metadata);
-        public static bool ValidName(string? name) => FoodNameIdentity.IsCanonical(name) && name!.IndexOf('\\') < 0;
+        public static bool ValidName(string? name) => FoodNameIdentity.IsCanonical(name);
     }
 }

@@ -178,9 +178,9 @@ namespace PersistentCity.Runtime
         public void Initialize(ModContext context)
         {
             log = context.Logger;
-            FoodProductMetadataApi.BindMainThread(); metadataLifetime = true;
             try
             {
+                FoodProductMetadataApi.BindMainThread(); metadataLifetime = true;
                 NativeFoodOwnership.Install();
                 NativeFoodOwnership.EnsureSave();
                 if (NativeFoodOwnership.Error.Length > 0) throw new InvalidDataException(NativeFoodOwnership.Error);
@@ -699,7 +699,6 @@ namespace PersistentCity.Runtime
 
         public void Shutdown()
         {
-            if (metadataLifetime) { FoodProductMetadataApi.Unload(); metadataLifetime = false; }
             Detach();
             // A pure worker may finish after unload; observe faults and release all runtime references.
             if (initialization != null)
@@ -712,6 +711,7 @@ namespace PersistentCity.Runtime
             routes = null;
             saveIdentity = null;
             enabled = false;
+            if (metadataLifetime) { FoodProductMetadataApi.Unload(); metadataLifetime = false; }
         }
         private void OnDestroy() => Shutdown();
     }

@@ -316,6 +316,7 @@ public sealed class FoodMetadataApiTests
         Assert.True(image.Contains(Dumplings));Assert.False(image.Contains(ChoppedCheese));
         Assert.Throws<ArgumentException>(()=>new FoodProductMetadataLoadedNames(new[]{Dumplings,Dumplings}));
         Assert.Throws<ArgumentException>(()=>new FoodProductMetadataLoadedNames(new[]{"bad|name"}));
+        Assert.Throws<ArgumentException>(()=>new FoodProductMetadataLoadedNames(new[]{@"mod:item\special"}));
         Assert.Throws<ArgumentNullException>(()=>new FoodProductMetadataLoadedNames(null!));
         Assert.Equal(16384,new FoodProductMetadataLoadedNames(Enumerable.Range(0,16384).Select(i=>"loaded:"+i)).Count);
         int visited=0;

@@ -18,6 +18,34 @@ public sealed class FoodProductMetadataTests
     private static FoodProductMetadata Read(string fields) => Parse(Entry(fields)).FoodProductOverrides.Resolver.Resolve(Dumplings,Traits,957,"consumer");
     private static EvaluatedFoodOffer Offer(string product, MealKind meal, double memory=0) => new("shop",product,Money.FromCents(100),2,1,10,90,null,null,meal,memory);
 
+    [Fact]
+    public void BackslashCanonicalNamesKeepConfigSeededTasteAndCaptureCompatibility()
+    {
+        const string name=@"mod:item\special";
+        Assert.True(FoodNameIdentity.IsCanonical(name));
+        Assert.True(FoodProductMetadataResolver.ValidName(name));
+        string json="{"+JsonConvert.ToString(name)+":{\"MealClass\":\"Drink\",\"BreakfastFitCents\":37},"
+            +JsonConvert.ToString(Dumplings)+":{\"TasteBand\":3}}";
+        var table=Parse(json).FoodProductOverrides;
+        Assert.False(table.InvalidTable); Assert.Equal(2,table.Resolver.Count);
+        Assert.Equal(3,table.Resolver.Resolve(Dumplings,Traits,957,"consumer").TasteBand);
+        foreach(var resolver in new[]{FoodProductMetadataResolver.Empty,table.Resolver})
+        {
+            var resolved=resolver.Resolve(name,Traits,957,"consumer");
+            var captured=resolver.Capture(name,Traits,957,"consumer");
+            Assert.Equal(FoodProductMetadataResolver.DefaultTaste(957,"consumer",name),resolved.TasteBand);
+            Assert.Equal(resolved.TasteBand,captured.TasteBand);
+            Assert.Equal((FoodMealClass)resolved.MealClass,captured.MealClass);
+            Assert.Equal(resolved.BreakfastFitCents,captured.BreakfastFitCents);
+            Assert.Equal(resolved.LunchFitCents,captured.LunchFitCents);
+            Assert.Equal(resolved.DinnerFitCents,captured.DinnerFitCents);
+        }
+        var configured=table.Resolver.Resolve(name,Traits,957,"consumer");
+        Assert.Equal(MealClass.Drink,configured.MealClass); Assert.Equal(37,configured.BreakfastFitCents);
+        var roundtrip=JsonConvert.DeserializeObject<PrototypeSettings>(JsonConvert.SerializeObject(Parse(json)))!;
+        Assert.Equal(configured,roundtrip.FoodProductOverrides.Resolver.Resolve(name,Traits,957,"consumer"));
+    }
+
     [Theory]
     [InlineData("")] [InlineData("\"MealClass\":null")] [InlineData("\"MealClass\":12")]
     [InlineData("\"MealClass\":\"food\"")] [InlineData("\"MealClass\":\"Food \"")]
