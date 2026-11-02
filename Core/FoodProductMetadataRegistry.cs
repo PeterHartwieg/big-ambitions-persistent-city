@@ -21,10 +21,13 @@ namespace PersistentCity.Core
     public sealed class FoodProductMetadataLoadedNames
     {
         public const int MaximumNames = 16384;
-        private readonly HashSet<string> names = new HashSet<string>(StringComparer.Ordinal);
+        private readonly HashSet<string> names;
         public FoodProductMetadataLoadedNames(IEnumerable<string> loadedNames)
         {
             if (loadedNames == null) throw new ArgumentNullException(nameof(loadedNames));
+            int capacity = loadedNames is ICollection<string> collection ? collection.Count : 0;
+            if (capacity < 0 || capacity > MaximumNames) throw new ArgumentException("Overbound loaded-name image.");
+            names = new HashSet<string>(capacity, StringComparer.Ordinal);
             foreach (string name in loadedNames)
             {
                 if (names.Count == MaximumNames || !FoodProductMetadataResolver.ValidName(name) || !names.Add(name))

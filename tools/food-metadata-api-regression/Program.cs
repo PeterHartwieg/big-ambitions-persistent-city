@@ -163,10 +163,11 @@ static class Program
     private static object LoadedNames(int count)
     {
         string[] names=Enumerable.Range(0,count).Select(i=>"loaded:product:"+i).ToArray();
+        var before=Measure(()=>sink+=new Before.FoodProductMetadataLoadedNamesBefore(names).Count,101,1);
         var timing=Measure(()=>sink+=new FoodProductMetadataLoadedNames(names).Count,101,1);
         long start=GC.GetTotalMemory(true);var image=new FoodProductMetadataLoadedNames(names);
         long retained=GC.GetTotalMemory(true)-start;GC.KeepAlive(image);GC.KeepAlive(names);
-        return new {count,copyAtCataloguePublication=timing,retainedBytesEstimate=retained};
+        return new {count,copyBefore=before,copyAtCataloguePublication=timing,retainedBytesEstimate=retained};
     }
     public static void Main()
     {
