@@ -1,0 +1,2521 @@
+{
+  "baseline": "034bb7629391ef0fedb61d7122b0d6ee3c451ff9",
+  "candidateCode": "41a5aa843597dc8020acff40e9e817419116b497",
+  "productionTrees": {
+    "Core": "cb65f4da0331a746b40ccc889dd006e3c0e0cfbe",
+    "Compatibility": "949655022acb0fb454bf23b05bf7aaade77ce7f9",
+    "Persistence": "28518e455ae71fde554fc21dae79724b0e412b4f",
+    "Runtime": "c2591f5f7e8338aad38faa59d492940c3816b9b7"
+  },
+  "gateSpikes": [
+    {
+      "run": "D3a/awareness",
+      "path": ".stages[1].buildMs",
+      "metrics": {
+        "p50": 25.3176,
+        "p95": 31.8366,
+        "max": 31.8366,
+        "spikesAtLeast30ms": 1
+      }
+    },
+    {
+      "run": "D3a/e4-menu",
+      "path": ".results.history[0].serialize",
+      "metrics": {
+        "samples": 21,
+        "p50": 155.7864,
+        "p95": 215.3876,
+        "max": 232.992,
+        "spikes30": 21,
+        "bytesPerCall": 80133112
+      }
+    },
+    {
+      "run": "D3a/e4-menu",
+      "path": ".results.history[1].serialize",
+      "metrics": {
+        "samples": 21,
+        "p50": 160.2724,
+        "p95": 215.7853,
+        "max": 247.1024,
+        "spikes30": 21,
+        "bytesPerCall": 91875813
+      }
+    },
+    {
+      "run": "D3a/name-identity",
+      "path": ".before.timing.write",
+      "metrics": {
+        "p50": 197.8413,
+        "p95": 205.1961,
+        "max": 205.1961,
+        "spikes30": 3,
+        "allocatedBytes": 155518338
+      }
+    },
+    {
+      "run": "D3a/name-identity",
+      "path": ".before.timing.read",
+      "metrics": {
+        "p50": 566.2416,
+        "p95": 572.5082,
+        "max": 572.5082,
+        "spikes30": 3,
+        "allocatedBytes": 291930389
+      }
+    },
+    {
+      "run": "D3a/name-identity",
+      "path": ".before.timing.activation",
+      "metrics": {
+        "p50": 191.5293,
+        "p95": 192.1918,
+        "max": 192.1918,
+        "spikes30": 3,
+        "allocatedBytes": 85585018
+      }
+    },
+    {
+      "run": "D3a/name-identity",
+      "path": ".after.timing.write",
+      "metrics": {
+        "p50": 239.8603,
+        "p95": 243.8094,
+        "max": 243.8094,
+        "spikes30": 3,
+        "allocatedBytes": 153192338
+      }
+    },
+    {
+      "run": "D3a/name-identity",
+      "path": ".after.timing.read",
+      "metrics": {
+        "p50": 594.3885,
+        "p95": 627.4566,
+        "max": 627.4566,
+        "spikes30": 3,
+        "allocatedBytes": 288334714
+      }
+    },
+    {
+      "run": "D3a/name-identity",
+      "path": ".after.timing.activation",
+      "metrics": {
+        "p50": 322.7992,
+        "p95": 347.7787,
+        "max": 347.7787,
+        "spikes30": 3,
+        "allocatedBytes": 82023282
+      }
+    },
+    {
+      "run": "D4/awareness",
+      "path": ".stages[1].buildMs",
+      "metrics": {
+        "p50": 36.6525,
+        "p95": 82.6261,
+        "max": 82.6261,
+        "spikesAtLeast30ms": 7
+      }
+    },
+    {
+      "run": "D4/e4-menu",
+      "path": ".results.history[0].serialize",
+      "metrics": {
+        "samples": 21,
+        "p50": 193.2846,
+        "p95": 225.3048,
+        "max": 231.0554,
+        "spikes30": 21,
+        "bytesPerCall": 80133091
+      }
+    },
+    {
+      "run": "D4/e4-menu",
+      "path": ".results.history[1].serialize",
+      "metrics": {
+        "samples": 21,
+        "p50": 203.1269,
+        "p95": 247.574,
+        "max": 265.8245,
+        "spikes30": 21,
+        "bytesPerCall": 91876224
+      }
+    },
+    {
+      "run": "D4/name-identity",
+      "path": ".before.timing.write",
+      "metrics": {
+        "p50": 213.1308,
+        "p95": 216.593,
+        "max": 216.593,
+        "spikes30": 3,
+        "allocatedBytes": 155518338
+      }
+    },
+    {
+      "run": "D4/name-identity",
+      "path": ".before.timing.read",
+      "metrics": {
+        "p50": 640.8006,
+        "p95": 663.8664,
+        "max": 663.8664,
+        "spikes30": 3,
+        "allocatedBytes": 291915346
+      }
+    },
+    {
+      "run": "D4/name-identity",
+      "path": ".before.timing.activation",
+      "metrics": {
+        "p50": 200.2526,
+        "p95": 241.3686,
+        "max": 241.3686,
+        "spikes30": 3,
+        "allocatedBytes": 85585042
+      }
+    },
+    {
+      "run": "D4/name-identity",
+      "path": ".after.timing.write",
+      "metrics": {
+        "p50": 329.3926,
+        "p95": 331.1639,
+        "max": 331.1639,
+        "spikes30": 3,
+        "allocatedBytes": 153193413
+      }
+    },
+    {
+      "run": "D4/name-identity",
+      "path": ".after.timing.read",
+      "metrics": {
+        "p50": 550.6268,
+        "p95": 649.9048,
+        "max": 649.9048,
+        "spikes30": 3,
+        "allocatedBytes": 288334709
+      }
+    },
+    {
+      "run": "D4/name-identity",
+      "path": ".after.timing.activation",
+      "metrics": {
+        "p50": 246.1581,
+        "p95": 288.8797,
+        "max": 288.8797,
+        "spikes30": 3,
+        "allocatedBytes": 82023282
+      }
+    },
+    {
+      "run": "D4/rival-outflow",
+      "path": ".wholeDay[1].advance128UnitSamples",
+      "metrics": {
+        "p50": 0.7964,
+        "p95": 1.8934,
+        "max": 33.3999,
+        "spikesAtLeast30ms": 1,
+        "allocatedBytesPerOperation": 584611.9619706137
+      }
+    }
+  ],
+  "nativeEvidence": false,
+  "cases": {
+    "957x2-baseline": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "build/e5d/baseline-runner/NameIdentityBaseline.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "957x2",
+        "3"
+      ],
+      "started": "2026-11-02T11:42:46.026380+00:00",
+      "seconds": 10.25307419989258,
+      "sourceHead": "a9b42e8b3efbaf4c25946e46d2a1f4da6e5e55e0",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\957x2-baseline.log",
+      "result": {
+        "name": "957x2",
+        "residents": 957,
+        "factor": 2,
+        "samples": 3,
+        "source": "034bb7629391ef0fedb61d7122b0d6ee3c451ff9",
+        "schema": 24,
+        "scopes": 32,
+        "scopeGrowthChars": 8686,
+        "historyRowGrowthChars": 7212401,
+        "historyCellChars": 5146624,
+        "before": {
+          "chars": 17745536,
+          "bytes": 17745536,
+          "Streaming": 184787,
+          "Semantic": 184563,
+          "retainedBytes": 38023264,
+          "timing": {
+            "write": {
+              "p50": 222.1797,
+              "p95": 255.9252,
+              "max": 255.9252,
+              "spikes30": 3,
+              "allocatedBytes": 156494688
+            },
+            "read": {
+              "p50": 616.8102,
+              "p95": 627.6513,
+              "max": 627.6513,
+              "spikes30": 3,
+              "allocatedBytes": 290986733
+            },
+            "activation": {
+              "p50": 164.0421,
+              "p95": 169.6221,
+              "max": 169.6221,
+              "spikes30": 3,
+              "allocatedBytes": 85585320
+            },
+            "early": {
+              "p50": 0.0013,
+              "p95": 0.0037,
+              "max": 0.0037,
+              "spikes30": 0,
+              "allocatedBytes": 3170
+            }
+          }
+        },
+        "sha256": "4C383E95FC5578D081A77980EBDBB5B30B657ED33E804E1AA020FDE2AAC69389"
+      }
+    },
+    "957x2-candidate": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/name-identity-regression/NameIdentityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "957x2",
+        "3"
+      ],
+      "started": "2026-11-02T11:42:56.595547+00:00",
+      "seconds": 16.887926199939102,
+      "sourceHead": "a9b42e8b3efbaf4c25946e46d2a1f4da6e5e55e0",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\957x2-candidate.log",
+      "result": {
+        "name": "957x2",
+        "residents": 957,
+        "factor": 2,
+        "samples": 3,
+        "seed": 11,
+        "scopes": 32,
+        "scopeGrowthChars": 8686,
+        "historyRowGrowthChars": 7212401,
+        "historyCellChars": 5146624,
+        "fixture": "32/64 retained visits; full 20k business references/four memories; 14x1024x8 history; 256 names; 8x3 legacy held offers",
+        "before": {
+          "chars": 17745536,
+          "bytes": 17745536,
+          "Streaming": 184787,
+          "Semantic": 184563,
+          "retainedBytes": 38941000,
+          "timing": {
+            "write": {
+              "p50": 179.1689,
+              "p95": 210.4785,
+              "max": 210.4785,
+              "spikes30": 3,
+              "allocatedBytes": 156743450
+            },
+            "read": {
+              "p50": 578.3408,
+              "p95": 657.8631,
+              "max": 657.8631,
+              "spikes30": 3,
+              "allocatedBytes": 291930410
+            },
+            "activation": {
+              "p50": 223.6481,
+              "p95": 231.0735,
+              "max": 231.0735,
+              "spikes30": 3,
+              "allocatedBytes": 85585010
+            },
+            "early": {
+              "p50": 0.0018,
+              "p95": 0.0031,
+              "max": 0.0031,
+              "spikes30": 0,
+              "allocatedBytes": 3170
+            }
+          }
+        },
+        "after": {
+          "chars": 17751674,
+          "bytes": 17751674,
+          "Streaming": 185067,
+          "Semantic": 184843,
+          "retainedBytes": 38960744,
+          "timing": {
+            "write": {
+              "p50": 250.1175,
+              "p95": 309.6925,
+              "max": 309.6925,
+              "spikes30": 3,
+              "allocatedBytes": 153192173
+            },
+            "read": {
+              "p50": 552.5875,
+              "p95": 615.5073,
+              "max": 615.5073,
+              "spikes30": 3,
+              "allocatedBytes": 288334712
+            },
+            "activation": {
+              "p50": 196.9675,
+              "p95": 316.241,
+              "max": 316.241,
+              "spikes30": 3,
+              "allocatedBytes": 82023594
+            },
+            "early": {
+              "p50": 0.0022,
+              "p95": 0.0062,
+              "max": 0.0062,
+              "spikes30": 0,
+              "allocatedBytes": 3130
+            }
+          }
+        },
+        "migrationMs": 1046.5524,
+        "semanticComparison": "every schema-24 field identical",
+        "tableCount": 256,
+        "beforeSha256": "4C383E95FC5578D081A77980EBDBB5B30B657ED33E804E1AA020FDE2AAC69389",
+        "afterSha256": "AAC4681A8B54CD6CA3066E2F315231585BD4D34CC333A3F3A4FF27E6E5DF2C02",
+        "maximumHeld": null,
+        "rows": 14336,
+        "cells": 114688,
+        "composition": null,
+        "processPeakBytes": 440696832
+      }
+    },
+    "957x3-baseline": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "build/e5d/baseline-runner/NameIdentityBaseline.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "957x3",
+        "3"
+      ],
+      "started": "2026-11-02T11:43:13.811896+00:00",
+      "seconds": 8.479990300023928,
+      "sourceHead": "a9b42e8b3efbaf4c25946e46d2a1f4da6e5e55e0",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\957x3-baseline.log",
+      "result": {
+        "name": "957x3",
+        "residents": 957,
+        "factor": 3,
+        "samples": 3,
+        "source": "034bb7629391ef0fedb61d7122b0d6ee3c451ff9",
+        "schema": 24,
+        "scopes": 32,
+        "scopeGrowthChars": 8686,
+        "historyRowGrowthChars": 7212401,
+        "historyCellChars": 5146624,
+        "before": {
+          "chars": 18419556,
+          "bytes": 18419556,
+          "Streaming": 186701,
+          "Semantic": 186477,
+          "retainedBytes": 39961304,
+          "timing": {
+            "write": {
+              "p50": 185.8716,
+              "p95": 217.1316,
+              "max": 217.1316,
+              "spikes30": 3,
+              "allocatedBytes": 163548128
+            },
+            "read": {
+              "p50": 669.229,
+              "p95": 731.1524,
+              "max": 731.1524,
+              "spikes30": 3,
+              "allocatedBytes": 301801512
+            },
+            "activation": {
+              "p50": 161.7596,
+              "p95": 172.5373,
+              "max": 172.5373,
+              "spikes30": 3,
+              "allocatedBytes": 89693098
+            },
+            "early": {
+              "p50": 0.0019,
+              "p95": 0.0025,
+              "max": 0.0025,
+              "spikes30": 0,
+              "allocatedBytes": 3170
+            }
+          }
+        },
+        "sha256": "E1FAE81181CE0CF85986A5A28BF12A296B5F689466A0403C47B2AC31E96F1B45"
+      }
+    },
+    "957x3-candidate": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/name-identity-regression/NameIdentityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "957x3",
+        "3"
+      ],
+      "started": "2026-11-02T11:43:22.610532+00:00",
+      "seconds": 15.637569699902087,
+      "sourceHead": "57ffdc76b5ac471c038eef9499abbc50a7667e57",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\957x3-candidate.log",
+      "result": {
+        "name": "957x3",
+        "residents": 957,
+        "factor": 3,
+        "samples": 3,
+        "seed": 11,
+        "scopes": 32,
+        "scopeGrowthChars": 8686,
+        "historyRowGrowthChars": 7212401,
+        "historyCellChars": 5146624,
+        "fixture": "32/64 retained visits; full 20k business references/four memories; 14x1024x8 history; 256 names; 8x3 legacy held offers",
+        "before": {
+          "chars": 18419556,
+          "bytes": 18419556,
+          "Streaming": 186701,
+          "Semantic": 186477,
+          "retainedBytes": 40879040,
+          "timing": {
+            "write": {
+              "p50": 239.7104,
+              "p95": 243.5065,
+              "max": 243.5065,
+              "spikes30": 3,
+              "allocatedBytes": 163547824
+            },
+            "read": {
+              "p50": 681.0385,
+              "p95": 715.6742,
+              "max": 715.6742,
+              "spikes30": 3,
+              "allocatedBytes": 302659181
+            },
+            "activation": {
+              "p50": 189.089,
+              "p95": 285.7767,
+              "max": 285.7767,
+              "spikes30": 3,
+              "allocatedBytes": 89693386
+            },
+            "early": {
+              "p50": 0.0017,
+              "p95": 0.0025,
+              "max": 0.0025,
+              "spikes30": 0,
+              "allocatedBytes": 3170
+            }
+          }
+        },
+        "after": {
+          "chars": 18425694,
+          "bytes": 18425694,
+          "Streaming": 186981,
+          "Semantic": 186757,
+          "retainedBytes": 40898808,
+          "timing": {
+            "write": {
+              "p50": 225.9713,
+              "p95": 313.9837,
+              "max": 313.9837,
+              "spikes30": 3,
+              "allocatedBytes": 160014280
+            },
+            "read": {
+              "p50": 557.9467,
+              "p95": 682.7109,
+              "max": 682.7109,
+              "spikes30": 3,
+              "allocatedBytes": 299090784
+            },
+            "activation": {
+              "p50": 241.6686,
+              "p95": 256.6551,
+              "max": 256.6551,
+              "spikes30": 3,
+              "allocatedBytes": 86131680
+            },
+            "early": {
+              "p50": 0.0035,
+              "p95": 0.0043,
+              "max": 0.0043,
+              "spikes30": 0,
+              "allocatedBytes": 3130
+            }
+          }
+        },
+        "migrationMs": 1116.1826,
+        "semanticComparison": "every schema-24 field identical",
+        "tableCount": 256,
+        "beforeSha256": "E1FAE81181CE0CF85986A5A28BF12A296B5F689466A0403C47B2AC31E96F1B45",
+        "afterSha256": "89C2152B18633E0DDBC9A1606644B11FDB8927492C8CBF435349F18BEAB7146A",
+        "maximumHeld": null,
+        "rows": 14336,
+        "cells": 114688,
+        "composition": null,
+        "processPeakBytes": 456290304
+      }
+    },
+    "5000x2-baseline": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "build/e5d/baseline-runner/NameIdentityBaseline.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "5000x2",
+        "3"
+      ],
+      "started": "2026-11-02T11:43:38.824504+00:00",
+      "seconds": 14.699154700152576,
+      "sourceHead": "57ffdc76b5ac471c038eef9499abbc50a7667e57",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\5000x2-baseline.log",
+      "result": {
+        "name": "5000x2",
+        "residents": 5000,
+        "factor": 2,
+        "samples": 3,
+        "source": "034bb7629391ef0fedb61d7122b0d6ee3c451ff9",
+        "schema": 24,
+        "scopes": 32,
+        "scopeGrowthChars": 8686,
+        "historyRowGrowthChars": 7212401,
+        "historyCellChars": 5146624,
+        "before": {
+          "chars": 30313445,
+          "bytes": 30313445,
+          "Streaming": 334378,
+          "Semantic": 334154,
+          "retainedBytes": 64237016,
+          "timing": {
+            "write": {
+              "p50": 389.918,
+              "p95": 515.3728,
+              "max": 515.3728,
+              "spikes30": 3,
+              "allocatedBytes": 276434429
+            },
+            "read": {
+              "p50": 1095.4168,
+              "p95": 1130.8977,
+              "max": 1130.8977,
+              "spikes30": 3,
+              "allocatedBytes": 509990469
+            },
+            "activation": {
+              "p50": 346.5722,
+              "p95": 398.7648,
+              "max": 398.7648,
+              "spikes30": 3,
+              "allocatedBytes": 155658552
+            },
+            "early": {
+              "p50": 0.003,
+              "p95": 0.0044,
+              "max": 0.0044,
+              "spikes30": 0,
+              "allocatedBytes": 3170
+            }
+          }
+        },
+        "sha256": "180D556C8699A643034CCE6DB7C39663659ADB91296FC2B499FDB3BE29B217F2"
+      }
+    },
+    "5000x2-candidate": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/name-identity-regression/NameIdentityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "5000x2",
+        "3"
+      ],
+      "started": "2026-11-02T11:43:53.854988+00:00",
+      "seconds": 29.498369800159708,
+      "sourceHead": "57ffdc76b5ac471c038eef9499abbc50a7667e57",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\5000x2-candidate.log",
+      "result": {
+        "name": "5000x2",
+        "residents": 5000,
+        "factor": 2,
+        "samples": 3,
+        "seed": 11,
+        "scopes": 32,
+        "scopeGrowthChars": 8686,
+        "historyRowGrowthChars": 7212401,
+        "historyCellChars": 5146624,
+        "fixture": "32/64 retained visits; full 20k business references/four memories; 14x1024x8 history; 256 names; 8x3 legacy held offers",
+        "before": {
+          "chars": 30313445,
+          "bytes": 30313445,
+          "Streaming": 334378,
+          "Semantic": 334154,
+          "retainedBytes": 65154752,
+          "timing": {
+            "write": {
+              "p50": 495.6395,
+              "p95": 532.6589,
+              "max": 532.6589,
+              "spikes30": 3,
+              "allocatedBytes": 276435338
+            },
+            "read": {
+              "p50": 1040.3074,
+              "p95": 1095.3375,
+              "max": 1095.3375,
+              "spikes30": 3,
+              "allocatedBytes": 510924373
+            },
+            "activation": {
+              "p50": 367.1135,
+              "p95": 522.0731,
+              "max": 522.0731,
+              "spikes30": 3,
+              "allocatedBytes": 155658552
+            },
+            "early": {
+              "p50": 0.0013,
+              "p95": 0.0027,
+              "max": 0.0027,
+              "spikes30": 0,
+              "allocatedBytes": 3170
+            }
+          }
+        },
+        "after": {
+          "chars": 30319583,
+          "bytes": 30319583,
+          "Streaming": 334658,
+          "Semantic": 334434,
+          "retainedBytes": 65174520,
+          "timing": {
+            "write": {
+              "p50": 541.0127,
+              "p95": 554.6557,
+              "max": 554.6557,
+              "spikes30": 3,
+              "allocatedBytes": 273651904
+            },
+            "read": {
+              "p50": 1119.2404,
+              "p95": 1138.4259,
+              "max": 1138.4259,
+              "spikes30": 3,
+              "allocatedBytes": 507376536
+            },
+            "activation": {
+              "p50": 405.4768,
+              "p95": 475.5121,
+              "max": 475.5121,
+              "spikes30": 3,
+              "allocatedBytes": 152096570
+            },
+            "early": {
+              "p50": 0.0035,
+              "p95": 0.0049,
+              "max": 0.0049,
+              "spikes30": 0,
+              "allocatedBytes": 3130
+            }
+          }
+        },
+        "migrationMs": 2230.6407,
+        "semanticComparison": "every schema-24 field identical",
+        "tableCount": 256,
+        "beforeSha256": "180D556C8699A643034CCE6DB7C39663659ADB91296FC2B499FDB3BE29B217F2",
+        "afterSha256": "F9C4AF275C1B7C4B6F8B8870B86E5F32662DA86DD86E81E658B9CA4EC9C19DFE",
+        "maximumHeld": null,
+        "rows": 14336,
+        "cells": 114688,
+        "composition": null,
+        "processPeakBytes": 660713472
+      }
+    },
+    "5000x3-baseline": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "build/e5d/baseline-runner/NameIdentityBaseline.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "5000x3",
+        "3"
+      ],
+      "started": "2026-11-02T11:44:23.691980+00:00",
+      "seconds": 14.815267500001937,
+      "sourceHead": "57ffdc76b5ac471c038eef9499abbc50a7667e57",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\5000x3-baseline.log",
+      "result": {
+        "name": "5000x3",
+        "residents": 5000,
+        "factor": 3,
+        "samples": 3,
+        "source": "034bb7629391ef0fedb61d7122b0d6ee3c451ff9",
+        "schema": 24,
+        "scopes": 32,
+        "scopeGrowthChars": 8686,
+        "historyRowGrowthChars": 7212401,
+        "historyCellChars": 5146624,
+        "before": {
+          "chars": 33834959,
+          "bytes": 33834959,
+          "Streaming": 344378,
+          "Semantic": 344154,
+          "retainedBytes": 74277016,
+          "timing": {
+            "write": {
+              "p50": 563.6144,
+              "p95": 587.7746,
+              "max": 587.7746,
+              "spikes30": 3,
+              "allocatedBytes": 311591120
+            },
+            "read": {
+              "p50": 1207.8192,
+              "p95": 1210.3059,
+              "max": 1210.3059,
+              "spikes30": 3,
+              "allocatedBytes": 565653517
+            },
+            "activation": {
+              "p50": 441.0877,
+              "p95": 466.6641,
+              "max": 466.6641,
+              "spikes30": 3,
+              "allocatedBytes": 176698386
+            },
+            "early": {
+              "p50": 0.0035,
+              "p95": 0.0045,
+              "max": 0.0045,
+              "spikes30": 0,
+              "allocatedBytes": 3170
+            }
+          }
+        },
+        "sha256": "48648BEDDA4AF3FA01BEDC2D7E78D0BB410F588E7D882BD5717CD4EDC89069B2"
+      }
+    },
+    "5000x3-candidate": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/name-identity-regression/NameIdentityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "5000x3",
+        "3"
+      ],
+      "started": "2026-11-02T11:44:38.826986+00:00",
+      "seconds": 29.331303799990565,
+      "sourceHead": "57ffdc76b5ac471c038eef9499abbc50a7667e57",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\5000x3-candidate.log",
+      "result": {
+        "name": "5000x3",
+        "residents": 5000,
+        "factor": 3,
+        "samples": 3,
+        "seed": 11,
+        "scopes": 32,
+        "scopeGrowthChars": 8686,
+        "historyRowGrowthChars": 7212401,
+        "historyCellChars": 5146624,
+        "fixture": "32/64 retained visits; full 20k business references/four memories; 14x1024x8 history; 256 names; 8x3 legacy held offers",
+        "before": {
+          "chars": 33834959,
+          "bytes": 33834959,
+          "Streaming": 344378,
+          "Semantic": 344154,
+          "retainedBytes": 75194728,
+          "timing": {
+            "write": {
+              "p50": 558.9583,
+              "p95": 635.5923,
+              "max": 635.5923,
+              "spikes30": 3,
+              "allocatedBytes": 311591557
+            },
+            "read": {
+              "p50": 1239.4201,
+              "p95": 1378.3902,
+              "max": 1378.3902,
+              "spikes30": 3,
+              "allocatedBytes": 566463373
+            },
+            "activation": {
+              "p50": 450.4881,
+              "p95": 554.1221,
+              "max": 554.1221,
+              "spikes30": 3,
+              "allocatedBytes": 176698394
+            },
+            "early": {
+              "p50": 0.0028,
+              "p95": 0.0064,
+              "max": 0.0064,
+              "spikes30": 0,
+              "allocatedBytes": 3170
+            }
+          }
+        },
+        "after": {
+          "chars": 33841097,
+          "bytes": 33841097,
+          "Streaming": 344658,
+          "Semantic": 344434,
+          "retainedBytes": 75222720,
+          "timing": {
+            "write": {
+              "p50": 460.976,
+              "p95": 623.1412,
+              "max": 623.1412,
+              "spikes30": 3,
+              "allocatedBytes": 308822554
+            },
+            "read": {
+              "p50": 1124.4768,
+              "p95": 1233.4574,
+              "max": 1233.4574,
+              "spikes30": 3,
+              "allocatedBytes": 562977477
+            },
+            "activation": {
+              "p50": 571.4008,
+              "p95": 604.4622,
+              "max": 604.4622,
+              "spikes30": 3,
+              "allocatedBytes": 173137138
+            },
+            "early": {
+              "p50": 0.0023,
+              "p95": 0.0035,
+              "max": 0.0035,
+              "spikes30": 0,
+              "allocatedBytes": 3130
+            }
+          }
+        },
+        "migrationMs": 2048.6978,
+        "semanticComparison": "every schema-24 field identical",
+        "tableCount": 256,
+        "beforeSha256": "48648BEDDA4AF3FA01BEDC2D7E78D0BB410F588E7D882BD5717CD4EDC89069B2",
+        "afterSha256": "F99D85116BCEC2A6A9E94359513A9C9B062EDA5F2AC604ECA2975C0365302D40",
+        "maximumHeld": null,
+        "rows": 14336,
+        "cells": 114688,
+        "composition": null,
+        "processPeakBytes": 732176384
+      }
+    },
+    "50000x2-baseline": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "build/e5d/baseline-runner/NameIdentityBaseline.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "50000x2",
+        "3"
+      ],
+      "started": "2026-11-02T11:45:08.466864+00:00",
+      "seconds": 51.33404430001974,
+      "sourceHead": "57ffdc76b5ac471c038eef9499abbc50a7667e57",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\50000x2-baseline.log",
+      "result": {
+        "name": "50000x2",
+        "residents": 50000,
+        "factor": 2,
+        "samples": 3,
+        "source": "034bb7629391ef0fedb61d7122b0d6ee3c451ff9",
+        "schema": 24,
+        "scopes": 32,
+        "scopeGrowthChars": 8686,
+        "historyRowGrowthChars": 7212401,
+        "historyCellChars": 5146624,
+        "before": {
+          "chars": 162340698,
+          "bytes": 162340698,
+          "Streaming": 1999378,
+          "Semantic": 1999154,
+          "retainedBytes": 341485544,
+          "timing": {
+            "write": {
+              "p50": 2011.3325,
+              "p95": 2055.0143,
+              "max": 2055.0143,
+              "spikes30": 3,
+              "allocatedBytes": 1571282544
+            },
+            "read": {
+              "p50": 5327.9583,
+              "p95": 5373.8662,
+              "max": 5373.8662,
+              "spikes30": 3,
+              "allocatedBytes": 2820255904
+            },
+            "activation": {
+              "p50": 1732.3542,
+              "p95": 1829.1338,
+              "max": 1829.1338,
+              "spikes30": 3,
+              "allocatedBytes": 920450282
+            },
+            "early": {
+              "p50": 0.0024,
+              "p95": 0.0057,
+              "max": 0.0057,
+              "spikes30": 0,
+              "allocatedBytes": 3170
+            }
+          }
+        },
+        "sha256": "99EFADD67D332FEB6934844EFB04E50D322629BC5E8DC1CE3F5CD7DAEA9A5DA8"
+      }
+    },
+    "50000x2-candidate": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/name-identity-regression/NameIdentityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "50000x2",
+        "3"
+      ],
+      "started": "2026-11-02T11:46:00.163105+00:00",
+      "seconds": 111.1141190000344,
+      "sourceHead": "57ffdc76b5ac471c038eef9499abbc50a7667e57",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\50000x2-candidate.log",
+      "result": {
+        "name": "50000x2",
+        "residents": 50000,
+        "factor": 2,
+        "samples": 3,
+        "seed": 11,
+        "scopes": 32,
+        "scopeGrowthChars": 8686,
+        "historyRowGrowthChars": 7212401,
+        "historyCellChars": 5146624,
+        "fixture": "32/64 retained visits; full 20k business references/four memories; 14x1024x8 history; 256 names; 8x3 legacy held offers",
+        "before": {
+          "chars": 162340698,
+          "bytes": 162340698,
+          "Streaming": 1999378,
+          "Semantic": 1999154,
+          "retainedBytes": 342403280,
+          "timing": {
+            "write": {
+              "p50": 1941.2695,
+              "p95": 2127.2825,
+              "max": 2127.2825,
+              "spikes30": 3,
+              "allocatedBytes": 1570708986
+            },
+            "read": {
+              "p50": 5291.8098,
+              "p95": 5317.0901,
+              "max": 5317.0901,
+              "spikes30": 3,
+              "allocatedBytes": 2820600437
+            },
+            "activation": {
+              "p50": 1777.9188,
+              "p95": 1969.4076,
+              "max": 1969.4076,
+              "spikes30": 3,
+              "allocatedBytes": 919876842
+            },
+            "early": {
+              "p50": 0.0015,
+              "p95": 0.0024,
+              "max": 0.0024,
+              "spikes30": 0,
+              "allocatedBytes": 3170
+            }
+          }
+        },
+        "after": {
+          "chars": 162346836,
+          "bytes": 162346836,
+          "Streaming": 1999658,
+          "Semantic": 1999434,
+          "retainedBytes": 342423048,
+          "timing": {
+            "write": {
+              "p50": 2031.7341,
+              "p95": 2081.7804,
+              "max": 2081.7804,
+              "spikes30": 3,
+              "allocatedBytes": 1564881826
+            },
+            "read": {
+              "p50": 5341.976,
+              "p95": 5439.7251,
+              "max": 5439.7251,
+              "spikes30": 3,
+              "allocatedBytes": 2814818914
+            },
+            "activation": {
+              "p50": 2016.3195,
+              "p95": 2060.1323,
+              "max": 2060.1323,
+              "spikes30": 3,
+              "allocatedBytes": 914021210
+            },
+            "early": {
+              "p50": 0.0012,
+              "p95": 0.0028,
+              "max": 0.0028,
+              "spikes30": 0,
+              "allocatedBytes": 3130
+            }
+          }
+        },
+        "migrationMs": 7685.1841,
+        "semanticComparison": "every schema-24 field identical",
+        "tableCount": 256,
+        "beforeSha256": "99EFADD67D332FEB6934844EFB04E50D322629BC5E8DC1CE3F5CD7DAEA9A5DA8",
+        "afterSha256": "4D9E7DA40AF889D82C880CD3AD8A02C686FD87F48C49C72C6DBBE3E60508457C",
+        "maximumHeld": null,
+        "rows": 14336,
+        "cells": 114688,
+        "composition": null,
+        "processPeakBytes": 2790944768
+      }
+    },
+    "50000x3-baseline": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "build/e5d/baseline-runner/NameIdentityBaseline.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "50000x3",
+        "3"
+      ],
+      "started": "2026-11-02T11:47:51.594466+00:00",
+      "seconds": 58.394133399939165,
+      "sourceHead": "57ffdc76b5ac471c038eef9499abbc50a7667e57",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\50000x3-baseline.log",
+      "result": {
+        "name": "50000x3",
+        "residents": 50000,
+        "factor": 3,
+        "samples": 3,
+        "source": "034bb7629391ef0fedb61d7122b0d6ee3c451ff9",
+        "schema": 24,
+        "scopes": 32,
+        "scopeGrowthChars": 8686,
+        "historyRowGrowthChars": 7212401,
+        "historyCellChars": 5146624,
+        "before": {
+          "chars": 196752600,
+          "bytes": 196752600,
+          "Streaming": 2099378,
+          "Semantic": 2099154,
+          "retainedBytes": 440973256,
+          "timing": {
+            "write": {
+              "p50": 2291.1105,
+              "p95": 2359.0025,
+              "max": 2359.0025,
+              "spikes30": 3,
+              "allocatedBytes": 1917611765
+            },
+            "read": {
+              "p50": 6037.8738,
+              "p95": 6405.7702,
+              "max": 6405.7702,
+              "spikes30": 3,
+              "allocatedBytes": 3368470645
+            },
+            "activation": {
+              "p50": 1814.4419,
+              "p95": 1922.4401,
+              "max": 1922.4401,
+              "spikes30": 3,
+              "allocatedBytes": 1128811002
+            },
+            "early": {
+              "p50": 0.0014,
+              "p95": 0.0036,
+              "max": 0.0036,
+              "spikes30": 0,
+              "allocatedBytes": 3170
+            }
+          }
+        },
+        "sha256": "1D242D26D6C60DDC87411F431CAB23257CC33D087EC85044CF5505E942D8C334"
+      }
+    },
+    "50000x3-candidate": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/name-identity-regression/NameIdentityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "50000x3",
+        "3"
+      ],
+      "started": "2026-11-02T11:48:50.304441+00:00",
+      "seconds": 131.58719140011817,
+      "sourceHead": "57ffdc76b5ac471c038eef9499abbc50a7667e57",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\50000x3-candidate.log",
+      "result": {
+        "name": "50000x3",
+        "residents": 50000,
+        "factor": 3,
+        "samples": 3,
+        "seed": 11,
+        "scopes": 32,
+        "scopeGrowthChars": 8686,
+        "historyRowGrowthChars": 7212401,
+        "historyCellChars": 5146624,
+        "fixture": "32/64 retained visits; full 20k business references/four memories; 14x1024x8 history; 256 names; 8x3 legacy held offers",
+        "before": {
+          "chars": 196752600,
+          "bytes": 196752600,
+          "Streaming": 2099378,
+          "Semantic": 2099154,
+          "retainedBytes": 441890992,
+          "timing": {
+            "write": {
+              "p50": 2167.6273,
+              "p95": 2308.2937,
+              "max": 2308.2937,
+              "spikes30": 3,
+              "allocatedBytes": 1917610448
+            },
+            "read": {
+              "p50": 6007.7483,
+              "p95": 6441.9657,
+              "max": 6441.9657,
+              "spikes30": 3,
+              "allocatedBytes": 3369387978
+            },
+            "activation": {
+              "p50": 1810.3464,
+              "p95": 1913.9603,
+              "max": 1913.9603,
+              "spikes30": 3,
+              "allocatedBytes": 1128811002
+            },
+            "early": {
+              "p50": 0.0016,
+              "p95": 0.0027,
+              "max": 0.0027,
+              "spikes30": 0,
+              "allocatedBytes": 3170
+            }
+          }
+        },
+        "after": {
+          "chars": 196758738,
+          "bytes": 196758738,
+          "Streaming": 2099658,
+          "Semantic": 2099434,
+          "retainedBytes": 441910456,
+          "timing": {
+            "write": {
+              "p50": 2595.7578,
+              "p95": 2609.7902,
+              "max": 2609.7902,
+              "spikes30": 3,
+              "allocatedBytes": 1914059968
+            },
+            "read": {
+              "p50": 7253.5346,
+              "p95": 7439.0977,
+              "max": 7439.0977,
+              "spikes30": 3,
+              "allocatedBytes": 3365900298
+            },
+            "activation": {
+              "p50": 2361.7715,
+              "p95": 2726.6571,
+              "max": 2726.6571,
+              "spikes30": 3,
+              "allocatedBytes": 1125249253
+            },
+            "early": {
+              "p50": 0.0016,
+              "p95": 0.0022,
+              "max": 0.0022,
+              "spikes30": 0,
+              "allocatedBytes": 3130
+            }
+          }
+        },
+        "migrationMs": 9786.1234,
+        "semanticComparison": "every schema-24 field identical",
+        "tableCount": 256,
+        "beforeSha256": "1D242D26D6C60DDC87411F431CAB23257CC33D087EC85044CF5505E942D8C334",
+        "afterSha256": "212ED4C6314E65903A07430291DF45694DE9D62554B8D5B7A3D05CE3588424A1",
+        "maximumHeld": null,
+        "rows": 14336,
+        "cells": 114688,
+        "composition": null,
+        "processPeakBytes": 3441303552
+      }
+    },
+    "CF32-baseline": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "build/e5d/baseline-runner/NameIdentityBaseline.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "CF32",
+        "3"
+      ],
+      "started": "2026-11-02T11:51:02.210050+00:00",
+      "seconds": 65.90609330008738,
+      "sourceHead": "57ffdc76b5ac471c038eef9499abbc50a7667e57",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\CF32-baseline.log",
+      "result": {
+        "name": "CF32",
+        "residents": 50000,
+        "factor": 3,
+        "samples": 3,
+        "source": "034bb7629391ef0fedb61d7122b0d6ee3c451ff9",
+        "schema": 24,
+        "scopes": 1024,
+        "places": 14000,
+        "scopeGrowthChars": 319713,
+        "historyRowGrowthChars": 7570003,
+        "historyCellChars": 5146624,
+        "before": {
+          "chars": 201827604,
+          "bytes": 201827604,
+          "Streaming": 2106322,
+          "Semantic": 2099154,
+          "retainedBytes": 449731280,
+          "timing": {
+            "write": {
+              "p50": 2360.8453,
+              "p95": 2547.0525,
+              "max": 2547.0525,
+              "spikes30": 3,
+              "allocatedBytes": 1951477709
+            },
+            "read": {
+              "p50": 6845.2414,
+              "p95": 6950.5949,
+              "max": 6950.5949,
+              "spikes30": 3,
+              "allocatedBytes": 3448277645
+            },
+            "activation": {
+              "p50": 2049.9876,
+              "p95": 2068.9965,
+              "max": 2068.9965,
+              "spikes30": 3,
+              "allocatedBytes": 1142339154
+            },
+            "early": {
+              "p50": 0.0014,
+              "p95": 0.0028,
+              "max": 0.0028,
+              "spikes30": 0,
+              "allocatedBytes": 3170
+            }
+          }
+        },
+        "sha256": "20282D6C4BB5BC69D5AACE08C5C9655201C4DA5A445E979C148F4E786061396F"
+      }
+    },
+    "CF32-candidate": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/name-identity-regression/NameIdentityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "CF32",
+        "3"
+      ],
+      "started": "2026-11-02T11:52:08.433895+00:00",
+      "seconds": 213.40826179995202,
+      "sourceHead": "57a7bb4c708e4e7cddaf6eda3725f5163dfa2114",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\CF32-candidate.log",
+      "result": {
+        "name": "CF32",
+        "residents": 50000,
+        "factor": 3,
+        "samples": 3,
+        "seed": 11,
+        "scopes": 1024,
+        "places": 14000,
+        "scopeGrowthChars": 319713,
+        "historyRowGrowthChars": 7570003,
+        "historyCellChars": 5146624,
+        "fixture": "32/64 retained visits; full 20k business references/four memories; 14x1024x8 history; 256 names; 8x3 legacy held offers",
+        "before": {
+          "chars": 201827604,
+          "bytes": 201827604,
+          "Streaming": 2106322,
+          "Semantic": 2099154,
+          "retainedBytes": 450649320,
+          "timing": {
+            "write": {
+              "p50": 3252.8417,
+              "p95": 3427.8981,
+              "max": 3427.8981,
+              "spikes30": 3,
+              "allocatedBytes": 1951476309
+            },
+            "read": {
+              "p50": 7059.0737,
+              "p95": 7259.1012,
+              "max": 7259.1012,
+              "spikes30": 3,
+              "allocatedBytes": 3449195442
+            },
+            "activation": {
+              "p50": 2021.4727,
+              "p95": 2066.4806,
+              "max": 2066.4806,
+              "spikes30": 3,
+              "allocatedBytes": 1142339133
+            },
+            "early": {
+              "p50": 0.0039,
+              "p95": 0.0048,
+              "max": 0.0048,
+              "spikes30": 0,
+              "allocatedBytes": 3170
+            }
+          }
+        },
+        "after": {
+          "chars": 201833742,
+          "bytes": 201833742,
+          "Streaming": 2106602,
+          "Semantic": 2099434,
+          "retainedBytes": 450669088,
+          "timing": {
+            "write": {
+              "p50": 2469.9275,
+              "p95": 2473.2334,
+              "max": 2473.2334,
+              "spikes30": 3,
+              "allocatedBytes": 1947942650
+            },
+            "read": {
+              "p50": 7069.6611,
+              "p95": 7228.8398,
+              "max": 7228.8398,
+              "spikes30": 3,
+              "allocatedBytes": 3445707578
+            },
+            "activation": {
+              "p50": 2617.009,
+              "p95": 2688.1271,
+              "max": 2688.1271,
+              "spikes30": 3,
+              "allocatedBytes": 1138777096
+            },
+            "early": {
+              "p50": 0.0017,
+              "p95": 0.0048,
+              "max": 0.0048,
+              "spikes30": 0,
+              "allocatedBytes": 3130
+            }
+          }
+        },
+        "migrationMs": 9965.7886,
+        "semanticComparison": "every schema-24 field identical",
+        "tableCount": 256,
+        "beforeSha256": "20282D6C4BB5BC69D5AACE08C5C9655201C4DA5A445E979C148F4E786061396F",
+        "afterSha256": "C686C4D49DEE7D4A6464EC175C719543BC782CC349870CAC4B6D07992FF07330",
+        "maximumHeld": {
+          "offers": 64,
+          "characters": 201838710,
+          "bytes": 201838710,
+          "Streaming": 2106682,
+          "Semantic": 2099514,
+          "retainedBytes": 450675424,
+          "execution": "early/full activation refused; cold storage only",
+          "timing": {
+            "write": {
+              "p50": 2640.2348,
+              "p95": 2750.9348,
+              "max": 2750.9348,
+              "spikes30": 3,
+              "allocatedBytes": 1947959962
+            },
+            "read": {
+              "p50": 6252.1489,
+              "p95": 7057.158,
+              "max": 7057.158,
+              "spikes30": 3,
+              "allocatedBytes": 3445786186
+            },
+            "activation": {
+              "p50": 276.592,
+              "p95": 343.7902,
+              "max": 343.7902,
+              "spikes30": 3,
+              "allocatedBytes": 141896602
+            },
+            "early": {
+              "p50": 0.0041,
+              "p95": 0.0056,
+              "max": 0.0056,
+              "spikes30": 0,
+              "allocatedBytes": 3594
+            }
+          }
+        },
+        "rows": 14336,
+        "cells": 114688,
+        "composition": {
+          "reservedChars": 19386774,
+          "reservedRecords": 12710,
+          "memoryHeadroom": 1950000,
+          "e5dConservativeChars": 540672,
+          "e5dRecords": 320,
+          "existingPlaceGrowthChars": 4429907,
+          "existingNameGrowthChars": 263289,
+          "existingScopeGrowthChars": 319713,
+          "existingHistoryRowGrowthChars": 7570003,
+          "existingGrowthChars": 12582912,
+          "totalChars": 223716156,
+          "totalBytes": 223716156,
+          "totalRecords": 2119712
+        },
+        "processPeakBytes": 4163481600
+      }
+    },
+    "CF64-baseline": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "build/e5d/baseline-runner/NameIdentityBaseline.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "CF64",
+        "3"
+      ],
+      "started": "2026-11-02T11:55:42.212011+00:00",
+      "seconds": 78.41412940016016,
+      "sourceHead": "57a7bb4c708e4e7cddaf6eda3725f5163dfa2114",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\CF64-baseline.log",
+      "result": {
+        "name": "CF64",
+        "residents": 50000,
+        "factor": 3,
+        "samples": 3,
+        "source": "034bb7629391ef0fedb61d7122b0d6ee3c451ff9",
+        "schema": 24,
+        "scopes": 1024,
+        "places": 14000,
+        "scopeGrowthChars": 319713,
+        "historyRowGrowthChars": 7570003,
+        "historyCellChars": 5146624,
+        "before": {
+          "chars": 240227604,
+          "bytes": 240227604,
+          "Streaming": 3706322,
+          "Semantic": 3699154,
+          "retainedBytes": 526531584,
+          "timing": {
+            "write": {
+              "p50": 2963.0397,
+              "p95": 3391.9815,
+              "max": 3391.9815,
+              "spikes30": 3,
+              "allocatedBytes": 2438224584
+            },
+            "read": {
+              "p50": 7987.7157,
+              "p95": 8101.0623,
+              "max": 8101.0623,
+              "spikes30": 3,
+              "allocatedBytes": 4255903269
+            },
+            "activation": {
+              "p50": 2634.6184,
+              "p95": 2655.4814,
+              "max": 2655.4814,
+              "spikes30": 3,
+              "allocatedBytes": 1475141941
+            },
+            "early": {
+              "p50": 0.0012,
+              "p95": 0.0033,
+              "max": 0.0033,
+              "spikes30": 0,
+              "allocatedBytes": 3170
+            }
+          }
+        },
+        "sha256": "4600F8D6139530081550AEEBEB8ED6F08A94D553E7BD09B848D02A3DAC841021"
+      }
+    },
+    "CF64-candidate": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/name-identity-regression/NameIdentityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "CF64",
+        "3"
+      ],
+      "started": "2026-11-02T11:57:00.964885+00:00",
+      "seconds": 227.98158020013943,
+      "sourceHead": "57a7bb4c708e4e7cddaf6eda3725f5163dfa2114",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\CF64-candidate.log",
+      "result": {
+        "name": "CF64",
+        "residents": 50000,
+        "factor": 3,
+        "samples": 3,
+        "seed": 11,
+        "scopes": 1024,
+        "places": 14000,
+        "scopeGrowthChars": 319713,
+        "historyRowGrowthChars": 7570003,
+        "historyCellChars": 5146624,
+        "fixture": "32/64 retained visits; full 20k business references/four memories; 14x1024x8 history; 256 names; 8x3 legacy held offers",
+        "before": {
+          "chars": 240227604,
+          "bytes": 240227604,
+          "Streaming": 3706322,
+          "Semantic": 3699154,
+          "retainedBytes": 527449320,
+          "timing": {
+            "write": {
+              "p50": 2920.0319,
+              "p95": 3015.4333,
+              "max": 3015.4333,
+              "spikes30": 3,
+              "allocatedBytes": 2438225842
+            },
+            "read": {
+              "p50": 7398.6471,
+              "p95": 8078.9071,
+              "max": 8078.9071,
+              "spikes30": 3,
+              "allocatedBytes": 4256820154
+            },
+            "activation": {
+              "p50": 2463.2856,
+              "p95": 2558.6558,
+              "max": 2558.6558,
+              "spikes30": 3,
+              "allocatedBytes": 1475141941
+            },
+            "early": {
+              "p50": 0.0022,
+              "p95": 0.0027,
+              "max": 0.0027,
+              "spikes30": 0,
+              "allocatedBytes": 3170
+            }
+          }
+        },
+        "after": {
+          "chars": 240233742,
+          "bytes": 240233742,
+          "Streaming": 3706602,
+          "Semantic": 3699434,
+          "retainedBytes": 527469088,
+          "timing": {
+            "write": {
+              "p50": 2953.9834,
+              "p95": 3030.7152,
+              "max": 3030.7152,
+              "spikes30": 3,
+              "allocatedBytes": 2434692066
+            },
+            "read": {
+              "p50": 8006.2934,
+              "p95": 8219.0233,
+              "max": 8219.0233,
+              "spikes30": 3,
+              "allocatedBytes": 4253331490
+            },
+            "activation": {
+              "p50": 2947.5211,
+              "p95": 3030.5938,
+              "max": 3030.5938,
+              "spikes30": 3,
+              "allocatedBytes": 1471580808
+            },
+            "early": {
+              "p50": 0.0016,
+              "p95": 0.0019,
+              "max": 0.0019,
+              "spikes30": 0,
+              "allocatedBytes": 3130
+            }
+          }
+        },
+        "migrationMs": 10935.309,
+        "semanticComparison": "every schema-24 field identical",
+        "tableCount": 256,
+        "beforeSha256": "4600F8D6139530081550AEEBEB8ED6F08A94D553E7BD09B848D02A3DAC841021",
+        "afterSha256": "1CADB22DCACD019FCBC3F67E9417890A9486B74F8259B98AC6A5C181FBA4C4D1",
+        "maximumHeld": {
+          "offers": 64,
+          "characters": 240238710,
+          "bytes": 240238710,
+          "Streaming": 3706682,
+          "Semantic": 3699514,
+          "retainedBytes": 527475424,
+          "execution": "early/full activation refused; cold storage only",
+          "timing": {
+            "write": {
+              "p50": 3001.8664,
+              "p95": 3290.1952,
+              "max": 3290.1952,
+              "spikes30": 3,
+              "allocatedBytes": 2434708317
+            },
+            "read": {
+              "p50": 7340.4968,
+              "p95": 7511.2804,
+              "max": 7511.2804,
+              "spikes30": 3,
+              "allocatedBytes": 4253411818
+            },
+            "activation": {
+              "p50": 359.8346,
+              "p95": 424.8061,
+              "max": 424.8061,
+              "spikes30": 3,
+              "allocatedBytes": 180299205
+            },
+            "early": {
+              "p50": 0.0034,
+              "p95": 0.0044,
+              "max": 0.0044,
+              "spikes30": 0,
+              "allocatedBytes": 3594
+            }
+          }
+        },
+        "rows": 14336,
+        "cells": 114688,
+        "composition": {
+          "reservedChars": 19386774,
+          "reservedRecords": 12710,
+          "memoryHeadroom": 1950000,
+          "e5dConservativeChars": 540672,
+          "e5dRecords": 320,
+          "existingPlaceGrowthChars": 4429907,
+          "existingNameGrowthChars": 263289,
+          "existingScopeGrowthChars": 319713,
+          "existingHistoryRowGrowthChars": 7570003,
+          "existingGrowthChars": 12582912,
+          "totalChars": 262116156,
+          "totalBytes": 262116156,
+          "totalRecords": 3719712
+        },
+        "processPeakBytes": 4859064320
+      }
+    },
+    "churn-baseline": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "build/e5d/baseline-runner/NameIdentityBaseline.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "churn",
+        "3"
+      ],
+      "started": "2026-11-02T12:00:49.279687+00:00",
+      "seconds": 12.077315100003034,
+      "sourceHead": "57a7bb4c708e4e7cddaf6eda3725f5163dfa2114",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\churn-baseline.log",
+      "result": {
+        "name": "churn",
+        "residents": 957,
+        "factor": 2,
+        "samples": 3,
+        "source": "034bb7629391ef0fedb61d7122b0d6ee3c451ff9",
+        "schema": 24,
+        "scopes": 32,
+        "places": 1030,
+        "scopeGrowthChars": 8686,
+        "historyRowGrowthChars": 14440343,
+        "historyCellChars": 10293248,
+        "before": {
+          "chars": 30120102,
+          "bytes": 30120102,
+          "Streaming": 313811,
+          "Semantic": 313587,
+          "retainedBytes": 64416432,
+          "timing": {
+            "write": {
+              "p50": 387.1498,
+              "p95": 395.3955,
+              "max": 395.3955,
+              "spikes30": 3,
+              "allocatedBytes": 259049968
+            },
+            "read": {
+              "p50": 940.1147,
+              "p95": 1112.5084,
+              "max": 1112.5084,
+              "spikes30": 3,
+              "allocatedBytes": 488691736
+            },
+            "activation": {
+              "p50": 311.5165,
+              "p95": 327.1644,
+              "max": 327.1644,
+              "spikes30": 3,
+              "allocatedBytes": 138296602
+            },
+            "early": {
+              "p50": 0.0045,
+              "p95": 0.0048,
+              "max": 0.0048,
+              "spikes30": 0,
+              "allocatedBytes": 3170
+            }
+          }
+        },
+        "sha256": "B559FF1E47CEBD00C3E2F9D94ABE330FE647B75E8E9A592A40EC10661D172FE4"
+      }
+    },
+    "churn-candidate": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/name-identity-regression/NameIdentityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "churn",
+        "3"
+      ],
+      "started": "2026-11-02T12:01:01.688088+00:00",
+      "seconds": 24.751208399888128,
+      "sourceHead": "57a7bb4c708e4e7cddaf6eda3725f5163dfa2114",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\churn-candidate.log",
+      "result": {
+        "name": "churn",
+        "residents": 957,
+        "factor": 2,
+        "samples": 3,
+        "seed": 11,
+        "scopes": 32,
+        "places": 1030,
+        "scopeGrowthChars": 8686,
+        "historyRowGrowthChars": 14440343,
+        "historyCellChars": 10293248,
+        "fixture": "32/64 retained visits; full 20k business references/four memories; 14x1024x8 history; 256 names; 8x3 legacy held offers",
+        "before": {
+          "chars": 30120102,
+          "bytes": 30120102,
+          "Streaming": 313811,
+          "Semantic": 313587,
+          "retainedBytes": 66251672,
+          "timing": {
+            "write": {
+              "p50": 415.5755,
+              "p95": 457.3752,
+              "max": 457.3752,
+              "spikes30": 3,
+              "allocatedBytes": 259051480
+            },
+            "read": {
+              "p50": 1057.8055,
+              "p95": 1062.1703,
+              "max": 1062.1703,
+              "spikes30": 3,
+              "allocatedBytes": 490570445
+            },
+            "activation": {
+              "p50": 394.2945,
+              "p95": 446.0237,
+              "max": 446.0237,
+              "spikes30": 3,
+              "allocatedBytes": 138296914
+            },
+            "early": {
+              "p50": 0.0017,
+              "p95": 0.0029,
+              "max": 0.0029,
+              "spikes30": 0,
+              "allocatedBytes": 3170
+            }
+          }
+        },
+        "after": {
+          "chars": 30126240,
+          "bytes": 30126240,
+          "Streaming": 314091,
+          "Semantic": 313867,
+          "retainedBytes": 66271440,
+          "timing": {
+            "write": {
+              "p50": 424.0403,
+              "p95": 493.1203,
+              "max": 493.1203,
+              "spikes30": 3,
+              "allocatedBytes": 251848840
+            },
+            "read": {
+              "p50": 940.231,
+              "p95": 1076.8387,
+              "max": 1076.8387,
+              "spikes30": 3,
+              "allocatedBytes": 483319282
+            },
+            "activation": {
+              "p50": 373.49,
+              "p95": 501.5903,
+              "max": 501.5903,
+              "spikes30": 3,
+              "allocatedBytes": 131064858
+            },
+            "early": {
+              "p50": 0.0016,
+              "p95": 0.0023,
+              "max": 0.0023,
+              "spikes30": 0,
+              "allocatedBytes": 3130
+            }
+          }
+        },
+        "migrationMs": 2033.7212,
+        "semanticComparison": "every schema-24 field identical",
+        "tableCount": 256,
+        "beforeSha256": "B559FF1E47CEBD00C3E2F9D94ABE330FE647B75E8E9A592A40EC10661D172FE4",
+        "afterSha256": "3F12703976A90F10AA2D6BFB6B17F22338ACA07D93D9604C0EDE09A9A2E6550E",
+        "maximumHeld": null,
+        "rows": 28672,
+        "cells": 229376,
+        "composition": null,
+        "processPeakBytes": 589148160
+      }
+    },
+    "held64-candidate": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/name-identity-regression/NameIdentityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "held64",
+        "3"
+      ],
+      "started": "2026-11-02T12:01:26.794106+00:00",
+      "seconds": 21.15098899998702,
+      "sourceHead": "57a7bb4c708e4e7cddaf6eda3725f5163dfa2114",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\held64-candidate.log",
+      "result": {
+        "name": "held64",
+        "residents": 957,
+        "factor": 2,
+        "samples": 3,
+        "seed": 11,
+        "scopes": 32,
+        "places": 1030,
+        "scopeGrowthChars": 8686,
+        "historyRowGrowthChars": 7212401,
+        "historyCellChars": 5146624,
+        "fixture": "32/64 retained visits; full 20k business references/four memories; 14x1024x8 history; 256 names; 8x3 legacy held offers",
+        "before": {
+          "chars": 17745536,
+          "bytes": 17745536,
+          "Streaming": 184787,
+          "Semantic": 184563,
+          "retainedBytes": 38941000,
+          "timing": {
+            "write": {
+              "p50": 218.6018,
+              "p95": 247.2085,
+              "max": 247.2085,
+              "spikes30": 3,
+              "allocatedBytes": 156540784
+            },
+            "read": {
+              "p50": 589.9294,
+              "p95": 649.7211,
+              "max": 649.7211,
+              "spikes30": 3,
+              "allocatedBytes": 291931474
+            },
+            "activation": {
+              "p50": 200.7113,
+              "p95": 263.3212,
+              "max": 263.3212,
+              "spikes30": 3,
+              "allocatedBytes": 85585010
+            },
+            "early": {
+              "p50": 0.0009,
+              "p95": 0.0041,
+              "max": 0.0041,
+              "spikes30": 0,
+              "allocatedBytes": 3170
+            }
+          }
+        },
+        "after": {
+          "chars": 17751674,
+          "bytes": 17751674,
+          "Streaming": 185067,
+          "Semantic": 184843,
+          "retainedBytes": 38968968,
+          "timing": {
+            "write": {
+              "p50": 241.4791,
+              "p95": 247.4949,
+              "max": 247.4949,
+              "spikes30": 3,
+              "allocatedBytes": 153192338
+            },
+            "read": {
+              "p50": 594.692,
+              "p95": 629.5129,
+              "max": 629.5129,
+              "spikes30": 3,
+              "allocatedBytes": 288334864
+            },
+            "activation": {
+              "p50": 226.9353,
+              "p95": 233.2697,
+              "max": 233.2697,
+              "spikes30": 3,
+              "allocatedBytes": 82023282
+            },
+            "early": {
+              "p50": 0.002,
+              "p95": 0.0023,
+              "max": 0.0023,
+              "spikes30": 0,
+              "allocatedBytes": 3130
+            }
+          }
+        },
+        "migrationMs": 1097.0523,
+        "semanticComparison": "every schema-24 field identical",
+        "tableCount": 256,
+        "beforeSha256": "4C383E95FC5578D081A77980EBDBB5B30B657ED33E804E1AA020FDE2AAC69389",
+        "afterSha256": "AAC4681A8B54CD6CA3066E2F315231585BD4D34CC333A3F3A4FF27E6E5DF2C02",
+        "maximumHeld": {
+          "offers": 64,
+          "characters": 17756642,
+          "bytes": 17756642,
+          "Streaming": 185147,
+          "Semantic": 184923,
+          "retainedBytes": 38967080,
+          "execution": "early/full activation refused; cold storage only",
+          "timing": {
+            "write": {
+              "p50": 208.0155,
+              "p95": 333.6682,
+              "max": 333.6682,
+              "spikes30": 3,
+              "allocatedBytes": 153225536
+            },
+            "read": {
+              "p50": 603.6073,
+              "p95": 707.5822,
+              "max": 707.5822,
+              "spikes30": 3,
+              "allocatedBytes": 288414093
+            },
+            "activation": {
+              "p50": 55.4282,
+              "p95": 55.6114,
+              "max": 55.6114,
+              "spikes30": 3,
+              "allocatedBytes": 44753624
+            },
+            "early": {
+              "p50": 0.0086,
+              "p95": 0.0098,
+              "max": 0.0098,
+              "spikes30": 0,
+              "allocatedBytes": 3594
+            }
+          }
+        },
+        "rows": 14336,
+        "cells": 114688,
+        "composition": null,
+        "processPeakBytes": 427978752
+      }
+    },
+    "encoding-candidate": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/name-identity-regression/NameIdentityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "encoding",
+        "3"
+      ],
+      "started": "2026-11-02T12:01:48.275102+00:00",
+      "seconds": 1.7195347999222577,
+      "sourceHead": "57a7bb4c708e4e7cddaf6eda3725f5163dfa2114",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\encoding-candidate.log",
+      "result": {
+        "maximumEscaping": false,
+        "names": 256,
+        "nameLength": 256,
+        "chars": 149224,
+        "bytes": 408296,
+        "escapedChars": 796904,
+        "escapedBytes": 796904,
+        "escapedTableChars": 390161,
+        "escapedTableBytes": 390161,
+        "timing": {
+          "write": {
+            "p50": 2.9901,
+            "p95": 3.0324,
+            "max": 3.0324,
+            "spikes30": 0,
+            "allocatedBytes": 1058409
+          },
+          "read": {
+            "p50": 28.2538,
+            "p95": 31.0604,
+            "max": 31.0604,
+            "spikes30": 1,
+            "allocatedBytes": 2065995
+          },
+          "activation": {
+            "p50": 3.6068,
+            "p95": 3.7846,
+            "max": 3.7846,
+            "spikes30": 0,
+            "allocatedBytes": 453716
+          },
+          "early": {
+            "p50": 0.0034,
+            "p95": 0.0066,
+            "max": 0.0066,
+            "spikes30": 0,
+            "allocatedBytes": 3132
+          }
+        },
+        "counts": {
+          "Item1": 486,
+          "Item2": 262
+        }
+      }
+    },
+    "record-boundary-candidate": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/name-identity-regression/NameIdentityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "record-boundary",
+        "3"
+      ],
+      "started": "2026-11-02T12:01:52.612086+00:00",
+      "seconds": 41.06982279988006,
+      "sourceHead": "57a7bb4c708e4e7cddaf6eda3725f5163dfa2114",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\record-boundary-candidate.log",
+      "result": {
+        "streamingAtCap": 4000000,
+        "semanticAtCap": 3999997,
+        "oneRecordOver": "read/write/store/session refused and source reference preserved",
+        "chars": 242816040,
+        "utf8Bytes": 242816040
+      }
+    },
+    "input-boundary-candidate": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/name-identity-regression/NameIdentityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "input-boundary",
+        "3"
+      ],
+      "started": "2026-11-02T12:02:34.032556+00:00",
+      "seconds": 3.6308200999628752,
+      "sourceHead": "57a7bb4c708e4e7cddaf6eda3725f5163dfa2114",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\input-boundary-candidate.log",
+      "result": {
+        "exactCharactersAndUtf8": 268435456,
+        "oneCharacterOver": "read/store/session preserved",
+        "oneUtf8ByteOver": "read/store/session preserved",
+        "oversizedSources": [
+          13,
+          14,
+          15,
+          16,
+          17
+        ]
+      }
+    },
+    "migration-record-limit-candidate": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/name-identity-regression/NameIdentityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "migration-record-limit",
+        "3"
+      ],
+      "started": "2026-11-02T12:02:37.986955+00:00",
+      "seconds": 67.21374280005693,
+      "sourceHead": "57a7bb4c708e4e7cddaf6eda3725f5163dfa2114",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\migration-record-limit-candidate.log",
+      "result": {
+        "chars": 242816266,
+        "bytes": 242816266,
+        "Streaming": 4000000,
+        "Semantic": 3999997,
+        "requiredNewRecords": 27,
+        "migration": "refused; originally valid 24 source text/reference preserved by codec/store/session",
+        "Error": "Invalid state: Too many opening, route and visit records."
+      }
+    },
+    "CF64-limits-candidate": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/name-identity-regression/NameIdentityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "CF64-limits",
+        "3"
+      ],
+      "started": "2026-11-02T12:03:45.776424+00:00",
+      "seconds": 202.7022386000026,
+      "sourceHead": "fbac6982b9615cbaee006ca88af55428fbd5a42e",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\CF64-limits-candidate.log",
+      "result": {
+        "name": "CF64-limits",
+        "residents": 50000,
+        "factor": 3,
+        "samples": 3,
+        "places": 20000,
+        "scopes": 32,
+        "before": {
+          "chars": 247807024,
+          "bytes": 247807024,
+          "Streaming": 3699378,
+          "Semantic": 3699154,
+          "retainedBytes": 541902872,
+          "timing": {
+            "write": {
+              "p50": 2997.3613,
+              "p95": 3392.4068,
+              "max": 3392.4068,
+              "spikes30": 3,
+              "allocatedBytes": 2475636976
+            },
+            "read": {
+              "p50": 7760.1489,
+              "p95": 8003.6868,
+              "max": 8003.6868,
+              "spikes30": 3,
+              "allocatedBytes": 4335298490
+            },
+            "activation": {
+              "p50": 2806.7292,
+              "p95": 2829.893,
+              "max": 2829.893,
+              "spikes30": 3,
+              "allocatedBytes": 1482175018
+            },
+            "early": {
+              "p50": 0.0021,
+              "p95": 0.0052,
+              "max": 0.0052,
+              "spikes30": 0,
+              "allocatedBytes": 3170
+            }
+          }
+        },
+        "after": {
+          "chars": 247813162,
+          "bytes": 247813162,
+          "Streaming": 3699658,
+          "Semantic": 3699434,
+          "retainedBytes": 541922640,
+          "timing": {
+            "write": {
+              "p50": 3121.8581,
+              "p95": 3134.0462,
+              "max": 3134.0462,
+              "spikes30": 3,
+              "allocatedBytes": 2472105357
+            },
+            "read": {
+              "p50": 7520.0468,
+              "p95": 7673.9932,
+              "max": 7673.9932,
+              "spikes30": 3,
+              "allocatedBytes": 4331808394
+            },
+            "activation": {
+              "p50": 2452.1119,
+              "p95": 2457.8137,
+              "max": 2457.8137,
+              "spikes30": 3,
+              "allocatedBytes": 1478612978
+            },
+            "early": {
+              "p50": 0.0016,
+              "p95": 0.0035,
+              "max": 0.0035,
+              "spikes30": 0,
+              "allocatedBytes": 3130
+            }
+          }
+        },
+        "beforeSha256": "AD330A5D10EB48FC2FDFF4F5CD14B864122E20B38DF9BFC67200C73F88A67371",
+        "migrationMs": 11476.9909,
+        "composition": "20,000-place hard-cap stress beyond CF's shared existing-state allowance; no future-reserve clearance",
+        "limits": {
+          "utf8": {
+            "dimension": "UTF-8",
+            "characters": 257644370,
+            "bytes": 278124370,
+            "result": "read/write/activation/store/session refused; original text/reference and unrelated key preserved"
+          },
+          "characters": {
+            "dimension": "characters",
+            "characters": 275959722,
+            "bytes": 275959722,
+            "result": "read/write/activation/store/session refused; original text/reference and unrelated key preserved"
+          }
+        }
+      }
+    },
+    "encoding-max-candidate": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/name-identity-regression/NameIdentityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "encoding-max",
+        "3"
+      ],
+      "started": "2026-11-02T12:01:50.595391+00:00",
+      "seconds": 1.7066440999042243,
+      "sourceHead": "57a7bb4c708e4e7cddaf6eda3725f5163dfa2114",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\encoding-max-candidate.log",
+      "result": {
+        "maximumEscaping": true,
+        "names": 256,
+        "nameLength": 256,
+        "chars": 149224,
+        "bytes": 411368,
+        "escapedChars": 804584,
+        "escapedBytes": 804584,
+        "escapedTableChars": 394001,
+        "escapedTableBytes": 394001,
+        "timing": {
+          "write": {
+            "p50": 3.0665,
+            "p95": 3.5483,
+            "max": 3.5483,
+            "spikes30": 0,
+            "allocatedBytes": 1058409
+          },
+          "read": {
+            "p50": 27.7529,
+            "p95": 29.9976,
+            "max": 29.9976,
+            "spikes30": 0,
+            "allocatedBytes": 2065995
+          },
+          "activation": {
+            "p50": 2.9617,
+            "p95": 3.151,
+            "max": 3.151,
+            "spikes30": 0,
+            "allocatedBytes": 453716
+          },
+          "early": {
+            "p50": 0.0024,
+            "p95": 0.0047,
+            "max": 0.0047,
+            "spikes30": 0,
+            "allocatedBytes": 3132
+          }
+        },
+        "counts": {
+          "Item1": 486,
+          "Item2": 262
+        }
+      }
+    },
+    "CF64-limits-baseline": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "build/e5d/baseline-runner/NameIdentityBaseline.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "CF64-limits",
+        "3"
+      ],
+      "started": "2026-11-02T12:07:09.028454+00:00",
+      "seconds": 79.39316780003719,
+      "sourceHead": "fbac6982b9615cbaee006ca88af55428fbd5a42e",
+      "exit": 0,
+      "log": "build\\e5d\\measurements\\CF64-limits-baseline.log",
+      "result": {
+        "name": "CF64-limits",
+        "residents": 50000,
+        "factor": 3,
+        "samples": 3,
+        "source": "034bb7629391ef0fedb61d7122b0d6ee3c451ff9",
+        "schema": 24,
+        "scopes": 32,
+        "places": 20000,
+        "scopeGrowthChars": 9417,
+        "historyRowGrowthChars": 7570003,
+        "historyCellChars": 5146624,
+        "before": {
+          "chars": 247807024,
+          "bytes": 247807024,
+          "Streaming": 3699378,
+          "Semantic": 3699154,
+          "retainedBytes": 540985136,
+          "timing": {
+            "write": {
+              "p50": 2841.7196,
+              "p95": 2971.2807,
+              "max": 2971.2807,
+              "spikes30": 3,
+              "allocatedBytes": 2475636792
+            },
+            "read": {
+              "p50": 8414.0636,
+              "p95": 8700.3574,
+              "max": 8700.3574,
+              "spikes30": 3,
+              "allocatedBytes": 4334378794
+            },
+            "activation": {
+              "p50": 3133.9444,
+              "p95": 3143.6917,
+              "max": 3143.6917,
+              "spikes30": 3,
+              "allocatedBytes": 1482174850
+            },
+            "early": {
+              "p50": 0.0045,
+              "p95": 0.0136,
+              "max": 0.0136,
+              "spikes30": 0,
+              "allocatedBytes": 3170
+            }
+          }
+        },
+        "sha256": "AD330A5D10EB48FC2FDFF4F5CD14B864122E20B38DF9BFC67200C73F88A67371"
+      }
+    }
+  }
+}
