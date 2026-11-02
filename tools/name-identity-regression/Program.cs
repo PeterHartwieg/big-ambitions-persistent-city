@@ -28,12 +28,13 @@ static partial class Program
 #endif
         if (name == "record-boundary") { Console.WriteLine(JsonConvert.SerializeObject(RecordBoundary())); return; }
         if (name == "input-boundary") { Console.WriteLine(JsonConvert.SerializeObject(InputBoundary())); return; }
-        bool cf = name.StartsWith("CF", StringComparison.Ordinal);
-        int residents = cf || name.StartsWith("50000", StringComparison.Ordinal) ? 50000 : name.StartsWith("5000", StringComparison.Ordinal) ? 5000 : 957;
-        int factor = cf || name.EndsWith("x3", StringComparison.Ordinal) ? 3 : 2;
+        bool cf = name == "CF32" || name == "CF64", placeLimit = name == "CF64-limits";
+        int residents = cf || placeLimit || name.StartsWith("50000", StringComparison.Ordinal) ? 50000 : name.StartsWith("5000", StringComparison.Ordinal) ? 5000 : 957;
+        int factor = cf || placeLimit || name.EndsWith("x3", StringComparison.Ordinal) ? 3 : 2;
         var state = FoodCity(residents, true, factor); PopulateDecisions(state);
         RetainVisits(state, name.StartsWith("CF64", StringComparison.Ordinal) ? 64 : 32);
-        if (cf) AddReferencePlaces(state);
+        int existingPlaceGrowth = cf ? AddCfPlaces25(state) : 0;
+        if (placeLimit) AddReferencePlaces(state); // Separate 20,000-place hard-cap stress, beyond CF's shared growth allowance.
         FullMemoryAndTable(state); PopulateWeather20(state);
         var products = new[] { FoodProducts.Croissant, FoodProducts.Burger, FoodProducts.HotDog,
             "ba:itemname_donut", "ba:itemname_cupcake", "ba:itemname_salad",
@@ -87,12 +88,12 @@ static partial class Program
         }
         string before = NameBaselineCodec.Write(state);
         var beforeCounts = NameBaselineCodec.CountRecordsForSchema(state, before, 24);
-        object baseline = name.EndsWith("-limits", StringComparison.Ordinal) ? "not timed" : Measure25(samples, () => NameBaselineCodec.Write(state), () => NameBaselineCodec.Read(before),
+        object baseline = Measure25(samples, () => NameBaselineCodec.Write(state), () => NameBaselineCodec.Read(before),
             () => NameBaselineCodec.ValidateForActivation(state), () => NameBaselineCodec.RequireExecutableCapabilities(before));
-        long baselineRetained = name.EndsWith("-limits", StringComparison.Ordinal) ? 0 : Retained25(() => NameBaselineCodec.Read(before));
+        long baselineRetained = Retained25(() => NameBaselineCodec.Read(before));
 #if NAME_SCHEMA24
         Console.WriteLine(JsonConvert.SerializeObject(new { name, residents, factor, samples, source = "034bb7629391ef0fedb61d7122b0d6ee3c451ff9", schema = CityState.CurrentSchema,
-            scopes = state.Food!.Shops.Count,
+            scopes = state.Food!.Shops.Count, places = state.Places.Count,
             scopeGrowthChars, historyRowGrowthChars = historySize.Rows, historyCellChars = historySize.Cells,
             before = new { chars = before.Length, bytes = Encoding.UTF8.GetByteCount(before), beforeCounts.Streaming, beforeCounts.Semantic,
                 retainedBytes = baselineRetained, timing = baseline }, sha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(before))) }));
@@ -108,12 +109,24 @@ static partial class Program
         state = upgraded;
         string after = SaveCodec.Write(state);
         var afterCounts = SaveCodec.CountRecords(state, after);
-        if (name == "CF64-limits") { Console.WriteLine(JsonConvert.SerializeObject(GlobalWriteLimits25(state, after))); return; }
         Check(state.ProductNames.Count == 256, "Expected complete 256-name table.");
         Check(NameBaselineCodec.Read(after).Status == SaveReadStatus.Future, "Old executable accepted 25.");
         var candidate = Measure25(samples, () => SaveCodec.Write(state), () => SaveCodec.Read(after),
             () => SaveCodec.ValidateForActivation(state), () => SaveCodec.RequireExecutableCapabilities(after));
         long candidateRetained = Retained25(() => SaveCodec.Read(after));
+        if (placeLimit)
+        {
+            Console.WriteLine(JsonConvert.SerializeObject(new { name, residents, factor, samples, places = state.Places.Count,
+                scopes = state.Food!.Shops.Count,
+                before = new { chars = before.Length, bytes = Encoding.UTF8.GetByteCount(before), beforeCounts.Streaming, beforeCounts.Semantic,
+                    retainedBytes = baselineRetained, timing = baseline },
+                after = new { chars = after.Length, bytes = Encoding.UTF8.GetByteCount(after), afterCounts.Streaming, afterCounts.Semantic,
+                    retainedBytes = candidateRetained, timing = candidate },
+                beforeSha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(before))),
+                migrationMs, composition = "20,000-place hard-cap stress beyond CF's shared existing-state allowance; no future-reserve clearance",
+                limits = GlobalWriteLimits25(state, after) }));
+            return;
+        }
         string budgetWire = after;
         var budgetCounts = afterCounts;
         object? maximumHeld = cf || name == "held64" ? MaximumHeld25(state, samples, out budgetWire, out budgetCounts) : null;
@@ -137,7 +150,7 @@ static partial class Program
             if (name == "CF32") Check(totalChars <= SaveCodec.MaxInputCharacters * .85, "CF32 85% composition failed.");
         }
         Console.WriteLine(JsonConvert.SerializeObject(new { name, residents, factor, samples, seed = state.Seed,
-            scopes = state.Food!.Shops.Count,
+            scopes = state.Food!.Shops.Count, places = state.Places.Count,
             scopeGrowthChars, historyRowGrowthChars = historySize.Rows, historyCellChars = historySize.Cells,
             fixture = "32/64 retained visits; full 20k business references/four memories; 14x1024x8 history; 256 names; 8x3 legacy held offers",
             before = new { chars = before.Length, bytes = Encoding.UTF8.GetByteCount(before), beforeCounts.Streaming, beforeCounts.Semantic, retainedBytes = baselineRetained, timing = baseline },
@@ -147,7 +160,7 @@ static partial class Program
             afterSha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(after))), maximumHeld,
             rows = state.Food.History.Count, cells = state.Food.History.Sum(r => r.ProductSales.Count),
             composition = cf ? new { reservedChars, reservedRecords, memoryHeadroom, e5dConservativeChars = 540672, e5dRecords = 320,
-                existingPlaceGrowthChars = 6343907, existingNameGrowthChars = 6239005 - scopeGrowthChars - historySize.Rows,
+                existingPlaceGrowthChars = existingPlaceGrowth, existingNameGrowthChars = 12582912 - existingPlaceGrowth - scopeGrowthChars - historySize.Rows,
                 existingScopeGrowthChars = scopeGrowthChars, existingHistoryRowGrowthChars = historySize.Rows,
                 existingGrowthChars = 12582912, totalChars, totalBytes, totalRecords } : null,
             processPeakBytes = Process.GetCurrentProcess().PeakWorkingSet64 }));
@@ -155,15 +168,39 @@ static partial class Program
     }
     static int ScopeCharacters25(IEnumerable<FoodScope> scopes) => JsonConvert.SerializeObject(scopes.Select(s => new {
         s.AdditionalProductIds, s.BusinessId, s.NextServiceAt, s.PlaceId, s.ProductId }), Formatting.None).Length;
+    static JsonSerializerSettings BaselineSettings25(CityState state)
+    {
+        var codec = typeof(NameBaselineCodec);
+        object context = codec.GetNestedType("WireContext", System.Reflection.BindingFlags.NonPublic)!
+            .GetMethod("FromState")!.Invoke(null, new object[] { state })!;
+        return (JsonSerializerSettings)codec.GetMethod("Settings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+            .Invoke(null, new[] { context })!;
+    }
+    static int AddCfPlaces25(CityState state)
+    {
+        // CF's 12 Mi allowance is shared by places, scopes, old history rows and names. These
+        // fixtures spend it on 14,000 places plus the full row/scope image; the independent
+        // CF64-limits case retains all 20,000 places and tests both codec caps explicitly.
+        AddReferencePlaces(state);
+        var settings = BaselineSettings25(state);
+        int full = JsonConvert.SerializeObject(state.Places, Formatting.None, settings).Length;
+        state.Places.RemoveRange(14000, state.Places.Count - 14000);
+        int recovered = full - JsonConvert.SerializeObject(state.Places, Formatting.None, settings).Length;
+        var own = state.Citizens.Where(c => c.Identity.Id.StartsWith("pc:", StringComparison.Ordinal)).ToArray();
+        int remaining = recovered;
+        for (int i = 0; i < own.Length; i++)
+        {
+            int extra = remaining / (own.Length - i); remaining -= extra;
+            own[i].Identity.Name += new string('X', extra);
+            Check(own[i].Identity.Name.Length <= 512, "CF name padding exceeds its original bound.");
+        }
+        return 6343907 - recovered;
+    }
     static (int Cells, int Rows) HistorySize25(CityState state)
     {
         // Fixture accounting only: use the exact frozen writer, including compact versus opaque
         // cells. Row keys, counters, array brackets and separators consume existing-state space.
-        var codec = typeof(NameBaselineCodec);
-        object context = codec.GetNestedType("WireContext", System.Reflection.BindingFlags.NonPublic)!
-            .GetMethod("FromState")!.Invoke(null, new object[] { state })!;
-        var settings = (JsonSerializerSettings)codec.GetMethod("Settings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
-            .Invoke(null, new[] { context })!;
+        var settings = BaselineSettings25(state);
         var history = state.Food!.History;
         string wire = JsonConvert.SerializeObject(history, Formatting.None, settings);
         int cells = history.Sum(r => JsonConvert.SerializeObject(r.ProductSales, Formatting.None, settings).Length - 2);

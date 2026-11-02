@@ -10,6 +10,7 @@ before = {name: data[f"{name}-baseline"]["result"]["before"] for name in cases}
 after = {name: data[f"{name}-candidate"]["result"] for name in cases}
 for name in ("CF32", "CF64"):
     assert after[name]["scopes"] == 1024, "Full-scope CF audit is required before reporting."
+    assert after[name]["places"] == 14000, "CF must stay within its declared shared-growth allocation."
 
 def number(n):
     return f"{n:,}"
@@ -36,7 +37,7 @@ for name in ("CF32", "CF64"):
     r = after[name]; m, c = r["maximumHeld"], r["composition"]
     text += f"| {name}, 64 offers | {number(m['bytes'])} | {number(m['Streaming'])}/{number(m['Semantic'])} | {m['retainedBytes']/1048576:.3f} | {number(c['totalBytes'])} | {number(c['totalRecords'])} |\n"
     text += ""
-text += "\nThe complete CF composition includes every outstanding reserve, including the entire extra 540,672 bytes/chars and 320 records on top of the actual image. CF32 passes the 85% target; CF64 passes hard caps only. These are reproducible specified compositions, not clearance for every simultaneous Unicode, opaque-history and churn maximum. Each cold image round-trips; its early/full execution attempts **refuse**. Cold p50/p95/max, allocations and refusal latencies are in the linked JSON.\n\n"
+text += "\nThe complete CF composition includes every outstanding reserve, including the entire extra 540,672 bytes/chars and 320 records on top of the actual image. CF has **14,000 places**, the full 20,000 business references, full histories and 1,024 scopes within one shared 12 Mi existing-state allowance. The separate `CF64-limits` stress exercises all 20,000 places beyond that allowance, without future-reserve clearance; the place limit remains unchanged. CF32 passes the 85% target; CF64 passes hard caps only. These are reproducible specified compositions, not clearance for every simultaneous Unicode, opaque-history and churn maximum. Each cold image round-trips; its early/full execution attempts **refuse**. Cold p50/p95/max, allocations and refusal latencies are in the linked JSON.\n\n"
 for name in ("CF32", "CF64"):
     c = after[name]["composition"]
     text += f"- {name}: existing growth {number(c['existingPlaceGrowthChars'])} place + {number(c['existingScopeGrowthChars'])} scope + {number(c['existingHistoryRowGrowthChars'])} history row structure + {number(c['existingNameGrowthChars'])} name = **{number(c['existingGrowthChars'])}** chars; remaining B–E reserve **{number(c['reservedChars'])} chars / {number(c['reservedRecords'])} records**; memory-field headroom **{number(c['memoryHeadroom'])}** chars.\n"
