@@ -92,9 +92,20 @@ namespace PersistentCity.Core
         // Bounded rational signals; unknown quality/demand are neutral. Health, loyalty and brand have no signal.
         // Meal suitability retains the verified MealRhythm table, scaled by the taste coefficient.
         public static double Weight(EvaluatedFoodOffer o, ResidentTraits t, Money allowance, FoodChoiceSettings s,double weatherTravelMultiplier=1)
+            => WeightCore(o,t,allowance,s,OfferTaste(o,t),MealRhythm.ProductPenalty(o.Kind,o.ProductId),
+                o.NewTasteBand<0 ? s.FoodChoiceTasteWeight : s.FoodMenuNewTasteWeight,weatherTravelMultiplier);
+
+        // Pure E5c seam only. Live callers retain the historical overload until schema-25 capture/E5b.
+        public static double Weight(EvaluatedFoodOffer o, ResidentTraits t, Money allowance, FoodChoiceSettings s,
+            FoodProductMetadata metadata, double weatherTravelMultiplier=1)
+            => WeightCore(o,t,allowance,s,FoodProducts.KnownLegacy(o.ProductId) ? Taste(t,o.ProductId) : metadata.TasteBand,
+                FoodProducts.KnownLegacy(o.ProductId) ? MealRhythm.ProductPenalty(o.Kind,o.ProductId) : metadata.Penalty(o.Kind),
+                FoodProducts.KnownLegacy(o.ProductId) ? s.FoodChoiceTasteWeight : s.FoodMenuNewTasteWeight,weatherTravelMultiplier);
+
+        private static double WeightCore(EvaluatedFoodOffer o, ResidentTraits t, Money allowance, FoodChoiceSettings s,
+            int band, int fitPenalty, double tasteWeight, double weatherTravelMultiplier)
         {
-            double taste=TasteRatios[OfferTaste(o,t)];
-            double tasteWeight=o.NewTasteBand<0 ? s.FoodChoiceTasteWeight : s.FoodMenuNewTasteWeight;
+            double taste=TasteRatios[band];
             double w=tasteWeight==1 ? taste : Math.Pow(taste,tasteWeight);
             w/=1+s.FoodChoicePriceWeight*(.5+.25*t.Band(ResidentTrait.PriceSensitivity))
                 *o.Price.ApproximateCents()/Math.Max(1,allowance.ApproximateCents());
@@ -104,7 +115,7 @@ namespace PersistentCity.Core
                 +(o.Demand.HasValue ? (o.Demand.Value-50)/100.0 : 0);
             w*=Math.Max(.25,1+s.FoodChoiceQualityWeight*t.Band(ResidentTrait.QualityOrientation)/4.0*quality);
             w/=1+s.FoodChoiceTimePressureWeight*(.5+.25*t.Band(ResidentTrait.TimePressure))*o.UsedTime/Math.Max(1,o.Window);
-            w/=1+s.FoodChoiceTasteWeight*MealRhythm.ProductPenalty(o.Kind,o.ProductId)/200.0;
+            w/=1+s.FoodChoiceTasteWeight*fitPenalty/200.0;
             return ApplyMemory(Positive(w,s.FoodChoiceWeightFloor,s.FoodChoiceTemperature), o.MemoryContribution, s.FoodChoiceWeightFloor);
         }
         public static double DistanceWeight(double minutes,ResidentTraits t,FoodChoiceSettings s,bool shortlist,double weatherTravelMultiplier=1,bool campaignActive=false)
