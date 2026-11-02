@@ -3,6 +3,7 @@ from pathlib import Path
 import json
 import subprocess
 import sys
+import re
 
 root = Path(__file__).resolve().parents[2]
 data = json.loads((root / "build/e5d/measurements/results.json").read_text(encoding="utf-8"))
@@ -28,6 +29,37 @@ production_trees = {name: subprocess.check_output(['git', 'rev-parse', f'HEAD:{n
 for head in {r['sourceHead'] for r in data.values() if 'sourceHead' in r}:
     for name, tree in production_trees.items():
         assert subprocess.check_output(['git', 'rev-parse', f'{head}:{name}'], cwd=root, text=True).strip() == tree, 'Production source changed during measurement'
+gate_spikes = []
+def scan_spikes(value, path, label):
+    if isinstance(value, dict):
+        numeric = {k: v for k, v in value.items() if isinstance(v, (int, float)) and not isinstance(v, bool)}
+        if (all(k in numeric for k in ('p50', 'p95', 'max')) and numeric['max'] >= 30
+                or any('30' in k and 'spike' in k.lower() and v > 0 for k, v in numeric.items())):
+            gate_spikes.append(dict(run=label, path=path, metrics=numeric))
+        for k, v in value.items():
+            scan_spikes(v, path + '.' + k, label)
+    elif isinstance(value, list):
+        for i, v in enumerate(value):
+            scan_spikes(v, path + '[' + str(i) + ']', label)
+
+def scan_log(path, label):
+    raw = path.read_text(encoding='utf-8-sig', errors='replace')
+    decoder, pattern, at = json.JSONDecoder(), re.compile(r'[\[{]'), 0
+    while match := pattern.search(raw, at):
+        try:
+            value, end = decoder.raw_decode(raw, match.start())
+        except ValueError:
+            at = match.start() + 1
+            continue
+        scan_spikes(value, '', label)
+        at = end
+
+for path in (root / 'build/d3a/gates').glob('*.log'):
+    scan_log(path, 'D3a/' + path.stem)
+for row in json.loads((root / 'build/d4-validation/results.json').read_text()):
+    command = row['command']
+    label = Path(command[command.index('--project') + 1]).parent.name if '--project' in command else Path(command[1]).parent.name
+    scan_log(root / row['log'], 'D4/' + label.removesuffix('-regression'))
 
 def number(n):
     return f"{n:,}"
@@ -79,12 +111,17 @@ for key in ("record-boundary", "input-boundary", "migration-record-limit"):
     text += f"- `{key}`: `{json.dumps(result, ensure_ascii=True, separators=(',', ':'))}`\n"
 text += f"- `20,000-place independent caps`: `{json.dumps(stress['limits'], ensure_ascii=True, separators=(',', ':'))}`\n"
 text += "\n## Spike flags and qualification\n\nEvery matrix bulk write/read/full-activation sample reaches 30 ms in both arms (3/3 per operation); every single cold migration and all cold maximum-held bulk operations are likewise flagged. These are save/startup batches, never ordinary-play mod-work p95. Early-header samples remain below 30 ms. The complete operation-by-operation spike counts, allocation totals, cold refusal timings, timestamps and peaks are in the metrics JSON. Managed GC collection counts were not captured; native/Mono GC and frame costs remain unmeasured.\n\n"
+text += "The two complete regression passes additionally reported these offline distributions with samples at least 30 ms. Whole-index builds and bulk saves are aggregate costs; none is a whole-frame measurement.\n\n| Run / component | Metric | p50/p95/max ms | Samples at least 30 ms |\n| --- | --- | ---: | ---: |\n"
+for item in gate_spikes:
+    m = item['metrics']
+    spikes = next((v for k, v in m.items() if '30' in k and 'spike' in k.lower()), 'unreported')
+    text += f"| {item['run']} | `{item['path']}` | {triple(m)} | {spikes} |\n"
 text += "[Metrics-only results, including every p50/p95/max and spike count](e5d-name-identity-save-results.json). No ordinary-play or whole-frame sample was collected. The next combined rig batch must measure mod-work p95 <5 ms and every ≥30 ms spike separately from whole-frame cost/stalls; the four parked hotspots remain parked.\n"
 p = root / "docs/perf/e5d-name-identity-save.md"
 prefix = p.read_text(encoding="utf-8").split("\n## Final matched results")[0]
 prefix = prefix.replace("Final matched figures and complete matrix results are recorded below after\nthe foreground measurement run.", "Final matched figures and complete matrix results follow.")
 p.write_text(prefix + text, encoding="utf-8")
-summary = {"baseline": "034bb7629391ef0fedb61d7122b0d6ee3c451ff9", "candidateCode": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(), "productionTrees": production_trees,
+summary = {"baseline": "034bb7629391ef0fedb61d7122b0d6ee3c451ff9", "candidateCode": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(), "productionTrees": production_trees, "gateSpikes": gate_spikes,
            "nativeEvidence": False, "cases": data}
 (root / "docs/perf/e5d-name-identity-save-results.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
 print("Published E5d metrics-only tables and JSON.")
