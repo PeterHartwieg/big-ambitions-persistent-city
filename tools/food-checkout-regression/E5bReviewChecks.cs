@@ -36,7 +36,8 @@ static partial class Program
             if(fault=="historical") {bad.RentedByPlayer=false;badScope.ProductId="missing:historic";}
             if(fault=="generation") badScope.BusinessId="old-generation";
             if(!batchFirst) Check(market.CaptureBusiness(goodScope.BusinessId,Minute)!=null,"healthy individual capture before batch");
-            var businesses=market.Read(Minute);
+            var businesses=batchFirst ? market.Read(Minute)
+                : market.ReadLocal(new Place {Id="origin",Kind=PlaceKind.Home},Minute,100,8);
             Check(businesses.Count==1 && businesses[0].Id==goodScope.BusinessId,"bad shop must not remove healthy batched result: "+fault);
             Check(market.CanServe(goodScope.BusinessId),"unrelated ownership survives batch refusal: "+fault);
             market.RefreshKnownOwnership();
