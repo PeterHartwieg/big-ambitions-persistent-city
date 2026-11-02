@@ -60,7 +60,7 @@ proof = dict(seed=957, products=products, consumers='pc:0 through pc:99', proces
              finalUnitSummary=summary,
              finalDiscovery=dict(exit=0,log=list_log.relative_to(root).as_posix(),
                                  sha256=hashlib.sha256(list_log.read_bytes()).hexdigest()),
-             focusedTests=dict(command=['dotnet.exe', *focused_command[1:]], exit=0,
+             finalTests=dict(command=['dotnet.exe', *focused_command[1:]], exit=0,
                                log=focused_log.relative_to(root).as_posix(),
                                sha256=hashlib.sha256(focused_log.read_bytes()).hexdigest()),
              sha256=hashlib.sha256(expected.encode('utf-8')).hexdigest(), bands=expected)
