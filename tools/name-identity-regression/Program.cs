@@ -24,6 +24,7 @@ static partial class Program
         int samples = args.Length < 2 ? 3 : int.Parse(args[1]);
         #if !NAME_SCHEMA24
         if (name == "encoding") { NameEncoding25(); return; }
+        if (name == "migration-record-limit") { Console.WriteLine(JsonConvert.SerializeObject(MigrationRecordLimit25())); return; }
 #endif
         if (name == "record-boundary") { Console.WriteLine(JsonConvert.SerializeObject(RecordBoundary())); return; }
         if (name == "input-boundary") { Console.WriteLine(JsonConvert.SerializeObject(InputBoundary())); return; }
@@ -31,7 +32,7 @@ static partial class Program
         int residents = cf || name.StartsWith("50000", StringComparison.Ordinal) ? 50000 : name.StartsWith("5000", StringComparison.Ordinal) ? 5000 : 957;
         int factor = cf || name.EndsWith("x3", StringComparison.Ordinal) ? 3 : 2;
         var state = FoodCity(residents, true, factor); PopulateDecisions(state);
-        RetainVisits(state, name == "CF64" ? 64 : 32);
+        RetainVisits(state, name.StartsWith("CF64", StringComparison.Ordinal) ? 64 : 32);
         if (cf) AddReferencePlaces(state);
         FullMemoryAndTable(state); PopulateWeather20(state);
         var products = new[] { FoodProducts.Croissant, FoodProducts.Burger, FoodProducts.HotDog,
@@ -61,17 +62,36 @@ static partial class Program
         const double shift = 12 * 1440;
         Shift25(state, shift);
         string[] names = products.Concat(Enumerable.Range(8, 248).Select(i => "name25:product:" + i.ToString("D3"))).ToArray();
+        int originalScopeChars = ScopeCharacters25(state.Food!.Shops);
         state.Food!.Shops.Clear();
-        for (int i = 0; i < 32; i++) state.Food.Shops.Add(new FoodScope { PlaceId = places[i].Id,
-            BusinessId = "name25:scope:" + i, ProductId = names[i * 8], AdditionalProductIds = names.Skip(i * 8 + 1).Take(7).ToList() });
+        for (int i = 0; i < (cf ? 1024 : 32); i++) state.Food.Shops.Add(new FoodScope { PlaceId = places[i].Id,
+            BusinessId = "name25:scope:" + i, ProductId = names[(i % 32) * 8], AdditionalProductIds = names.Skip((i % 32) * 8 + 1).Take(7).ToList() });
+        int scopeGrowthChars = ScopeCharacters25(state.Food.Shops) - originalScopeChars;
+        if (cf)
+        {
+            // Scope growth shares the same 12 Mi existing-state allowance. Replace X padding
+            // rather than adding a second allowance on top of the maximal place/name fixture.
+            var own = state.Citizens.Where(c => c.Identity.Id.StartsWith("pc:", StringComparison.Ordinal)).ToArray();
+            int remaining = scopeGrowthChars;
+            for (int i = 0; i < own.Length; i++)
+            {
+                int take = remaining / (own.Length - i); remaining -= take;
+                string value = own[i].Identity.Name;
+                Check(take <= value.Length && value.Skip(value.Length - take).All(c => c == 'X'), "Existing-state padding reduction.");
+                own[i].Identity.Name = value.Substring(0, value.Length - take);
+            }
+            Check(remaining == 0, "Scope growth was not charged to existing-state allowance.");
+        }
         state.Schema = 24; state.MenuPolicy = FoodMenuPolicy.Wire;
         string before = NameBaselineCodec.Write(state);
         var beforeCounts = NameBaselineCodec.CountRecordsForSchema(state, before, 24);
-        var baseline = Measure25(samples, () => NameBaselineCodec.Write(state), () => NameBaselineCodec.Read(before),
+        object baseline = name.EndsWith("-limits", StringComparison.Ordinal) ? "not timed" : Measure25(samples, () => NameBaselineCodec.Write(state), () => NameBaselineCodec.Read(before),
             () => NameBaselineCodec.ValidateForActivation(state), () => NameBaselineCodec.RequireExecutableCapabilities(before));
-        long baselineRetained = Retained25(() => NameBaselineCodec.Read(before));
+        long baselineRetained = name.EndsWith("-limits", StringComparison.Ordinal) ? 0 : Retained25(() => NameBaselineCodec.Read(before));
 #if NAME_SCHEMA24
         Console.WriteLine(JsonConvert.SerializeObject(new { name, residents, factor, samples, source = "034bb7629391ef0fedb61d7122b0d6ee3c451ff9", schema = CityState.CurrentSchema,
+            scopes = state.Food!.Shops.Count,
+            scopeGrowthChars,
             before = new { chars = before.Length, bytes = Encoding.UTF8.GetByteCount(before), beforeCounts.Streaming, beforeCounts.Semantic,
                 retainedBytes = baselineRetained, timing = baseline }, sha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(before))) }));
         return;
@@ -86,6 +106,7 @@ static partial class Program
         state = upgraded;
         string after = SaveCodec.Write(state);
         var afterCounts = SaveCodec.CountRecords(state, after);
+        if (name == "CF64-limits") { Console.WriteLine(JsonConvert.SerializeObject(GlobalWriteLimits25(state, after))); return; }
         Check(state.ProductNames.Count == 256, "Expected complete 256-name table.");
         Check(NameBaselineCodec.Read(after).Status == SaveReadStatus.Future, "Old executable accepted 25.");
         var candidate = Measure25(samples, () => SaveCodec.Write(state), () => SaveCodec.Read(after),
@@ -114,6 +135,8 @@ static partial class Program
             if (name == "CF32") Check(totalChars <= SaveCodec.MaxInputCharacters * .85, "CF32 85% composition failed.");
         }
         Console.WriteLine(JsonConvert.SerializeObject(new { name, residents, factor, samples, seed = state.Seed,
+            scopes = state.Food!.Shops.Count,
+            scopeGrowthChars,
             fixture = "32/64 retained visits; full 20k business references/four memories; 14x1024x8 history; 256 names; 8x3 legacy held offers",
             before = new { chars = before.Length, bytes = Encoding.UTF8.GetByteCount(before), beforeCounts.Streaming, beforeCounts.Semantic, retainedBytes = baselineRetained, timing = baseline },
             after = new { chars = after.Length, bytes = Encoding.UTF8.GetByteCount(after), afterCounts.Streaming, afterCounts.Semantic, retainedBytes = candidateRetained, timing = candidate },
@@ -121,10 +144,14 @@ static partial class Program
             beforeSha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(before))),
             afterSha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(after))), maximumHeld,
             rows = state.Food.History.Count, cells = state.Food.History.Sum(r => r.ProductSales.Count),
-            composition = cf ? new { reservedChars, reservedRecords, memoryHeadroom, e5dConservativeChars = 540672, e5dRecords = 320, totalChars, totalBytes, totalRecords } : null,
+            composition = cf ? new { reservedChars, reservedRecords, memoryHeadroom, e5dConservativeChars = 540672, e5dRecords = 320,
+                existingPlaceGrowthChars = 6343907, existingNameGrowthChars = 6239005 - scopeGrowthChars, existingScopeGrowthChars = scopeGrowthChars,
+                existingGrowthChars = 12582912, totalChars, totalBytes, totalRecords } : null,
             processPeakBytes = Process.GetCurrentProcess().PeakWorkingSet64 }));
 #endif
     }
+    static int ScopeCharacters25(IEnumerable<FoodScope> scopes) => JsonConvert.SerializeObject(scopes.Select(s => new {
+        s.AdditionalProductIds, s.BusinessId, s.NextServiceAt, s.PlaceId, s.ProductId }), Formatting.None).Length;
     static int HistoryReserveUsed25(CityState state)
     {
         // Materialize E4's 114,688-cell reservation once. Row text remains actual
@@ -172,6 +199,54 @@ static partial class Program
         long retained = GC.GetTotalMemory(true) - before; GC.KeepAlive(result); return retained;
     }
 #if !NAME_SCHEMA24
+    static object GlobalWriteLimits25(CityState state, string valid)
+    {
+        object Refuses(string dimension)
+        {
+            // Inspect the refused candidate's actual bytes without bypassing any production
+            // publication path. This raw serializer output is never a valid Write result.
+            object context = typeof(SaveCodec).GetNestedType("WireContext", System.Reflection.BindingFlags.NonPublic)!
+                .GetMethod("FromState")!.Invoke(null, new object[] { state })!;
+            var settings = (JsonSerializerSettings)typeof(SaveCodec).GetMethod("Settings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+                .Invoke(null, new[] { context })!;
+            string raw = JsonConvert.SerializeObject(state, Formatting.None, settings);
+            int bytes = Encoding.UTF8.GetByteCount(raw);
+            Check(dimension == "UTF-8" ? raw.Length <= SaveCodec.MaxInputCharacters && bytes > SaveCodec.MaxInputCharacters
+                : raw.Length > SaveCodec.MaxInputCharacters, "Global refusal fixture does not isolate its dimension.");
+            void Rejects(Action action)
+            { try { action(); } catch (SaveValidationException) { return; } throw new Exception("Overbound candidate was accepted."); }
+            Rejects(() => SaveCodec.Write(state)); Rejects(() => SaveCodec.ValidateForActivation(state));
+            Check(SaveCodec.Read(raw).Status == SaveReadStatus.Invalid, "Overbound source was read.");
+            var data = new Dictionary<string, string> { [SaveCodec.StateKey] = valid, ["other:sentinel"] = "keep" };
+            Check(!SaveStore.WriteTo(data, state).Success, "Overbound store write succeeded.");
+            Check(!SaveSession.Open(data, state.PopulationKey).WriteTo(data, state).Success, "Overbound session write succeeded.");
+            Check(ReferenceEquals(valid, data[SaveCodec.StateKey]) && data["other:sentinel"] == "keep", "Overbound write replaced its original source.");
+            return new { dimension, characters = raw.Length, bytes, result = "read/write/activation/store/session refused; original text/reference and unrelated key preserved" };
+        }
+        foreach (var place in state.Places) place.Name = new string('\ue001', 512);
+        object utf8 = Refuses("UTF-8");
+        foreach (var place in state.Places) place.Name = new string('X', 512);
+        foreach (var citizen in state.Citizens.Where(c => c.Identity.Id.StartsWith("pc:", StringComparison.Ordinal))) citizen.Identity.Name = new string('X', 512);
+        object characters = Refuses("characters");
+        return new { utf8, characters };
+    }
+    static object MigrationRecordLimit25()
+    {
+        var state = FoodCity(50000, true, 3); PopulateDecisions(state); AddReferencePlaces(state); RetainVisits(state, 64);
+        state.Schema = 24; state.MenuPolicy = FoodMenuPolicy.Wire;
+        int remaining = SaveCodec.MaxEmbeddedRecords - NameBaselineCodec.CountRecords(state, NameBaselineCodec.Write(state)).Streaming;
+        foreach (var place in state.Places) for (int i = 0, count = Math.Min(40, remaining); i < count; i++, remaining--)
+            place.WeeklyHours.Add(new OpeningWindow { Day = 0, FromMinute = 1, ToMinute = 2 });
+        Check(remaining == 0, "Exact predecessor record fixture construction.");
+        string source = NameBaselineCodec.Write(state); var counts = NameBaselineCodec.CountRecords(state, source);
+        Check(counts.Streaming == SaveCodec.MaxEmbeddedRecords, "Predecessor did not reach its exact record cap.");
+        Check(NameBaselineCodec.Read(source).Status == SaveReadStatus.Loaded, "Record-bound predecessor is not originally valid.");
+        var result = SaveCodec.Read(source);
+        Check(result.Status == SaveReadStatus.Invalid, "Oversized migrated record graph was published.");
+        PreserveB0(source, FoodCity(1, false));
+        return new { chars = source.Length, bytes = Encoding.UTF8.GetByteCount(source), counts.Streaming, counts.Semantic,
+            requiredNewRecords = 27, migration = "refused; originally valid 24 source text/reference preserved by codec/store/session", result.Error };
+    }
     static object MaximumHeld25(CityState state, int samples, out string wire, out (int Streaming, int Semantic) counts)
     {
         var held = state.Food!.Residents.Single(m => m.Decision != null).Decision!;

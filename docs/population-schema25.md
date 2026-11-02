@@ -62,6 +62,10 @@ runtime captures still use revision 1 and the established original-product
 calculation. Codec `Loaded` for a cold contract denotes valid stored data, not
 permission to construct a simulator; `ValidateForActivation` remains mandatory.
 Unknown headers refuse rather than selecting an older policy.
+Normal `SaveStore`/`SaveSession` reads and writes also refuse the cold capability,
+including a valid replacement offered over a cold source and a cold candidate in
+an empty dictionary. Their original payload/reference and unrelated keys remain
+untouched; inspection support cannot become permission to overwrite it.
 
 Schema/capabilities/menu headers precede the population graph on write. Early
 bootstrap checks only bounded headers; full decoding is still required for all

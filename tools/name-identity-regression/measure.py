@@ -18,9 +18,9 @@ wait = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
 subprocess.run([sys.executable, "tools/name-identity-regression/prepare.py"], cwd=root, check=True)
 manifest = out / "results.json"
 results = json.loads(manifest.read_text(encoding="utf-8")) if manifest.exists() else {}
-cases = sys.argv[1:] or ["957x2", "957x3", "5000x2", "5000x3", "50000x2", "50000x3", "CF32", "CF64", "churn", "held64", "encoding", "record-boundary", "input-boundary"]
+cases = sys.argv[1:] or ["957x2", "957x3", "5000x2", "5000x3", "50000x2", "50000x3", "CF32", "CF64", "churn", "held64", "encoding", "record-boundary", "input-boundary", "migration-record-limit", "CF64-limits"]
 for case in cases:
-    arms = ["baseline", "candidate"] if case not in {"held64", "encoding", "record-boundary", "input-boundary"} else ["candidate"]
+    arms = ["baseline", "candidate"] if case not in {"held64", "encoding", "record-boundary", "input-boundary", "migration-record-limit", "CF64-limits"} else ["candidate"]
     for arm in arms:
         subprocess.run(wait, cwd=root, check=True)
         project = "build/e5d/baseline-runner/NameIdentityBaseline.csproj" if arm == "baseline" else "tools/name-identity-regression/NameIdentityRegression.csproj"
