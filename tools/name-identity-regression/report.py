@@ -1,16 +1,33 @@
-"""Publish metrics-only E5d evidence from completed foreground measurements."""
+"""Complete a missing archived stress baseline, then publish metrics-only E5d evidence."""
 from pathlib import Path
 import json
 import subprocess
+import sys
 
 root = Path(__file__).resolve().parents[2]
 data = json.loads((root / "build/e5d/measurements/results.json").read_text(encoding="utf-8"))
+if "CF64-limits-baseline" not in data:
+    print("Completing the actual archived 20,000-place baseline before publication (foreground).", flush=True)
+    subprocess.run([sys.executable, "tools/name-identity-regression/measure.py", "--baseline-only", "CF64-limits"], cwd=root, check=True)
+    data = json.loads((root / "build/e5d/measurements/results.json").read_text(encoding="utf-8"))
 cases = ["957x2", "957x3", "5000x2", "5000x3", "50000x2", "50000x3", "CF32", "CF64"]
 before = {name: data[f"{name}-baseline"]["result"]["before"] for name in cases}
 after = {name: data[f"{name}-candidate"]["result"] for name in cases}
 for name in ("CF32", "CF64"):
     assert after[name]["scopes"] == 1024, "Full-scope CF audit is required before reporting."
     assert after[name]["places"] == 14000, "CF must stay within its declared shared-growth allocation."
+    c = after[name]["composition"]
+    assert sum(c[k] for k in ("existingPlaceGrowthChars", "existingNameGrowthChars", "existingScopeGrowthChars", "existingHistoryRowGrowthChars")) == 12582912
+stress = data['CF64-limits-candidate']['result']
+stress_before = data['CF64-limits-baseline']['result']
+for field in ('chars', 'bytes', 'Streaming', 'Semantic'):
+    assert stress_before['before'][field] == stress['before'][field], f'20,000-place frozen-24 mismatch: {field}'
+assert stress_before['sha256'] == stress['beforeSha256'], '20,000-place source identity mismatch'
+production_trees = {name: subprocess.check_output(['git', 'rev-parse', f'HEAD:{name}'], cwd=root, text=True).strip()
+                    for name in ('Core', 'Compatibility', 'Persistence', 'Runtime')}
+for head in {r['sourceHead'] for r in data.values() if 'sourceHead' in r}:
+    for name, tree in production_trees.items():
+        assert subprocess.check_output(['git', 'rev-parse', f'{head}:{name}'], cwd=root, text=True).strip() == tree, 'Production source changed during measurement'
 
 def number(n):
     return f"{n:,}"
@@ -50,16 +67,24 @@ maximum = data['encoding-max-candidate']['result']
 text += f"Separate true maximum-escaping fixture: **256 unique names, each 256 non-ASCII UTF-16 units**, all six-character JSON escapes; canonical save **{number(maximum['chars'])} chars / {number(maximum['bytes'])} UTF-8 B**, escaped save **{number(maximum['escapedChars'])} chars/B**, escaped table including field overhead **{number(maximum['escapedTableChars'])} chars/B**. Both representations pass and round-trip identically. This is a distinct bound fixture, not the matched pre-win allocation sample. Its complete timings, allocations and spike counts are in the JSON.\n\n"
 churn = data["churn-candidate"]["result"]
 text += f"Churn: **{number(churn['rows'])} rows / {number(churn['cells'])} cells**, 2,048 generations/day; **{number(churn['before']['bytes'])} → {number(churn['after']['bytes'])} B**, counters **{number(churn['after']['Streaming'])}/{number(churn['after']['Semantic'])}**. All retained generations survive; no hidden 1,024/day cap.\n\n"
-for key in ("record-boundary", "input-boundary", "migration-record-limit", "CF64-limits"):
+text += "| Separate 20,000-place stress | Bytes 24 → 25 | Streaming / semantic 24 → 25 | Retained MiB 24 → 25 |\n| --- | ---: | ---: | ---: |\n"
+a, b = stress_before['before'], stress['after']
+text += f"| 50,000 x3, 64 visits, 32 scopes | {number(a['bytes'])} → {number(b['bytes'])} | {number(a['Streaming'])}/{number(a['Semantic'])} → {number(b['Streaming'])}/{number(b['Semantic'])} | {a['retainedBytes']/1048576:.3f} → {b['retainedBytes']/1048576:.3f} |\n\n"
+text += "| Operation | 24 → 25, p50/p95/max ms |\n| --- | ---: |\n"
+for key in ('write', 'read', 'activation', 'early'):
+    text += f"| {key} | {triple(a['timing'][key])} → {triple(b['timing'][key])} |\n"
+text += f"\nCold migration: **{stress['migrationMs']:.4f} ms**. All bulk write/read/activation samples in both arms reach 30 ms (3/3 each); early headers do not. This current-contract stress is outside the shared CF existing-state allowance and grants no future-reserve clearance. Full source bytes/hashes match the actual archived base; the migration projects back identically.\n\n"
+for key in ("record-boundary", "input-boundary", "migration-record-limit"):
     result = data[f"{key}-candidate"]["result"]
     text += f"- `{key}`: `{json.dumps(result, ensure_ascii=True, separators=(',', ':'))}`\n"
+text += f"- `20,000-place independent caps`: `{json.dumps(stress['limits'], ensure_ascii=True, separators=(',', ':'))}`\n"
 text += "\n## Spike flags and qualification\n\nEvery matrix bulk write/read/full-activation sample reaches 30 ms in both arms (3/3 per operation); every single cold migration and all cold maximum-held bulk operations are likewise flagged. These are save/startup batches, never ordinary-play mod-work p95. Early-header samples remain below 30 ms. The complete operation-by-operation spike counts, allocation totals, cold refusal timings, timestamps and peaks are in the metrics JSON. Managed GC collection counts were not captured; native/Mono GC and frame costs remain unmeasured.\n\n"
 text += "[Metrics-only results, including every p50/p95/max and spike count](e5d-name-identity-save-results.json). No ordinary-play or whole-frame sample was collected. The next combined rig batch must measure mod-work p95 <5 ms and every ≥30 ms spike separately from whole-frame cost/stalls; the four parked hotspots remain parked.\n"
 p = root / "docs/perf/e5d-name-identity-save.md"
 prefix = p.read_text(encoding="utf-8").split("\n## Final matched results")[0]
 prefix = prefix.replace("Final matched figures and complete matrix results are recorded below after\nthe foreground measurement run.", "Final matched figures and complete matrix results follow.")
 p.write_text(prefix + text, encoding="utf-8")
-summary = {"baseline": "034bb7629391ef0fedb61d7122b0d6ee3c451ff9", "candidateCode": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(),
+summary = {"baseline": "034bb7629391ef0fedb61d7122b0d6ee3c451ff9", "candidateCode": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(), "productionTrees": production_trees,
            "nativeEvidence": False, "cases": data}
 (root / "docs/perf/e5d-name-identity-save-results.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
 print("Published E5d metrics-only tables and JSON.")
