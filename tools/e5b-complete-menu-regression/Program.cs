@@ -66,17 +66,18 @@ static class Program
         Check(Read(reader).Offers.Single(o=>o.ProductId==Dumplings).RawUnits==0,"zero remains zero");
         var image=Read(reader);
         long definitions=reader.DefinitionsRead,holders=reader.HoldersRead;
-        var clean=Measure(()=> { if(!reader.TryGet("shop",out _)) throw new Exception("clean miss"); },10000);
+        long cacheHits=0,cacheMisses=0,notifications=0;
+        var clean=Measure(()=> { if(reader.TryGet("shop",out _)) cacheHits++; else {cacheMisses++;throw new Exception("clean miss");} },10000);
         var admission=Measure(()=> { if(Admit(image)!=CompleteFoodMenuRefusal.None) throw new Exception("admission"); },10000);
         Check(reader.DefinitionsRead==definitions && reader.HoldersRead==holders,"clean admission has no catalogue or holder reads");
-        var storm=Measure(()=>reader.MarkShopDirty("shop",shop),10000);
+        var storm=Measure(()=> {notifications++;reader.MarkShopDirty("shop",shop);},10000);
         Check(reader.PendingShops==1,"notification storms coalesce"); Drain(reader);
         using var backlog=new LoadedCatalogueEligibilityReader();
         for(int i=0;i<1024;i++) Check(backlog.MarkShopDirty("shop:"+i,shop),"bounded shop registration");
         var units=new List<double>(); var total=Stopwatch.StartNew();
         while(true) { var start=Stopwatch.GetTimestamp(); if(!backlog.Continue()) break; units.Add(Stopwatch.GetElapsedTime(start).TotalMilliseconds); }
         total.Stop(); Check(backlog.PendingShops==0,"1024-shop backlog drains");
-        Console.WriteLine(JsonSerializer.Serialize(new { checks, clean, admission, storm,
+        Console.WriteLine(JsonSerializer.Serialize(new { checks, clean, cacheHits, cacheMisses, notifications, admission, storm,
             backlog=new { units=units.Count,totalMilliseconds=total.Elapsed.TotalMilliseconds,timing=Summary(units),backlog.CataloguePasses,backlog.ShopPasses },
             nativeDynamicCheckout="INCOMPLETE: notification coverage and schema-25 execution remain refused; no game evidence",
             sharedNativeSetupCount="not measured here; actual historical checkout harness measures setup reuse separately" }));
