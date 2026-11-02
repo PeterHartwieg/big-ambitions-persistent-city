@@ -28,7 +28,7 @@ B. Memory, loyalty and regulars. **B0 is implemented offline:** schema 18, exact
 C. Marketing awareness and targeting, plus the market research product. **C2a implemented offline on B0b:** bounded source/index interface, B1 memory projection/campaign-unknown providers, local/routine and positive daily distant discovery, common eight-slot shortlist, additive schema 19. B1 memory is wired within the existing four source slots and bounded rank; r1 bounds rebuild continuations and restores at-stop observation/diagnostics and strict held-image validation. Combined 6 Nov rig proof pending. [Contract](population-schema19.md). **C4 implemented offline and inactive:** bounded pure research engine/access contract only; paid research stays off because C3 found no safe native fee path. No UI, normal-play computation or saved fields. [Contract and offline proof](market-research.md).
    C2b (1 Nov, offline): hourly observed campaign images, bounded source/index and schema 22 implemented; Peter's 1 Nov rule now applies active preference/softer distance for all residents; native checks batched into the combined locked rig under merge rule v2, no rig proof claimed. [Checks](checks/c2b-campaign-awareness.md).
 D. Rivals as alternatives. **D2 implemented offline, schema 21:** bounded rival choices and atomic external-food spending; combined 6 Nov proof pending. [D2 checks](checks/d2-rival-outflow.md). **D3a implemented offline, schema 24:** free fourteen-day totals/counts and exact ledger reconciliation; combined 6 Nov native proof pending. [D3a checks](checks/d3a-outflow-line.md). **D4 implemented offline:** modeled rival experience shares B1's four-entry memory/watermark, writer 24; D4 adds no shape; [checks](checks/d4-rival-memory.md). Native acceptance is deferred to the next batched combined rig / Peter's playtest per merge rule v2, recorded in `rig-2026-11-06-checklist.md`, and does not gate merge.
-E. Weather, street life, bigger menus and more products. **E1 implemented offline:** new-context weather capture, soft rain effects, frozen queue commitment replay and additive schema 20 on the merged C2a/B1 contract; E2b timing and menu feasibility remain intact. Combined-head native checks remain pending. [Contract/budget](population-schema20.md). E5c pure product metadata defaults/config is implemented offline; no native product-support or writer change. [Checks and next batched rig handoff](checks/e5c-neutral-metadata.md).
+E. Weather, street life, bigger menus and more products. **E1 implemented offline:** new-context weather capture, soft rain effects, frozen queue commitment replay and additive schema 20 on the merged C2a/B1 contract; E2b timing and menu feasibility remain intact. Combined-head native checks remain pending. [Contract/budget](population-schema20.md). **E5a implemented offline:** detached loaded-catalogue/direct-stock validation and dirty cache only; `Supported`, ownership/checkout and writer 24 unchanged. [Evidence and automated next-batch rig checks](checks/e5a-catalogue-eligibility.md). E5c pure product metadata defaults/config is implemented offline; no native product-support or writer change. [Checks and next batched rig handoff](checks/e5c-neutral-metadata.md).
 Then: re-check the same performance gate for the final release, the hands-on session, and one release.
 Later: residents as employees, households.
 
@@ -39,7 +39,9 @@ E3 remaining batch status, 2 November (offline): Peter chose one batch of remain
 
 E4 status, 1 November (offline): schema 23 menu/product/history envelope implemented; effective live limit four, no extra product enabled. [Validation and numbered 6 Nov handoff](checks/e4-wider-menu.md).
 
-E5 plan, Peter 2 November 2026: per-product activation is superseded by the [dynamic loaded-catalogue plan](plans/e5-dynamic-products.md); E3 records are regression evidence, with no E3 product proven. Docs only; no activation or save change.
+E5 plan, Peter 2 November 2026: per-product implementation is superseded by the [dynamic loaded-catalogue plan](plans/e5-dynamic-products.md); the **18:02 JST decisions** record food-by-default admission after the full native contract, seeded per-resident tastes, **E5e mod metadata API**, deferred bundles and confirmed dumplings/chopped cheese cases. E3 records are regression evidence, with no E3 product proven in game. Docs only; no implementation or save change. Implementation and automated rig verification are separate statuses.
+
+E6 / next scope: **cart and food-truck sales support** for products without a building holder (Street Food dumplings/chopped cheese), if RIG-CAT finds no building-placeable holder; per Peter's E5 Q6 decision, **planned, not started**, after E5 and outside its scope.
 
 E3 status, 31 October (offline): [donut](plans/e3-donut.md) and [cupcake feasibility discovery](plans/e3-cupcake.md) share one isolated on-demand raw-field reader with pinned candidates. Loaded equipment and natural checkout/settlement proof remain pending; no additional product certified or enabled.
 
@@ -73,6 +75,8 @@ Applies to every step A–E slice re-measure and to the final release:
 ### Perf wins log
 
 Record every taken win with before/after numbers.
+
+- E5a — [Reuse bounded holder capacity and ordinal-key identity proof](perf/e5a-catalogue-eligibility.md): E5a eight-offer rebuild 300,280 -> 129,144 B; clean reads 0 B/scans; initial 32.5793 ms backlog spike retained in evidence.
 
 - E5c - [Load-time duplicate-field mask and metadata measurements](perf/e5c-neutral-metadata.md): 256-entry parse 289,488 -> 195,280 B; resolver and 4/8-offer hot choice work 0 B, no frame work.
 
