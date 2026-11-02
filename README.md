@@ -2,6 +2,8 @@
 
 Validation and dated development notices are in the [checks index](CHECKS.md); each slice maintains its own evidence file.
 
+E5a implements the detached loaded-catalogue/direct-stock reader with bounded dirty caches and pure validation, including registered mod identities. Ownership, checkout, `Supported` and writer 24 are unchanged. [Offline evidence and automated batched-rig checklist](docs/checks/e5a-catalogue-eligibility.md).
+
 E3 remaining batch: [six named candidates STOP](docs/plans/e3-remaining-batch.md), per Peter's 2 November batch-check decision; isolated conditional probes only, no gameplay/menu/save change. [Offline checks and 6 Nov handoff](docs/checks/e3-remaining-batch.md).
 
 D3a adds a free totals-only fourteen-day rival outflow line to Ctrl+F8 and D2 diagnostics, with schema 24 exact ledger reconciliation. [Offline evidence and pending 6 Nov checks](docs/checks/d3a-outflow-line.md).
