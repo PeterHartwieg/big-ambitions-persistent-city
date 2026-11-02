@@ -1,0 +1,1134 @@
+{
+  "cand2-default-slices": {
+    "minute": 8986.680534362793,
+    "schema": 24,
+    "capabilities": {
+      "Code": "B",
+      "Revision": 1,
+      "Active": false
+    },
+    "settings": {
+      "<Awareness>k__BackingField": {
+        "<DiscoveryProbability>k__BackingField": 0.02,
+        "<DrawsPerAnchor>k__BackingField": 4,
+        "<RadiusMetres>k__BackingField": 250.0
+      },
+      "<Campaigns>k__BackingField": {
+        "<DailyReachDecay>k__BackingField": 0.5,
+        "<Enabled>k__BackingField": true,
+        "<ReachProbability>k__BackingField": 0.25,
+        "<RetentionDays>k__BackingField": 7
+      },
+      "<Enabled>k__BackingField": true,
+      "<FoodChoice>k__BackingField": {
+        "<FoodChoiceDistanceScaleMinutes>k__BackingField": 10.0,
+        "<FoodChoiceDistanceWeight>k__BackingField": 1.0,
+        "<FoodChoiceHealthWeight>k__BackingField": 0.0,
+        "<FoodChoiceHouseholdWeight>k__BackingField": 1.0,
+        "<FoodChoicePriceWeight>k__BackingField": 1.0,
+        "<FoodChoiceQualityWeight>k__BackingField": 0.5,
+        "<FoodChoiceQueueWeight>k__BackingField": 1.0,
+        "<FoodChoiceTasteWeight>k__BackingField": 1.0,
+        "<FoodChoiceTemperature>k__BackingField": 1.0,
+        "<FoodChoiceTimePressureWeight>k__BackingField": 1.0,
+        "<FoodChoiceWeightFloor>k__BackingField": 0.02,
+        "<FoodMenuHealthWeight>k__BackingField": 0.0,
+        "<FoodMenuMaximumOffersPerShop>k__BackingField": 4,
+        "<FoodMenuNewTasteWeight>k__BackingField": 1.0,
+        "<FoodShortlistTemperature>k__BackingField": 1.0
+      },
+      "<FoodMemory>k__BackingField": {
+        "<FoodMemoryBadVisitTraitWeight>k__BackingField": 1.0,
+        "<FoodMemoryCapacity>k__BackingField": 4,
+        "<FoodMemoryClosedPenalty>k__BackingField": 3,
+        "<FoodMemoryCuriousNoveltyMultiplier>k__BackingField": 1.3,
+        "<FoodMemoryDecayDaysPerPoint>k__BackingField": 2,
+        "<FoodMemoryForgetAfterDays>k__BackingField": 28,
+        "<FoodMemoryLoyalReturnMultiplier>k__BackingField": 2.0,
+        "<FoodMemoryMaximumMultiplier>k__BackingField": 2.5,
+        "<FoodMemoryMinimumMultiplier>k__BackingField": 0.25,
+        "<FoodMemoryQueuePenalty>k__BackingField": 2,
+        "<FoodMemoryRegularRecentDays>k__BackingField": 14,
+        "<FoodMemoryRegularServedVisits>k__BackingField": 3,
+        "<FoodMemoryServedGain>k__BackingField": 1,
+        "<FoodMemoryStockPenalty>k__BackingField": 3,
+        "<FoodMemoryWeight>k__BackingField": 1.0
+      },
+      "<GameClockFactor>k__BackingField": 0.3333333333333333,
+      "<MarketResearch>k__BackingField": {
+        "<MarketResearchCatchmentMetres>k__BackingField": 500,
+        "<MarketResearchConsumersPerUnit>k__BackingField": 256,
+        "reported": true
+      },
+      "<MaximumPedestrians>k__BackingField": 48,
+      "<MaximumVehicles>k__BackingField": 24,
+      "<PhysicalEnabled>k__BackingField": true,
+      "<PhysicalRadiusMetres>k__BackingField": 120.0,
+      "<Rivals>k__BackingField": {
+        "<RivalAssumedServiceMinutes>k__BackingField": 5,
+        "<RivalChoiceWeight>k__BackingField": 1.0,
+        "<RivalReadsPerUnit>k__BackingField": 16,
+        "<RivalRefreshGameMinutes>k__BackingField": 60
+      },
+      "<ThirdPartyInteriorAssemblyPatterns>k__BackingField": [
+        "TrueCityInteriors",
+        "TrueCity*"
+      ],
+      "<ThirdPartyInteriorGuard>k__BackingField": "auto",
+      "<ThirdPartyInteriorHarmonyOwnerIds>k__BackingField": [],
+      "<Weather>k__BackingField": {
+        "<Enabled>k__BackingField": true,
+        "<QueueRainLeadMinutes>k__BackingField": 5,
+        "<RainOptionalOutingMultiplier>k__BackingField": 0.7,
+        "<RainTravelWeightMultiplier>k__BackingField": 1.3,
+        "invalidEnabled": false
+      },
+      "audienceMaximum": 8,
+      "breakMaximum": 10,
+      "chatMaximum": 30,
+      "interiorCityView": "off",
+      "interiorPedestrians": 24,
+      "interiorRadius": 60.0,
+      "interiorReported": true,
+      "interiorVehicles": 12,
+      "modeAdjusted": false,
+      "optionalStopChoicePercentage": 25,
+      "pedestriansAdjusted": false,
+      "radiusAdjusted": false,
+      "restingMaximum": 40,
+      "timingAdjusted": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "timingReported": true,
+      "vehiclesAdjusted": false,
+      "windowShoppingMaximum": 3
+    },
+    "rivals": {
+      "Core": {
+        "RivalChoices": 0,
+        "RivalSettlements": 0,
+        "RivalRefusals": 0,
+        "FreeOutflow": {
+          "Days": [
+            {
+              "Day": -7,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -6,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -5,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -4,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -3,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -2,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -1,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 0,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 1,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 2,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 3,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 4,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 5,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 6,
+              "Known": true,
+              "Partial": true,
+              "Units": 0,
+              "Count": 0
+            }
+          ],
+          "Units": 0,
+          "Count": 0
+        },
+        "Availability": "EstimatedFromPriceAndHours",
+        "NativeRivalCheckout": "Unsupported",
+        "ExternalFoodSpentUnits": "0"
+      },
+      "RefreshUnits": 0,
+      "DetailReads": 0,
+      "Unavailable": ""
+    },
+    "campaigns": {
+      "images": [],
+      "verifiedTypes": [
+        {
+          "Code": 0,
+          "Name": "SmallInternet",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        },
+        {
+          "Code": 1,
+          "Name": "MediumInternet",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        },
+        {
+          "Code": 2,
+          "Name": "LargeInternet",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        },
+        {
+          "Code": 3,
+          "Name": "SmallBillboard",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        },
+        {
+          "Code": 4,
+          "Name": "MediumBillboard",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        },
+        {
+          "Code": 5,
+          "Name": "LargeBillboard",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        }
+      ],
+      "indexedEntries": 0,
+      "publications": 0,
+      "exposuresAdmitted": 0,
+      "exposuresRefused": 0,
+      "observationError": "",
+      "lastObservedHour": 149,
+      "enabled": true,
+      "evidence": "Observed enabled types only; Active verified campaigns soften distance preference for every resident; no native writes."
+    },
+    "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+    "food": {
+      "active": true,
+      "hourlyCustomerBatchesSuppressed": 0,
+      "nativeDrawsSuppressed": 0,
+      "nativePurchasesThisSession": 0
+    },
+    "weatherStarts": 7
+  },
+  "activation-after": {
+    "minute": 10085.004360675812,
+    "schema": 24,
+    "capabilities": {
+      "Code": "B",
+      "Revision": 1,
+      "Active": true
+    },
+    "settings": {
+      "<Awareness>k__BackingField": {
+        "<DiscoveryProbability>k__BackingField": 0.02,
+        "<DrawsPerAnchor>k__BackingField": 4,
+        "<RadiusMetres>k__BackingField": 250.0
+      },
+      "<Campaigns>k__BackingField": {
+        "<DailyReachDecay>k__BackingField": 0.5,
+        "<Enabled>k__BackingField": true,
+        "<ReachProbability>k__BackingField": 0.25,
+        "<RetentionDays>k__BackingField": 7
+      },
+      "<Enabled>k__BackingField": true,
+      "<FoodChoice>k__BackingField": {
+        "<FoodChoiceDistanceScaleMinutes>k__BackingField": 10.0,
+        "<FoodChoiceDistanceWeight>k__BackingField": 1.0,
+        "<FoodChoiceHealthWeight>k__BackingField": 0.0,
+        "<FoodChoiceHouseholdWeight>k__BackingField": 1.0,
+        "<FoodChoicePriceWeight>k__BackingField": 1.0,
+        "<FoodChoiceQualityWeight>k__BackingField": 0.5,
+        "<FoodChoiceQueueWeight>k__BackingField": 1.0,
+        "<FoodChoiceTasteWeight>k__BackingField": 1.0,
+        "<FoodChoiceTemperature>k__BackingField": 1.0,
+        "<FoodChoiceTimePressureWeight>k__BackingField": 1.0,
+        "<FoodChoiceWeightFloor>k__BackingField": 0.02,
+        "<FoodMenuHealthWeight>k__BackingField": 0.0,
+        "<FoodMenuMaximumOffersPerShop>k__BackingField": 4,
+        "<FoodMenuNewTasteWeight>k__BackingField": 1.0,
+        "<FoodShortlistTemperature>k__BackingField": 1.0
+      },
+      "<FoodMemory>k__BackingField": {
+        "<FoodMemoryBadVisitTraitWeight>k__BackingField": 1.0,
+        "<FoodMemoryCapacity>k__BackingField": 4,
+        "<FoodMemoryClosedPenalty>k__BackingField": 3,
+        "<FoodMemoryCuriousNoveltyMultiplier>k__BackingField": 1.3,
+        "<FoodMemoryDecayDaysPerPoint>k__BackingField": 2,
+        "<FoodMemoryForgetAfterDays>k__BackingField": 28,
+        "<FoodMemoryLoyalReturnMultiplier>k__BackingField": 2.0,
+        "<FoodMemoryMaximumMultiplier>k__BackingField": 2.5,
+        "<FoodMemoryMinimumMultiplier>k__BackingField": 0.25,
+        "<FoodMemoryQueuePenalty>k__BackingField": 2,
+        "<FoodMemoryRegularRecentDays>k__BackingField": 14,
+        "<FoodMemoryRegularServedVisits>k__BackingField": 3,
+        "<FoodMemoryServedGain>k__BackingField": 1,
+        "<FoodMemoryStockPenalty>k__BackingField": 3,
+        "<FoodMemoryWeight>k__BackingField": 1.0
+      },
+      "<GameClockFactor>k__BackingField": 0.3333333333333333,
+      "<MarketResearch>k__BackingField": {
+        "<MarketResearchCatchmentMetres>k__BackingField": 500,
+        "<MarketResearchConsumersPerUnit>k__BackingField": 256,
+        "reported": true
+      },
+      "<MaximumPedestrians>k__BackingField": 48,
+      "<MaximumVehicles>k__BackingField": 24,
+      "<PhysicalEnabled>k__BackingField": true,
+      "<PhysicalRadiusMetres>k__BackingField": 120.0,
+      "<Rivals>k__BackingField": {
+        "<RivalAssumedServiceMinutes>k__BackingField": 5,
+        "<RivalChoiceWeight>k__BackingField": 1.0,
+        "<RivalReadsPerUnit>k__BackingField": 16,
+        "<RivalRefreshGameMinutes>k__BackingField": 60
+      },
+      "<ThirdPartyInteriorAssemblyPatterns>k__BackingField": [
+        "TrueCityInteriors",
+        "TrueCity*"
+      ],
+      "<ThirdPartyInteriorGuard>k__BackingField": "auto",
+      "<ThirdPartyInteriorHarmonyOwnerIds>k__BackingField": [],
+      "<Weather>k__BackingField": {
+        "<Enabled>k__BackingField": true,
+        "<QueueRainLeadMinutes>k__BackingField": 5,
+        "<RainOptionalOutingMultiplier>k__BackingField": 0.7,
+        "<RainTravelWeightMultiplier>k__BackingField": 1.3,
+        "invalidEnabled": false
+      },
+      "audienceMaximum": 8,
+      "breakMaximum": 10,
+      "chatMaximum": 30,
+      "interiorCityView": "off",
+      "interiorPedestrians": 24,
+      "interiorRadius": 60.0,
+      "interiorReported": true,
+      "interiorVehicles": 12,
+      "modeAdjusted": false,
+      "optionalStopChoicePercentage": 25,
+      "pedestriansAdjusted": false,
+      "radiusAdjusted": false,
+      "restingMaximum": 40,
+      "timingAdjusted": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "timingReported": true,
+      "vehiclesAdjusted": false,
+      "windowShoppingMaximum": 3
+    },
+    "rivals": {
+      "Core": {
+        "RivalChoices": 0,
+        "RivalSettlements": 0,
+        "RivalRefusals": 0,
+        "FreeOutflow": {
+          "Days": [
+            {
+              "Day": -6,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -5,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -4,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -3,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -2,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -1,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 0,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 1,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 2,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 3,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 4,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 5,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 6,
+              "Known": true,
+              "Partial": true,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 7,
+              "Known": true,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            }
+          ],
+          "Units": 0,
+          "Count": 0
+        },
+        "Availability": "EstimatedFromPriceAndHours",
+        "NativeRivalCheckout": "Unsupported",
+        "ExternalFoodSpentUnits": "0"
+      },
+      "RefreshUnits": 56,
+      "DetailReads": 0,
+      "Unavailable": ""
+    },
+    "campaigns": {
+      "images": [],
+      "verifiedTypes": [
+        {
+          "Code": 0,
+          "Name": "SmallInternet",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        },
+        {
+          "Code": 1,
+          "Name": "MediumInternet",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        },
+        {
+          "Code": 2,
+          "Name": "LargeInternet",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        },
+        {
+          "Code": 3,
+          "Name": "SmallBillboard",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        },
+        {
+          "Code": 4,
+          "Name": "MediumBillboard",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        },
+        {
+          "Code": 5,
+          "Name": "LargeBillboard",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        }
+      ],
+      "indexedEntries": 0,
+      "publications": 0,
+      "exposuresAdmitted": 0,
+      "exposuresRefused": 0,
+      "observationError": "",
+      "lastObservedHour": 168,
+      "enabled": true,
+      "evidence": "Observed enabled types only; Active verified campaigns soften distance preference for every resident; no native writes."
+    },
+    "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+    "food": {
+      "active": true,
+      "hourlyCustomerBatchesSuppressed": 17,
+      "nativeDrawsSuppressed": 0,
+      "nativePurchasesThisSession": 15
+    },
+    "weatherStarts": 7
+  },
+  "candidate-day-end-slices": {
+    "minute": 11525.00725364685,
+    "schema": 24,
+    "capabilities": {
+      "Code": "B",
+      "Revision": 1,
+      "Active": true
+    },
+    "settings": {
+      "<Awareness>k__BackingField": {
+        "<DiscoveryProbability>k__BackingField": 0.02,
+        "<DrawsPerAnchor>k__BackingField": 4,
+        "<RadiusMetres>k__BackingField": 250.0
+      },
+      "<Campaigns>k__BackingField": {
+        "<DailyReachDecay>k__BackingField": 0.5,
+        "<Enabled>k__BackingField": true,
+        "<ReachProbability>k__BackingField": 0.25,
+        "<RetentionDays>k__BackingField": 7
+      },
+      "<Enabled>k__BackingField": true,
+      "<FoodChoice>k__BackingField": {
+        "<FoodChoiceDistanceScaleMinutes>k__BackingField": 10.0,
+        "<FoodChoiceDistanceWeight>k__BackingField": 1.0,
+        "<FoodChoiceHealthWeight>k__BackingField": 0.0,
+        "<FoodChoiceHouseholdWeight>k__BackingField": 1.0,
+        "<FoodChoicePriceWeight>k__BackingField": 1.0,
+        "<FoodChoiceQualityWeight>k__BackingField": 0.5,
+        "<FoodChoiceQueueWeight>k__BackingField": 1.0,
+        "<FoodChoiceTasteWeight>k__BackingField": 1.0,
+        "<FoodChoiceTemperature>k__BackingField": 1.0,
+        "<FoodChoiceTimePressureWeight>k__BackingField": 1.0,
+        "<FoodChoiceWeightFloor>k__BackingField": 0.02,
+        "<FoodMenuHealthWeight>k__BackingField": 0.0,
+        "<FoodMenuMaximumOffersPerShop>k__BackingField": 4,
+        "<FoodMenuNewTasteWeight>k__BackingField": 1.0,
+        "<FoodShortlistTemperature>k__BackingField": 1.0
+      },
+      "<FoodMemory>k__BackingField": {
+        "<FoodMemoryBadVisitTraitWeight>k__BackingField": 1.0,
+        "<FoodMemoryCapacity>k__BackingField": 4,
+        "<FoodMemoryClosedPenalty>k__BackingField": 3,
+        "<FoodMemoryCuriousNoveltyMultiplier>k__BackingField": 1.3,
+        "<FoodMemoryDecayDaysPerPoint>k__BackingField": 2,
+        "<FoodMemoryForgetAfterDays>k__BackingField": 28,
+        "<FoodMemoryLoyalReturnMultiplier>k__BackingField": 2.0,
+        "<FoodMemoryMaximumMultiplier>k__BackingField": 2.5,
+        "<FoodMemoryMinimumMultiplier>k__BackingField": 0.25,
+        "<FoodMemoryQueuePenalty>k__BackingField": 2,
+        "<FoodMemoryRegularRecentDays>k__BackingField": 14,
+        "<FoodMemoryRegularServedVisits>k__BackingField": 3,
+        "<FoodMemoryServedGain>k__BackingField": 1,
+        "<FoodMemoryStockPenalty>k__BackingField": 3,
+        "<FoodMemoryWeight>k__BackingField": 1.0
+      },
+      "<GameClockFactor>k__BackingField": 0.3333333333333333,
+      "<MarketResearch>k__BackingField": {
+        "<MarketResearchCatchmentMetres>k__BackingField": 500,
+        "<MarketResearchConsumersPerUnit>k__BackingField": 256,
+        "reported": true
+      },
+      "<MaximumPedestrians>k__BackingField": 48,
+      "<MaximumVehicles>k__BackingField": 24,
+      "<PhysicalEnabled>k__BackingField": true,
+      "<PhysicalRadiusMetres>k__BackingField": 120.0,
+      "<Rivals>k__BackingField": {
+        "<RivalAssumedServiceMinutes>k__BackingField": 5,
+        "<RivalChoiceWeight>k__BackingField": 1.0,
+        "<RivalReadsPerUnit>k__BackingField": 16,
+        "<RivalRefreshGameMinutes>k__BackingField": 60
+      },
+      "<ThirdPartyInteriorAssemblyPatterns>k__BackingField": [
+        "TrueCityInteriors",
+        "TrueCity*"
+      ],
+      "<ThirdPartyInteriorGuard>k__BackingField": "auto",
+      "<ThirdPartyInteriorHarmonyOwnerIds>k__BackingField": [],
+      "<Weather>k__BackingField": {
+        "<Enabled>k__BackingField": true,
+        "<QueueRainLeadMinutes>k__BackingField": 5,
+        "<RainOptionalOutingMultiplier>k__BackingField": 0.7,
+        "<RainTravelWeightMultiplier>k__BackingField": 1.3,
+        "invalidEnabled": false
+      },
+      "audienceMaximum": 8,
+      "breakMaximum": 10,
+      "chatMaximum": 30,
+      "interiorCityView": "off",
+      "interiorPedestrians": 24,
+      "interiorRadius": 60.0,
+      "interiorReported": true,
+      "interiorVehicles": 12,
+      "modeAdjusted": false,
+      "optionalStopChoicePercentage": 25,
+      "pedestriansAdjusted": false,
+      "radiusAdjusted": false,
+      "restingMaximum": 40,
+      "timingAdjusted": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "timingReported": true,
+      "vehiclesAdjusted": false,
+      "windowShoppingMaximum": 3
+    },
+    "rivals": {
+      "Core": {
+        "RivalChoices": 306,
+        "RivalSettlements": 306,
+        "RivalRefusals": 0,
+        "FreeOutflow": {
+          "Days": [
+            {
+              "Day": -5,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -4,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -3,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -2,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -1,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 0,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 1,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 2,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 3,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 4,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 5,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 6,
+              "Known": true,
+              "Partial": true,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 7,
+              "Known": true,
+              "Partial": false,
+              "Units": 110711814348800,
+              "Count": 306
+            },
+            {
+              "Day": 8,
+              "Known": true,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            }
+          ],
+          "Units": 110711814348800,
+          "Count": 306
+        },
+        "Availability": "EstimatedFromPriceAndHours",
+        "NativeRivalCheckout": "Unsupported",
+        "ExternalFoodSpentUnits": "110711814348800"
+      },
+      "RefreshUnits": 1344,
+      "DetailReads": 24410,
+      "Unavailable": ""
+    },
+    "campaigns": {
+      "images": [],
+      "verifiedTypes": [
+        {
+          "Code": 0,
+          "Name": "SmallInternet",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        },
+        {
+          "Code": 1,
+          "Name": "MediumInternet",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        },
+        {
+          "Code": 2,
+          "Name": "LargeInternet",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        },
+        {
+          "Code": 3,
+          "Name": "SmallBillboard",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        },
+        {
+          "Code": 4,
+          "Name": "MediumBillboard",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        },
+        {
+          "Code": 5,
+          "Name": "LargeBillboard",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        }
+      ],
+      "indexedEntries": 0,
+      "publications": 0,
+      "exposuresAdmitted": 0,
+      "exposuresRefused": 0,
+      "observationError": "",
+      "lastObservedHour": 192,
+      "enabled": true,
+      "evidence": "Observed enabled types only; Active verified campaigns soften distance preference for every resident; no native writes."
+    },
+    "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+    "food": {
+      "active": true,
+      "hourlyCustomerBatchesSuppressed": 27,
+      "nativeDrawsSuppressed": 0,
+      "nativePurchasesThisSession": 5
+    },
+    "weatherStarts": 7
+  },
+  "nonzero23-slices": {
+    "minute": 11525.3370013237,
+    "schema": 24,
+    "capabilities": {
+      "Code": "B",
+      "Revision": 1,
+      "Active": true
+    },
+    "settings": {
+      "<Awareness>k__BackingField": {
+        "<DiscoveryProbability>k__BackingField": 0.02,
+        "<DrawsPerAnchor>k__BackingField": 4,
+        "<RadiusMetres>k__BackingField": 250.0
+      },
+      "<Campaigns>k__BackingField": {
+        "<DailyReachDecay>k__BackingField": 0.5,
+        "<Enabled>k__BackingField": true,
+        "<ReachProbability>k__BackingField": 0.25,
+        "<RetentionDays>k__BackingField": 7
+      },
+      "<Enabled>k__BackingField": true,
+      "<FoodChoice>k__BackingField": {
+        "<FoodChoiceDistanceScaleMinutes>k__BackingField": 10.0,
+        "<FoodChoiceDistanceWeight>k__BackingField": 1.0,
+        "<FoodChoiceHealthWeight>k__BackingField": 0.0,
+        "<FoodChoiceHouseholdWeight>k__BackingField": 1.0,
+        "<FoodChoicePriceWeight>k__BackingField": 1.0,
+        "<FoodChoiceQualityWeight>k__BackingField": 0.5,
+        "<FoodChoiceQueueWeight>k__BackingField": 1.0,
+        "<FoodChoiceTasteWeight>k__BackingField": 1.0,
+        "<FoodChoiceTemperature>k__BackingField": 1.0,
+        "<FoodChoiceTimePressureWeight>k__BackingField": 1.0,
+        "<FoodChoiceWeightFloor>k__BackingField": 0.02,
+        "<FoodMenuHealthWeight>k__BackingField": 0.0,
+        "<FoodMenuMaximumOffersPerShop>k__BackingField": 4,
+        "<FoodMenuNewTasteWeight>k__BackingField": 1.0,
+        "<FoodShortlistTemperature>k__BackingField": 1.0
+      },
+      "<FoodMemory>k__BackingField": {
+        "<FoodMemoryBadVisitTraitWeight>k__BackingField": 1.0,
+        "<FoodMemoryCapacity>k__BackingField": 4,
+        "<FoodMemoryClosedPenalty>k__BackingField": 3,
+        "<FoodMemoryCuriousNoveltyMultiplier>k__BackingField": 1.3,
+        "<FoodMemoryDecayDaysPerPoint>k__BackingField": 2,
+        "<FoodMemoryForgetAfterDays>k__BackingField": 28,
+        "<FoodMemoryLoyalReturnMultiplier>k__BackingField": 2.0,
+        "<FoodMemoryMaximumMultiplier>k__BackingField": 2.5,
+        "<FoodMemoryMinimumMultiplier>k__BackingField": 0.25,
+        "<FoodMemoryQueuePenalty>k__BackingField": 2,
+        "<FoodMemoryRegularRecentDays>k__BackingField": 14,
+        "<FoodMemoryRegularServedVisits>k__BackingField": 3,
+        "<FoodMemoryServedGain>k__BackingField": 1,
+        "<FoodMemoryStockPenalty>k__BackingField": 3,
+        "<FoodMemoryWeight>k__BackingField": 1.0
+      },
+      "<GameClockFactor>k__BackingField": 0.3333333333333333,
+      "<MarketResearch>k__BackingField": {
+        "<MarketResearchCatchmentMetres>k__BackingField": 500,
+        "<MarketResearchConsumersPerUnit>k__BackingField": 256,
+        "reported": true
+      },
+      "<MaximumPedestrians>k__BackingField": 48,
+      "<MaximumVehicles>k__BackingField": 24,
+      "<PhysicalEnabled>k__BackingField": true,
+      "<PhysicalRadiusMetres>k__BackingField": 120.0,
+      "<Rivals>k__BackingField": {
+        "<RivalAssumedServiceMinutes>k__BackingField": 5,
+        "<RivalChoiceWeight>k__BackingField": 1.0,
+        "<RivalReadsPerUnit>k__BackingField": 16,
+        "<RivalRefreshGameMinutes>k__BackingField": 60
+      },
+      "<ThirdPartyInteriorAssemblyPatterns>k__BackingField": [
+        "TrueCityInteriors",
+        "TrueCity*"
+      ],
+      "<ThirdPartyInteriorGuard>k__BackingField": "auto",
+      "<ThirdPartyInteriorHarmonyOwnerIds>k__BackingField": [],
+      "<Weather>k__BackingField": {
+        "<Enabled>k__BackingField": true,
+        "<QueueRainLeadMinutes>k__BackingField": 5,
+        "<RainOptionalOutingMultiplier>k__BackingField": 0.7,
+        "<RainTravelWeightMultiplier>k__BackingField": 1.3,
+        "invalidEnabled": false
+      },
+      "audienceMaximum": 8,
+      "breakMaximum": 10,
+      "chatMaximum": 30,
+      "interiorCityView": "off",
+      "interiorPedestrians": 24,
+      "interiorRadius": 60.0,
+      "interiorReported": true,
+      "interiorVehicles": 12,
+      "modeAdjusted": false,
+      "optionalStopChoicePercentage": 25,
+      "pedestriansAdjusted": false,
+      "radiusAdjusted": false,
+      "restingMaximum": 40,
+      "timingAdjusted": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "timingReported": true,
+      "vehiclesAdjusted": false,
+      "windowShoppingMaximum": 3
+    },
+    "rivals": {
+      "Core": {
+        "RivalChoices": 0,
+        "RivalSettlements": 0,
+        "RivalRefusals": 0,
+        "FreeOutflow": {
+          "Days": [
+            {
+              "Day": -5,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -4,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -3,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -2,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -1,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 0,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 1,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 2,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 3,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 4,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 5,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 6,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 7,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 8,
+              "Known": true,
+              "Partial": true,
+              "Units": 0,
+              "Count": 0
+            }
+          ],
+          "Units": 0,
+          "Count": 0
+        },
+        "Availability": "EstimatedFromPriceAndHours",
+        "NativeRivalCheckout": "Unsupported",
+        "ExternalFoodSpentUnits": "96330493030400"
+      },
+      "RefreshUnits": 0,
+      "DetailReads": 0,
+      "Unavailable": ""
+    },
+    "campaigns": {
+      "images": [],
+      "verifiedTypes": [
+        {
+          "Code": 0,
+          "Name": "SmallInternet",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        },
+        {
+          "Code": 1,
+          "Name": "MediumInternet",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        },
+        {
+          "Code": 2,
+          "Name": "LargeInternet",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        },
+        {
+          "Code": 3,
+          "Name": "SmallBillboard",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        },
+        {
+          "Code": 4,
+          "Name": "MediumBillboard",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        },
+        {
+          "Code": 5,
+          "Name": "LargeBillboard",
+          "audience": "All residents",
+          "nativeTarget": "Not used"
+        }
+      ],
+      "indexedEntries": 0,
+      "publications": 0,
+      "exposuresAdmitted": 0,
+      "exposuresRefused": 0,
+      "observationError": "",
+      "lastObservedHour": 192,
+      "enabled": true,
+      "evidence": "Observed enabled types only; Active verified campaigns soften distance preference for every resident; no native writes."
+    },
+    "guard": "ThirdPartyInteriorGuard: not detected; rule=not detected; effective view=off; active=False",
+    "food": {
+      "active": true,
+      "hourlyCustomerBatchesSuppressed": 37,
+      "nativeDrawsSuppressed": 0,
+      "nativePurchasesThisSession": 0
+    },
+    "weatherStarts": 7
+  }
+}

@@ -1,0 +1,155 @@
+{
+  "Address": "ba:street_thirdstreet 30",
+  "Size": "ba:buildingsize_a",
+  "BuildingVersion": 1,
+  "Frame": 5658,
+  "LayoutInstance": -2057698,
+  "Layout": {
+    "Origin": {
+      "X": 1000.0,
+      "Y": 0.0,
+      "Z": 0.0,
+      "IsFinite": true
+    },
+    "Right": {
+      "X": 1.0,
+      "Y": 0.0,
+      "Z": 0.0,
+      "IsFinite": true
+    },
+    "Up": {
+      "X": 0.0,
+      "Y": 1.0,
+      "Z": 0.0,
+      "IsFinite": true
+    },
+    "Forward": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 1.0,
+      "IsFinite": true
+    }
+  },
+  "Refusal": "InsufficientEdges",
+  "Complete": true,
+  "MultipleHeights": false,
+  "ViewConfigured": false,
+  "GuardDetected": false,
+  "GuardReason": "not detected",
+  "FloorHeight": 0.0,
+  "Eligibility": "None",
+  "Exterior": [
+    {
+      "Id": 0,
+      "Frame": {
+        "Origin": {
+          "X": 230.2625732421875,
+          "Y": 0.09000015258789062,
+          "Z": 21.2783203125,
+          "IsFinite": true
+        },
+        "Right": {
+          "X": 5.960464477539063e-08,
+          "Y": 0.0,
+          "Z": 1.0,
+          "IsFinite": true
+        },
+        "Up": {
+          "X": 0.0,
+          "Y": 1.0,
+          "Z": 0.0,
+          "IsFinite": true
+        },
+        "Forward": {
+          "X": -1.0,
+          "Y": 0.0,
+          "Z": 5.960464477539063e-08,
+          "IsFinite": true
+        }
+      },
+      "Elevator": false
+    }
+  ],
+  "Interior": [
+    {
+      "Id": 0,
+      "Frame": {
+        "Origin": {
+          "X": 999.0,
+          "Y": 0.0,
+          "Z": -4.429999828338623,
+          "IsFinite": true
+        },
+        "Right": {
+          "X": 1.0,
+          "Y": 3.57445667574334e-14,
+          "Z": 1.5795228591741761e-06,
+          "IsFinite": true
+        },
+        "Up": {
+          "X": 3.329857277498821e-14,
+          "Y": 1.0,
+          "Z": -4.371138828673793e-08,
+          "IsFinite": true
+        },
+        "Forward": {
+          "X": -1.5795228591741761e-06,
+          "Y": 4.371138828673793e-08,
+          "Z": 1.0,
+          "IsFinite": true
+        }
+      },
+      "Elevator": false
+    }
+  ],
+  "SuppliedEdges": [],
+  "Decision": {
+    "Failure": 7,
+    "UniqueIds": true,
+    "CandidateAvailable": true,
+    "Consistent": false,
+    "Candidate": {
+      "Rotation": {
+        "Origin": {
+          "X": 0.0,
+          "Y": 0.0,
+          "Z": 0.0,
+          "IsFinite": true
+        },
+        "Right": {
+          "X": 1.6391275039495667e-06,
+          "Y": -4.37113882867358e-08,
+          "Z": -0.9999999999999059,
+          "IsFinite": true
+        },
+        "Up": {
+          "X": 3.329857277498821e-14,
+          "Y": 1.0,
+          "Z": -4.371138828673793e-08,
+          "IsFinite": true
+        },
+        "Forward": {
+          "X": 0.9999999999999059,
+          "Y": 3.8349968528903584e-14,
+          "Z": 1.6391275039495667e-06,
+          "IsFinite": true
+        }
+      },
+      "Translation": {
+        "X": 977.721302257785,
+        "Y": -0.08999008749195976,
+        "Z": 225.83253853988114,
+        "IsFinite": true
+      }
+    },
+    "DoorPositionResiduals": [
+      0.0
+    ],
+    "DoorRotationResidualDegrees": [
+      0.0
+    ],
+    "EdgeResiduals": []
+  },
+  "FrameQualification": "Exit-zone roots and exterior markers are candidate frames, not measured jambs; supplied edges require independent provenance.",
+  "RendererAvailable": false
+}

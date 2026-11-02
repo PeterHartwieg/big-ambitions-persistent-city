@@ -1,0 +1,177 @@
+{
+  "role": "rig_test",
+  "nativeDay": 7,
+  "startMinute": 10085.004360675812,
+  "endMinute": 11525.00725364685,
+  "budgetConservationFailures": [],
+  "residentSpendDeltaUnits": "112087921868800",
+  "externalFoodOutflowDeltaUnits": "110711814348800",
+  "nativePaidReceiptUnits": "1376107520000",
+  "historyRevenueUnits": "1376107520000",
+  "residentSpendReconciles": true,
+  "ownReceiptHistoryReconciles": true,
+  "residentPurchaseDelta": 311,
+  "newNativeReceiptCount": 5,
+  "newPaidReceiptCount": 5,
+  "ownHistoryPurchases": 5,
+  "stockConsumed": {
+    "ba:itemname_paperbag": 5,
+    "ba:itemname_croissant": 5
+  },
+  "ownStockBagsReceiptReconcile": true,
+  "nativeDailyAccounts": [
+    {
+      "Day": 7,
+      "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+      "Name": "Persistent City food routines",
+      "Revenue": 51.264,
+      "Resources": 10.0,
+      "Wages": 216.239487,
+      "Rent": 0.0,
+      "OtherOperatingCosts": 0.0,
+      "OperatingProfit": -174.9755
+    }
+  ],
+  "nativeRevenueExpectedFloatBits": "560e4d42",
+  "nativeRevenueActualFloatBits": "560e4d42",
+  "pendingCompletedOrdersBefore": 0,
+  "pendingCompletedOrdersAfter": 0,
+  "nativeAfterReloadExact": true,
+  "nativeAfterSha256": "2d90878331c6ffb6782e168184f5ef20cfc0421ed648b2eb65d0046dee222cd6",
+  "nativeAfterReloadSha256": "2d90878331c6ffb6782e168184f5ef20cfc0421ed648b2eb65d0046dee222cd6",
+  "identitiesStable": true,
+  "traitsStable": true,
+  "rivalsAtDayEnd": {
+    "Core": {
+      "RivalChoices": 306,
+      "RivalSettlements": 306,
+      "RivalRefusals": 0,
+      "FreeOutflow": {
+        "Days": [
+          {
+            "Day": -5,
+            "Known": false,
+            "Partial": false,
+            "Units": 0,
+            "Count": 0
+          },
+          {
+            "Day": -4,
+            "Known": false,
+            "Partial": false,
+            "Units": 0,
+            "Count": 0
+          },
+          {
+            "Day": -3,
+            "Known": false,
+            "Partial": false,
+            "Units": 0,
+            "Count": 0
+          },
+          {
+            "Day": -2,
+            "Known": false,
+            "Partial": false,
+            "Units": 0,
+            "Count": 0
+          },
+          {
+            "Day": -1,
+            "Known": false,
+            "Partial": false,
+            "Units": 0,
+            "Count": 0
+          },
+          {
+            "Day": 0,
+            "Known": false,
+            "Partial": false,
+            "Units": 0,
+            "Count": 0
+          },
+          {
+            "Day": 1,
+            "Known": false,
+            "Partial": false,
+            "Units": 0,
+            "Count": 0
+          },
+          {
+            "Day": 2,
+            "Known": false,
+            "Partial": false,
+            "Units": 0,
+            "Count": 0
+          },
+          {
+            "Day": 3,
+            "Known": false,
+            "Partial": false,
+            "Units": 0,
+            "Count": 0
+          },
+          {
+            "Day": 4,
+            "Known": false,
+            "Partial": false,
+            "Units": 0,
+            "Count": 0
+          },
+          {
+            "Day": 5,
+            "Known": false,
+            "Partial": false,
+            "Units": 0,
+            "Count": 0
+          },
+          {
+            "Day": 6,
+            "Known": true,
+            "Partial": true,
+            "Units": 0,
+            "Count": 0
+          },
+          {
+            "Day": 7,
+            "Known": true,
+            "Partial": false,
+            "Units": 110711814348800,
+            "Count": 306
+          },
+          {
+            "Day": 8,
+            "Known": true,
+            "Partial": false,
+            "Units": 0,
+            "Count": 0
+          }
+        ],
+        "Units": 110711814348800,
+        "Count": 306
+      },
+      "Availability": "EstimatedFromPriceAndHours",
+      "NativeRivalCheckout": "Unsupported",
+      "ExternalFoodSpentUnits": "110711814348800"
+    },
+    "RefreshUnits": 1344,
+    "DetailReads": 24410,
+    "Unavailable": ""
+  },
+  "activeAtDayEnd": {
+    "Code": "B",
+    "Revision": 1,
+    "Active": true
+  },
+  "memoryEntriesAfter": 299,
+  "externalPurchasesWithNoNativeReceipt": 306,
+  "passiveNativeRivalAudit": {
+    "calls": 100,
+    "successes": 100,
+    "nativeEqualAll": true,
+    "exceptions": [],
+    "scope": "First 100 naturally invoked D2 payments; complete selected registration, cash, native receipts and finance projection compared within each call. No settlement invocation by tools."
+  },
+  "freeOutflowUnitsMatchLedger": true,
+  "freeCountMatchesExternalPurchases": true
+}

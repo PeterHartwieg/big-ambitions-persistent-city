@@ -1,0 +1,114 @@
+[
+  {
+    "day": 9,
+    "outcomes": {
+      "1": 570
+    },
+    "maxEntries": 4,
+    "uncertainMeals": 0
+  },
+  {
+    "day": 10,
+    "outcomes": {
+      "1": 810
+    },
+    "maxEntries": 4,
+    "uncertainMeals": 0
+  },
+  {
+    "day": 11,
+    "outcomes": {
+      "1": 988
+    },
+    "maxEntries": 4,
+    "uncertainMeals": 0
+  },
+  {
+    "day": 12,
+    "outcomes": {
+      "1": 1167
+    },
+    "maxEntries": 4,
+    "uncertainMeals": 0
+  },
+  {
+    "day": 13,
+    "outcomes": {
+      "1": 1396
+    },
+    "maxEntries": 4,
+    "uncertainMeals": 0
+  },
+  {
+    "day": 14,
+    "outcomes": {
+      "1": 1551
+    },
+    "maxEntries": 4,
+    "uncertainMeals": 0
+  },
+  {
+    "day": 15,
+    "outcomes": {
+      "1": 1710
+    },
+    "maxEntries": 4,
+    "uncertainMeals": 0
+  },
+  {
+    "day": 16,
+    "outcomes": {
+      "1": 1839
+    },
+    "maxEntries": 4,
+    "uncertainMeals": 0
+  },
+  {
+    "day": 17,
+    "outcomes": {
+      "1": 1941
+    },
+    "maxEntries": 4,
+    "uncertainMeals": 0
+  },
+  {
+    "day": 18,
+    "outcomes": {
+      "1": 2060
+    },
+    "maxEntries": 4,
+    "uncertainMeals": 0
+  },
+  {
+    "day": 19,
+    "outcomes": {
+      "1": 2141
+    },
+    "maxEntries": 4,
+    "uncertainMeals": 0
+  },
+  {
+    "day": 20,
+    "outcomes": {
+      "1": 2259
+    },
+    "maxEntries": 4,
+    "uncertainMeals": 0
+  },
+  {
+    "day": 21,
+    "outcomes": {
+      "1": 2373
+    },
+    "maxEntries": 4,
+    "uncertainMeals": 0
+  },
+  {
+    "day": 22,
+    "outcomes": {
+      "1": 2459
+    },
+    "maxEntries": 4,
+    "uncertainMeals": 0
+  }
+]

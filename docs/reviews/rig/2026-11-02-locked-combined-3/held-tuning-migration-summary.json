@@ -1,0 +1,126 @@
+{
+  "role": "rig_test",
+  "qualification": "Supplementary genuine schema18 held checkpoint, compared with archived dbddada reader projection; main migration controls are genuine schema23 writers.",
+  "sourceSha": "3dd3289a1678a4e28931f7e8bd3133abffaa34b08bfd9b19cfb2f4adae3f5875",
+  "copiedIdentical": true,
+  "archivedControlProjectionSchema": 23,
+  "writer": 24,
+  "oldProjectionDifferences": [],
+  "heldConsumers": [
+    {
+      "consumer": "pc:350",
+      "decision": {
+        "Weather": 0,
+        "WeatherTravelMultiplier": 1.0,
+        "Tuning": {},
+        "Awareness": null,
+        "IntentId": "food:pc%3A350:breakfast:6",
+        "PolicyVersion": 1,
+        "ContextKey": "trip:8tVqXi7AmHZTjtpwZyImetUsstybaAW2SI+dKffge0k=",
+        "Attempt": 1,
+        "Result": 0,
+        "BusinessId": "",
+        "ProductId": "",
+        "Outside": 0,
+        "Reason": 0,
+        "Factor1": 0,
+        "Factor2": 0,
+        "OriginAt": 9165.0,
+        "Deadline": 9210.0,
+        "QuotesDone": 1,
+        "Shops": [
+          {
+            "AlternativeKind": 0,
+            "AvailabilityEvidence": 1,
+            "RivalTerms": "",
+            "RivalServiceMinutes": 0,
+            "AlternativeWeight": 1.0,
+            "ServiceMinutes": 4.0,
+            "MemoryContribution": 0.0,
+            "BusinessId": "business:ba%3Astreet_thirdstreet:30:1:ba%3Abusinesstype_coffeeshop:player:generation:1",
+            "PlaceId": "address:ba%3Astreet_thirdstreet:30:shop",
+            "MealsPerHour": 15.0,
+            "ServiceUnavailable": false,
+            "NextServiceAt": 9165.0,
+            "Hours": [
+              {
+                "Day": 0,
+                "FromMinute": 480,
+                "ToMinute": 1080
+              },
+              {
+                "Day": 1,
+                "FromMinute": 480,
+                "ToMinute": 1080
+              },
+              {
+                "Day": 2,
+                "FromMinute": 480,
+                "ToMinute": 1080
+              },
+              {
+                "Day": 3,
+                "FromMinute": 480,
+                "ToMinute": 1080
+              },
+              {
+                "Day": 4,
+                "FromMinute": 480,
+                "ToMinute": 1080
+              },
+              {
+                "Day": 5,
+                "FromMinute": 480,
+                "ToMinute": 1080
+              },
+              {
+                "Day": 6,
+                "FromMinute": 480,
+                "ToMinute": 1080
+              }
+            ],
+            "CustomerServicePercent": 30,
+            "DistrictId": "ba:neighborhood_hellskitchen",
+            "Offers": [
+              {
+                "ProductId": "ba:itemname_croissant",
+                "Price": {
+                  "Units": 275221504000
+                },
+                "Units": 180,
+                "DistrictDemandPercent": 43
+              }
+            ],
+            "OutwardQuote": 1,
+            "ReturnQuote": 0,
+            "Outward": {
+              "Legs": [
+                {
+                  "From": {
+                    "X": 229.22433471679688,
+                    "Y": 0.09000015258789062,
+                    "Z": 11.202224731445312,
+                    "IsFinite": true
+                  },
+                  "To": {
+                    "X": 229.7625732421875,
+                    "Y": 0.09000015258789062,
+                    "Z": 21.2783203125,
+                    "IsFinite": true
+                  },
+                  "Mode": 0,
+                  "Minutes": 1.6817435657342494,
+                  "ServiceId": ""
+                }
+              ],
+              "Minutes": 1.6817435657342494,
+              "EstimatedMinutes": 1.6817435657342494
+            },
+            "Return": null
+          }
+        ],
+        "RouteBearing": true
+      }
+    }
+  ]
+}

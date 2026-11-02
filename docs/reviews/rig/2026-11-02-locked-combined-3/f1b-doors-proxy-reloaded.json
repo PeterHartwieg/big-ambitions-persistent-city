@@ -1,0 +1,47 @@
+{
+  "Address": "",
+  "Size": "",
+  "BuildingVersion": 0,
+  "Frame": 10462,
+  "LayoutInstance": 0,
+  "Layout": {
+    "Origin": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0,
+      "IsFinite": true
+    },
+    "Right": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0,
+      "IsFinite": true
+    },
+    "Up": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0,
+      "IsFinite": true
+    },
+    "Forward": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0,
+      "IsFinite": true
+    }
+  },
+  "Refusal": "observation refused: stable loaded shop context required",
+  "Complete": false,
+  "MultipleHeights": false,
+  "ViewConfigured": false,
+  "GuardDetected": false,
+  "GuardReason": "not detected",
+  "FloorHeight": null,
+  "Eligibility": "",
+  "Exterior": [],
+  "Interior": [],
+  "SuppliedEdges": [],
+  "Decision": null,
+  "FrameQualification": "Exit-zone roots and exterior markers are candidate frames, not measured jambs; supplied edges require independent provenance.",
+  "RendererAvailable": false
+}

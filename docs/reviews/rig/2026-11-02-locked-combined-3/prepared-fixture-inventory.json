@@ -1,0 +1,85 @@
+[
+  {
+    "stage": "persistent-city-rig-locked-a1fix",
+    "fixtureFiles": [],
+    "geometryDumpCount": 0
+  },
+  {
+    "stage": "persistent-city-rig-locked-a1sync",
+    "fixtureFiles": [],
+    "geometryDumpCount": 0
+  },
+  {
+    "stage": "persistent-city-rig-locked-a3stack",
+    "fixtureFiles": [],
+    "geometryDumpCount": 0
+  },
+  {
+    "stage": "persistent-city-rig-locked-a3sync",
+    "fixtureFiles": [],
+    "geometryDumpCount": 0
+  },
+  {
+    "stage": "persistent-city-rig-locked-b0b",
+    "fixtureFiles": [],
+    "geometryDumpCount": 0
+  },
+  {
+    "stage": "persistent-city-rig-locked-b1",
+    "fixtureFiles": [],
+    "geometryDumpCount": 0
+  },
+  {
+    "stage": "persistent-city-rig-locked-c1",
+    "fixtureFiles": [],
+    "geometryDumpCount": 0
+  },
+  {
+    "stage": "persistent-city-rig-locked-combined-20261101",
+    "fixtureFiles": [],
+    "geometryDumpCount": 0
+  },
+  {
+    "stage": "persistent-city-rig-locked-combined-20261102",
+    "fixtureFiles": [
+      "b2-recovery18.hsg",
+      "b2-recovery18.hsg.meta",
+      "held18.hsg",
+      "held18.hsg.meta",
+      "reference18.hsg",
+      "reference18.hsg.meta"
+    ],
+    "geometryDumpCount": 14
+  },
+  {
+    "stage": "persistent-city-rig-locked-combined-20261102b",
+    "fixtureFiles": [
+      "b2-recovery18.hsg",
+      "b2-recovery18.hsg.meta",
+      "held18.hsg",
+      "held18.hsg.meta",
+      "nonzero23.hsg",
+      "nonzero23.hsg.meta",
+      "reference18.hsg",
+      "reference18.hsg.meta",
+      "reference23.hsg",
+      "reference23.hsg.meta"
+    ],
+    "geometryDumpCount": 7
+  },
+  {
+    "stage": "persistent-city-rig-locked-d1",
+    "fixtureFiles": [],
+    "geometryDumpCount": 0
+  },
+  {
+    "stage": "persistent-city-rig-locked-e2a",
+    "fixtureFiles": [],
+    "geometryDumpCount": 0
+  },
+  {
+    "stage": "persistent-city-rig-locked-f0",
+    "fixtureFiles": [],
+    "geometryDumpCount": 0
+  }
+]

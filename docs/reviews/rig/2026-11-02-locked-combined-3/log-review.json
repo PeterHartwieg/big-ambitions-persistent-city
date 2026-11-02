@@ -1,0 +1,83 @@
+{
+  "base1-Player.private.log": {
+    "streetLampMentions": 0,
+    "nullReferenceExceptions": 4,
+    "pcSuspensions": [],
+    "exceptionCount": 4,
+    "exceptions": [
+      "NullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n",
+      "NullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+    ]
+  },
+  "base2-Player.private.log": {
+    "streetLampMentions": 0,
+    "nullReferenceExceptions": 6,
+    "pcSuspensions": [
+      "[Persistent City] Food ownership suspended: Unsupported population schema; preserve the payload.",
+      "[Mod:PersistentCity] Persistent City stopped: Food ownership suspended: Unsupported population schema; preserve the payload."
+    ],
+    "exceptionCount": 6,
+    "exceptions": [
+      "NullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n",
+      "NullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+    ]
+  },
+  "cand1-Player.private.log": {
+    "streetLampMentions": 0,
+    "nullReferenceExceptions": 14,
+    "pcSuspensions": [
+      "[Persistent City] Food ownership suspended: Unsupported population schema; preserve the payload.",
+      "[Mod:PersistentCity] Persistent City stopped: Food ownership suspended: Unsupported population schema; preserve the payload."
+    ],
+    "exceptionCount": 14,
+    "exceptions": [
+      "NullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n",
+      "NullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+    ]
+  },
+  "cand2-Player.private.log": {
+    "streetLampMentions": 0,
+    "nullReferenceExceptions": 14,
+    "pcSuspensions": [],
+    "exceptionCount": 14,
+    "exceptions": [
+      "NullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n",
+      "NullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+    ]
+  },
+  "cand3-Player.private.log": {
+    "streetLampMentions": 0,
+    "nullReferenceExceptions": 4,
+    "pcSuspensions": [],
+    "exceptionCount": 4,
+    "exceptions": [
+      "NullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n",
+      "NullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+    ]
+  },
+  "cand4-Player.private.log": {
+    "streetLampMentions": 49,
+    "nullReferenceExceptions": 111,
+    "pcSuspensions": [],
+    "exceptionCount": 160,
+    "exceptions": [
+      "NullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n",
+      "NullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n",
+      "NullReferenceException: Object reference not set to an instance of an object\n  at StreetLamp+<ChangeLightSetting>d__34.MoveNext () [0x00058] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at UnityEngine.SetupCoroutine.InvokeMoveNext (System.Collections.IEnumerator enumerator, System.IntPtr returnValueAddress) [0x00026] in <c39a522eee05469b8171a6cfeb646c59>:0 \n\nNullReferenceException: Object reference not set to an instance of an object\n  at StreetLamp+<ChangeLightSetting>d__34.MoveNext () [0x00058] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at UnityEngine.SetupCoroutine.InvokeMoveNext (System.Collections.IEnumerator enumerator, System.IntPtr returnValueAddress) [0x00026] in <c39a522eee05469b8171a6cfeb646c59>:0 \n",
+      "  at StreetLamp+<ChangeLightSetting>d__34.MoveNext () [0x00058] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at UnityEngine.SetupCoroutine.InvokeMoveNext (System.Collections.IEnumerator enumerator, System.IntPtr returnValueAddress) [0x00026] in <c39a522eee05469b8171a6cfeb646c59>:0 \n\nNullReferenceException: Object reference not set to an instance of an object\n  at StreetLamp+<ChangeLightSetting>d__34.MoveNext () [0x00058] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at UnityEngine.SetupCoroutine.InvokeMoveNext (System.Collections.IEnumerator enumerator, System.IntPtr returnValueAddress) [0x00026] in <c39a522eee05469b8171a6cfeb646c59>:0 \n\nNullReferenceException: Object reference not set to an instance of an object",
+      "  at StreetLamp+<ChangeLightSetting>d__34.MoveNext () [0x00058] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at UnityEngine.SetupCoroutine.InvokeMoveNext (System.Collections.IEnumerator enumerator, System.IntPtr returnValueAddress) [0x00026] in <c39a522eee05469b8171a6cfeb646c59>:0 \n\nNullReferenceException: Object reference not set to an instance of an object\n  at StreetLamp+<ChangeLightSetting>d__34.MoveNext () [0x00058] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at UnityEngine.SetupCoroutine.InvokeMoveNext (System.Collections.IEnumerator enumerator, System.IntPtr returnValueAddress) [0x00026] in <c39a522eee05469b8171a6cfeb646c59>:0 \n\n<color=#0099bc><b>DOTWEEN \u25ba </b></color>Target or field is missing/null () \u25ba ",
+      "NullReferenceException: Object reference not set to an instance of an object\n  at StreetLamp+<ChangeLightSetting>d__34.MoveNext () [0x00058] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at UnityEngine.SetupCoroutine.InvokeMoveNext (System.Collections.IEnumerator enumerator, System.IntPtr returnValueAddress) [0x00026] in <c39a522eee05469b8171a6cfeb646c59>:0 \n\n<color=#0099bc><b>DOTWEEN \u25ba </b></color>Target or field is missing/null () \u25ba \n\n  at (wrapper managed-to-native) UnityEngine.Transform.set_localScale_Injected(UnityEngine.Transform,UnityEngine.Vector3&)\n  at UnityEngine.Transform.set_localScale (UnityEngine.Vector3 value) [0x00000] in <c39a522eee05469b8171a6cfeb646c59>:0 ",
+      "  at StreetLamp+<ChangeLightSetting>d__34.MoveNext () [0x00058] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at UnityEngine.SetupCoroutine.InvokeMoveNext (System.Collections.IEnumerator enumerator, System.IntPtr returnValueAddress) [0x00026] in <c39a522eee05469b8171a6cfeb646c59>:0 \n\n<color=#0099bc><b>DOTWEEN \u25ba </b></color>Target or field is missing/null () \u25ba \n\n  at (wrapper managed-to-native) UnityEngine.Transform.set_localScale_Injected(UnityEngine.Transform,UnityEngine.Vector3&)\n  at UnityEngine.Transform.set_localScale (UnityEngine.Vector3 value) [0x00000] in <c39a522eee05469b8171a6cfeb646c59>:0 \n  at DG.Tweening.ShortcutExtensions+<>c__DisplayClass45_0.<DOScale>b__1 (UnityEngine.Vector3 x) [0x00000] in <82a2fd073ee449928e161903460426d7>:0 "
+    ]
+  },
+  "cand5-Player.private.log": {
+    "streetLampMentions": 0,
+    "nullReferenceExceptions": 8,
+    "pcSuspensions": [],
+    "exceptionCount": 8,
+    "exceptions": [
+      "NullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideMusicController.HasMusicOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideMusicController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n",
+      "NullReferenceException: Object reference not set to an instance of an object\n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.HasPedestriansOutside () [0x00010] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Buildings.Outdoors.BuildingOutsideHangoutZoneController.OnLod0 () [0x00007] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.DispatchLod (Culling.ICullable cullable) [0x00014] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Helpers.DistributedWork`1[T].ProgressWork () [0x00024] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingGroupController.Update () [0x00015] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n  at Culling.CullingManager.LateUpdate () [0x00000] in <fdedeac4e1ad42668c1e57f28d2390d6>:0 \n"
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "role": "rig_test",
+  "day7": {
+    "memoryEntries": 299,
+    "servedSum": 311,
+    "maxEntries": 3,
+    "entryTypes": {
+      "own": 5,
+      "rival": 294
+    },
+    "servedByType": {
+      "own": 5,
+      "rival": 306
+    },
+    "repeatedPositiveEntries": 12,
+    "outcomes": {
+      "1": 299,
+      "2": 0,
+      "3": 0,
+      "4": 0
+    }
+  },
+  "fixtureLimit": "One own native shop; two-own/two-rival mixed four-entry native fixture not available. Slot-zero body visibility not established; represented consumer is independent."
+}

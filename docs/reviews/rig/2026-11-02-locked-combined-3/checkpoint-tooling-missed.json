@@ -1,0 +1,6 @@
+{
+  "role": "rig_test",
+  "phase": "outward",
+  "consumer": "pc:12",
+  "finding": "Startup observer did not capture original outward phase. Live diagnostic is already paid at the same context, one served entry. Cancel this obsolete driver; it must not capture a later context as original proof. No mod defect established."
+}

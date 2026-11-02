@@ -1,0 +1,37 @@
+{
+  "role": "rig_test",
+  "candidate": "a1b993a9d680fcc9b79b66fa84a30cf6310ada1b",
+  "control": "dbddada2e35d0ac2ac826985214741392a406364",
+  "firstParent": [
+    "a1b993a Step D4: rival-experience memory integration (B1 tuple, no new shape) (#73)",
+    "fb958ae Step D3a: free rival outflow history and line, rival-core acceptance (#72)",
+    "c85dc19 Track F1b: render-only street proxy investigation and read-only door/renderer diagnostics (default off) (#71)"
+  ],
+  "notInCandidate": [],
+  "extra": [],
+  "writer": 24,
+  "chain": [
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24
+  ],
+  "documents": {
+    "AGENTS.md": "b0c904c7cd199640fea64ef621e8388e154802532679acc496ed017f799dae72",
+    "CHECKS.md": "6f89c7db964f2fe19af5c57334842e3565d95855db946bad23419dc09cea26ff",
+    "README.md": "ac56b1d915a33b541198c5e19dcc20c43624fcdfa3301f2ca7706b91019ae454",
+    "docs/checks/f1b-street-proxy.md": "864abb65d676117fb3ce1c7c8f5d24236f3d4b6d2ea0830dc0c5fc728a0e04ac",
+    "docs/checks/d3a-outflow-line.md": "be4737d33483b3a3932ade4c4668d3e1b7bce6d0bade1bd7c3bb1c7f92754c66",
+    "docs/checks/d4-rival-memory.md": "ded8c722734dfc35cc9d674900d6f4f48b829b0822696781913373a86b0daa3b",
+    "docs/checks/d2-rival-outflow.md": "a19151ca5a599ed2ebdc3ed30fefdc6185b195fb7c607d3d57bf4f0c8e1c2f11",
+    "docs/checks/b1-memory-loyalty.md": "d588539a206f92112661fd7d3c8045e02a229c067015b5f49fdf632121febcd3",
+    "docs/checks/f1-shop-view.md": "ea83689d395217934979f262726fcce3814081950d36b2a16c74df375bbf8b49"
+  },
+  "dll": {
+    "candidate": "82edbf8fe0c70c95736364109a278fb2cd54fc9f36c70d1f58052b82584e330f",
+    "control": "c521129592619b3e80ee101952c700e5b957c35e20a4aad6a15eb21992333603"
+  }
+}

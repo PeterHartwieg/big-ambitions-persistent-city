@@ -1,0 +1,14 @@
+{
+  "role": "rig_test",
+  "sourceSchema": 23,
+  "writer": 24,
+  "sourceSha": "f68ea0b63587a4f338ca1d8307381859d23f1427993a07c75ccc2fded254559c",
+  "copiedIdentical": true,
+  "oldFieldDifferences": [],
+  "activeTravelling": 11,
+  "activeServing": 2,
+  "returns": 13,
+  "heldDecisions": 0,
+  "outflowWire": "7|1|7|29118467251200|0|0",
+  "storedReloadExact": true
+}

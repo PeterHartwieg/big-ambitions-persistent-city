@@ -1,0 +1,9 @@
+{
+  "role": "rig_test",
+  "utc": "2026-11-02T01:02:47.524033+00:00",
+  "ownedProcessesRemaining": [],
+  "sevenOwnedGamesQuitNormally": true,
+  "gameKills": 0,
+  "obsoleteOwnedCheckpointDriversStopped": 4,
+  "driverStopReason": "Original observed context had passed, making continued checkpoint capture invalid; no elapsed-time termination; ownership verified before each stop."
+}

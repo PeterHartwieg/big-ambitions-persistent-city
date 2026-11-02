@@ -1,0 +1,30 @@
+{
+  "role": "rig_test",
+  "productionCallSites": [
+    {
+      "file": "Runtime/StreetProxyDiagnostics.cs",
+      "line": 11,
+      "text": "public StreetProxyDoorSnapshot? ReadStreetProxyDoors(bool requested = false, IReadOnlyList<StreetEdgePair>? edges = null)"
+    },
+    {
+      "file": "Runtime/StreetProxyDiagnostics.cs",
+      "line": 15,
+      "text": "return NativeStreetProxyDiagnostics.ReadDoors(edges);"
+    },
+    {
+      "file": "Runtime/StreetProxyDiagnostics.cs",
+      "line": 19,
+      "text": "public StreetProxyInventorySnapshot? ReadStreetProxyInventory(bool requested = false)"
+    },
+    {
+      "file": "Runtime/StreetProxyDiagnostics.cs",
+      "line": 23,
+      "text": "return NativeStreetProxyDiagnostics.ReadInventory(physical);"
+    }
+  ],
+  "finding": "Commands only dispatch after explicit requested=true; no initializer, subscription, recurring callback, production caller or new frame participant. No F1b explicit commands used in the six normal timing brackets.",
+  "hardware": {
+    "logicalProcessors": 20,
+    "ramGiB": 63.83710861206055
+  }
+}

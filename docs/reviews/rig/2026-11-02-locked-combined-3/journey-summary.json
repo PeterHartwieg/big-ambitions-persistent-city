@@ -1,0 +1,2062 @@
+{
+  "role": "rig_test",
+  "method": "Candidate-created commitments; normal native saves after completed Runtime frame batch; passive observer never calls settlement or replaces decisions",
+  "chains": [
+    {
+      "prefix": "D4Rival0",
+      "boundaries": [
+        {
+          "phase": "outward",
+          "minute": 10828.687313079834,
+          "consumer": "pc:12",
+          "slot": 0,
+          "status": 1,
+          "targetKind": 1,
+          "external": "10dsH5f4aSm37145FzXIk",
+          "intent": "food:pc%3A12:lunch:7",
+          "priceUnits": "240818790400",
+          "spentUnits": "0",
+          "purchases": 0,
+          "balanceUnits": "68167036567552",
+          "externalSpentUnits": "0",
+          "heldUnits": "0",
+          "serviceAt": 0.0,
+          "deadline": 10895.0,
+          "business": "business:ba%3Astreet_tenthavenue:24:1:ba%3Abusinesstype_coffeeshop:l4dEdW6Cv0ujkWYG6vtbmw%3D%3D",
+          "place": "address:ba%3Astreet_tenthavenue:24:shop",
+          "product": "ba:itemname_croissant",
+          "decision": null,
+          "journey": {
+            "Legs": [
+              {
+                "From": {
+                  "X": -1670.147705078125,
+                  "Y": 1.507035732269287,
+                  "Z": -1456.0987548828125,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1670.5577392578125,
+                  "Y": 1.5250015258789062,
+                  "Z": -1457.78369140625,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.28903393761243645,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1670.5577392578125,
+                  "Y": 1.5250015258789062,
+                  "Z": -1457.78369140625,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1670.5577392578125,
+                  "Y": 1.7699966430664062,
+                  "Z": -1471.1536865234375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 2.2287067226736643,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1670.5577392578125,
+                  "Y": 1.7699966430664062,
+                  "Z": -1471.1536865234375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1670.34765625,
+                  "Y": 1.9099960327148438,
+                  "Z": -1477.943603515625,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 1.132434846188488,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1670.34765625,
+                  "Y": 1.9099960327148438,
+                  "Z": -1477.943603515625,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1669.647705078125,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.213623046875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 3.047326613969588,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1669.647705078125,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.213623046875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1669.36767578125,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.49365234375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.06600354186102822,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1669.36767578125,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.49365234375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1608.677734375,
+                  "Y": 2.0499954223632812,
+                  "Z": -1498.1737060546875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 10.118865729761408,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1608.677734375,
+                  "Y": 2.0499954223632812,
+                  "Z": -1498.1737060546875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1603.2176513671875,
+                  "Y": 2.049999237060547,
+                  "Z": -1499.713623046875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.9455135923017217,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1603.2176513671875,
+                  "Y": 2.049999237060547,
+                  "Z": -1499.713623046875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1602.9376220703125,
+                  "Y": 2.1200008392333984,
+                  "Z": -1499.99365234375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.06702674760830417,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1602.9376220703125,
+                  "Y": 2.1200008392333984,
+                  "Z": -1499.99365234375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1602.9376220703125,
+                  "Y": 2.1200027465820312,
+                  "Z": -1520.013671875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 3.3366701044024984,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1602.9376220703125,
+                  "Y": 2.1200027465820312,
+                  "Z": -1520.013671875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1603.2176513671875,
+                  "Y": 2.0499954223632812,
+                  "Z": -1520.2935791015625,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.06701274872942284,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1603.2176513671875,
+                  "Y": 2.0499954223632812,
+                  "Z": -1520.2935791015625,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1606.011962890625,
+                  "Y": 2.0499954223632812,
+                  "Z": -1523.013671875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.649937673291391,
+                "ServiceId": ""
+              }
+            ],
+            "Minutes": 21.948532258399947,
+            "EstimatedMinutes": 21.948532258399947
+          },
+          "outing": {
+            "OriginId": "address:ba%3Astreet_twentyfourthstreet:17:home",
+            "OriginActivity": 0,
+            "ResumeUntil": 10910.0,
+            "ResumeEvent": 10910.0,
+            "Returning": false
+          },
+          "excursion": null,
+          "memory": {
+            "Weather": 1,
+            "Watermark": {
+              "Day": 7,
+              "Meal": 2,
+              "Context": 1,
+              "Stage": 1
+            },
+            "Entries": []
+          },
+          "context": "trip:wHVlb6QrC3GF4qQAfRXDBMQErtL8c3UVEErmff6Xwdo=",
+          "memorySha256": "8282c8fcbc6627016cbae42751f9260827fdf3c086895d84263ae23e61e9ece8",
+          "budgetConserved": true
+        },
+        {
+          "phase": "serving",
+          "minute": 10843.007457733154,
+          "consumer": "pc:12",
+          "slot": 0,
+          "status": 2,
+          "targetKind": 1,
+          "external": "10dsH5f4aSm37145FzXIk",
+          "intent": "food:pc%3A12:lunch:7",
+          "priceUnits": "240818790400",
+          "spentUnits": "0",
+          "purchases": 0,
+          "balanceUnits": "68167036567552",
+          "externalSpentUnits": "0",
+          "heldUnits": "0",
+          "serviceAt": 10846.9485322584,
+          "deadline": 10895.0,
+          "business": "business:ba%3Astreet_tenthavenue:24:1:ba%3Abusinesstype_coffeeshop:l4dEdW6Cv0ujkWYG6vtbmw%3D%3D",
+          "place": "address:ba%3Astreet_tenthavenue:24:shop",
+          "product": "ba:itemname_croissant",
+          "decision": null,
+          "journey": null,
+          "outing": {
+            "OriginId": "address:ba%3Astreet_twentyfourthstreet:17:home",
+            "OriginActivity": 0,
+            "ResumeUntil": 10910.0,
+            "ResumeEvent": 10910.0,
+            "Returning": false
+          },
+          "excursion": null,
+          "memory": {
+            "Weather": 1,
+            "Watermark": {
+              "Day": 7,
+              "Meal": 2,
+              "Context": 1,
+              "Stage": 2
+            },
+            "Entries": []
+          },
+          "context": "trip:wHVlb6QrC3GF4qQAfRXDBMQErtL8c3UVEErmff6Xwdo=",
+          "memorySha256": "064346aec6b915cdc1e8de5de5e97e2a83732a522f66136c2991af8f7335f724",
+          "budgetConserved": true
+        },
+        {
+          "phase": "paid",
+          "minute": 10848.005729675293,
+          "consumer": "pc:12",
+          "slot": 0,
+          "status": 3,
+          "targetKind": 1,
+          "external": "11dsH5f4aSm37145FzXIk",
+          "intent": "food:pc%3A12:lunch:7",
+          "priceUnits": "240818790400",
+          "spentUnits": "240818790400",
+          "purchases": 1,
+          "balanceUnits": "67926217777152",
+          "externalSpentUnits": "240818790400",
+          "heldUnits": "0",
+          "serviceAt": 10846.9485322584,
+          "deadline": 10895.0,
+          "business": "business:ba%3Astreet_tenthavenue:24:1:ba%3Abusinesstype_coffeeshop:l4dEdW6Cv0ujkWYG6vtbmw%3D%3D",
+          "place": "address:ba%3Astreet_tenthavenue:24:shop",
+          "product": "ba:itemname_croissant",
+          "decision": null,
+          "journey": null,
+          "outing": {
+            "OriginId": "address:ba%3Astreet_twentyfourthstreet:17:home",
+            "OriginActivity": 0,
+            "ResumeUntil": 10910.0,
+            "ResumeEvent": 10910.0,
+            "Returning": false
+          },
+          "excursion": null,
+          "memory": {
+            "Weather": 1,
+            "Watermark": {
+              "Day": 7,
+              "Meal": 2,
+              "Context": 1,
+              "Stage": 4
+            },
+            "Entries": [
+              {
+                "BusinessRef": 7,
+                "Day": 7,
+                "Served": 1,
+                "Affinity": 1,
+                "Outcome": 1
+              }
+            ]
+          },
+          "context": "trip:wHVlb6QrC3GF4qQAfRXDBMQErtL8c3UVEErmff6Xwdo=",
+          "memorySha256": "c6f77215cbbacf1d37fc22e8e25b40981946cdc4a4ffb889ecd2b8a708bad03c",
+          "budgetConserved": true
+        },
+        {
+          "phase": "return",
+          "minute": 10868.003977775574,
+          "consumer": "pc:12",
+          "slot": 0,
+          "status": 3,
+          "targetKind": 1,
+          "external": "11dsH5f4aSm37145FzXIk",
+          "intent": "food:pc%3A12:lunch:7",
+          "priceUnits": "240818790400",
+          "spentUnits": "240818790400",
+          "purchases": 1,
+          "balanceUnits": "67926217777152",
+          "externalSpentUnits": "240818790400",
+          "heldUnits": "0",
+          "serviceAt": 10846.9485322584,
+          "deadline": 10895.0,
+          "business": "business:ba%3Astreet_tenthavenue:24:1:ba%3Abusinesstype_coffeeshop:l4dEdW6Cv0ujkWYG6vtbmw%3D%3D",
+          "place": "address:ba%3Astreet_tenthavenue:24:shop",
+          "product": "ba:itemname_croissant",
+          "decision": null,
+          "journey": {
+            "Legs": [
+              {
+                "From": {
+                  "X": -1606.011962890625,
+                  "Y": 2.0499954223632812,
+                  "Z": -1523.013671875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1603.2176513671875,
+                  "Y": 2.0499954223632812,
+                  "Z": -1520.2935791015625,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.649937673291391,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1603.2176513671875,
+                  "Y": 2.0499954223632812,
+                  "Z": -1520.2935791015625,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1602.9376220703125,
+                  "Y": 2.1200027465820312,
+                  "Z": -1520.013671875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.06701274872942284,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1602.9376220703125,
+                  "Y": 2.1200027465820312,
+                  "Z": -1520.013671875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1602.9376220703125,
+                  "Y": 2.1200008392333984,
+                  "Z": -1499.99365234375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 3.3366701044024984,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1602.9376220703125,
+                  "Y": 2.1200008392333984,
+                  "Z": -1499.99365234375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1603.2176513671875,
+                  "Y": 2.049999237060547,
+                  "Z": -1499.713623046875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.06702674760830417,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1603.2176513671875,
+                  "Y": 2.049999237060547,
+                  "Z": -1499.713623046875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1608.677734375,
+                  "Y": 2.0499954223632812,
+                  "Z": -1498.1737060546875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.9455135923017217,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1608.677734375,
+                  "Y": 2.0499954223632812,
+                  "Z": -1498.1737060546875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1669.36767578125,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.49365234375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 10.118865729761408,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1669.36767578125,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.49365234375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1669.647705078125,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.213623046875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.06600354186102822,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1669.647705078125,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.213623046875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1670.34765625,
+                  "Y": 1.9099960327148438,
+                  "Z": -1477.943603515625,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 3.047326613969588,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1670.34765625,
+                  "Y": 1.9099960327148438,
+                  "Z": -1477.943603515625,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1670.5577392578125,
+                  "Y": 1.7699966430664062,
+                  "Z": -1471.1536865234375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 1.132434846188488,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1670.5577392578125,
+                  "Y": 1.7699966430664062,
+                  "Z": -1471.1536865234375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1670.5577392578125,
+                  "Y": 1.5250015258789062,
+                  "Z": -1457.78369140625,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 2.2287067226736643,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1670.5577392578125,
+                  "Y": 1.5250015258789062,
+                  "Z": -1457.78369140625,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1670.147705078125,
+                  "Y": 1.507035732269287,
+                  "Z": -1456.0987548828125,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.28903393761243645,
+                "ServiceId": ""
+              }
+            ],
+            "Minutes": 21.94853225839995,
+            "EstimatedMinutes": 21.94853225839995
+          },
+          "outing": {
+            "OriginId": "address:ba%3Astreet_twentyfourthstreet:17:home",
+            "OriginActivity": 0,
+            "ResumeUntil": 10910.0,
+            "ResumeEvent": 10910.0,
+            "Returning": true
+          },
+          "excursion": null,
+          "memory": {
+            "Weather": 1,
+            "Watermark": {
+              "Day": 7,
+              "Meal": 2,
+              "Context": 1,
+              "Stage": 4
+            },
+            "Entries": [
+              {
+                "BusinessRef": 7,
+                "Day": 7,
+                "Served": 1,
+                "Affinity": 1,
+                "Outcome": 1
+              }
+            ]
+          },
+          "context": "trip:wHVlb6QrC3GF4qQAfRXDBMQErtL8c3UVEErmff6Xwdo=",
+          "memorySha256": "c6f77215cbbacf1d37fc22e8e25b40981946cdc4a4ffb889ecd2b8a708bad03c",
+          "budgetConserved": true
+        }
+      ],
+      "targetAudits": [
+        {
+          "phase": "paid",
+          "frame": 18126,
+          "success": true,
+          "nativeEqual": true,
+          "nativeBeforeSha": "60098750e54e97ba4e3274c472df4466f7cf6f8393ec7c2415fb1422ec0d4ad9",
+          "nativeAfterSha": "60098750e54e97ba4e3274c472df4466f7cf6f8393ec7c2415fb1422ec0d4ad9",
+          "priceUnits": "240818790400",
+          "spentDeltaUnits": "240818790400",
+          "externalDeltaUnits": "240818790400",
+          "balanceDebitUnits": "240818790400",
+          "purchaseDelta": 1,
+          "watermarkBefore": "10dsH5f4aSm37145FzXIk",
+          "watermarkAfter": "11dsH5f4aSm37145FzXIk",
+          "heldBefore": 0,
+          "heldAfter": 0,
+          "observerInclusiveMs": 3.7666
+        }
+      ],
+      "checks": {
+        "stableCapturedTerms": true,
+        "onceExternalDebit": true,
+        "onceSpend": true,
+        "oncePurchase": true,
+        "noReplayAtReturn": true,
+        "allConserve": true,
+        "oneNaturalTargetPayment": true,
+        "allAuditedNativeFieldsEqual": true
+      }
+    },
+    {
+      "prefix": "D4Rival1",
+      "boundaries": [
+        {
+          "phase": "outward",
+          "minute": 10828.687313079834,
+          "consumer": "consumer:c174:1",
+          "slot": 1,
+          "status": 1,
+          "targetKind": 1,
+          "external": "109YRxEzCdukXCQ-GarrY",
+          "intent": "food:consumer%3Ac174%3A1:lunch:7",
+          "priceUnits": "418088192000",
+          "spentUnits": "0",
+          "purchases": 0,
+          "balanceUnits": "24998051840000",
+          "externalSpentUnits": "0",
+          "heldUnits": "0",
+          "serviceAt": 0.0,
+          "deadline": 10903.0,
+          "business": "business:ba%3Astreet_tenthavenue:13:1:ba%3Abusinesstype_fastfoodrestaurant:nkpk7Zx35Einlh12ymPNXw%3D%3D",
+          "place": "address:ba%3Astreet_tenthavenue:13:shop",
+          "product": "ba:itemname_burger",
+          "decision": null,
+          "journey": null,
+          "outing": null,
+          "excursion": {
+            "OriginId": "address:ba%3Astreet_twentyfifthstreet:9:home",
+            "DestinationId": "address:ba%3Astreet_tenthavenue:13:shop",
+            "OriginActivity": 0,
+            "OriginPosition": {
+              "X": -1760.167724609375,
+              "Y": 0.3716650605201721,
+              "Z": -1393.3701171875,
+              "IsFinite": true
+            },
+            "DestinationPosition": {
+              "X": -1714.989990234375,
+              "Y": 2.0499954223632812,
+              "Z": -1497.0863037109375,
+              "IsFinite": true
+            },
+            "DepartedAt": 10828.0,
+            "ArrivesAt": 10852.606569480673,
+            "AdmissionAt": 10852.606569480673,
+            "SharedDepartureAt": 10908.0,
+            "ReturnStartsAt": 0.0,
+            "ReturnsAt": 0.0,
+            "MaximumQueueMinutes": 15,
+            "ReturnGeometry": "dIRuC0vb4StWWNlKAGQ0qkgbvj8b+WSZQS9KOpOPhNE=",
+            "Returning": false,
+            "Unresolved": false,
+            "UnresolvedReason": ""
+          },
+          "memory": {
+            "Weather": 1,
+            "Watermark": {
+              "Day": 7,
+              "Meal": 2,
+              "Context": 1,
+              "Stage": 1
+            },
+            "Entries": []
+          },
+          "context": "trip:UfIHlmdWKoP4EIwXTpgxkZBA4u0KFbNUEZuqRzj2iAA=",
+          "memorySha256": "8282c8fcbc6627016cbae42751f9260827fdf3c086895d84263ae23e61e9ece8",
+          "budgetConserved": true
+        },
+        {
+          "phase": "serving",
+          "minute": 10854.005592346191,
+          "consumer": "consumer:c174:1",
+          "slot": 1,
+          "status": 2,
+          "targetKind": 1,
+          "external": "109YRxEzCdukXCQ-GarrY",
+          "intent": "food:consumer%3Ac174%3A1:lunch:7",
+          "priceUnits": "418088192000",
+          "spentUnits": "0",
+          "purchases": 0,
+          "balanceUnits": "24998051840000",
+          "externalSpentUnits": "0",
+          "heldUnits": "0",
+          "serviceAt": 10857.606569480673,
+          "deadline": 10903.0,
+          "business": "business:ba%3Astreet_tenthavenue:13:1:ba%3Abusinesstype_fastfoodrestaurant:nkpk7Zx35Einlh12ymPNXw%3D%3D",
+          "place": "address:ba%3Astreet_tenthavenue:13:shop",
+          "product": "ba:itemname_burger",
+          "decision": null,
+          "journey": null,
+          "outing": null,
+          "excursion": {
+            "OriginId": "address:ba%3Astreet_twentyfifthstreet:9:home",
+            "DestinationId": "address:ba%3Astreet_tenthavenue:13:shop",
+            "OriginActivity": 0,
+            "OriginPosition": {
+              "X": -1760.167724609375,
+              "Y": 0.3716650605201721,
+              "Z": -1393.3701171875,
+              "IsFinite": true
+            },
+            "DestinationPosition": {
+              "X": -1714.989990234375,
+              "Y": 2.0499954223632812,
+              "Z": -1497.0863037109375,
+              "IsFinite": true
+            },
+            "DepartedAt": 10828.0,
+            "ArrivesAt": 10852.606569480673,
+            "AdmissionAt": 10852.606569480673,
+            "SharedDepartureAt": 10908.0,
+            "ReturnStartsAt": 0.0,
+            "ReturnsAt": 0.0,
+            "MaximumQueueMinutes": 15,
+            "ReturnGeometry": "dIRuC0vb4StWWNlKAGQ0qkgbvj8b+WSZQS9KOpOPhNE=",
+            "Returning": false,
+            "Unresolved": false,
+            "UnresolvedReason": ""
+          },
+          "memory": {
+            "Weather": 1,
+            "Watermark": {
+              "Day": 7,
+              "Meal": 2,
+              "Context": 1,
+              "Stage": 2
+            },
+            "Entries": []
+          },
+          "context": "trip:UfIHlmdWKoP4EIwXTpgxkZBA4u0KFbNUEZuqRzj2iAA=",
+          "memorySha256": "064346aec6b915cdc1e8de5de5e97e2a83732a522f66136c2991af8f7335f724",
+          "budgetConserved": true
+        },
+        {
+          "phase": "paid",
+          "minute": 10859.005569458008,
+          "consumer": "consumer:c174:1",
+          "slot": 1,
+          "status": 3,
+          "targetKind": 1,
+          "external": "119YRxEzCdukXCQ-GarrY",
+          "intent": "food:consumer%3Ac174%3A1:lunch:7",
+          "priceUnits": "418088192000",
+          "spentUnits": "418088192000",
+          "purchases": 1,
+          "balanceUnits": "24579963648000",
+          "externalSpentUnits": "418088192000",
+          "heldUnits": "0",
+          "serviceAt": 10857.606569480673,
+          "deadline": 10903.0,
+          "business": "business:ba%3Astreet_tenthavenue:13:1:ba%3Abusinesstype_fastfoodrestaurant:nkpk7Zx35Einlh12ymPNXw%3D%3D",
+          "place": "address:ba%3Astreet_tenthavenue:13:shop",
+          "product": "ba:itemname_burger",
+          "decision": null,
+          "journey": null,
+          "outing": null,
+          "excursion": {
+            "OriginId": "address:ba%3Astreet_twentyfifthstreet:9:home",
+            "DestinationId": "address:ba%3Astreet_tenthavenue:13:shop",
+            "OriginActivity": 0,
+            "OriginPosition": {
+              "X": -1760.167724609375,
+              "Y": 0.3716650605201721,
+              "Z": -1393.3701171875,
+              "IsFinite": true
+            },
+            "DestinationPosition": {
+              "X": -1714.989990234375,
+              "Y": 2.0499954223632812,
+              "Z": -1497.0863037109375,
+              "IsFinite": true
+            },
+            "DepartedAt": 10828.0,
+            "ArrivesAt": 10852.606569480673,
+            "AdmissionAt": 10852.606569480673,
+            "SharedDepartureAt": 10908.0,
+            "ReturnStartsAt": 10877.606569480673,
+            "ReturnsAt": 0.0,
+            "MaximumQueueMinutes": 15,
+            "ReturnGeometry": "dIRuC0vb4StWWNlKAGQ0qkgbvj8b+WSZQS9KOpOPhNE=",
+            "Returning": false,
+            "Unresolved": false,
+            "UnresolvedReason": ""
+          },
+          "memory": {
+            "Weather": 1,
+            "Watermark": {
+              "Day": 7,
+              "Meal": 2,
+              "Context": 1,
+              "Stage": 4
+            },
+            "Entries": [
+              {
+                "BusinessRef": 21,
+                "Day": 7,
+                "Served": 1,
+                "Affinity": 1,
+                "Outcome": 1
+              }
+            ]
+          },
+          "context": "trip:UfIHlmdWKoP4EIwXTpgxkZBA4u0KFbNUEZuqRzj2iAA=",
+          "memorySha256": "bcb164443b88a18112d0e62718c95ee9e34282bfdae31af536c488c196f62561",
+          "budgetConserved": true
+        },
+        {
+          "phase": "return",
+          "minute": 10879.007879257202,
+          "consumer": "consumer:c174:1",
+          "slot": 1,
+          "status": 3,
+          "targetKind": 1,
+          "external": "119YRxEzCdukXCQ-GarrY",
+          "intent": "food:consumer%3Ac174%3A1:lunch:7",
+          "priceUnits": "418088192000",
+          "spentUnits": "418088192000",
+          "purchases": 1,
+          "balanceUnits": "24579963648000",
+          "externalSpentUnits": "418088192000",
+          "heldUnits": "0",
+          "serviceAt": 10857.606569480673,
+          "deadline": 10903.0,
+          "business": "business:ba%3Astreet_tenthavenue:13:1:ba%3Abusinesstype_fastfoodrestaurant:nkpk7Zx35Einlh12ymPNXw%3D%3D",
+          "place": "address:ba%3Astreet_tenthavenue:13:shop",
+          "product": "ba:itemname_burger",
+          "decision": null,
+          "journey": null,
+          "outing": null,
+          "excursion": {
+            "OriginId": "address:ba%3Astreet_twentyfifthstreet:9:home",
+            "DestinationId": "address:ba%3Astreet_tenthavenue:13:shop",
+            "OriginActivity": 0,
+            "OriginPosition": {
+              "X": -1760.167724609375,
+              "Y": 0.3716650605201721,
+              "Z": -1393.3701171875,
+              "IsFinite": true
+            },
+            "DestinationPosition": {
+              "X": -1714.989990234375,
+              "Y": 2.0499954223632812,
+              "Z": -1497.0863037109375,
+              "IsFinite": true
+            },
+            "DepartedAt": 10828.0,
+            "ArrivesAt": 10852.606569480673,
+            "AdmissionAt": 10852.606569480673,
+            "SharedDepartureAt": 10908.0,
+            "ReturnStartsAt": 10877.606569480673,
+            "ReturnsAt": 10902.213138961346,
+            "MaximumQueueMinutes": 15,
+            "ReturnGeometry": "dIRuC0vb4StWWNlKAGQ0qkgbvj8b+WSZQS9KOpOPhNE=",
+            "Returning": true,
+            "Unresolved": false,
+            "UnresolvedReason": ""
+          },
+          "memory": {
+            "Weather": 1,
+            "Watermark": {
+              "Day": 7,
+              "Meal": 2,
+              "Context": 1,
+              "Stage": 4
+            },
+            "Entries": [
+              {
+                "BusinessRef": 21,
+                "Day": 7,
+                "Served": 1,
+                "Affinity": 1,
+                "Outcome": 1
+              }
+            ]
+          },
+          "context": "trip:UfIHlmdWKoP4EIwXTpgxkZBA4u0KFbNUEZuqRzj2iAA=",
+          "memorySha256": "bcb164443b88a18112d0e62718c95ee9e34282bfdae31af536c488c196f62561",
+          "budgetConserved": true
+        }
+      ],
+      "targetAudits": [
+        {
+          "phase": "paid",
+          "frame": 45354,
+          "success": true,
+          "nativeEqual": true,
+          "nativeBeforeSha": "fdb3befd1eb51f34b8aa0b0a38c63e8ef7f109dc04269606eadae00e258fddd7",
+          "nativeAfterSha": "fdb3befd1eb51f34b8aa0b0a38c63e8ef7f109dc04269606eadae00e258fddd7",
+          "priceUnits": "418088192000",
+          "spentDeltaUnits": "418088192000",
+          "externalDeltaUnits": "418088192000",
+          "balanceDebitUnits": "418088192000",
+          "purchaseDelta": 1,
+          "watermarkBefore": "109YRxEzCdukXCQ-GarrY",
+          "watermarkAfter": "119YRxEzCdukXCQ-GarrY",
+          "heldBefore": 0,
+          "heldAfter": 0,
+          "observerInclusiveMs": 3.9327
+        }
+      ],
+      "checks": {
+        "stableCapturedTerms": true,
+        "onceExternalDebit": true,
+        "onceSpend": true,
+        "oncePurchase": true,
+        "noReplayAtReturn": true,
+        "allConserve": true,
+        "oneNaturalTargetPayment": true,
+        "allAuditedNativeFieldsEqual": true
+      }
+    }
+  ],
+  "uninterruptedComparisons": [
+    {
+      "consumer": "pc:12",
+      "slot": 0,
+      "mealDifferences": [],
+      "moneyCountsMemoryWatermarkEqual": true,
+      "facts": {
+        "uninterrupted1x": {
+          "minute": 10920.004342437256,
+          "meal": {
+            "ResidentId": "pc:12",
+            "AnchorId": "pc:12",
+            "Slot": 0,
+            "Day": 7,
+            "Kind": 2,
+            "LastContextKey": "trip:wHVlb6QrC3GF4qQAfRXDBMQErtL8c3UVEErmff6Xwdo=",
+            "TargetKind": 1,
+            "External": "11dsH5f4aSm37145FzXIk",
+            "Price": {
+              "Units": 240818790400
+            },
+            "Spent": {
+              "Units": 240818790400
+            },
+            "Purchases": 1,
+            "Budget": {
+              "IncomeSource": 0,
+              "BaseIncomeCents": 28114,
+              "DailyIncomeCents": 28114,
+              "DailyHousingCents": 5679,
+              "DailyEssentialsCents": 1995,
+              "DailyHomeFoodCents": 1392,
+              "OpeningBalance": {
+                "Units": 52827560869888
+              },
+              "Balance": {
+                "Units": 67926217777152
+              },
+              "IncomeReceived": {
+                "Units": 22640383229952
+              },
+              "EssentialsPaid": {
+                "Units": 6179921068032
+              },
+              "HomeFoodPaid": {
+                "Units": 1120986464256
+              },
+              "PreparedFoodSpent": {
+                "Units": 0
+              },
+              "ExternalFoodSpent": {
+                "Units": 240818790400
+              },
+              "HeldPurchase": {
+                "Units": 0
+              },
+              "Arrears": {
+                "Units": 0
+              },
+              "LastPostedDay": 7,
+              "HomeFoodFundedDay": 7,
+              "DaysWithoutHomeFood": 0,
+              "NextPostingMinute": 11520.0
+            },
+            "Memory": {
+              "Weather": 1,
+              "Watermark": {
+                "Day": 7,
+                "Meal": 2,
+                "Context": 1,
+                "Stage": 4
+              },
+              "Entries": [
+                {
+                  "BusinessRef": 7,
+                  "Day": 7,
+                  "Served": 1,
+                  "Affinity": 1,
+                  "Outcome": 1
+                }
+              ]
+            },
+            "Status": 3,
+            "Excursion": null
+          },
+          "outing": null,
+          "journey": {
+            "Legs": [
+              {
+                "From": {
+                  "X": -1670.147705078125,
+                  "Y": 1.507035732269287,
+                  "Z": -1456.0987548828125,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1670.5577392578125,
+                  "Y": 1.5250015258789062,
+                  "Z": -1457.78369140625,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.28903393761243645,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1670.5577392578125,
+                  "Y": 1.5250015258789062,
+                  "Z": -1457.78369140625,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1670.5577392578125,
+                  "Y": 1.7699966430664062,
+                  "Z": -1471.1536865234375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 2.2287067226736643,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1670.5577392578125,
+                  "Y": 1.7699966430664062,
+                  "Z": -1471.1536865234375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1670.34765625,
+                  "Y": 1.9099960327148438,
+                  "Z": -1477.943603515625,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 1.132434846188488,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1670.34765625,
+                  "Y": 1.9099960327148438,
+                  "Z": -1477.943603515625,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1669.647705078125,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.213623046875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 3.047326613969588,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1669.647705078125,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.213623046875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1669.36767578125,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.49365234375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.06600354186102822,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1669.36767578125,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.49365234375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1625.3377685546875,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.5635986328125,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 7.338327532292998,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1625.3377685546875,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.5635986328125,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1608.677734375,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.5635986328125,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 2.7766725151749134,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1608.677734375,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.5635986328125,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1600.627685546875,
+                  "Y": 2.049999237060547,
+                  "Z": -1496.49365234375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 1.3417255236472327,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1600.627685546875,
+                  "Y": 2.049999237060547,
+                  "Z": -1496.49365234375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1583.127685546875,
+                  "Y": 2.1200008392333984,
+                  "Z": -1494.3236083984375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 2.939028680110928,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1583.127685546875,
+                  "Y": 2.1200008392333984,
+                  "Z": -1494.3236083984375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1582.84765625,
+                  "Y": 2.049999237060547,
+                  "Z": -1494.043701171875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.06701258268751324,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1582.84765625,
+                  "Y": 2.049999237060547,
+                  "Z": -1494.043701171875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1579.9776611328125,
+                  "Y": 2.049999237060547,
+                  "Z": -1488.3037109375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 1.0695840880305978,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1579.9776611328125,
+                  "Y": 2.049999237060547,
+                  "Z": -1488.3037109375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1579.7677001953125,
+                  "Y": 2.049999237060547,
+                  "Z": -1488.0936279296875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.04950265848617,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1579.7677001953125,
+                  "Y": 2.049999237060547,
+                  "Z": -1488.0936279296875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1572.5576171875,
+                  "Y": 2.049999237060547,
+                  "Z": -1483.0537109375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 1.4661558649734905,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1572.5576171875,
+                  "Y": 2.049999237060547,
+                  "Z": -1483.0537109375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1538.9576416015625,
+                  "Y": 2.049999237060547,
+                  "Z": -1464.9237060546875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 6.363209349028032,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1538.9576416015625,
+                  "Y": 2.049999237060547,
+                  "Z": -1464.9237060546875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1538.677734375,
+                  "Y": 2.049999237060547,
+                  "Z": -1464.6436767578125,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.06598915730409047,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1538.677734375,
+                  "Y": 2.049999237060547,
+                  "Z": -1464.6436767578125,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1536.087646484375,
+                  "Y": 2.049999237060547,
+                  "Z": -1458.6937255859375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 1.0815431212962792,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1536.087646484375,
+                  "Y": 2.049999237060547,
+                  "Z": -1458.6937255859375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1531.11767578125,
+                  "Y": 2.049999237060547,
+                  "Z": -1442.733642578125,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 2.7860011614479494,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1531.11767578125,
+                  "Y": 2.049999237060547,
+                  "Z": -1442.733642578125,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1530.90771484375,
+                  "Y": 2.049999237060547,
+                  "Z": -1442.523681640625,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.049488270270692476,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1530.90771484375,
+                  "Y": 2.049999237060547,
+                  "Z": -1442.523681640625,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1504.2376708984375,
+                  "Y": 2.049999237060547,
+                  "Z": -1439.0936279296875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 4.481618605209769,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1504.2376708984375,
+                  "Y": 2.049999237060547,
+                  "Z": -1439.0936279296875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1504.0277099609375,
+                  "Y": 2.049999237060547,
+                  "Z": -1438.8836669921875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.049488270270692476,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1504.0277099609375,
+                  "Y": 2.049999237060547,
+                  "Z": -1438.8836669921875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1501.9976806640625,
+                  "Y": 2.049999237060547,
+                  "Z": -1436.78369140625,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.4867955691459925,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1501.9976806640625,
+                  "Y": 2.049999237060547,
+                  "Z": -1436.78369140625,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1501.7877197265625,
+                  "Y": 2.049999237060547,
+                  "Z": -1436.57373046875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.049488270270692476,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1501.7877197265625,
+                  "Y": 2.049999237060547,
+                  "Z": -1436.57373046875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1499.969970703125,
+                  "Y": 2.049999237060547,
+                  "Z": -1435.898681640625,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.3231744817655905,
+                "ServiceId": ""
+              }
+            ],
+            "Minutes": 39.54831136371883,
+            "EstimatedMinutes": 39.54831136371883
+          }
+        },
+        "interrupted1x": {
+          "minute": 10920.00464031566,
+          "meal": {
+            "ResidentId": "pc:12",
+            "AnchorId": "pc:12",
+            "Slot": 0,
+            "Day": 7,
+            "Kind": 2,
+            "LastContextKey": "trip:wHVlb6QrC3GF4qQAfRXDBMQErtL8c3UVEErmff6Xwdo=",
+            "TargetKind": 1,
+            "External": "11dsH5f4aSm37145FzXIk",
+            "Price": {
+              "Units": 240818790400
+            },
+            "Spent": {
+              "Units": 240818790400
+            },
+            "Purchases": 1,
+            "Budget": {
+              "IncomeSource": 0,
+              "BaseIncomeCents": 28114,
+              "DailyIncomeCents": 28114,
+              "DailyHousingCents": 5679,
+              "DailyEssentialsCents": 1995,
+              "DailyHomeFoodCents": 1392,
+              "OpeningBalance": {
+                "Units": 52827560869888
+              },
+              "Balance": {
+                "Units": 67926217777152
+              },
+              "IncomeReceived": {
+                "Units": 22640383229952
+              },
+              "EssentialsPaid": {
+                "Units": 6179921068032
+              },
+              "HomeFoodPaid": {
+                "Units": 1120986464256
+              },
+              "PreparedFoodSpent": {
+                "Units": 0
+              },
+              "ExternalFoodSpent": {
+                "Units": 240818790400
+              },
+              "HeldPurchase": {
+                "Units": 0
+              },
+              "Arrears": {
+                "Units": 0
+              },
+              "LastPostedDay": 7,
+              "HomeFoodFundedDay": 7,
+              "DaysWithoutHomeFood": 0,
+              "NextPostingMinute": 11520.0
+            },
+            "Memory": {
+              "Weather": 1,
+              "Watermark": {
+                "Day": 7,
+                "Meal": 2,
+                "Context": 1,
+                "Stage": 4
+              },
+              "Entries": [
+                {
+                  "BusinessRef": 7,
+                  "Day": 7,
+                  "Served": 1,
+                  "Affinity": 1,
+                  "Outcome": 1
+                }
+              ]
+            },
+            "Status": 3,
+            "Excursion": null
+          },
+          "outing": null,
+          "journey": {
+            "Legs": [
+              {
+                "From": {
+                  "X": -1670.147705078125,
+                  "Y": 1.507035732269287,
+                  "Z": -1456.0987548828125,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1670.5577392578125,
+                  "Y": 1.5250015258789062,
+                  "Z": -1457.78369140625,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.28903393761243645,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1670.5577392578125,
+                  "Y": 1.5250015258789062,
+                  "Z": -1457.78369140625,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1670.5577392578125,
+                  "Y": 1.7699966430664062,
+                  "Z": -1471.1536865234375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 2.2287067226736643,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1670.5577392578125,
+                  "Y": 1.7699966430664062,
+                  "Z": -1471.1536865234375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1670.34765625,
+                  "Y": 1.9099960327148438,
+                  "Z": -1477.943603515625,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 1.132434846188488,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1670.34765625,
+                  "Y": 1.9099960327148438,
+                  "Z": -1477.943603515625,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1669.647705078125,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.213623046875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 3.047326613969588,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1669.647705078125,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.213623046875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1669.36767578125,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.49365234375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.06600354186102822,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1669.36767578125,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.49365234375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1625.3377685546875,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.5635986328125,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 7.338327532292998,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1625.3377685546875,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.5635986328125,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1608.677734375,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.5635986328125,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 2.7766725151749134,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1608.677734375,
+                  "Y": 2.0499954223632812,
+                  "Z": -1496.5635986328125,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1600.627685546875,
+                  "Y": 2.049999237060547,
+                  "Z": -1496.49365234375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 1.3417255236472327,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1600.627685546875,
+                  "Y": 2.049999237060547,
+                  "Z": -1496.49365234375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1583.127685546875,
+                  "Y": 2.1200008392333984,
+                  "Z": -1494.3236083984375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 2.939028680110928,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1583.127685546875,
+                  "Y": 2.1200008392333984,
+                  "Z": -1494.3236083984375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1582.84765625,
+                  "Y": 2.049999237060547,
+                  "Z": -1494.043701171875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.06701258268751324,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1582.84765625,
+                  "Y": 2.049999237060547,
+                  "Z": -1494.043701171875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1579.9776611328125,
+                  "Y": 2.049999237060547,
+                  "Z": -1488.3037109375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 1.0695840880305978,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1579.9776611328125,
+                  "Y": 2.049999237060547,
+                  "Z": -1488.3037109375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1579.7677001953125,
+                  "Y": 2.049999237060547,
+                  "Z": -1488.0936279296875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.04950265848617,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1579.7677001953125,
+                  "Y": 2.049999237060547,
+                  "Z": -1488.0936279296875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1572.5576171875,
+                  "Y": 2.049999237060547,
+                  "Z": -1483.0537109375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 1.4661558649734905,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1572.5576171875,
+                  "Y": 2.049999237060547,
+                  "Z": -1483.0537109375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1538.9576416015625,
+                  "Y": 2.049999237060547,
+                  "Z": -1464.9237060546875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 6.363209349028032,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1538.9576416015625,
+                  "Y": 2.049999237060547,
+                  "Z": -1464.9237060546875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1538.677734375,
+                  "Y": 2.049999237060547,
+                  "Z": -1464.6436767578125,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.06598915730409047,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1538.677734375,
+                  "Y": 2.049999237060547,
+                  "Z": -1464.6436767578125,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1536.087646484375,
+                  "Y": 2.049999237060547,
+                  "Z": -1458.6937255859375,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 1.0815431212962792,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1536.087646484375,
+                  "Y": 2.049999237060547,
+                  "Z": -1458.6937255859375,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1531.11767578125,
+                  "Y": 2.049999237060547,
+                  "Z": -1442.733642578125,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 2.7860011614479494,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1531.11767578125,
+                  "Y": 2.049999237060547,
+                  "Z": -1442.733642578125,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1530.90771484375,
+                  "Y": 2.049999237060547,
+                  "Z": -1442.523681640625,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.049488270270692476,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1530.90771484375,
+                  "Y": 2.049999237060547,
+                  "Z": -1442.523681640625,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1504.2376708984375,
+                  "Y": 2.049999237060547,
+                  "Z": -1439.0936279296875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 4.481618605209769,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1504.2376708984375,
+                  "Y": 2.049999237060547,
+                  "Z": -1439.0936279296875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1504.0277099609375,
+                  "Y": 2.049999237060547,
+                  "Z": -1438.8836669921875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.049488270270692476,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1504.0277099609375,
+                  "Y": 2.049999237060547,
+                  "Z": -1438.8836669921875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1501.9976806640625,
+                  "Y": 2.049999237060547,
+                  "Z": -1436.78369140625,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.4867955691459925,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1501.9976806640625,
+                  "Y": 2.049999237060547,
+                  "Z": -1436.78369140625,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1501.7877197265625,
+                  "Y": 2.049999237060547,
+                  "Z": -1436.57373046875,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.049488270270692476,
+                "ServiceId": ""
+              },
+              {
+                "From": {
+                  "X": -1501.7877197265625,
+                  "Y": 2.049999237060547,
+                  "Z": -1436.57373046875,
+                  "IsFinite": true
+                },
+                "To": {
+                  "X": -1499.969970703125,
+                  "Y": 2.049999237060547,
+                  "Z": -1435.898681640625,
+                  "IsFinite": true
+                },
+                "Mode": 0,
+                "Minutes": 0.3231744817655905,
+                "ServiceId": ""
+              }
+            ],
+            "Minutes": 39.54831136371883,
+            "EstimatedMinutes": 39.54831136371883
+          }
+        }
+      }
+    },
+    {
+      "consumer": "consumer:c174:1",
+      "slot": 1,
+      "mealDifferences": [],
+      "moneyCountsMemoryWatermarkEqual": true,
+      "facts": {
+        "uninterrupted1x": {
+          "minute": 10920.005867327098,
+          "meal": {
+            "ResidentId": "consumer:c174:1",
+            "AnchorId": "c174",
+            "Slot": 1,
+            "Day": 7,
+            "Kind": 3,
+            "LastContextKey": "",
+            "TargetKind": 0,
+            "External": "",
+            "Price": {
+              "Units": 0
+            },
+            "Spent": {
+              "Units": 418088192000
+            },
+            "Purchases": 1,
+            "Budget": {
+              "IncomeSource": 0,
+              "BaseIncomeCents": 11606,
+              "DailyIncomeCents": 11606,
+              "DailyHousingCents": 3800,
+              "DailyEssentialsCents": 2419,
+              "DailyHomeFoodCents": 1426,
+              "OpeningBalance": {
+                "Units": 21808233316352
+              },
+              "Balance": {
+                "Units": 24579963648000
+              },
+              "IncomeReceived": {
+                "Units": 9346385707008
+              },
+              "EssentialsPaid": {
+                "Units": 5008200302592
+              },
+              "HomeFoodPaid": {
+                "Units": 1148366880768
+              },
+              "PreparedFoodSpent": {
+                "Units": 0
+              },
+              "ExternalFoodSpent": {
+                "Units": 418088192000
+              },
+              "HeldPurchase": {
+                "Units": 0
+              },
+              "Arrears": {
+                "Units": 0
+              },
+              "LastPostedDay": 7,
+              "HomeFoodFundedDay": 7,
+              "DaysWithoutHomeFood": 0,
+              "NextPostingMinute": 11520.0
+            },
+            "Memory": {
+              "Weather": 1,
+              "Watermark": {
+                "Day": 7,
+                "Meal": 2,
+                "Context": 1,
+                "Stage": 4
+              },
+              "Entries": [
+                {
+                  "BusinessRef": 21,
+                  "Day": 7,
+                  "Served": 1,
+                  "Affinity": 1,
+                  "Outcome": 1
+                }
+              ]
+            },
+            "Status": 0,
+            "Excursion": null
+          },
+          "outing": null,
+          "journey": null
+        },
+        "interrupted1x": {
+          "minute": 10920.00539660221,
+          "meal": {
+            "ResidentId": "consumer:c174:1",
+            "AnchorId": "c174",
+            "Slot": 1,
+            "Day": 7,
+            "Kind": 3,
+            "LastContextKey": "",
+            "TargetKind": 0,
+            "External": "",
+            "Price": {
+              "Units": 0
+            },
+            "Spent": {
+              "Units": 418088192000
+            },
+            "Purchases": 1,
+            "Budget": {
+              "IncomeSource": 0,
+              "BaseIncomeCents": 11606,
+              "DailyIncomeCents": 11606,
+              "DailyHousingCents": 3800,
+              "DailyEssentialsCents": 2419,
+              "DailyHomeFoodCents": 1426,
+              "OpeningBalance": {
+                "Units": 21808233316352
+              },
+              "Balance": {
+                "Units": 24579963648000
+              },
+              "IncomeReceived": {
+                "Units": 9346385707008
+              },
+              "EssentialsPaid": {
+                "Units": 5008200302592
+              },
+              "HomeFoodPaid": {
+                "Units": 1148366880768
+              },
+              "PreparedFoodSpent": {
+                "Units": 0
+              },
+              "ExternalFoodSpent": {
+                "Units": 418088192000
+              },
+              "HeldPurchase": {
+                "Units": 0
+              },
+              "Arrears": {
+                "Units": 0
+              },
+              "LastPostedDay": 7,
+              "HomeFoodFundedDay": 7,
+              "DaysWithoutHomeFood": 0,
+              "NextPostingMinute": 11520.0
+            },
+            "Memory": {
+              "Weather": 1,
+              "Watermark": {
+                "Day": 7,
+                "Meal": 2,
+                "Context": 1,
+                "Stage": 4
+              },
+              "Entries": [
+                {
+                  "BusinessRef": 21,
+                  "Day": 7,
+                  "Served": 1,
+                  "Affinity": 1,
+                  "Outcome": 1
+                }
+              ]
+            },
+            "Status": 0,
+            "Excursion": null
+          },
+          "outing": null,
+          "journey": null
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "codec": {
+    "detachedCopyOnly": true,
+    "removed": 390,
+    "sourceSchema": 24,
+    "sourceSha": "9305ec2f04ac7c67d2fdd702a784e751722ef2aa9c3a75e88e738654568b7e6f",
+    "emptySha": "5bfd1cacf0103bd43e16fbab06bbb7b4622c173f38403f92cf6880b5b619fe46",
+    "activeUnchanged": true
+  },
+  "nativeSourceSha": "f7f2f6dbab0873b06a6d2aaf281086ae890275e24f9e934d19f96322e0f5f9eb",
+  "nativeEmptySha": "9ae70784987deeccfc24417da2c02f79b66a4f17d6b60ec0edd9fc8790332e10",
+  "nativeOutsidePopulationNamespaceUnchanged": true,
+  "reason": "Only detached copied consumer memory entries removed; watermarks/decisions/ledgers/native state retained. Both fixtures written/read by candidate schema24 codec.",
+  "storedDecodedDifferences": 357,
+  "nonMemoryDifferences": [],
+  "activeEntries": 390,
+  "emptyEntries": 0,
+  "capabilitiesActiveBoth": true
+}

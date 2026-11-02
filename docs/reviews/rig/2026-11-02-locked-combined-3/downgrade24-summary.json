@@ -1,0 +1,21 @@
+{
+  "bytesPreserved": true,
+  "beforeSha256": "fea7f9acea0f7a407b7beed19c6a873a5e930256d8a8e83302f7efd568414ae8",
+  "afterSha256": "fea7f9acea0f7a407b7beed19c6a873a5e930256d8a8e83302f7efd568414ae8",
+  "runtime": {
+    "enabled": true,
+    "failed": true,
+    "status": "Food ownership suspended: Unsupported population schema; preserve the payload.",
+    "taskStatus": null,
+    "taskCompleted": null,
+    "taskError": null,
+    "saveMatches": false,
+    "discoveryReady": null,
+    "discoverySweeps": null,
+    "lastDiscoverySeconds": null,
+    "lastDiscoveryWorkMs": null,
+    "maximumDiscoverySliceMs": null,
+    "waitingRoutingFrames": 0,
+    "maximumPreparationMs": 0.0
+  }
+}

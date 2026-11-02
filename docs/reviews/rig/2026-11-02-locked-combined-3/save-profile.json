@@ -1,0 +1,720 @@
+{
+  "codec": {
+    "base-reference-profile": [
+      {
+        "startedUtc": "2026-11-01T23:11:13.5424428Z",
+        "finishedUtc": "2026-11-01T23:11:14.4977369Z",
+        "sample": 0,
+        "writeMs": 348.7662,
+        "readMs": 605.7958,
+        "status": "Loaded",
+        "SourceSchema": 23,
+        "characters": 5344205,
+        "utf8Bytes": 5344206,
+        "sourceCharacters": 5344208,
+        "sourceUtf8Bytes": 5344209,
+        "managedBefore": 894386176,
+        "managedAfter": 927191040,
+        "workingSet": 0,
+        "peakWorkingSet": 0,
+        "gcBefore": [
+          171,
+          171,
+          171
+        ],
+        "gcAfter": [
+          172,
+          172,
+          172
+        ]
+      },
+      {
+        "startedUtc": "2026-11-01T23:11:14.5013359Z",
+        "finishedUtc": "2026-11-01T23:11:15.4474716Z",
+        "sample": 1,
+        "writeMs": 335.629,
+        "readMs": 610.1183,
+        "status": "Loaded",
+        "SourceSchema": 23,
+        "characters": 5344205,
+        "utf8Bytes": 5344206,
+        "sourceCharacters": 5344208,
+        "sourceUtf8Bytes": 5344209,
+        "managedBefore": 927191040,
+        "managedAfter": 953180160,
+        "workingSet": 0,
+        "peakWorkingSet": 0,
+        "gcBefore": [
+          172,
+          172,
+          172
+        ],
+        "gcAfter": [
+          173,
+          173,
+          173
+        ]
+      },
+      {
+        "startedUtc": "2026-11-01T23:11:15.4494720Z",
+        "finishedUtc": "2026-11-01T23:11:16.3988810Z",
+        "sample": 2,
+        "writeMs": 340.5382,
+        "readMs": 608.9343,
+        "status": "Loaded",
+        "SourceSchema": 23,
+        "characters": 5344205,
+        "utf8Bytes": 5344206,
+        "sourceCharacters": 5344208,
+        "sourceUtf8Bytes": 5344209,
+        "managedBefore": 953180160,
+        "managedAfter": 977756160,
+        "workingSet": 0,
+        "peakWorkingSet": 0,
+        "gcBefore": [
+          173,
+          173,
+          173
+        ],
+        "gcAfter": [
+          174,
+          174,
+          174
+        ]
+      }
+    ],
+    "migration-profile": [
+      {
+        "startedUtc": "2026-11-01T23:14:13.9383371Z",
+        "finishedUtc": "2026-11-01T23:14:15.1536368Z",
+        "sample": 0,
+        "writeMs": 331.1291,
+        "readMs": 884.1850000000001,
+        "status": "Loaded",
+        "SourceSchema": 23,
+        "characters": 5344229,
+        "utf8Bytes": 5344230,
+        "sourceCharacters": 5344208,
+        "sourceUtf8Bytes": 5344209,
+        "managedBefore": 840048640,
+        "managedAfter": 894066688,
+        "workingSet": 0,
+        "peakWorkingSet": 0,
+        "gcBefore": [
+          171,
+          171,
+          171
+        ],
+        "gcAfter": [
+          172,
+          172,
+          172
+        ]
+      },
+      {
+        "startedUtc": "2026-11-01T23:14:15.1566406Z",
+        "finishedUtc": "2026-11-01T23:14:16.4000560Z",
+        "sample": 1,
+        "writeMs": 349.03130000000004,
+        "readMs": 894.1276,
+        "status": "Loaded",
+        "SourceSchema": 23,
+        "characters": 5344229,
+        "utf8Bytes": 5344230,
+        "sourceCharacters": 5344208,
+        "sourceUtf8Bytes": 5344209,
+        "managedBefore": 894066688,
+        "managedAfter": 836128768,
+        "workingSet": 0,
+        "peakWorkingSet": 0,
+        "gcBefore": [
+          172,
+          172,
+          172
+        ],
+        "gcAfter": [
+          174,
+          174,
+          174
+        ]
+      },
+      {
+        "startedUtc": "2026-11-01T23:14:16.4010590Z",
+        "finishedUtc": "2026-11-01T23:14:17.6097048Z",
+        "sample": 2,
+        "writeMs": 317.1881,
+        "readMs": 891.2144000000001,
+        "status": "Loaded",
+        "SourceSchema": 23,
+        "characters": 5344229,
+        "utf8Bytes": 5344230,
+        "sourceCharacters": 5344208,
+        "sourceUtf8Bytes": 5344209,
+        "managedBefore": 836128768,
+        "managedAfter": 884146176,
+        "workingSet": 0,
+        "peakWorkingSet": 0,
+        "gcBefore": [
+          174,
+          174,
+          174
+        ],
+        "gcAfter": [
+          175,
+          175,
+          175
+        ]
+      }
+    ],
+    "schema24-profile": [
+      {
+        "startedUtc": "2026-11-01T23:16:04.6665536Z",
+        "finishedUtc": "2026-11-01T23:16:05.6293583Z",
+        "sample": 0,
+        "writeMs": 338.03180000000003,
+        "readMs": 625.3265,
+        "status": "Loaded",
+        "SourceSchema": 24,
+        "characters": 5344232,
+        "utf8Bytes": 5344233,
+        "sourceCharacters": 5344232,
+        "sourceUtf8Bytes": 5344233,
+        "managedBefore": 1024864256,
+        "managedAfter": 1136971776,
+        "workingSet": 0,
+        "peakWorkingSet": 0,
+        "gcBefore": [
+          303,
+          303,
+          303
+        ],
+        "gcAfter": [
+          303,
+          303,
+          303
+        ]
+      },
+      {
+        "startedUtc": "2026-11-01T23:16:05.6313576Z",
+        "finishedUtc": "2026-11-01T23:16:06.6509123Z",
+        "sample": 1,
+        "writeMs": 390.7439,
+        "readMs": 628.7728000000001,
+        "status": "Loaded",
+        "SourceSchema": 24,
+        "characters": 5344232,
+        "utf8Bytes": 5344233,
+        "sourceCharacters": 5344232,
+        "sourceUtf8Bytes": 5344233,
+        "managedBefore": 1136971776,
+        "managedAfter": 1115148288,
+        "workingSet": 0,
+        "peakWorkingSet": 0,
+        "gcBefore": [
+          303,
+          303,
+          303
+        ],
+        "gcAfter": [
+          304,
+          304,
+          304
+        ]
+      },
+      {
+        "startedUtc": "2026-11-01T23:16:06.6534224Z",
+        "finishedUtc": "2026-11-01T23:16:07.6722504Z",
+        "sample": 2,
+        "writeMs": 340.9549,
+        "readMs": 678.3915000000001,
+        "status": "Loaded",
+        "SourceSchema": 24,
+        "characters": 5344232,
+        "utf8Bytes": 5344233,
+        "sourceCharacters": 5344232,
+        "sourceUtf8Bytes": 5344233,
+        "managedBefore": 1115148288,
+        "managedAfter": 1120641024,
+        "workingSet": 0,
+        "peakWorkingSet": 0,
+        "gcBefore": [
+          304,
+          304,
+          304
+        ],
+        "gcAfter": [
+          305,
+          305,
+          305
+        ]
+      }
+    ]
+  },
+  "operations": [
+    {
+      "operation": "activation-source-wall",
+      "seconds": 29.718999999808148
+    },
+    {
+      "operation": "active23-migrate-wall",
+      "seconds": 31.625
+    },
+    {
+      "operation": "active24-reload-wall",
+      "seconds": 32.79700000002049
+    },
+    {
+      "operation": "active24-save-wall",
+      "seconds": 0.6410000000614673
+    },
+    {
+      "operation": "base1-matched-wall",
+      "seconds": 29.062000000150874
+    },
+    {
+      "operation": "base2-matched-wall",
+      "seconds": 29.936999999918044
+    },
+    {
+      "operation": "cand1-matched-wall",
+      "seconds": 34.0
+    },
+    {
+      "operation": "cand2-matched-wall",
+      "seconds": 28.875
+    },
+    {
+      "operation": "candidate-day-end-wall",
+      "seconds": 0.6400000001303852
+    },
+    {
+      "operation": "candidate-day-reload-wall",
+      "seconds": 33.95299999997951
+    },
+    {
+      "operation": "candidate-day-source-again-wall",
+      "seconds": 30.031999999890104
+    },
+    {
+      "operation": "candidate-day-source-wall",
+      "seconds": 0.6720000000204891
+    },
+    {
+      "operation": "candidate23-roundtrip-wall",
+      "seconds": 0.5630000000819564
+    },
+    {
+      "operation": "candidate23-twice-wall",
+      "seconds": 0.5470000000204891
+    },
+    {
+      "operation": "candidate23-wall",
+      "seconds": 0.7029999999795109
+    },
+    {
+      "operation": "checkpoint-rearm-source-wall",
+      "seconds": 32.515000000130385
+    },
+    {
+      "operation": "d4-active-source-wall",
+      "seconds": 0.6099999998696148
+    },
+    {
+      "operation": "d4active-matched-wall",
+      "seconds": 30.75
+    },
+    {
+      "operation": "d4empty-matched-wall",
+      "seconds": 30.75
+    },
+    {
+      "operation": "D4Rival0 outward-source-wall",
+      "seconds": 31.155999999959022
+    },
+    {
+      "operation": "D4Rival0 paid-clock-save-wall",
+      "seconds": 0.5940000000409782
+    },
+    {
+      "operation": "D4Rival0 paid-clock-source-wall",
+      "seconds": 29.781000000191852
+    },
+    {
+      "operation": "D4Rival0 return-clock-save-wall",
+      "seconds": 0.6409999998286366
+    },
+    {
+      "operation": "D4Rival0 return-clock-source-wall",
+      "seconds": 29.765000000130385
+    },
+    {
+      "operation": "D4Rival0 serving-clock-save-wall",
+      "seconds": 0.6559999999590218
+    },
+    {
+      "operation": "D4Rival0 serving-clock-source-wall",
+      "seconds": 32.01599999982864
+    },
+    {
+      "operation": "D4Rival0 serving-source-wall",
+      "seconds": 29.57799999997951
+    },
+    {
+      "operation": "D4Rival1 outward-clock-save-wall",
+      "seconds": 0.5779999999795109
+    },
+    {
+      "operation": "D4Rival1 outward-clock-source-wall",
+      "seconds": 30.70300000021234
+    },
+    {
+      "operation": "D4Rival1 paid-clock-save-wall",
+      "seconds": 0.6089999999385327
+    },
+    {
+      "operation": "D4Rival1 paid-clock-source-wall",
+      "seconds": 30.75
+    },
+    {
+      "operation": "D4Rival1 return-clock-save-wall",
+      "seconds": 0.5630000000819564
+    },
+    {
+      "operation": "D4Rival1 return-clock-source-wall",
+      "seconds": 30.79699999978766
+    },
+    {
+      "operation": "D4Rival1 serving-clock-save-wall",
+      "seconds": 0.5630000000819564
+    },
+    {
+      "operation": "D4Rival1 serving-clock-source-wall",
+      "seconds": 31.281000000191852
+    },
+    {
+      "operation": "downgrade24-wall",
+      "seconds": 26.530999999959022
+    },
+    {
+      "operation": "geometry-guard-standin-new-city-wall",
+      "seconds": 34.54600000008941
+    },
+    {
+      "operation": "geometry-guard-standin-reload-wall",
+      "seconds": 36.59400000004098
+    },
+    {
+      "operation": "geometry-guard-standin-save-wall",
+      "seconds": 0.7809999999590218
+    },
+    {
+      "operation": "geometry-guard-standin-source-wall",
+      "seconds": 25.562999999849126
+    },
+    {
+      "operation": "geometry-off-120-source-wall",
+      "seconds": 26.984000000171363
+    },
+    {
+      "operation": "geometry-off-30-source-wall",
+      "seconds": 26.094000000040978
+    },
+    {
+      "operation": "geometry-off-60-source-wall",
+      "seconds": 25.5
+    },
+    {
+      "operation": "geometry-on-120-source-wall",
+      "seconds": 27.235000000102445
+    },
+    {
+      "operation": "geometry-on-30-source-wall",
+      "seconds": 28.20300000021234
+    },
+    {
+      "operation": "geometry-on-60-inside-reload-wall",
+      "seconds": 32.718000000109896
+    },
+    {
+      "operation": "geometry-on-60-inside-save-wall",
+      "seconds": 0.5319999998901039
+    },
+    {
+      "operation": "geometry-on-60-source-wall",
+      "seconds": 28.75
+    },
+    {
+      "operation": "held18-chain-wall",
+      "seconds": 52.906999999890104
+    },
+    {
+      "operation": "interrupted-0-return-source-wall",
+      "seconds": 30.04700000002049
+    },
+    {
+      "operation": "interrupted-1-return-source-wall",
+      "seconds": 30.766000000061467
+    },
+    {
+      "operation": "interrupted1x-0-source-wall",
+      "seconds": 33.29699999978766
+    },
+    {
+      "operation": "interrupted1x-1-source-wall",
+      "seconds": 30.95299999997951
+    },
+    {
+      "operation": "manual-service-save-wall",
+      "seconds": 0.7029999999795109
+    },
+    {
+      "operation": "manual-service-source-wall",
+      "seconds": 29.109999999869615
+    },
+    {
+      "operation": "nonzero23-migration-wall",
+      "seconds": 31.608999999938533
+    },
+    {
+      "operation": "nonzero24-reload-wall",
+      "seconds": 31.609999999869615
+    },
+    {
+      "operation": "nonzero24-save-wall",
+      "seconds": 0.5780000002123415
+    },
+    {
+      "operation": "proxy-idle-reloaded-wall",
+      "seconds": 29.641000000061467
+    },
+    {
+      "operation": "proxy-idle-save-wall",
+      "seconds": 0.4839999999385327
+    },
+    {
+      "operation": "proxy-idle-source-wall",
+      "seconds": 43.125
+    },
+    {
+      "operation": "proxy-matched-source-wall",
+      "seconds": 0.7660000000614673
+    },
+    {
+      "operation": "proxy-reads-reloaded-wall",
+      "seconds": 29.95299999997951
+    },
+    {
+      "operation": "proxy-reads-save-wall",
+      "seconds": 0.7180000001098961
+    },
+    {
+      "operation": "proxy-reads-source-wall",
+      "seconds": 29.828999999910593
+    },
+    {
+      "operation": "proxy-small-source-wall",
+      "seconds": 39.95299999997951
+    },
+    {
+      "operation": "refuse-corrupt-wall",
+      "seconds": 30.54700000002049
+    },
+    {
+      "operation": "refuse-future-wall",
+      "seconds": 28.563000000081956
+    },
+    {
+      "operation": "return23-migrate-wall",
+      "seconds": 31.95299999997951
+    },
+    {
+      "operation": "return24-reload-wall",
+      "seconds": 31.561999999918044
+    },
+    {
+      "operation": "return24-save-wall",
+      "seconds": 0.5470000000204891
+    },
+    {
+      "operation": "rolling-expired-reload-wall",
+      "seconds": 31.937999999849126
+    },
+    {
+      "operation": "rolling-expired-save-wall",
+      "seconds": 0.6720000000204891
+    },
+    {
+      "operation": "rolling-source-wall",
+      "seconds": 30.968999999808148
+    },
+    {
+      "operation": "rush-inflight-source-wall",
+      "seconds": 0.75
+    },
+    {
+      "operation": "schema24-reload-wall",
+      "seconds": 28.765000000130385
+    },
+    {
+      "operation": "schema24-roundtrip-reload-wall",
+      "seconds": 29.70300000021234
+    },
+    {
+      "operation": "schema24-roundtrip-wall",
+      "seconds": 0.5619999999180436
+    },
+    {
+      "operation": "schema24-twice-reload-wall",
+      "seconds": 32.04700000002049
+    },
+    {
+      "operation": "schema24-twice-wall",
+      "seconds": 0.5150000001303852
+    },
+    {
+      "operation": "schema24-wall",
+      "seconds": 0.6410000000614673
+    },
+    {
+      "operation": "uninterrupted-0-source-wall",
+      "seconds": 29.75
+    },
+    {
+      "operation": "uninterrupted-1-source-wall",
+      "seconds": 29.79700000002049
+    },
+    {
+      "operation": "uninterrupted1x-0-source-wall",
+      "seconds": 31.187000000150874
+    },
+    {
+      "operation": "uninterrupted1x-1-source-wall",
+      "seconds": 33.20299999997951
+    }
+  ],
+  "nativeFiles": [
+    {
+      "name": "FT Food Routines Locked Combined3 Active23.hsg",
+      "bytes": 1547613,
+      "sha256": "32a85fc5a6f8c78e1d0d4f7e79c6458420ec40a632753cd6fac960f6f04cc9fd"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 Active24.hsg",
+      "bytes": 1547554,
+      "sha256": "5105664ea1a4b5431135a137fd49a18fbccf0d6eb115b4cb7d9e4c8e408a1e2c"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 D4 Active24.hsg",
+      "bytes": 1536113,
+      "sha256": "f7f2f6dbab0873b06a6d2aaf281086ae890275e24f9e934d19f96322e0f5f9eb"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 D4 Empty24.hsg",
+      "bytes": 1469357,
+      "sha256": "9ae70784987deeccfc24417da2c02f79b66a4f17d6b60ec0edd9fc8790332e10"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 DayEnd24.hsg",
+      "bytes": 1539372,
+      "sha256": "ac7f6429ca13d5c6dd49ac3e40f1f8dfadac813dbf1298d3c023910c35cb7fc8"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 DayStart24.hsg",
+      "bytes": 1473166,
+      "sha256": "d6fc9e3bdb44d6c98503215f17cdcd0dc649e3ba98be791896009275a10704fe"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 Expired24.hsg",
+      "bytes": 1806034,
+      "sha256": "73f764d0420e2415c6e572b02be9452287a63d1bd3ebdcb32b1ba3553da34a49"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 Held18.hsg",
+      "bytes": 1241013,
+      "sha256": "3dd3289a1678a4e28931f7e8bd3133abffaa34b08bfd9b19cfb2f4adae3f5875"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 Manual Service24.hsg",
+      "bytes": 1450551,
+      "sha256": "4eae143fdbe0a1140e66e5bb4e1cd205d242d30f236ea93a1d64ee73c22c618b"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 Nonzero23.hsg",
+      "bytes": 1534097,
+      "sha256": "c28ecda346e4982702b73cc700298051951754571e6ec40033c1bef935ced78b"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 Nonzero24.hsg",
+      "bytes": 1534113,
+      "sha256": "fcb787a2e0bccaeade88097df8ffbdac8fd5e88b0d9c0e8d44c262d67c1b9232"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 Proxy idle24.hsg",
+      "bytes": 1287954,
+      "sha256": "81440ab0317639aa174e7479c750cb0dff2b4feddfdc1e5e9e78a69a64d805e3"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 Proxy reads24.hsg",
+      "bytes": 1287952,
+      "sha256": "07805dd4f7d222adc9b853a83bbbd7f0503cee92ab96d59c9a86471fc945190a"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 ProxySource24.hsg",
+      "bytes": 1286966,
+      "sha256": "55856627f9ef825e6a93d33167c2bab196484c326e443738659b88157afa018a"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 Rearmed Outward24.hsg",
+      "bytes": 1540195,
+      "sha256": "64dc27c63de31384a2f2a5d61f770ecb4f515a81ed166f2e7b9854147cb65299"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 Refuse corrupt.hsg",
+      "bytes": 1143006,
+      "sha256": "af8aaf029f76b8e6d7f84b443cdc0b2d92addd6ed0d1e7b301902251735e87e4"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 Refuse future.hsg",
+      "bytes": 1143010,
+      "sha256": "f0576e42539b0ba4b721b45d0c69f2e1beaa2ec56ccc782f0f912f2ea8fbf1a5"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 Return23.hsg",
+      "bytes": 1419184,
+      "sha256": "f68ea0b63587a4f338ca1d8307381859d23f1427993a07c75ccc2fded254559c"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 Return24.hsg",
+      "bytes": 1419215,
+      "sha256": "b7a441d4f013627c5dd9d7a3a379a081e861b5a50b04502e1d770996e3a6cc37"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 Roundtrip24.hsg",
+      "bytes": 1199131,
+      "sha256": "85e9bd0cd04bb633cb233ba19a7b5ad9958797bca67993ade51f3bf0cafdc3ad"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 Rush24.hsg",
+      "bytes": 1540593,
+      "sha256": "a06bc7ea8ca1238d337e70d740e6258729d698f3dd9d6837ce23f32579f64e6a"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 Schema24.hsg",
+      "bytes": 1199131,
+      "sha256": "e5d77d8bd97e70a373c251840f2e64f1297c0ffb22ac5db530baa03555719ee7"
+    },
+    {
+      "name": "FT Food Routines Locked Combined3 Twice24.hsg",
+      "bytes": 1199129,
+      "sha256": "fea7f9acea0f7a407b7beed19c6a873a5e930256d8a8e83302f7efd568414ae8"
+    }
+  ],
+  "referenceSchema23": {
+    "source": "rig2 dbddada native schema23 checkpoint copied unchanged",
+    "bytes": 1199127,
+    "sha256": "62f8b941482b82cf37b1b2204f7d08e1cf2eb055606ab9a3a3deac65b884c5c8",
+    "sourceWriter": 23,
+    "copyMatchesSource": true
+  },
+  "limits": "Codec timings exclude scene load. Native compressed sizes include name/clock/compression differences; population UTF-8 bytes are separate. All saves and codec profiling occurred outside timing brackets."
+}

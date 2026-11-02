@@ -1,0 +1,6 @@
+{
+  "verified_owned_driver": true,
+  "pid": 51424,
+  "reason": "Service boundary missed in original context; installed checkpoint patch remains, observer owner suspected; cancel obsolete own driver before replacing stage observer",
+  "role": "rig_test"
+}

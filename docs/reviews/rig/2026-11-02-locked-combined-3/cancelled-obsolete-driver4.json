@@ -1,0 +1,6 @@
+{
+  "verified_owned_driver": true,
+  "pid": 24428,
+  "reason": "Observer phase not captured despite live progression; switch to ordinary native run-until paused clock saves, not later-context capture",
+  "role": "rig_test"
+}

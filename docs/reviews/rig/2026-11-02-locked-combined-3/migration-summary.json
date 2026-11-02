@@ -1,0 +1,39 @@
+{
+  "source": {
+    "source": "rig2 dbddada native schema23 checkpoint copied unchanged",
+    "bytes": 1199127,
+    "sha256": "62f8b941482b82cf37b1b2204f7d08e1cf2eb055606ab9a3a3deac65b884c5c8",
+    "sourceWriter": 23,
+    "copyMatchesSource": true
+  },
+  "sourceSchema": 23,
+  "writer": 24,
+  "preservedSourceGraphDifferences": [],
+  "newFields": {
+    "Outflow": {
+      "RecordCount": 1
+    }
+  },
+  "reloads": {
+    "schema24": {
+      "exact": true,
+      "sourceKeyDifferences": [],
+      "beforeSha": "baf112649fa20c00091408ac87fdb1c74ba10b0a142390749a7a83fa7c4a550e",
+      "afterSha": "baf112649fa20c00091408ac87fdb1c74ba10b0a142390749a7a83fa7c4a550e"
+    },
+    "schema24-roundtrip": {
+      "exact": true,
+      "sourceKeyDifferences": [],
+      "beforeSha": "fd1286a39b88222c49e66e6e5f330cb9dd21ab2f73f03fd89ffe7b23b45abe63",
+      "afterSha": "fd1286a39b88222c49e66e6e5f330cb9dd21ab2f73f03fd89ffe7b23b45abe63"
+    },
+    "schema24-twice": {
+      "exact": true,
+      "sourceKeyDifferences": [],
+      "beforeSha": "c6908f972ce2eaa8e74b8bad15fdd099b68f87a3b86e2aad230120953a6cf62c",
+      "afterSha": "c6908f972ce2eaa8e74b8bad15fdd099b68f87a3b86e2aad230120953a6cf62c"
+    }
+  },
+  "nativePreservedMigration": true,
+  "nativeAfterReloads": true
+}

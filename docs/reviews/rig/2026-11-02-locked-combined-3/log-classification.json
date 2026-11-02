@@ -1,0 +1,65 @@
+{
+  "base1-Player.private.log": {
+    "nativeExceptionClasses": {
+      "NativeMusicCulling": 2,
+      "NativeHangoutCulling": 2
+    },
+    "pcFramesInNullReferenceStacks": [],
+    "plannedRefusalLines": []
+  },
+  "base2-Player.private.log": {
+    "nativeExceptionClasses": {
+      "NativeMusicCulling": 3,
+      "NativeHangoutCulling": 3
+    },
+    "pcFramesInNullReferenceStacks": [],
+    "plannedRefusalLines": [
+      "[Persistent City] Food ownership suspended: Unsupported population schema; preserve the payload.",
+      "[Mod:PersistentCity] Persistent City stopped: Food ownership suspended: Unsupported population schema; preserve the payload."
+    ]
+  },
+  "cand1-Player.private.log": {
+    "nativeExceptionClasses": {
+      "NativeMusicCulling": 7,
+      "NativeHangoutCulling": 7
+    },
+    "pcFramesInNullReferenceStacks": [],
+    "plannedRefusalLines": [
+      "[Persistent City] Food ownership suspended: Unsupported population schema; preserve the payload.",
+      "[Mod:PersistentCity] Persistent City stopped: Food ownership suspended: Unsupported population schema; preserve the payload."
+    ]
+  },
+  "cand2-Player.private.log": {
+    "nativeExceptionClasses": {
+      "NativeMusicCulling": 7,
+      "NativeHangoutCulling": 7
+    },
+    "pcFramesInNullReferenceStacks": [],
+    "plannedRefusalLines": []
+  },
+  "cand3-Player.private.log": {
+    "nativeExceptionClasses": {
+      "NativeMusicCulling": 2,
+      "NativeHangoutCulling": 2
+    },
+    "pcFramesInNullReferenceStacks": [],
+    "plannedRefusalLines": []
+  },
+  "cand4-Player.private.log": {
+    "nativeExceptionClasses": {
+      "NativeMusicCulling": 31,
+      "NativeHangoutCulling": 31,
+      "StreetLamp": 49
+    },
+    "pcFramesInNullReferenceStacks": [],
+    "plannedRefusalLines": []
+  },
+  "cand5-Player.private.log": {
+    "nativeExceptionClasses": {
+      "NativeMusicCulling": 4,
+      "NativeHangoutCulling": 4
+    },
+    "pcFramesInNullReferenceStacks": [],
+    "plannedRefusalLines": []
+  }
+}

@@ -1,0 +1,126 @@
+VERDICT: FAIL — C4 one clean 36.4136 ms mod-work frame; C7/F1b explicit inventory timing target missed.
+
+Role: `rig_test`. Locked-session combined rig proof #3, evidence date 2 November 2026. Owned rig interval 1 November 23:09 UTC to 2 November 01:02:45 UTC. Merge rule v2 applies: these findings are follow-up fix work, with no revert, merge, PR action, release, Workshop upload or ordinary-save approval. Pointer-only proof remains DEFERRED-INPUT for Peter’s 6 November playtest.
+
+Pinned candidate **`a1b993a9d680fcc9b79b66fa84a30cf6310ada1b`**, recorded immediately after `git fetch origin`; control **`dbddada2e35d0ac2ac826985214741392a406364`**. Exactly these SHAs were tested. The final read-only remote check still named the pinned candidate; it was never retargeted. Actual writer **24**; chain **18 →19(C2a) →20(E1) →21(D2) →22(C2b) →23(E4) →24(D3a/D4)**. D4 widens the existing scalar without a new shape. [Scope/doc hashes](scope.json), [final remote receipt](remote-head-final.json).
+
+| First-parent commit after dbddada | Slice / PR |
+|---|---|
+| `c85dc19` | F1b render-only street proxy investigation/read-only diagnostics, #71 |
+| `fb958ae` | D3a totals-only free rival outflow history/line, #72 |
+| `a1b993a` | D4 rival-experience memory integration, #73 |
+
+Expected but not in candidate: **none**. Extra first-parent merges in range: **none**. Required source/check sections, context documents, PR descriptions #71–#73, prior rig #2 report and locked feasibility at `84be71a` were read. Prior tooling, fixture files, schema-23 checkpoints and small-shop captures were copied into the new private stage; the prior stage was not modified. Detached source builds succeeded against agent1 Managed references, with the required per-user dotnet PATH prefix. No offline dotnet test suite was run; build/analysis checks are separate from native evidence.
+
+| Loaded production artifact | SHA-256 |
+|---|---|
+| Candidate PersistentCity.dll | `82edbf8fe0c70c95736364109a278fb2cd54fc9f36c70d1f58052b82584e330f` |
+| Control PersistentCity.dll | `c521129592619b3e80ee101952c700e5b957c35e20a4aad6a15eb21992333603` |
+| RLO 0.45.0.0 | `2f360a365cf7915f012cd62f4fd06214ef5cdaa0498331e05a7c831a3c20ab32` |
+
+Harmony 2.4.2. All seven launches identify their actual loaded hashes in [loaded builds](loaded-builds.json); production source/behaviour was unchanged. Stage-only bridge, timing, passive audit and fixture tooling were used. Game DLLs, raw saves, full logs, credentials and private bridge tokens are excluded from this folder.
+
+| Check | Verdict | Evidence and limits |
+|---|---|---|
+| C1 load/defaults | PASS | Candidate/control active, 957 residents/1,914 consumers/1,059 places; F0 off, F1b uncalled, guard auto/not detected, inactive research, default rain/menu cap4/rival/memory settings. All new diagnostics available. No unexpected PC error/exception. [diagnostics](diagnostics-summary.json), [logs](log-classification.json), [PC lines](pc-log-review.json) |
+| C2 migration/refusal | PASS | Genuine dbddada23→24, three exact stored reloads, zero old-field differences; nonzero ledger, active service/travel and13 return checkpoints preserve old graphs. Supplemental genuine18 held decision matches archived control-reader projection. Corrupt/future25/downgrade refuse with source bytes preserved. [migration](migration-summary.json), [nonzero](nonzero-migration-summary.json), [active](active23-migration-summary.json), [returns](return23-migration-summary.json), [held](held-tuning-migration-summary.json), [refusal](refusal-summary.json), [downgrade](downgrade24-summary.json) |
+| C3 accounting/replay | PASS | Full native day311 purchases=5 own receipts+306 external; exact units/holds/bags/stock/accounts. Slot-zero and represented four-phase saves/reloads match uninterrupted1x state exactly, with one payment/experience each. [accounting](accounting-summary.json), [journeys](journey-summary.json), [selected native registrations](native-rival-projection-presence.json) |
+| C4 combined perf | FAIL | Six original matched windows, all p95<5ms; one clean frame36.4136ms. Active390/empty0 pair changes only memory entries. [timing/load/raw](performance-summary.json), [variant proof](memory-variant-proof.json), [verifier](verify_evidence.py) |
+| C5 size/time | PASS | No ordinary save/load/migration errors; numbers informational. First24 native HSG1,199,131B versus control23 1,199,127B. [sizes/times](save-profile.json) |
+| C6 slice items | PARTIAL | Native accounting, exact replay, memory and14-day retention exercised; missing B-inactive/mixed-four-entry/closure fixtures qualified below. C4 failure reused. [coverage](slice-coverage.json), [rolling](rolling-summary.json), [expiry reload](expired-reload-summary.json) |
+| C7 F1b diagnostics | FAIL / PARTIAL | Explicit inventory target miss; readonly100x passes. Capped coverage and literal replay comparison remain partial. Renderer/handoff BLOCKED by design. [F1b](f1b-summary.json), [full initial inventory](f1b-inventory-initial.json) |
+| C8 carry-over observation | PARTIAL | GC-consistent Update spike pattern recurs; no naturally uncertain/late-midnight receipt, payment failure or95% warning. No event forced. [spike](performance-summary.json), [outcomes](rolling-memory-outcomes.json) |
+
+Two concrete follow-up findings are retained. **C4: shared population/route-preparation GC path, carried on the D4 #73 integration head** (provisional slice/PR tracking; the similar rig #2 flag was tracked under D2 #58). The measured component is shared `MultimodalRoutes.Prepare`; no isolated new-slice causal attribution is established. Minimal repro: pinned candidate/RLO above, disposable candidate-created day8/noon `D4 Empty24` fixture derived through the supplied candidate codec, defaults, Low1920×1080/90FPS/1x, autosave off, 15s warmup then>=60s normal capture. Observed `d4empty`, frame**109159**, minute**12247.323752880096**, branch`traffic-advance`. This is intermittent, not a guaranteed reproduction. Source/empty native fixture hashes and exact derivation are in [variant proof](memory-variant-proof.json). No extra performance rerun was taken.
+
+That frame: Update/authority union36.4099ms, Update36.4094ms, authority0.0005ms, GUI0.0026ms, disjoint hook0.0011ms; final36.4136ms. `MultimodalRoutes.Prepare`34.3018ms dominates; mod PhysicalPopulation.Update0.1308ms, advancement0.0567ms, closure refresh0.0503ms. Managed-used-heap delta**−95,129,600B** is consistent with collection; window GC deltas2/2/2 do not establish exact causal GC attribution. Native game PhysicalPopulation/traffic bodies are excluded from these hook timers; no evidence identifies such a body as the culprit. The measured slow caller is mod route preparation, with GC/native-call/scheduling attribution unresolved. CPU start14.7%, during29.0%, available RAM25.168GiB, dotnet/testhost0, codex6; no heavy test-load exception or save contamination applies.
+
+**C7: F1b #71, `ReadStreetProxyInventory(true)` native one-shot performance target miss.** Minimal repro: same pinned build, existing30 3rd Street small shop at the prepared entrance, F0 off/guard auto, paused, first true inventory request then50 repeated inventory reads interleaved with50 door reads. First inventory**64.9855ms** versus requested~5ms; later single94.9803ms, warm50 p50/p95/max**52.0822/69.8665/87.0894ms**. All are capped results, not complete coverage. There are**52 inventory invocations>=30ms**, each retained with frame/iteration/GC counters in [F1b evidence](f1b-summary.json). Cold call GC counters are unchanged. Allocation-byte counter unavailable (`-1`), so no allocation-zero claim. These explicit, paused operations are outside normal-frame brackets and do not add a second C4 frame spike. No speculative renderer or production fix was added.
+
+The six normal captures use same-frame Update/native-authority **union**, whole OnGUI and six disjoint mod physics/intersection hook bodies; nested work is not summed. Added-scope counters and raw distributions are verified. Native whole-frame wall intervals/stalls are informational. Captures interleave control idle→candidate idle→control lunch→candidate lunch, then candidate active/empty. Idle pair day6 precedes B activation; lunch pair day7/noon is active, memory pair day8/noon. Thus all-features-active default idle and an isolated D4-only delta are not claimed. Memory pair clears own and rival entries on a detached candidate-codec copy, retains watermarks/held terms, and preserves all other decoded/native bytes. Same saved fixture/clock/settings/camera; native presentation/caches/shared-host scheduling are not perfectly deterministic controls.
+
+| Window | Seconds | Combined mod p50 / p95 / max ms | Whole-frame p50 / p95 / max ms | Whole >50 / >100 / >250ms |
+|---|---:|---:|---:|---:|
+| base1 | 60.128 | 0.3724 / 0.4788 / 26.1863 | 11.1501 / 12.6164 / 55.5883 | 1 / 0 / 0 |
+| cand1 | 60.204 | 0.4227 / 0.6509 / 13.0944 | 11.2414 / 12.8600 / 58.3663 | 1 / 0 / 0 |
+| base2 | 63.402 | 0.9382 / 1.3267 / 9.7903 | 11.1406 / 12.9952 / 31.9868 | 0 / 0 / 0 |
+| cand2 | 63.680 | 1.0121 / 1.4885 / 10.5624 | 11.4194 / 13.4570 / 37.8678 | 0 / 0 / 0 |
+| d4active | 63.391 | 0.4054 / 0.6435 / 7.5778 | 11.1520 / 12.6306 / 44.5703 | 0 / 0 / 0 |
+| d4empty | 63.039 | 0.4253 / 0.6404 / 36.4136 | 11.0858 / 12.6855 / 45.1155 | 0 / 0 / 0 |
+
+Each window verifies autosave off before/after and after reload, no save activity and unchanged save inventory. Dotnet/testhost coordination found none at each capture; detailed poll records and CPU/top-process/RAM snapshots are retained. External application names can be generalized in public load evidence; PIDs and measured CPU deltas/RAM remain. No marginal miss was rerun. Hardware: i5-13600KF, RTX4070 D3D11,63.837GiB RAM,20 logical processors, Low1920×1080,vSync0,target90,physical48/24. Locked session11 flags0 before/after; Unity focus is not unlock evidence. No pointer/activation/WGC proof inferred.
+
+| Window | Start CPU% | Sample CPU range% | Start free GiB | dotnet / testhost / codex |
+|---|---:|---:|---:|---:|
+| base1 | 26.1 | 23.9–30.7 | 28.751 | 0 / 0 / 8 |
+| cand1 | 40.3 | 36.3–61.1 | 27.792 | 0 / 0 / 8 |
+| base2 | 32.3 | 23.9–37.9 | 28.618 | 0 / 0 / 8 |
+| cand2 | 44.9 | 28.0–44.9 | 28.485 | 0 / 0 / 10 |
+| d4active | 17.3 | 14.8–18.5 | 24.137 | 0 / 0 / 6 |
+| d4empty | 14.7 | 14.7–29.0 | 25.168 | 0 / 0 / 6 |
+
+C2’s initial schema23 checkpoint is1,199,127B, SHA-256`62f8b941482b82cf37b1b2204f7d08e1cf2eb055606ab9a3a3deac65b884c5c8`, hash-identical to rig #2 and written by dbddada. Old IDs, traits, represented traits, assignments, money, budgets, authority, receipts, Today, contexts/latches, awareness, weather, menu and D2 watermark all compare as the complete source-key graph. New dated outflow starts empty; nonzero23 ledger96,330,493,030,400units becomes undated baseline with partial first day and no invented dated count. Active23 checkpoint includes10 outward/3 service states; return23 includes13 returns. All zero old-field differences and exact stored reloads. Held18 supplement compares a real pending decision with the archived control-reader projection; it supplements, rather than replaces, the genuine23 controls. Deliberate corrupt/future25 and old-reader24 refusal bytes are preserved.
+
+C3 covers day7 00:05→day8 00:05,23h native time-machine accounting and the final native hour at1x. Exact resident spend**112,087,921,868,800units** = own paid receipts**1,376,107,520,000** + external**110,711,814,348,800**. Five croissants/five bags/five paid receipts/history match; native day revenue51.264 has expected binary32 bits`560e4d42`, zero pending completed orders, budgets conserve, native account snapshot reloads exactly. D3a306 counts match306 modeled purchases, with no native rival checkout/receipt. Passive observations cover the first100 natural payments, plus target replay payments; no tool invokes settlement, credits cash or writes rival terms/finances. All361 archived native-before projections contain a selected registration; callback-native hashes match.
+
+For pc:12 and represented consumer:c174:1, observed stages are committed1→reached2→served4. Each pays its held exact price once, gains one served entry, retains it at return and matches the uninterrupted1x final meal/budget/payment/memory state exactly. Represented outing clears independently; no second body/story is inferred. Four obsolete observer drivers were stopped after missing the original context; observer attempts were excluded. Final proof uses ordinary native bridge run-until, pause and native saves. An initial6x-vs1x comparison refused service after retiming and was not a matched replay control; it is explicitly excluded in [qualification](excluded-replay-comparison.json). Production code was unchanged, games were never killed.
+
+The first day has299 memories/311 served increments (5 own,306 rival),12 repeat positive entries,max3. The native14-day soak reaches max4 with only served outcomes, no naturally prepared closure/recovery, and no uncertain meals. Every day9–22 reconciles ledger; at22,633 payments/222,770,514,022,400units are expired, retained nonzero rows<=13. Known zero days, partial first day and earlier unknown days remain distinguishable; the free DTO contains only dates/known/partial/units/count, no named rival aggregate or share. Expired stored payload, live budgets/memory/watermarks/outflow survive reload exactly. Full protected failure insertion, changed-price/unreadable and combined B-inactive fixtures remain unproved.
+
+Save/load/migration timing is separate from normal-frame performance. Three frozen codec samples per row, medians; native load wall times include scene/preflight and are in the operations list. Manual saves and profiling are outside measured brackets. Largest observed population payload7,789,297B is far below256MiB/95% threshold; no warning event was induced.
+
+| Frozen codec profile | Source schema | Source UTF-8 B | Written UTF-8 B | Write median ms | Read/migration median ms |
+|---|---:|---:|---:|---:|---:|
+| base-reference-profile | 23 | 5,344,209 | 5,344,206 | 340.538 | 608.934 |
+| migration-profile | 23 | 5,344,209 | 5,344,230 | 331.129 | 891.214 |
+| schema24-profile | 24 | 5,344,233 | 5,344,233 | 340.955 | 628.773 |
+
+| Native HSG | Bytes |
+|---|---:|
+| Genuine control23 reference | 1,199,127 |
+| First candidate24 | 1,199,131 |
+| Candidate24 roundtrip | 1,199,131 |
+| Candidate24 twice | 1,199,129 |
+| Day8 active-memory fixture | 1,536,113 |
+| Corresponding empty-memory fixture | 1,469,357 |
+
+The first compressed delta is+4B; names, ticks and compression prevent attributing it solely to schema. Frozen source23→24 namespace is+21UTF-8B in the migration profile. Control write’s3B difference reflects live time representation; memory fixture size reduction is removed experience content, not a schema-shape change. Codec timing excludes scene load; peak-working-set precision unavailable. [All timings/native hashes](save-profile.json).
+
+F1b’s direct doorId0/exitToZoneId0, exterior `(230.262573,0.09000015,21.27832)`, yaw quaternion `(0,−0.707106769,0,0.7071068)`, scale1, interior exit`(999,0,−4.43)`, small sizeA/version1/no elevator agree with rig #2. Transient Unity instance IDs differ legitimately. Unique candidate has no independent aperture edges: `InsufficientEdges`, Consistent=false, RendererAvailable=false is correct. Door cold4.1336ms; warm50 p50/p95/max0.0370/0.0531/3.1503ms. Native inventory visits25,859 nodes, reaches1,024 metadata rows (1,020 renderers+4 environment), then refuses row cap with CountsComplete=false. Radius/static/owner/motion coverage is partial; repeated paused positions do not prove motion. F renderer/customer handoff is **BLOCKED (NO-GO, absent)**.
+
+False/omitted calls return null before scan; old retained host true refuses, cached guard stays not detected/off.100 interleaved reads preserve exact native, full scene projection and payload hashes. Full private projections are retained; public metadata dumps are [doors](f1b-doors-proxy-first-cold.json), [inventory](f1b-inventory-initial.json), [reload/refusal](f1b-inventory-reloaded.json.gz). Source audit finds no initializer/subscription/frame participant or production caller: [zero recurring call audit](f1b-frame-audit.json). Common-source idle/read save payloads5,149,924/5,149,946B are not literal-equal; pre-read payloads already differ, including native clock/re-entry and an arriving consumer.13 saved differences are retained and not attributed to reader calls. Post-reload true inventory refuses unstable loaded-shop context. Therefore literal matched save/reload geometry/byte acceptance remains PARTIAL, without inventing a mutation defect.
+
+Unity game captures were visually inspected, normal visible owned window while locked. Current small doorway is nonblack; dark exterior is consistent with absent F1 drawing and is not renderer acceptance. Screenshot FPS0 is a paused overlay, not perf data. [Current](small-shop-current.jpg), [copied rig2 viewoff30](small-shop-rig2.jpg). Medium/large own ground-floor frontage/layout and elevator/multi-height fixtures are absent in the native inventory and prior-stage filename search. Exact needed fixtures: one medium own food shop, one large own food shop with distinct frontage/layout, and one own elevator/upper-floor refusal checkpoint, plus independently identified fixed jamb/window landmarks.
+
+All numbered in-scope rig items follow. FAIL rows reusing C4 describe the same single frame, not additional frame defects.
+
+| Slice item | Verdict | Evidence / qualification |
+|---|---|---|
+| D3a 1 | PASS | Exact day-7 amount/count; every day 9–22 reconciles baseline + expired + retained with D2. 633 expired payments, 13 retained nonzero rows maximum. [rolling-summary.json](rolling-summary.json) |
+| D3a 2 | PASS | 100 natural payments preserve complete selected native registration/finance/receipt projections; all 361 archived before-projections have a real selected registration. Five own purchases book exactly once. [accounting-summary.json](accounting-summary.json) |
+| D3a 3 | DEFERRED-INPUT | Normal UI price/stock/hours changes; none induced. [diagnostics-summary.json](diagnostics-summary.json) |
+| D3a 4 | PARTIAL | Both default-active-B consumers pass four native checkpoints and matched 1x replay; expired checkpoint reload exact. Combined B1-inactive + explicitly disabled-campaign fixture absent. Empty campaign images observed, without claiming provider-disabled execution. [journey-summary.json](journey-summary.json) |
+| D3a 5 | FAIL | Same single C4 frame failure; closed-panel idle/rush captured. A separate late older-commitment burst was not prepared or forced; no extra perf window. [performance-summary.json](performance-summary.json) |
+| D3a 6 | DEFERRED-INPUT | Free panel visual boundary and paired open-panel timing require Peter’s input; no additional windows run here. [diagnostics-summary.json](diagnostics-summary.json) |
+| D4 1 | PARTIAL | Slot-zero pc:12 and represented consumer:c174:1: commitment/service/payment/return, exact-once experience, identical matched 1x final state. 12 repeat positive entries in first native day. Only one own shop; two-own/two-rival saturated native fixture and B-inactive purchase arm absent. Body visibility throughout pc:12’s trip not established. [journey-summary.json](journey-summary.json) |
+| D4 2 | DEFERRED-INPUT | Native rival closure/recovery via normal UI, never induced by tools. [rolling-memory-outcomes.json](rolling-memory-outcomes.json) |
+| D4 3 | NOT-RUN | No natural closure or prepared rival closure/recovery fixture in 14-day observation. Protected failure insertion, changed-price and unreadable-neutral native arms unavailable; no rival terms were forced. Unmatched 6x schedule refusal remained neutral, but is excluded from replay equality proof. [excluded-replay-comparison.json](excluded-replay-comparison.json) |
+| D4 4 | PARTIAL | Service arms conserve exact money, preserve native rival state and own authority; all consumers remain <=4 entries. Failure arm absent. Full 32-source/8-shop/16-route-slot saturation not exercised natively; no extra route participant introduced. [memory-summary.json](memory-summary.json) |
+| D4 5 | FAIL | C4 active390/empty0 entries, only memory-entry differences and identical native bytes elsewhere; all p95 pass, one >=30 ms clean empty-arm frame. Original autosave restored. [memory-variant-proof.json](memory-variant-proof.json) |
+| D4 6 | DEFERRED-INPUT | Visual modeled/native-unobserved wording, closure visitor and represented-anchor separation in inspector. [journey-summary.json](journey-summary.json) |
+| F1b 1 | PASS | Omitted/false return null; explicit true required; cached guard unchanged; retained stale host refuses true, false remains null. [f1b-summary.json](f1b-summary.json) |
+| F1b 2 | PASS | Native doorId=0 matches exitToZoneId=0; direct independent fields and rig2 transforms agree; unique candidate refuses InsufficientEdges, RendererAvailable=false. [f1b-doors-proxy-first-cold.json](f1b-doors-proxy-first-cold.json) |
+| F1b 3 | DEFERRED-INPUT | Independent fixed jamb/window correspondences and >=3 noncollinear points across two apertures unavailable; no candidate-derived pairs supplied. [f1b-summary.json](f1b-summary.json) |
+| F1b 4 | PARTIAL | 25,859 nodes/1,024 rows cap, 1,020 renderer rows +4 environment rows. CountsComplete=false; no full radius/owner/static/motion coverage claim. [f1b-inventory-initial.json](f1b-inventory-initial.json) |
+| F1b 5 | PARTIAL | 100 paused reads preserve native, scene and payload hashes; exit/re-entry/outside/stale refusal pass. Save controls differ already before reads; post-reload true request refuses unstable shop context, so literal save-byte/geometry reload acceptance is unproved. [f1b-summary.json](f1b-summary.json) |
+| F1b 6 | FAIL | One-shot native inventory misses requested ~5 ms target: first64.9855 ms, warm50 p95 69.8665/max87.0894 ms; 52 invocations >=30 ms. Separate from C4 frame gate; no default-on callback. [f1b-summary.json](f1b-summary.json) |
+| F1b 7 | DEFERRED-INPUT | Prepare medium/large own ground-floor frontage/layout and elevator/multi-height checkpoints plus independent landmarks. [additional-fixture-search.json](additional-fixture-search.json) |
+| F1b 8 | NOT-RUN | Prepared medium/large own/elevator fixtures not found in prior stages; no unowned business substituted. [additional-fixture-search.json](additional-fixture-search.json) |
+
+DEFERRED-INPUT for Peter’s6November playtest: native UI price/stock/hours edits; preparing a known rival closure and recovery with same generation; visual free totals/unknown/partial/zero/no-name/no-share wording and open-panel perf; readable modeled/native-service-unobserved inspector words for served/closure visitors and represented-anchor separation; independent jamb/window edge identity; missing medium/large/elevator fixtures. Real pointer hover/move/focus/arbitrary-position click/wheel were not attempted or passed by assumption. No native rival closure was forced. B0/B0b late/uncertain-midnight receipt, natural payment failure and95% warning were NOT-RUN because no natural event was reached; the Update/GC-consistent spike pattern recurs at36.4136ms, now narrowed to route preparation without proving GC causality.
+
+Native Music/Hangout culling exceptions occur on control and candidate with no PC frames. StreetLamp.ChangeLightSetting coroutine NRE recurs49 times in the long candidate4 run, zero in controls; no matching long control soak identifies causality. No unexpected PC exception or error occurred; planned corrupt/future/downgrade suspensions and ordinary diagnostic refusals are separate. [Class counts/stacks](log-classification.json), [samples](log-review.json). Original17-slice rig #2 evidence remains separate; this report adds only the three-merge batch.
+
+Cleanup **PASS** at01:02:45UTC: seven owned games quit normally, exit0, gamekills0; four verified own obsolete Python drivers stopped for invalid original-context capture, never solely elapsed time. No unrelated process controlled. All4,828 original profile hashes,107 install-reference hashes, root agent-install/run/Player-log and game-preference export match. Original autosave enabled/preventAutoSave=false,5min/3slots restored. Lease released,held=false/pending0; no process started by this task remains. Session11flags0 remains locked. Only isolated game preferences were backed up/restored; Windows OS settings/session, Steam/Workshop, normal profile, RLO source and other worktrees were untouched. [Restore/hash/lease](cleanup.json), [owned-process receipt](owned-process-check.json), [final lock](session-final.json). Build worktrees are scheduled for removal after the initial evidence commit; the final cleanup receipt will record verification.
+
+Only this folder is committed on `codex/pc-rig-locked-combined-20261102b`, based on the pinned candidate; normal push, no PR/issue. Recompute distributions/hashes with `python verify_evidence.py`. Raw saves/DLLs/full logs/private backups remain outside Git. This is bounded disposable-rig evidence, with the stated failures and unproved cases, and grants no release or ordinary-save clearance.

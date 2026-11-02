@@ -1,0 +1,8 @@
+{
+  "action": "Stopped own Python driver only; game paused, not terminated",
+  "pid": 45816,
+  "reason": "Observer missed original outward context; obsolete driver must not save a later context",
+  "parent": 8292,
+  "verified_owned_driver": true,
+  "role": "rig_test"
+}

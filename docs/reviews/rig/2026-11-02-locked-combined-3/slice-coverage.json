@@ -1,0 +1,122 @@
+[
+  {
+    "item": "D3a 1",
+    "verdict": "PASS",
+    "result": "Exact day-7 amount/count; every day 9\u201322 reconciles baseline + expired + retained with D2. 633 expired payments, 13 retained nonzero rows maximum.",
+    "evidence": "rolling-summary.json"
+  },
+  {
+    "item": "D3a 2",
+    "verdict": "PASS",
+    "result": "100 natural payments preserve complete selected native registration/finance/receipt projections; all 361 archived before-projections have a real selected registration. Five own purchases book exactly once.",
+    "evidence": "accounting-summary.json"
+  },
+  {
+    "item": "D3a 3",
+    "verdict": "DEFERRED-INPUT",
+    "result": "Normal UI price/stock/hours changes; none induced.",
+    "evidence": "diagnostics-summary.json"
+  },
+  {
+    "item": "D3a 4",
+    "verdict": "PARTIAL",
+    "result": "Both default-active-B consumers pass four native checkpoints and matched 1x replay; expired checkpoint reload exact. Combined B1-inactive + explicitly disabled-campaign fixture absent. Empty campaign images observed, without claiming provider-disabled execution.",
+    "evidence": "journey-summary.json"
+  },
+  {
+    "item": "D3a 5",
+    "verdict": "FAIL",
+    "result": "Same single C4 frame failure; closed-panel idle/rush captured. A separate late older-commitment burst was not prepared or forced; no extra perf window.",
+    "evidence": "performance-summary.json"
+  },
+  {
+    "item": "D3a 6",
+    "verdict": "DEFERRED-INPUT",
+    "result": "Free panel visual boundary and paired open-panel timing require Peter\u2019s input; no additional windows run here.",
+    "evidence": "diagnostics-summary.json"
+  },
+  {
+    "item": "D4 1",
+    "verdict": "PARTIAL",
+    "result": "Slot-zero pc:12 and represented consumer:c174:1: commitment/service/payment/return, exact-once experience, identical matched 1x final state. 12 repeat positive entries in first native day. Only one own shop; two-own/two-rival saturated native fixture and B-inactive purchase arm absent. Body visibility throughout pc:12\u2019s trip not established.",
+    "evidence": "journey-summary.json"
+  },
+  {
+    "item": "D4 2",
+    "verdict": "DEFERRED-INPUT",
+    "result": "Native rival closure/recovery via normal UI, never induced by tools.",
+    "evidence": "rolling-memory-outcomes.json"
+  },
+  {
+    "item": "D4 3",
+    "verdict": "NOT-RUN",
+    "result": "No natural closure or prepared rival closure/recovery fixture in 14-day observation. Protected failure insertion, changed-price and unreadable-neutral native arms unavailable; no rival terms were forced. Unmatched 6x schedule refusal remained neutral, but is excluded from replay equality proof.",
+    "evidence": "excluded-replay-comparison.json"
+  },
+  {
+    "item": "D4 4",
+    "verdict": "PARTIAL",
+    "result": "Service arms conserve exact money, preserve native rival state and own authority; all consumers remain <=4 entries. Failure arm absent. Full 32-source/8-shop/16-route-slot saturation not exercised natively; no extra route participant introduced.",
+    "evidence": "memory-summary.json"
+  },
+  {
+    "item": "D4 5",
+    "verdict": "FAIL",
+    "result": "C4 active390/empty0 entries, only memory-entry differences and identical native bytes elsewhere; all p95 pass, one >=30 ms clean empty-arm frame. Original autosave restored.",
+    "evidence": "memory-variant-proof.json"
+  },
+  {
+    "item": "D4 6",
+    "verdict": "DEFERRED-INPUT",
+    "result": "Visual modeled/native-unobserved wording, closure visitor and represented-anchor separation in inspector.",
+    "evidence": "journey-summary.json"
+  },
+  {
+    "item": "F1b 1",
+    "verdict": "PASS",
+    "result": "Omitted/false return null; explicit true required; cached guard unchanged; retained stale host refuses true, false remains null.",
+    "evidence": "f1b-summary.json"
+  },
+  {
+    "item": "F1b 2",
+    "verdict": "PASS",
+    "result": "Native doorId=0 matches exitToZoneId=0; direct independent fields and rig2 transforms agree; unique candidate refuses InsufficientEdges, RendererAvailable=false.",
+    "evidence": "f1b-doors-proxy-first-cold.json"
+  },
+  {
+    "item": "F1b 3",
+    "verdict": "DEFERRED-INPUT",
+    "result": "Independent fixed jamb/window correspondences and >=3 noncollinear points across two apertures unavailable; no candidate-derived pairs supplied.",
+    "evidence": "f1b-summary.json"
+  },
+  {
+    "item": "F1b 4",
+    "verdict": "PARTIAL",
+    "result": "25,859 nodes/1,024 rows cap, 1,020 renderer rows +4 environment rows. CountsComplete=false; no full radius/owner/static/motion coverage claim.",
+    "evidence": "f1b-inventory-initial.json"
+  },
+  {
+    "item": "F1b 5",
+    "verdict": "PARTIAL",
+    "result": "100 paused reads preserve native, scene and payload hashes; exit/re-entry/outside/stale refusal pass. Save controls differ already before reads; post-reload true request refuses unstable shop context, so literal save-byte/geometry reload acceptance is unproved.",
+    "evidence": "f1b-summary.json"
+  },
+  {
+    "item": "F1b 6",
+    "verdict": "FAIL",
+    "result": "One-shot native inventory misses requested ~5 ms target: first64.9855 ms, warm50 p95 69.8665/max87.0894 ms; 52 invocations >=30 ms. Separate from C4 frame gate; no default-on callback.",
+    "evidence": "f1b-summary.json"
+  },
+  {
+    "item": "F1b 7",
+    "verdict": "DEFERRED-INPUT",
+    "result": "Prepare medium/large own ground-floor frontage/layout and elevator/multi-height checkpoints plus independent landmarks.",
+    "evidence": "additional-fixture-search.json"
+  },
+  {
+    "item": "F1b 8",
+    "verdict": "NOT-RUN",
+    "result": "Prepared medium/large own/elevator fixtures not found in prior stages; no unowned business substituted.",
+    "evidence": "additional-fixture-search.json"
+  }
+]

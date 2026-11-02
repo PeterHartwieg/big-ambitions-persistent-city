@@ -1,0 +1,7 @@
+{
+  "verified_owned_driver": true,
+  "parent": 9240,
+  "pid": 39636,
+  "reason": "Missed original service phase; replace phase observation with safe main-thread polling; no elapsed-time termination",
+  "role": "rig_test"
+}

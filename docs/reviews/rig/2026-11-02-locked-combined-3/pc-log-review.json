@@ -1,0 +1,38 @@
+{
+  "role": "rig_test",
+  "lines": {
+    "base1-Player.private.log": [
+      "[Mod:PersistentCity] E1 weather revision 1; missing/failed source is unknown (neutral).",
+      "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence."
+    ],
+    "base2-Player.private.log": [
+      "[Mod:PersistentCity] E1 weather revision 1; missing/failed source is unknown (neutral).",
+      "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+      "[Persistent City] Food ownership suspended: Unsupported population schema; preserve the payload.",
+      "[Mod:PersistentCity] Persistent City stopped: Food ownership suspended: Unsupported population schema; preserve the payload."
+    ],
+    "cand1-Player.private.log": [
+      "[Mod:PersistentCity] E1 weather revision 1; missing/failed source is unknown (neutral).",
+      "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence.",
+      "[Persistent City] Food ownership suspended: Unsupported population schema; preserve the payload.",
+      "[Mod:PersistentCity] Persistent City stopped: Food ownership suspended: Unsupported population schema; preserve the payload."
+    ],
+    "cand2-Player.private.log": [
+      "[Mod:PersistentCity] E1 weather revision 1; missing/failed source is unknown (neutral).",
+      "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence."
+    ],
+    "cand3-Player.private.log": [
+      "[Mod:PersistentCity] E1 weather revision 1; missing/failed source is unknown (neutral).",
+      "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence."
+    ],
+    "cand4-Player.private.log": [
+      "[Mod:PersistentCity] E1 weather revision 1; missing/failed source is unknown (neutral).",
+      "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence."
+    ],
+    "cand5-Player.private.log": [
+      "[Mod:PersistentCity] E1 weather revision 1; missing/failed source is unknown (neutral).",
+      "[Mod:PersistentCity] Native outdoors: 3 parks and 1 beaches and 1 outdoor party piers accepted by public-ground checks, 1 failed those checks, 0 failed, 0 over discovery limit, 1 other happiness volumes; 288 samples, 5 path checks. Party pier means outdoor walking only; casino boarding is not modeled. Other map activity anchors await public-access/schedule evidence."
+    ]
+  },
+  "classification": "Only planned corrupt/future/downgrade ownership suspensions expected; native culling/StreetLamp stacks classified separately."
+}

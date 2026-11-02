@@ -1,0 +1,1766 @@
+[
+  {
+    "day": 9,
+    "wire": "6|1|9|0|0|0|7,110711814348800,306|8,112058699673600,327",
+    "ledgerUnits": "222770514022400",
+    "reconciles": true,
+    "rows": 2,
+    "free": {
+      "Core": {
+        "RivalChoices": 327,
+        "RivalSettlements": 327,
+        "RivalRefusals": 0,
+        "FreeOutflow": {
+          "Days": [
+            {
+              "Day": -4,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -3,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -2,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -1,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 0,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 1,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 2,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 3,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 4,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 5,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 6,
+              "Known": true,
+              "Partial": true,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 7,
+              "Known": true,
+              "Partial": false,
+              "Units": 110711814348800,
+              "Count": 306
+            },
+            {
+              "Day": 8,
+              "Known": true,
+              "Partial": false,
+              "Units": 112058699673600,
+              "Count": 327
+            },
+            {
+              "Day": 9,
+              "Known": true,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            }
+          ],
+          "Units": 222770514022400,
+          "Count": 633
+        },
+        "Availability": "EstimatedFromPriceAndHours",
+        "NativeRivalCheckout": "Unsupported",
+        "ExternalFoodSpentUnits": "222770514022400"
+      },
+      "RefreshUnits": 1344,
+      "DetailReads": 22339,
+      "Unavailable": ""
+    },
+    "memoryEntries": 570,
+    "maxEntries": 4
+  },
+  {
+    "day": 10,
+    "wire": "6|1|10|0|0|0|7,110711814348800,306|8,112058699673600,327|9,124743149593600,364",
+    "ledgerUnits": "347513663616000",
+    "reconciles": true,
+    "rows": 3,
+    "free": {
+      "Core": {
+        "RivalChoices": 691,
+        "RivalSettlements": 691,
+        "RivalRefusals": 0,
+        "FreeOutflow": {
+          "Days": [
+            {
+              "Day": -3,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -2,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -1,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 0,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 1,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 2,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 3,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 4,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 5,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 6,
+              "Known": true,
+              "Partial": true,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 7,
+              "Known": true,
+              "Partial": false,
+              "Units": 110711814348800,
+              "Count": 306
+            },
+            {
+              "Day": 8,
+              "Known": true,
+              "Partial": false,
+              "Units": 112058699673600,
+              "Count": 327
+            },
+            {
+              "Day": 9,
+              "Known": true,
+              "Partial": false,
+              "Units": 124743149593600,
+              "Count": 364
+            },
+            {
+              "Day": 10,
+              "Known": true,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            }
+          ],
+          "Units": 347513663616000,
+          "Count": 997
+        },
+        "Availability": "EstimatedFromPriceAndHours",
+        "NativeRivalCheckout": "Unsupported",
+        "ExternalFoodSpentUnits": "347513663616000"
+      },
+      "RefreshUnits": 2688,
+      "DetailReads": 45130,
+      "Unavailable": ""
+    },
+    "memoryEntries": 810,
+    "maxEntries": 4
+  },
+  {
+    "day": 11,
+    "wire": "6|1|11|0|0|0|7,110711814348800,306|8,112058699673600,327|9,124743149593600,364|10,119138561740800,345",
+    "ledgerUnits": "466652225356800",
+    "reconciles": true,
+    "rows": 4,
+    "free": {
+      "Core": {
+        "RivalChoices": 1036,
+        "RivalSettlements": 1036,
+        "RivalRefusals": 0,
+        "FreeOutflow": {
+          "Days": [
+            {
+              "Day": -2,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": -1,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 0,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 1,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 2,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 3,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 4,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 5,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 6,
+              "Known": true,
+              "Partial": true,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 7,
+              "Known": true,
+              "Partial": false,
+              "Units": 110711814348800,
+              "Count": 306
+            },
+            {
+              "Day": 8,
+              "Known": true,
+              "Partial": false,
+              "Units": 112058699673600,
+              "Count": 327
+            },
+            {
+              "Day": 9,
+              "Known": true,
+              "Partial": false,
+              "Units": 124743149593600,
+              "Count": 364
+            },
+            {
+              "Day": 10,
+              "Known": true,
+              "Partial": false,
+              "Units": 119138561740800,
+              "Count": 345
+            },
+            {
+              "Day": 11,
+              "Known": true,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            }
+          ],
+          "Units": 466652225356800,
+          "Count": 1342
+        },
+        "Availability": "EstimatedFromPriceAndHours",
+        "NativeRivalCheckout": "Unsupported",
+        "ExternalFoodSpentUnits": "466652225356800"
+      },
+      "RefreshUnits": 4032,
+      "DetailReads": 68044,
+      "Unavailable": ""
+    },
+    "memoryEntries": 988,
+    "maxEntries": 4
+  },
+  {
+    "day": 12,
+    "wire": "6|1|12|0|0|0|7,110711814348800,306|8,112058699673600,327|9,124743149593600,364|10,119138561740800,345|11,132513013888000,383",
+    "ledgerUnits": "599165239244800",
+    "reconciles": true,
+    "rows": 5,
+    "free": {
+      "Core": {
+        "RivalChoices": 1419,
+        "RivalSettlements": 1419,
+        "RivalRefusals": 0,
+        "FreeOutflow": {
+          "Days": [
+            {
+              "Day": -1,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 0,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 1,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 2,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 3,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 4,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 5,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 6,
+              "Known": true,
+              "Partial": true,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 7,
+              "Known": true,
+              "Partial": false,
+              "Units": 110711814348800,
+              "Count": 306
+            },
+            {
+              "Day": 8,
+              "Known": true,
+              "Partial": false,
+              "Units": 112058699673600,
+              "Count": 327
+            },
+            {
+              "Day": 9,
+              "Known": true,
+              "Partial": false,
+              "Units": 124743149593600,
+              "Count": 364
+            },
+            {
+              "Day": 10,
+              "Known": true,
+              "Partial": false,
+              "Units": 119138561740800,
+              "Count": 345
+            },
+            {
+              "Day": 11,
+              "Known": true,
+              "Partial": false,
+              "Units": 132513013888000,
+              "Count": 383
+            },
+            {
+              "Day": 12,
+              "Known": true,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            }
+          ],
+          "Units": 599165239244800,
+          "Count": 1725
+        },
+        "Availability": "EstimatedFromPriceAndHours",
+        "NativeRivalCheckout": "Unsupported",
+        "ExternalFoodSpentUnits": "599165239244800"
+      },
+      "RefreshUnits": 5376,
+      "DetailReads": 91448,
+      "Unavailable": ""
+    },
+    "memoryEntries": 1167,
+    "maxEntries": 4
+  },
+  {
+    "day": 13,
+    "wire": "6|1|13|0|0|0|7,110711814348800,306|8,112058699673600,327|9,124743149593600,364|10,119138561740800,345|11,132513013888000,383|12,157938695552000,433",
+    "ledgerUnits": "757103934796800",
+    "reconciles": true,
+    "rows": 6,
+    "free": {
+      "Core": {
+        "RivalChoices": 1852,
+        "RivalSettlements": 1852,
+        "RivalRefusals": 0,
+        "FreeOutflow": {
+          "Days": [
+            {
+              "Day": 0,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 1,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 2,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 3,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 4,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 5,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 6,
+              "Known": true,
+              "Partial": true,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 7,
+              "Known": true,
+              "Partial": false,
+              "Units": 110711814348800,
+              "Count": 306
+            },
+            {
+              "Day": 8,
+              "Known": true,
+              "Partial": false,
+              "Units": 112058699673600,
+              "Count": 327
+            },
+            {
+              "Day": 9,
+              "Known": true,
+              "Partial": false,
+              "Units": 124743149593600,
+              "Count": 364
+            },
+            {
+              "Day": 10,
+              "Known": true,
+              "Partial": false,
+              "Units": 119138561740800,
+              "Count": 345
+            },
+            {
+              "Day": 11,
+              "Known": true,
+              "Partial": false,
+              "Units": 132513013888000,
+              "Count": 383
+            },
+            {
+              "Day": 12,
+              "Known": true,
+              "Partial": false,
+              "Units": 157938695552000,
+              "Count": 433
+            },
+            {
+              "Day": 13,
+              "Known": true,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            }
+          ],
+          "Units": 757103934796800,
+          "Count": 2158
+        },
+        "Availability": "EstimatedFromPriceAndHours",
+        "NativeRivalCheckout": "Unsupported",
+        "ExternalFoodSpentUnits": "757103934796800"
+      },
+      "RefreshUnits": 6720,
+      "DetailReads": 117845,
+      "Unavailable": ""
+    },
+    "memoryEntries": 1396,
+    "maxEntries": 4
+  },
+  {
+    "day": 14,
+    "wire": "6|1|14|0|0|0|7,110711814348800,306|8,112058699673600,327|9,124743149593600,364|10,119138561740800,345|11,132513013888000,383|12,157938695552000,433|13,150309432601600,410",
+    "ledgerUnits": "907413367398400",
+    "reconciles": true,
+    "rows": 7,
+    "free": {
+      "Core": {
+        "RivalChoices": 2262,
+        "RivalSettlements": 2262,
+        "RivalRefusals": 0,
+        "FreeOutflow": {
+          "Days": [
+            {
+              "Day": 1,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 2,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 3,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 4,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 5,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 6,
+              "Known": true,
+              "Partial": true,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 7,
+              "Known": true,
+              "Partial": false,
+              "Units": 110711814348800,
+              "Count": 306
+            },
+            {
+              "Day": 8,
+              "Known": true,
+              "Partial": false,
+              "Units": 112058699673600,
+              "Count": 327
+            },
+            {
+              "Day": 9,
+              "Known": true,
+              "Partial": false,
+              "Units": 124743149593600,
+              "Count": 364
+            },
+            {
+              "Day": 10,
+              "Known": true,
+              "Partial": false,
+              "Units": 119138561740800,
+              "Count": 345
+            },
+            {
+              "Day": 11,
+              "Known": true,
+              "Partial": false,
+              "Units": 132513013888000,
+              "Count": 383
+            },
+            {
+              "Day": 12,
+              "Known": true,
+              "Partial": false,
+              "Units": 157938695552000,
+              "Count": 433
+            },
+            {
+              "Day": 13,
+              "Known": true,
+              "Partial": false,
+              "Units": 150309432601600,
+              "Count": 410
+            },
+            {
+              "Day": 14,
+              "Known": true,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            }
+          ],
+          "Units": 907413367398400,
+          "Count": 2568
+        },
+        "Availability": "EstimatedFromPriceAndHours",
+        "NativeRivalCheckout": "Unsupported",
+        "ExternalFoodSpentUnits": "907413367398400"
+      },
+      "RefreshUnits": 8064,
+      "DetailReads": 144446,
+      "Unavailable": ""
+    },
+    "memoryEntries": 1551,
+    "maxEntries": 4
+  },
+  {
+    "day": 15,
+    "wire": "6|1|15|0|0|0|7,110711814348800,306|8,112058699673600,327|9,124743149593600,364|10,119138561740800,345|11,132513013888000,383|12,157938695552000,433|13,150309432601600,410|14,160137005107200,446",
+    "ledgerUnits": "1067550372505600",
+    "reconciles": true,
+    "rows": 8,
+    "free": {
+      "Core": {
+        "RivalChoices": 2708,
+        "RivalSettlements": 2708,
+        "RivalRefusals": 0,
+        "FreeOutflow": {
+          "Days": [
+            {
+              "Day": 2,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 3,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 4,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 5,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 6,
+              "Known": true,
+              "Partial": true,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 7,
+              "Known": true,
+              "Partial": false,
+              "Units": 110711814348800,
+              "Count": 306
+            },
+            {
+              "Day": 8,
+              "Known": true,
+              "Partial": false,
+              "Units": 112058699673600,
+              "Count": 327
+            },
+            {
+              "Day": 9,
+              "Known": true,
+              "Partial": false,
+              "Units": 124743149593600,
+              "Count": 364
+            },
+            {
+              "Day": 10,
+              "Known": true,
+              "Partial": false,
+              "Units": 119138561740800,
+              "Count": 345
+            },
+            {
+              "Day": 11,
+              "Known": true,
+              "Partial": false,
+              "Units": 132513013888000,
+              "Count": 383
+            },
+            {
+              "Day": 12,
+              "Known": true,
+              "Partial": false,
+              "Units": 157938695552000,
+              "Count": 433
+            },
+            {
+              "Day": 13,
+              "Known": true,
+              "Partial": false,
+              "Units": 150309432601600,
+              "Count": 410
+            },
+            {
+              "Day": 14,
+              "Known": true,
+              "Partial": false,
+              "Units": 160137005107200,
+              "Count": 446
+            },
+            {
+              "Day": 15,
+              "Known": true,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            }
+          ],
+          "Units": 1067550372505600,
+          "Count": 3014
+        },
+        "Availability": "EstimatedFromPriceAndHours",
+        "NativeRivalCheckout": "Unsupported",
+        "ExternalFoodSpentUnits": "1067550372505600"
+      },
+      "RefreshUnits": 9408,
+      "DetailReads": 171079,
+      "Unavailable": ""
+    },
+    "memoryEntries": 1710,
+    "maxEntries": 4
+  },
+  {
+    "day": 16,
+    "wire": "6|1|16|0|0|0|7,110711814348800,306|8,112058699673600,327|9,124743149593600,364|10,119138561740800,345|11,132513013888000,383|12,157938695552000,433|13,150309432601600,410|14,160137005107200,446|15,145106386022400,408",
+    "ledgerUnits": "1212656758528000",
+    "reconciles": true,
+    "rows": 9,
+    "free": {
+      "Core": {
+        "RivalChoices": 3116,
+        "RivalSettlements": 3116,
+        "RivalRefusals": 0,
+        "FreeOutflow": {
+          "Days": [
+            {
+              "Day": 3,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 4,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 5,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 6,
+              "Known": true,
+              "Partial": true,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 7,
+              "Known": true,
+              "Partial": false,
+              "Units": 110711814348800,
+              "Count": 306
+            },
+            {
+              "Day": 8,
+              "Known": true,
+              "Partial": false,
+              "Units": 112058699673600,
+              "Count": 327
+            },
+            {
+              "Day": 9,
+              "Known": true,
+              "Partial": false,
+              "Units": 124743149593600,
+              "Count": 364
+            },
+            {
+              "Day": 10,
+              "Known": true,
+              "Partial": false,
+              "Units": 119138561740800,
+              "Count": 345
+            },
+            {
+              "Day": 11,
+              "Known": true,
+              "Partial": false,
+              "Units": 132513013888000,
+              "Count": 383
+            },
+            {
+              "Day": 12,
+              "Known": true,
+              "Partial": false,
+              "Units": 157938695552000,
+              "Count": 433
+            },
+            {
+              "Day": 13,
+              "Known": true,
+              "Partial": false,
+              "Units": 150309432601600,
+              "Count": 410
+            },
+            {
+              "Day": 14,
+              "Known": true,
+              "Partial": false,
+              "Units": 160137005107200,
+              "Count": 446
+            },
+            {
+              "Day": 15,
+              "Known": true,
+              "Partial": false,
+              "Units": 145106386022400,
+              "Count": 408
+            },
+            {
+              "Day": 16,
+              "Known": true,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            }
+          ],
+          "Units": 1212656758528000,
+          "Count": 3422
+        },
+        "Availability": "EstimatedFromPriceAndHours",
+        "NativeRivalCheckout": "Unsupported",
+        "ExternalFoodSpentUnits": "1212656758528000"
+      },
+      "RefreshUnits": 10752,
+      "DetailReads": 194995,
+      "Unavailable": ""
+    },
+    "memoryEntries": 1839,
+    "maxEntries": 4
+  },
+  {
+    "day": 17,
+    "wire": "6|1|17|0|0|0|7,110711814348800,306|8,112058699673600,327|9,124743149593600,364|10,119138561740800,345|11,132513013888000,383|12,157938695552000,433|13,150309432601600,410|14,160137005107200,446|15,145106386022400,408|16,146483003289600,422",
+    "ledgerUnits": "1359139761817600",
+    "reconciles": true,
+    "rows": 10,
+    "free": {
+      "Core": {
+        "RivalChoices": 3538,
+        "RivalSettlements": 3538,
+        "RivalRefusals": 0,
+        "FreeOutflow": {
+          "Days": [
+            {
+              "Day": 4,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 5,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 6,
+              "Known": true,
+              "Partial": true,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 7,
+              "Known": true,
+              "Partial": false,
+              "Units": 110711814348800,
+              "Count": 306
+            },
+            {
+              "Day": 8,
+              "Known": true,
+              "Partial": false,
+              "Units": 112058699673600,
+              "Count": 327
+            },
+            {
+              "Day": 9,
+              "Known": true,
+              "Partial": false,
+              "Units": 124743149593600,
+              "Count": 364
+            },
+            {
+              "Day": 10,
+              "Known": true,
+              "Partial": false,
+              "Units": 119138561740800,
+              "Count": 345
+            },
+            {
+              "Day": 11,
+              "Known": true,
+              "Partial": false,
+              "Units": 132513013888000,
+              "Count": 383
+            },
+            {
+              "Day": 12,
+              "Known": true,
+              "Partial": false,
+              "Units": 157938695552000,
+              "Count": 433
+            },
+            {
+              "Day": 13,
+              "Known": true,
+              "Partial": false,
+              "Units": 150309432601600,
+              "Count": 410
+            },
+            {
+              "Day": 14,
+              "Known": true,
+              "Partial": false,
+              "Units": 160137005107200,
+              "Count": 446
+            },
+            {
+              "Day": 15,
+              "Known": true,
+              "Partial": false,
+              "Units": 145106386022400,
+              "Count": 408
+            },
+            {
+              "Day": 16,
+              "Known": true,
+              "Partial": false,
+              "Units": 146483003289600,
+              "Count": 422
+            },
+            {
+              "Day": 17,
+              "Known": true,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            }
+          ],
+          "Units": 1359139761817600,
+          "Count": 3844
+        },
+        "Availability": "EstimatedFromPriceAndHours",
+        "NativeRivalCheckout": "Unsupported",
+        "ExternalFoodSpentUnits": "1359139761817600"
+      },
+      "RefreshUnits": 12096,
+      "DetailReads": 219388,
+      "Unavailable": ""
+    },
+    "memoryEntries": 1941,
+    "maxEntries": 4
+  },
+  {
+    "day": 18,
+    "wire": "6|1|18|0|0|0|7,110711814348800,306|8,112058699673600,327|9,124743149593600,364|10,119138561740800,345|11,132513013888000,383|12,157938695552000,433|13,150309432601600,410|14,160137005107200,446|15,145106386022400,408|16,146483003289600,422|17,154484946611200,445",
+    "ledgerUnits": "1513624708428800",
+    "reconciles": true,
+    "rows": 11,
+    "free": {
+      "Core": {
+        "RivalChoices": 3983,
+        "RivalSettlements": 3983,
+        "RivalRefusals": 0,
+        "FreeOutflow": {
+          "Days": [
+            {
+              "Day": 5,
+              "Known": false,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 6,
+              "Known": true,
+              "Partial": true,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 7,
+              "Known": true,
+              "Partial": false,
+              "Units": 110711814348800,
+              "Count": 306
+            },
+            {
+              "Day": 8,
+              "Known": true,
+              "Partial": false,
+              "Units": 112058699673600,
+              "Count": 327
+            },
+            {
+              "Day": 9,
+              "Known": true,
+              "Partial": false,
+              "Units": 124743149593600,
+              "Count": 364
+            },
+            {
+              "Day": 10,
+              "Known": true,
+              "Partial": false,
+              "Units": 119138561740800,
+              "Count": 345
+            },
+            {
+              "Day": 11,
+              "Known": true,
+              "Partial": false,
+              "Units": 132513013888000,
+              "Count": 383
+            },
+            {
+              "Day": 12,
+              "Known": true,
+              "Partial": false,
+              "Units": 157938695552000,
+              "Count": 433
+            },
+            {
+              "Day": 13,
+              "Known": true,
+              "Partial": false,
+              "Units": 150309432601600,
+              "Count": 410
+            },
+            {
+              "Day": 14,
+              "Known": true,
+              "Partial": false,
+              "Units": 160137005107200,
+              "Count": 446
+            },
+            {
+              "Day": 15,
+              "Known": true,
+              "Partial": false,
+              "Units": 145106386022400,
+              "Count": 408
+            },
+            {
+              "Day": 16,
+              "Known": true,
+              "Partial": false,
+              "Units": 146483003289600,
+              "Count": 422
+            },
+            {
+              "Day": 17,
+              "Known": true,
+              "Partial": false,
+              "Units": 154484946611200,
+              "Count": 445
+            },
+            {
+              "Day": 18,
+              "Known": true,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            }
+          ],
+          "Units": 1513624708428800,
+          "Count": 4289
+        },
+        "Availability": "EstimatedFromPriceAndHours",
+        "NativeRivalCheckout": "Unsupported",
+        "ExternalFoodSpentUnits": "1513624708428800"
+      },
+      "RefreshUnits": 13440,
+      "DetailReads": 243906,
+      "Unavailable": ""
+    },
+    "memoryEntries": 2060,
+    "maxEntries": 4
+  },
+  {
+    "day": 19,
+    "wire": "6|1|19|0|0|0|7,110711814348800,306|8,112058699673600,327|9,124743149593600,364|10,119138561740800,345|11,132513013888000,383|12,157938695552000,433|13,150309432601600,410|14,160137005107200,446|15,145106386022400,408|16,146483003289600,422|17,154484946611200,445|18,157037618688000,457",
+    "ledgerUnits": "1670662327116800",
+    "reconciles": true,
+    "rows": 12,
+    "free": {
+      "Core": {
+        "RivalChoices": 4440,
+        "RivalSettlements": 4440,
+        "RivalRefusals": 0,
+        "FreeOutflow": {
+          "Days": [
+            {
+              "Day": 6,
+              "Known": true,
+              "Partial": true,
+              "Units": 0,
+              "Count": 0
+            },
+            {
+              "Day": 7,
+              "Known": true,
+              "Partial": false,
+              "Units": 110711814348800,
+              "Count": 306
+            },
+            {
+              "Day": 8,
+              "Known": true,
+              "Partial": false,
+              "Units": 112058699673600,
+              "Count": 327
+            },
+            {
+              "Day": 9,
+              "Known": true,
+              "Partial": false,
+              "Units": 124743149593600,
+              "Count": 364
+            },
+            {
+              "Day": 10,
+              "Known": true,
+              "Partial": false,
+              "Units": 119138561740800,
+              "Count": 345
+            },
+            {
+              "Day": 11,
+              "Known": true,
+              "Partial": false,
+              "Units": 132513013888000,
+              "Count": 383
+            },
+            {
+              "Day": 12,
+              "Known": true,
+              "Partial": false,
+              "Units": 157938695552000,
+              "Count": 433
+            },
+            {
+              "Day": 13,
+              "Known": true,
+              "Partial": false,
+              "Units": 150309432601600,
+              "Count": 410
+            },
+            {
+              "Day": 14,
+              "Known": true,
+              "Partial": false,
+              "Units": 160137005107200,
+              "Count": 446
+            },
+            {
+              "Day": 15,
+              "Known": true,
+              "Partial": false,
+              "Units": 145106386022400,
+              "Count": 408
+            },
+            {
+              "Day": 16,
+              "Known": true,
+              "Partial": false,
+              "Units": 146483003289600,
+              "Count": 422
+            },
+            {
+              "Day": 17,
+              "Known": true,
+              "Partial": false,
+              "Units": 154484946611200,
+              "Count": 445
+            },
+            {
+              "Day": 18,
+              "Known": true,
+              "Partial": false,
+              "Units": 157037618688000,
+              "Count": 457
+            },
+            {
+              "Day": 19,
+              "Known": true,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            }
+          ],
+          "Units": 1670662327116800,
+          "Count": 4746
+        },
+        "Availability": "EstimatedFromPriceAndHours",
+        "NativeRivalCheckout": "Unsupported",
+        "ExternalFoodSpentUnits": "1670662327116800"
+      },
+      "RefreshUnits": 14784,
+      "DetailReads": 268535,
+      "Unavailable": ""
+    },
+    "memoryEntries": 2141,
+    "maxEntries": 4
+  },
+  {
+    "day": 20,
+    "wire": "6|1|20|0|0|0|7,110711814348800,306|8,112058699673600,327|9,124743149593600,364|10,119138561740800,345|11,132513013888000,383|12,157938695552000,433|13,150309432601600,410|14,160137005107200,446|15,145106386022400,408|16,146483003289600,422|17,154484946611200,445|18,157037618688000,457|19,175680753664000,478",
+    "ledgerUnits": "1846343080780800",
+    "reconciles": true,
+    "rows": 13,
+    "free": {
+      "Core": {
+        "RivalChoices": 4918,
+        "RivalSettlements": 4918,
+        "RivalRefusals": 0,
+        "FreeOutflow": {
+          "Days": [
+            {
+              "Day": 7,
+              "Known": true,
+              "Partial": false,
+              "Units": 110711814348800,
+              "Count": 306
+            },
+            {
+              "Day": 8,
+              "Known": true,
+              "Partial": false,
+              "Units": 112058699673600,
+              "Count": 327
+            },
+            {
+              "Day": 9,
+              "Known": true,
+              "Partial": false,
+              "Units": 124743149593600,
+              "Count": 364
+            },
+            {
+              "Day": 10,
+              "Known": true,
+              "Partial": false,
+              "Units": 119138561740800,
+              "Count": 345
+            },
+            {
+              "Day": 11,
+              "Known": true,
+              "Partial": false,
+              "Units": 132513013888000,
+              "Count": 383
+            },
+            {
+              "Day": 12,
+              "Known": true,
+              "Partial": false,
+              "Units": 157938695552000,
+              "Count": 433
+            },
+            {
+              "Day": 13,
+              "Known": true,
+              "Partial": false,
+              "Units": 150309432601600,
+              "Count": 410
+            },
+            {
+              "Day": 14,
+              "Known": true,
+              "Partial": false,
+              "Units": 160137005107200,
+              "Count": 446
+            },
+            {
+              "Day": 15,
+              "Known": true,
+              "Partial": false,
+              "Units": 145106386022400,
+              "Count": 408
+            },
+            {
+              "Day": 16,
+              "Known": true,
+              "Partial": false,
+              "Units": 146483003289600,
+              "Count": 422
+            },
+            {
+              "Day": 17,
+              "Known": true,
+              "Partial": false,
+              "Units": 154484946611200,
+              "Count": 445
+            },
+            {
+              "Day": 18,
+              "Known": true,
+              "Partial": false,
+              "Units": 157037618688000,
+              "Count": 457
+            },
+            {
+              "Day": 19,
+              "Known": true,
+              "Partial": false,
+              "Units": 175680753664000,
+              "Count": 478
+            },
+            {
+              "Day": 20,
+              "Known": true,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            }
+          ],
+          "Units": 1846343080780800,
+          "Count": 5224
+        },
+        "Availability": "EstimatedFromPriceAndHours",
+        "NativeRivalCheckout": "Unsupported",
+        "ExternalFoodSpentUnits": "1846343080780800"
+      },
+      "RefreshUnits": 16128,
+      "DetailReads": 296311,
+      "Unavailable": ""
+    },
+    "memoryEntries": 2259,
+    "maxEntries": 4
+  },
+  {
+    "day": 21,
+    "wire": "6|1|21|0|110711814348800|306|8,112058699673600,327|9,124743149593600,364|10,119138561740800,345|11,132513013888000,383|12,157938695552000,433|13,150309432601600,410|14,160137005107200,446|15,145106386022400,408|16,146483003289600,422|17,154484946611200,445|18,157037618688000,457|19,175680753664000,478|20,179173948441600,479",
+    "ledgerUnits": "2025517029222400",
+    "reconciles": true,
+    "rows": 13,
+    "free": {
+      "Core": {
+        "RivalChoices": 5397,
+        "RivalSettlements": 5397,
+        "RivalRefusals": 0,
+        "FreeOutflow": {
+          "Days": [
+            {
+              "Day": 8,
+              "Known": true,
+              "Partial": false,
+              "Units": 112058699673600,
+              "Count": 327
+            },
+            {
+              "Day": 9,
+              "Known": true,
+              "Partial": false,
+              "Units": 124743149593600,
+              "Count": 364
+            },
+            {
+              "Day": 10,
+              "Known": true,
+              "Partial": false,
+              "Units": 119138561740800,
+              "Count": 345
+            },
+            {
+              "Day": 11,
+              "Known": true,
+              "Partial": false,
+              "Units": 132513013888000,
+              "Count": 383
+            },
+            {
+              "Day": 12,
+              "Known": true,
+              "Partial": false,
+              "Units": 157938695552000,
+              "Count": 433
+            },
+            {
+              "Day": 13,
+              "Known": true,
+              "Partial": false,
+              "Units": 150309432601600,
+              "Count": 410
+            },
+            {
+              "Day": 14,
+              "Known": true,
+              "Partial": false,
+              "Units": 160137005107200,
+              "Count": 446
+            },
+            {
+              "Day": 15,
+              "Known": true,
+              "Partial": false,
+              "Units": 145106386022400,
+              "Count": 408
+            },
+            {
+              "Day": 16,
+              "Known": true,
+              "Partial": false,
+              "Units": 146483003289600,
+              "Count": 422
+            },
+            {
+              "Day": 17,
+              "Known": true,
+              "Partial": false,
+              "Units": 154484946611200,
+              "Count": 445
+            },
+            {
+              "Day": 18,
+              "Known": true,
+              "Partial": false,
+              "Units": 157037618688000,
+              "Count": 457
+            },
+            {
+              "Day": 19,
+              "Known": true,
+              "Partial": false,
+              "Units": 175680753664000,
+              "Count": 478
+            },
+            {
+              "Day": 20,
+              "Known": true,
+              "Partial": false,
+              "Units": 179173948441600,
+              "Count": 479
+            },
+            {
+              "Day": 21,
+              "Known": true,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            }
+          ],
+          "Units": 1914805214873600,
+          "Count": 5397
+        },
+        "Availability": "EstimatedFromPriceAndHours",
+        "NativeRivalCheckout": "Unsupported",
+        "ExternalFoodSpentUnits": "2025517029222400"
+      },
+      "RefreshUnits": 17472,
+      "DetailReads": 324109,
+      "Unavailable": ""
+    },
+    "memoryEntries": 2373,
+    "maxEntries": 4
+  },
+  {
+    "day": 22,
+    "wire": "6|1|22|0|222770514022400|633|9,124743149593600,364|10,119138561740800,345|11,132513013888000,383|12,157938695552000,433|13,150309432601600,410|14,160137005107200,446|15,145106386022400,408|16,146483003289600,422|17,154484946611200,445|18,157037618688000,457|19,175680753664000,478|20,179173948441600,479|21,168673690240000,450",
+    "ledgerUnits": "2194190719462400",
+    "reconciles": true,
+    "rows": 13,
+    "free": {
+      "Core": {
+        "RivalChoices": 5847,
+        "RivalSettlements": 5847,
+        "RivalRefusals": 0,
+        "FreeOutflow": {
+          "Days": [
+            {
+              "Day": 9,
+              "Known": true,
+              "Partial": false,
+              "Units": 124743149593600,
+              "Count": 364
+            },
+            {
+              "Day": 10,
+              "Known": true,
+              "Partial": false,
+              "Units": 119138561740800,
+              "Count": 345
+            },
+            {
+              "Day": 11,
+              "Known": true,
+              "Partial": false,
+              "Units": 132513013888000,
+              "Count": 383
+            },
+            {
+              "Day": 12,
+              "Known": true,
+              "Partial": false,
+              "Units": 157938695552000,
+              "Count": 433
+            },
+            {
+              "Day": 13,
+              "Known": true,
+              "Partial": false,
+              "Units": 150309432601600,
+              "Count": 410
+            },
+            {
+              "Day": 14,
+              "Known": true,
+              "Partial": false,
+              "Units": 160137005107200,
+              "Count": 446
+            },
+            {
+              "Day": 15,
+              "Known": true,
+              "Partial": false,
+              "Units": 145106386022400,
+              "Count": 408
+            },
+            {
+              "Day": 16,
+              "Known": true,
+              "Partial": false,
+              "Units": 146483003289600,
+              "Count": 422
+            },
+            {
+              "Day": 17,
+              "Known": true,
+              "Partial": false,
+              "Units": 154484946611200,
+              "Count": 445
+            },
+            {
+              "Day": 18,
+              "Known": true,
+              "Partial": false,
+              "Units": 157037618688000,
+              "Count": 457
+            },
+            {
+              "Day": 19,
+              "Known": true,
+              "Partial": false,
+              "Units": 175680753664000,
+              "Count": 478
+            },
+            {
+              "Day": 20,
+              "Known": true,
+              "Partial": false,
+              "Units": 179173948441600,
+              "Count": 479
+            },
+            {
+              "Day": 21,
+              "Known": true,
+              "Partial": false,
+              "Units": 168673690240000,
+              "Count": 450
+            },
+            {
+              "Day": 22,
+              "Known": true,
+              "Partial": false,
+              "Units": 0,
+              "Count": 0
+            }
+          ],
+          "Units": 1971420205440000,
+          "Count": 5520
+        },
+        "Availability": "EstimatedFromPriceAndHours",
+        "NativeRivalCheckout": "Unsupported",
+        "ExternalFoodSpentUnits": "2194190719462400"
+      },
+      "RefreshUnits": 18816,
+      "DetailReads": 352131,
+      "Unavailable": ""
+    },
+    "memoryEntries": 2459,
+    "maxEntries": 4
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "kind": "corrupt",
+    "beforeSha256": "af8aaf029f76b8e6d7f84b443cdc0b2d92addd6ed0d1e7b301902251735e87e4",
+    "afterSha256": "af8aaf029f76b8e6d7f84b443cdc0b2d92addd6ed0d1e7b301902251735e87e4",
+    "bytesPreserved": true,
+    "runtime": {
+      "enabled": true,
+      "failed": true,
+      "status": "Population save refused: Invalid state: Unexpected character encountered while parsing number: !. Path 'WeatherStartsDay', line 1, position 5344231. Original payload retained.",
+      "taskStatus": null,
+      "taskCompleted": null,
+      "taskError": null,
+      "saveMatches": false,
+      "discoveryReady": null,
+      "discoverySweeps": null,
+      "lastDiscoverySeconds": null,
+      "lastDiscoveryWorkMs": null,
+      "maximumDiscoverySliceMs": null,
+      "waitingRoutingFrames": 0,
+      "maximumPreparationMs": 0.0
+    }
+  },
+  {
+    "kind": "future",
+    "beforeSha256": "f0576e42539b0ba4b721b45d0c69f2e1beaa2ec56ccc782f0f912f2ea8fbf1a5",
+    "afterSha256": "f0576e42539b0ba4b721b45d0c69f2e1beaa2ec56ccc782f0f912f2ea8fbf1a5",
+    "bytesPreserved": true,
+    "runtime": {
+      "enabled": true,
+      "failed": true,
+      "status": "Food ownership suspended: Unsupported population schema; preserve the payload.",
+      "taskStatus": null,
+      "taskCompleted": null,
+      "taskError": null,
+      "saveMatches": false,
+      "discoveryReady": null,
+      "discoverySweeps": null,
+      "lastDiscoverySeconds": null,
+      "lastDiscoveryWorkMs": null,
+      "maximumDiscoverySliceMs": null,
+      "waitingRoutingFrames": 0,
+      "maximumPreparationMs": 0.0
+    }
+  }
+]
