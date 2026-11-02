@@ -17,7 +17,7 @@ parser.add_argument("--json-assembly", type=Path, help="Explicit Newtonsoft.Json
 args = parser.parse_args()
 managed = args.game_managed.resolve()
 references = ["mscorlib", "System", "System.Core", "System.Numerics", "System.Runtime.Serialization", "netstandard", "BigAmbitions",
-              "BigAmbitions.ModAPI", "BigAmbitions.AI", "BigAmbitions.Items", "BigAmbitions.Characters", "BigAmbitions.Neighborhoods", "BigAmbitions.InteriorDesigner", "HGExtensions", "HGPlugins",
+              "BigAmbitions.ModAPI", "BigAmbitions.AI", "BigAmbitions.Items", "BigAmbitions.Seasons", "BigAmbitions.Characters", "BigAmbitions.Neighborhoods", "BigAmbitions.InteriorDesigner", "HGExtensions", "HGPlugins",
               "UnityEngine.CoreModule", "UnityEngine.IMGUIModule", "UnityEngine.UI", "UnityEngine.InputLegacyModule", "BigAmbitions.PlacementSystem", "UnityEngine.TextRenderingModule", "UnityEngine.AIModule", "UnityEngine.PhysicsModule", "UnityEngine.AnimationModule", "ExternalPlugins", "DayNightCycle"]
 for name in references:
     if not (managed / (name + ".dll")).is_file():

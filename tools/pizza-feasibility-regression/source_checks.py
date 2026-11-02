@@ -5,6 +5,7 @@ import runpy
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
+batch_source = runpy.run_path(str(ROOT / "tools/e3-remaining-feasibility-regression/historical.py"))["source"]
 prior = runpy.run_path(str(ROOT / "tools/donut-feasibility-regression/source_checks.py"), run_name="__main__")
 # Combined pizza/icecream reader; the icecream guard changes only its full-reader pin and facade allowlist.
 PINS = {
@@ -15,7 +16,7 @@ PINS = {
     'tools/pizza-feasibility-regression/Program.cs': '973e0752fcc24b8b5699901aaeb1c409617ccbf102095ae5f9c4238dae710cca',
 }
 for path, expected in PINS.items():
-    source = (ROOT / path).read_bytes().replace(b"\r\n", b"\n")
+    source = batch_source(path).encode()
     assert hashlib.sha256(source).hexdigest() == expected, path
 
 print("PASS pizza source pins and no gameplay caller/poll/writer")

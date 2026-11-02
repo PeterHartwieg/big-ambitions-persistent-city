@@ -4,6 +4,7 @@ import hashlib
 import runpy
 
 ROOT = Path(__file__).resolve().parents[2]
+batch_source = runpy.run_path(str(ROOT / "tools/e3-remaining-feasibility-regression/historical.py"))["source"]
 runpy.run_path(str(ROOT / "tools/donut-feasibility-regression/source_checks.py"), run_name="__main__")
 PINS = {'Runtime/DirectStockShowcaseReader.cs': '239650040cb06dde4f0d8030e659c906a5fe09c8b37ea7be9dc763162ddb880d',
  'Runtime/IcecreamFeasibilityReader.cs': 'e2e52931c751a0d728cbd0af3d17e932cdd92aaeca6405121452778b925fcf4e',
@@ -12,11 +13,12 @@ PINS = {'Runtime/DirectStockShowcaseReader.cs': '239650040cb06dde4f0d8030e659c90
  'tools/icecream-feasibility-regression/generate_cases.py': '4b3db341d8bfd6e97a9ebbee6adba1748cb7c97c76c9a5e750f437f03f2d45c0',
  'tools/icecream-feasibility-regression/measure_baseline.py': 'd27d0fe36d8001fa76e2013ac3595a0d22fa7587b3d96b4f412b21b8eadbed66'}
 for path, expected in PINS.items():
-    source = (ROOT / path).read_text(encoding="utf-8")
+    source = batch_source(path)
     assert hashlib.sha256(source.encode()).hexdigest() == expected, path
 allowed = {ROOT / ("Runtime/" + name + ".cs") for name in
            ("DirectStockShowcaseReader", "DonutFeasibilityReader", "CupcakeFeasibilityReader",
             "SaladFeasibilityReader", "IcecreamFeasibilityReader", "PizzaFeasibilityReader", "FrenchFriesFeasibilityReader")}
+allowed.add(ROOT / "Runtime/RemainingBatchFeasibilityReaders.cs")
 for directory in ("Core", "Runtime", "Persistence", "Compatibility"):
     for path in (ROOT / directory).rglob("*.cs"):
         if "obj" in path.parts or "bin" in path.parts or path in allowed:

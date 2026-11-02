@@ -4,6 +4,7 @@ Usage: python tools/salad-feasibility-regression/compare_baseline.py before|diff
 Generated source stays ignored. No native assembly, game, profile or rig access.
 """
 import hashlib
+import runpy
 import os
 from pathlib import Path
 import re
@@ -11,6 +12,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
+batch_source = runpy.run_path(str(ROOT / "tools/e3-remaining-feasibility-regression/historical.py"))["source"]
 mode = sys.argv[1]
 assert mode in ("before", "differential")
 env = os.environ.copy()
@@ -25,7 +27,7 @@ APPROVED_SHA256 = {
 }
 
 def source(path):
-    body = (ROOT / path).read_text(encoding="utf-8")
+    body = batch_source(path)
     if path == "Runtime/DirectStockShowcaseReader.cs":
         body = body.replace('        internal static readonly DirectStockCandidate Pizza = new DirectStockCandidate("ba:itemname_pizza");\n', "")
         body = body.replace('        internal static readonly DirectStockCandidate Icecream = new DirectStockCandidate("ba:itemname_icecream");\n', "")

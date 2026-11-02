@@ -1,11 +1,13 @@
 """Fresh-process frozen three-candidate baseline; foreground, no execution deadline."""
 import hashlib
+import runpy
 import os
 from pathlib import Path
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
-shared = (ROOT / "Runtime/DirectStockShowcaseReader.cs").read_text(encoding="utf-8")
+batch_source = runpy.run_path(str(ROOT / "tools/e3-remaining-feasibility-regression/historical.py"))["source"]
+shared = batch_source("Runtime/DirectStockShowcaseReader.cs")
 shared = shared.replace('        internal static readonly DirectStockCandidate Pizza = new DirectStockCandidate("ba:itemname_pizza");\n', "")
 shared = shared.replace('        internal static readonly DirectStockCandidate Icecream = new DirectStockCandidate("ba:itemname_icecream");\n', '')
 shared = shared.replace('        internal static readonly DirectStockCandidate FrenchFries = new DirectStockCandidate("ba:itemname_frenchfries");\n', "")

@@ -40,6 +40,12 @@ namespace PersistentCity.Runtime
         internal static readonly DirectStockCandidate Pizza = new DirectStockCandidate("ba:itemname_pizza");
         internal static readonly DirectStockCandidate Icecream = new DirectStockCandidate("ba:itemname_icecream");
         internal static readonly DirectStockCandidate FrenchFries = new DirectStockCandidate("ba:itemname_frenchfries");
+        internal static readonly DirectStockCandidate CheesePlatter = new DirectStockCandidate("ba:itemname_cheeseplatter");
+        internal static readonly DirectStockCandidate CottonCandy = new DirectStockCandidate("ba:itemname_cottoncandy");
+        internal static readonly DirectStockCandidate Popcorn = new DirectStockCandidate("ba:itemname_popcorn");
+        internal static readonly DirectStockCandidate Kabob = new DirectStockCandidate("ba:itemname_kabob");
+        internal static readonly DirectStockCandidate CandyCane = new DirectStockCandidate("ba:itemname_candycane");
+        internal static readonly DirectStockCandidate ChristmasCookies = new DirectStockCandidate("ba:itemname_christmascookies");
     }
 
     // Stack result lets candidate facades retain their API with no intermediate snapshot allocation.
