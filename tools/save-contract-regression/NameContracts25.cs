@@ -3,8 +3,9 @@ using Newtonsoft.Json.Linq;
 
 static partial class Program
 {
-    // Archived-source comparisons compile this driver against earlier Core/Persistence too.
-    // Projection removes only E5d's additions; every older source still uses its frozen reader.
+    // Size accounting for the existing fixtures without product histories. This driver also
+    // compiles against archived Core/Persistence. Semantic migration comparisons re-encode
+    // through PopulationSchema24.Write (name-identity-regression), including its fixed codes.
     private static string WithoutNames25(string wire)
     {
         var root = JObject.Parse(wire);
