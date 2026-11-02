@@ -115,7 +115,11 @@ text += "The two complete regression passes additionally reported these offline 
 for item in gate_spikes:
     m = item['metrics']
     spikes = next((v for k, v in m.items() if '30' in k and 'spike' in k.lower()), 'unreported')
-    text += f"| {item['run']} | `{item['path']}` | {triple(m)} | {spikes} |\n"
+    # E5c first-use config records one startup interval, not a percentile sample set.
+    timing = triple(m) if all(k in m for k in ('p50', 'p95', 'max')) else (
+        f"single interval {m['milliseconds']:.4f}; percentiles unreported" if 'milliseconds' in m
+        else 'unreported; see raw metrics JSON')
+    text += f"| {item['run']} | `{item['path']}` | {timing} | {spikes} |\n"
 text += "[Metrics-only results, including every p50/p95/max and spike count](e5d-name-identity-save-results.json). No ordinary-play or whole-frame sample was collected. The next combined rig batch must measure mod-work p95 <5 ms and every ≥30 ms spike separately from whole-frame cost/stalls; the four parked hotspots remain parked.\n"
 p = root / "docs/perf/e5d-name-identity-save.md"
 prefix = p.read_text(encoding="utf-8").split("\n## Final matched results")[0]
