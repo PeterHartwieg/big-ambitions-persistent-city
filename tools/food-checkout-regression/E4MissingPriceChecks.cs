@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
@@ -22,7 +22,7 @@ static partial class Program
             Check(f.Receipt(meal) == FoodReceiptStatus.Missing, "refusal starts no receipt");
             f.Reg.retailPrices.Add(new() { itemName = unpriced, price = unpriced == Burger ? 6 : 3 });
             f.Market.RefreshKnownOwnership();
-            Check(!f.Market.CanServe(f.BusinessId), "unverified mutation coverage cannot auto-reacquire a latched refusal");
+            Check(!f.Market.CanServe(f.BusinessId), "same-hour repair cannot bypass drained handoff and later reacquisition");
         }
         foreach (string fault in new[] { "other-price", "other-price-removed", "advertised", "duplicate", "selected-duplicate", "selected-removed", "missing-prices", "ninth" })
         {

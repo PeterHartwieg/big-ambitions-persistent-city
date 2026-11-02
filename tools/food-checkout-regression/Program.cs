@@ -148,8 +148,13 @@ static partial class Program
         }
     }
 
-    static void Main()
+    static void Main(string[] args)
     {
+        if(args.Contains("--review-isolation")) {ReviewIsolationChecks();Console.WriteLine("PASS isolation: "+checks);return;}
+        if(args.Contains("--review-recovery")) {ReviewRecoveryChecks();Console.WriteLine("PASS recovery: "+checks);return;}
+        ReviewIsolationChecks();
+        ReviewRecoveryChecks();
+        ReviewStatusScanMeasurement();
         E4MissingPriceChecks();
         CachedBagPolicyChecks();
         E4MenuChecks();
@@ -489,9 +494,10 @@ static class Hooks
     public static string Fault = "";
     public static Action? OpenCheck;
     public static int PriceChecks;
+    public static bool KeepEmptyProducer;
     public static bool LastPriceAccepted;
     public static System.Reflection.MethodInfo? PricePrefix;
-    public static void Reset() { Fault = ""; OpenCheck = null; PriceChecks = 0; LastPriceAccepted = false; Helpers.BusinessTypeHelper.Reset(); }
+    public static void Reset() { Fault = ""; OpenCheck = null; PriceChecks = 0; KeepEmptyProducer = false; LastPriceAccepted = false; Helpers.BusinessTypeHelper.Reset(); }
 }
 
 public sealed class Save { public List<ProductMarketEntry>? productMarketEntries; public int Day = 3, Hour = 12; public float Minute; public Dictionary<string, string> modData = new(); }
@@ -543,8 +549,10 @@ namespace PersistentCity.Runtime
         internal static FoodAuthority Observe(BuildingRegistration reg, bool eligible)
         {
             string place = NativeFoodMarket.PlaceId(reg);
-            if (!Rows.TryGetValue(place, out var row)) Rows[place] = row = new FoodAuthority { PlaceId = place, FromHour = 0 };
-            row.Signature = TestIdentity(reg); row.Desired = eligible;
+            long hour=SaveGameManager.Current.Day*24L+SaveGameManager.Current.Hour;
+            if (!Rows.TryGetValue(place, out var row)) Rows[place] = row = new FoodAuthority {
+                PlaceId = place, FromHour = 0, Signature = TestIdentity(reg), Desired = eligible, RequestedHour=hour };
+            else row.Observe(TestIdentity(reg),eligible,hour);
             return row;
         }
         internal static FoodAuthority? Find(BuildingRegistration reg)
@@ -650,6 +658,12 @@ namespace Buildings.Retail.Simulation
             availableProducers = new();
             foreach (var shelf in reg.Shelves)
             {
+                // Conditional unknown-shape control, not a claim about native depletion.
+                if (Hooks.KeepEmptyProducer && shelf.cargoInstances?.Count==0)
+                {
+                    string product=shelf.ItemCached.itemsThatCanShowcase[0];
+                    availableProducers[product]=new() {shelf};continue;
+                }
                 var stock = shelf.cargoInstances![0];
                 if (stock.amount <= 0) continue;
                 if (!availableProducers.TryGetValue(stock.itemName, out var list)) availableProducers[stock.itemName] = list = new();

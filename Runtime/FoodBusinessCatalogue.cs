@@ -56,13 +56,15 @@ namespace PersistentCity.Runtime
         // Gameplay selects each shop's own complete bounded menu. The diagnostic overload
         // retains its historical explicit product-filter semantics.
         internal static FoodCatalogueObservation ReadCompleteMenus(IReadOnlyCollection<string> shopPlaceIds,
-            IEnumerable<CityBuildingController> controllers, Func<BuildingRegistration, IReadOnlyCollection<string>> menu,
-            Func<BuildingRegistration, string>? identity = null)
-            => ReadSelectedCore(shopPlaceIds, null, controllers, identity, menu);
+            IEnumerable<CityBuildingController> controllers, Func<BuildingRegistration, IReadOnlyCollection<string>?> menu,
+            Func<BuildingRegistration, string>? identity = null,
+            Action<BuildingRegistration, CatalogueRefusalException>? refused = null)
+            => ReadSelectedCore(shopPlaceIds, null, controllers, identity, menu, refused);
 
         private static FoodCatalogueObservation ReadSelectedCore(IReadOnlyCollection<string> shopPlaceIds,
             IReadOnlyCollection<string>? foodProductIds, IEnumerable<CityBuildingController> controllers,
-            Func<BuildingRegistration, string>? identity, Func<BuildingRegistration, IReadOnlyCollection<string>>? menu)
+            Func<BuildingRegistration, string>? identity, Func<BuildingRegistration, IReadOnlyCollection<string>?>? menu,
+            Action<BuildingRegistration, CatalogueRefusalException>? refused = null)
         {
             if (shopPlaceIds == null || shopPlaceIds.Count < 1 || shopPlaceIds.Count > 20000
                 || menu == null && (foodProductIds == null || foodProductIds.Count < 1 || foodProductIds.Count > 16
@@ -86,8 +88,13 @@ namespace PersistentCity.Runtime
                 string place = "address:" + address + ":shop";
                 if (!selected.Contains(place) || !reg.HasEstablishedBusiness || reg.AvailableForRent
                     || string.IsNullOrWhiteSpace(reg.businessTypeName) || reg.businessTypeName == "ba:businesstype_empty") continue;
+                // A null gameplay menu means this registration is not a current owned scope.
+                var completeMenu = menu?.Invoke(reg);
+                if (menu != null && completeMenu == null) continue;
+                try
+                {
                 if (!found.Add(place)) throw new CatalogueRefusalException("Duplicate live shop address; observation refused.");
-                IReadOnlyCollection<string> products = menu == null ? selectedProducts! : menu(reg);
+                IReadOnlyCollection<string> products = menu == null ? selectedProducts! : completeMenu!;
                 if (menu != null && (products == null || products.Count < 1 || products.Count > FoodMenuPolicy.MaximumOffers
                     || reg.cachedAvailableProducts == null || reg.cachedAvailableProducts.Count != products.Count
                     || products.Any(p => !FoodNameIdentity.IsCanonical(p) || !reg.cachedAvailableProducts.Contains(p))
@@ -146,6 +153,13 @@ namespace PersistentCity.Runtime
                 business.Offers.Sort((a, b) => StringComparer.Ordinal.Compare(a.ProductId, b.ProductId));
                 business.Hours = business.Hours.OrderBy(h => h.Day).ThenBy(h => h.FromMinute).ThenBy(h => h.ToMinute).ToList();
                 result.Businesses.Add(business);
+                }
+                catch (CatalogueRefusalException error) when (menu != null && refused != null)
+                {
+                    // A collision invalidates an earlier observation of this same address too.
+                    result.Businesses.RemoveAll(b => b.PlaceId == place);
+                    refused(reg, error);
+                }
             }
             result.Businesses.Sort((a, b) => StringComparer.Ordinal.Compare(a.Id, b.Id));
             result.UnavailablePlaces = selected.Where(p => !found.Contains(p)).OrderBy(p => p, StringComparer.Ordinal).ToList();

@@ -37,10 +37,12 @@ namespace PersistentCity.Runtime
         // Weak keys prevent retired registrations/definitions accumulating during menu churn.
         private ConditionalWeakTable<object, BagPolicy> authoredBagPolicies = new ConditionalWeakTable<object, BagPolicy>();
         private readonly Dictionary<Type, FieldInfo?> authoredTagFields = new Dictionary<Type, FieldInfo?>();
-        private ConditionalWeakTable<BuildingRegistration, BagPolicy> refusedContracts = new ConditionalWeakTable<BuildingRegistration, BagPolicy>();
-        private static readonly BagPolicy Refused = new BagPolicy(false);
+        private sealed class ContractRefusal { internal ContractRefusal(long hour) { Hour = hour; } internal readonly long Hour; }
+        private ConditionalWeakTable<BuildingRegistration, ContractRefusal> refusedContracts = new ConditionalWeakTable<BuildingRegistration, ContractRefusal>();
+        private long lastContractRecoveryHour = -1;
         private void RefuseContract(BuildingRegistration registration)
-        { if (!refusedContracts.TryGetValue(registration, out _)) refusedContracts.Add(registration, Refused); }
+        { if (!refusedContracts.TryGetValue(registration, out _)) refusedContracts.Add(registration,
+            new ContractRefusal(SaveGameManager.Current.Day * 24L + SaveGameManager.Current.Hour)); }
         private readonly Harmony patches = new Harmony(PatchId);
         private static readonly MethodInfo Process = AccessTools.Method(typeof(RetailBusinessSimulator), "ProcessCustomer");
         private bool buying;
@@ -196,8 +198,9 @@ namespace PersistentCity.Runtime
         }
         private string MenuStatus(string placeId)
         {
-            if (registrations.TryGetValue(placeId, out var dynamicReg) && dynamicReg.cachedAvailableProducts != null
-                && dynamicReg.cachedAvailableProducts.Any(p => !FoodProducts.Known(p))) return DynamicIntegrationRefusal;
+            if (registrations.TryGetValue(placeId, out var dynamicReg) && dynamicReg.cachedAvailableProducts != null)
+                for (int i = 0; i < dynamicReg.cachedAvailableProducts.Count; i++)
+                    if (!FoodProducts.Known(dynamicReg.cachedAvailableProducts[i])) return DynamicIntegrationRefusal;
             if (!registrations.TryGetValue(placeId, out var reg) || !SupportedMenu(reg)) return "Excluded: unsupported menu or business type";
             var authority = NativeFoodOwnership.Find(reg);
             if (authority == null || !authority.CanServe) return "Waiting for a safe native accounting boundary";
@@ -249,22 +252,17 @@ namespace PersistentCity.Runtime
             RefreshReadMetadata(minute);
             long observationMinute = (long)(SaveGameManager.Current.Day * 1440.0 + SaveGameManager.Current.Hour * 60.0 + SaveGameManager.Current.Minute);
             if (selectedPlaces.Length == 0) return Array.Empty<FoodBusiness>();
-            FoodCatalogueObservation catalogue;
-            try { catalogue = FoodBusinessCatalogue.ReadCompleteMenus(selectedPlaces,
+            var catalogue = FoodBusinessCatalogue.ReadCompleteMenus(selectedPlaces,
                 // A replaced registration can leave historical place keys pointing at one controller.
                 // Observe that controller once; distinct controllers with conflicting addresses still refuse.
                 selectedPlaces.Where(shopControllers.ContainsKey).Select(p => shopControllers[p]).Distinct(),
-                r => scopesByPlace.TryGetValue(PlaceId(r), out var selectedScope) ? selectedScope.Products().ToArray() : Array.Empty<string>(),
-                r => NativeFoodOwnership.Find(r)?.BusinessId ?? FoodBusinessCatalogue.BusinessIdentity(r)); }
-            catch (FoodBusinessCatalogue.CatalogueRefusalException)
-            {
-                // No partial priced menu may retain whole-business authority. Conservatively
-                // withdraw the selected batch; the existing boundary drains old native work.
-                foreach (var place in selectedPlaces) if (registrations.TryGetValue(place, out var refused))
-                { RefuseContract(refused); NativeFoodOwnership.Observe(refused, false); decisionSupply.Remove(place); }
-                if (observed != null) throw;
-                return Array.Empty<FoodBusiness>();
-            }
+                SelectedCompleteMenu,
+                r => NativeFoodOwnership.Find(r)?.BusinessId ?? FoodBusinessCatalogue.BusinessIdentity(r),
+                (reg, error) =>
+                {
+                    RefuseContract(reg); NativeFoodOwnership.Observe(reg, false); decisionSupply.Remove(PlaceId(reg));
+                    if (observed != null) throw error; // A selected checkout retains its precise definite-refusal reason.
+                });
             var result = new List<FoodBusiness>();
             foreach (var b in catalogue.Businesses)
             {
@@ -295,6 +293,42 @@ namespace PersistentCity.Runtime
                 result.Add(b);
             }
             return result;
+        }
+        private IReadOnlyCollection<string>? SelectedCompleteMenu(BuildingRegistration reg)
+        {
+            string place = PlaceId(reg);
+            if (!registrations.TryGetValue(place, out var registered) || !ReferenceEquals(reg, registered)) return null;
+            if (!SupportedMenu(reg)) { NativeFoodOwnership.Observe(reg, false); return null; }
+            if (MenuStatus(place).Length > 0 || !scopesByPlace.TryGetValue(place, out var scope)
+                || NativeFoodOwnership.Find(reg)?.BusinessId != scope.BusinessId) return null;
+            return scope.Products().ToArray();
+        }
+        private bool BeginContractRecoveryBoundary()
+        {
+            long hour = SaveGameManager.Current.Day * 24L + SaveGameManager.Current.Hour;
+            if (hour <= lastContractRecoveryHour) return false;
+            lastContractRecoveryHour = hour; return true;
+        }
+        private void RevalidateRefusedContract(BuildingRegistration reg, CityBuildingController controller)
+        {
+            if (!refusedContracts.TryGetValue(reg, out var refusal) || lastContractRecoveryHour <= refusal.Hour) return;
+            var authority = NativeFoodOwnership.Find(reg);
+            // Never cancel the requested handoff before its protected work has drained.
+            if (authority == null || authority.Managed || authority.OwnsHour(lastContractRecoveryHour)
+                || !SupportedBusiness(reg) || reg.cachedAvailableProducts.Count > menuLimit
+                || !GamePlaces.BuildingAccessible(controller) || !CurrentAuthoredBagPolicy(reg)) return;
+            try
+            {
+                var products = reg.cachedAvailableProducts.ToArray();
+                var catalogue = FoodBusinessCatalogue.ReadCompleteMenus(new[] { PlaceId(reg) }, new[] { controller }, r => products);
+                if (catalogue.Businesses.Count != 1) return;
+                var supply = FoodSupplyReader.ReadMenu(reg, products);
+                foreach (var item in supply.Values) if (!item.Units.HasValue) return;
+            }
+            catch (Exception) { return; } // Unreadable native supply remains native-owned, never known zero.
+            refusedContracts.Remove(reg); supplyExclusions.Remove(PlaceId(reg)); decisionSupply.Remove(PlaceId(reg));
+            // RefreshKnownOwnership requests eligibility; FoodAuthority still waits a later
+            // drained boundary with no live native customers before acquiring service.
         }
         // A decision read reuses this game minute's image of one shop. It never authorizes a sale:
         // Buy reads supply live, sells, and confirms against a live after image.
@@ -455,7 +489,7 @@ namespace PersistentCity.Runtime
             patches.UnpatchAll(PatchId);
             NativeFoodOwnership.Detach(this);
             authoredBagPolicies = new ConditionalWeakTable<object, BagPolicy>(); authoredTagFields.Clear();
-            refusedContracts = new ConditionalWeakTable<BuildingRegistration, BagPolicy>();
+            refusedContracts = new ConditionalWeakTable<BuildingRegistration, ContractRefusal>();
             if (ReferenceEquals(active, this)) active = null;
         }
     }

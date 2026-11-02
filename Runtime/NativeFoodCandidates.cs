@@ -129,6 +129,7 @@ namespace PersistentCity.Runtime
         }
         internal void RefreshKnownOwnership()
         {
+            bool recoveryBoundary = BeginContractRecoveryBoundary();
             foreach (var pair in shopControllers)
             {
                 decisionSupply.Remove(pair.Key);
@@ -140,6 +141,7 @@ namespace PersistentCity.Runtime
                 }
                 registrations[pair.Key] = reg;
                 CacheBagPolicy(reg);
+                if (recoveryBoundary) RevalidateRefusedContract(reg, pair.Value);
                 var authority = NativeFoodOwnership.Observe(reg, SupportedMenu(reg) && GamePlaces.BuildingAccessible(pair.Value));
                 if (authority.CanServe) { ActivateScope(authority, reg); Candidate(authority.BusinessId,true); }
                 else Candidate(authority.BusinessId,false);
