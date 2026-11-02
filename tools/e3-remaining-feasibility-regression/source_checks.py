@@ -12,6 +12,14 @@ ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
 PINS = json.loads((HERE / "source-pins.json").read_text())
 history = runpy.run_path(str(HERE / "historical.py"))
+HISTORICAL_PINS = {'Runtime/DirectStockShowcaseReader.cs': '239650040cb06dde4f0d8030e659c906a5fe09c8b37ea7be9dc763162ddb880d',
+ 'tools/donut-feasibility-regression/source_checks.py': '363604c0f2555206b2646f519a38c5b53f468718eda6a7cc71b702336a52213e',
+ 'tools/icecream-feasibility-regression/source_checks.py': 'd97ba698ae95756a9171f79ce7c910d5104766f3dcd60db479fbaa3d02f5688f',
+ 'tools/pizza-feasibility-regression/source_checks.py': 'f008a7cf64f1bcabc087cdab3046ad8ebdd70d496d3997c28b4ab055cd8b55e7',
+ 'tools/frenchfries-feasibility-regression/source_checks.py': 'd4bea51a583a11012a965c7876cee82376330f802556963b4447d91eea417850',
+ 'tools/salad-feasibility-regression/compare_baseline.py': 'c7cb36829f96d6a2cc8ab5b84109b79bcdb7b5de7c6cb8f0f6d5667b8732bf85',
+ 'tools/icecream-feasibility-regression/measure_baseline.py': 'd27d0fe36d8001fa76e2013ac3595a0d22fa7587b3d96b4f412b21b8eadbed66',
+ 'tools/frenchfries-feasibility-regression/measure_before.py': '790fcc15d5a14ee020893ae64e848c5da6f6fbf675ca15595109c2d09e2b486a'}
 readers = {"Runtime/DirectStockShowcaseReader.cs", "Runtime/RemainingBatchFeasibilityReaders.cs"}
 readers.update(f"Runtime/{name}FeasibilityReader.cs" for name in ("Donut", "Cupcake", "Salad", "Icecream", "FrenchFries", "Pizza"))
 names = ("Donut", "Cupcake", "Salad", "Icecream", "FrenchFries", "Pizza", "CheesePlatter", "CottonCandy", "Popcorn", "Kabob", "CandyCane", "ChristmasCookies")
@@ -65,8 +73,8 @@ for path, expected in PINS.items():
 # Every historical hash literal remains unchanged. The complete new guard/helper
 # versions are pinned above, so only the enumerated exact batch insertions disappear.
 for path in history["EDITS"]:
-    original = subprocess.check_output(["git", "show", "a1b993a:" + path], cwd=ROOT).decode().replace("\r\n", "\n")
-    assert history["source"](path) == original, "Historical content changed: " + path
+    original = history["source"](path)
+    assert hashlib.sha256(original.encode()).hexdigest() == HISTORICAL_PINS[path], "Historical content changed: " + path
     if path.endswith("source_checks.py"):
         assert re.findall(r"[a-f0-9]{64}", (ROOT / path).read_text()) == re.findall(r"[a-f0-9]{64}", original), path
 for product in ("donut", "salad", "icecream", "frenchfries", "pizza"):
