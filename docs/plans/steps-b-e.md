@@ -102,7 +102,7 @@ Show an explicit “food bought outside managed businesses” outflow line, sepa
 
 ### E: extend verified behavior in small increments
 
-E5 status, Peter 2 November 2026: the [dynamic loaded-catalogue plan](e5-dynamic-products.md) supersedes per-product E5 activation and its fixed-code/branching assumptions below; E3 records become regression evidence, with no E3 product proven. Docs only; no activation or save change.
+E5 status, Peter 2 November 2026: the [dynamic loaded-catalogue plan](e5-dynamic-products.md) supersedes per-product E5 implementation and its fixed-code/branching assumptions below; E3 records become regression evidence, with no E3 product proven in game. Docs only; no implementation or save change. Implementation and automated rig verification are separate statuses.
 
 E3 frenchfries status, 1 November (offline): [STOP record](e3-frenchfries.md); shipped holder unestablished. Independent pinned conditional probe, unchanged shared read branches, no product/menu/schema/gameplay change; [offline checks and 6 Nov handoff](../checks/e3-frenchfries.md).
 

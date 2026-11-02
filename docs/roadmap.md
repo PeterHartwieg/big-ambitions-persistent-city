@@ -39,7 +39,7 @@ E3 remaining batch status, 2 November (offline): Peter chose one batch of remain
 
 E4 status, 1 November (offline): schema 23 menu/product/history envelope implemented; effective live limit four, no extra product enabled. [Validation and numbered 6 Nov handoff](checks/e4-wider-menu.md).
 
-E5 plan, Peter 2 November 2026: per-product activation is superseded by the [dynamic loaded-catalogue plan](plans/e5-dynamic-products.md); E3 records are regression evidence, with no E3 product proven. Docs only; no activation or save change.
+E5 plan, Peter 2 November 2026: per-product implementation is superseded by the [dynamic loaded-catalogue plan](plans/e5-dynamic-products.md); E3 records are regression evidence, with no E3 product proven in game. Docs only; no implementation or save change. Implementation and automated rig verification are separate statuses.
 
 E3 status, 31 October (offline): [donut](plans/e3-donut.md) and [cupcake feasibility discovery](plans/e3-cupcake.md) share one isolated on-demand raw-field reader with pinned candidates. Loaded equipment and natural checkout/settlement proof remain pending; no additional product certified or enabled.
 
