@@ -64,14 +64,14 @@ static partial class Program
         return count;
     }
     private static int MenuHeaderChars23(CityState state) => typeof(CityState).GetProperty("MenuPolicy") is System.Reflection.PropertyInfo menu
-        ? ("\"MenuPolicy\":"+JsonConvert.SerializeObject(menu.GetValue(state))+",").Length : 0;
+        ? ("\"MenuPolicy\":"+JsonConvert.SerializeObject(state.Schema>=25 ? "1|1=croissant|2=burger|3=hotdog|4=donut|5=cupcake|6=salad" : menu.GetValue(state))+",").Length : 0;
     private static void WeatherContractChecks()
     {
         if(!Weather20) return;
         var state=FoodCity(3,true);PopulateDecisions(state);PopulateWeather20(state);
         string wire=SaveCodec.Write(state),old=WithoutWeather20(PreRivalWire(state));
         Check(PreRivalWire(state).Length-old.Length==WeatherChars20(state),"Schema-20 additive weather byte ledger mismatch.");
-        Check(wire.Length-WithoutMenu23(wire).Length==MenuHeaderChars23(state)+OutflowChars24(state),"Schema-23 menu header byte ledger mismatch.");
+        Check(wire.Length-WithoutMenu23(wire).Length==MenuHeaderChars23(state)+OutflowChars24(state)+wire.Length-WithoutNames25(wire).Length,"Schema-23 menu header byte ledger mismatch.");
         string schema22=WithoutMenu23(wire);
         Check(schema22.Length-WithoutCampaigns22(schema22).Length==CampaignChars22(state),"Schema-22 campaign byte ledger mismatch.");
         string schema20=PreRivalWire(state);

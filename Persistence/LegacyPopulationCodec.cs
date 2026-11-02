@@ -1183,7 +1183,7 @@ namespace PersistentCity.Persistence
             public StateContractResolver(int schema = 17) { this.schema = schema; }
             protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
             {
-                return base.CreateProperties(type, memberSerialization).Where(property => property.Writable && OriginalProperty(type, property.PropertyName!))
+                return base.CreateProperties(type, memberSerialization).Where(property => property.Writable && !FoodNameIdentity.AddedProperty(type, property.PropertyName) && OriginalProperty(type, property.PropertyName!))
                     .OrderBy(property => property.PropertyName, StringComparer.Ordinal).Select(property =>
                 {
                     if (IntroducedIn(type, property.PropertyName!) > schema) { property.Required = Required.Default; return property; }

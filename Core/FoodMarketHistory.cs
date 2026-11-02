@@ -12,6 +12,10 @@ namespace PersistentCity.Core
     }
     public sealed class FoodProductSales
     {
+        private bool opaqueIdentity;
+        public bool HasOpaqueIdentity() => opaqueIdentity;
+        // Historical object provenance survives saves even when its name happens to be canonical.
+        public void PreserveOpaqueIdentity() => opaqueIdentity = true;
         public string ProductId { get; set; } = "";
         public long Purchases { get; set; }
         public Money Revenue { get; set; }

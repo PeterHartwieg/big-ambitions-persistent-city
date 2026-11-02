@@ -116,15 +116,15 @@ public sealed class RivalOutflowHistoryTests
         double end = city.State.Food!.Residents.Single().DesiredAt + 7;
         while (!city.AdvanceTo(end, 1).CaughtUp) { }
         Assert.True(RivalOutflowHistory.Ledger(city.State.Food) > 0);
-        city.State.Schema = schema;
+        city.State.Schema = schema; city.State.MenuPolicy = FoodMenuPolicy.Wire;
         string source = SaveCodec.WriteForSchema(city.State, schema);
         Assert.DoesNotContain("Outflow", source);
         var read = SaveCodec.Read(source); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        Assert.Equal(schema, read.SourceSchema); Assert.Equal(24, read.State!.Schema);
+        Assert.Equal(schema, read.SourceSchema); Assert.Equal(CityState.CurrentSchema, read.State!.Schema);
         Assert.True(read.State.Food!.Outflow!.Reconciles(read.State.Food));
         Assert.Equal(BigInteger.Zero, read.State.Food.Outflow.Capture(1).Units);
         Assert.All(read.State.Food.Outflow.Capture(1).Days.Where(d => d.Day < 1), d => Assert.False(d.Known));
-        read.State.Schema = schema;
+        read.State.Schema = schema; read.State.MenuPolicy = FoodMenuPolicy.Wire;
         Assert.Equal(source, SaveCodec.WriteForSchema(read.State, schema));
     }
     [Theory]
@@ -151,7 +151,7 @@ public sealed class RivalOutflowHistoryTests
             Assert.False(SaveSession.Open(store, city.State.PopulationKey).WriteTo(store, city.State).Success);
             Assert.Same(original, store[SaveStore.StateKey]);
         }
-        var future = JObject.Parse(source); future["Schema"] = 25;
+        var future = JObject.Parse(source); future["Schema"] = CityState.CurrentSchema + 1;
         Assert.Equal(SaveReadStatus.Future, SaveCodec.Read(future.ToString()).Status);
         var foreign = JObject.Parse(source); foreign["Schema"] = 23;
         Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(foreign.ToString()).Status);

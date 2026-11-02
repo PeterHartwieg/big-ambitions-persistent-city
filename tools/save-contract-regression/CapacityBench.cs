@@ -138,6 +138,7 @@ static partial class Program
         int bHeaderChars = ("\"Capabilities\":" + JsonConvert.SerializeObject(new { Active = false, Code = "B", Revision = 1 }) + ",").Length;
         int heldTuningChars = typeof(FoodDecisionState).GetProperty("Tuning") == null ? 0 : 205 + 8 * 25;
         int reservedChars = futureChars - bHeaderChars - heldTuningChars - AwarenessChars(state) - RivalChars(state) - WeatherChars20(state) - CampaignChars22(state) - MenuHeaderChars23(state) - OutflowChars24(state); // consume each implemented scalar/image once
+        if (SchemaVersion >= 25) { reservedChars += 540672; reservedRecords += 320; } // conservative entire E5d allocation; no old reserve reclaimed
         if (cf && SchemaVersion >= 18)
         {
             Check(json.Length + reservedChars + memoryHeadroom <= SaveCodec.MaxInputCharacters, "CF character budget.");

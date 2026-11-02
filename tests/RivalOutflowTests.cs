@@ -346,9 +346,9 @@ public sealed class RivalOutflowTests
         string source=SaveCodec.WriteForSchema(city.State,schema);
         var read=SaveCodec.Read(source);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
         Assert.Equal(schema,read.SourceSchema);Assert.Equal(CityState.CurrentSchema,read.State!.Schema);
-        Assert.Equal(FoodMenuPolicy.Wire,read.State.MenuPolicy);
+        Assert.Equal(FoodNameIdentity.Wire,read.State.MenuPolicy);
         read.State.Schema=schema;Assert.Equal(source,SaveCodec.WriteForSchema(read.State,schema));
-        read.State.Schema=23;
+        read.State.Schema=CityState.CurrentSchema;
         var resumed=new CitySimulator(read.State,paths);
         resumed.AttachWeather(new FrameWeatherSource(()=>2,()=>throw new Exception("Captured input must survive migration")),
             new WeatherSettings {Enabled=false,RainTravelWeightMultiplier=2});

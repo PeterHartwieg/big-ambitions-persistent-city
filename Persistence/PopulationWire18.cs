@@ -29,7 +29,7 @@ namespace PersistentCity.Persistence
             Require(reader.Read() && reader.TokenType == JsonToken.StartObject, "Expected population object.");
             int? schema = null;
             PopulationCapabilities? capabilities = null;
-            bool menuPolicy = false;
+            string? menuPolicy = null;
             var names = new HashSet<string>(StringComparer.Ordinal);
             // Resolve token offsets only as far as a header requires; TokenText(source) would scan
             // every character even when both headers precede the population graph.
@@ -63,7 +63,7 @@ namespace PersistentCity.Persistence
                 {
                     schema = HeaderInteger(requireCanonical: false);
                     if (schema >= 18) Require(canonicalInteger, "Noncanonical population schema.");
-                    Require(schema >= 13 && schema <= 24, "Unsupported population schema; preserve the payload.");
+                    Require(schema >= 13 && schema <= 25, "Unsupported population schema; preserve the payload.");
                 }
                 else if (name == "Capabilities")
                 {
@@ -87,14 +87,16 @@ namespace PersistentCity.Persistence
                 }
                 else if (name == "MenuPolicy")
                 {
-                    Require(reader.TokenType == JsonToken.String && (string)reader.Value! == FoodMenuPolicy.Wire, "Unsupported menu product policy.");
-                    menuPolicy = true;
+                    Require(reader.TokenType == JsonToken.String && ((string)reader.Value! == FoodMenuPolicy.Wire
+                        || (string)reader.Value! == FoodNameIdentity.Wire), "Unsupported menu product policy.");
+                    menuPolicy = (string)reader.Value!;
                 }
                 else reader.Skip();
-                if (schema.HasValue && capabilities != null && (schema < 23 || menuPolicy))
+                if (schema.HasValue && capabilities != null && (schema < 23 || menuPolicy != null))
                 {
                     Require(schema >= 18, "Unknown capability header in a legacy population schema.");
-                    Require(schema >= 23 || !menuPolicy, "Menu policy in an old schema.");
+                    Require(schema >= 23 || menuPolicy == null, "Menu policy in an old schema.");
+                    Require(schema < 23 || menuPolicy == (schema >= 25 ? FoodNameIdentity.Wire : FoodMenuPolicy.Wire), "Unsupported menu product policy.");
                     return; // Full population startup still validates all fields, duplicates and trailing content.
                 }
             }
@@ -148,11 +150,13 @@ namespace PersistentCity.Persistence
 
         internal static (int Streaming, int Semantic) CountRecordsForSchema(CityState state,string source,int schema)
         {
+            if (schema < 25) return PopulationSchema24.CountRecordsForSchema(state, source, schema);
             int semantic = Validate(state,schema), streaming = 0;
-            var context = WireContext.FromSource(source);
+            var tokenText = new TokenText(source);
+            var context = WireContext.FromSource(source, tokenText);
             using var reader = Reader(source);
             Require(reader.Read(), "Missing state.");
-            CheckShape(reader, typeof(CityState), schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : schema==23 ? Schema23Contracts : StateContracts, ref streaming, new TokenText(source), schema, new FieldNameSets());
+            CheckShape(reader, typeof(CityState), schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : schema==23 ? Schema23Contracts : StateContracts, ref streaming, tokenText, schema, new FieldNameSets { Product25Count = context.ProductNames.Length });
             Require(!reader.Read(), "Trailing content.");
             return (streaming, semantic);
         }
@@ -169,18 +173,42 @@ namespace PersistentCity.Persistence
                 Index = new Dictionary<string, int>(StringComparer.Ordinal);
                 for (int i = 0; i < Places.Length; i++) Require(Index.TryAdd(Places[i], i), "Duplicate place ID.");
             }
-            public static WireContext FromState(CityState state) => new WireContext(state.Places.Select(p => p.Id));
-            public static WireContext FromSource(string source)
+            public string[] ProductNames = Array.Empty<string>();
+            public Dictionary<string, int> ProductIndex = new Dictionary<string, int>(StringComparer.Ordinal);
+            private void SetProducts(IEnumerable<string> names)
+            {
+                ProductNames = names.ToArray();
+                Require(ProductNames.Length <= FoodNameIdentity.MaximumNames, "Oversized product name table.");
+                for (int i = 0; i < ProductNames.Length; i++) ProductIndex.Add(ProductNames[i], i + 1);
+            }
+            public static WireContext FromState(CityState state)
+            {
+                var result = new WireContext(state.Places.Select(p => p.Id));
+                if (state.Schema >= 25) result.SetProducts(state.ProductNames);
+                return result;
+            }
+            public static WireContext FromSource(string source, TokenText? tokenText = null)
             {
                 // Root/property/Places order is irrelevant. Collect only bounded saved IDs; no native lookup.
                 using var reader = Reader(source);
                 Require(reader.Read() && reader.TokenType == JsonToken.StartObject, "Expected root.");
                 var ids = new List<string>(); bool found = false;
+                List<string>? products = null;
+                var text = tokenText ?? new TokenText(source);
+                int fieldStart = text.End((IJsonLineInfo)reader);
                 while (reader.Read() && reader.TokenType != JsonToken.EndObject)
                 {
                     Require(reader.TokenType == JsonToken.PropertyName, "Expected root field.");
                     string name = (string)reader.Value!; Require(reader.Read(), "Missing root value.");
-                    if (name != "Places") { reader.Skip(); continue; }
+                    if (name == "ProductNames")
+                    {
+                        Require(products == null, "Duplicate product name table.");
+                        int records = 0;
+                        products = CheckNameTable25(reader, text, ref records, fieldStart);
+                        fieldStart = text.End((IJsonLineInfo)reader);
+                        continue;
+                    }
+                    if (name != "Places") { reader.Skip(); fieldStart = text.End((IJsonLineInfo)reader); continue; }
                     Require(!found && reader.TokenType == JsonToken.StartArray, "Invalid Places."); found = true;
                     int count = 0;
                     while (reader.Read() && reader.TokenType != JsonToken.EndArray)
@@ -196,8 +224,12 @@ namespace PersistentCity.Persistence
                         }
                         Require(id != null, "Missing place ID."); ids.Add(id!);
                     }
+                    fieldStart = text.End((IJsonLineInfo)reader);
                 }
-                Require(found, "Missing Places."); return new WireContext(ids);
+                Require(found, "Missing Places.");
+                var result = new WireContext(ids);
+                if (products != null) result.SetProducts(products);
+                return result;
             }
         }
 

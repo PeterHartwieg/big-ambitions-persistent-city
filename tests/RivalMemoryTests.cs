@@ -197,7 +197,7 @@ public sealed class RivalMemoryTests
     {
         var (city, _, _) = RivalOutflowTests.Ready(); city.InspectFoodAwareness("r");
         city.AdvanceTo(city.State.Food!.Residents[0].DesiredAt, 1);
-        city.State.Schema = schema;
+        city.State.Schema = schema; city.State.MenuPolicy = FoodMenuPolicy.Wire;
         string neutral = SaveCodec.WriteForSchema(city.State, schema);
         Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(neutral).Status);
         var root = JObject.Parse(neutral);

@@ -6,6 +6,8 @@ Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here
 
 - E5c - 2 November 2026, offline: Food default/seeded resident tastes, 2,687 tests; 4/8 weights p95 0.003344/0.004805 ms, 0 B; max-name fresh config p95 1.5955 ms; first-use 59.0058 ms (earlier 57.6619 ms) startup intervals flagged. [Full resolver/config numbers, validation and next batched rig](docs/checks/e5c-neutral-metadata.md).
 
+- E5d - 2 November 2026, offline: writer 25, exact 24 migration, 2,612 unit cases; stress save +6,138 B / 280 records; CF32/64 budgets 223,716,156 / 262,116,156 B; [full bytes/counts/latency/memory](docs/perf/e5d-name-identity-save.md) and [In-game checks for the next batched rig](docs/checks/e5d-name-identity-save.md#in-game-checks-for-the-next-batched-rig).
+
 - E3 remaining batch - 2 November 2026, offline: all six named candidates STOP; twelve-reader worst warm 2,000-entry p95 0.1441 ms, 200 / 49,104 B/read; existing cold 1,112 -> 1,256 B, zero reader spikes >=30 ms; [full timings, proof and 6 Nov rig/PR handoff](docs/checks/e3-remaining-batch.md).
 
 - D4 - 1 November 2026, offline sync: writer 24; 2,556 unit cases; mixed lookup/update p95 0.0003/0.0002 ms, 0 B; matched controls 2,446 B and 8/8 records; [Dated checks and In-game checks for 6 Nov rig](docs/checks/d4-rival-memory.md#in-game-checks-for-6-nov-rig).

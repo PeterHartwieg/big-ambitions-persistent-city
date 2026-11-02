@@ -13,7 +13,7 @@ static partial class Program
         ? (int)history.GetType().GetProperty("RecordCount")!.GetValue(history)! : 0;
     private static string WithoutOutflow24(string wire)
     {
-        var root = JObject.Parse(wire);
+        var root = JObject.Parse(WithoutNames25(wire));
         if ((int)root["Schema"]! < 24) return wire;
         root["Schema"] = 23;
         if (root["Food"] is JObject food) food.Remove("Outflow");

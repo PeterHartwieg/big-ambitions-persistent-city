@@ -148,6 +148,7 @@ namespace PersistentCity.Core
     /// DistrictDemandPercent -1 means unknown district demand (no appeal adjustment), otherwise 0-100.</summary>
     public sealed class FoodDecisionOffer
     {
+        public FoodOfferMetadata? Metadata { get; set; }
         public string ProductId { get; set; } = "";
         public Money Price { get; set; }
         public int Units { get; set; } = -1;

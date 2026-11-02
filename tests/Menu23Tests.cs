@@ -32,7 +32,7 @@ public sealed partial class FoodCommerceTests
         string source=E4_Old(city.State,schema);
         var read=SaveCodec.Read(source); Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
         Assert.Equal(schema,read.SourceSchema); Assert.Equal(CityState.CurrentSchema,read.State!.Schema);
-        Assert.Equal(FoodMenuPolicy.Wire,read.State.MenuPolicy);
+        Assert.Equal(FoodNameIdentity.Wire,read.State.MenuPolicy);
         Assert.Equal(source,E4_Old(read.State,schema));
         Assert.Equal(SaveCodec.Write(read.State),SaveCodec.Write(SaveCodec.Read(SaveCodec.Write(read.State)).State!));
         foreach(int unknown in new[]{24,25,99})
@@ -182,7 +182,7 @@ public sealed partial class FoodCommerceTests
             ProductSales={new FoodProductSales{ProductId=FoodProducts.Croissant,Purchases=1,PurchaseMeals=new long[]{1,0,0,0}}},
             BuyerDistricts={new FoodBuyerDistrict{DistrictId="a",Purchases=1}}};
         row.PurchaseHours[0]=1;city.State.Food!.History.Add(row);
-        string original=SaveCodec.Write(city.State);
+        string original=E5d_Wire24(city.State);
         foreach(string cell in new[]{"[0,1,0,1,0,0,0]","[7,1,0,1,0,0,0]","[1,1,0,1,0,0]","[1,1,0,1,0,0,0,0]","[1,1.0,0,1,0,0,0]","[1,01,0,1,0,0,0]","[1,1,-1,1,0,0,0]","[1,1,0,0,0,0,0]"})
         {
             string bad=original.Replace("\"ProductSales\":[[1,1,0,1,0,0,0]]","\"ProductSales\":["+cell+"]");

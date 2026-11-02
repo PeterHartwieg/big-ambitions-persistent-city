@@ -16,8 +16,8 @@ namespace PersistentCity.Persistence
             state.Schema = 23;
         }
         private static int MenuLimit(int schema) => schema >= 23 ? FoodMenuPolicy.MaximumOffers : 4;
-        private static bool KnownMenuProduct(int schema,string product) => schema>=23 ? FoodProducts.Known(product) : FoodProducts.KnownLegacy(product);
-        private static void CheckMenuIds23(JsonReader reader,ref int records)
+        private static bool KnownMenuProduct(int schema,string product) => schema>=25 ? FoodNameIdentity.IsCanonical(product) : schema>=23 ? FoodProducts.Known(product) : FoodProducts.KnownLegacy(product);
+        private static void CheckMenuIds23(JsonReader reader,ref int records, TokenText? text = null)
         {
             Require(reader.TokenType==JsonToken.StartArray,"Invalid additional menu IDs.");
             int count=0;
@@ -25,6 +25,7 @@ namespace PersistentCity.Persistence
             {
                 Require(++count<FoodMenuPolicy.MaximumOffers && reader.TokenType==JsonToken.String
                     && !string.IsNullOrWhiteSpace((string)reader.Value!) && ((string)reader.Value!).Length<=256,"Oversized/invalid additional menu IDs.");
+                if (text != null) Require(ExactString25(text, (IJsonLineInfo)reader, (string)reader.Value!), "Invalid menu name encoding.");
                 Charge(ref records);
             }
             Require(reader.TokenType==JsonToken.EndArray,"Incomplete additional menu IDs.");

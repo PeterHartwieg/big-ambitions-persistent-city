@@ -197,6 +197,7 @@ namespace PersistentCity.Core
                     if(offer.Units.HasValue) reservations.TryGetValue(ReservationKey(b.PlaceId,offer.ProductId),out held);
                     int units=offer.Units.HasValue ? Math.Max(0,offer.Units.Value-held) : -1;
                     shop.Offers.Add(new FoodDecisionOffer {ProductId=offer.ProductId,Price=offer.Price,
+                        Metadata=city.State.Schema>=25 ? LegacyFoodOfferMetadata.Capture(Traits(meal,person),city.State.Seed,meal.ResidentId,offer.ProductId) : null,
                         Units=units,DistrictDemandPercent=offer.DistrictDemandPercent ?? -1});
                 }
                 d.Shops.Add(shop);

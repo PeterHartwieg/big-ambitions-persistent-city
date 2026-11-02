@@ -27,6 +27,7 @@ public sealed class Schema18ChoiceReplayTests
     {
         var root = JObject.Parse(SaveCodec.Write(state));
         ((JObject)root["Food"]!).Remove("Outflow");
+        root.Remove("NamePolicyStartsDay"); // independently checked next-day schema-25 boundary
         return root.ToString(Formatting.None);
     }
 

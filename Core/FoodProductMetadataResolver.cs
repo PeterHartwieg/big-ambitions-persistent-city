@@ -7,7 +7,7 @@ namespace PersistentCity.Core
     public sealed class FoodProductMetadataResolver
     {
         public const int MaximumOverrides = 256;
-        public const int MaximumNameLength = 256;
+        public const int MaximumNameLength = FoodNameIdentity.MaximumNameLength;
         public const int MaximumTableCharactersAndBytes = 512 * 1024;
         // Peter, 2 Nov 2026: Food by default; E5b owns native meal admission.
         public const MealClass UnclassifiedMealClass = MealClass.Food; // Q1, one policy constant
@@ -55,17 +55,6 @@ namespace PersistentCity.Core
         }
         public bool TryGetOverride(string canonicalName, out FoodProductMetadataOverride metadata)
             => overrides.TryGetValue(canonicalName, out metadata);
-        public static bool ValidName(string? name)
-        {
-            if (string.IsNullOrWhiteSpace(name) || name!.Length > MaximumNameLength) return false;
-            for (int i=0; i<name.Length; i++)
-            {
-                char c=name[i];
-                if (char.IsControl(c) || c=='|') return false;
-                if (char.IsHighSurrogate(c)) { if (++i==name.Length || !char.IsLowSurrogate(name[i])) return false; }
-                else if (char.IsLowSurrogate(c)) return false;
-            }
-            return true;
-        }
+        public static bool ValidName(string? name) => FoodNameIdentity.IsCanonical(name);
     }
 }

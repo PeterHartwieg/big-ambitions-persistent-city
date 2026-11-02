@@ -23,6 +23,11 @@ namespace PersistentCity.Persistence
             if (!modData.TryGetValue(StateKey, out var source)) return SaveCodec.Read(null);
             if (source == null) return new SaveReadResult(SaveReadStatus.Invalid, null, "Stored state is null.");
             var result = SaveCodec.Read(source);
+            if (result.Status == SaveReadStatus.Loaded)
+            {
+                try { SaveCodec.RequireExecutableCapabilities(source); }
+                catch (SaveValidationException e) { return new SaveReadResult(SaveReadStatus.Invalid, null, e.Message); }
+            }
             if (result.Status == SaveReadStatus.Loaded && !string.Equals(result.State!.PopulationKey, expectedPopulationKey, StringComparison.Ordinal))
                 return new SaveReadResult(SaveReadStatus.Invalid, null, "Stored state belongs to another population.");
             return result;
@@ -35,6 +40,7 @@ namespace PersistentCity.Persistence
             try
             {
                 // Encode and validate completely before touching modData.
+                SaveCodec.RequireExecutablePolicy(state);
                 var payload = SaveCodec.Write(state);
                 var existing = ReadFrom(modData, state.PopulationKey);
                 if (existing.Status != SaveReadStatus.Missing && existing.Status != SaveReadStatus.Loaded)
