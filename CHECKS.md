@@ -2,6 +2,8 @@
 
 Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here; never append slice sections to this file. Sync/review-fix notes go into the slice's own file.
 
+- E5b ? 2 November 2026, offline **partial / native integration incomplete**: complete-menu price refusal, cached authored bag policy; focused 1,071 menu / 10,414 checkout assertions; discovery 280 -> 0 B/call; cache 10,100/0 hits/misses, 10,100 marks -> one pending shop, setups 33 vs 990; 1,024-shop detached backlog p95/max 0.0125/0.0194 ms, zero new >=30 ms samples; inherited 64.2844 ms first-use interval flagged; [dated evidence, remaining contracts and six In-game checks for the next batched rig](docs/checks/e5b-complete-menu.md), [performance](docs/perf/e5b-complete-menu.md).
+
 - E5a — 2 November 2026, offline: detached loaded-catalogue/stock-contract reader, writer 24; 2,556 unit tests / 2,744 E5a assertions; 8-offer/2,000-holder rebuild p95 0.4434 ms, backlog unit p95 0.1777 ms; rebuild 300,280 -> 129,144 B, clean reads 0 B/scans; initial backlog spike 32.5793 ms flagged. [Checks, full measurements and In-game checks for the next batched rig](docs/checks/e5a-catalogue-eligibility.md).
 
 - E5c - 2 November 2026, offline: Food default/seeded resident tastes, 2,687 tests; 4/8 weights p95 0.003344/0.004805 ms, 0 B; max-name fresh config p95 1.5955 ms; first-use 59.0058 ms (earlier 57.6619 ms) startup intervals flagged. [Full resolver/config numbers, validation and next batched rig](docs/checks/e5c-neutral-metadata.md).

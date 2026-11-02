@@ -69,6 +69,11 @@ d4_checkout = next(record for record in result['matrices']['d4']
                    if any('FoodCheckoutRegression.csproj' in argument for argument in record['command']))
 result['checkout_final'] = (root / d4_checkout['log']).read_text().splitlines()[-3:]
 result['unit_summary'] = [line for line in (root / 'build/d3a/gates/test.log').read_text().splitlines() if 'Passed!' in line]
+result['final_resolver_verification'] = json.loads((root / 'build/e5b/final-name-taste-process-proof.json').read_text())
+result['additional_foreground'] = json.loads((root / 'build/e5b/extra-results.json').read_text())
+assert all(record['exit'] == 0 for record in result['additional_foreground'])
+for record in result['additional_foreground']:
+    record['sha256'] = sha(root / record['log'])
 
 checks = (root / 'docs/checks/e5b-complete-menu.md').read_text(encoding='utf-8-sig')
 pr = (root / 'docs/reviews/2026-11-02-e5b-complete-menu-pr-description.md').read_text(encoding='utf-8-sig')
