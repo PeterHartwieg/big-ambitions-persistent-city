@@ -6,6 +6,8 @@ E5a implements the detached loaded-catalogue/direct-stock reader with bounded di
 
 E5c implements the pure product metadata resolver (Food by default, seeded per-resident taste) and bounded optional config table; writer 24 and native product support are unchanged. [Offline evidence and next batched rig checks](docs/checks/e5c-neutral-metadata.md).
 
+E5e implements the bounded, versioned [mod metadata API](docs/food-product-metadata-api.md) with config > API > defaults and immutable loaded-name-filtered resolver images. Schema 25, held inputs and native eligibility/checkout are unchanged. [Offline evidence and automated next-batch rig checks](docs/checks/e5e-metadata-api.md).
+
 E5d implements the inactive [schema-25 name identity/save contract](docs/population-schema25.md), preserving exact predecessor facts and opaque histories; native product/ownership integration remains separate. [Offline evidence and numbered next-batch rig checks](docs/checks/e5d-name-identity-save.md).
 
 E3 remaining batch: [six named candidates STOP](docs/plans/e3-remaining-batch.md), per Peter's 2 November batch-check decision; isolated conditional probes only, no gameplay/menu/save change. [Offline checks and 6 Nov handoff](docs/checks/e3-remaining-batch.md).

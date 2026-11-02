@@ -15,13 +15,18 @@ env = dict(os.environ, DOTNET_CLI_USE_MSBUILD_SERVER='0', MSBUILDDISABLENODEREUS
 historical = [root / 'docs/checks/e5c-neutral-metadata-results.json', root / 'docs/checks/e5c-name-taste-process-proof.json']
 original = {p:p.read_bytes() for p in historical if p.exists()}
 process_proof = None
+dotnet = str(Path(os.environ['LOCALAPPDATA']) / 'Microsoft/dotnet/dotnet.exe')
+guard = ['powershell','-NoProfile','-ExecutionPolicy','Bypass','-File',r'C:\Users\Peter\Coding_Projects\.agent-logs\wait-other-dotnet.ps1','-Repo',str(root)]
 steps = [('full-required-matrix',[sys.executable,'tools/food-metadata-regression/validate.py']),
          ('e5a-source',[sys.executable,'tools/e5a-eligibility-regression/source_checks.py']),
-         ('e5e-source',[sys.executable,'tools/food-metadata-api-regression/source_checks.py'])]
+         ('e5e-source',[sys.executable,'tools/food-metadata-api-regression/source_checks.py']),
+         ('final-api-performance',[dotnet,'run','--project','tools/food-metadata-api-regression/FoodMetadataApiRegression.csproj','--configuration','Release'])]
 results = []
 try:
     for name,command in steps:
         print(f'{name}: foreground start',flush=True)
+        if command[0] == dotnet:
+            subprocess.run(guard,cwd=root,env=env,check=True)
         path = out / (name+'.log')
         with path.open('wb') as log:
             code = subprocess.run(command,cwd=root,env=env,stdout=log,stderr=subprocess.STDOUT).returncode
