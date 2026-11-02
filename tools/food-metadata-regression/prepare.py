@@ -12,8 +12,11 @@ choice = choice[choice.index('    public static partial class FoodChoicePolicy')
 choice = choice.replace('class FoodChoicePolicy', 'class FoodChoicePolicyBefore', 1)
 choice = choice.replace('private static readonly double[] TasteRatios', 'private const int MaximumShortlist=8, MaximumOffersPerShop=8;\n        private static readonly double[] TasteRatios', 1)
 (out / 'FoodChoicePolicyBefore.cs').write_text('using System;\nusing System.Collections.Generic;\nnamespace PersistentCity.Core\n{\n'+choice)
-parser = source('c365731', 'Runtime/FoodProductOverrideSettings.cs')
+parser = (root / 'Runtime/FoodProductOverrideSettings.cs').read_text()
+# Mechanical before arm: same current policy/budget with the original per-entry HashSet.
+parser = parser.replace('int fields=0;', 'var fields=new HashSet<string>(StringComparer.Ordinal);')
+parser = parser.replace('if (bit==0 || (fields&bit)!=0) invalid=true;\n                        fields|=bit;', 'if (bit==0 || !fields.Add(field)) invalid=true;')
 parser = parser[parser.index('    internal sealed class FoodProductOverrideConverter'):]
 parser = parser.replace('class FoodProductOverrideConverter', 'class FoodProductOverrideConverterBefore', 1)
 (out / 'FoodProductOverrideConverterBefore.cs').write_text('using System;\nusing System.Collections.Generic;\nusing System.Globalization;\nusing System.Linq;\nusing Newtonsoft.Json;\nusing PersistentCity.Core;\nnamespace PersistentCity.Runtime\n{\n'+parser)
-print('Prepared pinned 034bb76 choices and c365731 pre-bitmask config parser.')
+print('Prepared pinned 034bb76 choices and policy-matched pre-bitmask config parser.')

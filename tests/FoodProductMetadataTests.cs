@@ -15,18 +15,18 @@ public sealed class FoodProductMetadataTests
     private static readonly ResidentTraits Traits=new() {Bands="2222222222"};
     private static PrototypeSettings Parse(string table) => JsonConvert.DeserializeObject<PrototypeSettings>("{\"FoodProductOverrides\":"+table+",\"MaximumPedestrians\":37}")!;
     private static string Entry(string fields, string name=Dumplings) => "{"+JsonConvert.ToString(name)+":{"+fields+"}}";
-    private static FoodProductMetadata Read(string fields) => Parse(Entry(fields)).FoodProductOverrides.Resolver.Resolve(Dumplings,Traits);
+    private static FoodProductMetadata Read(string fields) => Parse(Entry(fields)).FoodProductOverrides.Resolver.Resolve(Dumplings,Traits,957,"consumer");
     private static EvaluatedFoodOffer Offer(string product, MealKind meal, double memory=0) => new("shop",product,Money.FromCents(100),2,1,10,90,null,null,meal,memory);
 
     [Theory]
     [InlineData("")] [InlineData("\"MealClass\":null")] [InlineData("\"MealClass\":12")]
     [InlineData("\"MealClass\":\"food\"")] [InlineData("\"MealClass\":\"Food \"")]
     [InlineData("\"MealClass\":{}")]
-    public void AbsentAndInvalidClassesStayUnknown(string fields)
+    public void AbsentAndInvalidClassesDefaultToFood(string fields)
     {
         var m=Read(fields);
-        Assert.Equal(MealClass.Unknown,m.MealClass);
-        Assert.Equal((2,900,100,450),(m.TasteBand,m.BreakfastFitCents,m.LunchFitCents,m.DinnerFitCents));
+        Assert.Equal(MealClass.Food,m.MealClass);
+        Assert.Equal((FoodProductMetadataResolver.DefaultTaste(957,"consumer",Dumplings),900,100,450),(m.TasteBand,m.BreakfastFitCents,m.LunchFitCents,m.DinnerFitCents));
     }
     [Theory]
     [InlineData("Unknown",MealClass.Unknown)] [InlineData("Food",MealClass.Food)] [InlineData("Drink",MealClass.Drink)]
@@ -37,28 +37,30 @@ public sealed class FoodProductMetadataTests
     public static IEnumerable<object[]> MealsAndWeights()
     {
         foreach (var meal in new[]{MealKind.Breakfast,MealKind.Lunch,MealKind.Dinner})
-            foreach (double weight in new[]{0,.25,.5,1,2,3}) yield return new object[]{meal,weight};
+            foreach (double weight in new[]{0,.25,.5,1,2,3})
+                for(int band=0;band<5;band++) yield return new object[]{meal,weight,band};
     }
     [Theory] [MemberData(nameof(MealsAndWeights))]
-    public void NeutralFitIsMedianForEveryMealAtSupportedTasteWeights(MealKind meal,double weight)
+    public void DefaultFitIsMedianForEveryMealAtSupportedTasteWeights(MealKind meal,double weight,int band)
     {
-        var settings=new FoodChoiceSettings {FoodChoiceTasteWeight=weight,FoodChoiceWeightFloor=.001};
-        var resolver=Parse(Entry("\"MealClass\":\"Food\"")).FoodProductOverrides.Resolver;
-        var neutral=resolver.Resolve(Dumplings,Traits);
+        var settings=new FoodChoiceSettings {FoodChoiceTasteWeight=weight,FoodMenuNewTasteWeight=weight,FoodChoiceWeightFloor=.001};
+        var traits=new ResidentTraits {Bands=new string((char)('0'+band),10)};
+        var resolver=Parse(Entry("\"MealClass\":\"Food\",\"TasteBand\":"+band)).FoodProductOverrides.Resolver;
+        var metadata=resolver.Resolve(Dumplings,traits,957,"consumer");
         int[] fits={900,100,450};
-        Assert.Equal(fits[(int)meal-1],neutral.Penalty(meal));
+        Assert.Equal(fits[(int)meal-1],metadata.Penalty(meal));
         var originals=new[]{FoodProducts.Croissant,FoodProducts.Burger,FoodProducts.HotDog};
-        var originalWeights=originals.Select(p=>FoodChoicePolicy.Weight(Offer(p,meal),Traits,Money.FromCents(1000),settings)).OrderBy(x=>x).ToArray();
-        double actual=FoodChoicePolicy.Weight(Offer(Dumplings,meal),Traits,Money.FromCents(1000),settings,neutral);
+        var originalWeights=originals.Select(p=>FoodChoicePolicy.Weight(Offer(p,meal),traits,Money.FromCents(1000),settings)).OrderBy(x=>x).ToArray();
+        double actual=FoodChoicePolicy.Weight(Offer(Dumplings,meal),traits,Money.FromCents(1000),settings,metadata);
         Assert.Equal(originalWeights[1],actual,12);
         // Compare each original, including full A3 floor/temperature/memory and rank ordering.
         foreach (string product in originals)
         {
             int fit=FoodProducts.Penalty(meal,product);
-            double old=FoodChoicePolicy.Weight(Offer(product,meal),Traits,Money.FromCents(1000),settings);
-            Assert.Equal(Math.Sign(weight*(fit-neutral.Penalty(meal))),Math.Sign(actual-old));
+            double old=FoodChoicePolicy.Weight(Offer(product,meal),traits,Money.FromCents(1000),settings);
+            Assert.Equal(Math.Sign(weight*(fit-metadata.Penalty(meal))),Math.Sign(actual-old));
         }
-        if (weight==1) Assert.Equal(new[]{5.5,1.5,3.25}[(int)meal-1],1+weight*neutral.Penalty(meal)/200.0);
+        if (weight==1) Assert.Equal(new[]{5.5,1.5,3.25}[(int)meal-1],1+weight*metadata.Penalty(meal)/200.0);
     }
     [Fact]
     public void OriginalThreeWeightsAndDrawsAreUnchangedAndOverridesCannotReplaceSavedTaste()
@@ -75,7 +77,7 @@ public sealed class FoodProductMetadataTests
                 double best=double.PositiveInfinity; int selected=-1;
                 for (int i=0;i<offers.Length;i++)
                 {
-                    var m=configured.Resolver.Resolve(offers[i].ProductId,traits);
+                    var m=configured.Resolver.Resolve(offers[i].ProductId,traits,seed,"consumer");
                     Assert.Equal(MealClass.Food,m.MealClass);
                     Assert.Equal(FoodChoicePolicy.Taste(traits,offers[i].ProductId),m.TasteBand);
                     double historical=FoodChoicePolicy.Weight(offers[i],traits,Money.FromCents(1000),settings);
@@ -93,10 +95,12 @@ public sealed class FoodProductMetadataTests
     [Theory]
     [InlineData(Dumplings)] [InlineData(ChoppedCheese)] [InlineData("ba:itemname_donut")]
     [InlineData("anothermod:unknown")] [InlineData("BA:itemname_burger")]
-    public void ArbitraryNamesUseNeutralDefaultsWithoutWireCodeHash(string name)
+    public void ArbitraryNamesUseFoodAndSeededTasteWithoutWireCodeHash(string name)
     {
-        var m=FoodProductMetadataResolver.Empty.Resolve(name,Traits);
-        Assert.Equal(FoodProductMetadataResolver.Neutral,m);
+        var m=FoodProductMetadataResolver.Empty.Resolve(name,Traits,957,"consumer");
+        Assert.Equal(MealClass.Food,m.MealClass);
+        Assert.Equal(FoodProductMetadataResolver.DefaultTaste(957,"consumer",name),m.TasteBand);
+        Assert.Equal((900,100,450),(m.BreakfastFitCents,m.LunchFitCents,m.DinnerFitCents));
         Assert.Equal(0,m.Penalty(MealKind.Legacy));
         Assert.Equal(name,ResidentInsight.DefaultProductName(name));
         Assert.False(FoodProducts.Known(name));
@@ -105,9 +109,9 @@ public sealed class FoodProductMetadataTests
     public void OrdinalKeysHaveNoTrimmingAliasesOrNamespaceFallback()
     {
         var table=Parse(Entry("\"MealClass\":\"Food\",\"TasteBand\":4")).FoodProductOverrides;
-        Assert.Equal(4,table.Resolver.Resolve(Dumplings,Traits).TasteBand);
+        Assert.Equal(4,table.Resolver.Resolve(Dumplings,Traits,957,"consumer").TasteBand);
         foreach (string other in new[]{Dumplings.ToUpperInvariant()," "+Dumplings,Dumplings+" ","ba:itemname_dumplings","itemname_dumplings"})
-            Assert.Equal(FoodProductMetadataResolver.Neutral,table.Resolver.Resolve(other,Traits));
+            Assert.Equal(FoodProductMetadataResolver.Empty.Resolve(other,Traits,957,"consumer"),table.Resolver.Resolve(other,Traits,957,"consumer"));
         var logs=new List<string>();
         table.ReportUnloadedOnce(new HashSet<string>(StringComparer.Ordinal),logs.Add);
         table.ReportUnloadedOnce(new HashSet<string>(StringComparer.Ordinal),logs.Add);
@@ -115,13 +119,13 @@ public sealed class FoodProductMetadataTests
     }
     [Theory]
     [InlineData("\"TasteBand\":99,\"BreakfastFitCents\":-1,\"LunchFitCents\":\"Infinity\",\"DinnerFitCents\":\"NaN\"",4,0,5000,450)]
-    [InlineData("\"TasteBand\":1.5,\"BreakfastFitCents\":{},\"LunchFitCents\":null,\"DinnerFitCents\":[]",2,900,100,450)]
+    [InlineData("\"TasteBand\":1.5,\"BreakfastFitCents\":{},\"LunchFitCents\":null,\"DinnerFitCents\":[]",-1,900,100,450)]
     [InlineData("\"TasteBand\":\"-Infinity\",\"BreakfastFitCents\":\"5000.1\",\"LunchFitCents\":\"12\",\"DinnerFitCents\":0",0,5000,12,0)]
     public void NumbersClampOrDefaultAndLogOnce(string fields,int taste,int breakfast,int lunch,int dinner)
     {
         var table=Parse(Entry(fields)).FoodProductOverrides;
-        var m=table.Resolver.Resolve(Dumplings,Traits);
-        Assert.Equal((taste,breakfast,lunch,dinner),(m.TasteBand,m.BreakfastFitCents,m.LunchFitCents,m.DinnerFitCents));
+        var m=table.Resolver.Resolve(Dumplings,Traits,957,"consumer");
+        Assert.Equal((taste==-1 ? FoodProductMetadataResolver.DefaultTaste(957,"consumer",Dumplings) : taste,breakfast,lunch,dinner),(m.TasteBand,m.BreakfastFitCents,m.LunchFitCents,m.DinnerFitCents));
         var logs=new List<string>(); table.ReportOnce(logs.Add); table.ReportOnce(logs.Add); Assert.Single(logs);
     }
     [Theory]
@@ -129,7 +133,7 @@ public sealed class FoodProductMetadataTests
     [InlineData("\"MealClass\":\"Food\",\"MealClass\":\"Food\"")]
     [InlineData("\"MealClass\":\"Food\",\"TasteBand\":4,\"tasteband\":4")]
     public void UnknownOrDuplicateEntryFieldsDefaultWholeEntry(string fields)
-        => Assert.Equal(FoodProductMetadataResolver.Neutral,Read(fields));
+        => Assert.Equal(FoodProductMetadataResolver.Empty.Resolve(Dumplings,Traits,957,"consumer"),Read(fields));
     [Theory]
     [InlineData("null")] [InlineData("[]")] [InlineData("12")]
     [InlineData("{\"a\":{},\"a\":{}}")]
@@ -172,7 +176,7 @@ public sealed class FoodProductMetadataTests
         {
             var logs=new List<string>();settings.FoodProductOverrides.ReportOnce(logs.Add);
             settings.FoodProductOverrides.ReportOnce(logs.Add);Assert.Empty(logs);
-            Assert.Equal(FoodProductMetadataResolver.Neutral,settings.FoodProductOverrides.Resolver.Resolve(Dumplings,Traits));
+            Assert.Equal(FoodProductMetadataResolver.Empty.Resolve(Dumplings,Traits,957,"consumer"),settings.FoodProductOverrides.Resolver.Resolve(Dumplings,Traits,957,"consumer"));
         }
     }
     [Fact]
@@ -187,10 +191,10 @@ public sealed class FoodProductMetadataTests
         {
             var traits=ResidentTraits.Generate(seed,"resident");var draw=new FoodDrawContext(seed,"resident",1,MealKind.Lunch,"home",1);
             string Winner(IEnumerable<string> products,FoodProductMetadataResolver resolver) => products.Select(p=>new {Product=p,
-                Rank=FoodDrawContext.Rank(draw.OfferHash("shop",p),FoodChoicePolicy.Weight(Offer(p,MealKind.Lunch),traits,Money.FromCents(1000),new FoodChoiceSettings(),resolver.Resolve(p,traits)))})
+                Rank=FoodDrawContext.Rank(draw.OfferHash("shop",p),FoodChoicePolicy.Weight(Offer(p,MealKind.Lunch),traits,Money.FromCents(1000),new FoodChoiceSettings(),resolver.Resolve(p,traits,seed,"consumer")))})
                 .OrderBy(x=>x.Rank).ThenBy(x=>x.Product,StringComparer.Ordinal).First().Product;
             Assert.Equal(Winner(names,a),Winner(names.Reverse(),b));
-            foreach(string name in names) Assert.Equal(a.Resolve(name,traits),b.Resolve(name,traits));
+            foreach(string name in names) Assert.Equal(a.Resolve(name,traits,seed,"consumer"),b.Resolve(name,traits,seed,"consumer"));
         }
     }
     [Fact]
@@ -203,26 +207,81 @@ public sealed class FoodProductMetadataTests
         foreach(string name in new[]{Dumplings,ChoppedCheese,"mod:removed","mod:returned"})
         {
             var resolver=Parse(Entry("\"MealClass\":\"Food\"",name)).FoodProductOverrides.Resolver;
-            _=resolver.Resolve(name,Traits);
+            _=resolver.Resolve(name,Traits,957,"consumer");
             Assert.Equal(before,MemoryWire.Encode(memory));
             Assert.Equal(remembered,FoodMemoryPolicy.Contribution(memory,3,1,Traits,settings));
             Assert.Equal(unseen,FoodMemoryPolicy.Contribution(memory,4,1,Traits,settings));
             var offer=Offer(name,MealKind.Lunch,remembered);
             var s=new FoodChoiceSettings();
-            double baseWeight=FoodChoicePolicy.Weight(Offer(name,MealKind.Lunch),Traits,Money.FromCents(1000),s,resolver.Resolve(name,Traits));
-            Assert.Equal(baseWeight*Math.Exp(remembered),FoodChoicePolicy.Weight(offer,Traits,Money.FromCents(1000),s,resolver.Resolve(name,Traits)),12);
+            double baseWeight=FoodChoicePolicy.Weight(Offer(name,MealKind.Lunch),Traits,Money.FromCents(1000),s,resolver.Resolve(name,Traits,957,"consumer"));
+            Assert.Equal(baseWeight*Math.Exp(remembered),FoodChoicePolicy.Weight(offer,Traits,Money.FromCents(1000),s,resolver.Resolve(name,Traits,957,"consumer")),12);
         }
     }
     [Fact]
     public void ResolverCopiesInputAndDoesNotAllocateOnWarmResolveOrWeights()
     {
-        var entries=new Dictionary<string,FoodProductMetadata> {{Dumplings,new(MealClass.Food,2,900,100,450)}};
+        var entries=new Dictionary<string,FoodProductMetadataOverride> {{Dumplings,new(MealClass.Food,2,900,100,450)}};
         var resolver=new FoodProductMetadataResolver(entries); entries.Clear();
         var offer=Offer(Dumplings,MealKind.Breakfast);var s=new FoodChoiceSettings();var allowance=Money.FromCents(1000);
-        for(int i=0;i<20000;i++) _=FoodChoicePolicy.Weight(offer,Traits,allowance,s,resolver.Resolve(Dumplings,Traits));
+        for(int i=0;i<20000;i++)
+        {
+            _=FoodChoicePolicy.Weight(offer,Traits,allowance,s,resolver.Resolve(Dumplings,Traits,957,"consumer"));
+            _=FoodChoicePolicy.Weight(offer,Traits,allowance,s,FoodProductMetadataResolver.Empty.Resolve(Dumplings,Traits,957,"consumer"));
+        }
         long bytes=GC.GetAllocatedBytesForCurrentThread();
-        for(int i=0;i<10000;i++) _=FoodChoicePolicy.Weight(offer,Traits,allowance,s,resolver.Resolve(Dumplings,Traits));
+        for(int i=0;i<10000;i++)
+        {
+            _=FoodChoicePolicy.Weight(offer,Traits,allowance,s,resolver.Resolve(Dumplings,Traits,957,"consumer"));
+            _=FoodChoicePolicy.Weight(offer,Traits,allowance,s,FoodProductMetadataResolver.Empty.Resolve(Dumplings,Traits,957,"consumer"));
+        }
         Assert.Equal(0,GC.GetAllocatedBytesForCurrentThread()-bytes);
-        Assert.Equal(MealClass.Food,resolver.Resolve(Dumplings,Traits).MealClass);
+        Assert.Equal(MealClass.Food,resolver.Resolve(Dumplings,Traits,957,"consumer").MealClass);
     }
+    [Theory]
+    [InlineData(Dumplings)] [InlineData(ChoppedCheese)]
+    public void SeededTasteVariesByResidentAndProductWithA2Distribution(string product)
+    {
+        var counts=new int[5]; var products=new HashSet<int>(); int differences=0;
+        for(int i=0;i<10000;i++)
+        {
+            string id="pc:"+i.ToString(CultureInfo.InvariantCulture);
+            int taste=FoodProductMetadataResolver.DefaultTaste(957,id,product);
+            counts[taste]++;
+            if(taste!=FoodProductMetadataResolver.DefaultTaste(957,id,"another:product")) differences++;
+            products.Add(taste);
+            // Reconstructed resolver/settings/traits represent fresh loads; no persisted taste array.
+            Assert.Equal(taste,Parse("{}").FoodProductOverrides.Resolver.Resolve(product,new ResidentTraits {Bands=Traits.Bands},957,id).TasteBand);
+        }
+        Assert.Equal(5,products.Count); Assert.InRange(differences,5000,8500);
+        int[] expected={1000,2000,4000,2000,1000};
+        for(int i=0;i<5;i++) Assert.InRange(counts[i],expected[i]-200,expected[i]+200);
+    }
+    [Fact]
+    public void TasteOverrideReplacesSeededDrawForAllResidentsAndRoundtripKeepsAbsence()
+    {
+        var table=Parse(Entry("\"TasteBand\":4")).FoodProductOverrides;
+        for(int i=0;i<100;i++) Assert.Equal(4,table.Resolver.Resolve(Dumplings,Traits,i,"pc:"+i).TasteBand);
+        var settings=Parse(Entry("\"MealClass\":\"Drink\""));
+        string json=JsonConvert.SerializeObject(settings);
+        var reloaded=JsonConvert.DeserializeObject<PrototypeSettings>(json)!;
+        for(int i=0;i<100;i++)
+            Assert.Equal(FoodProductMetadataResolver.DefaultTaste(957,"pc:"+i,Dumplings),reloaded.FoodProductOverrides.Resolver.Resolve(Dumplings,Traits,957,"pc:"+i).TasteBand);
+    }
+    [Fact]
+    public void NameHashMatchesIndependentFixedAlgorithmAndLengthDelimitedVectors()
+    {
+        // Reference strings intentionally allocate here; production streams the same UTF-16 units.
+        foreach(int seed in new[]{0,957,-1,int.MaxValue})
+        foreach(string id in new[]{"pc:1","pc:20","a|b:","resident:??"})
+        foreach(string name in new[]{Dumplings,ChoppedCheese,"mod:??","x"})
+        {
+            string key="pc:product-name-taste:v1|"+id.Length.ToString(CultureInfo.InvariantCulture)+":"+id+"|"+name.Length.ToString(CultureInfo.InvariantCulture)+":"+name;
+            uint hash=unchecked(2166136261u^(uint)seed);
+            unchecked {foreach(char c in key) hash=(hash^c)*16777619u; hash^=hash>>16; hash*=0x7feb352du; hash^=hash>>15;}
+            uint percentile=hash%100;
+            int expected=percentile<10 ? 0 : percentile<30 ? 1 : percentile<70 ? 2 : percentile<90 ? 3 : 4;
+            Assert.Equal(expected,FoodProductMetadataResolver.DefaultTaste(seed,id,name));
+        }
+    }
+
 }
