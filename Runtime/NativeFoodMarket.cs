@@ -381,13 +381,24 @@ namespace PersistentCity.Runtime
             try
             {
                 simulator.SetUp(reg, SaveGameManager.Current.Hour);
+                if (!ReferenceEquals(save, SaveGameManager.Current) || minute < EarliestMinute || minute >= EarliestMinute + 60
+                    || !CanServe(meal.BusinessId))
+                    return new FoodSale(false, "Native authority or accounting hour changed during checkout");
                 approvedProduct = meal.ProductId;
-                approvedPrice = reg.retailPrices.Single(p => p.itemName == meal.ProductId).price;
+                // Native callbacks can remove or duplicate the selected row after capture.
+                // This is a definite pre-receipt refusal, not an uncertain Single() exception.
+                if (reg.retailPrices == null || reg.retailPrices.Count > 128)
+                    return RefuseCheckoutContract(reg);
+                int selectedPrices = 0;
+                foreach (var row in reg.retailPrices) if (row != null && row.itemName == meal.ProductId)
+                { selectedPrices++; approvedPrice = row.price; }
+                if (selectedPrices != 1) return RefuseCheckoutContract(reg);
                 Money livePrice;
                 try { livePrice = Money.FromNative(approvedPrice); }
                 catch (ArgumentOutOfRangeException)
                 {
                     // No receipt or native sale exists yet: this is a definite refusal, not uncertain ownership.
+                    RefuseContract(reg); NativeFoodOwnership.Observe(reg, false);
                     return new FoodSale(false, "Approved price is outside the supported range");
                 }
                 if (livePrice != meal.Price)
@@ -397,8 +408,7 @@ namespace PersistentCity.Runtime
                 if (!CompletePricesMatch(reg, business!) || !SupportedMenu(reg) || !CurrentAuthoredBagPolicy(reg)
                     || BusinessTypeHelper.GetData(reg.businessTypeName)?.HasTag(BigAmbitions.Tags.TagRef.Businesstag.customersneedpaperbags) != true)
                 {
-                    RefuseContract(reg); NativeFoodOwnership.Observe(reg, false);
-                    return new FoodSale(false, "Complete food menu changed before native checkout");
+                    return RefuseCheckoutContract(reg);
                 }
                 FoodSaleReceipts.Begin(data, meal);
                 buyerShop = reg; buying = true;
@@ -415,6 +425,11 @@ namespace PersistentCity.Runtime
                 throw new InvalidOperationException("Native sale outcome is uncertain; do not retry this intention.");
             FoodSaleReceipts.Confirm(data, meal);
             NativePurchases++; return new FoodSale(true, "Native product, bag and completed order confirmed; daily settlement remains native");
+        }
+        private FoodSale RefuseCheckoutContract(BuildingRegistration reg)
+        {
+            RefuseContract(reg); NativeFoodOwnership.Observe(reg, false);
+            return new FoodSale(false, "Complete food menu changed before native checkout");
         }
         private static bool CompletePricesMatch(BuildingRegistration reg, FoodBusiness approved)
         {

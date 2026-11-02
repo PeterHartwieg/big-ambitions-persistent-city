@@ -18,6 +18,19 @@ static partial class Program
         && BusinessTypeHelper.GetData(r.businessTypeName).HasTag(BigAmbitions.Tags.TagRef.Businesstag.customersneedpaperbags);
     static void CachedBagPolicyChecks()
     {
+        foreach(string missing in new[]{"foodtrucks:itemname_dumplings","foodtrucks:itemname_choppedcheese","other:historical\\name"})
+        {
+            Hooks.Reset(); SaveGameManager.Current.modData.Clear();
+            var reg=Registration(1,5,7,3);reg.cachedAvailableProducts.Clear();reg.cachedAvailableProducts.Add(missing);
+            var controller=new CityBuildingController {buildingRegistration=reg};CityManager.Instance.cityBuildingControllers=new[]{controller};
+            string place=NativeFoodMarket.PlaceId(reg);
+            var state=new FoodCommerceState {Shops={new FoodScope {PlaceId=place,BusinessId="retained-business",ProductId=missing}}};
+            using var market=new NativeFoodMarket(state,new[]{new Place {Id=place,Kind=PlaceKind.Shop}});
+            Check(state.Shops.Single().ProductId==missing,"missing canonical scope loads without remapping");
+            Check(!market.CanServe("retained-business") && market.NativePurchases==0 && reg.unprocessedCompletedOrders.Count==0,
+                "missing definition never grants checkout authority");
+            Check(market.ScopeStatus(place).Contains("incomplete"),"dynamic refusal names remaining contract");
+        }
         using(var f=new Fixture())
         {
             var type=BusinessTypeHelper.GetData(f.Reg.businessTypeName);
