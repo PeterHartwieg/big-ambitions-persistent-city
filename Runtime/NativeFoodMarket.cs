@@ -316,8 +316,8 @@ namespace PersistentCity.Runtime
             // Never cancel the requested handoff before its protected work has drained.
             if (authority == null || authority.Managed || authority.OwnsHour(lastContractRecoveryHour)
                 || !SupportedBusiness(reg) || reg.cachedAvailableProducts.Count > menuLimit
-                // ReadMenu reports zero for these states without inspecting the supply contract.
-                || reg.temporarilyClosed || !reg.HasEstablishedBusiness
+                // SupportedBusiness rejects unestablished shops; ReadMenu also skips supply inspection when closed.
+                || reg.temporarilyClosed
                 || !GamePlaces.BuildingAccessible(controller) || !CurrentAuthoredBagPolicy(reg)) return;
             try
             {
