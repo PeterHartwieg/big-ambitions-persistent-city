@@ -38,8 +38,8 @@ namespace PersistentCity.Runtime
             if (InvalidTable) report("FoodProductOverrides rejected: duplicate/invalid key, type or table bound; using empty metadata table.");
             else
             {
-                if (InvalidEntry) report("FoodProductOverrides: invalid entry/field defaulted (new meal class Food; taste seeded per resident).");
-                if (AdjustedField) report("FoodProductOverrides: numeric fields clamped/defaulted (taste 0-4; fit 0-5000).");
+                if (InvalidEntry) report("FoodProductOverrides: invalid entry/field absent; using API metadata before defaults.");
+                if (AdjustedField) report("FoodProductOverrides: numeric fields clamped/absent (taste 0-4; fit 0-5000); absent fields use API before defaults.");
                 if (IgnoredOriginal) report("FoodProductOverrides: original-three overrides ignored; saved tastes and established food fits preserved.");
             }
         }
@@ -107,10 +107,8 @@ namespace PersistentCity.Runtime
                     return Reject(reader,rootDepth,result);
                 if (!budget.Read(reader)) return Reject(reader,rootDepth,result);
                 bool invalid=false;
-                var defaults=FoodProductMetadataResolver.Defaults;
-                MealClass mealClass=defaults.MealClass;
-                int? taste=defaults.TasteBand;
-                int breakfast=defaults.BreakfastFitCents, lunch=defaults.LunchFitCents, dinner=defaults.DinnerFitCents;
+                MealClass? mealClass=null;
+                int? taste=null, breakfast=null, lunch=null, dinner=null;
                 if (reader.TokenType!=JsonToken.StartObject)
                 {
                     invalid=true;
@@ -135,20 +133,19 @@ namespace PersistentCity.Runtime
                             case "MealClass":
                                 string? word=reader.TokenType==JsonToken.String ? (string?)reader.Value : null;
                                 mealClass=word=="Food" ? MealClass.Food : word=="Drink" ? MealClass.Drink : word=="Bundle" ? MealClass.Bundle
-                                    : word=="NonFood" ? MealClass.NonFood : word=="Unknown" ? MealClass.Unknown : defaults.MealClass;
+                                    : word=="NonFood" ? MealClass.NonFood : word=="Unknown" ? MealClass.Unknown : (MealClass?)null;
                                 if (word!="Unknown" && word!="Food" && word!="Drink" && word!="Bundle" && word!="NonFood") result.InvalidEntry=true;
                                 break;
-                            case "TasteBand": taste=Number(reader,defaults.TasteBand,4,result); break;
-                            case "BreakfastFitCents": breakfast=Number(reader,defaults.BreakfastFitCents,5000,result)!.Value; break;
-                            case "LunchFitCents": lunch=Number(reader,defaults.LunchFitCents,5000,result)!.Value; break;
-                            case "DinnerFitCents": dinner=Number(reader,defaults.DinnerFitCents,5000,result)!.Value; break;
+                            case "TasteBand": taste=Number(reader,4,result); break;
+                            case "BreakfastFitCents": breakfast=Number(reader,5000,result); break;
+                            case "LunchFitCents": lunch=Number(reader,5000,result); break;
+                            case "DinnerFitCents": dinner=Number(reader,5000,result); break;
                             default: invalid=true; break;
                         }
                         if (!ConsumeValue(reader,budget)) return Reject(reader,rootDepth,result);
                     }
                 }
-                if (invalid) { result.InvalidEntry=true; mealClass=defaults.MealClass; taste=defaults.TasteBand;
-                    breakfast=defaults.BreakfastFitCents; lunch=defaults.LunchFitCents; dinner=defaults.DinnerFitCents; }
+                if (invalid) { result.InvalidEntry=true; mealClass=null; taste=null; breakfast=null; lunch=null; dinner=null; }
                 if (FoodProducts.KnownLegacy(name!)) result.IgnoredOriginal=true;
                 entries.Add(name!,new FoodProductMetadataOverride(mealClass,taste,breakfast,lunch,dinner));
             }
@@ -174,7 +171,7 @@ namespace PersistentCity.Runtime
             }
             return result;
         }
-        private static int? Number(JsonReader reader, int? fallback, int maximum, FoodProductOverrideTable result)
+        private static int? Number(JsonReader reader, int maximum, FoodProductOverrideTable result)
         {
             if ((reader.TokenType==JsonToken.Integer || reader.TokenType==JsonToken.Float || reader.TokenType==JsonToken.String)
                 && double.TryParse(Convert.ToString(reader.Value,CultureInfo.InvariantCulture),NumberStyles.Float,CultureInfo.InvariantCulture,out double number)
@@ -185,7 +182,7 @@ namespace PersistentCity.Runtime
                 if (number==Math.Truncate(number)) return (int)number;
             }
             result.AdjustedField=true;
-            return fallback;
+            return null;
         }
         public override void WriteJson(JsonWriter writer, FoodProductOverrideTable? value, JsonSerializer serializer)
         {
@@ -197,11 +194,11 @@ namespace PersistentCity.Runtime
                 {
                     value.Resolver.TryGetOverride(name,out var m);
                     writer.WritePropertyName(name); writer.WriteStartObject();
-                    writer.WritePropertyName("MealClass"); writer.WriteValue(m.MealClass.ToString());
+                    if (m.OptionalMealClass.HasValue) { writer.WritePropertyName("MealClass"); writer.WriteValue(m.OptionalMealClass.Value.ToString()); }
                     if (m.TasteBand.HasValue) { writer.WritePropertyName("TasteBand"); writer.WriteValue(m.TasteBand.Value); }
-                    writer.WritePropertyName("BreakfastFitCents"); writer.WriteValue(m.BreakfastFitCents);
-                    writer.WritePropertyName("LunchFitCents"); writer.WriteValue(m.LunchFitCents);
-                    writer.WritePropertyName("DinnerFitCents"); writer.WriteValue(m.DinnerFitCents);
+                    if (m.OptionalBreakfastFitCents.HasValue) { writer.WritePropertyName("BreakfastFitCents"); writer.WriteValue(m.OptionalBreakfastFitCents.Value); }
+                    if (m.OptionalLunchFitCents.HasValue) { writer.WritePropertyName("LunchFitCents"); writer.WriteValue(m.OptionalLunchFitCents.Value); }
+                    if (m.OptionalDinnerFitCents.HasValue) { writer.WritePropertyName("DinnerFitCents"); writer.WriteValue(m.OptionalDinnerFitCents.Value); }
                     writer.WriteEndObject();
                 }
             }

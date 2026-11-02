@@ -90,6 +90,7 @@ namespace PersistentCity.Runtime
         private bool clockRetimingRoutes;
         private double maxRloCheckMilliseconds, maxGateCheckMilliseconds, maxStationSearchMilliseconds, maxPrepareMilliseconds;
         private bool failed, subscribed;
+        private bool metadataLifetime;
         private string status = "";
         private long advanceFrames, advanceEvents;
         private double advanceMilliseconds, maxAdvanceMilliseconds;
@@ -177,6 +178,7 @@ namespace PersistentCity.Runtime
         public void Initialize(ModContext context)
         {
             log = context.Logger;
+            FoodProductMetadataApi.BindMainThread(); metadataLifetime = true;
             try
             {
                 NativeFoodOwnership.Install();
@@ -697,6 +699,7 @@ namespace PersistentCity.Runtime
 
         public void Shutdown()
         {
+            if (metadataLifetime) { FoodProductMetadataApi.Unload(); metadataLifetime = false; }
             Detach();
             // A pure worker may finish after unload; observe faults and release all runtime references.
             if (initialization != null)
