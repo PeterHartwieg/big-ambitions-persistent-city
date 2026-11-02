@@ -303,4 +303,15 @@ public sealed class FoodMetadataApiTests
         Assert.All(typeof(FoodProductMetadataProvider).GetMethods().Where(m=>m.DeclaringType==typeof(FoodProductMetadataProvider)),
             m=>Assert.DoesNotContain(m.GetParameters(),arg=>typeof(Delegate).IsAssignableFrom(arg.ParameterType)));
     }
+    [Fact]
+    public void EmptyProviderLifecycleDoesNotInvalidateAnUnchangedImage()
+    {
+        var registry=Registry();var catalogue=Catalogue(Dumplings);var image=registry.Publish(catalogue);
+        using var empty=Provider(registry,"empty"); Assert.Same(image,registry.Publish(catalogue));
+        empty.Dispose(); Assert.Same(image,registry.Publish(catalogue));
+        using var real=Provider(registry,"real");Register(real,Dumplings,Input());
+        var active=registry.Publish(catalogue);Assert.NotSame(image,active);
+        using var other=Provider(registry,"other");Assert.Same(active,registry.Publish(catalogue));
+        other.Dispose();Assert.Same(active,registry.Publish(catalogue));
+    }
 }

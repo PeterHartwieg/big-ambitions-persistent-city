@@ -77,7 +77,8 @@ namespace PersistentCity.Core
                 Cost(providerId, out int c, out int b);
                 if (!Fits(c, b)) { reason = "registry-budget"; return false; }
                 provider = new FoodProductMetadataProvider(this, providerId);
-                providers.Add(providerId, provider); characters += c; bytes += b; revision++;
+                // An empty provider changes bookkeeping, not the effective product image.
+                providers.Add(providerId, provider); characters += c; bytes += b;
                 reason = "accepted"; return true;
             }
         }
@@ -133,6 +134,7 @@ namespace PersistentCity.Core
             lock (gate)
             {
                 if (!provider.Active) return;
+                bool hadEntries = provider.Entries.Count > 0;
                 foreach (var entry in provider.Entries)
                 {
                     int count = names[entry.Key] - 1;
@@ -142,7 +144,8 @@ namespace PersistentCity.Core
                     else names[entry.Key] = count;
                 }
                 provider.Entries.Clear(); provider.Active = false; providers.Remove(provider.Id);
-                Cost(provider.Id, out int c, out int b); characters -= c; bytes -= b; revision++;
+                Cost(provider.Id, out int c, out int b); characters -= c; bytes -= b;
+                if (hadEntries) revision++;
             }
         }
         /// <summary>Atomic immutable publication at a host context boundary. A sealed E5a detached

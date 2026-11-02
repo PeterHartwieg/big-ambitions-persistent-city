@@ -57,6 +57,8 @@ namespace PersistentCity.Core
             api.TryGet(canonicalName, out var supplied);
             return new FoodProductMetadataSources(config, supplied);
         }
+        // Explicit diagnostics only; no logging or success-path strings during choice.
+        public string ApiReason(string canonicalName) => api.Reason(canonicalName);
         /// <summary>Copy effective inputs into E5d's existing revision-2 held tuple. The host
         /// calls this once for a new offer; replay uses the saved tuple, never this resolver.</summary>
         public FoodOfferMetadata Capture(string canonicalName, ResidentTraits traits, int seed, string consumerId)
