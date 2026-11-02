@@ -90,6 +90,7 @@ namespace PersistentCity.Runtime
         private bool clockRetimingRoutes;
         private double maxRloCheckMilliseconds, maxGateCheckMilliseconds, maxStationSearchMilliseconds, maxPrepareMilliseconds;
         private bool failed, subscribed;
+        private bool metadataLifetime;
         private string status = "";
         private long advanceFrames, advanceEvents;
         private double advanceMilliseconds, maxAdvanceMilliseconds;
@@ -179,6 +180,7 @@ namespace PersistentCity.Runtime
             log = context.Logger;
             try
             {
+                FoodProductMetadataApi.BindMainThread(); metadataLifetime = true;
                 NativeFoodOwnership.Install();
                 NativeFoodOwnership.EnsureSave();
                 if (NativeFoodOwnership.Error.Length > 0) throw new InvalidDataException(NativeFoodOwnership.Error);
@@ -709,6 +711,7 @@ namespace PersistentCity.Runtime
             routes = null;
             saveIdentity = null;
             enabled = false;
+            if (metadataLifetime) { FoodProductMetadataApi.Unload(); metadataLifetime = false; }
         }
         private void OnDestroy() => Shutdown();
     }
