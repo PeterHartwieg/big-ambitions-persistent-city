@@ -8,4 +8,7 @@
     <ProjectReference Include="../../Core/PersistentCity.Core.csproj" />
     <ProjectReference Include="../../Persistence/PersistentCity.Persistence.csproj" />
   </ItemGroup>
+  <Target Name="PrepareMetadataComparators" BeforeTargets="CoreCompile">
+    <Exec Command="python &quot;$(MSBuildProjectDirectory)/prepare.py&quot;" WorkingDirectory="$(MSBuildProjectDirectory)" />
+  </Target>
 </Project>
