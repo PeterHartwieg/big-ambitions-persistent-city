@@ -9,6 +9,9 @@ namespace PersistentCity.Persistence
 {
     public static partial class SaveCodec
     {
+        internal static void RequireExecutablePolicy(CityState state)
+            => Require(state.Schema < 25 || state.MenuPolicy == FoodNameIdentity.Wire,
+                "Dynamic held-product execution is not implemented; preserve the payload.");
         private static void MigrateNames25(CityState state)
         {
             Require(state.Schema == 24, "Name migration requires exact schema 24.");
@@ -66,7 +69,7 @@ namespace PersistentCity.Persistence
             return names.ToList();
         }
         private static bool Opaque25(FoodProductSales cell)
-            => cell.OpaqueIdentity || !FoodNameIdentity.IsCanonical(cell.ProductId);
+            => cell.HasOpaqueIdentity() || !FoodNameIdentity.IsCanonical(cell.ProductId);
 
         private static FoodOfferMetadata LegacyMetadata25(CityState state, ResidentMeal meal, string product)
         {
@@ -178,7 +181,7 @@ namespace PersistentCity.Persistence
                     c = source[i];
                     if (c == 'u')
                     {
-                        if (i + 4 >= end - 1 || !ushort.TryParse(source.Substring(i + 1, 4), NumberStyles.HexNumber,
+                        if (i + 4 >= end - 1 || !ushort.TryParse(source.AsSpan(i + 1, 4), NumberStyles.HexNumber,
                             CultureInfo.InvariantCulture, out ushort code)) return false;
                         c = (char)code; i += 4;
                     }
@@ -227,12 +230,12 @@ namespace PersistentCity.Persistence
                 ValidateMetadata25(result); return result;
             }
         }
-        private static void CheckProductCell25(JsonReader reader, TokenText text)
+        private static void CheckProductCell25(JsonReader reader, TokenText text, int references)
         {
             int start = text.End((IJsonLineInfo)reader) - 1;
             for (int field = 0; field < 7; field++)
                 Require(reader.Read() && reader.TokenType == JsonToken.Integer
-                    && IntegerToken(reader.Value, field == 0 ? 1 : 0, field == 0 ? FoodNameIdentity.MaximumNames : long.MaxValue)
+                    && IntegerToken(reader.Value, field == 0 ? 1 : 0, field == 0 ? Math.Min(FoodNameIdentity.MaximumNames, references) : long.MaxValue)
                     && text.CanonicalInteger((IJsonLineInfo)reader), "Invalid product reference cell.");
             Require(reader.Read() && reader.TokenType == JsonToken.EndArray, "Invalid product reference cell arity.");
             Require(text.End((IJsonLineInfo)reader) - start <= 128, "Product reference cell exceeds 128 characters.");

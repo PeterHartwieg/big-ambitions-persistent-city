@@ -150,11 +150,13 @@ namespace PersistentCity.Persistence
 
         internal static (int Streaming, int Semantic) CountRecordsForSchema(CityState state,string source,int schema)
         {
+            if (schema < 25) return PopulationSchema24.CountRecordsForSchema(state, source, schema);
             int semantic = Validate(state,schema), streaming = 0;
-            var context = WireContext.FromSource(source);
+            var tokenText = new TokenText(source);
+            var context = WireContext.FromSource(source, tokenText);
             using var reader = Reader(source);
             Require(reader.Read(), "Missing state.");
-            CheckShape(reader, typeof(CityState), schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : schema==23 ? Schema23Contracts : StateContracts, ref streaming, new TokenText(source), schema, new FieldNameSets());
+            CheckShape(reader, typeof(CityState), schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : schema==23 ? Schema23Contracts : StateContracts, ref streaming, tokenText, schema, new FieldNameSets { Product25Count = context.ProductNames.Length });
             Require(!reader.Read(), "Trailing content.");
             return (streaming, semantic);
         }
@@ -185,7 +187,7 @@ namespace PersistentCity.Persistence
                 if (state.Schema >= 25) result.SetProducts(state.ProductNames);
                 return result;
             }
-            public static WireContext FromSource(string source)
+            public static WireContext FromSource(string source, TokenText? tokenText = null)
             {
                 // Root/property/Places order is irrelevant. Collect only bounded saved IDs; no native lookup.
                 using var reader = Reader(source);
@@ -200,7 +202,7 @@ namespace PersistentCity.Persistence
                     {
                         Require(products == null, "Duplicate product name table.");
                         int records = 0;
-                        products = CheckNameTable25(reader, new TokenText(source), ref records);
+                        products = CheckNameTable25(reader, tokenText ?? new TokenText(source), ref records);
                         continue;
                     }
                     if (name != "Places") { reader.Skip(); continue; }

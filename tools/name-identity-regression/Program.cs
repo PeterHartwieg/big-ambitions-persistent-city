@@ -6,6 +6,11 @@ using System.Text;
 using Newtonsoft.Json;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
+#if NAME_SCHEMA24
+using NameBaselineCodec = PersistentCity.Persistence.SaveCodec;
+#else
+using NameBaselineCodec = PersistentCity.Persistence.PopulationSchema24;
+#endif
 
 static class NameIdentityProgram
 {
@@ -17,7 +22,11 @@ static partial class Program
     {
         string name = args.Length == 0 ? "957x2" : args[0];
         int samples = args.Length < 2 ? 3 : int.Parse(args[1]);
+        #if !NAME_SCHEMA24
         if (name == "encoding") { NameEncoding25(); return; }
+#endif
+        if (name == "record-boundary") { Console.WriteLine(JsonConvert.SerializeObject(RecordBoundary())); return; }
+        if (name == "input-boundary") { Console.WriteLine(JsonConvert.SerializeObject(InputBoundary())); return; }
         bool cf = name.StartsWith("CF", StringComparison.Ordinal);
         int residents = cf || name.StartsWith("50000", StringComparison.Ordinal) ? 50000 : name.StartsWith("5000", StringComparison.Ordinal) ? 5000 : 957;
         int factor = cf || name.EndsWith("x3", StringComparison.Ordinal) ? 3 : 2;
@@ -47,35 +56,44 @@ static partial class Program
                 Purchases = 1, Revenue = Money.FromCents(1), PurchaseMeals = new long[] { 1,0,0,0 } });
             state.Food!.History.Add(row);
         }
-        // FoodCity's clock is day 1. Move the fixture coherently to day 14 without processing
+        // FoodCity's clock is day 1. Move the fixture coherently to day 13 without processing
         // purchases: all relative schedule fields retain their original differences.
-        const double shift = 13 * 1440;
+        const double shift = 12 * 1440;
         Shift25(state, shift);
         string[] names = products.Concat(Enumerable.Range(8, 248).Select(i => "name25:product:" + i.ToString("D3"))).ToArray();
         state.Food!.Shops.Clear();
         for (int i = 0; i < 32; i++) state.Food.Shops.Add(new FoodScope { PlaceId = places[i].Id,
             BusinessId = "name25:scope:" + i, ProductId = names[i * 8], AdditionalProductIds = names.Skip(i * 8 + 1).Take(7).ToList() });
         state.Schema = 24; state.MenuPolicy = FoodMenuPolicy.Wire;
-        string before = PopulationSchema24.Write(state);
-        var beforeCounts = PopulationSchema24.CountRecordsForSchema(state, before, 24);
-        var baseline = Measure25(samples, () => PopulationSchema24.Write(state), () => PopulationSchema24.Read(before),
-            () => PopulationSchema24.ValidateForActivation(state), () => PopulationSchema24.RequireExecutableCapabilities(before));
-        long baselineRetained = Retained25(() => PopulationSchema24.Read(before));
+        string before = NameBaselineCodec.Write(state);
+        var beforeCounts = NameBaselineCodec.CountRecordsForSchema(state, before, 24);
+        var baseline = Measure25(samples, () => NameBaselineCodec.Write(state), () => NameBaselineCodec.Read(before),
+            () => NameBaselineCodec.ValidateForActivation(state), () => NameBaselineCodec.RequireExecutableCapabilities(before));
+        long baselineRetained = Retained25(() => NameBaselineCodec.Read(before));
+#if NAME_SCHEMA24
+        Console.WriteLine(JsonConvert.SerializeObject(new { name, residents, factor, samples, source = "034bb7629391ef0fedb61d7122b0d6ee3c451ff9", schema = CityState.CurrentSchema,
+            before = new { chars = before.Length, bytes = Encoding.UTF8.GetByteCount(before), beforeCounts.Streaming, beforeCounts.Semantic,
+                retainedBytes = baselineRetained, timing = baseline }, sha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(before))) }));
+        return;
+#else
         long migrationStart = Stopwatch.GetTimestamp();
         var migrated = SaveCodec.Read(before); Check(migrated.Status == SaveReadStatus.Loaded, migrated.Error);
         double migrationMs = Stopwatch.GetElapsedTime(migrationStart).TotalMilliseconds;
         var upgraded = migrated.State!;
         upgraded.Schema = 24; upgraded.MenuPolicy = FoodMenuPolicy.Wire;
-        Check(PopulationSchema24.Write(upgraded) == before, "24 -> 25 changed predecessor identity/money/history/terms.");
+        Check(NameBaselineCodec.Write(upgraded) == before, "24 -> 25 changed predecessor identity/money/history/terms.");
         upgraded.Schema = 25; upgraded.MenuPolicy = FoodNameIdentity.Wire;
         state = upgraded;
         string after = SaveCodec.Write(state);
         var afterCounts = SaveCodec.CountRecords(state, after);
         Check(state.ProductNames.Count == 256, "Expected complete 256-name table.");
-        Check(PopulationSchema24.Read(after).Status == SaveReadStatus.Future, "Old executable accepted 25.");
+        Check(NameBaselineCodec.Read(after).Status == SaveReadStatus.Future, "Old executable accepted 25.");
         var candidate = Measure25(samples, () => SaveCodec.Write(state), () => SaveCodec.Read(after),
             () => SaveCodec.ValidateForActivation(state), () => SaveCodec.RequireExecutableCapabilities(after));
         long candidateRetained = Retained25(() => SaveCodec.Read(after));
+        string budgetWire = after;
+        var budgetCounts = afterCounts;
+        object? maximumHeld = cf || name == "held64" ? MaximumHeld25(state, samples, out budgetWire, out budgetCounts) : null;
         // Preserve the established B-E synthetic reserves, then add E5d's entire conservative
         // allocation without reclaiming the earlier header reserve. Actual DTO cost is separate.
         int memoryHeadroom = state.Food!.Residents.Count * 13;
@@ -86,9 +104,9 @@ static partial class Program
         int reservedRecords = 191864 - 8 * (1 + 3 + 7 + 2) - 1 - AwarenessRecords(state) - WeatherRecords20(state)
             - CampaignRecords22(state) - OutflowRecords24(state) - state.Food.History.Sum(r => 1 + r.ProductSales.Count);
         // The history byte/cell reservation has been materialized above; do not double-charge it.
-        long totalChars = after.Length + reservedChars + memoryHeadroom + 540672;
-        long totalBytes = Encoding.UTF8.GetByteCount(after) + reservedChars + memoryHeadroom + 540672;
-        int totalRecords = Math.Max(afterCounts.Streaming, afterCounts.Semantic) + reservedRecords + 320;
+        long totalChars = budgetWire.Length + reservedChars + memoryHeadroom + 540672;
+        long totalBytes = Encoding.UTF8.GetByteCount(budgetWire) + reservedChars + memoryHeadroom + 540672;
+        int totalRecords = Math.Max(budgetCounts.Streaming, budgetCounts.Semantic) + reservedRecords + 320;
         if (cf)
         {
             Check(totalChars <= SaveCodec.MaxInputCharacters && totalBytes <= SaveCodec.MaxInputCharacters, "Complete CF byte/character composition failed.");
@@ -100,9 +118,12 @@ static partial class Program
             before = new { chars = before.Length, bytes = Encoding.UTF8.GetByteCount(before), beforeCounts.Streaming, beforeCounts.Semantic, retainedBytes = baselineRetained, timing = baseline },
             after = new { chars = after.Length, bytes = Encoding.UTF8.GetByteCount(after), afterCounts.Streaming, afterCounts.Semantic, retainedBytes = candidateRetained, timing = candidate },
             migrationMs, semanticComparison = "every schema-24 field identical", tableCount = state.ProductNames.Count,
+            beforeSha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(before))),
+            afterSha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(after))), maximumHeld,
             rows = state.Food.History.Count, cells = state.Food.History.Sum(r => r.ProductSales.Count),
             composition = cf ? new { reservedChars, reservedRecords, memoryHeadroom, e5dConservativeChars = 540672, e5dRecords = 320, totalChars, totalBytes, totalRecords } : null,
             processPeakBytes = Process.GetCurrentProcess().PeakWorkingSet64 }));
+#endif
     }
     static int HistoryReserveUsed25(CityState state)
     {
@@ -116,9 +137,9 @@ static partial class Program
         foreach (var c in state.Citizens) { c.NextEventMinute += shift; c.ActivityUntilMinute += shift; if (c.W != null) c.W = new WeatherCommitment(c.W.Boundary + shift, c.W.Weather, c.W.Value != 0); }
         foreach (var m in state.Food!.Residents)
         {
-            m.Day += 13; m.DesiredAt += shift; m.ExpiresAt += shift; m.DueAt += shift;
-            if (m.Budget != null) { if (m.Budget.LastPostedDay >= 0) m.Budget.LastPostedDay += 13; if (m.Budget.HomeFoodFundedDay >= 0) m.Budget.HomeFoodFundedDay += 13; m.Budget.NextPostingMinute += shift; }
-            if (m.Today != null) { m.Today.Day += 13; foreach (var r in m.Today.Meals) { r.At += (int)shift; r.CheckoutAt += (int)shift; } }
+            m.Day += (int)(shift / 1440); m.DesiredAt += shift; m.ExpiresAt += shift; m.DueAt += shift;
+            if (m.Budget != null) { if (m.Budget.LastPostedDay >= 0) m.Budget.LastPostedDay += (int)(shift / 1440); if (m.Budget.HomeFoodFundedDay >= 0) m.Budget.HomeFoodFundedDay += (int)(shift / 1440); m.Budget.NextPostingMinute += shift; }
+            if (m.Today != null) { m.Today.Day += (int)(shift / 1440); foreach (var r in m.Today.Meals) { r.At += (int)shift; r.CheckoutAt += (int)shift; } }
             if (m.Decision != null)
             {
                 m.Decision.IntentId = m.IntentId; m.Decision.OriginAt += shift; m.Decision.Deadline += shift;
@@ -150,6 +171,24 @@ static partial class Program
         var result = read(); Check(result.Status == SaveReadStatus.Loaded, result.Error);
         long retained = GC.GetTotalMemory(true) - before; GC.KeepAlive(result); return retained;
     }
+#if !NAME_SCHEMA24
+    static object MaximumHeld25(CityState state, int samples, out string wire, out (int Streaming, int Semantic) counts)
+    {
+        var held = state.Food!.Residents.Single(m => m.Decision != null).Decision!;
+        for (int shop = 0; shop < 8; shop++) for (int i = 0; i < 5; i++)
+            held.Shops[shop].Offers.Add(new FoodDecisionOffer { ProductId = "name25:product:" + (8 + shop * 5 + i).ToString("D3"),
+                Price = Money.FromCents(100), Units = 1, Metadata = new FoodOfferMetadata(2, FoodMealClass.Unknown, 2, 900, 100, 450) });
+        held.Tuning = FoodDecisionTuning.Capture(new FoodChoiceSettings { FoodMenuMaximumOffersPerShop = 8 });
+        state.MenuPolicy = FoodNameIdentity.DynamicWire;
+        string source = SaveCodec.Write(state); wire = source; counts = SaveCodec.CountRecords(state, source);
+        Check(SaveCodec.Write(SaveCodec.Read(source).State!) == source, "Maximum held image changed on cold round trip.");
+        void Refuses(Action action)
+        { try { action(); } catch (SaveValidationException) { return; } throw new Exception("Inactive dynamic execution was accepted."); }
+        var timing = Measure25(samples, () => SaveCodec.Write(state), () => SaveCodec.Read(source),
+            () => Refuses(() => SaveCodec.ValidateForActivation(state)), () => Refuses(() => SaveCodec.RequireExecutableCapabilities(source)));
+        return new { offers = 64, characters = source.Length, bytes = Encoding.UTF8.GetByteCount(source), counts.Streaming, counts.Semantic,
+            retainedBytes = Retained25(() => SaveCodec.Read(source)), execution = "early/full activation refused; cold storage only", timing };
+    }
     static void NameEncoding25()
     {
         var state = FoodCity(1, false); state.Food!.Shops.Clear();
@@ -174,4 +213,5 @@ static partial class Program
             bytes = Encoding.UTF8.GetByteCount(wire), escapedChars = escaped.Length, escapedBytes = Encoding.UTF8.GetByteCount(escaped),
             escapedTableChars = table.Length + 16, escapedTableBytes = Encoding.UTF8.GetByteCount(table) + 16, timing = Measure25(7, () => SaveCodec.Write(state), () => SaveCodec.Read(escaped), () => SaveCodec.ValidateForActivation(state), () => SaveCodec.RequireExecutableCapabilities(escaped)), counts = SaveCodec.CountRecords(state, escaped) }));
     }
+#endif
 }

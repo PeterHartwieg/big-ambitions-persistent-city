@@ -81,7 +81,7 @@ namespace PersistentCity.Persistence
             if (schema >= 25) PrepareNames25(state);
             Validate(state,schema);
             using var count = new CharacterCountingWriter();
-            Require(schema < 25 || state.MenuPolicy == FoodNameIdentity.Wire, "Dynamic held-product execution is not implemented; preserve the payload.");
+            RequireExecutablePolicy(state);
             var serializer = JsonSerializer.CreateDefault(SettingsForSchema(WireContext.FromState(state),schema));
             // Match JsonConvert.SerializeObject(state, Formatting.None, Settings()), including
             // application-wide defaults that the explicit save settings do not override.
@@ -142,13 +142,14 @@ namespace PersistentCity.Persistence
                 }
                 Require(schema == 25, "Unsupported experimental state schema; preserve the original payload.");
                 Require(System.Text.Encoding.UTF8.GetByteCount(source) <= MaxInputCharacters, "State exceeds the UTF-8 size limit.");
-                var context = WireContext.FromSource(source);
+                var tokenText = new TokenText(source);
+                var context = WireContext.FromSource(source, tokenText);
                 var serializer = JsonSerializer.Create(SettingsForSchema(context, schema));
                 using (var shape = Reader(source))
                 {
                     Require(shape.Read(), "Missing state.");
                     int records = 0;
-                    CheckShape(shape, typeof(CityState), serializer.ContractResolver, ref records, new TokenText(source), schema, new FieldNameSets());
+                    CheckShape(shape, typeof(CityState), serializer.ContractResolver, ref records, tokenText, schema, new FieldNameSets { Product25Count = context.ProductNames.Length });
                     Require(!shape.Read(), "State contains trailing JSON content.");
                 }
                 using var reader = Reader(source);
@@ -200,7 +201,7 @@ namespace PersistentCity.Persistence
         private sealed class FieldNameSets
         {
             private readonly HashSet<string>?[] sets = new HashSet<string>?[64];
-            public int Metadata25Count, Metadata25Characters = 2, Metadata25Bytes = 2;
+            public int Product25Count, Metadata25Count, Metadata25Characters = 2, Metadata25Bytes = 2;
             public HashSet<string> At(int depth)
             {
                 var set = sets[depth] ??= new HashSet<string>(StringComparer.Ordinal);
@@ -224,7 +225,7 @@ namespace PersistentCity.Persistence
                 return;
             }
             if (schema >= 23 && type == typeof(FoodProductSales) && token == JsonToken.StartArray)
-            { if (schema >= 25) CheckProductCell25(reader, text); else CheckProductCell23(reader, text); return; }
+            { if (schema >= 25) CheckProductCell25(reader, text, fieldNames.Product25Count); else CheckProductCell23(reader, text); return; }
             Type? nullable = Nullable.GetUnderlyingType(type);
             if (token == JsonToken.Null)
             {

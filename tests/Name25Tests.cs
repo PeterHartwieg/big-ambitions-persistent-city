@@ -46,7 +46,7 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(24, read.SourceSchema); Assert.Equal(25, read.State!.Schema);
         Assert.Equal((int)(city.State.Minute / 1440) + 1, read.State.NamePolicyStartsDay);
         Assert.Equal(source, E5d_Wire24(read.State)); // all identities, money, routes, traits, histories and latches
-        Assert.All(read.State.Food!.History.SelectMany(r => r.ProductSales), c => Assert.True(c.OpaqueIdentity));
+        Assert.All(read.State.Food!.History.SelectMany(r => r.ProductSales), c => Assert.True(c.HasOpaqueIdentity()));
         string current = SaveCodec.Write(read.State);
         Assert.Equal(current, SaveCodec.Write(SaveCodec.Read(current).State!));
         Assert.Equal(SaveReadStatus.Future, PopulationSchema24.Read(current).Status);
@@ -213,6 +213,15 @@ public sealed partial class FoodCommerceTests
         Assert.Throws<SaveValidationException>(() => SaveCodec.RequireExecutableCapabilities(wire));
         Assert.Throws<SaveValidationException>(() => SaveCodec.ValidateForActivation(read.State));
         Assert.Throws<InvalidOperationException>(() => new CitySimulator(read.State, new Walking()));
+        var data = new Dictionary<string, string> { [SaveCodec.StateKey] = wire };
+        Assert.Equal(SaveReadStatus.Invalid, SaveStore.ReadFrom(data, city.State.PopulationKey).Status);
+        Assert.False(SaveStore.WriteTo(data, S17_Full().city.State).Success);
+        Assert.False(SaveSession.Open(data, city.State.PopulationKey).WriteTo(data, S17_Full().city.State).Success);
+        Assert.Same(wire, data[SaveCodec.StateKey]);
+        var empty = new Dictionary<string, string>();
+        Assert.False(SaveStore.WriteTo(empty, read.State).Success);
+        Assert.False(SaveSession.Open(empty, city.State.PopulationKey).WriteTo(empty, read.State).Success);
+        Assert.Empty(empty);
         read.State.MenuPolicy = FoodNameIdentity.Wire;
         Assert.Throws<SaveValidationException>(() => SaveCodec.Write(read.State));
     }

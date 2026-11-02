@@ -81,6 +81,7 @@ namespace PersistentCity.Persistence
             try
             {
                 // Validate the complete new state before considering any replacement.
+                SaveCodec.RequireExecutablePolicy(state);
                 string payload = SaveCodec.Write(state);
                 bool hasPayload = modData.TryGetValue(SaveStore.StateKey, out var existingPayload);
                 bool trusted = ReferenceEquals(modData, validatedDictionary)
