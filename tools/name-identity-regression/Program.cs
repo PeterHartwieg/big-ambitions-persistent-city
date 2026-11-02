@@ -23,7 +23,7 @@ static partial class Program
         string name = args.Length == 0 ? "957x2" : args[0];
         int samples = args.Length < 2 ? 3 : int.Parse(args[1]);
         #if !NAME_SCHEMA24
-        if (name == "encoding") { NameEncoding25(); return; }
+        if (name == "encoding" || name == "encoding-max") { NameEncoding25(name == "encoding-max"); return; }
         if (name == "migration-record-limit") { Console.WriteLine(JsonConvert.SerializeObject(MigrationRecordLimit25())); return; }
 #endif
         if (name == "record-boundary") { Console.WriteLine(JsonConvert.SerializeObject(RecordBoundary())); return; }
@@ -264,14 +264,15 @@ static partial class Program
         return new { offers = 64, characters = source.Length, bytes = Encoding.UTF8.GetByteCount(source), counts.Streaming, counts.Semantic,
             retainedBytes = Retained25(() => SaveCodec.Read(source)), execution = "early/full activation refused; cold storage only", timing };
     }
-    static void NameEncoding25()
+    static void NameEncoding25(bool maximumEscaping)
     {
         var state = FoodCity(1, false); state.Food!.Shops.Clear();
         foreach (var m in state.Food.Residents) { m.PreferredProductId = ""; m.PreferenceBonusCents = 0; m.Today = null; }
         for (int i = 0; i < 32; i++)
         {
             string place = "name25:" + i; state.Places.Add(new Place { Id = place, Name = "Shop", Kind = PlaceKind.Shop });
-            string Name(int n) => new string('\ue001', 253) + n.ToString("D3");
+            string Name(int n) => maximumEscaping ? new string('\ue001', 255) + (char)('\ue100' + n)
+                : new string('\ue001', 253) + n.ToString("D3");
             state.Food.Shops.Add(new FoodScope { PlaceId = place, BusinessId = "encoding:" + i, ProductId = Name(i * 8),
                 AdditionalProductIds = Enumerable.Range(i * 8 + 1, 7).Select(Name).ToList() });
         }
@@ -284,7 +285,7 @@ static partial class Program
         Check(SaveCodec.Read(escaped).Status == SaveReadStatus.Loaded, "Maximum escaped names refused.");
         Check(SaveCodec.Write(SaveCodec.Read(escaped).State!) == wire, "Escaping changed canonical identity.");
         string table = JsonConvert.SerializeObject(state.ProductNames, Formatting.None, settings);
-        Console.WriteLine(JsonConvert.SerializeObject(new { names = state.ProductNames.Count, nameLength = 256, chars = wire.Length,
+        Console.WriteLine(JsonConvert.SerializeObject(new { maximumEscaping, names = state.ProductNames.Count, nameLength = 256, chars = wire.Length,
             bytes = Encoding.UTF8.GetByteCount(wire), escapedChars = escaped.Length, escapedBytes = Encoding.UTF8.GetByteCount(escaped),
             escapedTableChars = table.Length + 16, escapedTableBytes = Encoding.UTF8.GetByteCount(table) + 16, timing = Measure25(7, () => SaveCodec.Write(state), () => SaveCodec.Read(escaped), () => SaveCodec.ValidateForActivation(state), () => SaveCodec.RequireExecutableCapabilities(escaped)), counts = SaveCodec.CountRecords(state, escaped) }));
     }
