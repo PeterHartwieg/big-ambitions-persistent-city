@@ -39,6 +39,8 @@ E3 remaining batch status, 2 November (offline): Peter chose one batch of remain
 
 E4 status, 1 November (offline): schema 23 menu/product/history envelope implemented; effective live limit four, no extra product enabled. [Validation and numbered 6 Nov handoff](checks/e4-wider-menu.md).
 
+E5 plan, Peter 2 November 2026: per-product activation is superseded by the [dynamic loaded-catalogue plan](plans/e5-dynamic-products.md); E3 records are regression evidence, with no E3 product proven. Docs only; no activation or save change.
+
 E3 status, 31 October (offline): [donut](plans/e3-donut.md) and [cupcake feasibility discovery](plans/e3-cupcake.md) share one isolated on-demand raw-field reader with pinned candidates. Loaded equipment and natural checkout/settlement proof remain pending; no additional product certified or enabled.
 
 E3 salad status, 1 November (offline): [salad stop record](plans/e3-salad.md) adds a pinned conditional probe on the cupcake/donut stack. Shipped holder unestablished; no generic holder extension, menu, gameplay or saved change. Existing read branches retained; no additional cheap safe measured perf win identified. Three-candidate offline timing and the combined 6 Nov handoff are in [CHECKS](checks/e3-salad.md#e3-salad-feasibility---1-november-2026-offline-only).
