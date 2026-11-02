@@ -76,7 +76,7 @@ Applies to every step A–E slice re-measure and to the final release:
 
 Record every taken win with before/after numbers.
 
-- E5b ? [Cached authored bag policy and bounded duplicate checks](perf/e5b-complete-menu.md): discovery 280 -> 0 B/call; offline p95 0.0003 -> 0.0001 ms; no native combined mod-work or whole-frame claim.
+- E5b — [Cached authored bag policy and bounded duplicate checks](perf/e5b-complete-menu.md): discovery 280 -> 0 B/call; offline p95 0.0003 -> 0.0001 ms; no native combined mod-work or whole-frame claim.
 
 - E5a — [Reuse bounded holder capacity and ordinal-key identity proof](perf/e5a-catalogue-eligibility.md): E5a eight-offer rebuild 300,280 -> 129,144 B; clean reads 0 B/scans; initial 32.5793 ms backlog spike retained in evidence.
 
