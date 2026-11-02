@@ -1,0 +1,10 @@
+{
+  "role": "rig_test",
+  "utc": "2026-11-02T01:15:15.585134+00:00",
+  "initialEvidenceCommit": "ed1434d",
+  "candidateWorktree": "rig-locked-combined-20261102b",
+  "controlWorktree": "rig-locked-combined-20261102b-control",
+  "candidateAbsent": true,
+  "controlAbsent": true,
+  "forceUsed": false
+}
