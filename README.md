@@ -2,6 +2,10 @@
 
 Validation and dated development notices are in the [checks index](CHECKS.md); each slice maintains its own evidence file.
 
+E5a implements the detached loaded-catalogue/direct-stock reader with bounded dirty caches and pure validation, including registered mod identities. Ownership, checkout, `Supported` and writer 24 are unchanged. [Offline evidence and automated batched-rig checklist](docs/checks/e5a-catalogue-eligibility.md).
+
+E5c implements the pure product metadata resolver (Food by default, seeded per-resident taste) and bounded optional config table; writer 24 and native product support are unchanged. [Offline evidence and next batched rig checks](docs/checks/e5c-neutral-metadata.md).
+
 E5d implements the inactive [schema-25 name identity/save contract](docs/population-schema25.md), preserving exact predecessor facts and opaque histories; native product/ownership integration remains separate. [Offline evidence and numbered next-batch rig checks](docs/checks/e5d-name-identity-save.md).
 
 E3 remaining batch: [six named candidates STOP](docs/plans/e3-remaining-batch.md), per Peter's 2 November batch-check decision; isolated conditional probes only, no gameplay/menu/save change. [Offline checks and 6 Nov handoff](docs/checks/e3-remaining-batch.md).

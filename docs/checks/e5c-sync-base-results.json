@@ -1,0 +1,5419 @@
+{
+  "created": "2026-11-02T13:26:12.673486+00:00",
+  "testedMerge": "22ab92b8fc1c3d692d548adf9cab9f7349892c49",
+  "remoteBase": "3ff8e3a63c80b657de288e32cccf61e6779eb1b4",
+  "codeChangedDuringResolution": false,
+  "writer": 24,
+  "nativeEvidence": false,
+  "wholeFrameMeasured": false,
+  "foregroundOnly": true,
+  "guardBeforeDotnet": true,
+  "preservation": {
+    "base": "034bb76",
+    "branchHeads": [
+      "8af17aa",
+      "3ff8e3a"
+    ],
+    "combinedBlobs": 661,
+    "allExact": true,
+    "sourceMapSHA256": "7bb546814e5e1359e5712413c11f836086ee405776873788ab44f5ba8b140e1b",
+    "bothOriginalSliceChecklistsAndPerfDocumentsPreserved": true,
+    "incomingPlansExact": true
+  },
+  "sourceAuditNote": "The historical 034bb76 E5a-only audit is replaced by exact two-head union preservation plus --audit-base 22ab92b for the merged tree. No test or source guard changed.",
+  "unitSummary": "Passed!  - Failed:     0, Passed:  2687, Skipped:     0, Total:  2687, Duration: 2 m 1 s - PersistentCity.Tests.dll (net10.0)",
+  "discovered": 2687,
+  "saveContract": {
+    "schema": 24,
+    "digest": "7D96832BF86DB99C1CB21284F7777AB13C9F16CFD2BB17197210637D59E185E0",
+    "length": 120257,
+    "weatherProjectionLength": 119083,
+    "weatherProjectionDigest": "D7FF8294F56C3B3D5AF736540274E68E9848319B34658859FC15E0D4CDB1F3A2",
+    "refusals": [
+      "Invalid:Invalid state: Missing state schema.",
+      "Future:State uses a newer schema; preserve the original payload.",
+      "Invalid:Invalid state: Incomplete or trailing JSON content.",
+      "Invalid:Invalid state: Unknown field: UnknownCitizens"
+    ],
+    "economy": {
+      "orders": 849,
+      "ordersDigest": "1B94987B3158044594B9C4D6A5473BA22BE0D4F3488D769CBBEE23318BB33B91",
+      "purchases": 797,
+      "spentUnits": 107967424757760,
+      "uncertain": 2,
+      "economyDigest": "74D0FE8081EA795D4D56A11B4B955DC6E777E3822C702D3C09BC9477E6679AF9",
+      "reloadDigest": "59B6F14D44CA0F996C5A828E2E538B52C5426347FCFA40767527B72D77F1D4FA"
+    },
+    "writeBytes": 14823432,
+    "readBytes": 39019960,
+    "bench": null,
+    "hot": null
+  },
+  "d3a": {
+    "prepare": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/e4-menu-regression/prepare.py"
+      ],
+      "started": "2026-11-02T13:07:08.577515+00:00",
+      "seconds": 0.484196700155735,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\prepare.log"
+    },
+    "build": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/build.py",
+        "--game-managed",
+        "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed"
+      ],
+      "started": "2026-11-02T13:07:09.059863+00:00",
+      "seconds": 1.961555799935013,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\build.log"
+    },
+    "test": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj"
+      ],
+      "started": "2026-11-02T13:07:11.361095+00:00",
+      "seconds": 131.0445799001027,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\test.log"
+    },
+    "list-tests": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--no-build",
+        "--list-tests"
+      ],
+      "started": "2026-11-02T13:09:22.700114+00:00",
+      "seconds": 1.1503492998890579,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\list-tests.log"
+    },
+    "core-identity": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\core-identity-regression\\CoreIdentityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:09:24.156425+00:00",
+      "seconds": 7.191428600111976,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\core-identity.log"
+    },
+    "diagnostic-response": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\diagnostic-response-regression\\DiagnosticResponseRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:09:31.689532+00:00",
+      "seconds": 2.2726134001277387,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\diagnostic-response.log"
+    },
+    "event-observation": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\event-observation-regression\\EventObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:09:34.533389+00:00",
+      "seconds": 4.711775100091472,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\event-observation.log"
+    },
+    "food-catalogue": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-catalogue-regression\\FoodCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:09:39.534178+00:00",
+      "seconds": 4.899465899914503,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\food-catalogue.log"
+    },
+    "food-checkout": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-checkout-regression\\FoodCheckoutRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:09:44.976191+00:00",
+      "seconds": 6.027999199926853,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\food-checkout.log"
+    },
+    "food-hours": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-hours-regression\\FoodHoursRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:09:51.304742+00:00",
+      "seconds": 2.4582416000775993,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\food-hours.log"
+    },
+    "food-household-catalogue": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-household-catalogue-regression\\FoodHouseholdCatalogueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:09:54.069597+00:00",
+      "seconds": 2.429050800157711,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\food-household-catalogue.log"
+    },
+    "food-ownership": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-ownership-regression\\FoodOwnershipRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:09:56.808457+00:00",
+      "seconds": 4.047660800162703,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\food-ownership.log"
+    },
+    "food-supply": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-supply-regression\\FoodSupplyRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:10:01.148047+00:00",
+      "seconds": 2.4191405000165105,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\food-supply.log"
+    },
+    "frame-observation": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\frame-observation-regression\\FrameObservationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:10:03.867755+00:00",
+      "seconds": 2.2615471000317484,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\frame-observation.log"
+    },
+    "gate-access": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\gate-access-regression\\GateAccessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:10:06.431484+00:00",
+      "seconds": 3.8682895000092685,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\gate-access.log"
+    },
+    "road-ceiling": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\road-ceiling-regression\\RoadCeilingRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:10:10.785509+00:00",
+      "seconds": 3.725093699991703,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\road-ceiling.log"
+    },
+    "road-handoff": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\road-handoff-regression\\RoadHandoffRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:10:14.828638+00:00",
+      "seconds": 3.3148644999600947,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\road-handoff.log"
+    },
+    "road-invalidation": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\road-invalidation-regression\\RoadInvalidationRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:10:18.438935+00:00",
+      "seconds": 5.092216299846768,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\road-invalidation.log"
+    },
+    "road-speed": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\road-speed-regression\\RoadSpeedRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:10:24.095789+00:00",
+      "seconds": 3.895649400074035,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\road-speed.log"
+    },
+    "route-discovery": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\route-discovery-regression\\RouteDiscoveryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:10:28.278634+00:00",
+      "seconds": 10.776637699920684,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\route-discovery.log"
+    },
+    "save-contract": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\save-contract-regression\\SaveContractRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:10:39.353249+00:00",
+      "seconds": 5.7345879001077265,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\save-contract.log"
+    },
+    "startup-clock": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\startup-clock-regression\\StartupClockRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:10:45.387739+00:00",
+      "seconds": 4.130420099943876,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\startup-clock.log"
+    },
+    "traffic-closure": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\traffic-closure-regression\\TrafficClosureRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:10:49.819804+00:00",
+      "seconds": 3.613910499960184,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\traffic-closure.log"
+    },
+    "traffic-queue": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\traffic-queue-regression\\TrafficQueueRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:10:53.740805+00:00",
+      "seconds": 4.032363099977374,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\traffic-queue.log"
+    },
+    "walking-quote": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\walking-quote-regression\\WalkingQuoteRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:10:58.068412+00:00",
+      "seconds": 3.7467565999832004,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\walking-quote.log"
+    },
+    "campaign-reader": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\campaign-reader-regression\\CampaignReaderRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:11:02.111145+00:00",
+      "seconds": 3.683535899966955,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\campaign-reader.log"
+    },
+    "donut-feasibility": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\donut-feasibility-regression\\DonutFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:11:06.112095+00:00",
+      "seconds": 2.675824499921873,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\donut-feasibility.log"
+    },
+    "cupcake-feasibility": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\cupcake-feasibility-regression\\CupcakeFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:11:09.089661+00:00",
+      "seconds": 2.690152900060639,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\cupcake-feasibility.log"
+    },
+    "salad-feasibility": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\salad-feasibility-regression\\SaladFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:11:12.063024+00:00",
+      "seconds": 2.687104499898851,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\salad-feasibility.log"
+    },
+    "rival-outflow": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\rival-outflow-regression\\RivalOutflowRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:11:15.090061+00:00",
+      "seconds": 9.41943580005318,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\rival-outflow.log"
+    },
+    "awareness": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\awareness-regression\\AwarenessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:11:24.844132+00:00",
+      "seconds": 20.64191640005447,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\awareness.log"
+    },
+    "food-candidate": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-candidate-regression\\FoodCandidateRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:11:45.812870+00:00",
+      "seconds": 3.450345699908212,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\food-candidate.log"
+    },
+    "outflow-line": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\outflow-line-regression\\OutflowLineRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:11:49.558807+00:00",
+      "seconds": 4.209340799832717,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\outflow-line.log"
+    },
+    "native-command": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/native-command-regression/run.py"
+      ],
+      "started": "2026-11-02T13:11:54.068866+00:00",
+      "seconds": 2.615256499964744,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\native-command.log"
+    },
+    "physical-selection": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/physical-selection-regression/run.py"
+      ],
+      "started": "2026-11-02T13:11:56.975671+00:00",
+      "seconds": 3.7818871999625117,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\physical-selection.log"
+    },
+    "vehicle-ownership": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/vehicle-ownership-regression/run.py"
+      ],
+      "started": "2026-11-02T13:12:01.086745+00:00",
+      "seconds": 2.6620412999764085,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\vehicle-ownership.log"
+    },
+    "optional-stop": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/optional-stop-regression/run.py"
+      ],
+      "started": "2026-11-02T13:12:04.054165+00:00",
+      "seconds": 4.019035100005567,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\optional-stop.log"
+    },
+    "simulate": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/simulate/Simulate.csproj",
+        "--",
+        "28",
+        "build/harness-demo"
+      ],
+      "started": "2026-11-02T13:12:08.363199+00:00",
+      "seconds": 6.444682500092313,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\simulate.log"
+    },
+    "food-routines": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-routines/FoodRoutines.csproj",
+        "--configuration",
+        "Release",
+        "--",
+        "build/harness-food-routines-demo",
+        "957"
+      ],
+      "started": "2026-11-02T13:12:15.131802+00:00",
+      "seconds": 6.3298691001255065,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\food-routines.log"
+    },
+    "food-demand": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-demand/FoodDemand.csproj",
+        "--",
+        "build/harness-food-demand-demo"
+      ],
+      "started": "2026-11-02T13:12:21.752298+00:00",
+      "seconds": 4.011605300009251,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\food-demand.log"
+    },
+    "donut-source": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/donut-feasibility-regression/source_checks.py"
+      ],
+      "started": "2026-11-02T13:12:25.761221+00:00",
+      "seconds": 0.09781979979015887,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\donut-source.log"
+    },
+    "salad-source": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/salad-feasibility-regression/source_checks.py"
+      ],
+      "started": "2026-11-02T13:12:25.864284+00:00",
+      "seconds": 0.07766769989393651,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\salad-source.log"
+    },
+    "a5-inspector": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\a5-inspector-regression\\A5InspectorRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:12:26.269215+00:00",
+      "seconds": 5.881813100073487,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\a5-inspector.log"
+    },
+    "agency-payment": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\agency-payment-regression\\AgencyPaymentRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:12:32.439851+00:00",
+      "seconds": 2.5486435999628156,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\agency-payment.log"
+    },
+    "campaign-awareness": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\campaign-awareness-regression\\CampaignAwarenessRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:12:35.297727+00:00",
+      "seconds": 6.959446499822661,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\campaign-awareness.log"
+    },
+    "e3-remaining-feasibility": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\e3-remaining-feasibility-regression\\E3RemainingFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:12:42.569425+00:00",
+      "seconds": 3.1425648001022637,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\e3-remaining-feasibility.log"
+    },
+    "e4-menu": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\e4-menu-regression\\E4MenuRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:12:46.022229+00:00",
+      "seconds": 18.732717299833894,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\e4-menu.log"
+    },
+    "e5a-eligibility": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\e5a-eligibility-regression\\E5aEligibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:13:05.044170+00:00",
+      "seconds": 6.227806099923328,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\e5a-eligibility.log"
+    },
+    "food-choice": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-choice-regression\\FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:13:11.564563+00:00",
+      "seconds": 5.724525100085884,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\food-choice.log"
+    },
+    "food-memory": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-memory-regression\\FoodMemoryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:13:17.583476+00:00",
+      "seconds": 9.12615879997611,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\food-memory.log"
+    },
+    "food-metadata": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-metadata-regression\\FoodMetadataRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:13:27.006855+00:00",
+      "seconds": 10.254437500145286,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\food-metadata.log"
+    },
+    "food-regulars": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\food-regulars-regression\\FoodRegularsRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:13:37.555143+00:00",
+      "seconds": 7.354200100060552,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\food-regulars.log"
+    },
+    "frenchfries-feasibility": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\frenchfries-feasibility-regression\\FrenchFriesFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:13:45.194977+00:00",
+      "seconds": 3.053146499907598,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\frenchfries-feasibility.log"
+    },
+    "held-tuning": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\held-tuning-regression\\HeldTuningRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:13:48.538867+00:00",
+      "seconds": 4.973411199869588,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\held-tuning.log"
+    },
+    "icecream-feasibility": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\icecream-feasibility-regression\\IcecreamFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:13:53.851465+00:00",
+      "seconds": 3.537702400004491,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\icecream-feasibility.log"
+    },
+    "interior-guard": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\interior-guard-regression\\InteriorGuardRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:13:57.704285+00:00",
+      "seconds": 2.960618400014937,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\interior-guard.log"
+    },
+    "market-research": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\market-research-regression\\MarketResearchRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:14:00.973378+00:00",
+      "seconds": 4.658673699945211,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\market-research.log"
+    },
+    "pizza-feasibility": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\pizza-feasibility-regression\\PizzaFeasibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:14:05.928865+00:00",
+      "seconds": 2.7271427002269775,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\pizza-feasibility.log"
+    },
+    "rival-memory": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\rival-memory-regression\\RivalMemoryRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:14:08.944549+00:00",
+      "seconds": 3.9834717998746783,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\rival-memory.log"
+    },
+    "street-proxy": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\street-proxy-regression\\StreetProxyRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:14:13.269778+00:00",
+      "seconds": 2.9311736000236124,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\street-proxy.log"
+    },
+    "weather": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools\\weather-regression\\WeatherRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:14:16.490531+00:00",
+      "seconds": 5.2644299999810755,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\weather.log"
+    },
+    "icecream-source": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/icecream-feasibility-regression/source_checks.py"
+      ],
+      "started": "2026-11-02T13:14:22.054845+00:00",
+      "seconds": 0.09299229993484914,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\icecream-source.log"
+    },
+    "pizza-source": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/pizza-feasibility-regression/source_checks.py"
+      ],
+      "started": "2026-11-02T13:14:22.439782+00:00",
+      "seconds": 0.0805935999378562,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\pizza-source.log"
+    },
+    "frenchfries-source": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/frenchfries-feasibility-regression/source_checks.py"
+      ],
+      "started": "2026-11-02T13:14:22.805786+00:00",
+      "seconds": 0.12687769997864962,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\frenchfries-source.log"
+    },
+    "c4-save-comparison": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/market-research-regression/compare_save_baseline.py",
+        "--baseline",
+        "HEAD"
+      ],
+      "started": "2026-11-02T13:14:23.230801+00:00",
+      "seconds": 14.464393999893218,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\c4-save-comparison.log"
+    },
+    "e4-default-comparison": {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/e4-menu-regression/compare-default.py"
+      ],
+      "started": "2026-11-02T13:14:37.983391+00:00",
+      "seconds": 10.08600590005517,
+      "exit": 0,
+      "log": "build\\d3a\\gates\\e4-default-comparison.log"
+    }
+  },
+  "d4": [
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/build.py",
+        "--game-managed",
+        "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/01.txt",
+      "sha256": "4b3152d8d333984cf00d81507f50f71d1ca7b4d54356dffb03e20acfd74885f4"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/02.txt",
+      "sha256": "b59505a2548c6d791b7d1760931bdc7f16807dc548709786a1bfe434f584b512"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--no-build",
+        "--list-tests",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/03.txt",
+      "sha256": "4d4dd1ad4499fc2d34d39d0571ea2e15d65db12a5c104a07a107a2292f288794"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/a5-inspector-regression/A5InspectorRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/04.txt",
+      "sha256": "acce8f5743ccd632d300ff76cbef0c0c06b672f3a848c50d65a7fd09921c5f10"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/agency-payment-regression/AgencyPaymentRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/05.txt",
+      "sha256": "7a670d6fcddcbb9a31f81076fddfc7aa0c52efc0f8e3bb4cba6efc98519b4960"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/awareness-regression/AwarenessRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/06.txt",
+      "sha256": "585a166baec2add0b3771be702181585355d846f28b6708739e1292a40dc62e8"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/campaign-awareness-regression/CampaignAwarenessRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/07.txt",
+      "sha256": "e0e0c80a1112f6fff8862eebb865795ba5daa60483f4bb67a4bafd48f5e2cf66"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/campaign-reader-regression/CampaignReaderRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/08.txt",
+      "sha256": "9066f86c350b2eb557d848ce1f86fa22be3882b4ee7dcc04ad57cf198f30715d"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/core-identity-regression/CoreIdentityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/09.txt",
+      "sha256": "84a86390e6b09badd2d5d95b0d0932f37b88d4faac493fd685b77c8dfb4e6550"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/cupcake-feasibility-regression/CupcakeFeasibilityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/10.txt",
+      "sha256": "d059be05fedafe463942003e0cecde782a24fd6591ffdd129643215dd07cc877"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/diagnostic-response-regression/DiagnosticResponseRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/11.txt",
+      "sha256": "a89f8e2948c58df6f28f5d0bf439ea876f62fe55dd2f032fb9d77ea4d0a7b103"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/donut-feasibility-regression/DonutFeasibilityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/12.txt",
+      "sha256": "2128032907339c566169722319a499d5af03b7f010de79a3cf373114bfa01b0f"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/e3-remaining-feasibility-regression/E3RemainingFeasibilityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/13.txt",
+      "sha256": "7720d2e2a1b5144d63dbe7f514297d3c2f0a41f78c317d7d31ce8c15d1edeeba"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/e4-menu-regression/E4MenuRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/14.txt",
+      "sha256": "660b0bd68e52ebf2faad01148815c048f0f3aa7c74ffa8830bf53ee73e9726df"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/e5a-eligibility-regression/E5aEligibilityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/15.txt",
+      "sha256": "f68337f80de2cf071534e38711e1b1abf9773e86f4b4efe68df4cbcc42ff2211"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/event-observation-regression/EventObservationRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/16.txt",
+      "sha256": "40f469986dcc21b4d134c4904a52e093fa21ea81f99bb13a948553c8b2a9f7b4"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-candidate-regression/FoodCandidateRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/17.txt",
+      "sha256": "251da08c664778fd8dd047e7249495730b56d2416a95e2972cbb0af046e346d3"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-catalogue-regression/FoodCatalogueRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/18.txt",
+      "sha256": "67bafd7d594f30a794d6aebd32f54abb0799144a684230db4d3228d912fb9ff0"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-checkout-regression/FoodCheckoutRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/19.txt",
+      "sha256": "ee009f5de4842a1975fe3d51b4631dc3151644df4995d7ac58d2633566cd0c0e"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-choice-regression/FoodChoiceRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/20.txt",
+      "sha256": "c7af585e53e82504158f39a5f0ba8cb9938e88f4999b874a38e407d746fe1472"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-hours-regression/FoodHoursRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/21.txt",
+      "sha256": "2410218689a17bf8e5ae868d3025d1a8bd9e449d7fd49d83728819236ce6607c"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-household-catalogue-regression/FoodHouseholdCatalogueRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/22.txt",
+      "sha256": "b0f19cfd0acbbded5af38461d6e0bbe596b236cd83207afa0223100fdcfb8609"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-memory-regression/FoodMemoryRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/23.txt",
+      "sha256": "d6c85e07dc7071695d381494c0e68876c8da9b1989d3f5443d4664ed1f89b762"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-metadata-regression/FoodMetadataRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/24.txt",
+      "sha256": "6367d3cb08c48ae2824fe1e27fb7b7e009fd7d96018658b699f7b448af474214"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-ownership-regression/FoodOwnershipRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/25.txt",
+      "sha256": "7d2e0de095246f1d5bd5a8344c8fa6307594d88abc98daa30b3c0223308716e1"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-regulars-regression/FoodRegularsRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/26.txt",
+      "sha256": "facc5e72091f8e5998683f15d4daccf2bb23240318ec8cb8a7c1077f95490671"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-supply-regression/FoodSupplyRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/27.txt",
+      "sha256": "bea33031a003404270de233cbd073eb44deacac65f41be406a1eae3b70385683"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/frame-observation-regression/FrameObservationRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/28.txt",
+      "sha256": "7e5da72d80f98e71b464d3c9f918cf9457b5350bfcafc294e80e823b646b2d02"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/frenchfries-feasibility-regression/FrenchFriesFeasibilityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/29.txt",
+      "sha256": "ed2e1b84ff1fde0c85a630d694b382aa63407bc0ba96fe5126232615d20bb06f"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/gate-access-regression/GateAccessRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/30.txt",
+      "sha256": "6e9877acee2b84dfcc2de1b4d7d7236ac991a58c1a89fbe420966d127bf4afae"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/held-tuning-regression/HeldTuningRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/31.txt",
+      "sha256": "4c9a5054ff011f9a2476a94b151508b3dcc5d3ea84423d3b7bb2c019925371ea"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/icecream-feasibility-regression/IcecreamFeasibilityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/32.txt",
+      "sha256": "2f49d831737c6aeb4341f45ed0e890f17d12f5b38d2a1374fe3182f55c1bf3cf"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/interior-guard-regression/InteriorGuardRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/33.txt",
+      "sha256": "1063074e6b5a93717b69ba601559285a05b2ed39840a7fc8b1474aa89e9b077a"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/market-research-regression/MarketResearchRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/34.txt",
+      "sha256": "d3214124b1dcdd10d461b3366f5a7bbdf7fc167cfc85d48b92d7a82c52cd5f02"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/outflow-line-regression/OutflowLineRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/35.txt",
+      "sha256": "f2c8abb6497487242807c6f963b12dfc117ede3d72361968c419255e4d2faa37"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/pizza-feasibility-regression/PizzaFeasibilityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/36.txt",
+      "sha256": "563b3ffc53d4dd177d88d3ad922697821ce4c58f1ffc0ea2b640f1b08bc919cd"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/rival-memory-regression/RivalMemoryRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/37.txt",
+      "sha256": "ea020345d3ac6205e56c5bbe4b3c06f7da55aa5292c121078b4d80a53fe4e158"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/rival-outflow-regression/RivalOutflowRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/38.txt",
+      "sha256": "5999d02fd329356bacd535e2deee072f9ad57c55e5c012781170aa2ae9febbb3"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-ceiling-regression/RoadCeilingRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/39.txt",
+      "sha256": "895bf78ce78f6cceb24e97e6ac8d4cc6c68fa71cfb5b0e54f707e9bf46369762"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-handoff-regression/RoadHandoffRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/40.txt",
+      "sha256": "5de54d90bad9b212aac21705900b22ad270fa18365f1284fc4e988bf67a5f23e"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-invalidation-regression/RoadInvalidationRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/41.txt",
+      "sha256": "11bcbab6bdde92b021b10a41d941aa322629fadbc821906b55ed9aa7d5d7e656"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/road-speed-regression/RoadSpeedRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/42.txt",
+      "sha256": "5242c509cd90b21734fe4321b43dcbba531282677f91d66ddc8931b9b07cef19"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/route-discovery-regression/RouteDiscoveryRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/43.txt",
+      "sha256": "eff274aaa88d1147e64edb58c0cdfa86bcc9101e03154b3d3a78250ea4b14d8f"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/salad-feasibility-regression/SaladFeasibilityRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/44.txt",
+      "sha256": "faa10e24994d743e1ab2ad879c107182574c3c25e0f9fbe8a714d680060f5dbd"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/save-contract-regression/SaveContractRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/45.txt",
+      "sha256": "4f00af3df1fa0327bf1d1d4ba82229681a8ac9e56a1453906feded512bdb59c3"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/startup-clock-regression/StartupClockRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/46.txt",
+      "sha256": "eff6d553b4ca61c0df7684aa50b1d6794a05dc08f182ae40f33bde6e00646421"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/street-proxy-regression/StreetProxyRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/47.txt",
+      "sha256": "ac0c49cd1114f0df9b78e53d47fe7406b773fe12df95155e2eb74676e843adca"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-closure-regression/TrafficClosureRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/48.txt",
+      "sha256": "708d6590f5351a9c1adf0b939e6775caa82602e1d6ec261b597977db98e808aa"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/traffic-queue-regression/TrafficQueueRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/49.txt",
+      "sha256": "897d1d2e5c92ef25374e61f7da26e9dea2849c91f3495eb8bc65210eb2e4b9c4"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/walking-quote-regression/WalkingQuoteRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/50.txt",
+      "sha256": "aadc6b307f80ba394e20bae864ac132336bc7113eba34734954992e2f44b0ac9"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/weather-regression/WeatherRegression.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/51.txt",
+      "sha256": "d80910b68d392fbd5cc2724c2f7354c6ac3ac7f1819ad3f63977214c7e829cc9"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/native-command-regression/run.py"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/52.txt",
+      "sha256": "bd610e1a32a30f6ad7638fc2a65ae7bf8bea9d44baba81884f821aea4ed0a9aa"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/physical-selection-regression/run.py"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/53.txt",
+      "sha256": "fce764da50e5bbd3f5a3d0f26b2b053d1d1d46fa05e0c00cca5e9b3b91974d61"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/vehicle-ownership-regression/run.py"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/54.txt",
+      "sha256": "7539f54a1b778a54ca9bc75f398a40c0491fb40281611c8c8efbbc473dd32e46"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/optional-stop-regression/run.py"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/55.txt",
+      "sha256": "f7d3a55ef6b939ada52be73e50fcae27ead5eb4643a5c9f7516905986ecddaa4"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/simulate/Simulate.csproj",
+        "--disable-build-servers",
+        "--",
+        "28",
+        "build/harness-demo"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/56.txt",
+      "sha256": "9e26700d1d4836cc2d4e5dc5f823e8d1f1e6aa26fac5a1a85cb4c608baad3545"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-routines/FoodRoutines.csproj",
+        "--configuration",
+        "Release",
+        "--disable-build-servers",
+        "--",
+        "build/harness-food-routines-demo",
+        "957"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/57.txt",
+      "sha256": "8b2ec4a0446baa02c938378579186ea72839e5fb964d9d021ca0ba8a1823cf9f"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-demand/FoodDemand.csproj",
+        "--disable-build-servers",
+        "--",
+        "build/harness-food-demand-demo"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/58.txt",
+      "sha256": "02ec422d7037f9e137ecc70495a01a40d661d6104fc7f58a13a52df850112399"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/donut-feasibility-regression/source_checks.py"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/59.txt",
+      "sha256": "cc6c0de139d40371e4fba40e86518707c7a4310b794607cd59d28b78b695852e"
+    },
+    {
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/salad-feasibility-regression/source_checks.py"
+      ],
+      "exit": 0,
+      "log": "build/d4-validation/60.txt",
+      "sha256": "320b305ad04a0ccc371ef2a6bea1d1a9a3357023c4ae74105b832eb60f7451b7"
+    }
+  ],
+  "additional": [
+    {
+      "name": "d4-required",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/rival-memory-regression/validate.py"
+      ],
+      "started": "2026-11-02T13:17:22.643463+00:00",
+      "exit": 0,
+      "log": "build/e5c-sync-base/d4-required.log",
+      "sha256": "b431537430f5e3e0d5ea6a518b415efcf08a0144f7975a9e4712469e5ecb7cd6"
+    },
+    {
+      "name": "e3-source",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/e3-remaining-feasibility-regression/source_checks.py"
+      ],
+      "started": "2026-11-02T13:23:27.323472+00:00",
+      "exit": 0,
+      "log": "build/e5c-sync-base/e3-source.log",
+      "sha256": "e2abf7286477fa29b42d46ce19c90d30dfc51736ad4cfa381d899e01c7ccb23f"
+    },
+    {
+      "name": "e5a-source",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/e5a-eligibility-regression/source_checks.py",
+        "--audit-base",
+        "22ab92b"
+      ],
+      "started": "2026-11-02T13:23:28.221769+00:00",
+      "exit": 0,
+      "log": "build/e5c-sync-base/e5a-source.log",
+      "sha256": "35ecd577901922e1cbc673ed399e0a8e2047a8775ba46e7f4515b53d2883d571"
+    },
+    {
+      "name": "e5c-prepare",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/food-metadata-regression/prepare.py"
+      ],
+      "started": "2026-11-02T13:23:28.741672+00:00",
+      "exit": 0,
+      "log": "build/e5c-sync-base/e5c-prepare.log",
+      "sha256": "ab513d53c9444e2923dac7ec6a4cf0c89447b8f29d82712597515586ba6070dc"
+    },
+    {
+      "name": "e5c-final",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/food-metadata-regression/FoodMetadataRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:23:29.366824+00:00",
+      "exit": 0,
+      "log": "build/e5c-sync-base/e5c-final.log",
+      "sha256": "9193c702b8bb99b089bc36a242705c6a24ef158dce1651a775d6f8065535422b"
+    },
+    {
+      "name": "e5a-final",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+        "run",
+        "--project",
+        "tools/e5a-eligibility-regression/E5aEligibilityRegression.csproj",
+        "--configuration",
+        "Release"
+      ],
+      "started": "2026-11-02T13:23:39.802688+00:00",
+      "exit": 0,
+      "log": "build/e5c-sync-base/e5a-final.log",
+      "sha256": "5a36178c7ec5ce42b0e0622a106a2fe2629c680194bb57dffdf2911f368e2e4b"
+    },
+    {
+      "name": "e5a-before",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/e5a-eligibility-regression/measure_before.py"
+      ],
+      "started": "2026-11-02T13:23:46.753448+00:00",
+      "exit": 0,
+      "log": "build/e5c-sync-base/e5a-before.log",
+      "sha256": "ffa8d331b194f47aa3d9fd7c7ae80bccf41cdaa554d4f83c53c371bdbbc4a646"
+    },
+    {
+      "name": "e5c-process-proof",
+      "command": [
+        "C:\\Users\\Peter\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/food-metadata-regression/verify_taste.py"
+      ],
+      "started": "2026-11-02T13:23:55.085012+00:00",
+      "exit": 0,
+      "log": "build/e5c-sync-base/e5c-process-proof.log",
+      "sha256": "d679a5dc48afa0bb47354098f3802dbbe5b2a2685314aa1d3274917087a7c3c9"
+    }
+  ],
+  "e5a": {
+    "checks": 2758,
+    "measurements": {
+      "cold": [
+        {
+          "furniture": 2,
+          "products": 3,
+          "catalogueSize": 0,
+          "totalMs": 4.0334,
+          "bytes": 4312,
+          "units": 2,
+          "maxUnitMs": 2.1232,
+          "spikesAtLeast30Ms": 0
+        },
+        {
+          "furniture": 2,
+          "products": 3,
+          "catalogueSize": 16,
+          "totalMs": 6.8502,
+          "bytes": 6472,
+          "units": 2,
+          "maxUnitMs": 4.0056,
+          "spikesAtLeast30Ms": 0
+        },
+        {
+          "furniture": 2,
+          "products": 3,
+          "catalogueSize": 16384,
+          "totalMs": 13.4212,
+          "bytes": 1866200,
+          "units": 66,
+          "maxUnitMs": 2.9196,
+          "spikesAtLeast30Ms": 0
+        },
+        {
+          "furniture": 2,
+          "products": 8,
+          "catalogueSize": 0,
+          "totalMs": 4.0674,
+          "bytes": 4504,
+          "units": 2,
+          "maxUnitMs": 2.1333,
+          "spikesAtLeast30Ms": 0
+        },
+        {
+          "furniture": 2,
+          "products": 8,
+          "catalogueSize": 16,
+          "totalMs": 5.8347,
+          "bytes": 6704,
+          "units": 2,
+          "maxUnitMs": 3.0303,
+          "spikesAtLeast30Ms": 0
+        },
+        {
+          "furniture": 2,
+          "products": 8,
+          "catalogueSize": 16384,
+          "totalMs": 12.626,
+          "bytes": 1866432,
+          "units": 66,
+          "maxUnitMs": 2.8664,
+          "spikesAtLeast30Ms": 0
+        },
+        {
+          "furniture": 2000,
+          "products": 3,
+          "catalogueSize": 0,
+          "totalMs": 4.1342,
+          "bytes": 4312,
+          "units": 2,
+          "maxUnitMs": 2.1524,
+          "spikesAtLeast30Ms": 0
+        },
+        {
+          "furniture": 2000,
+          "products": 3,
+          "catalogueSize": 16,
+          "totalMs": 6.8305,
+          "bytes": 289184,
+          "units": 17,
+          "maxUnitMs": 2.486,
+          "spikesAtLeast30Ms": 0
+        },
+        {
+          "furniture": 2000,
+          "products": 3,
+          "catalogueSize": 16384,
+          "totalMs": 14.1743,
+          "bytes": 2148392,
+          "units": 81,
+          "maxUnitMs": 2.6124,
+          "spikesAtLeast30Ms": 0
+        },
+        {
+          "furniture": 2000,
+          "products": 8,
+          "catalogueSize": 0,
+          "totalMs": 4.2702,
+          "bytes": 4504,
+          "units": 2,
+          "maxUnitMs": 2.2066,
+          "spikesAtLeast30Ms": 0
+        },
+        {
+          "furniture": 2000,
+          "products": 8,
+          "catalogueSize": 16,
+          "totalMs": 7.3871,
+          "bytes": 289656,
+          "units": 17,
+          "maxUnitMs": 2.5278,
+          "spikesAtLeast30Ms": 0
+        },
+        {
+          "furniture": 2000,
+          "products": 8,
+          "catalogueSize": 16384,
+          "totalMs": 15.3193,
+          "bytes": 2148864,
+          "units": 81,
+          "maxUnitMs": 2.6003,
+          "spikesAtLeast30Ms": 0
+        }
+      ],
+      "warm": [
+        {
+          "products": 1,
+          "holders": 2,
+          "definitions": 0,
+          "rebuild": {
+            "samples": 101,
+            "p50Ms": 0.0005,
+            "p95Ms": 0.001,
+            "maxMs": 0.0073,
+            "bytesPerCall": 368,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "catalogueRebuild": {
+            "samples": 21,
+            "p50Ms": 0.0007,
+            "p95Ms": 0.0013,
+            "maxMs": 0.0022,
+            "bytesPerCall": 488,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "clean": {
+            "samples": 1001,
+            "p50Ms": 0,
+            "p95Ms": 0.0001,
+            "maxMs": 0.0063,
+            "bytesPerCall": 0,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "cacheRetainedBytes": 2824,
+          "retainedRebuildDeltaBytes": -24
+        },
+        {
+          "products": 1,
+          "holders": 2,
+          "definitions": 16,
+          "rebuild": {
+            "samples": 101,
+            "p50Ms": 0.0014,
+            "p95Ms": 0.0037,
+            "maxMs": 0.0057,
+            "bytesPerCall": 664,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "catalogueRebuild": {
+            "samples": 21,
+            "p50Ms": 0.0079,
+            "p95Ms": 0.0102,
+            "maxMs": 0.0104,
+            "bytesPerCall": 2688,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "clean": {
+            "samples": 1001,
+            "p50Ms": 0,
+            "p95Ms": 0.0001,
+            "maxMs": 0.0001,
+            "bytesPerCall": 0,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "cacheRetainedBytes": 4744,
+          "retainedRebuildDeltaBytes": -24
+        },
+        {
+          "products": 1,
+          "holders": 2,
+          "definitions": 16384,
+          "rebuild": {
+            "samples": 101,
+            "p50Ms": 0.0014,
+            "p95Ms": 0.004,
+            "maxMs": 0.0056,
+            "bytesPerCall": 664,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "catalogueRebuild": {
+            "samples": 21,
+            "p50Ms": 6.7328,
+            "p95Ms": 9.9257,
+            "maxMs": 10.4413,
+            "bytesPerCall": 1860385,
+            "gen0": 5,
+            "gen1": 5,
+            "gen2": 3,
+            "spikesAtLeast30Ms": 0
+          },
+          "clean": {
+            "samples": 1001,
+            "p50Ms": 0.0001,
+            "p95Ms": 0.0001,
+            "maxMs": 0.0017,
+            "bytesPerCall": 0,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "cacheRetainedBytes": 1411408,
+          "retainedRebuildDeltaBytes": -24
+        },
+        {
+          "products": 1,
+          "holders": 2000,
+          "definitions": 0,
+          "rebuild": {
+            "samples": 101,
+            "p50Ms": 0.0008,
+            "p95Ms": 0.001,
+            "maxMs": 0.0013,
+            "bytesPerCall": 368,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "catalogueRebuild": {
+            "samples": 21,
+            "p50Ms": 0.0011,
+            "p95Ms": 0.0015,
+            "maxMs": 0.0016,
+            "bytesPerCall": 488,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "clean": {
+            "samples": 1001,
+            "p50Ms": 0.0001,
+            "p95Ms": 0.0001,
+            "maxMs": 0.0002,
+            "bytesPerCall": 0,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "cacheRetainedBytes": 2848,
+          "retainedRebuildDeltaBytes": -24
+        },
+        {
+          "products": 1,
+          "holders": 2000,
+          "definitions": 16,
+          "rebuild": {
+            "samples": 101,
+            "p50Ms": 0.4948,
+            "p95Ms": 0.8826,
+            "maxMs": 0.9301,
+            "bytesPerCall": 128536,
+            "gen0": 1,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "catalogueRebuild": {
+            "samples": 21,
+            "p50Ms": 0.1787,
+            "p95Ms": 0.1838,
+            "maxMs": 0.1857,
+            "bytesPerCall": 130560,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "clean": {
+            "samples": 1001,
+            "p50Ms": 0,
+            "p95Ms": 0.0001,
+            "maxMs": 0.0009,
+            "bytesPerCall": 0,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "cacheRetainedBytes": 197048,
+          "retainedRebuildDeltaBytes": 0
+        },
+        {
+          "products": 1,
+          "holders": 2000,
+          "definitions": 16384,
+          "rebuild": {
+            "samples": 101,
+            "p50Ms": 0.2159,
+            "p95Ms": 0.2359,
+            "maxMs": 0.7366,
+            "bytesPerCall": 128536,
+            "gen0": 1,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "catalogueRebuild": {
+            "samples": 21,
+            "p50Ms": 1.5677,
+            "p95Ms": 8.4339,
+            "maxMs": 17.6074,
+            "bytesPerCall": 1988186,
+            "gen0": 4,
+            "gen1": 4,
+            "gen2": 2,
+            "spikesAtLeast30Ms": 0
+          },
+          "clean": {
+            "samples": 1001,
+            "p50Ms": 0,
+            "p95Ms": 0.0001,
+            "maxMs": 0.0001,
+            "bytesPerCall": 0,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "cacheRetainedBytes": 1604216,
+          "retainedRebuildDeltaBytes": -312
+        },
+        {
+          "products": 3,
+          "holders": 2,
+          "definitions": 0,
+          "rebuild": {
+            "samples": 101,
+            "p50Ms": 0.0001,
+            "p95Ms": 0.0002,
+            "maxMs": 0.0004,
+            "bytesPerCall": 448,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "catalogueRebuild": {
+            "samples": 21,
+            "p50Ms": 0.0002,
+            "p95Ms": 0.0002,
+            "maxMs": 0.0003,
+            "bytesPerCall": 568,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "clean": {
+            "samples": 1001,
+            "p50Ms": 0,
+            "p95Ms": 0.0001,
+            "maxMs": 0.0001,
+            "bytesPerCall": 0,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "cacheRetainedBytes": 2848,
+          "retainedRebuildDeltaBytes": -24
+        },
+        {
+          "products": 3,
+          "holders": 2,
+          "definitions": 16,
+          "rebuild": {
+            "samples": 101,
+            "p50Ms": 0.0003,
+            "p95Ms": 0.0006,
+            "maxMs": 0.001,
+            "bytesPerCall": 584,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "catalogueRebuild": {
+            "samples": 21,
+            "p50Ms": 0.0014,
+            "p95Ms": 0.0018,
+            "maxMs": 0.0021,
+            "bytesPerCall": 2624,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "clean": {
+            "samples": 1001,
+            "p50Ms": 0,
+            "p95Ms": 0.0001,
+            "maxMs": 0.0001,
+            "bytesPerCall": 0,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "cacheRetainedBytes": 4432,
+          "retainedRebuildDeltaBytes": -24
+        },
+        {
+          "products": 3,
+          "holders": 2,
+          "definitions": 16384,
+          "rebuild": {
+            "samples": 101,
+            "p50Ms": 0.0003,
+            "p95Ms": 0.0006,
+            "maxMs": 0.001,
+            "bytesPerCall": 584,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "catalogueRebuild": {
+            "samples": 21,
+            "p50Ms": 1.6124,
+            "p95Ms": 11.7885,
+            "maxMs": 17.6258,
+            "bytesPerCall": 1860476,
+            "gen0": 5,
+            "gen1": 5,
+            "gen2": 3,
+            "spikesAtLeast30Ms": 0
+          },
+          "clean": {
+            "samples": 1001,
+            "p50Ms": 0,
+            "p95Ms": 0.0001,
+            "maxMs": 0.0002,
+            "bytesPerCall": 0,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "cacheRetainedBytes": 1402944,
+          "retainedRebuildDeltaBytes": -24
+        },
+        {
+          "products": 3,
+          "holders": 2000,
+          "definitions": 0,
+          "rebuild": {
+            "samples": 101,
+            "p50Ms": 0.0001,
+            "p95Ms": 0.0002,
+            "maxMs": 0.0009,
+            "bytesPerCall": 448,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "catalogueRebuild": {
+            "samples": 21,
+            "p50Ms": 0.0002,
+            "p95Ms": 0.0002,
+            "maxMs": 0.0008,
+            "bytesPerCall": 568,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "clean": {
+            "samples": 1001,
+            "p50Ms": 0,
+            "p95Ms": 0.0001,
+            "maxMs": 0.0002,
+            "bytesPerCall": 0,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "cacheRetainedBytes": 2848,
+          "retainedRebuildDeltaBytes": -24
+        },
+        {
+          "products": 3,
+          "holders": 2000,
+          "definitions": 16,
+          "rebuild": {
+            "samples": 101,
+            "p50Ms": 0.2198,
+            "p95Ms": 0.2316,
+            "maxMs": 0.4459,
+            "bytesPerCall": 128712,
+            "gen0": 1,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "catalogueRebuild": {
+            "samples": 21,
+            "p50Ms": 0.1914,
+            "p95Ms": 0.1953,
+            "maxMs": 0.2034,
+            "bytesPerCall": 130752,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "clean": {
+            "samples": 1001,
+            "p50Ms": 0,
+            "p95Ms": 0.0001,
+            "maxMs": 0.0001,
+            "bytesPerCall": 0,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "cacheRetainedBytes": 197160,
+          "retainedRebuildDeltaBytes": 0
+        },
+        {
+          "products": 3,
+          "holders": 2000,
+          "definitions": 16384,
+          "rebuild": {
+            "samples": 101,
+            "p50Ms": 0.2241,
+            "p95Ms": 0.3177,
+            "maxMs": 1.142,
+            "bytesPerCall": 128712,
+            "gen0": 1,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "catalogueRebuild": {
+            "samples": 21,
+            "p50Ms": 1.5579,
+            "p95Ms": 13.936,
+            "maxMs": 17.8469,
+            "bytesPerCall": 1988378,
+            "gen0": 4,
+            "gen1": 4,
+            "gen2": 2,
+            "spikesAtLeast30Ms": 0
+          },
+          "clean": {
+            "samples": 1001,
+            "p50Ms": 0,
+            "p95Ms": 0.0001,
+            "maxMs": 0.0001,
+            "bytesPerCall": 0,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "cacheRetainedBytes": 1604328,
+          "retainedRebuildDeltaBytes": -312
+        },
+        {
+          "products": 8,
+          "holders": 2,
+          "definitions": 0,
+          "rebuild": {
+            "samples": 101,
+            "p50Ms": 0.0001,
+            "p95Ms": 0.0003,
+            "maxMs": 0.0004,
+            "bytesPerCall": 640,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "catalogueRebuild": {
+            "samples": 21,
+            "p50Ms": 0.0002,
+            "p95Ms": 0.0003,
+            "maxMs": 0.0003,
+            "bytesPerCall": 760,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "clean": {
+            "samples": 1001,
+            "p50Ms": 0,
+            "p95Ms": 0.0001,
+            "maxMs": 0.0001,
+            "bytesPerCall": 0,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "cacheRetainedBytes": 2848,
+          "retainedRebuildDeltaBytes": -24
+        },
+        {
+          "products": 8,
+          "holders": 2,
+          "definitions": 16,
+          "rebuild": {
+            "samples": 101,
+            "p50Ms": 0.0005,
+            "p95Ms": 0.0009,
+            "maxMs": 0.0011,
+            "bytesPerCall": 776,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "catalogueRebuild": {
+            "samples": 21,
+            "p50Ms": 0.0016,
+            "p95Ms": 0.0018,
+            "maxMs": 0.0019,
+            "bytesPerCall": 2856,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "clean": {
+            "samples": 1001,
+            "p50Ms": 0,
+            "p95Ms": 0.0001,
+            "maxMs": 0.0001,
+            "bytesPerCall": 0,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "cacheRetainedBytes": 4472,
+          "retainedRebuildDeltaBytes": -24
+        },
+        {
+          "products": 8,
+          "holders": 2,
+          "definitions": 16384,
+          "rebuild": {
+            "samples": 101,
+            "p50Ms": 0.0005,
+            "p95Ms": 0.0009,
+            "maxMs": 0.0015,
+            "bytesPerCall": 776,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "catalogueRebuild": {
+            "samples": 21,
+            "p50Ms": 1.6218,
+            "p95Ms": 15.9221,
+            "maxMs": 17.0827,
+            "bytesPerCall": 1860483,
+            "gen0": 5,
+            "gen1": 5,
+            "gen2": 3,
+            "spikesAtLeast30Ms": 0
+          },
+          "clean": {
+            "samples": 1001,
+            "p50Ms": 0,
+            "p95Ms": 0.0001,
+            "maxMs": 0.0001,
+            "bytesPerCall": 0,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "cacheRetainedBytes": 1411208,
+          "retainedRebuildDeltaBytes": -24
+        },
+        {
+          "products": 8,
+          "holders": 2000,
+          "definitions": 0,
+          "rebuild": {
+            "samples": 101,
+            "p50Ms": 0.0001,
+            "p95Ms": 0.0004,
+            "maxMs": 0.0004,
+            "bytesPerCall": 640,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "catalogueRebuild": {
+            "samples": 21,
+            "p50Ms": 0.0002,
+            "p95Ms": 0.0003,
+            "maxMs": 0.0004,
+            "bytesPerCall": 760,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "clean": {
+            "samples": 1001,
+            "p50Ms": 0,
+            "p95Ms": 0.0001,
+            "maxMs": 0.0001,
+            "bytesPerCall": 0,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "cacheRetainedBytes": 2848,
+          "retainedRebuildDeltaBytes": -24
+        },
+        {
+          "products": 8,
+          "holders": 2000,
+          "definitions": 16,
+          "rebuild": {
+            "samples": 101,
+            "p50Ms": 0.248,
+            "p95Ms": 0.2697,
+            "maxMs": 0.7974,
+            "bytesPerCall": 129144,
+            "gen0": 1,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "catalogueRebuild": {
+            "samples": 21,
+            "p50Ms": 0.231,
+            "p95Ms": 0.2423,
+            "maxMs": 0.3416,
+            "bytesPerCall": 131224,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "clean": {
+            "samples": 1001,
+            "p50Ms": 0,
+            "p95Ms": 0.0001,
+            "maxMs": 0.0001,
+            "bytesPerCall": 0,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "cacheRetainedBytes": 197416,
+          "retainedRebuildDeltaBytes": 0
+        },
+        {
+          "products": 8,
+          "holders": 2000,
+          "definitions": 16384,
+          "rebuild": {
+            "samples": 101,
+            "p50Ms": 0.2654,
+            "p95Ms": 0.4401,
+            "maxMs": 0.8988,
+            "bytesPerCall": 129144,
+            "gen0": 1,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "catalogueRebuild": {
+            "samples": 21,
+            "p50Ms": 1.6208,
+            "p95Ms": 15.1742,
+            "maxMs": 16.768,
+            "bytesPerCall": 1988848,
+            "gen0": 4,
+            "gen1": 4,
+            "gen2": 2,
+            "spikesAtLeast30Ms": 0
+          },
+          "clean": {
+            "samples": 1001,
+            "p50Ms": 0,
+            "p95Ms": 0.0001,
+            "maxMs": 0.0001,
+            "bytesPerCall": 0,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          },
+          "cacheRetainedBytes": 1604608,
+          "retainedRebuildDeltaBytes": -312
+        }
+      ],
+      "valid": [
+        {
+          "products": 3,
+          "holders": 4,
+          "rebuild": {
+            "samples": 101,
+            "p50Ms": 0.0011,
+            "p95Ms": 0.0018,
+            "maxMs": 0.0019,
+            "bytesPerCall": 968,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          }
+        },
+        {
+          "products": 8,
+          "holders": 9,
+          "rebuild": {
+            "samples": 101,
+            "p50Ms": 0.0024,
+            "p95Ms": 0.0029,
+            "maxMs": 0.0128,
+            "bytesPerCall": 1720,
+            "gen0": 0,
+            "gen1": 0,
+            "gen2": 0,
+            "spikesAtLeast30Ms": 0
+          }
+        }
+      ],
+      "eightScans": {
+        "samples": 101,
+        "p50Ms": 0.718,
+        "p95Ms": 0.7576,
+        "maxMs": 0.8898,
+        "bytesPerCall": 50936,
+        "gen0": 0,
+        "gen1": 0,
+        "gen2": 0,
+        "spikesAtLeast30Ms": 0
+      },
+      "onePass": {
+        "samples": 101,
+        "p50Ms": 0.2282,
+        "p95Ms": 0.4394,
+        "maxMs": 2.0289,
+        "bytesPerCall": 129144,
+        "gen0": 1,
+        "gen1": 0,
+        "gen2": 0,
+        "spikesAtLeast30Ms": 0
+      },
+      "storm": {
+        "samples": 101,
+        "p50Ms": 0.2193,
+        "p95Ms": 0.23,
+        "maxMs": 0.6288,
+        "bytesPerCall": 129144,
+        "gen0": 1,
+        "gen1": 0,
+        "gen2": 0,
+        "spikesAtLeast30Ms": 0
+      },
+      "catalogueStorm": {
+        "samples": 101,
+        "p50Ms": 0.2301,
+        "p95Ms": 0.4084,
+        "maxMs": 0.5534,
+        "bytesPerCall": 131224,
+        "gen0": 1,
+        "gen1": 0,
+        "gen2": 0,
+        "spikesAtLeast30Ms": 0
+      },
+      "backlog": {
+        "shops": 1024,
+        "units": 16449,
+        "elapsedMs": 451.0521,
+        "shopsPerSecond": 2270.247716394625,
+        "p50Ms": 0.0087,
+        "p95Ms": 0.1068,
+        "maxMs": 19.6142,
+        "spikesAtLeast30Ms": 0,
+        "allocationBytes": 134159312,
+        "retainedBytes": 116044232,
+        "pending": 0
+      },
+      "nativeSetups": 0,
+      "nativeRoutes": 0,
+      "wholeFrame": "not measured offline"
+    }
+  },
+  "e5aBefore": {
+    "command": [
+      "C:\\Users\\Peter\\AppData\\Local\\Microsoft\\dotnet\\dotnet.exe",
+      "run",
+      "--project",
+      "C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\e5c-sync-base\\build\\e5a\\before\\E5aEligibilityRegression.csproj",
+      "--configuration",
+      "Release",
+      "--disable-build-servers"
+    ],
+    "exit": 0,
+    "transforms": [
+      [
+        "        private static readonly IReadOnlyList<string> EmptyNames = Array.AsReadOnly(Array.Empty<string>());\n",
+        ""
+      ],
+      [
+        " : values.Length == 0 ? EmptyNames : values.Length > LoadedStockLimits.Rows",
+        " : values.Length > LoadedStockLimits.Rows"
+      ],
+      [
+        "identities = uniqueOrdinalDictionaryKeys ? null : new HashSet<string>(StringComparer.Ordinal);",
+        "identities = new HashSet<string>(StringComparer.Ordinal);"
+      ],
+      [
+        "            holders.Capacity = furnitureCount;\n",
+        ""
+      ]
+    ],
+    "sourceSha256": "5e69ea074105eb0dc5d52c7b4a66d66ccb0c5ae6d44dfcebf0a83d52bbc68327",
+    "beforeSha256": "0b966753f25940f058595545394a2f66a1f333c705e960b65b00f628436d3ed1",
+    "logSha256": "f215a7c6dc5a14497828cf00a91b27cc431b12e70a84a827cd5c86be4b1f67fa",
+    "result": {
+      "checks": 2758,
+      "measurements": {
+        "cold": [
+          {
+            "furniture": 2,
+            "products": 3,
+            "catalogueSize": 0,
+            "totalMs": 4.0294,
+            "bytes": 4376,
+            "units": 2,
+            "maxUnitMs": 2.115,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2,
+            "products": 3,
+            "catalogueSize": 16,
+            "totalMs": 5.735,
+            "bytes": 7408,
+            "units": 2,
+            "maxUnitMs": 2.8824,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2,
+            "products": 3,
+            "catalogueSize": 16384,
+            "totalMs": 14.0849,
+            "bytes": 2652800,
+            "units": 66,
+            "maxUnitMs": 2.8562,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2,
+            "products": 8,
+            "catalogueSize": 0,
+            "totalMs": 4.0054,
+            "bytes": 4568,
+            "units": 2,
+            "maxUnitMs": 2.1169,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2,
+            "products": 8,
+            "catalogueSize": 16,
+            "totalMs": 5.624,
+            "bytes": 7640,
+            "units": 2,
+            "maxUnitMs": 2.8859,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2,
+            "products": 8,
+            "catalogueSize": 16384,
+            "totalMs": 13.9981,
+            "bytes": 2653032,
+            "units": 66,
+            "maxUnitMs": 2.8936,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2000,
+            "products": 3,
+            "catalogueSize": 0,
+            "totalMs": 4.2592,
+            "bytes": 4376,
+            "units": 2,
+            "maxUnitMs": 2.3686,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2000,
+            "products": 3,
+            "catalogueSize": 16,
+            "totalMs": 6.8413,
+            "bytes": 461064,
+            "units": 17,
+            "maxUnitMs": 2.4866,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2000,
+            "products": 3,
+            "catalogueSize": 16384,
+            "totalMs": 16.5132,
+            "bytes": 3105936,
+            "units": 81,
+            "maxUnitMs": 2.484,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2000,
+            "products": 8,
+            "catalogueSize": 0,
+            "totalMs": 4.3926,
+            "bytes": 4568,
+            "units": 2,
+            "maxUnitMs": 2.4399,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2000,
+            "products": 8,
+            "catalogueSize": 16,
+            "totalMs": 7.4167,
+            "bytes": 461536,
+            "units": 17,
+            "maxUnitMs": 2.6236,
+            "spikesAtLeast30Ms": 0
+          },
+          {
+            "furniture": 2000,
+            "products": 8,
+            "catalogueSize": 16384,
+            "totalMs": 16.0114,
+            "bytes": 3106408,
+            "units": 81,
+            "maxUnitMs": 2.528,
+            "spikesAtLeast30Ms": 0
+          }
+        ],
+        "warm": [
+          {
+            "products": 1,
+            "holders": 2,
+            "definitions": 0,
+            "rebuild": {
+              "samples": 101,
+              "p50Ms": 0.0005,
+              "p95Ms": 0.0009,
+              "maxMs": 0.0073,
+              "bytesPerCall": 432,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "catalogueRebuild": {
+              "samples": 21,
+              "p50Ms": 0.0007,
+              "p95Ms": 0.0012,
+              "maxMs": 0.0027,
+              "bytesPerCall": 552,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "clean": {
+              "samples": 1001,
+              "p50Ms": 0,
+              "p95Ms": 0.0001,
+              "maxMs": 0.0004,
+              "bytesPerCall": 0,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "cacheRetainedBytes": 2824,
+            "retainedRebuildDeltaBytes": -24
+          },
+          {
+            "products": 1,
+            "holders": 2,
+            "definitions": 16,
+            "rebuild": {
+              "samples": 101,
+              "p50Ms": 0.0014,
+              "p95Ms": 0.0039,
+              "maxMs": 0.006,
+              "bytesPerCall": 856,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "catalogueRebuild": {
+              "samples": 21,
+              "p50Ms": 0.0095,
+              "p95Ms": 0.0127,
+              "maxMs": 0.0131,
+              "bytesPerCall": 3624,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "clean": {
+              "samples": 1001,
+              "p50Ms": 0,
+              "p95Ms": 0.0001,
+              "maxMs": 0.0001,
+              "bytesPerCall": 0,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "cacheRetainedBytes": 4744,
+            "retainedRebuildDeltaBytes": -24
+          },
+          {
+            "products": 1,
+            "holders": 2,
+            "definitions": 16384,
+            "rebuild": {
+              "samples": 101,
+              "p50Ms": 0.0014,
+              "p95Ms": 0.0017,
+              "maxMs": 0.0025,
+              "bytesPerCall": 856,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "catalogueRebuild": {
+              "samples": 21,
+              "p50Ms": 8.3093,
+              "p95Ms": 14.8889,
+              "maxMs": 16.2106,
+              "bytesPerCall": 2647649,
+              "gen0": 6,
+              "gen1": 6,
+              "gen2": 3,
+              "spikesAtLeast30Ms": 0
+            },
+            "clean": {
+              "samples": 1001,
+              "p50Ms": 0,
+              "p95Ms": 0.0001,
+              "maxMs": 0.0009,
+              "bytesPerCall": 0,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "cacheRetainedBytes": 1411408,
+            "retainedRebuildDeltaBytes": -24
+          },
+          {
+            "products": 1,
+            "holders": 2000,
+            "definitions": 0,
+            "rebuild": {
+              "samples": 101,
+              "p50Ms": 0.0006,
+              "p95Ms": 0.0008,
+              "maxMs": 0.0037,
+              "bytesPerCall": 432,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "catalogueRebuild": {
+              "samples": 21,
+              "p50Ms": 0.001,
+              "p95Ms": 0.0013,
+              "maxMs": 0.0013,
+              "bytesPerCall": 552,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "clean": {
+              "samples": 1001,
+              "p50Ms": 0,
+              "p95Ms": 0.0001,
+              "maxMs": 0.0001,
+              "bytesPerCall": 0,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "cacheRetainedBytes": 2848,
+            "retainedRebuildDeltaBytes": -24
+          },
+          {
+            "products": 1,
+            "holders": 2000,
+            "definitions": 16,
+            "rebuild": {
+              "samples": 101,
+              "p50Ms": 0.7005,
+              "p95Ms": 1.1209,
+              "maxMs": 1.3523,
+              "bytesPerCall": 299672,
+              "gen0": 2,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "catalogueRebuild": {
+              "samples": 21,
+              "p50Ms": 0.5114,
+              "p95Ms": 0.5153,
+              "maxMs": 0.5399,
+              "bytesPerCall": 302440,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "clean": {
+              "samples": 1001,
+              "p50Ms": 0,
+              "p95Ms": 0.0001,
+              "maxMs": 0.0007,
+              "bytesPerCall": 0,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "cacheRetainedBytes": 197552,
+            "retainedRebuildDeltaBytes": 0
+          },
+          {
+            "products": 1,
+            "holders": 2000,
+            "definitions": 16384,
+            "rebuild": {
+              "samples": 101,
+              "p50Ms": 0.5075,
+              "p95Ms": 0.5854,
+              "maxMs": 1.0993,
+              "bytesPerCall": 299672,
+              "gen0": 2,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "catalogueRebuild": {
+              "samples": 21,
+              "p50Ms": 2.3513,
+              "p95Ms": 11.5245,
+              "maxMs": 13.3922,
+              "bytesPerCall": 2946018,
+              "gen0": 6,
+              "gen1": 4,
+              "gen2": 2,
+              "spikesAtLeast30Ms": 0
+            },
+            "clean": {
+              "samples": 1001,
+              "p50Ms": 0,
+              "p95Ms": 0.0001,
+              "maxMs": 0.0003,
+              "bytesPerCall": 0,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "cacheRetainedBytes": 1604216,
+            "retainedRebuildDeltaBytes": -576
+          },
+          {
+            "products": 3,
+            "holders": 2,
+            "definitions": 0,
+            "rebuild": {
+              "samples": 101,
+              "p50Ms": 0.0001,
+              "p95Ms": 0.0004,
+              "maxMs": 0.0005,
+              "bytesPerCall": 512,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "catalogueRebuild": {
+              "samples": 21,
+              "p50Ms": 0.0002,
+              "p95Ms": 0.0002,
+              "maxMs": 0.0007,
+              "bytesPerCall": 632,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "clean": {
+              "samples": 1001,
+              "p50Ms": 0,
+              "p95Ms": 0.0001,
+              "maxMs": 0.0001,
+              "bytesPerCall": 0,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "cacheRetainedBytes": 2848,
+            "retainedRebuildDeltaBytes": -24
+          },
+          {
+            "products": 3,
+            "holders": 2,
+            "definitions": 16,
+            "rebuild": {
+              "samples": 101,
+              "p50Ms": 0.0003,
+              "p95Ms": 0.0007,
+              "maxMs": 0.0018,
+              "bytesPerCall": 776,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "catalogueRebuild": {
+              "samples": 21,
+              "p50Ms": 0.0021,
+              "p95Ms": 0.0028,
+              "maxMs": 0.0029,
+              "bytesPerCall": 3560,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "clean": {
+              "samples": 1001,
+              "p50Ms": 0,
+              "p95Ms": 0.0001,
+              "maxMs": 0.0001,
+              "bytesPerCall": 0,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "cacheRetainedBytes": 4432,
+            "retainedRebuildDeltaBytes": -24
+          },
+          {
+            "products": 3,
+            "holders": 2,
+            "definitions": 16384,
+            "rebuild": {
+              "samples": 101,
+              "p50Ms": 0.0003,
+              "p95Ms": 0.0007,
+              "maxMs": 0.0009,
+              "bytesPerCall": 776,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "catalogueRebuild": {
+              "samples": 21,
+              "p50Ms": 2.1943,
+              "p95Ms": 10.3771,
+              "maxMs": 11.3103,
+              "bytesPerCall": 2647401,
+              "gen0": 6,
+              "gen1": 6,
+              "gen2": 3,
+              "spikesAtLeast30Ms": 0
+            },
+            "clean": {
+              "samples": 1001,
+              "p50Ms": 0,
+              "p95Ms": 0.0001,
+              "maxMs": 0.0002,
+              "bytesPerCall": 0,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "cacheRetainedBytes": 1411168,
+            "retainedRebuildDeltaBytes": -24
+          },
+          {
+            "products": 3,
+            "holders": 2000,
+            "definitions": 0,
+            "rebuild": {
+              "samples": 101,
+              "p50Ms": 0.0001,
+              "p95Ms": 0.0004,
+              "maxMs": 0.0008,
+              "bytesPerCall": 512,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "catalogueRebuild": {
+              "samples": 21,
+              "p50Ms": 0.0002,
+              "p95Ms": 0.0002,
+              "maxMs": 0.0005,
+              "bytesPerCall": 632,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "clean": {
+              "samples": 1001,
+              "p50Ms": 0,
+              "p95Ms": 0.0001,
+              "maxMs": 0.0004,
+              "bytesPerCall": 0,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "cacheRetainedBytes": 2848,
+            "retainedRebuildDeltaBytes": -24
+          },
+          {
+            "products": 3,
+            "holders": 2000,
+            "definitions": 16,
+            "rebuild": {
+              "samples": 101,
+              "p50Ms": 0.2426,
+              "p95Ms": 0.3315,
+              "maxMs": 0.5615,
+              "bytesPerCall": 299848,
+              "gen0": 2,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "catalogueRebuild": {
+              "samples": 21,
+              "p50Ms": 0.2375,
+              "p95Ms": 0.2426,
+              "maxMs": 0.243,
+              "bytesPerCall": 302632,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "clean": {
+              "samples": 1001,
+              "p50Ms": 0,
+              "p95Ms": 0.0001,
+              "maxMs": 0.0001,
+              "bytesPerCall": 0,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "cacheRetainedBytes": 197664,
+            "retainedRebuildDeltaBytes": 0
+          },
+          {
+            "products": 3,
+            "holders": 2000,
+            "definitions": 16384,
+            "rebuild": {
+              "samples": 101,
+              "p50Ms": 0.2395,
+              "p95Ms": 0.3159,
+              "maxMs": 0.7811,
+              "bytesPerCall": 299848,
+              "gen0": 2,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "catalogueRebuild": {
+              "samples": 21,
+              "p50Ms": 2.3857,
+              "p95Ms": 10.9171,
+              "maxMs": 21.2638,
+              "bytesPerCall": 2946196,
+              "gen0": 6,
+              "gen1": 4,
+              "gen2": 2,
+              "spikesAtLeast30Ms": 0
+            },
+            "clean": {
+              "samples": 1001,
+              "p50Ms": 0,
+              "p95Ms": 0.0001,
+              "maxMs": 0.0001,
+              "bytesPerCall": 0,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "cacheRetainedBytes": 1604328,
+            "retainedRebuildDeltaBytes": -576
+          },
+          {
+            "products": 8,
+            "holders": 2,
+            "definitions": 0,
+            "rebuild": {
+              "samples": 101,
+              "p50Ms": 0.0001,
+              "p95Ms": 0.0006,
+              "maxMs": 0.0007,
+              "bytesPerCall": 704,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "catalogueRebuild": {
+              "samples": 21,
+              "p50Ms": 0.0002,
+              "p95Ms": 0.0007,
+              "maxMs": 0.0009,
+              "bytesPerCall": 824,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "clean": {
+              "samples": 1001,
+              "p50Ms": 0,
+              "p95Ms": 0.0001,
+              "maxMs": 0.0001,
+              "bytesPerCall": 0,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "cacheRetainedBytes": 2848,
+            "retainedRebuildDeltaBytes": -24
+          },
+          {
+            "products": 8,
+            "holders": 2,
+            "definitions": 16,
+            "rebuild": {
+              "samples": 101,
+              "p50Ms": 0.0005,
+              "p95Ms": 0.0009,
+              "maxMs": 0.001,
+              "bytesPerCall": 968,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "catalogueRebuild": {
+              "samples": 21,
+              "p50Ms": 0.0023,
+              "p95Ms": 0.0032,
+              "maxMs": 0.0037,
+              "bytesPerCall": 3792,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "clean": {
+              "samples": 1001,
+              "p50Ms": 0,
+              "p95Ms": 0.0001,
+              "maxMs": 0.0001,
+              "bytesPerCall": 0,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "cacheRetainedBytes": 4472,
+            "retainedRebuildDeltaBytes": -24
+          },
+          {
+            "products": 8,
+            "holders": 2,
+            "definitions": 16384,
+            "rebuild": {
+              "samples": 101,
+              "p50Ms": 0.0005,
+              "p95Ms": 0.001,
+              "maxMs": 0.0058,
+              "bytesPerCall": 968,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "catalogueRebuild": {
+              "samples": 21,
+              "p50Ms": 2.1513,
+              "p95Ms": 10.9214,
+              "maxMs": 13.1461,
+              "bytesPerCall": 2647651,
+              "gen0": 6,
+              "gen1": 6,
+              "gen2": 3,
+              "spikesAtLeast30Ms": 0
+            },
+            "clean": {
+              "samples": 1001,
+              "p50Ms": 0,
+              "p95Ms": 0.0001,
+              "maxMs": 0.0001,
+              "bytesPerCall": 0,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "cacheRetainedBytes": 1411208,
+            "retainedRebuildDeltaBytes": -24
+          },
+          {
+            "products": 8,
+            "holders": 2000,
+            "definitions": 0,
+            "rebuild": {
+              "samples": 101,
+              "p50Ms": 0.0001,
+              "p95Ms": 0.0005,
+              "maxMs": 0.0009,
+              "bytesPerCall": 704,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "catalogueRebuild": {
+              "samples": 21,
+              "p50Ms": 0.0002,
+              "p95Ms": 0.0006,
+              "maxMs": 0.0009,
+              "bytesPerCall": 824,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "clean": {
+              "samples": 1001,
+              "p50Ms": 0,
+              "p95Ms": 0.0001,
+              "maxMs": 0.0001,
+              "bytesPerCall": 0,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "cacheRetainedBytes": 2848,
+            "retainedRebuildDeltaBytes": -24
+          },
+          {
+            "products": 8,
+            "holders": 2000,
+            "definitions": 16,
+            "rebuild": {
+              "samples": 101,
+              "p50Ms": 0.2855,
+              "p95Ms": 0.3722,
+              "maxMs": 0.637,
+              "bytesPerCall": 300280,
+              "gen0": 2,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "catalogueRebuild": {
+              "samples": 21,
+              "p50Ms": 0.2847,
+              "p95Ms": 0.2879,
+              "maxMs": 0.289,
+              "bytesPerCall": 303104,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "clean": {
+              "samples": 1001,
+              "p50Ms": 0,
+              "p95Ms": 0.0001,
+              "maxMs": 0.0001,
+              "bytesPerCall": 0,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "cacheRetainedBytes": 197944,
+            "retainedRebuildDeltaBytes": 0
+          },
+          {
+            "products": 8,
+            "holders": 2000,
+            "definitions": 16384,
+            "rebuild": {
+              "samples": 101,
+              "p50Ms": 0.2876,
+              "p95Ms": 0.4842,
+              "maxMs": 1.1178,
+              "bytesPerCall": 300280,
+              "gen0": 2,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "catalogueRebuild": {
+              "samples": 21,
+              "p50Ms": 2.4164,
+              "p95Ms": 11.602,
+              "maxMs": 14.298,
+              "bytesPerCall": 2946810,
+              "gen0": 6,
+              "gen1": 4,
+              "gen2": 2,
+              "spikesAtLeast30Ms": 0
+            },
+            "clean": {
+              "samples": 1001,
+              "p50Ms": 0,
+              "p95Ms": 0.0001,
+              "maxMs": 0.0001,
+              "bytesPerCall": 0,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            },
+            "cacheRetainedBytes": 1604608,
+            "retainedRebuildDeltaBytes": -552
+          }
+        ],
+        "valid": [
+          {
+            "products": 3,
+            "holders": 4,
+            "rebuild": {
+              "samples": 101,
+              "p50Ms": 0.0006,
+              "p95Ms": 0.0011,
+              "maxMs": 0.0012,
+              "bytesPerCall": 1336,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            }
+          },
+          {
+            "products": 8,
+            "holders": 9,
+            "rebuild": {
+              "samples": 101,
+              "p50Ms": 0.0014,
+              "p95Ms": 0.0019,
+              "maxMs": 0.0025,
+              "bytesPerCall": 2680,
+              "gen0": 0,
+              "gen1": 0,
+              "gen2": 0,
+              "spikesAtLeast30Ms": 0
+            }
+          }
+        ],
+        "eightScans": {
+          "samples": 101,
+          "p50Ms": 0.6902,
+          "p95Ms": 0.7168,
+          "maxMs": 0.8589,
+          "bytesPerCall": 50936,
+          "gen0": 0,
+          "gen1": 0,
+          "gen2": 0,
+          "spikesAtLeast30Ms": 0
+        },
+        "onePass": {
+          "samples": 101,
+          "p50Ms": 0.4408,
+          "p95Ms": 0.4684,
+          "maxMs": 1.0622,
+          "bytesPerCall": 300280,
+          "gen0": 2,
+          "gen1": 1,
+          "gen2": 0,
+          "spikesAtLeast30Ms": 0
+        },
+        "storm": {
+          "samples": 101,
+          "p50Ms": 0.2884,
+          "p95Ms": 0.5041,
+          "maxMs": 0.7505,
+          "bytesPerCall": 300280,
+          "gen0": 3,
+          "gen1": 0,
+          "gen2": 0,
+          "spikesAtLeast30Ms": 0
+        },
+        "catalogueStorm": {
+          "samples": 101,
+          "p50Ms": 0.4681,
+          "p95Ms": 0.5105,
+          "maxMs": 0.8288,
+          "bytesPerCall": 303104,
+          "gen0": 3,
+          "gen1": 0,
+          "gen2": 0,
+          "spikesAtLeast30Ms": 0
+        },
+        "backlog": {
+          "shops": 1024,
+          "units": 16449,
+          "elapsedMs": 535.3741,
+          "shopsPerSecond": 1912.6812447595055,
+          "p50Ms": 0.0119,
+          "p95Ms": 0.1257,
+          "maxMs": 15.9931,
+          "spikesAtLeast30Ms": 0,
+          "allocationBytes": 310191592,
+          "retainedBytes": 116050264,
+          "pending": 0
+        },
+        "nativeSetups": 0,
+        "nativeRoutes": 0,
+        "wholeFrame": "not measured offline"
+      }
+    }
+  },
+  "e5c": {
+    "baseCommit": "034bb76",
+    "parserBefore": "policy-matched per-entry HashSet",
+    "units": "ms/call",
+    "nativeEvidence": false,
+    "firstUseMaxConfig": {
+      "milliseconds": 54.7745,
+      "bytes": 747448,
+      "spikesAtLeast30ms": 1
+    },
+    "resolver": [
+      {
+        "count": 0,
+        "retainedTableBytesEstimate": 112,
+        "lookup": {
+          "samples": 1001,
+          "batch": 100,
+          "gc0": 0,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 0.00043200000000000004,
+          "p95": 0.0005,
+          "max": 0.024948,
+          "bytesPerCall": 0.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 2.4948,
+          "batchSpikesAtLeast30ms": 0
+        },
+        "miss": {
+          "samples": 1001,
+          "batch": 100,
+          "gc0": 0,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 0.000283,
+          "p95": 0.0003,
+          "max": 0.0016320000000000002,
+          "bytesPerCall": 0.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.1632,
+          "batchSpikesAtLeast30ms": 0
+        },
+        "maximumNameMiss": {
+          "samples": 1001,
+          "batch": 100,
+          "gc0": 0,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 0.002327,
+          "p95": 0.003938,
+          "max": 0.008625,
+          "bytesPerCall": 0.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.8625,
+          "batchSpikesAtLeast30ms": 0
+        }
+      },
+      {
+        "count": 1,
+        "retainedTableBytesEstimate": 360,
+        "lookup": {
+          "samples": 1001,
+          "batch": 100,
+          "gc0": 0,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 0.000104,
+          "p95": 0.000105,
+          "max": 0.000171,
+          "bytesPerCall": 0.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.0171,
+          "batchSpikesAtLeast30ms": 0
+        },
+        "miss": {
+          "samples": 1001,
+          "batch": 100,
+          "gc0": 0,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 5.1000000000000006e-05,
+          "p95": 5.2e-05,
+          "max": 0.0007040000000000001,
+          "bytesPerCall": 0.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.0704,
+          "batchSpikesAtLeast30ms": 0
+        },
+        "maximumNameMiss": {
+          "samples": 1001,
+          "batch": 100,
+          "gc0": 0,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 0.000426,
+          "p95": 0.000473,
+          "max": 0.0016289999999999998,
+          "bytesPerCall": 0.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.1629,
+          "batchSpikesAtLeast30ms": 0
+        }
+      },
+      {
+        "count": 256,
+        "retainedTableBytesEstimate": 37504,
+        "lookup": {
+          "samples": 1001,
+          "batch": 100,
+          "gc0": 0,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 1.4e-05,
+          "p95": 1.4e-05,
+          "max": 7.3e-05,
+          "bytesPerCall": 0.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.0073,
+          "batchSpikesAtLeast30ms": 0
+        },
+        "miss": {
+          "samples": 1001,
+          "batch": 100,
+          "gc0": 0,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 5.1000000000000006e-05,
+          "p95": 5.2e-05,
+          "max": 8.6e-05,
+          "bytesPerCall": 0.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.0086,
+          "batchSpikesAtLeast30ms": 0
+        },
+        "maximumNameMiss": {
+          "samples": 1001,
+          "batch": 100,
+          "gc0": 0,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 0.000472,
+          "p95": 0.00057,
+          "max": 0.002049,
+          "bytesPerCall": 0.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.2049,
+          "batchSpikesAtLeast30ms": 0
+        }
+      }
+    ],
+    "weights": [
+      {
+        "width": 4,
+        "offers": 32,
+        "historicalBefore": {
+          "samples": 1001,
+          "batch": 100,
+          "gc0": 0,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 0.001906,
+          "p95": 0.005758999999999999,
+          "max": 0.009838,
+          "bytesPerCall": 0.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.9838,
+          "batchSpikesAtLeast30ms": 0
+        },
+        "historicalAfter": {
+          "samples": 1001,
+          "batch": 100,
+          "gc0": 0,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 0.001559,
+          "p95": 0.005003,
+          "max": 0.007608,
+          "bytesPerCall": 0.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.7608,
+          "batchSpikesAtLeast30ms": 0
+        },
+        "resolvedWeights": {
+          "samples": 1001,
+          "batch": 100,
+          "gc0": 0,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 0.002867,
+          "p95": 0.002926,
+          "max": 0.005674,
+          "bytesPerCall": 0.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.5674,
+          "batchSpikesAtLeast30ms": 0
+        }
+      },
+      {
+        "width": 8,
+        "offers": 64,
+        "historicalBefore": {
+          "samples": 1001,
+          "batch": 100,
+          "gc0": 0,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 0.0027800000000000004,
+          "p95": 0.00396,
+          "max": 0.0059370000000000004,
+          "bytesPerCall": 0.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.5937,
+          "batchSpikesAtLeast30ms": 0
+        },
+        "historicalAfter": {
+          "samples": 1001,
+          "batch": 100,
+          "gc0": 0,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 0.003084,
+          "p95": 0.0031269999999999996,
+          "max": 0.006051999999999999,
+          "bytesPerCall": 0.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.6052,
+          "batchSpikesAtLeast30ms": 0
+        },
+        "resolvedWeights": {
+          "samples": 1001,
+          "batch": 100,
+          "gc0": 0,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 0.004128,
+          "p95": 0.004446,
+          "max": 0.0086,
+          "bytesPerCall": 0.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.86,
+          "batchSpikesAtLeast30ms": 0
+        }
+      }
+    ],
+    "config": [
+      {
+        "count": 0,
+        "maximumNames": false,
+        "retainedTableBytesEstimate": 112,
+        "characters": 27,
+        "utf8": 27,
+        "tableBefore": {
+          "samples": 101,
+          "batch": 1,
+          "gc0": 0,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 0.0005,
+          "p95": 0.0037,
+          "max": 0.0064,
+          "bytesPerCall": 2800.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.0064,
+          "batchSpikesAtLeast30ms": 0
+        },
+        "tableAfter": {
+          "samples": 101,
+          "batch": 1,
+          "gc0": 0,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 0.0005,
+          "p95": 0.0047,
+          "max": 0.007,
+          "bytesPerCall": 2800.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.007,
+          "batchSpikesAtLeast30ms": 0
+        },
+        "coldConfig": {
+          "samples": 101,
+          "batch": 1,
+          "gc0": 0,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 0.0022,
+          "p95": 0.0055,
+          "max": 0.009,
+          "bytesPerCall": 3904.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.009,
+          "batchSpikesAtLeast30ms": 0
+        }
+      },
+      {
+        "count": 1,
+        "maximumNames": false,
+        "retainedTableBytesEstimate": 360,
+        "characters": 150,
+        "utf8": 150,
+        "tableBefore": {
+          "samples": 101,
+          "batch": 1,
+          "gc0": 0,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 0.0071,
+          "p95": 0.0075,
+          "max": 0.0171,
+          "bytesPerCall": 4232.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.0171,
+          "batchSpikesAtLeast30ms": 0
+        },
+        "tableAfter": {
+          "samples": 101,
+          "batch": 1,
+          "gc0": 0,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 0.0073,
+          "p95": 0.0077,
+          "max": 0.0078,
+          "bytesPerCall": 3864.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.0078,
+          "batchSpikesAtLeast30ms": 0
+        },
+        "coldConfig": {
+          "samples": 101,
+          "batch": 1,
+          "gc0": 0,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 0.0092,
+          "p95": 0.0096,
+          "max": 0.01,
+          "bytesPerCall": 4816.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.01,
+          "batchSpikesAtLeast30ms": 0
+        }
+      },
+      {
+        "count": 256,
+        "maximumNames": false,
+        "retainedTableBytesEstimate": 37504,
+        "characters": 32172,
+        "utf8": 32172,
+        "tableBefore": {
+          "samples": 101,
+          "batch": 1,
+          "gc0": 2,
+          "gc1": 1,
+          "gc2": 0,
+          "p50": 0.1969,
+          "p95": 0.4077,
+          "max": 0.4996,
+          "bytesPerCall": 289488.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.4996,
+          "batchSpikesAtLeast30ms": 0
+        },
+        "tableAfter": {
+          "samples": 101,
+          "batch": 1,
+          "gc0": 2,
+          "gc1": 1,
+          "gc2": 0,
+          "p50": 0.1686,
+          "p95": 0.1872,
+          "max": 0.2967,
+          "bytesPerCall": 195280.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.2967,
+          "batchSpikesAtLeast30ms": 0
+        },
+        "coldConfig": {
+          "samples": 101,
+          "batch": 1,
+          "gc0": 1,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 0.1837,
+          "p95": 0.1907,
+          "max": 0.3967,
+          "bytesPerCall": 196232.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.3967,
+          "batchSpikesAtLeast30ms": 0
+        }
+      },
+      {
+        "count": 256,
+        "maximumNames": true,
+        "retainedTableBytesEstimate": 153248,
+        "characters": 399130,
+        "utf8": 399130,
+        "tableBefore": {
+          "samples": 101,
+          "batch": 1,
+          "gc0": 2,
+          "gc1": 1,
+          "gc2": 0,
+          "p50": 1.5299,
+          "p95": 1.6124,
+          "max": 1.756,
+          "bytesPerCall": 314240.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 1.756,
+          "batchSpikesAtLeast30ms": 0
+        },
+        "tableAfter": {
+          "samples": 101,
+          "batch": 1,
+          "gc0": 2,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 0.7945,
+          "p95": 1.498,
+          "max": 1.67,
+          "bytesPerCall": 269184.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 1.67,
+          "batchSpikesAtLeast30ms": 0
+        },
+        "coldConfig": {
+          "samples": 101,
+          "batch": 1,
+          "gc0": 2,
+          "gc1": 0,
+          "gc2": 0,
+          "p50": 0.8332,
+          "p95": 0.9163,
+          "max": 0.9998,
+          "bytesPerCall": 270136.0,
+          "spikesAtLeast30ms": 0,
+          "maxBatchMs": 0.9998,
+          "batchSpikesAtLeast30ms": 0
+        }
+      }
+    ],
+    "sink": 444257259.41555023
+  },
+  "processProof": {
+    "seed": 957,
+    "products": [
+      "foodtrucks:itemname_dumplings",
+      "foodtrucks:itemname_choppedcheese"
+    ],
+    "consumers": "pc:0 through pc:99",
+    "processes": 2,
+    "matchesIndependentReference": true,
+    "identicalAcrossProcesses": true,
+    "nativeTargetBuild": {
+      "exit": 0,
+      "dllSHA256": "85f2ea4176477ca2a9d33fb75c90879c0f3287fe5a77c524978acf667ab3bcfb"
+    },
+    "finalUnitSummary": "Passed!  - Failed:     0, Passed:  2687, Skipped:     0, Total:  2687, Duration: 2 m - PersistentCity.Tests.dll (net10.0)",
+    "finalDiscovery": {
+      "exit": 0,
+      "log": "build/food-metadata/final-list-tests.log",
+      "sha256": "4d4dd1ad4499fc2d34d39d0571ea2e15d65db12a5c104a07a107a2292f288794"
+    },
+    "finalTests": {
+      "command": [
+        "dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--disable-build-servers"
+      ],
+      "exit": 0,
+      "log": "build/food-metadata/final-tests.log",
+      "sha256": "e975f27091ac228d5c23d1df434cdea4d1de998cb2f2a2954eedb3dca00d32fe"
+    },
+    "sha256": "937617912baf43dfdc29f75444d394ee4505fa89bea2dbc72c3f938194b3949e",
+    "bands": "2,4,0,2,1,3,1,2,2,3,1,2,4,0,3,3,2,1,4,2,3,4,3,0,2,0,3,1,2,1,2,3,1,2,2,1,4,1,2,2,2,2,3,1,2,3,1,1,1,1,0,2,2,0,3,3,0,2,2,2,2,0,4,1,2,3,3,4,1,1,4,3,0,2,0,2,4,1,3,1,0,2,3,4,2,3,1,2,3,1,1,1,2,2,4,2,1,2,2,4,1,1,2,1,2,2,2,2,4,4,1,2,3,2,2,2,1,2,2,2,3,1,2,2,3,3,0,2,2,2,3,2,2,1,4,1,1,4,2,2,2,1,4,2,1,2,0,1,2,1,4,1,3,3,2,2,1,2,2,1,1,3,2,4,3,2,3,2,2,2,2,0,1,4,2,2,1,3,4,2,2,1,1,2,2,3,2,3,2,3,0,3,4,3,2,1,0,3,0,1"
+  },
+  "processAudit": {
+    "CurrentCheckoutProcesses": 0,
+    "CheckedAtUtc": "2026-11-02T13:26:11.7775601Z",
+    "SynchronousWorkloadsCompleted": true
+  },
+  "offlineTimingFlags": [
+    {
+      "log": "build/d3a/gates/awareness.log",
+      "path": "/stages/1/buildMs/p95",
+      "value": 33.5506,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d3a/gates/awareness.log",
+      "path": "/stages/1/buildMs/max",
+      "value": 33.5506,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/awareness.log",
+      "path": "/stages/1/buildMs/spikesAtLeast30ms",
+      "count": 2,
+      "kind": "spike counter; inspect original component units"
+    },
+    {
+      "log": "build/d3a/gates/awareness.log",
+      "path": "/stages/2/buildMs/p95",
+      "value": 10.1882,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d3a/gates/awareness.log",
+      "path": "/stages/3/buildMs/p95",
+      "value": 27.043,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d3a/gates/core-identity.log",
+      "path": "/simulateMs",
+      "value": 2730,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/e4-menu.log",
+      "path": "/results/history/0/serialize/p50",
+      "value": 138.1356,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/e4-menu.log",
+      "path": "/results/history/0/serialize/p95",
+      "value": 181.4484,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d3a/gates/e4-menu.log",
+      "path": "/results/history/0/serialize/max",
+      "value": 185.0911,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/e4-menu.log",
+      "path": "/results/history/0/serialize/spikes30",
+      "count": 21,
+      "kind": "spike counter; inspect original component units"
+    },
+    {
+      "log": "build/d3a/gates/e4-menu.log",
+      "path": "/results/history/1/serialize/p50",
+      "value": 147.8087,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/e4-menu.log",
+      "path": "/results/history/1/serialize/p95",
+      "value": 181.6675,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d3a/gates/e4-menu.log",
+      "path": "/results/history/1/serialize/max",
+      "value": 201.5485,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/e4-menu.log",
+      "path": "/results/history/1/serialize/spikes30",
+      "count": 21,
+      "kind": "spike counter; inspect original component units"
+    },
+    {
+      "log": "build/d3a/gates/e5a-eligibility.log",
+      "path": "/measurements/warm/2/catalogueRebuild/p95Ms",
+      "value": 11.25,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d3a/gates/e5a-eligibility.log",
+      "path": "/measurements/warm/5/catalogueRebuild/p95Ms",
+      "value": 17.4837,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d3a/gates/e5a-eligibility.log",
+      "path": "/measurements/warm/11/catalogueRebuild/p95Ms",
+      "value": 16.6161,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d3a/gates/e5a-eligibility.log",
+      "path": "/measurements/warm/14/catalogueRebuild/p95Ms",
+      "value": 12.0317,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d3a/gates/e5a-eligibility.log",
+      "path": "/measurements/warm/17/catalogueRebuild/p95Ms",
+      "value": 15.9636,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d3a/gates/e5a-eligibility.log",
+      "path": "/measurements/backlog/elapsedMs",
+      "value": 333.5731,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-catalogue.log",
+      "kind": "offline text timing; inspect aggregate context",
+      "line": "D1 PERF 20000: empty-cache build 43.5720 ms/25283740 B; warm refresh 1.2647 ms/32 B; 16-read unit 0.0019 ms/0 B; eight details 0.0088 ms/11632 B; retained 14056168 B (GC estimate; native fixtures excluded).",
+      "valuesAtLeast30Ms": [
+        43.572
+      ]
+    },
+    {
+      "log": "build/d3a/gates/food-memory.log",
+      "path": "/rush/0/cpuMs",
+      "value": 227.6234,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-memory.log",
+      "path": "/rush/1/cpuMs",
+      "value": 218.6709,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-memory.log",
+      "path": "/rush/2/cpuMs",
+      "value": 270.3237,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-memory.log",
+      "path": "/rush/3/cpuMs",
+      "value": 257.9585,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-memory.log",
+      "path": "/rush/4/cpuMs",
+      "value": 250.4458,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-memory.log",
+      "path": "/rush/5/cpuMs",
+      "value": 170.8272,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-memory.log",
+      "path": "/rush/6/cpuMs",
+      "value": 233.8963,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-memory.log",
+      "path": "/rush/7/cpuMs",
+      "value": 201.6058,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-memory.log",
+      "path": "/rush/8/cpuMs",
+      "value": 161.9611,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-memory.log",
+      "path": "/rush/9/cpuMs",
+      "value": 181.1423,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-memory.log",
+      "path": "/rush/10/cpuMs",
+      "value": 153.745,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-memory.log",
+      "path": "/rush/11/cpuMs",
+      "value": 162.0293,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-memory.log",
+      "path": "/rush/12/cpuMs",
+      "value": 68.3607,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-memory.log",
+      "path": "/rush/13/cpuMs",
+      "value": 62.5129,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-metadata.log",
+      "path": "/firstUseMaxConfig/milliseconds",
+      "value": 55.4257,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-metadata.log",
+      "path": "/firstUseMaxConfig/spikesAtLeast30ms",
+      "count": 1,
+      "kind": "spike counter; inspect original component units"
+    },
+    {
+      "log": "build/d3a/gates/food-routines.log",
+      "path": "/populationReplayMs",
+      "value": 207.3652,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-routines.log",
+      "path": "/scenarios/0/SimulationMs",
+      "value": 43.0389,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-routines.log",
+      "path": "/scenarios/1/QuoteMs",
+      "value": 37.7304,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-routines.log",
+      "path": "/scenarios/1/SimulationMs",
+      "value": 39.9782,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-routines.log",
+      "path": "/scenarios/3/QuoteMs",
+      "value": 33.7469,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-routines.log",
+      "path": "/scenarios/3/SimulationMs",
+      "value": 30.9543,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-routines.log",
+      "path": "/scenarios/5/QuoteMs",
+      "value": 41.6419,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/food-routines.log",
+      "path": "/scenarios/5/SimulationMs",
+      "value": 33.2048,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/rival-outflow.log",
+      "path": "/wholeDay/0/milliseconds",
+      "value": 1218.0447,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/rival-outflow.log",
+      "path": "/wholeDay/1/milliseconds",
+      "value": 1131.9427,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d3a/gates/simulate.log",
+      "path": "/ElapsedMilliseconds",
+      "value": 2373.1418,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/06.txt",
+      "path": "/stages/1/buildMs/p95",
+      "value": 38.9859,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d4-validation/06.txt",
+      "path": "/stages/1/buildMs/max",
+      "value": 38.9859,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/06.txt",
+      "path": "/stages/1/buildMs/spikesAtLeast30ms",
+      "count": 2,
+      "kind": "spike counter; inspect original component units"
+    },
+    {
+      "log": "build/d4-validation/06.txt",
+      "path": "/stages/2/buildMs/p95",
+      "value": 9.2461,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d4-validation/06.txt",
+      "path": "/stages/3/buildMs/p95",
+      "value": 26.7438,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d4-validation/08.txt",
+      "path": "/cold/p95Ms",
+      "value": 6.3191,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d4-validation/09.txt",
+      "path": "/simulateMs",
+      "value": 2276,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/14.txt",
+      "path": "/results/history/0/serialize/p50",
+      "value": 144.5022,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/14.txt",
+      "path": "/results/history/0/serialize/p95",
+      "value": 212.5638,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d4-validation/14.txt",
+      "path": "/results/history/0/serialize/max",
+      "value": 224.349,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/14.txt",
+      "path": "/results/history/0/serialize/spikes30",
+      "count": 21,
+      "kind": "spike counter; inspect original component units"
+    },
+    {
+      "log": "build/d4-validation/14.txt",
+      "path": "/results/history/1/serialize/p50",
+      "value": 163.744,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/14.txt",
+      "path": "/results/history/1/serialize/p95",
+      "value": 214.4926,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d4-validation/14.txt",
+      "path": "/results/history/1/serialize/max",
+      "value": 220.7801,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/14.txt",
+      "path": "/results/history/1/serialize/spikes30",
+      "count": 21,
+      "kind": "spike counter; inspect original component units"
+    },
+    {
+      "log": "build/d4-validation/15.txt",
+      "path": "/measurements/warm/2/catalogueRebuild/p95Ms",
+      "value": 8.1497,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d4-validation/15.txt",
+      "path": "/measurements/warm/5/catalogueRebuild/p95Ms",
+      "value": 13.1013,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d4-validation/15.txt",
+      "path": "/measurements/warm/8/catalogueRebuild/p95Ms",
+      "value": 19.0393,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d4-validation/15.txt",
+      "path": "/measurements/warm/11/catalogueRebuild/p95Ms",
+      "value": 16.334,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d4-validation/15.txt",
+      "path": "/measurements/warm/14/catalogueRebuild/p95Ms",
+      "value": 16.5957,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d4-validation/15.txt",
+      "path": "/measurements/warm/17/catalogueRebuild/p95Ms",
+      "value": 12.9923,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/d4-validation/15.txt",
+      "path": "/measurements/backlog/elapsedMs",
+      "value": 348.1468,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/18.txt",
+      "kind": "offline text timing; inspect aggregate context",
+      "line": "D1 PERF 20000: empty-cache build 44.2282 ms/25283741 B; warm refresh 1.0358 ms/32 B; 16-read unit 0.0020 ms/0 B; eight details 0.0085 ms/11632 B; retained 14056168 B (GC estimate; native fixtures excluded).",
+      "valuesAtLeast30Ms": [
+        44.2282
+      ]
+    },
+    {
+      "log": "build/d4-validation/23.txt",
+      "path": "/rush/0/cpuMs",
+      "value": 214.9912,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/23.txt",
+      "path": "/rush/1/cpuMs",
+      "value": 215.8956,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/23.txt",
+      "path": "/rush/2/cpuMs",
+      "value": 226.3693,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/23.txt",
+      "path": "/rush/3/cpuMs",
+      "value": 262.1564,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/23.txt",
+      "path": "/rush/4/cpuMs",
+      "value": 280.0214,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/23.txt",
+      "path": "/rush/5/cpuMs",
+      "value": 258.1482,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/23.txt",
+      "path": "/rush/6/cpuMs",
+      "value": 458.9923,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/23.txt",
+      "path": "/rush/7/cpuMs",
+      "value": 273.2924,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/23.txt",
+      "path": "/rush/8/cpuMs",
+      "value": 195.4982,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/23.txt",
+      "path": "/rush/9/cpuMs",
+      "value": 238.8111,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/23.txt",
+      "path": "/rush/10/cpuMs",
+      "value": 232.27,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/23.txt",
+      "path": "/rush/11/cpuMs",
+      "value": 155.0424,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/23.txt",
+      "path": "/rush/12/cpuMs",
+      "value": 58.085,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/23.txt",
+      "path": "/rush/13/cpuMs",
+      "value": 71.8881,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/24.txt",
+      "path": "/firstUseMaxConfig/milliseconds",
+      "value": 56.5075,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/24.txt",
+      "path": "/firstUseMaxConfig/spikesAtLeast30ms",
+      "count": 1,
+      "kind": "spike counter; inspect original component units"
+    },
+    {
+      "log": "build/d4-validation/38.txt",
+      "path": "/wholeDay/0/milliseconds",
+      "value": 1308.8081,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/38.txt",
+      "path": "/wholeDay/1/milliseconds",
+      "value": 930.848,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/56.txt",
+      "path": "/ElapsedMilliseconds",
+      "value": 2282.0179,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/57.txt",
+      "path": "/populationReplayMs",
+      "value": 198.7813,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/57.txt",
+      "path": "/opportunityMs",
+      "value": 33.5391,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/57.txt",
+      "path": "/scenarios/0/SimulationMs",
+      "value": 33.2441,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/57.txt",
+      "path": "/scenarios/1/QuoteMs",
+      "value": 34.2818,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/57.txt",
+      "path": "/scenarios/1/SimulationMs",
+      "value": 36.2948,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/57.txt",
+      "path": "/scenarios/3/QuoteMs",
+      "value": 30.524,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/d4-validation/57.txt",
+      "path": "/scenarios/5/SimulationMs",
+      "value": 32.5453,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/e5c-sync-base/e5a-final.log",
+      "path": "/measurements/warm/2/catalogueRebuild/p95Ms",
+      "value": 9.9257,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/e5c-sync-base/e5a-final.log",
+      "path": "/measurements/warm/5/catalogueRebuild/p95Ms",
+      "value": 8.4339,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/e5c-sync-base/e5a-final.log",
+      "path": "/measurements/warm/8/catalogueRebuild/p95Ms",
+      "value": 11.7885,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/e5c-sync-base/e5a-final.log",
+      "path": "/measurements/warm/11/catalogueRebuild/p95Ms",
+      "value": 13.936,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/e5c-sync-base/e5a-final.log",
+      "path": "/measurements/warm/14/catalogueRebuild/p95Ms",
+      "value": 15.9221,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/e5c-sync-base/e5a-final.log",
+      "path": "/measurements/warm/17/catalogueRebuild/p95Ms",
+      "value": 15.1742,
+      "thresholdMs": 5
+    },
+    {
+      "log": "build/e5c-sync-base/e5a-final.log",
+      "path": "/measurements/backlog/elapsedMs",
+      "value": 451.0521,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/e5c-sync-base/e5c-final.log",
+      "path": "/firstUseMaxConfig/milliseconds",
+      "value": 54.7745,
+      "thresholdMs": 30
+    },
+    {
+      "log": "build/e5c-sync-base/e5c-final.log",
+      "path": "/firstUseMaxConfig/spikesAtLeast30ms",
+      "count": 1,
+      "kind": "spike counter; inspect original component units"
+    }
+  ],
+  "timingLimit": "Cold, aggregate and component offline costs are not combined native mod-work or whole-frame samples; historical spikes remain documented. No latency-win or frame-budget claim.",
+  "logs": [
+    {
+      "path": "build/d3a/gates/a5-inspector.log",
+      "sha256": "e8860bd37a699dd6c067f8400f8a1c3ba32e490c0adbc6a9114df4bc602d20d8"
+    },
+    {
+      "path": "build/d3a/gates/agency-payment.log",
+      "sha256": "d272b9f4cef77012694c47c10481622f2acc60d7b5ae17f7dd7dd66cba4324ae"
+    },
+    {
+      "path": "build/d3a/gates/awareness.log",
+      "sha256": "5b15df5741a75165e5b988d780cb3ecb3c17ead17780247cd8443d7d2926148e"
+    },
+    {
+      "path": "build/d3a/gates/build.log",
+      "sha256": "4b3152d8d333984cf00d81507f50f71d1ca7b4d54356dffb03e20acfd74885f4"
+    },
+    {
+      "path": "build/d3a/gates/c4-save-comparison.log",
+      "sha256": "e7b919eec9c4434573de8f447a0f3c1b6c037ac3f6dc52ad20b6488ab559144e"
+    },
+    {
+      "path": "build/d3a/gates/campaign-awareness.log",
+      "sha256": "cba49e50d2d91262aaaa9cc05bf8a3ce2d0bc73bce0a98bea4cef718001c91ee"
+    },
+    {
+      "path": "build/d3a/gates/campaign-reader.log",
+      "sha256": "97e7d5c4d8ac32ec1f98019741c7bb03cd773f1c90a288bf40b9a417f7b81332"
+    },
+    {
+      "path": "build/d3a/gates/core-identity.log",
+      "sha256": "dafed15e35cff31dffa26e49ea88bb988b3fafa6baddd69f560112b9961632f3"
+    },
+    {
+      "path": "build/d3a/gates/cupcake-feasibility.log",
+      "sha256": "ac8d1299cde103a4b85c0c40af8b1d18900d29657ebf3a19f958d2d23982979a"
+    },
+    {
+      "path": "build/d3a/gates/diagnostic-response.log",
+      "sha256": "a89f8e2948c58df6f28f5d0bf439ea876f62fe55dd2f032fb9d77ea4d0a7b103"
+    },
+    {
+      "path": "build/d3a/gates/donut-feasibility.log",
+      "sha256": "9387006327f0c5e78347bfc3050c5c266a4a8d65c4e5765676db515b1ae14b32"
+    },
+    {
+      "path": "build/d3a/gates/donut-source.log",
+      "sha256": "cc6c0de139d40371e4fba40e86518707c7a4310b794607cd59d28b78b695852e"
+    },
+    {
+      "path": "build/d3a/gates/e3-remaining-feasibility.log",
+      "sha256": "7720d2e2a1b5144d63dbe7f514297d3c2f0a41f78c317d7d31ce8c15d1edeeba"
+    },
+    {
+      "path": "build/d3a/gates/e4-default-comparison.log",
+      "sha256": "6560270987a43294b7a5e2f0f639f192ed687a5b19512f5d32c43611a0a0337c"
+    },
+    {
+      "path": "build/d3a/gates/e4-menu.log",
+      "sha256": "9bfb9440c345d368eb330f9f91ca6270ff6c4c20c2c7a5ee323fae380639be28"
+    },
+    {
+      "path": "build/d3a/gates/e5a-eligibility.log",
+      "sha256": "a760294559bd7684b3214f0b2b59ea0b2dba4d5dc26241b457998cb6a11a2149"
+    },
+    {
+      "path": "build/d3a/gates/event-observation.log",
+      "sha256": "40f469986dcc21b4d134c4904a52e093fa21ea81f99bb13a948553c8b2a9f7b4"
+    },
+    {
+      "path": "build/d3a/gates/food-candidate.log",
+      "sha256": "2a343d4e8ae8ca58c11d34afbcdbd778984c6f6d386196b7f6ee791cfcc9e9a9"
+    },
+    {
+      "path": "build/d3a/gates/food-catalogue.log",
+      "sha256": "5c968b0735b26239979a267279356b7cc75bd47f3c4d6ff73a41a0e9d921e280"
+    },
+    {
+      "path": "build/d3a/gates/food-checkout.log",
+      "sha256": "ee009f5de4842a1975fe3d51b4631dc3151644df4995d7ac58d2633566cd0c0e"
+    },
+    {
+      "path": "build/d3a/gates/food-choice.log",
+      "sha256": "df5885f1fb8a1b43f08f5e1325801f6dc1ab25f1075e3950fdb6aed9819957cd"
+    },
+    {
+      "path": "build/d3a/gates/food-demand.log",
+      "sha256": "02ec422d7037f9e137ecc70495a01a40d661d6104fc7f58a13a52df850112399"
+    },
+    {
+      "path": "build/d3a/gates/food-hours.log",
+      "sha256": "2410218689a17bf8e5ae868d3025d1a8bd9e449d7fd49d83728819236ce6607c"
+    },
+    {
+      "path": "build/d3a/gates/food-household-catalogue.log",
+      "sha256": "b0f19cfd0acbbded5af38461d6e0bbe596b236cd83207afa0223100fdcfb8609"
+    },
+    {
+      "path": "build/d3a/gates/food-memory.log",
+      "sha256": "cae1efb2cd188cedc081f88b92c3d08c159f1ffb97532c144728fe390a9d896b"
+    },
+    {
+      "path": "build/d3a/gates/food-metadata.log",
+      "sha256": "22bfbba0eb8637fc20d23883d2c235f03e5b6a589b049e1a959ade42ba68e361"
+    },
+    {
+      "path": "build/d3a/gates/food-ownership.log",
+      "sha256": "7d2e0de095246f1d5bd5a8344c8fa6307594d88abc98daa30b3c0223308716e1"
+    },
+    {
+      "path": "build/d3a/gates/food-regulars.log",
+      "sha256": "1fe2e2b3d50211639aa1ae19b898bd1fc52359e50fb64d9ac638ae9ef6dc6b66"
+    },
+    {
+      "path": "build/d3a/gates/food-routines.log",
+      "sha256": "529c1fdb38d2e943f935a116bd9c7232925b2060b418f879bf8372d82824fe50"
+    },
+    {
+      "path": "build/d3a/gates/food-supply.log",
+      "sha256": "bea33031a003404270de233cbd073eb44deacac65f41be406a1eae3b70385683"
+    },
+    {
+      "path": "build/d3a/gates/frame-observation.log",
+      "sha256": "7e5da72d80f98e71b464d3c9f918cf9457b5350bfcafc294e80e823b646b2d02"
+    },
+    {
+      "path": "build/d3a/gates/frenchfries-feasibility.log",
+      "sha256": "473f6f12e09c5560c66b7bfd39071ef92916ca84ca70c49694a04436555a25df"
+    },
+    {
+      "path": "build/d3a/gates/frenchfries-source.log",
+      "sha256": "f0f597c8870c839ec87883c74cc943db8ee26bff0bac0fa35d11d92879b9b3e7"
+    },
+    {
+      "path": "build/d3a/gates/gate-access.log",
+      "sha256": "6e9877acee2b84dfcc2de1b4d7d7236ac991a58c1a89fbe420966d127bf4afae"
+    },
+    {
+      "path": "build/d3a/gates/held-tuning.log",
+      "sha256": "61ccc26ac0f15b9338018a05207f50fdb74d3eae136de3737bc8478df79e87dc"
+    },
+    {
+      "path": "build/d3a/gates/icecream-feasibility.log",
+      "sha256": "245e22f741627075860891a3e456a3ed954c625a352007207da6d25964122fa8"
+    },
+    {
+      "path": "build/d3a/gates/icecream-source.log",
+      "sha256": "3216ba55dfb65e001666ba7649eb260eb6b0c0029a72fd76f15379dc3fc93572"
+    },
+    {
+      "path": "build/d3a/gates/interior-guard.log",
+      "sha256": "003a4a54f9fcccb48a0b506740043f4490c6ad3facd1170c7a228ff63a5fa4ee"
+    },
+    {
+      "path": "build/d3a/gates/list-tests.log",
+      "sha256": "4d4dd1ad4499fc2d34d39d0571ea2e15d65db12a5c104a07a107a2292f288794"
+    },
+    {
+      "path": "build/d3a/gates/market-research.log",
+      "sha256": "67e74e510660ed335805f7c4ff361e5adf003fcdeeebe0cb2d7edbeaab70aa14"
+    },
+    {
+      "path": "build/d3a/gates/native-command.log",
+      "sha256": "bd610e1a32a30f6ad7638fc2a65ae7bf8bea9d44baba81884f821aea4ed0a9aa"
+    },
+    {
+      "path": "build/d3a/gates/optional-stop.log",
+      "sha256": "f7d3a55ef6b939ada52be73e50fcae27ead5eb4643a5c9f7516905986ecddaa4"
+    },
+    {
+      "path": "build/d3a/gates/outflow-line.log",
+      "sha256": "490a2c5ea8bf251acac09528a1a8dddcd76c193d5698956e810902be9180d68d"
+    },
+    {
+      "path": "build/d3a/gates/physical-selection.log",
+      "sha256": "f397871fee9518f1ed1b562975f18fbd064fce0506b571902f9879b977169992"
+    },
+    {
+      "path": "build/d3a/gates/pizza-feasibility.log",
+      "sha256": "863bdb13e7c36bca3ab47033d9b03876cfcae448dd7b8f8635883eb93e679f12"
+    },
+    {
+      "path": "build/d3a/gates/pizza-source.log",
+      "sha256": "87e39693d34d127342f521ea0c46c4e227665c415186cf013daaf05d292665f3"
+    },
+    {
+      "path": "build/d3a/gates/prepare.log",
+      "sha256": "dee8fcfd30c98d90b1c2e71e14b4eaba04fe89a2de97459b8eda58ef5feddab7"
+    },
+    {
+      "path": "build/d3a/gates/rival-memory.log",
+      "sha256": "4cdd8eb7c9dcb31fbf3080daca08c20fe3fb2e3569134e12a3d7efd436fe29bb"
+    },
+    {
+      "path": "build/d3a/gates/rival-outflow.log",
+      "sha256": "60238e25c0c579747a4abb0033eed9c01b1dc2bc49302b7a6b0b431a6c338dd6"
+    },
+    {
+      "path": "build/d3a/gates/road-ceiling.log",
+      "sha256": "895bf78ce78f6cceb24e97e6ac8d4cc6c68fa71cfb5b0e54f707e9bf46369762"
+    },
+    {
+      "path": "build/d3a/gates/road-handoff.log",
+      "sha256": "5de54d90bad9b212aac21705900b22ad270fa18365f1284fc4e988bf67a5f23e"
+    },
+    {
+      "path": "build/d3a/gates/road-invalidation.log",
+      "sha256": "11bcbab6bdde92b021b10a41d941aa322629fadbc821906b55ed9aa7d5d7e656"
+    },
+    {
+      "path": "build/d3a/gates/road-speed.log",
+      "sha256": "5242c509cd90b21734fe4321b43dcbba531282677f91d66ddc8931b9b07cef19"
+    },
+    {
+      "path": "build/d3a/gates/route-discovery.log",
+      "sha256": "eff274aaa88d1147e64edb58c0cdfa86bcc9101e03154b3d3a78250ea4b14d8f"
+    },
+    {
+      "path": "build/d3a/gates/salad-feasibility.log",
+      "sha256": "4fec4ec82af40bafa664706bed9f4a7923172743c587e7a80e82c8407032d38c"
+    },
+    {
+      "path": "build/d3a/gates/salad-source.log",
+      "sha256": "320b305ad04a0ccc371ef2a6bea1d1a9a3357023c4ae74105b832eb60f7451b7"
+    },
+    {
+      "path": "build/d3a/gates/save-contract.log",
+      "sha256": "4f00af3df1fa0327bf1d1d4ba82229681a8ac9e56a1453906feded512bdb59c3"
+    },
+    {
+      "path": "build/d3a/gates/simulate.log",
+      "sha256": "9d2b9a13de4601f3f9994b3ae7dec29b54597f2d5e073d6e24097bb2cbfba258"
+    },
+    {
+      "path": "build/d3a/gates/startup-clock.log",
+      "sha256": "31eae1a1246fea78420168e4191cdff2cac0887b22341d0cf39b648638ed3649"
+    },
+    {
+      "path": "build/d3a/gates/street-proxy.log",
+      "sha256": "036498e10c79cb62a6fad2e5067e3ba9c5678cbf568e976730dbbbbdbcfff22c"
+    },
+    {
+      "path": "build/d3a/gates/test.log",
+      "sha256": "7d4fe7f37c2db8a1ccc4e7401ea2de596df3e87367e188755cdcda6175180880"
+    },
+    {
+      "path": "build/d3a/gates/traffic-closure.log",
+      "sha256": "708d6590f5351a9c1adf0b939e6775caa82602e1d6ec261b597977db98e808aa"
+    },
+    {
+      "path": "build/d3a/gates/traffic-queue.log",
+      "sha256": "897d1d2e5c92ef25374e61f7da26e9dea2849c91f3495eb8bc65210eb2e4b9c4"
+    },
+    {
+      "path": "build/d3a/gates/vehicle-ownership.log",
+      "sha256": "7539f54a1b778a54ca9bc75f398a40c0491fb40281611c8c8efbbc473dd32e46"
+    },
+    {
+      "path": "build/d3a/gates/walking-quote.log",
+      "sha256": "aadc6b307f80ba394e20bae864ac132336bc7113eba34734954992e2f44b0ac9"
+    },
+    {
+      "path": "build/d3a/gates/weather.log",
+      "sha256": "6eb05c25dd96c32d14bf24885ff3028345193d941e83ec52960c79b960e3ec25"
+    },
+    {
+      "path": "build/d4-validation/01.txt",
+      "sha256": "4b3152d8d333984cf00d81507f50f71d1ca7b4d54356dffb03e20acfd74885f4"
+    },
+    {
+      "path": "build/d4-validation/02.txt",
+      "sha256": "b59505a2548c6d791b7d1760931bdc7f16807dc548709786a1bfe434f584b512"
+    },
+    {
+      "path": "build/d4-validation/03.txt",
+      "sha256": "4d4dd1ad4499fc2d34d39d0571ea2e15d65db12a5c104a07a107a2292f288794"
+    },
+    {
+      "path": "build/d4-validation/04.txt",
+      "sha256": "acce8f5743ccd632d300ff76cbef0c0c06b672f3a848c50d65a7fd09921c5f10"
+    },
+    {
+      "path": "build/d4-validation/05.txt",
+      "sha256": "7a670d6fcddcbb9a31f81076fddfc7aa0c52efc0f8e3bb4cba6efc98519b4960"
+    },
+    {
+      "path": "build/d4-validation/06.txt",
+      "sha256": "585a166baec2add0b3771be702181585355d846f28b6708739e1292a40dc62e8"
+    },
+    {
+      "path": "build/d4-validation/07.txt",
+      "sha256": "e0e0c80a1112f6fff8862eebb865795ba5daa60483f4bb67a4bafd48f5e2cf66"
+    },
+    {
+      "path": "build/d4-validation/08.txt",
+      "sha256": "9066f86c350b2eb557d848ce1f86fa22be3882b4ee7dcc04ad57cf198f30715d"
+    },
+    {
+      "path": "build/d4-validation/09.txt",
+      "sha256": "84a86390e6b09badd2d5d95b0d0932f37b88d4faac493fd685b77c8dfb4e6550"
+    },
+    {
+      "path": "build/d4-validation/10.txt",
+      "sha256": "d059be05fedafe463942003e0cecde782a24fd6591ffdd129643215dd07cc877"
+    },
+    {
+      "path": "build/d4-validation/11.txt",
+      "sha256": "a89f8e2948c58df6f28f5d0bf439ea876f62fe55dd2f032fb9d77ea4d0a7b103"
+    },
+    {
+      "path": "build/d4-validation/12.txt",
+      "sha256": "2128032907339c566169722319a499d5af03b7f010de79a3cf373114bfa01b0f"
+    },
+    {
+      "path": "build/d4-validation/13.txt",
+      "sha256": "7720d2e2a1b5144d63dbe7f514297d3c2f0a41f78c317d7d31ce8c15d1edeeba"
+    },
+    {
+      "path": "build/d4-validation/14.txt",
+      "sha256": "660b0bd68e52ebf2faad01148815c048f0f3aa7c74ffa8830bf53ee73e9726df"
+    },
+    {
+      "path": "build/d4-validation/15.txt",
+      "sha256": "f68337f80de2cf071534e38711e1b1abf9773e86f4b4efe68df4cbcc42ff2211"
+    },
+    {
+      "path": "build/d4-validation/16.txt",
+      "sha256": "40f469986dcc21b4d134c4904a52e093fa21ea81f99bb13a948553c8b2a9f7b4"
+    },
+    {
+      "path": "build/d4-validation/17.txt",
+      "sha256": "251da08c664778fd8dd047e7249495730b56d2416a95e2972cbb0af046e346d3"
+    },
+    {
+      "path": "build/d4-validation/18.txt",
+      "sha256": "67bafd7d594f30a794d6aebd32f54abb0799144a684230db4d3228d912fb9ff0"
+    },
+    {
+      "path": "build/d4-validation/19.txt",
+      "sha256": "ee009f5de4842a1975fe3d51b4631dc3151644df4995d7ac58d2633566cd0c0e"
+    },
+    {
+      "path": "build/d4-validation/20.txt",
+      "sha256": "c7af585e53e82504158f39a5f0ba8cb9938e88f4999b874a38e407d746fe1472"
+    },
+    {
+      "path": "build/d4-validation/21.txt",
+      "sha256": "2410218689a17bf8e5ae868d3025d1a8bd9e449d7fd49d83728819236ce6607c"
+    },
+    {
+      "path": "build/d4-validation/22.txt",
+      "sha256": "b0f19cfd0acbbded5af38461d6e0bbe596b236cd83207afa0223100fdcfb8609"
+    },
+    {
+      "path": "build/d4-validation/23.txt",
+      "sha256": "d6c85e07dc7071695d381494c0e68876c8da9b1989d3f5443d4664ed1f89b762"
+    },
+    {
+      "path": "build/d4-validation/24.txt",
+      "sha256": "6367d3cb08c48ae2824fe1e27fb7b7e009fd7d96018658b699f7b448af474214"
+    },
+    {
+      "path": "build/d4-validation/25.txt",
+      "sha256": "7d2e0de095246f1d5bd5a8344c8fa6307594d88abc98daa30b3c0223308716e1"
+    },
+    {
+      "path": "build/d4-validation/26.txt",
+      "sha256": "facc5e72091f8e5998683f15d4daccf2bb23240318ec8cb8a7c1077f95490671"
+    },
+    {
+      "path": "build/d4-validation/27.txt",
+      "sha256": "bea33031a003404270de233cbd073eb44deacac65f41be406a1eae3b70385683"
+    },
+    {
+      "path": "build/d4-validation/28.txt",
+      "sha256": "7e5da72d80f98e71b464d3c9f918cf9457b5350bfcafc294e80e823b646b2d02"
+    },
+    {
+      "path": "build/d4-validation/29.txt",
+      "sha256": "ed2e1b84ff1fde0c85a630d694b382aa63407bc0ba96fe5126232615d20bb06f"
+    },
+    {
+      "path": "build/d4-validation/30.txt",
+      "sha256": "6e9877acee2b84dfcc2de1b4d7d7236ac991a58c1a89fbe420966d127bf4afae"
+    },
+    {
+      "path": "build/d4-validation/31.txt",
+      "sha256": "4c9a5054ff011f9a2476a94b151508b3dcc5d3ea84423d3b7bb2c019925371ea"
+    },
+    {
+      "path": "build/d4-validation/32.txt",
+      "sha256": "2f49d831737c6aeb4341f45ed0e890f17d12f5b38d2a1374fe3182f55c1bf3cf"
+    },
+    {
+      "path": "build/d4-validation/33.txt",
+      "sha256": "1063074e6b5a93717b69ba601559285a05b2ed39840a7fc8b1474aa89e9b077a"
+    },
+    {
+      "path": "build/d4-validation/34.txt",
+      "sha256": "d3214124b1dcdd10d461b3366f5a7bbdf7fc167cfc85d48b92d7a82c52cd5f02"
+    },
+    {
+      "path": "build/d4-validation/35.txt",
+      "sha256": "f2c8abb6497487242807c6f963b12dfc117ede3d72361968c419255e4d2faa37"
+    },
+    {
+      "path": "build/d4-validation/36.txt",
+      "sha256": "563b3ffc53d4dd177d88d3ad922697821ce4c58f1ffc0ea2b640f1b08bc919cd"
+    },
+    {
+      "path": "build/d4-validation/37.txt",
+      "sha256": "ea020345d3ac6205e56c5bbe4b3c06f7da55aa5292c121078b4d80a53fe4e158"
+    },
+    {
+      "path": "build/d4-validation/38.txt",
+      "sha256": "5999d02fd329356bacd535e2deee072f9ad57c55e5c012781170aa2ae9febbb3"
+    },
+    {
+      "path": "build/d4-validation/39.txt",
+      "sha256": "895bf78ce78f6cceb24e97e6ac8d4cc6c68fa71cfb5b0e54f707e9bf46369762"
+    },
+    {
+      "path": "build/d4-validation/40.txt",
+      "sha256": "5de54d90bad9b212aac21705900b22ad270fa18365f1284fc4e988bf67a5f23e"
+    },
+    {
+      "path": "build/d4-validation/41.txt",
+      "sha256": "11bcbab6bdde92b021b10a41d941aa322629fadbc821906b55ed9aa7d5d7e656"
+    },
+    {
+      "path": "build/d4-validation/42.txt",
+      "sha256": "5242c509cd90b21734fe4321b43dcbba531282677f91d66ddc8931b9b07cef19"
+    },
+    {
+      "path": "build/d4-validation/43.txt",
+      "sha256": "eff274aaa88d1147e64edb58c0cdfa86bcc9101e03154b3d3a78250ea4b14d8f"
+    },
+    {
+      "path": "build/d4-validation/44.txt",
+      "sha256": "faa10e24994d743e1ab2ad879c107182574c3c25e0f9fbe8a714d680060f5dbd"
+    },
+    {
+      "path": "build/d4-validation/45.txt",
+      "sha256": "4f00af3df1fa0327bf1d1d4ba82229681a8ac9e56a1453906feded512bdb59c3"
+    },
+    {
+      "path": "build/d4-validation/46.txt",
+      "sha256": "eff6d553b4ca61c0df7684aa50b1d6794a05dc08f182ae40f33bde6e00646421"
+    },
+    {
+      "path": "build/d4-validation/47.txt",
+      "sha256": "ac0c49cd1114f0df9b78e53d47fe7406b773fe12df95155e2eb74676e843adca"
+    },
+    {
+      "path": "build/d4-validation/48.txt",
+      "sha256": "708d6590f5351a9c1adf0b939e6775caa82602e1d6ec261b597977db98e808aa"
+    },
+    {
+      "path": "build/d4-validation/49.txt",
+      "sha256": "897d1d2e5c92ef25374e61f7da26e9dea2849c91f3495eb8bc65210eb2e4b9c4"
+    },
+    {
+      "path": "build/d4-validation/50.txt",
+      "sha256": "aadc6b307f80ba394e20bae864ac132336bc7113eba34734954992e2f44b0ac9"
+    },
+    {
+      "path": "build/d4-validation/51.txt",
+      "sha256": "d80910b68d392fbd5cc2724c2f7354c6ac3ac7f1819ad3f63977214c7e829cc9"
+    },
+    {
+      "path": "build/d4-validation/52.txt",
+      "sha256": "bd610e1a32a30f6ad7638fc2a65ae7bf8bea9d44baba81884f821aea4ed0a9aa"
+    },
+    {
+      "path": "build/d4-validation/53.txt",
+      "sha256": "fce764da50e5bbd3f5a3d0f26b2b053d1d1d46fa05e0c00cca5e9b3b91974d61"
+    },
+    {
+      "path": "build/d4-validation/54.txt",
+      "sha256": "7539f54a1b778a54ca9bc75f398a40c0491fb40281611c8c8efbbc473dd32e46"
+    },
+    {
+      "path": "build/d4-validation/55.txt",
+      "sha256": "f7d3a55ef6b939ada52be73e50fcae27ead5eb4643a5c9f7516905986ecddaa4"
+    },
+    {
+      "path": "build/d4-validation/56.txt",
+      "sha256": "9e26700d1d4836cc2d4e5dc5f823e8d1f1e6aa26fac5a1a85cb4c608baad3545"
+    },
+    {
+      "path": "build/d4-validation/57.txt",
+      "sha256": "8b2ec4a0446baa02c938378579186ea72839e5fb964d9d021ca0ba8a1823cf9f"
+    },
+    {
+      "path": "build/d4-validation/58.txt",
+      "sha256": "02ec422d7037f9e137ecc70495a01a40d661d6104fc7f58a13a52df850112399"
+    },
+    {
+      "path": "build/d4-validation/59.txt",
+      "sha256": "cc6c0de139d40371e4fba40e86518707c7a4310b794607cd59d28b78b695852e"
+    },
+    {
+      "path": "build/d4-validation/60.txt",
+      "sha256": "320b305ad04a0ccc371ef2a6bea1d1a9a3357023c4ae74105b832eb60f7451b7"
+    },
+    {
+      "path": "build/e5c-sync-base/d4-required.log",
+      "sha256": "b431537430f5e3e0d5ea6a518b415efcf08a0144f7975a9e4712469e5ecb7cd6"
+    },
+    {
+      "path": "build/e5c-sync-base/e3-source.log",
+      "sha256": "e2abf7286477fa29b42d46ce19c90d30dfc51736ad4cfa381d899e01c7ccb23f"
+    },
+    {
+      "path": "build/e5c-sync-base/e5a-before.log",
+      "sha256": "ffa8d331b194f47aa3d9fd7c7ae80bccf41cdaa554d4f83c53c371bdbbc4a646"
+    },
+    {
+      "path": "build/e5c-sync-base/e5a-final.log",
+      "sha256": "5a36178c7ec5ce42b0e0622a106a2fe2629c680194bb57dffdf2911f368e2e4b"
+    },
+    {
+      "path": "build/e5c-sync-base/e5a-source.log",
+      "sha256": "35ecd577901922e1cbc673ed399e0a8e2047a8775ba46e7f4515b53d2883d571"
+    },
+    {
+      "path": "build/e5c-sync-base/e5c-final.log",
+      "sha256": "9193c702b8bb99b089bc36a242705c6a24ef158dce1651a775d6f8065535422b"
+    },
+    {
+      "path": "build/e5c-sync-base/e5c-prepare.log",
+      "sha256": "ab513d53c9444e2923dac7ec6a4cf0c89447b8f29d82712597515586ba6070dc"
+    },
+    {
+      "path": "build/e5c-sync-base/e5c-process-proof.log",
+      "sha256": "d679a5dc48afa0bb47354098f3802dbbe5b2a2685314aa1d3274917087a7c3c9"
+    }
+  ],
+  "dllSHA256": "85f2ea4176477ca2a9d33fb75c90879c0f3287fe5a77c524978acf667ab3bcfb"
+}
