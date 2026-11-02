@@ -19,7 +19,7 @@ commands = [
     ("d3a-required", [sys.executable, "tools/run-d3a-checks.py"]),
     ("d4-required", [sys.executable, "tools/rival-memory-regression/validate.py"]),
     ("e3-source", [sys.executable, "tools/e3-remaining-feasibility-regression/source_checks.py"]),
-    ("e5a-source", [sys.executable, "tools/e5a-eligibility-regression/source_checks.py"]),
+    ("e5a-source", [sys.executable, "tools/e5a-eligibility-regression/source_checks.py", "--audit-base", "034bb7629391ef0fedb61d7122b0d6ee3c451ff9"]),
     ("e5a-final", [dotnet, "run", "--project", "tools/e5a-eligibility-regression/E5aEligibilityRegression.csproj", "--configuration", "Release", "--disable-build-servers"]),
 ]
 parser = argparse.ArgumentParser(__doc__)
