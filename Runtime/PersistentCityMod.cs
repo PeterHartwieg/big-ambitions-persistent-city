@@ -512,6 +512,8 @@ namespace PersistentCity.Runtime
 
         private void TryStart()
         {
+            if (SaveGameManager.Current?.modData != null && AccountingStopStore.IsStopped(SaveGameManager.Current.modData))
+            { StopAccounting(); return; }
             if (!NativeTravelPace.StartObservation()) { Fail(NativeTravelPace.LastError); return; }
             dependency = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "RealLifeOverhaul");
             var source = ReadRlo("startup");

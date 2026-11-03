@@ -1,3 +1,5 @@
+using PersistentCity.Persistence;
+
 namespace PersistentCity.Runtime
 {
     public sealed partial class PopulationRuntime
@@ -12,6 +14,7 @@ namespace PersistentCity.Runtime
         private void StopAccounting()
         {
             accountingStopped = true;
+            AccountingStopStore.Stop(SaveGameManager.Current.modData);
             try { NativeFoodOwnership.ReleaseAfterAccountingFailure(); }
             finally { Fail("Accounting input epoch was lost. Native calendar continues; Persistent City is stopped. "
                 + "Unprocessed Persistent City demand is lost, not replayed. The original population payload is retained. "
