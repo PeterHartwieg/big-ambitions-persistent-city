@@ -1990,5 +1990,9 @@
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       }
     ]
+  },
+  "wrapperByproductHashes": {
+    "e5c-neutral-metadata-results.json": "bb0a494c2db267c6e2693e2eba188adc5199f451180ba7d2642a874cb92e3606",
+    "e5c-name-taste-process-proof.json": "873517848be1599118a63962b9501b980a523c47614dfb279cbf502d96395307"
   }
 }
