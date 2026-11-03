@@ -45,6 +45,7 @@ namespace PersistentCity.Runtime
                 return;
             }
             if (simulation == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current)) return;
+            GUI.depth = -10000;
             if (NativeCityClock.PacingAffected && !showEconomy)
             {
                 economyLabel ??= new GUIStyle(GUI.skin.label) { wordWrap = true, fontSize = 16 };
@@ -54,7 +55,6 @@ namespace PersistentCity.Runtime
             var input = Event.current;
             if (input.type == EventType.KeyDown && input.control && input.keyCode == KeyCode.F8)
             { showEconomy = !showEconomy; nextEconomyText = 0; input.Use(); }
-            GUI.depth = -10000;
             if (showEconomy) DrawEconomy(); else economyRect = default;
             if (!inspectorFailed) inspector.Draw();
         }

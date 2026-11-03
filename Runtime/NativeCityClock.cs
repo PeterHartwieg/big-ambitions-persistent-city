@@ -35,6 +35,12 @@ namespace PersistentCity.Runtime
             LagMinutes = Math.Max(0, target - logical);
             MaximumLagMinutes = Math.Max(MaximumLagMinutes, LagMinutes);
         }
+        public static bool CheckInputEpoch(double native, double logical)
+        {
+            ObserveSimulationLag(AccountingClock.Target(native), logical);
+            Refused |= !AccountingClock.Compatible(logical, native);
+            return !Refused;
+        }
         public static double Factor { get; private set; } = 1;
         public static bool CoordinatesDrivenRides { get; private set; }
         public static bool Active => patches != null && save != null && ReferenceEquals(save, SaveGameManager.Current);
@@ -92,10 +98,9 @@ namespace PersistentCity.Runtime
             AccountingLimited = false;
             if (!Active || LoadScene.isLoading || economyActive?.Invoke() != true || nativeClock == null || populationCaughtUp == null) return;
             double native = nativeClock(), logical = logicalClock?.Invoke() ?? native;
-            ObserveSimulationLag(AccountingClock.Target(native), logical);
             // A bypassing clock writer or an old cross-epoch save has no replay-safe input image.
             // Hold and report the broken contract; never turn its backlog into missed demand.
-            Refused |= !AccountingClock.Compatible(logical, native);
+            CheckInputEpoch(native, logical);
             if (deltaTimeWithMultiplier <= 0) return;
             float requested = deltaTimeWithMultiplier;
             bool ready = !Refused && populationCaughtUp();

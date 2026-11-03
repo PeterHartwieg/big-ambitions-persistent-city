@@ -9,6 +9,7 @@ internal static class Program
     private static void Main()
     {
         NativeClockContract.Run();
+        AccountingStatusBenchmark.Run();
         FrameCapComparison.Run();
         // Warm both policies before measuring. Timers include every detached frame operation;
         // save/reload is deliberately outside measured gameplay windows, as on the rig.

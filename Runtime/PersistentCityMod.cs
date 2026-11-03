@@ -320,7 +320,7 @@ namespace PersistentCity.Runtime
                 closureFrames++; closureMilliseconds += closureElapsed;
                 maxClosureMilliseconds = Math.Max(maxClosureMilliseconds, closureElapsed);
                 RecordRoutingFrame(prepareElapsed, closureElapsed, true);
-                if (NativeCityClock.Refused) { inspector.Suspend(); return; }
+                if (!NativeCityClock.CheckInputEpoch(target, simulation.State.Minute)) { inspector.Suspend(); return; }
                 AdvancePopulation(Math.Max(AccountingClock.Target(target), simulation.State.Minute));
                 if (settings.PhysicalEnabled && !physicalFailed && physical == null && !BuildingManager.IsInsideBuilding && !NativeTravelPace.HiddenTravel)
                 {
@@ -645,7 +645,7 @@ namespace PersistentCity.Runtime
         private void Save()
         {
             if (failed || simulation == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current)) return;
-            if (NativeCityClock.Refused)
+            if (!NativeCityClock.CheckInputEpoch(Now(), simulation.State.Minute))
             { log?.Warn("Population save refused: synchronized accounting input epoch was lost. Original payload retained."); return; }
             try
             {

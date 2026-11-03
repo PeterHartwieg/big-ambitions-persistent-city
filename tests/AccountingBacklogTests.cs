@@ -29,10 +29,63 @@ public sealed partial class FoodCommerceTests
         Assert.DoesNotContain(city.State.Food.Residents, m => m.Reason == "Native clock passed the purchase window");
         Assert.Equal(0, city.HistoricalClockMisses);
     }
+
+    [Fact]
+    public void PurchaseInTheLastNativeFloatGapCommitsBeforeTheHourCloses()
+    {
+        var (city, market, _) = Ready();
+        var meal = city.State.Food!.Residents.Single();
+        Advance(city, meal.DesiredAt + 6); Assert.Equal(MealStatus.Serving, meal.Status);
+        double boundary = (Math.Floor(meal.ServiceAt / 60) + 1) * 60;
+        // Move this legacy fixture's reserved service into the otherwise unobservable gap.
+        meal.DueAt = meal.ServiceAt = boundary - 1e-10; meal.Deadline = boundary + 20;
+        city.State.Food.Shops.Single().NextServiceAt = meal.ServiceAt;
+        city.ExtendMealStay(city.State.Citizens.Single(), boundary + 15);
+        double native = boundary - 1 + AccountingClock.Limit(true, boundary - 1, 120);
+        market.EarliestMinute = Math.Floor(native / 60) * 60;
+        Advance(city, native); Assert.Empty(market.Orders);
+        double target = AccountingClock.Target(native);
+        Assert.True(native < meal.ServiceAt && meal.ServiceAt < target);
+        Assert.Equal(0, AccountingClock.Limit(city.IsCaughtUpTo(target), native, 120));
+        Advance(city, target, 1);
+        Assert.Single(market.Orders); Assert.Equal(meal.ServiceAt, market.Times.Single());
+        Assert.Equal(MealStatus.Paid, meal.Status); Assert.Equal(meal.Price, meal.Spent);
+        Assert.True(AccountingClock.Limit(city.IsCaughtUpTo(target), native, 120) > 0);
+        Assert.Equal(0, city.HistoricalClockMisses);
+    }
 }
 
 public sealed class AccountingBacklogTests
 {
+    [Fact]
+    public void Writer25ResumesTheRoundingGapWithoutPersistedReadinessFlags()
+    {
+        var state = EconomyScenario.Create(1, 7); state.Food = EconomyScenario.Food();
+        // The shared scenario starts at 05:00; use its real codec-valid city and no new meals.
+        var routes = new EmptyRoutes(); var market = new EmptyMarket();
+        var city = new CitySimulator(state, routes); city.AttachFoodMarket(market); city.EnableHouseholdFinances();
+        double native = state.Minute + AccountingClock.Limit(true, state.Minute, 1);
+        double target = AccountingClock.Target(native);
+        while (!city.AdvanceTo(target, 1).CaughtUp) { }
+        string before = PersistentCity.Persistence.SaveCodec.Write(city.State);
+        var read = PersistentCity.Persistence.SaveCodec.Read(before);
+        var restoredState = read.State!;
+        Assert.Equal(25, restoredState.Schema); Assert.Equal(before, PersistentCity.Persistence.SaveCodec.Write(restoredState));
+        Assert.True(AccountingClock.Compatible(restoredState.Minute, native));
+        var restored = new CitySimulator(restoredState, routes); restored.AttachFoodMarket(market);
+        Assert.True(restored.IsCaughtUpTo(target));
+        Assert.True(AccountingClock.Limit(restored.IsCaughtUpTo(target), native, 1) > 0);
+    }
+    private sealed class EmptyRoutes : IRoutePlanner
+    {
+        public Route? Plan(Place from, Place to, double at, TravelPreferences preferences) => null;
+    }
+    private sealed class EmptyMarket : IFoodMarket
+    {
+        public double EarliestMinute => 0;
+        public System.Collections.Generic.IReadOnlyList<FoodBusiness> Read(double at) => Array.Empty<FoodBusiness>();
+        public FoodSale Buy(ResidentMeal meal, double at) => throw new Exception("No meal in rounding-gap fixture");
+    }
     [Theory]
     [InlineData(30, 1, .01)] [InlineData(60, 16, .5)] [InlineData(120, 128, 2)]
     public void TimestampedDayReconcilesOrdersMissesWalletsAndReloads(int fps, int units, double milliseconds)
@@ -79,6 +132,13 @@ public sealed class AccountingBacklogTests
         Assert.Equal(citizens, budget.CitizenEvents); Assert.Equal(units, budget.Units); Assert.Equal(milliseconds, budget.Milliseconds);
         var stalled = new PopulationFrameBudget(30, false);
         Assert.Equal(128, stalled.CitizenEvents); Assert.Equal(1024, stalled.Units); Assert.Equal(4, stalled.Milliseconds);
+    }
+    [Theory]
+    [InlineData(30, 32, 256)] [InlineData(60, 16, 128)] [InlineData(120, 8, 64)]
+    public void UnityFloatFrameDurationDoesNotRoundUpAWholeExtraWorkUnit(int fps, int citizens, int units)
+    {
+        var budget = new PopulationFrameBudget((float)(1.0 / fps), false);
+        Assert.Equal(citizens, budget.CitizenEvents); Assert.Equal(units, budget.Units);
     }
     [Fact]
     public void SustainedAccountingCapsCannotRetimeTravel()

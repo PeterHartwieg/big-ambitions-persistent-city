@@ -41,6 +41,8 @@ public static class NativeClockContract
         native = logical = 62; ready = true; InstanceBehavior<UI.UIs>.Instance.timeMachine.isRunning = false;
         NativeCityClock.Start(SaveGameManager.Current, 1, () => ready, () => true, () => native, () => logical);
         Require(Tick(.5f) == .5f && Tick(0) == 0 && NativeCityClock.HeldOrdinaryTicks == 0, "native factor/earlier zero cap changed");
+        Require(!NativeCityClock.CheckInputEpoch(64, logical) && NativeCityClock.Refused,
+            "advance/save entry did not catch a writer bypassing ticks");
         SaveGameManager.Current = new object();
         Require(Tick(.5f) == .5f && !NativeCityClock.Active, "clock leaked into another save");
         NativeCityClock.Stop();

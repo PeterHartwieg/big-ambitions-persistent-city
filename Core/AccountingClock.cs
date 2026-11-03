@@ -62,8 +62,10 @@ namespace PersistentCity.Core
         public PopulationFrameBudget(double seconds, bool hiddenSkip)
         {
             if (!Position.Finite(seconds) || seconds < 0) throw new ArgumentOutOfRangeException(nameof(seconds));
-            Units = hiddenSkip ? 128 : Math.Max(1, Math.Min(1024, (int)Math.Ceiling(Math.Min(seconds, 1) * 7680)));
-            CitizenEvents = hiddenSkip ? 128 : Math.Max(1, Math.Min(128, (int)Math.Ceiling(Math.Min(seconds, 1) * 960)));
+            // Unity supplies float seconds; do not turn 16.0000008 into seventeen starts.
+            // The epsilon is below a work unit and covers float conversion at these caps.
+            Units = hiddenSkip ? 128 : Math.Max(1, Math.Min(1024, (int)Math.Ceiling(Math.Min(seconds, 1) * 7680 - .0001)));
+            CitizenEvents = hiddenSkip ? 128 : Math.Max(1, Math.Min(128, (int)Math.Ceiling(Math.Min(seconds, 1) * 960 - .0001)));
             Milliseconds = hiddenSkip ? 16 : Math.Max(.25, Math.Min(4, seconds * 120));
         }
         public int Units { get; }
