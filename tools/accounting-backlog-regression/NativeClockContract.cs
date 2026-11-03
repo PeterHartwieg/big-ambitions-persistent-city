@@ -12,7 +12,7 @@ public static class NativeClockContract
     public delegate void Prefix(ref float delta);
     public static void Run()
     {
-        SaveGameManager.Current = new object();
+        SaveGameManager.Current = new NativeSave();
         InstanceBehavior<UI.UIs>.Instance = new UI.UIs();
         double native = 59, logical = 59; bool ready = false;
         NativeCityClock.Start(SaveGameManager.Current, 1.0 / 3, () => ready, () => true, () => native, () => logical);
@@ -44,7 +44,7 @@ public static class NativeClockContract
         Require(Tick(.5f) == .5f && Tick(0) == 0 && NativeCityClock.HeldOrdinaryTicks == 0, "native factor/earlier zero cap changed");
         Require(!NativeCityClock.CheckInputEpoch(64, logical) && NativeCityClock.Refused,
             "advance/save entry did not catch a writer bypassing ticks");
-        SaveGameManager.Current = new object();
+        SaveGameManager.Current = new NativeSave();
         Require(Tick(.5f) == .5f && !NativeCityClock.Active, "clock leaked into another save");
         NativeCityClock.Stop();
         native = 64; logical = AccountingClock.PreviousEpochTarget(native); ready = false;
@@ -56,12 +56,61 @@ public static class NativeClockContract
         Require(Tick(.5f) == 0 && !NativeCityClock.Refused, "drained predecessor/new-boundary work was refused");
         NativeCityClock.Stop();
         Require(PopulationRuntime.PreparingAccountingText.Contains("Calendar held"), "startup notice must explain the clock hold");
+        // Empty ordinary epochs still clip at fences. They must not masquerade as workload
+        // holds, including over many hours and under native fast-forward requests.
+        InstanceBehavior<UI.UIs>.Instance.timeMachine.isRunning = false;
+        foreach (var arm in new[] { (Factor: 1.0 / 3, Rate: 1f), (Factor: 1.0, Rate: 1f), (Factor: 1.0, Rate: 2f) })
+        {
+            native = logical = 0; ready = true;
+            NativeCityClock.Start(SaveGameManager.Current, arm.Factor, () => ready, () => true, () => native, () => logical);
+            while (native < 180)
+            {
+                float allowed = Tick(arm.Rate / 60);
+                Require(allowed > 0, "empty epoch did not progress");
+                native = Math.Floor(native / 60) * 60 + (float)((float)(native % 60) + allowed);
+                logical = AccountingClock.Target(native);
+                Require(!NativeCityClock.PacingAffected, "zero-work minute fences raised the workload notice");
+            }
+            Require(NativeCityClock.BoundaryClips >= 180 && NativeCityClock.WithheldMinutes > 0,
+                "quiet fences lost pacing diagnostics");
+            Require(NativeCityClock.HeldOrdinaryTicks == 0, "empty ordinary epochs counted as workload holds");
+            ready = false;
+            Require(Tick(1f / 60) == 0 && NativeCityClock.PacingAffected, "actual workload hold lost its prominent notice");
+            NativeCityClock.Stop();
+        }
+        Console.WriteLine("PASS quiet ordinary fences: 180 minutes each at 1/3, 1 and 2 game minutes/second; workload notice false until an actual hold");
+        RecoveryMessageContract();
         Console.WriteLine("PASS actual NativeCityClock source: ordinary/skip/fence/refusal/pacing/recovery/teardown (native/Harmony doubles)");
+    }
+    private static void RecoveryMessageContract()
+    {
+        SaveGameManager.Current = new NativeSave();
+        SaveGameManager.Current.modData[PersistentCity.Persistence.SaveStore.StateKey] = "original population";
+        var runtime = new PopulationRuntime();
+        NativeCityClock.CheckInputEpoch(62, 59);
+        Require(runtime.StatusForTest().Contains(PopulationRuntime.AccountingRestartRequiredText), "transient refusal omitted restart requirement");
+        string message = runtime.StopForTest(); // Actual AccountingRecovery source; only native authority/Fail are doubles.
+        Require(message.Contains("Quit and relaunch the game, then load a synchronized pre-failure checkpoint"), "stop guidance implied same-session recovery");
+        Require(message.Contains("Loading another save in this session does not restart Persistent City"), "sticky session failure was not explained");
+        Require(message.StartsWith(PopulationRuntime.AccountingRestartRequiredText), "restart guidance must precede the long failure details");
+        Require(PersistentCity.Persistence.AccountingStopStore.IsStopped(SaveGameManager.Current.modData), "failure intent lost");
+        Require(SaveGameManager.Current.modData[PersistentCity.Persistence.SaveStore.StateKey] == "original population", "stop rewrote population");
+        Require(PersistentCity.Runtime.NativeFoodOwnership.WithdrawalRequests == 1, "stop omitted authority withdrawal");
+        Console.WriteLine("PASS actual AccountingRecovery source: restart-first guidance and preserved stop intent (native/Fail doubles)");
     }
     private static void Require(bool condition, string message) { if (!condition) throw new Exception(message); }
 }
 public class InstanceBehavior<T> { public static T? Instance; }
-public static class SaveGameManager { public static object? Current; }
+public sealed class NativeSave { public readonly Dictionary<string, string> modData = new(); }
+public static class SaveGameManager { public static NativeSave Current = null!; }
+namespace PersistentCity.Runtime
+{
+    internal static class NativeFoodOwnership
+    {
+        internal static int WithdrawalRequests;
+        internal static void ReleaseAfterAccountingFailure() => WithdrawalRequests++;
+    }
+}
 public sealed class GameManager { public void RunMainGameTick(float deltaTimeWithMultiplier) { } }
 namespace UI
 {

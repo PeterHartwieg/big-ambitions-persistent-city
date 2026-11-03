@@ -11,6 +11,10 @@ namespace PersistentCity.Runtime
         private CitySimulator? simulation = null;
         private static double Now() => 0;
         public string StatusForTest() => AccountingStatusText();
+        public string BoundaryForTest() => BoundaryAccountingText;
+        private string failureForTest = "";
+        private void Fail(string message) { failureForTest = message; NativeCityClock.Stop(); }
+        public string StopForTest() { StopAccounting(); return failureForTest; }
     }
 }
 internal static class AccountingStatusBenchmark
@@ -33,7 +37,15 @@ internal static class AccountingStatusBenchmark
         Measure(true); Measure(false);
         var before = Measure(true); var after = Measure(false);
         if (after.Builds > 41 || after.Bytes >= before.Bytes) throw new Exception("Visible accounting text was not cached at 4 Hz");
+        var baseline = new PersistentCity.Runtime.PopulationRuntime();
+        string boundary = baseline.BoundaryForTest(); // Warm the accessor before measuring.
+        long boundaryStart = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 1200; i++)
+            if (!ReferenceEquals(boundary, baseline.BoundaryForTest())) throw new Exception("Baseline text rebuilt");
+        long boundaryBytes = GC.GetAllocatedBytesForCurrentThread() - boundaryStart;
+        if (boundaryBytes != 0) throw new Exception("Quiet baseline text allocated");
         Console.WriteLine(JsonSerializer.Serialize(new { statusRequests = 1200, simulatedSeconds = 10,
-            beforeBytes = before.Bytes, afterBytes = after.Bytes, beforeBuilds = before.Builds, afterBuilds = after.Builds }));
+            beforeBytes = before.Bytes, afterBytes = after.Bytes, beforeBuilds = before.Builds, afterBuilds = after.Builds,
+            boundaryBytes, boundaryBuilds = 0 }));
     }
 }

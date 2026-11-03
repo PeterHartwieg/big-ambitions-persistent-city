@@ -52,6 +52,11 @@ namespace PersistentCity.Runtime
                 GUI.Box(new Rect(20, 20, Math.Min(760, Screen.width - 40), 82), "");
                 GUI.Label(new Rect(30, 28, Math.Min(740, Screen.width - 60), 68), AccountingStatusText(), economyLabel);
             }
+            else if (NativeCityClock.BoundaryClips > 0 && !showEconomy)
+            {
+                // Quiet baseline status; reserve the large card for actual workload holds.
+                GUI.Label(new Rect(20, 20, Math.Min(760, Screen.width - 40), 22), BoundaryAccountingText);
+            }
             var input = Event.current;
             if (input.type == EventType.KeyDown && input.control && input.keyCode == KeyCode.F8)
             { showEconomy = !showEconomy; nextEconomyText = 0; input.Use(); }

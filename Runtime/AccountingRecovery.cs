@@ -16,9 +16,9 @@ namespace PersistentCity.Runtime
             accountingStopped = true;
             AccountingStopStore.Stop(SaveGameManager.Current.modData);
             try { NativeFoodOwnership.ReleaseAfterAccountingFailure(); }
-            finally { Fail("Accounting input epoch was lost. Native calendar continues; Persistent City is stopped. "
+            finally { Fail(AccountingRestartRequiredText + " Accounting input epoch was lost. Native calendar continues; Persistent City is stopped. "
                 + "Unprocessed Persistent City demand is lost, not replayed. The original population payload is retained. "
-                + "Native saves remain playable with Persistent City stopped; restore a synchronized checkpoint to resume it."); }
+                + "Native saves remain playable with Persistent City stopped."); }
         }
     }
 }

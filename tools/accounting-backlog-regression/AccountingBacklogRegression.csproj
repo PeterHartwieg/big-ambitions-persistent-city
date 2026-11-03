@@ -3,6 +3,7 @@
   <ItemGroup>
     <Compile Include="../../Runtime/NativeCityClock.cs" Link="NativeCityClock.cs" />
     <Compile Include="../../Runtime/AccountingStatus.cs" Link="AccountingStatus.cs" />
+    <Compile Include="../../Runtime/AccountingRecovery.cs" Link="AccountingRecovery.cs" />
     <ProjectReference Include="../../Core/PersistentCity.Core.csproj" />
     <ProjectReference Include="../../Persistence/PersistentCity.Persistence.csproj" />
   </ItemGroup>

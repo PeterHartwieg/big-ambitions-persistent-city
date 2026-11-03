@@ -121,7 +121,9 @@ namespace PersistentCity.Runtime
             {
                 MaximumRecoverySeconds = Math.Max(MaximumRecoverySeconds, WaitingSeconds);
                 waitingSince = 0;
-                if (AccountingLimited) { BoundaryClips++; lastHeldAt = System.Diagnostics.Stopwatch.GetTimestamp(); }
+                // Quantization is diagnosed separately from workload backpressure. A fence
+                // every game minute must not keep the prominent workload notice alive.
+                if (AccountingLimited) BoundaryClips++;
             }
             deltaTimeWithMultiplier = allowed;
         }
