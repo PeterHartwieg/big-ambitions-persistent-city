@@ -214,3 +214,22 @@ remain unchanged.
 The unchanged standalone saturated-history bulk arm also flags **310.6081/609.7626/255.2312 ms**
 write/read/activation maxima (3/3 >=30 ms each), plus **1077.9129 ms** migration. These are separate
 serialization/startup costs. The parked hotspots remain parked.
+
+## R3 accounting save-change recovery - 3 November 2026 (offline)
+
+Code `18cd631` changes only failure/session lifecycle and guidance. Normal frames return
+from the failure-transition helper on the existing `failed == false` condition, before
+reading a save or touching any collections; no new per-frame scan, reflection or allocation
+is introduced. Old-state disposal, task-fault observation, cache clearing and stop-marker
+lookup occur only on a save transition/startup. No calendar factor, limiter, service budget,
+Core economic work, schema or parked hotspot changes; no additional performance win is claimed.
+
+[Focused source/economic regression](f1-accounting-backlog-r3-focused.txt) passes actual
+Fail/reset/transition logic with native cleanup doubles. Warm baseline text remains 0 B /
+0 builds per 1,200 requests. The supported 957-resident day retains exact economic/save/order
+equivalence and <1 minute lag, with injected supported/stress stall + recovery of 2/10 s.
+Focused ordinary 30/60/120 p95 **0.0089/0.0675/0.1449 ms**, maxima **4.9484/4.4710/2.8378 ms**;
+skip **0.0142/2.7879 ms**, stress **0.0058/19.3869 ms** (p95/max), zero >=30 ms samples in this
+save-free detached run. Native/Unity/GUI and whole-game costs are excluded. Required-matrix
+repeats follow after completion; native proof remains outstanding. The R2 **66.3905 ms**
+unattributed detached sample remains retained and flagged, with no retrospective gate pass.

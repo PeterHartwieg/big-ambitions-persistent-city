@@ -2,7 +2,7 @@
 
 Validation and dated development notices are in the [checks index](CHECKS.md); each slice maintains its own evidence file.
 
-City-audit F1 implements simulation/accounting backpressure, bounded lag and visible pacing/refusal status, boundary observation publication and safe PC stop/native-clock release on a lost epoch (game restart required), with writer 25 unchanged. [Offline cadence/reload evidence and six automated batched-rig checks](docs/checks/f1-accounting-backlog.md); native accounting and complete-cost proof remain a merge blocker.
+City-audit F1 implements simulation/accounting backpressure, bounded lag and visible pacing/refusal status, boundary observation publication and safe PC stop/native-clock release on a lost epoch, with accounting-specific recovery when a different valid save loads, with writer 25 unchanged. [Offline cadence/reload evidence and six automated batched-rig checks](docs/checks/f1-accounting-backlog.md); native accounting and complete-cost proof remain a merge blocker.
 
 E5b partially implements complete-menu admission and safe refusal offline: whole-menu explicit prices, cached authored bag policy and pre-receipt revalidation. Dynamic native acquisition/dirty recovery and held-policy execution remain incomplete; historical live support stays bounded. [Contract gaps, measurements and six automated batched-rig checks](docs/checks/e5b-complete-menu.md).
 

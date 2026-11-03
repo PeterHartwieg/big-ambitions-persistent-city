@@ -78,12 +78,15 @@ The visible stopped message explicitly reports lost/unprocessed PC demand.
 A native save after refusal remains playable **with Persistent City stopped**. Its newer
 native clock and preserved older population snapshot do not authorize resuming that snapshot;
 the bounded `persistentcity:accounting-stop_v1` marker prevents automatic PC restart on
-the next load, including accidental clock equality, and leaves native time running. The
-accounting failure is sticky for the entire game session: **quit and relaunch the game before
-loading any other city or a synchronized pre-failure checkpoint**. Loading a save within the
-failed session does not restart PC and can leave that save's PC-owned businesses without a
-simulator. A fresh runtime can resume the synchronized unmarked checkpoint; the marked failed
-save keeps PC stopped. No same-session recovery is implemented. No attempt repairs past workload loss or reconstructs prior native
+the next load, including accidental clock equality, and leaves native time running. An
+accounting failure stays latched for that save object. **Loading a different save object in
+the same session clears only the accounting-specific failure** after scene loading finishes.
+Old population, routes, pending initialization and cached UI are discarded before normal
+RLO/payload/clock/ownership validation starts for the new save. An unmarked synchronized
+checkpoint or another valid PC city may attach normally; it cannot inherit the failed city's
+awaiting-population state. A newly loaded object for the marked failed save is refused before
+initialization and keeps its archive/stop marker. Null unload gaps and loading scenes do not
+clear failure; non-accounting failures retain their existing refusal. No attempt repairs past workload loss or reconstructs prior native
 inputs. Unreadable/future authority manifests keep their existing conservative refusal.
 `HistoricalClockMisses` remains a commerce-attachment diagnostic, not a persisted loss ledger.
 
