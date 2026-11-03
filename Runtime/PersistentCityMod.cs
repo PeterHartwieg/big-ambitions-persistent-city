@@ -645,6 +645,8 @@ namespace PersistentCity.Runtime
         private void Save()
         {
             if (failed || simulation == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current)) return;
+            if (NativeCityClock.Refused)
+            { log?.Warn("Population save refused: synchronized accounting input epoch was lost. Original payload retained."); return; }
             try
             {
                 var source = ReadRlo("save");
@@ -652,7 +654,7 @@ namespace PersistentCity.Runtime
                 { Fail("RLO changed before saving; original population payload retained."); return; }
                 RunPhysical(() => physical?.BeforeSave());
                 foodMarket?.RefreshKnownOwnership();
-                // A partially caught-up snapshot is valid: replay continues from its recorded minute after load.
+                // Within the guarded input epoch, a partial snapshot resumes from its recorded minute after load.
                 var result = (saveSession ?? throw new InvalidOperationException("Save session is missing."))
                     .WriteTo(SaveGameManager.Current.modData, simulation.State);
                 if (!result.Success) Fail("Population save refused: " + result.Error);

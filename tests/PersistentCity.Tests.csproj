@@ -7,6 +7,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../tools/accounting-backlog-regression/AccountingScenario.cs" Link="AccountingScenario.cs" />
     <Compile Include="../tools/market-research-regression/ResearchFixture.cs" Link="ResearchFixture.cs" />
     <Compile Include="../Runtime/PrototypeSettings.cs" Link="PrototypeSettings.cs" />
     <Compile Include="../Runtime/FoodProductOverrideSettings.cs" Link="FoodProductOverrideSettings.cs" />
