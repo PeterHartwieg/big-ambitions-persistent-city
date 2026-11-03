@@ -2,6 +2,8 @@
 
 Each slice adds its own `docs/checks/<slice>.md` and exactly one index line here; never append slice sections to this file. Sync/review-fix notes go into the slice's own file.
 
+- City-audit F1 — 3 November 2026, offline: minute-epoch accounting/backpressure, writer 25; 2,824 tests; 957-resident detached 30/60/120 p95 0.0274/0.2508/0.1894 ms, max 2.8245/14.8037/4.4055 ms, lag <1 min, injected recovery 2 s (stress 10 s); zero clean >=30 ms samples, four save-containing windows invalidated; native complete-cost proof pending. [Dated checks and six In-game checks for the next batched rig](docs/checks/f1-accounting-backlog.md), [measurements](docs/perf/f1-accounting-backlog.md).
+
 - E5b — 2 November 2026, offline **partial / native integration incomplete**: complete-menu price refusal, cached authored bag policy; focused 1,071 menu / 10,596 checkout assertions (r1); discovery 280 -> 0 B/call; cache 10,100/0 hits/misses, 10,100 marks -> one pending shop, setups 33 vs 990; 1,024-shop detached backlog p95/max 0.0140/0.0497 ms, zero new >=30 ms samples; inherited 62.8223 ms first-use interval flagged; [dated evidence, remaining contracts and six In-game checks for the next batched rig](docs/checks/e5b-complete-menu.md), [performance](docs/perf/e5b-complete-menu.md).
 
 - E5e - 2 November 2026, offline: versioned metadata only, 2,782 unit cases / 39 new E5e cases, full required matrix green; empty/256/budget resolve p95 0.000518/0.000047/0.000726 ms, 0 B; register/unregister/conflict p95 0.1084/0.0414/0.1539 ms; budget publish 0.0117 ms / retained 422,128 B; zero >=30 ms E5e windows. [Full measurements, checks and In-game checks for the next batched rig](docs/checks/e5e-metadata-api.md).

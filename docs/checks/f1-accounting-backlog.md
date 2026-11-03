@@ -1,0 +1,85 @@
+﻿# City-audit F1 — 3 November 2026 — offline only
+
+Refs #88. Base `bd99eb3a45d6b008911e1a5225ce1ced590cec51`; audit source inspected from
+`origin/codex/city-vision-audit-2026-11-03` without importing or editing the report.
+This is separate from Track F's historical shop-view F1.
+
+Implemented the [simulation/accounting contract](../plans/f1-accounting-boundary.md):
+one-minute input epochs, float-safe end draining, ordinary/skip backpressure, a less-than-one
+minute admitted lag bound, explicit recovery/refusal, wall-time frame caps and visible lag/hold
+status. Writer **25** and native sale/receipt authority remain unchanged. Native proof and
+complete native mod-work/whole-frame measurement are pending the batched rig.
+
+## Evidence and acceptance
+
+- Re-verified the audit against this base: `FoodCommerce.StepMeal` still misses active meals
+  when `now < market.EarliestMinute`; `AdvancePopulation` still had fixed 128-unit/16-citizen
+  ordinary caps and 2 ms; `NativeCityClock.TickPrefix` held skips but only multiplied ordinary
+  ticks. E5 code movement did not remove the finding. The sale adapter's `BuyLive` rejects
+  outside the current native hour and checks saved receipts; neither authority check changed.
+- Red: the foreground test advanced the native market hour with active meals and failed its
+  no-`Native clock passed the purchase window` assertion (60-resident fixture). Green: the
+  same in-flight boundary fixture uses the production guard and one-unit slices, with zero
+  historical-clock misses. This is source/offline evidence only.
+- Twenty focused cases cover 30/60/120 cadence with 1/16/128 units and 0.01/0.5/2 ms budgets,
+  identical timestamped price inputs, skip parity, held/travelling and midnight writer-25
+  reloads, float predecessors through large absolute days, stalled frames, recovery and
+  constrained-clock travel-pace inference, Unity float-duration caps, a Core checkout into the market double in the
+  final float gap, a writer-25 gap round trip and unfinished exact-predecessor refusal before/
+  after market attachment. Entire final save bytes and native-double ordered
+  sales must match, covering purchases, missed meals, wallets, held funds and native orders.
+- The foreground `accounting-backlog-regression` additionally runs the 957-resident /
+  1,914-consumer day at every cadence, compares whole save bytes and ordered sales, and runs
+  a 2,000-resident stress day. Actual `NativeCityClock` source is compiled with native/Harmony
+  doubles to verify registered hook priority, ordinary/skip holds, fence crossing, visible
+  pacing, recovery counters, bypass refusal and teardown. The doubles do not establish native
+  Harmony order, native inventory or in-game UI correctness.
+- Supported offline envelope and timestamped-input limits are explicit in the contract. No
+  native capacity claim is made. An out-of-epoch save or bypassing native clock writer is
+  refused rather than repaired with lost meals or historical purchases. Arbitrary subminute
+  external mutations/physical motion are not proven cadence-independent by this fixture.
+- [Full measurements and raw output](../perf/f1-accounting-backlog.md): detached supported
+  p95s 0.0274/0.2508/0.1894 ms (30/60/120), maxima 2.8245/14.8037/4.4055 ms; skip p95/max
+  0.0084/15.0445 ms; stress 0.0090/14.0765 ms. Zero clean >=30 ms component samples; four
+  preliminary save-containing >=30 ms windows are flagged and invalidated. Lag <1 minute;
+  recovery includes the injected 2 s supported / 10 s stress stall. No native mod-work or
+  whole-frame measurement is available; their gates remain pending. Frame-cap win at 30 FPS:
+  960 same-minute residents drain in 60 -> 30 frames (2 -> 1 simulated seconds), equal state.
+
+## Required foreground validation
+
+All **62 matrix commands passed**, covering the required commands, both nested validation wrappers and
+the additional F1 regression. The final review pass also passed build, **2,824 unit cases /
+zero failures or skips**, discovery (**2,732 listed entries**), identity, save-contract, **10,648** checkout assertions
+and the F1 source/cadence/recovery benchmark. The last game-reference build passed with DLL
+SHA-256 `7d82b931f795603310e91d16f9c9848e5573d35f66c28f59ea8fed77150067b1`.
+[Command exits and log hashes](f1-accounting-backlog-results.json) retain the matrix and final
+checks separately; earlier matrix test runs contained fewer cases while review regressions
+were added. Core identity and save-contract digests remain equal to the initial matrix.
+
+The shared `wait-other-dotnet.ps1` gate ran before each foreground command. Build servers
+were gracefully shut down; final process inspection found zero repository dotnet/testhost
+processes. Generated E5c validation manifests were restored to keep this slice local.
+No game or rig run is part of this evidence. The source fixture, clock contract checks and
+measurements are reproducible with
+`tools/accounting-backlog-regression/AccountingBacklogRegression.csproj`.
+
+## In-game checks for the next batched rig
+
+All checks are executed by the headless agent rig in
+[`PeterHartwieg/big-ambitions-agent-rig`](https://github.com/PeterHartwieg/big-ambitions-agent-rig),
+owned by Coding Projects. Read-only README/capability inventory: `25aecb0f7fe7b130a8a290df8e613abfebf35501`.
+No rig files, preferences, lease, ModsLocal, bridge profile or game process were touched in
+this task. Existing capabilities below are available interfaces, not claims of native proof.
+Pending capabilities must be implemented by the rig owner; a missing capability blocks that
+check instead of substituting manual verification. Only named disposable FT fixtures may be
+used. Preserve original preferences/rig files; disable and verify autosave off before **each**
+timing window, including after reload, and restore during cleanup. Manual saves belong outside
+timing windows; any save in a window invalidates the window.
+
+1. **One-day cadence/input replay — rig-automated (existing capability: `rig flow run`, FT `state`/`save`/`load`/`time`, `shop_fixture`, `shop_state`, `shop_log`; pending rig capability: fixed 30/60/120 rendered-cadence and scheduler-budget arms, minute-stamped input publication and independent PC/native ledger comparator).** Restore one synchronized FT checkpoint for each arm with unchanged configured calendar factor, resident/consumer/shop/menu/body/graphics setup and seed. Apply identical minute-timestamped prices, hours, staffing and finite-stock deliveries after each prior epoch drains. Run one logical day at 30/60/120 and different event/time budgets. Read full meal outcomes, balances/holds, PC receipts, native completed order IDs/counts, product/bag deltas, hourly and midnight revenue/bank settlement. Assert identical purchases, missed meals, funds and ordered native sales, no duplicate/replayed purchase and zero historical-clock misses. Retain the old-head red reproduction and this-head green trace separately from detached evidence.
+2. **Overload and recovery — rig-automated (existing capability: `rig flow run`, FT `state`/`time`; pending rig capability: controlled scheduler stall/budget injection plus `AccountingDiagnostics` sampling and automated pacing-notice capture).** At a meal rush inject a fixed finite stall, then restore the original work allowance. Repeat at the supported candidate load (957 residents, factor two) and a declared stress load. Read native/logical targets, due/pending work, ordinary/skip hold ticks, withheld time, configured factor, refusal and recovered wait duration. Assert native time holds before closing the input epoch, admitted lag <=1 game minute, the player notice appears for short repeated and sustained holds, recovery drains without a fast repayment burst, and post-recovery purchases/outcomes/money/orders equal the matched unstalled logical-day arm. A nonprogressing workload must remain visibly held, never silently drop demand.
+3. **Meal/hour/midnight and skip boundaries — rig-automated (existing capability: FT `time`, `state`, `shop_state`, `shop_log`; pending rig capability: exact native float-fence/ending-accounting hook trace with time-machine control and pending-work assertions).** Run ordinary and time-machine arms through meals, each hour and midnight with work due in the last representable float gap and exactly at the boundary. Read final tick arguments, guard readiness, event timestamps, native accounting epoch, ending-hour queues, receipts and daily totals. Assert all strictly earlier events drain under the old epoch, boundary events use the new inputs, the skip destination is unchanged, no historical buy is attempted, and native settlement remains exact with unchanged ownership rules.
+4. **In-flight save/reload — rig-automated (existing capability: FT `save`/`load`/`state`, `rig flow run`; pending rig capability: named held-decision/rounding-gap/midnight-backlog checkpoints and receipt/funds comparator).** Outside timing windows save during ordinary lag, a held food decision, an excursion, the final float gap and pending midnight postings; reload each and finish the same logical day. Verify native autosave remains off before resuming timing. Read writer-25 payload, native time, target/readiness, held funds, original uncertain receipts and completed orders. Assert exact state/economic equivalence to uninterrupted arms, no duplicate sale, retained uncertainty and no schema change. Hold startup through route preparation. Load an intentionally out-of-epoch disposable snapshot and assert visible synchronized-input-epoch refusal with the original payload unchanged and no historical checkout.
+5. **Complete cost and throughput together — rig-automated (existing capability: `rig flow run`, FT `state`, automated capture; pending rig capability: complete mod-work union plus independent whole-frame/presented-frame intervals correlated with F1 lag, work units and recovery).** With the same autosave-off setup, record supported/stress ordinary meal/accounting peaks and separate skip/reload latency arms. Read p50/p95/max complete mod-work, every >=30 ms spike with count/condition/component when attributable, whole-frame costs/stalls separately, actual body counts, units/second, maximum lag, withheld calendar time and catch-up duration. Require ordinary mod-work p95 <5 ms and individual spikes <30 ms; flag every spike >=30 ms; never use whole-frame p95 as mod-work or a low p95 to excuse nonprogressing demand. Record the native fence's baseline pacing cost explicitly. Preserve unattributed stalls and any failed capacity envelope as unresolved evidence.
+6. **Clock/authority interoperability and refusal — rig-automated (existing capability: RIG-MODSET DLL transactions, FT `state`/`load`/`time`, `shop_state`, `shop_log`; pending rig capability: final tick-prefix/Driven Rides observer trace and a disposable bypass-clock fault arm).** Exercise configured factor 1 and 1/3 with the installed ride/run-until policies, ordinary fast-forward, pause, cold startup and teardown. Read the final positive/zero tick argument, inferred travel pace, native current hour, PC authority and saved receipts. Assert earlier caps/zero holds survive the final guard, sustained accounting caps never retime journeys, unsupported businesses remain native, ending-hour transfer remains safe and teardown restores clock ownership. Inject a bypassing clock writer only in the disposable fault arm and assert a latched visible refusal with no new PC checkout or payload overwrite; remove the fault and reload a synchronized checkpoint to recover.
