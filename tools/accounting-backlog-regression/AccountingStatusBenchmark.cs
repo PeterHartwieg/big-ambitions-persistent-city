@@ -12,10 +12,41 @@ namespace PersistentCity.Runtime
         private static double Now() => 0;
         public string StatusForTest() => AccountingStatusText();
         public string BoundaryForTest() => BoundaryAccountingText;
-        private string failureForTest = "";
-        private void Fail(string message) { failureForTest = message; NativeCityClock.Stop(); }
-        public string StopForTest() { StopAccounting(); return failureForTest; }
+        // Native cleanup surfaces are doubles; failure/reset decisions compile from Runtime.
+        private bool failed, physicalFailed, inspectorFailed, clockRetimingRoutes, initializingHadPayload;
+        private string status = "", economyText = "";
+        private float nextStart, nextEconomyText;
+        private object? saveIdentity, initializingSave, saveSession, routes;
+        private string? initializingPayload;
+        private System.Threading.Tasks.Task<int>? initialization;
+        private TestDisposable? physical;
+        private readonly TestInspector inspector = new();
+        private readonly TestLogger log = new();
+        private void Detach() { physical?.Dispose(); physical = null; NativeCityClock.Stop(); }
+        public string StopForTest() { StopAccounting(); return status; }
+        public bool PrepareForTest() => PrepareAccountingSaveChange();
+        public bool CanStartForTest() => CanStartAccountingSave();
+        public bool FailedForTest => failed;
+        public void FailForTest() => Fail("non-accounting failure");
+        public void SeedOldSaveForTest(bool beforeAttachment = false)
+        {
+            saveIdentity = beforeAttachment ? null : SaveGameManager.Current;
+            initializingSave = SaveGameManager.Current; initializingPayload = "old payload";
+            initializingHadPayload = true;
+            initialization = System.Threading.Tasks.Task.FromResult(1);
+            saveSession = routes = new object(); physical = new TestDisposable();
+            physicalFailed = inspectorFailed = clockRetimingRoutes = true;
+            economyText = "old economy"; nextStart = nextEconomyText = nextAccountingText = 100;
+        }
+        public bool OldSaveClearedForTest => saveIdentity == null && initializingSave == null
+            && initializingPayload == null && !initializingHadPayload && initialization == null && simulation == null
+            && saveSession == null && routes == null && physical == null && !physicalFailed
+            && !inspectorFailed && !clockRetimingRoutes && economyText.Length == 0 && accountingText.Length == 0
+            && nextStart == 0 && nextEconomyText == 0 && nextAccountingText == 0 && inspector.Resets == 1;
     }
+    internal sealed class TestDisposable { public void Dispose() { } }
+    internal sealed class TestInspector { internal int Resets; public void Reset() => Resets++; }
+    internal sealed class TestLogger { public void Warn(string message) { } }
 }
 internal static class AccountingStatusBenchmark
 {

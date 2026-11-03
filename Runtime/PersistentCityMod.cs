@@ -219,23 +219,15 @@ namespace PersistentCity.Runtime
 
         private void Update()
         {
-            if (failed) return;
             try
             {
+                if (!PrepareAccountingSaveChange()) return;
                 var save = SaveGameManager.Current;
                 if (NativeInteriorCityView.Configured && (save == null || UI.Load.LoadScene.isLoading
                     || saveIdentity != null && !ReferenceEquals(saveIdentity, save))) RestoreInterior();
                 if (save == null) return;
                 if (saveIdentity != null && !ReferenceEquals(saveIdentity, save))
-                {
-                    physical?.Dispose(); physical = null; physicalFailed = false;
-                    inspector.Reset(); inspectorFailed = false;
-                    Detach();
-                    simulation = null;
-                    saveSession = null;
-                    routes = null; clockRetimingRoutes = false;
-                    saveIdentity = null;
-                }
+                    ResetPopulationForSaveChange();
                 if (simulation == null)
                 {
                     if (initialization != null) { CompleteInitialization(); return; }
@@ -512,8 +504,7 @@ namespace PersistentCity.Runtime
 
         private void TryStart()
         {
-            if (SaveGameManager.Current?.modData != null && AccountingStopStore.IsStopped(SaveGameManager.Current.modData))
-            { StopAccounting(); return; }
+            if (!CanStartAccountingSave()) return;
             if (!NativeTravelPace.StartObservation()) { Fail(NativeTravelPace.LastError); return; }
             dependency = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "RealLifeOverhaul");
             var source = ReadRlo("startup");
@@ -683,14 +674,6 @@ namespace PersistentCity.Runtime
             if (message == status) return;
             status = message;
             log?.Info(message);
-        }
-
-        private void Fail(string message)
-        {
-            failed = true;
-            status = message;
-            log?.Warn("Persistent City stopped: " + message);
-            Detach();
         }
 
         private void Detach()

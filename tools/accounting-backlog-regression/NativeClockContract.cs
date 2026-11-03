@@ -79,24 +79,57 @@ public static class NativeClockContract
             NativeCityClock.Stop();
         }
         Console.WriteLine("PASS quiet ordinary fences: 180 minutes each at 1/3, 1 and 2 game minutes/second; workload notice false until an actual hold");
-        RecoveryMessageContract();
+        RecoveryLifecycleContract();
         Console.WriteLine("PASS actual NativeCityClock source: ordinary/skip/fence/refusal/pacing/recovery/teardown (native/Harmony doubles)");
     }
-    private static void RecoveryMessageContract()
+    private static void RecoveryLifecycleContract()
     {
         SaveGameManager.Current = new NativeSave();
         SaveGameManager.Current.modData[PersistentCity.Persistence.SaveStore.StateKey] = "original population";
         var runtime = new PopulationRuntime();
+        var stopped = SaveGameManager.Current;
+        runtime.SeedOldSaveForTest();
         NativeCityClock.CheckInputEpoch(62, 59);
-        Require(runtime.StatusForTest().Contains(PopulationRuntime.AccountingRestartRequiredText), "transient refusal omitted restart requirement");
-        string message = runtime.StopForTest(); // Actual AccountingRecovery source; only native authority/Fail are doubles.
-        Require(message.Contains("Quit and relaunch the game, then load a synchronized pre-failure checkpoint"), "stop guidance implied same-session recovery");
-        Require(message.Contains("Loading another save in this session does not restart Persistent City"), "sticky session failure was not explained");
-        Require(message.StartsWith(PopulationRuntime.AccountingRestartRequiredText), "restart guidance must precede the long failure details");
+        Require(runtime.StatusForTest().Contains(PopulationRuntime.AccountingRecoveryText), "transient refusal omitted save-change guidance");
+        int withdrawals = PersistentCity.Runtime.NativeFoodOwnership.WithdrawalRequests;
+        string message = runtime.StopForTest(); // Actual failure, transition and reset methods; native cleanup surfaces are doubles.
+        Require(PersistentCity.Runtime.NativeFoodOwnership.WithdrawalRequests == withdrawals + 1, "accounting stop omitted native withdrawal");
+        Require(message.StartsWith(PopulationRuntime.AccountingRecoveryText), "save-change guidance must precede failure details");
+        Require(runtime.FailedForTest && !runtime.PrepareForTest(), "same stopped save resumed without a load");
         Require(PersistentCity.Persistence.AccountingStopStore.IsStopped(SaveGameManager.Current.modData), "failure intent lost");
         Require(SaveGameManager.Current.modData[PersistentCity.Persistence.SaveStore.StateKey] == "original population", "stop rewrote population");
-        Require(PersistentCity.Runtime.NativeFoodOwnership.WithdrawalRequests == 1, "stop omitted authority withdrawal");
-        Console.WriteLine("PASS actual AccountingRecovery source: restart-first guidance and preserved stop intent (native/Fail doubles)");
+        SaveGameManager.Current = null!;
+        Require(!runtime.PrepareForTest(), "unload gap cleared the failure");
+        var checkpoint = new NativeSave();
+        checkpoint.modData[PersistentCity.Persistence.SaveStore.StateKey] = "unmarked synchronized checkpoint";
+        SaveGameManager.Current = checkpoint; UI.Load.LoadScene.isLoading = true;
+        Require(!runtime.PrepareForTest(), "loading scene resumed old population");
+        UI.Load.LoadScene.isLoading = false;
+        Require(runtime.PrepareForTest() && !runtime.FailedForTest && runtime.OldSaveClearedForTest,
+            "unmarked synchronized checkpoint did not clear accounting failure and old state");
+        Require(runtime.CanStartForTest(), "unmarked save could not enter normal initialization/attachment");
+        Require(!checkpoint.modData.ContainsKey(PersistentCity.Persistence.AccountingStopStore.Key), "old stop marker leaked into new city");
+        Require(checkpoint.modData[PersistentCity.Persistence.SaveStore.StateKey] == "unmarked synchronized checkpoint", "load reset rewrote new population");
+        Require(PersistentCity.Persistence.AccountingStopStore.IsStopped(stopped.modData), "leaving stopped save erased its refusal");
+
+        // A newly loaded object for the stopped file must be refused before initialization,
+        // including when the first stop happened before saveIdentity was ever assigned.
+        var early = new PopulationRuntime(); early.SeedOldSaveForTest(beforeAttachment: true); early.StopForTest();
+        var markedReload = new NativeSave();
+        foreach (var pair in stopped.modData) markedReload.modData.Add(pair.Key, pair.Value);
+        SaveGameManager.Current = markedReload;
+        Require(!early.PrepareForTest() && early.FailedForTest && early.OldSaveClearedForTest,
+            "marked reload escaped refusal or retained pre-attachment state");
+        Require(!early.CanStartForTest(), "marked reload entered initialization");
+        Require(markedReload.modData[PersistentCity.Persistence.SaveStore.StateKey] == "original population", "marked reload overwrote archive");
+        var anotherCity = new NativeSave();
+        anotherCity.modData[PersistentCity.Persistence.SaveStore.StateKey] = "another PC city";
+        SaveGameManager.Current = anotherCity;
+        Require(early.PrepareForTest() && !early.FailedForTest && early.CanStartForTest(), "accounting marker in one city stranded another city");
+
+        var unrelated = new PopulationRuntime(); unrelated.FailForTest(); SaveGameManager.Current = new NativeSave();
+        Require(!unrelated.PrepareForTest() && unrelated.FailedForTest, "non-accounting failure was cleared by save change");
+        Console.WriteLine("PASS actual accounting lifecycle: unmarked checkpoint resumes startup, marked reload refuses, old state discarded, generic failures retained (native cleanup doubles; actual Fail)");
     }
     private static void Require(bool condition, string message) { if (!condition) throw new Exception(message); }
 }
