@@ -1,0 +1,3663 @@
+{
+  "utc": "2026-11-03T03:01:34.073521+00:00",
+  "nativeEvidence": false,
+  "validationCommit": "759045fd38dfa81beb461ad6548ab8ba65290e68",
+  "schema": 25,
+  "sourceTrees": {
+    "Core": "1f2ed259f949fd553e1b8ab927539a6c1ddd779c",
+    "Runtime": "97591dd477d08c1f15edb78dc4fc23c0f08a663b",
+    "Persistence": "28518e455ae71fde554fc21dae79724b0e412b4f"
+  },
+  "productionDllSha256": "d5500ac99f3d1241964367cf623f25dd548e7bd027a6719047240b06d357477d",
+  "preservation": {
+    "base": "4ee0c8d",
+    "e5b": "241e648",
+    "e5e": "00506ed",
+    "merge": "759045fd38dfa81beb461ad6548ab8ba65290e68",
+    "parents": [
+      "241e648b264c3967aca8ddd52c8b4a21fede51e8",
+      "00506edf14bdfc35262ed5c54cdcd2b5032ce30c"
+    ],
+    "preservedParentFiles": [
+      {
+        "parent": "241e648",
+        "path": "Runtime/FoodBusinessCatalogue.cs",
+        "sha256": "3c2e7fe0ee3c7abee657759ee1a673fce203ad9906a89b64184ac5526b223fe2"
+      },
+      {
+        "parent": "241e648",
+        "path": "Runtime/FoodSupplyReader.cs",
+        "sha256": "06a1c65eebdc004890aa87807c02b066afbea039aa2a7b396e69efd806845e95"
+      },
+      {
+        "parent": "241e648",
+        "path": "Runtime/NativeFoodCandidates.cs",
+        "sha256": "bcb092a0f5bd5802aa4a88a9b6c0541033490ce0905a33596abc76c1372f63fc"
+      },
+      {
+        "parent": "241e648",
+        "path": "Runtime/NativeFoodMarket.cs",
+        "sha256": "01c0ebf6463014840aa18175d6cb0e3fc4cc70a79c32d9449f2b5b6d0d22e0cc"
+      },
+      {
+        "parent": "241e648",
+        "path": "docs/checks/e5b-complete-menu-results.json",
+        "sha256": "ab19b779af1bd76bef8575b0c5cc045161e4b1036a1680b5c420b2daf08b2ee8"
+      },
+      {
+        "parent": "241e648",
+        "path": "docs/checks/e5b-local5-allocation-results.json",
+        "sha256": "a0c434799cc4eec62cdd50ef636124ea1910c7787855b961e374deedd404ab25"
+      },
+      {
+        "parent": "241e648",
+        "path": "docs/checks/e5b-review-r1-results.json",
+        "sha256": "18af325198d9de221ad890ae63c403a33660a5e74a8a69c3f62f98a3bd43386c"
+      },
+      {
+        "parent": "241e648",
+        "path": "docs/checks/e5b-review-r2-results.json",
+        "sha256": "b3125474f6bb1a841477f67525880b89c80b5e510e4be017001e7d0b274ec450"
+      },
+      {
+        "parent": "241e648",
+        "path": "docs/checks/e5b-review-r3-results.json",
+        "sha256": "91a73ddc2cf322b73bb181c9593b9c59b76cd78f5d9f02e8b94d7809821dc23b"
+      },
+      {
+        "parent": "241e648",
+        "path": "docs/checks/e5b-review-r3-rig-test.md",
+        "sha256": "38f9be93d198ec24b05080f6a8688f343e91494cce763ccfdad9d40d3445d36e"
+      },
+      {
+        "parent": "241e648",
+        "path": "docs/perf/e5b-complete-menu.md",
+        "sha256": "bec00358bfd762eec81bbc02bf79b76b461c6101116efa9eb4535be99e5f5480"
+      },
+      {
+        "parent": "241e648",
+        "path": "docs/reviews/2026-11-02-e5b-complete-menu-pr-description.md",
+        "sha256": "1625852a3986d091cf5685b1b1ab4327f51a4edc39f99d000e9c2831f20edf10"
+      },
+      {
+        "parent": "241e648",
+        "path": "tests/ResidentInsightTests.cs",
+        "sha256": "793de1a21dabae4677c9e135cf989449bbe1ac87516e1c8a009e5c0da1a0e8a0"
+      },
+      {
+        "parent": "241e648",
+        "path": "tools/e5b-complete-menu-regression/E5bCompleteMenuRegression.csproj",
+        "sha256": "9b084d521d2c8ea7e9f96a69ca017472f9c6867fbd6cfecbcede4729376f0c52"
+      },
+      {
+        "parent": "241e648",
+        "path": "tools/e5b-complete-menu-regression/Program.cs",
+        "sha256": "9bdb8283a7ab06d84a9e329b09959e6488a2c8b49d4543b2d3e5e133a724bd50"
+      },
+      {
+        "parent": "241e648",
+        "path": "tools/e5b-complete-menu-regression/collect.py",
+        "sha256": "c14c2216ef4768e7cad77b4620dd4d0f6a4c3335ffaf26761d7100bbb088567c"
+      },
+      {
+        "parent": "241e648",
+        "path": "tools/e5b-native-rig-proof/Probe.cs",
+        "sha256": "4c618837ba35884642b1098e3f67f84c7b4d44e30e052e7d72b5b4d1951908bb"
+      },
+      {
+        "parent": "241e648",
+        "path": "tools/e5b-native-rig-proof/README.md",
+        "sha256": "0167fdbcbfc586cf6dc69984b7ce6d424305e53a81fd124e128940078ce4a2d5"
+      },
+      {
+        "parent": "241e648",
+        "path": "tools/e5b-native-rig-proof/analyze.py",
+        "sha256": "5367dbd5ea3803485c659e7fbe07232cc8043695da29eee93c69f0d0a109cc3c"
+      },
+      {
+        "parent": "241e648",
+        "path": "tools/e5b-native-rig-proof/build_probe.py",
+        "sha256": "3967183d37df57883227802972b9475ff48b5761474c52e7bc12e4b3ca3e8953"
+      },
+      {
+        "parent": "241e648",
+        "path": "tools/e5b-native-rig-proof/make_flow.py",
+        "sha256": "e07391b078804422c267824b608d9c0188bdda2c3be17db3c11e7cd1d8ccb892"
+      },
+      {
+        "parent": "241e648",
+        "path": "tools/e5b-native-rig-proof/produce_fixture.py",
+        "sha256": "1bb687f779be84c0a338d1d69e394c1879fc3b5074e17e85097a961077a51436"
+      },
+      {
+        "parent": "241e648",
+        "path": "tools/e5b-native-rig-proof/run_flow.py",
+        "sha256": "440b652400738f46eaeb48bc4d70b542e898a43e88b74132d8dd2cc4f058c099"
+      },
+      {
+        "parent": "241e648",
+        "path": "tools/e5b-native-rig-proof/test_lifecycle.py",
+        "sha256": "00dce8e397bafbcd44c35c198b397235841931d2444747fc6b1ddce413d33973"
+      },
+      {
+        "parent": "241e648",
+        "path": "tools/e5b-native-rig-proof/test_producer_preservation.py",
+        "sha256": "6bdcd1f20fbccc0643720b59107eb196f9e31ec7f7c2591fac962a4804c36ef3"
+      },
+      {
+        "parent": "241e648",
+        "path": "tools/e5b-native-rig-proof/test_producer_startup.py",
+        "sha256": "c558db8b1a7fd491311bb756a80fc60630fbd4e6eab8f608fab43032dc07feb6"
+      },
+      {
+        "parent": "241e648",
+        "path": "tools/e5b-native-rig-proof/test_selfcheck_evidence.py",
+        "sha256": "11b0d0562372df5c3798bfbd97f51f43f3186897fdc01290b00cd1859fb1ff27"
+      },
+      {
+        "parent": "241e648",
+        "path": "tools/food-candidate-regression/Program.cs",
+        "sha256": "6f816e87c9fe2d670d7c5e988047f32bbf119e749ff957b84b6a31399ce9678a"
+      },
+      {
+        "parent": "241e648",
+        "path": "tools/food-checkout-regression/E4MissingPriceChecks.cs",
+        "sha256": "2d9b8bf2cf19dd4281e93c175b03cc3bfb3c79daccde64c7efb39312b143757f"
+      },
+      {
+        "parent": "241e648",
+        "path": "tools/food-checkout-regression/E5bBagPolicyChecks.cs",
+        "sha256": "b4a7a149ff264c4a6acd0f8042893770f48c033d4b03c62a4723a8308ce93b44"
+      },
+      {
+        "parent": "241e648",
+        "path": "tools/food-checkout-regression/E5bReviewChecks.cs",
+        "sha256": "5a4482b051b906f78a76a78f8037a056abefa9d4e6693d9c97b102bcfb064336"
+      },
+      {
+        "parent": "241e648",
+        "path": "tools/food-checkout-regression/Program.cs",
+        "sha256": "90d257353bc97abccaddfc7176315cc924d7f080ac87a4b412aa904ce77ff056"
+      },
+      {
+        "parent": "00506ed",
+        "path": "Core/FoodProductMetadata.cs",
+        "sha256": "25d05873ec8702b2ad5afc024fb16059ba07d0c59312d02ab588d3f1a9e3b4bd"
+      },
+      {
+        "parent": "00506ed",
+        "path": "Core/FoodProductMetadataRegistry.cs",
+        "sha256": "531be1ed45988edee4f7b304761418c8fc32abeb33ba5c23606c42dfb67c74e8"
+      },
+      {
+        "parent": "00506ed",
+        "path": "Runtime/FoodProductMetadataApi.cs",
+        "sha256": "38bf43c11aa983c39f4020f3df67fbbd7318d5596cefc9256981d6786654f424"
+      },
+      {
+        "parent": "00506ed",
+        "path": "Runtime/FoodProductOverrideSettings.cs",
+        "sha256": "d531adac3d67e33b2e52ecf94b2f51af9cda76610e3512c0f18fc5fbb838cbe9"
+      },
+      {
+        "parent": "00506ed",
+        "path": "Runtime/PersistentCityMod.cs",
+        "sha256": "43cc4e15da33a5d2a4f6bb903ba0118d4bd9c527cefbbe1cf743450f06414faa"
+      },
+      {
+        "parent": "00506ed",
+        "path": "docs/checks/e5e-isolation-repair.json",
+        "sha256": "0c2d7948670103e0c415a9e7ee3cb1819e195aba975a989e454e9bb6be9ca52c"
+      },
+      {
+        "parent": "00506ed",
+        "path": "docs/checks/e5e-metadata-api-results.json",
+        "sha256": "f9d0669ef9462b8f94ac56968aaf9452e7432c9983091f0f7375056a2119f2f1"
+      },
+      {
+        "parent": "00506ed",
+        "path": "docs/checks/e5e-metadata-api.md",
+        "sha256": "583d566eb44fb98a29d0fae4a50725c541a6f1d8d8bb3784f04439af20c14e75"
+      },
+      {
+        "parent": "00506ed",
+        "path": "docs/checks/e5e-pr-description.md",
+        "sha256": "b90ae95ff3ad2a4e328234b1bd5fa44c3e75037af7e8f84e8b8854534bbda810"
+      },
+      {
+        "parent": "00506ed",
+        "path": "docs/checks/e5e-review-r1-results.json",
+        "sha256": "e2a72635e23dc33ca1be6716df9006215b1c38c316215e9a2fd21f322dacbc4e"
+      },
+      {
+        "parent": "00506ed",
+        "path": "docs/food-product-metadata-api.md",
+        "sha256": "908384527c3cb654da2ed000bded91014da276c23108a997722e7510a0cedfc3"
+      },
+      {
+        "parent": "00506ed",
+        "path": "docs/perf/e5e-metadata-api-provider-count-results.json",
+        "sha256": "783b393c9f77056bd0626b9c4653f697213461cd3d97b8103b64a3b9efb34e89"
+      },
+      {
+        "parent": "00506ed",
+        "path": "docs/perf/e5e-metadata-api-results.json",
+        "sha256": "7d119545496344d3cb44eabc2d76d15a6db27bb44b84c4b69c22f28e09f3aa85"
+      },
+      {
+        "parent": "00506ed",
+        "path": "docs/perf/e5e-metadata-api.md",
+        "sha256": "34a355fd9c5a4bb3eca285fe59f265ff8bfcfc600dc108f5d4436ba4d7f7884f"
+      },
+      {
+        "parent": "00506ed",
+        "path": "tests/FoodMetadataApiHeldTests.cs",
+        "sha256": "de14536dc31d502d7cd7756cedcc579988c1fa0be7fdd5433ff638e3af383695"
+      },
+      {
+        "parent": "00506ed",
+        "path": "tests/FoodMetadataApiTests.cs",
+        "sha256": "7b20d09b38d6a73256d19a1cef4d8ffe1c5a4b9dc8980680d2cc55fc1d53dd66"
+      },
+      {
+        "parent": "00506ed",
+        "path": "tests/FoodProductMetadataTests.cs",
+        "sha256": "70d66eea93dae040fa5aa5db89fa344fc6eab97e2c2eece1b506ac2900a5e960"
+      },
+      {
+        "parent": "00506ed",
+        "path": "tools/food-metadata-api-regression/FoodMetadataApiRegression.csproj",
+        "sha256": "ee8c1a7213a5b91cd912654302b5417df33eda4dc8270ecda0e42ba37675e44e"
+      },
+      {
+        "parent": "00506ed",
+        "path": "tools/food-metadata-api-regression/Program.cs",
+        "sha256": "5e2e9a163b60c2f2e7323ac1da14351333487380752ce2865ef9bd210cb5a9e2"
+      },
+      {
+        "parent": "00506ed",
+        "path": "tools/food-metadata-api-regression/prepare.py",
+        "sha256": "d4d7438ca6b8f4b99a93d658cf7247c60cac6cec84b25445e8e0146d224d7e50"
+      },
+      {
+        "parent": "00506ed",
+        "path": "tools/food-metadata-api-regression/source_checks.py",
+        "sha256": "9abe153465c90f1ce7f61693c70fc97f7456df14a54c836276eafb6eed7f27c7"
+      },
+      {
+        "parent": "00506ed",
+        "path": "tools/food-metadata-api-regression/validate.py",
+        "sha256": "1e3211e9dc155bab3147b35067f435f95e1681d1062003c41b369d4983fb45bf"
+      }
+    ],
+    "checks": {
+      "bothDocumentationAdditionsPreserved": true,
+      "e5bInGameSectionUnchanged": true,
+      "e5bSharedChecklistPrefixUnchanged": true,
+      "e5eOwningChecksUnchanged": true,
+      "persistenceAndSaveRegressionUnchanged": true
+    },
+    "intentionalIntegrationPaths": [
+      "CHECKS.md",
+      "Core/CompleteFoodMenu.cs",
+      "Core/FoodProductMetadataResolver.cs",
+      "README.md",
+      "docs/checks/e5b-complete-menu.md",
+      "docs/checks/rig-2026-11-06-checklist.md",
+      "docs/roadmap.md",
+      "tests/CompleteFoodMenuTests.cs"
+    ]
+  },
+  "focusedIntegrationRedGreen": [
+    {
+      "phase": "red",
+      "exit": 1,
+      "expectedFailure": true,
+      "command": [
+        "dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--filter",
+        "FullyQualifiedName~AdmissionUsesPublishedApiClassWithConfigPrecedenceAndDefaultFallback"
+      ],
+      "log": "build/e5b-sync-base/admission-red.log",
+      "sha256": "2a6381ec102b73f52d8fe682b6cbccfa6e09b06db297a97ccc8778b37040b93e",
+      "summary": "Failed!  - Failed:     8, Passed:     0, Skipped:     0, Total:     8, Duration: 73 ms - PersistentCity.Tests.dll (net10.0)"
+    },
+    {
+      "phase": "green",
+      "exit": 0,
+      "expectedFailure": false,
+      "command": [
+        "dotnet.exe",
+        "test",
+        "tests/PersistentCity.Tests.csproj",
+        "--filter",
+        "FullyQualifiedName~AdmissionUsesPublishedApiClassWithConfigPrecedenceAndDefaultFallback"
+      ],
+      "log": "build/e5b-sync-base/admission-green.log",
+      "sha256": "a2c11369096f247acf7e8b3e02de0173ddcd050be5465ba73a3023cb2cd8d59a",
+      "summary": "Passed!  - Failed:     0, Passed:     8, Skipped:     0, Total:     8, Duration: 16 ms - PersistentCity.Tests.dll (net10.0)"
+    }
+  ],
+  "rigProofOfflinePython": {
+    "command": [
+      "python",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tools/e5b-native-rig-proof",
+      "-p",
+      "test_*.py",
+      "-v"
+    ],
+    "exit": 0,
+    "log": "build/e5b-sync-base/rig-proof-python.log",
+    "sha256": "713673b163e9df937a20497804c7f366b86e196508fbb089d4518e6631ed707b",
+    "utc": "2026-11-03T02:47:18.754498+00:00"
+  },
+  "unitSummaries": [
+    "Passed!  - Failed:     0, Passed:  2804, Skipped:     0, Total:  2804, Duration: 2 m 4 s - PersistentCity.Tests.dll (net10.0)",
+    "Passed!  - Failed:     0, Passed:  2804, Skipped:     0, Total:  2804, Duration: 1 m 58 s - PersistentCity.Tests.dll (net10.0)",
+    "Passed!  - Failed:     0, Passed:  2804, Skipped:     0, Total:  2804, Duration: 2 m 3 s - PersistentCity.Tests.dll (net10.0)"
+  ],
+  "sourceSha256": {
+    "Core/CompleteFoodMenu.cs": "0c78163acf25011ce9857eebe95b90970fdc32a58e8c721e9b823b5ca43748ab",
+    "Core/FoodProductMetadataResolver.cs": "d6a72caef02e07f180e3a2989da94e125bab6ce59a28ad70b9635e4c4f423c95",
+    "tests/CompleteFoodMenuTests.cs": "76d9d2538379588cec6a68c732eb991ae8121794dcec4f116d56c0413f35eee2"
+  },
+  "matrixInvocation": {
+    "command": [
+      "python",
+      "tools/food-metadata-api-regression/validate.py"
+    ],
+    "startedUtc": "2026-11-03T02:44:53.374258+00:00",
+    "finishedUtc": "2026-11-03T03:01:21.447185+00:00",
+    "exit": 0
+  },
+  "matrix": {
+    "utc": "2026-11-03T03:01:21.426699+00:00",
+    "nativeEvidence": false,
+    "steps": [
+      {
+        "name": "full-required-matrix",
+        "command": [
+          "python.exe",
+          "tools/food-metadata-regression/validate.py"
+        ],
+        "exit": 0,
+        "sha256": "75549570a0d34dc54450864c5df5c2ecd9ed067903341bd09f2db6aa2e7f64b6",
+        "log": "build/food-metadata-api-validation/full-required-matrix.log"
+      },
+      {
+        "name": "e5a-source",
+        "command": [
+          "python.exe",
+          "tools/e5a-eligibility-regression/source_checks.py"
+        ],
+        "exit": 0,
+        "sha256": "a44c70ed440840046bad018e1e3992cd0b2e68cbb20cd4802c5be5debb7f7a90",
+        "log": "build/food-metadata-api-validation/e5a-source.log"
+      },
+      {
+        "name": "e5e-source",
+        "command": [
+          "python.exe",
+          "tools/food-metadata-api-regression/source_checks.py"
+        ],
+        "exit": 0,
+        "sha256": "c9560710288379b0c0f2a13a8809d7f4b2f140bb43368384b1dc160b4134f168",
+        "log": "build/food-metadata-api-validation/e5e-source.log"
+      },
+      {
+        "name": "final-api-performance",
+        "command": [
+          "dotnet.exe",
+          "run",
+          "--project",
+          "tools/food-metadata-api-regression/FoodMetadataApiRegression.csproj",
+          "--configuration",
+          "Release"
+        ],
+        "exit": 0,
+        "sha256": "a1abb97f8ff21cddc799c5be985d94cf4a69567cf8378befd9e68c4b0cd22970",
+        "log": "build/food-metadata-api-validation/final-api-performance.log"
+      }
+    ],
+    "nested": {
+      "d3a": {
+        "prepare": {
+          "command": [
+            "python.exe",
+            "tools/e4-menu-regression/prepare.py"
+          ],
+          "started": "2026-11-03T02:44:53.551517+00:00",
+          "seconds": 0.24165030010044575,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\prepare.log",
+          "sha256": "dee8fcfd30c98d90b1c2e71e14b4eaba04fe89a2de97459b8eda58ef5feddab7"
+        },
+        "build": {
+          "command": [
+            "python.exe",
+            "tools/build.py",
+            "--game-managed",
+            "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed"
+          ],
+          "started": "2026-11-03T02:44:53.789434+00:00",
+          "seconds": 2.400469599990174,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\build.log",
+          "sha256": "2ee0eae54dd86449edf42180c565000c20ef0f8070c88eeafc990f0f99d7b060"
+        },
+        "test": {
+          "command": [
+            "dotnet.exe",
+            "test",
+            "tests/PersistentCity.Tests.csproj"
+          ],
+          "started": "2026-11-03T02:44:56.629521+00:00",
+          "seconds": 132.67078510019928,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\test.log",
+          "sha256": "3fdeea4f39fcf1de1b88ccf19433b023a3a40fb7f6f181cef60e749d5f88bb29"
+        },
+        "list-tests": {
+          "command": [
+            "dotnet.exe",
+            "test",
+            "tests/PersistentCity.Tests.csproj",
+            "--no-build",
+            "--list-tests"
+          ],
+          "started": "2026-11-03T02:47:09.634627+00:00",
+          "seconds": 1.4769038001541048,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\list-tests.log",
+          "sha256": "0b5be42eee775d106128439e9be550faa93c97d58e412a53aa6073dfb8f70056"
+        },
+        "core-identity": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\core-identity-regression\\CoreIdentityRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:47:11.421327+00:00",
+          "seconds": 7.396518000168726,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\core-identity.log",
+          "sha256": "e70173e17471aeeeb4e0f8f5d9415995ddaaff24c4e87f0b4ff9234fcb10d403"
+        },
+        "diagnostic-response": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\diagnostic-response-regression\\DiagnosticResponseRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:47:19.170944+00:00",
+          "seconds": 2.6072603999637067,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\diagnostic-response.log",
+          "sha256": "a89f8e2948c58df6f28f5d0bf439ea876f62fe55dd2f032fb9d77ea4d0a7b103"
+        },
+        "event-observation": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\event-observation-regression\\EventObservationRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:47:22.065182+00:00",
+          "seconds": 4.754105600062758,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\event-observation.log",
+          "sha256": "cc314ec683de899dc12c92231c694eb63cc52de0449066aab9099e84ba5bfb22"
+        },
+        "food-catalogue": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\food-catalogue-regression\\FoodCatalogueRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:47:27.105796+00:00",
+          "seconds": 4.847723900107667,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\food-catalogue.log",
+          "sha256": "07a386cdd040f6c0645db7447b63bc8ea3e2914da33a541f0e62d15aa5d4ed82"
+        },
+        "food-checkout": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\food-checkout-regression\\FoodCheckoutRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:47:32.249810+00:00",
+          "seconds": 6.138958499999717,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\food-checkout.log",
+          "sha256": "cbe2776c5c1ce9a9111c5d473d6a41a45faaa29d723bd6b83554e5d395237dc1"
+        },
+        "food-hours": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\food-hours-regression\\FoodHoursRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:47:38.677446+00:00",
+          "seconds": 2.752642699982971,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\food-hours.log",
+          "sha256": "2410218689a17bf8e5ae868d3025d1a8bd9e449d7fd49d83728819236ce6607c"
+        },
+        "food-household-catalogue": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\food-household-catalogue-regression\\FoodHouseholdCatalogueRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:47:41.712147+00:00",
+          "seconds": 2.7107362002134323,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\food-household-catalogue.log",
+          "sha256": "b0f19cfd0acbbded5af38461d6e0bbe596b236cd83207afa0223100fdcfb8609"
+        },
+        "food-ownership": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\food-ownership-regression\\FoodOwnershipRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:47:44.722041+00:00",
+          "seconds": 4.72173049999401,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\food-ownership.log",
+          "sha256": "7d2e0de095246f1d5bd5a8344c8fa6307594d88abc98daa30b3c0223308716e1"
+        },
+        "food-supply": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\food-supply-regression\\FoodSupplyRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:47:49.744973+00:00",
+          "seconds": 2.448655500076711,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\food-supply.log",
+          "sha256": "bea33031a003404270de233cbd073eb44deacac65f41be406a1eae3b70385683"
+        },
+        "frame-observation": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\frame-observation-regression\\FrameObservationRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:47:52.491954+00:00",
+          "seconds": 2.2403532001189888,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\frame-observation.log",
+          "sha256": "7e5da72d80f98e71b464d3c9f918cf9457b5350bfcafc294e80e823b646b2d02"
+        },
+        "gate-access": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\gate-access-regression\\GateAccessRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:47:55.031359+00:00",
+          "seconds": 4.045651899883524,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\gate-access.log",
+          "sha256": "6e9877acee2b84dfcc2de1b4d7d7236ac991a58c1a89fbe420966d127bf4afae"
+        },
+        "road-ceiling": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\road-ceiling-regression\\RoadCeilingRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:47:59.362071+00:00",
+          "seconds": 3.7598037999123335,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\road-ceiling.log",
+          "sha256": "895bf78ce78f6cceb24e97e6ac8d4cc6c68fa71cfb5b0e54f707e9bf46369762"
+        },
+        "road-handoff": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\road-handoff-regression\\RoadHandoffRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:48:03.435811+00:00",
+          "seconds": 3.2831482000183314,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\road-handoff.log",
+          "sha256": "5de54d90bad9b212aac21705900b22ad270fa18365f1284fc4e988bf67a5f23e"
+        },
+        "road-invalidation": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\road-invalidation-regression\\RoadInvalidationRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:48:07.007510+00:00",
+          "seconds": 5.240884699858725,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\road-invalidation.log",
+          "sha256": "11bcbab6bdde92b021b10a41d941aa322629fadbc821906b55ed9aa7d5d7e656"
+        },
+        "road-speed": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\road-speed-regression\\RoadSpeedRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:48:12.573018+00:00",
+          "seconds": 3.933800800004974,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\road-speed.log",
+          "sha256": "5242c509cd90b21734fe4321b43dcbba531282677f91d66ddc8931b9b07cef19"
+        },
+        "route-discovery": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\route-discovery-regression\\RouteDiscoveryRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:48:16.805738+00:00",
+          "seconds": 10.783163599902764,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\route-discovery.log",
+          "sha256": "eff274aaa88d1147e64edb58c0cdfa86bcc9101e03154b3d3a78250ea4b14d8f"
+        },
+        "save-contract": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\save-contract-regression\\SaveContractRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:48:27.880178+00:00",
+          "seconds": 5.758101999992505,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\save-contract.log",
+          "sha256": "68c21c4a7fbb5f278106c1beab93b8a556e47719719d786723781a5c721e7d88"
+        },
+        "startup-clock": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\startup-clock-regression\\StartupClockRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:48:33.932574+00:00",
+          "seconds": 4.631722699850798,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\startup-clock.log",
+          "sha256": "9a2ca7e0ae5cc2fcc649bc634e81cc71ebb50f84b97575c995f3b6fb52ac93e9"
+        },
+        "traffic-closure": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\traffic-closure-regression\\TrafficClosureRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:48:38.861700+00:00",
+          "seconds": 3.722130300011486,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\traffic-closure.log",
+          "sha256": "708d6590f5351a9c1adf0b939e6775caa82602e1d6ec261b597977db98e808aa"
+        },
+        "traffic-queue": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\traffic-queue-regression\\TrafficQueueRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:48:42.883401+00:00",
+          "seconds": 3.656930300174281,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\traffic-queue.log",
+          "sha256": "897d1d2e5c92ef25374e61f7da26e9dea2849c91f3495eb8bc65210eb2e4b9c4"
+        },
+        "walking-quote": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\walking-quote-regression\\WalkingQuoteRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:48:46.823180+00:00",
+          "seconds": 3.893851100001484,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\walking-quote.log",
+          "sha256": "aadc6b307f80ba394e20bae864ac132336bc7113eba34734954992e2f44b0ac9"
+        },
+        "campaign-reader": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\campaign-reader-regression\\CampaignReaderRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:48:51.008298+00:00",
+          "seconds": 3.738934800028801,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\campaign-reader.log",
+          "sha256": "6a558ffcae359482b99b3a31a2ef5cb4bba701bf4fcc71265a53ff081abbe1c3"
+        },
+        "donut-feasibility": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\donut-feasibility-regression\\DonutFeasibilityRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:48:55.030918+00:00",
+          "seconds": 2.975568199995905,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\donut-feasibility.log",
+          "sha256": "b3cc3368f21085116f88654b9ce9304f75d02650ab2b0cfc9768208be8e6c8e2"
+        },
+        "cupcake-feasibility": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\cupcake-feasibility-regression\\CupcakeFeasibilityRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:48:58.332293+00:00",
+          "seconds": 2.743880599969998,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\cupcake-feasibility.log",
+          "sha256": "210844c64599a32bf722775fe7450f7d177149da81060fcddac6a1b414f1801f"
+        },
+        "salad-feasibility": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\salad-feasibility-regression\\SaladFeasibilityRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:49:01.359449+00:00",
+          "seconds": 2.7451567000243813,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\salad-feasibility.log",
+          "sha256": "5f438399e8b253e70c4594b9d7f9a5fec6872e48bbc018198f7ced8a6cefec82"
+        },
+        "rival-outflow": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\rival-outflow-regression\\RivalOutflowRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:49:04.463678+00:00",
+          "seconds": 10.029997400008142,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\rival-outflow.log",
+          "sha256": "5c3d9a4cc7928a98d87c47f16879a98c9dfab459c9f499100312119cce2e122f"
+        },
+        "awareness": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\awareness-regression\\AwarenessRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:49:14.795942+00:00",
+          "seconds": 20.476977500133216,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\awareness.log",
+          "sha256": "8ae39b17e49193072b8632415b366173b1a3a537976d296e5bcd10c0e06e9bfd"
+        },
+        "food-candidate": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\food-candidate-regression\\FoodCandidateRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:49:35.563738+00:00",
+          "seconds": 3.2725229000207037,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\food-candidate.log",
+          "sha256": "dfc00f9468d17b417b10f3f85918b3fb0e40c6bd1d7b94da9776e841c5c106f3"
+        },
+        "outflow-line": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\outflow-line-regression\\OutflowLineRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:49:39.125374+00:00",
+          "seconds": 4.274160000029951,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\outflow-line.log",
+          "sha256": "d412d6a2d8c9f4f57706da2b07755c3358f1012c5278f1096d04128a357a3890"
+        },
+        "native-command": {
+          "command": [
+            "python.exe",
+            "tools/native-command-regression/run.py"
+          ],
+          "started": "2026-11-03T02:49:43.682719+00:00",
+          "seconds": 2.5732370000332594,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\native-command.log",
+          "sha256": "bd610e1a32a30f6ad7638fc2a65ae7bf8bea9d44baba81884f821aea4ed0a9aa"
+        },
+        "physical-selection": {
+          "command": [
+            "python.exe",
+            "tools/physical-selection-regression/run.py"
+          ],
+          "started": "2026-11-03T02:49:46.581255+00:00",
+          "seconds": 3.807485300116241,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\physical-selection.log",
+          "sha256": "2318d4547709f2b22e501ba9f2e87fa85670f2132efa278d3a2ef7499e4f1fe7"
+        },
+        "vehicle-ownership": {
+          "command": [
+            "python.exe",
+            "tools/vehicle-ownership-regression/run.py"
+          ],
+          "started": "2026-11-03T02:49:50.686991+00:00",
+          "seconds": 2.5949566999915987,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\vehicle-ownership.log",
+          "sha256": "7539f54a1b778a54ca9bc75f398a40c0491fb40281611c8c8efbbc473dd32e46"
+        },
+        "optional-stop": {
+          "command": [
+            "python.exe",
+            "tools/optional-stop-regression/run.py"
+          ],
+          "started": "2026-11-03T02:49:53.572745+00:00",
+          "seconds": 3.967097499873489,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\optional-stop.log",
+          "sha256": "f7d3a55ef6b939ada52be73e50fcae27ead5eb4643a5c9f7516905986ecddaa4"
+        },
+        "simulate": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/simulate/Simulate.csproj",
+            "--",
+            "28",
+            "build/harness-demo"
+          ],
+          "started": "2026-11-03T02:49:57.849517+00:00",
+          "seconds": 6.469670699909329,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\simulate.log",
+          "sha256": "4a2353803e79d3fdc13e0fea8eeee27eaa5a11592a168e322ae666b4ab2c0c46"
+        },
+        "food-routines": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/food-routines/FoodRoutines.csproj",
+            "--configuration",
+            "Release",
+            "--",
+            "build/harness-food-routines-demo",
+            "957"
+          ],
+          "started": "2026-11-03T02:50:04.635579+00:00",
+          "seconds": 6.582554399967194,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\food-routines.log",
+          "sha256": "0abe0517796dbbb5771f89869eb3ad3128ee1805dcef6ed0798541ecfad6b025"
+        },
+        "food-demand": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/food-demand/FoodDemand.csproj",
+            "--",
+            "build/harness-food-demand-demo"
+          ],
+          "started": "2026-11-03T02:50:11.695386+00:00",
+          "seconds": 4.195229300064966,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\food-demand.log",
+          "sha256": "e81e8c5aac5d927a8dc07f44c1069ecd90d6f0c5b1f9e39926cf7a7f4e47c18b"
+        },
+        "donut-source": {
+          "command": [
+            "python.exe",
+            "tools/donut-feasibility-regression/source_checks.py"
+          ],
+          "started": "2026-11-03T02:50:15.891347+00:00",
+          "seconds": 0.09891130006872118,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\donut-source.log",
+          "sha256": "cc6c0de139d40371e4fba40e86518707c7a4310b794607cd59d28b78b695852e"
+        },
+        "salad-source": {
+          "command": [
+            "python.exe",
+            "tools/salad-feasibility-regression/source_checks.py"
+          ],
+          "started": "2026-11-03T02:50:15.989139+00:00",
+          "seconds": 0.08256170013919473,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\salad-source.log",
+          "sha256": "320b305ad04a0ccc371ef2a6bea1d1a9a3357023c4ae74105b832eb60f7451b7"
+        },
+        "a5-inspector": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\a5-inspector-regression\\A5InspectorRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:50:16.393658+00:00",
+          "seconds": 6.006682300008833,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\a5-inspector.log",
+          "sha256": "19cd86d186c496a5ccd3861f308bf3b313a94826ce1c6ac6fad971e142fc9858"
+        },
+        "agency-payment": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\agency-payment-regression\\AgencyPaymentRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:50:22.704800+00:00",
+          "seconds": 2.614689600188285,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\agency-payment.log",
+          "sha256": "9c992c52c0dc064d45e0fa7311e87ffca3cb54fb53609540381fc88aa3edcf07"
+        },
+        "campaign-awareness": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\campaign-awareness-regression\\CampaignAwarenessRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:50:25.603021+00:00",
+          "seconds": 7.849933199817315,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\campaign-awareness.log",
+          "sha256": "41dcb17c55ef69830d80c511c4a22095112af5dd104086aff974f9c6f35bb33c"
+        },
+        "e3-remaining-feasibility": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\e3-remaining-feasibility-regression\\E3RemainingFeasibilityRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:50:33.744818+00:00",
+          "seconds": 2.8359745000489056,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\e3-remaining-feasibility.log",
+          "sha256": "7720d2e2a1b5144d63dbe7f514297d3c2f0a41f78c317d7d31ce8c15d1edeeba"
+        },
+        "e4-menu": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\e4-menu-regression\\E4MenuRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:50:36.879704+00:00",
+          "seconds": 21.585917100077495,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\e4-menu.log",
+          "sha256": "b7834a106f8cffebf47fd4f52616fae016c89e6b1f7ad8614e3c5cd421a750a9"
+        },
+        "e5a-eligibility": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\e5a-eligibility-regression\\E5aEligibilityRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:50:58.761602+00:00",
+          "seconds": 6.354384500067681,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\e5a-eligibility.log",
+          "sha256": "f937037c99cd71c764b834697e154aa8a9c265587351eb3d6f0e6bd444b0a334"
+        },
+        "e5b-complete-menu": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\e5b-complete-menu-regression\\E5bCompleteMenuRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:51:05.400945+00:00",
+          "seconds": 2.634701499948278,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\e5b-complete-menu.log",
+          "sha256": "06b61d37b4ea99b5fbb3f3a652e0412953625db1269ee4bbcb3c812ec636be0d"
+        },
+        "food-choice": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\food-choice-regression\\FoodChoiceRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:51:08.349090+00:00",
+          "seconds": 5.4254115000367165,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\food-choice.log",
+          "sha256": "89d88a35908db742d9ef18e4bfa8fa41828f01ca7c1df38ec913d44c712c4aee"
+        },
+        "food-memory": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\food-memory-regression\\FoodMemoryRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:51:14.067570+00:00",
+          "seconds": 9.070543400011957,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\food-memory.log",
+          "sha256": "9c072e80ae83b744ea1fb7358c33d263dd6e212af4e71ed589409a67fc8a277f"
+        },
+        "food-metadata-api": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\food-metadata-api-regression\\FoodMetadataApiRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:51:23.477505+00:00",
+          "seconds": 3.8527012998238206,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\food-metadata-api.log",
+          "sha256": "20fb18c50db71a95bfdc89cbb856b032a28b629fe5d8e43c9014d0a7f624e90f"
+        },
+        "food-metadata": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\food-metadata-regression\\FoodMetadataRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:51:27.656477+00:00",
+          "seconds": 10.44308579992503,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\food-metadata.log",
+          "sha256": "24b73e1d984f309db12fc171f0a1a34c4275748ac37061be7bc765a496ab800a"
+        },
+        "food-regulars": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\food-regulars-regression\\FoodRegularsRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:51:38.400844+00:00",
+          "seconds": 7.455122199840844,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\food-regulars.log",
+          "sha256": "3bc1b7a299220be92ccea745385e3bbd5d9d59049d51748deb7632f478f10c66"
+        },
+        "frenchfries-feasibility": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\frenchfries-feasibility-regression\\FrenchFriesFeasibilityRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:51:46.142455+00:00",
+          "seconds": 2.828268999932334,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\frenchfries-feasibility.log",
+          "sha256": "99ac3636328db63bf48a925e109a17cf5eeb2d3106b808896e7da4923aa0e39d"
+        },
+        "held-tuning": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\held-tuning-regression\\HeldTuningRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:51:49.275106+00:00",
+          "seconds": 5.172993400134146,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\held-tuning.log",
+          "sha256": "4e3343894bac29b854264771e7a683ed1c55ce823f0da48b996a0fe0d24e0657"
+        },
+        "icecream-feasibility": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\icecream-feasibility-regression\\IcecreamFeasibilityRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:51:54.762736+00:00",
+          "seconds": 3.1383517999202013,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\icecream-feasibility.log",
+          "sha256": "4ad3fecea73602825d1b84a512b57198fdc725af0bf5441fd46e686c071d556a"
+        },
+        "interior-guard": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\interior-guard-regression\\InteriorGuardRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:51:58.227480+00:00",
+          "seconds": 2.6917032001074404,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\interior-guard.log",
+          "sha256": "258907a502529c4d16c6daa6496f7614ecbf74f81a7ae595ff4feb122f7b4ad3"
+        },
+        "market-research": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\market-research-regression\\MarketResearchRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:52:01.208282+00:00",
+          "seconds": 4.726170600159094,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\market-research.log",
+          "sha256": "be7db55daa5a93a9cd30a906dcbb7560b2f0f0160515494847b8ee97cf71edab"
+        },
+        "name-identity": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\name-identity-regression\\NameIdentityRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:52:06.230531+00:00",
+          "seconds": 17.62286899983883,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\name-identity.log",
+          "sha256": "6bd4add186e546e7bc8cefbe9e5424b630dbb3bcf3d5034b70df20821c99ecbf"
+        },
+        "pizza-feasibility": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\pizza-feasibility-regression\\PizzaFeasibilityRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:52:24.161555+00:00",
+          "seconds": 3.102836500154808,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\pizza-feasibility.log",
+          "sha256": "4e0765e53dfde8e6ee051aa08d99abdd3a7a309c786f2ef36effe4761b82155f"
+        },
+        "rival-memory": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\rival-memory-regression\\RivalMemoryRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:52:27.550092+00:00",
+          "seconds": 3.980115999933332,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\rival-memory.log",
+          "sha256": "aee9b3ffb4738b68b724bc182c9237c16951ba0b11a059d854385ff113f5c5f8"
+        },
+        "street-proxy": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\street-proxy-regression\\StreetProxyRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:52:31.853296+00:00",
+          "seconds": 3.2736646998673677,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\street-proxy.log",
+          "sha256": "e6425e0ab9905663a0ed4a6ae3355b3cce671bd0cc59adcb09a405be5a9f3d70"
+        },
+        "weather": {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools\\weather-regression\\WeatherRegression.csproj",
+            "--configuration",
+            "Release"
+          ],
+          "started": "2026-11-03T02:52:35.420146+00:00",
+          "seconds": 5.102948600193486,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\weather.log",
+          "sha256": "c5b6c50c54f958ef51239b61b9736cc6dacb6fbc369f222498eb83b8c7d84afa"
+        },
+        "icecream-source": {
+          "command": [
+            "python.exe",
+            "tools/icecream-feasibility-regression/source_checks.py"
+          ],
+          "started": "2026-11-03T02:52:40.806768+00:00",
+          "seconds": 0.10980809992179275,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\icecream-source.log",
+          "sha256": "3216ba55dfb65e001666ba7649eb260eb6b0c0029a72fd76f15379dc3fc93572"
+        },
+        "pizza-source": {
+          "command": [
+            "python.exe",
+            "tools/pizza-feasibility-regression/source_checks.py"
+          ],
+          "started": "2026-11-03T02:52:41.224485+00:00",
+          "seconds": 0.09034309978596866,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\pizza-source.log",
+          "sha256": "87e39693d34d127342f521ea0c46c4e227665c415186cf013daaf05d292665f3"
+        },
+        "frenchfries-source": {
+          "command": [
+            "python.exe",
+            "tools/frenchfries-feasibility-regression/source_checks.py"
+          ],
+          "started": "2026-11-03T02:52:41.635801+00:00",
+          "seconds": 0.12113199988380075,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\frenchfries-source.log",
+          "sha256": "f0f597c8870c839ec87883c74cc943db8ee26bff0bac0fa35d11d92879b9b3e7"
+        },
+        "c4-save-comparison": {
+          "command": [
+            "python.exe",
+            "tools/market-research-regression/compare_save_baseline.py",
+            "--baseline",
+            "HEAD"
+          ],
+          "started": "2026-11-03T02:52:42.385695+00:00",
+          "seconds": 16.83694799989462,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\c4-save-comparison.log",
+          "sha256": "4a93d0cee40ddfab6943f87963aa52e34f2a56d7391d2abe62eab9f98ff5d01f"
+        },
+        "e4-default-comparison": {
+          "command": [
+            "python.exe",
+            "tools/e4-menu-regression/compare-default.py"
+          ],
+          "started": "2026-11-03T02:52:59.534994+00:00",
+          "seconds": 10.05587420007214,
+          "exit": 0,
+          "log": "build\\d3a\\gates\\e4-default-comparison.log",
+          "sha256": "6560270987a43294b7a5e2f0f639f192ed687a5b19512f5d32c43611a0a0337c"
+        }
+      },
+      "d4": [
+        {
+          "command": [
+            "python.exe",
+            "tools/build.py",
+            "--game-managed",
+            "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Big Ambitions\\Big Ambitions_Data\\Managed"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/01.txt",
+          "sha256": "2ee0eae54dd86449edf42180c565000c20ef0f8070c88eeafc990f0f99d7b060"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "test",
+            "tests/PersistentCity.Tests.csproj",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/02.txt",
+          "sha256": "eb9ab49d4622ed3e3281ccd8e3c5ba6c53728140889da92629bcb825a7f41777"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "test",
+            "tests/PersistentCity.Tests.csproj",
+            "--no-build",
+            "--list-tests",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/03.txt",
+          "sha256": "0b5be42eee775d106128439e9be550faa93c97d58e412a53aa6073dfb8f70056"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/a5-inspector-regression/A5InspectorRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/04.txt",
+          "sha256": "8f565d845ef89d56c5788c54db039b5107b195d84928d5b1f536a1f431f91086"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/agency-payment-regression/AgencyPaymentRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/05.txt",
+          "sha256": "076bd247e851bb46774cd40fc877d3f5b8fd6004a8f474a5b36e7002ac49c584"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/awareness-regression/AwarenessRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/06.txt",
+          "sha256": "1f41622cff01f0d3766b729e65ebcb48a7dccb53dd9d9c138de4e162f23d79fa"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/campaign-awareness-regression/CampaignAwarenessRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/07.txt",
+          "sha256": "5268231590ade178d6ebdc3006745c65127df381e6668f7d2888d9f3f8d415ae"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/campaign-reader-regression/CampaignReaderRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/08.txt",
+          "sha256": "52794875e49520c2ad3ee67605a61d3de5360e499878340f58eb0882c8706d37"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/core-identity-regression/CoreIdentityRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/09.txt",
+          "sha256": "644f9e4a91f4438f78a7aa5cea403a50b3e7a9f5a4b29a3692de4bd709966b5f"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/cupcake-feasibility-regression/CupcakeFeasibilityRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/10.txt",
+          "sha256": "b26a6d222f0163e6c4319637c6b28f754a7ac6b6a2d16713f92abbee16742017"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/diagnostic-response-regression/DiagnosticResponseRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/11.txt",
+          "sha256": "a89f8e2948c58df6f28f5d0bf439ea876f62fe55dd2f032fb9d77ea4d0a7b103"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/donut-feasibility-regression/DonutFeasibilityRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/12.txt",
+          "sha256": "9dc172e7d7b422f2301bace229d2349a87dbf7a975b7c07bb0d4575576ea2945"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/e3-remaining-feasibility-regression/E3RemainingFeasibilityRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/13.txt",
+          "sha256": "7720d2e2a1b5144d63dbe7f514297d3c2f0a41f78c317d7d31ce8c15d1edeeba"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/e4-menu-regression/E4MenuRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/14.txt",
+          "sha256": "09c9d14b5499393476a025dd8e02febe13899ceaeabc55c7c3d96823d51cc8bd"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/e5a-eligibility-regression/E5aEligibilityRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/15.txt",
+          "sha256": "0325c292c3230f23b3c25555bc949c57fb489e744bf49ec9e12b9dcc89e839d5"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/e5b-complete-menu-regression/E5bCompleteMenuRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/16.txt",
+          "sha256": "7554182ed265d54d84501b40ee3d4240c88f4a95d4656c27351cc0c39d59b46e"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/event-observation-regression/EventObservationRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/17.txt",
+          "sha256": "cc314ec683de899dc12c92231c694eb63cc52de0449066aab9099e84ba5bfb22"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/food-candidate-regression/FoodCandidateRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/18.txt",
+          "sha256": "e95a6b1613c292f9263bd4abd6054c37a8e14174be12d89cb60ccdd8da7cfa06"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/food-catalogue-regression/FoodCatalogueRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/19.txt",
+          "sha256": "7c632696fa91746c341ba2688574d66f0544c512c310596dadf4b31ac368b115"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/food-checkout-regression/FoodCheckoutRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/20.txt",
+          "sha256": "a98ace86deef1d254f2148842d83affaaaddf812573cdc9e76435367ee68007a"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/food-choice-regression/FoodChoiceRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/21.txt",
+          "sha256": "66b8a7944eee6eee5d7ec1cad7e6e875dd3e9595c1986ec56902acbb37ba84ee"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/food-hours-regression/FoodHoursRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/22.txt",
+          "sha256": "2410218689a17bf8e5ae868d3025d1a8bd9e449d7fd49d83728819236ce6607c"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/food-household-catalogue-regression/FoodHouseholdCatalogueRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/23.txt",
+          "sha256": "b0f19cfd0acbbded5af38461d6e0bbe596b236cd83207afa0223100fdcfb8609"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/food-memory-regression/FoodMemoryRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/24.txt",
+          "sha256": "6bc4ae5a65d5f91c727447853273f6b736c8c03e775c999e74d738aacd0c223e"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/food-metadata-api-regression/FoodMetadataApiRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/25.txt",
+          "sha256": "e5ba593e1c62cf230db128339c0bb9b23e4cff22dc8d64c2c7d719084bed9ebe"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/food-metadata-regression/FoodMetadataRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/26.txt",
+          "sha256": "b10252e8c6c1494555141f20e1bb35c826df48b2fed3fae1ccbbc69654e32ea4"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/food-ownership-regression/FoodOwnershipRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/27.txt",
+          "sha256": "7d2e0de095246f1d5bd5a8344c8fa6307594d88abc98daa30b3c0223308716e1"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/food-regulars-regression/FoodRegularsRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/28.txt",
+          "sha256": "8a7dc5299de6318c43a7d93a6daca796484cdf204c3ce5e45586cc22597bfd1e"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/food-supply-regression/FoodSupplyRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/29.txt",
+          "sha256": "bea33031a003404270de233cbd073eb44deacac65f41be406a1eae3b70385683"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/frame-observation-regression/FrameObservationRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/30.txt",
+          "sha256": "7e5da72d80f98e71b464d3c9f918cf9457b5350bfcafc294e80e823b646b2d02"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/frenchfries-feasibility-regression/FrenchFriesFeasibilityRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/31.txt",
+          "sha256": "4d3b6e6609f171d9198db92bb70fda0acc7b02f1280bbf77b9a91016a6ac89c6"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/gate-access-regression/GateAccessRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/32.txt",
+          "sha256": "6e9877acee2b84dfcc2de1b4d7d7236ac991a58c1a89fbe420966d127bf4afae"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/held-tuning-regression/HeldTuningRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/33.txt",
+          "sha256": "c3d21ab334084ab29c86b29d5173cb4629f9fc0c1d9139ca19799603544253cf"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/icecream-feasibility-regression/IcecreamFeasibilityRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/34.txt",
+          "sha256": "1eabe66aeab6b0aed0d36680470df2b7c685c6a88610ff7154f0af8c0b2cc494"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/interior-guard-regression/InteriorGuardRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/35.txt",
+          "sha256": "dd1560791372d4bbb5b80044d8cb2be32cf0f8a7926b6665da59829451b2273d"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/market-research-regression/MarketResearchRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/36.txt",
+          "sha256": "51f5e2c8baed11788a5f5f7387581440d6f52d2141633ad65d376272bd983839"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/name-identity-regression/NameIdentityRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/37.txt",
+          "sha256": "2c29f22e76731975bfebf698d68487254c4c5ff31a37caf6cd38bf3564452e9e"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/outflow-line-regression/OutflowLineRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/38.txt",
+          "sha256": "4eb7957dc567cdb5a782003b8f5a9c0321981515227eb11e014a83bac452aec8"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/pizza-feasibility-regression/PizzaFeasibilityRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/39.txt",
+          "sha256": "8d0890322b19d9d30847f73257458d4447f73189c13e2016b56785b9cb0744a3"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/rival-memory-regression/RivalMemoryRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/40.txt",
+          "sha256": "03a957437d56930f86d5fa06003b0a3142f9823ccd9022c6b376173c146eb7f4"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/rival-outflow-regression/RivalOutflowRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/41.txt",
+          "sha256": "7d22c5f51cbf77dd200022f3e9fe94e820f1a6bbda3b9f95cd0dab25a92ee335"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/road-ceiling-regression/RoadCeilingRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/42.txt",
+          "sha256": "895bf78ce78f6cceb24e97e6ac8d4cc6c68fa71cfb5b0e54f707e9bf46369762"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/road-handoff-regression/RoadHandoffRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/43.txt",
+          "sha256": "5de54d90bad9b212aac21705900b22ad270fa18365f1284fc4e988bf67a5f23e"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/road-invalidation-regression/RoadInvalidationRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/44.txt",
+          "sha256": "11bcbab6bdde92b021b10a41d941aa322629fadbc821906b55ed9aa7d5d7e656"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/road-speed-regression/RoadSpeedRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/45.txt",
+          "sha256": "5242c509cd90b21734fe4321b43dcbba531282677f91d66ddc8931b9b07cef19"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/route-discovery-regression/RouteDiscoveryRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/46.txt",
+          "sha256": "eff274aaa88d1147e64edb58c0cdfa86bcc9101e03154b3d3a78250ea4b14d8f"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/salad-feasibility-regression/SaladFeasibilityRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/47.txt",
+          "sha256": "32a5943d9e7db00d5fa0025dbc7f6ab90eff6faa15500feeda776fb5f0466e7f"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/save-contract-regression/SaveContractRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/48.txt",
+          "sha256": "68c21c4a7fbb5f278106c1beab93b8a556e47719719d786723781a5c721e7d88"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/startup-clock-regression/StartupClockRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/49.txt",
+          "sha256": "acce9d1b0f1f739434afd8aa2d45d36539c58f24c84a6fb6e3f5158a62df066e"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/street-proxy-regression/StreetProxyRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/50.txt",
+          "sha256": "ccb35b3d408b107f8420d1ee20e3c4aac3c476d6b74b19bcda7eb87de7cfa4d7"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/traffic-closure-regression/TrafficClosureRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/51.txt",
+          "sha256": "708d6590f5351a9c1adf0b939e6775caa82602e1d6ec261b597977db98e808aa"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/traffic-queue-regression/TrafficQueueRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/52.txt",
+          "sha256": "897d1d2e5c92ef25374e61f7da26e9dea2849c91f3495eb8bc65210eb2e4b9c4"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/walking-quote-regression/WalkingQuoteRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/53.txt",
+          "sha256": "aadc6b307f80ba394e20bae864ac132336bc7113eba34734954992e2f44b0ac9"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/weather-regression/WeatherRegression.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/54.txt",
+          "sha256": "0a0918b54204f921e835faee19d2f9690b10787c459e3908760b35b81b02db91"
+        },
+        {
+          "command": [
+            "python.exe",
+            "tools/native-command-regression/run.py"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/55.txt",
+          "sha256": "bd610e1a32a30f6ad7638fc2a65ae7bf8bea9d44baba81884f821aea4ed0a9aa"
+        },
+        {
+          "command": [
+            "python.exe",
+            "tools/physical-selection-regression/run.py"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/56.txt",
+          "sha256": "846df2de82c75fa3107673742704d5faac7daf95bd6d0bdeb75d56e63fb6d60b"
+        },
+        {
+          "command": [
+            "python.exe",
+            "tools/vehicle-ownership-regression/run.py"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/57.txt",
+          "sha256": "7539f54a1b778a54ca9bc75f398a40c0491fb40281611c8c8efbbc473dd32e46"
+        },
+        {
+          "command": [
+            "python.exe",
+            "tools/optional-stop-regression/run.py"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/58.txt",
+          "sha256": "f7d3a55ef6b939ada52be73e50fcae27ead5eb4643a5c9f7516905986ecddaa4"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/simulate/Simulate.csproj",
+            "--disable-build-servers",
+            "--",
+            "28",
+            "build/harness-demo"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/59.txt",
+          "sha256": "d870a6172eae648348c99f8762f84f02489188307fc5bd7d1a4fa640e331fcba"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/food-routines/FoodRoutines.csproj",
+            "--configuration",
+            "Release",
+            "--disable-build-servers",
+            "--",
+            "build/harness-food-routines-demo",
+            "957"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/60.txt",
+          "sha256": "366584e3e80f6d4efe898988fac4145dcce766bbb34e5c27384a9209f2f4a733"
+        },
+        {
+          "command": [
+            "dotnet.exe",
+            "run",
+            "--project",
+            "tools/food-demand/FoodDemand.csproj",
+            "--disable-build-servers",
+            "--",
+            "build/harness-food-demand-demo"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/61.txt",
+          "sha256": "e81e8c5aac5d927a8dc07f44c1069ecd90d6f0c5b1f9e39926cf7a7f4e47c18b"
+        },
+        {
+          "command": [
+            "python.exe",
+            "tools/donut-feasibility-regression/source_checks.py"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/62.txt",
+          "sha256": "cc6c0de139d40371e4fba40e86518707c7a4310b794607cd59d28b78b695852e"
+        },
+        {
+          "command": [
+            "python.exe",
+            "tools/salad-feasibility-regression/source_checks.py"
+          ],
+          "exit": 0,
+          "log": "build/d4-validation/63.txt",
+          "sha256": "320b305ad04a0ccc371ef2a6bea1d1a9a3357023c4ae74105b832eb60f7451b7"
+        }
+      ]
+    },
+    "seededTasteProcessProof": {
+      "seed": 957,
+      "products": [
+        "foodtrucks:itemname_dumplings",
+        "foodtrucks:itemname_choppedcheese"
+      ],
+      "consumers": "pc:0 through pc:99",
+      "processes": 2,
+      "matchesIndependentReference": true,
+      "identicalAcrossProcesses": true,
+      "nativeTargetBuild": {
+        "exit": 0,
+        "dllSHA256": "d5500ac99f3d1241964367cf623f25dd548e7bd027a6719047240b06d357477d"
+      },
+      "finalUnitSummary": "Passed!  - Failed:     0, Passed:  2804, Skipped:     0, Total:  2804, Duration: 2 m 3 s - PersistentCity.Tests.dll (net10.0)",
+      "finalDiscovery": {
+        "exit": 0,
+        "log": "build/food-metadata/final-list-tests.log",
+        "sha256": "0b5be42eee775d106128439e9be550faa93c97d58e412a53aa6073dfb8f70056"
+      },
+      "finalTests": {
+        "command": [
+          "dotnet.exe",
+          "test",
+          "tests/PersistentCity.Tests.csproj",
+          "--disable-build-servers"
+        ],
+        "exit": 0,
+        "log": "build/food-metadata/final-tests.log",
+        "sha256": "cbae262f9a60cd9b047a5c9ef15dfcd6df7ea9c553666a041981d101301a12a2"
+      },
+      "sha256": "937617912baf43dfdc29f75444d394ee4505fa89bea2dbc72c3f938194b3949e",
+      "bands": "2,4,0,2,1,3,1,2,2,3,1,2,4,0,3,3,2,1,4,2,3,4,3,0,2,0,3,1,2,1,2,3,1,2,2,1,4,1,2,2,2,2,3,1,2,3,1,1,1,1,0,2,2,0,3,3,0,2,2,2,2,0,4,1,2,3,3,4,1,1,4,3,0,2,0,2,4,1,3,1,0,2,3,4,2,3,1,2,3,1,1,1,2,2,4,2,1,2,2,4,1,1,2,1,2,2,2,2,4,4,1,2,3,2,2,2,1,2,2,2,3,1,2,2,3,3,0,2,2,2,3,2,2,1,4,1,1,4,2,2,2,1,4,2,1,2,0,1,2,1,4,1,3,3,2,2,1,2,2,1,1,3,2,4,3,2,3,2,2,2,2,0,1,4,2,2,1,3,4,2,2,1,1,2,2,3,2,3,2,3,0,3,4,3,2,1,0,3,0,1"
+    }
+  },
+  "offlineMeasurementFlags": [
+    {
+      "log": "build\\d3a\\gates\\core-identity.log",
+      "path": [
+        0,
+        "simulateMs"
+      ],
+      "value": 3048,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\rival-outflow.log",
+      "path": [
+        0,
+        "wholeDay",
+        0,
+        "milliseconds"
+      ],
+      "value": 1281.45,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\rival-outflow.log",
+      "path": [
+        0,
+        "wholeDay",
+        1,
+        "milliseconds"
+      ],
+      "value": 1173.9616,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\rival-outflow.log",
+      "path": [
+        0,
+        "wholeDay",
+        1,
+        "advance128UnitSamples",
+        "max"
+      ],
+      "value": 31.4971,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\rival-outflow.log",
+      "path": [
+        0,
+        "wholeDay",
+        1,
+        "advance128UnitSamples",
+        "spikesAtLeast30ms"
+      ],
+      "value": 1,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build\\d3a\\gates\\awareness.log",
+      "path": [
+        0,
+        "stages",
+        1,
+        "buildMs",
+        "p95"
+      ],
+      "value": 33.2148,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\awareness.log",
+      "path": [
+        0,
+        "stages",
+        1,
+        "buildMs",
+        "max"
+      ],
+      "value": 33.2148,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\awareness.log",
+      "path": [
+        0,
+        "stages",
+        1,
+        "buildMs",
+        "spikesAtLeast30ms"
+      ],
+      "value": 1,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build\\d3a\\gates\\simulate.log",
+      "path": [
+        0,
+        "ElapsedMilliseconds"
+      ],
+      "value": 2392.4991,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-routines.log",
+      "path": [
+        0,
+        "populationReplayMs"
+      ],
+      "value": 217.5972,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-routines.log",
+      "path": [
+        0,
+        "opportunityMs"
+      ],
+      "value": 34.0157,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-routines.log",
+      "path": [
+        0,
+        "scenarios",
+        0,
+        "SimulationMs"
+      ],
+      "value": 34.7848,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-routines.log",
+      "path": [
+        0,
+        "scenarios",
+        1,
+        "QuoteMs"
+      ],
+      "value": 40.4009,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-routines.log",
+      "path": [
+        0,
+        "scenarios",
+        1,
+        "SimulationMs"
+      ],
+      "value": 38.5883,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-routines.log",
+      "path": [
+        0,
+        "scenarios",
+        3,
+        "SimulationMs"
+      ],
+      "value": 30.0317,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-routines.log",
+      "path": [
+        0,
+        "scenarios",
+        4,
+        "SimulationMs"
+      ],
+      "value": 48.3025,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-routines.log",
+      "path": [
+        0,
+        "scenarios",
+        5,
+        "SimulationMs"
+      ],
+      "value": 32.5906,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\e4-menu.log",
+      "path": [
+        0,
+        "results",
+        "history",
+        0,
+        "serialize",
+        "p95"
+      ],
+      "value": 207.5202,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\e4-menu.log",
+      "path": [
+        0,
+        "results",
+        "history",
+        0,
+        "serialize",
+        "max"
+      ],
+      "value": 230.8093,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\e4-menu.log",
+      "path": [
+        0,
+        "results",
+        "history",
+        0,
+        "serialize",
+        "spikes30"
+      ],
+      "value": 21,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build\\d3a\\gates\\e4-menu.log",
+      "path": [
+        0,
+        "results",
+        "history",
+        1,
+        "serialize",
+        "p95"
+      ],
+      "value": 228.1429,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\e4-menu.log",
+      "path": [
+        0,
+        "results",
+        "history",
+        1,
+        "serialize",
+        "max"
+      ],
+      "value": 242.2503,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\e4-menu.log",
+      "path": [
+        0,
+        "results",
+        "history",
+        1,
+        "serialize",
+        "spikes30"
+      ],
+      "value": 21,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build\\d3a\\gates\\e5a-eligibility.log",
+      "path": [
+        0,
+        "measurements",
+        "backlog",
+        "elapsedMs"
+      ],
+      "value": 353.1383,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-memory.log",
+      "path": [
+        0,
+        "rush",
+        0,
+        "cpuMs"
+      ],
+      "value": 239.3968,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-memory.log",
+      "path": [
+        0,
+        "rush",
+        1,
+        "cpuMs"
+      ],
+      "value": 230.0515,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-memory.log",
+      "path": [
+        0,
+        "rush",
+        2,
+        "cpuMs"
+      ],
+      "value": 282.5889,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-memory.log",
+      "path": [
+        0,
+        "rush",
+        3,
+        "cpuMs"
+      ],
+      "value": 196.0704,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-memory.log",
+      "path": [
+        0,
+        "rush",
+        4,
+        "cpuMs"
+      ],
+      "value": 157.4364,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-memory.log",
+      "path": [
+        0,
+        "rush",
+        5,
+        "cpuMs"
+      ],
+      "value": 89.0358,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-memory.log",
+      "path": [
+        0,
+        "rush",
+        6,
+        "cpuMs"
+      ],
+      "value": 230.1905,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-memory.log",
+      "path": [
+        0,
+        "rush",
+        7,
+        "cpuMs"
+      ],
+      "value": 174.9116,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-memory.log",
+      "path": [
+        0,
+        "rush",
+        8,
+        "cpuMs"
+      ],
+      "value": 170.2388,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-memory.log",
+      "path": [
+        0,
+        "rush",
+        9,
+        "cpuMs"
+      ],
+      "value": 204.2568,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-memory.log",
+      "path": [
+        0,
+        "rush",
+        10,
+        "cpuMs"
+      ],
+      "value": 174.3424,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-memory.log",
+      "path": [
+        0,
+        "rush",
+        11,
+        "cpuMs"
+      ],
+      "value": 150.1257,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-memory.log",
+      "path": [
+        0,
+        "rush",
+        12,
+        "cpuMs"
+      ],
+      "value": 92.5975,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-memory.log",
+      "path": [
+        0,
+        "rush",
+        13,
+        "cpuMs"
+      ],
+      "value": 66.0684,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-metadata-api.log",
+      "path": [
+        0,
+        "allRefusedWin",
+        "claims"
+      ],
+      "value": 3072,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-metadata.log",
+      "path": [
+        0,
+        "firstUseMaxConfig",
+        "milliseconds"
+      ],
+      "value": 59.7598,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\food-metadata.log",
+      "path": [
+        0,
+        "firstUseMaxConfig",
+        "spikesAtLeast30ms"
+      ],
+      "value": 1,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build\\d3a\\gates\\name-identity.log",
+      "path": [
+        0,
+        "before",
+        "timing",
+        "write",
+        "p95"
+      ],
+      "value": 221.7374,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\name-identity.log",
+      "path": [
+        0,
+        "before",
+        "timing",
+        "write",
+        "max"
+      ],
+      "value": 221.7374,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\name-identity.log",
+      "path": [
+        0,
+        "before",
+        "timing",
+        "write",
+        "spikes30"
+      ],
+      "value": 3,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build\\d3a\\gates\\name-identity.log",
+      "path": [
+        0,
+        "before",
+        "timing",
+        "read",
+        "p95"
+      ],
+      "value": 655.5304,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\name-identity.log",
+      "path": [
+        0,
+        "before",
+        "timing",
+        "read",
+        "max"
+      ],
+      "value": 655.5304,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\name-identity.log",
+      "path": [
+        0,
+        "before",
+        "timing",
+        "read",
+        "spikes30"
+      ],
+      "value": 3,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build\\d3a\\gates\\name-identity.log",
+      "path": [
+        0,
+        "before",
+        "timing",
+        "activation",
+        "p95"
+      ],
+      "value": 167.5178,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\name-identity.log",
+      "path": [
+        0,
+        "before",
+        "timing",
+        "activation",
+        "max"
+      ],
+      "value": 167.5178,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\name-identity.log",
+      "path": [
+        0,
+        "before",
+        "timing",
+        "activation",
+        "spikes30"
+      ],
+      "value": 3,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build\\d3a\\gates\\name-identity.log",
+      "path": [
+        0,
+        "after",
+        "timing",
+        "write",
+        "p95"
+      ],
+      "value": 313.8812,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\name-identity.log",
+      "path": [
+        0,
+        "after",
+        "timing",
+        "write",
+        "max"
+      ],
+      "value": 313.8812,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\name-identity.log",
+      "path": [
+        0,
+        "after",
+        "timing",
+        "write",
+        "spikes30"
+      ],
+      "value": 3,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build\\d3a\\gates\\name-identity.log",
+      "path": [
+        0,
+        "after",
+        "timing",
+        "read",
+        "p95"
+      ],
+      "value": 755.9987,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\name-identity.log",
+      "path": [
+        0,
+        "after",
+        "timing",
+        "read",
+        "max"
+      ],
+      "value": 755.9987,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\name-identity.log",
+      "path": [
+        0,
+        "after",
+        "timing",
+        "read",
+        "spikes30"
+      ],
+      "value": 3,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build\\d3a\\gates\\name-identity.log",
+      "path": [
+        0,
+        "after",
+        "timing",
+        "activation",
+        "p95"
+      ],
+      "value": 305.8268,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\name-identity.log",
+      "path": [
+        0,
+        "after",
+        "timing",
+        "activation",
+        "max"
+      ],
+      "value": 305.8268,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build\\d3a\\gates\\name-identity.log",
+      "path": [
+        0,
+        "after",
+        "timing",
+        "activation",
+        "spikes30"
+      ],
+      "value": 3,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build\\d3a\\gates\\name-identity.log",
+      "path": [
+        0,
+        "migrationMs"
+      ],
+      "value": 1044.211,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/06.txt",
+      "path": [
+        0,
+        "stages",
+        1,
+        "buildMs",
+        "p95"
+      ],
+      "value": 33.1992,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/06.txt",
+      "path": [
+        0,
+        "stages",
+        1,
+        "buildMs",
+        "max"
+      ],
+      "value": 33.1992,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/06.txt",
+      "path": [
+        0,
+        "stages",
+        1,
+        "buildMs",
+        "spikesAtLeast30ms"
+      ],
+      "value": 1,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build/d4-validation/09.txt",
+      "path": [
+        0,
+        "simulateMs"
+      ],
+      "value": 2262,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/14.txt",
+      "path": [
+        0,
+        "results",
+        "history",
+        0,
+        "serialize",
+        "p95"
+      ],
+      "value": 174.6243,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/14.txt",
+      "path": [
+        0,
+        "results",
+        "history",
+        0,
+        "serialize",
+        "max"
+      ],
+      "value": 176.6541,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/14.txt",
+      "path": [
+        0,
+        "results",
+        "history",
+        0,
+        "serialize",
+        "spikes30"
+      ],
+      "value": 21,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build/d4-validation/14.txt",
+      "path": [
+        0,
+        "results",
+        "history",
+        1,
+        "serialize",
+        "p95"
+      ],
+      "value": 219.997,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/14.txt",
+      "path": [
+        0,
+        "results",
+        "history",
+        1,
+        "serialize",
+        "max"
+      ],
+      "value": 245.4355,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/14.txt",
+      "path": [
+        0,
+        "results",
+        "history",
+        1,
+        "serialize",
+        "spikes30"
+      ],
+      "value": 21,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build/d4-validation/15.txt",
+      "path": [
+        0,
+        "measurements",
+        "backlog",
+        "elapsedMs"
+      ],
+      "value": 330.6242,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/24.txt",
+      "path": [
+        0,
+        "rush",
+        0,
+        "cpuMs"
+      ],
+      "value": 207.4865,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/24.txt",
+      "path": [
+        0,
+        "rush",
+        1,
+        "cpuMs"
+      ],
+      "value": 212.2596,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/24.txt",
+      "path": [
+        0,
+        "rush",
+        2,
+        "cpuMs"
+      ],
+      "value": 203.3415,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/24.txt",
+      "path": [
+        0,
+        "rush",
+        3,
+        "cpuMs"
+      ],
+      "value": 273.9403,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/24.txt",
+      "path": [
+        0,
+        "rush",
+        4,
+        "cpuMs"
+      ],
+      "value": 269.6427,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/24.txt",
+      "path": [
+        0,
+        "rush",
+        5,
+        "cpuMs"
+      ],
+      "value": 255.8741,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/24.txt",
+      "path": [
+        0,
+        "rush",
+        6,
+        "cpuMs"
+      ],
+      "value": 430.7318,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/24.txt",
+      "path": [
+        0,
+        "rush",
+        7,
+        "cpuMs"
+      ],
+      "value": 251.1387,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/24.txt",
+      "path": [
+        0,
+        "rush",
+        8,
+        "cpuMs"
+      ],
+      "value": 163.0052,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/24.txt",
+      "path": [
+        0,
+        "rush",
+        9,
+        "cpuMs"
+      ],
+      "value": 201.7976,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/24.txt",
+      "path": [
+        0,
+        "rush",
+        10,
+        "cpuMs"
+      ],
+      "value": 232.7811,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/24.txt",
+      "path": [
+        0,
+        "rush",
+        11,
+        "cpuMs"
+      ],
+      "value": 219.603,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/24.txt",
+      "path": [
+        0,
+        "rush",
+        12,
+        "cpuMs"
+      ],
+      "value": 75.4912,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/24.txt",
+      "path": [
+        0,
+        "rush",
+        13,
+        "cpuMs"
+      ],
+      "value": 90.7411,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/25.txt",
+      "path": [
+        0,
+        "allRefusedWin",
+        "claims"
+      ],
+      "value": 3072,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/26.txt",
+      "path": [
+        0,
+        "firstUseMaxConfig",
+        "milliseconds"
+      ],
+      "value": 56.2402,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/26.txt",
+      "path": [
+        0,
+        "firstUseMaxConfig",
+        "spikesAtLeast30ms"
+      ],
+      "value": 1,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build/d4-validation/37.txt",
+      "path": [
+        0,
+        "before",
+        "timing",
+        "write",
+        "p95"
+      ],
+      "value": 251.703,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/37.txt",
+      "path": [
+        0,
+        "before",
+        "timing",
+        "write",
+        "max"
+      ],
+      "value": 251.703,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/37.txt",
+      "path": [
+        0,
+        "before",
+        "timing",
+        "write",
+        "spikes30"
+      ],
+      "value": 3,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build/d4-validation/37.txt",
+      "path": [
+        0,
+        "before",
+        "timing",
+        "read",
+        "p95"
+      ],
+      "value": 669.6873,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/37.txt",
+      "path": [
+        0,
+        "before",
+        "timing",
+        "read",
+        "max"
+      ],
+      "value": 669.6873,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/37.txt",
+      "path": [
+        0,
+        "before",
+        "timing",
+        "read",
+        "spikes30"
+      ],
+      "value": 3,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build/d4-validation/37.txt",
+      "path": [
+        0,
+        "before",
+        "timing",
+        "activation",
+        "p95"
+      ],
+      "value": 284.5283,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/37.txt",
+      "path": [
+        0,
+        "before",
+        "timing",
+        "activation",
+        "max"
+      ],
+      "value": 284.5283,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/37.txt",
+      "path": [
+        0,
+        "before",
+        "timing",
+        "activation",
+        "spikes30"
+      ],
+      "value": 3,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build/d4-validation/37.txt",
+      "path": [
+        0,
+        "after",
+        "timing",
+        "write",
+        "p95"
+      ],
+      "value": 289.7428,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/37.txt",
+      "path": [
+        0,
+        "after",
+        "timing",
+        "write",
+        "max"
+      ],
+      "value": 289.7428,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/37.txt",
+      "path": [
+        0,
+        "after",
+        "timing",
+        "write",
+        "spikes30"
+      ],
+      "value": 3,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build/d4-validation/37.txt",
+      "path": [
+        0,
+        "after",
+        "timing",
+        "read",
+        "p95"
+      ],
+      "value": 751.7666,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/37.txt",
+      "path": [
+        0,
+        "after",
+        "timing",
+        "read",
+        "max"
+      ],
+      "value": 751.7666,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/37.txt",
+      "path": [
+        0,
+        "after",
+        "timing",
+        "read",
+        "spikes30"
+      ],
+      "value": 3,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build/d4-validation/37.txt",
+      "path": [
+        0,
+        "after",
+        "timing",
+        "activation",
+        "p95"
+      ],
+      "value": 308.318,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/37.txt",
+      "path": [
+        0,
+        "after",
+        "timing",
+        "activation",
+        "max"
+      ],
+      "value": 308.318,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/37.txt",
+      "path": [
+        0,
+        "after",
+        "timing",
+        "activation",
+        "spikes30"
+      ],
+      "value": 3,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build/d4-validation/37.txt",
+      "path": [
+        0,
+        "migrationMs"
+      ],
+      "value": 1239.5693,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/41.txt",
+      "path": [
+        0,
+        "wholeDay",
+        0,
+        "milliseconds"
+      ],
+      "value": 1261.283,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/41.txt",
+      "path": [
+        0,
+        "wholeDay",
+        1,
+        "milliseconds"
+      ],
+      "value": 875.944,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/41.txt",
+      "path": [
+        0,
+        "wholeDay",
+        1,
+        "advance128UnitSamples",
+        "max"
+      ],
+      "value": 30.0021,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/41.txt",
+      "path": [
+        0,
+        "wholeDay",
+        1,
+        "advance128UnitSamples",
+        "spikesAtLeast30ms"
+      ],
+      "value": 1,
+      "kind": "reported spike count"
+    },
+    {
+      "log": "build/d4-validation/59.txt",
+      "path": [
+        0,
+        "ElapsedMilliseconds"
+      ],
+      "value": 2296.3474,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/60.txt",
+      "path": [
+        0,
+        "populationReplayMs"
+      ],
+      "value": 208.3638,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/60.txt",
+      "path": [
+        0,
+        "scenarios",
+        0,
+        "SimulationMs"
+      ],
+      "value": 40.4616,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/60.txt",
+      "path": [
+        0,
+        "scenarios",
+        1,
+        "QuoteMs"
+      ],
+      "value": 36.3441,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/60.txt",
+      "path": [
+        0,
+        "scenarios",
+        1,
+        "SimulationMs"
+      ],
+      "value": 37.4399,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/d4-validation/60.txt",
+      "path": [
+        0,
+        "scenarios",
+        5,
+        "SimulationMs"
+      ],
+      "value": 32.9233,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    },
+    {
+      "log": "build/food-metadata-api-validation/final-api-performance.log",
+      "path": [
+        0,
+        "allRefusedWin",
+        "claims"
+      ],
+      "value": 3072,
+      "kind": "offline duration/distribution; may be an aggregate or startup, not a frame spike"
+    }
+  ],
+  "measurementLimit": "Offline component/aggregate/startup fields only; combined native mod-work p95 <5ms and whole-frame cost remain unmeasured. No new performance win claimed; original per-slice perf records retained.",
+  "finalRemoteBase": "00506edf14bdfc35262ed5c54cdcd2b5032ce30c",
+  "finalProcessAudit": {
+    "ActiveTestRunProcesses": 0,
+    "Processes": []
+  },
+  "finalAudit": {
+    "latestBaseContained": true,
+    "allParentChecksReceiptsPreserved": true,
+    "e5bInGameTextUnchanged": true,
+    "e5eSharedChecklistTextExact": true,
+    "persistenceAndSaveRegressionUnchanged": true
+  }
+}
