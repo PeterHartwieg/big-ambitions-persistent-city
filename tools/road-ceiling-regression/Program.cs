@@ -12,6 +12,7 @@ using PersistentCity.Core;
 using PersistentCity.Runtime;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using Activity = PersistentCity.Core.Activity;
 
 internal static class Program
 {
@@ -117,6 +118,88 @@ internal static class Program
     }
 
 #if SLICED_PLANNER
+    // Match Update preflight plus AdvancePopulation's readiness check before every unit.
+    // Never bypass readiness to drive a stale job directly: it must recover through staged preparation.
+    private static void CheckRuntimeFrameRecovery()
+    {
+        foreach (bool invalidateNative in new[] { true, false })
+        {
+            var f = new Fixture(4097, true) { DirectMinutes = 7 };
+            f.From.Kind = PlaceKind.Home; f.To.Kind = PlaceKind.Work;
+            var state = new CityState { Minute = 100, Seed = 7, Places = new List<Place> { f.From, f.To },
+                Capabilities = new PopulationCapabilities { Active = true } };
+            const int residents = 4;
+            for (int i = 0; i < residents; i++) state.Citizens.Add(new CitizenState {
+                Identity = new CitizenIdentity { Id = "resident:" + i, Age = 30 },
+                HomeId = f.From.Id, DayPlaceId = f.To.Id, PlaceId = f.From.Id,
+                Phase = CitizenPhase.WaitingForRoute, DestinationId = f.To.Id, DestinationActivity = Activity.Work,
+                Activity = Activity.Home, ActivityUntilMinute = 600, NextEventMinute = 100,
+                Preferences = new TravelPreferences { OwnsCar = false, AllowTransit = false, WalkingToleranceMetres = 100000 } });
+            var city = new CitySimulator(state, f.Planner);
+            var order = new List<string>(); city.ActivityObserved += (id, _, __) => order.Add(id);
+            object? Stations() => typeof(MultimodalRoutes).GetField("stations", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(f.Planner);
+            RoadRoutes Roads() => (RoadRoutes)typeof(MultimodalRoutes).GetField("roads", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(f.Planner)!;
+            object? committedStations = null;
+            int frames = 0, stagedFrames = 0, blockedAfterCommit = 0, startsAfterPublication = 0;
+            bool injected = false, caughtUp = false;
+            while (!caughtUp && frames++ < 512)
+            {
+                Time.frameCount++;
+                if (city.PlanningPending)
+                {
+                    if (invalidateNative && !injected)
+                    { f.Native[10].position.z += .25f; injected = true; }
+                    f.Planner.Refresh(); f.Planner.RefreshStations();
+                }
+                bool prepared = f.Planner.Prepare();
+                if (!prepared)
+                {
+                    if (Roads().IsCurrent && !Roads().Ready) stagedFrames++;
+                    Thread.Sleep(1); // allow the existing pure network-construction task to finish
+                    continue;
+                }
+                bool committedThisFrame = false;
+                for (int step = 0; step < 64; step++)
+                {
+                    if (!f.Planner.ReadyForPopulation)
+                    {
+                        if (committedThisFrame && !city.PlanningPending) blockedAfterCommit++;
+                        break;
+                    }
+                    if (city.PlanningPending)
+                    {
+                        long units = f.Planner.JobUnits;
+                        bool completed = city.ContinuePlanning(0);
+                        Check(f.Planner.JobUnits - units <= 8, "runtime recovery exceeded finite route work");
+                        if (!completed) break;
+                        committedStations = Stations(); committedThisFrame = true;
+                        continue; // production may try to begin another event in this same frame
+                    }
+                    var result = city.AdvanceFrameSlice(101, 1);
+                    if (result.PlanningPending)
+                    {
+                        if (order.Count != 0)
+                        {
+                            Check(!ReferenceEquals(committedStations, Stations()), "successive runtime event acquired inputs before deferred station publication");
+                            startsAfterPublication++;
+                        }
+                        break;
+                    }
+                    if (result.CaughtUp) { caughtUp = true; break; }
+                }
+            }
+            Check(caughtUp && city.IsCaughtUpTo(101), "runtime preflight/readiness loop failed to recover and advance later events");
+            Check(order.SequenceEqual(Enumerable.Range(0, residents).Select(i => "resident:" + i)), "runtime recovery changed event order or lost demand");
+            Check(blockedAfterCommit == residents && startsAfterPublication == residents - 1,
+                "deferred refresh did not force bounded preflight between every pair of runtime events");
+            if (invalidateNative) Check(injected && stagedFrames >= 2 && city.EventRestarts == 1,
+                "native invalidation did not traverse staged replacement, restart and later-event recovery");
+            else Check(city.EventRestarts == 0, "managed refresh churn restarted a held event");
+            Console.WriteLine(JsonSerializer.Serialize(new { runtimeFrameRecovery = true, invalidateNative, frames,
+                stagedFrames, blockedAfterCommit, startsAfterPublication, events = order.Count, city.EventRestarts, minute = state.Minute }));
+        }
+    }
+
     private static void CheckPeakPlanningThroughput()
     {
         var f=new Fixture(31,true) {DirectMinutes=2000,AccessMinutes=2,EgressMinutes=3,HaveSubway=true};
@@ -454,6 +537,7 @@ internal static class Program
             SlicedCheck(restarted,"event lease pinned an unsafe stale topology");
             f.Planner.EndRouteEvent();
         }
+        CheckRuntimeFrameRecovery();
         CheckBoundedAdmission();
         CheckPeakPlanningThroughput();
         Console.WriteLine(JsonSerializer.Serialize(new { checks, results, slicedChecks, sliced }));

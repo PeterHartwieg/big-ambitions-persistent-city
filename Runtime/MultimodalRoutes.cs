@@ -167,7 +167,10 @@ namespace PersistentCity.Runtime
             trafficEntryForecast = forecast;
             roads?.SetTrafficEntryForecast(forecast);
         }
-        public bool ReadyForPopulation => (routeEventHeld || objects == null || (objects.Ready && objectRevision == objects.Revision))
+        // Once an event releases its lease, stop the frame batch until the next bounded preflight
+        // publishes deferred inputs. Otherwise the next event can renew the lease indefinitely.
+        public bool ReadyForPopulation => (routeEventHeld || !refreshDeferred && !stationsDeferred)
+            && (routeEventHeld || objects == null || (objects.Ready && objectRevision == objects.Revision))
             && stations != null && roads != null && roads.Ready && roads.IsCurrent;
         /// <summary>Runtime preflight: do not advance any citizen until this returns true. Staged infrastructure
         /// readiness must not change which modes are available to an individual planning request.</summary>
@@ -188,7 +191,9 @@ namespace PersistentCity.Runtime
             }
             // A logical event owns one mod-published input generation across every request.
             // Never pin native topology: city/scene loss above and stale road checks still win.
-            if (routeEventHeld && !cityChanged && !sceneLost && roads?.IsCurrent == true)
+            // A current replacement may still be importing nodes/building its network. Keep driving
+            // its staged preparation until Ready; the pending old job restarts only after preflight.
+            if (routeEventHeld && !cityChanged && !sceneLost && roads?.Ready == true && roads.IsCurrent)
             {
                 roads.Sweep(1, 1024);
                 return roads.IsCurrent;
