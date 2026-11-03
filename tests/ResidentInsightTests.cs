@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Stopwatch = System.Diagnostics.Stopwatch;
 using System.Linq;
+using System.Threading;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
 using Xunit;
@@ -527,10 +528,24 @@ public sealed class ResidentInsightTests
             for (int i = 0; i < ids.Length; i++)
                 if (ResidentPickAccumulator.Hit(300, 200, 280 + i, 260, 281 + i, 140, 8, out float score)) best.Consider(ids[i], i, score, 10 + i);
         }
-        for (int i = 0; i < 1000; i++) Frame(i);
-        long before = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 1000; i < 101000; i++) Frame(i);
-        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+        long allocated = 0;
+        Exception? failure = null;
+        // Keep runner work off the allocation counter's thread, as in the hours-cache test.
+        // Thread creation, setup and assertions remain outside the measured window.
+        var worker = new Thread(() =>
+        {
+            try
+            {
+                for (int i = 0; i < 1000; i++) Frame(i);
+                long before = GC.GetAllocatedBytesForCurrentThread();
+                for (int i = 1000; i < 101000; i++) Frame(i);
+                allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+            }
+            catch (Exception e) { failure = e; }
+        });
+        worker.Start(); worker.Join();
+        Assert.Null(failure);
+        Assert.Equal(0, allocated);
     }
 
     [Fact]
