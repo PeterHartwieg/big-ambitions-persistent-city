@@ -53,11 +53,13 @@ are F3's separate progress contract.
 
 `AccountingDiagnostics` exposes current/maximum lag, ordinary/skip hold ticks, boundary clips,
 withheld requested game minutes, current wait/maximum recovered wait seconds, configured
-factor and refusal. A screen notice appears on workload holds **and boundary clips** and remains for
-three seconds after the last one, including repeated short holds; Ctrl+F8 also shows lag
-and lifetime hold counts. Fence clips are separately counted, so baseline quantization cost
-cannot be confused with workload holds; the panel also reports those caps and withheld
-requested minutes. Visible text refreshes at 4 Hz. Constrained native samples cannot change inferred
+factor and refusal. The prominent notice appears only on workload holds or refusal and remains
+for three seconds after the last workload hold, including repeated short holds. Ready fence
+clips do not extend that timer. After the first fence cap, a quiet single-line label without
+a background box points to Ctrl+F8; it uses constant text without the lag formatter. The panel
+retains lag, lifetime holds, boundary caps and withheld requested minutes. Thus material skip
+pacing remains visible while routine quantization cannot masquerade as workload backpressure.
+Workload status text refreshes at 4 Hz. Constrained native samples cannot change inferred
 travel pace. Diagnostic objects/strings are built only on request or for visible UI.
 
 Startup installs the guard before detached construction and holds time through route
@@ -76,8 +78,12 @@ The visible stopped message explicitly reports lost/unprocessed PC demand.
 A native save after refusal remains playable **with Persistent City stopped**. Its newer
 native clock and preserved older population snapshot do not authorize resuming that snapshot;
 the bounded `persistentcity:accounting-stop_v1` marker prevents automatic PC restart on
-the next load, including accidental clock equality, and leaves native time running. Restore a synchronized older
-checkpoint to resume PC. No attempt repairs past workload loss or reconstructs prior native
+the next load, including accidental clock equality, and leaves native time running. The
+accounting failure is sticky for the entire game session: **quit and relaunch the game before
+loading any other city or a synchronized pre-failure checkpoint**. Loading a save within the
+failed session does not restart PC and can leave that save's PC-owned businesses without a
+simulator. A fresh runtime can resume the synchronized unmarked checkpoint; the marked failed
+save keeps PC stopped. No same-session recovery is implemented. No attempt repairs past workload loss or reconstructs prior native
 inputs. Unreadable/future authority manifests keep their existing conservative refusal.
 `HistoricalClockMisses` remains a commerce-attachment diagnostic, not a persisted loss ledger.
 

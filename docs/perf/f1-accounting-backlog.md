@@ -157,3 +157,27 @@ Across the six R1 runs (30 clean arm windows), >=30 ms samples total **0**, maxi
 The zero-work tick counts and remaining baseline/skip costs above are unchanged in the repeats.
 
 The required standalone 957x2 saturated-history bulk arm also flags **289.8408/583.4523/340.8855 ms** write/read/activation maxima, each **3/3 samples >=30 ms**, and **1171.2615 ms** migration. These are bulk serialization/startup costs, separate from F1 gameplay frame windows; the parked serialization hotspot remains unchanged. They are not a native frame-gate pass.
+
+## R2 notice/recovery corrections - 3 November 2026 (offline)
+
+Code `a8c6cfc`: the minute limiter, service budgets, configured calendar factor and native
+accounting rules are unchanged. Zero-work fences now increment their existing diagnostics
+without extending the three-second workload-notice tail. A constant 22-pixel-high single-line
+status replaces the 760x82 card for baseline quantization. No percentage/window calculation,
+per-frame scan, reflection or new diagnostic allocation is introduced. Actual workload holds
+and refusal retain the prominent notice; startup preparation still explains the clock hold.
+
+**Taken low-risk win:** 1,200 warm baseline text requests over ten simulated seconds now use
+**0 B / 0 text builds**, versus **16,640 B / 40 formatter builds** for the former cached status.
+[Raw corrected-source output](f1-accounting-backlog-r2-focused.txt) includes the measurement,
+180 empty ordinary minutes each at 1/3, 1 and 2 game minutes/second, then an actual workload
+hold. Native GUI/Unity cost is excluded; removal of the background box is not a measured
+native CPU claim. Complete native mod-work and separate whole-frame costs remain pending.
+The four parked hotspots remain unchanged.
+
+The focused corrected run also reconciles the same 957-resident economics and held/midnight
+reloads, with <1 minute lag and 2 s injected supported / 10 s stress recovery. Its ordinary
+30/60/120 p95 is **0.0333/0.1404/0.2172 ms**, maxima **15.8939/4.5423/2.9441 ms**; skip
+**0.0040/1.5204 ms**, stress **0.0051/8.3109 ms** (p95/max). Zero >=30 ms F1 samples in that
+clean detached run. Full required-matrix repeats will be recorded after completion. Native
+rig proof remains the Sol-r2-1 merge blocker; no game or rig was used by this fixer.

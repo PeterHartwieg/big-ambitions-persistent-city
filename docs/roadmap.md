@@ -78,7 +78,7 @@ Applies to every step A–E slice re-measure and to the final release:
 
 Record every taken win with before/after numbers.
 
-- City-audit F1 — [Elapsed-time frame caps and cached pacing text](perf/f1-accounting-backlog.md): matched 960-resident queue at 30 simulated FPS, 60 -> 30 frames / 2 -> 1 simulated seconds, byte-identical state; 1,200 visible text requests 499,200 -> 16,640 B / 1,200 -> 40 builds; R1 removes the wasted crossing tick (8-hour zero-work skip 960 -> 481 ticks), restores the 120 FPS 16-start/2 ms floor and quantifies remaining pacing cost; offline components, no native whole-frame gate claim.
+- City-audit F1 — [Elapsed-time frame caps and cached pacing text](perf/f1-accounting-backlog.md): matched 960-resident queue at 30 simulated FPS, 60 -> 30 frames / 2 -> 1 simulated seconds, byte-identical state; 1,200 visible text requests 499,200 -> 16,640 B / 1,200 -> 40 builds; R1 removes the wasted crossing tick (8-hour zero-work skip 960 -> 481 ticks), restores the 120 FPS 16-start/2 ms floor and quantifies remaining pacing cost; R2 quiet baseline text 16,640 -> 0 B / 40 -> 0 builds per 1,200 requests (GUI excluded); offline components, no native whole-frame gate claim.
 
 - E5b — [Cached authored bag policy and bounded duplicate checks](perf/e5b-complete-menu.md): discovery 280 -> 0 B/call; offline p95 0.0003 -> 0.0001 ms; no native combined mod-work or whole-frame claim.
 
