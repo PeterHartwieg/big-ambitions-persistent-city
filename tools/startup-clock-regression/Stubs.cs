@@ -87,7 +87,7 @@ namespace UI.Load { public static class LoadScene { public static bool isLoading
 namespace Parking.UndergroundParking { public static class UndergroundParkingManager { public static bool IsInsideParking; } }
 namespace PersistentCity.Runtime
 {
-    internal static class NativeCityClock { public static bool Active; public static double Factor = 1; }
+    internal static class NativeCityClock { public static bool Active; public static bool AccountingLimited = false; public static double Factor = 1; }
     internal static class PhysicalTrafficHooks
     {
         public static bool CurrentFastForward

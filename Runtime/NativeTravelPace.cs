@@ -61,7 +61,7 @@ namespace PersistentCity.Runtime
         {
             if (LoadScene.isLoading || InstanceBehavior<UIs>.Instance?.timeMachine == null
                 || InstanceBehavior<UIs>.Instance.timeMachine.isRunning || Time.deltaTime <= 0) return;
-            tracker.Observe(Time.frameCount, deltaTimeWithMultiplier, Time.deltaTime);
+            tracker.Observe(Time.frameCount, deltaTimeWithMultiplier, Time.deltaTime, NativeCityClock.AccountingLimited);
         }
 
         // PedestrianPool's normal, non-animation-override walking speed in the reviewed game build.

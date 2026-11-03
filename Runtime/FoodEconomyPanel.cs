@@ -45,6 +45,12 @@ namespace PersistentCity.Runtime
                 return;
             }
             if (simulation == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current)) return;
+            if (NativeCityClock.PacingAffected && !showEconomy)
+            {
+                economyLabel ??= new GUIStyle(GUI.skin.label) { wordWrap = true, fontSize = 16 };
+                GUI.Box(new Rect(20, 20, Math.Min(760, Screen.width - 40), 82), "");
+                GUI.Label(new Rect(30, 28, Math.Min(740, Screen.width - 60), 68), AccountingStatusText(), economyLabel);
+            }
             var input = Event.current;
             if (input.type == EventType.KeyDown && input.control && input.keyCode == KeyCode.F8)
             { showEconomy = !showEconomy; nextEconomyText = 0; input.Use(); }
@@ -82,6 +88,10 @@ namespace PersistentCity.Runtime
             var city = simulation!.State; var food = city.Food!;
             var text = new StringBuilder(); int day = (int)(city.Minute / 1440);
             text.AppendLine("Day " + day + " · " + city.Citizens.Count + " physical residents · " + food.Residents.Count + " represented consumers");
+            text.AppendLine("Accounting lag " + NativeCityClock.LagMinutes.ToString("F3", CultureInfo.InvariantCulture)
+                + " game minutes; calendar holds " + NativeCityClock.HeldOrdinaryTicks + " ordinary / " + NativeCityClock.HeldEconomySkipTicks
+                + " skip ticks. Configured calendar factor " + NativeCityClock.Factor.ToString("F3", CultureInfo.InvariantCulture) + ".");
+            if (NativeCityClock.PacingAffected) text.AppendLine(AccountingStatusText());
             if (food.MealRhythmVersion != 0) text.AppendLine("Breakfast, lunch and dinner follow each resident's waking hours and preferences. All meals share one wallet; eating at home remains an option.");
             text.AppendLine("Each consumer has a separate budget for bills, food at home and prepared meals. Workplaces and travel patterns shape nearby demand.");
             int uncertain = food.Residents.Count(m => m.Status == MealStatus.Uncertain);

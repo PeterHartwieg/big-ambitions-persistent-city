@@ -51,6 +51,7 @@ namespace PersistentCity.Core
         private readonly IRoutePlanner routes;
         public CityState State { get; }
         private FoodCommerce? food;
+        public long HistoricalClockMisses => food?.HistoricalClockMisses ?? 0;
         internal CitizenState? FindCitizen(string id) => citizenEvents.TryGetValue(id, out var entry) ? entry.Citizen : null;
         internal Place FindPlace(string id) => places[id];
         internal Position? FindPosition(string id) => places.TryGetValue(id,out var place) ? place.Position : (Position?)null;
