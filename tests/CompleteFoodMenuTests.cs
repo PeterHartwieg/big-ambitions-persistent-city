@@ -40,6 +40,42 @@ public sealed class CompleteFoodMenuTests
         Assert.Equal(CompleteFoodMenuRefusal.MealClass, Check(Image(), resolver));
         Assert.Equal(CompleteFoodMenuRefusal.None, Check(Image(new[] { Dumplings }), resolver));
     }
+    [Theory]
+    [InlineData(Dumplings, MealClass.Unknown)] [InlineData(Cheese, MealClass.Unknown)]
+    [InlineData(Dumplings, MealClass.Drink)] [InlineData(Cheese, MealClass.Drink)]
+    [InlineData(Dumplings, MealClass.Bundle)] [InlineData(Cheese, MealClass.Bundle)]
+    [InlineData(Dumplings, MealClass.NonFood)] [InlineData(Cheese, MealClass.NonFood)]
+    public void AdmissionUsesPublishedApiClassWithConfigPrecedenceAndDefaultFallback(string product, MealClass excluded)
+    {
+        var registry = new FoodProductMetadataRegistry(); registry.BindPublicationThread();
+        Assert.True(registry.TryCreateProvider("test:menu", out var provider, out _));
+        using var lifetime = provider;
+        Assert.True(provider.TryRegisterProductMetadata(product, new() { MealClass = excluded }, 1, out _));
+        var loaded = new FoodProductMetadataLoadedNames(new[] { Dumplings, Cheese });
+        var snapshot = registry.Publish(loaded);
+        var apiOnly = FoodProductMetadataResolver.Empty.WithApi(snapshot);
+        var image = Image();
+        Assert.Equal(CompleteFoodMenuRefusal.MealClass, Check(image, apiOnly));
+        Assert.Equal(CompleteFoodMenuRefusal.None, Check(Image(new[] { product == Dumplings ? Cheese : Dumplings }), apiOnly));
+        FoodProductMetadataResolver Config(MealClass? mealClass) => new FoodProductMetadataResolver(new[] {
+            new KeyValuePair<string, FoodProductMetadataOverride>(product, new(mealClass, 4, null, null, null))
+        }).WithApi(snapshot);
+        // A taste-only config must not hide the API's class; an explicit class wins.
+        Assert.Equal(CompleteFoodMenuRefusal.MealClass, Check(image, Config(null)));
+        Assert.Equal(CompleteFoodMenuRefusal.None, Check(image, Config(MealClass.Food)));
+        Assert.Equal(CompleteFoodMenuRefusal.NativeContract, Check(image, Config(MealClass.Food), native: false));
+        Assert.Equal(CompleteFoodMenuRefusal.StockContract, Check(Image(Enumerable.Range(0,9).Select(i=>"fixture:"+i).ToArray()), Config(MealClass.Food)));
+        Assert.Equal(CompleteFoodMenuRefusal.MealClass, Check(image, Config(excluded)));
+        // Removal affects the next publication, preserving the old immutable decision image.
+        provider.Dispose();
+        var defaults = FoodProductMetadataResolver.Empty.WithApi(registry.Publish(loaded));
+        Assert.Equal(CompleteFoodMenuRefusal.None, Check(image, defaults));
+        Assert.Equal(CompleteFoodMenuRefusal.MealClass, Check(image, apiOnly));
+        var configExcluded = new FoodProductMetadataResolver(new[] {
+            new KeyValuePair<string, FoodProductMetadataOverride>(product, new(excluded, null, null, null, null))
+        }).WithApi(registry.Publish(loaded));
+        Assert.Equal(CompleteFoodMenuRefusal.MealClass, Check(image, configExcluded));
+    }
     [Fact]
     public void DefaultFoodNeedsStockImageAndIndependentNativeContract()
     {
