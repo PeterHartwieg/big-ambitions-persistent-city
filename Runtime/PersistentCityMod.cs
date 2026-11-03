@@ -537,7 +537,7 @@ namespace PersistentCity.Runtime
             // Otherwise the world can cross accounting epochs before its scheduler exists.
             NativeCityClock.Start(save, settings.GameClockFactor,
                 () => simulation != null && routes?.ReadyForPopulation == true && simulation.IsCaughtUpTo(AccountingClock.Target(Now())),
-                () => true, Now, () => simulation?.State.Minute ?? Now());
+                () => true, Now, () => simulation?.State.Minute ?? Now(), native => simulation == null || simulation.IsAccountingEpochDrained(native));
             initializingSave = save;
             initialization = Task.Run(() =>
             {
@@ -588,12 +588,14 @@ namespace PersistentCity.Runtime
             if (state.Minute > Now() + 0.001) { Fail("Population snapshot is ahead of this save's clock; original payload retained."); return; }
             if (!AccountingClock.Compatible(state.Minute, Now()))
             { Fail("Accounting input epoch differs from the population snapshot. Historical demand cannot be replayed safely; original payload retained."); return; }
-            var binding = prepared.Saves.BindTo(save.modData);
-            if (!binding.Success) { Fail("Population save binding refused: " + binding.Error); return; }
-            saveSession = prepared.Saves;
             routeObjects = new RouteObjectDiscovery();
             routes = new MultimodalRoutes(state.Places, NativeTravelPace.WalkingMetresPerSecond / state.TravelClockRate, state.TravelClockRate, dependency, routeObjects);
             simulation = new CitySimulator(state, routes);
+            if (!simulation.IsAccountingEpochDrained(Now()))
+            { Fail("Ending accounting epoch still has unfinished work. Historical demand cannot be replayed safely; original payload retained."); return; }
+            var binding = prepared.Saves.BindTo(save.modData);
+            if (!binding.Success) { Fail("Population save binding refused: " + binding.Error); return; }
+            saveSession = prepared.Saves;
             dwellSpots = new DwellSpots();
             var stopEnvironment=new OptionalStopEnvironment(state.Places,dwellSpots);
             simulation.AttachOptionalStops(stopEnvironment, settings.OptionalStopChoicePercentage, settings.StopTiming());

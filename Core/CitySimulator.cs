@@ -172,10 +172,27 @@ namespace PersistentCity.Core
         public bool IsCaughtUpTo(double targetMinute) => Position.Finite(targetMinute)
             && State.Minute >= targetMinute && NoEventsThrough(targetMinute);
 
-        private bool NoEventsThrough(double targetMinute) => pending == null && food?.HasPendingDecision != true
+        /// <summary>Read-only startup/clock check, including saved food work before market attachment.
+        /// Minute equality at the predecessor alone cannot prove that the ending epoch drained.</summary>
+        public bool IsAccountingEpochDrained(double nativeMinute)
+        {
+            double target = AccountingClock.PreviousEpochTarget(nativeMinute);
+            if (Math.Floor(nativeMinute) == 0) return true; // No simulation events exist before minute zero.
+            return State.Minute >= target && NoEventsThrough(target, inspectSavedFood: true);
+        }
+        private bool SavedFoodAfter(double target)
+        {
+            foreach (var meal in State.Food!.Residents)
+                if (meal.DueAt <= target || meal.Decision != null && meal.Decision.OriginAt <= target
+                    || meal.Budget != null && meal.Budget.NextPostingMinute <= target) return false;
+            return true;
+        }
+        private bool NoEventsThrough(double targetMinute, bool inspectSavedFood = false)
+            => (pending == null || inspectSavedFood && pending.Item.Minute > targetMinute)
+            && (food?.HasPendingDecision != true || inspectSavedFood && food!.NextMinute > targetMinute)
             && (due.Count == 0 || due.Min!.Minute > targetMinute)
             && (traffic == null || traffic.NextEventMinute > targetMinute)
-            && (State.Food == null || (food != null && food.NextMinute > targetMinute))
+            && (State.Food == null || (food != null ? food.NextMinute > targetMinute : inspectSavedFood && SavedFoodAfter(targetMinute)))
             && (State.Capabilities.Active || (Math.Floor(State.Minute / 1440) + 1) * 1440 > targetMinute);
 
         private AdvanceResult AdvanceCore(double targetMinute, int eventBudget, bool publishSnapshot)

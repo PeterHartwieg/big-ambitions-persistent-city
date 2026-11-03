@@ -53,6 +53,28 @@ public sealed partial class FoodCommerceTests
         Assert.True(AccountingClock.Limit(city.IsCaughtUpTo(target), native, 120) > 0);
         Assert.Equal(0, city.HistoricalClockMisses);
     }
+    [Fact]
+    public void ExactPredecessorWithAnUnfinishedMealIsNotADrainedEndingEpoch()
+    {
+        var (city, market, routes) = Ready(); var meal = city.State.Food!.Residents.Single();
+        Advance(city, meal.DesiredAt + 6); Assert.Equal(MealStatus.Serving, meal.Status);
+        double boundary = (Math.Floor(meal.ServiceAt / 60) + 1) * 60;
+        double predecessor = AccountingClock.PreviousEpochTarget(boundary);
+        meal.DueAt = meal.ServiceAt = predecessor; meal.Deadline = boundary + 20;
+        city.State.Food.Shops.Single().NextServiceAt = predecessor;
+        city.ExtendMealStay(city.State.Citizens.Single(), boundary + 15);
+        city.State.Minute = predecessor;
+        // A bypassing native writer or old snapshot can have equal minutes but unfinished work.
+        var detached = new CitySimulator(city.State, routes);
+        Assert.True(AccountingClock.Compatible(predecessor, boundary));
+        Assert.False(detached.IsAccountingEpochDrained(boundary)); // Before market attachment: saved timestamps.
+        detached.AttachFoodMarket(market);
+        Assert.False(detached.IsAccountingEpochDrained(boundary)); // After attachment: scheduler roots.
+        meal.DueAt = meal.ServiceAt = boundary;
+        Assert.True(detached.IsAccountingEpochDrained(boundary)); // Work in the new epoch is allowed.
+        Assert.False(detached.IsCaughtUpTo(boundary));
+        Assert.Empty(market.Orders);
+    }
 }
 
 public sealed class AccountingBacklogTests
@@ -72,6 +94,8 @@ public sealed class AccountingBacklogTests
         var restoredState = read.State!;
         Assert.Equal(25, restoredState.Schema); Assert.Equal(before, PersistentCity.Persistence.SaveCodec.Write(restoredState));
         Assert.True(AccountingClock.Compatible(restoredState.Minute, native));
+        var beforeMarket = new CitySimulator(restoredState, routes);
+        Assert.True(beforeMarket.IsAccountingEpochDrained(Math.Floor(native) + 1));
         var restored = new CitySimulator(restoredState, routes); restored.AttachFoodMarket(market);
         Assert.True(restored.IsCaughtUpTo(target));
         Assert.True(AccountingClock.Limit(restored.IsCaughtUpTo(target), native, 1) > 0);

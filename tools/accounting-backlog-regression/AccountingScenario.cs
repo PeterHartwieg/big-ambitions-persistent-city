@@ -84,6 +84,7 @@ public static class AccountingScenario
             long started = Stopwatch.GetTimestamp();
             long saveTicks = 0;
             if (coordinated) Require(AccountingClock.Compatible(city.State.Minute, native), "input epoch escaped");
+            if (coordinated) Require(city.IsAccountingEpochDrained(native), "unfinished ending epoch escaped");
             bool ready = city.IsCaughtUpTo(target);
             float requested = (float)Math.Min(skip ? 120 : 30.0 / fps, end - native);
             float allowed = coordinated ? AccountingClock.Limit(ready, native, requested) : requested;

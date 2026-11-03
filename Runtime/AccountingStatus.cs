@@ -11,7 +11,10 @@ namespace PersistentCity.Runtime
         public object AccountingDiagnostics => new {
             policy = "minute-epoch-drain-v1", configuredCalendarFactor = NativeCityClock.Factor,
             nativeMinute = SaveGameManager.Current == null ? 0 : Now(), logicalMinute = simulation?.State.Minute,
-            lagMinutes = NativeCityClock.LagMinutes, maxLagMinutes = NativeCityClock.MaximumLagMinutes,
+            caughtUpToTarget = simulation != null && SaveGameManager.Current != null && simulation.IsCaughtUpTo(AccountingClock.Target(Now())),
+            lagMinutes = simulation == null || SaveGameManager.Current == null ? 0
+                : System.Math.Max(0, AccountingClock.Target(Now()) - simulation.State.Minute),
+            maxLagMinutes = NativeCityClock.MaximumLagMinutes,
             supportedMaxLagMinutes = AccountingClock.MaximumLagMinutes,
             heldOrdinaryTicks = NativeCityClock.HeldOrdinaryTicks, heldSkipTicks = NativeCityClock.HeldEconomySkipTicks,
             boundaryClips = NativeCityClock.BoundaryClips, withheldGameMinutes = NativeCityClock.WithheldMinutes,

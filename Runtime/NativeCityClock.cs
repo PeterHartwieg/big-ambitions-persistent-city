@@ -15,6 +15,7 @@ namespace PersistentCity.Runtime
         private static object? save;
         private static Func<double>? nativeClock;
         private static Func<double>? logicalClock;
+        private static Func<double, bool>? endingEpochDrained;
         private static Func<bool>? populationCaughtUp, economyActive;
         public static long HeldEconomySkipTicks { get; private set; }
         public static long HeldOrdinaryTicks { get; private set; }
@@ -39,6 +40,7 @@ namespace PersistentCity.Runtime
         {
             ObserveSimulationLag(AccountingClock.Target(native), logical);
             Refused |= !AccountingClock.Compatible(logical, native);
+            if (endingEpochDrained != null && !endingEpochDrained(native)) Refused = true;
             return !Refused;
         }
         public static double Factor { get; private set; } = 1;
@@ -50,7 +52,7 @@ namespace PersistentCity.Runtime
             && InstanceBehavior<UIs>.Instance?.timeMachine != null && !InstanceBehavior<UIs>.Instance.timeMachine.isRunning;
 
         public static void Start(object currentSave, double factor) => Start(currentSave, factor, null, null, null);
-        public static void Start(object currentSave, double factor, Func<bool>? readPopulationReady, Func<bool>? ownsEconomy, Func<double>? readNative, Func<double>? readLogical = null)
+        public static void Start(object currentSave, double factor, Func<bool>? readPopulationReady, Func<bool>? ownsEconomy, Func<double>? readNative, Func<double>? readLogical = null, Func<double, bool>? readEndingEpochDrained = null)
         {
             if (double.IsNaN(factor) || double.IsInfinity(factor) || factor < .1 || factor > 1)
                 throw new ArgumentOutOfRangeException(nameof(factor), "GameClockFactor must be between 0.1 and 1.");
@@ -83,6 +85,7 @@ namespace PersistentCity.Runtime
                 }
                 Factor = factor; save = currentSave; patches = installing;
                 populationCaughtUp = readPopulationReady; economyActive = ownsEconomy; nativeClock = readNative; logicalClock = readLogical;
+                endingEpochDrained = readEndingEpochDrained;
                 ResetDiagnostics();
             }
             catch { installing.UnpatchAll(Owner); CoordinatesDrivenRides = false; throw; }
@@ -136,7 +139,7 @@ namespace PersistentCity.Runtime
         {
             save = null;
             try { patches?.UnpatchAll(Owner); }
-            finally { patches = null; Factor = 1; CoordinatesDrivenRides = false; nativeClock = logicalClock = null; populationCaughtUp = economyActive = null; ResetDiagnostics(); }
+            finally { patches = null; Factor = 1; CoordinatesDrivenRides = false; nativeClock = logicalClock = null; endingEpochDrained = null; populationCaughtUp = economyActive = null; ResetDiagnostics(); }
         }
     }
 }

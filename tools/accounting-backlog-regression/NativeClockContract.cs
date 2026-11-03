@@ -46,6 +46,14 @@ public static class NativeClockContract
         SaveGameManager.Current = new object();
         Require(Tick(.5f) == .5f && !NativeCityClock.Active, "clock leaked into another save");
         NativeCityClock.Stop();
+        native = 64; logical = AccountingClock.PreviousEpochTarget(native); ready = false;
+        bool drained = false;
+        NativeCityClock.Start(SaveGameManager.Current!, 1, () => ready, () => true, () => native, () => logical, _ => drained);
+        Require(Tick(.5f) == 0 && NativeCityClock.Refused, "unfinished predecessor epoch was accepted");
+        NativeCityClock.Stop(); drained = true;
+        NativeCityClock.Start(SaveGameManager.Current!, 1, () => ready, () => true, () => native, () => logical, _ => drained);
+        Require(Tick(.5f) == 0 && !NativeCityClock.Refused, "drained predecessor/new-boundary work was refused");
+        NativeCityClock.Stop();
         Console.WriteLine("PASS actual NativeCityClock source: ordinary/skip/fence/refusal/pacing/recovery/teardown (native/Harmony doubles)");
     }
     private static void Require(bool condition, string message) { if (!condition) throw new Exception(message); }

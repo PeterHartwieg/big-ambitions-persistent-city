@@ -37,6 +37,8 @@ namespace PersistentCity.Core
             return Position.Finite(logicalMinute) && logicalMinute >= Previous(Math.Floor(nativeMinute))
                 && logicalMinute <= Target(nativeMinute);
         }
+        public static double PreviousEpochTarget(double nativeMinute)
+        { Validate(nativeMinute); return Previous(Math.Floor(nativeMinute)); }
         public static float Limit(bool caughtUp, double nativeMinute, float requestedMinutes)
         {
             Validate(nativeMinute);

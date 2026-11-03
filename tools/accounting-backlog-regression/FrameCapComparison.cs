@@ -20,6 +20,7 @@ internal static class FrameCapComparison
         (int Frames, string Final) Drain(int citizens)
         {
             var city = new CitySimulator(SaveCodec.Read(initial).State!, new NoRoutes()); int frames = 0;
+            if (!city.IsAccountingEpochDrained(0)) throw new Exception("Minute-zero work belongs to the first epoch");
             while (!city.IsCaughtUpTo(0))
             {
                 frames++;
