@@ -423,6 +423,37 @@ internal static class Program
             SlicedCheck(job.Result == null, "abandoned job kept a result");
             SlicedCheck(Fingerprint(f.Plan()) == expected && Fingerprint(f.PlanSliced().Route) == expected, "plans after an abandoned job differ");
         }
+        {
+            var f=new Fixture(300,true) {DirectMinutes=2000,AccessMinutes=2,EgressMinutes=3,HaveSubway=true};
+            string expected=Fingerprint(f.Plan());
+            f.Planner.BeginRouteEvent();
+            using var job=f.Planner.Begin(new RouteRequest(f.From,f.To,100,f.Person,f.Person.Preferences));
+            int calls=0;bool done=false;
+            while(!done)
+            {
+                Time.frameCount++;f.Planner.Refresh();f.Planner.RefreshStations();
+                SlicedCheck(f.Planner.Prepare(),"mod refresh invalidated a held event");
+                long units=f.Planner.JobUnits;
+                done=job.Continue(0);calls++;
+                SlicedCheck(f.Planner.JobUnits-units<=8 && calls<1000,"held event exceeded finite work or failed progress");
+            }
+            SlicedCheck(calls>8 && Fingerprint(job.Result)==expected,"sustained refresh changed route or did not exercise slicing");
+            f.Planner.EndRouteEvent();
+            f.Preflight();
+            SlicedCheck(f.Planner.ReadyForPopulation,"deferred refresh did not publish after event");
+        }
+        {
+            var f=new Fixture(31,true);
+            f.Planner.BeginRouteEvent();
+            using var job=f.Planner.Begin(new RouteRequest(f.From,f.To,100,f.Person,f.Person.Preferences));
+            f.Native[0].listIndex++;
+            f.Planner.Refresh();Time.frameCount++;
+            SlicedCheck(!f.Planner.Prepare(),"event lease hid native topology invalidation");
+            bool restarted=false;
+            try {job.Continue(0);} catch(RoutePlanningRestartRequired) {restarted=true;}
+            SlicedCheck(restarted,"event lease pinned an unsafe stale topology");
+            f.Planner.EndRouteEvent();
+        }
         CheckBoundedAdmission();
         CheckPeakPlanningThroughput();
         Console.WriteLine(JsonSerializer.Serialize(new { checks, results, slicedChecks, sliced }));

@@ -2,6 +2,12 @@ using System;
 
 namespace PersistentCity.Core
 {
+    /// <summary>Defer mod-owned input publication for one event. Native invalidation must still fail closed.</summary>
+    public interface IRouteEventInputs
+    {
+        void BeginRouteEvent();
+        void EndRouteEvent();
+    }
     /// <summary>One route question raised by a citizen event. The simulator holds its clock at the event's
     /// minute until the request is answered, so an answer that arrives frames later has the same simulation
     /// time as a synchronous one. The request carries either the working copy of the resident or a detached

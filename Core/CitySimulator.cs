@@ -262,6 +262,7 @@ namespace PersistentCity.Core
             public readonly IEnumerator<RouteRequest> Steps;
             public RouteRequest? Request;
             public IRoutePlanningJob? Job;
+            public bool InputLease;
         }
         private PendingEvent? pending;
         /// <summary>True while a citizen event waits for its route answer.</summary>
@@ -286,6 +287,7 @@ namespace PersistentCity.Core
             var evt = new PendingEvent(item, working, StepEvent(working, item.Minute).GetEnumerator());
             try
             {
+                if (routes is IRouteEventInputs inputs) { inputs.BeginRouteEvent(); evt.InputLease = true; }
                 while (evt.Steps.MoveNext())
                 {
                     var request = evt.Steps.Current;
@@ -300,7 +302,7 @@ namespace PersistentCity.Core
                     else request.Answer(AnswerSynchronously(request));
                 }
             }
-            catch { evt.Steps.Dispose(); due.Add(item); throw; }
+            catch { ReleaseEventInputs(evt); evt.Steps.Dispose(); due.Add(item); throw; }
             CompleteEvent(evt);
             return true;
         }
@@ -358,6 +360,7 @@ namespace PersistentCity.Core
             try { evt.Job?.Dispose(); }
             finally
             {
+                ReleaseEventInputs(evt);
                 evt.Steps.Dispose();
                 if (!due.Add(evt.Item)) throw new InvalidOperationException("An interrupted event lost its queue slot.");
             }
@@ -365,6 +368,7 @@ namespace PersistentCity.Core
 
         private void CompleteEvent(PendingEvent evt)
         {
+            ReleaseEventInputs(evt);
             var item = evt.Item; var working = evt.Working; var live = item.Citizen;
             evt.Steps.Dispose();
             if (!Position.Finite(working.NextEventMinute) || working.NextEventMinute <= State.Minute)
@@ -400,6 +404,13 @@ namespace PersistentCity.Core
             ScheduleOptionalStop(live, arrivalRoute);
             FileOptionalStop(live);
             activityObservers.Handlers?.Invoke(live.Identity.Id, live, State.Minute);
+        }
+
+        private void ReleaseEventInputs(PendingEvent evt)
+        {
+            if (!evt.InputLease) return;
+            evt.InputLease = false;
+            ((IRouteEventInputs)routes).EndRouteEvent();
         }
 
         // The event works on a copy that shares the immutable identity and the route object (events replace
