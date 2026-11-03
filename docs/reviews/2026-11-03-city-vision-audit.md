@@ -225,12 +225,14 @@ Defer further interior rendering, isolated product probes and preference dimensi
 
 ## Reproducing the budget measurement
 
-The [fixture source](assets/2026-11-03-city-vision-audit/budget-posting-benchmark.cs.txt), [runner](assets/2026-11-03-city-vision-audit/run-budget-benchmark.py) and [recorded observations](assets/2026-11-03-city-vision-audit/budget-posting-results.json) preserve the audit's small component experiment. The runner builds in a temporary directory against the local Core project and does not launch the game or access saves.
+The [fixture source](assets/2026-11-03-city-vision-audit/budget-posting-benchmark.cs.txt), [runner](assets/2026-11-03-city-vision-audit/run-budget-benchmark.py) and [recorded observations](assets/2026-11-03-city-vision-audit/budget-posting-results.json) preserve the audit's small component experiment. The runner copies the local Core project and sources (excluding existing `bin`/`obj` directories) into scratch beside the fixture project. Both projects' restore, intermediate and build outputs stay in that temporary directory and are cleaned up on exit; the checkout's existing build artifacts remain unchanged. The runner does not launch the game or access saves.
 
 From the repository root, run:
 
 ```sh
 python3 docs/reviews/assets/2026-11-03-city-vision-audit/run-budget-benchmark.py
 ```
+
+The [isolation regression check](assets/2026-11-03-city-vision-audit/test_budget_benchmark.py) runs the real benchmark against disposable checkouts with and without existing Core artifacts. It checks file hashes and modification times, directory entries and temporary-build cleanup. Run it with `python3 docs/reviews/assets/2026-11-03-city-vision-audit/test_budget_benchmark.py`; both cases reproduced checkout writes before the isolation fix and pass afterward.
 
 The recorded values belong to the audited source and the original audit process. Reruns depend on the checkout, host, JIT state and runtime. The fixture directly constructs minimal state and invokes the posting operation; it is not a complete validated city, a general scale harness or a new release gate.
