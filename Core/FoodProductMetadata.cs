@@ -23,20 +23,26 @@ namespace PersistentCity.Core
         public int Penalty(MealKind meal) => meal == MealKind.Legacy ? 0 : meal == MealKind.Breakfast ? BreakfastFitCents
             : meal == MealKind.Lunch ? LunchFitCents : meal == MealKind.Dinner ? DinnerFitCents : throw new ArgumentOutOfRangeException(nameof(meal));
     }
-    // Partial config metadata: null taste preserves the per-resident seeded default.
+    // Partial metadata; absence falls through config > API > defaults, per field.
     public readonly struct FoodProductMetadataOverride
     {
         public FoodProductMetadataOverride(MealClass mealClass, int? tasteBand, int breakfastFitCents, int lunchFitCents, int dinnerFitCents)
+            : this((MealClass?)mealClass, tasteBand, (int?)breakfastFitCents, lunchFitCents, dinnerFitCents) { }
+        public FoodProductMetadataOverride(MealClass? mealClass, int? tasteBand, int? breakfastFitCents, int? lunchFitCents, int? dinnerFitCents)
         {
-            _ = new FoodProductMetadata(mealClass, tasteBand ?? 2, breakfastFitCents, lunchFitCents, dinnerFitCents);
-            MealClass=mealClass; TasteBand=tasteBand; BreakfastFitCents=breakfastFitCents;
-            LunchFitCents=lunchFitCents; DinnerFitCents=dinnerFitCents;
+            _ = new FoodProductMetadata(mealClass ?? MealClass.Food, tasteBand ?? 2, breakfastFitCents ?? 900, lunchFitCents ?? 100, dinnerFitCents ?? 450);
+            OptionalMealClass=mealClass; TasteBand=tasteBand; OptionalBreakfastFitCents=breakfastFitCents;
+            OptionalLunchFitCents=lunchFitCents; OptionalDinnerFitCents=dinnerFitCents;
         }
-        public MealClass MealClass { get; }
+        public MealClass? OptionalMealClass { get; }
+        public int? OptionalBreakfastFitCents { get; }
+        public int? OptionalLunchFitCents { get; }
+        public int? OptionalDinnerFitCents { get; }
+        public MealClass MealClass => OptionalMealClass ?? MealClass.Food;
         public int? TasteBand { get; }
-        public int BreakfastFitCents { get; }
-        public int LunchFitCents { get; }
-        public int DinnerFitCents { get; }
+        public int BreakfastFitCents => OptionalBreakfastFitCents ?? 900;
+        public int LunchFitCents => OptionalLunchFitCents ?? 100;
+        public int DinnerFitCents => OptionalDinnerFitCents ?? 450;
     }
 
     // Shared immutable E5 DTO only. Classification is authored policy, never native eligibility.

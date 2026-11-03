@@ -1,0 +1,13 @@
+{
+  "nativeEvidence": false,
+  "red": {
+    "exit": 1,
+    "output": "Traceback (most recent call last):\n  File \"C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\e5e-metadata-api\\tools\\e5a-eligibility-regression\\source_checks.py\", line 37, in <module>\n    scan(sources)\n  File \"C:\\Users\\Peter\\Coding_Projects\\big-ambitions\\big-ambitions-persistent-city-worktrees\\e5e-metadata-api\\tools\\e5a-eligibility-regression\\source_checks.py\", line 18, in scan\n    assert not any(symbol in code for symbol in SYMBOLS), \"E5a production caller: \" + path\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: E5a production caller: Core/FoodProductMetadataRegistry.cs\n"
+  },
+  "green": {
+    "exit": 0,
+    "output": "PASS 11 isolation mutations rejected; immutable DTO sibling consumer allowed\n"
+  },
+  "guardUnchangedAgainst": "4ee0c8d",
+  "correctedCode": "545f589"
+}

@@ -22,9 +22,8 @@ namespace PersistentCity.Core
             for (int i = 0; i < image.Offers.Count; i++)
             {
                 var offer = image.Offers[i];
-                if (!FoodProducts.KnownLegacy(offer.ProductId)
-                    && resolver.TryGetOverride(offer.ProductId, out var metadata)
-                    && metadata.MealClass != MealClass.Food) return CompleteFoodMenuRefusal.MealClass;
+                if (resolver.ResolveMealClass(offer.ProductId) != MealClass.Food)
+                    return CompleteFoodMenuRefusal.MealClass;
             }
             if (!Fits(historyProducts, image.Offers, FoodMenuPolicy.MaximumOffers))
                 return CompleteFoodMenuRefusal.HistoryCapacity;
