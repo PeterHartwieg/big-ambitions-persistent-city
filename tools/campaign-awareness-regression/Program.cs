@@ -121,6 +121,9 @@ foreach(int count in new[]{1,1024})
     NativeFoodOwnership.Hour=0;adapter.AttachCampaignAwareness(79,new());long runtimeHour=0;
     string before=JsonSerializer.Serialize(native,new JsonSerializerOptions {IncludeFields=true});
     var production=Measure(()=>adapter.ObserveCampaignBoundary(++runtimeHour));
+    bool automaticScopeAdmitted=NativeCampaignReader.BoundaryScopeAdmitted(count);
+    if(runtimeFood.Campaigns.Count!=(automaticScopeAdmitted?count:0))
+        throw new Exception("Automatic boundary admission published an unexpected/partial campaign scope.");
     string after=JsonSerializer.Serialize(native,new JsonSerializerOptions {IncludeFields=true});
     if(before!=after) throw new Exception("Native campaign/account state changed.");
     foreach(var registration in native) registration.marketingCampaigns.Clear();
@@ -148,7 +151,7 @@ foreach(int count in new[]{1,1024})
     imageFood.Campaigns.Clear();string noImages=SaveCodec.Write(previous.State);var baseCounts=SaveCodec.CountRecords(previous.State,noImages);
     int campaignBytes=emptyWire.Length-noImages.Length;
     if(imageCounts.Semantic-baseCounts.Semantic!=count || imageCounts.Streaming-baseCounts.Streaming!=count) throw new Exception("Image record charge changed.");
-    Console.WriteLine(JsonSerializer.Serialize(new {businesses=count,hourlyC1AndPublication=sample,dayTypeIndexRebuild=rebuild,eightSlotDecision=decision,
+    Console.WriteLine(JsonSerializer.Serialize(new {businesses=count,automaticScopeAdmitted,hourlyC1AndPublication=sample,dayTypeIndexRebuild=rebuild,eightSlotDecision=decision,
         eightCurrentHourActiveLookups=currentActive,eightDelayedHourActiveLookups=delayedActive,
         eightUnobservedHourActiveLookups=unobservedActive,
         fullUnionUnobservedHourActiveLookups=unobservedFullUnion,

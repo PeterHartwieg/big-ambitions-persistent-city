@@ -426,7 +426,7 @@ namespace PersistentCity.Runtime
                         }
                         elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
                         // Not finished: still pending, or the event restarted and is due again unstarted.
-                        if (!finished) { if (elapsed >= timeBudget) { pendingAtEnd = active.PlanningPending; break; } continue; }
+                        if (!finished) { if (elapsed >= timeBudget || routes?.JobAdmissionExhaustedForFrame == true) { pendingAtEnd = active.PlanningPending; break; } continue; }
                         events++; citizenEvents++; planningEvents++;
                         if (citizenEvents >= citizenLimit || elapsed >= timeBudget) break;
                         continue;

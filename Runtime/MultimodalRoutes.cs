@@ -260,6 +260,7 @@ namespace PersistentCity.Runtime
         internal const int MaximumJobPathsPerFrame = 2;
         private int jobPathFrame = -1, jobFramePaths;
         public long JobAdmissionDeferrals { get; private set; }
+        public bool JobAdmissionExhaustedForFrame => jobPathFrame == Time.frameCount && jobFramePaths >= MaximumJobPathsPerFrame;
         /// <summary>The kind of the unit a job performed last, for attributing a slow slice.</summary>
         public string LastJobUnit { get; private set; } = "";
         private static readonly string[] StageNames =

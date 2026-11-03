@@ -149,6 +149,8 @@ internal static class Program
                     }
                     Check(f.Planner.Metrics.NavMeshPathQueries - framePaths <= MultimodalRoutes.MaximumJobPathsPerFrame,
                         "several Continue calls bypassed frame path admission");
+                    if (f.Planner.Metrics.NavMeshPathQueries - framePaths == MultimodalRoutes.MaximumJobPathsPerFrame)
+                        Check(f.Planner.JobAdmissionExhaustedForFrame, "runtime cannot stop zero-work retries after native admission is exhausted");
                 }
                 Check(Fingerprint(job.Result) == expected, "admitted route changed its winner");
             }

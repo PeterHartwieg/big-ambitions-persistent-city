@@ -54,8 +54,8 @@ namespace PersistentCity.Runtime
                 if (candidateBusinesses.Contains(scope.BusinessId) && registrations.TryGetValue(scope.PlaceId,out var reg)
                     && awarenessCampaignReader.HasCampaignEntries(reg)) { any = true; break; }
             if (!any) return;
-            var sources = new List<CampaignBusinessSource>();
-            var places = new Dictionary<string, string>(StringComparer.Ordinal);
+            var sources = new List<CampaignBusinessSource>(state.Shops.Count);
+            var places = new Dictionary<string, string>(state.Shops.Count, StringComparer.Ordinal);
             foreach (var scope in state.Shops)
             {
                 places.Add(scope.BusinessId, scope.PlaceId); // retained identity, independent of today's candidacy
