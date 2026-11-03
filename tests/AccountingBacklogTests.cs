@@ -24,6 +24,7 @@ public sealed partial class FoodCommerceTests
             minute += step; if (minute >= 60) { minute -= 60; hour++; }
             clock = hour * 60.0 + minute;
             market.EarliestMinute = Math.Floor(clock / 60) * 60;
+            Assert.True(city.BeginAccountingObservations(clock));
             city.AdvanceTo(Math.Max(city.State.Minute, AccountingClock.Target(clock)), 1);
         }
         Assert.DoesNotContain(city.State.Food.Residents, m => m.Reason == "Native clock passed the purchase window");
@@ -68,6 +69,7 @@ public sealed partial class FoodCommerceTests
         var detached = new CitySimulator(city.State, routes);
         Assert.True(AccountingClock.Compatible(predecessor, boundary));
         Assert.False(detached.IsAccountingEpochDrained(boundary)); // Before market attachment: saved timestamps.
+        Assert.False(detached.BeginAccountingObservations(boundary));
         detached.AttachFoodMarket(market);
         Assert.False(detached.IsAccountingEpochDrained(boundary)); // After attachment: scheduler roots.
         meal.DueAt = meal.ServiceAt = boundary;
@@ -144,13 +146,14 @@ public sealed class AccountingBacklogTests
         Assert.Equal(0, AccountingClock.Limit(false, clock, 120));
         float crossing = AccountingClock.Limit(true, clock, 120);
         clock = Math.Floor(clock / 60) * 60 + (float)((float)(clock % 60) + crossing);
-        Assert.Equal(start + 1, clock);
+        Assert.Equal(start + 1, Math.Floor(clock));
+        Assert.True(clock < start + 2);
         Assert.True(AccountingClock.Compatible(fenceTarget, clock));
         Assert.False(AccountingClock.Compatible(start - .01, clock));
     }
     [Theory]
-    [InlineData(30, 32, 256, 4)] [InlineData(60, 16, 128, 2)] [InlineData(120, 8, 64, 1)]
-    public void OrdinaryCapsProvideEqualWorkPerSecond(int fps, int citizens, int units, double milliseconds)
+    [InlineData(30, 32, 256, 4)] [InlineData(60, 16, 128, 2)] [InlineData(120, 16, 128, 2)]
+    public void OrdinaryCapsRetainLegacyPerFrameFloor(int fps, int citizens, int units, double milliseconds)
     {
         var budget = new PopulationFrameBudget(1.0 / fps, false);
         Assert.Equal(citizens, budget.CitizenEvents); Assert.Equal(units, budget.Units); Assert.Equal(milliseconds, budget.Milliseconds);
@@ -158,7 +161,7 @@ public sealed class AccountingBacklogTests
         Assert.Equal(128, stalled.CitizenEvents); Assert.Equal(1024, stalled.Units); Assert.Equal(4, stalled.Milliseconds);
     }
     [Theory]
-    [InlineData(30, 32, 256)] [InlineData(60, 16, 128)] [InlineData(120, 8, 64)]
+    [InlineData(30, 32, 256)] [InlineData(60, 16, 128)] [InlineData(120, 16, 128)]
     public void UnityFloatFrameDurationDoesNotRoundUpAWholeExtraWorkUnit(int fps, int citizens, int units)
     {
         var budget = new PopulationFrameBudget((float)(1.0 / fps), false);

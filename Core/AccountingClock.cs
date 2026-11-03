@@ -22,7 +22,10 @@ namespace PersistentCity.Core
 
         // Use the float minute-of-hour that native time actually stores. A decimal epsilon
         // is unsafe: the last substep can round into an hour before its final events drain.
-        private static float Fence(double nativeMinute) => Previous((float)(Math.Floor(nativeMinute % 60) + 1));
+        // Use the hour's float spacing everywhere: adding across 60 and then subtracting
+        // 60 must preserve this fence too (the float spacing near minute one is smaller).
+        private const float FenceGap = 1f / 262144;
+        private static float Fence(double nativeMinute) => (float)(Math.Floor(nativeMinute % 60) + 1) - FenceGap;
         public static double Target(double nativeMinute)
         {
             Validate(nativeMinute);
@@ -45,7 +48,9 @@ namespace PersistentCity.Core
             if (!Position.Finite(requestedMinutes) || requestedMinutes < 0) throw new ArgumentOutOfRangeException(nameof(requestedMinutes));
             if (!caughtUp || requestedMinutes == 0) return 0;
             float minute = (float)(nativeMinute % 60), fence = Fence(nativeMinute);
-            float end = minute >= fence ? (float)(Math.Floor(minute) + 1) : fence;
+            // Once the ending epoch drained, use this tick's remaining allowance in the
+            // next epoch instead of spending a rendered frame on a one-ulp crossing.
+            float end = minute >= fence ? fence + 1 : fence;
             float allowed = Math.Min(requestedMinutes, end - minute);
             // Subtraction and subsequent native float addition can round in opposite directions.
             if (minute + allowed > end) allowed = Previous(allowed);
@@ -57,7 +62,7 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>Equal ordinary work allowance per wall second at 30/60/120 FPS. No debt
+    /// <summary>Elapsed-time allowance with the legacy 16-start/2ms per-frame floor. No debt
     /// accumulates after stalls; soft time limits still cannot preempt an individual native call.</summary>
     public readonly struct PopulationFrameBudget
     {
@@ -66,9 +71,9 @@ namespace PersistentCity.Core
             if (!Position.Finite(seconds) || seconds < 0) throw new ArgumentOutOfRangeException(nameof(seconds));
             // Unity supplies float seconds; do not turn 16.0000008 into seventeen starts.
             // The epsilon is below a work unit and covers float conversion at these caps.
-            Units = hiddenSkip ? 128 : Math.Max(1, Math.Min(1024, (int)Math.Ceiling(Math.Min(seconds, 1) * 7680 - .0001)));
-            CitizenEvents = hiddenSkip ? 128 : Math.Max(1, Math.Min(128, (int)Math.Ceiling(Math.Min(seconds, 1) * 960 - .0001)));
-            Milliseconds = hiddenSkip ? 16 : Math.Max(.25, Math.Min(4, seconds * 120));
+            Units = hiddenSkip ? 128 : Math.Max(128, Math.Min(1024, (int)Math.Ceiling(Math.Min(seconds, 1) * 7680 - .0001)));
+            CitizenEvents = hiddenSkip ? 128 : Math.Max(16, Math.Min(128, (int)Math.Ceiling(Math.Min(seconds, 1) * 960 - .0001)));
+            Milliseconds = hiddenSkip ? 16 : Math.Max(2, Math.Min(4, seconds * 120));
         }
         public int Units { get; }
         public int CitizenEvents { get; }

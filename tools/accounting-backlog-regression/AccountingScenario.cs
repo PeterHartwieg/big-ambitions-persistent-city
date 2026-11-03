@@ -92,6 +92,7 @@ public static class AccountingScenario
             minute += allowed;
             while (minute >= 60) { minute -= 60; hour++; }
             native = market.Clock = hour * 60.0 + minute;
+            if (coordinated) Require(city.BeginAccountingObservations(native), "observation epoch not published");
             target = Math.Max(city.State.Minute, coordinated ? AccountingClock.Target(native) : native);
             if (reload && !midnightReload && native == end)
             {

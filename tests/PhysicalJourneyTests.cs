@@ -6,7 +6,7 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-public sealed class PhysicalJourneyTests
+public sealed partial class PhysicalJourneyTests
 {
     private sealed class Planner : IRoutePlanner
     {

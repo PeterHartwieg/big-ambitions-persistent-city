@@ -31,11 +31,12 @@ public static class NativeClockContract
         Require(NativeCityClock.MaximumRecoverySeconds >= 1, "recovery duration missing");
         native = 59 + step; logical = AccountingClock.Target(native);
         step = Tick(3); native = (float)((float)native + step);
-        Require(native == 60, "ending hour did not cross exactly");
+        Require(native >= 60 && native < 61, "ending hour did not cross into the next epoch fence");
         ready = false; InstanceBehavior<UI.UIs>.Instance.timeMachine.isRunning = true;
         Require(Tick(120) == 0 && NativeCityClock.HeldEconomySkipTicks == 1, "skip backlog not held");
         Require(NativeCityClock.WithheldMinutes > 0 && NativeCityClock.MaximumLagMinutes <= 1, "lag/overload counters missing");
-        native = 62; Require(Tick(120) == 0 && NativeCityClock.Refused && NativeCityClock.PacingAffected, "bypassing native writer not refused");
+        native = 62; Require(Tick(120) == 120 && NativeCityClock.Refused && NativeCityClock.PacingAffected, "refusal must release native time immediately");
+        Require(Tick(120) == 120, "latched refusal must not freeze subsequent native ticks");
         NativeCityClock.Stop();
         Require(HarmonyLib.Harmony.Prefixes.Count == 0 && !NativeCityClock.Active && !NativeCityClock.Refused, "clock teardown leaked state");
         native = logical = 62; ready = true; InstanceBehavior<UI.UIs>.Instance.timeMachine.isRunning = false;
@@ -49,11 +50,12 @@ public static class NativeClockContract
         native = 64; logical = AccountingClock.PreviousEpochTarget(native); ready = false;
         bool drained = false;
         NativeCityClock.Start(SaveGameManager.Current!, 1, () => ready, () => true, () => native, () => logical, _ => drained);
-        Require(Tick(.5f) == 0 && NativeCityClock.Refused, "unfinished predecessor epoch was accepted");
+        Require(Tick(.5f) == .5f && NativeCityClock.Refused, "unfinished predecessor epoch must refuse PC and release native time");
         NativeCityClock.Stop(); drained = true;
         NativeCityClock.Start(SaveGameManager.Current!, 1, () => ready, () => true, () => native, () => logical, _ => drained);
         Require(Tick(.5f) == 0 && !NativeCityClock.Refused, "drained predecessor/new-boundary work was refused");
         NativeCityClock.Stop();
+        Require(PopulationRuntime.PreparingAccountingText.Contains("Calendar held"), "startup notice must explain the clock hold");
         Console.WriteLine("PASS actual NativeCityClock source: ordinary/skip/fence/refusal/pacing/recovery/teardown (native/Harmony doubles)");
     }
     private static void Require(bool condition, string message) { if (!condition) throw new Exception(message); }

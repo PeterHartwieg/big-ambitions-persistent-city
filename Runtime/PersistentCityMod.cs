@@ -244,6 +244,7 @@ namespace PersistentCity.Runtime
                     TryStart();
                     return;
                 }
+                if (!BeginAccountingObservations()) return;
                 foodMarket?.RefreshDiscovery();
                 routeObjects?.Step(preparingPausedCity: Time.timeScale == 0);
                 if (Time.unscaledTime >= nextDependencyCheck)
@@ -320,7 +321,7 @@ namespace PersistentCity.Runtime
                 closureFrames++; closureMilliseconds += closureElapsed;
                 maxClosureMilliseconds = Math.Max(maxClosureMilliseconds, closureElapsed);
                 RecordRoutingFrame(prepareElapsed, closureElapsed, true);
-                if (!NativeCityClock.CheckInputEpoch(target, simulation.State.Minute)) { inspector.Suspend(); return; }
+                if (!NativeCityClock.CheckInputEpoch(target, simulation.State.Minute)) { StopAccounting(); return; }
                 AdvancePopulation(Math.Max(AccountingClock.Target(target), simulation.State.Minute));
                 if (settings.PhysicalEnabled && !physicalFailed && physical == null && !BuildingManager.IsInsideBuilding && !NativeTravelPace.HiddenTravel)
                 {
@@ -587,12 +588,12 @@ namespace PersistentCity.Runtime
             if (!source.MatchesPopulation(state)) { Fail("RLO donor catalogue changed during initialization. Original payload retained."); return; }
             if (state.Minute > Now() + 0.001) { Fail("Population snapshot is ahead of this save's clock; original payload retained."); return; }
             if (!AccountingClock.Compatible(state.Minute, Now()))
-            { Fail("Accounting input epoch differs from the population snapshot. Historical demand cannot be replayed safely; original payload retained."); return; }
+            { StopAccounting(); return; }
             routeObjects = new RouteObjectDiscovery();
             routes = new MultimodalRoutes(state.Places, NativeTravelPace.WalkingMetresPerSecond / state.TravelClockRate, state.TravelClockRate, dependency, routeObjects);
             simulation = new CitySimulator(state, routes);
             if (!simulation.IsAccountingEpochDrained(Now()))
-            { Fail("Ending accounting epoch still has unfinished work. Historical demand cannot be replayed safely; original payload retained."); return; }
+            { StopAccounting(); return; }
             var binding = prepared.Saves.BindTo(save.modData);
             if (!binding.Success) { Fail("Population save binding refused: " + binding.Error); return; }
             saveSession = prepared.Saves;
@@ -647,8 +648,7 @@ namespace PersistentCity.Runtime
         private void Save()
         {
             if (failed || simulation == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current)) return;
-            if (!NativeCityClock.CheckInputEpoch(Now(), simulation.State.Minute))
-            { log?.Warn("Population save refused: synchronized accounting input epoch was lost. Original payload retained."); return; }
+            if (!BeginAccountingObservations()) return;
             try
             {
                 var source = ReadRlo("save");
@@ -656,6 +656,7 @@ namespace PersistentCity.Runtime
                 { Fail("RLO changed before saving; original population payload retained."); return; }
                 RunPhysical(() => physical?.BeforeSave());
                 foodMarket?.RefreshKnownOwnership();
+                if (!NativeCityClock.CheckInputEpoch(Now(), simulation.State.Minute)) { StopAccounting(); return; }
                 // Within the guarded input epoch, a partial snapshot resumes from its recorded minute after load.
                 var result = (saveSession ?? throw new InvalidOperationException("Save session is missing."))
                     .WriteTo(SaveGameManager.Current.modData, simulation.State);

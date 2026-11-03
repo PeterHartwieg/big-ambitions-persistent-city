@@ -11,6 +11,7 @@ internal static class Program
         NativeClockContract.Run();
         AccountingStatusBenchmark.Run();
         FrameCapComparison.Run();
+        ClockBaseline.Run();
         // Warm both policies before measuring. Timers include every detached frame operation;
         // save/reload is deliberately outside measured gameplay windows, as on the rig.
         AccountingScenario.Run(16, 60, 16, 2);

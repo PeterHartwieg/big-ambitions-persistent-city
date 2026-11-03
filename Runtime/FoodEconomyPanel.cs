@@ -39,8 +39,8 @@ namespace PersistentCity.Runtime
                 economyLabel ??= new GUIStyle(GUI.skin.label) { wordWrap = true, fontSize = 16 };
                 string message = failed ? "Persistent City is paused. " + status
                     : simulation != null && ReferenceEquals(saveIdentity, SaveGameManager.Current)
-                        ? "Persistent City is preparing city routes. Resident demand starts automatically when ready. Ctrl+F8 opens food business feedback."
-                        : "Persistent City: " + (status.Length == 0 ? "Preparing the city." : status);
+                        ? PreparingAccountingText
+                        : NativeCityClock.Active ? PreparingAccountingText : "Persistent City: " + (status.Length == 0 ? "Preparing the city." : status);
                 GUI.Label(new Rect(30, 28, Math.Min(740, Screen.width - 60), 68), message, economyLabel);
                 return;
             }

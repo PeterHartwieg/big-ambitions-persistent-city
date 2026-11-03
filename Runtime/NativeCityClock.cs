@@ -93,7 +93,7 @@ namespace PersistentCity.Runtime
 
         private static void TickPrefix(ref float deltaTimeWithMultiplier)
         {
-            if (!Active || LoadScene.isLoading || deltaTimeWithMultiplier <= 0 || float.IsInfinity(deltaTimeWithMultiplier)) return;
+            if (!Active || Refused || LoadScene.isLoading || deltaTimeWithMultiplier <= 0 || float.IsInfinity(deltaTimeWithMultiplier)) return;
             if (OrdinaryTick) deltaTimeWithMultiplier *= (float)Factor;
         }
         private static void AccountingPrefix(ref float deltaTimeWithMultiplier)
@@ -102,8 +102,9 @@ namespace PersistentCity.Runtime
             if (!Active || LoadScene.isLoading || economyActive?.Invoke() != true || nativeClock == null || populationCaughtUp == null) return;
             double native = nativeClock(), logical = logicalClock?.Invoke() ?? native;
             // A bypassing clock writer or an old cross-epoch save has no replay-safe input image.
-            // Hold and report the broken contract; never turn its backlog into missed demand.
-            CheckInputEpoch(native, logical);
+            // Failure releases native time immediately. PopulationRuntime detaches at its
+            // next Update/save entry; never freeze the whole native city after refusal.
+            if (!CheckInputEpoch(native, logical)) return;
             if (deltaTimeWithMultiplier <= 0) return;
             float requested = deltaTimeWithMultiplier;
             bool ready = !Refused && populationCaughtUp();
@@ -120,7 +121,7 @@ namespace PersistentCity.Runtime
             {
                 MaximumRecoverySeconds = Math.Max(MaximumRecoverySeconds, WaitingSeconds);
                 waitingSince = 0;
-                if (AccountingLimited) BoundaryClips++;
+                if (AccountingLimited) { BoundaryClips++; lastHeldAt = System.Diagnostics.Stopwatch.GetTimestamp(); }
             }
             deltaTimeWithMultiplier = allowed;
         }

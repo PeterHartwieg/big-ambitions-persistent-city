@@ -180,6 +180,24 @@ namespace PersistentCity.Core
             if (Math.Floor(nativeMinute) == 0) return true; // No simulation events exist before minute zero.
             return State.Minute >= target && NoEventsThrough(target, inspectSavedFood: true);
         }
+        /// <summary>Publish a verified new epoch before closure, physical or save observations.
+        /// This executes no events and cannot forgive any unfinished previous-epoch work.</summary>
+        public bool BeginAccountingObservations(double nativeMinute)
+        {
+            if (!AccountingClock.Compatible(State.Minute, nativeMinute) || !IsAccountingEpochDrained(nativeMinute)) return false;
+            double epoch = Math.Floor(nativeMinute);
+            if (traffic != null && traffic.Clock < epoch) traffic.BeginObservationEpoch(epoch);
+            if (State.Minute < epoch)
+            {
+                // This boundary was implicit in the predecessor clock. Publish its calendar
+                // capability fact too, or deriving the next midnight from the new clock would
+                // skip it. No citizen, meal, budget, traffic or native transaction executes here.
+                if (!State.Capabilities.Active && Math.Floor(State.Minute / 1440) < Math.Floor(epoch / 1440))
+                    State.Capabilities.Active = true;
+                State.Minute = epoch; SynchronizeSnapshot();
+            }
+            return true;
+        }
         private bool SavedFoodAfter(double target)
         {
             foreach (var meal in State.Food!.Residents)

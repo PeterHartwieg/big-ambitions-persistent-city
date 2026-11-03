@@ -305,6 +305,25 @@ reg=Fresh();market=new NativeFoodMarket(reg);NativeFoodOwnership.Observe(reg,tru
 GameManager.RunMainGameTick(60);market.CampaignRunning=false;GameManager.RunMainGameTick(60);
 Check(market.CampaignObservations==2 && market.CampaignFood.Campaigns.Count==1
     && market.CampaignFood.Campaigns[0].Mask(1,0)==(1u<<9),"running campaign at acquisition then stop before next hour keeps evidence");
+// A stopped population must not freeze native time or own every future hour after reload.
+reg = Fresh(); market = new NativeFoodMarket(reg);
+NativeFoodOwnership.Observe(reg, true); NativeFoodOwnership.Attach(market);
+GameManager.RunMainGameTick(60);
+string stoppedPopulation = PopulationPayload(SaveGameManager.Current.Hour);
+SaveGameManager.Current.modData[SaveStore.StateKey] = stoppedPopulation;
+NativeFoodOwnership.ReleaseAfterAccountingFailure();
+string stoppedAuthority = SaveGameManager.Current.modData[FoodAuthorityStore.Key];
+Check(NativeFoodOwnership.Find(reg)!.OwnsHour(33) && !NativeFoodOwnership.Find(reg)!.CanServe,
+    "refusal protects the partial hour and immediately removes PC checkout authority");
+NativeFoodOwnership.Detach(market);
+reg = Fresh(9, stoppedAuthority, populationPayload: stoppedPopulation);
+Check(SaveGameManager.Current.modData[SaveStore.StateKey] == stoppedPopulation, "native failure save/reload preserves original population bytes");
+Check(CustomerEntriesHelper.GetEntriesByAddress(reg.Address).Count == 0, "stopped saved partial hour cannot replay native demand");
+GameManager.RunMainGameTick(60);
+Check(!NativeFoodOwnership.Find(reg)!.OwnsHour(34), "detached stopped city releases the next drained native hour after reload");
+Check(CustomerEntriesHelper.Generated.Count == 14 && CustomerEntriesHelper.Generated.All(h => h >= 10),
+    "native playable save resumes only current/future customer generation without PC attached");
+Check(SaveGameManager.Current.modData[SaveStore.StateKey] == stoppedPopulation, "native handoff never overwrites the stopped population payload");
 Console.WriteLine($"PASS {checks} actual ownership-hook checks against native field/callback doubles. No Unity/game execution.");
 
 BuildingRegistration Fresh(int hour = 8, string? payload = null, bool? ownPayload = null, string? receiptKey = null, string? receiptValue = null, string? populationPayload = null)

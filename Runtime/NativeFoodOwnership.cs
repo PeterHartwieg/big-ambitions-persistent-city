@@ -40,7 +40,7 @@ namespace PersistentCity.Runtime
         private static object? save;
         private static string? payload;
         private static NativeFoodMarket? market;
-        private static bool installed, boundary, awaitingPopulation;
+        private static bool installed, boundary, awaitingPopulation, releaseWithoutMarket;
         private static long lastBoundaryHour = -1;
         internal static string Error { get; private set; } = "";
         internal static long Hour => SaveGameManager.Current.Day * 24L + SaveGameManager.Current.Hour;
@@ -75,6 +75,7 @@ namespace PersistentCity.Runtime
             var current = SaveGameManager.Current;
             if (current == null || current.modData == null || ReferenceEquals(save, current)) return;
             save = current; market = null; records.Clear(); observed.Clear(); addresses.Clear(); Error = "";
+            lastBoundaryHour = Hour; releaseWithoutMarket = false;
             if (current.BuildingRegistrations != null)
                 foreach (var reg in current.BuildingRegistrations) addresses[reg.Address] = reg;
             current.modData.TryGetValue(FoodAuthorityStore.Key, out payload);
@@ -89,6 +90,8 @@ namespace PersistentCity.Runtime
                         throw new InvalidOperationException("Food authority is ahead of the loaded native clock; original payload retained.");
                     records.Add(row.PlaceId, row);
                 }
+                releaseWithoutMarket = records.Values.Any(row => row.Managed && !row.Desired);
+                if (releaseWithoutMarket) ObserveReleaseRegistrations();
                 if (!current.modData.ContainsKey(SaveStore.StateKey) && (records.Values.Any(r => r.FromHour >= 0)
                     || current.modData.Keys.Any(FoodSaleReceipts.IsReceiptKey)))
                     throw new InvalidOperationException("Saved food authority or receipts exist without the population payload; original data retained, fresh identities and wallets refused.");
@@ -158,6 +161,27 @@ namespace PersistentCity.Runtime
             throw new InvalidOperationException(Error);
         }
         internal static void Detach(NativeFoodMarket value) { if (ReferenceEquals(market, value)) market = null; }
+        // Persist a withdrawal, not a replay or deletion. The current hour remains protected;
+        // the next drained native boundary can hand it back even after the market detaches/reloads.
+        internal static void ReleaseAfterAccountingFailure()
+        {
+            EnsureSave();
+            if (Error.Length > 0) throw new InvalidOperationException(Error);
+            bool changed = false;
+            foreach (var row in records.Values)
+                if (row.Managed || row.Desired) changed |= row.Observe(row.Signature, false, Hour);
+            releaseWithoutMarket = records.Values.Any(row => row.Managed && !row.Desired);
+            if (releaseWithoutMarket) ObserveReleaseRegistrations();
+            if (changed) Persist();
+        }
+        private static void ObserveReleaseRegistrations()
+        {
+            foreach (var reg in SaveGameManager.Current.BuildingRegistrations)
+            {
+                string place = NativeFoodMarket.PlaceId(reg);
+                if (records.TryGetValue(place, out var row) && row.Managed && !row.Desired) observed[place] = reg;
+            }
+        }
         internal static FoodAuthority Observe(BuildingRegistration reg, bool eligible)
         {
             EnsureSave();
@@ -243,11 +267,12 @@ namespace PersistentCity.Runtime
         private static void AfterNativeTick()
         {
             EnsureSave();
-            if (boundary || market == null || Error.Length > 0 || Hour <= lastBoundaryHour) return;
+            if (boundary || Error.Length > 0 || Hour <= lastBoundaryHour
+                || market == null && !releaseWithoutMarket) return;
             // Observation must remain outside the lock: a replacement drains work under its
             // previous identity before Observe changes the generation. Stable businesses leave
             // the native ending-hour batch available for its normal distributed processing.
-            market.RefreshKnownOwnership();
+            market?.RefreshKnownOwnership();
             lastBoundaryHour = Hour;
             if (records.Values.Any(row => Hour > row.RequestedHour && (row.Desired != row.Managed || row.Suspended)
                 && (!row.Desired || !HasNativeCustomers(row))))
@@ -261,7 +286,7 @@ namespace PersistentCity.Runtime
                     // force-drained 23:00 before daily settlement. Never delete orders or baskets.
                     BusinessSimulatorHelper.Work.ForceCompleteAllWork();
                     // Drained native callbacks may have changed eligibility or introduced customers.
-                    market.RefreshKnownOwnership();
+                    market?.RefreshKnownOwnership();
                     bool changed = false;
                     foreach (var row in records.Values.ToArray())
                     {
@@ -274,6 +299,7 @@ namespace PersistentCity.Runtime
                         else if (reg != null && reg.RentedByPlayer) CustomerEntriesHelper.UpdateCustomerEntriesForPlayerBusiness(reg, TimeHelper.GetDayOfWeek());
                     }
                     if (changed) Persist();
+                    releaseWithoutMarket = records.Values.Any(row => row.Managed && !row.Desired);
                 }
                 finally { boundary = false; }
             }
