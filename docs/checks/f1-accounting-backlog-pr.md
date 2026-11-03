@@ -41,7 +41,16 @@ routes, initialization, save binding and UI are discarded before startup for the
 marked stopped saves are refused again before initialization. Other failures stay latched.
 The regression compiles actual Fail/reset/transition methods with native cleanup doubles and
 covers both unmarked and marked loads, another PC city, pre-attachment stops, loading gaps,
-old-state cleanup and retained payloads. Build and focused checks pass; full matrix is running.
+old-state cleanup and retained payloads. All **62 required matrix commands** pass, including both nested wrappers: **2,832 tests**,
+zero failures/skips; **2,740 discovery entries**. Build, identity, save contract, checkout,
+ownership and all regression/source checks pass.
+[R3 exits/hashes](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/codex/pc-f1-accounting-backlog/docs/checks/f1-accounting-backlog-r3-results.json).
+Final detached 30/60/120 p95 **0.0370/0.2919/0.3453 ms**, max **4.8222/4.6583/3.8542 ms**;
+skip p95/max **0.0204/2.5089 ms**, stress **0.0128/13.1749 ms**.
+Across six R3 runs: **0 samples >=30 ms**, maximum **19.3869 ms**. The R2 66.3905 ms sample
+remains retained and flagged. No native performance gate is established. The unchanged
+standalone saturated-history bulk arm separately flags **305.4715/649.4827/286.7959 ms** write/read/activation
+maxima (3/3 >=30 ms each); parked serialization is unchanged.
 No native attachment or settlement proof is claimed. R2 restart-only guidance is superseded.
 
 R2 offline evidence (retained): the pre-R2 clock fails the new zero-work notice regression; the

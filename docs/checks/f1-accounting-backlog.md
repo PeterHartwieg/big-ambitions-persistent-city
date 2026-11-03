@@ -190,8 +190,20 @@ Lifecycle regressions compile the actual failure, reset, marker and transition m
 checkpoint startup eligibility, another PC city, a marked reload, pre-attachment failure
 without saveIdentity, unload/loading gaps, old-state/cache disposal and generic failure
 retention. They assert that neither the old marker/archive nor the new payload is replaced.
-The game-reference build and focused source/economic regression pass. Full required-matrix
-results will be recorded after completion. Population writer 25 remains unchanged.
+The complete required foreground matrix passed **62/62 commands**, including the required
+64-command and 70-command nested suites. Full tests: **2,832 passed**, zero failures/skips;
+discovery: **2,740 entries**. Identity, save contract, checkout, ownership and all required
+regression/source tools pass. [R3 command exits and hashes](f1-accounting-backlog-r3-results.json).
+Completed 2026-11-04T00:39:50+01:00. Population writer 25 remains unchanged. Final game-reference DLL
+SHA-256: `669556a155bd157d0d1ab74a9a1c46f1793783be38b2089fb0a91852b29dd600`.
+
+Final detached ordinary 30/60/120 p95 **0.0370/0.2919/0.3453 ms**, max **4.8222/4.6583/3.8542 ms**;
+skip p95/max **0.0204/2.5089 ms**, stress **0.0128/13.1749 ms**.
+Across R3 repeats: **0 samples >=30 ms**, maximum **19.3869 ms**. Lag <1 minute,
+injected supported/stress stall + recovery 2/10 s. The R2 66.3905 ms sample remains flagged;
+no native mod-work or whole-frame gate is established. All tests ran in the foreground after
+the shared dotnet gate. Final inspection found zero repository dotnet/testhost processes;
+generated unrelated E5c evidence was restored. No game or rig work occurred.
 
 **Sol-r3-1 and Opus-r3-2 remain unresolved and block merge.** They request the same missing
 separate authorized Codex Sol high rig_test proof. No game/rig run or native red/green

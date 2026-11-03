@@ -233,3 +233,27 @@ skip **0.0142/2.7879 ms**, stress **0.0058/19.3869 ms** (p95/max), zero >=30 ms 
 save-free detached run. Native/Unity/GUI and whole-game costs are excluded. Required-matrix
 repeats follow after completion; native proof remains outstanding. The R2 **66.3905 ms**
 unattributed detached sample remains retained and flagged, with no retrospective gate pass.
+
+## R3 completed foreground validation
+
+Completed 2026-11-04T00:39:50+01:00. All required functional checks pass.
+[Retained R3 repeats](f1-accounting-backlog-r3-repeats.txt) and
+[final standalone output](f1-accounting-backlog-r3-final.txt) include the real lifecycle
+method checks; native cleanup/Unity surfaces remain doubles.
+
+| Final detached arm | Frames / held ticks | Max lag, game min | Injected stall + recovery, s | Frame p50 / p95 / max, ms | >=30 ms |
+| --- | --- | --- | --- | --- | --- |
+| 30 FPS / 1 unit | 29,537 / 28,096 | 0.999999999999773 | 2 | 0.0110 / 0.0370 / 4.8222 | 0 |
+| 60 FPS / 16 units | 4,438 / 1,557 | 0.500003814697038 | 2 | 0.0086 / 0.2919 / 4.6583 | 0 |
+| 120 FPS / 128 units | 6,021 / 260 | 0.250003814697038 | 2 | 0.0009 / 0.3453 / 3.8542 | 0 |
+| skip 30 FPS / 1 unit | 29,537 / 28,096 | 0.999999999999773 | 2 | 0.0081 / 0.0204 / 2.5089 | 0 |
+| stress 2,000 / 30 FPS | 58,053 / 56,612 | 0.999999999999773 | 10 | 0.0037 / 0.0128 / 13.1749 | 0 |
+
+Across six R3 runs (30 measured arm windows): **0 samples >=30 ms**,
+maximum **19.3869 ms**. No >=30 ms sample occurred in these R3 windows.
+The earlier R2 **66.3905 ms** sample remains retained and flagged, with no retrospective
+gate pass. These are save-free complete detached frame costs, excluding native/Unity/GUI
+and whole-game frames. Native mod-work/whole-frame proof remains outstanding. Writer 25,
+calendar policy, budgets and the four parked hotspots remain unchanged.
+The unchanged standalone saturated-history bulk arm separately flags **305.4715/649.4827/286.7959 ms**
+write/read/activation maxima (3/3 >=30 ms each), plus **1125.3513 ms** migration.
