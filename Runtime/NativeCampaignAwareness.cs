@@ -23,7 +23,14 @@ namespace PersistentCity.Runtime
                 if(image.ThroughHour>NativeFoodOwnership.Hour) throw new InvalidOperationException("Campaign evidence is ahead of the native saved clock; preserve the source.");
             campaignHour = NativeFoodOwnership.Hour; // never reconstruct the loaded/current native hour
             campaignSource = new FoodCampaignSource(state, seed, settings);
+            campaignSource.PublicationFailed = StopCampaignObservation;
             return campaignSource;
+        }
+        private void StopCampaignObservation(Exception error)
+        {
+            campaignSource?.DiscardPublications();
+            campaignObservationError=error.GetType().Name+": "+error.Message;
+            UnityEngine.Debug.LogWarning("[Persistent City] Campaign observation stopped for this session: "+campaignObservationError);
         }
         internal void ObserveCampaignBoundary(long hour)
         {
@@ -33,8 +40,7 @@ namespace PersistentCity.Runtime
             try { SampleCampaignBoundary(hour); }
             catch(Exception error)
             {
-                campaignObservationError=error.GetType().Name+": "+error.Message;
-                UnityEngine.Debug.LogWarning("[Persistent City] Campaign observation stopped for this session: "+campaignObservationError);
+                StopCampaignObservation(error);
             }
             finally { maximumCampaignBoundaryMilliseconds = Math.Max(maximumCampaignBoundaryMilliseconds,
                 (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000.0 / System.Diagnostics.Stopwatch.Frequency); }

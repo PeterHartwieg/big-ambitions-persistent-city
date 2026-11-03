@@ -25,11 +25,15 @@ namespace PersistentCity.Runtime
         public long ReadBusinesses => campaignReadBusinesses;
         public IEnumerable<BuildingRegistration> Registrations => registrations.Values;
         public void RetainOnlyCandidate(string id) { candidateBusinesses.Clear(); candidateBusinesses.Add(id); }
+        public string ObservationError => campaignObservationError;
         public FoodCommerceState Food => state;
         public FoodCampaignSource Source => campaignSource!;
     }
 }
 namespace UnityEngine
 {
-    public static class Debug { public static void LogWarning(string message) => throw new Exception("Unexpected warning: " + message); }
+    public static class Debug { public static readonly List<string> Warnings = new();
+        public static bool ExpectWarning;
+        public static void LogWarning(string message)
+        { if (!ExpectWarning) throw new Exception("Unexpected warning: " + message); Warnings.Add(message); } }
 }

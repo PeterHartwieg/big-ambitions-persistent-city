@@ -58,6 +58,26 @@ foreach (int count in new[] { 1, 64, 65, 1024 })
 }
 Console.WriteLine("F3 hourly adapter: 1/64/65/1024 coherent captures; 1024 retained/one candidate reads one; save completes transient publication.");
 
+// Runtime containment holds in both a frame continuation and the explicit save completion path.
+UnityEngine.Debug.ExpectWarning=true;
+foreach(bool duringSave in new[] {false,true})
+{
+    NativeFoodOwnership.Hour=24;
+    var food=new FoodCommerceState();food.Shops.Add(new FoodScope {BusinessId="b:0",PlaceId="p:0"});
+    var market=new NativeFoodMarket(food);var source=market.AttachCampaignAwareness(7,new());
+    market.ObserveCampaignBoundary(25);
+    source.EnqueuePublication(new CampaignSnapshot(1500,25,Array.Empty<BusinessCampaignSnapshot>()),new Dictionary<string,string>());
+    if(duringSave) market.CompleteCampaignsForSave();
+    else while(source.HasPendingPublication) source.ContinuePublication(1);
+    if(market.ObservationError.Length==0 || source.HasPendingPublication || source.Publications!=1 || food.Campaigns.Count!=1)
+        throw new Exception("Campaign failure escaped containment or discarded committed evidence");
+    long reads=market.ReadBusinesses;market.ObserveCampaignBoundary(26);market.CompleteCampaignsForSave();
+    if(market.ReadBusinesses!=reads) throw new Exception("Campaign observation continued after failure");
+}
+UnityEngine.Debug.ExpectWarning=false;
+if(UnityEngine.Debug.Warnings.Count!=2) throw new Exception("Campaign failure was not reported exactly once per session");
+Console.WriteLine("F3 deferred failure: observation alone stops; committed evidence retained, queue reset, save completion succeeds.");
+
 // F3: the runtime boundary admits exactly one atomic unit. Large on-demand diagnostics below
 // still measure explicit refreshes; they do not justify a per-frame synchronous drain.
 foreach (int count in new[] { 1, 64, 65, 1024 })

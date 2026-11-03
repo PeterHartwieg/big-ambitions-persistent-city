@@ -39,6 +39,37 @@ public sealed class CampaignPublicationTests
         Assert.Equal(Enumerable.Range(0,8).Select(i=>reference.Reference("resident",0,i)),Enumerable.Range(0,8).Select(i=>restored.Reference("resident",0,i)));
         Assert.Equal(reference.IndexedEntries,restored.IndexedEntries);
     }
+    [Theory]
+    [InlineData(false)] [InlineData(true)]
+    public void PublicationFailureClearsQueueAndDoesNotBlockCityOrSave(bool failDuringSave)
+    {
+        var state=EconomyScenario.Create(1,23);state.Food=EconomyScenario.Food();
+        var source=new FoodCampaignSource(state.Food,23,new());
+        int failures=0;source.PublicationFailed=error=> { Assert.IsType<ArgumentException>(error);failures++; };
+        var city=new CitySimulator(state,new Routes());city.AttachFoodMarket(new EmptyMarket(),campaign:source);
+        source.EnqueuePublication(Snapshot(1,30),new Dictionary<string,string>()); // invalid business mapping
+        source.EnqueuePublication(Snapshot(1,31),new Dictionary<string,string>{{"b:0","p:0"}});
+        if(failDuringSave) source.CompletePublicationsForSave();
+        else while(source.HasPendingPublication) city.AdvanceFrameSlice(state.Minute,1);
+        Assert.Equal(1,failures); Assert.False(source.HasPendingPublication); Assert.Equal(0,source.Publications);
+        Assert.Empty(state.Food.Campaigns);
+        Assert.True(city.AdvanceFrameSlice(state.Minute,1).CaughtUp);
+        source.CompletePublicationsForSave();
+        Assert.NotEmpty(PersistentCity.Persistence.SaveCodec.Write(state));
+        Assert.True(source.ContinuePublication());Assert.Equal(1,failures);
+    }
+
+    [Fact]
+    public void OfflineFailurePropagatesButCannotLeaveAFaultedIteratorQueued()
+    {
+        var food=new FoodCommerceState();var source=new FoodCampaignSource(food,23,new());
+        source.EnqueuePublication(Snapshot(1,30),new Dictionary<string,string>());
+        Assert.Throws<ArgumentException>(()=>source.CompletePublicationsForSave());
+        Assert.False(source.HasPendingPublication);
+        source.Publish(Snapshot(1,31),new Dictionary<string,string>{{"b:0","p:0"}});
+        Assert.Equal(1,source.Publications);Assert.Single(food.Campaigns);
+    }
+
     private sealed class EmptyMarket : IFoodMarket
     {
         public int Reads;

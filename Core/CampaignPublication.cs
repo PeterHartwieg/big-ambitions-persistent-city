@@ -21,6 +21,12 @@ namespace PersistentCity.Core
         public bool HasPendingPublication => publications.Count != 0;
         public long PublicationUnits { get; private set; }
         public int LastPublicationUnits { get; private set; }
+        // Runtime owns containment: invalid campaign evidence disables observation, not the city.
+        public Action<Exception>? PublicationFailed { get; set; }
+        public void DiscardPublications()
+        {
+            publicationWork?.Dispose(); publicationWork = null; publications.Clear();
+        }
 
         // Snapshot contains detached immutable values, never live registrations. Keep hourly order.
         // Saves must finish this transient work before capturing the native/mod epoch together.
@@ -41,7 +47,15 @@ namespace PersistentCity.Core
             {
                 var head = publications.Peek();
                 publicationWork ??= PublishSteps(head.Snapshot, head.Places).GetEnumerator();
-                bool more = publicationWork.MoveNext();
+                bool more;
+                try { more = publicationWork.MoveNext(); }
+                catch (Exception error)
+                {
+                    DiscardPublications();
+                    if (PublicationFailed == null) throw;
+                    PublicationFailed(error);
+                    return true;
+                }
                 LastPublicationUnits++; PublicationUnits++;
                 if (more) continue;
                 publicationWork.Dispose(); publicationWork=null; publications.Dequeue();
