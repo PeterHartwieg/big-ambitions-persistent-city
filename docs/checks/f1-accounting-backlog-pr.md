@@ -43,7 +43,17 @@ uses **0 B / 0 builds**, versus **16,640 B / 40 builds** per 1,200 prior cached-
 GUI cost is excluded. The first nested repeat flags **one 66.3905 ms detached F1 frame**
 at 120 simulated FPS (p95 0.4610 ms). The save-free sample is retained and unattributed;
 that run does not pass the detached spike condition. Native performance remains unverified.
-The required foreground matrix is running; final results will follow.
+The required foreground matrix passed **62/62 commands**, including both full wrappers: **2,832 tests**,
+zero failures/skips; **2,740 discovery entries**. Build and every required regression/source
+check passed. Both pre-R2 isolated-source negatives fail as expected; current source passes.
+[Command exits/hashes](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/codex/pc-f1-accounting-backlog/docs/checks/f1-accounting-backlog-r2-results.json).
+
+Final detached ordinary 30/60/120 p95 **0.0188/0.1338/0.2736 ms**, max **4.7865/4.6588/4.2513 ms**;
+skip p95/max **0.0173/3.1596 ms**, stress **0.0158/14.7591 ms**.
+Across six R2 runs: **one sample >=30 ms**, maximum **66.3905 ms**; the detached spike condition
+is not passed. Native mod-work and separately tracked whole-frame costs remain unverified.
+The inherited saturated-history bulk arm separately flags write/read/activation maxima
+**310.6081/609.7626/255.2312 ms** (3/3 >=30 ms each); parked serialization is unchanged.
 
 R1 offline evidence (retained):
 

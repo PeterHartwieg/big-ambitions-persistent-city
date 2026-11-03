@@ -189,3 +189,28 @@ complete detached frame, not a native frame and not invalidated or discarded as 
 The sample is unattributed; a low p95 does not excuse it. R2 changes no Core frame work,
 and this does not authorize a rewrite of the parked hotspots or establish a native cause.
 The detached spike condition is not passed for this run; native gates remain unverified.
+
+## R2 final foreground matrix repeat
+
+All required foreground commands and nested suites passed their functional assertions.
+[All retained R2 repeats](f1-accounting-backlog-r2-repeats.txt) and
+[final standalone output](f1-accounting-backlog-r2-final.txt) preserve measurements, source
+notice/restart assertions and the unchanged zero-work clock baselines. These are save-free
+complete detached frame costs; native/Unity/GUI work and whole-game frames remain excluded.
+
+| Final detached arm | Frames / held ticks | Max lag, game min | Injected stall + recovery, s | Frame p50 / p95 / max, ms | >=30 ms |
+| --- | --- | --- | --- | --- | --- |
+| 30 FPS / 1 unit | 29,537 / 28,096 | 0.999999999999773 | 2 | 0.0066 / 0.0188 / 4.7865 | 0 |
+| 60 FPS / 16 units | 4,438 / 1,557 | 0.500003814697038 | 2 | 0.0055 / 0.1338 / 4.6588 | 0 |
+| 120 FPS / 128 units | 6,017 / 256 | 0.250003814697038 | 2 | 0.0009 / 0.2736 / 4.2513 | 0 |
+| skip 30 FPS / 1 unit | 29,537 / 28,096 | 0.999999999999773 | 2 | 0.0068 / 0.0173 / 3.1596 | 0 |
+| stress 2,000 / 30 FPS | 58,053 / 56,612 | 0.999999999999773 | 10 | 0.0047 / 0.0158 / 14.7591 | 0 |
+
+Across six R2 runs (30 measured arm windows), **one sample >=30 ms** is flagged,
+maximum **66.3905 ms**. The retained 66.3905 ms save-free sample is not discarded; the
+detached spike condition is **not passed**, irrespective of other low p95s. No native
+mod-work/whole-frame gate is established. Calendar policy, economic results and writer 25
+remain unchanged.
+The unchanged standalone saturated-history bulk arm also flags **310.6081/609.7626/255.2312 ms**
+write/read/activation maxima (3/3 >=30 ms each), plus **1077.9129 ms** migration. These are separate
+serialization/startup costs. The parked hotspots remain parked.

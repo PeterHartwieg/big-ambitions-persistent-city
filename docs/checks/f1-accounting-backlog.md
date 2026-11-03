@@ -153,7 +153,23 @@ The first nested R2 repeat flags one **66.3905 ms** detached F1 frame at 120 sim
 FPS (p95 0.4610 ms). The save-free raw sample is retained, unattributed and not discarded;
 that repeat does not pass the detached spike condition. Native timing remains unverified.
 
-R2 foreground matrix results will be recorded here after completion. R1 evidence above is
+The R2 foreground matrix completed **62/62 commands with zero failure exits**, including
+the required 64-command and 70-command nested suites. Current full suite: **2,832 tests**,
+zero failures/skips; discovery: **2,740 entries**. Build, identity, save contract, checkout,
+ownership and all required regression/source tools passed. Both isolated pre-R2 source
+regressions fail at their intended assertions (routine fences raising the workload notice;
+stop guidance implying same-session recovery); current source passes. These are native/Fail/
+Harmony doubles, not native before-red/after-green proof. [R2 command exits and hashes](f1-accounting-backlog-r2-results.json).
+
+Final game-reference DLL SHA-256: `0cf3e0a80fbbc8d3252caed4dcc497f7a5b102138b812633d68627f6dc1aec6e`.
+Final detached ordinary 30/60/120 p95 **0.0188/0.1338/0.2736 ms**, max **4.7865/4.6588/4.2513 ms**;
+skip p95/max **0.0173/3.1596 ms**, stress **0.0158/14.7591 ms**.
+All R2 measured arm windows retain **one sample >=30 ms**, maximum **66.3905 ms**; the detached spike
+condition is not passed. Lag remained <1 minute, injected supported/stress recovery 2/10 s.
+Native complete mod-work and separate whole-frame costs remain unverified. The shared dotnet
+gate ran before foreground test/run commands. All processes started here finished; final
+inspection found no repository dotnet/testhost processes. Unrelated generated E5c evidence
+was restored. No game or rig work occurred. R1 evidence above is
 retained; its statement that fence clips raise the prominent notice is superseded by R2.
 The numbered rig checks below use the corrected notice and restart policy.
 
