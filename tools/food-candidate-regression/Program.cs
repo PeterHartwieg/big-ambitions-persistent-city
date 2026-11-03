@@ -129,6 +129,9 @@ namespace PersistentCity.Runtime
         public double EarliestMinute=>SaveGameManager.Current.Day*1440+SaveGameManager.Current.Hour*60;
         public static string PlaceId(BuildingRegistration r)=>"address:"+r.StreetName+":"+r.StreetNumber+":shop";
         private static bool SupportedMenu(BuildingRegistration r)=>r.RentedByPlayer&&r.Eligible;
+        private static void CacheBagPolicy(BuildingRegistration r) { }
+        private static bool BeginContractRecoveryBoundary() => false;
+        private static void RevalidateRefusedContract(BuildingRegistration r,CityBuildingController c) { }
         public NativeFoodMarket(FoodCommerceState state,CityBuildingController[] controllers)
         {
             this.state=state;this.controllers=controllers;

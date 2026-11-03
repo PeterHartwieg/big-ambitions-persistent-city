@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using AI.Citizens;
 using BigAmbitions.Items;
 using AI.Customers.CustomerEntries;
@@ -32,7 +33,16 @@ namespace PersistentCity.Runtime
         private readonly Dictionary<string, CityBuildingController> shopControllers = new Dictionary<string, CityBuildingController>(StringComparer.Ordinal);
         private long lastOwnershipRefresh = -1;
         private readonly Dictionary<string, string> supplyExclusions = new Dictionary<string, string>(StringComparer.Ordinal);
-        private static readonly string[] Products = FoodProducts.Ids.ToArray();
+        private sealed class BagPolicy { internal BagPolicy(bool bags) { Bags = bags; } internal readonly bool Bags; }
+        // Weak keys prevent retired registrations/definitions accumulating during menu churn.
+        private ConditionalWeakTable<object, BagPolicy> authoredBagPolicies = new ConditionalWeakTable<object, BagPolicy>();
+        private readonly Dictionary<Type, FieldInfo?> authoredTagFields = new Dictionary<Type, FieldInfo?>();
+        private sealed class ContractRefusal { internal ContractRefusal(long hour) { Hour = hour; } internal readonly long Hour; }
+        private ConditionalWeakTable<BuildingRegistration, ContractRefusal> refusedContracts = new ConditionalWeakTable<BuildingRegistration, ContractRefusal>();
+        private long lastContractRecoveryHour = -1;
+        private void RefuseContract(BuildingRegistration registration)
+        { if (!refusedContracts.TryGetValue(registration, out _)) refusedContracts.Add(registration,
+            new ContractRefusal(SaveGameManager.Current.Day * 24L + SaveGameManager.Current.Hour)); }
         private readonly Harmony patches = new Harmony(PatchId);
         private static readonly MethodInfo Process = AccessTools.Method(typeof(RetailBusinessSimulator), "ProcessCustomer");
         private bool buying;
@@ -100,6 +110,7 @@ namespace PersistentCity.Runtime
             menuLimit=Math.Max(1,Math.Min(FoodMenuPolicy.LiveMaximumOffers,maximumOffers));
             NativeFoodOwnership.ValidatePopulation(state);
             controllers = CityManager.Instance.cityBuildingControllers.Where(c => c != null).ToArray();
+            foreach (var controller in controllers) if (controller.buildingRegistration != null) CacheBagPolicy(controller.buildingRegistration);
             discoveryRegistrations = new BuildingRegistration?[controllers.Length];
             discoveryStreets = new string?[controllers.Length];
             discoveryNumbers = new int[controllers.Length];
@@ -107,8 +118,10 @@ namespace PersistentCity.Runtime
             if (places != null)
                 foreach (var place in places.Where(p => p.Kind == PlaceKind.Shop)) routinePlaces.Add(place.Id, place);
             DiscoverShops(controllers.Length);
+            // A missing definition is unavailable service evidence, not corrupt saved identity.
+            // Keep scopes, receipts and history for normal whole-business withdrawal/recovery.
             foreach (var scope in state.Shops)
-                if (!scope.Products().All(FoodProducts.Known)) throw new InvalidOperationException("Saved food scope contains an unsupported product.");
+                if (!scope.Products().All(FoodNameIdentity.IsCanonical)) throw new InvalidOperationException("Saved food scope contains a malformed product identity.");
             RefreshKnownOwnership();
             RefreshRoutineHours(EarliestMinute, true);
             active = this;
@@ -122,27 +135,78 @@ namespace PersistentCity.Runtime
         }
         public static string PlaceId(BuildingRegistration r) => "address:" + Uri.EscapeDataString(r.StreetName) + ":"
             + r.StreetNumber.ToString(System.Globalization.CultureInfo.InvariantCulture) + ":shop";
-        private bool SupportedMenu(BuildingRegistration r) => Supported(r) && r.cachedAvailableProducts.Count <= menuLimit;
-        internal static bool Supported(BuildingRegistration r) => r.RentedByPlayer && r.HasEstablishedBusiness && !r.AvailableForRent
-            && r.cachedAvailableProducts != null && r.cachedAvailableProducts.Count >= 1
-            && r.cachedAvailableProducts.Count <= FoodMenuPolicy.LiveMaximumOffers
-            && r.cachedAvailableProducts.All(FoodProducts.Known)
-            && r.cachedAvailableProducts.Distinct(StringComparer.Ordinal).Count() == r.cachedAvailableProducts.Count
-            && BusinessTypeHelper.GetData(r.businessTypeName)?.simulator?.GetType() == typeof(FullServiceBusinessSimulator)
-            && !BusinessTypeHelper.GetData(r.businessTypeName).hasEntranceFee
-            && BusinessTypeHelper.GetData(r.businessTypeName).HasTag(BigAmbitions.Tags.TagRef.Businesstag.customersneedpaperbags);
+        // Warm outside the frame-discovery ring. A newly encountered definition stays refused
+        // until an existing ownership refresh can read its authored metadata.
+        private void CacheBagPolicy(BuildingRegistration registration)
+        {
+            if (!registration.RentedByPlayer || !registration.HasEstablishedBusiness || registration.AvailableForRent
+                || string.IsNullOrWhiteSpace(registration.businessTypeName)) return;
+            var type = BusinessTypeHelper.GetData(registration.businessTypeName);
+            if (type == null || authoredBagPolicies.TryGetValue(type, out _)) return;
+            bool bags = false;
+            if (!authoredTagFields.TryGetValue(type.GetType(), out var field))
+            {
+                for (Type? t = type.GetType(); t != null; t = t.BaseType)
+                {
+                    field = t.GetField("tags", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                    if (field != null) break;
+                }
+                authoredTagFields.Add(type.GetType(), field);
+            }
+            if (field?.FieldType == typeof(List<string>) && field.GetValue(type) is List<string> tags && tags.Count <= 128
+                && tags.All(tag => !string.IsNullOrWhiteSpace(tag)))
+                bags = tags.Contains("ba:businesstag_customersneedpaperbags");
+            authoredBagPolicies.Add(type, new BagPolicy(bags));
+        }
+        private bool SupportedMenu(BuildingRegistration r) => !refusedContracts.TryGetValue(r, out _) && SupportedBusiness(r)
+            && r.cachedAvailableProducts.Count <= menuLimit;
+        private bool CurrentAuthoredBagPolicy(BuildingRegistration r)
+        {
+            var type = BusinessTypeHelper.GetData(r.businessTypeName);
+            if (type == null || !authoredBagPolicies.TryGetValue(type, out var cached) || !cached.Bags
+                || !authoredTagFields.TryGetValue(type.GetType(), out var field)
+                || !(field?.GetValue(type) is List<string> tags) || tags.Count > 128) return false;
+            bool bags = false;
+            for (int i = 0; i < tags.Count; i++)
+            {
+                if (string.IsNullOrWhiteSpace(tags[i])) return false;
+                bags |= tags[i] == "ba:businesstag_customersneedpaperbags";
+            }
+            return bags;
+        }
+        internal static bool Supported(BuildingRegistration r) => active != null && active.SupportedMenu(r);
+        private bool SupportedBusiness(BuildingRegistration r)
+        {
+            if (!r.RentedByPlayer || !r.HasEstablishedBusiness || r.AvailableForRent || r.cachedAvailableProducts == null
+                || r.cachedAvailableProducts.Count < 1 || r.cachedAvailableProducts.Count > FoodMenuPolicy.LiveMaximumOffers) return false;
+            for (int i = 0; i < r.cachedAvailableProducts.Count; i++)
+            {
+                // Historical live support remains bounded here until the notification contract
+                // and schema-25 dynamic execution can be integrated together. No new name list.
+                if (!FoodProducts.Known(r.cachedAvailableProducts[i])) return false;
+                for (int j = 0; j < i; j++) if (r.cachedAvailableProducts[i] == r.cachedAvailableProducts[j]) return false;
+            }
+            var type = BusinessTypeHelper.GetData(r.businessTypeName);
+            return type?.simulator?.GetType() == typeof(FullServiceBusinessSimulator) && !type.hasEntranceFee
+                && authoredBagPolicies.TryGetValue(type, out var bags) && bags.Bags;
+        }
         public string ScopeStatus(string placeId)
         {
+            if (supplyExclusions.TryGetValue(placeId, out var excluded)) return excluded;
             string menu = MenuStatus(placeId);
             return menu.Length > 0 ? menu : supplyExclusions.TryGetValue(placeId, out var supply) ? supply : "";
         }
         private string MenuStatus(string placeId)
         {
+            if (registrations.TryGetValue(placeId, out var dynamicReg) && dynamicReg.cachedAvailableProducts != null)
+                for (int i = 0; i < dynamicReg.cachedAvailableProducts.Count; i++)
+                    if (!FoodProducts.Known(dynamicReg.cachedAvailableProducts[i])) return DynamicIntegrationRefusal;
             if (!registrations.TryGetValue(placeId, out var reg) || !SupportedMenu(reg)) return "Excluded: unsupported menu or business type";
             var authority = NativeFoodOwnership.Find(reg);
             if (authority == null || !authority.CanServe) return "Waiting for a safe native accounting boundary";
             return "";
         }
+        public const string DynamicIntegrationRefusal = "E5b dynamic native integration incomplete: mutation notifications, holder reconciliation and held execution need implementation and RIG-CAT/RIG-SHOPEDIT proof";
         internal static bool IsBuying(BuildingRegistration reg) => active != null && active.buying && ReferenceEquals(active.buyerShop, reg);
         public bool IsConfirmedPaid(ResidentMeal meal) => meal.TargetKind == FoodAlternativeKind.Player && ReferenceEquals(save, SaveGameManager.Current)
             && FoodSaleReceipts.ReadStatus(SaveGameManager.Current.modData, meal) == FoodReceiptStatus.Paid;
@@ -188,16 +252,28 @@ namespace PersistentCity.Runtime
             RefreshReadMetadata(minute);
             long observationMinute = (long)(SaveGameManager.Current.Day * 1440.0 + SaveGameManager.Current.Hour * 60.0 + SaveGameManager.Current.Minute);
             if (selectedPlaces.Length == 0) return Array.Empty<FoodBusiness>();
-            var catalogue = FoodBusinessCatalogue.ReadSelected(selectedPlaces, Products,
+            var catalogue = FoodBusinessCatalogue.ReadCompleteMenus(selectedPlaces,
                 // A replaced registration can leave historical place keys pointing at one controller.
                 // Observe that controller once; distinct controllers with conflicting addresses still refuse.
                 selectedPlaces.Where(shopControllers.ContainsKey).Select(p => shopControllers[p]).Distinct(),
-                r => NativeFoodOwnership.Find(r)?.BusinessId ?? FoodBusinessCatalogue.BusinessIdentity(r));
+                SelectedCompleteMenu,
+                r => NativeFoodOwnership.Find(r)?.BusinessId ?? FoodBusinessCatalogue.BusinessIdentity(r),
+                (reg, error) =>
+                {
+                    RefuseContract(reg); NativeFoodOwnership.Observe(reg, false); decisionSupply.Remove(PlaceId(reg));
+                    if (observed != null) throw error; // A selected checkout retains its precise definite-refusal reason.
+                });
             var result = new List<FoodBusiness>();
             foreach (var b in catalogue.Businesses)
             {
                 if (!registrations.TryGetValue(b.PlaceId, out var reg) || MenuStatus(b.PlaceId).Length > 0
                     || !scopesByPlace.TryGetValue(b.PlaceId,out var scope) || scope.BusinessId!=b.Id) continue;
+                if (!CurrentAuthoredBagPolicy(reg))
+                {
+                    supplyExclusions[b.PlaceId] = "Excluded: authored bag policy changed or is unverified";
+                    RefuseContract(reg); NativeFoodOwnership.Observe(reg, false); decisionSupply.Remove(b.PlaceId);
+                    continue;
+                }
                 b.Offers.RemoveAll(o => !scope.ContainsProduct(o.ProductId));
                 var products = scope.Products().ToArray();
                 // Checkout (observed != null) always reads live, exactly as before this cache existed.
@@ -206,7 +282,8 @@ namespace PersistentCity.Runtime
                 if (supply.Values.Any(s => !s.Units.HasValue))
                 {
                     supplyExclusions[b.PlaceId] = "Excluded: menu stock contract is unverified";
-                    if(!capture) continue;
+                    RefuseContract(reg); NativeFoodOwnership.Observe(reg, false); decisionSupply.Remove(b.PlaceId);
+                    continue;
                 }
                 else supplyExclusions.Remove(b.PlaceId);
                 if (observed != null) observed[b.PlaceId] = new SupplyObservation(reg, products, supply);
@@ -216,6 +293,44 @@ namespace PersistentCity.Runtime
                 result.Add(b);
             }
             return result;
+        }
+        private IReadOnlyCollection<string>? SelectedCompleteMenu(BuildingRegistration reg)
+        {
+            string place = PlaceId(reg);
+            if (!registrations.TryGetValue(place, out var registered) || !ReferenceEquals(reg, registered)) return null;
+            if (!SupportedMenu(reg)) { NativeFoodOwnership.Observe(reg, false); return null; }
+            if (MenuStatus(place).Length > 0 || !scopesByPlace.TryGetValue(place, out var scope)
+                || NativeFoodOwnership.Find(reg)?.BusinessId != scope.BusinessId) return null;
+            return scope.Products().ToArray();
+        }
+        private bool BeginContractRecoveryBoundary()
+        {
+            long hour = SaveGameManager.Current.Day * 24L + SaveGameManager.Current.Hour;
+            if (hour <= lastContractRecoveryHour) return false;
+            lastContractRecoveryHour = hour; return true;
+        }
+        private void RevalidateRefusedContract(BuildingRegistration reg, CityBuildingController controller)
+        {
+            if (!refusedContracts.TryGetValue(reg, out var refusal) || lastContractRecoveryHour <= refusal.Hour) return;
+            var authority = NativeFoodOwnership.Find(reg);
+            // Never cancel the requested handoff before its protected work has drained.
+            if (authority == null || authority.Managed || authority.OwnsHour(lastContractRecoveryHour)
+                || !SupportedBusiness(reg) || reg.cachedAvailableProducts.Count > menuLimit
+                // SupportedBusiness rejects unestablished shops; ReadMenu also skips supply inspection when closed.
+                || reg.temporarilyClosed
+                || !GamePlaces.BuildingAccessible(controller) || !CurrentAuthoredBagPolicy(reg)) return;
+            try
+            {
+                var products = reg.cachedAvailableProducts.ToArray();
+                var catalogue = FoodBusinessCatalogue.ReadCompleteMenus(new[] { PlaceId(reg) }, new[] { controller }, r => products);
+                if (catalogue.Businesses.Count != 1) return;
+                var supply = FoodSupplyReader.ReadMenu(reg, products);
+                foreach (var item in supply.Values) if (!item.Units.HasValue) return;
+            }
+            catch (Exception) { return; } // Unreadable native supply remains native-owned, never known zero.
+            refusedContracts.Remove(reg); supplyExclusions.Remove(PlaceId(reg)); decisionSupply.Remove(PlaceId(reg));
+            // RefreshKnownOwnership requests eligibility; FoodAuthority still waits a later
+            // drained boundary with no live native customers before acquiring service.
         }
         // A decision read reuses this game minute's image of one shop. It never authorizes a sale:
         // Buy reads supply live, sells, and confirms against a live after image.
@@ -302,17 +417,35 @@ namespace PersistentCity.Runtime
             try
             {
                 simulator.SetUp(reg, SaveGameManager.Current.Hour);
+                if (!ReferenceEquals(save, SaveGameManager.Current) || minute < EarliestMinute || minute >= EarliestMinute + 60
+                    || !CanServe(meal.BusinessId))
+                    return new FoodSale(false, "Native authority or accounting hour changed during checkout");
                 approvedProduct = meal.ProductId;
-                approvedPrice = reg.retailPrices.Single(p => p.itemName == meal.ProductId).price;
+                // Native callbacks can remove or duplicate the selected row after capture.
+                // This is a definite pre-receipt refusal, not an uncertain Single() exception.
+                if (reg.retailPrices == null || reg.retailPrices.Count > 128)
+                    return RefuseCheckoutContract(reg);
+                int selectedPrices = 0;
+                foreach (var row in reg.retailPrices) if (row != null && row.itemName == meal.ProductId)
+                { selectedPrices++; approvedPrice = row.price; }
+                if (selectedPrices != 1) return RefuseCheckoutContract(reg);
                 Money livePrice;
                 try { livePrice = Money.FromNative(approvedPrice); }
                 catch (ArgumentOutOfRangeException)
                 {
                     // No receipt or native sale exists yet: this is a definite refusal, not uncertain ownership.
+                    RefuseContract(reg); NativeFoodOwnership.Observe(reg, false);
                     return new FoodSale(false, "Approved price is outside the supported range");
                 }
                 if (livePrice != meal.Price)
                     return new FoodSale(false, "Approved price changed during native setup");
+                // Setup/open checks may invoke native callbacks. Check the whole approved menu
+                // again, not only the chosen price, before creating a receipt or native order.
+                if (!CompletePricesMatch(reg, business!) || !SupportedMenu(reg) || !CurrentAuthoredBagPolicy(reg)
+                    || BusinessTypeHelper.GetData(reg.businessTypeName)?.HasTag(BigAmbitions.Tags.TagRef.Businesstag.customersneedpaperbags) != true)
+                {
+                    return RefuseCheckoutContract(reg);
+                }
                 FoodSaleReceipts.Begin(data, meal);
                 buyerShop = reg; buying = true;
                 Process.Invoke(simulator, new object[] { customer });
@@ -329,11 +462,36 @@ namespace PersistentCity.Runtime
             FoodSaleReceipts.Confirm(data, meal);
             NativePurchases++; return new FoodSale(true, "Native product, bag and completed order confirmed; daily settlement remains native");
         }
+        private FoodSale RefuseCheckoutContract(BuildingRegistration reg)
+        {
+            RefuseContract(reg); NativeFoodOwnership.Observe(reg, false);
+            return new FoodSale(false, "Complete food menu changed before native checkout");
+        }
+        private static bool CompletePricesMatch(BuildingRegistration reg, FoodBusiness approved)
+        {
+            if (reg.cachedAvailableProducts == null || reg.retailPrices == null || reg.retailPrices.Count > 128
+                || reg.cachedAvailableProducts.Count != approved.Offers.Count) return false;
+            foreach (var offer in approved.Offers)
+            {
+                int advertised = 0, prices = 0;
+                foreach (string name in reg.cachedAvailableProducts) if (name == offer.ProductId) advertised++;
+                foreach (var price in reg.retailPrices) if (price != null && price.itemName == offer.ProductId)
+                {
+                    prices++;
+                    try { if (Money.FromNative(price.price) != offer.Price) return false; }
+                    catch (ArgumentOutOfRangeException) { return false; }
+                }
+                if (advertised != 1 || prices != 1) return false;
+            }
+            return true;
+        }
         public void Dispose()
         {
             ((object)this as IRivalFoodMarket)?.CloseRivals();
             patches.UnpatchAll(PatchId);
             NativeFoodOwnership.Detach(this);
+            authoredBagPolicies = new ConditionalWeakTable<object, BagPolicy>(); authoredTagFields.Clear();
+            refusedContracts = new ConditionalWeakTable<BuildingRegistration, ContractRefusal>();
             if (ReferenceEquals(active, this)) active = null;
         }
     }

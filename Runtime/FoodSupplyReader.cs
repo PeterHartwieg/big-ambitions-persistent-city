@@ -80,6 +80,8 @@ namespace PersistentCity.Runtime
                 var counters = (List<PointOfSale>)Counters.GetValue(simulator)!;
                 var producers = (Dictionary<string, List<ItemInstance>>)Producers.GetValue(simulator)!;
                 bool bags = type.HasTag(TagRef.Businesstag.customersneedpaperbags);
+                if (!bags)
+                { Evidence("Authored/native paper-bag policy disagreement; menu contract is unverified"); return result; }
                 int bagUnits = 0, stocked = 0;
                 foreach (var counter in counters)
                 {

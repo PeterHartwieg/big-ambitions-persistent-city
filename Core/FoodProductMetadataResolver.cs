@@ -36,6 +36,16 @@ namespace PersistentCity.Core
         }
         public int Count => overrides.Count;
         public IEnumerable<string> Names => overrides.Keys;
+        // Whole-menu admission needs the same precedence without a resident taste draw.
+        public MealClass ResolveMealClass(string canonicalName)
+        {
+            if (FoodProducts.KnownLegacy(canonicalName)) return MealClass.Food;
+            overrides.TryGetValue(canonicalName, out var configured);
+            api.TryGet(canonicalName, out var supplied);
+            return EffectiveMealClass(configured, supplied);
+        }
+        private static MealClass EffectiveMealClass(FoodProductMetadataOverride configured, FoodProductMetadataOverride supplied)
+            => configured.OptionalMealClass ?? supplied.OptionalMealClass ?? Defaults.MealClass;
         public FoodProductMetadata Resolve(string canonicalName, ResidentTraits traits, int seed, string consumerId)
         {
             if (FoodProducts.KnownLegacy(canonicalName))
@@ -44,7 +54,7 @@ namespace PersistentCity.Core
                     FoodProducts.Penalty(MealKind.Dinner, canonicalName));
             overrides.TryGetValue(canonicalName, out var configured);
             api.TryGet(canonicalName, out var supplied);
-            return new FoodProductMetadata(configured.OptionalMealClass ?? supplied.OptionalMealClass ?? Defaults.MealClass,
+            return new FoodProductMetadata(EffectiveMealClass(configured, supplied),
                 configured.TasteBand ?? supplied.TasteBand ?? DefaultTaste(seed, consumerId, canonicalName),
                 configured.OptionalBreakfastFitCents ?? supplied.OptionalBreakfastFitCents ?? Defaults.BreakfastFitCents,
                 configured.OptionalLunchFitCents ?? supplied.OptionalLunchFitCents ?? Defaults.LunchFitCents,
