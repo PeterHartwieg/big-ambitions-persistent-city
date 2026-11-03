@@ -25,6 +25,22 @@ Stable identities, deterministic random draws, interrupted-journey handling, exp
 
 The tests contain substantial interruption, conservation, identity and ordering coverage. A complete rewrite would discard that knowledge. The strongest case for change concerns how the existing systems connect and execute.
 
+## GitHub follow up
+
+Each issue contains source evidence, scope qualifications and acceptance criteria. These track the architectural findings; they do not treat a proposed implementation as already selected.
+
+| Finding | Priority for the city vision | Issue |
+| --- | --- | --- |
+| F1 Accounting and simulation lag | Critical | [#88](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/88) |
+| F2 Movement authority across detail levels | High | [#89](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/89) |
+| F3 Bounded work and route planning | High | [#90](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/90) |
+| F4 Integrated frame rate and throughput gate | High | [#91](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/91) |
+| F5 Independent logical population | High | [#92](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/92) |
+| F6 Connected economic feedback | High | [#93](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/93) |
+| F7 Save scaling and coherent snapshots | High at larger scale | [#94](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/94) |
+| F8 Dependency and native capability contracts | Medium to high | [#95](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/95) |
+| F9 Integrated acceptance workflow | Medium to high | [#96](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/96) |
+
 ## Findings
 
 ### F1 Simulation backlog can change economic outcomes
