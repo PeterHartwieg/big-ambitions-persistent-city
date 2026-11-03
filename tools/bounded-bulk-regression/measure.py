@@ -4,7 +4,6 @@ import io
 import json
 import os
 import platform
-import shutil
 import subprocess
 import tarfile
 import datetime
@@ -59,12 +58,8 @@ for suffix, arguments in [('postings', ()), ('integrated', ('--integrated',))]:
             for key in ['consumers', 'sales', 'purchases', 'routes', 'reads', 'saveSha256', 'finalBacklogGameMinutes']:
                 if old[key] != new[key]:
                     raise RuntimeError('Replay changed ' + key)
-# Isolate the tiny capture-buffer win from the admission change: same current fixture,
-# first F3 implementation (already bounded) versus the pre-sized final implementation.
-capture_baseline = root / 'build/f3-capture-before-capacity'
-extract('0f632b3', ['Core', 'Runtime'], capture_baseline)
-shutil.copytree(root / 'tools/campaign-reader-regression', capture_baseline / 'tools/campaign-reader-regression',
-                dirs_exist_ok=True, ignore=shutil.ignore_patterns('bin', 'obj'))
-run('before-capacity-campaign', str(capture_baseline / 'tools/campaign-reader-regression/CampaignReaderRegression.csproj'))
+# The original pre-sizing comparison is retained as historical evidence. R1 changes
+# capture/publication APIs and coverage, so the current fixture is not compiled against
+# the older 64-scope implementation as a purported equivalent workload.
 run('campaign', 'tools/campaign-reader-regression/CampaignReaderRegression.csproj')
 run('routes', 'tools/road-ceiling-regression/RoadCeilingRegression.csproj')

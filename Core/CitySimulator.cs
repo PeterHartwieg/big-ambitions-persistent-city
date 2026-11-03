@@ -171,7 +171,7 @@ namespace PersistentCity.Core
         public bool IsCaughtUpTo(double targetMinute) => Position.Finite(targetMinute)
             && State.Minute >= targetMinute && NoEventsThrough(targetMinute);
 
-        private bool NoEventsThrough(double targetMinute) => pending == null && food?.HasPendingDecision != true
+        private bool NoEventsThrough(double targetMinute) => pending == null && food?.HasPendingDecision != true && food?.HasPendingCampaignPublication != true
             && (due.Count == 0 || due.Min!.Minute > targetMinute)
             && (traffic == null || traffic.NextEventMinute > targetMinute)
             && (State.Food == null || (food != null && food.NextMinute > targetMinute))
@@ -197,6 +197,8 @@ namespace PersistentCity.Core
             }
             while (count < eventBudget)
             {
+                if (food?.HasPendingCampaignPublication == true)
+                { food.ContinueCampaignPublication(); count++; foodContinuationCount++; continue; }
                 double citizenMinute = due.Count == 0 ? double.PositiveInfinity : due.Min!.Minute;
                 double trafficMinute = traffic?.NextEventMinute ?? double.PositiveInfinity;
                 double foodMinute = food?.NextMinute ?? double.PositiveInfinity;
@@ -318,6 +320,7 @@ namespace PersistentCity.Core
         public bool ContinuePlanning(double budgetMilliseconds)
         {
             if (double.IsNaN(budgetMilliseconds) || budgetMilliseconds < 0) throw new ArgumentOutOfRangeException(nameof(budgetMilliseconds));
+            if (food?.HasPendingCampaignPublication == true) { food.ContinueCampaignPublication(); return false; }
             var evt = pending;
             if (evt == null) return true;
             try

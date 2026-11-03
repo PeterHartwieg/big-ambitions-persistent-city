@@ -41,38 +41,31 @@ namespace PersistentCity.Runtime
         }
         private void SampleCampaignBoundary(long hour)
         {
-            // This is called ONLY by the existing accounting-hour boundary hook. With no campaigns,
-            // count probes allocate nothing and there is no C1 snapshot/publication/index/decision work.
-            // Refuse the complete boundary before scanning/reading any registrations. Splitting live
-            // reads over frames would mix UI/native writes and invent evidence for an earlier hour.
-            // Retain old history, add no bits, and expose the refusal; never silently sample a prefix.
-            if (!NativeCampaignReader.BoundaryScopeAdmitted(state.Shops.Count))
-            { campaignScopeRefusals++; lastRefusedCampaignScope = state.Shops.Count; return; }
+            // Candidate membership and identity mapping are maintained by discovery/ownership.
+            // Historical retained scopes do not consume native-read admission.
+            int actualCandidates=0;
+            foreach (string id in candidateBusinesses)
+                if (scopesByBusiness.TryGetValue(id,out var known) && registrations.ContainsKey(known.PlaceId)) actualCandidates++;
+            if (!NativeCampaignReader.BoundaryScopeAdmitted(actualCandidates))
+            { campaignScopeRefusals++;lastRefusedCampaignScope=actualCandidates;throw new InvalidOperationException("Campaign read-candidate envelope exceeded."); }
             awarenessCampaignReader ??= new NativeCampaignReader();
-            bool any = state.Campaigns.Count != 0;
-            if (!any) foreach (var scope in state.Shops)
-                if (candidateBusinesses.Contains(scope.BusinessId) && registrations.TryGetValue(scope.PlaceId,out var reg)
-                    && awarenessCampaignReader.HasCampaignEntries(reg)) { any = true; break; }
-            if (!any) return;
-            var sources = new List<CampaignBusinessSource>(state.Shops.Count);
-            var places = new Dictionary<string, string>(state.Shops.Count, StringComparer.Ordinal);
-            foreach (var scope in state.Shops)
-            {
-                places.Add(scope.BusinessId, scope.PlaceId); // retained identity, independent of today's candidacy
-                if (!candidateBusinesses.Contains(scope.BusinessId) || !registrations.TryGetValue(scope.PlaceId, out var reg)) continue;
-                if (sources.Count == 1024) throw new InvalidOperationException("Oversized campaign observation scope.");
-                sources.Add(new CampaignBusinessSource(scope.BusinessId, reg));
-            }
-            if (sources.Count == 0)
-            {
-                campaignSource!.Publish(new CampaignSnapshot(hour * 60, hour, Array.Empty<BusinessCampaignSnapshot>()), places);
-                return;
-            }
-            // Exactly one admitted unit, never a drain loop or an asynchronous native reference.
-            var snapshot = awarenessCampaignReader.ReadBoundary(sources, hour * 60, hour);
+            bool any = state.Campaigns.Count != 0 || campaignSource!.HasPendingPublication;
+            if (!any) foreach (string id in candidateBusinesses)
+                if (scopesByBusiness.TryGetValue(id,out var known) && registrations.TryGetValue(known.PlaceId,out var registration)
+                    && awarenessCampaignReader.HasCampaignEntries(registration)) { any=true;break; }
+            if (!any) return; // Keep the warmed empty-campaign path allocation-free.
+            var sources = new List<CampaignBusinessSource>(actualCandidates);
+            foreach (string id in candidateBusinesses)
+                if (scopesByBusiness.TryGetValue(id,out var scope) && registrations.TryGetValue(scope.PlaceId,out var reg))
+                    sources.Add(new CampaignBusinessSource(id,reg));
+            var places = new Dictionary<string,string>(state.Shops.Count,StringComparer.Ordinal);
+            foreach (var scope in state.Shops) places.Add(scope.BusinessId,scope.PlaceId);
+            // Native references live only in this bounded atomic capture, never in a continuation.
+            var snapshot = awarenessCampaignReader.ReadBoundary(sources,hour*60,hour);
             campaignReadBusinesses += sources.Count;
-            campaignSource!.Publish(snapshot, places);
+            campaignSource!.EnqueuePublication(snapshot,places);
         }
+        internal void CompleteCampaignsForSave() => campaignSource?.CompletePublicationsForSave();
         internal object CampaignAwarenessDump()
         {
             var references=state.BusinessReferences.ToDictionary(r=>r.Slot,r=>r.BusinessId);
@@ -86,6 +79,7 @@ namespace PersistentCity.Runtime
             atomicBusinessLimit = NativeCampaignReader.MaximumBoundaryBusinesses,
             scopeRefusals = campaignScopeRefusals, lastRefusedScope = lastRefusedCampaignScope,
             businessesRead = campaignReadBusinesses, maximumBoundaryMilliseconds = maximumCampaignBoundaryMilliseconds,
+            pendingPublication = campaignSource?.HasPendingPublication ?? false, publicationUnits = campaignSource?.PublicationUnits ?? 0,
             lastObservedHour = campaignHour, enabled = campaignSettings?.Enabled == true,
             evidence = "Observed enabled types only; Active verified campaigns soften distance preference for every resident; no native writes."
             };

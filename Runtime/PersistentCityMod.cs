@@ -375,7 +375,7 @@ namespace PersistentCity.Runtime
                         + planningMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms total, slowest slice "
                         + maxPlanningSliceMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms ending in "
                         + (slowestPlanningUnit.Length == 0 ? "none" : slowestPlanningUnit) + " with " + slowestPlanningUnitNavMeshQueries
-                        + " NavMesh path queries; event restarts " + eventRestarts + " (run inline after repeated restarts "
+                        + " NavMesh path queries; event restarts " + eventRestarts + " (inline escapes removed in F3; compatibility count "
                         + inlineRestarts + "), road search restarts " + (routes?.RoadSearchRestarts ?? 0)
                         + ", units " + (routes?.JobUnits ?? 0) + ", query/unit admission deferrals " + (routes?.JobAdmissionDeferrals ?? 0) + ". "
                         + (physical?.Diagnostics ?? "Physical population inactive."));
@@ -649,6 +649,7 @@ namespace PersistentCity.Runtime
                 if (!source.MatchesPopulation(simulation.State))
                 { Fail("RLO changed before saving; original population payload retained."); return; }
                 RunPhysical(() => physical?.BeforeSave());
+                foodMarket?.CompleteCampaignsForSave();
                 foodMarket?.RefreshKnownOwnership();
                 // A partially caught-up snapshot is valid: replay continues from its recorded minute after load.
                 var result = (saveSession ?? throw new InvalidOperationException("Save session is missing."))

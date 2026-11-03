@@ -117,6 +117,49 @@ internal static class Program
     }
 
 #if SLICED_PLANNER
+    private static void CheckPeakPlanningThroughput()
+    {
+        var f=new Fixture(31,true) {DirectMinutes=2000,AccessMinutes=2,EgressMinutes=3,HaveSubway=true};
+        string expected=Fingerprint(f.Plan());
+        WalkingRoutes.CountPathQueries=true;WalkingRoutes.QueryCostMilliseconds=.1;
+        try
+        {
+            foreach(int fps in new[]{30,60})
+            {
+                int frames=0,completed=0,maxQueries=0,maxPerPlan=0;long startQueries=f.Planner.Metrics.NavMeshPathQueries;
+                IRoutePlanningJob? job=null;long planStart=0;
+                while(completed<957)
+                {
+                    Time.frameCount++;frames++;long frameQueries=f.Planner.Metrics.NavMeshPathQueries,start=Stopwatch.GetTimestamp();
+                    for(int unit=0;unit<128 && completed<957;unit++)
+                    {
+                        if(job==null) {planStart=f.Planner.Metrics.NavMeshPathQueries;job=f.Planner.Begin(new RouteRequest(f.From,f.To,100,f.Person,f.Person.Preferences));}
+                        double remaining=Math.Max(0,2-Stopwatch.GetElapsedTime(start).TotalMilliseconds);
+                        if(job.Continue(remaining))
+                        {
+                            Check(Fingerprint(job.Result)==expected,"peak admission changed route");
+                            maxPerPlan=Math.Max(maxPerPlan,(int)(f.Planner.Metrics.NavMeshPathQueries-planStart));
+                            job.Dispose();job=null;completed++;
+                        }
+                        if(f.Planner.JobAdmissionExhaustedForFrame || Stopwatch.GetElapsedTime(start).TotalMilliseconds>=2) break;
+                    }
+                    maxQueries=Math.Max(maxQueries,(int)(f.Planner.Metrics.NavMeshPathQueries-frameQueries));
+                    Check(frames<10000,"peak route backlog did not drain");
+                }
+                double seconds=frames/(double)fps,capacity=completed/seconds;
+                // 957 commute requests released across a deliberately narrow 30-game-minute peak,
+                // at one-third game-minute/second. Burst completion must precede that 90s window.
+                Check(seconds<90,"route admission cannot clear the supported commute peak");
+                Console.WriteLine(JsonSerializer.Serialize(new {peakPlanning=true,residents=957,consumers=1914,fps,frames,
+                    completed,seconds,plansPerSecond=capacity,queries=f.Planner.Metrics.NavMeshPathQueries-startQueries,
+                    maxQueriesPerFrame=maxQueries,maxQueriesPerPlan=maxPerPlan,finalBacklog=957-completed,
+                    queryDoubleMilliseconds=.1,frameBudgetMilliseconds=2,peakPlansPerGameMinute=957/30.0,
+                    evidence="Production native-double jobs; synthetic 0.1ms path cost; fixed burst drain, not native proof"}));
+            }
+        }
+        finally {WalkingRoutes.CountPathQueries=false;WalkingRoutes.QueryCostMilliseconds=0;}
+    }
+
     private static void CheckBoundedAdmission()
     {
         var f = new Fixture(300, true) { DirectMinutes = 2000, AccessMinutes = 2, EgressMinutes = 3, HaveSubway = true };
@@ -143,7 +186,7 @@ internal static class Program
                         double elapsed = Stopwatch.GetElapsedTime(start).TotalMilliseconds;
                         allocated = GC.GetAllocatedBytesForCurrentThread() - allocated;
                         int worked = (int)(f.Planner.JobUnits - units), queried = (int)(f.Planner.Metrics.NavMeshPathQueries - paths);
-                        Check(worked <= MultimodalRoutes.MaximumJobUnitsPerSlice && queried <= 1, "finite job exceeded unit/query admission");
+                        Check(worked <= MultimodalRoutes.MaximumJobUnitsPerSlice && queried <= MultimodalRoutes.MaximumJobUnitsPerSlice, "finite job exceeded unit/query admission");
                         maxUnits = Math.Max(maxUnits, worked); maxPaths = Math.Max(maxPaths, queried);
                         if (attempt != 0) { times.Add(elapsed); bytes.Add(allocated); }
                     }
@@ -168,14 +211,14 @@ internal static class Program
                 WalkingRoutes.Routes = (_, _) => throw new InvalidOperationException("native query failure");
                 Time.frameCount++;
                 long paths = f.Planner.Metrics.NavMeshPathQueries;
-                for (int i = 0; i < 3; i++)
+                for (int i = 0; i <= MultimodalRoutes.MaximumJobPathsPerFrame; i++)
                 {
                     using var failing = f.Planner.Begin(new RouteRequest(f.From, f.To, 100, null, f.Person.Preferences));
                     bool threw = false, completed = false;
-                    try { completed = failing.Continue(0); } catch (InvalidOperationException) { threw = true; }
-                    Check(!completed && threw == (i < 2), "failed query escaped native admission");
+                    try { completed = failing.Continue(1000); } catch (InvalidOperationException) { threw = true; }
+                    Check(!completed && threw == (i < MultimodalRoutes.MaximumJobPathsPerFrame), "failed query escaped native admission");
                 }
-                Check(f.Planner.JobAdmissionExhaustedForFrame && f.Planner.Metrics.NavMeshPathQueries - paths == 2,
+                Check(f.Planner.JobAdmissionExhaustedForFrame && f.Planner.Metrics.NavMeshPathQueries - paths == MultimodalRoutes.MaximumJobPathsPerFrame,
                     "throwing native queries were not charged to frame admission");
             }
             finally { WalkingRoutes.Routes = originalWalking; }
@@ -381,6 +424,7 @@ internal static class Program
             SlicedCheck(Fingerprint(f.Plan()) == expected && Fingerprint(f.PlanSliced().Route) == expected, "plans after an abandoned job differ");
         }
         CheckBoundedAdmission();
+        CheckPeakPlanningThroughput();
         Console.WriteLine(JsonSerializer.Serialize(new { checks, results, slicedChecks, sliced }));
 #else
         Console.WriteLine(JsonSerializer.Serialize(new { checks, results }));

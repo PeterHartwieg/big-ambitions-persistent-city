@@ -13,16 +13,20 @@ namespace PersistentCity.Runtime
         private readonly FoodCommerceState state;
         private readonly HashSet<string> candidateBusinesses = new(StringComparer.Ordinal);
         private readonly Dictionary<string, BuildingRegistration> registrations = new(StringComparer.Ordinal);
+        private readonly Dictionary<string,FoodScope> scopesByBusiness = new(StringComparer.Ordinal);
         public NativeFoodMarket(FoodCommerceState food)
         {
             state = food;
             foreach (var scope in food.Shops)
-            { candidateBusinesses.Add(scope.BusinessId); registrations.Add(scope.PlaceId, new BuildingRegistration { Id = scope.BusinessId }); }
+            { candidateBusinesses.Add(scope.BusinessId); scopesByBusiness.Add(scope.BusinessId,scope); registrations.Add(scope.PlaceId, new BuildingRegistration { Id = scope.BusinessId }); }
         }
         public bool ReaderBound => awarenessCampaignReader != null;
         public long RefusedBoundaries => campaignScopeRefusals;
         public long ReadBusinesses => campaignReadBusinesses;
         public IEnumerable<BuildingRegistration> Registrations => registrations.Values;
+        public void RetainOnlyCandidate(string id) { candidateBusinesses.Clear(); candidateBusinesses.Add(id); }
+        public FoodCommerceState Food => state;
+        public FoodCampaignSource Source => campaignSource!;
     }
 }
 namespace UnityEngine

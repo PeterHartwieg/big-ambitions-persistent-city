@@ -255,12 +255,14 @@ namespace PersistentCity.Runtime
         /// <summary>Units of planning work performed by jobs, for the frame summary.</summary>
         public long JobUnits { get; private set; }
         // A native NavMesh path is non-preemptible. Admission bounds its multiplicity, not its tail.
-        // At most one path calculation per finite Continue and two per rendered frame per planner.
+        // Admit path stages against remaining time and an observed tail reserve; count is a safety ceiling.
         internal const int MaximumJobUnitsPerSlice = 8;
-        internal const int MaximumJobPathsPerFrame = 2;
-        private int jobPathFrame = -1, jobFramePaths;
+        internal const int MaximumJobPathsPerFrame = 16;
+        private int jobPathFrame = -1, jobFramePaths, jobAdmissionHeldFrame = -1;
+        private double jobPathReserveMilliseconds = .05;
         public long JobAdmissionDeferrals { get; private set; }
-        public bool JobAdmissionExhaustedForFrame => jobPathFrame == Time.frameCount && jobFramePaths >= MaximumJobPathsPerFrame;
+        public bool JobAdmissionExhaustedForFrame => jobAdmissionHeldFrame == Time.frameCount
+            || jobPathFrame == Time.frameCount && jobFramePaths >= MaximumJobPathsPerFrame;
         /// <summary>The kind of the unit a job performed last, for attributing a slow slice.</summary>
         public string LastJobUnit { get; private set; } = "";
         private static readonly string[] StageNames =
@@ -271,7 +273,8 @@ namespace PersistentCity.Runtime
 
         /// <summary>The former synchronous citizen plan as a resumable job. Each unit is one native query (a walk,
         /// a curb search, a station capture) or one slice of a road A*; Continue runs units until the budget is
-        /// spent, up to eight units, one path query per finite call and two per frame. Exhausted native
+        /// spent, up to eight units per call and a 16-path/frame safety ceiling. Further path
+        /// stages reserve the recent observed query tail against the remaining time budget. Exhausted native
         /// admission yields without advancing a stage. The job captures the road snapshot, public access and station list it
         /// plans against; if any of them was replaced while it was suspended, Continue throws
         /// RoutePlanningRestartRequired and the simulator replays the whole citizen event, so no event mixes two
@@ -341,21 +344,38 @@ namespace PersistentCity.Runtime
                 bool first = true;
                 bool finite = !double.IsPositiveInfinity(budgetMilliseconds);
                 int units = 0;
-                long pathsBefore = owner.Metrics.NavMeshPathQueries;
                 if (finite && owner.jobPathFrame != Time.frameCount)
                 { owner.jobPathFrame = Time.frameCount; owner.jobFramePaths = 0; }
                 while (!Completed)
                 {
                     if (!first && Stopwatch.GetTimestamp() >= deadline) return false;
-                    if (finite && (units >= MaximumJobUnitsPerSlice || owner.jobFramePaths >= MaximumJobPathsPerFrame
-                        || owner.Metrics.NavMeshPathQueries != pathsBefore))
+                    if (finite && units >= MaximumJobUnitsPerSlice)
                     { owner.JobAdmissionDeferrals++; return false; }
+                    bool pathStage = stage == Stage.HomeCurbWalk || stage == Stage.DirectWalk || stage == Stage.SubwayConnector
+                        || stage == Stage.CarAccessWalk || stage == Stage.CarEgressWalk || preferenceOnly && stage == Stage.Validate;
+                    if (finite && pathStage && (owner.jobFramePaths >= MaximumJobPathsPerFrame
+                        || owner.jobFramePaths > 0 && (deadline - Stopwatch.GetTimestamp()) * 1000.0 / Stopwatch.Frequency <= owner.jobPathReserveMilliseconds))
+                    {
+                        owner.jobAdmissionHeldFrame = Time.frameCount; owner.JobAdmissionDeferrals++; return false;
+                    }
                     first = false;
                     units++;
                     owner.JobUnits++; owner.LastJobUnit = StageNames[(int)stage];
                     long before = owner.Metrics.NavMeshPathQueries;
+                    double pathTimeBefore = owner.Metrics.NavMeshPathMilliseconds;
                     try { Unit(deadline); }
-                    finally { if (finite) owner.jobFramePaths += (int)(owner.Metrics.NavMeshPathQueries - before); }
+                    finally
+                    {
+                        int queries = (int)(owner.Metrics.NavMeshPathQueries - before);
+                        if (finite) owner.jobFramePaths += queries;
+                        if (queries > 0)
+                        {
+                            double observed = (owner.Metrics.NavMeshPathMilliseconds - pathTimeBefore) / queries;
+                            // Recent upper envelope with slow decay; at least one query/frame retains progress
+                            // when a single unavoidable native tail exceeds the entire frame budget.
+                            owner.jobPathReserveMilliseconds = Math.Max(.05,Math.Max(observed*1.25,owner.jobPathReserveMilliseconds*.95));
+                        }
+                    }
                 }
                 return true;
             }
