@@ -226,6 +226,10 @@ public sealed class FoodBudgetBatchTests
         }
         Assert.Equal(Midnight, resumed.City.State.Minute);
         Assert.False(resumed.City.IsCaughtUpTo(Midnight));
+        Assert.Equal(resumed.City.State.Food!.Residents.Select(m => m.ResidentId).OrderBy(id => id, StringComparer.Ordinal)
+                .Take(chunks * FoodCommerce.MaximumBudgetPostingsPerUnit),
+            resumed.City.State.Food.Residents.Where(m => m.Budget!.LastPostedDay == 2).Select(m => m.ResidentId)
+                .OrderBy(id => id, StringComparer.Ordinal));
         string partial = SaveCodec.Write(resumed.City.State);
         Reload(resumed); Assert.Equal(partial, SaveCodec.Write(resumed.City.State));
         resumed.Trace.Clear(); reference.Trace.Clear();

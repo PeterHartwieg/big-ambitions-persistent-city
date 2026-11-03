@@ -354,8 +354,8 @@ namespace PersistentCity.Runtime
                     units++;
                     owner.JobUnits++; owner.LastJobUnit = StageNames[(int)stage];
                     long before = owner.Metrics.NavMeshPathQueries;
-                    Unit(deadline);
-                    if (finite) owner.jobFramePaths += (int)(owner.Metrics.NavMeshPathQueries - before);
+                    try { Unit(deadline); }
+                    finally { if (finite) owner.jobFramePaths += (int)(owner.Metrics.NavMeshPathQueries - before); }
                 }
                 return true;
             }

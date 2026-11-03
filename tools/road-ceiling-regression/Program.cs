@@ -160,6 +160,25 @@ internal static class Program
                     .GetValue(f.Planner)!).BeginPlan(new RoadRoutes.Curb { Node = 0, Position = Point(f.Native[0].position) },
                         new RoadRoutes.Curb { Node = 299, Position = Point(f.Native[299].position) });
             Check(!drive.Continue(long.MaxValue - 1) && drive.Expanded <= 64, "finite road continuation drained A* synchronously");
+            // A failed native query still spends admission; catching an exception must not grant
+            // unlimited fresh jobs in the same frame. Third preference-only request is deferred.
+            var originalWalking = WalkingRoutes.Routes;
+            try
+            {
+                WalkingRoutes.Routes = (_, _) => throw new InvalidOperationException("native query failure");
+                Time.frameCount++;
+                long paths = f.Planner.Metrics.NavMeshPathQueries;
+                for (int i = 0; i < 3; i++)
+                {
+                    using var failing = f.Planner.Begin(new RouteRequest(f.From, f.To, 100, null, f.Person.Preferences));
+                    bool threw = false, completed = false;
+                    try { completed = failing.Continue(0); } catch (InvalidOperationException) { threw = true; }
+                    Check(!completed && threw == (i < 2), "failed query escaped native admission");
+                }
+                Check(f.Planner.JobAdmissionExhaustedForFrame && f.Planner.Metrics.NavMeshPathQueries - paths == 2,
+                    "throwing native queries were not charged to frame admission");
+            }
+            finally { WalkingRoutes.Routes = originalWalking; }
         }
         finally { WalkingRoutes.CountPathQueries = false; }
         times.Sort(); bytes.Sort();

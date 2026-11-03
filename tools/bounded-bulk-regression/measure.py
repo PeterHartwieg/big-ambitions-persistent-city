@@ -4,6 +4,7 @@ import io
 import json
 import os
 import platform
+import shutil
 import subprocess
 import tarfile
 import datetime
@@ -12,16 +13,18 @@ root = Path(__file__).resolve().parents[2]
 out = root / 'docs/perf/assets/f3-bounded-bulk'
 out.mkdir(parents=True, exist_ok=True)
 baseline = root / 'build/f3-baseline'
-baseline.mkdir(parents=True, exist_ok=True)
-archive = subprocess.check_output(['git', 'archive', 'bd99eb3', 'Core', 'Persistence'], cwd=root)
-with tarfile.open(fileobj=io.BytesIO(archive)) as contents:
-    for member in contents.getmembers():
-        if member.isfile():
-            destination = (baseline / member.name).resolve()
-            if baseline.resolve() not in destination.parents:
-                raise RuntimeError('Archive path escaped baseline directory')
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            destination.write_bytes(contents.extractfile(member).read())
+def extract(ref, paths, target):
+    target.mkdir(parents=True, exist_ok=True)
+    archive = subprocess.check_output(['git', 'archive', ref, *paths], cwd=root)
+    with tarfile.open(fileobj=io.BytesIO(archive)) as contents:
+        for member in contents.getmembers():
+            if member.isfile():
+                destination = (target / member.name).resolve()
+                if target.resolve() not in destination.parents:
+                    raise RuntimeError('Archive path escaped baseline directory')
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes(contents.extractfile(member).read())
+extract('bd99eb3', ['Core', 'Persistence'], baseline)
 dotnet = str(Path(os.environ['LOCALAPPDATA']) / 'Microsoft/dotnet/dotnet.exe')
 wait = ['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
         r'C:\Users\Peter\Coding_Projects\.agent-logs\wait-other-dotnet.ps1', '-Repo', str(root)]
@@ -56,5 +59,12 @@ for suffix, arguments in [('postings', ()), ('integrated', ('--integrated',))]:
             for key in ['consumers', 'sales', 'purchases', 'routes', 'reads', 'saveSha256', 'finalBacklogGameMinutes']:
                 if old[key] != new[key]:
                     raise RuntimeError('Replay changed ' + key)
+# Isolate the tiny capture-buffer win from the admission change: same current fixture,
+# first F3 implementation (already bounded) versus the pre-sized final implementation.
+capture_baseline = root / 'build/f3-capture-before-capacity'
+extract('0f632b3', ['Core', 'Runtime'], capture_baseline)
+shutil.copytree(root / 'tools/campaign-reader-regression', capture_baseline / 'tools/campaign-reader-regression',
+                dirs_exist_ok=True, ignore=shutil.ignore_patterns('bin', 'obj'))
+run('before-capacity-campaign', str(capture_baseline / 'tools/campaign-reader-regression/CampaignReaderRegression.csproj'))
 run('campaign', 'tools/campaign-reader-regression/CampaignReaderRegression.csproj')
 run('routes', 'tools/road-ceiling-regression/RoadCeilingRegression.csproj')
