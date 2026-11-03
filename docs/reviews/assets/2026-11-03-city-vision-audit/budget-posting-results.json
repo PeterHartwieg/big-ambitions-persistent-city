@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-03",
+  "audited_commit": "00506edf14bdfc35262ed5c54cdcd2b5032ce30c",
+  "method": "One discarded call and seven measured sequential daily StepBudget calls per size, direct reflection invocation, minimal two-consumer-per-resident fixture, sizes in increasing order in one process",
+  "environment": {
+    "os": "macOS",
+    "architecture": "arm64",
+    "sdk": "10.0.400",
+    "runtime": "10.0.11",
+    "configuration": "Release"
+  },
+  "boundary": "Component-only .NET timing and current-thread allocation. No Unity, native market, routes, game frames, saves or complete city validation. Construction and completeness assertions excluded; reflection invocation included. JIT state and host noise limit cross-size comparisons. These are observations from the original audit, not performance thresholds.",
+  "results": [
+    {"residents": 957, "consumers": 1914, "samples": 7, "median_ms": 2.261, "max_ms": 4.117, "median_allocated_bytes": 91896},
+    {"residents": 5000, "consumers": 10000, "samples": 7, "median_ms": 13.729, "max_ms": 15.741, "median_allocated_bytes": 480024},
+    {"residents": 50000, "consumers": 100000, "samples": 7, "median_ms": 54.212, "max_ms": 65.826, "median_allocated_bytes": 4800024}
+  ]
+}
