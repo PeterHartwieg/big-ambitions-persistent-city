@@ -34,11 +34,12 @@ bodies/queries. Wider native workloads and arbitrary subminute changes are not c
 
 R1 offline evidence:
 
-- The focused regression passed 26 cases and the full R1 unit run passed **2,829 cases**, zero
-  failures/skips. Ownership-hook source checks passed **249 assertions**, including detached
-  partial-hour protection, preserved population bytes, reload and native future-demand handoff.
-  The required foreground matrix is in progress; final command exits/hashes will be recorded
-  in the [owning checks](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/codex/pc-f1-accounting-backlog/docs/checks/f1-accounting-backlog.md).
+- All required foreground commands passed across the resumed sessions, including both broad
+  wrappers. Current suite: **2,832 tests**, zero failures/skips; **2,740 discovery entries**.
+  Ownership: **249 assertions**. Build, identity, save contract, checkout and all required
+  regression/source tools passed. The first segment lost its aggregate exit JSON at harness
+  resumption; preserved output and independently repeated zero-exit nested matrices are
+  qualified in the [R1 manifest](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/codex/pc-f1-accounting-backlog/docs/checks/f1-accounting-backlog-r1-results.json).
 - Every cadence/budget and skip arm has identical final save bytes and ordered native-double
   sales: 969 confirmed purchases, 971 original orders, 164 recorded missed meals and identical
   balances/held funds. Two acknowledgements remain uncertain and are not replayed.
@@ -49,10 +50,16 @@ R1 offline evidence:
   **960 / 16.000 s** before review and **16 / 0.267 s** with the historical hourly limiter.
   The remaining approximately one-tick/minute floor is still **30.06x** the old hourly minimum;
   this is a documented minute-input contract cost, not a skip-latency pass.
-- Initial corrected detached frame p95 (30/60/120) **0.0316/0.2999/0.4271 ms**, max
-  **7.0055/5.0113/5.3553 ms**; skip p95/max **0.0240/4.3991 ms**, stress **0.0148/11.4676 ms**.
-  No >=30 ms samples in that clean run; full native mod-work/whole-frame costs remain pending.
+- Final detached frame p95 (30/60/120) **0.0118/0.0839/0.2280 ms**, max
+  **4.0703/2.6435/2.5934 ms**; skip p95/max **0.0169/3.9963 ms**, stress **0.0092/5.8933 ms**.
+  Final >=30 ms F1 samples: **0**. Lag <1 game minute; injected supported/stress recovery
+  2/10 s. These complete detached frame costs exclude native/Unity work; full native
+  mod-work/whole-frame costs remain pending, and the native proof blocker remains open.
   [All initial/R1 measurements and limits](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/codex/pc-f1-accounting-backlog/docs/perf/f1-accounting-backlog.md).
+
+- The inherited standalone saturated-history bulk arm flags write/read/activation maxima
+  **289.8408/583.4523/340.8855 ms** (3/3 >=30 ms each), separate from F1 frame windows.
+  Parked serialization remains unchanged; no native frame-gate pass is implied.
 
 ## In-game checks for the next batched rig
 

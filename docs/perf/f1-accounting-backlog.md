@@ -72,7 +72,9 @@ Scale the existing frame caps by unscaled elapsed time instead of giving every r
 frame sixteen citizen starts. The matched real-Core 960-resident same-minute queue at
 30 simulated FPS drains in **60 -> 30 frames**, **2 -> 1 simulated seconds**, with byte-identical
 final state. Citizen-start capacity is **480 -> 960/s** at 30 FPS; 60 FPS retains 960/s and
-120 FPS uses eight starts/frame for the same rate. This removes the artificial low-FPS cap
+the pre-review 120 FPS policy used eight starts/frame, reducing the old capacity from
+1,920 to 960 starts/s and 240 to 120 soft ms/s. R1 restores the legacy 16-start / 2 ms floor
+and its 1,920 starts/s / 240 soft ms/s capacity. This removes the artificial low-FPS cap
 when the CPU time budget permits it; it is not a whole-frame CPU saving or a promise to fit
 arbitrary work into 4 ms. Long-stall caps prevent an unlimited next-frame burst.
 
@@ -133,3 +135,25 @@ hotspot is rewritten. Cached visible text still measures 499,200 -> 16,640 B / 1
 R1 supported/stress throughput and complete **detached** frame costs are retained in the raw
 output; native mod-work and whole-frame costs remain separate pending proof. Native timing
 must flag every >=30 ms mod-work sample and keep whole-frame stalls separate.
+
+## R1 final foreground matrix repeat
+
+The corrected HEAD also passed both required nested wrappers and the standalone F1 tool.
+[Nested repeats](f1-accounting-backlog-r1-repeat.txt) and
+[final standalone raw output](f1-accounting-backlog-r1-final.txt) retain the repeated measurements.
+All measured arms exclude save/read and native/Unity work, with the same inputs and economic
+assertions as above. Complete native mod-work and separate whole-frame costs remain unverified.
+
+| Final detached arm | Frames / held ticks | Max lag, game min | Stall and recovery, s | Frame p50 / p95 / max, ms | >=30 ms |
+| --- | --- | --- | --- | --- | --- |
+| 30 FPS / 1 unit | 29,537 / 28,096 | 0.999999999999773 | 2 | 0.0056 / 0.0118 / 4.0703 | 0 |
+| 60 FPS / 16 units | 4,436 / 1,555 | 0.500003814697038 | 2 | 0.0049 / 0.0839 / 2.6435 | 0 |
+| 120 FPS / 128 units | 6,016 / 255 | 0.250003814697038 | 2 | 0.0005 / 0.2280 / 2.5934 | 0 |
+| skip 30 FPS / 1 unit | 29,537 / 28,096 | 0.999999999999773 | 2 | 0.0039 / 0.0169 / 3.9963 | 0 |
+| stress 2,000 / 30 FPS | 58,053 / 56,612 | 0.999999999999773 | 10 | 0.0028 / 0.0092 / 5.8933 | 0 |
+
+Final F1 >=30 ms samples: **0**. The corrected precheck and first nested repeat also recorded zero. The first nested stress maximum was 14.8795 ms. Native frame gates remain pending regardless of these detached results.
+Across the six R1 runs (30 clean arm windows), >=30 ms samples total **0**, maximum **16.5706 ms**. All are detached, save-free windows.
+The zero-work tick counts and remaining baseline/skip costs above are unchanged in the repeats.
+
+The required standalone 957x2 saturated-history bulk arm also flags **289.8408/583.4523/340.8855 ms** write/read/activation maxima, each **3/3 samples >=30 ms**, and **1171.2615 ms** migration. These are bulk serialization/startup costs, separate from F1 gameplay frame windows; the parked serialization hotspot remains unchanged. They are not a native frame-gate pass.

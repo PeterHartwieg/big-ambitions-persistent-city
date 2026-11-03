@@ -10,7 +10,10 @@ minute admitted lag bound, explicit recovery/refusal, wall-time frame caps and v
 status. Writer **25** and native sale/receipt authority remain unchanged. Native proof and
 complete native mod-work/whole-frame measurement are pending the batched rig.
 
-## Evidence and acceptance
+## Initial evidence and acceptance (before R1)
+
+The original evidence below is retained. Corrected behavior and current results are in the
+R1 section; native proof remains a merge blocker.
 
 - Re-verified the audit against this base: `FoodCommerce.StepMeal` still misses active meals
   when `now < market.EarliestMinute`; `AdvancePopulation` still had fixed 128-unit/16-citizen
@@ -95,8 +98,24 @@ Three additional stop-marker cases cover native-save/reload intent, idempotence,
 marker preservation and unchanged archived population/receipt bytes. The marker is separate
 from population writer 25; it prevents unsafe automatic restart after a failed epoch.
 
-Full R1 matrix results are recorded below once complete. The focused run passed 26 cases;
-the first full R1 unit run passed **2,829 cases**, zero failures or skips. Writer 25 is unchanged.
+The required foreground matrix passed across two sessions: the first 41 commands reported
+success before harness resumption; commands 42-62 then completed with recorded zero exits.
+The two required nested wrappers independently reran build, current unit/discovery and broad
+regressions successfully. The first segment output survives, but its aggregate exit JSON was
+lost with the parent session; this limitation and command/log hashes are explicit in the
+[R1 results manifest](f1-accounting-backlog-r1-results.json). The current full suite passed
+**2,832 cases**, zero failures/skips, and discovery listed **2,740 entries**. The earlier focused
+run passed 26 cases before the three marker cases were added. Ownership passed 249 assertions.
+Writer 25 is unchanged. The final nested game-reference build DLL SHA-256 is
+`eaf0f9c395fa341c4c9336a5350072860620f57d2cf7a473e6719ac84cb2f9cc`.
+
+Final detached ordinary 30/60/120 p95 **0.0118/0.0839/0.2280 ms**, max **4.0703/2.6435/2.5934 ms**;
+skip p95/max **0.0169/3.9963 ms**; stress **0.0092/5.8933 ms**.
+Final >=30 ms F1 samples: **0**. Lag stayed <1 game minute; stall/recovery remained 2 s supported /
+10 s stress. These are detached costs, never a native mod-work or whole-frame gate pass.
+The shared dotnet gate ran before foreground work; all processes started by this fixer
+finished, and final inspection found no repository test/dotnet processes left. Generated
+unrelated E5c evidence was restored. No game or rig work occurred.
 See [R1 performance and baseline pacing costs](../perf/f1-accounting-backlog.md#r1-review-corrections).
 
 **Sol-r1-2 remains unresolved and blocks merge.** No authorized separate `rig_test` session,
@@ -107,7 +126,7 @@ project rule. The authorized rig owner must validate the corrected HEAD and atta
 PR #99. Do not mark this finding passed from the offline results.
 
 Sol-r1-3 is handled by updating PR #99's actual body from the matching prepared description;
-that metadata action is separate from repository commits and will be verified by readback.
+that metadata action is separate from repository commits and is verified by readback.
 
 ## In-game checks for the next batched rig
 
