@@ -377,7 +377,7 @@ namespace PersistentCity.Runtime
                         + (slowestPlanningUnit.Length == 0 ? "none" : slowestPlanningUnit) + " with " + slowestPlanningUnitNavMeshQueries
                         + " NavMesh path queries; event restarts " + eventRestarts + " (run inline after repeated restarts "
                         + inlineRestarts + "), road search restarts " + (routes?.RoadSearchRestarts ?? 0)
-                        + ", units " + (routes?.JobUnits ?? 0) + ". "
+                        + ", units " + (routes?.JobUnits ?? 0) + ", query/unit admission deferrals " + (routes?.JobAdmissionDeferrals ?? 0) + ". "
                         + (physical?.Diagnostics ?? "Physical population inactive."));
                     if (simulation.Traffic != null)
                         log?.Info("Citywide traffic: " + simulation.Traffic.VehicleCount + " persistent cars, "

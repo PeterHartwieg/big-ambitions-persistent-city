@@ -31,17 +31,18 @@ namespace PersistentCity.Core
     }
 
     /// <summary>One request's planning work, resumable across frames. Continue performs at least one unit of
-    /// work and keeps going while the budget allows; it returns true once the result is final. Dispose
+    /// work when admitted and keeps going while the work/time budget allows; it returns true once the result is final. Dispose
     /// releases any scratch storage the job borrowed, whether or not it finished.</summary>
     public interface IRoutePlanningJob : IDisposable
     {
-        /// <summary>Run at least one unit of work and keep going while the budget allows; true once the result is
+        /// <summary>Run bounded work while the budget and native-query admission allow; true once the result is
         /// final. A job that resumes after the native state it captured was replaced (a road snapshot, public
         /// access object or station list) throws <see cref="RoutePlanningRestartRequired"/> instead of mixing two
         /// snapshots. Earlier answers of the same event and anything the job wrote to the request's resident
         /// (a car allocated at a curb, for example) belong to the abandoned snapshot, so the caller discards
         /// the event's working copy and runs the event again from its first request, as a reload would. A job
-        /// begun and driven to completion within one call never throws it.</summary>
+        /// begun and driven to completion within one call never throws it. A finite call may perform no work
+        /// when this frame's native-query admission is exhausted; retry on the next frame.</summary>
         bool Continue(double budgetMilliseconds);
         Route? Result { get; }
     }

@@ -254,6 +254,12 @@ namespace PersistentCity.Runtime
         public int RoadSearchRestarts => roads?.SearchRestarts ?? 0;
         /// <summary>Units of planning work performed by jobs, for the frame summary.</summary>
         public long JobUnits { get; private set; }
+        // A native NavMesh path is non-preemptible. Admission bounds its multiplicity, not its tail.
+        // At most one path calculation per finite Continue and two per rendered frame per planner.
+        internal const int MaximumJobUnitsPerSlice = 8;
+        internal const int MaximumJobPathsPerFrame = 2;
+        private int jobPathFrame = -1, jobFramePaths;
+        public long JobAdmissionDeferrals { get; private set; }
         /// <summary>The kind of the unit a job performed last, for attributing a slow slice.</summary>
         public string LastJobUnit { get; private set; } = "";
         private static readonly string[] StageNames =
@@ -264,7 +270,8 @@ namespace PersistentCity.Runtime
 
         /// <summary>The former synchronous citizen plan as a resumable job. Each unit is one native query (a walk,
         /// a curb search, a station capture) or one slice of a road A*; Continue runs units until the budget is
-        /// spent and always at least one. The job captures the road snapshot, public access and station list it
+        /// spent, up to eight units, one path query per finite call and two per frame. Exhausted native
+        /// admission yields without advancing a stage. The job captures the road snapshot, public access and station list it
         /// plans against; if any of them was replaced while it was suspended, Continue throws
         /// RoutePlanningRestartRequired and the simulator replays the whole citizen event, so no event mixes two
         /// snapshots. Forecasts and node validations it reads are live at the moment of each read, as
@@ -331,12 +338,23 @@ namespace PersistentCity.Runtime
                 if (RevisionChanged())
                     throw new RoutePlanningRestartRequired("The road snapshot, public access or station list changed while a route plan was suspended.");
                 bool first = true;
+                bool finite = !double.IsPositiveInfinity(budgetMilliseconds);
+                int units = 0;
+                long pathsBefore = owner.Metrics.NavMeshPathQueries;
+                if (finite && owner.jobPathFrame != Time.frameCount)
+                { owner.jobPathFrame = Time.frameCount; owner.jobFramePaths = 0; }
                 while (!Completed)
                 {
                     if (!first && Stopwatch.GetTimestamp() >= deadline) return false;
+                    if (finite && (units >= MaximumJobUnitsPerSlice || owner.jobFramePaths >= MaximumJobPathsPerFrame
+                        || owner.Metrics.NavMeshPathQueries != pathsBefore))
+                    { owner.JobAdmissionDeferrals++; return false; }
                     first = false;
+                    units++;
                     owner.JobUnits++; owner.LastJobUnit = StageNames[(int)stage];
+                    long before = owner.Metrics.NavMeshPathQueries;
                     Unit(deadline);
+                    if (finite) owner.jobFramePaths += (int)(owner.Metrics.NavMeshPathQueries - before);
                 }
                 return true;
             }

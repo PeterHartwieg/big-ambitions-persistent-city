@@ -14,6 +14,66 @@ try { runtime.ReadCampaignSnapshot(new[] { 0, 0 }); } catch (ArgumentException) 
 if (!duplicateRefused) throw new Exception("Duplicate identity accepted");
 Console.WriteLine("Campaign bridge: 20 repeated detached reads unchanged; duplicate scope refused; native helper/money spies untouched.");
 
+// F3: the runtime boundary admits exactly one atomic unit. Large on-demand diagnostics below
+// still measure explicit refreshes; they do not justify a per-frame synchronous drain.
+foreach (int count in new[] { 1, 64, 65, 1024 })
+{
+    var sources = Enumerable.Range(0, count).Select(i => new CampaignBusinessSource("boundary:" + i, new BuildingRegistration())).ToArray();
+    var reader = new NativeCampaignReader();
+    var times = new List<double>(); var bytes = new List<long>(); int refusals = 0;
+    for (int i = 0; i < 302; i++)
+    {
+        long allocated = GC.GetAllocatedBytesForCurrentThread(), start = Stopwatch.GetTimestamp();
+        bool admitted = NativeCampaignReader.BoundaryScopeAdmitted(count);
+        if (admitted)
+        {
+            var snapshot = reader.ReadBoundary(sources, 60, 1);
+            if (snapshot.Businesses.Count != count) throw new Exception("Partial boundary image escaped");
+        }
+        else refusals++;
+        double elapsed = Stopwatch.GetElapsedTime(start).TotalMilliseconds;
+        allocated = GC.GetAllocatedBytesForCurrentThread() - allocated;
+        if (i != 0) { times.Add(elapsed); bytes.Add(allocated); }
+    }
+    times.Sort(); bytes.Sort();
+    Console.WriteLine(JsonSerializer.Serialize(new { boundaryBusinesses = count, admittedWork = count <= 64 ? count : 0, refusals,
+        p50Ms = times[150], p95Ms = times[285], maxMs = times[300], spikesAtLeast30Ms = times.Count(t => t >= 30),
+        medianAllocatedBytes = bytes[150], maxAllocatedBytes = bytes[300],
+        evidence = "Fields-only production reader with native doubles; oversized boundary refused before reads/allocation" }));
+}
+
+// Largest previously saved campaign history feeding one newly admitted 64-business boundary.
+// Construction/load-time index rebuild stays outside the atomic boundary measurement.
+{
+    var times = new List<double>(); var bytes = new List<long>();
+    for (int iteration = 0; iteration < 32; iteration++)
+    {
+        var food = new FoodCommerceState();
+        for (int slot = 0; slot < 1024; slot++)
+        {
+            food.BusinessReferences.Add(new BusinessReference { Slot = slot, BusinessId = "b:" + slot, PlaceId = "p:" + slot });
+            var masks = new uint[64];
+            for (int age = 0; age < 8; age++) for (int type = 0; type < 6; type++) masks[age * 8 + type] = 0xffffff;
+            food.Campaigns.Add(new FoodCampaignImage(slot, 191, masks));
+        }
+        var publisher = new FoodCampaignSource(food, 7, new FoodCampaignSettings());
+        var places = Enumerable.Range(0, 64).ToDictionary(i => "b:" + i, i => "p:" + i);
+        var sources = Enumerable.Range(0, 64).Select(i => new CampaignBusinessSource("b:" + i, new BuildingRegistration())).ToArray();
+        var reader = new NativeCampaignReader(); reader.ReadBoundary(sources, 60, 1); // bind reflection before timing
+        long allocated = GC.GetAllocatedBytesForCurrentThread(), start = Stopwatch.GetTimestamp();
+        publisher.Publish(reader.ReadBoundary(sources, 192 * 60, 192), places);
+        double elapsed = Stopwatch.GetElapsedTime(start).TotalMilliseconds;
+        allocated = GC.GetAllocatedBytesForCurrentThread() - allocated;
+        if (food.Campaigns.Count != 64 || publisher.Publications != 1) throw new Exception("Atomic campaign publication incomplete");
+        if (iteration != 0) { times.Add(elapsed); bytes.Add(allocated); }
+    }
+    times.Sort(); bytes.Sort();
+    Console.WriteLine(JsonSerializer.Serialize(new { boundaryWithRetainedHistory = 1024, admittedBusinesses = 64,
+        p50Ms = times[15], p95Ms = times[29], maxMs = times[30], spikesAtLeast30Ms = times.Count(t => t >= 30),
+        medianAllocatedBytes = bytes[15], maxAllocatedBytes = bytes[30],
+        evidence = "Production atomic reader + publication, 1024 full eight-day histories -> 64 admitted scope, native doubles" }));
+}
+
 foreach (int count in new[] { 1, 8, NativeCampaignReader.MaximumBusinesses })
 {
     var sources = Enumerable.Range(0, count).Select(i => new CampaignBusinessSource("business:" + i, new BuildingRegistration())).ToArray();

@@ -493,26 +493,58 @@ public sealed class ResumablePlanningTests
     }
 
     [Fact]
-    public void ResidentWhoseSnapshotKeepsChangingRunsInlineAfterThreeRestarts()
+    public void RepeatedSnapshotRestartsStaySlicedAndEventuallyMatchWithoutInlineEscape()
     {
         var reference = new CitySimulator(City(48), new SyncPlanner());
         var planner = new DeferredPlanner { ContinuesFor = _ => 2 };
         var city = new CitySimulator(City(48), planner);
         string unlucky = city.State.Citizens[7].Identity.Id;
-        // Every sliced attempt of this resident's events loses its snapshot; nobody else's does.
-        planner.RestartAt = (request, _, c) => c >= 1 && request.Citizen?.Identity.Id == unlucky;
+        var attempts = new Dictionary<double, int>();
+        // Twelve replacements at each held event minute, well beyond the former three-restart
+        // escape. Once inputs stabilize, the same event must finish without changing outcomes.
+        planner.RestartAt = (request, _, c) =>
+        {
+            if (c < 1 || request.Citizen?.Identity.Id != unlucky) return false;
+            attempts.TryGetValue(city.State.Minute, out int count);
+            if (count == 12) return false;
+            attempts[city.State.Minute] = count + 1; return true;
+        };
         for (int day = 1; day <= 3; day++)
         {
             reference.AdvanceTo(Target(day));
             RunFrames(city, Target(day));
             Assert.Equal(SaveCodec.Write(reference.State), SaveCodec.Write(city.State));
         }
-        Assert.True(city.InlineAfterRestarts > 3, "too few inline runs: " + city.InlineAfterRestarts);
-        // Each of the resident's events restarted exactly three times at its held minute, then ran inline.
-        Assert.Equal(3 * city.InlineAfterRestarts, city.EventRestarts);
+        Assert.Equal(0, city.InlineAfterRestarts);
+        Assert.True(city.EventRestarts >= 48);
+        Assert.All(attempts.Values, count => Assert.Equal(12, count));
         Assert.Equal(planner.RestartsThrown, city.EventRestarts);
         Assert.Equal(planner.Requests, planner.Disposed);
         Assert.True(reference.State.Citizens.Single(c => c.Identity.Id == unlucky).CompletedJourneys > 0);
+    }
+
+    [Fact]
+    public void PersistentChurnHasBoundedAttemptsPreservesTheBarrierAndReloadResumesTheOriginalEvent()
+    {
+        var reference = new CitySimulator(City(24), new SyncPlanner());
+        var planner = new DeferredPlanner { RestartAt = (_, _, _) => true };
+        var city = new CitySimulator(City(24), planner);
+        while (!city.AdvanceFrameSlice(Target(2), 1).PlanningPending) { }
+        string held = SaveCodec.Write(city.State);
+        for (int attempt = 0; attempt < 120; attempt++)
+        {
+            int before = planner.Continues;
+            Assert.False(city.ContinuePlanning(0));
+            Assert.Equal(before + 1, planner.Continues);
+            Assert.Equal(held, SaveCodec.Write(city.State));
+            Assert.False(city.PlanningPending);
+            Assert.True(city.AdvanceFrameSlice(Target(2), 1).PlanningPending);
+            Assert.Equal(0, city.InlineAfterRestarts);
+        }
+        Assert.Equal(120, city.EventRestarts);
+        var restored = new CitySimulator(SaveCodec.Read(held).State!, new DeferredPlanner { ContinuesFor = _ => 3 });
+        RunFrames(restored, Target(2)); reference.AdvanceTo(Target(2));
+        Assert.Equal(SaveCodec.Write(reference.State), SaveCodec.Write(restored.State));
     }
 
     [Fact]

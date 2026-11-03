@@ -23,6 +23,19 @@ namespace PersistentCity.Runtime
         public const int MaximumBusinesses = 1024;
         public const int MaximumCampaignsPerBusiness = 8;
         public const int MaximumBusinessesPerUnit = 64;
+        // Native/UI campaign writers cannot be version-pinned between frames. A boundary observation
+        // therefore admits one unit only; larger diagnostic refreshes still use explicit caller steps.
+        public const int MaximumBoundaryBusinesses = MaximumBusinessesPerUnit;
+        public static bool BoundaryScopeAdmitted(int businesses) => businesses >= 0 && businesses <= MaximumBoundaryBusinesses;
+        public CampaignSnapshot ReadBoundary(IReadOnlyList<CampaignBusinessSource> sources, double minute, long revision)
+        {
+            if (sources == null || !BoundaryScopeAdmitted(sources.Count))
+                throw new ArgumentException("Campaign boundary exceeds the atomic observation admission limit.");
+            if (sources.Count == 0) return new CampaignSnapshot(minute, revision, Array.Empty<BusinessCampaignSnapshot>());
+            var refresh = Begin(sources, minute, revision);
+            refresh.Step(MaximumBoundaryBusinesses, minute, revision);
+            return refresh.Snapshot ?? throw new InvalidOperationException("Campaign boundary observation refused.");
+        }
         private const int MaximumShapes = 32;
         private readonly Dictionary<Type, Shape> shapes = new Dictionary<Type, Shape>();
 

@@ -116,6 +116,58 @@ internal static class Program
 #endif
     }
 
+#if SLICED_PLANNER
+    private static void CheckBoundedAdmission()
+    {
+        var f = new Fixture(300, true) { DirectMinutes = 2000, AccessMinutes = 2, EgressMinutes = 3, HaveSubway = true };
+        string expected = Fingerprint(f.Plan());
+        WalkingRoutes.CountPathQueries = true;
+        var times = new List<double>(); var bytes = new List<long>(); int maxUnits = 0, maxPaths = 0;
+        try
+        {
+            for (int attempt = 0; attempt < 31; attempt++)
+            {
+                using var job = f.Planner.Begin(new RouteRequest(f.From, f.To, 100, f.Person, f.Person.Preferences));
+                bool done = false; int calls = 0;
+                while (!done)
+                {
+                    Check(++calls < 1000, "admitted route failed to make progress");
+                    Time.frameCount++;
+                    long framePaths = f.Planner.Metrics.NavMeshPathQueries;
+                    // Several calls in one synthetic frame exercise shared per-frame admission.
+                    for (int call = 0; call < 6 && !done; call++)
+                    {
+                        long units = f.Planner.JobUnits, paths = f.Planner.Metrics.NavMeshPathQueries;
+                        long allocated = GC.GetAllocatedBytesForCurrentThread(), start = Stopwatch.GetTimestamp();
+                        done = job.Continue(1000); // A generous finite deadline cannot bypass the work caps.
+                        double elapsed = Stopwatch.GetElapsedTime(start).TotalMilliseconds;
+                        allocated = GC.GetAllocatedBytesForCurrentThread() - allocated;
+                        int worked = (int)(f.Planner.JobUnits - units), queried = (int)(f.Planner.Metrics.NavMeshPathQueries - paths);
+                        Check(worked <= MultimodalRoutes.MaximumJobUnitsPerSlice && queried <= 1, "finite job exceeded unit/query admission");
+                        maxUnits = Math.Max(maxUnits, worked); maxPaths = Math.Max(maxPaths, queried);
+                        if (attempt != 0) { times.Add(elapsed); bytes.Add(allocated); }
+                    }
+                    Check(f.Planner.Metrics.NavMeshPathQueries - framePaths <= MultimodalRoutes.MaximumJobPathsPerFrame,
+                        "several Continue calls bypassed frame path admission");
+                }
+                Check(Fingerprint(job.Result) == expected, "admitted route changed its winner");
+            }
+            Check(f.Planner.JobAdmissionDeferrals > 0, "admission was not exercised");
+            using var drive = f.Planner.TrafficNetwork == null ? throw new Exception("Missing network")
+                : ((RoadRoutes)typeof(MultimodalRoutes).GetField("roads", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+                    .GetValue(f.Planner)!).BeginPlan(new RoadRoutes.Curb { Node = 0, Position = Point(f.Native[0].position) },
+                        new RoadRoutes.Curb { Node = 299, Position = Point(f.Native[299].position) });
+            Check(!drive.Continue(long.MaxValue - 1) && drive.Expanded <= 64, "finite road continuation drained A* synchronously");
+        }
+        finally { WalkingRoutes.CountPathQueries = false; }
+        times.Sort(); bytes.Sort();
+        Console.WriteLine(JsonSerializer.Serialize(new { boundedAdmission = true, calls = times.Count, maxUnits, maxPaths,
+            p50Ms = times[times.Count / 2], p95Ms = times[(int)(times.Count * .95)], maxMs = times[times.Count - 1],
+            spikesAtLeast30 = times.Count(t => t >= 30), medianBytes = bytes[bytes.Count / 2], maxBytes = bytes[bytes.Count - 1],
+            evidence = "Production multimodal/road jobs with native doubles; no native query tail claim" }));
+    }
+#endif
+
     private static void Main(string[] args)
     {
         System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
@@ -307,6 +359,7 @@ internal static class Program
             SlicedCheck(job.Result == null, "abandoned job kept a result");
             SlicedCheck(Fingerprint(f.Plan()) == expected && Fingerprint(f.PlanSliced().Route) == expected, "plans after an abandoned job differ");
         }
+        CheckBoundedAdmission();
         Console.WriteLine(JsonSerializer.Serialize(new { checks, results, slicedChecks, sliced }));
 #else
         Console.WriteLine(JsonSerializer.Serialize(new { checks, results }));

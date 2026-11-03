@@ -140,10 +140,11 @@ public sealed class FoodBudgetBatchTests
         // Same native calls and citizen events, in the same order, each seeing the same postings.
         Assert.Equal(legacy.Trace, batched.Trace);
 
-        // Postings ran at the enabling minute and at five midnights: 60 per-budget events became one each.
+        // Postings ran at the enabling minute and at five midnights, now in bounded units.
         int residents = batched.City.State.Food.Residents.Count;
         Assert.Equal(60, residents);
-        Assert.Equal(6L * (residents - 1), legacy.Events - batched.Events);
+        Assert.Equal(6L * (residents - (residents + FoodCommerce.MaximumBudgetPostingsPerUnit - 1)
+            / FoodCommerce.MaximumBudgetPostingsPerUnit), legacy.Events - batched.Events);
     }
 
     [Fact]
@@ -197,7 +198,8 @@ public sealed class FoodBudgetBatchTests
         Assert.All(budgets, b => Assert.Equal(1, b.LastPostedDay));
         Assert.All(budgets, b => Assert.Equal(Midnight, b.NextPostingMinute));
         var food = Food(run.City);
-        Assert.Equal(int.MaxValue, food.BudgetPostingsPerEvent);
+        Assert.Equal(FoodCommerce.MaximumBudgetPostingsPerUnit, food.BudgetPostingsPerEvent);
+        Assert.Throws<ArgumentOutOfRangeException>(() => food.BudgetPostingsPerEvent = int.MaxValue);
         var state = run.City.State;
         var read = SaveCodec.Read(SaveCodec.Write(state)); Assert.Equal("", read.Error);
         var shifted = read.State!;
@@ -209,5 +211,64 @@ public sealed class FoodBudgetBatchTests
         Assert.Equal(1, shifted.Food.Residents[1].Budget!.LastPostedDay);
         city.AdvanceTo(Midnight + .25, 10000);
         Assert.Equal(2, shifted.Food.Residents[1].Budget!.LastPostedDay);
+    }
+
+    [Theory]
+    [InlineData(1)] [InlineData(2)] [InlineData(3)]
+    public void DefaultBoundedPostingReloadsAtEachPartialChunkWithoutRepostingOrReordering(int chunks)
+    {
+        var resumed = Start(legacy: false, count: 100);
+        var reference = Start(legacy: false, count: 100);
+        Advance(resumed, Midnight - 1, 128); Advance(reference, Midnight - 1, 128);
+        while (Posted(resumed.City) != chunks * FoodCommerce.MaximumBudgetPostingsPerUnit)
+        {
+            Assert.False(resumed.City.AdvanceFrameSlice(Midnight, 1).CaughtUp);
+        }
+        Assert.Equal(Midnight, resumed.City.State.Minute);
+        Assert.False(resumed.City.IsCaughtUpTo(Midnight));
+        string partial = SaveCodec.Write(resumed.City.State);
+        Reload(resumed); Assert.Equal(partial, SaveCodec.Write(resumed.City.State));
+        resumed.Trace.Clear(); reference.Trace.Clear();
+        Advance(resumed, Midnight + 700, 1); Advance(reference, Midnight + 700, 128);
+        Assert.Equal(SaveCodec.Write(reference.City.State), SaveCodec.Write(resumed.City.State));
+        Assert.Equal(reference.Market.Orders, resumed.Market.Orders);
+        Assert.Equal(reference.Trace.Where(t => !t.StartsWith("citizen ") || !t.Contains("@2880 posted")),
+            resumed.Trace.Where(t => !t.StartsWith("citizen ") || !t.Contains("@2880 posted")));
+    }
+
+    [Theory]
+    [InlineData(1914)] [InlineData(10000)] [InlineData(100000)]
+    public void SupportedAndStressSizesBoundEveryPostingCallAndKeepTheClockHeld(int consumers)
+    {
+        var state = new CityState { Seed = 7, Minute = 1440, Food = new FoodCommerceState { RepresentationFactor = 2, HouseholdFinanceVersion = 1 } };
+        state.Places.Add(new Place { Id = "home", Kind = PlaceKind.Home, Capacity = consumers / 2 });
+        for (int i = 0; i < consumers / 2; i++)
+        {
+            var citizen = new CitizenState { Identity = new CitizenIdentity { Id = "r" + i, Age = 22, Persona = Persona.Student },
+                HomeId = "home", PlaceId = "home", NextEventMinute = 1e8, ActivityUntilMinute = 1e8 };
+            state.Citizens.Add(citizen);
+            for (int slot = 0; slot < 2; slot++)
+            {
+                string id = FoodRepresentation.ConsumerId(citizen.Identity.Id, slot);
+                state.Food.Residents.Add(new ResidentMeal { ResidentId = id, AnchorId = citizen.Identity.Id, Slot = slot,
+                    DueAt = 1e8, Budget = HouseholdFinance.Create(citizen, 7, 1440, null, id) });
+            }
+        }
+        var city = new CitySimulator(state, new Walking()); city.AttachFoodMarket(new TracingMarket());
+        var food = Food(city); int calls = 0;
+        do
+        {
+            long before = food.BudgetPostings;
+            var result = city.AdvanceFrameSlice(1440, 1);
+            if (food.BudgetPostings == before)
+            { Assert.True(result.FoodContinuationEvents > 0); continue; }
+            calls++;
+            Assert.InRange(food.LastBudgetPostings, 1, FoodCommerce.MaximumBudgetPostingsPerUnit);
+            Assert.Equal(1440, state.Minute);
+            Assert.Equal(food.BudgetPostings == consumers, result.CaughtUp);
+        } while (food.BudgetPostings < consumers);
+        Assert.Equal((consumers + 31) / 32, calls);
+        Assert.All(state.Food.Residents, meal =>
+        { Assert.Equal(1, meal.Budget!.LastPostedDay); Assert.True(HouseholdFinance.CashConserved(meal.Budget)); });
     }
 }

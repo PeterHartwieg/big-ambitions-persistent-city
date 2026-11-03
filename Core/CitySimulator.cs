@@ -238,9 +238,7 @@ namespace PersistentCity.Core
                     activityObservers.Handlers?.Invoke(item.Citizen.Identity.Id, item.Citizen, State.Minute);
                     continue;
                 }
-                bool inline = publishSnapshot;
-                if (!inline && RestartsExhausted(item)) { inline = true; InlineAfterRestarts++; }
-                if (!RunEvent(item, inline))
+                if (!RunEvent(item, inline: publishSnapshot))
                     return new AdvanceResult(count, false, trafficCount, planningPending: true, foodContinuationEvents: foodContinuationCount);
                 count++;
             }
@@ -272,17 +270,12 @@ namespace PersistentCity.Core
         /// <summary>Citizen events abandoned between slices because a job lost its captured native state and
         /// requeued to run again from their first request.</summary>
         public long EventRestarts { get; private set; }
-        /// <summary>Events run inline in a frame slice because the same resident's event had already restarted
-        /// MaximumEventRestarts times at the same held minute.</summary>
-        public long InlineAfterRestarts { get; private set; }
-        // A city whose snapshot keeps changing must still progress: after this many restarts of one event at one
-        // held minute, the next attempt runs inline, where every job gets an unlimited budget in one call.
-        private const int MaximumEventRestarts = 3;
-        private Due? restartedItem;
-        private double restartedMinute;
-        private int restartedCount;
-        private bool RestartsExhausted(Due item) => ReferenceEquals(restartedItem, item)
-            && restartedMinute == State.Minute && restartedCount >= MaximumEventRestarts;
+        /// <summary>Compatibility diagnostic. Frame slices never fall back to inline planning.</summary>
+        public long InlineAfterRestarts => 0;
+        // A changed version discards one attempt and requeues the original event. Every replay uses
+        // the same finite frame admission as its first attempt; no number of restarts grants an
+        // unlimited call. The held clock is intentional: later events can change route forecasts,
+        // employment and meals. Reordering them would make a frame cadence change city outcomes.
 
         // Returns false only when a resumable planner's job was left pending for the frame loop.
         private bool RunEvent(Due item, bool inline)
@@ -315,8 +308,8 @@ namespace PersistentCity.Core
                 ? citizenRoutes.Plan(request.From, request.To, request.DepartureMinute, request.Citizen)
                 : routes.Plan(request.From, request.To, request.DepartureMinute, request.Preferences);
 
-        /// <summary>Give the pending route job up to the budget (it always performs at least one unit of
-        /// work), resume the event when the answer arrives, and report true once no request is pending.
+        /// <summary>Give the pending route job its finite work/time and native-query admission,
+        /// resume the event when the answer arrives, and report true once no request is pending.
         /// A planner exception leaves the resident's published state untouched with the event still due;
         /// the next advance runs it again from the beginning. A job that throws RoutePlanningRestartRequired
         /// abandons the whole event the same way, without propagating: earlier answers of the event belong to
@@ -351,8 +344,6 @@ namespace PersistentCity.Core
         private void RestartPending(PendingEvent evt)
         {
             EventRestarts++;
-            if (ReferenceEquals(restartedItem, evt.Item) && restartedMinute == State.Minute) restartedCount++;
-            else { restartedItem = evt.Item; restartedMinute = State.Minute; restartedCount = 1; }
             AbortPending();
         }
 
@@ -398,7 +389,6 @@ namespace PersistentCity.Core
             else if (live.OptionalStopChoice == true && live.OptionalStop == null) working.OptionalStopChoice = true;
             CommitEvent(live, working);
             if (sameVisit && live.OptionalStop != null) CancelOptionalStop(live.Identity.Id);
-            if (ReferenceEquals(restartedItem, item)) restartedItem = null;
             item.Minute = ScheduledMinute(live);
             // The in-flight item is outside the queue; failing to add it means it was queued meanwhile and
             // its sort key just changed inside the set.

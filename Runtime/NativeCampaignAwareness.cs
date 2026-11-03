@@ -12,6 +12,10 @@ namespace PersistentCity.Runtime
         private FoodCampaignSettings? campaignSettings;
         private long campaignHour;
         private string campaignObservationError = "";
+        private long campaignScopeRefusals;
+        private int lastRefusedCampaignScope;
+        private long campaignReadBusinesses;
+        private double maximumCampaignBoundaryMilliseconds;
         internal FoodCampaignSource AttachCampaignAwareness(int seed, FoodCampaignSettings settings)
         {
             campaignSettings = settings;
@@ -25,17 +29,25 @@ namespace PersistentCity.Runtime
         {
             if (campaignSettings?.Enabled != true || campaignSource == null || campaignObservationError.Length!=0 || hour <= campaignHour) return;
             campaignHour = hour;
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
             try { SampleCampaignBoundary(hour); }
             catch(Exception error)
             {
                 campaignObservationError=error.GetType().Name+": "+error.Message;
                 UnityEngine.Debug.LogWarning("[Persistent City] Campaign observation stopped for this session: "+campaignObservationError);
             }
+            finally { maximumCampaignBoundaryMilliseconds = Math.Max(maximumCampaignBoundaryMilliseconds,
+                (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000.0 / System.Diagnostics.Stopwatch.Frequency); }
         }
         private void SampleCampaignBoundary(long hour)
         {
             // This is called ONLY by the existing accounting-hour boundary hook. With no campaigns,
             // count probes allocate nothing and there is no C1 snapshot/publication/index/decision work.
+            // Refuse the complete boundary before scanning/reading any registrations. Splitting live
+            // reads over frames would mix UI/native writes and invent evidence for an earlier hour.
+            // Retain old history, add no bits, and expose the refusal; never silently sample a prefix.
+            if (!NativeCampaignReader.BoundaryScopeAdmitted(state.Shops.Count))
+            { campaignScopeRefusals++; lastRefusedCampaignScope = state.Shops.Count; return; }
             awarenessCampaignReader ??= new NativeCampaignReader();
             bool any = state.Campaigns.Count != 0;
             if (!any) foreach (var scope in state.Shops)
@@ -56,11 +68,10 @@ namespace PersistentCity.Runtime
                 campaignSource!.Publish(new CampaignSnapshot(hour * 60, hour, Array.Empty<BusinessCampaignSnapshot>()), places);
                 return;
             }
-            var refresh = awarenessCampaignReader.Begin(sources, hour * 60, hour);
-            // All native reads finish on this main-thread boundary before returning to native/UI writers.
-            // C1 units remain <=16; no native registration survives into an asynchronous continuation.
-            while (refresh.Snapshot == null && !refresh.Refused) refresh.Step(16, hour * 60, hour);
-            if (refresh.Snapshot != null) campaignSource!.Publish(refresh.Snapshot, places);
+            // Exactly one admitted unit, never a drain loop or an asynchronous native reference.
+            var snapshot = awarenessCampaignReader.ReadBoundary(sources, hour * 60, hour);
+            campaignReadBusinesses += sources.Count;
+            campaignSource!.Publish(snapshot, places);
         }
         internal object CampaignAwarenessDump()
         {
@@ -72,6 +83,9 @@ namespace PersistentCity.Runtime
             indexedEntries = campaignSource?.IndexedEntries ?? 0, publications = campaignSource?.Publications ?? 0,
             exposuresAdmitted = campaignSource?.Admitted ?? 0, exposuresRefused = campaignSource?.Refused ?? 0,
             observationError = campaignObservationError,
+            atomicBusinessLimit = NativeCampaignReader.MaximumBoundaryBusinesses,
+            scopeRefusals = campaignScopeRefusals, lastRefusedScope = lastRefusedCampaignScope,
+            businessesRead = campaignReadBusinesses, maximumBoundaryMilliseconds = maximumCampaignBoundaryMilliseconds,
             lastObservedHour = campaignHour, enabled = campaignSettings?.Enabled == true,
             evidence = "Observed enabled types only; Active verified campaigns soften distance preference for every resident; no native writes."
             };
