@@ -1,0 +1,14 @@
+OFFLINE ONLY: native doubles/Core, not qualifying native rig proof.
+Before ready-snapshot guard
+Unhandled exception. System.Exception: runtime preflight/readiness loop failed to recover and advance later events
+   at Program.Check(Boolean value, String message) in <repo>\tools\road-ceiling-regression\Program.cs:line 20
+   at Program.CheckRuntimeFrameRecovery() in <repo>\tools\road-ceiling-regression\Program.cs:line 191
+   at Program.Main(String[] args) in <repo>\tools\road-ceiling-regression\Program.cs:line 540
+Before deferred-readiness guard
+Unhandled exception. System.Exception: successive runtime event acquired inputs before deferred station publication
+   at Program.Check(Boolean value, String message) in <repo>\tools\road-ceiling-regression\Program.cs:line 20
+   at Program.CheckRuntimeFrameRecovery() in <repo>\tools\road-ceiling-regression\Program.cs:line 183
+   at Program.Main(String[] args) in <repo>\tools\road-ceiling-regression\Program.cs:line 540
+After both guards: production-style runtime frame loop
+{"runtimeFrameRecovery":true,"invalidateNative":true,"frames":32,"stagedFrames":7,"blockedAfterCommit":4,"startsAfterPublication":3,"events":4,"EventRestarts":1,"minute":101}
+{"runtimeFrameRecovery":true,"invalidateNative":false,"frames":21,"stagedFrames":0,"blockedAfterCommit":4,"startsAfterPublication":3,"events":4,"EventRestarts":0,"minute":101}
