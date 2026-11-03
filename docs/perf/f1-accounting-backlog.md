@@ -181,3 +181,11 @@ reloads, with <1 minute lag and 2 s injected supported / 10 s stress recovery. I
 **0.0040/1.5204 ms**, stress **0.0051/8.3109 ms** (p95/max). Zero >=30 ms F1 samples in that
 clean detached run. Full required-matrix repeats will be recorded after completion. Native
 rig proof remains the Sol-r2-1 merge blocker; no game or rig was used by this fixer.
+
+**R2 required-matrix spike flag:** the first nested repeat records **66.3905 ms** at
+120 simulated FPS / 128 units / 2 soft ms, **one >=30 ms sample**, p95 **0.4610 ms**.
+[Full raw repeat](f1-accounting-backlog-r2-first-repeat.txt) is retained. It is a save-free
+complete detached frame, not a native frame and not invalidated or discarded as a warmup.
+The sample is unattributed; a low p95 does not excuse it. R2 changes no Core frame work,
+and this does not authorize a rewrite of the parked hotspots or establish a native cause.
+The detached spike condition is not passed for this run; native gates remain unverified.

@@ -40,7 +40,10 @@ corrected clock passes 180 empty ordinary minutes at 1/3, 1 and 2 game minutes/s
 the workload notice, then shows it on a real hold. Actual AccountingRecovery source verifies
 restart-first guidance and retained failure intent (native/Fail doubles). Warm quiet text
 uses **0 B / 0 builds**, versus **16,640 B / 40 builds** per 1,200 prior cached-status requests;
-GUI cost is excluded. The required foreground matrix is running; final results will follow.
+GUI cost is excluded. The first nested repeat flags **one 66.3905 ms detached F1 frame**
+at 120 simulated FPS (p95 0.4610 ms). The save-free sample is retained and unattributed;
+that run does not pass the detached spike condition. Native performance remains unverified.
+The required foreground matrix is running; final results will follow.
 
 R1 offline evidence (retained):
 

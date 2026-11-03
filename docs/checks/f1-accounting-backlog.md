@@ -149,6 +149,10 @@ that metadata action is separate from repository commits and is verified by read
   mod-work and separately measured whole-frame costs still require the authorized Codex Sol
   high rig session. The original no-game/no-rig restriction remains in force for this fixer.
 
+The first nested R2 repeat flags one **66.3905 ms** detached F1 frame at 120 simulated
+FPS (p95 0.4610 ms). The save-free raw sample is retained, unattributed and not discarded;
+that repeat does not pass the detached spike condition. Native timing remains unverified.
+
 R2 foreground matrix results will be recorded here after completion. R1 evidence above is
 retained; its statement that fence clips raise the prominent notice is superseded by R2.
 The numbered rig checks below use the corrected notice and restart policy.
