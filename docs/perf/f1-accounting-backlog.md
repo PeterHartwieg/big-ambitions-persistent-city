@@ -1,6 +1,6 @@
 # City-audit F1 measurements — 3 November 2026
 
-Offline only, base `bd99eb3`, final implementation `98e2afd`. Run:
+Initial offline evidence below: base `bd99eb3`, implementation `98e2afd`. R1 corrections and current limits follow under [R1 review corrections](#r1-review-corrections). Run:
 `dotnet run --project tools/accounting-backlog-regression/AccountingBacklogRegression.csproj --configuration Release`.
 The foreground run uses .NET 10 on this Windows host, after the shared dotnet gate. Raw output
 is retained in [f1-accounting-backlog.txt](f1-accounting-backlog.txt).
@@ -89,3 +89,47 @@ invalidates the cache each request to reproduce the original formatter. Refusal 
 constant and appears immediately; normal closed UI does not call the formatter. This is a
 formatter allocation comparison, not native GUI or complete mod-work timing.
 No further cheap safe win was identified in the touched accounting boundary.
+
+## R1 review corrections
+
+3 November 2026, code `6df891d` / `8e5c8a9`, offline only. The initial rows above are retained historical
+evidence, superseded for the corrected fence by the [R1 raw output](f1-accounting-backlog-r1.txt).
+`ClockBaseline` compares a full zero-work logical day with identical native float addition,
+configured requested rate and FPS: policy 0 = uncapped reference, 2 = frozen pre-review minute
+fence, 1 = corrected production limiter. The only work here is clock arithmetic; these are
+simulated wall durations/tick counts, never native frame costs.
+
+| FPS | game min/s | Uncapped ticks | Pre-review ticks | Corrected ticks | Remaining extra frames/game minute | Remaining slowdown vs uncapped |
+| --- | --- | --- | --- | --- | --- | --- |
+| 30 | 1/3 | 129,597 | 131,472 | 130,033 | 0.303 | 0.336% |
+| 30 | 2 (6x) | 21,601 | 23,856 | 22,632 | 0.716 | 4.773% |
+| 60 | 1/3 | 259,225 | 261,528 | 260,089 | 0.600 | 0.333% |
+| 60 | 2 (6x) | 43,201 | 45,864 | 44,448 | 0.866 | 2.887% |
+| 120 | 1/3 | 518,489 | 521,016 | 519,576 | 0.755 | 0.210% |
+| 120 | 2 (6x) | 86,402 | 89,184 | 87,744 | 0.932 | 1.553% |
+
+One-frame-only crossing waste is removed. Remaining clipping depends on request phase and
+native float accumulation: measured **0.303–0.932 extra frames/game minute**, rather than
+assuming exactly half a frame. At one-third pace the added simulated wall duration for a
+whole logical day is **14.53/14.40/9.06 seconds** at 30/60/120 FPS. At the 6x request it is
+**34.37/20.78/11.18 seconds**. Calendar factor is unchanged; boundary clips/withheld minutes
+are counted and now trigger the player-facing pacing notice as well as the panel.
+
+**Skip minimum cost:** for eight logical hours, 120 requested minutes/tick and zero work,
+the historical hour limiter uses **16 ticks / 0.267 simulated seconds at 60 FPS**; the
+pre-review minute limiter uses **960 / 16.000 s**; the corrected limiter uses **481 / 8.017 s**.
+The remaining minute-epoch floor is approximately **one tick/game minute** plus endpoint
+alignment: still **30.06x** the old hour-limiter minimum, and approximately half the pre-review
+minimum. This deliberate cost preserves minute-stamped input publication; empty-epoch jumps
+were not added without a proof of all due inputs. It is explicitly reported, not a skip
+latency pass. The next rig must measure it together with actual work and time-machine behavior.
+
+**120 FPS regression removed:** retain the pre-F1 16 starts / 128 units / 2 soft ms per frame,
+so capacity remains **1,920 starts/s / 240 ms/s**. At 60 FPS it remains 960 / 120; at 30 FPS the
+existing win remains 480 -> 960 starts/s and 60 -> 120 soft ms/s. The 4 ms allowance at 30 FPS
+leaves only 1 ms under the complete mod-work p95 gate and cannot certify that gate. No parked
+hotspot is rewritten. Cached visible text still measures 499,200 -> 16,640 B / 1,200 -> 40 builds.
+
+R1 supported/stress throughput and complete **detached** frame costs are retained in the raw
+output; native mod-work and whole-frame costs remain separate pending proof. Native timing
+must flag every >=30 ms mod-work sample and keep whole-frame stalls separate.

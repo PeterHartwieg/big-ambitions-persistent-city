@@ -34,7 +34,7 @@ Later: residents as employees, households.
 
 Implementation plan for B–E: [memory, marketing, rivals and the wider street](plans/steps-b-e.md).
 
-City-audit F1 implements [minute-epoch accounting coordination](plans/f1-accounting-boundary.md), ordinary/skip backpressure and explicit lag/refusal status, with writer 25 unchanged. [Offline evidence and automated batched-rig handoff](checks/f1-accounting-backlog.md); native proof and complete mod-work/whole-frame cost remain pending. F3 retains individual bulk/route work ownership.
+City-audit F1 implements [minute-epoch accounting coordination](plans/f1-accounting-boundary.md), ordinary/skip backpressure, safe boundary observations and PC stop/native-clock release on a lost epoch, with writer 25 unchanged. [Offline evidence and automated batched-rig handoff](checks/f1-accounting-backlog.md); native proof and complete mod-work/whole-frame cost remain merge blockers. F3 retains individual bulk/route work ownership.
 
 E3 pizza status (offline): [STOP record](plans/e3-pizza.md); pinned conditional shared probe, shipped holder unestablished, no menu/gameplay/save change. [Validation and 6 Nov handoff](checks/e3-pizza.md).
 E3 remaining batch status, 2 November (offline): Peter chose one batch of remaining E3 records; [all six named candidates STOP](plans/e3-remaining-batch.md), isolated probes only, no menu/gameplay/save change; drinks/bundles/carts remain deferred. [Checks and 6 Nov handoff](checks/e3-remaining-batch.md).
@@ -78,7 +78,7 @@ Applies to every step A–E slice re-measure and to the final release:
 
 Record every taken win with before/after numbers.
 
-- City-audit F1 — [Elapsed-time frame caps and cached pacing text](perf/f1-accounting-backlog.md): matched 960-resident queue at 30 simulated FPS, 60 -> 30 frames / 2 -> 1 simulated seconds, byte-identical state; 1,200 visible text requests 499,200 -> 16,640 B / 1,200 -> 40 builds; offline components, no native whole-frame gate claim.
+- City-audit F1 — [Elapsed-time frame caps and cached pacing text](perf/f1-accounting-backlog.md): matched 960-resident queue at 30 simulated FPS, 60 -> 30 frames / 2 -> 1 simulated seconds, byte-identical state; 1,200 visible text requests 499,200 -> 16,640 B / 1,200 -> 40 builds; R1 removes the wasted crossing tick (8-hour zero-work skip 960 -> 481 ticks), restores the 120 FPS 16-start/2 ms floor and quantifies remaining pacing cost; offline components, no native whole-frame gate claim.
 
 - E5b — [Cached authored bag policy and bounded duplicate checks](perf/e5b-complete-menu.md): discovery 280 -> 0 B/call; offline p95 0.0003 -> 0.0001 ms; no native combined mod-work or whole-frame claim.
 

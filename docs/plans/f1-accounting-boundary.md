@@ -16,26 +16,33 @@ native observation, including same-minute events, held food decisions and pendin
 Minute equality alone is insufficient. The final clock prefix caps positive time after
 calendar/ride/run-until policies. It never runs the simulation inside a native tick.
 
-A tick stops at the preceding representable **float minute-of-hour** before the next
-integer minute. At that fence the logical target becomes the preceding representable
-**double absolute minute**. All strictly earlier events therefore drain in the old epoch,
-including events in the float rounding gap. Only then may a tiny tick cross exactly to the
-integer boundary. Events exactly at that minute run with the new epoch's inputs. This also
-protects meal/hour/midnight ordering without an arbitrary decimal epsilon or historical sale.
-The logical clock may lead native time only across that final float rounding gap.
+A tick stops at a float-safe fence before the next integer minute. The fence uses the
+hour's float spacing (2^-18 minutes), including after adding across 60 and subtracting 60.
+At the fence, logical work drains through the preceding double absolute minute. Once ready,
+the next tick may use its remaining allowance up to the **next minute's fence**, including
+across an hour/midnight. It does not waste a frame on a one-ulp-only crossing. Events exactly
+at the new boundary see the new epoch's inputs; historical sales remain forbidden.
 
-Maximum admitted logical backlog is **less than one game minute** (reported conservatively
-as a one-minute bound). No skipped event, forgiven meal, historical stock image, altered
+Before closures, physical arrivals, retiming or BeforeSave observations, the runtime verifies
+the ending epoch and calls `BeginAccountingObservations`. It publishes the current epoch's
+integer timestamp in both city and traffic clocks, retaining queued events at that timestamp.
+The existing midnight capability fact moves with the clock, so deriving a later midnight
+cannot skip it. No citizen, meal, budget, traffic event or native transaction executes here.
+Physical progress is rebased without crediting motion. A genuine unfinished prior event is
+rejected before any promotion. Save validates again after its physical observations.
+
+Maximum admitted logical backlog is **at most one game minute**. No skipped event, forgiven meal, historical stock image, altered
 deadline, receipt replay or late accounting adjustment pays down backlog.
 
 ## Overload and recovery
 
-Ordinary frames receive 960 citizen starts and 7,680 total units per unscaled wall second:
-32/256 at 30 FPS, 16/128 at 60 and 8/64 at 120. Their soft advancement budget is 4/2/1 ms
-respectively. Long stalls cannot accrue work debt: caps are 128 citizen starts, 1,024 units
-and 4 ms per ordinary frame. Hidden economy skips retain 128 units/16 ms as a separate
-latency condition. Budgets check between units and cannot preempt a native call; making
-individual units bounded remains F3's work.
+Ordinary frames use elapsed-time allowances with the legacy per-frame floor: 32/256
+citizen starts/total units and 4 soft ms at 30 FPS, 16/128/2 ms at 60 FPS, and **16/128/2 ms
+at 120 FPS**. Thus 120 FPS retains its old 1,920 citizen starts and 240 soft CPU ms/second;
+the pre-review halving is removed. At 30 FPS the 4 ms allowance leaves only 1 ms beneath the
+complete 5 ms mod-work p95 gate; it is a capacity allowance, never proof of that gate.
+Long-stall caps remain 128 starts, 1,024 units and 4 ms. Hidden skips retain 128 units/16 ms
+as a separate latency condition. Individual nonpreemptible work remains F3's responsibility.
 
 If due work remains, native calendar time is held at the current epoch while later rendered
 frames drain it. Recovery resumes at the configured pace once the queue is drained; withheld
@@ -46,24 +53,38 @@ are F3's separate progress contract.
 
 `AccountingDiagnostics` exposes current/maximum lag, ordinary/skip hold ticks, boundary clips,
 withheld requested game minutes, current wait/maximum recovered wait seconds, configured
-factor and refusal. A persistent screen notice appears on a workload hold and remains for
-three seconds after the last hold, including repeated short holds; Ctrl+F8 also shows lag
+factor and refusal. A screen notice appears on workload holds **and boundary clips** and remains for
+three seconds after the last one, including repeated short holds; Ctrl+F8 also shows lag
 and lifetime hold counts. Fence clips are separately counted, so baseline quantization cost
 cannot be confused with workload holds; the panel also reports those caps and withheld
 requested minutes. Visible text refreshes at 4 Hz. Constrained native samples cannot change inferred
 travel pace. Diagnostic objects/strings are built only on request or for visible UI.
 
-Startup installs the guard before detached decoding/population construction and holds time
-through route preparation. A clock writer bypassing the guarded tick, or a loaded snapshot
-outside the native input epoch, breaks the **synchronized input epoch** contract. Startup
-refuses before binding/writing the payload; a running city latches a visible accounting hold
-and stops advancement. Reloading a synchronized save is required. Minute equality at the
-exact predecessor never proves draining.
-Validation checks pending route/food/budget/event roots; before market attachment it also
-checks saved food timestamps. New-boundary work is allowed after the earlier epoch drains.
-Past workload loss and prior native worlds are not reconstructed. `HistoricalClockMisses` additionally
-counts the existing Core stale-market refusal on its current commerce attachment; it is a
-session diagnostic, not persisted history or a substitute for the runtime refusal.
+Startup installs the guard before detached construction and holds time through route
+preparation. The preparing card explicitly says **calendar held**, including before a
+simulation exists. A real lost input epoch refuses Persistent City, releases native time
+immediately, and detaches the population/market on Update or save entry. The native game
+clock is not held indefinitely by a latched refusal.
+
+The runtime requests withdrawal of all known food scopes through the existing authority
+manifest. The partially owned hour stays protected from duplicate native demand. After
+ending work drains, the next native hourly boundary releases current/future demand, even
+without an attached market and after reload. Original population bytes, receipts, wallets
+and completed native orders are retained; no historical purchase or refund is fabricated.
+The visible stopped message explicitly reports lost/unprocessed PC demand.
+
+A native save after refusal remains playable **with Persistent City stopped**. Its newer
+native clock and preserved older population snapshot do not authorize resuming that snapshot;
+the bounded `persistentcity:accounting-stop_v1` marker prevents automatic PC restart on
+the next load, including accidental clock equality, and leaves native time running. Restore a synchronized older
+checkpoint to resume PC. No attempt repairs past workload loss or reconstructs prior native
+inputs. Unreadable/future authority manifests keep their existing conservative refusal.
+`HistoricalClockMisses` remains a commerce-attachment diagnostic, not a persisted loss ledger.
+
+Minute equality at the predecessor never proves draining. Validation checks pending route,
+food, budget and traffic roots, including saved food timestamps before market attachment.
+New-boundary observations are published after that proof, preventing legitimate arrivals
+and reopenings from recreating old-epoch work. Schema 25 remains unchanged.
 
 ## Timestamped world inputs and limits
 
@@ -99,8 +120,12 @@ Writer **25** is unchanged. The native clock plus existing `State.Minute`, event
 held contexts, excursions, wallets and receipts fully determine the drain target after load.
 Save/reload may interrupt the rounding-gap drain, a decision, an excursion or midnight work.
 Transient hold counters/timers restart; readiness is recomputed, never restored from a stale
-"caught up" flag. No schema-26 state or migration is needed. Older valid schema payloads
-remain codec-readable; an out-of-epoch runtime snapshot is preserved and refused.
+"caught up" flag. Failure intent alone is retained in the separate versioned
+`persistentcity:accounting-stop_v1` marker; its presence (including an unknown value) stops PC
+without replacing the archived population or receipts. This prevents unsafe automatic restart
+after saving/reloading a failed native epoch. A synchronized pre-failure checkpoint has no marker.
+No population schema-26 state or migration is needed. Older valid schema payloads
+remain codec-readable; an out-of-epoch runtime snapshot is preserved and PC is stopped while native play continues.
 
 ## Evidence
 
@@ -110,3 +135,6 @@ from pending native proof. F3's bulk posting, campaign refresh and route progres
 and all other city-audit findings, remain outside this slice.
 F3 must preserve `IsCaughtUpTo` as a drain predicate for all pending work through its target,
 even if it allows other events to progress while routes or postings remain pending.
+
+R1 baseline pacing cost and the remaining minute-granular skip cost are quantified offline
+in the [performance evidence](../perf/f1-accounting-backlog.md#r1-review-corrections).

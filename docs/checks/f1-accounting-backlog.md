@@ -1,4 +1,4 @@
-﻿# City-audit F1 — 3 November 2026 — offline only
+# City-audit F1 — 3 November 2026 — offline only
 
 Refs #88. Base `bd99eb3a45d6b008911e1a5225ce1ced590cec51`; audit source inspected from
 `origin/codex/city-vision-audit-2026-11-03` without importing or editing the report.
@@ -46,7 +46,7 @@ complete native mod-work/whole-frame measurement are pending the batched rig.
   whole-frame measurement is available; their gates remain pending. Frame-cap win at 30 FPS:
   960 same-minute residents drain in 60 -> 30 frames (2 -> 1 simulated seconds), equal state.
 
-## Required foreground validation
+## Initial foreground validation (before R1)
 
 All **62 matrix commands passed**, covering the required commands, both nested validation wrappers and
 the additional F1 regression. The final review pass also passed build, **2,824 unit cases /
@@ -64,6 +64,51 @@ No game or rig run is part of this evidence. The source fixture, clock contract 
 measurements are reproducible with
 `tools/accounting-backlog-regression/AccountingBacklogRegression.csproj`.
 
+## R1 review corrections — 3 November 2026 (offline)
+
+Code: `6df891d`, `8e5c8a9`. Sol-r1-1 and Opus-r1-1/2/3/4/5 are implemented and covered offline:
+
+- A verified new epoch is published in city **and traffic** clocks before closure, physical,
+  retiming and BeforeSave observations. Queued boundary events remain queued. The five new
+  regression cases reproduce the old drained-to-undrained transition for a reopened link and
+  physical arrival, then verify the published epoch and a single arrival after save/reload.
+  Genuine prior work remains rejected. The midnight capability fact is published with its
+  clock, preserving the original multi-day purchase/ledger comparison.
+- Ready fences use the remaining tick allowance up to the next minute fence, with uniform
+  hour-safe float spacing across 60. The unused `EconomySkipClock` is removed; its existing
+  food regression now runs the production limiter. The before-review limiter is retained
+  only as a local benchmark control, alongside the historical hour-granular control.
+- Calendar caps as well as workload holds trigger the pacing notice. Startup/routes show
+  “calendar held” before a simulator exists. The legacy 120 FPS floor is restored:
+  16 citizen starts / 128 units / 2 ms, 1,920 starts and 240 soft ms per second. The 30 FPS
+  4 ms allowance leaves only 1 ms below the complete 5 ms mod-work gate and requires native proof.
+- On a genuinely lost epoch, native ticks immediately run without the accounting cap. Update
+  or save entry stops/detaches PC and requests withdrawal using the existing food-authority
+  manifest. Native time continues; the partially owned hour remains protected and the next
+  drained boundary restores current/future native customers, including after reload without
+  an attached market. The ownership source regression passes 249 assertions including this
+  lifecycle. Original population bytes, receipts, held money and native orders are retained.
+  Unprocessed PC demand is visibly reported as lost, never replayed. A subsequent native save
+  remains playable **with PC stopped**; restore a synchronized checkpoint to resume PC.
+
+Three additional stop-marker cases cover native-save/reload intent, idempotence, unknown
+marker preservation and unchanged archived population/receipt bytes. The marker is separate
+from population writer 25; it prevents unsafe automatic restart after a failed epoch.
+
+Full R1 matrix results are recorded below once complete. The focused run passed 26 cases;
+the first full R1 unit run passed **2,829 cases**, zero failures or skips. Writer 25 is unchanged.
+See [R1 performance and baseline pacing costs](../perf/f1-accounting-backlog.md#r1-review-corrections).
+
+**Sol-r1-2 remains unresolved and blocks merge.** No authorized separate `rig_test` session,
+native red/green artifacts, actual hook-order/settlement proof or complete native mod-work /
+whole-frame measurements were produced by this offline fixer. The original no-game/no-rig
+restriction was retained. Source doubles and the prepared rig handoff do not satisfy that
+project rule. The authorized rig owner must validate the corrected HEAD and attach proof to
+PR #99. Do not mark this finding passed from the offline results.
+
+Sol-r1-3 is handled by updating PR #99's actual body from the matching prepared description;
+that metadata action is separate from repository commits and will be verified by readback.
+
 ## In-game checks for the next batched rig
 
 All checks are executed by the headless agent rig in
@@ -79,7 +124,7 @@ timing windows; any save in a window invalidates the window.
 
 1. **One-day cadence/input replay — rig-automated (existing capability: `rig flow run`, FT `state`/`save`/`load`/`time`, `shop_fixture`, `shop_state`, `shop_log`; pending rig capability: fixed 30/60/120 rendered-cadence and scheduler-budget arms, minute-stamped input publication and independent PC/native ledger comparator).** Restore one synchronized FT checkpoint for each arm with unchanged configured calendar factor, resident/consumer/shop/menu/body/graphics setup and seed. Apply identical minute-timestamped prices, hours, staffing and finite-stock deliveries after each prior epoch drains. Run one logical day at 30/60/120 and different event/time budgets. Read full meal outcomes, balances/holds, PC receipts, native completed order IDs/counts, product/bag deltas, hourly and midnight revenue/bank settlement. Assert identical purchases, missed meals, funds and ordered native sales, no duplicate/replayed purchase and zero historical-clock misses. Retain the old-head red reproduction and this-head green trace separately from detached evidence.
 2. **Overload and recovery — rig-automated (existing capability: `rig flow run`, FT `state`/`time`; pending rig capability: controlled scheduler stall/budget injection plus `AccountingDiagnostics` sampling and automated pacing-notice capture).** At a meal rush inject a fixed finite stall, then restore the original work allowance. Repeat at the supported candidate load (957 residents, factor two) and a declared stress load. Read native/logical targets, due/pending work, ordinary/skip hold ticks, withheld time, configured factor, refusal and recovered wait duration. Assert native time holds before closing the input epoch, admitted lag <=1 game minute, the player notice appears for short repeated and sustained holds, recovery drains without a fast repayment burst, and post-recovery purchases/outcomes/money/orders equal the matched unstalled logical-day arm. A nonprogressing workload must remain visibly held, never silently drop demand.
-3. **Meal/hour/midnight and skip boundaries — rig-automated (existing capability: FT `time`, `state`, `shop_state`, `shop_log`; pending rig capability: exact native float-fence/ending-accounting hook trace with time-machine control and pending-work assertions).** Run ordinary and time-machine arms through meals, each hour and midnight with work due in the last representable float gap and exactly at the boundary. Read final tick arguments, guard readiness, event timestamps, native accounting epoch, ending-hour queues, receipts and daily totals. Assert all strictly earlier events drain under the old epoch, boundary events use the new inputs, the skip destination is unchanged, no historical buy is attempted, and native settlement remains exact with unchanged ownership rules.
-4. **In-flight save/reload — rig-automated (existing capability: FT `save`/`load`/`state`, `rig flow run`; pending rig capability: named held-decision/rounding-gap/midnight-backlog checkpoints and receipt/funds comparator).** Outside timing windows save during ordinary lag, a held food decision, an excursion, the final float gap and pending midnight postings; reload each and finish the same logical day. Verify native autosave remains off before resuming timing. Read writer-25 payload, native time, target/readiness, held funds, original uncertain receipts and completed orders. Assert exact state/economic equivalence to uninterrupted arms, no duplicate sale, retained uncertainty and no schema change. Hold startup through route preparation. Load an intentionally out-of-epoch disposable snapshot and assert visible synchronized-input-epoch refusal with the original payload unchanged and no historical checkout.
-5. **Complete cost and throughput together — rig-automated (existing capability: `rig flow run`, FT `state`, automated capture; pending rig capability: complete mod-work union plus independent whole-frame/presented-frame intervals correlated with F1 lag, work units and recovery).** With the same autosave-off setup, record supported/stress ordinary meal/accounting peaks and separate skip/reload latency arms. Read p50/p95/max complete mod-work, every >=30 ms spike with count/condition/component when attributable, whole-frame costs/stalls separately, actual body counts, units/second, maximum lag, withheld calendar time and catch-up duration. Require ordinary mod-work p95 <5 ms and individual spikes <30 ms; flag every spike >=30 ms; never use whole-frame p95 as mod-work or a low p95 to excuse nonprogressing demand. Record the native fence's baseline pacing cost explicitly. Preserve unattributed stalls and any failed capacity envelope as unresolved evidence.
-6. **Clock/authority interoperability and refusal — rig-automated (existing capability: RIG-MODSET DLL transactions, FT `state`/`load`/`time`, `shop_state`, `shop_log`; pending rig capability: final tick-prefix/Driven Rides observer trace and a disposable bypass-clock fault arm).** Exercise configured factor 1 and 1/3 with the installed ride/run-until policies, ordinary fast-forward, pause, cold startup and teardown. Read the final positive/zero tick argument, inferred travel pace, native current hour, PC authority and saved receipts. Assert earlier caps/zero holds survive the final guard, sustained accounting caps never retime journeys, unsupported businesses remain native, ending-hour transfer remains safe and teardown restores clock ownership. Inject a bypassing clock writer only in the disposable fault arm and assert a latched visible refusal with no new PC checkout or payload overwrite; remove the fault and reload a synchronized checkpoint to recover.
+3. **Meal/hour/midnight and skip boundaries — rig-automated (existing capability: FT `time`, `state`, `shop_state`, `shop_log`; pending rig capability: exact native float-fence/ending-accounting hook trace with time-machine control and pending-work assertions).** Run ordinary and time-machine arms through meals, each hour and midnight with work due in the final float gap and exactly at the boundary; reopen a blocked link and finish a physical journey in BeforeAdvance at that crossing. Read final tick arguments, guard readiness, event timestamps, native accounting epoch, ending-hour queues, receipts and daily totals. Assert all strictly earlier events drain under the old epoch, boundary events use the new inputs, the skip destination is unchanged, no historical buy is attempted, and native settlement remains exact with unchanged ownership rules.
+4. **In-flight save/reload — rig-automated (existing capability: FT `save`/`load`/`state`, `rig flow run`; pending rig capability: named held-decision/rounding-gap/midnight-backlog checkpoints and receipt/funds comparator).** Outside timing windows save during ordinary lag, a held food decision, an excursion, the final float gap, a completed physical journey in BeforeSave and pending midnight postings; reload each and finish the same logical day. Verify native autosave remains off before resuming timing. Read writer-25 payload, native time, target/readiness, held funds, original uncertain receipts and completed orders. Assert exact state/economic equivalence to uninterrupted arms, no duplicate sale, retained uncertainty and no schema change. Hold startup through route preparation. Load an intentionally out-of-epoch disposable snapshot and assert visible synchronized-input-epoch refusal with the original payload unchanged and no historical checkout.
+5. **Complete cost and throughput together — rig-automated (existing capability: `rig flow run`, FT `state`, automated capture; pending rig capability: complete mod-work union plus independent whole-frame/presented-frame intervals correlated with F1 lag, work units and recovery).** With the same autosave-off setup, record supported/stress ordinary meal/accounting peaks and separate skip/reload latency arms. Read p50/p95/max complete mod-work, every >=30 ms spike with count/condition/component when attributable, whole-frame costs/stalls separately, actual body counts, units/second, maximum lag, withheld calendar time and catch-up duration. Require ordinary mod-work p95 <5 ms and individual spikes <30 ms; flag every spike >=30 ms; never use whole-frame p95 as mod-work or a low p95 to excuse nonprogressing demand. Compare zero-work ordinary/fast-forward/8-hour skip pacing against the offline old/new controls, including the remaining one-tick-per-minute skip floor; record native baseline pacing cost explicitly. Preserve unattributed stalls and any failed capacity envelope as unresolved evidence.
+6. **Clock/authority interoperability and refusal — rig-automated (existing capability: RIG-MODSET DLL transactions, FT `state`/`load`/`time`, `shop_state`, `shop_log`; pending rig capability: final tick-prefix/Driven Rides observer trace and a disposable bypass-clock fault arm).** Exercise configured factor 1 and 1/3 with the installed ride/run-until policies, ordinary fast-forward, pause, cold startup and teardown. Read the final positive/zero tick argument, inferred travel pace, native current hour, PC authority and saved receipts. Assert earlier caps/zero holds survive the final guard, sustained accounting caps never retime journeys, unsupported businesses remain native, ending-hour transfer remains safe and teardown restores clock ownership. Inject a bypassing clock writer only in the disposable fault arm and assert visible PC stop, immediate native-clock release, no new PC checkout, preserved population/receipts and protected partial-hour authority. Save/reload after refusal and assert the native city remains playable with PC stopped and next-boundary native demand resumes without duplicate orders. Remove the fault and restore a synchronized checkpoint to resume PC; verify cold population/route preparation explicitly reports calendar held.
