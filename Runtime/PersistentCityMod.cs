@@ -71,6 +71,7 @@ namespace PersistentCity.Runtime
         {
             public CityState State = null!;
             public SaveSession Saves = null!;
+            public double ReadMilliseconds, CreateMilliseconds, ValidateMilliseconds;
         }
         private Task<PreparedCity>? initialization;
         private SaveSession? saveSession;
@@ -183,6 +184,7 @@ namespace PersistentCity.Runtime
                 string path = Path.Combine(context.ModRootPath, "persistent-city.json");
                 if (File.Exists(path)) settings = JsonConvert.DeserializeObject<PrototypeSettings>(File.ReadAllText(path)) ?? throw new InvalidDataException("Configuration is null.");
                 settings.FoodProductOverrides.ReportOnce(message => log.Info(message));
+                SaveCostDiagnosticsRequested = settings.SaveCostDiagnostics;
                 inspector.ShopName = place => foodMarket?.NameOf(place);
                 inspector.CurrentOwnShop = ObservedOwnShop;
                 settings.FoodChoice.Clamp(message => log.Info(message));
@@ -534,10 +536,14 @@ namespace PersistentCity.Runtime
                 () => simulation != null && routes?.ReadyForPopulation == true && simulation.IsCaughtUpTo(AccountingClock.Target(Now())),
                 () => true, Now, () => simulation?.State.Minute ?? Now(), native => simulation == null || simulation.IsAccountingEpochDrained(native));
             initializingSave = save;
+            activationHadPayload = initializingHadPayload;
+            activationPayloadCharacters = initializingPayload?.Length ?? 0;
             initialization = Task.Run(() =>
             {
+                long readStarted = Stopwatch.GetTimestamp();
                 var session = SaveSession.Open(saved, source.PopulationKey);
                 var stored = session.InitialReadResult;
+                long created = Stopwatch.GetTimestamp();
                 CityState state;
                 if (stored.Status == SaveReadStatus.Missing)
                     state = Population.CreateFromHousing(source.Identities, places, source.PopulationKey, source.SourceVersion, source.CitySeed, minute);
@@ -548,8 +554,11 @@ namespace PersistentCity.Runtime
                 }
                 else throw new InvalidDataException("Population save refused: " + stored.Error);
                 NativeTravelPace.PrepareInitialTiming(state, stored.Status == SaveReadStatus.Missing, clockRate);
+                long validating = Stopwatch.GetTimestamp();
                 SaveCodec.ValidateForActivation(state); // Validate completely before making it active or touching modData.
-                return new PreparedCity { State = state, Saves = session };
+                long validated = Stopwatch.GetTimestamp();
+                return new PreparedCity { State = state, Saves = session, ReadMilliseconds = (created - readStarted) * MillisecondsPerTimestamp,
+                    CreateMilliseconds = (validating - created) * MillisecondsPerTimestamp, ValidateMilliseconds = (validated - validating) * MillisecondsPerTimestamp };
             });
             Say("Preparing housing-based background population. Existing saved state is retained until initialization succeeds.");
         }
@@ -558,6 +567,19 @@ namespace PersistentCity.Runtime
         {
             var pending = initialization;
             if (pending == null || !pending.IsCompleted) return;
+            // F7a: main-thread activation cost, once per completed load (primitives only).
+            long started = Stopwatch.GetTimestamp();
+            try { CompleteInitialization(pending); }
+            finally
+            {
+                var done = pending.Status == TaskStatus.RanToCompletion ? pending.Result : null;
+                RecordActivation(started, done != null && simulation != null && ReferenceEquals(simulation.State, done.State) && subscribed,
+                    done?.ReadMilliseconds ?? 0, done?.CreateMilliseconds ?? 0, done?.ValidateMilliseconds ?? 0);
+            }
+        }
+
+        private void CompleteInitialization(Task<PreparedCity> pending)
+        {
             initialization = null;
             var save = SaveGameManager.Current;
             var expectedSave = initializingSave;
@@ -642,22 +664,34 @@ namespace PersistentCity.Runtime
         private void Save()
         {
             if (failed || simulation == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current)) return;
-            if (!BeginAccountingObservations()) return;
+            var cost = saveCost; // F7a: null unless requested; then only timestamps are taken.
+            cost?.Begin();
+            if (!BeginAccountingObservations()) { cost?.End(false, "Accounting observations refused."); return; }
+            bool saved = false; string error = "";
             try
             {
                 var source = ReadRlo("save");
                 if (!source.MatchesPopulation(simulation.State))
-                { Fail("RLO changed before saving; original population payload retained."); return; }
+                { error = "RLO changed before saving."; Fail("RLO changed before saving; original population payload retained."); return; }
                 RunPhysical(() => physical?.BeforeSave());
                 foodMarket?.CompleteCampaignsForSave();
                 foodMarket?.RefreshKnownOwnership();
-                if (!NativeCityClock.CheckInputEpoch(Now(), simulation.State.Minute)) { StopAccounting(); return; }
+                if (!NativeCityClock.CheckInputEpoch(Now(), simulation.State.Minute)) { error = "Accounting input epoch changed."; StopAccounting(); return; }
                 // Within the guarded input epoch, a partial snapshot resumes from its recorded minute after load.
                 var result = (saveSession ?? throw new InvalidOperationException("Save session is missing."))
-                    .WriteTo(SaveGameManager.Current.modData, simulation.State);
+                    .WriteTo(SaveGameManager.Current.modData, simulation.State, cost);
+                saved = result.Success; error = result.Error;
                 if (!result.Success) Fail("Population save refused: " + result.Error);
             }
-            catch (Exception error) { Fail("Population save failed: " + error.Message); }
+            catch (Exception exception) { error = exception.Message; Fail("Population save failed: " + exception.Message); }
+            finally
+            {
+                if (cost != null)
+                {
+                    cost.End(saved, error);
+                    if (saved) CountSavedRecords(cost);
+                }
+            }
         }
 
         private void RestoreInterior()
