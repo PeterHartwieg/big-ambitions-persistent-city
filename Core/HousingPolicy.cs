@@ -22,11 +22,14 @@ namespace PersistentCity.Core
             return 7;
         }
 
+        // Integer floor of 90% of the beds, without overflow; Target adds the bounds.
+        internal static long Fill(long totalHomeCapacity) => totalHomeCapacity / 10 * 9 + totalHomeCapacity % 10 * 9 / 10;
+
         // Apply occupancy once to the city total so small homes retain their beds.
         public static int Target(long totalHomeCapacity)
         {
             if (totalHomeCapacity <= 0) throw new InvalidOperationException("The catalogue has no residential capacity.");
-            long target = totalHomeCapacity / 10 * 9 + totalHomeCapacity % 10 * 9 / 10;
+            long target = Fill(totalHomeCapacity);
             if (target < 1) throw new InvalidOperationException("Residential capacity produces an empty population target.");
             if (target > MaximumResidents)
                 throw new InvalidOperationException("The housing population exceeds the reviewed maximum of " + MaximumResidents + " residents.");
