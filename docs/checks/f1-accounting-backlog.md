@@ -219,6 +219,42 @@ complete mod-work versus separately tracked whole-frame measurements remain unve
 that rig runs against the branch head.
 The R2 66.3905 ms detached sample remains retained and flagged; it is not a native result.
 
+## F3 sync - 4 November 2026 (offline)
+
+Merge `a3b63f0` brings `codex/persistent-city` at `1962211` (F3 #98, bounded bulk work) into
+this branch as a two-parent merge from base `bd99eb3`. Writer 25 and every save migration are
+unchanged; `Persistence/AccountingStopStore.cs` is kept. Conflicts and their resolutions:
+
+- `Core/CitySimulator.cs` `NoEventsThrough`: keeps F1's `inspectSavedFood` drain rules and adds
+  F3's pending campaign publication. A queued publication still blocks `IsCaughtUpTo`, so it
+  holds native time and runs first in `AdvanceCore` under the F1 frame caps. It does not count
+  as unfinished previous-epoch work in `IsAccountingEpochDrained`: it is enqueued at the native
+  hour boundary inside the current epoch and has no accounting effect. Counting it would refuse
+  the next tick and stop accounting. Locked by
+  `CampaignPublicationTests.PendingPublicationHoldsTheClockWithoutCountingAsUnfinishedPreviousEpochWork`
+  (red with the exemption removed, green with it).
+- `CHECKS.md`, `README.md`, `docs/roadmap.md`: keep both the F1 and F3 index, status and perf
+  lines (F1 first). `docs/checks/rig-2026-11-06-checklist.md`, `Core/FoodCommerce.cs` and
+  `Runtime/PersistentCityMod.cs` merged automatically. Every line that either side added is
+  present. The frame loop applies F1's elapsed-time unit/citizen/ms caps together with F3's
+  `JobAdmissionExhaustedForFrame` check. The save path runs F3's `CompleteCampaignsForSave`
+  before F1's input-epoch check.
+
+Offline results on the merged tree: build passed (game-reference DLL SHA-256
+`d6f2ffa2aaf3372b0319d2b54edef7b10a303a2414855f2f7a1a63ba7ac52165`); **2,856 tests** passed with
+zero failures or skips; discovery listed **2,847 entries**; every required regression and source
+tool passed (E4 after its existing `prepare.py`). `accounting-backlog-regression` passed. Its
+957-resident detached 30/60/120 p95s are **0.0346/0.1439/0.2905 ms** with maxima
+**13.8933/4.7256/3.7248 ms**, skip **0.0180/1.8555 ms** and 2,000-resident stress
+**0.0209/4.8855 ms**. There are zero >=30 ms samples, lag stays below 1 minute and recovery
+takes 2/10 s. `bounded-bulk-regression` (posting and `--integrated`) passed, and so did
+`finish_checks.py` (5/5). The integrated save SHA-256s at 1,914/10,000/100,000 consumers equal
+F3's recorded values, as do the event, route, read and sale counts. Integrated frame p95s are
+0.1343/0.2109/0.0864 ms (F3: 0.1604/0.2252/0.1563 ms). Three 100,000-consumer stress intervals
+>=30 ms (max 33.2738 ms; F3 recorded 49, max 54.2938 ms) remain flagged. All of these are offline
+checks. Native accounting, mod-work and whole-frame evidence is still pending in the batched rig
+below, and no game or rig run took place. Generated E5c manifests were restored.
+
 ## In-game checks for the next batched rig
 
 All checks are executed by the headless agent rig in
