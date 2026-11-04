@@ -1,0 +1,24 @@
+build/d3a/gates/test.log
+Passed!  - Failed:     0, Passed:  2816, Skipped:     0, Total:  2816, Duration: 2 m 47 s - PersistentCity.Tests.dll (net10.0)
+
+build/d4-validation/02.txt
+Passed!  - Failed:     0, Passed:  2816, Skipped:     0, Total:  2816, Duration: 2 m 1 s - PersistentCity.Tests.dll (net10.0)
+
+build/f3-checks/01.log
+DLL SHA256: 170abcb0dcdae0c26cdd973bfc8944299460d570159ce879d8425edd95abd6e0
+Passed!  - Failed:     0, Passed:  2816, Skipped:     0, Total:  2816, Duration: 3 m - PersistentCity.Tests.dll (net10.0)
+PASS: two fresh processes match the independent name-taste v1 reference; 937617912baf43dfdc29f75444d394ee4505fa89bea2dbc72c3f938194b3949e
+PASS; command manifest and log hashes: docs\checks\e5c-neutral-metadata-results.json
+
+build/f3-checks/05.log
+Ran 16 tests in 0.191s
+OK
+
+build/f3-final/01.log
+DLL SHA256: 170abcb0dcdae0c26cdd973bfc8944299460d570159ce879d8425edd95abd6e0
+
+build/f3-final/02.log
+Passed!  - Failed:     0, Passed:    52, Skipped:     0, Total:    52, Duration: 4 s - PersistentCity.Tests.dll (net10.0)
+
+build/d4-validation/09.txt
+F3 hourly adapter: 1/64 complete, 65/1024 refused before reader binding; duplicate callback idempotent; native state identical.

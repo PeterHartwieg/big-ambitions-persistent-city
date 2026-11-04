@@ -6,17 +6,55 @@ namespace PersistentCity.Core
 {
     public sealed partial class FoodCommerce
     {
-        private sealed class BudgetOrder : IComparer<ResidentMeal>
+        // Only the minimum changes, and only by moving later. Reuse a heap slot instead of allocating
+        // a new SortedSet node on every posting. This index is derived from saved budget timestamps.
+        private sealed class BudgetQueue
         {
-            public int Compare(ResidentMeal? a, ResidentMeal? b)
+            private struct Entry
             {
-                if (ReferenceEquals(a, b)) return 0;
-                if (a == null) return -1; if (b == null) return 1;
-                int time = a.Budget!.NextPostingMinute.CompareTo(b.Budget!.NextPostingMinute);
-                return time == 0 ? StringComparer.Ordinal.Compare(a.ResidentId, b.ResidentId) : time;
+                public ResidentMeal Meal;
+                public double Minute;
+                public int Ordinal;
+            }
+            private readonly List<Entry> items = new List<Entry>();
+            public int Count => items.Count;
+            public ResidentMeal Min => items[0].Meal;
+            // Population enrollment/finance activation builds this derived index before advancement.
+            // Cache ordinal ranks once: heap repair never hashes or compares resident-ID strings.
+            public void Add(ResidentMeal meal) => items.Add(new Entry { Meal = meal });
+            public void Build()
+            {
+                items.Sort((a, b) => StringComparer.Ordinal.Compare(a.Meal.ResidentId, b.Meal.ResidentId));
+                for (int i = 0; i < items.Count; i++)
+                {
+                    var entry = items[i]; entry.Ordinal = i; entry.Minute = entry.Meal.Budget!.NextPostingMinute; items[i] = entry;
+                }
+                for (int i = items.Count / 2 - 1; i >= 0; i--) Repair(i);
+            }
+            private static int Compare(Entry a, Entry b)
+            {
+                int time = a.Minute.CompareTo(b.Minute);
+                return time == 0 ? a.Ordinal.CompareTo(b.Ordinal) : time;
+            }
+            public void UpdatedMinimum()
+            {
+                var entry = items[0]; entry.Minute = entry.Meal.Budget!.NextPostingMinute; items[0] = entry;
+                Repair(0);
+            }
+            private void Repair(int at)
+            {
+                var meal = items[at];
+                while (at * 2 + 1 < items.Count)
+                {
+                    int child = at * 2 + 1;
+                    if (child + 1 < items.Count && Compare(items[child + 1], items[child]) < 0) child++;
+                    if (Compare(meal, items[child]) <= 0) break;
+                    items[at] = items[child]; at = child;
+                }
+                items[at] = meal;
             }
         }
-        private readonly SortedSet<ResidentMeal> budgetDue = new SortedSet<ResidentMeal>(new BudgetOrder());
+        private readonly BudgetQueue budgetDue = new BudgetQueue();
         private double NextBudgetMinute => budgetDue.Count == 0 ? double.PositiveInfinity : budgetDue.Min!.Budget!.NextPostingMinute;
         internal void EnableFinances()
         {
@@ -27,6 +65,7 @@ namespace PersistentCity.Core
             state.HouseholdFinanceVersion = HouseholdFinance.PolicyVersion;
             foreach (var meal in state.Residents)
             { CreateBudget(meal, city.FindCitizen(meal.AnchorId)!); budgetDue.Add(meal); }
+            budgetDue.Build();
         }
         private void CreateBudget(ResidentMeal meal, CitizenState person)
         {
@@ -34,24 +73,34 @@ namespace PersistentCity.Core
             meal.Budget = HouseholdFinance.Create(person, city.State.Seed, city.State.Minute,
                 state.Districts.SingleOrDefault(d => d.DistrictId == district), meal.ResidentId);
         }
-        /// <summary>Most postings one food event makes. Unbounded in play; a differential test sets 1 to
-        /// reproduce the earlier one-posting-per-event stepping exactly.</summary>
-        internal int BudgetPostingsPerEvent { get; set; } = int.MaxValue;
-        // Every budget due at this minute posts in one event, in BudgetOrder. PostDay moves a posted budget
-        // to the next midnight, so the loop cannot post one twice. Citizen and traffic events at this minute
-        // ran before this food event, and meals due at this minute still follow every budget due at it.
+        public const int MaximumBudgetPostingsPerUnit = 32;
+        // Tests may lower the cap to compare interruption cadences, but cannot raise the runtime bound.
+        private int budgetPostingsPerEvent = MaximumBudgetPostingsPerUnit;
+        internal int BudgetPostingsPerEvent
+        {
+            get => budgetPostingsPerEvent;
+            set => budgetPostingsPerEvent = value >= 1 && value <= MaximumBudgetPostingsPerUnit
+                ? value : throw new ArgumentOutOfRangeException(nameof(value));
+        }
+        public long BudgetPostings { get; private set; }
+        public int LastBudgetPostings { get; private set; }
+        // Keep the same minute/ordinal order across units. NextBudgetMinute continues to hold the
+        // food clock before meals until every posting at that minute has completed. A save needs no
+        // cursor: each posted budget already contains its next timestamp and exact conserved ledger.
         private bool StepBudget()
         {
+            LastBudgetPostings = 0;
             if (NextBudgetMinute > (due.Count == 0 ? double.PositiveInfinity : due.Min!.DueAt)) return false;
             if (budgetDue.Count == 0) return false;
             double minute = budgetDue.Min!.Budget!.NextPostingMinute;
             int posted = 0;
             do
             {
-                var meal = budgetDue.Min!; budgetDue.Remove(meal);
+                var meal = budgetDue.Min!;
                 HouseholdFinance.PostDay(meal.Budget!, city.State.Minute, city.FindCitizen(meal.AnchorId)!);
-                budgetDue.Add(meal);
+                budgetDue.UpdatedMinimum();
                 posted++;
+                LastBudgetPostings = posted; BudgetPostings++;
             }
             while (posted < BudgetPostingsPerEvent && budgetDue.Min!.Budget!.NextPostingMinute == minute);
             return true;

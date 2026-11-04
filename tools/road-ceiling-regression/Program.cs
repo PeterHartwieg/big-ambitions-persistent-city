@@ -12,6 +12,7 @@ using PersistentCity.Core;
 using PersistentCity.Runtime;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using Activity = PersistentCity.Core.Activity;
 
 internal static class Program
 {
@@ -115,6 +116,204 @@ internal static class Program
         }
 #endif
     }
+
+#if SLICED_PLANNER
+    // Match Update preflight plus AdvancePopulation's readiness check before every unit.
+    // Never bypass readiness to drive a stale job directly: it must recover through staged preparation.
+    private static void CheckRuntimeFrameRecovery()
+    {
+        foreach (bool invalidateNative in new[] { true, false })
+        {
+            var f = new Fixture(4097, true) { DirectMinutes = 7 };
+            f.From.Kind = PlaceKind.Home; f.To.Kind = PlaceKind.Work;
+            var state = new CityState { Minute = 100, Seed = 7, Places = new List<Place> { f.From, f.To },
+                Capabilities = new PopulationCapabilities { Active = true } };
+            const int residents = 4;
+            for (int i = 0; i < residents; i++) state.Citizens.Add(new CitizenState {
+                Identity = new CitizenIdentity { Id = "resident:" + i, Age = 30 },
+                HomeId = f.From.Id, DayPlaceId = f.To.Id, PlaceId = f.From.Id,
+                Phase = CitizenPhase.WaitingForRoute, DestinationId = f.To.Id, DestinationActivity = Activity.Work,
+                Activity = Activity.Home, ActivityUntilMinute = 600, NextEventMinute = 100,
+                Preferences = new TravelPreferences { OwnsCar = false, AllowTransit = false, WalkingToleranceMetres = 100000 } });
+            var city = new CitySimulator(state, f.Planner);
+            var order = new List<string>(); city.ActivityObserved += (id, _, __) => order.Add(id);
+            object? Stations() => typeof(MultimodalRoutes).GetField("stations", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(f.Planner);
+            RoadRoutes Roads() => (RoadRoutes)typeof(MultimodalRoutes).GetField("roads", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(f.Planner)!;
+            object? committedStations = null;
+            int frames = 0, stagedFrames = 0, blockedAfterCommit = 0, startsAfterPublication = 0;
+            bool injected = false, caughtUp = false;
+            while (!caughtUp && frames++ < 512)
+            {
+                Time.frameCount++;
+                if (city.PlanningPending)
+                {
+                    if (invalidateNative && !injected)
+                    { f.Native[10].position.z += .25f; injected = true; }
+                    f.Planner.Refresh(); f.Planner.RefreshStations();
+                }
+                bool prepared = f.Planner.Prepare();
+                if (!prepared)
+                {
+                    if (Roads().IsCurrent && !Roads().Ready) stagedFrames++;
+                    Thread.Sleep(1); // allow the existing pure network-construction task to finish
+                    continue;
+                }
+                bool committedThisFrame = false;
+                for (int step = 0; step < 64; step++)
+                {
+                    if (!f.Planner.ReadyForPopulation)
+                    {
+                        if (committedThisFrame && !city.PlanningPending) blockedAfterCommit++;
+                        break;
+                    }
+                    if (city.PlanningPending)
+                    {
+                        long units = f.Planner.JobUnits;
+                        bool completed = city.ContinuePlanning(0);
+                        Check(f.Planner.JobUnits - units <= 8, "runtime recovery exceeded finite route work");
+                        if (!completed) break;
+                        committedStations = Stations(); committedThisFrame = true;
+                        continue; // production may try to begin another event in this same frame
+                    }
+                    var result = city.AdvanceFrameSlice(101, 1);
+                    if (result.PlanningPending)
+                    {
+                        if (order.Count != 0)
+                        {
+                            Check(!ReferenceEquals(committedStations, Stations()), "successive runtime event acquired inputs before deferred station publication");
+                            startsAfterPublication++;
+                        }
+                        break;
+                    }
+                    if (result.CaughtUp) { caughtUp = true; break; }
+                }
+            }
+            Check(caughtUp && city.IsCaughtUpTo(101), "runtime preflight/readiness loop failed to recover and advance later events");
+            Check(order.SequenceEqual(Enumerable.Range(0, residents).Select(i => "resident:" + i)), "runtime recovery changed event order or lost demand");
+            Check(blockedAfterCommit == residents && startsAfterPublication == residents - 1,
+                "deferred refresh did not force bounded preflight between every pair of runtime events");
+            if (invalidateNative) Check(injected && stagedFrames >= 2 && city.EventRestarts == 1,
+                "native invalidation did not traverse staged replacement, restart and later-event recovery");
+            else Check(city.EventRestarts == 0, "managed refresh churn restarted a held event");
+            Console.WriteLine(JsonSerializer.Serialize(new { runtimeFrameRecovery = true, invalidateNative, frames,
+                stagedFrames, blockedAfterCommit, startsAfterPublication, events = order.Count, city.EventRestarts, minute = state.Minute }));
+        }
+    }
+
+    private static void CheckPeakPlanningThroughput()
+    {
+        var f=new Fixture(31,true) {DirectMinutes=2000,AccessMinutes=2,EgressMinutes=3,HaveSubway=true};
+        string expected=Fingerprint(f.Plan());
+        WalkingRoutes.CountPathQueries=true;WalkingRoutes.QueryCostMilliseconds=.1;
+        try
+        {
+            foreach(int fps in new[]{30,60})
+            {
+                int frames=0,completed=0,maxQueries=0,maxPerPlan=0;long startQueries=f.Planner.Metrics.NavMeshPathQueries;
+                IRoutePlanningJob? job=null;long planStart=0;
+                while(completed<957)
+                {
+                    Time.frameCount++;frames++;long frameQueries=f.Planner.Metrics.NavMeshPathQueries,start=Stopwatch.GetTimestamp();
+                    for(int unit=0;unit<128 && completed<957;unit++)
+                    {
+                        if(job==null) {planStart=f.Planner.Metrics.NavMeshPathQueries;job=f.Planner.Begin(new RouteRequest(f.From,f.To,100,f.Person,f.Person.Preferences));}
+                        double remaining=Math.Max(0,2-Stopwatch.GetElapsedTime(start).TotalMilliseconds);
+                        if(job.Continue(remaining))
+                        {
+                            Check(Fingerprint(job.Result)==expected,"peak admission changed route");
+                            maxPerPlan=Math.Max(maxPerPlan,(int)(f.Planner.Metrics.NavMeshPathQueries-planStart));
+                            job.Dispose();job=null;completed++;
+                        }
+                        if(f.Planner.JobAdmissionExhaustedForFrame || Stopwatch.GetElapsedTime(start).TotalMilliseconds>=2) break;
+                    }
+                    maxQueries=Math.Max(maxQueries,(int)(f.Planner.Metrics.NavMeshPathQueries-frameQueries));
+                    Check(frames<10000,"peak route backlog did not drain");
+                }
+                double seconds=frames/(double)fps,capacity=completed/seconds;
+                // 957 commute requests released across a deliberately narrow 30-game-minute peak,
+                // at one-third game-minute/second. Burst completion must precede that 90s window.
+                Check(seconds<90,"route admission cannot clear the supported commute peak");
+                Console.WriteLine(JsonSerializer.Serialize(new {peakPlanning=true,residents=957,consumers=1914,fps,frames,
+                    completed,seconds,plansPerSecond=capacity,queries=f.Planner.Metrics.NavMeshPathQueries-startQueries,
+                    maxQueriesPerFrame=maxQueries,maxQueriesPerPlan=maxPerPlan,finalBacklog=957-completed,
+                    queryDoubleMilliseconds=.1,frameBudgetMilliseconds=2,peakPlansPerGameMinute=957/30.0,
+                    evidence="Production native-double jobs; synthetic 0.1ms path cost; fixed burst drain, not native proof"}));
+            }
+        }
+        finally {WalkingRoutes.CountPathQueries=false;WalkingRoutes.QueryCostMilliseconds=0;}
+    }
+
+    private static void CheckBoundedAdmission()
+    {
+        var f = new Fixture(300, true) { DirectMinutes = 2000, AccessMinutes = 2, EgressMinutes = 3, HaveSubway = true };
+        string expected = Fingerprint(f.Plan());
+        WalkingRoutes.CountPathQueries = true;
+        var times = new List<double>(); var bytes = new List<long>(); int maxUnits = 0, maxPaths = 0;
+        try
+        {
+            for (int attempt = 0; attempt < 31; attempt++)
+            {
+                using var job = f.Planner.Begin(new RouteRequest(f.From, f.To, 100, f.Person, f.Person.Preferences));
+                bool done = false; int calls = 0;
+                while (!done)
+                {
+                    Check(++calls < 1000, "admitted route failed to make progress");
+                    Time.frameCount++;
+                    long framePaths = f.Planner.Metrics.NavMeshPathQueries;
+                    // Several calls in one synthetic frame exercise shared per-frame admission.
+                    for (int call = 0; call < 6 && !done; call++)
+                    {
+                        long units = f.Planner.JobUnits, paths = f.Planner.Metrics.NavMeshPathQueries;
+                        long allocated = GC.GetAllocatedBytesForCurrentThread(), start = Stopwatch.GetTimestamp();
+                        done = job.Continue(1000); // A generous finite deadline cannot bypass the work caps.
+                        double elapsed = Stopwatch.GetElapsedTime(start).TotalMilliseconds;
+                        allocated = GC.GetAllocatedBytesForCurrentThread() - allocated;
+                        int worked = (int)(f.Planner.JobUnits - units), queried = (int)(f.Planner.Metrics.NavMeshPathQueries - paths);
+                        Check(worked <= MultimodalRoutes.MaximumJobUnitsPerSlice && queried <= MultimodalRoutes.MaximumJobUnitsPerSlice, "finite job exceeded unit/query admission");
+                        maxUnits = Math.Max(maxUnits, worked); maxPaths = Math.Max(maxPaths, queried);
+                        if (attempt != 0) { times.Add(elapsed); bytes.Add(allocated); }
+                    }
+                    Check(f.Planner.Metrics.NavMeshPathQueries - framePaths <= MultimodalRoutes.MaximumJobPathsPerFrame,
+                        "several Continue calls bypassed frame path admission");
+                    if (f.Planner.Metrics.NavMeshPathQueries - framePaths == MultimodalRoutes.MaximumJobPathsPerFrame)
+                        Check(f.Planner.JobAdmissionExhaustedForFrame, "runtime cannot stop zero-work retries after native admission is exhausted");
+                }
+                Check(Fingerprint(job.Result) == expected, "admitted route changed its winner");
+            }
+            Check(f.Planner.JobAdmissionDeferrals > 0, "admission was not exercised");
+            using var drive = f.Planner.TrafficNetwork == null ? throw new Exception("Missing network")
+                : ((RoadRoutes)typeof(MultimodalRoutes).GetField("roads", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+                    .GetValue(f.Planner)!).BeginPlan(new RoadRoutes.Curb { Node = 0, Position = Point(f.Native[0].position) },
+                        new RoadRoutes.Curb { Node = 299, Position = Point(f.Native[299].position) });
+            Check(!drive.Continue(long.MaxValue - 1) && drive.Expanded <= 64, "finite road continuation drained A* synchronously");
+            // A failed native query still spends admission; catching an exception must not grant
+            // unlimited fresh jobs in the same frame. Third preference-only request is deferred.
+            var originalWalking = WalkingRoutes.Routes;
+            try
+            {
+                WalkingRoutes.Routes = (_, _) => throw new InvalidOperationException("native query failure");
+                Time.frameCount++;
+                long paths = f.Planner.Metrics.NavMeshPathQueries;
+                for (int i = 0; i <= MultimodalRoutes.MaximumJobPathsPerFrame; i++)
+                {
+                    using var failing = f.Planner.Begin(new RouteRequest(f.From, f.To, 100, null, f.Person.Preferences));
+                    bool threw = false, completed = false;
+                    try { completed = failing.Continue(1000); } catch (InvalidOperationException) { threw = true; }
+                    Check(!completed && threw == (i < MultimodalRoutes.MaximumJobPathsPerFrame), "failed query escaped native admission");
+                }
+                Check(f.Planner.JobAdmissionExhaustedForFrame && f.Planner.Metrics.NavMeshPathQueries - paths == MultimodalRoutes.MaximumJobPathsPerFrame,
+                    "throwing native queries were not charged to frame admission");
+            }
+            finally { WalkingRoutes.Routes = originalWalking; }
+        }
+        finally { WalkingRoutes.CountPathQueries = false; }
+        times.Sort(); bytes.Sort();
+        Console.WriteLine(JsonSerializer.Serialize(new { boundedAdmission = true, calls = times.Count, maxUnits, maxPaths,
+            p50Ms = times[times.Count / 2], p95Ms = times[(int)(times.Count * .95)], maxMs = times[times.Count - 1],
+            spikesAtLeast30 = times.Count(t => t >= 30), medianBytes = bytes[bytes.Count / 2], maxBytes = bytes[bytes.Count - 1],
+            evidence = "Production multimodal/road jobs with native doubles; no native query tail claim" }));
+    }
+#endif
 
     private static void Main(string[] args)
     {
@@ -307,6 +506,40 @@ internal static class Program
             SlicedCheck(job.Result == null, "abandoned job kept a result");
             SlicedCheck(Fingerprint(f.Plan()) == expected && Fingerprint(f.PlanSliced().Route) == expected, "plans after an abandoned job differ");
         }
+        {
+            var f=new Fixture(300,true) {DirectMinutes=2000,AccessMinutes=2,EgressMinutes=3,HaveSubway=true};
+            string expected=Fingerprint(f.Plan());
+            f.Planner.BeginRouteEvent();
+            using var job=f.Planner.Begin(new RouteRequest(f.From,f.To,100,f.Person,f.Person.Preferences));
+            int calls=0;bool done=false;
+            while(!done)
+            {
+                Time.frameCount++;f.Planner.Refresh();f.Planner.RefreshStations();
+                SlicedCheck(f.Planner.Prepare(),"mod refresh invalidated a held event");
+                long units=f.Planner.JobUnits;
+                done=job.Continue(0);calls++;
+                SlicedCheck(f.Planner.JobUnits-units<=8 && calls<1000,"held event exceeded finite work or failed progress");
+            }
+            SlicedCheck(calls>8 && Fingerprint(job.Result)==expected,"sustained refresh changed route or did not exercise slicing");
+            f.Planner.EndRouteEvent();
+            f.Preflight();
+            SlicedCheck(f.Planner.ReadyForPopulation,"deferred refresh did not publish after event");
+        }
+        {
+            var f=new Fixture(31,true);
+            f.Planner.BeginRouteEvent();
+            using var job=f.Planner.Begin(new RouteRequest(f.From,f.To,100,f.Person,f.Person.Preferences));
+            f.Native[0].listIndex++;
+            f.Planner.Refresh();Time.frameCount++;
+            SlicedCheck(!f.Planner.Prepare(),"event lease hid native topology invalidation");
+            bool restarted=false;
+            try {job.Continue(0);} catch(RoutePlanningRestartRequired) {restarted=true;}
+            SlicedCheck(restarted,"event lease pinned an unsafe stale topology");
+            f.Planner.EndRouteEvent();
+        }
+        CheckRuntimeFrameRecovery();
+        CheckBoundedAdmission();
+        CheckPeakPlanningThroughput();
         Console.WriteLine(JsonSerializer.Serialize(new { checks, results, slicedChecks, sliced }));
 #else
         Console.WriteLine(JsonSerializer.Serialize(new { checks, results }));

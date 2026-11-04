@@ -639,7 +639,9 @@ namespace PersistentCity.Runtime
                 while (true)
                 {
                     if (search!.Advance(ExpansionSlice)) { Complete(); return true; }
-                    if (Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
+                    // A finite caller admits one 64-expansion slice even when the clock budget
+                    // is large or the host is fast. Only explicit offline/synchronous calls drain.
+                    if (deadlineTimestamp != long.MaxValue) return false;
                 }
             }
 
