@@ -8,71 +8,71 @@ Rechecked at this base before use: `AccountingClock` (`Core/AccountingClock.cs:9
 
 `tools/economy-interventions` (README-level usage in `Program.cs`; tables via `report.py`):
 
-- **Fixture.** The F1 supported shape: 957 residents, representation factor 2 (1,914 consumers), one-minute walking routes, minute-stamped inputs, the current weighted choice, awareness, rival and household-budget model attached unchanged. Additions, all fixture data: a three-product own shop (burger 800, croissant 300, hot dog 500 cents; 07:00–22:00; 60 meals/h, i.e. two counters at 30/h), an equidistant rival with the same menu, prices, hours and service rating, a dormant second own site at twice the distance, and ten workplaces in place of F1's one (so "10 % of workplaces" is one place). Residents stay home until day 3, as in F1.
+- **Fixture.** The F1 supported shape: 957 residents, representation factor 2 (1,914 consumers), one-minute walking routes, minute-stamped inputs, the current weighted choice, awareness, rival and household-budget model attached unchanged. Additions, all fixture data: a three-product own shop (burger 800, croissant 300, hot dog 500 cents; 07:00–22:00; 60 meals/h, i.e. two counters at 30/h), an equidistant rival with the same menu, prices, hours and service rating, a dormant second own site at twice the distance (two-minute walks each way against one), and ten workplaces in place of F1's one (so "10 % of workplaces" is one place). Residents stay home until day 3, as in F1. Every resident is `Persona.Foodie`, age 30, inherited from the F1 fixture. Foodie's 1.4 taste factor raises the value of a prepared meal over home food, which limits how far price can move choices (see the price findings).
 - **Native double.** `EconomyMarket` is the only thing an input changes: player supply/prices/hours/staffing/stock/door/site, rival advertised prices, route-time percent, closed workplaces and blocked worker routes (route refusal; today's model has no workplace-closure input). Player checkout is the sale authority with one order per intent. Any rival checkout throws. Every native read is fenced to the published epoch and throws outside it.
 - **Epoch discipline.** The runner advances epoch by epoch: drain the ending epoch to `PreviousEpochTarget`, run the midnight ledger checks, publish inputs stamped at this boundary, enter the native epoch, then `BeginAccountingObservations`. `InputSchedule` refuses fractional or out-of-window minutes, publication before the ending epoch drained and publication after the epoch was observed. It has no cursor; a reloaded city resumes with the same inputs.
 - **Protocol (section 3.5).** Six weeks: days 1–14 baseline, 15–28 intervention, 29–42 reverted. Five seeds (`Population.Create` seed 0–4) and a same-seed control. 16 arms: price (burger −25 %, +25 %, whole menu +50 %), staffing (lunch counters halved 11:00–14:00 daily; zero staff on day 17), hours (breakfast removed: opens 11:00; close 20:00), shortages (burger out on lunches of days 15/17/19; whole-shop stockout day 16), employment (work0 closed; 5 % of workers' work routes blocked), access (route time +50 %; door closed days 16 and 18; second site open), rival (estimated lanes halved, recorded only because Core has no rival lanes before F6b; rival menu −25 %).
-- **Metrics (`persistentcity-f6a-metrics-1`).** Per day and arm: own purchases/revenue by shop, meal, hour and product; considered/chosen offers and causes from `FoodShopDay`; rival meals by checkout hour; diagnostic meal shares own/rival/home/skipped/unconfirmed from `MealOutcomeRecord`; household lines (arrears owners, unfed days, median/p10 balance, income posted, scheduled employment income, employed, job losses/finds, missed activities); accounting identities. Money is exact units (`unitsPerCent` recorded). Outcomes are sampled at 03:00 the next day; a consumer whose next-day outcome already exists fails the run.
+- **Metrics (`persistentcity-f6a-metrics-1`).** Per day and arm: own purchases/revenue by shop, meal, hour and product; considered/chosen offers and causes from `FoodShopDay`; rival meals by checkout hour; diagnostic meal shares own/rival/home/skipped/unconfirmed from `MealOutcomeRecord`, city-wide and per own business over its section 3.5 **catchment** (resolved meal opportunities whose decision evaluated that business, from Core's opt-in `FoodDecisionObserved` trace, keyed by consumer, day and meal); demand-side offer evidence per business and product (evaluated, feasible, chosen); household lines (arrears owners, unfed days, median/p10 balance, income posted, scheduled employment income, employed, job losses/finds, missed activities); accounting identities, including the cumulative watermarked rival outflow (baseline + expired + retained rows, read from the history's saved wire) next to the rolling 14-day window. Each run simulates exactly the requested days plus the 03:00 sample (10,260 epochs per week, asserted). Money is exact units (`unitsPerCent` recorded). Outcomes are sampled at 03:00 the next day; a consumer whose next-day outcome already exists fails the run.
 - **Contract fold (F5 B2/B4/B5).** `population.ownerKind` is `consumer-budget` today, `perPersonWallets` false. `kinds` holds a `resident` line only, with `kindsReserved` naming `commuter` and `dayVisitor`, so F5's person wallets and visitor kinds add lines without a schema break. The harness is detached and has no physical leases, so the F5 B5 lease dependence of resident demand is outside this fixture (declared, not tested).
 - **Named defaults.** `EconomyRun.MarketShareDiagnosticOnly = true` implements the F6 section 9 Q3 default: shares are an experiment/diagnostic metric, never free player UI. `EconomyRun.OwnerKind` holds the B4 owner label. Rival lanes are a percentage input (`RivalLanesHalvedPercent = 50`) of the future F6b profile, so Q2's answer changes F6b defaults, not this arm. No other section 9 question touches F6a.
-- **Summary.** Seed means/sd per week for 22 metrics, the effect against the control seed band (mean ± 2 sd over seeds), recovery days (the first day whose 3-day mean, wholly after reversion, is inside the control band; **3 is the earliest possible value**), the residual 14 days after reversion, and arc elasticity for the price arms against the same-seed control. Thresholds are F6h work and are not set here.
+- **Summary.** Seed means/sd per week for 29 metrics, the effect against the control seed band (mean ± 2 sd over seeds), recovery days (the first day whose 3-day mean, wholly after reversion, is inside the control band; **3 is the earliest possible value**), the residual 14 days after reversion, and three arc elasticities for the price arms against the same-seed control: served purchases, chosen offers and the chosen share of feasible offers (demand-side, before service capacity binds). Thresholds are F6h work and are not set here.
 
 ## Offline tests and checks
 
-Harness self-checks (run first by every tool invocation, 48 residents × 42 days), all PASS: same seed byte-identical; a mid-epoch save/reload (first in-flight half minute at or after day 20 12:30.5) gives byte-identical metrics and final save; a reload at an input boundary (day 20 11:00) under the lunch-staffing arm is byte-identical; an input at 15×1440+660.5 throws; publication before drain or after observation throws; fault injections fail loudly: **duplicated debit** (balanced, so `CashConserved` still holds) is caught as "modeled outside total does not equal watermarked debits", an unbalanced debit as "conservation identity failed", a duplicate native order as "duplicate native receipt". Full size: the **957-resident mid-epoch reload with 24 meals in flight** gives byte-identical metrics and final save.
+Harness self-checks (run first by every tool invocation, 48 residents × 42 days), all PASS: same seed byte-identical; a mid-epoch save/reload (first in-flight half minute at or after day 20 12:30.5) gives byte-identical metrics and final save; a reload at an input boundary (day 20 11:00) under the lunch-staffing arm is byte-identical; an input at 15×1440+660.5 throws; publication before drain or after observation throws; fault injections fail loudly: **duplicated debit** (balanced, so `CashConserved` still holds) is caught as "modeled outside total does not equal watermarked debits", an unbalanced debit as "conservation identity failed", a duplicate native order as "duplicate native receipt". Full size: the **957-resident mid-epoch reload with 27 meals in flight** gives byte-identical metrics and final save. The duplicated debit is caught by both the cumulative watermark comparison and `Reconciles`.
 
-New unit tests in `tests/EconomyInterventionTests.cs` (linked harness sources): determinism and seed sensitivity; four reload cases (control/staffing mid-epoch, input boundary, door closure mid-day) with interrupted meals required; epoch-only publication and read fencing; every arm input a whole minute inside the intervention window and reverting to base terms; the section 3.5 protocol and family counts; per-owner per-day conservation counts, receipt equality and outcome-partition identity on the whole-shop stockout arm (zero own sales on day 16); the three faults with the named day; the schema's reserved kinds and the Q3 flag. Results of the required command matrix are recorded below.
+New unit tests in `tests/EconomyInterventionTests.cs` (linked harness sources): determinism and seed sensitivity; four reload cases (control/staffing mid-epoch, input boundary, door closure mid-day) with interrupted meals required; epoch-only publication and read fencing; every arm input a whole minute inside the intervention window and reverting to base terms; the section 3.5 protocol and family counts; per-owner per-day conservation counts, receipt equality and outcome-partition identity on the whole-shop stockout arm (zero own sales on day 16); the three faults with the named day; the schema's reserved kinds and the Q3 flag; the second site's walks are twice the first's and scale with the access input; a run simulates exactly the requested days (10,260 epochs per week); the cumulative watermarked outflow equals the ledger across the 14-day rollover while the rolling window falls below it; catchment rows partition their outcomes, exclude the dormant site until it opens and stay byte-identical across a mid-epoch reload. 17 F6a tests. The full required command matrix is in the validation section below.
 
 ## Today's baseline (957 residents / 1,914 consumers, 5 seeds)
 
 Full JSON: [f6a-baseline-summary.json](f6a-baseline-summary.json) (per-seed weekly series and the 85 metrics hashes); curve and cost: [assets](../perf/assets/f6a/). Per-run day files are regenerated, not committed. Every arm: **80,388 conservation checks per run, 6,832,980 in total, all held**; zero duplicate receipts, zero `HistoricalClockMisses`, zero epoch-read violations; PC prepared spend equals native revenue every day and the rival outflow reconciles every day.
 
-Control: own **465.8 purchases/day** in weeks 3–4 (band 457.9–473.7), about 3,260/week, against **~21,900 rival meals/week** and ~14,200 home meals/week out of 40,194 resolved meals. The own shop's lunch and dinner hours sit at its 60/h staffed ceiling (36,000 service/queue offer refusals/week), so the unlimited rival absorbs the overflow.
+Control: own **465.7 purchases/day** in weeks 3–4 (band 457.0–474.3), about 3,250/week, against **~21,900 rival meals/week** and ~14,200 home meals/week out of 40,194 resolved meals. The own shop's catchment covers **39,722 of 40,194** resolved meals per week (98.8 %); the shop takes 8.2 % of them, the rival 55.0 % and home 34.8 %. Lunch and dinner sit at the shop's 60/h staffed ceiling (35,866 service/queue offer refusals/week), so the unlimited rival absorbs the overflow.
 
 | Arm | Own purchases/day, weeks 1-2 / 3-4 / 5-6 | Outside control band | Own revenue $/week, week 3 | Rival meals/week, week 3 | Recovery days (5 seeds) | Residual after 14 d |
 | --- | --- | --- | ---: | ---: | --- | ---: |
-| control | 468.7 / 465.8 / 466.4 | no | 17,990 | 21,942 | - | - |
-| price/product-minus-25 | 468.7 / 465.8 / 466.4 | no | 15,452 | 21,942 | 3, 3, 3, 3, 3 | +0.0 |
-| price/product-plus-25 | 468.7 / 465.8 / 466.4 | no | 20,528 | 21,942 | 3, 3, 3, 3, 3 | +0.0 |
-| price/menu-plus-50 | 468.7 / 465.7 / 466.4 | no | 26,978 | 21,942 | 3, 3, 3, 3, 3 | +0.1 |
-| staffing/lunch-counters-halved | 468.7 / 397.1 / 466.2 | yes | 15,316 | 22,336 | 3, 3, 3, 3, 3 | +0.0 |
-| staffing/zero-staff-day | 468.7 / 433.3 / 466.3 | yes | 15,492 | 22,283 | 3, 3, 3, 3, 3 | +0.0 |
-| hours/breakfast-removed | 468.7 / 333.3 / 466.3 | yes | 14,446 | 22,695 | 3, 3, 3, 3, 3 | +0.7 |
-| hours/close-2h-earlier | 468.7 / 401.8 / 465.6 | yes | 14,934 | 22,235 | 3, 3, 3, 3, 3 | +0.3 |
-| shortage/product-3-lunches | 468.7 / 464.7 / 466.8 | no | 17,395 | 21,984 | 3, 3, 3, 3, 3 | +0.6 |
-| shortage/whole-shop-day | 468.7 / 433.6 / 466.5 | yes | 15,516 | 22,271 | 3, 3, 3, 3, 3 | +0.4 |
-| employment/workplaces-closed-10pct | 468.7 / 464.1 / 466.7 | no | 17,931 | 21,256 | 3, 3, 3, 3, 3 | +0.3 |
-| employment/worker-routes-blocked-5pct | 468.7 / 465.4 / 466.6 | no | 17,972 | 21,596 | 3, 3, 3, 3, 3 | +0.4 |
-| access/route-time-plus-50 | 468.7 / 464.3 / 466.7 | no | 18,005 | 22,038 | 3, 3, 3, 3, 3 | +0.4 |
-| access/door-closed-2-days | 468.7 / 400.9 / 466.3 | yes | 13,012 | 21,956 | 3, 3, 3, 3, 3 | +0.2 |
-| access/second-site-2x | 468.7 / 902.3 / 466.6 | yes | 34,825 | 19,639 | 3, 3, 3, 3, 3 | +0.5 |
-| rival/lanes-halved | 468.7 / 465.8 / 466.4 | no | 17,990 | 21,942 | 3, 3, 3, 3, 3 | +0.0 |
-| rival/price-minus-25 | 468.7 / 465.8 / 466.4 | no | 17,988 | 21,947 | 3, 3, 3, 3, 3 | -0.1 |
+| control | 468.4 / 465.7 / 465.5 | no | 17,968 | 21,915 | - | - |
+| price/product-minus-25 | 468.4 / 465.7 / 465.6 | no | 15,439 | 21,915 | 3, 3, 3, 3, 3 | -0.1 |
+| price/product-plus-25 | 468.4 / 465.7 / 465.5 | no | 20,497 | 21,915 | 3, 3, 3, 3, 3 | +0.0 |
+| price/menu-plus-50 | 468.4 / 465.7 / 465.5 | no | 26,949 | 21,916 | 3, 3, 3, 3, 3 | -0.1 |
+| staffing/lunch-counters-halved | 468.4 / 397.1 / 465.4 | yes | 15,294 | 22,306 | 3, 3, 3, 3, 3 | +0.1 |
+| staffing/zero-staff-day | 468.4 / 432.9 / 465.5 | yes | 15,473 | 22,249 | 3, 3, 3, 3, 3 | +0.3 |
+| hours/breakfast-removed | 468.4 / 333.3 / 465.7 | yes | 14,398 | 22,674 | 3, 3, 3, 3, 3 | +0.3 |
+| hours/close-2h-earlier | 468.4 / 401.5 / 464.6 | yes | 14,932 | 22,203 | 3, 3, 3, 3, 3 | -0.9 |
+| shortage/product-3-lunches | 468.4 / 464.5 / 465.6 | no | 17,378 | 21,961 | 3, 3, 3, 3, 3 | +0.4 |
+| shortage/whole-shop-day | 468.4 / 433.3 / 465.2 | yes | 15,486 | 22,246 | 3, 3, 3, 3, 3 | -0.3 |
+| employment/workplaces-closed-10pct | 468.4 / 464.4 / 465.6 | no | 17,928 | 21,236 | 3, 3, 3, 3, 3 | -0.1 |
+| employment/worker-routes-blocked-5pct | 468.4 / 465.2 / 465.8 | no | 17,953 | 21,572 | 3, 3, 3, 3, 3 | +0.7 |
+| access/route-time-plus-50 | 468.4 / 464.3 / 466.0 | no | 17,896 | 22,016 | 3, 3, 3, 3, 3 | +0.7 |
+| access/door-closed-2-days | 468.4 / 400.7 / 465.0 | yes | 12,993 | 21,930 | 3, 3, 3, 3, 3 | -0.6 |
+| access/second-site-2x | 468.4 / 899.2 / 465.9 | yes | 34,742 | 19,528 | 3, 3, 3, 3, 3 | +0.5 |
+| rival/lanes-halved | 468.4 / 465.7 / 465.5 | no | 17,968 | 21,915 | 3, 3, 3, 3, 3 | +0.0 |
+| rival/price-minus-25 | 468.4 / 465.7 / 465.5 | no | 17,967 | 21,920 | 3, 3, 3, 3, 3 | +0.0 |
 
 What today's model shows, for F6b–F6h to compare against:
 
-- **Price.** Quantity barely moves: arc elasticity −0.0003 (burger −25 %), +0.0003 (burger +25 %), −0.0003 (menu +50 %). Revenue scales with price, so +50 % on the menu maximizes weekly revenue in every seed, which is the "dominant extreme" section 3.5 says F6h must not accept. Part of this is capacity: the own shop is at its staffed ceiling, so extra demand at a lower price cannot be served. Wholesale cost is not modeled in this fixture.
-- **Staffing, hours, shortages, door, second site** move own purchases outside the control band, and the lost demand goes to the rival and home. Zero staff and the closed door classify as service/queue causes in today's `RecordChoices`, not as "no staffed counter" (0 such offers in every arm).
-- **Recovery is immediate** (the measurement floor of 3 days in every seed and arm), with residuals within ±0.7 purchases/day after 14 days: today's memory leaves almost no lasting effect.
+- **Price.** Quantity barely moves. Arc elasticities, mean of 5 seeds (served purchases / chosen offers / chosen share of feasible offers): burger −25 % **−0.0033 / −0.0028 / −0.0036**; burger +25 % **−0.0007 / −0.0024 / −0.0030**; whole menu +50 % **−0.0002 / −0.0004 / −0.0031**. Revenue scales with price, so +50 % on the menu maximizes weekly revenue in every seed. Section 3.5 calls that a dominant extreme that F6h must not accept. Two fixture facts qualify this. The own shop is at its staffed ceiling, so served purchases cannot grow at a lower price. And every resident is `Persona.Foodie` (1.4 taste factor), which favours prepared meals over home food. The demand-side elasticities are also near zero, so the weak response comes from today's choice model at these prices, not only from the capacity cap. A mixed-persona fixture is F6h/F5 work. Wholesale cost is not modeled.
+- **Staffing, hours, shortages, door, second site** move own purchases outside the control band, and the lost demand goes to the rival and home. Zero staff and the closed door classify as service/queue causes in today's `RecordChoices`, not as "no staffed counter" (0 such offers in every arm). With two-minute walks the second site still adds about 434 own purchases/day; the near shop keeps 3,170 of its control 3,247 weekly sales.
+- **Recovery is immediate** (the measurement floor of 3 days in every seed and arm), with residuals within ±0.9 purchases/day after 14 days: today's memory leaves almost no lasting effect.
 - **Employment.** Closing one workplace raises missed activities to 381.9/week and blocking 5 % of routes to 189.9/week (0 in control), but posted income is unchanged (status-based income; L1–L4 are F6e). Job losses+finds total 57.4 over six weeks in every arm.
 - **Rival.** Halving estimated lanes has no effect (no Core consumer before F6b). A 25 % rival price cut changes almost nothing, consistent with the low price sensitivity above.
-- **Households.** Control arrears owners 0.2 at week 6; p10 balance rises from $1,016 (end of week 1) to $1,986 (week 6), so it does not fall every week; zero unfed days.
+- **Households.** Control arrears owners 0.2 at week 6; p10 balance rises from $1,018 (end of week 1) to $1,991 (week 6), so it does not fall every week; zero unfed days.
 
 **Unlimited rival curve** (same menu, price, hours, distance and service rating; one side listed at a time; mean of days 2–3; own staffed ceiling 60/h):
 
 | Residents / consumers | Own-only served/day | Own peak hour | Rival-only served/day | Rival peak hour |
 | --- | ---: | ---: | ---: | ---: |
-| 32 / 64 | 112.5 | 25 | 112.0 | 24 |
-| 64 / 128 | 212.0 | 44 | 214.0 | 45 |
-| 128 / 256 | 339.5 | 59 | 409.5 | 90 |
-| 256 / 512 | 417.5 | 60 | 810.0 | 180 |
-| 512 / 1,024 | 458.5 | 60 | 1,613.5 | 375 |
-| 957 / 1,914 | 488.5 | 60 | 3,049.5 | 688 |
-| 1,914 / 3,828 | 523.5 | 60 | 6,109.5 | 1,342 |
+| 32 / 64 | 113.0 | 25 | 111.0 | 24 |
+| 64 / 128 | 213.0 | 44 | 213.5 | 45 |
+| 128 / 256 | 341.0 | 59 | 407.5 | 90 |
+| 256 / 512 | 416.5 | 60 | 805.0 | 180 |
+| 512 / 1,024 | 458.0 | 60 | 1,598.5 | 375 |
+| 957 / 1,914 | 489.0 | 60 | 3,043.0 | 688 |
+| 1,914 / 3,828 | 522.0 | 60 | 6,094.5 | 1,342 |
 
 The curves agree at low demand. The own shop saturates at its 60/h staffed ceiling. The rival keeps growing linearly with no ceiling (1,342 meals in one hour at 3,828 consumers). F6b must bring the rival curve within the declared band of the own curve.
 
-Tool cost (no gate): 2.01 s and 2.00 GB allocated per simulated week at 1,914 consumers; 4.91 s and 4.17 GB at 4,000 ([perf](../perf/f6a-intervention-harness.md)). F6a adds no mod work: there is no mod-work p95 or ≥30 ms spike to report, and whole-frame cost is not involved.
+Tool cost (no gate): 1.32 s and 1.80 GB allocated per simulated week at 1,914 consumers; 3.27 s and 3.74 GB at 4,000 (10,260 epochs per week; [perf](../perf/f6a-intervention-harness.md)). F6a adds no mod work: there is no mod-work p95 or ≥30 ms spike to report, and whole-frame cost is not involved.
 
 ## Required command matrix
 
