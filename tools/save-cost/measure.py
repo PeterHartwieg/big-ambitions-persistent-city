@@ -41,18 +41,26 @@ def run(arguments):
 
 
 def main():
+    # With no fixture list: build, record metadata and determinism, then measure every fixture.
+    # With a fixture list: append those rows only (lets long matrices run as short foreground steps).
     samples = sys.argv[1] if len(sys.argv) > 1 else "7"
-    fixtures = sys.argv[2:] or representative + stress
+    fixtures = sys.argv[2:]
+    full = not fixtures
+    fixtures = fixtures or representative + stress
     out.mkdir(parents=True, exist_ok=True)
     wait_for_dotnet()
-    subprocess.run([dotnet, "build", str(project), "--configuration", "Release", "-p:UseSharedCompilation=false"], cwd=root, check=True)
-    head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True).stdout.strip()
-    (out / "metadata.json").write_text(json.dumps({"sourceHead": head, "host": platform.platform(), "python": platform.python_version(),
-        "dotnet": subprocess.run([dotnet, "--version"], capture_output=True, text=True).stdout.strip(), "samples": int(samples),
-        "note": "Windows .NET 10 synthetic; one process per fixture; not native or Mono evidence"}, indent=2) + "\n")
-    with open(out / "determinism.jsonl", "w", encoding="utf-8") as handle:
-        handle.write(json.dumps(run(["determinism"])) + "\n")
-    with open(out / "baseline.jsonl", "w", encoding="utf-8") as handle:
+    subprocess.run([dotnet, "build", str(project), "--configuration", "Release", "-p:UseSharedCompilation=false"], cwd=root, check=True,
+                   stdout=subprocess.DEVNULL)
+    if full or fixtures == ["determinism"]:
+        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True).stdout.strip()
+        (out / "metadata.json").write_text(json.dumps({"sourceHead": head, "host": platform.platform(), "python": platform.python_version(),
+            "dotnet": subprocess.run([dotnet, "--version"], capture_output=True, text=True).stdout.strip(), "samples": int(samples),
+            "note": "Windows .NET 10 synthetic; one process per fixture; not native or Mono evidence"}, indent=2) + "\n")
+        with open(out / "determinism.jsonl", "w", encoding="utf-8") as handle:
+            handle.write(json.dumps(run(["determinism"])) + "\n")
+        if not full:
+            return
+    with open(out / "baseline.jsonl", "w" if full else "a", encoding="utf-8") as handle:
         for fixture in fixtures:
             row = run([fixture, samples])
             handle.write(json.dumps(row) + "\n"); handle.flush()
