@@ -56,7 +56,7 @@ var settings=new FoodCampaignSettings {ReachProbability=1};
     var native=new BuildingRegistration {Id="acquired"};var food=new FoodCommerceState();
     var adapter=new NativeFoodMarket(food,new[]{native});
     var source=adapter.AttachCampaignAwareness(79,new() {ReachProbability=1,DailyReachDecay=1});
-    adapter.ObserveCampaignBoundary(1);
+    adapter.ObserveCampaignBoundary(1);adapter.CompleteCampaignsForSave();
     if(food.Campaigns.Count!=1 || food.Campaigns[0].Mask(0,0)!=2) throw new Exception("Acquisition observation missed.");
     foreach(string resident in new[]{"commuter","retired","health-oriented","other"})
     {
@@ -66,14 +66,14 @@ var settings=new FoodCampaignSettings {ReachProbability=1};
     }
     adapter.CandidateForFixture("acquired",false);
     foreach(var campaign in native.marketingCampaigns) campaign.enabled=false;
-    adapter.ObserveCampaignBoundary(2);source.Prepare("other",0,120);
+    adapter.ObserveCampaignBoundary(2);adapter.CompleteCampaignsForSave();source.Prepare("other",0,120);
     if(food.Campaigns.Count!=1 || food.Campaigns[0].Mask(0,0)!=2 || source.Active("acquired"))
         throw new Exception("Temporary ineligibility lost history or invented active evidence.");
-    adapter.CandidateForFixture("acquired",true);adapter.ObserveCampaignBoundary(3);
+    adapter.CandidateForFixture("acquired",true);adapter.ObserveCampaignBoundary(3);adapter.CompleteCampaignsForSave();
     string retained=food.Campaigns[0].Encode();
     int warnings=UnityEngine.Debug.CampaignWarnings;long publications=source.Publications;
     food.Shops.Add(new FoodScope {BusinessId="acquired",PlaceId="duplicate"});
-    adapter.ObserveCampaignBoundary(4);adapter.ObserveCampaignBoundary(5);
+    adapter.ObserveCampaignBoundary(4);try {adapter.CompleteCampaignsForSave();} catch(ArgumentException) {} adapter.ObserveCampaignBoundary(5);
     if(source.Publications!=publications || food.Campaigns[0].Encode()!=retained || UnityEngine.Debug.CampaignWarnings!=warnings+1)
         throw new Exception("Optional observation did not latch one failure without partial publication.");
     Console.WriteLine("PASS production campaign adapter: all residents, stopped/ineligible history retained, failure logged once and isolated.");
@@ -120,12 +120,15 @@ foreach(int count in new[]{1,1024})
     var runtimeFood=new FoodCommerceState();var adapter=new NativeFoodMarket(runtimeFood,native);
     NativeFoodOwnership.Hour=0;adapter.AttachCampaignAwareness(79,new());long runtimeHour=0;
     string before=JsonSerializer.Serialize(native,new JsonSerializerOptions {IncludeFields=true});
-    var production=Measure(()=>adapter.ObserveCampaignBoundary(++runtimeHour));
+    var production=Measure(()=>{adapter.ObserveCampaignBoundary(++runtimeHour);adapter.CompleteCampaignsForSave();});
+    bool automaticScopeAdmitted=NativeCampaignReader.BoundaryScopeAdmitted(count);
+    if(runtimeFood.Campaigns.Count!=(automaticScopeAdmitted?count:0))
+        throw new Exception("Automatic boundary admission published an unexpected/partial campaign scope.");
     string after=JsonSerializer.Serialize(native,new JsonSerializerOptions {IncludeFields=true});
     if(before!=after) throw new Exception("Native campaign/account state changed.");
     foreach(var registration in native) registration.marketingCampaigns.Clear();
     // Allow all eight retained days to expire before absent-path measurements.
-    adapter.ObserveCampaignBoundary(runtimeHour+=8*24);
+    adapter.ObserveCampaignBoundary(runtimeHour+=8*24);adapter.CompleteCampaignsForSave();
     if(runtimeFood.Campaigns.Count!=0) throw new Exception("Stopped evidence did not expire.");
     var absent=Measure(()=>adapter.ObserveCampaignBoundary(++runtimeHour),10001);
     var disabledFood=new FoodCommerceState();var disabled=new NativeFoodMarket(disabledFood,native);
@@ -148,7 +151,7 @@ foreach(int count in new[]{1,1024})
     imageFood.Campaigns.Clear();string noImages=SaveCodec.Write(previous.State);var baseCounts=SaveCodec.CountRecords(previous.State,noImages);
     int campaignBytes=emptyWire.Length-noImages.Length;
     if(imageCounts.Semantic-baseCounts.Semantic!=count || imageCounts.Streaming-baseCounts.Streaming!=count) throw new Exception("Image record charge changed.");
-    Console.WriteLine(JsonSerializer.Serialize(new {businesses=count,hourlyC1AndPublication=sample,dayTypeIndexRebuild=rebuild,eightSlotDecision=decision,
+    Console.WriteLine(JsonSerializer.Serialize(new {businesses=count,automaticScopeAdmitted,hourlyC1AndPublication=sample,dayTypeIndexRebuild=rebuild,eightSlotDecision=decision,
         eightCurrentHourActiveLookups=currentActive,eightDelayedHourActiveLookups=delayedActive,
         eightUnobservedHourActiveLookups=unobservedActive,
         fullUnionUnobservedHourActiveLookups=unobservedFullUnion,

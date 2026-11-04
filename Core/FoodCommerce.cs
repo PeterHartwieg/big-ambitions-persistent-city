@@ -216,6 +216,7 @@ namespace PersistentCity.Core
                 if (market is IRivalFoodMarket && (Active(entry) && entry.TargetKind == FoodAlternativeKind.Rival
                     || entry.Decision?.Shops.Any(s => s.AlternativeKind == FoodAlternativeKind.Rival) == true)) rivalResumeNeedsRefresh = true;
             }
+            budgetDue.Build();
         }
         private static bool Active(ResidentMeal m) => m.Status == MealStatus.Travelling || m.Status == MealStatus.Serving;
         private static string ReservationKey(string shop, string product) => shop + "\n" + product;

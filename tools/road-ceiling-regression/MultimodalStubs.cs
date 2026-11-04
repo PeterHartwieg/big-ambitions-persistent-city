@@ -44,6 +44,8 @@ namespace PersistentCity.Runtime
     {
         public NativeRouteMetrics Metrics { get; } = new NativeRouteMetrics();
         internal static Func<Place, Place, Route?> Routes = (_, _) => null;
+        internal static bool CountPathQueries;
+        internal static double QueryCostMilliseconds;
         internal static UnityEngine.AI.NavMeshQueryFilter DryFilter => default;
         private readonly Func<Position, Position, bool>? clear;
         public WalkingRoutes(double speed, Func<Position, Position, bool>? clear) { this.clear = clear; }
@@ -54,6 +56,13 @@ namespace PersistentCity.Runtime
             => throw new NotSupportedException("This road harness does not validate cached native walking quotes.");
         public Route? Plan(Place from, Place to, double minute, TravelPreferences preferences)
         {
+            if (CountPathQueries)
+            {
+                Metrics.NavMeshPathQueries++;
+                long start=System.Diagnostics.Stopwatch.GetTimestamp();
+                while(System.Diagnostics.Stopwatch.GetElapsedTime(start).TotalMilliseconds<QueryCostMilliseconds) { }
+                Metrics.NavMeshPathMilliseconds+=System.Diagnostics.Stopwatch.GetElapsedTime(start).TotalMilliseconds;
+            }
             var route = Routes(from, to);
             if (route == null) return null;
             double length = 0;

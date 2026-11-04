@@ -29,6 +29,28 @@ namespace PersistentCity.Tests
 {
     public sealed class NativeCampaignReaderTests
     {
+        [Theory]
+        [InlineData(0)] [InlineData(1)] [InlineData(64)] [InlineData(65)] [InlineData(1024)]
+        public void BoundaryAdmissionReadsOneCompleteUnitOrRefusesTheWholeScope(int count)
+        {
+            var sources = Enumerable.Range(0, count).Select(i => new CampaignBusinessSource("b:" + i, new Registration())).ToArray();
+            var reader = new NativeCampaignReader();
+            if (count > NativeCampaignReader.MaximumBoundaryBusinesses)
+            {
+                Assert.False(NativeCampaignReader.BoundaryScopeAdmitted(count));
+                Assert.Throws<ArgumentException>(() => reader.ReadBoundary(sources, 60, 1));
+                return;
+            }
+            var snapshot = reader.ReadBoundary(sources, 60, 1);
+            Assert.Equal(count, snapshot.Businesses.Count);
+            Assert.All(snapshot.Businesses, b => Assert.Equal(CampaignReadStatus.Observed, b.Status));
+            var refresh = count == 0 ? null : reader.Begin(sources, 60, 1);
+            if (refresh == null) return;
+            while (refresh.Snapshot == null) refresh.Step(1, 60, 1);
+            Assert.Equal(snapshot.Businesses.Select(b => b.BusinessId), refresh.Snapshot.Businesses.Select(b => b.BusinessId));
+            Assert.Equal(snapshot.Businesses.SelectMany(b => b.Campaigns).Select(c => c.TypeCode),
+                refresh.Snapshot.Businesses.SelectMany(b => b.Campaigns).Select(c => c.TypeCode));
+        }
         public sealed class Registration
         {
             public List<Entities.MarketingCampaign?>? marketingCampaigns = new List<Entities.MarketingCampaign?> { new Entities.MarketingCampaign() };
