@@ -24,18 +24,19 @@ namespace PersistentCity.Core
         public static string CauseLabel(FoodOfferCause cause) => CauseLabels[(int)cause];
 
         /// <summary>One pass over the history, grouped by place and business in history order.</summary>
-        public static Dictionary<string, List<FoodShopDay>> IndexHistory(IReadOnlyList<FoodShopDay> history)
+        public static Dictionary<(string, string), List<FoodShopDay>> IndexHistory(IReadOnlyList<FoodShopDay> history)
         {
-            var index = new Dictionary<string, List<FoodShopDay>>(StringComparer.Ordinal);
+            var index = new Dictionary<(string, string), List<FoodShopDay>>();
             for (int i = 0; i < history.Count; i++)
             {
-                var row = history[i]; string key = Key(row.PlaceId, row.BusinessId);
+                var row = history[i]; var key = Key(row.PlaceId, row.BusinessId);
                 if (!index.TryGetValue(key, out var rows)) index.Add(key, rows = new List<FoodShopDay>(RetainedDays));
                 rows.Add(row);
             }
             return index;
         }
-        public static string Key(string placeId, string businessId) => placeId + "\n" + businessId;
+        // Value-tuple key: ordinal string equality and no per-row key allocation.
+        public static (string, string) Key(string placeId, string businessId) => (placeId, businessId);
 
         /// <summary>This week is days today − 6 … today (today in progress); last week is today − 13 … today − 7.
         /// Rows of other shops or outside both windows are ignored. The first recorded day is the earliest kept
@@ -160,7 +161,9 @@ namespace PersistentCity.Core
         public int? FirstRecordedDay { get; }
         public FoodWeek ThisWeek { get; }
         public FoodWeek LastWeek { get; }
-        public string Text() { var text = new StringBuilder(768); FoodFeedback.AppendWeeks(text, this); return text.ToString(); }
+        public string Text() { var text = new StringBuilder(768); AppendTo(text); return text.ToString(); }
+        /// <summary>Appends the same lines as <see cref="Text"/> to an existing panel builder (no intermediate string).</summary>
+        public void AppendTo(StringBuilder text) => FoodFeedback.AppendWeeks(text, this);
     }
 
     internal enum FoodMoneyField { OpeningBalance, Balance, IncomeReceived, EssentialsPaid, HomeFoodPaid, PreparedFoodSpent, ExternalFoodSpent, HeldPurchase, Arrears }
@@ -168,11 +171,11 @@ namespace PersistentCity.Core
     /// <summary>Exact city totals of the current per-consumer budgets and meal states, equal to a full rescan.</summary>
     public sealed class FoodMoneySnapshot : IEquatable<FoodMoneySnapshot>
     {
-        internal FoodMoneySnapshot(decimal[] totals, int consumers, int budgets, int uncertain, int blocked, int[] flags)
+        internal FoodMoneySnapshot(BigInteger[] totals, int consumers, int budgets, int uncertain, int blocked, int[] flags)
         {
-            OpeningBalance = new BigInteger(totals[0]); Balance = new BigInteger(totals[1]); IncomeReceived = new BigInteger(totals[2]);
-            EssentialsPaid = new BigInteger(totals[3]); HomeFoodPaid = new BigInteger(totals[4]); PreparedFoodSpent = new BigInteger(totals[5]);
-            ExternalFoodSpent = new BigInteger(totals[6]); HeldPurchase = new BigInteger(totals[7]); Arrears = new BigInteger(totals[8]);
+            OpeningBalance = totals[0]; Balance = totals[1]; IncomeReceived = totals[2];
+            EssentialsPaid = totals[3]; HomeFoodPaid = totals[4]; PreparedFoodSpent = totals[5];
+            ExternalFoodSpent = totals[6]; HeldPurchase = totals[7]; Arrears = totals[8];
             Consumers = consumers; Budgets = budgets; Uncertain = uncertain; BlockedReturns = blocked;
             BehindOnBills = flags[0]; HoldingPurchase = flags[1]; NoSpareMoney = flags[2]; WithoutHomeBasket = flags[3];
         }
@@ -214,7 +217,9 @@ namespace PersistentCity.Core
     {
         internal const int BehindFlag = 1, HoldFlag = 2, ShortFlag = 4, BasketFlag = 8;
         private readonly FoodCommerceState state;
-        private readonly decimal[] totals = new decimal[9];
+        // Exact signed 128-bit totals per field (high word, low word): one add and carry per change.
+        private readonly long[] high = new long[9];
+        private readonly ulong[] low = new ulong[9];
         private readonly int[] flagCounts = new int[4];
         private int meals, budgets, uncertain, blocked;
         private FoodMoneyCounters(FoodCommerceState state) { this.state = state; }
@@ -230,7 +235,7 @@ namespace PersistentCity.Core
         }
         private void Rebuild()
         {
-            Array.Clear(totals, 0, totals.Length); Array.Clear(flagCounts, 0, flagCounts.Length);
+            Array.Clear(high, 0, high.Length); Array.Clear(low, 0, low.Length); Array.Clear(flagCounts, 0, flagCounts.Length);
             meals = budgets = uncertain = blocked = 0; Rebuilds++;
             foreach (var meal in state.Residents) Add(meal);
         }
@@ -239,6 +244,8 @@ namespace PersistentCity.Core
             Requests++;
             // Consumers are only appended (enrolment). A count mismatch means one bypassed the owner.
             if (meals != state.Residents.Count) Rebuild();
+            var totals = new BigInteger[9];
+            for (int i = 0; i < totals.Length; i++) totals[i] = ((BigInteger)high[i] << 64) + low[i];
             return new FoodMoneySnapshot(totals, meals, budgets, uncertain, blocked, flagCounts);
         }
         /// <summary>Reference full scan with the same definitions; tests and diagnostics compare it with Snapshot.</summary>
@@ -256,7 +263,9 @@ namespace PersistentCity.Core
                 sums[6] += b.ExternalFoodSpent.Units; sums[7] += b.HeldPurchase.Units; sums[8] += b.Arrears.Units;
                 Count(flags, Flags(b), 1);
             }
-            return new FoodMoneySnapshot(sums, state.Residents.Count, budgets, uncertain, blocked, flags);
+            var totals = new BigInteger[9];
+            for (int i = 0; i < totals.Length; i++) totals[i] = new BigInteger(sums[i]);
+            return new FoodMoneySnapshot(totals, state.Residents.Count, budgets, uncertain, blocked, flags);
         }
 
         /// <summary>Current budget states shared by the panel counts and the inspector words.
@@ -289,14 +298,29 @@ namespace PersistentCity.Core
         }
         internal void Moved(FoodMoneyField field, Money old, Money value, int before, ResidentBudget budget)
         {
-            totals[(int)field] += (decimal)value.Units - old.Units;
+            int i = (int)field; Add(i, value.Units); Subtract(i, old.Units);
             Reflag(before, budget);
+        }
+        private void Add(int field, long units)
+        {
+            // Sign-extend to 128 bits; a carry out of the low word moves into the high word.
+            ulong sum = unchecked(low[field] + (ulong)units);
+            high[field] += (units < 0 ? -1 : 0) + (sum < low[field] ? 1 : 0);
+            low[field] = sum;
+        }
+        // long.MinValue has no long negation; subtract it as two representable halves.
+        private void Subtract(int field, long units)
+        {
+            if (units == long.MinValue) { Add(field, long.MaxValue); Add(field, 1); }
+            else Add(field, -units);
         }
         internal void Reflag(int before, ResidentBudget budget)
         {
             int after = Flags(budget);
             if (after != before) { Count(flagCounts, before, -1); Count(flagCounts, after, 1); }
         }
+        private void Signed(int field, Money amount, int sign)
+        { if (sign > 0) Add(field, amount.Units); else Subtract(field, amount.Units); }
         internal void Restatus(MealStatus old, MealStatus value)
         {
             if (old == MealStatus.Uncertain) uncertain--;
@@ -328,11 +352,9 @@ namespace PersistentCity.Core
         }
         private void Apply(ResidentBudget b, int sign)
         {
-            totals[0] += sign * (decimal)b.OpeningBalance.Units; totals[1] += sign * (decimal)b.Balance.Units;
-            totals[2] += sign * (decimal)b.IncomeReceived.Units; totals[3] += sign * (decimal)b.EssentialsPaid.Units;
-            totals[4] += sign * (decimal)b.HomeFoodPaid.Units; totals[5] += sign * (decimal)b.PreparedFoodSpent.Units;
-            totals[6] += sign * (decimal)b.ExternalFoodSpent.Units; totals[7] += sign * (decimal)b.HeldPurchase.Units;
-            totals[8] += sign * (decimal)b.Arrears.Units;
+            Signed(0, b.OpeningBalance, sign); Signed(1, b.Balance, sign); Signed(2, b.IncomeReceived, sign);
+            Signed(3, b.EssentialsPaid, sign); Signed(4, b.HomeFoodPaid, sign); Signed(5, b.PreparedFoodSpent, sign);
+            Signed(6, b.ExternalFoodSpent, sign); Signed(7, b.HeldPurchase, sign); Signed(8, b.Arrears, sign);
             Count(flagCounts, Flags(b), sign);
         }
     }

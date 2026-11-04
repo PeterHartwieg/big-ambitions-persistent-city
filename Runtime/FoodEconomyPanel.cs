@@ -159,7 +159,7 @@ namespace PersistentCity.Runtime
                 if (observed == null) text.AppendLine("No evaluated food offers recorded yet.");
                 else
                 {
-                    text.Append(FoodFeedback.Weeks(rows, scope.PlaceId, scope.BusinessId, day).Text());
+                    FoodFeedback.Weeks(rows, scope.PlaceId, scope.BusinessId, day).AppendTo(text);
                     text.AppendLine("Latest recorded day " + observed.Day + ": " + observed.Purchases + " purchases · " + observed.ExistingStopPurchases + " during existing visits · " + Amount(observed.Revenue) + " sales");
                     text.AppendLine("Meals: breakfast " + observed.PurchaseMeals[1] + " · lunch " + observed.PurchaseMeals[2] + " · dinner " + observed.PurchaseMeals[3]
                         + (observed.PurchaseMeals[0] > 0 ? " · earlier single-meal routine " + observed.PurchaseMeals[0] : ""));

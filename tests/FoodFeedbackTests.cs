@@ -169,6 +169,17 @@ public sealed partial class FoodCommerceTests
             Assert.Equal(FoodMoneyCounters.Rescan(food), counters.Snapshot());
         }
         Assert.Equal(1, counters.Rebuilds);
+        // Exact 128-bit carries at the extremes of the money unit, including removing long.MinValue.
+        var edge = food.Residents.First(m => m.Budget != null);
+        foreach (long units in new[] { long.MinValue, long.MaxValue, long.MinValue, -1L, long.MaxValue, 0L, long.MinValue })
+        {
+            edge.Budget!.Balance = Money.FromUnits(units); edge.Budget.Arrears = Money.FromUnits(units);
+            Assert.Equal(FoodMoneyCounters.Rescan(food), counters.Snapshot());
+        }
+        foreach (var m in food.Residents) if (m.Budget != null) m.Budget.PreparedFoodSpent = Money.FromUnits(long.MaxValue);
+        edge.Budget = new ResidentBudget { HeldPurchase = Money.FromUnits(long.MinValue) }; edge.Budget = null;
+        Assert.Equal(FoodMoneyCounters.Rescan(food), counters.Snapshot());
+        Assert.True(counters.Snapshot().PreparedFoodSpent > long.MaxValue);
         // A consumer appended without the commerce owner is caught by the count guard and rescanned.
         food.Residents.Add(new ResidentMeal { ResidentId = "late", Status = MealStatus.Uncertain, Budget = new ResidentBudget { Arrears = Money.FromCents(1) } });
         Assert.Equal(FoodMoneyCounters.Rescan(food), counters.Snapshot()); Assert.Equal(2, counters.Rebuilds);
