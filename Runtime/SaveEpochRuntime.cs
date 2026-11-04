@@ -7,9 +7,19 @@ namespace PersistentCity.Runtime
     public sealed partial class PopulationRuntime
     {
         private SaveEpochBinding? saveEpoch;
+        // Retained after detach for diagnostics only; never written through.
+        private SaveEpochBinding? lastSaveEpoch;
         // PC units, checkout and initialization all run inside Update; a native save there is re-entrant.
         private int saveEpochUnits;
         private bool saveEpochStopPending;
+
+        /// <summary>On-demand rig projection; no frame path builds it.</summary>
+        public object SaveEpochDiagnostics => new {
+            policy = "save-epoch-v1", attached = saveEpoch != null,
+            sequence = lastSaveEpoch?.Sequence ?? 0, published = lastSaveEpoch?.Published ?? 0,
+            refused = lastSaveEpoch?.Refused ?? 0, lastRefusal = lastSaveEpoch?.LastRefusal ?? "",
+            detached = lastSaveEpoch?.Detached ?? false, stopPending = saveEpochStopPending
+        };
 
         private void Update()
         {

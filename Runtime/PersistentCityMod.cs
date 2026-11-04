@@ -620,7 +620,7 @@ namespace PersistentCity.Runtime
             log?.Info("City clock factor=" + settings.GameClockFactor.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
                 + "; Driven Rides coordinated=" + NativeCityClock.CoordinatesDrivenRides + ". Movement speed unchanged.");
             ResetAdvanceDiagnostics();
-            saveEpoch = new SaveEpochBinding(save, save.modData, prepared.EpochSequence);
+            lastSaveEpoch = saveEpoch = new SaveEpochBinding(save, save.modData, prepared.EpochSequence);
             GlobalEvents.onSaveGame += Save;
             GlobalEvents.onGameUnloaded += Shutdown;
             subscribed = true;
