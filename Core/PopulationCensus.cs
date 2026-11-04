@@ -32,8 +32,7 @@ namespace PersistentCity.Core
         public const int TripsPerAnchoredDay = 2;
         // Plan Q1 default: visitors arrive by subway and walk; no road portals or visitor cars.
         public static readonly bool VisitorsDrive = false;
-        // Plan Q2 default: keep HousingPolicy home sizes and its 90% fill unchanged.
-        public static readonly bool HousingPolicyUnchanged = true;
+        // Plan Q2 default: homes keep HousingPolicy bands and its 90% fill; the census reports that policy ID.
         // F6 contract C1: player-owned businesses are reported on their own flagged line and excluded
         // from assignable workplace capacity, because residents are not the player's native staff.
         public static readonly bool ExcludePlayerOwnedWorkplaces = true;
@@ -149,8 +148,11 @@ namespace PersistentCity.Core
                 return census.Refuse("stations " + input.StationIds.Count + " exceed " + PopulationCensusPolicy.MaximumStations);
 
             var kinds = new Dictionary<string, Place>(places.Count, StringComparer.Ordinal);
+            int homeCount = 0, dayPlaceCount = 0;
             foreach (var place in places)
             {
+                if (place != null && place.Kind == PlaceKind.Home) homeCount++;
+                else if (place != null && (place.Kind == PlaceKind.Work || place.Kind == PlaceKind.Study)) dayPlaceCount++;
                 if (place == null || string.IsNullOrEmpty(place.Id)) return census.Refuse("place without an ID");
                 if (place.Capacity < 0) return census.Refuse("negative capacity at " + place.Id);
                 if (!kinds.ContainsKey(place.Id)) kinds.Add(place.Id, place);
@@ -168,8 +170,9 @@ namespace PersistentCity.Core
                 byStudy.Add(workplace.StudyPlaceId, workplace);
             }
 
-            var occupancy = new Dictionary<string, int>(StringComparer.Ordinal);
-            var assigned = new Dictionary<string, int>(StringComparer.Ordinal);
+            // Sized once: at most one entry per occupied home or assigned day place.
+            var occupancy = new Dictionary<string, int>(Math.Min(homeCount, residents.Count), StringComparer.Ordinal);
+            var assigned = new Dictionary<string, int>(Math.Min(dayPlaceCount, residents.Count), StringComparer.Ordinal);
             foreach (var person in residents)
             {
                 if (person == null) return census.Refuse("null resident");
@@ -281,6 +284,7 @@ namespace PersistentCity.Core
             Line("policy", PopulationCensusPolicy.PolicyId);
             if (Refused) { Line("refused", RefusalReason); return text.ToString(); }
             Number("places", Places);
+            Line("housing_policy", HousingPolicy.PolicyId);
             Number("homes", HomeInteriors); Number("beds", Beds); Number("resident_target", ResidentTarget);
             Number("residents", Residents); Number("households", Households);
             Number("over_band_homes", OverBandHomes); Number("residents_without_home", ResidentsWithoutHome);
