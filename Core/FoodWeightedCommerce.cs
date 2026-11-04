@@ -177,7 +177,7 @@ namespace PersistentCity.Core
             for (int scopeIndex=0; scopeIndex<scopes.Length; scopeIndex++)
             {
                 var scope=scopes[scopeIndex];
-                var b=scope.AlternativeKind==FoodAlternativeKind.Rival ? CaptureRival(scope.BusinessId,now) : market is IFoodCandidateMarket capture ? capture.CaptureBusiness(scope.BusinessId,now) : ReadBusiness(scope.BusinessId,now);
+                var b=scope.AlternativeKind==FoodAlternativeKind.Rival ? CaptureRival(scope.BusinessId,now,deadline) : market is IFoodCandidateMarket capture ? capture.CaptureBusiness(scope.BusinessId,now) : ReadBusiness(scope.BusinessId,now);
                 if(b==null || b.Id!=scope.BusinessId || b.PlaceId!=scope.PlaceId) continue; // no refill or replacement identity
                 // A smaller configured menu cannot silently discard offers or steal native demand.
                 // Held images retain their captured tuning. The native owner reconciles at its boundary.
@@ -362,6 +362,9 @@ namespace PersistentCity.Core
             out List<FoodBusiness> businesses,out List<FoodTravelQuote> quotes)
         {
             businesses=d.Shops.Select(CapturedBusiness).ToList();quotes=new List<FoodTravelQuote>();
+            // F6b: a rival's known lane load participates in feasibility, queue reasons and preference.
+            for(int i=0;i<d.Shops.Count;i++)
+                if(d.Shops[i].AlternativeKind==FoodAlternativeKind.Rival) businesses[i].NextServiceMinute=RivalNextService(d.Shops[i],d.OriginAt);
             foreach(var s in d.Shops)
                 if(s.Outward!=null && s.Return!=null) quotes.Add(new FoodTravelQuote {BusinessId=s.BusinessId,ConsumerId=meal.ResidentId,
                     IntentId=meal.IntentId,OriginPlaceId=stop.PlaceId,Minutes=s.Outward.Minutes,ReturnMinutes=s.Return.Minutes,Evidence="Captured complete walking paths"});
@@ -412,6 +415,10 @@ namespace PersistentCity.Core
                     deferObservation:true,capturedHours:shop.AlternativeKind==FoodAlternativeKind.Rival ? CapturedBusiness(shop).OpeningPlace : null))
                 {EndDecision(meal);Finish(meal,MealStatus.Missed,"Schedule or shop changed before departure");return;}
                 // Optional presentation changes only after a winner and its feasibility are committed.
+                // An existing-stop rival purchase enters Serving here, never through ArriveRival: its queued finish
+                // already includes the lane wait; the modeled sell-out applies to the period it finishes in.
+                if(atStop && shop.AlternativeKind==FoodAlternativeKind.Rival && SoldOut(shop.PlaceId,RivalType(shop),choice.ServiceEndsAt!.Value))
+                {RivalSellOutRefusals++;EndDecision(meal);Finish(meal,MealStatus.Missed,"Service unavailable on arrival");return;}
                 if(atStop) city.CancelOptionalStop(person.Identity.Id);
                 intent.Status=FoodIntentStatus.Travelling;intent.BusinessId=shop.BusinessId;intent.ProductId=d.ProductId;
                 choice.Reason="Chosen: weighted preference draw";

@@ -132,6 +132,20 @@ namespace PersistentCity.Core
         private RivalServiceLoad rivalLoad = new RivalServiceLoad();
         private bool SoldOut(string place, string businessType, double finish)
             => rivalLoad.Count(place, RivalServiceCalibration.Period(finish)) >= RivalSettings.MealPeriodUnits(businessType);
+        // Transient place -> native business type from observations already read; selects a per-type profile.
+        private readonly Dictionary<string, string> rivalTypes = new Dictionary<string, string>(StringComparer.Ordinal);
+        private string RivalType(FoodDecisionShop shop)
+        {
+            if (RivalSettings.RivalServiceProfiles.Count == 0) return "";
+            if (rivalTypes.TryGetValue(shop.PlaceId, out var type)) return type;
+            var observation = ObserveRival(shop.BusinessId); // only after a reload resumed a held decision
+            if (observation == null || observation.PlaceId != shop.PlaceId) return "";
+            rivalTypes[shop.PlaceId] = observation.BusinessType; return observation.BusinessType;
+        }
+        /// <summary>Choice-time queue knowledge: the derived earliest free estimated lane. Evaluated live at the
+        /// decision minute; the held image keeps its saved NextServiceAt == OriginAt contract unchanged.</summary>
+        private double RivalNextService(FoodDecisionShop shop, double at)
+            => Math.Max(at, rivalLoad.NextFree(shop.PlaceId, at, RivalSettings.Lanes(RivalType(shop))));
         private bool rivalResumeNeedsRefresh;
         private bool NeedsRivalPreparation(double minute) => (rivalResumeNeedsRefresh
             || RivalSettings.RivalChoiceWeight > 0 && minute / 1440 >= state.RivalStartsDay)
@@ -160,13 +174,18 @@ namespace PersistentCity.Core
             try { return (market as IRivalFoodMarket)?.ReadRival(id); }
             catch (Exception) { return null; } // Unavailable read evidence cannot authorize an outside payment.
         }
-        private FoodBusiness? CaptureRival(string id, double minute)
+        private FoodBusiness? CaptureRival(string id, double minute, double deadline)
         {
             var observation = ObserveRival(id);
             if (!RivalFoodTerms.Eligible(observation)) return null;
-            // Choice-time knowledge: a rival already sold out for this meal period is not an available offer.
+            rivalTypes[observation!.PlaceId] = observation.BusinessType;
+            // Choice-time knowledge: a rival sold out for every meal period a service could finish in before the
+            // deadline is not an available offer. A service that can finish after the next period starts stays.
             // The held image keeps its unknown-stock contract; nothing about the estimate is captured or saved.
-            if (SoldOut(observation!.PlaceId, observation.BusinessType, minute)) { RivalSellOutExclusions++; return null; }
+            double earliest = minute + RivalSettings.RivalAssumedServiceMinutes;
+            if (SoldOut(observation.PlaceId, observation.BusinessType, earliest)
+                && RivalServiceCalibration.Period(Math.Max(earliest, deadline)) == RivalServiceCalibration.Period(earliest))
+            { RivalSellOutExclusions++; return null; }
             var business = RivalFoodTerms.Capture(observation!, RivalSettings.RivalAssumedServiceMinutes);
             business.NextServiceMinute = minute;
             return business;
@@ -193,7 +212,7 @@ namespace PersistentCity.Core
             if (requireOpen && RivalFoodMemory.Closed(observation, minute)) failure = ShopExperience.Closed;
             if (!RivalFoodTerms.Eligible(observation) || failure.HasValue
                 || RivalFoodTerms.Fingerprint(observation) != terms) return false;
-            businessType = observation.BusinessType;
+            businessType = observation.BusinessType; rivalTypes[place] = businessType;
             if (!requireOpen) return true;
             // Completion needs membership only; only arrival needs the union's next-close boundary.
             if (captureHours) hours = new Place { WeeklyHours = observation.Hours.Select(h => new OpeningWindow { Day = h.Day, FromMinute = h.FromMinute, ToMinute = h.ToMinute }).ToList(), OpenMinute = 0, CloseMinute = 0 };

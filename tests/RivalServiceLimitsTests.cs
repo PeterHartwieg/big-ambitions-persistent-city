@@ -43,20 +43,30 @@ public sealed class RivalServiceLimitsTests
         External = "10" + RivalFoodTerms.Fingerprint(RivalOutflowTests.Observation()) };
 
     internal static (CitySimulator city, RivalOutflowTests.Market market, WeightedFoodChoiceTests.Planner paths) Crowd(
-        int residents, RivalFoodSettings settings, int representation = 1, int seed = 79)
+        int residents, RivalFoodSettings settings, int representation = 1, int seed = 79, int atRival = 0, bool player = false)
     {
         var places = new List<Place> { new() { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = residents },
             new() { Id = "s0", Name = "Rival", Kind = PlaceKind.Shop, Position = new Position(10, 0, 0) } };
+        if (player) places.Add(new Place { Id = "player", Name = "Player", Kind = PlaceKind.Shop, Position = new Position(10, 0, 0) });
         var identities = Enumerable.Range(0, residents).Select(i => new CitizenIdentity { Id = "r" + i, Name = "Resident " + i, Age = 30, Persona = Persona.Foodie });
         var state = Population.Create(identities, places, "rival-limits", "0.40.4", seed, 1440);
         foreach (var person in state.Citizens) { person.NextEventMinute = person.ActivityUntilMinute = 2870; person.Preferences.WalkingToleranceMetres = 5; }
+        // Existing-stop customers: already inside the rival on an ordinary shop stop for the whole day.
+        foreach (var person in state.Citizens.Take(atRival)) { person.PlaceId = "s0"; person.Activity = Activity.Shop; person.Phase = CitizenPhase.AtPlace; }
         state.Food = new FoodCommerceState { RepresentationFactor = representation, ChoiceStartsDay = 1 };
         var market = new RivalOutflowTests.Market();
         market.Rivals.Add(Rival, new FoodScope { AlternativeKind = FoodAlternativeKind.Rival, BusinessId = Rival, PlaceId = "s0", ProductId = FoodProducts.Croissant });
         market.Observations.Add(Rival, RivalOutflowTests.Observation(Rival, "s0"));
+        if (player)
+        {
+            state.Food.Shops.Add(new FoodScope { BusinessId = "player", PlaceId = "player", ProductId = FoodProducts.Croissant });
+            market.Players = new[] { new FoodBusiness { Id = "player", PlaceId = "player", MealsPerHour = 30,
+                Hours = Enumerable.Range(0, 7).Select(d => new OpeningWindow { Day = d, FromMinute = 0, ToMinute = 1440 }).ToList(),
+                Offers = new() { new FoodOffer { ProductId = FoodProducts.Croissant, Price = Money.FromCents(100), Units = 1000 } } } };
+        }
         var paths = new WeightedFoodChoiceTests.Planner();
         var city = new CitySimulator(state, paths);
-        city.AttachFoodMarket(market, rivalSettings: settings, campaign: new NoCampaign());
+        city.AttachFoodMarket(player ? new WithPlayer(market) : market, rivalSettings: settings, campaign: new NoCampaign());
         state.Food.ChoiceStartsDay = state.Food.AwarenessStartsDay = state.Food.RivalStartsDay = 1;
         return (city, market, paths);
     }
@@ -68,7 +78,8 @@ public sealed class RivalServiceLimitsTests
     {
         string wire = SaveCodec.Write(city.State); var read = SaveCodec.Read(wire);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-        var next = new CitySimulator(read.State!, paths); next.AttachFoodMarket(market, rivalSettings: settings, campaign: new NoCampaign());
+        var next = new CitySimulator(read.State!, paths);
+        next.AttachFoodMarket(next.State.Food!.Shops.Count > 0 ? new WithPlayer(market) : market, rivalSettings: settings, campaign: new NoCampaign());
         Assert.Equal(wire, SaveCodec.Write(next.State));
         Assert.Equal(city.RivalLoadImage(), next.RivalLoadImage());
         if (next.State.Food!.Residents.All(m => m.Decision == null)) next.InspectFoodAwareness("r0");
@@ -261,8 +272,9 @@ public sealed class RivalServiceLimitsTests
     }
 
     [Fact]
-    public void HeldDecisionReplaysCapturedTermsAndANewConfigOnlyAppliesAtArrivalOrANewContext()
+    public void HeldDecisionImageIsNeverRecapturedWhenAReloadChangesTheProfile()
     {
+        // The held image keeps its saved terms; nothing about lanes or units is captured into it (writer 25).
         var (city, market, paths) = RivalOutflowTests.Ready();
         city.InspectFoodAwareness("r");
         var meal = city.State.Food!.Residents.Single();
@@ -282,6 +294,109 @@ public sealed class RivalServiceLimitsTests
         Assert.Equal(1, after.Purchases); Assert.Equal(0, market.NativeBuys);
         Assert.True(market.Reads > reads);
     }
+    /// <summary>Known F6d dependency (docs/checks/f6b.md): writer 25 saves no per-commitment lane/unit terms, so a
+    /// travelling commitment meets the profile loaded at arrival. Same profile: byte-identical to no reload. Tighter
+    /// profile under contention: refused at arrival with no debit and no native write, never served beyond limits.</summary>
+    [Fact]
+    public void ReloadWithATighterProfileUnderContentionRefusesAtArrivalWithoutDebit()
+    {
+        var loose = Tight(lanes: 8, units: 100, service: 10);
+        var (city, market, paths) = Crowd(24, Copy(loose), representation: 2);
+        // Stop at the first boundary where a consumer travels to the rival and another was already paid this period.
+        bool found = false; double at = city.State.Minute;
+        while (!found && at < 2880)
+        {
+            at += 1; while (!city.AdvanceTo(at, 4).CaughtUp) { }
+            long period = RivalServiceCalibration.Period(at);
+            found = city.State.Food!.Residents.Any(m => m.Status == MealStatus.Travelling && m.TargetKind == FoodAlternativeKind.Rival)
+                && Paid(city).Any(r => RivalServiceCalibration.Period(r.CheckoutAt) == period);
+        }
+        Assert.True(found);
+        var travellers = city.State.Food!.Residents.Where(m => m.Status == MealStatus.Travelling && m.TargetKind == FoodAlternativeKind.Rival)
+            .Select(m => m.ResidentId).ToArray();
+        string checkpoint = SaveCodec.Write(city.State);
+        // Same profile: exactly the uninterrupted future.
+        var same = Reload(city, market, paths, Copy(loose));
+        Assert.Equal(Run(city, 2880, 5, 4), Run(same, 2880, 5, 4));
+        // Tighter profile: the travellers are refused at arrival, before any debit.
+        var read = SaveCodec.Read(checkpoint); Assert.Equal(SaveReadStatus.Loaded, read.Status);
+        var tight = new CitySimulator(read.State!, paths);
+        tight.AttachFoodMarket(market, rivalSettings: Tight(lanes: 8, units: 1, service: 10), campaign: new NoCampaign());
+        var spent = travellers.ToDictionary(id => id, id => tight.State.Food!.Residents.Single(m => m.ResidentId == id).LegacyExternalFoodSpent);
+        long period0 = RivalServiceCalibration.Period(at);
+        int paidBefore = Paid(tight).Count(r => RivalServiceCalibration.Period(r.CheckoutAt) == period0);
+        Run(tight, at + 15, 1, 4);
+        Assert.True(Counter(tight, "RivalSellOutRefusals") > 0);
+        foreach (var id in travellers)
+        {
+            var m = tight.State.Food!.Residents.Single(x => x.ResidentId == id);
+            if (m.Status != MealStatus.Paid) Assert.Equal(spent[id], m.LegacyExternalFoodSpent);
+        }
+        // Nothing further sells in the already sold-out period.
+        Assert.Equal(paidBefore, Paid(tight).Count(r => RivalServiceCalibration.Period(r.CheckoutAt) == period0));
+        Assert.Equal(0, market.NativeBuys);
+    }
+
+    /// <summary>Residents already inside a rival on a shop stop decide there and enter Serving without ArriveRival.
+    /// Their queued finish must include the lane wait, so concurrent service never exceeds the estimated lanes.</summary>
+    [Theory] [InlineData(1)] [InlineData(2)]
+    public void ExistingStopCustomersQueueOnEstimatedLanes(int lanes)
+    {
+        const int service = 30;
+        var (city, market, _) = Crowd(16, Tight(lanes, units: 10000, service: service), atRival: 16);
+        int maxConcurrent = 0;
+        string straight = Run(city, 2880, 1, 4, c => {
+            double now = c.State.Minute;
+            maxConcurrent = Math.Max(maxConcurrent, c.State.Food!.Residents.Count(m => m.Status == MealStatus.Serving
+                && m.TargetKind == FoodAlternativeKind.Rival && m.ServiceAt - service <= now && now < m.ServiceAt));
+            return c; });
+        long settled = Counter(city, "RivalSettlements");
+        Assert.True(settled > lanes, "settled " + settled);
+        Assert.InRange(maxConcurrent, 1, lanes);
+        var finishes = Paid(city).Select(r => r.CheckoutAt).OrderBy(t => t).ToArray();
+        for (int i = lanes; i < finishes.Length; i++) Assert.True(finishes[i] - finishes[i - lanes] >= service - 1, finishes[i] + " vs " + finishes[i - lanes]);
+        Assert.Equal(Money.FromCents(100 * settled), city.State.Food!.Residents.Aggregate(Money.Zero, (s, m) => s + m.LegacyExternalFoodSpent));
+        Assert.Equal(0, market.NativeBuys);
+        // Reload at every boundary, including held stop decisions, reproduces the same city.
+        var (again, market2, paths2) = Crowd(16, Tight(lanes, units: 10000, service: service), atRival: 16);
+        Assert.Equal(straight, Run(again, 2880, 1, 4, c => Reload(c, market2, paths2, Tight(lanes, units: 10000, service: service))));
+    }
+
+    /// <summary>Sell-out applies to the meal period a service finishes in, and never more than N finish in any period.</summary>
+    [Fact]
+    public void ExistingStopSellOutFollowsTheFinishingPeriod()
+    {
+        var (city, market, _) = Crowd(16, Tight(lanes: 8, units: 1, service: 30), atRival: 16);
+        Run(city, 2880, 1, 4);
+        var paid = Paid(city).ToArray();
+        Assert.NotEmpty(paid);
+        Assert.All(paid.GroupBy(r => RivalServiceCalibration.Period(r.CheckoutAt)), g => Assert.Single(g));
+        Assert.True(Counter(city, "RivalSellOutRefusals") + Counter(city, "RivalSellOutExclusions") > 0);
+        Assert.Equal(0, market.NativeBuys);
+    }
+
+    /// <summary>A rival whose estimated lanes are known busy at decision time is judged by its queue: residents at
+    /// home see the existing queue reasons and can choose the free player shop instead.</summary>
+    [Fact]
+    public void BusyRivalQueueParticipatesInChoiceAgainstAnAvailablePlayerShop()
+    {
+        var settings = Tight(lanes: 1, units: 10000, service: 30);
+        var (city, market, _) = Crowd(24, Copy(settings), atRival: 12, player: true);
+        int queueReasons = 0, playerWhileBusy = 0;
+        city.FoodDecisionObserved += trace => {
+            var rival = trace.Intent.Choices.Where(c => c.BusinessId == Rival).ToArray();
+            if (rival.Any(c => c.Reason == "Expected queue exceeds patience" || c.Reason == "Service and return do not fit available time"))
+            { queueReasons++; if (trace.Intent.BusinessId == "player") playerWhileBusy++; }
+        };
+        string straight = Run(city, 2880, 1, 4);
+        Assert.True(queueReasons > 0, "queue reasons " + queueReasons);
+        Assert.True(playerWhileBusy > 0, "player while busy " + playerWhileBusy);
+        Assert.True(market.NativeBuys > 0);
+        // The same choices replay after a reload at every boundary (held images keep NextServiceAt == OriginAt).
+        var (again, market2, paths2) = Crowd(24, Copy(settings), atRival: 12, player: true);
+        Assert.Equal(straight, Run(again, 2880, 1, 4, c => Reload(c, market2, paths2, Copy(settings))));
+    }
+
     static string RivalId(RivalOutflowTests.Market market) => market.Rivals.Keys.Single();
     static void Advance(CitySimulator city, double at) { while (!city.AdvanceTo(at, 1).CaughtUp) { } }
 
