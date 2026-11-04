@@ -75,6 +75,7 @@ namespace PersistentCity.Core
         {
             var draw = Draw(seed, personId);
             var appearance = donors[draw.Appearance];
+            // Frozen version-1 copy of the pc: remix name rule; keep it separate so a ResidentLifecycle change cannot move v1.
             string given = appearance.Name.Trim(), family = donors[draw.Surname].Name.Trim();
             int space = given.LastIndexOf(' ');
             if (space > 0) given = given.Substring(0, space);
