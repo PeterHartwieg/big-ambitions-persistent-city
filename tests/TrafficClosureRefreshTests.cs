@@ -7,7 +7,7 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-public sealed class TrafficClosureRefreshTests
+public sealed partial class TrafficClosureRefreshTests
 {
     private class Planner : IRoutePlanner, ITrafficRoutePlanner
     {

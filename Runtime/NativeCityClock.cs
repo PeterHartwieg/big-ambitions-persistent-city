@@ -14,8 +14,35 @@ namespace PersistentCity.Runtime
         private static Harmony? patches;
         private static object? save;
         private static Func<double>? nativeClock;
+        private static Func<double>? logicalClock;
+        private static Func<double, bool>? endingEpochDrained;
         private static Func<bool>? populationCaughtUp, economyActive;
         public static long HeldEconomySkipTicks { get; private set; }
+        public static long HeldOrdinaryTicks { get; private set; }
+        public static long BoundaryClips { get; private set; }
+        public static double WithheldMinutes { get; private set; }
+        public static double LagMinutes { get; private set; }
+        public static double MaximumLagMinutes { get; private set; }
+        public static bool AccountingLimited { get; private set; }
+        public static bool Refused { get; private set; }
+        private static long waitingSince, lastHeldAt;
+        public static double WaitingSeconds => waitingSince == 0 ? 0
+            : (System.Diagnostics.Stopwatch.GetTimestamp() - waitingSince) / (double)System.Diagnostics.Stopwatch.Frequency;
+        public static double MaximumRecoverySeconds { get; private set; }
+        public static bool PacingAffected => Refused || waitingSince != 0 || lastHeldAt != 0
+            && (System.Diagnostics.Stopwatch.GetTimestamp() - lastHeldAt) < 3L * System.Diagnostics.Stopwatch.Frequency;
+        public static void ObserveSimulationLag(double target, double logical)
+        {
+            LagMinutes = Math.Max(0, target - logical);
+            MaximumLagMinutes = Math.Max(MaximumLagMinutes, LagMinutes);
+        }
+        public static bool CheckInputEpoch(double native, double logical)
+        {
+            ObserveSimulationLag(AccountingClock.Target(native), logical);
+            Refused |= !AccountingClock.Compatible(logical, native);
+            if (endingEpochDrained != null && !endingEpochDrained(native)) Refused = true;
+            return !Refused;
+        }
         public static double Factor { get; private set; } = 1;
         public static bool CoordinatesDrivenRides { get; private set; }
         public static bool Active => patches != null && save != null && ReferenceEquals(save, SaveGameManager.Current);
@@ -25,7 +52,7 @@ namespace PersistentCity.Runtime
             && InstanceBehavior<UIs>.Instance?.timeMachine != null && !InstanceBehavior<UIs>.Instance.timeMachine.isRunning;
 
         public static void Start(object currentSave, double factor) => Start(currentSave, factor, null, null, null);
-        public static void Start(object currentSave, double factor, Func<bool>? readPopulationReady, Func<bool>? ownsEconomy, Func<double>? readNative)
+        public static void Start(object currentSave, double factor, Func<bool>? readPopulationReady, Func<bool>? ownsEconomy, Func<double>? readNative, Func<double>? readLogical = null, Func<double, bool>? readEndingEpochDrained = null)
         {
             if (double.IsNaN(factor) || double.IsInfinity(factor) || factor < .1 || factor > 1)
                 throw new ArgumentOutOfRangeException(nameof(factor), "GameClockFactor must be between 0.1 and 1.");
@@ -41,6 +68,9 @@ namespace PersistentCity.Runtime
                 // Calendar policy precedes boundary caps (including the rig's Priority.First
                 // run-until limiter), so a last partial tick still reaches its requested time.
                 installing.Patch(tick, prefix: new HarmonyMethod(typeof(NativeCityClock), nameof(TickPrefix)) { priority = Priority.First + 1 });
+                // Last, after calendar/ride/run-until caps. Never allow another local pace
+                // policy to undo the accounting hold. This prefix performs no simulation work.
+                installing.Patch(tick, prefix: new HarmonyMethod(typeof(NativeCityClock), nameof(AccountingPrefix)) { priority = Priority.Last });
                 // Optional adapter for the installed Driven Rides contract. Undo only its positive
                 // ride multiplier, preserving an explicit zero/held clock and all other tick patches.
                 var ride = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType("DrivenRides.Ride", false)).FirstOrDefault(t => t != null);
@@ -54,21 +84,54 @@ namespace PersistentCity.Runtime
                     CoordinatesDrivenRides = true;
                 }
                 Factor = factor; save = currentSave; patches = installing;
-                populationCaughtUp = readPopulationReady; economyActive = ownsEconomy; nativeClock = readNative; HeldEconomySkipTicks = 0;
+                populationCaughtUp = readPopulationReady; economyActive = ownsEconomy; nativeClock = readNative; logicalClock = readLogical;
+                endingEpochDrained = readEndingEpochDrained;
+                ResetDiagnostics();
             }
             catch { installing.UnpatchAll(Owner); CoordinatesDrivenRides = false; throw; }
         }
 
         private static void TickPrefix(ref float deltaTimeWithMultiplier)
         {
-            if (!Active || LoadScene.isLoading || deltaTimeWithMultiplier <= 0 || float.IsInfinity(deltaTimeWithMultiplier)) return;
-            if (ProcessingEconomySkip && populationCaughtUp != null && nativeClock != null)
+            if (!Active || Refused || LoadScene.isLoading || deltaTimeWithMultiplier <= 0 || float.IsInfinity(deltaTimeWithMultiplier)) return;
+            if (OrdinaryTick) deltaTimeWithMultiplier *= (float)Factor;
+        }
+        private static void AccountingPrefix(ref float deltaTimeWithMultiplier)
+        {
+            AccountingLimited = false;
+            if (!Active || LoadScene.isLoading || economyActive?.Invoke() != true || nativeClock == null || populationCaughtUp == null) return;
+            double native = nativeClock(), logical = logicalClock?.Invoke() ?? native;
+            // A bypassing clock writer or an old cross-epoch save has no replay-safe input image.
+            // Failure releases native time immediately. PopulationRuntime detaches at its
+            // next Update/save entry; never freeze the whole native city after refusal.
+            if (!CheckInputEpoch(native, logical)) return;
+            if (deltaTimeWithMultiplier <= 0) return;
+            float requested = deltaTimeWithMultiplier;
+            bool ready = !Refused && populationCaughtUp();
+            float allowed = AccountingClock.Limit(ready, native, requested);
+            AccountingLimited = allowed < requested;
+            WithheldMinutes += requested - allowed;
+            if (!ready)
             {
-                double allowed = EconomySkipClock.Limit(populationCaughtUp(), nativeClock(), deltaTimeWithMultiplier);
-                if (allowed == 0) HeldEconomySkipTicks++;
-                deltaTimeWithMultiplier = (float)allowed;
+                if (ProcessingEconomySkip) HeldEconomySkipTicks++; else HeldOrdinaryTicks++;
+                lastHeldAt = System.Diagnostics.Stopwatch.GetTimestamp();
+                if (waitingSince == 0) waitingSince = lastHeldAt;
             }
-            else if (OrdinaryTick) deltaTimeWithMultiplier *= (float)Factor;
+            else
+            {
+                MaximumRecoverySeconds = Math.Max(MaximumRecoverySeconds, WaitingSeconds);
+                waitingSince = 0;
+                // Quantization is diagnosed separately from workload backpressure. A fence
+                // every game minute must not keep the prominent workload notice alive.
+                if (AccountingLimited) BoundaryClips++;
+            }
+            deltaTimeWithMultiplier = allowed;
+        }
+        private static void ResetDiagnostics()
+        {
+            HeldEconomySkipTicks = HeldOrdinaryTicks = BoundaryClips = waitingSince = lastHeldAt = 0;
+            WithheldMinutes = LagMinutes = MaximumLagMinutes = MaximumRecoverySeconds = 0;
+            AccountingLimited = Refused = false;
         }
         private static void RidePrefix(float __0, out float __state) => __state = OrdinaryTick ? __0 : float.NaN;
         private static void RidePostfix(ref float __0, float __state)
@@ -79,7 +142,7 @@ namespace PersistentCity.Runtime
         {
             save = null;
             try { patches?.UnpatchAll(Owner); }
-            finally { patches = null; Factor = 1; CoordinatesDrivenRides = false; nativeClock = null; populationCaughtUp = economyActive = null; HeldEconomySkipTicks = 0; }
+            finally { patches = null; Factor = 1; CoordinatesDrivenRides = false; nativeClock = logicalClock = null; endingEpochDrained = null; populationCaughtUp = economyActive = null; ResetDiagnostics(); }
         }
     }
 }

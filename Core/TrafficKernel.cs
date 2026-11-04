@@ -82,6 +82,15 @@ namespace PersistentCity.Core
         public double? NextEventTime => events.Count == 0 ? (double?)null : events.Min!.At;
         public double NextEventMinute => NextEventTime ?? double.PositiveInfinity;
 
+        // New observations can schedule work at Clock. Publish the new epoch first,
+        // retaining events exactly at its boundary without executing them or skipping old work.
+        internal void BeginObservationEpoch(double minute)
+        {
+            RequireTime(minute, nameof(minute));
+            if (minute < Clock || NextEventMinute < minute) throw new InvalidOperationException("Unfinished traffic epoch.");
+            Clock = minute; RequestedTime = Math.Max(RequestedTime, minute);
+        }
+
         public TrafficKernel(IEnumerable<TrafficLinkDefinition> network, double initialClock = 0)
         {
             RequireTime(initialClock, nameof(initialClock));

@@ -488,10 +488,12 @@ public sealed partial class FoodCommerceTests
         while (!city.IsCaughtUpTo(target))
         {
             Assert.True(++frames < 100000);
-            double step = EconomySkipClock.Limit(city.IsCaughtUpTo(clock), clock, target - clock);
+            float step = AccountingClock.Limit(city.IsCaughtUpTo(AccountingClock.Target(clock)), clock, (float)(target - clock));
             if (step == 0) held++;
-            clock += step; actual.EarliestMinute = Math.Floor(clock / 60) * 60;
-            city.AdvanceTo(clock, eventBudget);
+            clock = Math.Floor(clock / 60) * 60 + (float)((float)(clock % 60) + step);
+            actual.EarliestMinute = Math.Floor(clock / 60) * 60;
+            Assert.True(city.BeginAccountingObservations(clock));
+            city.AdvanceTo(Math.Max(city.State.Minute, AccountingClock.Target(clock)), eventBudget);
         }
         Assert.True(held > 0); Assert.NotEmpty(actual.Orders);
         Assert.Equal(expected.Orders, actual.Orders);

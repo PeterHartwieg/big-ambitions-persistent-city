@@ -39,16 +39,27 @@ namespace PersistentCity.Runtime
                 economyLabel ??= new GUIStyle(GUI.skin.label) { wordWrap = true, fontSize = 16 };
                 string message = failed ? "Persistent City is paused. " + status
                     : simulation != null && ReferenceEquals(saveIdentity, SaveGameManager.Current)
-                        ? "Persistent City is preparing city routes. Resident demand starts automatically when ready. Ctrl+F8 opens food business feedback."
-                        : "Persistent City: " + (status.Length == 0 ? "Preparing the city." : status);
+                        ? PreparingAccountingText
+                        : NativeCityClock.Active ? PreparingAccountingText : "Persistent City: " + (status.Length == 0 ? "Preparing the city." : status);
                 GUI.Label(new Rect(30, 28, Math.Min(740, Screen.width - 60), 68), message, economyLabel);
                 return;
             }
             if (simulation == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current)) return;
+            GUI.depth = -10000;
+            if (NativeCityClock.PacingAffected && !showEconomy)
+            {
+                economyLabel ??= new GUIStyle(GUI.skin.label) { wordWrap = true, fontSize = 16 };
+                GUI.Box(new Rect(20, 20, Math.Min(760, Screen.width - 40), 82), "");
+                GUI.Label(new Rect(30, 28, Math.Min(740, Screen.width - 60), 68), AccountingStatusText(), economyLabel);
+            }
+            else if (NativeCityClock.BoundaryClips > 0 && !showEconomy)
+            {
+                // Quiet baseline status; reserve the large card for actual workload holds.
+                GUI.Label(new Rect(20, 20, Math.Min(760, Screen.width - 40), 22), BoundaryAccountingText);
+            }
             var input = Event.current;
             if (input.type == EventType.KeyDown && input.control && input.keyCode == KeyCode.F8)
             { showEconomy = !showEconomy; nextEconomyText = 0; input.Use(); }
-            GUI.depth = -10000;
             if (showEconomy) DrawEconomy(); else economyRect = default;
             if (!inspectorFailed) inspector.Draw();
         }
@@ -82,6 +93,12 @@ namespace PersistentCity.Runtime
             var city = simulation!.State; var food = city.Food!;
             var text = new StringBuilder(); int day = (int)(city.Minute / 1440);
             text.AppendLine("Day " + day + " · " + city.Citizens.Count + " physical residents · " + food.Residents.Count + " represented consumers");
+            text.AppendLine("Accounting lag " + NativeCityClock.LagMinutes.ToString("F3", CultureInfo.InvariantCulture)
+                + " game minutes; calendar holds " + NativeCityClock.HeldOrdinaryTicks + " ordinary / " + NativeCityClock.HeldEconomySkipTicks
+                + " skip ticks. Configured calendar factor " + NativeCityClock.Factor.ToString("F3", CultureInfo.InvariantCulture) + ".");
+            text.AppendLine("Calendar boundary caps " + NativeCityClock.BoundaryClips + "; requested game minutes withheld "
+                + NativeCityClock.WithheldMinutes.ToString("F3", CultureInfo.InvariantCulture) + ". Holds and boundary caps extend wall time; they are not repaid by speeding up.");
+            if (NativeCityClock.PacingAffected) text.AppendLine(AccountingStatusText());
             if (food.MealRhythmVersion != 0) text.AppendLine("Breakfast, lunch and dinner follow each resident's waking hours and preferences. All meals share one wallet; eating at home remains an option.");
             text.AppendLine("Each consumer has a separate budget for bills, food at home and prepared meals. Workplaces and travel patterns shape nearby demand.");
             int uncertain = food.Residents.Count(m => m.Status == MealStatus.Uncertain);

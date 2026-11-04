@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><Nullable>enable</Nullable><TreatWarningsAsErrors>true</TreatWarningsAsErrors></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Runtime/NativeCityClock.cs" Link="NativeCityClock.cs" />
+    <Compile Include="../../Runtime/AccountingStatus.cs" Link="AccountingStatus.cs" />
+    <Compile Include="../../Runtime/AccountingRecovery.cs" Link="AccountingRecovery.cs" />
+    <Compile Include="../../Runtime/PopulationLifecycle.cs" Link="PopulationLifecycle.cs" />
+    <ProjectReference Include="../../Core/PersistentCity.Core.csproj" />
+    <ProjectReference Include="../../Persistence/PersistentCity.Persistence.csproj" />
+  </ItemGroup>
+</Project>

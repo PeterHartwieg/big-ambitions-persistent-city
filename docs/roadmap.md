@@ -34,6 +34,8 @@ Later: residents as employees, households.
 
 Implementation plan for B–E: [memory, marketing, rivals and the wider street](plans/steps-b-e.md).
 
+City-audit F1 implements [minute-epoch accounting coordination](plans/f1-accounting-boundary.md), ordinary/skip backpressure, safe boundary observations and PC stop/native-clock release on a lost epoch, with writer 25 unchanged. [Offline evidence and automated batched-rig handoff](checks/f1-accounting-backlog.md); native proof and complete mod-work/whole-frame cost remain merge blockers. F3 retains individual bulk/route work ownership.
+
 E3 pizza status (offline): [STOP record](plans/e3-pizza.md); pinned conditional shared probe, shipped holder unestablished, no menu/gameplay/save change. [Validation and 6 Nov handoff](checks/e3-pizza.md).
 E3 remaining batch status, 2 November (offline): Peter chose one batch of remaining E3 records; [all six named candidates STOP](plans/e3-remaining-batch.md), isolated probes only, no menu/gameplay/save change; drinks/bundles/carts remain deferred. [Checks and 6 Nov handoff](checks/e3-remaining-batch.md).
 
@@ -75,6 +77,8 @@ Applies to every step A–E slice re-measure and to the final release:
 ### Perf wins log
 
 Record every taken win with before/after numbers.
+
+- City-audit F1 — [Elapsed-time frame caps and cached pacing text](perf/f1-accounting-backlog.md): matched 960-resident queue at 30 simulated FPS, 60 -> 30 frames / 2 -> 1 simulated seconds, byte-identical state; 1,200 visible text requests 499,200 -> 16,640 B / 1,200 -> 40 builds; R1 removes the wasted crossing tick (8-hour zero-work skip 960 -> 481 ticks), restores the 120 FPS 16-start/2 ms floor and quantifies remaining pacing cost; R2 quiet baseline text 16,640 -> 0 B / 40 -> 0 builds per 1,200 requests (GUI excluded); offline components, no native whole-frame gate claim.
 
 - City-audit F3 — [Reusable posting heap, pre-sized campaign capture and bounded work](perf/pc-f3-bounded-bulk-work.md): 48 B/posting -> no recurring node allocation; matched complete-day work 3.2406/15.7399/87.1907 -> 0.9100/5.1148/22.4029 ms at 1,914/10,000/100,000 consumers; 64-scope capture 141,472 -> 138,392 B/boundary. Exact replay hashes match; 49 stress advancement intervals >=30 ms remain flagged. R1 restores 1,024-candidate campaign coverage with resumable publication and time-aware route admission (16-path safety ceiling); native-double 957-plan burst drains at 30/60 FPS, native capture p95 6.1153 ms remains above gate. Offline only; [status and five automated next-batch rig checks](checks/pc-f3-bounded-bulk-work.md).
 

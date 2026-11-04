@@ -187,6 +187,7 @@ namespace PersistentCity.Core
         public double NextMinute => pendingDecision?.Decision?.OriginAt
             ?? Math.Min(NextBudgetMinute, due.Count == 0 ? double.PositiveInfinity : due.Min!.DueAt);
         internal IFoodMarket Market => market;
+        public long HistoricalClockMisses { get; private set; }
         internal ResidentMeal? FindMeal(string consumerId) => records.TryGetValue(consumerId, out var meal) ? meal : null;
         internal FoodCommerce(CitySimulator city, IFoodMarket market, IRoutePlanner routes, FoodChoiceSettings? choiceSettings = null, FoodMemorySettings? memorySettings = null, FoodAwarenessSettings? awarenessSettings = null, IFoodAwarenessProvider? memory = null, IFoodAwarenessProvider? campaign = null, RivalFoodSettings? rivalSettings = null)
         {
@@ -330,7 +331,7 @@ namespace PersistentCity.Core
             else if (now < market.EarliestMinute)
             {
                 // Native inventory is current, never replay sales into a historical day/hour.
-                if (Active(meal)) Finish(meal, MealStatus.Missed, "Native clock passed the purchase window");
+                if (Active(meal)) { HistoricalClockMisses++; Finish(meal, MealStatus.Missed, "Native clock passed the purchase window"); }
                 meal.DueAt = Math.Max(meal.DueAt, market.EarliestMinute);
             }
             else if (meal.Status == MealStatus.Pending)

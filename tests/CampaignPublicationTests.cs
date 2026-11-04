@@ -95,4 +95,32 @@ public sealed class CampaignPublicationTests
         Assert.True(source.HasPendingPublication);
         while(source.HasPendingPublication) {city.AdvanceFrameSlice(minute,1);Assert.Equal(0,market.Reads);}
     }
+    [Fact]
+    public void PendingPublicationHoldsTheClockWithoutCountingAsUnfinishedPreviousEpochWork()
+    {
+        // F1/F3 merge rule: an hour-boundary publication is current-epoch work. It must hold native
+        // time (IsCaughtUpTo) but must not make the epoch-drain check refuse and stop accounting.
+        var state=EconomyScenario.Create(1,23);state.Food=EconomyScenario.Food();
+        var market=new EmptyMarket();var source=new FoodCampaignSource(state.Food,23,new());
+        var city=new CitySimulator(state,new Routes());city.AttachFoodMarket(market,campaign:source);
+        double minute=state.Minute; Assert.True(minute>0 && minute==Math.Floor(minute));
+        Assert.True(city.IsAccountingEpochDrained(minute));
+        bool caughtUpBefore=city.IsCaughtUpTo(minute);
+        source.EnqueuePublication(Snapshot(65,30),Enumerable.Range(0,65).ToDictionary(i=>"b:"+i,i=>"p:"+i));
+        Assert.False(city.IsCaughtUpTo(minute));
+        Assert.True(city.IsAccountingEpochDrained(minute));
+        Assert.True(city.IsAccountingEpochDrained(minute+.5));
+        Assert.True(city.BeginAccountingObservations(minute));
+        Assert.Equal(minute,state.Minute);
+        int slices=0;
+        while(source.HasPendingPublication)
+        {
+            var result=city.AdvanceFrameSlice(minute,1); slices++;
+            // The publication unit runs before any food/citizen event and is not a citizen event.
+            Assert.Equal(1,result.FoodContinuationEvents);Assert.Equal(0,result.CitizenEvents);Assert.Equal(0,market.Reads);
+            Assert.True(city.IsAccountingEpochDrained(minute));
+        }
+        Assert.True(slices>1);Assert.Equal(1,source.Publications);
+        Assert.Equal(caughtUpBefore,city.IsCaughtUpTo(minute));
+    }
 }

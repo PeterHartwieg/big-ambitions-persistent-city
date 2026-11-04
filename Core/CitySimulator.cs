@@ -51,6 +51,7 @@ namespace PersistentCity.Core
         private readonly IRoutePlanner routes;
         public CityState State { get; }
         private FoodCommerce? food;
+        public long HistoricalClockMisses => food?.HistoricalClockMisses ?? 0;
         internal CitizenState? FindCitizen(string id) => citizenEvents.TryGetValue(id, out var entry) ? entry.Citizen : null;
         internal Place FindPlace(string id) => places[id];
         internal Position? FindPosition(string id) => places.TryGetValue(id,out var place) ? place.Position : (Position?)null;
@@ -171,10 +172,48 @@ namespace PersistentCity.Core
         public bool IsCaughtUpTo(double targetMinute) => Position.Finite(targetMinute)
             && State.Minute >= targetMinute && NoEventsThrough(targetMinute);
 
-        private bool NoEventsThrough(double targetMinute) => pending == null && food?.HasPendingDecision != true && food?.HasPendingCampaignPublication != true
+        /// <summary>Read-only startup/clock check, including saved food work before market attachment.
+        /// Minute equality at the predecessor alone cannot prove that the ending epoch drained.</summary>
+        public bool IsAccountingEpochDrained(double nativeMinute)
+        {
+            double target = AccountingClock.PreviousEpochTarget(nativeMinute);
+            if (Math.Floor(nativeMinute) == 0) return true; // No simulation events exist before minute zero.
+            return State.Minute >= target && NoEventsThrough(target, inspectSavedFood: true);
+        }
+        /// <summary>Publish a verified new epoch before closure, physical or save observations.
+        /// This executes no events and cannot forgive any unfinished previous-epoch work.</summary>
+        public bool BeginAccountingObservations(double nativeMinute)
+        {
+            if (!AccountingClock.Compatible(State.Minute, nativeMinute) || !IsAccountingEpochDrained(nativeMinute)) return false;
+            double epoch = Math.Floor(nativeMinute);
+            if (traffic != null && traffic.Clock < epoch) traffic.BeginObservationEpoch(epoch);
+            if (State.Minute < epoch)
+            {
+                // This boundary was implicit in the predecessor clock. Publish its calendar
+                // capability fact too, or deriving the next midnight from the new clock would
+                // skip it. No citizen, meal, budget, traffic or native transaction executes here.
+                if (!State.Capabilities.Active && Math.Floor(State.Minute / 1440) < Math.Floor(epoch / 1440))
+                    State.Capabilities.Active = true;
+                State.Minute = epoch; SynchronizeSnapshot();
+            }
+            return true;
+        }
+        private bool SavedFoodAfter(double target)
+        {
+            foreach (var meal in State.Food!.Residents)
+                if (meal.DueAt <= target || meal.Decision != null && meal.Decision.OriginAt <= target
+                    || meal.Budget != null && meal.Budget.NextPostingMinute <= target) return false;
+            return true;
+        }
+        private bool NoEventsThrough(double targetMinute, bool inspectSavedFood = false)
+            // A queued campaign publication belongs to the epoch that observed its hour boundary.
+            // It holds native time (IsCaughtUpTo) but is never unfinished previous-epoch work.
+            => (food?.HasPendingCampaignPublication != true || inspectSavedFood)
+            && (pending == null || inspectSavedFood && pending.Item.Minute > targetMinute)
+            && (food?.HasPendingDecision != true || inspectSavedFood && food!.NextMinute > targetMinute)
             && (due.Count == 0 || due.Min!.Minute > targetMinute)
             && (traffic == null || traffic.NextEventMinute > targetMinute)
-            && (State.Food == null || (food != null && food.NextMinute > targetMinute))
+            && (State.Food == null || (food != null ? food.NextMinute > targetMinute : inspectSavedFood && SavedFoodAfter(targetMinute)))
             && (State.Capabilities.Active || (Math.Floor(State.Minute / 1440) + 1) * 1440 > targetMinute);
 
         private AdvanceResult AdvanceCore(double targetMinute, int eventBudget, bool publishSnapshot)
