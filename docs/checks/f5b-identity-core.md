@@ -54,7 +54,23 @@ Re-read at `dc59049` before relying on them: `FoodCommerce.cs:166-167` (stale "s
 
 ## Validation run
 
-RESULTS_PLACEHOLDER
+Offline only, on this PC, 4 November 2026, with the code at `355d345` (later commits on this branch change only documentation). Each `dotnet test`/`dotnet run` waited for `wait-other-dotnet.ps1` first; nothing ran in game or on the rig.
+
+**Implementer's run (sequential, one command at a time):**
+
+- `python tools/build.py --game-managed "<Steam>/Big Ambitions_Data/Managed"`: exit 0.
+- `dotnet test tests/PersistentCity.Tests.csproj`: **2,934 passed, 0 failed, 0 skipped** (1 min 55 s), including the 78 F5b cases in `tests/PersonIdentityTests.cs`.
+- `dotnet test tests/PersistentCity.Tests.csproj --no-build --list-tests`: exit 0, 2,925 entries listed. Discovery lists fewer entries than the 2,934 executed cases because some `Theory` rows expand only at run time.
+- Exit 0 for every other required command:
+  - `dotnet run --configuration Release` for `core-identity`, `diagnostic-response`, `event-observation`, `food-catalogue`, `food-checkout`, `food-hours`, `food-household-catalogue`, `food-ownership`, `food-supply`, `frame-observation`, `gate-access`, `road-ceiling`, `road-handoff`, `road-invalidation`, `road-speed`, `route-discovery`, `save-contract`, `startup-clock`, `traffic-closure`, `traffic-queue`, `walking-quote`, `campaign-reader`, `donut`/`cupcake`/`salad`/`icecream`/`frenchfries`/`pizza` feasibility, `rival-outflow`, `awareness`, `food-candidate`, `rival-memory`, `e4-menu`, `e3-remaining-feasibility`, `e5a-eligibility`, `food-metadata`, `name-identity`, `e5b-complete-menu`, `food-metadata-api`, `accounting-backlog` and `bounded-bulk`;
+  - `tools/simulate -- 28 build/harness-demo`, `tools/food-routines -- build/harness-food-routines-demo 957` and `tools/food-demand -- build/harness-food-demand-demo`;
+  - the Python checks `native-command`, `physical-selection`, `vehicle-ownership` and `optional-stop` (`run.py`), the donut/salad/icecream/frenchfries/pizza/e3-remaining/e5a/food-metadata-api `source_checks.py`, `rival-memory-regression/validate.py` (exit 0 as a separate step), `run-d3a-checks.py` and the `e5b-native-rig-proof` unittest discovery.
+- `python tools/food-metadata-regression/validate.py`: **exit 1**. Its nested call to `tools/rival-memory-regression/validate.py` failed when one child process could not start: exit 3221225794 (`0xC0000142`, `STATUS_DLL_INIT_FAILED`), 0 output bytes, while sibling worktrees were running dotnet loads on the same PC. No assertion failed, and the same `rival-memory-regression/validate.py` passed as its own matrix step. A standalone rerun was interrupted before it finished, so **this check has no passing result on this head yet**.
+- `dotnet run --project tools/identity-core-measure --configuration Release`: PASS (0 B warm validator and `Draw` allocation); numbers in *Performance*.
+
+**Reviewer-observed (round 1, separate run):** Core Release build with 0 warnings and 0 errors; `tests/PersistentCity.Tests.csproj` 2,934 passed, 0 failed; `tools/identity-core-measure` Release build clean.
+
+**Not run:** nothing native. The four in-game checks below are for the next batched rig and have not been executed.
 
 ## Performance
 
