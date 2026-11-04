@@ -265,11 +265,6 @@ namespace PersistentCity.Persistence
             MarkFailed(AccountingStopStore.SaveEpochFailed);
         }
 
-        /// <summary>
-        /// Rule 9: detach while the bound GameInstance is still current writes both markers, so a later native
-        /// save of the same object is refused on load. A verified replacement (another or no current object)
-        /// writes nothing. Returns whether markers were written.
-        /// </summary>
         /// <summary>Initialization completed and the session is attached; publication is allowed from now on.</summary>
         public void CompleteInitialization()
         {
@@ -277,6 +272,11 @@ namespace PersistentCity.Persistence
             Initializing = false;
         }
 
+        /// <summary>
+        /// Rule 9: detach while the bound GameInstance is still current writes both markers, so a later native
+        /// save of the same object is refused on load. A verified replacement (another or no current object)
+        /// or a detach before initialization completed writes nothing. Returns whether markers were written.
+        /// </summary>
         public bool Detach(object? current)
         {
             if (Detached) return false;
