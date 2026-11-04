@@ -424,6 +424,7 @@ namespace PersistentCity.Core
                 {
                     meal.ServiceAt=choice.ServiceEndsAt.Value;meal.Status=MealStatus.Serving;meal.DueAt=meal.ServiceAt;
                     if(shop.AlternativeKind==FoodAlternativeKind.Player) ScopeAtPlace(shop.PlaceId)!.NextServiceAt=meal.ServiceAt;
+                    else rivalLoad.Admit(meal);
                 }
                 else
                 {
