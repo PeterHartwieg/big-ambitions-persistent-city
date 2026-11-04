@@ -34,6 +34,8 @@ Later: residents as employees, households.
 
 Implementation plan for B–E: [memory, marketing, rivals and the wider street](plans/steps-b-e.md).
 
+City-audit F6b implements [estimated rival service lanes and meal-period sell-out](plans/f6-economy.md) derived from saved state, with writer 25 unchanged; [offline evidence and automated batched-rig handoff](checks/f6b.md); not verified by rig.
+
 City-audit F1 implements [minute-epoch accounting coordination](plans/f1-accounting-boundary.md), ordinary/skip backpressure, safe boundary observations and PC stop/native-clock release on a lost epoch, with writer 25 unchanged. [Offline evidence and automated batched-rig handoff](checks/f1-accounting-backlog.md); native proof and complete mod-work/whole-frame cost remain merge blockers. F3 retains individual bulk/route work ownership.
 
 E3 pizza status (offline): [STOP record](plans/e3-pizza.md); pinned conditional shared probe, shipped holder unestablished, no menu/gameplay/save change. [Validation and 6 Nov handoff](checks/e3-pizza.md).
@@ -101,6 +103,7 @@ Record every taken win with before/after numbers.
 
 Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index line here. Keep before/after numbers and measurement limits in that file; sync/review-fix notes stay with the slice.
 
+- City-audit F6b — [Rival lane/sell-out cost, reconstruction and retained bytes; no win taken](perf/f6b.md).
 - C2b - [Campaign index reuse, canonical sorting, shared references, active-hour buffers and neutral marker cache](perf/c2b-campaign-awareness.md).
 - D2 — [Bounded rival choice, refresh and settlement measurements](perf/d2-rival-outflow.md).
 
