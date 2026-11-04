@@ -310,6 +310,10 @@ public sealed partial class FoodCommerceTests
         { Assert.DoesNotContain(paid, panel); Assert.DoesNotContain(paid, core); }
         // F6b owns the rival wording: one neutral constant, used by the panel and nowhere redefined.
         Assert.Equal("Rival availability: estimated", FoodFeedback.RivalEstimateLabel);
+        bool shareLine = FoodFeedback.FreeMealShareLine, suggestions = FoodFeedback.SuggestionLines;
+        Assert.False(shareLine); Assert.False(suggestions); // plan Q3/Q4 defaults
+        foreach (string advice in new[] { "add ", "consider", "should", "try " })
+            Assert.DoesNotContain(advice, weeks.Text() + money.Text(), StringComparison.OrdinalIgnoreCase);
         Assert.Contains("FoodFeedback.RivalEstimateLabel", panel);
     }
 

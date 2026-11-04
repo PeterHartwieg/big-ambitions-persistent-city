@@ -12,6 +12,10 @@ namespace PersistentCity.Core
     {
         /// <summary>Neutral rival label. F6b replaces this one constant with its service-limit wording.</summary>
         public const string RivalEstimateLabel = "Rival availability: estimated";
+        /// <summary>F6 plan Q3 default: nearby meal shares stay in paid research; the free panel shows none.</summary>
+        public const bool FreeMealShareLine = false;
+        /// <summary>F6 plan Q4 default: facts only (evaluated-offer causes and week deltas), no suggestion lines.</summary>
+        public const bool SuggestionLines = false;
         public const int WeekDays = 7;
         /// <summary>Equals the <see cref="FoodShopDay"/> retention (rows before day − 13 are removed), so the
         /// previous week is always inside the kept history.</summary>
