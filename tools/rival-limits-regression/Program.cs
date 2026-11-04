@@ -16,7 +16,7 @@ static class Program
         public Route Plan(Place a, Place b, double at, TravelPreferences p)
             => new Route { Legs = new() { new RouteLeg { From = a.Position, To = b.Position, Minutes = 1, Mode = TravelMode.Walk } } };
     }
-    sealed class Market : IFoodMarket, IFoodCandidateMarket, IFoodAwarenessRevision, IRivalFoodMarket, IFoodBusinessAuthority
+    sealed class Market : IFoodMarket, IFoodCandidateMarket, IFoodAwarenessRevision, IRivalFoodMarket, IFoodBusinessAuthority, ILocalFoodMarket
     {
         sealed class Batch : IDisposable { public void Dispose() { } }
         public readonly Dictionary<string, FoodScope> Rivals = new(StringComparer.Ordinal);
@@ -31,6 +31,8 @@ static class Program
         public bool IsCandidate(FoodScope scope) => Players.Any(p => p.Id == scope.BusinessId);
         public FoodBusiness? CaptureBusiness(string id, double minute) => Players.SingleOrDefault(p => p.Id == id);
         public bool CanServe(string id) => Players.Any(p => p.Id == id);
+        public FoodBusiness? ReadBusiness(string id, double minute) => CaptureBusiness(id, minute);
+        public IReadOnlyList<FoodBusiness> ReadLocal(Place origin, double minute, double tolerance, int maximum) => throw new Exception("All-shop read forbidden");
         public IReadOnlyList<FoodBusiness> Read(double minute) => throw new Exception("All-shop read forbidden");
         public FoodSale Buy(ResidentMeal meal, double minute)
         {
@@ -121,11 +123,11 @@ static class Program
             double start = load.NextFree("p", 1990, lanes);
             sink += start + load.Count("p", RivalServiceCalibration.Period(start + 5));
             load.Admit(m);
-            double ms = Stopwatch.GetElapsedTime(t).TotalMilliseconds; arriveBytes += GC.GetAllocatedBytesForCurrentThread() - b;
+            double ms = Stopwatch.GetElapsedTime(t).TotalMilliseconds; if (i >= 1000) arriveBytes += GC.GetAllocatedBytesForCurrentThread() - b;
             if (i >= 1000) arrive.Add(ms);
             b = GC.GetAllocatedBytesForCurrentThread(); t = Stopwatch.GetTimestamp();
             load.Paid(m);
-            ms = Stopwatch.GetElapsedTime(t).TotalMilliseconds; completeBytes += GC.GetAllocatedBytesForCurrentThread() - b;
+            ms = Stopwatch.GetElapsedTime(t).TotalMilliseconds; if (i >= 1000) completeBytes += GC.GetAllocatedBytesForCurrentThread() - b;
             if (i >= 1000) complete.Add(ms);
             load.Admit(m);
         }
@@ -214,15 +216,21 @@ static class Program
         var (straight, _) = Fixture(32, tight);
         while (!straight.AdvanceTo(2880, 4).CaughtUp) { }
         var (city, market) = Fixture(32, new RivalFoodSettings { RivalServiceLanes = 1, RivalMealPeriodUnits = 3, RivalAssumedServiceMinutes = 20 });
+        int calls = 0;
         for (double at = 1445; at <= 2880; at += 5)
             while (true)
             {
+                // Bounded: a reload that could never catch up must fail, not hang the harness.
+                Check(++calls < 100000, "reload loop makes progress");
                 bool caught = city.AdvanceTo(at, 4).CaughtUp;
                 string wire = SaveCodec.Write(city.State); var read = SaveCodec.Read(wire);
                 Check(read.Status == SaveReadStatus.Loaded, "reload");
                 var next = new CitySimulator(read.State!, new Paths());
                 next.AttachFoodMarket(market, rivalSettings: new RivalFoodSettings { RivalServiceLanes = 1, RivalMealPeriodUnits = 3, RivalAssumedServiceMinutes = 20 }, campaign: new NoCampaign());
                 Check(next.RivalLoadImage() == city.RivalLoadImage(), "reload rebuilds identical lanes and counts");
+                // The transient awareness index intentionally restarts on reload; finish it before the next
+                // saved boundary (as the unit tests do) instead of restarting its private build every call.
+                if (next.State.Food!.Residents.All(m => m.Decision == null)) next.InspectFoodAwareness("r0");
                 city = next;
                 if (caught) break;
             }
@@ -230,21 +238,23 @@ static class Program
         Check(CityState.CurrentSchema == 25, "writer 25 unchanged");
     }
 
+    static T Timed<T>(string label, Func<T> work)
+    { var t = Stopwatch.StartNew(); var r = work(); Console.Error.WriteLine(label + ": " + t.ElapsedMilliseconds + " ms"); return r; }
     static void Main(string[] args)
     {
-        Behaviour();
+        Timed("behaviour", () => { Behaviour(); return 0; });
         var result = new {
             note = "Detached Core wall time on this PC. Not in-game mod-work, whole-frame or native evidence.",
             writer = CityState.CurrentSchema,
             calibration = new { RivalServiceCalibration.ReferencePlayerMealsPerHour, defaultLanes = new RivalFoodSettings().Lanes(""),
                 defaultCeilingMealsPerHour = RivalServiceCalibration.CeilingMealsPerHour(new RivalFoodSettings().Lanes(""), 5),
                 defaultMealPeriodUnits = new RivalFoodSettings().MealPeriodUnits(""), bandPercent = RivalServiceCalibration.CalibrationBandPercent },
-            saturation = Saturation(),
-            arrivalCompletion = new[] { ArrivalCompletion(2, 2), ArrivalCompletion(8, 16) },
-            reconstruction = new[] { Reconstruction(1914, 64), Reconstruction(10000, 1024), Reconstruction(100000, 20000) },
-            retained = Retained(20000),
-            advancement = new[] { Advancement(957) },
-            dayAllocation = new[] { DayAllocation(8), DayAllocation(64) },
+            saturation = Timed("saturation", () => Saturation()),
+            arrivalCompletion = Timed("arrival", () => new[] { ArrivalCompletion(2, 2), ArrivalCompletion(8, 16) }),
+            reconstruction = Timed("reconstruction", () => new[] { Reconstruction(1914, 64), Reconstruction(10000, 1024), Reconstruction(100000, 20000) }),
+            retained = Timed("Retained", () => Retained(20000)),
+            advancement = new[] { Timed("Advancement", () => Advancement(957)) },
+            dayAllocation = Timed("day", () => new[] { DayAllocation(8), DayAllocation(64) }),
             checks
         };
         string json = JsonConvert.SerializeObject(result, Formatting.Indented);
