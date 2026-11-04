@@ -187,9 +187,8 @@ supply chains. These are outside boundaries (section 3.3).
 scheduled weekly minutes. Full attendance at the scheduled shifts then reproduces today's
 weekly income within rounding. Rounding remainders carry on the employment
 (exact-units accumulator), so no cents are lost or created. Support and pension stay daily
-postings, unchanged. Whether a non-attending worker falls back to support is decided as
-follows: support begins only after job loss. The plan does not let a worker collect support
-while employed and absent.
+postings, unchanged. Support begins only after job loss, so an employed worker who misses a
+shift earns nothing for it and does not collect support instead.
 
 ### 3.2 Calibrated rival competition (mod-owned estimates)
 
@@ -396,3 +395,304 @@ fixture later), F6b (rival calibration, independent of identity), F6c (feedback 
 existing history and per-consumer budgets). **Must wait for F5:** F6d (needs F5's identity
 schema and `PersonId`/`HouseholdId`/`WorkplaceId`), F6e (B3), F6f (B2/B4). F6g needs F6d for
 its journal shape. F6h runs last.
+
+## 4. Slice breakdown
+
+Effort is in focused engineer-days, including review and offline proof but excluding rig
+infrastructure. Each slice branches from the then-current `codex/persistent-city` once its
+prerequisites have merged. Slices are siblings, not a branch chain. Each implementation PR
+adds its own `docs/checks/<slice>.md`, `docs/perf/<slice>.md` and a numbered batched-rig list
+drawn from section 7. Offline success is not native proof.
+
+| Slice | Scope and effort | Offline/headless tests | Perf measurement | Schema | Dependencies / branching |
+| --- | --- | --- | --- | --- | --- |
+| **F6a — intervention harness and baseline** (slice 1), 2–3 days | `tools/economy-interventions` deterministic Core scenario runner. Uses the F1 supported fixture, timestamped inputs at epoch boundaries, six-week arms × 5 seeds plus controls (section 3.5), and JSON metrics. Records **today's** baseline, including the unlimited rival curve. No Runtime or Core behavior change. | Determinism: the same seed gives byte-identical metrics, including across a mid-run save/reload. Inputs mutate only at epoch boundaries. Conservation identity checked every day. A fault injection (a deliberately duplicated debit) must turn the ledger check red. | Harness runtime and allocation per simulated week at 1,914/4,000 consumers (tool cost only, no gate). | None | Independent. Can merge before F5. Touches only `tools/` and `tests/`. |
+| **F6b — rival service limits (mod-owned estimates)**, 2–4 days | `RivalFoodSettings` gains bounded `RivalServiceLanes`/`RivalMealPeriodUnits` profiles by business type. Transient lane schedule and period count. Refusals use the existing reasons and D4 memory. Labels on diagnostics and the D3a line. Reconstruction from saved outcomes and active meals. Owns `Core/RivalFood.cs` and rival settings; does not edit `FoodEconomyPanel.cs` (F6c adds the label text). | Queue/lane ordering; sell-out at exactly N; period reset; refusal before debit; no debit on refusal; reload mid-queue and mid-service rebuilds the same lanes and counts byte-for-byte; 30/60/120 cadence equivalence; config change only at a new decision context; held replay under old terms; rival ownership flip; no native rival write (reachability guard); estimate labels present. F6a before/after curves. | Arrival/complete cost p50/p95/max and allocation (target 0 B steady state). Attach-time reconstruction at 1,914/10,000/100,000 consumers. Retained bytes for 20,000 rivals. | None expected. Conditional: two integers in the held image if review requires replay of old terms (section 5). | Independent of F5. Sibling of F6a and F6c. |
+| **F6c — feedback v1**, 2–3 days | Panel: week-over-week per shop from the existing 14-day rows, top causes by meal/hour, rival estimate label, city money summary on the current per-consumer budgets. Incremental aggregates replace the O(consumers) panel scans. Inspector words for current budget states. Owns `Runtime/FoodEconomyPanel.cs` and inspector word tables. | Projections from fixture histories (golden text with invariant checks: numbers equal row sums, the week boundary is correct across the 14-day rollover, the partial first week is labeled); counters equal full rescans after every mutation, reload and migration; no paid-research fields (D3a type guard extended); strings built only on request. | Panel build cost at 1 / 64 / 1,024 shops. Before/after scan cost at 1,914/10,000/100,000 consumers. Hidden-panel cost 0 B and no calls. | None | Independent of F5. After F6b only for the rival label wording; can merge first with a neutral label. |
+| **F6d — economic ledger contract (inactive)**, 3–4 days | Persistence owner. Employment accrual tuple, extended owner accounts (`EmploymentIncome`, `Discretionary` plus watermark), dated outside-spending totals, change-journal shape. Strict reader; exact migration from F5's schema; inactive until F6e/F6f/F6g (E5d pattern). | Exact predecessor round-trip; migration preserves every id and money unit; future/unknown/duplicate/missing fields refused with originals kept; bounds and one-over refusal; conservation-identity overflow; record and character counts; projection back to the predecessor byte-identical. | Bytes/records added at E5d fixtures (957/5,000/50,000; CF32/CF64); read/write/migration latency, separate from the play gate. | **Yes**: one next-free version after F5 (and after F7 if F7 lands first). | Waits for F5's identity schema. Serializes with F7's schema slice (section 5). |
+| **F6e — attendance-based wages and employment feedback**, 3–4 days | L1–L4, L10: accrual at shift end, rounding carry, miss record, job-loss sensitivity, closure days. Midnight-crossing shifts settle on the posting heap. Diagnostic console command for a logical workplace closure, gated to the named disposable FT city. | Full attendance reproduces old weekly income within rounding; late/missed/closed shifts; shift across midnight; interruption and reload at every shift stage; exactly-once watermark; job-loss draw stability; 30/60/120 cadence equivalence; no native payroll path (reachability guard); conservation each day. F6a employment arms. | Per-shift accrual cost; posting-unit p95 unchanged at 1,914/10,000/100,000; zero steady-state allocation. | Uses F6d | After F5 (B3) and F6d. Sibling of F6f. |
+| **F6f — household resources and ordinary exchanges**, 3–5 days | B4 pooling policy (household reserve, per-person daily share) or person wallets per F5. C9 modeled paid visits with a bounded price table; L6 admission gate for paid destinations; dated outside-spending totals and a free total line; visitor endowment spending (C13). | No debit at player-owned places (ownership flips, reload, accounting hour); refusal before debit; exactly-once watermark; pooling never overdraws the reserve; visitors never pay housing; conservation; sustainability metrics in F6a arms; free output limited to totals (type guard). | Admission gate cost; owner lookup; zero steady-state allocation; panel line built only on request. | Uses F6d | After F5 (B2/B4) and F6d. Sibling of F6e. |
+| **F6g — change journal and feedback v2**, 2–3 days | Detects price/hours/staffed-counter/stock-out-day changes from the already captured managed-shop images at hourly accounting boundaries. Bounded journal (section 5). Panel before/after deltas with "mixed" marking. Household-strain and outside-spending lines from F6e/F6f. | Detection exactness vs fixture edits; no entry on unchanged reads; bound and eviction order (oldest first, counted); reload; ownership handoff clears the business's entries; overlapping changes marked; no PC write to the shop. | Boundary detection ≤ 16 shops per unit, p95 at 1,024 shops; panel build. | Uses F6d (journal shape) | After F6c and F6d. F6e/F6f only for their lines. |
+| **F6h — integrated multi-week acceptance and calibration**, 2–3 days | Runs every F6a family with all loops implemented, on the F5 population fixture. Sets thresholds and default profiles (rival lanes/units, job-loss k, C9 prices) from measurements. Cadence and body-cap equivalence. Final rig handoff list. | All section 3.5 tradeoff and recovery criteria; detail-independence (section 3.7); 100,000-consumer stress posting/advancement with F6 loops. | Full section 6 table; flagged ≥ 30 ms intervals attributed or retained as flagged. | None | Last. After F6b–F6g; composes with F1/F2/F3 fixtures. |
+
+**Parallelism.** F6a, F6b and F6c can start now, in parallel, with disjoint file ownership
+(tools/tests; rival Core/settings; panel/inspector). F6d starts when F5's identity schema has
+merged. F6e and F6f are siblings after F6d. F6g follows F6c and F6d. F6h is last. No F6 slice
+edits F5's identity/assignment code or F7's codec beyond F6d's own additive contract.
+
+## 5. Save schema and migration impact
+
+Against writer 25 (`Core/Model.cs:256`):
+
+| Slice | Schema need |
+| --- | --- |
+| F6a, F6c, F6h | None. |
+| F6b | None expected: rival load is derived from saved outcomes and active commitments. Conditional only: if held decisions must replay old estimate terms, two bounded integers join the held image in the next free version. Prefer folding them into F6d if F6b has not merged by F6d's shape freeze. |
+| F6d | **One additive version** carrying everything F6e/F6f/F6g persist. Inactive at merge. |
+| F6g | Uses F6d's journal shape. If the journal shape is not frozen with F6d, it takes a separate next-free version; a second F6 version is allowed, but not two formats under one number. |
+
+**Shape and migration (A2/E5d style).** The strict reader accepts exactly the predecessor
+schema's shape and the new version. It refuses unknown, future or duplicate fields, bad
+enums, out-of-range or noncanonical money tokens and over-bound collections, keeping the
+original payload untouched. Migration is exact: every `PersonId`/`HouseholdId`/`WorkplaceId`
+and every money unit is preserved. New accounts start at zero. `EmploymentIncome` starts at
+zero and existing `IncomeReceived` stays as "other income" history, so the conservation
+identity holds without reclassifying past money. No historical wage is recomputed from past
+attendance. A migration failure keeps the original payload and refuses the city. Projection
+back to the predecessor is byte-identical in tests. New modules start empty, with zero
+new spending until the slice that uses them has merged. A binary that cannot execute an F6
+capability recorded in the save refuses and preserves the payload (steps B–E capability rule).
+
+**Byte and record budget (ASCII, including field overhead).**
+
+| Location | Bound | Chars/bytes |
+| --- | --- | ---: |
+| Employment accrual tuple, per person with employment | Attended minutes of the current shift, unposted wage units, 14-day miss mask, day/shift watermark | ≤ 40 / person |
+| Owner account extension, per money owner | `EmploymentIncome`, `Discretionary`, visit watermark | ≤ 48 / owner |
+| Dated outside-spending totals | 14 rows × fixed categories, exact wide integers (D3a encoding) | ≤ 16,384 / city |
+| Change journal | ≤ 1,024 managed shops × ≤ 8 entries × ≤ 40 chars | ≤ 327,680 / city |
+
+Records: the per-person/per-owner tuples are fixed-width fields on existing records, so they
+add 0 records (the B0 fixed-tuple counting rule). The journal is charged itemwise (≤ 8,192
+records). Totals add ≤ 14 records.
+
+**Versus the codec caps.** The E5d CF32 composition budget is 223,716,156 B
+([E5d perf](../perf/e5d-name-identity-save.md)), and CF32 must stay within 85 % of the
+268,435,456-character cap, which is 228,170,137. That leaves **4,453,981 B** of headroom at
+today's saturated 50,000-resident composition. F6's worst case at 50,000 persons with
+per-person wallets is 50,000 × 88 + 344,064 = **4,744,064 B**, which **does not fit** that
+headroom by about 290 KB. F6d therefore must not freeze its shape on today's envelope.
+Before F6d freezes, its shape must be re-budgeted against the envelope after F5's
+consolidation (which removes or remaps the factor-two consumer budgets) and, if merged, F7's
+compact representation. If the composed CF32 fixture still exceeds 85 %, F6d reduces its
+optional parts first: journal entries per shop, then the miss mask width. It never drops an
+exact money field. Above any bound, a save write refuses and keeps the previous save, never
+truncating. F6 does not raise the 50,000-citizen, 4,000,000-record or 256 Mi caps; raising
+them is F5/F7 work.
+
+**Ordering with F5 and F7.** Numbers are allocated at implementation time, in merge order.
+
+1. **F5's identity schema comes first.** F6d references `PersonId`/`HouseholdId`/`WorkplaceId`
+   and cannot precede it.
+2. **F7's representation change and F6d are sequential, in either order.** Preferred: F7
+   first, because the byte finding above favors F6d landing on F7's compact representation.
+   If F6d lands first, F7 migrates F6d's fields exactly. If F7 lands first, F6d forward-merges
+   and adds its fields in F7's representation.
+3. **No combination.** F5, F6 and F7 have different owners and different freeze
+   prerequisites. One version per owner, one format per version. A conditional F6b held
+   addition joins F6d, not F5's version.
+
+## 6. Performance
+
+The standing gate applies to every slice: **mod-work p95 < 5 ms**, and every mod-work sample
+**≥ 30 ms** is flagged with count, condition and component. Whole-frame and presented-frame
+behavior is tracked separately and never certified by the mod-work union. F6 adds no frame
+participants. All new work runs in existing logical events, the F3 posting heap or
+already-existing accounting-boundary units.
+
+| Work | Expected cost and bound | Measured at |
+| --- | --- | --- |
+| F6b rival arrival/completion | O(lanes ≤ 8) array scan plus one dictionary lookup. Target ≪ 0.01 ms, 0 B steady state. | 1,914 / 10,000 / 100,000 consumers on the F3 matched replay fixture |
+| F6b attach-time reconstruction | O(current-day outcome records ≤ 3 × consumers). Off the frame path inside detached construction, or 1,024-record units if on the main thread. | Same sizes, plus 20,000 rivals |
+| F6c/F6g panel | Built only while open, every 3 s, from counters. Hidden: 0 calls and 0 B. Replaces today's O(consumers) scans (expected taken win). | 1 / 64 / 1,024 shops; 1,914 / 10,000 / 100,000 consumers |
+| F6e accrual | O(1) per shift end in an existing event. Midnight-crossing settlement in ≤ 32-posting units. | Posting-call p95 must stay at the F3 level (0.0208 / 0.0229 / 0.0111 ms at 1,914 / 10,000 / 100,000) within noise |
+| F6f admission gate and debit | O(1) in an existing admission event. | Same sizes |
+| F6g boundary detection | ≤ 16 managed shops per unit at the hourly boundary from captured images; no extra native reads. | 1,024 shops |
+| F6d save | Separate save latency (F7 owns save timing). | E5d fixtures 957 / 5,000 / 50,000 × factor 2/3, CF32/CF64 |
+
+The sizes reuse the audit `StepBudget` fixture
+([assets](../reviews/assets/2026-11-03-city-vision-audit/)), F3's matched 1,914/10,000/100,000
+fixture and E5d's save fixtures. The 50,000-person rows apply to saves; 100,000 consumers
+apply to posting and advancement stress. F6 code allows no per-frame reflection, catalogue
+or resident scans, LINQ in hot paths, or steady-state allocations. Debug strings are built on
+request only.
+
+**Parked hotspots.** Physical population, closure refresh, optional-stop refresh and save
+serialization stay parked. F6 takes none of them. F7 owns save serialization; F5 may own
+physical population selection. F6's only presentation-side change is the panel's scan
+removal, which is not one of the four.
+
+## 7. In-game checks for the batched rig
+
+Every check is executed by the headless agent rig
+([PeterHartwieg/big-ambitions-agent-rig](https://github.com/PeterHartwieg/big-ambitions-agent-rig),
+owned by the Coding Projects bot, read-only here) in one named disposable FT city, using
+reusable checkpoints. Existing interfaces, as recorded in the [E5 plan §8](e5-dynamic-products.md#8-fully-rig-automated-batched-in-game-proof),
+are: FT `state`/`save`/`load`/`time`/`money`/`console`/`shoot`/`ui`/`walk`; rig-ops
+`shop_fixture`, `shop_state`, `shop_log`, `rival` (prices/hours/owner readback), `weather`
+and `panel`; virtual mouse and `ui geometry`; and `rig flow run` with disposable fixture copies
+and the autosave guard. Those capabilities are built and await RIG-LIVE. Old-schema and large
+fixture saves are built in game by the rig with the earlier PC build (RIG-MODSET); the rig
+does not support older game builds. PC diagnostics read by the rig (ledger projection, rival
+load, wage accrual, journal) are implementation work in the owning slice. Diagnostic
+interventions are limited to the named disposable FT city (AGENTS.md fixture rule) and refuse
+elsewhere. Every performance window follows the autosave protocol: record the original
+setting, verify it is off before each window including after reload, keep saves outside
+windows, and restore it during cleanup.
+
+1. **Baseline ledger reconciliation** — rig-automated (existing capability: `rig flow run`,
+   FT `state`/`save`/`load`/`time`/`console`, `shop_fixture`, `shop_state`, `shop_log`;
+   pending rig capability: RIG-LEDGER independent daily native receipt/order/bank vs PC
+   ledger comparator). The rig runs 7 game days on a two-shop fixture. Each day it asserts
+   that the extended conservation identity holds for every owner, PC confirmed receipts
+   equal native sales units for managed shops, modeled outside totals equal watermarked
+   debits, there are zero duplicate receipts and zero `HistoricalClockMisses`, and native
+   statements are unchanged by PC reads.
+2. **Price intervention, 3 weeks** — rig-automated (existing capability: `shop_state`,
+   `shop_log`, FT `time`/`console`; pending rig capability: RIG-SHOPEDIT price edit on an
+   existing shop; RIG-CAMPAIGN multi-week unattended arms with per-day metric export). Week
+   1 baseline, week 2 at +25 % on one product, week 3 reverted, against a control checkpoint
+   copy. It asserts the direction of the purchase and revenue change matches F6a, the
+   journal entry and panel delta appear, recovery is reported, and accounting is exact.
+3. **Staffing intervention** — rig-automated (existing capability: `shop_state`, `shop_log`;
+   pending rig capability: RIG-SHOPEDIT staff removal/shift change; RIG-CAMPAIGN). Lunch staff
+   halved for one week. It asserts "no staffed counter" causes rise at lunch hours, B1 bad
+   visits are recorded, served meals do not rise, and the panel shows the cause by hour.
+4. **Hours intervention** — rig-automated (existing capability: `shop_state`, `shop_log`;
+   pending rig capability: RIG-SHOPEDIT hours; RIG-CAMPAIGN). Closing 2 h earlier for one
+   week. It asserts closed/late causes, demand moving to rivals or home, journal and
+   reacquisition at the native boundary, and no duplicate ending-hour orders.
+5. **Shortage intervention** — rig-automated (existing capability: `shop_state`, `shop_log`;
+   pending rig capability: RIG-SHOPEDIT set/zero stock; RIG-CAMPAIGN). Product zeroed for 3
+   lunches. It asserts stock causes, memory, journal "stock-out day", and no checkout against
+   zero stock.
+6. **Employment shock** — rig-automated (existing capability: FT `console`/`state`/`time`;
+   pending rig capability: RIG-CAMPAIGN). The F6e PC console command closes 10 % of logical
+   workplaces for one week in the FT city. It asserts no wages for closed shifts, closure days
+   rather than misses, a lower income-earned line, higher "unaffordable" causes at own shops,
+   recovery after reopening, and conservation.
+7. **Access intervention** — rig-automated (existing capability: `shop_fixture` for the
+   second-site arm, `shop_state`, `shop_log`; pending rig capability: RIG-ACCESS apply/revert a
+   native temporary street closure or shop door closure in the FT city with readback). It
+   asserts longer travel causes, fewer purchases at the far or closed site, workers on blocked
+   routes missing shifts (L1) with exact wage loss, and recovery.
+8. **Rival service limits** — rig-automated (existing capability: `rival` readback, FT
+   `console`/`state`; pending rig capability: RIG-RIVALFP read-only native fingerprint of
+   rival registration, prices, hours and finances before/after). A lunch rush next to a
+   rival. It asserts lane and sell-out refusals at the estimated counts, labels reading
+   "estimated", memory entries, more own-shop custom when the rival is full, and a
+   byte-identical rival native fingerprint (no native rival write).
+9. **Attendance and wage across save/reload** — rig-automated (existing capability: FT
+   `save`/`load`/`state`/`time`/`console`; pending rig capability: named-resident shift-stage
+   checkpoints: before arrival, mid-shift, after a midnight-crossing shift). It asserts
+   identical accrual, watermark, money and job state after reload, and no double wage.
+10. **Household sustainability soak** — rig-automated (existing capability: `rig flow run`,
+    FT `time`/`state`/`console`; pending rig capability: RIG-CAMPAIGN). Three game weeks
+    without intervention. It asserts that the arrears share, unfed days and p10 balance stay
+    within the F6h control band, that there is no runaway growth or collapse, and that
+    conservation holds every day.
+11. **Feedback UI** — rig-automated (existing capability: `panel`, `ui geometry`, virtual
+    mouse, FT `shoot`, FT `console`). After checks 2–7 it opens Ctrl+F8 and the inspector. It
+    asserts that the text equals the PC projection (week deltas, causes by hour, journal,
+    estimate labels, money lines), that no rival names, shares or paid-research fields appear,
+    and that layout clearance holds. Screenshots are retained. Closed panel: zero build calls.
+12. **Cadence and detail independence** — rig-automated (pending rig capability: RIG-CADENCE
+    fixed 30/60/120 rendered-FPS arms with scheduler-budget arms, shared with F1's pending
+    cadence arms, plus a body-cap 0 vs default arm). Same checkpoint and inputs for one game
+    day. It asserts byte-identical economic ledgers across cadence arms and the body-cap
+    difference within F2's declared bound (flagged, not passed, before F2).
+13. **Migration and refusal** — rig-automated (existing capability: FT `save`/`load`;
+    pending rig capability: RIG-MODSET build selection; bounded PC payload fault matrix in
+    copied FT checkpoints). The rig builds the predecessor-schema city in game with the
+    earlier PC build, saves it with in-flight purchases, shifts and visits, then loads it with
+    the F6d build. It asserts exact ids and money, no reclassified history, and an original
+    payload that is refused and preserved for future, unknown or over-bound variants.
+14. **Performance batch** — rig-automated (existing capability: `rig flow run` autosave guard,
+    FT `state`/`time`; pending rig capability: unified PC mod-work/whole-frame evidence
+    assertions). Breakfast, lunch and evening rush windows with all F6 loops, against the
+    matched pre-F6 checkpoint. It asserts mod-work p95 < 5 ms and flags every ≥ 30 ms sample
+    with its component. Whole-frame is recorded separately. Autosave is verified off before
+    every window.
+
+**Rig capability requests for Coding Projects** (short request texts):
+
+- **RIG-LIVE** (existing request) — first live verification of rig-ops, fixtures, flows and
+  the autosave guard. Prerequisite for checks 1–14.
+- **RIG-SHOPEDIT** (existing request) — edit an existing player shop's price, hours, staff and
+  stock with readback. Checks 2–5.
+- **RIG-MODSET** (existing request) — per-flow PC build selection with restore. Checks 13–14.
+- **RIG-CAMPAIGN** — "Run a multi-week unattended flow: copy a baseline checkpoint per arm,
+  apply timestamped interventions via existing ops, advance game time with time-machine or
+  6×, export a PC console metric JSON per game day, and fail on lost coverage." Checks 2–7
+  and 10.
+- **RIG-ACCESS** — "Apply and revert a native temporary street closure or shop door closure
+  in the FT city, with readback." Check 7.
+- **RIG-RIVALFP** — "Read-only fingerprint of a rival's native registration, prices, hours,
+  stock and finance fields, before and after." Check 8.
+- **RIG-LEDGER** — "Independent per-day native receipts, completed orders, bank and statement
+  reader compared with a PC ledger export." Shared with F1's pending comparator. Checks 1–7
+  and 13.
+- **RIG-CADENCE** — "Fixed rendered-FPS caps and scheduler-budget arms, plus a body-cap
+  override arm, for one matched checkpoint." Shared with F1/F2. Check 12.
+- **Shift-stage checkpoints** — "Pause and save at a named resident's shift stage." Check 9.
+
+## 8. Dependencies on the other plans
+
+| Plan | F6 needs (assumed contract) | F6 provides |
+| --- | --- | --- |
+| **F5 #92** | B1–B6 (section 3.8): `PersonId`, kind, `HouseholdId`, Workplace and employment schedule, one money owner, body independence, determinism. Its identity schema merged before F6d. Workplace assignment that excludes or flags player-owned businesses. | Wage, pooling and visitor-spending policies on F5's entities. Sustainability metrics validating F5's population consistency. The F6a harness accepts an F5 population fixture. |
+| **F7 #94** | Save representation and timing. A compact representation preferred before F6d (section 5). Exact migration of F6d fields if F7 lands after. | F6d's bounded per-person/per-owner/city shapes and byte numbers for F7's budget. No save-path work. |
+| **F1 #88** | Minute epochs, `IsCaughtUpTo`, boundary observations, no historical sales, cadence fixture and RIG-CADENCE/RIG-LEDGER. | New events inside epochs. Shared ledger comparator use. |
+| **F2 #89** | A declared bound on body-induced divergence for arrival. | Economic ledgers as one of F2's divergence measures (check 12). |
+| **F3 #90** | 32-unit posting heap ordering, bounded continuations. | No new unbounded unit. Midnight settlement through the existing heap. |
+| **F4 #91** | The integrated gate definition. | Per-event F6 costs and rush-window measurements (check 14). |
+| C4/C5 research | Stays off. Paid-research boundary. | Market-share computation exists as a diagnostic only, usable later as an entitled report input. |
+
+## 9. Questions for Peter
+
+Player-facing only. None blocks the plan. The recommended default ships if unanswered.
+
+| # | Question | Recommended default | If Peter picks the other option |
+| --- | --- | --- | --- |
+| Q1 | When a resident arrives late for work, are they paid for the minutes worked, or nothing for that shift? | Paid for minutes worked. | Whole-shift-or-nothing: stronger income swings from traffic. F6e changes one rule; the tuple gets smaller. |
+| Q2 | How tight should rivals feel? | Moderate: rivals queue and sell out at about the level of a typical comparable player shop (±25 %). | Generous (about 2×): rivals stay a strong fallback; player gains from rival saturation are smaller. Only F6b defaults change. |
+| Q3 | Should the free panel show your share of nearby meals, or keep shares in paid research as decided on 31 October? | Keep shares in paid research. The free panel shows own-shop causes, week deltas and city totals. | A free coarse "share of nearby meals" line in F6c. The D3a/31 October rule would need an explicit exception. |
+| Q4 | Facts only, or also suggestions such as "add lunch staff"? | Facts only (causes by hour, change deltas). The player draws the conclusion. | One suggestion line per shop in F6g; easier but shallower. |
+| Q5 | Should residents spend money on non-food shops and leisure outside your businesses, competing with their food budget? | Yes, as a labeled outside total. | Leisure stays free, food budgets stay larger, and F6f drops C9. |
+| Q6 | Should repeated missed work make job loss more likely? | Yes, mildly. | No link: employment stays random, and traffic affects income only through missed wages. |
+
+## 10. Risks and refusals
+
+**Risks, and how each fails safe:**
+
+- *Rival estimates mis-calibrated* (too tight or too loose). The defaults are config
+  profiles measured in F6a/F6h. Labels always say "estimated", and no native claim depends
+  on them. A bad profile changes balance, never accounting.
+- *Household collapse or runaway wealth after attendance wages.* F6h control-band thresholds
+  catch it offline before merge. Support after job loss is unchanged. Reserve rules are kept.
+- *Derived rival load disagrees after reload.* Exact reconstruction tests. On any
+  inconsistency, the rival is treated as unavailable for that period (refusal, no debit), not
+  as unlimited.
+- *Byte budget overrun* (section 5). F6d does not freeze until the composed fixture fits.
+  Writes above a bound refuse and keep the previous save.
+- *F5 differs from B1–B6.* Section 3.8 defines the fallback per baseline. F6d/F6e/F6f wait;
+  F6a–F6c are unaffected.
+- *Change-journal noise from native refreshes.* Entries come only from differences between
+  captured images at boundaries. Unchanged reads add nothing, which is tested.
+- *Rig capability gaps.* Checks stay pending under named capabilities. Offline results are
+  reported separately and never as native proof.
+- *Performance regressions.* Per-slice measurements; every ≥ 30 ms sample is flagged. A slice
+  that breaks the gate does not merge.
+
+**Refusals. F6 will not:**
+
+- replay historical purchases, back-date wages, or recompute past income from past attendance;
+- write native rival finances, stock, hours or staff, or claim inaccessible native rival stock;
+- credit or debit native payroll, rent, wholesale or business accounts from PC wallets;
+- book a modeled exchange at any player-owned place (C7/C10);
+- forgive, skip or late-post a wage or a visit to pay down backlog (F1);
+- use a stale background snapshot for economic state or saving (F7);
+- show free named-rival figures, market shares or city-wide trait distributions;
+- add a hardware- or detail-dependent fidelity tier;
+- modify RLO or True City Interiors, or report F6 status in any terms other than
+  "implemented" and, later, "verified by rig".
+
+## Verification boundary of this planning change
+
+Read AGENTS.md, CHECKS.md, README.md, `docs/roadmap.md`, `docs/design.md`, the steps B–E
+plan, the E5 plan, the F1 plan, the F3 checks, the E5d perf record, issues #93/#88/#90 and the
+merged audit. Inspected at `d6b534a` the source members cited in sections 2–5. No native API
+is introduced beyond members already read by existing adapters. No code, test, tool, config,
+schema, CHECKS, README or roadmap change. No build, `dotnet test`, `dotnet run`, game, rig,
+lease, profile, ModsLocal or bridge access. Validation for this file is the Git diff checks
+requested by the task.
