@@ -59,9 +59,12 @@ public static class EconomyRun
         var timer = System.Diagnostics.Stopwatch.StartNew();
         var (state, market) = EconomyFixture.Build(options.Seed, options.Residents, options.RivalListed, options.OwnListed);
         var routes = new EconomyRoutes(market);
+        var observer = new DecisionObserver();
         var city = EconomyFixture.Attach(state, market, routes, fresh: true);
+        city.FoodDecisionObserved += observer.Observe;
         double start = EconomyFixture.StartMinute;
-        long end = (long)start + (options.Days + 1) * 1440L + OutcomeSampleMinute;
+        // The last requested day ends at start + Days days; its outcomes are sampled at 03:00 after it.
+        long end = (long)start + options.Days * 1440L + OutcomeSampleMinute;
         var schedule = new InputSchedule(options.Inputs, start, end);
         var result = new RunResult();
         market.Enter((long)start);
@@ -77,7 +80,7 @@ public static class EconomyRun
             if (options.ReloadAt is double at && !reloaded && at != Math.Floor(at) && epoch - 0.5 >= at)
             {
                 Drain(city, epoch - 0.5);
-                if (InFlight(city) > 0) { city = Reload(city, market, routes, result); reloaded = true; }
+                if (InFlight(city) > 0) { city = Reload(city, market, routes, result, observer); reloaded = true; }
             }
             Drain(city, ending);
             bool drained = city.IsAccountingEpochDrained(epoch);
@@ -96,7 +99,7 @@ public static class EconomyRun
             }
             if (epoch % 1440 == OutcomeSampleMinute && pending.TryGetValue(day - 1, out var sample))
             {
-                Outcomes(city.State, day - 1, sample);
+                Outcomes(city.State, day - 1, sample, observer);
                 result.Days.Add(sample); pending.Remove(day - 1);
             }
             if (options.Fault == Fault.DuplicateNativeOrder && epoch == options.FaultDay * 1440L + 12 * 60)
@@ -106,9 +109,10 @@ public static class EconomyRun
             Require(city.BeginAccountingObservations(epoch), "observation epoch not published");
             result.Epochs++;
             if (options.ReloadAt is double whole && !reloaded && whole == epoch)
-            { city = Reload(city, market, routes, result); reloaded = true; }
+            { city = Reload(city, market, routes, result, observer); reloaded = true; }
         }
         Require(pending.Count == 0 && result.Days.Count == options.Days, "missing day samples");
+        Require(result.Epochs == end - (long)start, "unexpected epoch count");
         Require(options.ReloadAt == null || reloaded, "requested reload did not happen");
         result.FinalSaveSha256 = Sha256(SaveCodec.Write(city.State));
         result.Json = Write(options, schedule, result.Days);
@@ -123,7 +127,7 @@ public static class EconomyRun
         while (!city.AdvanceTo(target, 10000).CaughtUp) Require(++guard < 100000, "nonterminating epoch");
     }
 
-    private static CitySimulator Reload(CitySimulator city, EconomyMarket market, EconomyRoutes routes, RunResult result)
+    private static CitySimulator Reload(CitySimulator city, EconomyMarket market, EconomyRoutes routes, RunResult result, DecisionObserver observer)
     {
         result.InFlightAtReload = InFlight(city);
         string before = SaveCodec.Write(city.State);
@@ -131,7 +135,10 @@ public static class EconomyRun
         Require(read.Status == SaveReadStatus.Loaded, "reload refused: " + read.Error);
         Require(SaveCodec.Write(read.State!) == before, "reload round trip changed the save");
         result.Reloads++;
-        return EconomyFixture.Attach(read.State!, market, routes, fresh: false);
+        var next = EconomyFixture.Attach(read.State!, market, routes, fresh: false);
+        // The observer is harness state; it continues across the city reload.
+        next.FoodDecisionObserved += observer.Observe;
+        return next;
     }
 
     private static int InFlight(CitySimulator city) => city.State.Food!.Residents.Count(m => m.Decision != null
@@ -169,7 +176,10 @@ public static class EconomyRun
         metrics.EpochReadViolations = market.EpochReadViolations;
         metrics.OutsideLedgerUnits = (long)RivalOutflowHistory.Ledger(food);
         var view = food.Outflow?.Capture((int)(city.State.Minute / 1440));
-        metrics.WatermarkedOutflowUnits = (long)(view?.Units ?? 0);
+        metrics.WatermarkedOutflowWindowUnits = (long)(view?.Units ?? 0);
+        metrics.WatermarkedOutflowUnits = food.Outflow == null ? 0 : CumulativeWatermarked(food.Outflow);
+        if (metrics.WatermarkedOutflowUnits != metrics.OutsideLedgerUnits)
+            throw new LedgerViolation("cumulative watermarked outflow does not equal the outside ledger on day " + metrics.Day);
         if (market.DuplicateOrders != 0) throw new LedgerViolation("duplicate native receipt on day " + metrics.Day);
         if (prepared + uncertain != market.NativeRevenueUnits)
             throw new LedgerViolation("PC confirmed receipts do not equal native sales on day " + metrics.Day);
@@ -179,7 +189,18 @@ public static class EconomyRun
         if (market.EpochReadViolations != 0) throw new LedgerViolation("native read outside its epoch on day " + metrics.Day);
     }
 
-    private static void Outcomes(CityState state, int day, DayMetrics metrics)
+    /// <summary>Lifetime watermarked units: the history's baseline, expired rows and retained rows,
+    /// read from its public saved wire (the fourteen-day view alone is a rolling window).</summary>
+    public static long CumulativeWatermarked(RivalOutflowHistory history)
+    {
+        var fields = history.ToWire().Split('|');
+        var total = System.Numerics.BigInteger.Parse(fields[3], System.Globalization.CultureInfo.InvariantCulture)
+            + System.Numerics.BigInteger.Parse(fields[4], System.Globalization.CultureInfo.InvariantCulture);
+        foreach (var row in fields.Skip(6)) total += System.Numerics.BigInteger.Parse(row.Split(',')[1], System.Globalization.CultureInfo.InvariantCulture);
+        return (long)total;
+    }
+
+    private static void Outcomes(CityState state, int day, DayMetrics metrics, DecisionObserver observer)
     {
         foreach (var meal in state.Food!.Residents)
         {
@@ -194,8 +215,24 @@ public static class EconomyRun
                 else if (o.Status == MealOutcomeStatus.ChoseAlternative) metrics.HomeMeals++;
                 else if (o.Status == MealOutcomeStatus.Skipped) metrics.Skipped++;
                 else metrics.Unconfirmed++;
+                foreach (var business in observer.ConsideredBy(day, meal.ResidentId, o.Kind))
+                {
+                    if (!metrics.Catchments.TryGetValue(business, out var c)) metrics.Catchments[business] = c = new DayMetrics.CatchmentRow();
+                    c.Resolved++;
+                    if (o.Status == MealOutcomeStatus.Bought)
+                    {
+                        if (o.TargetKind == FoodAlternativeKind.Rival) c.Rival++;
+                        else if (o.PlaceId == EconomyFixture.PlaceOf(business)) c.ThisShop++;
+                        else c.OtherOwn++;
+                    }
+                    else if (o.Status == MealOutcomeStatus.ChoseAlternative) c.Home++;
+                    else if (o.Status == MealOutcomeStatus.Skipped) c.Skipped++;
+                    else c.Unconfirmed++;
+                }
             }
         }
+        foreach (var (key, offer) in observer.OffersOn(day)) metrics.Offers[key] = offer;
+        observer.Prune(day);
         foreach (var row in state.Food.History.Where(h => h.Day == day).OrderBy(h => h.BusinessId, StringComparer.Ordinal))
         {
             var s = new DayMetrics.ShopRow { Purchases = row.Purchases, RevenueUnits = row.Revenue.Units, Considered = row.OffersConsidered,

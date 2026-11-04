@@ -46,12 +46,19 @@ public sealed class DayMetrics
         ScheduledEmploymentUnits, Employed, JobLosses, JobFinds, MissedActivities;
     // Accounting boundary.
     public long ConservationChecks, NativeOrders, NativeRevenueUnits, ConfirmedPreparedUnits, UncertainConfirmedUnits,
-        DuplicateOrders, HistoricalClockMisses, OutsideLedgerUnits, WatermarkedOutflowUnits, EpochReadViolations;
+        DuplicateOrders, HistoricalClockMisses, OutsideLedgerUnits, WatermarkedOutflowUnits, WatermarkedOutflowWindowUnits, EpochReadViolations;
     // Outcome sample (03:00 the next day).
     public long Resolved, OwnMeals, RivalMeals, HomeMeals, Skipped, Unconfirmed;
     public readonly long[] OutcomeMeals = new long[4];
     public readonly long[] RivalHours = new long[24];
     public readonly SortedDictionary<string, ShopRow> Shops = new(StringComparer.Ordinal);
+    // Section 3.5 catchment: meal opportunities whose decision evaluated the own business.
+    public readonly SortedDictionary<string, CatchmentRow> Catchments = new(StringComparer.Ordinal);
+    // Demand-side offer evidence per "business|product" from the decision observer.
+    public readonly SortedDictionary<string, OfferRow> Offers = new(StringComparer.Ordinal);
+
+    public sealed class CatchmentRow { public long Resolved, ThisShop, OtherOwn, Rival, Home, Skipped, Unconfirmed; }
+    public sealed class OfferRow { public long Considered, Feasible, Chosen; }
 
     public sealed class ShopRow
     {
@@ -63,6 +70,8 @@ public sealed class DayMetrics
     public long OwnPurchases => Shops.Values.Sum(s => s.Purchases);
     public long OwnRevenueUnits => Shops.Values.Sum(s => s.RevenueUnits);
     public long ProductPurchases(string product) => Shops.Values.Sum(s => s.Products.TryGetValue(product, out var p) ? p.Purchases : 0);
+    public long ProductOffers(string product, Func<OfferRow, long> metric) => Offers.Where(o => o.Key.EndsWith("|" + product, StringComparison.Ordinal)).Sum(o => metric(o.Value));
+    public long Catchment(string business, Func<CatchmentRow, long> metric) => Catchments.TryGetValue(business, out var c) ? metric(c) : 0;
 
     public void Write(Json json)
     {
@@ -83,9 +92,20 @@ public sealed class DayMetrics
         json.CloseArray().Close();
         json.Open("rival").Field("meals", RivalMeals).Values("byCheckoutHour", RivalHours).Field("estimatedLimits", "none-before-F6b").Close();
         // Diagnostic/experiment metric (F6 Q3 default): never free player UI.
-        json.Open("share").Field("diagnosticOnly", EconomyRun.MarketShareDiagnosticOnly).Field("catchment", "all-consumers")
-            .Field("resolved", Resolved).Field("own", OwnMeals).Field("rival", RivalMeals).Field("home", HomeMeals)
-            .Field("skipped", Skipped).Field("unconfirmed", Unconfirmed).Values("resolvedByMeal", OutcomeMeals).Close();
+        json.Open("share").Field("diagnosticOnly", EconomyRun.MarketShareDiagnosticOnly)
+            .Open("city").Field("resolved", Resolved).Field("own", OwnMeals).Field("rival", RivalMeals).Field("home", HomeMeals)
+            .Field("skipped", Skipped).Field("unconfirmed", Unconfirmed).Values("resolvedByMeal", OutcomeMeals).Close()
+            .Field("catchmentDefinition", "resolved meal opportunities whose decision evaluated the business");
+        json.OpenArray("catchments");
+        foreach (var (id, c) in Catchments)
+            json.Open().Field("businessId", id).Field("resolved", c.Resolved).Field("thisShop", c.ThisShop).Field("otherOwn", c.OtherOwn)
+                .Field("rival", c.Rival).Field("home", c.Home).Field("skipped", c.Skipped).Field("unconfirmed", c.Unconfirmed).Close();
+        json.CloseArray().Close();
+        json.OpenArray("offerEvidence");
+        foreach (var (key, o) in Offers)
+            json.Open().Field("businessId", key.Split('|')[0]).Field("productId", key.Split('|')[1]).Field("evaluated", o.Considered)
+                .Field("feasible", o.Feasible).Field("chosen", o.Chosen).Close();
+        json.CloseArray();
         json.Open("households").Field("ownerKind", EconomyRun.OwnerKind).Field("owners", Owners).Field("arrearsOwners", ArrearsOwners)
             .Field("unfedDays", UnfedDays).Field("medianBalanceUnits", MedianBalanceUnits).Field("p10BalanceUnits", P10BalanceUnits)
             .Field("incomeReceivedUnits", IncomeReceivedUnits).Field("scheduledEmploymentUnits", ScheduledEmploymentUnits)
@@ -98,12 +118,53 @@ public sealed class DayMetrics
             .Field("confirmedPreparedUnits", ConfirmedPreparedUnits).Field("uncertainConfirmedUnits", UncertainConfirmedUnits)
             .Field("duplicateReceipts", DuplicateOrders).Field("historicalClockMisses", HistoricalClockMisses)
             .Field("outsideLedgerUnits", OutsideLedgerUnits).Field("watermarkedOutflowUnits", WatermarkedOutflowUnits)
+            .Field("watermarkedOutflowWindowUnits", WatermarkedOutflowWindowUnits)
             .Field("epochReadViolations", EpochReadViolations).Close();
         json.Close();
     }
 
     public static string Phase(int day) => day <= EconomyRun.BaselineDays ? "baseline"
         : day <= EconomyRun.BaselineDays + EconomyRun.InterventionDays ? "intervention" : "reverted";
+}
+
+/// <summary>Harness-side subscriber to Core's opt-in decision trace. It copies only ids and counts;
+/// the trace has no saved effect. It survives a city reload because it lives in the runner.</summary>
+public sealed class DecisionObserver
+{
+    private readonly SortedDictionary<int, Dictionary<string, SortedSet<string>>> considered = new();
+    private readonly SortedDictionary<int, SortedDictionary<string, DayMetrics.OfferRow>> offers = new();
+    private static readonly SortedSet<string> None = new(StringComparer.Ordinal);
+
+    private static bool Own(string business) => business == EconomyFixture.Shop || business == EconomyFixture.FarShop;
+    private static string Key(string consumer, MealKind kind) => consumer + "|" + (int)kind;
+
+    public void Observe(FoodDecisionTrace trace)
+    {
+        var intent = trace.Intent;
+        foreach (var choice in intent.Choices)
+        {
+            if (!Own(choice.BusinessId)) continue;
+            if (!considered.TryGetValue(intent.Day, out var day)) considered[intent.Day] = day = new Dictionary<string, SortedSet<string>>(StringComparer.Ordinal);
+            string key = Key(trace.Consumer.Id, trace.MealKind);
+            if (!day.TryGetValue(key, out var set)) day[key] = set = new SortedSet<string>(StringComparer.Ordinal);
+            set.Add(choice.BusinessId);
+            if (!offers.TryGetValue(intent.Day, out var rows)) offers[intent.Day] = rows = new SortedDictionary<string, DayMetrics.OfferRow>(StringComparer.Ordinal);
+            string offer = choice.BusinessId + "|" + choice.ProductId;
+            if (!rows.TryGetValue(offer, out var row)) rows[offer] = row = new DayMetrics.OfferRow();
+            row.Considered++;
+            if (choice.ScoreCents.HasValue) row.Feasible++;
+            if (choice.Reason.StartsWith("Chosen:", StringComparison.Ordinal) && intent.Status == FoodIntentStatus.Travelling) row.Chosen++;
+        }
+    }
+    public IEnumerable<string> ConsideredBy(int day, string consumer, MealKind kind)
+        => considered.TryGetValue(day, out var d) && d.TryGetValue(Key(consumer, kind), out var set) ? set : None;
+    public IEnumerable<KeyValuePair<string, DayMetrics.OfferRow>> OffersOn(int day)
+        => offers.TryGetValue(day, out var rows) ? rows : Enumerable.Empty<KeyValuePair<string, DayMetrics.OfferRow>>();
+    public void Prune(int day)
+    {
+        foreach (var d in considered.Keys.Where(k => k <= day).ToList()) considered.Remove(d);
+        foreach (var d in offers.Keys.Where(k => k <= day).ToList()) offers.Remove(d);
+    }
 }
 
 public sealed class LedgerViolation : Exception { public LedgerViolation(string message) : base(message) { } }

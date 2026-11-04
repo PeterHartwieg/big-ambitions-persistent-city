@@ -18,6 +18,8 @@ public sealed class EconomyMarket : IFoodMarket, IFoodCandidateMarket, IFoodAwar
         public readonly SortedDictionary<string, int> Prices = new(StringComparer.Ordinal);
         public readonly SortedDictionary<string, int> StockOverride = new(StringComparer.Ordinal);
         public int MealsPerHour, OpenMinute, CloseMinute, RouteTimePercent = 100;
+        // Base walking minutes each way; the second site is twice as far as the first.
+        public double BaseRouteMinutes = 1;
         public bool DoorClosed, SiteOpen = true;
     }
     public sealed class Rival
@@ -25,7 +27,8 @@ public sealed class EconomyMarket : IFoodMarket, IFoodCandidateMarket, IFoodAwar
         public string BusinessId = "", PlaceId = "";
         public readonly SortedDictionary<string, int> Prices = new(StringComparer.Ordinal);
         public int OpenMinute, CloseMinute;
-        // Recorded input only: today's Core has no rival lanes (unlimited parallel service).
+        // Recorded input only, as a percentage of the future F6b lane profile: today's Core has no
+        // rival lanes (unlimited parallel service).
         public int EstimatedLanes;
         public bool Listed = true;
     }
@@ -143,7 +146,8 @@ public sealed class EconomyMarket : IFoodMarket, IFoodCandidateMarket, IFoodAwar
     }
 }
 
-/// <summary>One-minute walking routes (the F1 supported fixture), scaled by a shop's access input.
+/// <summary>One-minute walking routes (the F1 supported fixture); two minutes each way to the second
+/// site at twice the distance; both scaled by a shop's access input.
 /// Work trips refuse while the workplace is closed or the worker's route is blocked.</summary>
 public sealed class EconomyRoutes : ICitizenRoutePlanner, IFoodWalkingPace
 {
@@ -152,9 +156,10 @@ public sealed class EconomyRoutes : ICitizenRoutePlanner, IFoodWalkingPace
     public double WalkingMetresPerMinute => 120;
     public Route? Plan(Place from, Place to, double at, TravelPreferences preferences)
     {
-        int percent = 100;
-        foreach (var shop in market.Shops) if (shop.PlaceId == to.Id || shop.PlaceId == from.Id) percent = shop.RouteTimePercent;
-        return new Route { Legs = { new RouteLeg { From = from.Position, To = to.Position, Minutes = percent / 100.0, Mode = TravelMode.Walk } } };
+        double minutes = 1;
+        foreach (var shop in market.Shops)
+            if (shop.PlaceId == to.Id || shop.PlaceId == from.Id) minutes = shop.BaseRouteMinutes * shop.RouteTimePercent / 100.0;
+        return new Route { Legs = { new RouteLeg { From = from.Position, To = to.Position, Minutes = minutes, Mode = TravelMode.Walk } } };
     }
     public Route? Plan(Place from, Place to, double departureMinute, CitizenState citizen)
     {
@@ -186,8 +191,11 @@ public static class EconomyFixture
     public static readonly (string Product, int Cents)[] Menu = {
         (FoodProducts.Burger, 800), (FoodProducts.Croissant, 300), (FoodProducts.HotDog, 500) };
     public const string Shop = "b-shop", FarShop = "b-far", RivalBusiness = "b-rival";
+    // Twice the one-minute own-shop walk, each way, matching the doubled distance.
+    public const double FarSiteRouteMinutes = 2;
 
     public static string WorkplaceId(int index) => "work" + index;
+    public static string PlaceOf(string business) => business == Shop ? "shop" : business == FarShop ? "shop-far" : business == RivalBusiness ? "rival" : "";
 
     public static (CityState State, EconomyMarket Market) Build(int seed, int residents, bool rivalListed = true, bool ownListed = true)
     {
@@ -213,16 +221,16 @@ public static class EconomyFixture
         state.Food = new FoodCommerceState { RepresentationFactor = RepresentationFactor, MealRhythmVersion = MealRhythm.PolicyVersion,
             Shops = new List<FoodScope> { Scope("shop", Shop), Scope("shop-far", FarShop) } };
         var market = new EconomyMarket();
-        foreach (var (business, place, open) in new[] { (Shop, "shop", ownListed), (FarShop, "shop-far", false) })
+        foreach (var (business, place, open, minutes) in new[] { (Shop, "shop", ownListed, 1.0), (FarShop, "shop-far", false, FarSiteRouteMinutes) })
         {
             var shop = new EconomyMarket.Shop { BusinessId = business, PlaceId = place, Name = place, MealsPerHour = MealsPerHour,
-                OpenMinute = OpenMinute, CloseMinute = CloseMinute, SiteOpen = open };
+                OpenMinute = OpenMinute, CloseMinute = CloseMinute, SiteOpen = open, BaseRouteMinutes = minutes };
             foreach (var (product, cents) in Menu) shop.Prices[product] = cents;
             market.Shops.Add(shop);
         }
         market.RivalShop.BusinessId = RivalBusiness; market.RivalShop.PlaceId = "rival";
         market.RivalShop.OpenMinute = OpenMinute; market.RivalShop.CloseMinute = CloseMinute;
-        market.RivalShop.EstimatedLanes = 0; market.RivalShop.Listed = rivalListed;
+        market.RivalShop.EstimatedLanes = InterventionArms.RivalLanesDefaultPercent; market.RivalShop.Listed = rivalListed;
         foreach (var (product, cents) in Menu) market.RivalShop.Prices[product] = cents;
         return (state, market);
     }

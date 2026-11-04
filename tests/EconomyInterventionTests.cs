@@ -74,11 +74,11 @@ public sealed class EconomyInterventionTests
             var market = EconomyFixture.Build(0, 4).Market;
             string Terms() => string.Join("|", market.Shops.Select(s => string.Join(",", s.Prices) + s.MealsPerHour + s.OpenMinute + s.CloseMinute
                 + string.Join(",", s.StockOverride) + s.DoorClosed + s.SiteOpen + s.RouteTimePercent))
-                + string.Join(",", market.RivalShop.Prices) + string.Join(",", market.ClosedWorkplaces) + market.WorkerRoutesBlockedPercent;
+                + string.Join(",", market.RivalShop.Prices) + market.RivalShop.EstimatedLanes + string.Join(",", market.ClosedWorkplaces) + market.WorkerRoutesBlockedPercent;
             string before = Terms();
             foreach (var input in arm.Inputs) market.Apply(input, (long)input.Minute);
             Assert.True(before == Terms(), arm.Name + " does not revert to base terms");
-            Assert.Equal(InterventionArms.RivalLanesDefaultPercent * (arm.Name == "lanes-halved" ? 1 : 0), market.RivalShop.EstimatedLanes);
+            Assert.Equal(InterventionArms.RivalLanesDefaultPercent, market.RivalShop.EstimatedLanes);
         }
     }
 
@@ -138,5 +138,61 @@ public sealed class EconomyInterventionTests
         Assert.Contains("\"diagnosticOnly\":true", run.Json);
         Assert.True(EconomyRun.MarketShareDiagnosticOnly);
         Newtonsoft.Json.Linq.JObject.Parse(run.Json);
+    }
+
+    [Fact]
+    public void SecondSiteWalksTwiceAsLongAsTheFirstAndAccessInputsScaleBoth()
+    {
+        var (state, market) = EconomyFixture.Build(0, 4);
+        var routes = new EconomyRoutes(market);
+        Place P(string id) => state.Places.Single(p => p.Id == id);
+        double Minutes(string from, string to) => routes.Plan(P(from), P(to), 0, new TravelPreferences())!.Legs.Sum(l => l.Minutes);
+        Assert.Equal(1, Minutes("home", "shop")); Assert.Equal(1, Minutes("shop", "home"));
+        Assert.Equal(2 * Minutes("home", "shop"), Minutes("home", "shop-far"));
+        Assert.Equal(2 * Minutes("shop", "home"), Minutes("shop-far", "home"));
+        market.Shops.Single(s => s.BusinessId == EconomyFixture.FarShop).RouteTimePercent = 150;
+        Assert.Equal(3, Minutes("home", "shop-far"));
+    }
+
+    [Fact]
+    public void RunSimulatesExactlyTheRequestedDaysPlusTheFinalOutcomeSample()
+    {
+        var options = SelfChecks.Small(); options.Days = 7;
+        var run = EconomyRun.Run(options);
+        Assert.Equal(7 * 1440 + EconomyRun.OutcomeSampleMinute, run.Epochs);
+        Assert.Equal(7, run.Days.Count);
+    }
+
+    [Fact]
+    public void CumulativeWatermarkedOutflowMatchesTheLedgerAcrossTheFourteenDayRollover()
+    {
+        var run = EconomyRun.Run(SelfChecks.Small());
+        Assert.All(run.Days, d => Assert.Equal(d.OutsideLedgerUnits, d.WatermarkedOutflowUnits));
+        Assert.True(run.Days.Last().OutsideLedgerUnits > 0);
+        // After rollover the rolling window is smaller than the lifetime total; before it they agree.
+        Assert.Equal(run.Days.Single(d => d.Day == 10).OutsideLedgerUnits, run.Days.Single(d => d.Day == 10).WatermarkedOutflowWindowUnits);
+        Assert.True(run.Days.Last().WatermarkedOutflowWindowUnits < run.Days.Last().WatermarkedOutflowUnits);
+    }
+
+    [Fact]
+    public void CatchmentCountsOnlyMealsWhoseDecisionEvaluatedTheShopAndSurvivesReload()
+    {
+        var site = ArmNamed("second-site-2x");
+        var run = EconomyRun.Run(SelfChecks.Small(site));
+        Assert.All(run.Days, d => {
+            foreach (var (business, c) in d.Catchments)
+            {
+                Assert.True(c.Resolved <= d.Resolved);
+                Assert.Equal(c.Resolved, c.ThisShop + c.OtherOwn + c.Rival + c.Home + c.Skipped + c.Unconfirmed);
+                Assert.True(c.ThisShop <= (d.Shops.GetValueOrDefault(business)?.Purchases ?? 0));
+            }
+            Assert.Equal(d.Shops.GetValueOrDefault(EconomyFixture.Shop)?.Purchases ?? 0, d.Catchment(EconomyFixture.Shop, c => c.ThisShop));
+            Assert.All(d.Offers.Values, o => Assert.True(o.Chosen <= o.Feasible && o.Feasible <= o.Considered));
+        });
+        // The dormant second site has no catchment until it opens, and one while it is open.
+        Assert.All(run.Days.Where(d => d.Day < InterventionArms.FirstInterventionDay), d => Assert.False(d.Catchments.ContainsKey(EconomyFixture.FarShop)));
+        Assert.Contains(run.Days, d => d.Catchment(EconomyFixture.FarShop, c => c.Resolved) > 0);
+        Assert.Contains(run.Days, d => d.Catchment(EconomyFixture.Shop, c => c.Resolved) < d.Resolved);
+        Assert.Equal(run.Json, EconomyRun.Run(SelfChecks.Small(site, SelfChecks.MidEpochReload)).Json);
     }
 }

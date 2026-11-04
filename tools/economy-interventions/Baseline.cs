@@ -28,6 +28,13 @@ public static class Baseline
         ("burgerPurchases", d => d.ProductPurchases(FoodProducts.Burger), false),
         ("rivalMeals", d => d.RivalMeals, false), ("homeMeals", d => d.HomeMeals, false), ("skipped", d => d.Skipped, false),
         ("resolvedMeals", d => d.Resolved, false),
+        ("shopCatchmentResolved", d => d.Catchment(EconomyFixture.Shop, c => c.Resolved), false),
+        ("shopCatchmentThisShop", d => d.Catchment(EconomyFixture.Shop, c => c.ThisShop), false),
+        ("shopCatchmentRival", d => d.Catchment(EconomyFixture.Shop, c => c.Rival), false),
+        ("shopCatchmentHome", d => d.Catchment(EconomyFixture.Shop, c => c.Home), false),
+        ("burgerOffersEvaluated", d => d.ProductOffers(FoodProducts.Burger, o => o.Considered), false),
+        ("burgerOffersFeasible", d => d.ProductOffers(FoodProducts.Burger, o => o.Feasible), false),
+        ("burgerOffersChosen", d => d.ProductOffers(FoodProducts.Burger, o => o.Chosen), false),
         ("noStaffedCounterOffers", d => d.Shops.Values.Sum(s => s.Staff), false), ("stockOffers", d => d.Shops.Values.Sum(s => s.Stock), false),
         ("closedLateOffers", d => d.Shops.Values.Sum(s => s.Closed), false), ("serviceQueueOffers", d => d.Shops.Values.Sum(s => s.Service), false),
         ("priceOffers", d => d.Shops.Values.Sum(s => s.Price), false), ("travelTimeOffers", d => d.Shops.Values.Sum(s => s.Access), false),
@@ -91,15 +98,24 @@ public static class Baseline
                 bool menu = arm.Name == "menu-plus-50";
                 var priceInput = arm.Inputs.First(i => i.Kind == InputKind.ProductPrice);
                 double basePrice = EconomyFixture.Menu.Single(m => m.Product == priceInput.Product).Cents, changed = priceInput.Value;
-                var elasticity = runs.Select((r, i) =>
+                double Arc(double qa, double qc) => (qa - qc) / ((qa + qc) / 2) / ((changed - basePrice) / ((changed + basePrice) / 2));
+                double Sum(RunResult r, Func<DayMetrics, double> q) => r.Days.Where(d => DayMetrics.Phase(d.Day) == "intervention").Sum(q);
+                // Served purchases are capped by the staffed ceiling; the demand-side quantities are
+                // chosen offers and the chosen share of feasible offers, before service capacity binds.
+                var measures = new (string Name, string Quantity, Func<RunResult, double> Q)[] {
+                    ("arcElasticity", menu ? "own purchases" : "burger purchases",
+                        r => Sum(r, d => menu ? d.OwnPurchases : d.ProductPurchases(InterventionArms.Product))),
+                    ("arcElasticityChosenOffers", menu ? "chosen own offers" : "chosen burger offers",
+                        r => Sum(r, d => menu ? d.Offers.Values.Sum(o => o.Chosen) : d.ProductOffers(InterventionArms.Product, o => o.Chosen))),
+                    ("arcElasticityFeasibleConversion", menu ? "chosen / feasible own offers" : "chosen / feasible burger offers",
+                        r => Sum(r, d => menu ? d.Offers.Values.Sum(o => o.Chosen) : d.ProductOffers(InterventionArms.Product, o => o.Chosen))
+                            / Math.Max(1, Sum(r, d => menu ? d.Offers.Values.Sum(o => o.Feasible) : d.ProductOffers(InterventionArms.Product, o => o.Feasible)))) };
+                foreach (var (name, quantity, q) in measures)
                 {
-                    Func<DayMetrics, long> q = menu ? d => d.OwnPurchases : d => d.ProductPurchases(InterventionArms.Product);
-                    double qa = r.Days.Where(d => DayMetrics.Phase(d.Day) == "intervention").Sum(q);
-                    double qc = control[i].Days.Where(d => DayMetrics.Phase(d.Day) == "intervention").Sum(q);
-                    return (qa - qc) / ((qa + qc) / 2) / ((changed - basePrice) / ((changed + basePrice) / 2));
-                }).ToArray();
-                json.Open("arcElasticity").Field("quantity", menu ? "own purchases" : "burger purchases")
-                    .Field("against", "same-seed control, intervention weeks").Ratios("perSeed", elasticity).Ratio("mean", Mean(elasticity)).Close();
+                    var elasticity = runs.Select((r, i) => Arc(q(r), q(control[i]))).ToArray();
+                    json.Open(name).Field("quantity", quantity).Field("against", "same-seed control, intervention weeks")
+                        .Ratios("perSeed", elasticity).Ratio("mean", Mean(elasticity)).Close();
+                }
             }
             json.Open("accounting").Field("conservationChecks", runs.Sum(r => r.ConservationChecks))
                 .Field("duplicateReceipts", runs.Sum(r => r.Days.Last().DuplicateOrders)).Field("historicalClockMisses", runs.Sum(r => r.Days.Last().HistoricalClockMisses))
