@@ -62,7 +62,7 @@ public sealed class ResumablePlanningTests
         public Route? Plan(Place from, Place to, double minute, CitizenState citizen) => Serve(new RouteRequest(from, to, minute, citizen, citizen.Preferences));
     }
 
-    private sealed class DeferredPlanner : IResumableRoutePlanner, ICommuteTimingPlanner
+    private class DeferredPlanner : IResumableRoutePlanner, ICommuteTimingPlanner
     {
         public Func<int, int> ContinuesFor = _ => 1;
         public Func<int, int, bool>? ThrowAt;
@@ -70,6 +70,13 @@ public sealed class ResumablePlanningTests
         // a job resumed after an earlier sliced Continue can throw it; a job run inline from its start cannot.
         public Func<RouteRequest, int, int, bool>? RestartAt;
         public int Requests, Disposed, Continues, RestartsThrown;
+        public bool InputsHeld;
+        public int ManagedRevision, ReplacementRequests, EventLeases;
+        private bool replacementPending;
+        public void BeginRouteEvent() { Assert.False(InputsHeld); InputsHeld=true; EventLeases++; }
+        public void EndRouteEvent() { Assert.True(InputsHeld); InputsHeld=false; if(replacementPending) ManagedRevision++; replacementPending=false; }
+        public void ReplaceManagedInputs()
+        { ReplacementRequests++; if(InputsHeld) replacementPending=true; else ManagedRevision++; }
         public readonly List<RouteRequest> Seen = new();
         public IRoutePlanningJob Begin(RouteRequest request)
         {
@@ -81,14 +88,15 @@ public sealed class ResumablePlanningTests
         private sealed class Job : IRoutePlanningJob
         {
             private readonly DeferredPlanner owner; private readonly RouteRequest request; private readonly int index;
-            private int remaining, continues; private bool disposed, sliced;
+            private int remaining, continues; private bool disposed, sliced; private readonly int revision;
             public Job(DeferredPlanner owner, RouteRequest request, int index, int continues)
-            { this.owner = owner; this.request = request; this.index = index; remaining = Math.Max(1, continues); }
+            { this.owner = owner; this.request = request; this.index = index; remaining = Math.Max(1, continues); revision=owner.ManagedRevision; }
             public Route? Result { get; private set; }
             public bool Continue(double budgetMilliseconds)
             {
                 Assert.False(disposed);
                 owner.Continues++;
+                if(revision!=owner.ManagedRevision) throw new RoutePlanningRestartRequired("Managed input replacement");
                 if (owner.ThrowAt?.Invoke(index, continues) == true) throw new InvalidOperationException("planner failure");
                 // Like the runtime job, a sliced job may lose its captured state before any slice, including the first.
                 if ((sliced || !double.IsPositiveInfinity(budgetMilliseconds)) && owner.RestartAt?.Invoke(request, index, continues) == true)
@@ -102,6 +110,8 @@ public sealed class ResumablePlanningTests
             public void Dispose() { if (!disposed) owner.Disposed++; disposed = true; }
         }
     }
+
+    private sealed class LeasedPlanner : DeferredPlanner, IRouteEventInputs { }
 
     private static CityState City(int count, int seed = 11)
     {
@@ -175,6 +185,45 @@ public sealed class ResumablePlanningTests
 
     private static bool IsProbe(CityState state, RouteRequest request)
         => request.Citizen != null && !state.Citizens.Any(c => ReferenceEquals(c.Identity, request.Citizen.Identity));
+
+    [Theory]
+    [InlineData(false)] [InlineData(true)]
+    public void EventInputLeaseIsReleasedOnPlannerFailureOrRebuild(bool rebuild)
+    {
+        var planner=new LeasedPlanner { ContinuesFor=_=>4 };
+        var city=new CitySimulator(City(1),planner);
+        while(!city.PlanningPending) city.AdvanceFrameSlice(Target(1),1);
+        Assert.True(planner.InputsHeld);
+        if(rebuild) city=city.RebuildRoutes(new SyncPlanner());
+        else
+        {
+            planner.ThrowAt=(_,_)=>true;
+            Assert.Throws<InvalidOperationException>(()=>city.ContinuePlanning(0));
+            planner.ThrowAt=null;
+        }
+        Assert.False(planner.InputsHeld);
+        RunFrames(city,Target(1));
+        Assert.True(city.IsCaughtUpTo(Target(1)));
+    }
+
+    [Fact]
+    public void EventCompletesWithIdenticalBytesAndOrderWhileManagedReplacementsContinue()
+    {
+        var reference=new CitySimulator(City(12),new SyncPlanner());
+        var planner=new LeasedPlanner { ContinuesFor=_=>4 };
+        var city=new CitySimulator(City(12),planner);
+        var expected=new List<string>(); var actual=new List<string>();
+        reference.ActivityObserved+=(id,person,at)=>expected.Add(id+"@"+at);
+        city.ActivityObserved+=(id,person,at)=>actual.Add(id+"@"+at);
+        reference.AdvanceTo(Target(2));
+        RunFrames(city,Target(2),_=> { Assert.True(planner.InputsHeld); planner.ReplaceManagedInputs(); });
+        Assert.True(planner.ReplacementRequests>120);
+        Assert.True(planner.ManagedRevision>0);
+        Assert.False(planner.InputsHeld);
+        Assert.Equal(0,city.EventRestarts);
+        Assert.Equal(expected,actual);
+        Assert.Equal(SaveCodec.Write(reference.State),SaveCodec.Write(city.State));
+    }
 
     [Theory]
     [InlineData(1)]
@@ -493,26 +542,58 @@ public sealed class ResumablePlanningTests
     }
 
     [Fact]
-    public void ResidentWhoseSnapshotKeepsChangingRunsInlineAfterThreeRestarts()
+    public void RepeatedSnapshotRestartsStaySlicedAndEventuallyMatchWithoutInlineEscape()
     {
         var reference = new CitySimulator(City(48), new SyncPlanner());
         var planner = new DeferredPlanner { ContinuesFor = _ => 2 };
         var city = new CitySimulator(City(48), planner);
         string unlucky = city.State.Citizens[7].Identity.Id;
-        // Every sliced attempt of this resident's events loses its snapshot; nobody else's does.
-        planner.RestartAt = (request, _, c) => c >= 1 && request.Citizen?.Identity.Id == unlucky;
+        var attempts = new Dictionary<double, int>();
+        // Twelve replacements at each held event minute, well beyond the former three-restart
+        // escape. Once inputs stabilize, the same event must finish without changing outcomes.
+        planner.RestartAt = (request, _, c) =>
+        {
+            if (c < 1 || request.Citizen?.Identity.Id != unlucky) return false;
+            attempts.TryGetValue(city.State.Minute, out int count);
+            if (count == 12) return false;
+            attempts[city.State.Minute] = count + 1; return true;
+        };
         for (int day = 1; day <= 3; day++)
         {
             reference.AdvanceTo(Target(day));
             RunFrames(city, Target(day));
             Assert.Equal(SaveCodec.Write(reference.State), SaveCodec.Write(city.State));
         }
-        Assert.True(city.InlineAfterRestarts > 3, "too few inline runs: " + city.InlineAfterRestarts);
-        // Each of the resident's events restarted exactly three times at its held minute, then ran inline.
-        Assert.Equal(3 * city.InlineAfterRestarts, city.EventRestarts);
+        Assert.Equal(0, city.InlineAfterRestarts);
+        Assert.True(city.EventRestarts >= 48);
+        Assert.All(attempts.Values, count => Assert.Equal(12, count));
         Assert.Equal(planner.RestartsThrown, city.EventRestarts);
         Assert.Equal(planner.Requests, planner.Disposed);
         Assert.True(reference.State.Citizens.Single(c => c.Identity.Id == unlucky).CompletedJourneys > 0);
+    }
+
+    [Fact]
+    public void PersistentChurnHasBoundedAttemptsPreservesTheBarrierAndReloadResumesTheOriginalEvent()
+    {
+        var reference = new CitySimulator(City(24), new SyncPlanner());
+        var planner = new DeferredPlanner { RestartAt = (_, _, _) => true };
+        var city = new CitySimulator(City(24), planner);
+        while (!city.AdvanceFrameSlice(Target(2), 1).PlanningPending) { }
+        string held = SaveCodec.Write(city.State);
+        for (int attempt = 0; attempt < 120; attempt++)
+        {
+            int before = planner.Continues;
+            Assert.False(city.ContinuePlanning(0));
+            Assert.Equal(before + 1, planner.Continues);
+            Assert.Equal(held, SaveCodec.Write(city.State));
+            Assert.False(city.PlanningPending);
+            Assert.True(city.AdvanceFrameSlice(Target(2), 1).PlanningPending);
+            Assert.Equal(0, city.InlineAfterRestarts);
+        }
+        Assert.Equal(120, city.EventRestarts);
+        var restored = new CitySimulator(SaveCodec.Read(held).State!, new DeferredPlanner { ContinuesFor = _ => 3 });
+        RunFrames(restored, Target(2)); reference.AdvanceTo(Target(2));
+        Assert.Equal(SaveCodec.Write(reference.State), SaveCodec.Write(restored.State));
     }
 
     [Fact]

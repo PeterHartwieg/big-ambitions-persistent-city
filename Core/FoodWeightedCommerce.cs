@@ -25,11 +25,14 @@ namespace PersistentCity.Core
         private long publishedInvalidation=-1;
         // The next logical event stays unprocessed while the shared image builds. A held decision
         // already owns its inputs and is never delayed/rerolled by a later catalogue publication.
-        internal bool NeedsAwarenessPreparation(double minute) => rivalResumeNeedsRefresh && NeedsRivalPreparation(minute)
+        internal bool HasPendingCampaignPublication => (CampaignProvider as IFoodCampaignPreparation)?.HasPendingPublication == true;
+        internal void ContinueCampaignPublication() => ((IFoodCampaignPreparation)CampaignProvider!).ContinuePublication();
+        internal bool NeedsAwarenessPreparation(double minute) => HasPendingCampaignPublication || rivalResumeNeedsRefresh && NeedsRivalPreparation(minute)
             || pendingDecision==null && state.ChoicePolicyVersion==FoodChoicePolicy.Version
             && (int)(minute/1440)>=state.ChoiceStartsDay && (int)(minute/1440)>=state.AwarenessStartsDay && (NeedsRivalPreparation(minute) || !AwarenessReady);
         internal void ContinueAwarenessPreparation()
         {
+            if (HasPendingCampaignPublication) { ContinueCampaignPublication(); return; }
             if(NeedsRivalPreparation(city.State.Minute))
             {
                 var rivals=(IRivalFoodMarket)market; rivals.ContinueRivalRefresh(city.State.Minute);

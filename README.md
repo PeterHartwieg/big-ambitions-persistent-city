@@ -2,6 +2,8 @@
 
 Validation and dated development notices are in the [checks index](CHECKS.md); each slice maintains its own evidence file.
 
+City-audit F3 implements bounded household posting units and finite route retries/query admission, with coherent 1,024-candidate campaign capture, resumable publication and no schema change. [Offline equivalence, stress limitations and automated batched-rig checks](docs/checks/pc-f3-bounded-bulk-work.md).
+
 E5b partially implements complete-menu admission and safe refusal offline: whole-menu explicit prices, cached authored bag policy and pre-receipt revalidation. Dynamic native acquisition/dirty recovery and held-policy execution remain incomplete; historical live support stays bounded. [Contract gaps, measurements and six automated batched-rig checks](docs/checks/e5b-complete-menu.md).
 
 E5a implements the detached loaded-catalogue/direct-stock reader with bounded dirty caches and pure validation, including registered mod identities. Ownership, checkout, `Supported` and writer 24 are unchanged. [Offline evidence and automated batched-rig checklist](docs/checks/e5a-catalogue-eligibility.md).

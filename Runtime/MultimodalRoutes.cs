@@ -21,7 +21,7 @@ namespace PersistentCity.Runtime
         void RequestSweep();
     }
     /// <summary>Background routes only. Native geometry, explicit simulation timing, no actors or economy writes.</summary>
-    internal sealed class MultimodalRoutes : ICitizenRoutePlanner, ICommuteTimingPlanner, ITrafficRoutePlanner, ITrafficEntryRoutePlanner, ITrafficClosureBatchPlanner, IWalkingTimeBound, IFoodWalkingPace, IWalkingQuoteValidity, IWalkingQuoteOperation, IResumableRoutePlanner
+    internal sealed class MultimodalRoutes : ICitizenRoutePlanner, ICommuteTimingPlanner, ITrafficRoutePlanner, ITrafficEntryRoutePlanner, ITrafficClosureBatchPlanner, IWalkingTimeBound, IFoodWalkingPace, IWalkingQuoteValidity, IWalkingQuoteOperation, IResumableRoutePlanner, IRouteEventInputs
     {
         private readonly double subwayMetresPerMinute;
         private readonly double clockRate;
@@ -95,12 +95,19 @@ namespace PersistentCity.Runtime
             roadScene = previous.roadScene; roadCity = city; roadSceneSearched = true;
             return true;
         }
-        /// <summary>Periodic refresh. Gate geometry is recaptured and the walking cache dropped every time. Refresh never
-        /// discards the road snapshot unless the public gates changed, since the snapshot cannot see them; it starts a
-        /// staged check of the whole snapshot instead, which marks it stale on any native difference. Returns the
-        /// changed gate, or "" when the gates are the same.</summary>
+        // One event may span multiple route requests and finite frame continuations.
+        private bool routeEventHeld, refreshDeferred, stationsDeferred;
+        public void BeginRouteEvent()
+        {
+            if (routeEventHeld) throw new InvalidOperationException("Route event input lease cannot nest.");
+            routeEventHeld = true;
+        }
+        public void EndRouteEvent() => routeEventHeld = false;
+        /// <summary>Periodic refresh. During an event, coalesce requests until its input lease ends.
+        /// Outside a lease, recapture gate geometry and schedule snapshot validation.</summary>
         public string Refresh()
         {
+            if (routeEventHeld) { refreshDeferred = true; roads?.BeginSweep(); return ""; }
             if (objects != null && !objects.Ready) return "";
             walking.Clear();
             // Nothing marks a snapshot taken without a road scene stale, so look for the scene again.
@@ -117,7 +124,11 @@ namespace PersistentCity.Runtime
             return change;
         }
         /// <summary>Recaptures live station eligibility and geometry on the next preparation.</summary>
-        public void RefreshStations() => stations = null;
+        public void RefreshStations()
+        {
+            if (routeEventHeld) { stationsDeferred = true; return; }
+            stations = null;
+        }
         /// <summary>The slowest station search since the last call, in milliseconds.</summary>
         public double TakeStationSearchMilliseconds() { double slowest = stationSearchMilliseconds; stationSearchMilliseconds = 0; return slowest; }
         private double stationSearchMilliseconds;
@@ -156,7 +167,10 @@ namespace PersistentCity.Runtime
             trafficEntryForecast = forecast;
             roads?.SetTrafficEntryForecast(forecast);
         }
-        public bool ReadyForPopulation => (objects == null || (objects.Ready && objectRevision == objects.Revision))
+        // Once an event releases its lease, stop the frame batch until the next bounded preflight
+        // publishes deferred inputs. Otherwise the next event can renew the lease indefinitely.
+        public bool ReadyForPopulation => (routeEventHeld || !refreshDeferred && !stationsDeferred)
+            && (routeEventHeld || objects == null || (objects.Ready && objectRevision == objects.Revision))
             && stations != null && roads != null && roads.Ready && roads.IsCurrent;
         /// <summary>Runtime preflight: do not advance any citizen until this returns true. Staged infrastructure
         /// readiness must not change which modes are available to an individual planning request.</summary>
@@ -175,6 +189,20 @@ namespace PersistentCity.Runtime
                 pendingRoadReason = cityChanged ? "city-instance" : "scene-destroyed";
                 objects?.RequestSweep();
             }
+            // A logical event owns one mod-published input generation across every request.
+            // Never pin native topology: city/scene loss above and stale road checks still win.
+            // A current replacement may still be importing nodes/building its network. Keep driving
+            // its staged preparation until Ready; the pending old job restarts only after preflight.
+            if (routeEventHeld && !cityChanged && !sceneLost && roads?.Ready == true && roads.IsCurrent)
+            {
+                roads.Sweep(1, 1024);
+                return roads.IsCurrent;
+            }
+            if (!routeEventHeld)
+            {
+                if (refreshDeferred) { refreshDeferred = false; LastDiscoveryGateChange = Refresh(); }
+                if (stationsDeferred) { stationsDeferred = false; stations = null; }
+            }
             if (objects != null)
             {
                 // Initial discovery and structural changes require a complete generation before
@@ -182,7 +210,8 @@ namespace PersistentCity.Runtime
                 if (!objects.Ready) return false;
                 if (objectRevision != objects.Revision)
                 {
-                    LastDiscoveryGateChange = Refresh();
+                    string gateChange = Refresh();
+                    if (gateChange.Length != 0) LastDiscoveryGateChange = gateChange;
                     stations = null; objectRevision = objects.Revision;
                 }
             }
@@ -254,6 +283,16 @@ namespace PersistentCity.Runtime
         public int RoadSearchRestarts => roads?.SearchRestarts ?? 0;
         /// <summary>Units of planning work performed by jobs, for the frame summary.</summary>
         public long JobUnits { get; private set; }
+        // A native NavMesh path is non-preemptible. Admission bounds its multiplicity, not its tail.
+        // Admit path stages against remaining time and an observed tail reserve; count is a safety ceiling.
+        internal const int MaximumJobUnitsPerSlice = 8;
+        internal const int MaximumJobPathsPerFrame = 16;
+        private int jobPathFrame = -1, jobFramePaths, jobAdmissionHeldFrame = -1;
+        private double jobPathReserveMilliseconds = .05;
+        public long JobAdmissionDeferrals { get; private set; }
+        public double JobPathReserveMilliseconds => jobPathReserveMilliseconds;
+        public bool JobAdmissionExhaustedForFrame => jobAdmissionHeldFrame == Time.frameCount
+            || jobPathFrame == Time.frameCount && jobFramePaths >= MaximumJobPathsPerFrame;
         /// <summary>The kind of the unit a job performed last, for attributing a slow slice.</summary>
         public string LastJobUnit { get; private set; } = "";
         private static readonly string[] StageNames =
@@ -264,7 +303,9 @@ namespace PersistentCity.Runtime
 
         /// <summary>The former synchronous citizen plan as a resumable job. Each unit is one native query (a walk,
         /// a curb search, a station capture) or one slice of a road A*; Continue runs units until the budget is
-        /// spent and always at least one. The job captures the road snapshot, public access and station list it
+        /// spent, up to eight units per call and a 16-path/frame safety ceiling. Further path
+        /// stages reserve the recent observed query tail against the remaining time budget. Exhausted native
+        /// admission yields without advancing a stage. The job captures the road snapshot, public access and station list it
         /// plans against; if any of them was replaced while it was suspended, Continue throws
         /// RoutePlanningRestartRequired and the simulator replays the whole citizen event, so no event mixes two
         /// snapshots. Forecasts and node validations it reads are live at the moment of each read, as
@@ -331,12 +372,40 @@ namespace PersistentCity.Runtime
                 if (RevisionChanged())
                     throw new RoutePlanningRestartRequired("The road snapshot, public access or station list changed while a route plan was suspended.");
                 bool first = true;
+                bool finite = !double.IsPositiveInfinity(budgetMilliseconds);
+                int units = 0;
+                if (finite && owner.jobPathFrame != Time.frameCount)
+                { owner.jobPathFrame = Time.frameCount; owner.jobFramePaths = 0; }
                 while (!Completed)
                 {
                     if (!first && Stopwatch.GetTimestamp() >= deadline) return false;
+                    if (finite && units >= MaximumJobUnitsPerSlice)
+                    { owner.JobAdmissionDeferrals++; return false; }
+                    bool pathStage = stage == Stage.HomeCurbWalk || stage == Stage.DirectWalk || stage == Stage.SubwayConnector
+                        || stage == Stage.CarAccessWalk || stage == Stage.CarEgressWalk || preferenceOnly && stage == Stage.Validate;
+                    if (finite && pathStage && (owner.jobFramePaths >= MaximumJobPathsPerFrame
+                        || owner.jobFramePaths > 0 && (deadline - Stopwatch.GetTimestamp()) * 1000.0 / Stopwatch.Frequency <= owner.jobPathReserveMilliseconds))
+                    {
+                        owner.jobAdmissionHeldFrame = Time.frameCount; owner.JobAdmissionDeferrals++; return false;
+                    }
                     first = false;
+                    units++;
                     owner.JobUnits++; owner.LastJobUnit = StageNames[(int)stage];
-                    Unit(deadline);
+                    long before = owner.Metrics.NavMeshPathQueries;
+                    double pathTimeBefore = owner.Metrics.NavMeshPathMilliseconds;
+                    try { Unit(deadline); }
+                    finally
+                    {
+                        int queries = (int)(owner.Metrics.NavMeshPathQueries - before);
+                        if (finite) owner.jobFramePaths += queries;
+                        if (queries > 0)
+                        {
+                            double observed = (owner.Metrics.NavMeshPathMilliseconds - pathTimeBefore) / queries;
+                            // Recent upper envelope with slow decay; at least one query/frame retains progress
+                            // when a single unavoidable native tail exceeds the entire frame budget.
+                            owner.jobPathReserveMilliseconds = Math.Max(.05,Math.Max(observed*1.25,owner.jobPathReserveMilliseconds*.95));
+                        }
+                    }
                 }
                 return true;
             }

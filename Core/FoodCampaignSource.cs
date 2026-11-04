@@ -12,7 +12,7 @@ namespace PersistentCity.Core
 
     /// <summary>Event-only publication/index build. A query visits fixed day/type buckets and eight
     /// indexed slots, never the business collection. No resident rows or persistent exposure cache.</summary>
-    public sealed class FoodCampaignSource : IFoodCampaignAwarenessProvider
+    public sealed partial class FoodCampaignSource : IFoodCampaignAwarenessProvider
     {
         private readonly FoodCommerceState food;
         private readonly FoodMemoryStore references;
@@ -57,9 +57,9 @@ namespace PersistentCity.Core
 
         /// <summary>Only a complete C1 image may enter. Snapshot minute is the actual observed boundary,
         /// never the lagging simulation clock or an inferred campaign start. Retired generations drop here.</summary>
-        public void Publish(CampaignSnapshot snapshot, IReadOnlyDictionary<string, string> eligiblePlaces)
+        private IEnumerable<int> PublishSteps(CampaignSnapshot snapshot, IReadOnlyDictionary<string, string> eligiblePlaces)
         {
-            if (!settings.Enabled) return;
+            if (!settings.Enabled) yield break;
             double minute = snapshot.AtMinute;
             if (!Position.Finite(minute) || minute < 0 || minute > 1e9 || minute % 60 != 0 || snapshot.Businesses.Count > 1024)
                 throw new ArgumentException("Campaign publication requires an actual hourly boundary and bounded complete image.");
@@ -69,6 +69,7 @@ namespace PersistentCity.Core
             var seen = new HashSet<string>(StringComparer.Ordinal);
             foreach (var business in snapshot.Businesses)
             {
+                yield return 1;
                 if (business == null || !seen.Add(business.BusinessId) || !eligiblePlaces.ContainsKey(business.BusinessId)
                     || business.Campaigns.Count > 8) throw new ArgumentException("Invalid campaign business scope.");
                 int slot=references.Find(business.BusinessId);
@@ -76,13 +77,14 @@ namespace PersistentCity.Core
                     throw new ArgumentException("Campaign generation changed its place.");
                 sorted.Add(business);
             }
-            foreach (var image in food.Campaigns) if (hour <= image.ThroughHour) throw new ArgumentException("Observation already published or backdated.");
+            foreach (var image in food.Campaigns) { yield return 1; if (hour <= image.ThroughHour) throw new ArgumentException("Observation already published or backdated."); }
             sorted.Sort((a, b) => StringComparer.Ordinal.Compare(a.BusinessId, b.BusinessId));
             var old = new Dictionary<int, FoodCampaignImage>();
-            foreach (var image in food.Campaigns) old.Add(image.BusinessRef, image);
+            foreach (var image in food.Campaigns) { yield return 1; old.Add(image.BusinessRef, image); }
             var next = new List<FoodCampaignImage>(sorted.Count);
             foreach (var business in sorted)
             {
+                yield return 1;
                 int types = 0, duplicates = 0, observed = 0;
                 foreach (var campaign in business.Campaigns)
                 {
@@ -106,6 +108,7 @@ namespace PersistentCity.Core
             // aging it without adding evidence. Only an absent/replaced generation drops here.
             foreach(var previous in food.Campaigns)
             {
+                yield return 1;
                 var reference=references.Reference(previous.BusinessRef)!;
                 if(seen.Contains(reference.BusinessId) || !eligiblePlaces.TryGetValue(reference.BusinessId,out var place)) continue;
                 if(place!=reference.PlaceId) throw new ArgumentException("Retained campaign generation changed its place.");
@@ -114,8 +117,30 @@ namespace PersistentCity.Core
             }
             next.Sort((a, b) => a.BusinessRef.CompareTo(b.BusinessRef));
             // Build everything privately. Neither a partially merged image nor partial indexes escape.
-            var built = Build(next, out int day, out int entries);
-            var images=ImageIndex(next);
+            var built = scratch;
+            foreach (var bucket in built) bucket?.Clear(); // fixed 64 buckets
+            int day = -1, entries = 0;
+            var ordered = new List<KeyValuePair<string,FoodCampaignImage>>(next.Count);
+            foreach (var image in next)
+            {
+                yield return 1;
+                day = Math.Max(day, image.Day);
+                ordered.Add(new KeyValuePair<string,FoodCampaignImage>(references.Identity(image.BusinessRef), image));
+            }
+            ordered.Sort((a,b) => StringComparer.Ordinal.Compare(a.Key,b.Key)); // <=1024 immutable identities
+            var images = scratchImages; images.Clear();
+            foreach (var pair in ordered)
+            {
+                yield return 1;
+                images.Add(pair.Key, pair.Value);
+                for (int age=0; age<8; age++) for (int type=0; type<8; type++)
+                {
+                    uint hours = pair.Value.Mask(day-age,type);
+                    if (hours == 0) continue;
+                    int key = age*8+type;
+                    (built[key] ??= new List<Entry>()).Add(new Entry { Id=pair.Key, Hours=hours }); entries++;
+                }
+            }
             food.Campaigns = next; scratchImages=imagesByBusiness;imagesByBusiness=images; scratch = index; index = built; newestDay = day; IndexedEntries = entries; Publications++;
         }
         private List<Entry>?[] Build(List<FoodCampaignImage> images, out int day, out int entries)

@@ -12,6 +12,7 @@ namespace PersistentCity.Runtime
         private readonly FoodCommerceState state;
         private readonly Dictionary<string,BuildingRegistration> registrations = new(StringComparer.Ordinal);
         private readonly HashSet<string> candidateBusinesses = new(StringComparer.Ordinal);
+        private readonly Dictionary<string,FoodScope> scopesByBusiness = new(StringComparer.Ordinal);
         internal NativeFoodMarket(FoodCommerceState state, IEnumerable<BuildingRegistration> native)
         {
             this.state=state;
@@ -19,6 +20,7 @@ namespace PersistentCity.Runtime
             {
                 registrations.Add("place:"+registration.Id,registration);candidateBusinesses.Add(registration.Id);
                 state.Shops.Add(new FoodScope {BusinessId=registration.Id,PlaceId="place:"+registration.Id});
+                scopesByBusiness.Add(registration.Id,state.Shops[state.Shops.Count-1]);
             }
         }
         internal void CandidateForFixture(string business,bool value)
