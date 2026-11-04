@@ -6,6 +6,8 @@ City-audit F1 implements simulation/accounting backpressure, bounded lag and vis
 
 City-audit F3 implements bounded household posting units and finite route retries/query admission, with coherent 1,024-candidate campaign capture, resumable publication and no schema change. [Offline equivalence, stress limitations and automated batched-rig checks](docs/checks/pc-f3-bounded-bulk-work.md).
 
+City-audit F5b implements the inactive identity and ownership core: person kinds, visitor stays, employments, derived households and visitor identities, and an ownership validator, not yet wired to the simulator or saves (writer 25 unchanged). [Offline checks and automated batched-rig checks](docs/checks/f5b-identity-core.md).
+
 E5b partially implements complete-menu admission and safe refusal offline: whole-menu explicit prices, cached authored bag policy and pre-receipt revalidation. Dynamic native acquisition/dirty recovery and held-policy execution remain incomplete; historical live support stays bounded. [Contract gaps, measurements and six automated batched-rig checks](docs/checks/e5b-complete-menu.md).
 
 E5a implements the detached loaded-catalogue/direct-stock reader with bounded dirty caches and pure validation, including registered mod identities. Ownership, checkout, `Supported` and writer 24 are unchanged. [Offline evidence and automated batched-rig checklist](docs/checks/e5a-catalogue-eligibility.md).
