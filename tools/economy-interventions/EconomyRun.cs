@@ -179,7 +179,7 @@ public static class EconomyRun
         metrics.WatermarkedOutflowWindowUnits = (long)(view?.Units ?? 0);
         metrics.WatermarkedOutflowUnits = food.Outflow == null ? 0 : CumulativeWatermarked(food.Outflow);
         if (metrics.WatermarkedOutflowUnits != metrics.OutsideLedgerUnits)
-            throw new LedgerViolation("cumulative watermarked outflow does not equal the outside ledger on day " + metrics.Day);
+            throw new LedgerViolation("modeled outside total does not equal cumulative watermarked debits on day " + metrics.Day);
         if (market.DuplicateOrders != 0) throw new LedgerViolation("duplicate native receipt on day " + metrics.Day);
         if (prepared + uncertain != market.NativeRevenueUnits)
             throw new LedgerViolation("PC confirmed receipts do not equal native sales on day " + metrics.Day);

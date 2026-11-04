@@ -11,6 +11,7 @@ namespace PersistentCity.Tests;
 public sealed class EconomyInterventionTests
 {
     static Arm ArmNamed(string name) => InterventionArms.All().Single(a => a.Name == name);
+    static long Purchases(DayMetrics day, string business) => day.Shops.TryGetValue(business, out var row) ? row.Purchases : 0;
 
     [Fact]
     public void SameSeedGivesByteIdenticalMetricsAndOtherSeedsDiffer()
@@ -184,9 +185,9 @@ public sealed class EconomyInterventionTests
             {
                 Assert.True(c.Resolved <= d.Resolved);
                 Assert.Equal(c.Resolved, c.ThisShop + c.OtherOwn + c.Rival + c.Home + c.Skipped + c.Unconfirmed);
-                Assert.True(c.ThisShop <= (d.Shops.GetValueOrDefault(business)?.Purchases ?? 0));
+                Assert.True(c.ThisShop <= Purchases(d, business));
             }
-            Assert.Equal(d.Shops.GetValueOrDefault(EconomyFixture.Shop)?.Purchases ?? 0, d.Catchment(EconomyFixture.Shop, c => c.ThisShop));
+            Assert.Equal(Purchases(d, EconomyFixture.Shop), d.Catchment(EconomyFixture.Shop, c => c.ThisShop));
             Assert.All(d.Offers.Values, o => Assert.True(o.Chosen <= o.Feasible && o.Feasible <= o.Considered));
         });
         // The dormant second site has no catchment until it opens, and one while it is open.
