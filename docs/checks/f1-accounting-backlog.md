@@ -13,7 +13,9 @@ complete native mod-work/whole-frame measurement are pending the batched rig.
 ## Initial evidence and acceptance (before R1)
 
 The original evidence below is retained. Corrected behavior and current results are in the
-R1 section; native proof remains a merge blocker.
+R1 section. Native accounting-backlog checks (before red / after green) are rig-automated
+and deferred to the next batched combined rig per merge rule v2; they are recorded in the
+rig checklist and do not gate merge.
 
 - Re-verified the audit against this base: `FoodCommerce.StepMeal` still misses active meals
   when `now < market.EarliestMinute`; `AdvancePopulation` still had fixed 128-unit/16-citizen
@@ -118,12 +120,13 @@ finished, and final inspection found no repository test/dotnet processes left. G
 unrelated E5c evidence was restored. No game or rig work occurred.
 See [R1 performance and baseline pacing costs](../perf/f1-accounting-backlog.md#r1-review-corrections).
 
-**Sol-r1-2 remains unresolved and blocks merge.** No authorized separate `rig_test` session,
-native red/green artifacts, actual hook-order/settlement proof or complete native mod-work /
-whole-frame measurements were produced by this offline fixer. The original no-game/no-rig
-restriction was retained. Source doubles and the prepared rig handoff do not satisfy that
-project rule. The authorized rig owner must validate the corrected HEAD and attach proof to
-PR #99. Do not mark this finding passed from the offline results.
+**Sol-r1-2 (native proof) is deferred to the batched rig.** Native accounting-backlog checks
+(before red / after green) are rig-automated and deferred to the next batched combined rig per
+merge rule v2, recorded in the checklist, and do not gate merge. No native red/green artifacts,
+actual hook-order/settlement proof or complete native mod-work / whole-frame measurements were
+produced by this offline fixer, which kept the no-game/no-rig restriction. Source doubles and
+the prepared rig handoff are not native proof; do not mark the native checks passed from the
+offline results.
 
 Sol-r1-3 is handled by updating PR #99's actual body from the matching prepared description;
 that metadata action is separate from repository commits and is verified by readback.
@@ -144,10 +147,12 @@ that metadata action is separate from repository commits and is verified by read
   A fresh runtime still honors the persisted stop marker on the failed save. The regression
   compiles the actual AccountingRecovery source and checks restart-first guidance, authority
   withdrawal and preserved stop intent/population bytes; native authority and Fail are doubles.
-- **Sol-r2-1 remains unresolved and blocks merge.** No native rig_test session or native
-  red/green artifacts were produced here. Actual hook/input ordering, settlement, complete
-  mod-work and separately measured whole-frame costs still require the authorized Codex Sol
-  high rig session. The original no-game/no-rig restriction remains in force for this fixer.
+- **Sol-r2-1 (native proof) is deferred to the batched rig.** Native accounting-backlog checks
+  (before red / after green) are rig-automated and deferred to the next batched combined rig
+  per merge rule v2, recorded in the checklist, and do not gate merge. No native red/green
+  artifacts were produced here; actual hook/input ordering, settlement, complete mod-work and
+  separately measured whole-frame costs remain unverified natively. The no-game/no-rig
+  restriction remains in force for this fixer.
 
 The first nested R2 repeat flags one **66.3905 ms** detached F1 frame at 120 simulated
 FPS (p95 0.4610 ms). The save-free raw sample is retained, unattributed and not discarded;
@@ -205,11 +210,13 @@ no native mod-work or whole-frame gate is established. All tests ran in the fore
 the shared dotnet gate. Final inspection found zero repository dotnet/testhost processes;
 generated unrelated E5c evidence was restored. No game or rig work occurred.
 
-**Sol-r3-1 and Opus-r3-2 remain unresolved and block merge.** They request the same missing
-separate authorized Codex Sol high rig_test proof. No game/rig run or native red/green
-artifacts were produced by this fixer under the original no-game/no-rig restriction.
-Native hook/input ordering, native ownership/settlement and complete mod-work versus
-separately tracked whole-frame measurements still require that session on corrected HEAD.
+**Sol-r3-1 and Opus-r3-2 (native proof) are deferred to the batched rig.** Native
+accounting-backlog checks (before red / after green) are rig-automated and deferred to the next
+batched combined rig per merge rule v2, recorded in the checklist, and do not gate merge.
+No game/rig run or native red/green artifacts were produced by this fixer under the
+no-game/no-rig restriction. Native hook/input ordering, native ownership/settlement and
+complete mod-work versus separately tracked whole-frame measurements remain unverified until
+that rig runs against the branch head.
 The R2 66.3905 ms detached sample remains retained and flagged; it is not a native result.
 
 ## In-game checks for the next batched rig
