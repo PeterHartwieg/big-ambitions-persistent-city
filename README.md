@@ -4,6 +4,8 @@ Validation and dated development notices are in the [checks index](CHECKS.md); e
 
 City-audit F1 implements simulation/accounting backpressure, bounded lag and visible pacing/refusal status, boundary observation publication and safe PC stop/native-clock release on a lost epoch, with accounting-specific recovery when a different valid save loads, with writer 25 unchanged. [Offline cadence/reload evidence and six automated batched-rig checks](docs/checks/f1-accounting-backlog.md); native accounting and complete-cost proof remain a merge blocker.
 
+City-audit F6a implements an offline intervention harness and records today's economic baseline, including the unlimited rival curve; no Runtime, Core or save change. [Baseline, offline checks and automated batched-rig checks](docs/checks/f6a-intervention-harness.md).
+
 City-audit F3 implements bounded household posting units and finite route retries/query admission, with coherent 1,024-candidate campaign capture, resumable publication and no schema change. [Offline equivalence, stress limitations and automated batched-rig checks](docs/checks/pc-f3-bounded-bulk-work.md).
 
 E5b partially implements complete-menu admission and safe refusal offline: whole-menu explicit prices, cached authored bag policy and pre-receipt revalidation. Dynamic native acquisition/dirty recovery and held-policy execution remain incomplete; historical live support stays bounded. [Contract gaps, measurements and six automated batched-rig checks](docs/checks/e5b-complete-menu.md).
