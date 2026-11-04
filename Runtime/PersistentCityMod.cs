@@ -539,6 +539,8 @@ namespace PersistentCity.Runtime
                 () => simulation != null && routes?.ReadyForPopulation == true && simulation.IsCaughtUpTo(AccountingClock.Target(Now())),
                 () => true, Now, () => simulation?.State.Minute ?? Now(), native => simulation == null || simulation.IsAccountingEpochDrained(native));
             initializingSave = save;
+            // Rule 5: saves during initialization are refused with both markers, never silently skipped.
+            BeginInitializingSaveEpoch(save, save.modData, epochMarker?.Sequence ?? 0);
             initialization = Task.Run(() =>
             {
                 var session = SaveSession.Open(saved, source.PopulationKey);
@@ -576,10 +578,10 @@ namespace PersistentCity.Runtime
             {
                 string error = pending.Exception?.GetBaseException().Message ?? "Unknown initialization failure.";
                 if (ReferenceEquals(expectedSave, save)) Fail(error + " Original payload retained.");
-                else NativeCityClock.Stop();
+                else { NativeCityClock.Stop(); DropSaveEpoch(); }
                 return;
             }
-            if (pending.IsCanceled || save == null || !ReferenceEquals(expectedSave, save)) { NativeCityClock.Stop(); return; }
+            if (pending.IsCanceled || save == null || !ReferenceEquals(expectedSave, save)) { NativeCityClock.Stop(); DropSaveEpoch(); return; }
             bool hasPayload = save.modData.TryGetValue(SaveStore.StateKey, out var currentPayload);
             if (hasPayload != initializingHadPayload || currentPayload != expectedPayload)
             { Fail("Population payload changed during initialization. Original payload retained."); return; }
@@ -620,10 +622,9 @@ namespace PersistentCity.Runtime
             log?.Info("City clock factor=" + settings.GameClockFactor.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
                 + "; Driven Rides coordinated=" + NativeCityClock.CoordinatesDrivenRides + ". Movement speed unchanged.");
             ResetAdvanceDiagnostics();
-            lastSaveEpoch = saveEpoch = new SaveEpochBinding(save, save.modData, prepared.EpochSequence);
-            GlobalEvents.onSaveGame += Save;
-            GlobalEvents.onGameUnloaded += Shutdown;
-            subscribed = true;
+            if (saveEpoch == null || !saveEpoch.BoundTo(save) || saveEpoch.Sequence != prepared.EpochSequence)
+            { Fail("Save epoch changed during initialization. Every saved key is retained."); return; }
+            saveEpoch.CompleteInitialization(); // Attached: publication allowed, detach now marks a still-current city.
             nextDependencyCheck = Time.unscaledTime + 30;
             nextStationScan = float.PositiveInfinity;
             seenRoadSnapshots = 0; clockRetimingRoutes = false;

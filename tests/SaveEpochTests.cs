@@ -40,12 +40,14 @@ public sealed class SaveEpochTests
         public Func<string?>? BeforeWrite;
         public Action? InsideCapture;
 
-        public void Attach(GameInstance save, long sequence = 0)
+        /// <summary>Mirrors TryStart (bind and subscribe while initializing) and CompleteInitialization.</summary>
+        public void Attach(GameInstance save, long sequence = 0, bool initializing = false)
         {
             Current = save;
             Session = SaveSession.Open(save.modData, State.PopulationKey);
             Assert.True(Session.BindTo(save.modData).Success);
-            Epoch = new SaveEpochBinding(save, save.modData, sequence);
+            Epoch = new SaveEpochBinding(save, save.modData, sequence, initializing: true);
+            if (!initializing) Epoch.CompleteInitialization();
         }
 
         public SaveEpochResult Save()
@@ -330,6 +332,49 @@ public sealed class SaveEpochTests
         AssertRefusedByEveryBuild(file, runtime.State.PopulationKey);
     }
 
+    // Rule 5: a native save while initialization is pending (worker running, or its steps on the stack)
+    // refuses with both markers, takes no snapshot and returns normally.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SaveDuringPendingInitializationRefusesWithBothMarkersAndKeepsPayload(bool initializationOnStack)
+    {
+        var save = new GameInstance(); var runtime = new Runtime();
+        save.modData[SaveStore.StateKey] = SaveCodec.Write(runtime.State);
+        save.modData[Receipt] = "Confirmed";
+        string previous = save.modData[SaveStore.StateKey];
+        runtime.Attach(save, initializing: true);
+        Dictionary<string, string>? file = null;
+        Exception? error = null;
+        if (initializationOnStack) runtime.Unit(() => error = Record.Exception(() => file = NativeSave(save, runtime)));
+        else error = Record.Exception(() => file = NativeSave(save, runtime));
+        Assert.Null(error); // Native Save completes normally.
+        Assert.Equal(0, runtime.Captures); // No snapshot of a half-initialized city.
+        Assert.Same(previous, file![SaveStore.StateKey]);
+        Assert.Equal(AccountingStopStore.SaveEpochFailed, file[AccountingStopStore.Key]);
+        Assert.Equal(SaveEpochStore.Failed(1), file[SaveEpochStore.Key]);
+        Assert.Equal("Confirmed", file[Receipt]);
+        Assert.True(runtime.Failed); Assert.Equal(1, runtime.Stops);
+        AssertRefusedByEveryBuild(file, runtime.State.PopulationKey);
+    }
+
+    // Rules 5 and 9: an initialization that fails or is abandoned writes nothing (load refusals preserve
+    // every key); after completion the same session publishes normally.
+    [Fact]
+    public void InitializingBindingDetachWritesNothingAndCompletionAllowsPublication()
+    {
+        var save = new GameInstance(); save.modData[SaveStore.StateKey] = "payload";
+        var before = new Dictionary<string, string>(save.modData);
+        var abandoned = new SaveEpochBinding(save, save.modData, 3, initializing: true);
+        Assert.False(abandoned.Detach(save));
+        Assert.Equal(before, save.modData);
+        Assert.Throws<InvalidOperationException>(() => abandoned.CompleteInitialization());
+
+        var (live, runtime) = Attached();
+        Assert.Equal(SaveEpochResult.Published, runtime.Save());
+        Assert.False(live.modData.ContainsKey(AccountingStopStore.Key));
+    }
+
     // Rules 3 and 5: a nested save inside a callback refuses, and the outer stale-sequence snapshot is never published.
     [Fact]
     public void NestedCallbackRefusesAndOuterStaleSequenceIsNotPublished()
@@ -531,13 +576,19 @@ public sealed class SaveEpochTests
         Assert.DoesNotContain("Fail(", capture); // Every refusal goes through the epoch callback's marker-first path.
         string detach = mod.Substring(mod.IndexOf("private void Detach()", StringComparison.Ordinal));
         Assert.True(detach.IndexOf("DetachSaveEpoch();", StringComparison.Ordinal) < detach.IndexOf("NativeInteriorCityView.Stop();", StringComparison.Ordinal));
-        Assert.Contains("saveEpoch = new SaveEpochBinding(save, save.modData, prepared.EpochSequence);\n            GlobalEvents.onSaveGame += Save;",
-            mod.Replace("\r\n", "\n"));
         string epoch = Read("Runtime/SaveEpochRuntime.cs");
+        // Rule 5: bound and subscribed when initialization starts; publication allowed only after completion.
+        Assert.Contains("new SaveEpochBinding(save, data, sequence, initializing: true);\n            GlobalEvents.onSaveGame += Save;",
+            epoch.Replace("\r\n", "\n"));
+        Assert.DoesNotContain("onSaveGame += Save", mod);
+        string complete = mod.Substring(mod.IndexOf("private void CompleteInitialization()", StringComparison.Ordinal));
+        Assert.True(complete.IndexOf("saveEpoch.CompleteInitialization();", StringComparison.Ordinal) > 0);
         Assert.Contains("SaveEpochCallback.Run(saveEpoch, save, save?.modData, saveEpochUnits > 0", epoch);
         Assert.Contains("try { UpdateCity(); }", epoch);
         string start2 = mod.Substring(mod.IndexOf("private void TryStart()", StringComparison.Ordinal));
         Assert.True(start2.IndexOf("SaveEpochStore.CheckForStart", StringComparison.Ordinal) < start2.IndexOf("Task.Run", StringComparison.Ordinal));
+        int bind = start2.IndexOf("BeginInitializingSaveEpoch(save, save.modData,", StringComparison.Ordinal);
+        Assert.True(bind > 0 && bind < start2.IndexOf("Task.Run", StringComparison.Ordinal));
         Assert.Contains("SaveEpochStore.DescribesState(epochMarker, stored.SourceSchema, stored.State)", start2);
     }
 }

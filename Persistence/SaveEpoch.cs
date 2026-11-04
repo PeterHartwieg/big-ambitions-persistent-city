@@ -172,8 +172,12 @@ namespace PersistentCity.Persistence
         private readonly IDictionary<string, string> data;
         private bool poisoned;
 
-        public SaveEpochBinding(object instance, IDictionary<string, string> data, long lastSequence)
+        /// <param name="initializing">Rule 5: bound when initialization starts. Until <see cref="CompleteInitialization"/>
+        /// every callback is refused with both markers; a detach before completion writes nothing, because the
+        /// loaded payload/marker pair still describes the city and no PC state was attached.</param>
+        public SaveEpochBinding(object instance, IDictionary<string, string> data, long lastSequence, bool initializing = false)
         {
+            Initializing = initializing;
             this.instance = instance ?? throw new ArgumentNullException(nameof(instance));
             this.data = data ?? throw new ArgumentNullException(nameof(data));
             if (lastSequence < 0) throw new ArgumentOutOfRangeException(nameof(lastSequence));
@@ -183,6 +187,7 @@ namespace PersistentCity.Persistence
         public long Sequence { get; private set; }
         public bool Saving { get; private set; }
         public bool Detached { get; private set; }
+        public bool Initializing { get; private set; }
         public int Published { get; private set; }
         public int Refused { get; private set; }
         public string LastRefusal { get; private set; } = "";
@@ -201,6 +206,7 @@ namespace PersistentCity.Persistence
                 : unitOnStack ? "A Persistent City unit was executing when the native save started."
                 : Saving ? "A native save started inside another Persistent City save callback."
                 : poisoned ? "An earlier save epoch of this session failed."
+                : Initializing ? "Persistent City initialization has not completed."
                 : null;
             if (refusal != null)
             {
@@ -264,10 +270,17 @@ namespace PersistentCity.Persistence
         /// save of the same object is refused on load. A verified replacement (another or no current object)
         /// writes nothing. Returns whether markers were written.
         /// </summary>
+        /// <summary>Initialization completed and the session is attached; publication is allowed from now on.</summary>
+        public void CompleteInitialization()
+        {
+            if (Detached) throw new InvalidOperationException("A detached save epoch cannot complete initialization.");
+            Initializing = false;
+        }
+
         public bool Detach(object? current)
         {
             if (Detached) return false;
-            bool same = ReferenceEquals(current, instance);
+            bool same = !Initializing && ReferenceEquals(current, instance);
             if (same) MarkFailed(AccountingStopStore.DetachedAfterSave);
             Detached = true; Saving = false;
             return same;

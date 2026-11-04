@@ -53,6 +53,28 @@ namespace PersistentCity.Runtime
             catch (Exception error) { log?.Warn("Persistent City stop after a re-entrant save was contained: " + error); }
         }
 
+        /// <summary>Binds the save epoch and subscribes the callbacks when initialization starts.</summary>
+        private void BeginInitializingSaveEpoch(object save, System.Collections.Generic.IDictionary<string, string> data, long sequence)
+        {
+            DropSaveEpoch();
+            lastSaveEpoch = saveEpoch = new SaveEpochBinding(save, data, sequence, initializing: true);
+            GlobalEvents.onSaveGame += Save;
+            GlobalEvents.onGameUnloaded += Shutdown;
+            subscribed = true;
+        }
+
+        /// <summary>Abandoned initialization for a replaced save object: unsubscribe without writing anything.</summary>
+        private void DropSaveEpoch()
+        {
+            var epoch = saveEpoch;
+            saveEpoch = null;
+            epoch?.Detach(null);
+            if (!subscribed) return;
+            GlobalEvents.onSaveGame -= Save;
+            GlobalEvents.onGameUnloaded -= Shutdown;
+            subscribed = false;
+        }
+
         /// <summary>Rule 9: before any teardown, mark the still-current save object so a later native save is refused.</summary>
         private void DetachSaveEpoch()
         {
