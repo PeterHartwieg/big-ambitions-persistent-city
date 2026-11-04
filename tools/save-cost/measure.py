@@ -20,7 +20,7 @@ wait = r"C:\Users\Peter\Coding_Projects\.agent-logs\wait-other-dotnet.ps1"
 project = root / "tools" / "save-cost" / "SaveCost.csproj"
 out = root / "docs" / "perf" / "assets" / "f7a"
 representative = ["representative-957x2", "representative-5000x2", "representative-50000x2"]
-stress = ["957x2", "957x3", "5000x2", "5000x3", "50000x2", "50000x3", "churn", "CF32", "CF64"]
+stress = ["957x2", "957x3", "5000x2", "5000x3", "50000x2", "50000x3", "churn", "CF32", "CF64", "encoding-max"]
 
 
 def wait_for_dotnet():

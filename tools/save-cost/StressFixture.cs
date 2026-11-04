@@ -8,11 +8,12 @@ using PersistentCity.Persistence;
 // with the retained E5d afterSha256 is checked by the harness; nothing here edits E5d's tool.
 static partial class Program
 {
-    public static readonly string[] StressNames = { "957x2", "957x3", "5000x2", "5000x3", "50000x2", "50000x3", "churn", "CF32", "CF64" };
+    public static readonly string[] StressNames = { "957x2", "957x3", "5000x2", "5000x3", "50000x2", "50000x3", "churn", "CF32", "CF64", "encoding-max" };
 
     public static CityState StressFixture(string name)
     {
         if (!StressNames.Contains(name)) throw new ArgumentException("Unknown E5d stress fixture " + name);
+        if (name == "encoding-max") return MaximumEscapingFixture();
         bool cf = name == "CF32" || name == "CF64";
         int residents = cf || name.StartsWith("50000", StringComparison.Ordinal) ? 50000 : name.StartsWith("5000", StringComparison.Ordinal) ? 5000 : 957;
         int factor = cf || name.EndsWith("x3", StringComparison.Ordinal) ? 3 : 2;
@@ -66,5 +67,23 @@ static partial class Program
         var upgraded = migrated.State!;
         upgraded.Schema = 25; upgraded.MenuPolicy = FoodNameIdentity.Wire;
         return upgraded;
+    }
+
+    /// <summary>
+    /// E5d's maximum-escaping case (NameEncoding25(true)): 32 scopes x 8 product names of 256
+    /// non-ASCII characters, so characters and UTF-8 bytes diverge. Same construction as E5d.
+    /// </summary>
+    static CityState MaximumEscapingFixture()
+    {
+        var state = FoodCity(1, false); state.Food!.Shops.Clear();
+        foreach (var m in state.Food.Residents) { m.PreferredProductId = ""; m.PreferenceBonusCents = 0; m.Today = null; }
+        for (int i = 0; i < 32; i++)
+        {
+            string place = "name25:" + i; state.Places.Add(new Place { Id = place, Name = "Shop", Kind = PlaceKind.Shop });
+            string Name(int n) => new string('', 255) + (char)('' + n);
+            state.Food.Shops.Add(new FoodScope { PlaceId = place, BusinessId = "encoding:" + i, ProductId = Name(i * 8),
+                AdditionalProductIds = Enumerable.Range(i * 8 + 1, 7).Select(Name).ToList() });
+        }
+        return state;
     }
 }

@@ -536,14 +536,15 @@ namespace PersistentCity.Runtime
                 () => simulation != null && routes?.ReadyForPopulation == true && simulation.IsCaughtUpTo(AccountingClock.Target(Now())),
                 () => true, Now, () => simulation?.State.Minute ?? Now(), native => simulation == null || simulation.IsAccountingEpochDrained(native));
             initializingSave = save;
-            activationHadPayload = initializingHadPayload;
-            activationPayloadCharacters = initializingPayload?.Length ?? 0;
+            // F7a: load timing only when save-cost diagnostics are requested; otherwise no timestamps or fields.
+            bool timed = timeActivation = saveCost != null;
+            if (timed) { activationHadPayload = initializingHadPayload; activationPayloadCharacters = initializingPayload?.Length ?? 0; }
             initialization = Task.Run(() =>
             {
-                long readStarted = Stopwatch.GetTimestamp();
+                long readStarted = timed ? Stopwatch.GetTimestamp() : 0;
                 var session = SaveSession.Open(saved, source.PopulationKey);
                 var stored = session.InitialReadResult;
-                long created = Stopwatch.GetTimestamp();
+                long created = timed ? Stopwatch.GetTimestamp() : 0;
                 CityState state;
                 if (stored.Status == SaveReadStatus.Missing)
                     state = Population.CreateFromHousing(source.Identities, places, source.PopulationKey, source.SourceVersion, source.CitySeed, minute);
@@ -554,8 +555,9 @@ namespace PersistentCity.Runtime
                 }
                 else throw new InvalidDataException("Population save refused: " + stored.Error);
                 NativeTravelPace.PrepareInitialTiming(state, stored.Status == SaveReadStatus.Missing, clockRate);
-                long validating = Stopwatch.GetTimestamp();
+                long validating = timed ? Stopwatch.GetTimestamp() : 0;
                 SaveCodec.ValidateForActivation(state); // Validate completely before making it active or touching modData.
+                if (!timed) return new PreparedCity { State = state, Saves = session };
                 long validated = Stopwatch.GetTimestamp();
                 return new PreparedCity { State = state, Saves = session, ReadMilliseconds = (created - readStarted) * MillisecondsPerTimestamp,
                     CreateMilliseconds = (validating - created) * MillisecondsPerTimestamp, ValidateMilliseconds = (validated - validating) * MillisecondsPerTimestamp };
@@ -567,7 +569,8 @@ namespace PersistentCity.Runtime
         {
             var pending = initialization;
             if (pending == null || !pending.IsCompleted) return;
-            // F7a: main-thread activation cost, once per completed load (primitives only).
+            if (!timeActivation) { CompleteInitialization(pending); return; }
+            // F7a: requested main-thread activation cost, once per completed load (primitives only).
             long started = Stopwatch.GetTimestamp();
             try { CompleteInitialization(pending); }
             finally

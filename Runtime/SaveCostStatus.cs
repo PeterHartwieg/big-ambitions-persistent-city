@@ -7,7 +7,9 @@ namespace PersistentCity.Runtime
     {
         // F7a. Null unless explicitly requested: ordinary saves then pass null and do no timing work.
         private SaveCostRecorder? saveCost;
-        // Load timings are written once per activation into primitives; nothing runs per frame.
+        // Requested load timings are written once per activation into primitives; nothing runs per frame.
+        // Captured at load start: a request armed later times the next load, never a half-timed one.
+        private bool timeActivation;
         private long activationSequence;
         private double activationReadMilliseconds, activationCreateMilliseconds, activationValidateMilliseconds, activationMainThreadMilliseconds;
         private int activationPayloadCharacters;

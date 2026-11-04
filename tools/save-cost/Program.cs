@@ -37,6 +37,8 @@ static partial class Program
         ["CF32"] = "C686C4D49DEE7D4A6464EC175C719543BC782CC349870CAC4B6D07992FF07330",
         ["CF64"] = "1CADB22DCACD019FCBC3F67E9417890A9486B74F8259B98AC6A5C181FBA4C4D1",
     };
+    // E5d retained maximum-escaping canonical sizes (no hash was retained): characters, UTF-8 bytes.
+    static readonly (int Characters, int Bytes) E5dEncodingMax = (149224, 411368);
     // F3 retained integrated-replay final save hashes (docs/perf/assets/f3-bounded-bulk/after-integrated.jsonl).
     static readonly Dictionary<int, string> F3IntegratedSha256 = new Dictionary<int, string>
     {
@@ -59,11 +61,14 @@ static partial class Program
             rows.Add(new { fixture = "representative-" + residents + "x2", seed = RepresentativeFixture.Seed, sha256 = RepresentativeFixture.Sha256(a),
                 repeatEqual = true, otherSeed = RepresentativeFixture.Seed + 1, otherSeedSha256 = RepresentativeFixture.Sha256(other) });
         }
-        foreach (string name in new[] { "957x2", "5000x2" })
+        foreach (string name in new[] { "957x2", "5000x2", "encoding-max" })
         {
             string a = SaveCodec.Write(StressFixture(name)), b = SaveCodec.Write(StressFixture(name));
             Check(a == b, "Stress fixture is not deterministic: " + name);
-            rows.Add(new { fixture = name, seed = 11, sha256 = RepresentativeFixture.Sha256(a), repeatEqual = true, e5dSha256Equal = RepresentativeFixture.Sha256(a) == E5dAfterSha256[name] });
+            bool e5dEqual = name == "encoding-max" ? (a.Length, Encoding.UTF8.GetByteCount(a)) == E5dEncodingMax
+                : RepresentativeFixture.Sha256(a) == E5dAfterSha256[name];
+            rows.Add(new { fixture = name, seed = 11, sha256 = RepresentativeFixture.Sha256(a), repeatEqual = true, e5dEqual,
+                e5dComparison = name == "encoding-max" ? "retained characters and UTF-8 bytes" : "retained afterSha256" });
         }
         return new { mode = "determinism", rows };
     }
@@ -83,6 +88,7 @@ static partial class Program
         Check(off == on, "Diagnostics changed payload bytes.");
         string sha = RepresentativeFixture.Sha256(off);
         string? expected = representative ? F3IntegratedSha256.GetValueOrDefault(Residents(name)) : E5dAfterSha256.GetValueOrDefault(name);
+        bool? e5dSizesEqual = name == "encoding-max" ? (off.Length, Encoding.UTF8.GetByteCount(off)) == E5dEncodingMax : null;
 
         // Mirror the runtime session: bound to the live dictionary, so later writes take the trusted publish path.
         var data = new Dictionary<string, string>(StringComparer.Ordinal) { [SaveCodec.StateKey] = off, ["other:sentinel"] = "keep" };
@@ -146,7 +152,7 @@ static partial class Program
             payload = new { characters = off.Length, utf8Bytes = Encoding.UTF8.GetByteCount(off), utf16StorageBytes = 2L * off.Length,
                 streamingRecords = counts.Streaming, semanticRecords = counts.Semantic, sha256 = sha,
                 expectedSha256 = expected, expectedSha256Equal = expected == null ? (bool?)null : expected == sha,
-                diagnosticsOnOffBytesEqual = true },
+                diagnosticsOnOffBytesEqual = true, e5dSizesEqual },
             save = new
             {
                 phasesMs = phases.ToDictionary(p => p.Key.ToString().ToLowerInvariant(), p => Stats(p.Value)),
@@ -157,9 +163,28 @@ static partial class Program
             },
             load = new { backgroundReadMs = Stats(read), backgroundReadAllocatedBytes = LongStats(readAlloc), backgroundActivationValidateMs = Stats(validate),
                 mainThreadSimulatorConstructionMs = Stats(construct), retainedBytesAfterRead = retained },
+            escapedSource = name == "encoding-max" ? EscapedRead(off, samples) : null,
             processPeakWorkingSetBytes = Process.GetCurrentProcess().PeakWorkingSet64,
             evidence = "Windows .NET 10 synthetic, foreground, one process per fixture; save/load are their own latency criterion, never ordinary-play mod-work; no Unity, Mono, native save or whole-frame evidence"
         };
+    }
+
+    // Every non-ASCII character spelled as a JSON escape: the reader must decode it to the same canonical bytes.
+    static object EscapedRead(string canonical, int samples)
+    {
+        var settings = new JsonSerializerSettings { StringEscapeHandling = StringEscapeHandling.EscapeNonAscii };
+        string escaped = JsonConvert.SerializeObject(Newtonsoft.Json.Linq.JObject.Parse(canonical), Formatting.None, settings);
+        var times = new List<double>(); var alloc = new List<long>();
+        for (int i = 0; i <= samples; i++)
+        {
+            long bytes = GC.GetAllocatedBytesForCurrentThread(), start = Stopwatch.GetTimestamp();
+            var result = SaveCodec.Read(escaped);
+            double ms = Stopwatch.GetElapsedTime(start).TotalMilliseconds; long used = GC.GetAllocatedBytesForCurrentThread() - bytes;
+            Check(result.Status == SaveReadStatus.Loaded && SaveCodec.Write(result.State!) == canonical, "Escaped source did not decode to the canonical bytes.");
+            if (i == 0) continue;
+            times.Add(ms); alloc.Add(used);
+        }
+        return new { characters = escaped.Length, utf8Bytes = Encoding.UTF8.GetByteCount(escaped), readMs = Stats(times), readAllocatedBytes = LongStats(alloc), canonicalRewriteEqual = true };
     }
 
     static object Stats(List<double> values)
