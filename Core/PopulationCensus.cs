@@ -64,11 +64,44 @@ namespace PersistentCity.Core
         public int NativeStaff { get; set; } = -1;
     }
 
+    /// <summary>The three resident facts the census reads, captured on the simulation thread so the
+    /// reduction can run detached while the live population keeps changing.</summary>
+    public readonly struct CensusResident
+    {
+        public CensusResident(string homeId, string dayPlaceId, Persona persona) { HomeId = homeId ?? ""; DayPlaceId = dayPlaceId ?? ""; Persona = persona; }
+        public string HomeId { get; }
+        public string DayPlaceId { get; }
+        public Persona Persona { get; }
+    }
+
     public sealed class PopulationCensusInput
     {
         public IReadOnlyList<Place> Places { get; set; } = Array.Empty<Place>();
         public IReadOnlyList<CensusWorkplace> Workplaces { get; set; } = Array.Empty<CensusWorkplace>();
-        public IReadOnlyList<CitizenState> Residents { get; set; } = Array.Empty<CitizenState>();
+        public IReadOnlyList<CensusResident> Residents { get; set; } = Array.Empty<CensusResident>();
+        /// <summary>Copies the resident facts the census reads. Strings are shared immutable references;
+        /// no identity, journey or wallet is copied.</summary>
+        public static CensusResident[] CaptureResidents(IReadOnlyList<CitizenState> citizens)
+        {
+            var residents = new CensusResident[citizens.Count];
+            for (int i = 0; i < residents.Length; i++)
+            {
+                var person = citizens[i];
+                residents[i] = new CensusResident(person.HomeId, person.DayPlaceId, person.Identity.Persona);
+            }
+            return residents;
+        }
+
+        /// <summary>Detached copies of the census fields of a place catalogue, so later live edits
+        /// (hours, capacity refresh) never race the detached reduction.</summary>
+        public static List<Place> CapturePlaces(IReadOnlyList<Place> places)
+        {
+            var copy = new List<Place>(places.Count);
+            foreach (var place in places)
+                if (place != null) copy.Add(new Place { Id = place.Id, Kind = place.Kind, Capacity = place.Capacity, ResidentialAreaSquareMetres = place.ResidentialAreaSquareMetres });
+            return copy;
+        }
+
         /// <summary>Discovered subway station IDs; null while discovery has not completed.</summary>
         public IReadOnlyList<string>? StationIds { get; set; }
     }
@@ -139,7 +172,7 @@ namespace PersistentCity.Core
             if (input == null) throw new ArgumentNullException(nameof(input));
             var census = new PopulationCensus();
             var places = input.Places ?? Array.Empty<Place>();
-            var residents = input.Residents ?? Array.Empty<CitizenState>();
+            var residents = input.Residents ?? Array.Empty<CensusResident>();
             var workplaces = input.Workplaces ?? Array.Empty<CensusWorkplace>();
             census.Places = places.Count;
             if (places.Count > PopulationCensusPolicy.MaximumPlaces) return census.Refuse("places " + places.Count + " exceed " + PopulationCensusPolicy.MaximumPlaces);
@@ -175,7 +208,6 @@ namespace PersistentCity.Core
             var assigned = new Dictionary<string, int>(Math.Min(dayPlaceCount, residents.Count), StringComparer.Ordinal);
             foreach (var person in residents)
             {
-                if (person == null) return census.Refuse("null resident");
                 if (kinds.TryGetValue(person.HomeId ?? "", out var home) && home.Kind == PlaceKind.Home) Increment(occupancy, home.Id);
                 else census.ResidentsWithoutHome++;
                 if (!string.IsNullOrEmpty(person.DayPlaceId)) Increment(assigned, person.DayPlaceId);
@@ -226,7 +258,7 @@ namespace PersistentCity.Core
             foreach (var person in residents)
             {
                 if (string.IsNullOrEmpty(person.DayPlaceId) || !kinds.TryGetValue(person.DayPlaceId, out var day)) continue;
-                var persona = person.Identity.Persona;
+                var persona = person.Persona;
                 if (day.Kind == PlaceKind.Study && persona == Persona.Student) census.Students++;
                 else if (day.Kind == PlaceKind.Work && persona != Persona.Student && persona != Persona.Retiree)
                 {
@@ -297,7 +329,7 @@ namespace PersistentCity.Core
             Number("study_places", StudyPlaces); Number("study_capacity", StudyCapacity);
             Number("resident_workers", ResidentWorkers); Number("resident_workers_player_owned", ResidentWorkersAtPlayerOwned);
             Number("students", Students);
-            Line("stations", StationsKnown ? Stations.ToString(CultureInfo.InvariantCulture) : "pending");
+            Line("discovered_stations", StationsKnown ? Stations.ToString(CultureInfo.InvariantCulture) : "pending");
             Line("visitor_arrival", PopulationCensusPolicy.VisitorsDrive ? "subway-walk-road" : "subway-walk");
             Number("commuter_demand", CommuterDemand); Number("commuter_target", CommuterTarget);
             Number("day_visitors_per_day", DayVisitorsPerDay); Number("day_visitor_pool_demand", DayVisitorPoolDemand);

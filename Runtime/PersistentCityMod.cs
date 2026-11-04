@@ -527,7 +527,7 @@ namespace PersistentCity.Runtime
             if (initializingHadPayload) saved.Add(SaveStore.StateKey, initializingPayload!);
             var workplaces = new List<CensusWorkplace>();
             var places = GamePlaces.Read(workplaces);
-            censusWorkplaces = workplaces;
+            CaptureCensusCatalogue(places, workplaces);
             log?.Info(OutdoorPlaces.LastDiscoverySummary);
             double minute = Now();
             double clockRate = NativeTravelPace.InitialClockRate(settings.GameClockFactor);
@@ -697,7 +697,7 @@ namespace PersistentCity.Runtime
         public void Shutdown()
         {
             UnregisterCensusCommand();
-            censusWorkplaces = new List<CensusWorkplace>();
+            ResetCensus();
             Detach();
             // A pure worker may finish after unload; observe faults and release all runtime references.
             if (initialization != null)

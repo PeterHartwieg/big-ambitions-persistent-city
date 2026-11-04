@@ -14,7 +14,7 @@ foreach (var (name, places, homes, works, residents, stations) in new[]
     ("places-20000", 20000, 6330, 7240, 50000, 256)
 })
 {
-    var input = Fixture(places, homes, works, residents, stations);
+    var input = Fixture(places, homes, works, residents, stations, out var citizens);
     var census = PopulationCensus.Compute(input);
     Check(!census.Refused, name + " refused: " + census.RefusalReason);
     Check(census.Places == places && census.HomeInteriors == homes && census.Residents == residents, name + " counts");
@@ -40,15 +40,30 @@ foreach (var (name, places, homes, works, residents, stations) in new[]
         times.Add((Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency);
         bytes.Add(GC.GetAllocatedBytesForCurrentThread() - allocated);
     }
+    // Main-thread capture (resident facts and place copies) is measured apart from the detached reduction.
+    var source = citizens;
+    var captureTimes = new List<double>(); var captureBytes = new List<long>();
+    for (int i = 0; i < 220; i++)
+    {
+        long allocated = GC.GetAllocatedBytesForCurrentThread();
+        long started = Stopwatch.GetTimestamp();
+        PopulationCensusInput.CaptureResidents(source);
+        double elapsed = (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
+        long used = GC.GetAllocatedBytesForCurrentThread() - allocated;
+        if (i >= 20) { captureTimes.Add(elapsed); captureBytes.Add(used); }
+    }
+    captureTimes.Sort(); captureBytes.Sort();
     times.Sort(); bytes.Sort();
     string F(double value) => value.ToString("F3", CultureInfo.InvariantCulture);
     Console.WriteLine(name + ": places=" + places + " residents=" + residents + " runs=200 compute+summary ms p50=" + F(times[100])
-        + " p95=" + F(times[189]) + " max=" + F(times[199]) + " allocated_bytes median=" + bytes[100] + " max=" + bytes[199]);
+        + " p95=" + F(times[189]) + " max=" + F(times[199]) + " allocated_bytes median=" + bytes[100] + " max=" + bytes[199]
+        + " | main-thread resident capture ms p50=" + F(captureTimes[100]) + " p95=" + F(captureTimes[189]) + " max=" + F(captureTimes[199])
+        + " bytes=" + captureBytes[100]);
 }
 Console.WriteLine(failures == 0 ? "population census regression: PASS" : "population census regression: FAIL " + failures);
 return failures == 0 ? 0 : 1;
 
-static PopulationCensusInput Fixture(int placeCount, int homes, int works, int residents, int stations)
+static PopulationCensusInput Fixture(int placeCount, int homes, int works, int residents, int stations, out List<CitizenState> citizens)
 {
     // Home bands 1/2/4/5/7 in a fixed cycle (the real reference city has 1,064 beds; this has 1,106).
     int[] beds = { 2, 4, 2, 4, 5, 1, 2, 4, 7, 2 };
@@ -80,5 +95,6 @@ static PopulationCensusInput Fixture(int placeCount, int homes, int works, int r
             HomeId = home, PlaceId = home, DayPlaceId = day });
     }
     var stationIds = Enumerable.Range(0, stations).Select(i => "subway:Station" + i.ToString(CultureInfo.InvariantCulture)).ToList();
-    return new PopulationCensusInput { Places = places, Workplaces = workplaces, Residents = people, StationIds = stationIds };
+    citizens = people;
+    return new PopulationCensusInput { Places = places, Workplaces = workplaces, Residents = PopulationCensusInput.CaptureResidents(people), StationIds = stationIds };
 }

@@ -14,10 +14,13 @@ public sealed class PopulationCensusTests
     private static Place Home(string id, int beds, double area = 60) => new Place { Id = id, Kind = PlaceKind.Home, Capacity = beds, ResidentialAreaSquareMetres = area };
     private static Place Work(string id) => new Place { Id = id, Kind = PlaceKind.Work, Capacity = 16 };
     private static Place Study(string id) => new Place { Id = id, Kind = PlaceKind.Study, Capacity = 16 };
-    private static CitizenState Resident(string id, Persona persona, string home, string day = "") => new CitizenState
+    private static CitizenState Citizen(string id, Persona persona, string home, string day = "") => new CitizenState
     {
         Identity = new CitizenIdentity { Id = id, Persona = persona }, HomeId = home, PlaceId = home, DayPlaceId = day
     };
+    // The census reads three facts per resident; ids only name the fixture rows.
+    private static CensusResident Resident(string id, Persona persona, string home, string day = "")
+        => PopulationCensusInput.CaptureResidents(new[] { Citizen(id, persona, home, day) })[0];
     private static CensusWorkplace Live(string work, double area, bool player = false, string study = "", int staff = -1)
         => new CensusWorkplace { WorkPlaceId = work, AreaSquareMetres = area, PlayerOwned = player, StudyPlaceId = study, NativeStaff = staff };
 
@@ -35,7 +38,7 @@ public sealed class PopulationCensusTests
             Live("w1", 50, staff: 3), Live("w2", 700, staff: 9), Live("w3", 200, player: true), Live("s:work", 100, study: "s:study")
             // w4 has no live record: area unknown, capacity zero, reported unmatched.
         },
-        Residents = new List<CitizenState>
+        Residents = new List<CensusResident>
         {
             Resident("r1", Persona.Commuter, "h1", "w1"), Resident("r2", Persona.Parent, "h1", "w2"),
             Resident("r3", Persona.Student, "h1", "s:study"), Resident("r4", Persona.Retiree, "h2"),
@@ -97,7 +100,7 @@ public sealed class PopulationCensusTests
         Assert.Equal(0, census.ResidentTarget);
         Assert.Equal(0, census.PersistedPersons);
         Assert.False(census.StationsKnown);
-        Assert.Contains("stations=pending\n", census.Summary());
+        Assert.Contains("discovered_stations=pending\n", census.Summary());
         Assert.Equal("", census.WorkplaceDetail());
     }
 
@@ -260,11 +263,11 @@ public sealed class PopulationCensusTests
         // Households can never exceed home interiors, so they never exceed beds of homes with capacity.
         var homesWithoutBeds = PopulationCensus.Compute(new PopulationCensusInput
         {
-            Places = new List<Place> { Home("h", 0) }, Residents = new List<CitizenState> { Resident("r", Persona.Commuter, "h") }
+            Places = new List<Place> { Home("h", 0) }, Residents = new List<CensusResident> { Resident("r", Persona.Commuter, "h") }
         });
         Assert.False(homesWithoutBeds.HouseholdsWithinBeds);
         Assert.Equal(1, homesWithoutBeds.OverBandHomes);
-        var homeless = PopulationCensus.Compute(new PopulationCensusInput { Residents = new List<CitizenState> { Resident("r", Persona.Commuter, "missing") } });
+        var homeless = PopulationCensus.Compute(new PopulationCensusInput { Residents = new List<CensusResident> { Resident("r", Persona.Commuter, "missing") } });
         Assert.Equal(1, homeless.ResidentsWithoutHome);
         Assert.Equal(0, homeless.Households);
     }
@@ -303,7 +306,7 @@ public sealed class PopulationCensusTests
 
         static string Snapshot(PopulationCensusInput value) => string.Join("|", value.Places.Select(p => p.Id + ":" + p.Kind + ":" + p.Capacity))
             + "#" + string.Join("|", value.Workplaces.Select(w => w.WorkPlaceId + ":" + w.AreaSquareMetres + ":" + w.PlayerOwned + ":" + w.NativeStaff))
-            + "#" + string.Join("|", value.Residents.Select(r => r.Identity.Id + ":" + r.HomeId + ":" + r.DayPlaceId + ":" + r.PlaceId))
+            + "#" + string.Join("|", value.Residents.Select(r => r.HomeId + ":" + r.DayPlaceId + ":" + r.Persona))
             + "#" + string.Join("|", value.StationIds!);
     }
 
@@ -318,6 +321,45 @@ public sealed class PopulationCensusTests
         Assert.Equal(3, Enum.GetValues(typeof(MealKind)).Length - 1); // breakfast, lunch, dinner
         Assert.False(PopulationCensusPolicy.VisitorsDrive);
         Assert.True(PopulationCensusPolicy.ExcludePlayerOwnedWorkplaces);
+    }
+
+    [Fact]
+    public void Business_established_at_a_saved_vacant_address_is_counted_from_the_load_catalogue()
+    {
+        // Saved city: the address was vacant, so only its dormant shop entrance was persisted.
+        var saved = new List<Place> { Home("h", 4), new Place { Id = "address:Main:1:shop", Kind = PlaceKind.Shop, Capacity = 16 } };
+        // Before reload the player established a business there; the load-time read now has its Work role.
+        var fresh = new List<Place> { Home("h", 4), new Place { Id = "address:Main:1:shop", Kind = PlaceKind.Shop, Capacity = 16 }, Work("address:Main:1:work") };
+        var live = new List<CensusWorkplace> { Live("address:Main:1:work", 120, player: true) };
+        var residents = new List<CensusResident> { Resident("r1", Persona.Commuter, "h") };
+        var stale = PopulationCensus.Compute(new PopulationCensusInput { Places = saved, Workplaces = live, Residents = residents, StationIds = new[] { "subway:A" } });
+        Assert.Equal(0, stale.Workplaces); // the defect: the business silently disappears
+        var census = PopulationCensus.Compute(new PopulationCensusInput { Places = PopulationCensusInput.CapturePlaces(fresh), Workplaces = live, Residents = residents, StationIds = new[] { "subway:A" } });
+        Assert.Equal(1, census.Workplaces);
+        Assert.Equal(1, census.PlayerOwnedWorkplaces);
+        Assert.Equal(6, census.PlayerOwnedCapacity);
+        Assert.Equal(0, census.UnmatchedWorkplaces);
+        Assert.Equal(1, census.Households); // saved assignments join the fresh catalogue by stable ID
+        Assert.Contains("address:Main:1:work area=120 capacity=6 study=0 assigned=0 owner=player", census.WorkplaceDetail());
+    }
+
+    [Fact]
+    public void Captured_inputs_are_detached_from_live_state()
+    {
+        var citizens = new List<CitizenState> { Citizen("r1", Persona.Commuter, "h1", "w1"), Citizen("r2", Persona.Student, "h1", "s:study") };
+        var places = Mixed().Places;
+        var input = new PopulationCensusInput
+        {
+            Places = PopulationCensusInput.CapturePlaces(places), Workplaces = Mixed().Workplaces,
+            Residents = PopulationCensusInput.CaptureResidents(citizens), StationIds = new[] { "subway:A" }
+        };
+        string before = PopulationCensus.Compute(input).Summary();
+        // The simulation keeps running after capture: moves, job changes and capacity edits.
+        citizens[0].HomeId = "h2"; citizens[0].DayPlaceId = ""; citizens.Add(Citizen("r3", Persona.Commuter, "h3"));
+        foreach (var place in places) place.Capacity = 99;
+        Assert.Equal(before, PopulationCensus.Compute(input).Summary());
+        Assert.Equal(2, input.Residents.Count);
+        Assert.Equal(new CensusResident("h1", "w1", Persona.Commuter), input.Residents[0]);
     }
 
     private static string Root()
@@ -357,6 +399,16 @@ public sealed class PopulationCensusTests
         Assert.Contains("private const int BusinessAllocation = 16;", places);
         Assert.DoesNotMatch(new Regex(@"current\.State\.\w+\s*="), diagnostics);
         Assert.DoesNotContain("Update(", diagnostics);
+        // The census uses the fresh load-time catalogue, never the persisted one, and reduces detached.
+        Assert.Contains("Places = censusPlaces", diagnostics);
+        Assert.DoesNotMatch(new Regex(@"Places\s*=\s*current\.State\.Places"), diagnostics);
+        int worker = diagnostics.IndexOf("Task.Run(", StringComparison.Ordinal);
+        Assert.True(worker > 0);
+        Assert.Equal(diagnostics.IndexOf("PopulationCensus.Compute(", StringComparison.Ordinal), diagnostics.LastIndexOf("PopulationCensus.Compute(", StringComparison.Ordinal));
+        Assert.True(diagnostics.IndexOf("PopulationCensus.Compute(", StringComparison.Ordinal) > worker);
+        Assert.True(diagnostics.IndexOf(".Summary()", StringComparison.Ordinal) > worker);
+        Assert.True(diagnostics.IndexOf(".WorkplaceDetail()", StringComparison.Ordinal) > worker);
+        Assert.Contains("ReferenceEquals(pending.Result.Save, save)", diagnostics); // publish only for the originating save
         string mod = File.ReadAllText(Path.Combine(root, "Runtime", "PersistentCityMod.cs"));
         Assert.DoesNotContain("PopulationCensus.Compute", mod); // only the console diagnostic computes it
     }
