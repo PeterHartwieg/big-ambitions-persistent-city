@@ -77,28 +77,28 @@ Validated source: `5d0bb2a`. The later commits `0b3565d`, `3cef7ab` and this rec
 | 41 | `dotnet run --project tools/rival-memory-regression/RivalMemoryRegression.csproj --configuration Release` | A | exit 0 (2.0 s) |
 | 42 | `python tools/rival-memory-regression/validate.py` | B | exit 0; validate.py sub-matrix: 65/65 exit 0 |
 | 43 | `python tools/run-d3a-checks.py` | B | exit 0; validate.py step 1: 71 D3a records, all exit 0 |
-| 44 | `dotnet run --project tools/icecream-feasibility-regression/IcecreamFeasibilityRegression.csproj --configuration Release` | — | **not yet recorded** |
-| 45 | `dotnet run --project tools/frenchfries-feasibility-regression/FrenchFriesFeasibilityRegression.csproj --configuration Release` | — | **not yet recorded** |
-| 46 | `dotnet run --project tools/pizza-feasibility-regression/PizzaFeasibilityRegression.csproj --configuration Release` | — | **not yet recorded** |
-| 47 | `dotnet run --project tools/e4-menu-regression/E4MenuRegression.csproj --configuration Release` | — | **not yet recorded** |
-| 48 | `python tools/icecream-feasibility-regression/source_checks.py` | — | **not yet recorded** |
-| 49 | `python tools/frenchfries-feasibility-regression/source_checks.py` | — | **not yet recorded** |
-| 50 | `python tools/pizza-feasibility-regression/source_checks.py` | — | **not yet recorded** |
-| 51 | `dotnet run --project tools/e3-remaining-feasibility-regression/E3RemainingFeasibilityRegression.csproj --configuration Release` | — | **not yet recorded** |
-| 52 | `python tools/e3-remaining-feasibility-regression/source_checks.py` | — | **not yet recorded** |
-| 53 | `dotnet run --project tools/e5a-eligibility-regression/E5aEligibilityRegression.csproj --configuration Release` | — | **not yet recorded** |
-| 54 | `python tools/e5a-eligibility-regression/source_checks.py` | — | **not yet recorded** |
-| 55 | `dotnet run --project tools/food-metadata-regression/FoodMetadataRegression.csproj --configuration Release` | — | **not yet recorded** |
+| 44 | `dotnet run --project tools/icecream-feasibility-regression/IcecreamFeasibilityRegression.csproj --configuration Release` | A | exit 0 (2.4 s) |
+| 45 | `dotnet run --project tools/frenchfries-feasibility-regression/FrenchFriesFeasibilityRegression.csproj --configuration Release` | A | exit 0 (1.8 s) |
+| 46 | `dotnet run --project tools/pizza-feasibility-regression/PizzaFeasibilityRegression.csproj --configuration Release` | A | exit 0 (1.8 s) |
+| 47 | `dotnet run --project tools/e4-menu-regression/E4MenuRegression.csproj --configuration Release` | A | exit 0 (18.2 s) |
+| 48 | `python tools/icecream-feasibility-regression/source_checks.py` | A | exit 0 (0.4 s) |
+| 49 | `python tools/frenchfries-feasibility-regression/source_checks.py` | A | exit 0 (0.4 s) |
+| 50 | `python tools/pizza-feasibility-regression/source_checks.py` | A | exit 0 (0.1 s) |
+| 51 | `dotnet run --project tools/e3-remaining-feasibility-regression/E3RemainingFeasibilityRegression.csproj --configuration Release` | A | exit 0 (2.2 s) |
+| 52 | `python tools/e3-remaining-feasibility-regression/source_checks.py` | A | exit 0 (0.6 s) |
+| 53 | `dotnet run --project tools/e5a-eligibility-regression/E5aEligibilityRegression.csproj --configuration Release` | A | exit 0 (4.9 s) |
+| 54 | `python tools/e5a-eligibility-regression/source_checks.py` | A | exit 0 (0.1 s) |
+| 55 | `dotnet run --project tools/food-metadata-regression/FoodMetadataRegression.csproj --configuration Release` | A | exit 0 (9.9 s) |
 | 56 | `python tools/food-metadata-regression/validate.py` | B | exit 0; completed run; wrote its e5c result manifest |
-| 57 | `dotnet run --project tools/name-identity-regression/NameIdentityRegression.csproj --configuration Release` | — | **not yet recorded** |
-| 58 | `dotnet run --project tools/e5b-complete-menu-regression/E5bCompleteMenuRegression.csproj --configuration Release` | — | **not yet recorded** |
-| 59 | `python -m unittest discover -s tools/e5b-native-rig-proof -p "test_*.py"` | — | **not yet recorded** |
-| 60 | `dotnet run --project tools/food-metadata-api-regression/FoodMetadataApiRegression.csproj --configuration Release` | — | **not yet recorded** |
-| 61 | `python tools/food-metadata-api-regression/source_checks.py` | — | **not yet recorded** |
-| 62 | `dotnet run --project tools/accounting-backlog-regression/AccountingBacklogRegression.csproj --configuration Release` | — | **not yet recorded** |
-| 63 | `dotnet run --project tools/bounded-bulk-regression/BoundedBulkRegression.csproj --configuration Release` | — | **not yet recorded** |
+| 57 | `dotnet run --project tools/name-identity-regression/NameIdentityRegression.csproj --configuration Release` | A | exit 0 (17.0 s) |
+| 58 | `dotnet run --project tools/e5b-complete-menu-regression/E5bCompleteMenuRegression.csproj --configuration Release` | A | exit 0 (2.0 s) |
+| 59 | `python -m unittest discover -s tools/e5b-native-rig-proof -p "test_*.py"` | A | exit 0 (0.4 s) |
+| 60 | `dotnet run --project tools/food-metadata-api-regression/FoodMetadataApiRegression.csproj --configuration Release` | A | exit 0 (3.4 s) |
+| 61 | `python tools/food-metadata-api-regression/source_checks.py` | A | exit 0 (0.1 s) |
+| 62 | `dotnet run --project tools/accounting-backlog-regression/AccountingBacklogRegression.csproj --configuration Release` | A | exit 0 (7.0 s) |
+| 63 | `dotnet run --project tools/bounded-bulk-regression/BoundedBulkRegression.csproj --configuration Release` | A | exit 0 (3.0 s) |
 
-Commands 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 57, 58, 59, 60, 61, 62, 63 are not yet recorded.
+All 63 required commands are recorded with exit 0. No test, tool or build failed in any run.
 
 No game, rig, lease, test profile, ModsLocal, bridge directory or Steam file was touched. No background test process was left running.
 
