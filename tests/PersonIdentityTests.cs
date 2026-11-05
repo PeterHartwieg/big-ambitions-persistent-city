@@ -211,7 +211,8 @@ public sealed class PersonIdentityTests
     public void DerivedIdentityIsNeverPersistedOrWired()
     {
         // B6 and INACTIVE: the identity policy, validator and person types are not read by the simulator, the codec,
-        // Runtime or Compatibility in F5b.
+        // Runtime or Compatibility in F5b. F5f's active-journey index is the one reader: it classifies person IDs
+        // (PersonIds, PersonKind) to withhold visitors from bodies, and references nothing else listed here.
         var root = new DirectoryInfo(AppContext.BaseDirectory);
         while (root != null && !File.Exists(Path.Combine(root.FullName, "Core", "IdentityPolicy.cs"))) root = root.Parent;
         Assert.NotNull(root);
@@ -224,7 +225,10 @@ public sealed class PersonIdentityTests
         foreach (var file in files)
         {
             string text = File.ReadAllText(file);
-            foreach (var name in names) Assert.False(text.Contains(name, StringComparison.Ordinal), Path.GetFileName(file) + " references " + name);
+            bool index = Path.GetFileName(file) == "ActiveJourneyIndex.cs" && Path.GetFileName(Path.GetDirectoryName(file)) == "Core";
+            foreach (var name in names)
+                if (!index || name != "PersonKind" && name != "PersonIds")
+                    Assert.False(text.Contains(name, StringComparison.Ordinal), Path.GetFileName(file) + " references " + name);
         }
         Assert.Equal(25, CityState.CurrentSchema);
     }
