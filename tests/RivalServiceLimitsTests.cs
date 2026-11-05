@@ -397,6 +397,49 @@ public sealed class RivalServiceLimitsTests
         Assert.Equal(straight, Run(again, 2880, 1, 4, c => Reload(c, market2, paths2, Copy(settings))));
     }
 
+    /// <summary>Residents already inside a sold-out rival whose stop deadline crosses into the next meal period:
+    /// each offer is judged by its actual queued finish, so no commitment is refused after selection, every refusal
+    /// forms a D4 Stockout entry for the rival, spending is unchanged and reload replays the same city.</summary>
+    [Fact]
+    public void CrossingPeriodSellOutIsRefusedBeforeSelectionWithStockoutMemory()
+    {
+        var settings = Tight(lanes: 8, units: 1, service: 5);
+        var (city, market, _) = Crowd(16, Copy(settings), atRival: 16); city.State.Capabilities.Active = true;
+        string straight = Run(city, 2880, 1, 4);
+        long settled = Counter(city, "RivalSettlements");
+        Assert.Equal(0, Counter(city, "RivalSellOutRefusals")); // nothing known sold out is ever committed
+        Assert.All(Paid(city).GroupBy(r => RivalServiceCalibration.Period(r.CheckoutAt)), g => Assert.Single(g));
+        var stockouts = city.State.Food!.Residents.SelectMany(m => m.Memory.Entries).Where(e => e.Outcome == ShopExperience.Stockout).ToArray();
+        Assert.NotEmpty(stockouts);
+        Assert.Equal(Money.FromCents(100 * settled), city.State.Food.Residents.Aggregate(Money.Zero, (sum, m) => sum + m.LegacyExternalFoodSpent));
+        Assert.Equal(0, market.NativeBuys);
+        var (again, market2, paths2) = Crowd(16, Copy(settings), atRival: 16); again.State.Capabilities.Active = true;
+        Assert.Equal(straight, Run(again, 2880, 1, 4, c => Reload(c, market2, paths2, Copy(settings))));
+    }
+
+    /// <summary>Home residents choosing between a sold-out rival and an available player shop: the rival offer is
+    /// refused with the existing stock reason at its queued finish, and the player shop can win instead.</summary>
+    [Fact]
+    public void SoldOutRivalCannotBeatAnAvailablePlayerShop()
+    {
+        var settings = Tight(lanes: 8, units: 1, service: 5);
+        var (city, market, _) = Crowd(24, Copy(settings), atRival: 12, player: true);
+        int soldOutSeen = 0, playerInstead = 0, rivalChosenWhileSoldOut = 0;
+        city.FoodDecisionObserved += trace => {
+            var rival = trace.Intent.Choices.Where(c => c.BusinessId == Rival).ToArray();
+            if (!rival.Any(c => c.Reason == "Out of stock")) return;
+            soldOutSeen++;
+            if (trace.Intent.BusinessId == "player") playerInstead++;
+            if (trace.Intent.BusinessId == Rival) rivalChosenWhileSoldOut++;
+        };
+        Run(city, 2880, 1, 4);
+        Assert.True(soldOutSeen > 0, "sold-out evaluations " + soldOutSeen);
+        Assert.True(playerInstead > 0, "player chosen " + playerInstead);
+        Assert.Equal(0, rivalChosenWhileSoldOut);
+        Assert.All(Paid(city).GroupBy(r => RivalServiceCalibration.Period(r.CheckoutAt)), g => Assert.Single(g));
+        Assert.True(market.NativeBuys > 0);
+    }
+
     static string RivalId(RivalOutflowTests.Market market) => market.Rivals.Keys.Single();
     static void Advance(CitySimulator city, double at) { while (!city.AdvanceTo(at, 1).CaughtUp) { } }
 

@@ -6,7 +6,9 @@ plan's citations were rechecked at this base: `RivalFoodTerms.Capture` (`Core/Ri
 `CompleteRival`, `FoodBusiness.ServiceMinutes` (`Core/FoodDemand.cs`), `MealOutcomeRecord` (`Core/FoodToday.cs`)
 and the schema-21 held-shop validator (`Persistence/RivalWire21.cs`, rival `NextServiceAt == OriginAt`,
 `Units == -1`). Status: **implemented; offline checks pass; not verified by rig.** Offline success is not
-native proof.
+native proof. **Merge blocked:** this changes in-game behaviour, so the project rule requires a separately
+authorized rig_test session (Codex Sol, high) to attach reproducible before-red/after-green proof to the PR before
+merge or upload. This offline slice does not provide that proof.
 
 ## Implemented contract
 
@@ -21,11 +23,17 @@ native proof.
   "modeled sell-out (estimated)". The count resets at each period start. There is no restock, rival cost or profit.
 - **Choice-time knowledge.** A held decision evaluates each rival at its derived earliest free lane, so a known
   queue gives the existing "Expected queue exceeds patience" / "Service and return do not fit available time"
-  reasons and enters the preference queue term. A rival whose every feasible finish falls in one sold-out period
-  is not captured. In-flight travellers are not yet in the load, the same as for player shops.
+  reasons and enters the preference queue term. Each otherwise eligible rival offer is also checked against the
+  period its **queued finish** falls in. If that period is sold out, the offer is refused before the draw with the
+  existing "Out of stock" reason, so a known-sold-out rival can never beat an available shop, including when the
+  deadline crosses into the next period. A rival whose every feasible finish falls in one sold-out period is not
+  captured at all. In-flight travellers are not yet in the load, the same as for player shops.
 - **Existing-stop purchases.** A resident already inside the rival decides and enters Serving without
-  `ArriveRival`. The commit-time evaluation includes the lane wait. The commit refuses with
-  "Service unavailable on arrival" when the finishing period is sold out.
+  `ArriveRival`. The commit-time evaluation includes the lane wait and the finishing-period sell-out. When a
+  present customer's only eligible rival offer is refused for the modeled sell-out, D4 records a `Stockout` entry
+  for that rival, named explicitly with the same Committed/Reached stages the player existing-stop path uses.
+  Other rival stop failures stay neutral, as before. A commit-time sell-out check remains as a fail-safe and
+  records the same memory.
 - **Derived, never saved.** `RivalServiceLoad` (`Core/RivalServiceLimits.cs`) is rebuilt inside FoodCommerce's
   existing attach pass from active Serving rival meals and current-period paid rival `MealOutcomeRecord`s
   (`TargetKind = Rival`, `Bought`, `PlaceId`, `CheckoutAt`). A lazy outcome-day rollover forgets the dropped
@@ -83,7 +91,7 @@ profile change between saves can refuse an already committed rival meal at arriv
 
 ## Offline evidence
 
-`tests/RivalServiceLimitsTests.cs` (21 cases) covers:
+`tests/RivalServiceLimitsTests.cs` (23 cases) covers:
 
 - lane ordering and freeing;
 - sell-out at exactly N, period boundaries and reset;
@@ -100,17 +108,23 @@ profile change between saves can refuse an already committed rival meal at arriv
 - player native `Buy` count equal to player sales while rivals saturate;
 - existing-stop customers at 1 and 2 lanes, never above the lane count, with reload equivalence;
 - existing-stop sell-out by finishing period;
+- a sold-out rival whose stop deadline crosses into the next period, with capabilities active: no commitment is
+  refused after selection, D4 Stockout entries are recorded, spending is unchanged, and reload at every boundary
+  replays the same city;
+- a sold-out rival against an available player shop: the rival is never chosen while sold out, and the player
+  shop wins those decisions;
 - a busy rival against a free player shop, producing queue reasons and player choices, with reload equivalence;
 - label strings, plus a source-reachability guard: the limit code names no sale, receipt, Runtime, Unity or
   registration member.
 
-With the evaluation fix disabled, the two existing-stop cases and the busy-rival case fail (3 red); with it they
-pass.
+With the lane evaluation disabled, the two existing-stop cases and the busy-rival case fail (3 red). With the
+finishing-period sell-out evaluation and the stop memory disabled, the two sell-out cases above fail (2 red).
+With the fixes, all pass.
 
 `tools/rival-limits-regression` (1,091 checks) repeats reload-every-call equivalence on a 64-consumer crowd. It
 also asserts writer 25, and that the steady state allocates 0 B and makes no rival native write.
 
-Full suite: **2,877/2,877** tests pass (`dotnet test tests/PersistentCity.Tests.csproj`, 4 November 2026); the build passes; the remaining command matrix is listed in the PR. Offline only; no game, rig, lease, profile,
+Full suite: **2,879/2,879** tests pass (`dotnet test tests/PersistentCity.Tests.csproj`, 5 November 2026); the build passes; the remaining command matrix is listed in the PR. Offline only; no game, rig, lease, profile,
 ModsLocal or bridge access.
 
 ## In-game checks for the next batched rig

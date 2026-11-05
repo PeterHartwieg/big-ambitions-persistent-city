@@ -134,6 +134,16 @@ namespace PersistentCity.Core
             => rivalLoad.Count(place, RivalServiceCalibration.Period(finish)) >= RivalSettings.MealPeriodUnits(businessType);
         // Transient place -> native business type from observations already read; selects a per-type profile.
         private readonly Dictionary<string, string> rivalTypes = new Dictionary<string, string>(StringComparer.Ordinal);
+        // Rival shops of the latest decision evaluation whose eligible offers were refused only by the modeled sell-out.
+        private readonly HashSet<FoodDecisionShop> rivalSoldOutShops = new HashSet<FoodDecisionShop>();
+        /// <summary>D4 Stockout for a customer already inside the rival, named explicitly: the meal holds no rival target yet.</summary>
+        private void RivalStopStockout(ResidentMeal meal, CitizenState person, FoodDecisionShop shop, FoodDecisionState decision)
+        {
+            if (!city.State.Capabilities.Active || person.PlaceId != shop.PlaceId) return;
+            memoryStore.CommitStage(meal, ExperienceStage.Committed, shop.BusinessId);
+            memoryStore.CommitStage(meal, ExperienceStage.Reached, shop.BusinessId);
+            memoryStore.Experience(meal, ShopExperience.Stockout, (int)(decision.OriginAt / 1440), Traits(meal, person), MemorySettings, shop.BusinessId, shop.PlaceId);
+        }
         private string RivalType(FoodDecisionShop shop)
         {
             if (RivalSettings.RivalServiceProfiles.Count == 0) return "";

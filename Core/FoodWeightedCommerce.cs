@@ -377,6 +377,16 @@ namespace PersistentCity.Core
                 else if(shop.OutwardQuote==FoodQuoteState.NotNeeded && FoodDemand.KnownUnavailable(CapturedBusiness(shop),consumer,d.OriginAt,d.Deadline)==null)
                     refusals[shop.BusinessId]="Service and return do not fit available time";
             FoodDemand.ChooseObserved(consumer,businesses,quotes,intent,d.OriginAt,refusals,meal.Kind,evaluateOnly:true);
+            // F6b: an otherwise eligible rival offer whose queued finish lands in a modeled sold-out meal period is
+            // refused before the draw, with the existing stock reason, so it can never beat an available shop.
+            rivalSoldOutShops.Clear();
+            foreach(var c in intent.Choices)
+            {
+                if(!c.ScoreCents.HasValue || !c.ServiceEndsAt.HasValue) continue;
+                var s=d.Shops.First(x=>x.BusinessId==c.BusinessId);
+                if(s.AlternativeKind!=FoodAlternativeKind.Rival || !SoldOut(s.PlaceId,RivalType(s),c.ServiceEndsAt.Value)) continue;
+                c.ScoreCents=null;c.Reason="Out of stock";rivalSoldOutShops.Add(s);
+            }
             return intent;
         }
         private static MealReasonCode FailureReason(FoodIntent intent)
@@ -388,7 +398,7 @@ namespace PersistentCity.Core
             if(intent.Choices.Any(c=>c.Reason=="Service unavailable")) return MealReasonCode.ServiceUnavailable;
             return MealReasonCode.NoFeasibleOffer;
         }
-        private void EndDecision(ResidentMeal meal) {meal.Decision=null;pendingDecision=null;capturedStop=null;evaluatedBusinesses.Clear();}
+        private void EndDecision(ResidentMeal meal) {meal.Decision=null;pendingDecision=null;capturedStop=null;evaluatedBusinesses.Clear();rivalSoldOutShops.Clear();}
         private bool ValidateCapturedRoute(Place from,Place to,Route route,TravelPreferences preferences,bool present)
         {
             if(present) return route.Minutes==0 && route.Legs.Count==1 && Position.Distance(route.Legs[0].From,from.Position)<=.01
@@ -417,8 +427,9 @@ namespace PersistentCity.Core
                 // Optional presentation changes only after a winner and its feasibility are committed.
                 // An existing-stop rival purchase enters Serving here, never through ArriveRival: its queued finish
                 // already includes the lane wait; the modeled sell-out applies to the period it finishes in.
+                // Evaluation already refuses such offers; this remains a fail-safe with the same D4 memory.
                 if(atStop && shop.AlternativeKind==FoodAlternativeKind.Rival && SoldOut(shop.PlaceId,RivalType(shop),choice.ServiceEndsAt!.Value))
-                {RivalSellOutRefusals++;EndDecision(meal);Finish(meal,MealStatus.Missed,"Service unavailable on arrival");return;}
+                {RivalSellOutRefusals++;RivalStopStockout(meal,person,shop,d);EndDecision(meal);Finish(meal,MealStatus.Missed,"Service unavailable on arrival");return;}
                 if(atStop) city.CancelOptionalStop(person.Identity.Id);
                 intent.Status=FoodIntentStatus.Travelling;intent.BusinessId=shop.BusinessId;intent.ProductId=d.ProductId;
                 choice.Reason="Chosen: weighted preference draw";
