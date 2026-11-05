@@ -37,7 +37,7 @@ Offline/headless success is not native proof. The harness does not run Unity, na
 
 ## Dated summary — 5 November 2026 (offline)
 
-`python tools/build.py` succeeded. `dotnet test`: 2,973 passed, 0 failed (9 new; one F5b guard updated). `--list-tests` succeeded. Every required regression tool and Python check passed. Writer 25 unchanged; no save, identity or economy change. Selection p95 with the index: 0.0002 / 0.0470 / 0.1386 ms at 1,914 persons, 0.0001 / 0.0124 / 0.1513 ms at 10,000 and 0.0001 / 0.0121 / 0.1965 ms at 50,000 (0 / 100 / 1,000 active journeys), against 0.0942 / 0.1494 / 0.4779, 0.0603 / 0.1357 / 0.3308 and 0.6965 / 0.9725 / 1.1065 ms for the full scan; shadow comparison p95 ≤ 0.9641 ms at 50,000 persons every 30 s; no sample ≥ 30 ms. No native or in-game claim.
+`python tools/build.py` succeeded. `dotnet test`: 2,973 passed, 0 failed (9 new; one F5b guard updated). `--list-tests` succeeded. Every required regression tool and Python check passed. Writer 25 unchanged; no save, identity or economy change. Selection p95 with the index: 0.0001 / 0.0133 / 0.1823 ms at 1,914 persons, 0.0001 / 0.0126 / 0.2289 ms at 10,000 and 0.0001 / 0.0123 / 0.1927 ms at 50,000 (0 / 100 / 1,000 active journeys), against 0.0154 / 0.0360 / 0.2801, 0.1080 / 0.2623 / 0.4230 and 1.2042 / 1.0858 / 1.9762 ms for the unchanged pre-F5f loop (tiered compilation off, second of two runs; review round 1 corrected the earlier baseline, which was the fallback scan); shadow comparison p95 ≤ 1.8317 ms (max 3.1935 ms) at 50,000 persons every 30 s; no sample ≥ 30 ms. No native or in-game claim.
 
 ## In-game checks for the next batched rig
 

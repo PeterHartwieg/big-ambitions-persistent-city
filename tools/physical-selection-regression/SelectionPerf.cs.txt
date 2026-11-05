@@ -25,12 +25,13 @@ static class SelectionPerf {
   F5f();
  }
  // F5f: open pools (48/24), N persons of which A walk within the radius; the rest are indoors at work.
- // BEFORE is the same production selection over every citizen (the fallback path, identical to the
- // pre-F5f loop); AFTER iterates the active-journey index. Each call clears cooldowns so it attempts again.
+ // BEFORE is the unchanged pre-F5f loop over every citizen (BeforeF5f: no index, no ID classification);
+ // AFTER iterates the active-journey index; FALLBACK is this build's full scan after a shadow mismatch,
+ // which also classifies every ID to withhold visitors. Each call clears cooldowns so it attempts again.
  static void F5f() {
   foreach (int n in new[]{1914,10000,50000}) foreach (int active in new[]{0,100,1000}) {
-   var full=new After{journeyIndexFallback=true};var indexed=new After();
-   foreach(Fixture f in new Fixture[]{full,indexed}) {
+   var baseline=new BeforeF5f();var full=new After{journeyIndexFallback=true};var indexed=new After();
+   foreach(Fixture f in new Fixture[]{baseline,full,indexed}) {
     f.pedestrianLimit=48;f.vehicleLimit=24;f.places["indoor"]=new Place{Id="indoor"};
     for(int i=0;i<n;i++) {
      var id=i.ToString();
@@ -42,10 +43,12 @@ static class SelectionPerf {
     }
     _=f.simulation.ActiveJourneys;
    }
-   full.attempted.Clear();indexed.attempted.Clear();
-   Check(full.Select().SequenceEqual(indexed.Select()),"F5f perf fixture selections differ");
-   Measure($"F5f {n} persons / {active} active journeys selection BEFORE (full scan)",()=>{full.attempted.Clear();full.Select();});
+   baseline.attempted.Clear();full.attempted.Clear();indexed.attempted.Clear();
+   var expected=baseline.Select();
+   Check(expected.SequenceEqual(indexed.Select()) && expected.SequenceEqual(full.Select()),"F5f perf fixture selections differ");
+   Measure($"F5f {n} persons / {active} active journeys selection BEFORE (pre-F5f loop)",()=>{baseline.attempted.Clear();baseline.Select();});
    Measure($"F5f {n} persons / {active} active journeys selection AFTER (index)",()=>{indexed.attempted.Clear();indexed.Select();});
+   Measure($"F5f {n} persons / {active} active journeys selection FALLBACK (full scan after mismatch)",()=>{full.attempted.Clear();full.Select();});
    var index=indexed.simulation.ActiveJourneys;var roster=indexed.simulation.State.Citizens;
    Measure($"F5f {n} persons / {active} active journeys shadow comparison (30 s cadence)",()=>{if(!index.MatchesScan(roster))throw new Exception("shadow");});
    if(active==1000) {

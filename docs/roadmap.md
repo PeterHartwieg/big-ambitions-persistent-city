@@ -92,7 +92,7 @@ Record every taken win with before/after numbers.
 
 - City-audit F5b — [Ordered-input owner lookup hint, boxing-free enum checks, allocation-free intent ownership and concatenation-free identity hashing](perf/f5b-identity-core.md): validator p50 1,914/10,000/100,000 persons 1.3185/8.3299/108.7320 -> 0.6485/3.6938/49.2912 ms; warm validator 68,741/358,737/3,587,106 -> 0 B/call; intent check 127.8 -> 0 B/intent (3.06 -> 1.05 ms per 30,000); identity draw 284 -> 0 B/lookup. New code, offline components only; no frame work.
 
-- City-audit F5f — [Active-journey candidate index for physical selection](perf/f5f.md): selection p95 at 1,914/10,000/50,000 persons with 100 active journeys 0.1494/0.1357/0.9725 -> 0.0470/0.0124/0.0121 ms, with 1,000 active 0.4779/0.3308/1.1065 -> 0.1386/0.1513/0.1965 ms; 0 B per call from the selection itself; offline harness on native doubles, not in-game mod-work.
+- City-audit F5f — [Active-journey candidate index for physical selection](perf/f5f.md): selection p95 against the unchanged pre-F5f loop at 1,914/10,000/50,000 persons with 100 active journeys 0.0360/0.2623/1.0858 -> 0.0133/0.0126/0.0123 ms, with 1,000 active 0.2801/0.4230/1.9762 -> 0.1823/0.2289/0.1927 ms; 0 B per call from the selection itself; offline harness on native doubles (tiered compilation off), not in-game mod-work.
 
 - E5b — [Cached authored bag policy and bounded duplicate checks](perf/e5b-complete-menu.md): discovery 280 -> 0 B/call; offline p95 0.0003 -> 0.0001 ms; no native combined mod-work or whole-frame claim.
 
