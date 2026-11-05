@@ -44,7 +44,9 @@ namespace PersistentCity.Core
 
         /// <summary>This week is days today − 6 … today (today in progress); last week is today − 13 … today − 7.
         /// Rows of other shops or outside both windows are ignored. The first recorded day is the earliest kept
-        /// row in the fourteen-day window: earlier days of a window have no record and are never shown as zero.</summary>
+        /// row in the fourteen-day window. Rows exist only for days with evaluated offers or purchases, so an
+        /// earlier day without a row may be a quiet day or a day before recording began; the text says "no record"
+        /// for such days, never zero and never "not recorded", and shows no change across them.</summary>
         public static FoodShopWeeks Weeks(IEnumerable<FoodShopDay> rows, string placeId, string businessId, int today)
         {
             var current = new FoodWeek(today - WeekDays + 1, today);
@@ -79,7 +81,7 @@ namespace PersistentCity.Core
             text.Append("Week over week · this week = days ").Append(Days(now)).Append(" (day ").Append(N(weeks.Today))
                 .Append(" so far) · last week = days ").Append(Days(last)).AppendLine();
             text.Append("Purchases: ").Append(N(now.Purchases)).Append(" this week").Append(Coverage(now)).Append(" · ");
-            if (last.Coverage == FoodWeekCoverage.NotRecorded) text.Append("last week not recorded");
+            if (last.Coverage == FoodWeekCoverage.NotRecorded) text.Append("no record last week");
             else text.Append(N(last.Purchases)).Append(" last week").Append(Coverage(last));
             if (last.Coverage == FoodWeekCoverage.Complete)
                 text.Append(" · change ").Append(Signed(now.Purchases - last.Purchases)).Append(". Sales: ").Append(Amount(now.RevenueUnits))
@@ -88,23 +90,23 @@ namespace PersistentCity.Core
             else
                 text.Append(". Sales: ").Append(Amount(now.RevenueUnits)).Append(" this week")
                     .Append(last.Coverage == FoodWeekCoverage.NotRecorded ? "" : " · " + Amount(last.RevenueUnits) + " last week")
-                    .AppendLine(". No change shown: last week is not fully recorded.");
+                    .AppendLine(". No change shown: last week has days with no record (no evaluated offers, or before recording began).");
             text.Append("Evaluated offers: ").Append(N(now.Offers)).Append(" this week").Append(Coverage(now)).Append(" · ")
-                .Append(last.Coverage == FoodWeekCoverage.NotRecorded ? "last week not recorded" : N(last.Offers) + " last week" + Coverage(last))
+                .Append(last.Coverage == FoodWeekCoverage.NotRecorded ? "no record last week" : N(last.Offers) + " last week" + Coverage(last))
                 .Append(". ").AppendLine(OfferMeaning);
             for (int i = 0; i < CauseLabels.Length; i++)
             {
                 long a = now.Causes[i], b = last.Causes[i];
                 if (a == 0 && b == 0) continue;
                 text.Append(CauseLabels[i]).Append(": ").Append(N(a)).Append(a == 1 ? " evaluated offer" : " evaluated offers").Append(" this week (");
-                if (last.Coverage == FoodWeekCoverage.NotRecorded) text.Append("last week not recorded");
-                else text.Append("last week ").Append(N(b)).Append(last.Coverage == FoodWeekCoverage.Partial ? ", recorded from day " + N(last.RecordedFrom!.Value) : "");
+                if (last.Coverage == FoodWeekCoverage.NotRecorded) text.Append("no record last week");
+                else text.Append("last week ").Append(N(b)).Append(last.Coverage == FoodWeekCoverage.Partial ? ", no record before day " + N(last.RecordedFrom!.Value) : "");
                 text.AppendLine(")");
             }
         }
         private static string Days(FoodWeek week) => N(week.FirstDay) + "–" + N(week.LastDay);
         private static string Coverage(FoodWeek week) => week.Coverage == FoodWeekCoverage.Partial
-            ? " (partial: recorded from day " + N(week.RecordedFrom!.Value) + ")" : "";
+            ? " (no record before day " + N(week.RecordedFrom!.Value) + ")" : "";
 
         internal static string MoneyText(FoodMoneySnapshot money)
         {

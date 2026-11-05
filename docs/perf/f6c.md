@@ -21,7 +21,7 @@ Refs #93. Measurements named by the F6c row of [the F6 plan](../plans/f6-economy
 | 10,000 | 1.4390 / 3.4898 / 4.4826 | 3,863,008 | 0.0045 / 0.0050 / 0.0086 | 6,456 |
 | 100,000 | 20.1208 / 32.1975 / **46.5256** | 39,248,344 | 0.0016 / 0.0030 / 0.0048 | 7,768 |
 
-The removed scans had samples ≥ 30 ms at 100,000 consumers (**flagged**, before only). After: no sample ≥ 30 ms. The remaining bytes are the money text itself.
+The removed scans had samples ≥ 30 ms at 100,000 consumers (**flagged**; 45 of 200 in the spike-count rerun below). The counters had none in any run. The remaining bytes are the money text itself.
 
 ### Per-shop lookups → one-pass index, plus the new week text
 
@@ -33,7 +33,7 @@ The removed scans had samples ≥ 30 ms at 100,000 consumers (**flagged**, befor
 | 64 | 1.9890 / 2.7575 / 8.3129 | 19,992 | 0.4250 / 0.5459 / 7.3592 | 292,864 |
 | 1,024 | 89.3232 / 116.1171 / **123.5872** | 319,512 | 2.4110 / 14.5748 / 26.0409 | 4,525,584 |
 
-At one shop the new path costs about 0.1 ms more (one full pass over 20,000 places replaces an early-exit search, plus the new text). From 64 shops on it is faster. The removed lookups were ≥ 30 ms at 1,024 shops (**flagged**, before only). After: max 26.0 ms, no sample ≥ 30 ms; the p95/max tail at 1,024 shops comes from building about a megabyte of panel text (GC), once per 3 s while open.
+At one shop the new path costs about 0.1 ms more (one full pass over 20,000 places replaces an early-exit search, plus the new text). From 64 shops on it is faster. The removed lookups were ≥ 30 ms at 1,024 shops (**flagged**; 200 of 200 in the spike-count rerun below). The new path had max 26.0 ms in this run but **1 of 200 samples at 34.2305 ms** in the rerun (**flagged**: open panel, 1,024 managed shops, 20,000 places, component `BuildEconomyText` Core part). The tail comes from building about a megabyte of panel text (GC), at most once per 3 s while the panel is open; it is not ordinary-frame work and only occurs at the 1,024-scope maximum.
 
 ### Hidden panel
 
@@ -58,6 +58,21 @@ Household posting (`tools/bounded-bulk-regression`, 32-posting `StepBudget` call
 | 100,000 | 0.0057 / 0.0089 / 0.1999 | 0.0066 / 0.0099 / 0.3482 | 0.0064 / 0.0095 / 0.3509 |
 
 This is a real cost of the incremental counters: about +0.0006 to +0.0163 ms per posting call at p95, roughly 0.2 % of the 5 ms gate, with zero allocation in every run and no sample ≥ 30 ms. It is not a win and is reported as a cost.
+
+### Spike-count rerun (review fix)
+
+Round-1 review found that `spikesAtLeast30` reported only whether the maximum reached 30 ms (0 or 1). The tool now counts every unrounded timed sample ≥ 30 ms and reports `timedSamples`. Rerun on the final code (same fixtures, 200 timed samples per row; p50 / p95 / max ms, samples ≥ 30 ms):
+
+| Row | Before | After |
+| --- | --- | --- |
+| 1,914 consumers | 0.6670 / 0.7526 / 1.5205, 0 | 0.0022 / 0.0025 / 0.0030, 0 |
+| 10,000 consumers | 1.5777 / 3.8990 / 26.5672, 0 | 0.0021 / 0.0027 / 0.0195, 0 |
+| 100,000 consumers | 24.0747 / 35.2186 / 70.6390, **45** | 0.0029 / 0.0039 / 0.0064, 0 |
+| 1 shop | 0.0635 / 0.0713 / 0.1846, 0 | 0.2175 / 0.2427 / 0.3370, 0 |
+| 64 shops | 2.0878 / 2.7115 / 7.5123, 0 | 0.7148 / 0.8812 / 15.8811, 0 |
+| 1,024 shops | 107.5294 / 145.3742 / 162.8678, **200** | 2.3325 / 13.2756 / **34.2305, 1** |
+
+Hidden panel again 0 B and 0 requests. Attached setter 20.40 / 9.09 / 4.91 ns.
 
 ## Wins taken in this slice
 

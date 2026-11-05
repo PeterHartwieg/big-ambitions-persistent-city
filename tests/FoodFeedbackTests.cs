@@ -65,19 +65,19 @@ public sealed partial class FoodCommerceTests
         var rows = new List<FoodShopDay> { F6c_Row(10, 2, 300, chosen: 2, staff: 1), F6c_Row(18, 5, 800, chosen: 5, staff: 4) };
         Assert.Equal(new[] {
             "Week over week · this week = days 14–20 (day 20 so far) · last week = days 7–13",
-            "Purchases: 5 this week · 2 last week (partial: recorded from day 10). Sales: $8 this week · $3 last week. No change shown: last week is not fully recorded.",
-            "Evaluated offers: 9 this week · 3 last week (partial: recorded from day 10). " + FoodFeedback.OfferMeaning,
-            "Chosen: 5 evaluated offers this week (last week 2, recorded from day 10)",
-            "No staffed counter: 4 evaluated offers this week (last week 1, recorded from day 10)" },
+            "Purchases: 5 this week · 2 last week (no record before day 10). Sales: $8 this week · $3 last week. No change shown: last week has days with no record (no evaluated offers, or before recording began).",
+            "Evaluated offers: 9 this week · 3 last week (no record before day 10). " + FoodFeedback.OfferMeaning,
+            "Chosen: 5 evaluated offers this week (last week 2, no record before day 10)",
+            "No staffed counter: 4 evaluated offers this week (last week 1, no record before day 10)" },
             F6c_Lines(FoodFeedback.Weeks(rows, "s", "b", 20).Text()));
         var fresh = FoodFeedback.Weeks(new[] { F6c_Row(18, 5, 800, chosen: 5) }, "s", "b", 20);
         Assert.Equal(FoodWeekCoverage.Partial, fresh.ThisWeek.Coverage); Assert.Equal(18, fresh.ThisWeek.RecordedFrom);
         Assert.Equal(FoodWeekCoverage.NotRecorded, fresh.LastWeek.Coverage);
         Assert.Equal(new[] {
             "Week over week · this week = days 14–20 (day 20 so far) · last week = days 7–13",
-            "Purchases: 5 this week (partial: recorded from day 18) · last week not recorded. Sales: $8 this week. No change shown: last week is not fully recorded.",
-            "Evaluated offers: 5 this week (partial: recorded from day 18) · last week not recorded. " + FoodFeedback.OfferMeaning,
-            "Chosen: 5 evaluated offers this week (last week not recorded)" }, F6c_Lines(fresh.Text()));
+            "Purchases: 5 this week (no record before day 18) · no record last week. Sales: $8 this week. No change shown: last week has days with no record (no evaluated offers, or before recording began).",
+            "Evaluated offers: 5 this week (no record before day 18) · no record last week. " + FoodFeedback.OfferMeaning,
+            "Chosen: 5 evaluated offers this week (no record last week)" }, F6c_Lines(fresh.Text()));
         Assert.Equal(new[] { "Week over week: nothing recorded in the last 14 days." },
             F6c_Lines(FoodFeedback.Weeks(new[] { F6c_Row(2, 1, 1) }, "s", "b", 20).Text()));
         // A negative change keeps an explicit sign under every runtime's currency pattern.

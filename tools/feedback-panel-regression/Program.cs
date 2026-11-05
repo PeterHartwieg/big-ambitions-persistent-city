@@ -13,7 +13,7 @@ const int Warmup = 20, Timed = 200;
 var failures = new List<string>();
 void Require(bool ok, string what) { if (!ok) failures.Add(what); }
 
-static (double p50, double p95, double max, long bytes) Measure(Func<object> work)
+static (double p50, double p95, double max, long bytes, int spikes) Measure(Func<object> work)
 {
     for (int i = 0; i < Warmup; i++) work();
     var times = new List<double>(Timed); var bytes = new List<long>(Timed);
@@ -24,11 +24,13 @@ static (double p50, double p95, double max, long bytes) Measure(Func<object> wor
         times.Add((Stopwatch.GetTimestamp() - start) * 1000.0 / Stopwatch.Frequency);
         bytes.Add(GC.GetAllocatedBytesForCurrentThread() - allocated);
     }
+    // Every unrounded timed sample at or above 30 ms counts, not just whether the maximum reached it.
+    int spikes = times.Count(t => t >= 30);
     times.Sort(); bytes.Sort();
-    return (Math.Round(times[Timed / 2], 4), Math.Round(times[(int)(Timed * .95)], 4), Math.Round(times[^1], 4), bytes[Timed / 2]);
+    return (Math.Round(times[Timed / 2], 4), Math.Round(times[(int)(Timed * .95)], 4), Math.Round(times[^1], 4), bytes[Timed / 2], spikes);
 }
-static object Row(string name, (double p50, double p95, double max, long bytes) m)
-    => new { name, p50Ms = m.p50, p95Ms = m.p95, maxMs = m.max, medianBytes = m.bytes, spikesAtLeast30 = m.max >= 30 ? 1 : 0 };
+static object Row(string name, (double p50, double p95, double max, long bytes, int spikes) m)
+    => new { name, p50Ms = m.p50, p95Ms = m.p95, maxMs = m.max, medianBytes = m.bytes, timedSamples = Timed, spikesAtLeast30 = m.spikes };
 
 static FoodCommerceState Consumers(int count)
 {
