@@ -39,7 +39,7 @@ The **cross-build test** uses a frozen copy of the base startup refusal: stop-ke
 
 **Behaviour changes from the base, all intended by the plan:** any save-callback refusal (RLO changed, write refused, exception) now stops PC through `StopAccounting` rather than a generic `Fail`. Any detach of a still-current city (runtime failure, mod unload, return to menu) marks its in-memory `modData`, so the city line is refused if the same object is saved again. Files already on disk are unchanged, which the save/quit/reload test checks. The order of native `onGameUnloaded` against a later save of the same object remains uninspected. The offline save/quit/reload test copies the file before detach, which *assumes* that order; it does not prove it. Rig check 2 below covers it.
 
-**Merge blocker (review round 1, Sol-r1-2).** This slice changes in-game save behaviour, so it stays blocked from merge until a separately authorized `rig_test` session (Codex Sol, high) attaches verifiable before -> red / after -> green evidence to the PR: at least save/quit/reload (check 2) and failure containment (checks 4 and 6). This fixer run is not authorized to run the rig and adds no native evidence. If that session shows a native save of the same `GameInstance` following `onGameUnloaded`, rule 9's alternative detach path (no markers after a proven coherent final publication) must be implemented and verified before merge.
+**Native save/unload evidence (review rounds 1–3; owner decision, 5 November 2026).** Under merge rule v2 this slice merges after review and local tests. Native evidence for save/quit/reload, failure containment and the order of `onGameUnloaded` against a later save of the same `GameInstance` is batched into the next combined rig run, as checks 2, 4 and 6 below. This PR contains no native evidence, and the offline save/quit/reload test assumes that order rather than proving it. If the rig shows a native save of the same `GameInstance` following `onGameUnloaded`, rule 9's alternative detach path (no markers after a proven coherent final publication) is implemented and verified as a follow-up.
 
 ### Commands
 
@@ -52,7 +52,7 @@ All in the foreground, after `wait-other-dotnet.ps1`. Results are in the dated r
 
 ### Run results (4 November 2026)
 
-See the [run log at the end of this file](#run-log-4-november-2026).
+See the [run log at the end of this file](#run-log-45-november-2026).
 
 ## In-game checks for the next batched rig
 
@@ -66,6 +66,15 @@ Every check runs on the headless agent rig ([PeterHartwieg/big-ambitions-agent-r
 6. **Runtime failure outside a save.** With RIG-FAULT forcing a runtime `Fail` outside a save (for example an injected `Update` exception), the rig saves natively in the same minute and reloads. It asserts `accounting-stop_v1 = detached-after-save`, `failed:N`, refusal on load in both F7b and the base build, and native play continuing. — rig-automated (existing capability: RIG-MODSET, FT `save`/`load`/`state`/`console`; pending rig capability: **RIG-FAULT**).
 7. **No ordinary-play cost (ordinary batched windows).** In each ordinary performance window, with autosave verified off before the window (including after reload) and restored in cleanup, the rig asserts that `SaveEpochDiagnostics.sequence` does not change during the window (zero save callbacks). It records mod-work p95 (<5 ms) and every ≥30 ms spike, with whole-frame metrics kept separate. — rig-automated (existing capability: `rig flow run` autosave guard and health `autosave_disabled`, FT `state`/`console`; pending rig capability: **RIG-PERF-UNION**).
 
-## Run log (4 November 2026)
+## Run log (4–5 November 2026)
 
-Results are recorded in the commit that adds this section.
+All commands ran on the development PC (Windows 11, .NET SDK 10), each `dotnet` run after `wait-other-dotnet.ps1`. Head **693b27e**: review round 2 changed a doc comment only, and the package DLL is byte-identical to round 1's `c36d211`.
+
+- `python tools/build.py --game-managed …`: package built, DLL SHA-256 `ed015c09b30237fb46873aa9c94e84dd3995ebd094f035c95b3f19687e93c00d`.
+- `dotnet test tests/PersistentCity.Tests.csproj`: **2,906 passed, 0 failed, 0 skipped** (2 m 1 s). The 50 `SaveEpochTests` cases are included. Before F7b the base had 2,856 cases; round 0 had 2,903.
+- `dotnet test … --no-build --list-tests`: 2,897 listed names (theory rows expand at run time).
+- `tools/save-epoch-regression` (Release): PASS. `{"residents":957,"payloadChars":926514,"markerChars":103,"samples":20000,"beforePublishMs":"0.0000 / 0.0001 / 0.0188","afterCallbackMs":"0.0006 / 0.0010 / 0.5921","loadCheckMs":"0.0007 / 0.0010 / 0.0823","beforeBytesPerCall":0,"afterBytesPerCall":808,"loadBytesPerCall":984,"spikesAtLeast30Ms":0,"writer25EncodeMeanMs":44.55012,"writer25Sha256":"B377CB44780E947DFCFAA3E6C0DBB8452362EC4111E2486F6B64B5741CF0F5BD"}`. Writer-25 bytes are equal through the epoch path and the direct codec. The [perf record](../perf/f7b.md) keeps round 0's run (p95 0.0008 ms, max 0.3734 ms); this rerun is within host noise, with no sample ≥30 ms.
+- Every other required .NET regression tool, run with `--configuration Release` and passing: core-identity, diagnostic-response, event-observation, food-catalogue, food-checkout (10,648 checkout checks), food-hours, food-household-catalogue, food-ownership, food-supply, frame-observation, gate-access, road-ceiling, road-handoff, road-invalidation, road-speed, route-discovery, save-contract, startup-clock, traffic-closure, traffic-queue, walking-quote, campaign-reader, donut/cupcake/salad feasibility, rival-outflow, awareness, food-candidate, rival-memory, icecream/frenchfries/pizza feasibility, e4-menu, e3-remaining feasibility, e5a-eligibility, food-metadata, name-identity, e5b-complete-menu, food-metadata-api, accounting-backlog, bounded-bulk. Also passing: `simulate 28`, `food-routines 957` and `food-demand`. The first food-checkout launch exited 127 with an empty log (the command could not start while the PC was busy); the foreground rerun passed.
+- Python checks passing on 693b27e: `native-command-regression/run.py`, `physical-selection-regression/run.py`, `vehicle-ownership-regression/run.py`, `optional-stop-regression/run.py`, `donut-feasibility-regression/source_checks.py`, `salad-feasibility-regression/source_checks.py`. PYREST
+
+These are offline results. There is no native evidence, and nothing here is verified by rig.
