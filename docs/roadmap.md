@@ -38,6 +38,8 @@ City-audit F6b implements [estimated rival service lanes and meal-period sell-ou
 
 City-audit F1 implements [minute-epoch accounting coordination](plans/f1-accounting-boundary.md), ordinary/skip backpressure, safe boundary observations and PC stop/native-clock release on a lost epoch, with writer 25 unchanged. [Offline evidence and automated batched-rig handoff](checks/f1-accounting-backlog.md); native proof and complete mod-work/whole-frame cost remain merge blockers. F3 retains individual bulk/route work ownership.
 
+City-audit F6c (#93) implements [feedback v1](plans/f6-economy.md#4-slice-breakdown) (week-over-week evaluated-offer causes, budget-state counts and inspector words, incremental panel counters) offline; rig verification pending. [Checks and batched-rig list](checks/f6c.md).
+
 City-audit F5a (#92) implements the [read-only world census](plans/f5-population.md#4-slice-breakdown) and `pc population census` offline; rig verification pending. [Checks and batched-rig list](checks/f5a.md).
 
 City-audit F5b (4 November, offline) implements the inactive [identity and ownership core](plans/f5-population.md): person/visitor/employment types, derived household and visitor identity (IdentityPolicy v1) and the ownership validator, not wired; writer 25 unchanged. [Checks and batched-rig handoff](checks/f5b-identity-core.md).
@@ -87,6 +89,8 @@ Record every taken win with before/after numbers.
 - City-audit F1 — [Elapsed-time frame caps and cached pacing text](perf/f1-accounting-backlog.md): matched 960-resident queue at 30 simulated FPS, 60 -> 30 frames / 2 -> 1 simulated seconds, byte-identical state; 1,200 visible text requests 499,200 -> 16,640 B / 1,200 -> 40 builds; R1 removes the wasted crossing tick (8-hour zero-work skip 960 -> 481 ticks), restores the 120 FPS 16-start/2 ms floor and quantifies remaining pacing cost; R2 quiet baseline text 16,640 -> 0 B / 40 -> 0 builds per 1,200 requests (GUI excluded); offline components, no native whole-frame gate claim.
 
 - City-audit F3 — [Reusable posting heap, pre-sized campaign capture and bounded work](perf/pc-f3-bounded-bulk-work.md): 48 B/posting -> no recurring node allocation; matched complete-day work 3.2406/15.7399/87.1907 -> 0.9100/5.1148/22.4029 ms at 1,914/10,000/100,000 consumers; 64-scope capture 141,472 -> 138,392 B/boundary. Exact replay hashes match; 49 stress advancement intervals >=30 ms remain flagged. R1 restores 1,024-candidate campaign coverage with resumable publication and time-aware route admission (16-path safety ceiling); native-double 957-plan burst drains at 30/60 FPS, native capture p95 6.1153 ms remains above gate. Offline only; [status and five automated next-batch rig checks](checks/pc-f3-bounded-bulk-work.md).
+
+- City-audit F6c — [Incremental panel counters and one-pass shop lookups](perf/f6c.md): open-panel consumer work p95 1.1088/3.4898/32.1975 -> 0.0026/0.0050/0.0030 ms and 743,240/3,863,008/39,248,344 -> 6,280/6,456/7,768 B/request at 1,914/10,000/100,000 consumers; per-shop lookups p95 2.7575/116.1171 -> 0.5459/14.5748 ms at 64/1,024 shops including the new week text; 128-bit counters and tuple keys cut the 1,024-shop build 8,109,056 -> 4,525,584 B; hidden panel 0 B. Cost: +0.0006–0.0163 ms p95 per posting call, 0 B. Offline components, no whole-frame claim.
 
 - City-audit F5a — [Pre-sized census dictionaries](perf/f5a.md): census allocation 126,408 -> 104,000 B/call (reference shape) and 2,288,064 -> 1,817,576 B/call (20,000 places / 50,000 residents), timing within noise; on-request diagnostic, offline only.
 

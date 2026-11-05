@@ -58,7 +58,10 @@ namespace PersistentCity.Core
         public int MaximumQueueMinutes { get; set; }
         public string ReturnGeometry { get; set; } = "";
         public bool Returning { get; set; }
-        public bool Unresolved { get; set; }
+        // F6c: transient panel counters (never saved); attached while its meal is attached.
+        internal FoodMoneyCounters? counters;
+        private bool unresolved;
+        public bool Unresolved { get => unresolved; set { var c = counters; if (c == null) unresolved = value; else { bool old = unresolved; unresolved = value; c.Unresolve(old, value); } } }
         public string UnresolvedReason { get; set; } = "";
     }
 
