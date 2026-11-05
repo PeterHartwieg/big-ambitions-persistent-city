@@ -6,9 +6,7 @@ plan's citations were rechecked at this base: `RivalFoodTerms.Capture` (`Core/Ri
 `CompleteRival`, `FoodBusiness.ServiceMinutes` (`Core/FoodDemand.cs`), `MealOutcomeRecord` (`Core/FoodToday.cs`)
 and the schema-21 held-shop validator (`Persistence/RivalWire21.cs`, rival `NextServiceAt == OriginAt`,
 `Units == -1`). Status: **implemented; offline checks pass; not verified by rig.** Offline success is not
-native proof. **Merge blocked:** this changes in-game behaviour, so the project rule requires a separately
-authorized rig_test session (Codex Sol, high) to attach reproducible before-red/after-green proof to the PR before
-merge or upload. This offline slice does not provide that proof.
+native proof. Native rival-service-limits checks (before red / after green) are rig-automated and deferred to the next batched combined rig per merge rule v2, recorded in [rig-2026-11-06-checklist.md](rig-2026-11-06-checklist.md#f6b-rival-service-limits), and do not gate merge. Native findings become follow-up fix slices.
 
 ## Implemented contract
 
@@ -135,7 +133,7 @@ that city. Each timed window follows the autosave protocol: record the original 
 before each window (including after reload), keep saves outside windows, and restore it during cleanup. None
 of these checks is deferred to Peter, a playtest or a by-hand visual check.
 
-1. **Lane and sell-out refusals at the estimated counts (plan check 8).** The rig loads a lunch-rush checkpoint
+1. **LOCKED-PC — Lane and sell-out refusals at the estimated counts (plan check 8).** The rig loads a lunch-rush checkpoint
    with many residents near one fixture rival. It applies a tight profile (`RivalServiceLanes = 1`,
    `RivalMealPeriodUnits = 3`) through the per-flow config, advances through the rush, and bridge-dumps
    `RivalFoodDiagnostics.Core` before and after. It asserts:
@@ -146,20 +144,20 @@ of these checks is deferred to Peter, a playtest or a by-hand visual check.
    - each refusal has a matching D4 `Queue`/`Stockout` memory entry.
 
    Rig-automated (existing capability: FT `state`/`time`/`console` bridge dump of `RivalFoodDiagnostics`, `rig flow run` with disposable fixture copies; pending rig capability: RIG-MODSET per-flow PC config selection with restore).
-2. **Calibration evidence: native staffed throughput (plan check 8, section 3.2).** On representative staffed
+2. **LOCKED-PC — Calibration evidence: native staffed throughput (plan check 8, section 3.2).** On representative staffed
    player shops in the same city, the rig reads `shop_state` staffed counters and the PC `MealsPerHour`
    diagnostic each game hour through a lunch window. It records the measured meals/hour beside the default
    rival ceiling (2 lanes × 12/hour = 24/hour). It asserts the default lies within ±25 % of the median staffed
    value, or reports the measured band as calibration evidence for F6h.
 
    Rig-automated (existing capability: `shop_fixture`, `shop_state`, FT `console`/`state`).
-3. **Estimate labels.** The rig bridge-dumps `RivalFoodDiagnostics.Core` and a captured rival decision. It
+3. **LOCKED-PC — Estimate labels.** The rig bridge-dumps `RivalFoodDiagnostics.Core` and a captured rival decision. It
    asserts `ServiceLimits = "estimated (modeled service limits)"`, `SellOut = "modeled sell-out (estimated)"`,
    `Availability = "EstimatedFromPriceAndHours"`, `NativeRivalCheckout = "Unsupported"`, and `ServiceEvidence`
    containing "modeled service limits". The Ctrl+F8 label text is F6c's check.
 
    Rig-automated (existing capability: FT `console`/`state` bridge dump).
-4. **More own-shop custom when the rival is full (plan check 8).** Two matched checkpoint copies with a player
+4. **LOCKED-PC — More own-shop custom when the rival is full (plan check 8).** Two matched checkpoint copies with a player
    shop and a rival at similar distance; arm A uses the default profile, arm B uses `RivalServiceLanes = 1`
    with the rival kept busy by existing-stop customers. The rig advances one lunch window and asserts that arm
    B has more player purchases, as `shop_log` native sales and PC confirmed receipts; that a sampled decision
@@ -167,25 +165,25 @@ of these checks is deferred to Peter, a playtest or a by-hand visual check.
    arms, with no duplicate receipt.
 
    Rig-automated (existing capability: `shop_fixture`, `shop_state`, `shop_log`, FT `console`; pending rig capability: RIG-MODSET per-flow PC config; RIG-LEDGER independent native receipt/order comparator).
-5. **No native rival write (plan check 8).** Before and after checks 1 and 4, the rig reads the fixture rival's
+5. **LOCKED-PC — No native rival write (plan check 8).** Before and after checks 1 and 4, the rig reads the fixture rival's
    native registration, prices, hours, stock and finance fields. It asserts byte-identical fingerprints and an
    unchanged `rival` owner/prices/hours readback.
 
    Rig-automated (existing capability: `rival` prices/hours/owner readback; pending rig capability: RIG-RIVALFP read-only native fingerprint of registration, prices, hours, stock and finances).
-6. **Reload mid-queue and mid-service.** At a boundary where at least one rival meal is queued (Serving, start
+6. **LOCKED-PC — Reload mid-queue and mid-service.** At a boundary where at least one rival meal is queued (Serving, start
    in the future) and one is being served, the rig saves outside any timing window, reloads, and dumps the
    `Load` image and the meals' `ServiceAt` values. It asserts the image is identical before and after, and that
    advancing to the end of the window gives the same paid count, refusal counters and wallets as an unreloaded
    copy of the checkpoint.
 
    Rig-automated (existing capability: FT `save`/`load`/`state`/`time`/`console`, `rig flow run` disposable copies).
-7. **Profile change across a reload (documented F6d dependency).** Same checkpoint as check 6, reloaded with a
+7. **LOCKED-PC — Profile change across a reload (documented F6d dependency).** Same checkpoint as check 6, reloaded with a
    tighter `RivalMealPeriodUnits`. The rig asserts that every refused traveller's account is unchanged, that no
    period exceeds the new N, and that no native rival write occurs. This checks the declared fail-safe, not
    old-term replay; old-term replay waits for F6d.
 
    Rig-automated (existing capability: FT `save`/`load`/`console`; pending rig capability: RIG-MODSET per-flow PC config selection with restore).
-8. **Performance window (plan check 14, F6b part).** A lunch-rush window at the default profile, against the
+8. **LOCKED-PC — Performance window (plan check 14, F6b part).** A lunch-rush window at the default profile, against the
    matched pre-F6b build, on a 957-resident/1,914-consumer city. The rig asserts mod-work p95 < 5 ms and flags
    every mod-work sample ≥ 30 ms with its component. It records whole-frame separately and never uses it as
    mod-work. It also records the one-time attach cost on load. Autosave is verified off before every window.
