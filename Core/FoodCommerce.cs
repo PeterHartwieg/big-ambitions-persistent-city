@@ -168,8 +168,9 @@ namespace PersistentCity.Core
         bool IsConfirmedPaid(ResidentMeal meal);
     }
 
-    /// <summary>Sequential meal opportunities sharing one resident wallet. No nutrition or
-    /// closed-city payroll claim. Events share the population clock and its bounded frame budget.</summary>
+    /// <summary>Sequential meal opportunities, each paid from its own consumer's budget (with household
+    /// finances on, one ResidentBudget per roster record, seeded by consumer ID; no shared or household
+    /// wallet). No nutrition or closed-city payroll claim. Events share the population clock and its bounded frame budget.</summary>
     public sealed partial class FoodCommerce
     {
         private sealed class Order : IComparer<ResidentMeal>
