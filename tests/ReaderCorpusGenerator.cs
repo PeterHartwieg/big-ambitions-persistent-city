@@ -39,15 +39,23 @@ public sealed partial class FoodCommerceTests
         for (int schema = ReaderCorpus.OldestSupportedSchema; schema <= CityState.CurrentSchema; schema++)
         {
             string folder = Path.Combine(target, ReaderCorpus.SchemaFolder(schema));
-            bool exists = Directory.Exists(folder);
+            if (Directory.Exists(folder))
+            {
+                // Existing folders are frozen: pin every manifest entry (synthetic or later native), hash-checked on load.
+                foreach (var fixture in ReaderCorpus.Load(target, schema))
+                {
+                    var read = SaveCodec.Read(fixture.Text); Assert.True(read.Status == SaveReadStatus.Loaded, ReaderCorpus.Key(fixture) + ": " + read.Error);
+                    pins[ReaderCorpus.Key(fixture)] = ReaderCorpus.Sha256(SaveCodec.Write(read.State!));
+                }
+                continue;
+            }
             var fixtures = new JArray();
+            Directory.CreateDirectory(folder);
             foreach (var (file, builder, city) in CorpusCities)
             {
-                string text = exists ? File.ReadAllText(Path.Combine(folder, file), Encoding.UTF8) : ReaderCorpusRecipes.Project(city(), schema);
+                string text = ReaderCorpusRecipes.Project(city(), schema);
                 var read = SaveCodec.Read(text); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
                 pins[ReaderCorpus.SchemaFolder(schema) + "/" + file] = ReaderCorpus.Sha256(SaveCodec.Write(read.State!));
-                if (exists) continue;
-                Directory.CreateDirectory(folder);
                 File.WriteAllBytes(Path.Combine(folder, file), new UTF8Encoding(false).GetBytes(text));
                 fixtures.Add(new JObject
                 {
@@ -57,7 +65,6 @@ public sealed partial class FoodCommerceTests
                     ["kind"] = "synthetic offline payload from test builders; not a native save",
                 });
             }
-            if (exists) continue;
             var manifest = new JObject
             {
                 ["schema"] = schema, ["readerWhenFrozen"] = ReaderCorpus.ReaderFor(schema).Name,

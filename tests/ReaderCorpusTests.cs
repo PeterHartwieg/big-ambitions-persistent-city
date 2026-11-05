@@ -186,10 +186,7 @@ public sealed class ReaderCorpusTests
                 AssertRefusedAndPreserved(variant, valid, SaveReadStatus.Invalid, key + " " + name);
             }
             // One over the per-citizen visit cap: each reader's token check refuses before allocation.
-            // Schema 18+ visits are compact tokens: version 1, binary64 minute (1440.0), place index 000, activity 0.
-            string visit = schema >= 18 ? "\"1" + "4096800000000000" + "000" + "0\"" : "{\"Activity\":0,\"AtMinute\":1440.0,\"PlaceId\":\"home\"}";
-            string overVisits = ReplaceFirst(text, "\"RecentVisits\":[]",
-                "\"RecentVisits\":[" + string.Join(",", Enumerable.Repeat(visit, SaveCodec.MaxRecentVisits + 1)) + "]");
+            string overVisits = OverVisits(text, schema);
             foreach (var reader in ReaderCorpus.Readers)
             {
                 var read = reader.Read(overVisits);
@@ -241,9 +238,53 @@ public sealed class ReaderCorpusTests
         foreach (var (key, value) in before) Assert.Same(value, data[key]);
     }
 
-    private static string ReplaceFirst(string text, string find, string replacement)
+    /// <summary>Replaces the first citizen's <c>RecentVisits</c> array, whatever it holds, with one record over the cap.
+    /// Schema 18+ visits are compact tokens: version 1, binary64 minute (1440.0), place index 000, activity 0.</summary>
+    internal static string OverVisits(string text, int schema)
     {
-        int at = text.IndexOf(find, StringComparison.Ordinal); Assert.True(at >= 0, find);
-        return text.Substring(0, at) + replacement + text.Substring(at + find.Length);
+        const string field = "\"RecentVisits\":[";
+        int start = text.IndexOf(field, StringComparison.Ordinal); Assert.True(start >= 0, field);
+        int end = MatchingBracket(text, start + field.Length - 1);
+        string visit = schema >= 18 ? "\"1" + "4096800000000000" + "000" + "0\"" : "{\"Activity\":0,\"AtMinute\":1440.0,\"PlaceId\":\"home\"}";
+        return text.Substring(0, start) + field + string.Join(",", Enumerable.Repeat(visit, SaveCodec.MaxRecentVisits + 1)) + "]" + text.Substring(end + 1);
+    }
+
+    // Index of the bracket closing the one at `open`, skipping JSON string contents.
+    private static int MatchingBracket(string text, int open)
+    {
+        int depth = 0; bool inString = false;
+        for (int i = open; i < text.Length; i++)
+        {
+            char c = text[i];
+            if (inString) { if (c == '\\') i++; else if (c == '"') inString = false; continue; }
+            if (c == '"') inString = true;
+            else if (c == '[' || c == '{') depth++;
+            else if ((c == ']' || c == '}') && --depth == 0) return i;
+        }
+        throw new InvalidDataException("Unclosed array.");
+    }
+
+    /// <summary>The over-cap mutation must also work on a checkpoint where every resident already has visit history
+    /// (an ordinary native payload): every citizen gets three visits, the city is written through schema N's frozen
+    /// writer, and the populated payload loads before its over-cap variant is refused and preserved.</summary>
+    [Theory]
+    [MemberData(nameof(Schemas))]
+    public void ReaderCorpus_VisitCapVariantAlsoBuildsFromPopulatedVisitHistories(int schema)
+    {
+        var fixture = ReaderCorpus.Load(schema).Single(f => f.File == "full.json");
+        var state = SaveCodec.Read(fixture.Text).State!;
+        foreach (var citizen in state.Citizens)
+            for (int n = 0; n < 3; n++) citizen.RecentVisits.Add(new VisitRecord { AtMinute = state.Minute - 3 + n, PlaceId = "home", Activity = Activity.Home });
+        string populated = ReaderCorpusRecipes.Project(state, schema);
+        Assert.DoesNotContain("\"RecentVisits\":[]", populated);
+        var loaded = SaveCodec.Read(populated); Assert.True(loaded.Status == SaveReadStatus.Loaded, loaded.Error);
+        Assert.All(loaded.State!.Citizens, c => Assert.Equal(3, c.RecentVisits.Count));
+        string over = OverVisits(populated, schema);
+        foreach (var reader in ReaderCorpus.Readers.Where(r => r.OwnMax >= schema))
+        {
+            var read = reader.Read(over);
+            Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Contains("Oversized collection", read.Error);
+        }
+        AssertRefusedAndPreserved(over, loaded.State, SaveReadStatus.Invalid, ReaderCorpus.Key(fixture) + " populated visits+1");
     }
 }
