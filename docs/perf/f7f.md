@@ -27,6 +27,8 @@ That gives 9,187 reader lines across 30 files, and 26 fixtures totalling 94,311 
 
 Per test method (median of 3 runs, ms): cross-schema matrix 939.8, over-cap ×5 871.4, migration pins 644.1, future/older/corrupt/overbound 491.6, projection 99.7, reader acceptance 95.5, packaging 13.2, changed-byte 7.6.
 
+These timings are from the first commit (72 cases). Review r1 added the 13-case populated-visits theory and the generator's per-entry pinning; the suite was not re-timed for that change. In the full-suite run at `cdee629` the corpus filter still completed in seconds (86 passed).
+
 ## Win taken (test time only)
 
 The first version allocated one 256 Mi-character over-cap payload per schema (13 × about 512 MB of UTF-16). Every reader checks the length before it reads the schema, so one payload per reader, labelled with that reader's newest schema, covers the same bound for every reader.

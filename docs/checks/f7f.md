@@ -19,8 +19,8 @@ Only test code, test data, one tool script and docs. **No reader, writer, schema
 
 - `tests/ReaderCorpus/schema-13 … schema-25/`: each folder has `full.json`, `minimal.json` and a `corpus.json` manifest (SHA-256, characters, builder, recipe, writer commit, rig fixture reference). There is also `current-writer-25.json` (migrated pins) and a [README](../../tests/ReaderCorpus/README.md) with the packaging rules.
 - `tests/ReaderCorpus.cs`: the reader registry (`ReaderCorpus.Readers`, one row per frozen reader with its own range), a loader that verifies the pinned hash of every file before use, and `ReaderCorpusRecipes.Project`, the existing builders' frozen-writer recipes.
-- `tests/ReaderCorpusTests.cs`: 8 test methods, 72 cases.
-- `tests/ReaderCorpusGenerator.cs`: a one-time generator, run only with `PC_READER_CORPUS_WRITE`. It never rewrites an existing folder.
+- `tests/ReaderCorpusTests.cs`: 9 test methods, 85 cases (72 in the first commit; review r1 added the 13-case populated-visits theory).
+- `tests/ReaderCorpusGenerator.cs`: a one-time generator, run only with `PC_READER_CORPUS_WRITE`. It never rewrites an existing folder. For an existing folder it loads (and hash-checks) **every** manifest entry and pins its migration, so a native file added later gets a next-writer pin; the builder list is used only for a new folder (review r1).
 - `.gitattributes`: `tests/ReaderCorpus/** -text`, so line-ending conversion cannot change a pinned byte. Fixtures are single-line, with no BOM and no trailing newline.
 - `tests/CurrentSchemaOnlyTests.cs`: `City()` changed from private to internal, so the minimal builder is shared rather than copied. `tests/PersistentCity.Tests.csproj` copies the corpus JSON to the output.
 - `tools/reader-corpus/maintenance_cost.py`: lines, corpus bytes and test time per reader ([perf record](../perf/f7f.md)).
@@ -65,6 +65,7 @@ The migrated hashes form three groups (13–16, 17–19, 20–24). Within a grou
 | `…MigratedCityProjectsBackOntoItsSourceBytes` (×13) | Projecting the migrated city back through schema N's frozen writer reproduces the fixture byte for byte, for every schema 13–25 (the E5d check). |
 | `…CrossSchemaVariantsAreRefusedOrMeaningIdenticalAndRefusalsPreserveEveryKey` (×13) | Each fixture is relabelled to all 12 other supported schemas, changing only the schema token. Every reader agrees with the full chain: `Future` above its range, otherwise the chain's status. A refused variant preserves everything (see below). An accepted variant must read to exactly the same writer-25 bytes as the true label. A `full` fixture may only be accepted for the 13↔14 pair. |
 | `…FutureOlderCorruptAndOverboundVariantsAreRefusedAndPreserved` (×13) | The cases are: future (26, 99) → `Future` from every reader; older (12, 1, 0, −1) → `Invalid` "Unsupported experimental state schema" from every reader; truncated by one character, half, trailing content, unknown top-level field ("Unknown field: Corpus"), duplicate `Schema` and string `Schema`, and empty → `Invalid`; one recent visit over the cap (65, in each schema's own visit shape: named object for 13–17, compact token for 18+) → "Oversized collection". If the schema token still parses, an older reader returns `Future`. |
+| `…VisitCapVariantAlsoBuildsFromPopulatedVisitHistories` (×13) | Review r1. Every resident of the `full` city gets three visits and the city is written through schema N's frozen writer (no `"RecentVisits":[]` left). The populated payload loads with three visits per citizen. The over-cap mutation, which replaces the first `RecentVisits` array whatever it holds (bracket matching that skips string contents), is refused by every reader at or above N with "Oversized collection" and preserved. The mutation therefore also works on an ordinary populated native checkpoint (rig check 1). |
 | `…OneCharacterOverTheInputCapIsRefusedAndPreserved` (×5, one per reader) | A payload of exactly 268,435,457 characters (a valid fixture plus trailing spaces) is refused by every reader with "input size limit" and preserved. |
 
 **Preserved** means the following. `modData` holds the variant plus `rlo:state`, a `persistentcity:food-sale-v2:` receipt, `persistentcity:food-authority-v1` and a foreign mod key. `SaveCodec.Read` and `SaveSession.Open` report the expected refusal with no state. `SaveSession.WriteTo` and `SaveStore.WriteTo` with a valid city of the same population key both fail. Afterwards every key is present and `Assert.Same` holds for every value, including the original payload string reference.
@@ -94,14 +95,37 @@ The section 4 measurement for F7f is test time and lines per reader. It is in [d
 
 ## Offline results
 
-The F7f-specific results are listed here. The full required command list and its results are recorded in the [sync section](#required-commands) below.
+The F7f-specific results are listed here. The full required command list and its results are under [Required commands](#required-commands) below.
 
-- `dotnet test --filter FullyQualifiedName~ReaderCorpusTests`: 72 passed, 0 failed (three timed runs).
+- `dotnet test --filter FullyQualifiedName~ReaderCorpusTests`: 72 passed, 0 failed (three timed runs, first commit). At head `cdee629`, the `ReaderCorpus` filter gives 86 passed, 0 failed (85 corpus cases plus the generator fact).
+- Generator check (review r1): in a scratch copy of the corpus with one extra manifest entry in `schema-20` (a copy of `minimal.json` under a new name), the generator pinned the extra entry, left all 26 existing pins unchanged and gave the extra entry the same pin as `minimal.json`. The scratch copy was deleted.
 - Corpus regeneration into an empty directory: byte-identical (`diff -r`).
 
 ### Required commands
 
-Recorded after the full run; see the end of this file.
+Run on 5 November 2026 at head `cdee629` (the review r1 fix, including the populated-visits theory). Later commits change only docs. Each dotnet step was preceded by `C:\Users\Peter\Coding_Projects\.agent-logs\wait-other-dotnet.ps1`, and every step ran on the development PC with no game, rig or bridge. Logs are under the ignored `build/f7f/req/`.
+
+| Command | Result |
+| --- | --- |
+| `python tools/build.py --game-managed "…\Big Ambitions_Data\Managed"` | exit 0; package DLL SHA-256 `95e69590251fa6963eeca1b9d901bc8f70f841d27f46efe8381e50a2629a8cad` |
+| `wait-other-dotnet.ps1 -Repo <worktree>` | exit 0 ("no other dotnet test load; continuing") |
+| `dotnet test tests/PersistentCity.Tests.csproj` | **2,972 passed, 0 failed, 0 skipped** (2 m 7 s; base `c64e3e2` had 2,886) |
+| `dotnet test … --no-build --list-tests` | exit 0 (2,963 listed lines) |
+| `dotnet run --configuration Release` for each of the 41 listed projects: core-identity, diagnostic-response, event-observation, food-catalogue, food-checkout, food-hours, food-household-catalogue, food-ownership, food-supply, frame-observation, gate-access, road-ceiling, road-handoff, road-invalidation, road-speed, route-discovery, save-contract, startup-clock, traffic-closure, traffic-queue, walking-quote, campaign-reader, donut/cupcake/salad feasibility, rival-outflow, awareness, food-candidate, rival-memory, icecream/frenchfries/pizza feasibility, e4-menu, e3-remaining feasibility, e5a-eligibility, food-metadata, name-identity, e5b-complete-menu, food-metadata-api, accounting-backlog, bounded-bulk | all 41 exit 0 (1–19 s each). In a fresh worktree, e4-menu first needs its generated inputs from `python tools/e4-menu-regression/prepare.py`. Without them, the first attempt on this branch failed at compile (missing `build/e4-menu/*.cs`) and passed after `prepare.py`. That is an environment step, not a code failure. |
+| `python tools/{native-command,physical-selection,vehicle-ownership,optional-stop}-regression/run.py` | all 4 exit 0 |
+| `dotnet run --project tools/simulate/Simulate.csproj -- 28 build/harness-demo` | exit 0 |
+| `dotnet run --project tools/food-routines/FoodRoutines.csproj --configuration Release -- build/harness-food-routines-demo 957` | exit 0 |
+| `dotnet run --project tools/food-demand/FoodDemand.csproj -- build/harness-food-demand-demo` | exit 0 |
+| `source_checks.py` for donut, salad, icecream, frenchfries, pizza, e3-remaining and e5a-eligibility | all 7 exit 0 |
+| `python -m unittest discover -s tools/e5b-native-rig-proof -p "test_*.py"` | 16 tests, OK |
+| `python tools/food-metadata-api-regression/source_checks.py` | exit 0 |
+| `python tools/food-metadata-regression/validate.py`. It wraps `prepare.py`, then **`python tools/run-d3a-checks.py`**, then **`python tools/rival-memory-regression/validate.py`**, then its own build, test and process-proof steps, with `check=True` on every step. | Completed with no failing step: 138 `exit 0` step lines, no `Traceback`, empty stderr. **run-d3a-checks**: all 72 gates exit 0, including its own build, a 2,972-passed test run and list-tests. **rival-memory validate**: 66/66 steps exit 0. Own steps: build exit 0, 2,972 passed / 0 failed, "PASS: two fresh processes match the independent name-taste v1 reference", "PASS; command manifest and log hashes". |
+
+Qualifications:
+
+- `food-metadata-regression/validate.py` runs longer than the 10-minute foreground limit of the agent's shell tool, because its dotnet guard waits whenever other worktrees run dotnet. It was therefore started as a detached process with a recorded PID and polled from the foreground until that PID exited. Nothing was left running. Its numeric exit code was not captured; the evidence is the absence of any failing step under `check=True`, an empty stderr and the final PASS lines.
+- That script rewrites two tracked E5c evidence files (`docs/checks/e5c-name-taste-process-proof.json`, `docs/checks/e5c-neutral-metadata-results.json`) with fresh timings. They are not F7f evidence and were restored with `git checkout` and not committed.
+- All of this is offline/headless evidence. Nothing here is verified by rig.
 
 ## In-game checks for the next batched rig
 
