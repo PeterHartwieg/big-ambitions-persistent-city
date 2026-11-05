@@ -10,23 +10,28 @@ namespace PersistentCity.Core
     /// payroll is not credited a second time and native retail remains the sale authority.</summary>
     public sealed class ResidentBudget
     {
+        // F6c: transient city totals for the read-only food panel; never saved. Each setter reports the exact
+        // change so the panel needs no consumer scan. Unattached budgets (tests, codecs, copies) pay one null check.
+        internal FoodMoneyCounters? counters;
+        private int dailyHousingCents, dailyEssentialsCents, dailyHomeFoodCents, lastPostedDay = -1, homeFoodFundedDay = -1;
+        private Money openingBalance, balance, incomeReceived, essentialsPaid, homeFoodPaid, preparedFoodSpent, externalFoodSpent, heldPurchase, arrears;
         public ResidentIncomeSource IncomeSource { get; set; }
         public int BaseIncomeCents { get; set; }
         public int DailyIncomeCents { get; set; }
-        public int DailyHousingCents { get; set; }
-        public int DailyEssentialsCents { get; set; }
-        public int DailyHomeFoodCents { get; set; }
-        public Money OpeningBalance { get; set; }
-        public Money Balance { get; set; }
-        public Money IncomeReceived { get; set; }
-        public Money EssentialsPaid { get; set; }
-        public Money HomeFoodPaid { get; set; }
-        public Money PreparedFoodSpent { get; set; }
-        public Money ExternalFoodSpent { get; set; }
-        public Money HeldPurchase { get; set; }
-        public Money Arrears { get; set; }
-        public int LastPostedDay { get; set; } = -1;
-        public int HomeFoodFundedDay { get; set; } = -1;
+        public int DailyHousingCents { get => dailyHousingCents; set { var c = counters; if (c == null) dailyHousingCents = value; else { int before = FoodMoneyCounters.Flags(this); dailyHousingCents = value; c.Reflag(before, this); } } }
+        public int DailyEssentialsCents { get => dailyEssentialsCents; set { var c = counters; if (c == null) dailyEssentialsCents = value; else { int before = FoodMoneyCounters.Flags(this); dailyEssentialsCents = value; c.Reflag(before, this); } } }
+        public int DailyHomeFoodCents { get => dailyHomeFoodCents; set { var c = counters; if (c == null) dailyHomeFoodCents = value; else { int before = FoodMoneyCounters.Flags(this); dailyHomeFoodCents = value; c.Reflag(before, this); } } }
+        public Money OpeningBalance { get => openingBalance; set { var c = counters; if (c == null) openingBalance = value; else { int before = FoodMoneyCounters.Flags(this); var old = openingBalance; openingBalance = value; c.Moved(FoodMoneyField.OpeningBalance, old, value, before, this); } } }
+        public Money Balance { get => balance; set { var c = counters; if (c == null) balance = value; else { int before = FoodMoneyCounters.Flags(this); var old = balance; balance = value; c.Moved(FoodMoneyField.Balance, old, value, before, this); } } }
+        public Money IncomeReceived { get => incomeReceived; set { var c = counters; if (c == null) incomeReceived = value; else { int before = FoodMoneyCounters.Flags(this); var old = incomeReceived; incomeReceived = value; c.Moved(FoodMoneyField.IncomeReceived, old, value, before, this); } } }
+        public Money EssentialsPaid { get => essentialsPaid; set { var c = counters; if (c == null) essentialsPaid = value; else { int before = FoodMoneyCounters.Flags(this); var old = essentialsPaid; essentialsPaid = value; c.Moved(FoodMoneyField.EssentialsPaid, old, value, before, this); } } }
+        public Money HomeFoodPaid { get => homeFoodPaid; set { var c = counters; if (c == null) homeFoodPaid = value; else { int before = FoodMoneyCounters.Flags(this); var old = homeFoodPaid; homeFoodPaid = value; c.Moved(FoodMoneyField.HomeFoodPaid, old, value, before, this); } } }
+        public Money PreparedFoodSpent { get => preparedFoodSpent; set { var c = counters; if (c == null) preparedFoodSpent = value; else { int before = FoodMoneyCounters.Flags(this); var old = preparedFoodSpent; preparedFoodSpent = value; c.Moved(FoodMoneyField.PreparedFoodSpent, old, value, before, this); } } }
+        public Money ExternalFoodSpent { get => externalFoodSpent; set { var c = counters; if (c == null) externalFoodSpent = value; else { int before = FoodMoneyCounters.Flags(this); var old = externalFoodSpent; externalFoodSpent = value; c.Moved(FoodMoneyField.ExternalFoodSpent, old, value, before, this); } } }
+        public Money HeldPurchase { get => heldPurchase; set { var c = counters; if (c == null) heldPurchase = value; else { int before = FoodMoneyCounters.Flags(this); var old = heldPurchase; heldPurchase = value; c.Moved(FoodMoneyField.HeldPurchase, old, value, before, this); } } }
+        public Money Arrears { get => arrears; set { var c = counters; if (c == null) arrears = value; else { int before = FoodMoneyCounters.Flags(this); var old = arrears; arrears = value; c.Moved(FoodMoneyField.Arrears, old, value, before, this); } } }
+        public int LastPostedDay { get => lastPostedDay; set { var c = counters; if (c == null) lastPostedDay = value; else { int before = FoodMoneyCounters.Flags(this); lastPostedDay = value; c.Reflag(before, this); } } }
+        public int HomeFoodFundedDay { get => homeFoodFundedDay; set { var c = counters; if (c == null) homeFoodFundedDay = value; else { int before = FoodMoneyCounters.Flags(this); homeFoodFundedDay = value; c.Reflag(before, this); } } }
         public int DaysWithoutHomeFood { get; set; }
         public double NextPostingMinute { get; set; }
     }
