@@ -127,6 +127,27 @@ Qualifications:
 - That script rewrites two tracked E5c evidence files (`docs/checks/e5c-name-taste-process-proof.json`, `docs/checks/e5c-neutral-metadata-results.json`) with fresh timings. They are not F7f evidence and were restored with `git checkout` and not committed.
 - All of this is offline/headless evidence. Nothing here is verified by rig.
 
+### Sync with codex/persistent-city (5 November 2026)
+
+Merge commit `25865bd` brings in F5b (#105, `448247c`) and F6c (#110, `0a926ef`) on top of F7f head `800e803`, as a two-parent merge. The only conflicts were in `CHECKS.md`, `README.md` and `docs/roadmap.md`. Each was a single line on both sides at the same insertion point, and all were resolved by keeping both lines:
+
+- `CHECKS.md`: the F7f index line (5 November) goes above F6c (4 November), newest first. The F5a, F5b and older lines are unchanged.
+- `README.md` and `docs/roadmap.md` status paragraphs: F5b goes after F5a, then F7f.
+- `docs/roadmap.md` perf log: F5b's line goes after F5a's, then F7f's.
+
+`docs/plans/f7-save-snapshots.md` and `tests/PersistentCity.Tests.csproj` merged without conflict. No code, test, fixture or schema change was needed: writer 25 is unchanged, and no `tests/ReaderCorpus/**` fixture changed (the hash-pin and migration-pin tests pass against the committed bytes, and `git status` stayed clean after every run). Neither F5a nor F7f code changed.
+
+Offline results on the merged tree, development PC, each dotnet step guarded by `wait-other-dotnet.ps1`:
+
+- `python tools/build.py`: exit 0. Package DLL SHA-256 `6ee8b14f234f2209ac0251de19621ed45d5e2cd61281cbc0ca161f454aab068d`; this differs from F7f's because the merged Core now includes F5b and F6c.
+- `dotnet test tests/PersistentCity.Tests.csproj`: **3,063 passed, 0 failed, 0 skipped** (2 m 24 s); `--no-build --list-tests` exit 0.
+- `ReaderCorpus` + `CurrentSchemaOnlyTests` filter, three runs with `--logger trx`: 100 passed each time. `maintenance_cost.py --trx` over these runs gives the same lines (9,187), corpus files (26) and bytes (94,311) as the [perf record](../perf/f7f.md). Medians in ms are 1,012.1 / 636.3 / 375.0 / 872.6 / 400.7 / 20.6. They include the 13 populated-visits cases that were not in the recorded timing, so they are within noise of it.
+- All 42 listed `dotnet run --configuration Release` regression projects exit 0 (e4-menu after `prepare.py`), including `population-census-regression` (F5a). The 4 `run.py` tools, the 8 `source_checks.py`, the simulate/food-routines/food-demand demos and the e5b-native-rig-proof unittests also pass.
+- F5b `identity-core-measure`: PASS; validator p50 0.6437 / 3.6705 / 47.6115 ms at 1,914 / 10,000 / 100,000 persons, 0 B warm allocation. This matches the recorded 0.6485 / 3.6938 / 49.2912 ms.
+- F6c `feedback-panel-regression`: passed, no failures. Counters p95 is 0.0033 / 0.0031 / 0.0019 ms, with 0 spikes ≥ 30 ms, and the hidden panel does 0 work.
+- `python tools/rival-memory-regression/validate.py`: PASS 67/67. A first attempt hit the agent shell's 30-minute background cap while it was waiting for other worktrees' dotnet load, and was stopped. The rerun completed with exit 0.
+- `python tools/food-metadata-regression/validate.py` (wraps `run-d3a-checks.py` and rival-memory validate): see the result line below.
+
 ## In-game checks for the next batched rig
 
 These come from F7 plan section 7, checks 5 and 9, which F7f makes testable. Each is executed by the headless agent rig ([PeterHartwieg/big-ambitions-agent-rig](https://github.com/PeterHartwieg/big-ambitions-agent-rig), read-only here). None is deferred to Peter, a playtest, an unlocked console or a by-hand check. Checks 1–3 belong to the save-specific campaign and run only when that campaign is requested. Check 4 runs in the ordinary batched rig.
