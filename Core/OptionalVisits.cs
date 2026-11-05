@@ -140,6 +140,7 @@ namespace PersistentCity.Core
             person.NextEventMinute = arrival;
             item.Minute = ScheduledMinute(person);
             due.Add(item);
+            activeJourneys.File(person);
             activityObservers.Handlers?.Invoke(citizenId, person, now);
             SynchronizeSnapshot();
             return true;
