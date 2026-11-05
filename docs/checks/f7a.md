@@ -21,11 +21,86 @@ Rechecked base locations before editing: `Runtime/PersistentCityMod.cs` `Save()`
 - Baseline (synthetic .NET 10): representative 957×2 is **2,333,388 characters** (4,666,776 UTF-16 bytes, 11,312/11,309 records), save p50/p95/max **46.10/87.19/87.19 ms**, read p50 205.22 ms, retained 4.124 MiB. Stress 50000x2 is 162,346,836 characters, save p50/p95 **2,036.83/2,293.39 ms**. **All 84 measured save samples are ≥30 ms and flagged** (save latency, not mod-work). Main-thread simulator construction reached **32.221 ms (2/7 samples ≥30 ms) at representative 50,000×2**, flagged as startup latency. `encoding-max` (non-ASCII): 149,224 characters, 411,368 UTF-8 bytes, 298,448 UTF-16 bytes; save p50/p95 3.02/6.29 ms; escaped-source read p50/p95 29.09/30.36 ms (1/7 ≥30 ms, flagged). Full tables, limits and representativeness notes are in the [performance record](../perf/f7a.md).
 - Ordinary-play mod-work: F7a adds no per-frame work. The F3 integrated replay and posting experiments are unchanged code paths; no mod-work p95 or whole-frame claim is made here. Whole-frame cost stays tracked separately (F4 #91).
 
-Validation commands, the full unit suite and every regression tool required for this slice are listed with results in the section below.
+Validation commands, the full unit suite and every regression tool required for this slice are listed with results in the next section.
 
 ## Foreground validation
 
-Pending final run; recorded below before handoff.
+Validated source: `5d0bb2a`. The later commits `0b3565d`, `3cef7ab` and this record change documentation only (`git diff --stat 5d0bb2a 3cef7ab -- Core Persistence Runtime Compatibility tests tools` is empty), so every run below exercised identical code. Windows 11, .NET SDK 10.0.402. Every dotnet command ran after `wait-other-dotnet.ps1` returned "no other dotnet test load". All runs were in the foreground, with no deadline inside any command.
+
+- **Matrix A** (`build/f7a-checks.py`, run by this slice at `0b3565d`/`3cef7ab`): one process per required command, results in `build/f7a-checks.jsonl`.
+- **Matrix B** (the required `python tools/food-metadata-regression/validate.py`, run in this worktree at `3cef7ab`, 04:26–06:02 UTC on 5 November): `run-d3a-checks.py` (**71/71** records exit 0, `build/d3a/gates/results.json`), then `rival-memory-regression/validate.py` (**65/65** commands exit 0 with per-log SHA-256 in `build/d4-validation/results.json`: runtime build, full unit suite, list-tests, all 53 `tools/*-regression` projects, the four `run.py` adapters, simulate, food-routines, food-demand and the donut/salad source checks), then the E3 source checks and `verify_taste.py` (runtime build, full unit suite, list-tests and the cross-process taste proof). It ended by writing `docs/checks/e5c-neutral-metadata-results.json`, which happens only after every assertion passed; that regenerated file was identical to the committed one.
+
+**Runtime build:** `PersistentCity.dll` SHA-256 `cab4b491ff3e8b0f9aafd5056a1ada68d0125202a7ed1dcb3c64f34b70bb8a1f` (Matrix A and B; installed Managed assemblies referenced read-only). **Unit suite:** **2,862 passed / 0 failed / 0 skipped of 2,862** in Matrix A, in Matrix B's `rival-memory` step and in `verify_taste.py`; `--list-tests` lists them, including the six `SaveCostDiagnosticsTests`.
+
+| # | Required command | Matrix | Result |
+| ---: | --- | :---: | --- |
+| 1 | `python tools/build.py --game-managed "C:\Program Files (x86)\Steam\steamapps\common\Big Ambitions\Big Ambitions_Data\Managed"` | A | exit 0 (1.6 s) |
+| 2 | `dotnet test tests/PersistentCity.Tests.csproj` | A | exit 0 (131.5 s) |
+| 3 | `dotnet test tests/PersistentCity.Tests.csproj --no-build --list-tests` | A | exit 0 (1.9 s) |
+| 4 | `dotnet run --project tools/core-identity-regression/CoreIdentityRegression.csproj --configuration Release` | A | exit 0 (4.1 s) |
+| 5 | `dotnet run --project tools/diagnostic-response-regression/DiagnosticResponseRegression.csproj --configuration Release` | A | exit 0 (1.5 s) |
+| 6 | `dotnet run --project tools/event-observation-regression/EventObservationRegression.csproj --configuration Release` | A | exit 0 (2.2 s) |
+| 7 | `dotnet run --project tools/food-catalogue-regression/FoodCatalogueRegression.csproj --configuration Release` | A | exit 0 (2.3 s) |
+| 8 | `dotnet run --project tools/food-checkout-regression/FoodCheckoutRegression.csproj --configuration Release` | A | exit 0 (2.1 s) |
+| 9 | `dotnet run --project tools/food-hours-regression/FoodHoursRegression.csproj --configuration Release` | A | exit 0 (1.3 s) |
+| 10 | `dotnet run --project tools/food-household-catalogue-regression/FoodHouseholdCatalogueRegression.csproj --configuration Release` | A | exit 0 (1.7 s) |
+| 11 | `dotnet run --project tools/food-ownership-regression/FoodOwnershipRegression.csproj --configuration Release` | A | exit 0 (2.1 s) |
+| 12 | `dotnet run --project tools/food-supply-regression/FoodSupplyRegression.csproj --configuration Release` | A | exit 0 (2.1 s) |
+| 13 | `dotnet run --project tools/frame-observation-regression/FrameObservationRegression.csproj --configuration Release` | A | exit 0 (1.2 s) |
+| 14 | `dotnet run --project tools/gate-access-regression/GateAccessRegression.csproj --configuration Release` | A | exit 0 (2.6 s) |
+| 15 | `dotnet run --project tools/road-ceiling-regression/RoadCeilingRegression.csproj --configuration Release` | A | exit 0 (4.9 s) |
+| 16 | `dotnet run --project tools/road-handoff-regression/RoadHandoffRegression.csproj --configuration Release` | A | exit 0 (1.5 s) |
+| 17 | `dotnet run --project tools/road-invalidation-regression/RoadInvalidationRegression.csproj --configuration Release` | A | exit 0 (3.7 s) |
+| 18 | `dotnet run --project tools/road-speed-regression/RoadSpeedRegression.csproj --configuration Release` | A | exit 0 (2.1 s) |
+| 19 | `dotnet run --project tools/route-discovery-regression/RouteDiscoveryRegression.csproj --configuration Release` | A | exit 0 (9.8 s) |
+| 20 | `dotnet run --project tools/save-contract-regression/SaveContractRegression.csproj --configuration Release` | A | exit 0 (3.7 s) |
+| 21 | `dotnet run --project tools/startup-clock-regression/StartupClockRegression.csproj --configuration Release` | A | exit 0 (1.7 s) |
+| 22 | `dotnet run --project tools/traffic-closure-regression/TrafficClosureRegression.csproj --configuration Release` | A | exit 0 (2.2 s) |
+| 23 | `dotnet run --project tools/traffic-queue-regression/TrafficQueueRegression.csproj --configuration Release` | A | exit 0 (2.0 s) |
+| 24 | `dotnet run --project tools/walking-quote-regression/WalkingQuoteRegression.csproj --configuration Release` | A | exit 0 (1.9 s) |
+| 25 | `dotnet run --project tools/campaign-reader-regression/CampaignReaderRegression.csproj --configuration Release` | A | exit 0 (3.4 s) |
+| 26 | `python tools/native-command-regression/run.py` | A | exit 0 (2.2 s) |
+| 27 | `python tools/physical-selection-regression/run.py` | A | exit 0 (3.2 s) |
+| 28 | `python tools/vehicle-ownership-regression/run.py` | A | exit 0 (2.3 s) |
+| 29 | `python tools/optional-stop-regression/run.py` | A | exit 0 (3.3 s) |
+| 30 | `dotnet run --project tools/simulate/Simulate.csproj -- 28 build/harness-demo` | A | exit 0 (4.4 s) |
+| 31 | `dotnet run --project tools/food-routines/FoodRoutines.csproj --configuration Release -- build/harness-food-routines-demo 957` | A | exit 0 (3.6 s) |
+| 32 | `dotnet run --project tools/food-demand/FoodDemand.csproj -- build/harness-food-demand-demo` | A | exit 0 (2.0 s) |
+| 33 | `dotnet run --project tools/donut-feasibility-regression/DonutFeasibilityRegression.csproj --configuration Release` | A | exit 0 (1.6 s) |
+| 34 | `dotnet run --project tools/cupcake-feasibility-regression/CupcakeFeasibilityRegression.csproj --configuration Release` | A | exit 0 (1.5 s) |
+| 35 | `dotnet run --project tools/salad-feasibility-regression/SaladFeasibilityRegression.csproj --configuration Release` | A | exit 0 (1.4 s) |
+| 36 | `python tools/donut-feasibility-regression/source_checks.py` | A | exit 0 (0.4 s) |
+| 37 | `python tools/salad-feasibility-regression/source_checks.py` | A | exit 0 (0.1 s) |
+| 38 | `dotnet run --project tools/rival-outflow-regression/RivalOutflowRegression.csproj --configuration Release` | A | exit 0 (7.2 s) |
+| 39 | `dotnet run --project tools/awareness-regression/AwarenessRegression.csproj --configuration Release` | A | exit 0 (19.1 s) |
+| 40 | `dotnet run --project tools/food-candidate-regression/FoodCandidateRegression.csproj --configuration Release` | A | exit 0 (1.5 s) |
+| 41 | `dotnet run --project tools/rival-memory-regression/RivalMemoryRegression.csproj --configuration Release` | A | exit 0 (2.0 s) |
+| 42 | `python tools/rival-memory-regression/validate.py` | B | exit 0; validate.py sub-matrix: 65/65 exit 0 |
+| 43 | `python tools/run-d3a-checks.py` | B | exit 0; validate.py step 1: 71 D3a records, all exit 0 |
+| 44 | `dotnet run --project tools/icecream-feasibility-regression/IcecreamFeasibilityRegression.csproj --configuration Release` | — | **not yet recorded** |
+| 45 | `dotnet run --project tools/frenchfries-feasibility-regression/FrenchFriesFeasibilityRegression.csproj --configuration Release` | — | **not yet recorded** |
+| 46 | `dotnet run --project tools/pizza-feasibility-regression/PizzaFeasibilityRegression.csproj --configuration Release` | — | **not yet recorded** |
+| 47 | `dotnet run --project tools/e4-menu-regression/E4MenuRegression.csproj --configuration Release` | — | **not yet recorded** |
+| 48 | `python tools/icecream-feasibility-regression/source_checks.py` | — | **not yet recorded** |
+| 49 | `python tools/frenchfries-feasibility-regression/source_checks.py` | — | **not yet recorded** |
+| 50 | `python tools/pizza-feasibility-regression/source_checks.py` | — | **not yet recorded** |
+| 51 | `dotnet run --project tools/e3-remaining-feasibility-regression/E3RemainingFeasibilityRegression.csproj --configuration Release` | — | **not yet recorded** |
+| 52 | `python tools/e3-remaining-feasibility-regression/source_checks.py` | — | **not yet recorded** |
+| 53 | `dotnet run --project tools/e5a-eligibility-regression/E5aEligibilityRegression.csproj --configuration Release` | — | **not yet recorded** |
+| 54 | `python tools/e5a-eligibility-regression/source_checks.py` | — | **not yet recorded** |
+| 55 | `dotnet run --project tools/food-metadata-regression/FoodMetadataRegression.csproj --configuration Release` | — | **not yet recorded** |
+| 56 | `python tools/food-metadata-regression/validate.py` | B | exit 0; completed run; wrote its e5c result manifest |
+| 57 | `dotnet run --project tools/name-identity-regression/NameIdentityRegression.csproj --configuration Release` | — | **not yet recorded** |
+| 58 | `dotnet run --project tools/e5b-complete-menu-regression/E5bCompleteMenuRegression.csproj --configuration Release` | — | **not yet recorded** |
+| 59 | `python -m unittest discover -s tools/e5b-native-rig-proof -p "test_*.py"` | — | **not yet recorded** |
+| 60 | `dotnet run --project tools/food-metadata-api-regression/FoodMetadataApiRegression.csproj --configuration Release` | — | **not yet recorded** |
+| 61 | `python tools/food-metadata-api-regression/source_checks.py` | — | **not yet recorded** |
+| 62 | `dotnet run --project tools/accounting-backlog-regression/AccountingBacklogRegression.csproj --configuration Release` | — | **not yet recorded** |
+| 63 | `dotnet run --project tools/bounded-bulk-regression/BoundedBulkRegression.csproj --configuration Release` | — | **not yet recorded** |
+
+Commands 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 57, 58, 59, 60, 61, 62, 63 are not yet recorded.
+
+No game, rig, lease, test profile, ModsLocal, bridge directory or Steam file was touched. No background test process was left running.
 
 ## In-game checks for the next batched rig
 
