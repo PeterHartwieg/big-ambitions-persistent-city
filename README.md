@@ -8,6 +8,8 @@ City-audit F3 implements bounded household posting units and finite route retrie
 
 City-audit F7a implements an on-request save-cost record (save phases, payload sizes, records, load activation) and the `tools/save-cost` baseline on representative and stress fixtures, with writer 25 and payload bytes unchanged. [Offline baseline and automated batched-rig checks](docs/checks/f7a.md); not verified by rig.
 
+City-audit F6c implements read-only feedback v1 in the Ctrl+F8 food panel: week-over-week purchases, sales and evaluated-offer causes per managed shop from the existing 14-day history (days without a record labeled, no hour/meal/resident attribution), a neutral rival estimate label, current budget-state counts from incremental counters that replace the panel's consumer scans, and inspector words for budget states. No behaviour, economy or save change. [Offline evidence and automated batched-rig checks](docs/checks/f6c.md).
+
 City-audit F5a implements a read-only world census (beds, households, area-band workplace capacity with player-owned businesses flagged and excluded, resident workers, commuter/day-visitor targets, implied trips and meals) behind the `pc population census` console diagnostic, with no behaviour, save or allocation change. [Offline evidence, native staffing inspection and automated batched-rig checks](docs/checks/f5a.md).
 
 City-audit F5b implements the inactive identity and ownership core: person kinds, visitor stays, employments, derived households and visitor identities, and an ownership validator, not yet wired to the simulator or saves (writer 25 unchanged). [Offline checks and automated batched-rig checks](docs/checks/f5b-identity-core.md).
