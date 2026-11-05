@@ -8,6 +8,8 @@ City-audit F3 implements bounded household posting units and finite route retrie
 
 City-audit F5a implements a read-only world census (beds, households, area-band workplace capacity with player-owned businesses flagged and excluded, resident workers, commuter/day-visitor targets, implied trips and meals) behind the `pc population census` console diagnostic, with no behaviour, save or allocation change. [Offline evidence, native staffing inspection and automated batched-rig checks](docs/checks/f5a.md).
 
+City-audit F7f implements a frozen reader corpus for every supported schema 13–25, with pinned hashes, per-reader acceptance/refusal tests and a one-folder-per-writer layout; no reader, writer or schema change (writer 25). Offline only; not verified by rig. [Checks and automated batched-rig list](docs/checks/f7f.md).
+
 E5b partially implements complete-menu admission and safe refusal offline: whole-menu explicit prices, cached authored bag policy and pre-receipt revalidation. Dynamic native acquisition/dirty recovery and held-policy execution remain incomplete; historical live support stays bounded. [Contract gaps, measurements and six automated batched-rig checks](docs/checks/e5b-complete-menu.md).
 
 E5a implements the detached loaded-catalogue/direct-stock reader with bounded dirty caches and pure validation, including registered mod identities. Ownership, checkout, `Supported` and writer 24 are unchanged. [Offline evidence and automated batched-rig checklist](docs/checks/e5a-catalogue-eligibility.md).

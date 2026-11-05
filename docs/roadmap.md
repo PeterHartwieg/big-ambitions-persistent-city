@@ -38,6 +38,8 @@ City-audit F1 implements [minute-epoch accounting coordination](plans/f1-account
 
 City-audit F5a (#92) implements the [read-only world census](plans/f5-population.md#4-slice-breakdown) and `pc population census` offline; rig verification pending. [Checks and batched-rig list](checks/f5a.md).
 
+City-audit F7f (#94) implements the [frozen reader corpus](plans/f7-save-snapshots.md#4-slice-breakdown) for schemas 13–25 offline, with pinned hashes and no reader/writer change; rig verification pending. [Checks and batched-rig list](checks/f7f.md).
+
 E3 pizza status (offline): [STOP record](plans/e3-pizza.md); pinned conditional shared probe, shipped holder unestablished, no menu/gameplay/save change. [Validation and 6 Nov handoff](checks/e3-pizza.md).
 E3 remaining batch status, 2 November (offline): Peter chose one batch of remaining E3 records; [all six named candidates STOP](plans/e3-remaining-batch.md), isolated probes only, no menu/gameplay/save change; drinks/bundles/carts remain deferred. [Checks and 6 Nov handoff](checks/e3-remaining-batch.md).
 
@@ -85,6 +87,8 @@ Record every taken win with before/after numbers.
 - City-audit F3 — [Reusable posting heap, pre-sized campaign capture and bounded work](perf/pc-f3-bounded-bulk-work.md): 48 B/posting -> no recurring node allocation; matched complete-day work 3.2406/15.7399/87.1907 -> 0.9100/5.1148/22.4029 ms at 1,914/10,000/100,000 consumers; 64-scope capture 141,472 -> 138,392 B/boundary. Exact replay hashes match; 49 stress advancement intervals >=30 ms remain flagged. R1 restores 1,024-candidate campaign coverage with resumable publication and time-aware route admission (16-path safety ceiling); native-double 957-plan burst drains at 30/60 FPS, native capture p95 6.1153 ms remains above gate. Offline only; [status and five automated next-batch rig checks](checks/pc-f3-bounded-bulk-work.md).
 
 - City-audit F5a — [Pre-sized census dictionaries](perf/f5a.md): census allocation 126,408 -> 104,000 B/call (reference shape) and 2,288,064 -> 1,817,576 B/call (20,000 places / 50,000 residents), timing within noise; on-request diagnostic, offline only.
+
+- City-audit F7f — [One over-cap payload per frozen reader instead of per schema](perf/f7f.md): corpus over-cap test 3,294.7 -> 871.4 ms, corpus suite 6,188.0 -> 3,162.9 ms (sum of per-method medians, 3 runs); test time only, zero runtime change and no mod-work effect; also records lines/test time per frozen reader.
 
 - E5b — [Cached authored bag policy and bounded duplicate checks](perf/e5b-complete-menu.md): discovery 280 -> 0 B/call; offline p95 0.0003 -> 0.0001 ms; no native combined mod-work or whole-frame claim.
 
