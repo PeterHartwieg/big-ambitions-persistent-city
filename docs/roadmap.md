@@ -40,6 +40,8 @@ City-audit F6a implements the [section 3.5 intervention harness](plans/f6-econom
 
 City-audit F5a (#92) implements the [read-only world census](plans/f5-population.md#4-slice-breakdown) and `pc population census` offline; rig verification pending. [Checks and batched-rig list](checks/f5a.md).
 
+City-audit F5b (4 November, offline) implements the inactive [identity and ownership core](plans/f5-population.md): person/visitor/employment types, derived household and visitor identity (IdentityPolicy v1) and the ownership validator, not wired; writer 25 unchanged. [Checks and batched-rig handoff](checks/f5b-identity-core.md).
+
 E3 pizza status (offline): [STOP record](plans/e3-pizza.md); pinned conditional shared probe, shipped holder unestablished, no menu/gameplay/save change. [Validation and 6 Nov handoff](checks/e3-pizza.md).
 E3 remaining batch status, 2 November (offline): Peter chose one batch of remaining E3 records; [all six named candidates STOP](plans/e3-remaining-batch.md), isolated probes only, no menu/gameplay/save change; drinks/bundles/carts remain deferred. [Checks and 6 Nov handoff](checks/e3-remaining-batch.md).
 
@@ -89,6 +91,8 @@ Record every taken win with before/after numbers.
 - City-audit F3 — [Reusable posting heap, pre-sized campaign capture and bounded work](perf/pc-f3-bounded-bulk-work.md): 48 B/posting -> no recurring node allocation; matched complete-day work 3.2406/15.7399/87.1907 -> 0.9100/5.1148/22.4029 ms at 1,914/10,000/100,000 consumers; 64-scope capture 141,472 -> 138,392 B/boundary. Exact replay hashes match; 49 stress advancement intervals >=30 ms remain flagged. R1 restores 1,024-candidate campaign coverage with resumable publication and time-aware route admission (16-path safety ceiling); native-double 957-plan burst drains at 30/60 FPS, native capture p95 6.1153 ms remains above gate. Offline only; [status and five automated next-batch rig checks](checks/pc-f3-bounded-bulk-work.md).
 
 - City-audit F5a — [Pre-sized census dictionaries](perf/f5a.md): census allocation 126,408 -> 104,000 B/call (reference shape) and 2,288,064 -> 1,817,576 B/call (20,000 places / 50,000 residents), timing within noise; on-request diagnostic, offline only.
+
+- City-audit F5b — [Ordered-input owner lookup hint, boxing-free enum checks, allocation-free intent ownership and concatenation-free identity hashing](perf/f5b-identity-core.md): validator p50 1,914/10,000/100,000 persons 1.3185/8.3299/108.7320 -> 0.6485/3.6938/49.2912 ms; warm validator 68,741/358,737/3,587,106 -> 0 B/call; intent check 127.8 -> 0 B/intent (3.06 -> 1.05 ms per 30,000); identity draw 284 -> 0 B/lookup. New code, offline components only; no frame work.
 
 - E5b — [Cached authored bag policy and bounded duplicate checks](perf/e5b-complete-menu.md): discovery 280 -> 0 B/call; offline p95 0.0003 -> 0.0001 ms; no native combined mod-work or whole-frame claim.
 
