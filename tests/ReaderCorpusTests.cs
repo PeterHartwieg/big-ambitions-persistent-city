@@ -200,8 +200,12 @@ public sealed class ReaderCorpusTests
         }
     }
 
+    public static IEnumerable<object[]> ReaderNewestSchemas() => ReaderCorpus.Readers.Select(r => new object[] { r.OwnMax });
+
+    // Every reader checks the length before it reads the schema, so one 256 Mi-character payload per reader (labelled
+    // with that reader's newest schema) covers the bound; per-schema copies cost about 250 ms each without adding a case.
     [Theory]
-    [MemberData(nameof(Schemas))]
+    [MemberData(nameof(ReaderNewestSchemas))]
     public void ReaderCorpus_OneCharacterOverTheInputCapIsRefusedAndPreserved(int schema)
     {
         var fixture = ReaderCorpus.Load(schema)[0];
