@@ -62,7 +62,12 @@ command = [dotnet, str(csc), "-nologo", "-noconfig", "-nostdlib+", "-target:libr
 command += ["-reference:" + str(managed / (name + ".dll")) for name in references]
 command += ["-reference:" + str(json_reference)]
 command += ["-reference:" + str(harmony)]
-subprocess.run(command + sources, check=True)
+# A response file keeps long worktree paths under the Windows command-line limit.
+# csc reads -noconfig only from the command line.
+arguments = command[4:] + sources
+response = root / "build/csc.rsp"  # Outside the package folder.
+response.write_text("".join('"' + a + '"\n' for a in arguments), encoding="utf-8")
+subprocess.run(command[:4] + ["@" + str(response)], check=True)
 shutil.copy2(root / "config/persistent-city.json", output / "persistent-city.json")
 if (root / "README.md").exists():
     shutil.copy2(root / "README.md", output / "README.md")
