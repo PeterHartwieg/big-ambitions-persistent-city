@@ -42,12 +42,22 @@ namespace PersistentCity.Core
         // Value-tuple key: ordinal string equality and no per-row key allocation.
         public static (string, string) Key(string placeId, string businessId) => (placeId, businessId);
 
+        /// <summary>The day from which the city's food history was certainly being recorded, independent of any
+        /// shop's activity: the earlier of the saved choice-policy start (set to the food city's creation or
+        /// migration day + 1, so recording ran by then) and the earliest kept row of any shop.</summary>
+        public static int RecordingSince(FoodCommerceState food)
+        {
+            int since = food.ChoiceStartsDay;
+            foreach (var row in food.History) if (row.Day < since) since = row.Day;
+            return since;
+        }
+
         /// <summary>This week is days today − 6 … today (today in progress); last week is today − 13 … today − 7.
-        /// Rows of other shops or outside both windows are ignored. The first recorded day is the earliest kept
-        /// row in the fourteen-day window. Rows exist only for days with evaluated offers or purchases, so an
-        /// earlier day without a row may be a quiet day or a day before recording began; the text says "no record"
-        /// for such days, never zero and never "not recorded", and shows no change across them.</summary>
-        public static FoodShopWeeks Weeks(IEnumerable<FoodShopDay> rows, string placeId, string businessId, int today)
+        /// Rows of other shops or outside both windows are ignored. Coverage starts at the earlier of this shop's
+        /// first kept row and <paramref name="recordingSince"/> (see <see cref="RecordingSince"/>): a covered day
+        /// without a row had no evaluated offers or purchases and counts as zero. Days before coverage are
+        /// genuinely unknown, say "no record", are never shown as zero, and no change is shown across them.</summary>
+        public static FoodShopWeeks Weeks(IEnumerable<FoodShopDay> rows, string placeId, string businessId, int today, int? recordingSince = null)
         {
             var current = new FoodWeek(today - WeekDays + 1, today);
             var previous = new FoodWeek(today - RetainedDays + 1, today - WeekDays);
@@ -58,7 +68,8 @@ namespace PersistentCity.Core
                 (row.Day >= current.FirstDay ? current : previous).Add(row);
                 if (first == null || row.Day < first) first = row.Day;
             }
-            current.Close(first); previous.Close(first);
+            int? coverage = recordingSince.HasValue && (first == null || recordingSince < first) ? recordingSince : first;
+            current.Close(coverage); previous.Close(coverage);
             return new FoodShopWeeks(today, first, current, previous);
         }
 

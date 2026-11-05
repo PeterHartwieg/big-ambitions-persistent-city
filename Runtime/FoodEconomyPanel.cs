@@ -36,10 +36,11 @@ namespace PersistentCity.Runtime
                 long requests = money.Requests, rebuilds = money.Rebuilds;
                 var current = money.Snapshot(); var rescan = FoodMoneyCounters.Rescan(food);
                 int day = (int)(simulation!.State.Minute / 1440); var index = FoodFeedback.IndexHistory(food.History);
+                int recordingSince = FoodFeedback.RecordingSince(food);
                 return new { active = true, day, requestsBefore = requests, rebuildsBefore = rebuilds, countersMatchRescan = current.Equals(rescan),
                     counters = current.ToString(), rescan = rescan.ToString(), moneyText = current.Text(), rivalLabel = FoodFeedback.RivalEstimateLabel,
                     shops = food.Shops.Select(s => new { s.PlaceId, s.BusinessId, weeks = FoodFeedback.Weeks(
-                        index.TryGetValue(FoodFeedback.Key(s.PlaceId, s.BusinessId), out var rows) ? rows : new List<FoodShopDay>(), s.PlaceId, s.BusinessId, day).Text() }).ToArray() };
+                        index.TryGetValue(FoodFeedback.Key(s.PlaceId, s.BusinessId), out var rows) ? rows : new List<FoodShopDay>(), s.PlaceId, s.BusinessId, day, recordingSince).Text() }).ToArray() };
             }
         }
         // Whole-dollar display only; never changes a settlement amount. Totals may exceed one amount's range.
@@ -134,7 +135,7 @@ namespace PersistentCity.Runtime
             text.AppendLine();
             var nativeAccounts = foodMarket?.ReadAccounts() ?? Array.Empty<NativeFoodAccount>();
             var regulars = simulation.ProjectRegulars(ObservedOwnShop);
-            var history = FoodFeedback.IndexHistory(food.History);
+            var history = FoodFeedback.IndexHistory(food.History); int recordingSince = FoodFeedback.RecordingSince(food);
             var shopPlaces = new Dictionary<string, Place?>(food.Shops.Count, StringComparer.Ordinal);
             foreach (var scope in food.Shops) shopPlaces[scope.PlaceId] = null;
             foreach (var p in city.Places) if (shopPlaces.TryGetValue(p.Id, out var found) && found == null) shopPlaces[p.Id] = p;
@@ -159,7 +160,7 @@ namespace PersistentCity.Runtime
                 if (observed == null) text.AppendLine("No evaluated food offers recorded yet.");
                 else
                 {
-                    FoodFeedback.Weeks(rows, scope.PlaceId, scope.BusinessId, day).AppendTo(text);
+                    FoodFeedback.Weeks(rows, scope.PlaceId, scope.BusinessId, day, recordingSince).AppendTo(text);
                     text.AppendLine("Latest recorded day " + observed.Day + ": " + observed.Purchases + " purchases · " + observed.ExistingStopPurchases + " during existing visits · " + Amount(observed.Revenue) + " sales");
                     text.AppendLine("Meals: breakfast " + observed.PurchaseMeals[1] + " · lunch " + observed.PurchaseMeals[2] + " · dinner " + observed.PurchaseMeals[3]
                         + (observed.PurchaseMeals[0] > 0 ? " · earlier single-meal routine " + observed.PurchaseMeals[0] : ""));

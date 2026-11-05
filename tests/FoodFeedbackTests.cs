@@ -107,6 +107,32 @@ public sealed partial class FoodCommerceTests
     }
 
     [Fact]
+    public void F6c_QuietCoveredDaysCountAsZeroAndKeepTheComparison()
+    {
+        // Recording ran since before day 7 (another shop's row on day 5), but this shop was quiet on days 7 and 8.
+        var rows = new List<FoodShopDay> { F6c_Row(5, 1, 100, chosen: 1, business: "other"),
+            F6c_Row(9, 2, 400, chosen: 2, staff: 1), F6c_Row(18, 5, 800, chosen: 5, staff: 4) };
+        var food = new FoodCommerceState { ChoiceStartsDay = 30 }; food.History.AddRange(rows);
+        Assert.Equal(5, FoodFeedback.RecordingSince(food));
+        var weeks = FoodFeedback.Weeks(rows, "s", "b", 20, FoodFeedback.RecordingSince(food));
+        Assert.Equal(FoodWeekCoverage.Complete, weeks.LastWeek.Coverage); Assert.Equal(9, weeks.FirstRecordedDay);
+        Assert.Equal(new[] {
+            "Week over week · this week = days 14–20 (day 20 so far) · last week = days 7–13",
+            "Purchases: 5 this week · 2 last week · change +3. Sales: $8 this week · $4 last week · change +$4.",
+            "Evaluated offers: 9 this week · 3 last week. " + FoodFeedback.OfferMeaning,
+            "Chosen: 5 evaluated offers this week (last week 2)",
+            "No staffed counter: 4 evaluated offers this week (last week 1)" }, F6c_Lines(weeks.Text()));
+        // The saved choice-policy start alone also proves coverage, with no row from any shop that early.
+        var byStart = new FoodCommerceState { ChoiceStartsDay = 3 }; byStart.History.AddRange(rows.Skip(1));
+        Assert.Equal(FoodWeekCoverage.Complete, FoodFeedback.Weeks(rows, "s", "b", 20, FoodFeedback.RecordingSince(byStart)).LastWeek.Coverage);
+        // A genuinely unknown period stays unknown: city recording itself began on day 9.
+        var late = new FoodCommerceState { ChoiceStartsDay = 10 }; late.History.AddRange(rows.Skip(1));
+        var unknown = FoodFeedback.Weeks(rows, "s", "b", 20, FoodFeedback.RecordingSince(late));
+        Assert.Equal(FoodWeekCoverage.Partial, unknown.LastWeek.Coverage); Assert.Equal(9, unknown.LastWeek.RecordedFrom);
+        Assert.Contains("No change shown", unknown.Text());
+    }
+
+    [Fact]
     public void F6c_RecordedHistoryProjectsTheSameNumbersAsItsRowsAndAfterReload()
     {
         var (city, market, routes) = Ready(count: 2, threeMeals: true);
