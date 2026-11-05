@@ -175,6 +175,7 @@ namespace PersistentCity.Runtime
         public void Initialize(ModContext context)
         {
             log = context.Logger;
+            RegisterCensusCommand();
             try
             {
                 FoodProductMetadataApi.BindMainThread(); metadataLifetime = true;
@@ -526,7 +527,9 @@ namespace PersistentCity.Runtime
             initializingHadPayload = save.modData.TryGetValue(SaveStore.StateKey, out initializingPayload);
             var saved = new Dictionary<string, string>(StringComparer.Ordinal);
             if (initializingHadPayload) saved.Add(SaveStore.StateKey, initializingPayload!);
-            var places = GamePlaces.Read();
+            var workplaces = new List<CensusWorkplace>();
+            var places = GamePlaces.Read(workplaces);
+            CaptureCensusCatalogue(places, workplaces);
             log?.Info(OutdoorPlaces.LastDiscoverySummary);
             double minute = Now();
             double clockRate = NativeTravelPace.InitialClockRate(settings.GameClockFactor);
@@ -730,6 +733,8 @@ namespace PersistentCity.Runtime
 
         public void Shutdown()
         {
+            UnregisterCensusCommand();
+            ResetCensus();
             Detach();
             // A pure worker may finish after unload; observe faults and release all runtime references.
             if (initialization != null)
