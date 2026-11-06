@@ -32,6 +32,20 @@ namespace PersistentCity.Runtime
             }
         }
 
+        /// <summary>Rule 5 for a PC unit that native code runs outside Update (C5d: one research billing attempt
+        /// inside native MarketingHelper.RunDaily). A save started inside it writes both failure markers, publishes
+        /// no payload and stops Persistent City after the outermost unit returns.</summary>
+        internal void RunSaveEpochUnit(Action unit)
+        {
+            saveEpochUnits++;
+            try { unit(); }
+            finally
+            {
+                saveEpochUnits--;
+                if (saveEpochStopPending && saveEpochUnits == 0) FinishDeferredSaveEpochStop();
+            }
+        }
+
         private void Save()
         {
             var save = SaveGameManager.Current;
