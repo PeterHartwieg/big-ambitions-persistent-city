@@ -110,3 +110,28 @@ The baseline above is still the F7a record. This section adds a comparison taken
 | CF64 | 240,233,742 | 2,676.85 / 3,109.63 | 3,328.55 / 3,417.41 | 7/7 | 2,434,690,688 -> 2,434,690,680 | 8,060.7 -> 8,813.3 | 24.470 -> 26.481 (0/7 ≥30) |
 | encoding-max | 149,224 | 3.02 / 6.29 | 3.36 / 6.67 | 0/7 | 1,058,312 -> 1,058,312 | 10.9 -> 9.4 | 0.008 -> 0.009 (0/7 ≥30) |
 | representative-957x2 (repeat) | 2,333,388 | 46.10 / 87.19 | 50.75 / 136.51 | 7/7 | 17,355,776 -> 17,355,776 | 375.2 -> 334.8 | 0.592 -> 0.488 (0/7 ≥30) |
+
+## Sync 2 re-measurement at merge head `5be0f71` (6 November 2026)
+
+The baseline above is still the F7a record, and the `b4690b8` section stays as it is. This section adds a comparison taken after merging `codex/persistent-city` twice: `0a926ef` (F6c #110, merge `737eaff`) and then `eee8755` (F5f #115, merge `5be0f71`). Neither merged range changes anything under `Persistence/`, `tools/save-cost/`, `tools/name-identity-regression/` or `tests/SaveCostDiagnosticsTests.cs`. On fixture paths, F6c turns `ResidentBudget`, `ResidentMeal` and `MealExcursion.Unresolved` auto-properties into fields with setters that feed transient, never-saved panel counters. F5f adds an in-memory active-journey index. Commands, all in the foreground after the shared other-dotnet wait: `python tools/save-cost/measure.py 7 determinism`, then the 13 fixtures in groups of two to six (`python tools/save-cost/measure.py 7 <fixture ...>`). Raw rows: [sync-5be0f71/](assets/f7a/sync-5be0f71/). The retained baseline files are unchanged.
+
+- **Bytes and hashes are unchanged.** For all 13 fixtures, characters, UTF-8 bytes, UTF-16 bytes, streaming/semantic records and SHA-256 equal the retained rows, with writer 25. F3/E5d expected-hash equality and diagnostics-on/off byte equality hold. Determinism equals the retained file field by field. No committed fixture size or hash needed regenerating.
+- **Save allocation is unchanged** apart from a few bytes. `churn` again shows its +1,146,880 B GC-segment median shift. Retained bytes after read grow by 0.1–0.8 % (for example 50,000×2: 342,423,048 -> 344,023,048 B). This comes from the merged slices' in-memory fields, not from save code.
+- **Timings:** 3 of 13 save p95s are lower and 10 higher. Another worktree's dotnet load was active during the run, and the save path code did not change, so this is shared-host noise rather than a measured regression. It is synthetic .NET 10 evidence only, like the baseline.
+- **Flags:** every non-`encoding-max` fixture still has save samples ≥30 ms (81/84 here; representative-957x2 4/7). As before, this is save latency, not mod-work. Main-thread construction at representative 50,000×2 is still flagged: max 36.212 ms, 4/7 ≥30 ms (baseline 32.221 ms, 2/7; `b4690b8` 30.967 ms, 1/7). That path now also runs F6c's counter attach and F5f's index build. With one run on a loaded host, this is recorded as a flag and not attributed. No ordinary-frame work was added, no win was taken, and none of the four parked hotspots was touched.
+
+| Fixture | Characters | Save off p50 / p95, baseline (ms) | Save off p50 / p95, `5be0f71` (ms) | ≥30 ms | Allocated B / save, baseline -> `5be0f71` | Read p95 (ms) | Main-thread construction max (ms) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| representative-957x2 | 2,333,388 | 46.10 / 87.19 | 61.12 / 117.65 | 4/7 | 17,355,776 -> 17,355,776 | 375.2 -> 251.9 | 0.592 -> 0.651 (0/7 ≥30) |
+| representative-5000x2 | 12,193,195 | 114.48 / 222.67 | 161.40 / 222.37 | 7/7 | 90,511,840 -> 90,511,328 | 503.6 -> 522.8 | 1.855 -> 2.451 (0/7 ≥30) |
+| representative-50000x2 | 109,762,853 | 1,217.18 / 1,668.38 | 1,340.16 / 1,414.22 | 7/7 | 812,227,576 -> 812,227,592 | 5,061.4 -> 4,382.9 | 32.221 -> 36.212 (4/7 ≥30) |
+| 957x2 | 17,751,674 | 275.91 / 331.05 | 256.62 / 341.57 | 7/7 | 156,861,200 -> 156,861,200 | 679.6 -> 743.2 | 0.470 -> 0.852 (0/7 ≥30) |
+| 957x3 | 18,425,694 | 259.96 / 302.08 | 276.55 / 320.50 | 7/7 | 163,683,448 -> 163,683,456 | 736.0 -> 786.0 | 0.466 -> 0.744 (0/7 ≥30) |
+| 5000x2 | 30,319,583 | 465.87 / 739.17 | 474.28 / 602.01 | 7/7 | 277,319,048 -> 277,319,072 | 1,315.6 -> 1,359.5 | 1.951 -> 2.189 (0/7 ≥30) |
+| 5000x3 | 33,841,097 | 418.12 / 550.14 | 527.14 / 637.64 | 7/7 | 312,490,752 -> 312,490,760 | 1,299.9 -> 1,446.7 | 1.706 -> 1.988 (0/7 ≥30) |
+| churn | 30,126,240 | 424.94 / 508.21 | 535.51 / 642.13 | 7/7 | 258,038,424 -> 259,185,304 | 1,119.9 -> 1,525.0 | 0.374 -> 0.444 (0/7 ≥30) |
+| 50000x2 | 162,346,836 | 2,036.83 / 2,293.39 | 2,348.17 / 2,601.62 | 7/7 | 1,567,748,152 -> 1,567,748,040 | 5,269.7 -> 6,226.3 | 17.218 -> 19.693 (0/7 ≥30) |
+| 50000x3 | 196,758,738 | 2,437.78 / 2,621.31 | 2,609.52 / 2,771.55 | 7/7 | 1,914,058,376 -> 1,914,058,376 | 7,139.2 -> 7,740.3 | 26.424 -> 24.274 (0/7 ≥30) |
+| CF32 | 201,833,742 | 2,354.28 / 2,586.99 | 2,783.42 / 3,201.12 | 7/7 | 1,945,648,000 -> 1,945,648,528 | 6,651.2 -> 8,130.4 | 16.847 -> 23.498 (0/7 ≥30) |
+| CF64 | 240,233,742 | 2,676.85 / 3,109.63 | 3,499.35 / 3,646.93 | 7/7 | 2,434,690,688 -> 2,434,690,688 | 8,060.7 -> 8,879.6 | 24.470 -> 23.831 (0/7 ≥30) |
+| encoding-max | 149,224 | 3.02 / 6.29 | 3.21 / 6.56 | 0/7 | 1,058,312 -> 1,058,312 | 10.9 -> 12.3 | 0.008 -> 0.012 (0/7 ≥30) |

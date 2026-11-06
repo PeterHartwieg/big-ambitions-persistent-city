@@ -1,0 +1,8 @@
+{
+  "sourceHead": "5be0f71b971d0c14a5db4b4936a11946ac37e041",
+  "host": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.10",
+  "dotnet": "10.0.402",
+  "samples": 7,
+  "note": "Windows .NET 10 synthetic; one process per fixture; not native or Mono evidence"
+}
