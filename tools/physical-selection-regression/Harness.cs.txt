@@ -11,6 +11,7 @@ class Fixture {
  public int InitialPeople, InitialCars, pedestrianLimit = 3, vehicleLimit = 3;
  public HashSet<string> Failed = new();
  public Dictionary<int, object> bodies = new();
+ public bool journeyIndexFallback;
 }
 class Sim {
  public OptionalStopAvailability StopStatus = OptionalStopAvailability.Ready;
@@ -20,6 +21,16 @@ class Sim {
  public Dictionary<string, PhysicalJourneySample> Samples = new();
  public Position PositionOf(CitizenState c) { Positions++; return c.Journey?.Legs[0].From ?? new Position(int.Parse(c.Identity.Id), 0, 0); }
  public PhysicalJourneySample SampleJourney(CitizenState c) => Samples[c.Identity.Id];
+ // The real Core index over this roster, rebuilt when citizens are added. Reversed models a swap-removal order.
+ public bool ReverseIndex;
+ ActiveJourneyIndex? index; int indexed = -1;
+ public ActiveJourneyIndex ActiveJourneys { get {
+  if (index == null || indexed != State.Citizens.Count) {
+   index = new ActiveJourneyIndex(); var roster = State.Citizens.ToList(); if (ReverseIndex) roster.Reverse();
+   index.Rebuild(roster); indexed = State.Citizens.Count;
+   if (!index.MatchesScan(State.Citizens)) throw new Exception("Index differs from a full scan");
+  }
+  return index; } }
 }
 class Ambient { public HashSet<string> Reserved = new(); public bool IsReserved(string id) => Reserved.Contains(id); }
 class QueuePlanEntry {}
@@ -45,7 +56,7 @@ class VehicleComponent {
 static class VehicleScriptOwnership { public static bool NativeOnly(VehicleComponent v) => v.Native; }
 static class Manager { public static VehicleComponent[] All = Array.Empty<VehicleComponent>(); public static VehicleComponent[] GetVehicleList() => All; }
 static class Program {
- static int checks;
+ static int checks, indexSelections;
  static void Check(bool condition, string text) { checks++; if (!condition) throw new Exception(text); }
  static bool SameValue(object? a, object? b) {
  if(a is double x && b is double y) return BitConverter.DoubleToInt64Bits(x)==BitConverter.DoubleToInt64Bits(y);
@@ -83,22 +94,24 @@ static class Program {
  int beforePositions = 0, afterPositions = 0, beforeHierarchy = 0, afterHierarchy = 0;
  for (int trial=0; trial<500; trial++) {
  var before = new Before(); var after = new After();
- foreach(var f in new Fixture[]{before,after}) {
+ // F5f: the same selection over every citizen (fallback full scan) and over a reversed index order.
+ var full = new After { journeyIndexFallback = true }; var reversed = new After(); reversed.simulation.ReverseIndex = true;
+ foreach(var f in new Fixture[]{before,after,full,reversed}) {
  f.InitialPeople = trial%4; f.InitialCars = trial/4%4;
  // An off-axis focus gives non-integer distances for the comparer's second key.
  f.focus = new Position(trial%60,0,trial%3*0.37);
- f.places["indoor"] = new Place { Id="indoor" }; f.places["outdoor"] = new Place { Id="scene-park" };
+ f.places["indoor"] = new Place { Id="indoor" }; f.places["scene-park"] = new Place { Id="scene-park" }; // Production keys places by Id.
  }
  int roster = trial%100==0?5000:trial%10==0?957:120;
  for(int i=0;i<roster;i++) {
  var id=i.ToString(); int kind=trial==0?6:rng.Next(9); float spread=(float)(rng.NextDouble()*8); var phase=kind<4?CitizenPhase.Travelling:kind==4?CitizenPhase.WaitingForOpening:CitizenPhase.AtPlace;
  var mode=kind==0?TravelMode.Walk:kind==1?TravelMode.Car:TravelMode.Subway;
  var leg=new RouteLeg { Minutes=1,Mode=mode,From=new Position(i%5,0,0),To=new Position(kind==3?i%5:i%5+5,0,0) };
- foreach(var f in new Fixture[]{before,after}) {
- var c=new CitizenState { Identity=new CitizenIdentity{Id=id},Phase=phase,Journey=phase==CitizenPhase.Travelling?new Route{Legs=new(){leg}}:null,PlaceId=kind==7?"outdoor":"indoor",Activity=Activity.Leisure,NextEventMinute=i%19==0?99:101 };
+ foreach(var f in new Fixture[]{before,after,full,reversed}) {
+ var c=new CitizenState { Identity=new CitizenIdentity{Id=id},Phase=phase,Journey=phase==CitizenPhase.Travelling?new Route{Legs=new(){leg}}:null,PlaceId=kind==7?"scene-park":"indoor",Activity=Activity.Leisure,NextEventMinute=i%19==0?99:101 };
  f.simulation.State.Citizens.Add(c);
  if(c.Journey!=null) f.simulation.Samples[id]=new PhysicalJourneySample(0,1,0,0,leg,leg.From,null,null);
- if(trial!=0 && i%7==0) f.queuers[id]=new QueuePlanEntry();
+ if(trial!=0 && phase==CitizenPhase.WaitingForOpening && i%2==0) f.queuers[id]=new QueuePlanEntry(); // PlanQueues plans only waiting citizens.
  if(i%11==0) f.attempted[id]=9; else if(i%13==0) f.attempted[id]=1;
  else if(trial%5==1&&i%2==0) f.attempted[id]=spread; // Many distinct past attempts, all outside the cooldown.
  if(i%17==0) f.ambient.Reserved.Add(id);
@@ -106,8 +119,15 @@ static class Program {
  if(i%3==0) f.Failed.Add(id);
  }
  }
- Check(before.Select().SequenceEqual(after.Select()),"Attempt order/caps changed");
+ var selected = after.Select();
+ Check(before.Select().SequenceEqual(selected),"Attempt order/caps changed");
  Check(before.attempted.OrderBy(x=>x.Key).SequenceEqual(after.attempted.OrderBy(x=>x.Key)),"Cooldown writes changed");
+ Check(full.Select().SequenceEqual(selected),"Index selection differs from the full scan");
+ Check(reversed.Select().SequenceEqual(selected),"Index order changed the selection");
+ Check(full.attempted.OrderBy(x=>x.Key).SequenceEqual(after.attempted.OrderBy(x=>x.Key))
+  && reversed.attempted.OrderBy(x=>x.Key).SequenceEqual(after.attempted.OrderBy(x=>x.Key)),"Index cooldown writes differ from the full scan");
+ Check(after.simulation.Positions<=full.simulation.Positions,"Index sampled more positions than the full scan");
+ indexSelections++;
  Check(after.simulation.Positions<=before.simulation.Positions,"Position work increased");
  if(trial==0) Check(after.simulation.Positions==0,"Indoor population reached position sampling");
  beforePositions+=before.simulation.Positions; afterPositions+=after.simulation.Positions;
@@ -145,7 +165,26 @@ static class Program {
  route.Legs[0].Minutes*=2;
  Check(SameSample(CitySimulator.SampleRoute(route,route.Minutes,null),Before.SampleRoute(route,route.Minutes,null)),"Mutable route total retained");
  }
+ // F5f: visitors are indexed but never selected before F5i, by the index or by the full-scan fallback.
+ foreach (bool fallback in new[]{false,true}) {
+  var visitors = new After { journeyIndexFallback = fallback, pedestrianLimit = 48, vehicleLimit = 24 };
+  var residents = new Before { pedestrianLimit = 48, vehicleLimit = 24 };
+  foreach (var id in new[]{"pv:1","consumer:c1:1","c2","pc:3","pv:4","5"}) {
+   var leg=new RouteLeg {Mode=TravelMode.Walk,Minutes=1,From=new Position(id.Length,0,0),To=new Position(id.Length+1,0,0)};
+   foreach (Fixture f in new Fixture[]{visitors,residents}) {
+    bool visitor = id.StartsWith("pv:") || id.StartsWith("consumer:");
+    if (f == residents && visitor) continue;
+    var c = new CitizenState {Identity=new CitizenIdentity {Id=id},Phase=CitizenPhase.Travelling,Journey=new Route {Legs=new(){leg}},NextEventMinute=200};
+    f.simulation.State.Citizens.Add(c); f.simulation.Samples[id]=new PhysicalJourneySample(0,1,0,0,leg,leg.From,null,null);
+   }
+  }
+  var chosen = visitors.Select();
+  Check(chosen.All(id => !id.StartsWith("pv:") && !id.StartsWith("consumer:")),"A visitor was selected for a body");
+  Check(chosen.SequenceEqual(residents.Select()),"Visitor filtering changed resident selection");
+  Check(visitors.simulation.ActiveJourneys.WithheldVisitors == 3 && visitors.simulation.ActiveJourneys.Count == 6,"Visitors are not indexed");
+ }
+ Check(!ActiveJourneyIndex.VisitorsReceiveBodies,"Visitor bodies are F5i scope");
  Check(afterPositions<beforePositions,"No position reduction"); Check(afterHierarchy<beforeHierarchy,"No hierarchy reduction");
- Console.WriteLine($"PASS {checks} checks; positions {beforePositions}->{afterPositions}; hierarchy {beforeHierarchy}->{afterHierarchy}");
+ Console.WriteLine($"PASS {checks} checks; positions {beforePositions}->{afterPositions}; hierarchy {beforeHierarchy}->{afterHierarchy}; F5f index-vs-full-scan selections {indexSelections}");
  }
 }

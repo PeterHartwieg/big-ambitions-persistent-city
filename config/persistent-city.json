@@ -4,6 +4,10 @@
   "RivalAssumedServiceMinutes": 5,
   "RivalRefreshGameMinutes": 60,
   "RivalReadsPerUnit": 16,
+  "RivalCapacityPercent": 100,
+  "RivalServiceLanes": 2,
+  "RivalMealPeriodUnits": 60,
+  "RivalServiceProfiles": {},
 
   "FoodMenuMaximumOffersPerShop": 4,
   "FoodMenuNewTasteWeight": 1.0,
