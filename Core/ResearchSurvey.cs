@@ -97,7 +97,14 @@ namespace PersistentCity.Core
             var order = current;
             if (order == null) return;
             if (index != null && !SameRoster()) { Restarts++; Clear(); }
-            if (index == null) Start();
+            if (index == null && !Start())
+            {
+                // The roster was removed or grew past the cap after the order was picked. Treat the order as
+                // unsurveyable (technical decision 2): release the hold instead of failing the frame.
+                unsurveyable.Add(order.Id); Clear();
+                current = null; seenSequence = -1;
+                return;
+            }
             if (!index!.Done) { index.Continue(); IndexUnits++; return; }
             if (engine == null)
             {
@@ -150,16 +157,16 @@ namespace PersistentCity.Core
         private MarketResearchScope Scope(ResearchOrder order) => order.Product.Coverage == ResearchCoverage.City
             ? new MarketResearchScope() : new MarketResearchScope(order.BusinessAddress, Centre(order.BusinessAddress)!.Value, order.RadiusMetres);
 
-        private void Start()
+        // False when the roster is gone, empty or over the C4 cap; Surveyable was checked only when the order was picked.
+        private bool Start()
         {
             var food = city.State.Food;
-            // Surveyable was checked when the order was picked; a roster removed since then cannot be surveyed.
-            if (food == null || food.Residents.Count == 0 || food.Residents.Count > MarketResearchEngine.MaximumConsumers)
-                throw new InvalidOperationException("The food roster changed under an open research survey.");
+            if (food == null || food.Residents.Count == 0 || food.Residents.Count > MarketResearchEngine.MaximumConsumers) return false;
             roster = food.Residents; rosterCount = roster.Count; rosterMinute = city.State.Minute;
             if (bufferA == null || bufferA.Length < rosterCount)
             { bufferA = new int[rosterCount]; bufferB = new int[rosterCount]; bufferKeys = new string[rosterCount]; }
             index = new OrdinalRosterIndex(roster, rosterCount, bufferA, bufferB!, bufferKeys!);
+            return true;
         }
 
         // The minute and the roster count are checked before and after each unit (plan 3.4). The list identity

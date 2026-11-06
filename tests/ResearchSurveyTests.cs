@@ -433,6 +433,28 @@ public sealed class ResearchSurveyTests
         Assert.Equal(1, food.Ledger.NextSequence);
     }
 
+    [Theory]
+    [InlineData(false)] [InlineData(true)]
+    public void ARosterRemovedAfterTheOrderWasPickedReleasesTheHoldInsteadOfThrowing(bool midSurvey)
+    {
+        var run = Start(); Catch(run.City, Noon);
+        run.City.AttachResearch(new ResearchLedger(), 16);
+        var order = Order(run);
+        Assert.Equal(order.Id, run.Research.SurveyingOrderId);
+        if (midSurvey) while (run.Research.SurveyUnits < 2) run.City.AdvanceFrameSlice(Noon, 1);
+        var food = run.City.State.Food!;
+        var saved = food.Residents;
+        food.Residents = new List<ResidentMeal>();
+        Assert.False(run.City.IsCaughtUpTo(Noon));
+        var result = run.City.AdvanceFrameSlice(Noon, 1);
+        Assert.Equal(1, result.ResearchUnits);
+        Assert.Equal(new[] { order.Id }, run.Research.UnsurveyableOrders);
+        Assert.Null(run.Research.SurveyingOrderId);
+        Assert.Equal(ResearchOrderState.Ordered, order.State);
+        Assert.True(run.City.IsCaughtUpTo(Noon));
+        food.Residents = saved;
+    }
+
     [Fact]
     public void TheSurveyChangesNoSaleReceiptBudgetRouteOrTrafficField()
     {
@@ -533,28 +555,40 @@ public sealed class ResearchSurveyTests
             var run = Start(residents: consumers / 2, finances: true);
             Catch(run.City, run.City.State.Minute + 1);
             var research = run.City.AttachResearch(new ResearchLedger(), 256);
-            var indexUnits = new List<double>(); var surveyUnits = new List<double>();
+            var indexUnits = new List<double>(); var surveyUnits = new List<double>(); var frameWork = new List<double>();
             long allocated = 0;
             for (int rep = 0; rep < 2; rep++)
             {
                 var product = rep == 0 ? ResearchProducts.DetailedCityCode : ResearchProducts.DetailedLocalCode;
                 var order = Order(run, product, rep == 0 ? "shop-1" : "shop-2");
                 long gc = GC.GetAllocatedBytesForCurrentThread();
+                // Runtime frames at 60 FPS, as PersistentCityMod.AdvancePopulation drives them: one-unit slices
+                // until the budget's unit cap, its elapsed-time allowance or catch-up. Research units do not
+                // spend the citizen-event limit.
+                var budget = new PopulationFrameBudget(1.0 / 60, false);
                 int frames = 0, total = 0;
                 while (order.State == ResearchOrderState.Ordered)
                 {
-                    long beforeIndex = research.IndexUnits;
-                    long t = Stopwatch.GetTimestamp();
-                    var result = run.City.AdvanceFrameSlice(run.City.State.Minute, 1);
-                    double ms = Ms(Stopwatch.GetTimestamp() - t);
-                    if (result.ResearchUnits == 0) continue;
-                    total++;
-                    (research.IndexUnits > beforeIndex ? indexUnits : surveyUnits).Add(ms);
+                    long frameStarted = Stopwatch.GetTimestamp();
+                    int citizen = 0;
+                    for (int step = 0; step < budget.Units; step++)
+                    {
+                        long beforeIndex = research.IndexUnits;
+                        long t = Stopwatch.GetTimestamp();
+                        var result = run.City.AdvanceFrameSlice(run.City.State.Minute, 1);
+                        double ms = Ms(Stopwatch.GetTimestamp() - t);
+                        citizen += result.CitizenEvents;
+                        if (result.ResearchUnits > 0) { total++; (research.IndexUnits > beforeIndex ? indexUnits : surveyUnits).Add(ms); }
+                        double elapsed = Ms(Stopwatch.GetTimestamp() - frameStarted);
+                        if (result.CaughtUp || citizen >= budget.CitizenEvents || elapsed >= budget.Milliseconds) break;
+                    }
+                    frameWork.Add(Ms(Stopwatch.GetTimestamp() - frameStarted));
+                    frames++;
                 }
-                frames = (total + 15) / 16;
                 allocated = GC.GetAllocatedBytesForCurrentThread() - gc;
-                output.WriteLine($"{consumers} survey {product}: {total} units, {frames} frames at 16 units/frame (60 FPS), allocated {allocated / 1024} KiB");
+                output.WriteLine($"{consumers} survey {product}: {total} units in {frames} frames at 60 FPS (PopulationFrameBudget {budget.Units} units, {budget.Milliseconds:F1} ms), allocated {allocated / 1024} KiB");
             }
+            output.WriteLine($"{consumers} hold frame work: {Stats(frameWork)}");
             output.WriteLine($"{consumers} in-city index units: {Stats(indexUnits)}; engine units (256): {Stats(surveyUnits)}");
             // Idle: no open order.
             var idle = new List<double>();
