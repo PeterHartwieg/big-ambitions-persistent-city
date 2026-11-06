@@ -107,7 +107,7 @@ The [30 October Windows report](https://github.com/PeterHartwieg/big-ambitions-p
 
 The campaign used 957 residents, a stationary camera, 1920x1080 Low graphics, one-third calendar pace, a target of 90 and unsaturated caps of 48 pedestrians/24 cars. Endpoint observations showed zero to three cars; these were sparse observations, not maxima. Allocation attribution was unavailable, some fixed-step hooks were outside the primary mod-work union, and the report expressly does not establish presented-frame FPS or a matched whole-frame improvement. Its source predates the audited head.
 
-The current [roadmap gate](../roadmap.md#performance-gate-peter-2026-10-30) focuses on mod-work p95 below five milliseconds and flags spikes of thirty milliseconds or more. That cannot independently establish a total frame within the 16.67 ms budget for 60 FPS. It also permits individual mod calls that exceed that entire frame budget.
+The current [roadmap gate](../roadmap.md#performance-gate) focuses on mod-work p95 below five milliseconds and flags spikes of thirty milliseconds or more. That cannot independently establish a total frame within the 16.67 ms budget for 60 FPS. It also permits individual mod calls that exceed that entire frame budget.
 
 Replace the headline gate with a combined contract covering presented-frame pacing, complete mod cost, native/GPU pressure, simulation lag and recovery. Declare supported hardware, settings, logical population, business load, actual body counts and calendar pace. Test commute, meal and accounting peaks, moving cameras, dense streets and ordinary management UI. Use a matched dependency-only reference and distinguish component CPU savings from whole-frame improvement.
 

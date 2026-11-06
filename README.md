@@ -38,31 +38,31 @@ The build references game assemblies in place; none enters the package. Output i
 
 ## Status
 
-Status words: planned, implemented, partial, stopped, verified by rig. Nothing is verified by rig yet; the in-game checks wait for the next batched rig run. Per-slice evidence is in [CHECKS.md](CHECKS.md).
+Status words: planned, implemented, partial, stopped, verified by rig. Rig is "pending" until the next batched rig run verifies a slice; nothing is verified by rig yet. Per-slice evidence is in [CHECKS.md](CHECKS.md).
 
-| Slice | Implemented | Verified by rig |
+| Slice | Status | Rig |
 | --- | --- | --- |
-| A1–A3, A5 inspector, traits, weighted choice, integrated acceptance | implemented | no |
-| B0, B0b, B1, B2 memory, loyalty, regulars | implemented | no |
-| C1, C2a, C2b campaign reader and awareness | implemented | no |
-| C3 agency payment discovery | implemented (no safe fee path found) | no |
-| C4 market research | implemented, inactive | no |
-| D1, D2, D3a, D4 rival catalogue, choice, outflow, memory | implemented | no |
-| E1 weather, E2a–E2c street life and interior guard | implemented | no |
-| E3 per-product feasibility (donut, cupcake, salad, ice cream, French fries, pizza, six more) | stopped | no |
-| E4 wider-menu envelope | implemented | no |
-| E5a, E5c, E5d, E5e catalogue reader, metadata, names, metadata API | implemented | no |
-| E5b complete-menu support | partial | no |
-| E6 carts and food trucks | planned | no |
-| Track F: F0 interior view experiment | implemented, default off | no |
-| Track F: F1 shop view, F1b street proxy | stopped | no |
-| Audit F1 accounting backpressure, F3 bounded bulk work | implemented | no |
-| Audit F5a census, F5b identity core, F5f journey index | implemented | no |
-| Audit F5c-lite to F5i population | planned | no |
-| Audit F6a harness, F6b rival limits, F6c feedback v1 | implemented | no |
-| Audit F6d to F6h economy | planned | no |
-| Audit F7a save cost, F7b save epoch, F7f reader corpus | implemented | no |
-| Audit F7p, F7c to F7e save snapshots | planned | no |
+| A1–A3, A5 inspector, traits, weighted choice, integrated acceptance | implemented | pending |
+| B0, B0b, B1, B2 memory, loyalty, regulars | implemented | pending |
+| C1, C2a, C2b campaign reader and awareness | implemented | pending |
+| C3 agency payment discovery (no safe fee path found) | implemented | pending |
+| C4 market research (inactive) | implemented | pending |
+| D1, D2, D3a, D4 rival catalogue, choice, outflow, memory | implemented | pending |
+| E1 weather, E2a–E2c street life and interior guard | implemented | pending |
+| E3 per-product feasibility (donut, cupcake, salad, ice cream, French fries, pizza, six more) | stopped | pending |
+| E4 wider-menu envelope | implemented | pending |
+| E5a, E5c, E5d, E5e catalogue reader, metadata, names, metadata API | implemented | pending |
+| E5b complete-menu support | partial | pending |
+| E6 carts and food trucks | planned | pending |
+| Track F: F0 interior view experiment (default off) | implemented | pending |
+| Track F: F1 shop view, F1b street proxy | stopped | pending |
+| Audit F1 accounting backpressure, F3 bounded bulk work | implemented | pending |
+| Audit F5a census, F5b identity core, F5f journey index | implemented | pending |
+| Audit F5c-lite to F5i population | planned | pending |
+| Audit F6a harness, F6b rival limits, F6c feedback v1 | implemented | pending |
+| Audit F6d to F6h economy | planned | pending |
+| Audit F7a save cost, F7b save epoch, F7f reader corpus | implemented | pending |
+| Audit F7p, F7c to F7e save snapshots | planned | pending |
 
 ## Links
 
