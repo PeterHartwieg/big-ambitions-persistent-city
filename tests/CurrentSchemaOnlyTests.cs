@@ -8,7 +8,7 @@ namespace PersistentCity.Tests;
 
 public sealed class CurrentSchemaOnlyTests
 {
-    private static CityState City() => Population.Create(
+    internal static CityState City() => Population.Create(
         new[] { new CitizenIdentity { Id = "r", Name = "Resident", Age = 35, Persona = Persona.Commuter } },
         new[] { new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 2 } },
         "current-development", "0.41.1", 42, 0);
