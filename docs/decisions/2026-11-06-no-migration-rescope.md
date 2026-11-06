@@ -10,7 +10,7 @@ All other scope items, tests, perf measurements and dependencies stay as written
 
 ### F5 ([plan](../plans/f5-population.md#4-slice-breakdown))
 
-- **F5c** (pointer only). The row now starts with a note that it was re-issued as F5c-lite, schema 26, in PR #127. The original text stays for reference.
+- **F5c** (pointer only). The row's scope and test cells are now a pointer to F5c-lite, schema 26, PR #127, and this record. The original migration scope is in the plan's Git history.
 - **F5d.** Removed: the `IndependentPolicyStartsDay` switch-over, persons switching at their first safe event, the legacy excursion path, the "after the switch" anchor rule, switch-day employment seating, switch-timing tests, conservation and income continuity across the switch day. Replaced by: a schema bump; fresh cities run independent schedules from their first day; older-schema refusal; a golden hash; no anchor read at all; conservation from city creation; income continuity across reload; save/reload with an in-flight excursion, uncertain receipt, rival settlement and held decision; a fresh-seed resident-trace comparison for the arrival guards; employment seating at city creation. Added perf: fresh-city bytes, records and read/write latency against section 5.
 - **F5e.** Removed: nothing migration-specific was listed, but the row relied on F5d's switch-day seating for existing cities. Replaced by: a schema bump, because a city seated under `BusinessAllocation = 16` can hold more workers than the new capacity; fresh cities are seated by the new rule at creation; older-schema refusal; a golden hash; the loss/find-rate check runs as a fresh-seed comparison against the base. Dependency added: after F5d's schema merges, because schema slices are serial.
 - **F5g.** Removed: "an over-target migrated city". Replaced by: a fresh city seeded above target creates no commuters and retires none; current-writer golden hash unchanged. Fill starting at the next day boundary is its ordinary behaviour, so F5g does not bump.
@@ -62,7 +62,9 @@ These do not bump: F5f, F5g, F5h, F5i, F6a, F6b (unless its conditional applies)
 
 ## Checks for this re-scope
 
-Status: implemented (docs only); not verified by rig. The task's file rule limits this slice to `docs/plans/` and `docs/decisions/`. The checks and perf notes are therefore here, not in `docs/checks/` or `docs/perf/`.
+Status: implemented (offline); not verified by rig.
+
+This is a docs-only slice. The task's file rule limits this slice to `docs/plans/` and `docs/decisions/`. The checks and perf notes are therefore here, not in `docs/checks/` or `docs/perf/`.
 
 - Evidence: `git diff --check`, the changed-paths check (only `docs/plans/` and `docs/decisions/`) and `python tools/docs-links/check.py` pass on this branch.
 - Perf: not applicable. No code changed, so there is nothing to measure.
