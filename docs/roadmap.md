@@ -115,7 +115,7 @@ Record every taken win with before/after numbers.
 
 - City-audit F7f — [One over-cap payload per frozen reader instead of per schema](perf/f7f.md): corpus over-cap test 3,294.7 -> 871.4 ms, corpus suite 6,188.0 -> 3,162.9 ms (sum of per-method medians, 3 runs); test time only, zero runtime change and no mod-work effect; also records lines/test time per frozen reader.
 
-- City-audit F7p — [Compact-format candidate matrix](perf/f7p.md): no win taken (tools only, no product code or mod work touched); candidate C 2,333,388 -> 694,001 chars at representative 957x2 and 162,346,836 -> 33,972,886 at 50000x2, prototype encode p50/p95 24.7/35.5 and 1,373.6/1,537.5 ms; format comparison, not a shipped before/after.
+- City-audit F7p — [Compact-format candidate matrix](perf/f7p.md): no win taken (tools only, no product code or mod work touched); candidate C 2,333,388 -> 694,001 chars at representative 957x2 and 162,346,836 -> 33,972,886 at 50000x2, composed C save pause p50 45.9 and 1,796.9 ms (targets 40/600 ms not met); format comparison, not a shipped before/after.
 
 - City-audit F5f — [Active-journey candidate index for physical selection](perf/f5f.md): selection p95 against the unchanged pre-F5f loop at 1,914/10,000/50,000 persons with 100 active journeys 0.0360/0.2623/1.0858 -> 0.0133/0.0126/0.0123 ms, with 1,000 active 0.2801/0.4230/1.9762 -> 0.1823/0.2289/0.1927 ms; 0 B per call from the selection itself; offline harness on native doubles (tiered compilation off), not in-game mod-work.
 

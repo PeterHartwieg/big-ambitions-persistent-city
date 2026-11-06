@@ -20,13 +20,19 @@ Every command ran in the foreground after the shared other-dotnet wait. No backg
 
 New unit cases: Newtonsoft-identical escaping over every UTF-16 code unit plus a surrogate pair; every candidate round-trips representative 957×2 exactly (tree equality, writer-25 bytes, re-encode identity, strict reader accepts the rewrite); edge shapes (number spellings `-0`, `-0.0`, `1E-05`, beyond-`long` integers, nulls mixed with values, varying shapes and tuple lengths, control and non-BMP strings, shared journeys and vehicle routes as one reference, chained road ranges); canonical road-tag splitting only; varint round-trip over the whole `long` range with overlong, surplus and bad-symbol refusal; five tampered-payload refusals (format, version, unknown field, shape index, column tag); truncated and foreign payloads refused.
 
+**Review round 1 (6 November 2026).** Fixes for reviewer findings:
+- The matrix now also measures capture (a detached-copy proxy), synchronize and validate (F7a recorder), materialization (upper bound: strict writer-25 read), activation validate and simulator construction. Each phase is measured once per fixture in candidate A's process and composed into pause and load per candidate.
+- The full 52-row matrix was rerun at `6512136`. It has zero differences, and bytes and hashes are identical to the first run.
+- `measure.py` rewrites the matrix file on a full run and appends only for an explicit fixture list.
+- The decision record now states that no candidate met every target, and gives the same-harness C/A encode ratio.
+
 Following the 6 November owner rule, the other `tools/*-regression` suites, feasibility source checks and validation matrices were not run; they are not required for this slice.
 
 ## Result summary (synthetic .NET 10)
 
 - **Bytes:** C is 29.74 % of writer 25 at representative 957×2 (694,001 chars; target ≤ 35 % = 816,686) and 20.93 % at stress 50000×2 (33,972,886 chars; target ≤ 64 Mi). Both targets are met.
-- **Pause and allocation:** C encode p50/p95 is 24.7/35.5 ms at representative 957×2 and 1,373.6/1,537.5 ms at 50000×2. Allocation is 7.8–11.5 × payload UTF-16 bytes. The prototype does not show the ≤ 40 ms / ≤ 600 ms / ≤ 2.5 × targets; F7d carries them as ceiling tests (see the decision record).
-- **Flags:** 647 of 728 encode/decode samples are ≥ 30 ms. These are offline save/load samples, not mod-work. F7p adds no runtime code and no per-frame work, so mod-work p95 < 5 ms and whole-frame metrics are not affected and stay tracked separately. The four parked hotspots stay parked.
+- **Pause, allocation and load (review round 1 matrix, with capture/validate/activation phases):** the composed C pause is 45.9 ms p50 at representative 957×2 (target ≤ 40 ms p95) and 1,796.9 ms at 50000×2 (target ≤ 600 ms). Allocation is 7.8–11.5 × payload UTF-16 bytes (target ≤ 2.5 ×). Stress load is 3,514 ms even without the upper-bound materialization (target 2,500 ms). Typical load is 186.1 ms p50 (target 400 ms). In the same harness C encodes at 1.19–7.09 × A. **Under section 3.6's pass criteria no candidate met every target.** C is selected on bytes and identity, conditional on F7d meeting the ceilings (see the decision record).
+- **Flags:** 648 of 728 encode/decode samples are ≥ 30 ms (format-independent phase flags are in the perf record). These are offline save/load samples, not mod-work. F7p adds no runtime code and no per-frame work, so mod-work p95 < 5 ms and whole-frame metrics are not affected and stay tracked separately. The four parked hotspots stay parked.
 - **Decision:** C for F7d. D is not selected.
 
 ## In-game checks for the next batched rig
