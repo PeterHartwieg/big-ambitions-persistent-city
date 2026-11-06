@@ -1,5 +1,17 @@
 # E5c product metadata defaults and config
 
+## README entry (moved 6 Nov 2026)
+
+E5c implements the pure product metadata resolver (Food by default, seeded per-resident taste) and bounded optional config table; writer 24 and native product support are unchanged. [Offline evidence and next batched rig checks](e5c-neutral-metadata.md).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+E5c pure product metadata defaults/config is implemented offline; no native product-support or writer change. [Checks and next batched rig handoff](e5c-neutral-metadata.md).
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- E5c - 2 November 2026, offline: Food default/seeded resident tastes, 2,687 tests; 4/8 weights p95 0.003344/0.004805 ms, 0 B; max-name fresh config p95 1.5955 ms; first-use 59.0058 ms (earlier 57.6619 ms) startup intervals flagged. [Full resolver/config numbers, validation and next batched rig](e5c-neutral-metadata.md).
+
 ## 2 November 2026 — offline implementation
 
 Base `034bb76`, branch `codex/pc-e5c-neutral-metadata`. Pure E5c implements detached metadata and optional config only. Writer **24** and every historical product/save contract remain unchanged. No game, rig, lease, test profile, ModsLocal, bridge directory, Street Food repository or Steam write was performed. Steam assemblies are read-only build inputs. No product has new ownership or checkout support from this slice; no in-game product proof is claimed.

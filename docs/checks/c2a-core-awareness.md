@@ -1,5 +1,9 @@
 # C2a core bounded awareness
 
+## Roadmap entry (moved 6 Nov 2026)
+
+C. Marketing awareness and targeting, plus the market research product. **C2a implemented offline on B0b:** bounded source/index interface, B1 memory projection/campaign-unknown providers, local/routine and positive daily distant discovery, common eight-slot shortlist, additive schema 19. B1 memory is wired within the existing four source slots and bounded rank; r1 bounds rebuild continuations and restores at-stop observation/diagnostics and strict held-image validation. Combined 6 Nov rig proof pending. [Contract](../archive/population-schema19.md).
+
 ## Second base sync ? 1 November 2026 (offline only)
 
 `pc-c2a-sync2-base` merges approved C2a `0aa41ff` with development head `193c81d`

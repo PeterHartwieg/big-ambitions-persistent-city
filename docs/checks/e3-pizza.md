@@ -1,5 +1,17 @@
 # E3 pizza checks
 
+## README entry (moved 6 Nov 2026)
+
+E3 pizza: [feasibility STOP record](../archive/e3-pizza.md), conditional shared probe only; shipped holder unestablished, no product enabled or gameplay/save change. [Offline checks and 6 Nov handoff](e3-pizza.md).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+E3 pizza status (offline): [STOP record](../archive/e3-pizza.md); pinned conditional shared probe, shipped holder unestablished, no menu/gameplay/save change. [Validation and 6 Nov handoff](e3-pizza.md).
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- E3 pizza — 1 November 2026 (offline only), holder STOP; 2,000-entry warm p95 donut/cupcake/salad/pizza **0.1589/0.1338/0.1476/0.1122 ms**, **49,104 B/read** (2 entries **200 B**); cold **1,064 B/read**. [Full cold/warm timings, proof and numbered 6 Nov handoff](e3-pizza.md).
+
 ## 1 November 2026 - offline only
 
 **STOP at the unestablished shipped holder contract.** [Inspected members, confidence and limitations](../archive/e3-pizza.md). Based independently on development `5877453`; runtime/cases `acf8081`, audit-tool composition `6bd6fac`. Finished pizza on a native showcase remains a conditional hypothesis. No live product, menu/enrollment expansion, checkout seam, product code, schema, saved field or gameplay change. No sibling feature dependency.

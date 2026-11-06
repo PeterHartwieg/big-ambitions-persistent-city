@@ -1,5 +1,9 @@
 # D3a outflow history/line: 1 November 2026, offline only
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- D3a — [Cache immutable free projections/text](d3a-outflow-line.md): unchanged open request 14,336 → 0 B; offline p95 0.0198 → 0.0001 ms (component only).
+
 Implementation `7cd4809`, conservative boundary-day follow-up `88551e8`; Windows shared host, .NET 10 Release. Reproduce with
 `tools/outflow-line-regression` (included in `python tools/run-d3a-checks.py`).
 No game, rig, Unity execution, native mod-work or whole-frame sample is claimed.

@@ -1,5 +1,17 @@
 # C2b: observed campaigns and soft distance preference
 
+## README entry (moved 6 Nov 2026)
+
+C2b has offline campaign evidence/source plumbing and schema 22; active campaigns now raise choice preference and soften distance for every resident under Peter's 1 Nov decision; in-game checks are batched into the combined locked rig under merge rule v2; no rig proof is claimed. [Checks and 6 Nov rig list](c2b-campaign-awareness.md).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+C2b (1 Nov, offline): hourly observed campaign images, bounded source/index and schema 22 implemented; Peter's 1 Nov rule now applies active preference/softer distance for all residents; native checks batched into the combined locked rig under merge rule v2, no rig proof claimed. [Checks](c2b-campaign-awareness.md).
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- C2b - 1 November 2026 (offline): schema 22; hourly/query p95 at 1,024 images 2.6336/0.0065 ms, query/absent/disabled 0 B; owner decision 1 active for all residents; pre-E1 measurements; in-game checks batched under merge rule v2, no rig proof claimed. [Checks and rig list](c2b-campaign-awareness.md).
+
 Measurements and run counts below belong to the named historical C2b heads (latest `8378efa`); current composed acceptance is in [D2 checks](d2-rival-outflow.md). Schema-chain prose reflects the current supported composition.
 
 ## Round-1 review fixes: latest E4 base - 1 November 2026

@@ -1,5 +1,13 @@
 # E2c: Third-party interior guard and base sync evidence
 
+## Roadmap entry (moved 6 Nov 2026)
+
+Track F (Peter, 31 October): independently authored city view from interiors, F0 spike → F1 shop view/customer entry → F2 upper-floor/penthouse view → F3 polish. [F0 findings and plan](../plans/track-f-interior-view.md): default-off runtime eligibility/entrance-anchor experiment; **city drawing is a no-op pending F1**, with no save-format change or A-stack dependency. E2c (31 Oct, offline) implements only the once-per-load third-party detection guard, forced-off F0 state and read-only bridge verdict; native proof remains pending. [E2c evidence](e2c-interior-guard.md#e2c-third-party-interior-guard---31-october-2026-offline-only). The same mod-work/whole-frame evidence rules apply to F.
+
+## Plan row status (moved 6 Nov 2026)
+
+Slice-table row in [track-f-interior-view.md](../plans/track-f-interior-view.md): | **E2c (separate)** | Implemented 31 Oct (offline): once-per-city-load assembly/optional Harmony-owner detection forces F0 off on match/error; flat auto/off control and cached read-only bridge verdict. Detection guard only; no foreign implementation dependency/research, interop, new patch or save change. [Evidence and pending 6 Nov checks](e2c-interior-guard.md#e2c-third-party-interior-guard---31-october-2026-offline-only). |
+
 ## E2c second base sync after A3/B0/C3 and the docs split - 1 November 2026 (offline only)
 
 Merge development `8c24f24` into E2c `2af082f`, retaining merge base `8b05227` and both parents. Resolve four documentation conflicts with both sides' complete intent: retain every incoming slice and its sync fixes, move E2c's two original checks sections and two README notices into this owning file, and move its full performance row into [E2c perf](../perf/e2c-interior-guard.md). CHECKS and the roadmap receive one index line each; README matches incoming exactly. C3's findings and E2c's independent guard status both remain in the B-E plan. Relative evidence links are repaired. [Prepared PR description and per-file resolutions](../reviews/2026-11-01-e2c-sync2-base-pr-description.md).

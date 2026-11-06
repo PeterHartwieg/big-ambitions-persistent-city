@@ -1,5 +1,9 @@
 # E3 salad checks
 
+## Roadmap entry (moved 6 Nov 2026)
+
+E3 salad status, 1 November (offline): [salad stop record](../archive/e3-salad.md) adds a pinned conditional probe on the cupcake/donut stack. Shipped holder unestablished; no generic holder extension, menu, gameplay or saved change. Existing read branches retained; no additional cheap safe measured perf win identified. Three-candidate offline timing and the combined 6 Nov handoff are in [CHECKS](e3-salad.md#e3-salad-feasibility---1-november-2026-offline-only).
+
 ## Review round 1 - C4 base sync (offline only)
 
 **Sol-r1-1 / Opus-r1-1:** development moved after the original sync to **`1f8f4b4` (C4 #30)**. Third two-parent merge **`0a0aca7`** retains both C4/salad index and performance links and C4's updated C-track paragraph alongside salad's stop status. Both parents' changes against `692b8b5` were inspected; only `CHECKS.md` and `docs/roadmap.md` conflicted. No reader, gameplay, persistence, schema or test integration change was needed. [Per-conflict resolutions](../reviews/2026-11-01-e3-salad-sync-base-pr-description.md#review-round-1-latest-c4-base).

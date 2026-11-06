@@ -1,5 +1,17 @@
 # F1: Shop-view drawing stop and rig handoff
 
+## README entry (moved 6 Nov 2026)
+
+F1 shop view stopped at the drawing decision: [clean-room NO-GO and smaller geometry probe](../archive/f1-shop-view-decision.md). F0 drawing remains a no-op; runtime and save behavior are unchanged.
+
+## Roadmap entry (moved 6 Nov 2026)
+
+F1 status, 1 November (offline): **NO-GO at drawing step 1**; no proven detached-space projection/culling approach, no renderer or customer hand-off added. [Decision and smaller read-only probe](../archive/f1-shop-view-decision.md); [offline checks and 6 Nov handoff](f1-shop-view.md). F0/E2c and all runtime/save behavior remain unchanged.
+
+## Plan row status (moved 6 Nov 2026)
+
+Slice-table row in [track-f-interior-view.md](../plans/track-f-interior-view.md): | **F1** | **NO-GO at drawing step 1, 1 November (offline).** No safe complete approach proven; no renderer/hand-off implemented. Native layout relocation rejected; investigate a render-only street proxy with a smaller read-only geometry/ownership probe. [Decision/evidence](../archive/f1-shop-view-decision.md). Ground-floor view, single body/purchase and restore acceptance remain unfulfilled. |
+
 ## F1 review r1 roadmap status - 1 November 2026 (offline only)
 
 **Opus-r1-1:** moved the unchanged F1 status paragraph directly after Track F and before the Performance gate heading. An exact-text comparison verifies this is the only roadmap change; gate wording, thresholds and the perf log remain intact. No production, configuration, test, tool or prepared-description changes.

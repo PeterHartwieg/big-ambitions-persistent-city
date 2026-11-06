@@ -1,5 +1,9 @@
 # F1b diagnostic allocation win — 1 November 2026 (offline)
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- F1b — [Reuse the one-shot inventory's shared-material buffer](f1b-street-proxy.md): 129-renderer offline mean allocation 80,838.96 →69,547.73 B/call; no frame work added.
+
 Reuse one command-local `List<Material>` for `Renderer.GetSharedMaterials` across the inventory. Every renderer still gets its own immutable names/shader arrays; no native material is instantiated or changed. The buffer dies when the command returns. No cache, frame caller or parked-hotspot rewrite is introduced.
 
 Reproduce with `python tools/street-proxy-regression/compare_buffers.py`. It generates an ignored baseline project using the actual adapter and identical doubles/fixtures; the only source change creates a fresh shared-material list for each renderer. The generated baseline removes the unused caller buffer, so its allocation is not charged twice. It runs the required other-dotnet wait before each synchronous foreground invocation, without timeouts. Both variants pass 2,028 actual-source assertions. Raw output: ignored `build/f1b/buffer-comparison/{before,after}.txt`.

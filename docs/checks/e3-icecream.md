@@ -1,5 +1,17 @@
 # E3 ice cream checks
 
+## README entry (moved 6 Nov 2026)
+
+E3 ice cream: [feasibility STOP](../archive/e3-icecream.md), shipped holder unestablished; conditional read-only probe only ([offline checks](e3-icecream.md)).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+E3 ice cream status, 1 November (offline): [independent feasibility STOP](../archive/e3-icecream.md); shipped holder/resource contract unestablished, shared read branches unchanged, no product/menu/save/gameplay change. [Offline timings and 6 Nov handoff](e3-icecream.md).
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- E3 ice cream - 1 November 2026, offline STOP; D/C/S/I warm 2,000-entry p95 0.1610 / 0.1474 / 0.1605 / 0.1779 ms, 49,104 B/call; cold/small timings and 6 Nov handoff: [checks](e3-icecream.md).
+
 ## 1 November 2026 - offline only
 
 [Native feasibility STOP](../archive/e3-icecream.md): ice cream 256, counter 255 and mixture 381 are independent identifiers. The shipped holder/resource contract remains Unknown. The conditional pinned facade adds one descriptor line to the unchanged shared reader; candidate workstations and converted/shared inputs refuse. No menu/enrollment, supported-product set, schema, saved field or gameplay behavior changes. No game launch, rig/test-profile/ModsLocal/bridge-directory/lease access, Steam writes or WSL use.

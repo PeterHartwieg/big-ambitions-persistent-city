@@ -1,5 +1,17 @@
 # E4 wider menu checks
 
+## README entry (moved 6 Nov 2026)
+
+E4 implements the [schema 23 wider-menu envelope](../archive/population-schema23.md) with offline coverage; the effective live menu limit stays four and no additional native product is enabled. [Evidence and pending 6 Nov checks](e4-wider-menu.md).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+E4 status, 1 November (offline): schema 23 menu/product/history envelope implemented; effective live limit four, no extra product enabled. [Validation and numbered 6 Nov handoff](e4-wider-menu.md).
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- E4 — Schema 23 envelope (1 Nov, offline; original pre-E1 measurements): 4/8 choice p95 0.0134/0.0257 ms; supply 1,960 -> 1,552 B; eight-product save 10,135,833 B; 6 Nov checklist: [checks](e4-wider-menu.md).
+
 ## 1 November 2026 — offline implementation
 
 Code commits `60b0715` and `6d3068a`; base `51ce709`, branch `codex/pc-e4-wider-menu`. Implements only the [schema 23 envelope](../archive/population-schema23.md); three native products and effective live maximum four remain. Donut/cupcake/salad are reserved identifiers with pending E3 natural checkout/settlement proof. No game, rig, lease, ModsLocal, bridge profile, WSL or Steam writes in this run. Steam assemblies are read-only build inputs.

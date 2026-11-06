@@ -1,5 +1,9 @@
 # City audit F3 performance — 3 November 2026, offline
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- City-audit F3 — [Reusable posting heap, pre-sized campaign capture and bounded work](pc-f3-bounded-bulk-work.md): 48 B/posting -> no recurring node allocation; matched complete-day work 3.2406/15.7399/87.1907 -> 0.9100/5.1148/22.4029 ms at 1,914/10,000/100,000 consumers; 64-scope capture 141,472 -> 138,392 B/boundary. Exact replay hashes match; 49 stress advancement intervals >=30 ms remain flagged. R1 restores 1,024-candidate campaign coverage with resumable publication and time-aware route admission (16-path safety ceiling); native-double 957-plan burst drains at 30/60 FPS, native capture p95 6.1153 ms remains above gate. Offline only; [status and five automated next-batch rig checks](../checks/pc-f3-bounded-bulk-work.md).
+
 Refs #90; **Review-round-1 campaign/admission changes supersede the initial limits and corresponding native-double figures below; posting measurements remain unchanged.** [correctness, scope limits and numbered batched-rig checks](../checks/pc-f3-bounded-bulk-work.md). Baseline **bd99eb3**, writer **25**, compared with this slice's source. No native performance proof. The audit report/fixture were read from PR #97 without adding them to this branch.
 
 ## Method and retained evidence

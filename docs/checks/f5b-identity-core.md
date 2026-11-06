@@ -1,5 +1,21 @@
 # City audit F5b — identity and ownership core, 4 November 2026, offline
 
+## README entry (moved 6 Nov 2026)
+
+City-audit F5b implements the inactive identity and ownership core: person kinds, visitor stays, employments, derived households and visitor identities, and an ownership validator, not yet wired to the simulator or saves (writer 25 unchanged). [Offline checks and automated batched-rig checks](f5b-identity-core.md).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+City-audit F5b (4 November, offline) implements the inactive [identity and ownership core](../plans/f5-population.md): person/visitor/employment types, derived household and visitor identity (IdentityPolicy v1) and the ownership validator, not wired; writer 25 unchanged. [Checks and batched-rig handoff](f5b-identity-core.md).
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- City-audit F5b — 4 November 2026, offline, inactive: pure Core person kind, visitor stay, employment, derived household ID, IdentityPolicy v1 and the ownership validator (rules 1-5, duplication guards, player-owned workplaces refused); not wired; writer 25 unchanged. 78 new unit cases; validator 0 B/call warm, p95 0.7140/5.1875/56.3153 ms at 1,914/10,000/100,000 persons (100,000 whole-graph pass >=30 ms flagged, no frame work); derived identity draw 53-64 ns / 0 B. [Checks and four In-game checks for the next batched rig](f5b-identity-core.md), [measurements](../perf/f5b-identity-core.md).
+
+## Plan row status (moved 6 Nov 2026)
+
+F5b row in [f5-population.md](../plans/f5-population.md): *Status: implemented offline, 4 November 2026, not wired ([checks](f5b-identity-core.md)).*
+
 Refs [#92](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/92). Base `dc59049` on `codex/persistent-city` (writer **25**; F1 #99, F3 #98 and the F5/F6/F7 plans merged). Scope: the F5b row of [the F5 plan](../plans/f5-population.md) section 4, under section 3's *Identity and ownership*, *Guards against duplication*, *Conservation and determinism* and *Contracts for F6 and F7*. Persistent City is not live or released. This slice is **implemented** (inactive, offline); none of it is verified by rig. Offline success is not native proof.
 
 ## Rechecked base citations

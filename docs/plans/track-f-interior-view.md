@@ -89,11 +89,11 @@ World-space state a later layout move would invalidate (F0 moves nothing):
 | Slice | Scope / acceptance boundary |
 |---|---|
 | **F0 (this branch)** | Default-off settings, read-only eligibility/anchor discovery, guarded physical retention, restoration and offline proof; drawing no-op explicitly accepted by the task's fallback. No schema change. Final-head rig proof still required before merge. |
-| **F1** | **NO-GO at drawing step 1, 1 November (offline).** No safe complete approach proven; no renderer/hand-off implemented. Native layout relocation rejected; investigate a render-only street proxy with a smaller read-only geometry/ownership probe. [Decision/evidence](../archive/f1-shop-view-decision.md). Ground-floor view, single body/purchase and restore acceptance remain unfulfilled. |
-| **F1b** | **Renderer NO-GO, diagnostics implemented offline (1 Nov).** Explicit door-id/rigid-transform residual and capped metadata commands; C8 alone cannot validate mapping/independent apertures or static coverage. No renderer or customer hand-off; [decision and remaining evidence](../archive/f1b-street-proxy.md). |
+| **F1** | Ground-floor shop view, a single visible body and purchase, and full restoration. Status is in [F1 checks](../checks/f1-shop-view.md). |
+| **F1b** | Render-only street proxy investigation with read-only door/transform and metadata diagnostics. Status is in [F1b checks](../checks/f1b-street-proxy.md). |
 | **F2** | Upper floors/penthouse/elevator view, actual floor/height/projection contract and transitions. No F0 address/height guess becomes an upper-floor authorization; height LOD remains absent here. |
 | **F3** | Lighting/window/depth/culling polish, bounded refresh/invalidation and full restoration/performance in varied scenes. |
-| **E2c (separate)** | Implemented 31 Oct (offline): once-per-city-load assembly/optional Harmony-owner detection forces F0 off on match/error; flat auto/off control and cached read-only bridge verdict. Detection guard only; no foreign implementation dependency/research, interop, new patch or save change. [Evidence and pending 6 Nov checks](../checks/e2c-interior-guard.md#e2c-third-party-interior-guard---31-october-2026-offline-only). |
+| **E2c (separate)** | Once-per-city-load third-party interior detection that forces F0 off. Status is in [E2c checks](../checks/e2c-interior-guard.md). |
 
 Go/no-go: effective radius **30–120 m**, default **60 m**; default caps **24/12** within global **48/24**; height difference **≤3 m**; geometry cadence **≥2 s**; all failed/uncertain reads close. Native combined **mod-work p95 <5 ms**, flag **every spike ≥30 ms**. Whole-frame p50/p95/max is separate. A future working shop view at 60–80 m has a planning estimate of **+2–4 ms whole-frame cost over vanilla interior**, not a measurement or F0 renderer result. Three-shop matched rig windows must establish the actual cost.
 

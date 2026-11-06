@@ -1,5 +1,13 @@
 # A5: integrated Step A acceptance
 
+## README entry (moved 6 Nov 2026)
+
+A5 integrates Step A's offline acceptance on the schema-20 development line (historical measurements precede E1); [closure, measurements and the 6 Nov in-game checklist](a5-integrated-acceptance.md) keep offline results separate from pending native interaction and final-head proof.
+
+## Roadmap entry (moved 6 Nov 2026)
+
+A5 (1 Nov): integrated offline gate complete on the original pre-E1 A/B/C line (2,351 tests /50 commands); [schema-20 base-sync validation, review closure, invariant gate, historical performance report and 6 Nov handoff](a5-integrated-acceptance.md). Native interaction and final-head matched proof remain pending.
+
 ## 1 November 2026 — offline acceptance on the integration line
 
 Historical baseline `51ce709` on `codex/pc-a5-integrated-acceptance`: A1–A3, B0/B0b/B1/B2, C1/C2a/C3/C4, D1, E2a–E2c, E3 feasibility and F0. That original run used population schema **19**. That original run did not import E1/PR #37, F1, D2, C2b or E4; the schema-20 sync below now includes E1 and F1. This session performs no game, rig, bridge, lease, profile, ModsLocal or Steam write operation.

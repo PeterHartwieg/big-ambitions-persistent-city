@@ -1,5 +1,21 @@
 # F1b street proxy investigation — 1 November 2026 (offline only)
 
+## README entry (moved 6 Nov 2026)
+
+F1b adds explicit read-only door/transform and capped street-renderer metadata commands. [Evidence and offline checks](f1b-street-proxy.md): renderer NO-GO pending semantic door mapping, independent aperture alignment and bounded native coverage; no renderer or schema change.
+
+## Roadmap entry (moved 6 Nov 2026)
+
+F1b status (offline): renderer **NO-GO**; explicit read-only door/transform and capped street metadata diagnostics implement the smaller investigation. [Decision, refresh/invalidation limits](../archive/f1b-street-proxy.md) and [offline evidence/6 Nov checks](f1b-street-proxy.md). No frame participant, renderer, customer path or schema change.
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- F1b — 1 November 2026, offline: renderer NO-GO; one-shot doors/inventory p95 0.0043/0.2010 ms (native doubles); disabled 0 B, no frame calls. [Dated checks and In-game checks for 6 Nov rig](f1b-street-proxy.md).
+
+## Plan row status (moved 6 Nov 2026)
+
+Slice-table row in [track-f-interior-view.md](../plans/track-f-interior-view.md): | **F1b** | **Renderer NO-GO, diagnostics implemented offline (1 Nov).** Explicit door-id/rigid-transform residual and capped metadata commands; C8 alone cannot validate mapping/independent apertures or static coverage. No renderer or customer hand-off; [decision and remaining evidence](../archive/f1b-street-proxy.md). |
+
 **Renderer NO-GO; read-only diagnostics implemented.** C8 at rig #2's pinned `dbddada` proves a small F0-eligible own shop at 30 3rd Street, size A/version 1, one exterior marker and one non-elevator exit, six doorway captures and detached geometry. It does not record semantic `doorId`/`exitToZoneId` or independent paired edges. The report's changing exit `id` is not identified as a semantic correspondence id. More than one aperture/edge has not been tested. Medium/large/elevator fixtures and bounded native renderer coverage remain missing. The report is dated 2 November but records its actual run on 1 November. [Detailed analysis, independently inspected vanilla seams, command contract and remaining unknowns](../archive/f1b-street-proxy.md).
 
 No proxy, render resource, new setting, scene clone, Harmony patch, native layout/transform/renderer/enabled/material write, customer/economic write or schema change. F0, E2c, `NativeCityClock`, customer spawning/checkout and the four parked hotspots retain their source. `PhysicalPopulation` only gains the `partial` keyword to house an explicit read-only body snapshot in its own file. Our metadata commands never call its simulation/movement/ownership-validation methods.

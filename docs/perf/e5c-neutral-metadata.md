@@ -1,5 +1,9 @@
 # E5c product metadata defaults - 2 November 2026, offline only
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- E5c - [Load-time duplicate-field mask and metadata measurements](e5c-neutral-metadata.md): 256-entry parse 289,488 -> 195,280 B; resolver and 4/8-offer hot choice work 0 B, no frame work.
+
 Reproduce with `python tools/food-metadata-regression/prepare.py`, the prescribed other-dotnet guard, then Release `tools/food-metadata-regression/FoodMetadataRegression.csproj`. Canonical sample: the successful required-repeat `food-metadata` arm in `build/d4-validation/23.txt`, with the final large-integer budget fix. The earlier D3a sample is retained in the same raw JSON for comparison, including its flagged startup interval. [Raw measurements](../checks/e5c-neutral-metadata-measurements.json) and the [validation manifest](../checks/e5c-neutral-metadata-results.json) retain values/log hashes. No native evidence is claimed.
 
 The choice comparator is frozen base `034bb76`. The config before arm is a mechanical, policy-matched reconstruction using the original per-entry duplicate-field HashSet instead of the current five-bit mask; both arms use the same current byte budget, Food default and optional seeded-taste metadata. This isolates the allocation change rather than comparing different policies. A fresh reader/table is created for every parse. 0/1/256 short-name entries and 256 maximum-length escaped names are measured; the last uses two fields per entry, the ordinary full table five.

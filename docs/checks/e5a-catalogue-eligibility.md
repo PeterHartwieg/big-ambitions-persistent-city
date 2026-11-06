@@ -1,5 +1,17 @@
 # E5a loaded catalogue and direct-stock eligibility
 
+## README entry (moved 6 Nov 2026)
+
+E5a implements the detached loaded-catalogue/direct-stock reader with bounded dirty caches and pure validation, including registered mod identities. Ownership, checkout, `Supported` and writer 24 are unchanged. [Offline evidence and automated batched-rig checklist](e5a-catalogue-eligibility.md).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+**E5a implemented offline:** detached loaded-catalogue/direct-stock validation and dirty cache only; `Supported`, ownership/checkout and writer 24 unchanged. [Evidence and automated next-batch rig checks](e5a-catalogue-eligibility.md).
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- E5a — 2 November 2026, offline: detached loaded-catalogue/stock-contract reader, writer 24; 2,556 unit tests / 2,744 E5a assertions; 8-offer/2,000-holder rebuild p95 0.4434 ms, backlog unit p95 0.1777 ms; rebuild 300,280 -> 129,144 B, clean reads 0 B/scans; initial backlog spike 32.5793 ms flagged. [Checks, full measurements and In-game checks for the next batched rig](e5a-catalogue-eligibility.md).
+
 ## 2 November 2026 — offline only
 
 Implements the detached reader and pure stock-contract validator from [E5 sections 1, 2, 5, 6 and the E5a row](../plans/e5-dynamic-products.md), based on `034bb7629391ef0fedb61d7122b0d6ee3c451ff9`. No product is proven in-game. `NativeFoodMarket.Supported`, ownership, supply, checkout, configuration, persistence and writer **24** are unchanged. All incoming production/test/tool/config files, including every E3 diagnostic API and regression pin, remain unchanged. The E5 plan is owned by the parallel documentation task and is untouched here.

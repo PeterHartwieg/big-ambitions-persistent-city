@@ -1,5 +1,13 @@
 # E3 frenchfries feasibility - 1 November 2026 (offline only)
 
+## README entry (moved 6 Nov 2026)
+
+E3 frenchfries: [offline feasibility STOP](../archive/e3-frenchfries.md); shipped holder unestablished, conditional probe only, no product enabled or gameplay/save change.
+
+## Roadmap entry (moved 6 Nov 2026)
+
+E3 frenchfries status, 1 November (offline): [STOP record](../archive/e3-frenchfries.md); shipped holder unestablished, pinned conditional probe with unchanged shared read branches. No gameplay/menu/save change; [four-reader timing and 6 Nov handoff](e3-frenchfries.md). No additional cheap safe measured perf win identified.
+
 [Feasibility STOP record](../archive/e3-frenchfries.md): fries ID 22 is verified, but the shipped retail holder is unestablished. Fryer ID 7 and russet-potato ID 407 do not establish a recipe or direct-stock pairing. Inspected factory and historical donut migrations do not supply a retail contract. The pinned conditional facade reuses all existing shared read branches unchanged. Non-showcase workstations, converted/shared inputs and ingredient substitution remain refused. No menu/enrollment, `NativeFoodMarket.Supported`, product code, schema, saved field, gameplay caller or checkout seam changes.
 
 ## Offline validation

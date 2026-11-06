@@ -1,5 +1,9 @@
 # City audit F7b performance: save-epoch callback overhead, 4 November 2026, offline
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- City-audit F7b — [Save-epoch callback overhead](f7b.md): no win taken (save/detach path only); publish 0.0001 -> 0.0008 ms p95, 0 -> 808 B per save, load check 0.0012 ms p95; writer-25 SHA-256 unchanged; no frame work beyond a unit counter; offline components only.
+
 Refs #94. [Checks and rig list](../checks/f7b.md). Base `dc59049`, writer **25** unchanged. These are offline .NET 10 component timings on the development PC (Windows 11). They are **not** native save pause, mod-work or whole-frame evidence.
 
 ## Method

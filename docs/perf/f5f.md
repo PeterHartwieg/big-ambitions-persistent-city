@@ -1,5 +1,9 @@
 # City-audit F5f — active-journey candidate index: performance
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- City-audit F5f — [Active-journey candidate index for physical selection](f5f.md): selection p95 against the unchanged pre-F5f loop at 1,914/10,000/50,000 persons with 100 active journeys 0.0360/0.2623/1.0858 -> 0.0133/0.0126/0.0123 ms, with 1,000 active 0.2801/0.4230/1.9762 -> 0.1823/0.2289/0.1927 ms; 0 B per call from the selection itself; offline harness on native doubles (tiered compilation off), not in-game mod-work.
+
 5 November 2026, offline. Refs [#92](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/92). Measurement named in the [F5 plan](../plans/f5-population.md) section 4 F5f row and section 6: selection p95/max and allocation at 1,914 / 10,000 / 50,000 persons with 0 / 100 / 1,000 active journeys, before/after against the full scan. Historical comparison point: parked hotspot #1 (physical population) p95 0.64 ms / max 21.7 ms in game (30 October review), which covers the whole `PhysicalPopulation.Update`, not only the candidate scan.
 
 ## Scope and limits

@@ -1,5 +1,17 @@
 # E5b complete-menu admission and safe refusal
 
+## README entry (moved 6 Nov 2026)
+
+E5b partially implements complete-menu admission and safe refusal offline: whole-menu explicit prices, cached authored bag policy and pre-receipt revalidation. Dynamic native acquisition/dirty recovery and held-policy execution remain incomplete; historical live support stays bounded. [Contract gaps, measurements and six automated batched-rig checks](e5b-complete-menu.md).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+**E5b partial (offline):** complete-menu price refusal and authored bag caching; dynamic native mutation/holder/held-execution integration remains incomplete. [Evidence, exact gaps and automated next-batch checks](e5b-complete-menu.md).
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- E5b — 2 November 2026, offline **partial / native integration incomplete**: complete-menu price refusal, cached authored bag policy; focused 1,071 menu / 10,596 checkout assertions (r1); discovery 280 -> 0 B/call; cache 10,100/0 hits/misses, 10,100 marks -> one pending shop, setups 33 vs 990; 1,024-shop detached backlog p95/max 0.0140/0.0497 ms, zero new >=30 ms samples; inherited 62.8223 ms first-use interval flagged; [dated evidence, remaining contracts and six In-game checks for the next batched rig](e5b-complete-menu.md), [performance](../perf/e5b-complete-menu.md).
+
 ## 2 November 2026 — offline only; native integration incomplete
 
 This is a **partial E5b implementation**, not completion of the E5b plan row. No new product is proven in game. No game, rig session, profile, lease, ordinary save or Steam write was used. Writer **25**, `NameWire25`, every predecessor reader and the dynamic-execution capability refusal are unchanged. E5e's resolver/API seam and the E5 plan are untouched.

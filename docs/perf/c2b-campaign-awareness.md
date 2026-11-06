@@ -1,5 +1,9 @@
 # C2b campaign evidence performance — 1 November 2026
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- C2b - [Campaign index reuse, canonical sorting, shared references, active-hour buffers and neutral marker cache](c2b-campaign-awareness.md).
+
 
 All measurements below were made on C2b based on `51ce709`, before E1 weather
 and A5 integration. They remain historical evidence; this sync claims no new

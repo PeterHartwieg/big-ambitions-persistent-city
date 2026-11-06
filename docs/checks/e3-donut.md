@@ -1,5 +1,9 @@
 # E3: Donut feasibility and base sync evidence
 
+## Roadmap entry (moved 6 Nov 2026)
+
+E3 status, 31 October (offline): [donut](../archive/e3-donut.md) and [cupcake feasibility discovery](../archive/e3-cupcake.md) share one isolated on-demand raw-field reader with pinned candidates. Loaded equipment and natural checkout/settlement proof remain pending; no additional product certified or enabled.
+
 ## Sync3 - B2 integration and squash-safe source pins (1 November 2026, offline only)
 
 Merge incoming development `81472e6` (B2 #19) into E3 `fb46f38`, using common ancestor `7053a28` and real two-parent commit `29db576`. Read both sides' merge-base diffs. The sole conflict is CHECKS.md: keep B1, B2 and E3 index lines, each once, in the split layout. The automatic roadmap merge retains B2 status/default thresholds, the B1 protected-insertion exception, all shared performance gates and both performance entries. All **499 incoming source/test/tool/config files** and all **26 incoming checks/performance files** remain byte-identical. Earlier E3 evidence, five native checks, all native/input-only markers and the performance file remain intact. Schema **18** and incoming persistence are unchanged; no schema conflict, allocation or saved-field change. [Conflict resolution and scope](../reviews/2026-11-01-e3-sync3-base-pr-description.md).

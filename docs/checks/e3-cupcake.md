@@ -1,5 +1,9 @@
 # E3 cupcake checks
 
+## Roadmap entry (moved 6 Nov 2026)
+
+E3 status, 31 October (offline): [donut](../archive/e3-donut.md) and [cupcake feasibility discovery](../archive/e3-cupcake.md) share one isolated on-demand raw-field reader with pinned candidates. Loaded equipment and natural checkout/settlement proof remain pending; no additional product certified or enabled.
+
 ## Base sync - 1 November 2026 (offline only)
 
 Merge approved cupcake `682aa77` with development `193c81d` (including E2b #28), using common ancestor `00d1321` and real two-parent ancestry. Preserve both sides of all ten conflicts and the split docs layout. All **499 protected incoming source/test/tool/config blobs**, all **30 incoming checks/performance files**, all **250 original CHECKS paragraphs** and **25 original README notices** survive. Cupcake's full original section and six native checks remain below; donut's five checks and sync history stay unchanged in its own file. E3 cupcake/shared-reader C# and compiled harness are unchanged from the approved cupcake head, and the shared donut body/refusals and original cases/project match landed `3f7b885` mechanically. Schema **18**, all incoming migrations/refusals and persistence remain unchanged; no schema conflict or new saved field.

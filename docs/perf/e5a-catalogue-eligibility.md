@@ -1,5 +1,9 @@
 # E5a detached eligibility performance
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- E5a — [Reuse bounded holder capacity and ordinal-key identity proof](e5a-catalogue-eligibility.md): E5a eight-offer rebuild 300,280 -> 129,144 B; clean reads 0 B/scans; initial 32.5793 ms backlog spike retained in evidence.
+
 ## 2 November 2026 — offline native doubles only
 
 Release .NET 10, foreground sequential workloads on the shared Windows machine, with the required other-dotnet guard. Fixture construction is excluded. Fresh apphosts provide one cold sample per condition (including JIT/static metadata); no cold percentile is inferred. Warm distributions use 20 warmups and 101 rebuild samples / 1,001 cache samples. The reader has no production caller; there are no added frame scans, reflection, polling or allocations. A clean explicit `TryGet` plus `Continue` control verifies zero allocations and unchanged native lookup/scan counters. All native setup and route counts are zero; whole-frame and combined native mod-work are unmeasured.

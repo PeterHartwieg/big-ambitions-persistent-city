@@ -1,5 +1,9 @@
 # City audit F7a: writer-25 save-cost baseline (4 November 2026, offline)
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- City-audit F7a — [Writer-25 save-cost baseline](f7a.md): representative 957x2 2,333,388 chars, save p50/p95 46.10/87.19 ms, 3.72x UTF-16 allocation; baseline only, no win taken (save serialization stays parked for F7c/F7d).
+
 Refs #94. Base `dc59049` (writer **25**); the twelve original fixtures were measured at `edf4949`, and `encoding-max` and the determinism record with the `5d0bb2a` harness (the measurement code for the original rows is unchanged). Plan: [F7 section 4, row F7a](../plans/f7-save-snapshots.md#4-slice-breakdown); [checks and numbered rig list](../checks/f7a.md). This is a **baseline**. F7a changes no serialization, so it has no before/after pair, and no performance win was taken (see the end of this record). Save and load are their own latency criterion. They are never ordinary-play mod-work and never count toward the mod-work p95 gate.
 
 ## Method

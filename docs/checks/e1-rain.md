@@ -1,5 +1,9 @@
 # E1: Weather capture, integration and native checklist
 
+## Roadmap entry (moved 6 Nov 2026)
+
+E. Weather, street life, bigger menus and more products. **E1 implemented offline:** new-context weather capture, soft rain effects, frozen queue commitment replay and additive schema 20 on the merged C2a/B1 contract; E2b timing and menu feasibility remain intact. Combined-head native checks remain pending. [Contract/budget](../archive/population-schema20.md).
+
 ## Final docs-only base refresh ? 1 November 2026
 
 Third two-parent merge **`11600fd`** includes latest development **`2f12ae9`**,
