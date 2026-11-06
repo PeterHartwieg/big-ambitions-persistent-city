@@ -47,12 +47,12 @@ public sealed class FoodAwarenessReviewTests
     {
         var (city,_,_)=WeightedFoodChoiceTests.Ready(79,24);city.State.Food!.AwarenessStartsDay=1;
         city.InspectFoodAwareness("r");var meal=city.State.Food.Residents[0];city.AdvanceTo(meal.DesiredAt,1);
-        var json=JObject.Parse(SaveCodec.Write(city.State));json["Food"]!["Residents"]![0]![9]!["Awareness"]=null;
+        var json=JObject.Parse(DevelopmentChain.Write(city.State));json["Food"]!["Residents"]![0]![8]!["Awareness"]=null;
         string source=json.ToString(Formatting.None);
-        Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(source).Status);
-        meal.Decision!.Awareness=null;Assert.Throws<SaveValidationException>(()=>SaveCodec.Write(city.State));
+        Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(source).Status);
+        meal.Decision!.Awareness=null;Assert.Throws<SaveValidationException>(()=>DevelopmentChain.Write(city.State));
         city.State.Food.AwarenessStartsDay=meal.Day+1;
-        Assert.Equal(SaveReadStatus.Loaded,SaveCodec.Read(SaveCodec.Write(city.State)).Status);
+        Assert.Equal(SaveReadStatus.Loaded,DevelopmentChain.Read(DevelopmentChain.Write(city.State)).Status);
     }
     [Fact]
     public void InvalidationCannotRebuildAndCaptureWithinOneNormalWorkUnit()
@@ -96,11 +96,11 @@ public sealed class FoodAwarenessReviewTests
             Assert.Equal(at,b.State.Minute);Assert.Null(b.State.Food.Residents[0].Decision);Assert.Equal(0,b.State.Food.Residents[0].ContextAttempts);
         }
         b.InvalidateFoodAwareness();b.AdvanceFrameSlice(at,1); // discard partial private image
-        var source=SaveCodec.Write(b.State);var loaded=SaveCodec.Read(source);Assert.True(loaded.Status==SaveReadStatus.Loaded,loaded.Error);
+        var source=DevelopmentChain.Write(b.State);var loaded=DevelopmentChain.Read(source);Assert.True(loaded.Status==SaveReadStatus.Loaded,loaded.Error);
         b=new CitySimulator(loaded.State!,pb);b.AttachFoodMarket(mb);
         while(!a.AdvanceTo(at,128).CaughtUp) {}
         while(!b.AdvanceTo(at,1).CaughtUp) {}
-        Assert.Equal(SaveCodec.Write(a.State),SaveCodec.Write(b.State));Assert.Equal(ma.Orders,mb.Orders);Assert.Equal(pa.Out,pb.Out);
+        Assert.Equal(DevelopmentChain.Write(a.State),DevelopmentChain.Write(b.State));Assert.Equal(ma.Orders,mb.Orders);Assert.Equal(pa.Out,pb.Out);
     }
 
     [Theory] [InlineData(0)] [InlineData(1)] [InlineData(2)]
@@ -124,7 +124,7 @@ public sealed class FoodAwarenessReviewTests
         var (continuous,mc,pc)=LateScope(false);
         var (reloaded,mr,pr)=LateScope(false);
         var (inspected,mi,pi)=LateScope(true);
-        var read=SaveCodec.Read(SaveCodec.Write(reloaded.State));Assert.Equal(SaveReadStatus.Loaded,read.Status);
+        var read=DevelopmentChain.Read(DevelopmentChain.Write(reloaded.State));Assert.Equal(SaveReadStatus.Loaded,read.Status);
         reloaded=new CitySimulator(read.State!,pr);reloaded.AttachFoodMarket(mr);
         double at=continuous.State.Food!.Residents[0].DesiredAt;
         foreach(var city in new[]{reloaded,inspected,continuous})
@@ -135,12 +135,12 @@ public sealed class FoodAwarenessReviewTests
             Assert.Equal("b1",Assert.Single(meal.Decision.Shops).BusinessId);
             Assert.Null(meal.Decision.Awareness); // still the pre-activation policy
         }
-        Assert.Equal(SaveCodec.Write(continuous.State),SaveCodec.Write(reloaded.State));
-        Assert.Equal(SaveCodec.Write(continuous.State),SaveCodec.Write(inspected.State));
+        Assert.Equal(DevelopmentChain.Write(continuous.State),DevelopmentChain.Write(reloaded.State));
+        Assert.Equal(DevelopmentChain.Write(continuous.State),DevelopmentChain.Write(inspected.State));
         foreach(var city in new[]{continuous,reloaded,inspected})
             while(!city.AdvanceTo(at+20,1).CaughtUp) {}
-        Assert.Equal(SaveCodec.Write(continuous.State),SaveCodec.Write(reloaded.State));
-        Assert.Equal(SaveCodec.Write(continuous.State),SaveCodec.Write(inspected.State));
+        Assert.Equal(DevelopmentChain.Write(continuous.State),DevelopmentChain.Write(reloaded.State));
+        Assert.Equal(DevelopmentChain.Write(continuous.State),DevelopmentChain.Write(inspected.State));
         Assert.Equal(mc.Orders,mr.Orders);Assert.Equal(mc.Orders,mi.Orders);
         Assert.Equal(0,pc.Out+pc.Back+pr.Out+pr.Back+pi.Out+pi.Back);
     }

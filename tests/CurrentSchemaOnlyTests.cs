@@ -17,14 +17,16 @@ public sealed class CurrentSchemaOnlyTests
     [InlineData(1)] [InlineData(2)] [InlineData(3)] [InlineData(4)]
     [InlineData(5)] [InlineData(6)] [InlineData(7)] [InlineData(8)]
     [InlineData(9)] [InlineData(10)] [InlineData(11)] [InlineData(12)]
+    [InlineData(13)] [InlineData(24)] [InlineData(25)]
     public void EveryOldDevelopmentSchemaBlocksCodecStoreAndSessionWrites(int schema)
     {
-        var city = City(); var wire = JObject.Parse(SaveCodec.Write(city)); wire["Schema"] = schema;
+        var city = City(); var wire = JObject.Parse(DevelopmentChain.Write(city)); wire["Schema"] = schema;
         string payload = wire.ToString();
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = payload, ["rlo:state"] = "owned by RLO" };
         var read = SaveStore.ReadFrom(data, city.PopulationKey);
-        Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State);
-        Assert.Contains("Unsupported experimental state schema", read.Error);
+        // F5c-lite: no migration before release; every older development schema is its own refusal, not corruption.
+        Assert.Equal(SaveReadStatus.DevelopmentSchema, read.Status); Assert.Null(read.State); Assert.Equal(schema, read.SourceSchema);
+        Assert.Contains("older development build; start a new city", read.Error);
         Assert.False(SaveStore.WriteTo(data, city).Success);
         var session = SaveSession.Open(data, city.PopulationKey);
         Assert.False(session.WriteTo(data, city).Success);
@@ -45,7 +47,7 @@ public sealed class CurrentSchemaOnlyTests
     [Fact]
     public void CurrentVersionRequiresCurrentShapeRatherThanFillingMissingFields()
     {
-        var city = City(); var wire = JObject.Parse(SaveCodec.Write(city)); wire.Remove("Food");
+        var city = City(); var wire = JObject.Parse(DevelopmentChain.Write(city)); wire.Remove("Food");
         string incomplete = wire.ToString();
         var data = new Dictionary<string,string> { [SaveStore.StateKey] = incomplete };
         Assert.Equal(SaveReadStatus.Invalid, SaveStore.ReadFrom(data, city.PopulationKey).Status);

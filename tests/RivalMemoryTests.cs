@@ -17,10 +17,10 @@ public sealed class RivalMemoryTests
 
     static CitySimulator Reload(CitySimulator city, RivalOutflowTests.Market market, WeightedFoodChoiceTests.Planner paths)
     {
-        string wire = SaveCodec.Write(city.State);
-        var read = SaveCodec.Read(wire); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        string wire = DevelopmentChain.Write(city.State);
+        var read = DevelopmentChain.Read(wire); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var next = new CitySimulator(read.State!, paths); next.AttachFoodMarket(market);
-        Assert.Equal(wire, SaveCodec.Write(next.State));
+        Assert.Equal(wire, DevelopmentChain.Write(next.State));
         if (next.State.Food!.Residents.All(m => m.Decision == null)) next.InspectFoodAwareness("r");
         return next;
     }
@@ -118,7 +118,7 @@ public sealed class RivalMemoryTests
         Assert.True(a.State.Food!.Outflow!.Reconciles(a.State.Food));
         Assert.Equal(3, a.FreeRivalOutflow()!.Count);
         Assert.All(a.State.Food.Residents, m => Assert.Equal(1, Assert.Single(m.Memory.Entries).Served));
-        Assert.Equal(SaveCodec.Write(a.State), SaveCodec.Write(b.State));
+        Assert.Equal(DevelopmentChain.Write(a.State), DevelopmentChain.Write(b.State));
         Assert.Equal(pa.Out, pb.Out); Assert.Equal(pa.Back, pb.Back);
         Assert.Equal(ma.Reads, mb.Reads);
     }
@@ -149,7 +149,7 @@ public sealed class RivalMemoryTests
             declines++;
             Assert.Empty(meal.Memory.Entries); Assert.Null(meal.Memory.Watermark);
             Assert.Equal(0, meal.Purchases); Assert.Equal(0, market.NativeBuys);
-            Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(city.State)).Status);
+            Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(city.State)).Status);
         }
         Assert.True(declines > 0);
     }
@@ -166,11 +166,11 @@ public sealed class RivalMemoryTests
         var shop = Assert.Single(meal.Decision!.Shops);
         Assert.Equal(FoodMemoryPolicy.Contribution(meal.Memory, 0, 1, city.State.Citizens[0].Traits!, new()), shop.MemoryContribution);
         Assert.True(shop.MemoryContribution < 0);
-        string held = SaveCodec.Write(city.State);
+        string held = DevelopmentChain.Write(city.State);
         city = Reload(city, market, paths);
         city = new CitySimulator(city.State, paths);
         city.AttachFoodMarket(market, memorySettings: new FoodMemorySettings { FoodMemoryWeight = 0 });
-        Assert.Equal(held, SaveCodec.Write(city.State));
+        Assert.Equal(held, DevelopmentChain.Write(city.State));
         Assert.Equal(shop.MemoryContribution, city.State.Food!.Residents.Single().Decision!.Shops.Single().MemoryContribution);
     }
 
@@ -183,12 +183,12 @@ public sealed class RivalMemoryTests
         foreach (double contribution in new[] { -8d, -1d, 0d, 1d, 8d })
         {
             shop.MemoryContribution = contribution;
-            Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(SaveCodec.Write(city.State)).Status);
+            Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(city.State)).Status);
         }
         foreach (double contribution in new[] { double.NaN, double.NegativeInfinity, double.PositiveInfinity, -9d, 9d })
         {
             shop.MemoryContribution = contribution;
-            Assert.Throws<SaveValidationException>(() => SaveCodec.Write(city.State));
+            Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(city.State));
         }
     }
 
@@ -199,11 +199,11 @@ public sealed class RivalMemoryTests
         city.AdvanceTo(city.State.Food!.Residents[0].DesiredAt, 1);
         city.State.Schema = schema; city.State.MenuPolicy = FoodMenuPolicy.Wire;
         string neutral = SaveCodec.WriteForSchema(city.State, schema);
-        Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(neutral).Status);
+        Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(neutral).Status);
         var root = JObject.Parse(neutral);
         root["Food"]!["Residents"]![0]![9]!["Shops"]![0]!["MemoryContribution"] = 1;
         string forged = root.ToString(Formatting.None);
-        Assert.Equal(SaveReadStatus.Invalid, SaveCodec.Read(forged).Status);
+        Assert.Equal(SaveReadStatus.Invalid, DevelopmentChain.Read(forged).Status);
         var saved = new System.Collections.Generic.Dictionary<string, string> { [SaveCodec.StateKey] = forged };
         Assert.False(SaveStore.WriteTo(saved, city.State).Success);
         Assert.Equal(forged, saved[SaveCodec.StateKey]);

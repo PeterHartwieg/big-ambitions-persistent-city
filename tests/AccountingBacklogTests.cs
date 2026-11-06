@@ -94,7 +94,7 @@ public sealed class AccountingBacklogTests
         string before = PersistentCity.Persistence.SaveCodec.Write(city.State);
         var read = PersistentCity.Persistence.SaveCodec.Read(before);
         var restoredState = read.State!;
-        Assert.Equal(25, restoredState.Schema); Assert.Equal(before, PersistentCity.Persistence.SaveCodec.Write(restoredState));
+        Assert.Equal(CityState.CurrentSchema, restoredState.Schema); Assert.Equal(before, PersistentCity.Persistence.SaveCodec.Write(restoredState));
         Assert.True(AccountingClock.Compatible(restoredState.Minute, native));
         var beforeMarket = new CitySimulator(restoredState, routes);
         Assert.True(beforeMarket.IsAccountingEpochDrained(Math.Floor(native) + 1));

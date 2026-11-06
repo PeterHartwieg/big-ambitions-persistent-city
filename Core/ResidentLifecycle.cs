@@ -19,6 +19,7 @@ namespace PersistentCity.Core
             person.JoinedMinute = minute;
             person.JobChanges = 0;
             person.LastEmploymentCheckDay = (int)(minute / 1440);
+            person.EmploymentStartDay = person.DayPlaceId.Length == 0 ? 0 : person.LastEmploymentCheckDay;
         }
 
         public static double NextHomeEvent(CitizenState person, double routineMinute, double now)
@@ -52,6 +53,7 @@ namespace PersistentCity.Core
             {
                 if (chance >= CityBalance.DailyJobLossChance) return null;
                 person.DayPlaceId = "";
+                person.EmploymentStartDay = 0;
                 person.JobChanges = checked(person.JobChanges + 1);
                 person.CommutePreparation = new CommutePreparation();
                 return null;
@@ -67,6 +69,8 @@ namespace PersistentCity.Core
         internal static void AssignWorkplace(CitizenState person, Place candidate)
         {
             person.DayPlaceId = candidate.Id;
+            // The assignment follows the employment check of LastEmploymentCheckDay.
+            person.EmploymentStartDay = person.LastEmploymentCheckDay;
             person.JobChanges = checked(person.JobChanges + 1);
             person.CommutePreparation = new CommutePreparation();
         }

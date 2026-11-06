@@ -210,14 +210,24 @@ public sealed class PersonIdentityTests
     [Fact]
     public void DerivedIdentityIsNeverPersistedOrWired()
     {
-        // B6 and INACTIVE: the identity policy, validator and person types are not read by the simulator, the codec,
-        // Runtime or Compatibility in F5b. F5f's active-journey index (Core/PhysicalJourneys.cs) is the one reader: it classifies person IDs
-        // (PersonIds, PersonKind) to withhold visitors from bodies, and references nothing else listed here.
+        // B6, and F5c-lite's boundary: schema 26 persists the person shape (Core/PersonTable.cs, Core/Model.cs,
+        // Persistence/PersonWire26.cs) and the inspector shows kind/household/workplace words (Core/ResidentInsight.cs).
+        // No routine, choice, money, Runtime or Compatibility path reads these types. F5f's active-journey index
+        // (Core/PhysicalJourneys.cs) classifies person IDs to withhold visitors from bodies. Derived identity is never
+        // drawn outside the Core identity files, so no saved field can carry it.
         var root = new DirectoryInfo(AppContext.BaseDirectory);
         while (root != null && !File.Exists(Path.Combine(root.FullName, "Core", "IdentityPolicy.cs"))) root = root.Parent;
         Assert.NotNull(root);
         var names = new[] { "IdentityPolicy", "OwnershipValidator", "OwnershipInput", "PersonIncome", "VisitorStay", "PersonKind",
             "HouseholdIds", "PersonIds", "PersonFacts", "NativeEmployment", "new Employment", "EmploymentKind" };
+        var allowed = new Dictionary<string, string[]>(StringComparer.Ordinal)
+        {
+            ["Core/PersonTable.cs"] = names,
+            ["Core/Model.cs"] = new[] { "IdentityPolicy" },
+            ["Core/PhysicalJourneys.cs"] = new[] { "PersonKind", "PersonIds" },
+            ["Core/ResidentInsight.cs"] = new[] { "PersonKind", "HouseholdIds", "EmploymentKind" },
+            ["Persistence/PersonWire26.cs"] = new[] { "IdentityPolicy", "VisitorStay", "PersonKind", "PersonIds", "NativeEmployment", "new Employment", "EmploymentKind" },
+        };
         var files = new[] { "Runtime", "Persistence", "Compatibility" }
             .SelectMany(d => Directory.GetFiles(Path.Combine(root!.FullName, d), "*.cs", SearchOption.AllDirectories))
             .Concat(Directory.GetFiles(Path.Combine(root!.FullName, "Core"), "*.cs")
@@ -225,12 +235,15 @@ public sealed class PersonIdentityTests
         foreach (var file in files)
         {
             string text = File.ReadAllText(file);
-            bool index = Path.GetFileName(file) == "PhysicalJourneys.cs" && Path.GetFileName(Path.GetDirectoryName(file)) == "Core";
+            string relative = Path.GetRelativePath(root!.FullName, file).Replace(Path.DirectorySeparatorChar, '/');
+            var permitted = allowed.TryGetValue(relative, out var list) ? list : Array.Empty<string>();
             foreach (var name in names)
-                if (!index || name != "PersonKind" && name != "PersonIds")
-                    Assert.False(text.Contains(name, StringComparison.Ordinal), Path.GetFileName(file) + " references " + name);
+                if (Array.IndexOf(permitted, name) < 0)
+                    Assert.False(text.Contains(name, StringComparison.Ordinal), relative + " references " + name);
+            foreach (var draw in new[] { "IdentityPolicy.V1", ".Derive(", "IdentityPolicy.Draw" })
+                Assert.False(text.Contains(draw, StringComparison.Ordinal), relative + " draws derived identity: " + draw);
         }
-        Assert.Equal(25, CityState.CurrentSchema);
+        Assert.Equal(26, CityState.CurrentSchema);
     }
 
     // ---- Per-person income source ----

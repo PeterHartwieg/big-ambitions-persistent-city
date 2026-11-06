@@ -63,7 +63,8 @@ namespace PersistentCity.Persistence
                 {
                     schema = HeaderInteger(requireCanonical: false);
                     if (schema >= 18) Require(canonicalInteger, "Noncanonical population schema.");
-                    Require(schema >= 13 && schema <= 25, "Unsupported population schema; preserve the payload.");
+                    Require(schema < 1 || schema > LatestDevelopmentSchema, DevelopmentSchemaMessage);
+                    Require(schema == CityState.CurrentSchema, "Unsupported population schema; preserve the payload.");
                 }
                 else if (name == "Capabilities")
                 {
@@ -156,7 +157,7 @@ namespace PersistentCity.Persistence
             var context = WireContext.FromSource(source, tokenText);
             using var reader = Reader(source);
             Require(reader.Read(), "Missing state.");
-            CheckShape(reader, typeof(CityState), schema==21 ? Schema21Contracts : schema==22 ? Schema22Contracts : schema==23 ? Schema23Contracts : StateContracts, ref streaming, tokenText, schema, new FieldNameSets { Product25Count = context.ProductNames.Length });
+            CheckShape(reader, typeof(CityState), ContractsFor(schema), ref streaming, tokenText, schema, new FieldNameSets { Product25Count = context.ProductNames.Length });
             Require(!reader.Read(), "Trailing content.");
             return (streaming, semantic);
         }
@@ -181,9 +182,12 @@ namespace PersistentCity.Persistence
                 Require(ProductNames.Length <= FoodNameIdentity.MaximumNames, "Oversized product name table.");
                 for (int i = 0; i < ProductNames.Length; i++) ProductIndex.Add(ProductNames[i], i + 1);
             }
+            /// <summary>Schema-26 station table for visitor stays (ordinal); empty when reading.</summary>
+            public List<string> Portals = new List<string>();
             public static WireContext FromState(CityState state)
             {
                 var result = new WireContext(state.Places.Select(p => p.Id));
+                if (state.Portals != null) result.Portals = state.Portals;
                 if (state.Schema >= 25) result.SetProducts(state.ProductNames);
                 return result;
             }
@@ -239,10 +243,14 @@ namespace PersistentCity.Persistence
             public readonly Action<JsonWriter, object, JsonSerializer>[] Write;
             public readonly Action<object, JsonReader, JsonSerializer>[] Read;
             public readonly Func<object> Create;
-            private TupleLayout(Type type, string fields)
+            public readonly int Version;
+            private TupleLayout(Type type, string fields, int version = 2, string derived = "")
             {
+                Version = version;
                 var names = fields.Split(' ');
-                var writable = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetSetMethod() != null && !(type == typeof(ResidentMeal) && p.Name == "LegacyExternalFoodSpent")).ToArray();
+                var omitted = derived.Split(' ');
+                var writable = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetSetMethod() != null && !(type == typeof(ResidentMeal) && p.Name == "LegacyExternalFoodSpent")
+                    && Array.IndexOf(omitted, p.Name) < 0).ToArray();
                 if (names.Length != writable.Length || names.Distinct(StringComparer.Ordinal).Count() != names.Length
                     || !new HashSet<string>(writable.Select(p => p.Name), StringComparer.Ordinal).SetEquals(names))
                     throw new InvalidOperationException(type.Name + " tuple fields must exactly match its public writable properties; change the tuple version and save contract deliberately.");
@@ -278,18 +286,22 @@ namespace PersistentCity.Persistence
             // Frozen positional contracts, independent of declaration/reflection order. Version 1 is slot zero.
             private static readonly TupleLayout Budget = new TupleLayout(typeof(ResidentBudget), "Arrears Balance BaseIncomeCents DailyEssentialsCents DailyHomeFoodCents DailyHousingCents DailyIncomeCents DaysWithoutHomeFood EssentialsPaid HeldPurchase HomeFoodFundedDay HomeFoodPaid IncomeReceived IncomeSource LastPostedDay NextPostingMinute OpeningBalance PreparedFoodSpent ExternalFoodSpent");
             private static readonly TupleLayout Meal = new TupleLayout(typeof(ResidentMeal), "Allowance AnchorId Budget BusinessId ContextAttempts Day DayAllowanceUsed Deadline Decision DesiredAt DueAt Excursion ExistingStop ExistingStopPurchases ExpiresAt Kind LastContextKey NeedsHomeResync PlaceId PreferenceBonusCents PreferredProductId Price ProductId Purchases Reason RepresentedTraits ResidentId ReturnMinutes ServiceAt ServiceMinutes Slot Spent Status Today Memory External");
-            public static TupleLayout? For(Type type) => type == typeof(ResidentBudget) ? Budget : type == typeof(ResidentMeal) ? Meal : null;
+            // Schema 26: one roster record per person, so the anchor and slot are derived from the person table (PersonWire26).
+            private static readonly TupleLayout Meal3 = new TupleLayout(typeof(ResidentMeal), "Allowance Budget BusinessId ContextAttempts Day DayAllowanceUsed Deadline Decision DesiredAt DueAt Excursion ExistingStop ExistingStopPurchases ExpiresAt Kind LastContextKey NeedsHomeResync PlaceId PreferenceBonusCents PreferredProductId Price ProductId Purchases Reason RepresentedTraits ResidentId ReturnMinutes ServiceAt ServiceMinutes Spent Status Today Memory External", 3, "AnchorId Slot");
+            public static TupleLayout? For(Type type, int schema) => type == typeof(ResidentBudget) ? Budget : type == typeof(ResidentMeal) ? schema >= PersonSchema ? Meal3 : Meal : null;
         }
         private static double TupleNumber(JsonReader reader) => reader.Value is double d ? d : reader.Value is long n ? n
             : reader.Value is System.Numerics.BigInteger b ? (double)b : throw new SaveValidationException("Invalid tuple number.");
         private sealed class TupleConverter : JsonConverter
         {
-            public override bool CanConvert(Type type) => TupleLayout.For(type) != null;
+            private readonly int schema;
+            public TupleConverter(int schema) { this.schema = schema; }
+            public override bool CanConvert(Type type) => TupleLayout.For(type, schema) != null;
             public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
             {
                 if (value == null) { writer.WriteNull(); return; }
-                var tuple = TupleLayout.For(value.GetType())!;
-                writer.WriteStartArray(); writer.WriteValue(2);
+                var tuple = TupleLayout.For(value.GetType(), schema)!;
+                writer.WriteStartArray(); writer.WriteValue(tuple.Version);
                 for (int i = 0; i < tuple.Properties.Length; i++)
                 {
                     if (value is ResidentMeal meal && tuple.Properties[i].Name == "Budget" && meal.Budget == null) writer.WriteValue(meal.LegacyExternalFoodSpent.Units);
@@ -300,8 +312,8 @@ namespace PersistentCity.Persistence
             public override object? ReadJson(JsonReader reader, Type type, object? existingValue, JsonSerializer serializer)
             {
                 if (reader.TokenType == JsonToken.Null) return null;
-                var tuple = TupleLayout.For(type)!;
-                Require(reader.TokenType == JsonToken.StartArray && reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 2, 2), "Invalid tuple version.");
+                var tuple = TupleLayout.For(type, schema)!;
+                Require(reader.TokenType == JsonToken.StartArray && reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, tuple.Version, tuple.Version), "Invalid tuple version.");
                 var value = tuple.Create();
                 for (int i = 0; i < tuple.Properties.Length; i++)
                 {

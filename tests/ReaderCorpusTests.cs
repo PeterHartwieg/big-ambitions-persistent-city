@@ -15,7 +15,7 @@ namespace PersistentCity.Tests;
 public sealed class ReaderCorpusTests
 {
     public static IEnumerable<object[]> Schemas() =>
-        Enumerable.Range(ReaderCorpus.OldestSupportedSchema, CityState.CurrentSchema - ReaderCorpus.OldestSupportedSchema + 1).Select(s => new object[] { s });
+        Enumerable.Range(ReaderCorpus.OldestSupportedSchema, ReaderCorpus.CorpusWriter - ReaderCorpus.OldestSupportedSchema + 1).Select(s => new object[] { s });
 
     private const string ReceiptKey = "persistentcity:food-sale-v2:corpus-intent";
 
@@ -28,9 +28,9 @@ public sealed class ReaderCorpusTests
         // Readers tile 13..current with no gap or overlap; the newest is the live codec.
         int next = ReaderCorpus.OldestSupportedSchema;
         foreach (var reader in ReaderCorpus.Readers) { Assert.Equal(next, reader.OwnMin); Assert.True(reader.OwnMax >= reader.OwnMin); next = reader.OwnMax + 1; }
-        Assert.Equal(CityState.CurrentSchema + 1, next);
+        Assert.Equal(ReaderCorpus.CorpusWriter + 1, next);
         Assert.Equal("SaveCodec", ReaderCorpus.Readers[^1].Name);
-        var pins = ReaderCorpus.CurrentWriterPins(CityState.CurrentSchema);
+        var pins = ReaderCorpus.CurrentWriterPins(ReaderCorpus.CorpusWriter);
         var keys = new List<string>();
         foreach (var row in Schemas())
             foreach (var fixture in ReaderCorpus.Load((int)row[0])) keys.Add(ReaderCorpus.Key(fixture));
@@ -81,20 +81,26 @@ public sealed class ReaderCorpusTests
     [MemberData(nameof(Schemas))]
     public void ReaderCorpus_FullChainMigratesToTheCurrentWriterExactlyAsPinned(int schema)
     {
-        var pins = ReaderCorpus.CurrentWriterPins(CityState.CurrentSchema);
+        var pins = ReaderCorpus.CurrentWriterPins(ReaderCorpus.CorpusWriter);
         foreach (var fixture in ReaderCorpus.Load(schema))
         {
-            var read = SaveCodec.Read(fixture.Text);
+            var read = ReaderCorpus.Chain(fixture.Text);
             Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-            Assert.Equal(schema, read.SourceSchema); Assert.Equal(CityState.CurrentSchema, read.State!.Schema);
-            string current = SaveCodec.Write(read.State);
+            Assert.Equal(schema, read.SourceSchema); Assert.Equal(ReaderCorpus.CorpusWriter, read.State!.Schema);
+            string current = DevelopmentChain.Write(read.State);
             Assert.Equal(pins[ReaderCorpus.Key(fixture)], ReaderCorpus.Sha256(current));
-            Assert.Equal(current, SaveCodec.Write(SaveCodec.Read(current).State!));
-            // The session keeps the loaded source until a later successful save replaces it.
+            Assert.Equal(current, DevelopmentChain.Write(ReaderCorpus.Chain(current).State!));
+            // F5c-lite: the product refuses every development schema with its own status and message, keeps every
+            // key byte-identical and never replaces the payload; no migration is published.
             var data = Keys(fixture.Text);
+            var before = data.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal);
             var session = SaveSession.Open(data, read.State.PopulationKey);
-            Assert.Equal(SaveReadStatus.Loaded, session.InitialReadResult.Status);
-            Assert.Same(fixture.Text, data[SaveCodec.StateKey]);
+            Assert.Equal(SaveReadStatus.DevelopmentSchema, session.InitialReadResult.Status);
+            Assert.Equal(schema, session.InitialReadResult.SourceSchema);
+            Assert.Contains("older development build; start a new city", session.InitialReadResult.Error);
+            Assert.False(session.WriteTo(data, read.State).Success); Assert.False(SaveStore.WriteTo(data, read.State).Success);
+            foreach (var (k, value) in before) Assert.Same(value, data[k]);
+            Assert.Equal(before.Count, data.Count);
         }
     }
 
@@ -104,7 +110,7 @@ public sealed class ReaderCorpusTests
     {
         foreach (var fixture in ReaderCorpus.Load(schema))
         {
-            var read = SaveCodec.Read(fixture.Text); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+            var read = ReaderCorpus.Chain(fixture.Text); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
             Assert.Equal(fixture.Text, ReaderCorpusRecipes.Project(read.State!, schema));
         }
     }
@@ -120,14 +126,14 @@ public sealed class ReaderCorpusTests
     {
         foreach (var fixture in ReaderCorpus.Load(schema))
         {
-            var valid = SaveCodec.Read(fixture.Text).State!;
-            string truth = SaveCodec.Write(SaveCodec.Read(fixture.Text).State!);
+            var valid = ReaderCorpus.Chain(fixture.Text).State!;
+            string truth = DevelopmentChain.Write(ReaderCorpus.Chain(fixture.Text).State!);
             foreach (var row in Schemas())
             {
                 int other = (int)row[0]; if (other == schema) continue;
                 string variant = ReaderCorpus.Relabel(fixture.Text, schema, other);
                 string label = $"{ReaderCorpus.Key(fixture)} as {other}";
-                var chain = SaveCodec.Read(variant);
+                var chain = ReaderCorpus.Chain(variant);
                 foreach (var reader in ReaderCorpus.Readers)
                 {
                     var read = reader.Read(variant);
@@ -138,7 +144,7 @@ public sealed class ReaderCorpusTests
                 {
                     Assert.True(fixture.File != "full.json" || Math.Min(schema, other) == 13 && Math.Max(schema, other) == 14, label);
                     Assert.Equal(other, chain.SourceSchema);
-                    Assert.Equal(truth, SaveCodec.Write(chain.State!));
+                    Assert.Equal(truth, DevelopmentChain.Write(chain.State!));
                 }
                 else AssertRefusedAndPreserved(variant, valid, SaveReadStatus.Invalid, label);
             }
@@ -151,20 +157,20 @@ public sealed class ReaderCorpusTests
     {
         foreach (var fixture in ReaderCorpus.Load(schema))
         {
-            var valid = SaveCodec.Read(fixture.Text).State!;
+            var valid = ReaderCorpus.Chain(fixture.Text).State!;
             string text = fixture.Text, key = ReaderCorpus.Key(fixture);
-            foreach (int future in new[] { CityState.CurrentSchema + 1, 99 })
+            foreach (int future in new[] { ReaderCorpus.CorpusWriter + 1, 99 })
             {
                 string variant = ReaderCorpus.Relabel(text, schema, future);
                 Assert.All(ReaderCorpus.Readers, r => Assert.Equal(SaveReadStatus.Future, r.Read(variant).Status));
-                Assert.Equal(future, SaveCodec.Read(variant).SourceSchema);
+                Assert.Equal(future, ReaderCorpus.Chain(variant).SourceSchema);
                 AssertRefusedAndPreserved(variant, valid, SaveReadStatus.Future, key + " future " + future);
             }
             foreach (int older in new[] { ReaderCorpus.OldestSupportedSchema - 1, 1, 0, -1 })
             {
                 string variant = ReaderCorpus.Relabel(text, schema, older);
                 Assert.All(ReaderCorpus.Readers, r => Assert.Equal(SaveReadStatus.Invalid, r.Read(variant).Status));
-                Assert.Contains("Unsupported experimental state schema", SaveCodec.Read(variant).Error);
+                Assert.Contains("Unsupported experimental state schema", ReaderCorpus.Chain(variant).Error);
                 AssertRefusedAndPreserved(variant, valid, SaveReadStatus.Invalid, key + " older " + older);
             }
             // SchemaReadable: the top-level schema token still parses, so a reader older than the payload reports
@@ -182,7 +188,7 @@ public sealed class ReaderCorpusTests
             foreach (var (name, variant, error, readable) in corrupt)
             {
                 Assert.All(ReaderCorpus.Readers, r => Assert.Equal(readable && r.OwnMax < schema ? SaveReadStatus.Future : SaveReadStatus.Invalid, r.Read(variant).Status));
-                Assert.Contains(error, SaveCodec.Read(variant).Error);
+                Assert.Contains(error, ReaderCorpus.Chain(variant).Error);
                 AssertRefusedAndPreserved(variant, valid, SaveReadStatus.Invalid, key + " " + name);
             }
             // One over the per-citizen visit cap: each reader's token check refuses before allocation.
@@ -206,7 +212,7 @@ public sealed class ReaderCorpusTests
     public void ReaderCorpus_OneCharacterOverTheInputCapIsRefusedAndPreserved(int schema)
     {
         var fixture = ReaderCorpus.Load(schema)[0];
-        var valid = SaveCodec.Read(fixture.Text).State!;
+        var valid = ReaderCorpus.Chain(fixture.Text).State!;
         // Trailing whitespace keeps it otherwise valid JSON; only the length bound refuses it.
         string over = fixture.Text + new string(' ', SaveCodec.MaxInputCharacters + 1 - fixture.Text.Length);
         Assert.Equal(SaveCodec.MaxInputCharacters + 1, over.Length);
@@ -226,12 +232,17 @@ public sealed class ReaderCorpusTests
 
     private static void AssertRefusedAndPreserved(string payload, CityState valid, SaveReadStatus expected, string label)
     {
-        var read = SaveCodec.Read(payload);
+        var read = ReaderCorpus.Chain(payload);
         Assert.True(read.Status == expected, $"{label}: {read.Status} {read.Error}"); Assert.Null(read.State);
         var data = Keys(payload);
         var before = data.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal);
         var session = SaveSession.Open(data, valid.PopulationKey);
-        Assert.Equal(expected, session.InitialReadResult.Status);
+        // F5c-lite: the product refuses every development schema as DevelopmentSchema; other refusals keep their status.
+        var product = SaveCodec.Read(payload).Status;
+        Assert.NotEqual(SaveReadStatus.Loaded, product);
+        // The header probe stops at the first Schema token; the full reader also refuses duplicate root fields.
+        if (SaveCodec.DevelopmentSchemaOf(payload) != null) Assert.True(product == SaveReadStatus.DevelopmentSchema || product == SaveReadStatus.Invalid, label);
+        Assert.Equal(product, session.InitialReadResult.Status);
         Assert.False(session.WriteTo(data, valid).Success, label);
         Assert.False(SaveStore.WriteTo(data, valid).Success, label);
         Assert.Equal(before.Count, data.Count);
@@ -272,12 +283,12 @@ public sealed class ReaderCorpusTests
     public void ReaderCorpus_VisitCapVariantAlsoBuildsFromPopulatedVisitHistories(int schema)
     {
         var fixture = ReaderCorpus.Load(schema).Single(f => f.File == "full.json");
-        var state = SaveCodec.Read(fixture.Text).State!;
+        var state = ReaderCorpus.Chain(fixture.Text).State!;
         foreach (var citizen in state.Citizens)
             for (int n = 0; n < 3; n++) citizen.RecentVisits.Add(new VisitRecord { AtMinute = state.Minute - 3 + n, PlaceId = "home", Activity = Activity.Home });
         string populated = ReaderCorpusRecipes.Project(state, schema);
         Assert.DoesNotContain("\"RecentVisits\":[]", populated);
-        var loaded = SaveCodec.Read(populated); Assert.True(loaded.Status == SaveReadStatus.Loaded, loaded.Error);
+        var loaded = ReaderCorpus.Chain(populated); Assert.True(loaded.Status == SaveReadStatus.Loaded, loaded.Error);
         Assert.All(loaded.State!.Citizens, c => Assert.Equal(3, c.RecentVisits.Count));
         string over = OverVisits(populated, schema);
         foreach (var reader in ReaderCorpus.Readers.Where(r => r.OwnMax >= schema))

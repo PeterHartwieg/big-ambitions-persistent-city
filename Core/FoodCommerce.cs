@@ -262,7 +262,10 @@ namespace PersistentCity.Core
             meal.Allowance = consumer.DailyAllowance;
             if (state.HouseholdFinanceVersion != 0) CreateBudget(meal, person);
             StartMeal(meal, person, (int)(city.State.Minute / 1440), state.MealRhythmVersion == 0 ? MealKind.Legacy : MealKind.Breakfast);
-            records.Add(meal.ResidentId, meal); state.Residents.Add(meal); Feedback?.Add(meal); return meal;
+            records.Add(meal.ResidentId, meal); state.Residents.Add(meal); Feedback?.Add(meal);
+            // Schema 26: every roster record is one person; a represented slot is a visitor person (no behaviour reads it).
+            if (slot > 0) PersonTable.AddRepresentedVisitor(city.State, id);
+            return meal;
         }
         private void StartMeal(ResidentMeal meal, CitizenState person, int day, MealKind kind)
         {

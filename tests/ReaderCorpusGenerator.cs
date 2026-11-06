@@ -13,7 +13,7 @@ namespace PersistentCity.Tests;
 
 public sealed partial class FoodCommerceTests
 {
-    // Mainline commit whose CityState.CurrentSchema first equalled the schema (null: the schema existed only on a
+    // Mainline commit whose ReaderCorpus.CorpusWriter first equalled the schema (null: the schema existed only on a
     // stacked branch and was first merged together with a later writer). Provenance only; nothing is built from it.
     private static readonly IReadOnlyDictionary<int, string?> CorpusWriterCommits = new Dictionary<int, string?>
     {
@@ -36,7 +36,7 @@ public sealed partial class FoodCommerceTests
         string? target = Environment.GetEnvironmentVariable("PC_READER_CORPUS_WRITE");
         if (string.IsNullOrEmpty(target)) return;
         var pins = new JObject();
-        for (int schema = ReaderCorpus.OldestSupportedSchema; schema <= CityState.CurrentSchema; schema++)
+        for (int schema = ReaderCorpus.OldestSupportedSchema; schema <= ReaderCorpus.CorpusWriter; schema++)
         {
             string folder = Path.Combine(target, ReaderCorpus.SchemaFolder(schema));
             if (Directory.Exists(folder))
@@ -44,8 +44,8 @@ public sealed partial class FoodCommerceTests
                 // Existing folders are frozen: pin every manifest entry (synthetic or later native), hash-checked on load.
                 foreach (var fixture in ReaderCorpus.Load(target, schema))
                 {
-                    var read = SaveCodec.Read(fixture.Text); Assert.True(read.Status == SaveReadStatus.Loaded, ReaderCorpus.Key(fixture) + ": " + read.Error);
-                    pins[ReaderCorpus.Key(fixture)] = ReaderCorpus.Sha256(SaveCodec.Write(read.State!));
+                    var read = ReaderCorpus.Chain(fixture.Text); Assert.True(read.Status == SaveReadStatus.Loaded, ReaderCorpus.Key(fixture) + ": " + read.Error);
+                    pins[ReaderCorpus.Key(fixture)] = ReaderCorpus.Sha256(DevelopmentChain.Write(read.State!));
                 }
                 continue;
             }
@@ -54,8 +54,8 @@ public sealed partial class FoodCommerceTests
             foreach (var (file, builder, city) in CorpusCities)
             {
                 string text = ReaderCorpusRecipes.Project(city(), schema);
-                var read = SaveCodec.Read(text); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
-                pins[ReaderCorpus.SchemaFolder(schema) + "/" + file] = ReaderCorpus.Sha256(SaveCodec.Write(read.State!));
+                var read = ReaderCorpus.Chain(text); Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+                pins[ReaderCorpus.SchemaFolder(schema) + "/" + file] = ReaderCorpus.Sha256(DevelopmentChain.Write(read.State!));
                 File.WriteAllBytes(Path.Combine(folder, file), new UTF8Encoding(false).GetBytes(text));
                 fixtures.Add(new JObject
                 {
@@ -76,8 +76,8 @@ public sealed partial class FoodCommerceTests
             };
             File.WriteAllText(Path.Combine(folder, "corpus.json"), manifest.ToString(Formatting.Indented) + "\n");
         }
-        string pinFile = Path.Combine(target, "current-writer-" + CityState.CurrentSchema + ".json");
+        string pinFile = Path.Combine(target, "current-writer-" + ReaderCorpus.CorpusWriter + ".json");
         if (!File.Exists(pinFile))
-            File.WriteAllText(pinFile, new JObject { ["writer"] = CityState.CurrentSchema, ["migrated"] = pins }.ToString(Formatting.Indented) + "\n");
+            File.WriteAllText(pinFile, new JObject { ["writer"] = ReaderCorpus.CorpusWriter, ["migrated"] = pins }.ToString(Formatting.Indented) + "\n");
     }
 }

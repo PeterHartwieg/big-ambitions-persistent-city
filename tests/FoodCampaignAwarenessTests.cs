@@ -244,7 +244,7 @@ public sealed class FoodCampaignAwarenessTests
         Assert.InRange(decision.Awareness!.Union.Count,1,32);Assert.InRange(decision.Shops.Count,0,8);
         Assert.Contains(decision.Awareness.Union,c=>(c.Sources&FoodAwarenessSource.Campaign)!=0);
         Assert.Contains(decision.Awareness.Union,c=>(c.Sources&FoodAwarenessSource.ActiveCampaign)!=0);
-        string held=JsonConvert.SerializeObject(decision);var loaded=SaveCodec.Read(SaveCodec.Write(state));Assert.True(loaded.Status==SaveReadStatus.Loaded,loaded.Error);
+        string held=JsonConvert.SerializeObject(decision);var loaded=DevelopmentChain.Read(DevelopmentChain.Write(state));Assert.True(loaded.Status==SaveReadStatus.Loaded,loaded.Error);
         Assert.Equal(held,JsonConvert.SerializeObject(loaded.State!.Food!.Residents[0].Decision));
         var other=new CitySimulator(loaded.State,planner);other.AttachFoodMarket(market,campaign:Source(loaded.State.Food,settings:new() {Enabled=false}));
         while(decision.Result==FoodDecisionResult.Evaluating) city.AdvanceTo(meal.DesiredAt,1);
@@ -256,45 +256,45 @@ public sealed class FoodCampaignAwarenessTests
     [Fact]
     public void Exact20MigrationAddsD2CampaignAndMenuFieldsAndPreservesSource()
     {
-        var (city,_,_)=WeightedFoodChoiceTests.Ready(79,2);var root=JObject.Parse(SaveCodec.Write(city.State));
+        var (city,_,_)=WeightedFoodChoiceTests.Ready(79,2);var root=JObject.Parse(DevelopmentChain.Write(city.State));
         city.State.WeatherStartsDay=1;
         city.State.Citizens[0].W=new WeatherCommitment(city.State.Minute,WeatherSample.Rain,true);
-        root=JObject.Parse(SaveCodec.Write(city.State));
+        root=JObject.Parse(DevelopmentChain.Write(city.State));
         int current=city.State.Schema;city.State.Schema=20;
         root=JObject.Parse(PopulationSchema20.Write(city.State));city.State.Schema=current;
         string source=root.ToString(Formatting.None);var data=new Dictionary<string,string> {[SaveStore.StateKey]=source};
-        SaveCodec.RequireExecutableCapabilities(source);
-        var read=SaveSession.Open(data,"weighted").InitialReadResult;Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
-        Assert.Equal(20,read.SourceSchema);Assert.Equal(CityState.CurrentSchema,read.State!.Schema);Assert.Empty(read.State.Food!.Campaigns);
-        var expected=JObject.Parse(SaveCodec.Write(city.State));expected["Food"]!["RivalStartsDay"]=(int)(city.State.Minute/1440)+1; expected["NamePolicyStartsDay"]=(int)(city.State.Minute/1440)+1;
-        Assert.True(JToken.DeepEquals(expected,JObject.Parse(SaveCodec.Write(read.State))));Assert.Equal(source,data[SaveStore.StateKey]);
+        DevelopmentChain.RequireRefusedCapabilities(source);
+        var read=DevelopmentChain.RefusedThenRead(data,"weighted");Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);
+        Assert.Equal(20,read.SourceSchema);Assert.Equal(SaveCodec.LatestDevelopmentSchema,read.State!.Schema);Assert.Empty(read.State.Food!.Campaigns);
+        var expected=JObject.Parse(DevelopmentChain.Write25(city.State));expected["Food"]!["RivalStartsDay"]=(int)(city.State.Minute/1440)+1; expected["NamePolicyStartsDay"]=(int)(city.State.Minute/1440)+1;
+        Assert.True(JToken.DeepEquals(expected,JObject.Parse(DevelopmentChain.Write(read.State))));Assert.Equal(source,data[SaveStore.StateKey]);
         foreach(int schema in new[]{24,99})
         {
             root["Schema"]=schema;var wire=root.ToString(Formatting.None);data[SaveStore.StateKey]=wire;
             Assert.NotEqual(SaveReadStatus.Loaded,SaveSession.Open(data,"weighted").InitialReadResult.Status);Assert.Equal(wire,data[SaveStore.StateKey]);
             Assert.Throws<SaveValidationException>(()=>SaveCodec.RequireExecutableCapabilities(wire));
         }
-        root["Schema"]=20;root["Food"]!["Campaigns"]=new JArray();Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(root.ToString(Formatting.None)).Status);
+        root["Schema"]=20;root["Food"]!["Campaigns"]=new JArray();Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(root.ToString(Formatting.None)).Status);
         ((JObject)root["Food"]!).Remove("Campaigns");root["Food"]!["AwarenessStartsDay"]=-1;
-        Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(root.ToString(Formatting.None)).Status);
+        Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(root.ToString(Formatting.None)).Status);
         var (heldCity,_,_)=WeightedFoodChoiceTests.Ready(79,24);heldCity.State.Food!.AwarenessStartsDay=1;
         heldCity.AttachWeather(new FrameWeatherSource(()=>1,()=>true));
         heldCity.InspectFoodAwareness("r");heldCity.AdvanceTo(heldCity.State.Food.Residents[0].DesiredAt,1);
         heldCity.State.Schema=20;var heldRoot=JObject.Parse(PopulationSchema20.Write(heldCity.State));heldCity.State.Schema=current;
-        var heldRead=SaveCodec.Read(heldRoot.ToString(Formatting.None));Assert.True(heldRead.Status==SaveReadStatus.Loaded,heldRead.Error);
+        var heldRead=DevelopmentChain.Read(heldRoot.ToString(Formatting.None));Assert.True(heldRead.Status==SaveReadStatus.Loaded,heldRead.Error);
         Assert.Equal(JsonConvert.SerializeObject(heldCity.State.Food.Residents[0].Decision),JsonConvert.SerializeObject(heldRead.State!.Food!.Residents[0].Decision));
         var legacy19=JObject.Parse(WeatherTests.As19(heldRoot.ToString(Formatting.None)));
         string legacySource=legacy19.ToString(Formatting.None);data[SaveStore.StateKey]=legacySource;
-        var legacyRead=SaveSession.Open(data,"weighted").InitialReadResult;
+        var legacyRead=DevelopmentChain.RefusedThenRead(data,"weighted");
         Assert.True(legacyRead.Status==SaveReadStatus.Loaded,legacyRead.Error);
-        Assert.Equal(19,legacyRead.SourceSchema);Assert.Equal(CityState.CurrentSchema,legacyRead.State!.Schema);
+        Assert.Equal(19,legacyRead.SourceSchema);Assert.Equal(SaveCodec.LatestDevelopmentSchema,legacyRead.State!.Schema);
         Assert.Equal((int)(heldCity.State.Minute/1440)+1,legacyRead.State.WeatherStartsDay);
         Assert.Equal(WeatherSample.Unknown,legacyRead.State.Food!.Residents[0].Decision!.Weather);
         Assert.Equal(legacySource,data[SaveStore.StateKey]);
         legacy19["Food"]!["Residents"]![0]![9]!["Awareness"]!["Union"]![0]!["Sources"]=32;
-        Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(legacy19.ToString(Formatting.None)).Status);
+        Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(legacy19.ToString(Formatting.None)).Status);
         heldRoot["Food"]!["Residents"]![0]![9]!["Awareness"]!["Union"]![0]!["Sources"]=32;
-        Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(heldRoot.ToString(Formatting.None)).Status); // predecessor 20 still forbids campaigns
+        Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(heldRoot.ToString(Formatting.None)).Status); // predecessor 20 still forbids campaigns
     }
     [Fact]
     public void Exact22CampaignAndRainCommitmentsSurviveMenuMigrationAndChangedLiveInputs()
@@ -321,22 +321,22 @@ public sealed class FoodCampaignAwarenessTests
             return root.ToString(Formatting.None);
         }
         string source=As22(state);var data=new Dictionary<string,string>{{SaveStore.StateKey,source}};
-        SaveCodec.RequireExecutableCapabilities(source);
-        var read=SaveSession.Open(data,"weighted").InitialReadResult;
+        DevelopmentChain.RequireRefusedCapabilities(source);
+        var read=DevelopmentChain.RefusedThenRead(data,"weighted");
         Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);Assert.Equal(22,read.SourceSchema);
-        Assert.Equal(CityState.CurrentSchema,read.State!.Schema);Assert.Equal(FoodNameIdentity.Wire,read.State.MenuPolicy);
+        Assert.Equal(SaveCodec.LatestDevelopmentSchema,read.State!.Schema);Assert.Equal(FoodNameIdentity.Wire,read.State.MenuPolicy);
         Assert.Equal(source,As22(read.State));Assert.Same(source,data[SaveStore.StateKey]);
         Assert.Equal(state.Citizens[0].W!.ToWire(),read.State.Citizens[0].W!.ToWire());
         Assert.Equal(WeatherSample.Rain,read.State.Food!.Residents[0].Decision!.Weather);
         Assert.Equal(1.3,read.State.Food.Residents[0].Decision!.WeatherTravelMultiplier);
-        string migrated=SaveCodec.Write(read.State);
-        Assert.Equal(migrated,SaveCodec.Write(SaveCodec.Read(migrated).State!));
+        string migrated=DevelopmentChain.Write(read.State);
+        Assert.Equal(migrated,DevelopmentChain.Write(DevelopmentChain.Read(migrated).State!));
 
         var resumed=new CitySimulator(read.State,planner);
         resumed.AttachWeather(new FrameWeatherSource(()=>2,()=>false),new WeatherSettings{Enabled=false});
         resumed.AttachFoodMarket(market,new FoodChoiceSettings{FoodMenuMaximumOffersPerShop=8,FoodMenuNewTasteWeight=0},
             campaign:Source(read.State.Food,settings:new(){Enabled=false}));
-        Assert.Equal(migrated,SaveCodec.Write(resumed.State));
+        Assert.Equal(migrated,DevelopmentChain.Write(resumed.State));
         while(meal.Decision.Result==FoodDecisionResult.Evaluating) city.AdvanceTo(meal.DesiredAt,1);
         var restored=read.State.Food.Residents[0].Decision!;
         while(restored.Result==FoodDecisionResult.Evaluating) resumed.AdvanceTo(meal.DesiredAt,128);
@@ -360,14 +360,14 @@ public sealed class FoodCampaignAwarenessTests
     [Fact]
     public void CampaignImageCountsExactlyOnceAndRejectsCorruptOrForeignReferences()
     {
-        var (city,_,_)=WeightedFoodChoiceTests.Ready(79,2);var state=city.State;string before=SaveCodec.Write(state);
+        var (city,_,_)=WeightedFoodChoiceTests.Ready(79,2);var state=city.State;string before=DevelopmentChain.Write(state);
         var source=Source(state.Food!);var shop=state.Food!.Shops[0];source.Publish(Snapshot(24,Business(shop.BusinessId,Campaign())),new Dictionary<string,string>{{shop.BusinessId,shop.PlaceId}});
-        string wire=SaveCodec.Write(state);var read=SaveCodec.Read(wire);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);Assert.Equal(wire,SaveCodec.Write(read.State!));
-        var counts=SaveCodec.CountRecords(state,wire);var previous=SaveCodec.Read(before).State!;var oldCounts=SaveCodec.CountRecords(previous,before);
+        string wire=DevelopmentChain.Write(state);var read=DevelopmentChain.Read(wire);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);Assert.Equal(wire,DevelopmentChain.Write(read.State!));
+        var counts=SaveCodec.CountRecords(state,wire);var previous=DevelopmentChain.Read(before).State!;var oldCounts=SaveCodec.CountRecords(previous,before);
         Assert.Equal(2,counts.Streaming-oldCounts.Streaming);Assert.Equal(2,counts.Semantic-oldCounts.Semantic); // image plus shared generation
         var root=JObject.Parse(wire);var image=root["Food"]!["Campaigns"]![0]!;
-        root["Food"]!["Campaigns"]![0]="bad";Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(root.ToString(Formatting.None)).Status);
-        root["Food"]!["Campaigns"]![0]="1ZZZ"+image.ToString().Substring(4);Assert.Equal(SaveReadStatus.Invalid,SaveCodec.Read(root.ToString(Formatting.None)).Status);
+        root["Food"]!["Campaigns"]![0]="bad";Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(root.ToString(Formatting.None)).Status);
+        root["Food"]!["Campaigns"]![0]="1ZZZ"+image.ToString().Substring(4);Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(root.ToString(Formatting.None)).Status);
         Assert.Throws<ArgumentException>(()=>new FoodCampaignImage(0,0,new uint[64]));
         var masks=new uint[64];masks[6]=1;Assert.Throws<ArgumentException>(()=>new FoodCampaignImage(0,0,masks));
         masks=new uint[64];masks[0]=2;Assert.Throws<ArgumentException>(()=>new FoodCampaignImage(0,0,masks));
@@ -393,10 +393,10 @@ public sealed class FoodCampaignAwarenessTests
     public void AForeignCityCampaignSourceCannotChangeThisCitysReferenceOwnership()
     {
         var (prepared,market,planner)=WeightedFoodChoiceTests.Ready(79,2);
-        string before=SaveCodec.Write(prepared.State);
+        string before=DevelopmentChain.Write(prepared.State);
         var city=new CitySimulator(prepared.State,planner);
         Assert.Throws<ArgumentException>(()=>city.AttachFoodMarket(market,campaign:Source(new FoodCommerceState())));
-        Assert.Equal(before,SaveCodec.Write(prepared.State));
+        Assert.Equal(before,DevelopmentChain.Write(prepared.State));
     }
     [Fact]
     public void FlatTunablesClampAndLogOnceWithoutChangingOtherSettings()

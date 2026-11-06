@@ -474,6 +474,7 @@ namespace PersistentCity.Core
             OptionalStopChoice = live.OptionalStopChoice,
             Car = live.Car == null ? null : CopyCar(live.Car),
             JoinedMinute = live.JoinedMinute, LastEmploymentCheckDay = live.LastEmploymentCheckDay, JobChanges = live.JobChanges,
+            EmploymentStartDay = live.EmploymentStartDay,
             Phase = live.Phase, Activity = live.Activity, PlaceId = live.PlaceId, DestinationId = live.DestinationId,
             DestinationActivity = live.DestinationActivity, Journey = live.Journey, DepartureMinute = live.DepartureMinute,
             NextEventMinute = live.NextEventMinute, ActivityUntilMinute = live.ActivityUntilMinute,
@@ -527,6 +528,7 @@ namespace PersistentCity.Core
                 car.Id = changed.Id; car.ModelId = changed.ModelId; car.PaintSeed = changed.PaintSeed; car.ParkedPosition = changed.ParkedPosition;
             }
             live.JoinedMinute = working.JoinedMinute; live.LastEmploymentCheckDay = working.LastEmploymentCheckDay; live.JobChanges = working.JobChanges;
+            live.EmploymentStartDay = working.EmploymentStartDay;
             live.Phase = working.Phase; live.Activity = working.Activity; live.PlaceId = working.PlaceId; live.DestinationId = working.DestinationId;
             live.DestinationActivity = working.DestinationActivity; live.Journey = working.Journey; live.DepartureMinute = working.DepartureMinute;
             live.NextEventMinute = working.NextEventMinute; live.ActivityUntilMinute = working.ActivityUntilMinute;

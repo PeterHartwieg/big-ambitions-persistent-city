@@ -33,7 +33,7 @@ public sealed partial class FoodCommerceTests
 
     private static void BaseMerge_RefusedAndPreserved(string payload, string error)
     {
-        var read = SaveCodec.Read(payload);
+        var read = DevelopmentChain.Read(payload);
         Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Contains(error, read.Error);
         var (city, _, _) = Ready();
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = payload };
@@ -49,7 +49,7 @@ public sealed partial class FoodCommerceTests
         string old = LegacyMoneyWire.AsSchema(LegacyMoneyWire.ToLegacy(JObject.Parse(current), wholeCents: true), 13).ToString(Formatting.None);
         var price = city.State.Food!.Residents.Single().Price;
         Assert.Contains("\"PriceCents\":" + price.Units / Money.UnitsPerCent + ",", old);
-        var read = SaveCodec.Read(old);
+        var read = DevelopmentChain.Read(old);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(13, read.SourceSchema);
         Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(read.State!)));
     }
@@ -60,7 +60,7 @@ public sealed partial class FoodCommerceTests
     {
         var (city, current) = R8_Paid(native);
         Assert.Contains("\"Price\":" + city.State.Food!.Residents.Single().Price.Units + ",", current);
-        var read = SaveCodec.Read(LegacyMoneyWire.AsSchema(JObject.Parse(current), 14).ToString(Formatting.None));
+        var read = DevelopmentChain.Read(LegacyMoneyWire.AsSchema(JObject.Parse(current), 14).ToString(Formatting.None));
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(14, read.SourceSchema);
         Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(read.State!)));
     }
@@ -72,7 +72,7 @@ public sealed partial class FoodCommerceTests
     public void BaseMerge_OptionalStopEraCentsSavesMigrateExactly(int schema)
     {
         string old = BaseMerge_Label(BaseMerge_EraSchema16Exact, schema);
-        var read = SaveCodec.Read(old);
+        var read = DevelopmentChain.Read(old);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(schema, read.SourceSchema);
         Assert.Equal(Money.FromCents(25), read.State!.Food!.Residents.Single().Price);
         string written = LegacyWire.Write(read.State);
@@ -91,7 +91,7 @@ public sealed partial class FoodCommerceTests
             }
         }
         Assert.True(compared >= 14, "Compared " + compared + " monetary fields.");
-        Assert.Equal(written, LegacyWire.Write(SaveCodec.Read(written).State!));
+        Assert.Equal(written, LegacyWire.Write(DevelopmentChain.Read(written).State!));
     }
 
     [Theory]
@@ -127,7 +127,7 @@ public sealed partial class FoodCommerceTests
         var wire = JObject.Parse(current);
         if (field.EndsWith("Cents", StringComparison.Ordinal)) LegacyMoneyWire.ToLegacy(wire, wholeCents: false);
         string encoded = LegacyMoneyWire.AsSchema(wire, schema).ToString(Formatting.None);
-        var control = SaveCodec.Read(encoded);
+        var control = DevelopmentChain.Read(encoded);
         Assert.True(control.Status == SaveReadStatus.Loaded, control.Error);
         Assert.Equal(LegacyMoneyWire.WithoutUpgradeFacts(current), LegacyMoneyWire.WithoutUpgradeFacts(LegacyWire.Write(control.State!)));
         string damaged = Regex.Replace(encoded, "\"" + field + "\":[0-9.]+", "\"" + field + "\":" + token);
@@ -148,10 +148,11 @@ public sealed partial class FoodCommerceTests
             Assert.DoesNotContain("\"" + field.Value + "\":", current);
             Assert.DoesNotMatch("\"" + field.Key + "\":-?[0-9]*[.eE]", current);
         }
-        var read = SaveCodec.Read(current);
+        var read = DevelopmentChain.Read(current);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error); Assert.Equal(17, read.SourceSchema);
         Assert.Equal(current, LegacyWire.Write(read.State!));
         var data = new Dictionary<string, string>();
-        Assert.True(SaveStore.WriteTo(data, read.State!).Success); Assert.Equal(SaveCodec.Write(read.State!), data[SaveStore.StateKey]);
+        // F5c-lite: the product writer never publishes a development-chain (schema-25) state; nothing is migrated.
+        Assert.False(SaveStore.WriteTo(data, read.State!).Success); Assert.Empty(data);
     }
 }

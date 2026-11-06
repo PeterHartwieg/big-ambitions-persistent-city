@@ -84,7 +84,7 @@ public sealed partial class FoodCommerceTests
         a.EnableHouseholdFinances(); b.EnableHouseholdFinances();
         Advance(a, 3 * 1440); Advance(b, 3 * 1440);
         Assert.Equal(ma.Orders, mb.Orders); Assert.NotEmpty(mb.Orders);
-        Assert.Equal(SaveCodec.Write(a.State), SaveCodec.Write(b.State));
+        Assert.Equal(DevelopmentChain.Write(a.State), DevelopmentChain.Write(b.State));
         Assert.Equal(plain.Calls, scoped.Calls); Assert.Equal(plain.Validations, scoped.Validations);
         Assert.Equal(plain.Sequence, scoped.Sequence);
         Assert.DoesNotContain("unscoped-validation", scoped.Log);
@@ -174,7 +174,7 @@ public sealed partial class FoodCommerceTests
         city = Reload(city, market, routes);
         Advance(city, desired + 80, 1); Advance(control, desired + 80);
         Assert.Equal(controlMarket.Orders, market.Orders);
-        Assert.Equal(SaveCodec.Write(control.State), SaveCodec.Write(city.State));
+        Assert.Equal(DevelopmentChain.Write(control.State), DevelopmentChain.Write(city.State));
         Assert.All(city.State.Food!.Residents, m => Assert.Null(m.Excursion));
     }
 
@@ -227,7 +227,7 @@ public sealed partial class FoodCommerceTests
         var extra = city.State.Food.Residents.Single(m => m.Slot == 1);
         Assert.True(extra.Excursion!.Unresolved);
         string receipt = extra.IntentId;
-        var read = SaveCodec.Read(SaveCodec.Write(city.State)); Assert.Equal("", read.Error);
+        var read = DevelopmentChain.Read(DevelopmentChain.Write(city.State)); Assert.Equal("", read.Error);
         city = new CitySimulator(read.State!, routes); city.AttachFoodMarket(market);
         routes.Accessible = true; Advance(city, 3 * 1440);
         extra = city.State.Food!.Residents.Single(m => m.Slot == 1);
@@ -271,7 +271,7 @@ public sealed partial class FoodCommerceTests
     {
         var (city, market, routes) = Ready(atWork: true);
         city.State.Food!.RepresentationFactor = 2;
-        Assert.Throws<SaveValidationException>(() => SaveCodec.Write(city.State));
+        Assert.Throws<SaveValidationException>(() => DevelopmentChain.Write(city.State));
         Assert.Throws<InvalidOperationException>(() => new CitySimulator(city.State, routes).AttachFoodMarket(market));
     }
 
@@ -321,7 +321,7 @@ public sealed partial class FoodCommerceTests
             if (time % 120 == 0) b = Reload(b, mb, routes);
         }
         Assert.Equal(ma.Orders, mb.Orders);
-        Assert.Equal(SaveCodec.Write(a.State), SaveCodec.Write(b.State));
+        Assert.Equal(DevelopmentChain.Write(a.State), DevelopmentChain.Write(b.State));
         Assert.All(a.State.Food!.Residents, m => Assert.False(m.Excursion?.Unresolved == true));
     }
 
@@ -345,7 +345,7 @@ public sealed partial class FoodCommerceTests
         Assert.True(extra.Excursion!.Unresolved); Assert.Equal(originalReceipt, extra.IntentId);
         Assert.Single(market.Orders, key => key == originalReceipt);
         Assert.True(city.State.Food.Residents.Single(m => m.Slot == 0).Purchases > 1);
-        var read = SaveCodec.Read(SaveCodec.Write(city.State)); Assert.Equal("", read.Error);
+        var read = DevelopmentChain.Read(DevelopmentChain.Write(city.State)); Assert.Equal("", read.Error);
     }
 
     [Fact]
@@ -382,7 +382,7 @@ public sealed partial class FoodCommerceTests
         var row = Assert.Single(city.State.Food.History);
         Assert.Equal(1, row.StaffRejections); Assert.Equal(0, row.StockRejections);
         Assert.Equal("b", row.BusinessId);
-        Assert.Equal("", SaveCodec.Read(SaveCodec.Write(city.State)).Error);
+        Assert.Equal("", DevelopmentChain.Read(DevelopmentChain.Write(city.State)).Error);
     }
 
     [Fact]
@@ -397,7 +397,7 @@ public sealed partial class FoodCommerceTests
         Advance(city, 4 * 1440);
         Assert.Equal(1, city.State.Food.History.Where(h => h.BusinessId == "b").Sum(h => h.Purchases));
         Assert.True(city.State.Food.History.Where(h => h.BusinessId == "replacement").Sum(h => h.Purchases) > 0);
-        Assert.Equal("", SaveCodec.Read(SaveCodec.Write(city.State)).Error);
+        Assert.Equal("", DevelopmentChain.Read(DevelopmentChain.Write(city.State)).Error);
     }
 
     [Fact]
