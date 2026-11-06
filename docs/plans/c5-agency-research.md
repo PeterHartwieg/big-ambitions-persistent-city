@@ -18,7 +18,7 @@ Acceptance:
 4. The survey runs in bounded units while native time is held at the order's epoch. It never changes sale, route, budget or traffic state.
 5. The charge is one native `GameManager.ChangeMoneySafe` call per order, made from the native `MarketingHelper.RunDaily` boundary. It uses the native marketing transaction type and category, the business address and the day being billed. It appears in that day's `MarketingExpenses` for the business.
 6. Each order is charged at most once, across save, reload, crash and repeated daily boundaries. An exception after native entry leaves the order blocked as payment unknown. It is never retried or refunded.
-7. Insufficient funds decline the order with no money change, no native record and no change to the player's campaigns.
+7. Insufficient funds decline the order with no money change, no native record and no change to the player's campaigns. A charge the binary32 balance cannot subtract exactly is declined the same way, before any native call.
 8. A report is readable only through `MarketResearchReport.TryRead` with a paid, delivered, unreplaced grant from the saved ledger.
 9. Orders and delivered reports survive save and reload byte for byte. The new schema refuses older development cities with the "start a new city" status.
 10. Mod-work p95 stays under 5 ms in matched windows with a survey and a billing boundary. Every spike of 30 ms or more is flagged. Whole-frame timing is reported separately.
@@ -103,13 +103,17 @@ Decision: a fixed product table in Core, keyed by a stable product code. Each ro
 
 Decision: survey at the order's epoch, not at midnight. Reason: midnight already carries postings, closures and billing. Freezing at the order also gives the "as of when you asked" meaning, and the hold is short.
 
-When an order is stored, the simulator reports `HasPendingResearchSurvey`. `NoEventsThrough` treats it like the campaign publication at `CitySimulator.cs:216-219`: it holds native time but is not previous-epoch work. `AdvanceCore` runs one survey unit per event budget slot before other events, as at lines 247-248. Native time stays held until the survey finishes, so the frozen input is the live state: no Persistent City event runs during the hold, and native writes cannot change the fields the survey reads.
+When an order is stored, it records `SurveyAtMinute`: the accounting target `AccountingClock.Target(now)` at the moment of the order. The survey describes the city after every event through that minute has run, and before any later event.
 
-`CityResearchSnapshot : IMarketResearchSnapshot` reads the food roster (`FoodCommerceState.Residents`) through an ordinal index. Each row maps to C4's `MarketResearchConsumer`: resident ID; represented when `ResidentMeal.Slot > 0` (`Core/FoodCommerce.cs:349`); home and day-place positions from `CitizenState.HomeId`/`DayPlaceId` and `Places`; day activity; A2 trait bands; three meal bits for the logical day; individual home-food funding for the day; discretionary budget in cents. A missing input stays `null`, as C4 requires. The identity is the population key, logical day, and the order minute standing in for all three revisions, because the hold keeps them fixed. The adapter also checks the minute and roster count before and after each unit. If either changed, the engine restarts, as C4 already does.
+Decision: the survey starts only when the simulator has drained through `SurveyAtMinute`: no pending route job (`PlanningPending` false, `CitySimulator.cs:316`), no pending campaign publication, and no due citizen, food or traffic event at or before that minute. Reason: an event already in `ContinuePlanning` (driven before `AdvanceFrameSlice` at `Runtime/PersistentCityMod.cs:407`, committed at `CitySimulator.cs:369`) can change inputs such as `DayPlaceId` without changing the minute or roster count. A save drops that transient job, and reload replays the event from the start. Waiting for the drain point gives both paths the same input: uninterrupted, the job commits and then the survey runs; after reload, the replayed event commits and then the survey runs. Giving research priority over `ContinuePlanning` was rejected because it would need the uncommitted event to survive reload.
+
+Until the survey finishes, `NoEventsThrough` reports pending research work, as the campaign publication does at `CitySimulator.cs:216-219`: it holds native time but is not previous-epoch work. In the `AdvanceCore` loop (next to lines 247-248), a survey unit runs only when the next event is later than `SurveyAtMinute` and no route job is pending, and it runs before that later event. While the survey runs no Persistent City event runs, and native writes cannot change the fields it reads.
+
+`CityResearchSnapshot : IMarketResearchSnapshot` reads the food roster (`FoodCommerceState.Residents`) through an ordinal index. Each row maps to C4's `MarketResearchConsumer`: resident ID; represented when `ResidentMeal.Slot > 0` (`Core/FoodCommerce.cs:349`); home and day-place positions from `CitizenState.HomeId`/`DayPlaceId` and `Places`; day activity; A2 trait bands; three meal bits for the logical day; individual home-food funding for the day; discretionary budget in cents. A missing input stays `null`, as C4 requires. The identity is the population key, logical day, `SurveyAtMinute` standing in for all three revisions (the hold keeps them fixed), and the order ID, so two orders in the same minute never share an identity. The adapter also checks the minute and roster count before and after each unit. If either changed, the engine restarts, as C4 already does.
 
 Decision: the ordinal index is built in bounded units at the start of the hold (bottom-up merge sort over an `int[]`, at most 4,096 element moves per unit), not with one synchronous sort. Reason: at 100,000 consumers a single sort would be a nonpreemptible spike. C5b measures both and keeps the bounded version unless the single sort's p95 stays under 1 ms at 100,000.
 
-At completion the engine's report is sealed in the order. The survey is transient: a save during the hold writes the order as `Ordered`, and reload restarts the survey at the loaded minute, which is the same frozen state. No cursor is saved. This is C4's restart rule.
+At completion the engine's report is sealed in the order. The survey is transient: a save during the hold writes the order as `Ordered` with its `SurveyAtMinute`. Reload replays the events through that minute, then restarts the survey from zero on the same state. No cursor is saved. This is C4's restart rule.
 
 ### 3.5 Charge through the native agency bill (Runtime)
 
@@ -119,15 +123,16 @@ Reasons: it is the agency's own billing moment and the same transaction kind, so
 
 Exactly once:
 
-1. Before charging, scan the native transaction queue for a marketing record whose data holds this order ID. If one exists with amount equal to the negated price, mark `Paid` without charging. If one exists with another amount, mark `PaymentUnknown`.
-2. Mark the native entry immediately before the call.
-3. `false` → `Declined`, with no money change by native contract.
-4. `true` → read the new queue tail. It must be a marketing record with this order ID, this address and day, and amount exactly equal to the negated price. Then `Paid`. Anything else → `PaymentUnknown`.
-5. An exception after the entry marker → `PaymentUnknown`. Exceptions are contained, so native `RunDaily` continues.
+1. Before charging, scan the native transaction queue for a marketing record whose data holds this order ID. If exactly one exists with amount equal to the negated price, mark `Paid` without charging. If one exists with another amount, or there are several, mark `PaymentUnknown`.
+2. Exact-debit preflight. Read the native balance `B` (binary32, exact as a rational value). The exact result `B - price` must be representable in binary32. Native `ChangeMoney` subtracts with correctly rounded binary32 addition, so the debit is then exact; otherwise it is not. The native clamp is inactive for any such balance and price. If the result is not representable, the order is `Declined` with reason `BalancePrecision` and nothing is called. Example: at `B = $100,000,000` (binary32 spacing $8) a $500 debit would remove $496, so it is refused; a $504 or $512 price would pass.
+3. Remember the current last queue record by reference, then mark the native entry immediately before the call.
+4. `false` → `Declined` with reason `InsufficientFunds`, with no money change by native contract.
+5. `true` → look only at the records appended after the remembered one (the queue may drop old records from the front). Exactly one of them must hold this order ID. It must be a marketing record with this address and day, amount exactly the negated price, and native `balance` equal to `floor(B - price)`. Then `Paid`. Zero or several matches, or a field mismatch, → `PaymentUnknown`. Other appended records, for example from a money-change listener, are ignored.
+6. An exception after the entry marker → `PaymentUnknown`. Exceptions are contained, so native `RunDaily` continues.
 
-The ledger update happens in the same synchronous call as the native debit. A native save holds both or neither, so the population payload and native money cannot disagree after reload. The order ID in `transactionData` is the second line of defence; if the rig shows that the extra key breaks native display or saves, C5d drops the key and keeps the synchronous rule.
+Save-epoch guard: native `ChangeMoney` raises `ba:gameevent_moneychange` before it returns, so a listener could start a save while the order is still `Surveyed`. Synchronous code alone does not prevent that. The whole billing attempt (scan, preflight, charge, evidence, ledger update) therefore runs inside the F7b guarded unit, the same depth counter `saveEpochUnits` that `Runtime/SaveEpochRuntime.cs:26-30` keeps around `Update`. A save callback inside it follows F7b rule 5: it writes the failure markers, publishes no payload and stops Persistent City after the unit returns. So a saved city never holds the debit without the ledger update. C5d adds one small guarded-unit helper to `SaveEpochRuntime.cs` and uses it.
 
-Balance precision: the native balance is binary32. The record amount is the exact check. The balance change is recorded in diagnostics only, as C3 already noted.
+Tagged evidence is required. The order ID in `transactionData` is how reload, a repeated boundary and the scan in step 1 recognise a debit. There is no keyless fallback: if the native contract check or the rig shows that the extra key is not stored, saved and reloaded intact, research charging stays off and the research button is not shown.
 
 If Persistent City is stopped or detached at midnight, the postfix does nothing and nothing is charged. Native `RunDaily` failing before the postfix leaves the order `Surveyed` for the next day's bill.
 
@@ -137,7 +142,7 @@ At attach, Runtime resolves by reflection every member in section 2 with its exa
 
 ### 3.7 Delivery and reading
 
-On `Paid`, Runtime sends the agency contact a native `TextMessage` with a mod localization key ("Your market research for {businessName} is ready. Open Persistent City (Ctrl+F8) to read it."). A new IMGUI window, opened from a "Research reports" button in the Ctrl+F8 panel and by a console line, lists orders and their states. For a `Paid` order it calls `TryRead` with the ledger and draws the cells with English labels made from C4's fixed codes, plus C4's `Evidence` text. Nothing is built while the window is closed.
+On `Paid`, Runtime sends the agency contact a native `TextMessage` with a mod localization key ("Your market research for {businessName} is ready. Open Persistent City (Ctrl+F8) to read it."). On `Declined` it sends a decline message with its own key ("We could not bill the market research for {businessName}, so it was not delivered."). C5f owns both messages. A new IMGUI window, opened from a "Research reports" button in the Ctrl+F8 panel and by a console line, lists orders and their states. For a `Paid` order it calls `TryRead` with the ledger and draws the cells with English labels made from C4's fixed codes, plus C4's `Evidence` text. Nothing is built while the window is closed.
 
 `pcresearch` console lines (a separate command name, so the census file is not touched): `pcresearch status`, `pcresearch orders`, `pcresearch report <id>` (numbers only for `Paid`), `pcresearch window open|close`.
 
@@ -161,17 +166,18 @@ Each slice writes `docs/checks/c5x-<name>.md` and `docs/perf/c5x-<name>.md`. Loc
 - Tests: every allowed and forbidden move; one charge per order under repeated boundaries; unknown blocks only itself; the declined and cancelled paths; caps of 8 open orders and one per business; `TryRead` succeeds only for `Paid` and fails after `Replaced`; exact `Money` for every product price and its binary32 value.
 - Perf: order and grant calls p50/p95/max and allocation.
 - Schema: none.
+- Ledger fields include `SurveyAtMinute` and the decline reason (`InsufficientFunds`, `BalancePrecision`).
 - Dependencies: none. Can run in parallel with C5d.
 
 ### C5b — Survey runner and time hold
 
 - Scope: `CityResearchSnapshot`, bounded ordinal index, survey scheduling inside the F1 hold.
-- Owns: new `Core/ResearchSurvey.cs`, `tests/ResearchSurveyTests.cs`. In `Core/CitySimulator.cs`, only the `NoEventsThrough` clause and the `AdvanceCore` continuation line next to the campaign publication ones.
+- Owns: new `Core/ResearchSurvey.cs`, `tests/ResearchSurveyTests.cs`. In `Core/CitySimulator.cs`: a new `AttachResearch(ResearchLedger)` seam, the `NoEventsThrough` clause and the `AdvanceCore` survey unit next to the campaign publication ones. `ContinuePlanning` is not changed. C5b does not touch `Core/Model.cs` or the codec; the ledger reaches the simulator only through the seam.
 - Effort: 1.5 days.
-- Tests: the hold keeps `IsCaughtUpTo` false until completion, then events run in their old order; a cadence change (unit size 16, 256, 1,024) gives the same cells; reload in the middle restarts and gives the same cells; missing inputs stay unknown; roster change mid-survey restarts; a city with no food roster refuses the order; no sale, receipt, budget, route or traffic field changes (state hash before and after).
+- Tests: the hold keeps `IsCaughtUpTo` false until completion, then events run in their old order; a cadence change (unit size 16, 256, 1,024) gives the same cells; reload in the middle restarts and gives the same cells (the reload test saves `CityState` with the writer-25 codec and passes an in-memory clone of the ledger through the seam, until C5c lands); an order placed while an employment route probe is pending (`PlanningPending`) gives the same cells uninterrupted and after a save and reload before the probe commits, and the survey sees the probe's committed `DayPlaceId`; two orders in the same minute get different identities; missing inputs stay unknown; roster change mid-survey restarts; a city with no food roster refuses the order; no sale, receipt, budget, route or traffic field changes (state hash before and after).
 - Perf: index units and survey units at 1,914, 10,000 and 100,000 consumers; total hold frames at 60 FPS budgets; single sort versus bounded sort.
 - Schema: none.
-- Dependencies: C5a. Runs in parallel with C5c and C5d.
+- Dependencies: C5a. Runs in parallel with C5c and C5d through the `AttachResearch` seam. C5e attaches the saved `CityState.Research` ledger through the same seam.
 
 ### C5c — Save schema
 
@@ -186,9 +192,11 @@ Each slice writes `docs/checks/c5x-<name>.md` and `docs/perf/c5x-<name>.md`. Loc
 ### C5d — Native billing
 
 - Scope: `RunDaily` postfix, `ChangeMoneySafe` charge, evidence check, queue scan, native contract check for billing members.
-- Owns: new `Runtime/ResearchBilling.cs`, new `Core/ResearchCharge.cs` (pure `IResearchChargePort` and the evidence rules), `tests/ResearchChargeTests.cs`.
+- Owns: new `Runtime/ResearchBilling.cs`, new `Core/ResearchCharge.cs` (pure `IResearchChargePort`, the exact-debit preflight and the evidence rules), `tests/ResearchChargeTests.cs`, and one guarded-unit helper in `Runtime/SaveEpochRuntime.cs`.
 - Effort: 1.5 days.
-- Tests (pure port doubles): success; insufficient funds; exception before and after entry; tail mismatch in amount, address, day or ID; an existing record found by the scan; repeated boundary; stopped runtime does nothing; campaigns are never touched; tax flag carried.
+- Tests (pure port doubles): success; insufficient funds; exception before and after entry; appended-record mismatch in amount, address, day, balance or ID; zero and two matching records; an unrelated record appended by a money-change listener still gives `Paid`; queue front dropped during the call; an existing record found by the scan; repeated boundary; stopped runtime does nothing; campaigns are never touched; tax flag carried.
+- Preflight tests: balances $0, $16,777,216 and $100,000,000 with a $500 price (the last refused as `BalancePrecision`, with no native call) and with $512 (charged exactly); a sweep of every product price against balances at each binary32 exponent.
+- Save-guard tests: a save invoked from inside the charge port writes the failure markers and publishes no payload, so the ledger and the debit are never saved apart; a port that reports the tagged key as unsupported keeps charging off.
 - Perf: postfix cost with 0, 1 and 8 surveyed orders and a full 1,000-record queue.
 - Schema: none.
 - Dependencies: C5a. Runs in parallel with C5b and C5c.
@@ -196,7 +204,7 @@ Each slice writes `docs/checks/c5x-<name>.md` and `docs/perf/c5x-<name>.md`. Loc
 ### C5e — Agency dialog and ordering
 
 - Scope: `CampaignSettings` postfix, the product menu, order placement, localization table and registration, dialog contract check. The button is still hidden because `Available` stays false.
-- Owns: new `Runtime/ResearchAgencyDialog.cs`, new `Runtime/Localization/` table, new `tests/ResearchMenuTests.cs` (menu tree built from the product table, pure), and the attach and install lines in `Runtime/PersistentCityMod.cs`.
+- Owns: new `Runtime/ResearchAgencyDialog.cs`, new `Runtime/Localization/` table, new `tests/ResearchMenuTests.cs` (menu tree built from the product table, pure), and the attach and install lines in `Runtime/PersistentCityMod.cs`, including attaching the saved `CityState.Research` ledger through C5b's `AttachResearch` seam.
 - Effort: 1.5 days.
 - Tests: menu tree for 1 to 6 products; null business and ineligible business stay on the screen; the native entry is unchanged whenever a precondition fails (`OnConfirm`, `OnCancel` and template identical).
 - Perf: postfix and menu build cost per call.
@@ -205,10 +213,10 @@ Each slice writes `docs/checks/c5x-<name>.md` and `docs/perf/c5x-<name>.md`. Loc
 
 ### C5f — Delivery, report window, activation and cleanup
 
-- Scope: delivery message, report window, `pcresearch` console lines, `MarketResearchSettings.Available` derived from the attach and contract checks, removal of the C3 placeholders.
+- Scope: delivery message and decline message (localization keys and agency `TextMessage` for `InsufficientFunds` and `BalancePrecision`), report window, `pcresearch` console lines, `MarketResearchSettings.Available` derived from the attach and contract checks, removal of the C3 placeholders.
 - Owns: new `Runtime/ResearchReportWindow.cs`, new `Runtime/ResearchDiagnostics.cs`, `Core/MarketResearchSettings.cs`, one button line in `Runtime/FoodEconomyPanel.cs`, deletion of `Core/AgencyOrders.cs`, `Runtime/AgencyPaymentPort.cs`, `tests/AgencyOrdersTests.cs`, `tools/agency-payment-regression/`.
 - Effort: 1 day.
-- Tests: window and console show numbers only for `Paid`; closed window builds nothing; `Available` is false when any check fails.
+- Tests: delivery message only for `Paid` and decline message only for `Declined`, once per order; window and console show numbers only for `Paid`; closed window builds nothing; `Available` is false when any check fails.
 - Perf: window draw cost when open; zero work when closed.
 - Schema: none.
 - Dependencies: C5e. The `FoodEconomyPanel.cs` line can collide with F6 panel slices; rebase and keep both.
@@ -223,7 +231,7 @@ Section `Research` in `persistentcity:state_v1`:
 
 - `NextSequence`: integer, at least 1, never decreasing.
 - `Orders`: at most 8 non-terminal orders plus at most 16 retained terminal or paid orders (section 9, Q6).
-- Each order: ID, business address, agency address, product code, price (`MoneyJson` canonical units), tax flag, order minute, state, and for `Surveyed` or `Paid` the sealed report: query key, tier, logical day, scope address, radius and up to 64 cells (fixed metric and band codes, value or null).
+- Each order: ID, business address, agency address, product code, price (`MoneyJson` canonical units), tax flag, order minute, `SurveyAtMinute`, state, decline reason, and for `Surveyed` or `Paid` the sealed report: query key, tier, logical day, scope address, radius and up to 64 cells (fixed metric and band codes, value or null).
 
 Maximum size is about 24 orders times 64 cells, well under 20 KB. `SaveEpochStore.PublishedKeys` is unchanged. The new writer gets a pinned golden hash and a reader-corpus entry.
 
@@ -284,7 +292,7 @@ Recommended default:
 | `detailed-local` | Customer profile: snapshot plus taste and lifestyle bands and work/study groups | 500 m around the business | Detailed (62 cells) | $2,000 |
 | `detailed-city` | City profile: the same for the whole city | Whole city | Detailed (62 cells) | $6,000 |
 
-Prices are one-off and billed with that night's marketing bill. Compare them with the native campaign prices that `campaign list` reports before choosing.
+Prices are one-off and billed with that night's marketing bill. Compare them with the native campaign prices that `campaign list` reports before choosing. Above about $16.8 million the native balance cannot subtract every whole-dollar price exactly; such a charge is declined (3.5). Prices that are multiples of a larger power of two (for example $512) stay chargeable at higher balances.
 
 Q2. Should the In-depth tier be sold now? Its two extra cells (loyalty, rival share) are always "unknown" today.
 Recommended default: no. Hide In-depth until both cells have real inputs.
@@ -296,7 +304,7 @@ Q4. Which businesses can order research?
 Recommended default: only player food businesses that Persistent City owns, because the report describes food demand.
 
 Q5. What happens when the bill cannot be paid?
-Recommended default: the order is cancelled, nothing is charged, no report, and the agency sends a message. The player's campaigns are not affected by the research order.
+Recommended default: the order is declined, nothing is charged, no report, and the agency sends a message. The player's campaigns are not affected by the research order.
 
 Q6. How many delivered reports does the player keep?
 Recommended default: the last 16 per city; the oldest is dropped when a new one is delivered.
@@ -308,12 +316,12 @@ Recommended default: one per business and at most 8 per city.
 
 Risks:
 
-- The extra `transactionData` key may affect native display or the save. Check 9 and check 7 test it. Fallback: drop the key and keep the synchronous ledger update.
+- The extra `transactionData` key may affect native display or the save. Check 9 and check 7 test it. There is no keyless fallback: if the key does not survive, research charging stays off (3.5).
 - Mod localization may not load from the mod folder. Check 5 tests it. Fallback: register the folder explicitly with `RegisterExternalLocalization`.
 - Another mod may patch `RunDaily` or `CampaignSettings`. The contract check turns research off when it sees a foreign prefix.
 - A game update may change the private dialog methods. The contract check turns research off; Persistent City keeps running.
 - The survey hold is visible as "calendar held". At 100,000 consumers it is about one second at 60 FPS. C5b measures it.
-- Binary32 balance changes are inexact at very large balances. The record amount is the exact check.
+- Binary32 balance changes are inexact at very large balances. The exact-debit preflight declines such charges before the native call, and the evidence checks the record amount and balance.
 - The rig's `campaign` op verifies the `OnConfirm` target; the added second option must not change its checks. Check 2 tests it.
 
 Refusals:
