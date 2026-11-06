@@ -324,7 +324,7 @@ public sealed class ResearchChargeTests
     [Fact]
     public void QueueFrontDroppedDuringTheCallStillFindsTheAppendedRecord()
     {
-        foreach (int drop in new[] { 1, 5, 6 }) // 6 drops the remembered tail itself
+        foreach (int drop in new[] { 1, 4, 5 }) // 5 drops the remembered tail itself, not the appended record
         {
             var (ledger, port, _, session) = Setup();
             for (int i = 0; i < 5; i++) port.Queue.Add(new Record { Type = "ba:transaction_rent", Amount = -10 });
