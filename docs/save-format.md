@@ -61,7 +61,7 @@ Named in `SaveCodec`/`PersonTable` and checked while streaming, before allocatio
 | Meal roster records, routine stops | 150,000 |
 | Traffic vehicles, link vehicle and waiting lists | 50,000 (`MaxTrafficVehicles`; only residents own cars) |
 | Stations | 256 |
-| Input | 256 Mi characters and UTF-8 bytes; 4,000,000 embedded records (one per visitor tuple) |
+| Input | 256 Mi characters and UTF-8 bytes; 4,000,000 embedded records (one per resident tuple, visitor tuple and station entry) |
 
 The other limits are unchanged from writer 25. Nothing is truncated: a payload over a bound is refused.
 
