@@ -161,6 +161,17 @@ public sealed class Schema26Tests
         return validator.Violations.Where(v => v.Rule != OwnershipRule.PersonIdFormat && v.Rule != OwnershipRule.UnknownPortal).Select(v => (int)v.Rule).ToArray();
     }
 
+    [Theory]
+    [InlineData(1)] [InlineData(2)] [InlineData(3)]
+    public void MarketDiagnosticReportsTheSchedulingFactorBesideTheStoredRosterFactor(int factor)
+    {
+        var state = Running(factor, true, 2).State;
+        var capture = JObject.FromObject(FoodEconomyInsight.Capture(state));
+        Assert.Equal(factor, (int)capture["representationFactor"]!);
+        Assert.Equal(1, (int)capture["storedRosterFactor"]!);
+        Assert.Equal(factor * state.Citizens.Count, (int)capture["representedConsumers"]!);
+    }
+
     [Fact]
     public void WritesRefuseARosterRecordThatIsNotItsOwnPersons()
     {

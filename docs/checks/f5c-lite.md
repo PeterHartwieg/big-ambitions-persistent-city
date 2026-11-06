@@ -81,10 +81,10 @@ Offline only, on this PC, 6 November 2026. Each `dotnet test` first waited for `
 Fresh cities at 957/5,000/50,000 × K2/K3, with the same state written by writer 25 and writer 26:
 
 - **Bytes:** +39,645 characters at 957 × 2 and +4.58 M at 50,000 × 3, which reaches 52.0 % of the cap.
-- **Records:** exactly +1 per visitor.
+- **Records:** exactly +1 per person (resident and visitor tuples) and per station entry, after review fix Sol-r1-2.
 - **Retained memory:** 95.7–121.5 B per visitor.
 - **Tuple sizes:** resident tuple ≤ 15 characters, visitor tuple ≤ 67.
-- **Latency:** within noise between the writers. Every save/load sample is ≥ 30 ms in both arms. This is the save criterion, flagged as in F7a, and is not ordinary-play mod-work.
+- **Latency:** after the review fixes (the ownership pass on every read and write), writer 26 is slower than writer 25 at ≥ 5,000 residents: +16–37 % write and +10–19 % read p50. At 957 it is mixed (−3 %/+27 % write). Every save/load sample is ≥ 30 ms in both arms. This is the save criterion, flagged as in F7a, and is not ordinary-play mod-work (perf file, *Re-measured after the review fixes*).
 - **Frame work:** none added, so mod-work p95 is unchanged by construction; whole-frame timing is separate.
 - **Win:** visitor enrolment ordering is 4× faster at 50,000 × 3 (165.6 → 41.1 ms p50). It is still ≥ 30 ms at that stress size, once at fresh-roster activation (flagged).
 
