@@ -45,12 +45,32 @@ foreach (string type in new[] { "ba:businesstype_school", "ba:businesstype_gym",
     reg.businessTypeName = type; convertedMarket.RefreshRoutineHours(702, true);
     Require(dormant.WeeklyHours.Count == 0, "Returning to study/leisure must close duplicate shop activity again");
 }
+// F5a census sink: same places, one fact record per established business, field reads only.
+foreach (var (type, player, rival) in new[] { ("ba:businesstype_school", false, ""), ("ba:businesstype_coffeeshop", true, ""), ("ba:businesstype_coffeeshop", false, "rival-a") })
+{
+    reg.businessTypeName = type; reg.RentedByPlayer = player; reg.businessOwnerRivalId = rival;
+    reg.aiEmployees = rival.Length > 0 ? new List<object> { new(), new(), new() } : null;
+    string before = Fingerprint(GamePlaces.Read());
+    var census = new List<CensusWorkplace>();
+    string withCensus = Fingerprint(GamePlaces.Read(census));
+    Require(before == withCensus, "The census sink must not change any returned place");
+    Require(census.Count == 1 && census[0].WorkPlaceId == "address:Test:7:work" && census[0].AreaSquareMetres == 30,
+        "Census records the business area from the same catalogue read as homes");
+    Require(census[0].StudyPlaceId == (type == "ba:businesstype_school" ? "address:Test:7:study" : ""), "Only a school pairs a study place");
+    Require(census[0].PlayerOwned == player, "Census flags player-owned businesses");
+    Require(census[0].NativeStaff == (rival.Length > 0 ? 3 : -1), "Rival AI staff list length is informational; unknown otherwise");
+    Require(reg.RentedByPlayer == player && reg.businessTypeName == type && (reg.aiEmployees?.Count ?? 0) == (rival.Length > 0 ? 3 : 0),
+        "Census read must leave the native registration unchanged");
+}
+reg.businessTypeName = "ba:businesstype_coffeeshop"; reg.RentedByPlayer = false; reg.businessOwnerRivalId = null; reg.aiEmployees = null;
+Console.WriteLine("PASS actual GamePlaces census sink: identical places, area/school/player/rival-staff facts, unchanged registration.");
 reg.HasEstablishedBusiness = false;
 var vacant = GamePlaces.Read();
 Require(vacant.Count == 1 && vacant[0].Kind == PlaceKind.Shop && vacant[0].WeeklyHours.Count == 0,
     "Vacant retail keeps dormant entrance without inventing a Work assignment");
 Console.WriteLine("PASS actual GamePlaces + NativeFoodHours: five retail study/leisure roles stay dormant, convert in place, return dormant; vacant retail has no fake Work role.");
 static void Require(bool condition, string message) { if (!condition) throw new Exception(message); }
+static string Fingerprint(List<Place> places) => string.Join("|", places.Select(p => p.Id + ":" + p.Kind + ":" + p.Capacity + ":" + p.WeeklyHours.Count + ":" + p.EvidenceSource));
 public static class SaveGameManager { public static object Current = new object(); }
 namespace Entities
 {
@@ -59,6 +79,7 @@ namespace Entities
         public bool temporarilyClosed, AvailableForRent; public bool HasEstablishedBusiness = true;
         public string businessTypeName = "ba:businesstype_coffeeshop", StreetName = "Test", BusinessName = "Test shop";
         public int StreetNumber = 7; public List<ScheduleDay> scheduleDays = new();
+        public bool RentedByPlayer; public string? businessOwnerRivalId; public List<object>? aiEmployees;
     }
     public sealed class ScheduleDay { public int day; public bool isOpen; public List<Slot> openingHourSlots = new(); }
     public sealed class Slot { public int startingHour, endingHour; }

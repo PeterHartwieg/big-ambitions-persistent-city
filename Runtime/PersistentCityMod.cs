@@ -176,6 +176,7 @@ namespace PersistentCity.Runtime
         public void Initialize(ModContext context)
         {
             log = context.Logger;
+            RegisterCensusCommand();
             try
             {
                 FoodProductMetadataApi.BindMainThread(); metadataLifetime = true;
@@ -191,7 +192,7 @@ namespace PersistentCity.Runtime
                 log.Info("Food menu policy v1: configured="+settings.FoodMenuMaximumOffersPerShop+", effective native maximum="+Math.Min(FoodMenuPolicy.LiveMaximumOffers,settings.FoodMenuMaximumOffersPerShop)+"; reserved product codes grant no sale permission.");
                 settings.MarketResearch.Clamp(message => log.Info(message));
                 settings.Rivals.Clamp(message => log.Info(message));
-                log.Info("Rival choice revision 1: estimated availability; weight="+settings.RivalChoiceWeight+", service="+settings.RivalAssumedServiceMinutes+", refresh="+settings.RivalRefreshGameMinutes+", reads/unit="+settings.RivalReadsPerUnit);
+                log.Info("Rival choice revision 1: estimated availability; weight="+settings.RivalChoiceWeight+", service="+settings.RivalAssumedServiceMinutes+", refresh="+settings.RivalRefreshGameMinutes+", reads/unit="+settings.RivalReadsPerUnit+", service limits "+RivalServiceCalibration.Label+": "+settings.Rivals.ServiceLimitsText());
                 settings.Awareness.Clamp(message => log.Info(message));
                 settings.Campaigns.Clamp(message => log.Info(message));
 
@@ -529,7 +530,9 @@ namespace PersistentCity.Runtime
             initializingHadPayload = save.modData.TryGetValue(SaveStore.StateKey, out initializingPayload);
             var saved = new Dictionary<string, string>(StringComparer.Ordinal);
             if (initializingHadPayload) saved.Add(SaveStore.StateKey, initializingPayload!);
-            var places = GamePlaces.Read();
+            var workplaces = new List<CensusWorkplace>();
+            var places = GamePlaces.Read(workplaces);
+            CaptureCensusCatalogue(places, workplaces);
             log?.Info(OutdoorPlaces.LastDiscoverySummary);
             double minute = Now();
             double clockRate = NativeTravelPace.InitialClockRate(settings.GameClockFactor);
@@ -706,6 +709,8 @@ namespace PersistentCity.Runtime
 
         public void Shutdown()
         {
+            UnregisterCensusCommand();
+            ResetCensus();
             Detach();
             // A pure worker may finish after unload; observe faults and release all runtime references.
             if (initialization != null)

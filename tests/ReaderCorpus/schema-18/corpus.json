@@ -1,0 +1,24 @@
+{
+  "schema": 18,
+  "readerWhenFrozen": "PopulationSchema19",
+  "writerCommit": "3b8f7ec",
+  "rigFixture": "none planned",
+  "fixtures": [
+    {
+      "file": "full.json",
+      "sha256": "0dfb0c63c799dde5133fd33a95157d0cd06f0f74481999810b63783c0b3c5c32",
+      "characters": 5583,
+      "builder": "FoodCommerceTests.S17_Full (2 residents, factor 2, three meals, active decision with routes, outcomes)",
+      "recipe": "ReaderCorpusRecipes.Project(city, 18)",
+      "kind": "synthetic offline payload from test builders; not a native save"
+    },
+    {
+      "file": "minimal.json",
+      "sha256": "3ee92378438896c16e8dbd0c7d3089d74dbb5f2fc85af7433cfd4754518da2ba",
+      "characters": 1521,
+      "builder": "CurrentSchemaOnlyTests.City (1 resident, 1 home, no food scope)",
+      "recipe": "ReaderCorpusRecipes.Project(city, 18)",
+      "kind": "synthetic offline payload from test builders; not a native save"
+    }
+  ]
+}
