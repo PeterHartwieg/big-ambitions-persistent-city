@@ -1,87 +1,53 @@
-# Persistent City roadmap (Peter's answers, 2026-10-30 15:17–15:24 JST, guided Q&A with Spock)
+# Persistent City roadmap
 
-Replaces the phase order in docs/reviews/2026-10-27-realism-gameplay-roadmap.md where they differ. Same principles still apply: bounded state, no extra route searches per decision, saved state replays identically after a reload, native accounting stays authoritative, nothing is written to rivals.
+What is left before the single release, and the standing rules every slice follows. Done work is in [CHECKS.md](../CHECKS.md). Peter's product decisions of 30 October to 2 November (vision, probabilistic choice, traits, memory, marketing, rivals, release order) are in [docs/decisions/2026-10-30-roadmap-decisions.md](decisions/2026-10-30-roadmap-decisions.md); the 6 November delivery rules are in [2026-11-06-delivery-rules.md](decisions/2026-11-06-delivery-rules.md).
 
-## Vision
-"Both equally: a living city that also drives my business." It should feel like a deep optimization game, not formula numbers you work out in the first 5 hours.
+Principles that still apply: bounded state, no extra route searches per decision, saved state replays identically after a reload, native accounting stays authoritative, nothing is written to rivals. There is no interim release.
 
-## Product decisions
-1. **Choice is probabilistic, not a fixed score.** Preferences raise the chance for an item. Distance raises the chance for nearby shops but never rules out distant ones. Keep it deterministic per save through seeded draws, so a reload replays the same day.
-2. **Resident inspector first.** Click a resident to see where they live and work, what their preferences are, and what they ate or skipped and why.
-3. **Individuals are described in words, not numbers** (e.g. "loves burgers", "price-sensitive", "hates waiting"). City-wide statistics come from **paid market research through marketing agencies**, which gives players a new thing to spend money on.
-4. **Traits, core plus lifestyle:** food preferences, price sensitivity, patience (queues), loyalty vs curiosity, willingness to travel, health-conscious, brand or quality focus, time pressure (commuters).
-5. **Memory is driven by the loyalty trait.** Loyal residents keep going back to the same shops, curious ones try new places. Bad visits (stockout, closed, queue) lower the chance of returning, weighted by traits. Memory stays bounded, about 4 shops per consumer. The slice re-measure checks the cost.
-6. **Marketing means awareness plus targeting.** Campaign types reach different resident groups (commuters, health-conscious, ...). Awareness only makes a visit possible; traits still decide.
-7. **Rivals are real alternatives.** Residents can choose them over Peter's shops. Rivals are read-only with an outflow line, and nothing native is written.
-8. **Weather, street life and bigger menus come after the core loop works.**
+## Remaining
 
-## Order
-**Peter 15:25 JST: "Release will only happen at the end."** There's no interim release. Steps A–E build on the development line (still merged through the normal gates), and the single Workshop release comes after the full roadmap. Performance stays a standing requirement that is re-checked as features land, and it must pass before that final release.
+| Item | Status | Notes |
+| --- | --- | --- |
+| E5b complete-menu integration | partial | Dynamic native acquisition, dirty recovery and held-policy execution are not done. [E5b checks](checks/e5b-complete-menu.md). |
+| E6 carts and food trucks | planned | Per Peter's E5 Q6 decision: cart and food-truck sales for products without a building holder (Street Food dumplings, chopped cheese), if RIG-CAT finds no building-placeable holder. After E5 and outside its scope. |
+| Audit F5c-lite | planned (running) | Schema 26 person shape, refusing older development cities. Replaces F5c's migration design. |
+| Audit F5d, F5e, F5g, F5i, F5h | planned | Independent schedules, workplaces and employment, population fill and visitor transport, visitor bodies after F2, integrated acceptance. [F5 plan](plans/f5-population.md#4-slice-breakdown). |
+| Audit F6d to F6h | planned | Ledger contract, attended wages, household resources, change journal and feedback v2, multi-week calibration. [F6 plan](plans/f6-economy.md#4-slice-breakdown). F6d also owns the committed-meal profile change across reload left by [F6b](checks/f6b.md). |
+| Audit F7p | planned (running) | Compact-format prototype, tools only. |
+| Audit F7c, F7d, F7e | planned | Snapshot/wire split, compact writer, overlap in the native save window (F7e conditional). [F7 plan](plans/f7-save-snapshots.md#4-slice-breakdown). |
+| Re-scope plan rows for no migration | planned | F5d, F5e, F6d, F6e, F7c and F7d still describe migration or switch-over-day tests. The coordinator proposes the changes; Peter approves them in `docs/decisions/`. |
+| Audit F2, F4, F8, F9 | planned, no plan yet | [City audit](reviews/2026-11-03-city-vision-audit.md): F2 presentation must not change journey authority; F4 the perf gate does not prove the requested experience; F8 capability boundaries for dependencies and native patches; F9 an integrated city acceptance path. |
+| Batched rig run | planned | Runs every merged slice's "In-game checks for the next batched rig" against the development head, including audit F1's native accounting and complete-cost proof and A5's final-head matched proof. List: [rig-2026-11-06-checklist.md](checks/rig-2026-11-06-checklist.md) plus each checks file. Before the first refusing schema merges, the rig needs to build and age a fresh FT city at head. |
+| Final performance gate | planned | Re-check the gate below on the final development head. |
+| Hands-on session | planned | Peter's playtest, including A5's pointer and input checks 1–3 and check 12's interactive extension. |
+| Single release | planned | One Workshop release after all of the above. |
 
-0. Performance: the 30 October comprehensive review is done and passes the mod-work gate below. Spock agreed: no optimization work now; re-measure as each slice lands. This isn't a release step.
-A. Inspector, traits and probabilistic choice. Start now (Peter 15:24 JST), with the standing performance gate applied to each slice.
+## Deferred
 
-   A5 (1 Nov): integrated offline gate complete on the original pre-E1 A/B/C line (2,351 tests /50 commands); [schema-20 base-sync validation, review closure, invariant gate, historical performance report and 6 Nov handoff](checks/a5-integrated-acceptance.md). Native interaction and final-head matched proof remain pending.
-B. Memory, loyalty and regulars. **B0 is implemented offline:** schema 18, exact old-source migration and history-inclusive capacity; memory remains empty/inactive and the regulars helper is a pure own-shop projection. **B0b is inserted between B0 and B1:** persist the held A3 tuning image and neutral bounded per-candidate contribution; schema 18 is amended before player use. B1 is implemented offline on B0b: per-consumer generation memory, atomic experience watermarks and captured bounded loyalty/curiosity weights; 6 Nov native proof remains pending. B2 is implemented offline on B1: unique-consumer own-shop regular counts, inspector memory words and read-only bridge flags/counts, with zero saved growth and no choice contribution. Default Q7 thresholds are three served visits, positive effective memory and fourteen days. Native proof remains pending the combined 6 Nov session. [B2 checks](checks/b2-regulars-inspector.md#step-b2-regulars-and-inspector-words---31-october-2026-offline-only). [Contract and capacity evidence](population-schema18.md).
-   B1 protected-insertion exception: if recording a new bad visit would evict a competing boost, return chance stays equal (never higher), with a terminal failed watermark and no negative per-shop entry. B2 must not assume every failure leaves a negative entry; `ProtectedInsertions` is session-local, not saved history. [Exact exception](population-schema18.md#b1-execution--31-october-2026).
+| Item | Status | Reason |
+| --- | --- | --- |
+| C4 paid market research | implemented, inactive | C3 found no safe native fee path; tier contents and fees are still open. [C4 checks](checks/c4-market-research.md). |
+| Track F interior view: F2 upper floors, F3 polish | planned | F1 shop-view drawing is NO-GO and F1b found no safe renderer. F0 stays a default-off experiment. [Track F plan](plans/track-f-interior-view.md). |
+| Drinks and bundles | planned | Deferred by the E3 remaining batch and the E5 decisions. |
+| Physical fast-forward (6×) | planned | A 6× physical experiment drifted off roads and jammed. Fast-forward runs in the background. |
+| Reachability-aware assignment and live venue refresh | planned | Destinations use straight-line weighting and a catalogue frozen at initialization; see [behaviour](behaviour.md#known-limitations). |
+| Social and employee identity unification with RLO | planned | Native employees and RLO social profiles stay separate. |
 
-C. Marketing awareness and targeting, plus the market research product. **C2a implemented offline on B0b:** bounded source/index interface, B1 memory projection/campaign-unknown providers, local/routine and positive daily distant discovery, common eight-slot shortlist, additive schema 19. B1 memory is wired within the existing four source slots and bounded rank; r1 bounds rebuild continuations and restores at-stop observation/diagnostics and strict held-image validation. Combined 6 Nov rig proof pending. [Contract](population-schema19.md). **C4 implemented offline and inactive:** bounded pure research engine/access contract only; paid research stays off because C3 found no safe native fee path. No UI, normal-play computation or saved fields. [Contract and offline proof](market-research.md).
-   C2b (1 Nov, offline): hourly observed campaign images, bounded source/index and schema 22 implemented; Peter's 1 Nov rule now applies active preference/softer distance for all residents; native checks batched into the combined locked rig under merge rule v2, no rig proof claimed. [Checks](checks/c2b-campaign-awareness.md).
-D. Rivals as alternatives. **D2 implemented offline, schema 21:** bounded rival choices and atomic external-food spending; combined 6 Nov proof pending. [D2 checks](checks/d2-rival-outflow.md). **D3a implemented offline, schema 24:** free fourteen-day totals/counts and exact ledger reconciliation; combined 6 Nov native proof pending. [D3a checks](checks/d3a-outflow-line.md). **D4 implemented offline:** modeled rival experience shares B1's four-entry memory/watermark, writer 24; D4 adds no shape; [checks](checks/d4-rival-memory.md). Native acceptance is deferred to the next batched combined rig / Peter's playtest per merge rule v2, recorded in `rig-2026-11-06-checklist.md`, and does not gate merge.
-E. Weather, street life, bigger menus and more products. **E1 implemented offline:** new-context weather capture, soft rain effects, frozen queue commitment replay and additive schema 20 on the merged C2a/B1 contract; E2b timing and menu feasibility remain intact. Combined-head native checks remain pending. [Contract/budget](population-schema20.md). **E5a implemented offline:** detached loaded-catalogue/direct-stock validation and dirty cache only; `Supported`, ownership/checkout and writer 24 unchanged. [Evidence and automated next-batch rig checks](checks/e5a-catalogue-eligibility.md). E5c pure product metadata defaults/config is implemented offline; no native product-support or writer change. [Checks and next batched rig handoff](checks/e5c-neutral-metadata.md). **E5d implemented offline:** inactive schema 25 canonical names/held inputs, exact 24 migration and capability refusal; [contract](population-schema25.md), [offline evidence and numbered rig handoff](checks/e5d-name-identity-save.md). **E5b partial (offline):** complete-menu price refusal and authored bag caching; dynamic native mutation/holder/held-execution integration remains incomplete. [Evidence, exact gaps and automated next-batch checks](checks/e5b-complete-menu.md). **E5e implemented offline:** bounded versioned provider metadata, config > API > defaults, unchanged schema/held/native authority; [checks and automated next-batch rig handoff](checks/e5e-metadata-api.md).
-Then: re-check the same performance gate for the final release, the hands-on session, and one release.
-Later: residents as employees, households.
+## Superseded
 
-Implementation plan for B–E: [memory, marketing, rivals and the wider street](plans/steps-b-e.md).
+| Item | Replaced by |
+| --- | --- |
+| E3 per-product implementation PRs | The [E5 dynamic loaded-catalogue plan](plans/e5-dynamic-products.md) (2 Nov). E3 records stay as regression evidence. |
+| F5c schema and migration | F5c-lite under the no-migration rule (6 Nov). |
+| Development-save migration and switch-over days | Schema bump plus refusal of older development cities (6 Nov). |
+| Native rig proof as a merge gate (for example audit F1, F0 final head) | The batched rig run (merge rule v2, 6 Nov). |
+| Running the `tools/*-regression` suites before release | Build, unit tests and each slice's own checks (6 Nov). |
+| "Later: residents as employees, households" | F5 households and employment, F6 attended wages. |
+| The 24 October scope in `implementation-plan.md` | This roadmap and the approved F5, F6 and F7 plans. Archived in [docs/archive](archive/implementation-plan.md). |
 
-City-audit F6b implements [estimated rival service lanes and meal-period sell-out](plans/f6-economy.md) derived from saved state, with writer 25 unchanged; [offline evidence and automated batched-rig handoff](checks/f6b.md); not verified by rig.
+## Performance gate
 
-City-audit F1 implements [minute-epoch accounting coordination](plans/f1-accounting-boundary.md), ordinary/skip backpressure, safe boundary observations and PC stop/native-clock release on a lost epoch, with writer 25 unchanged. [Offline evidence and automated batched-rig handoff](checks/f1-accounting-backlog.md); native proof and complete mod-work/whole-frame cost remain merge blockers. F3 retains individual bulk/route work ownership.
-
-City-audit F6a implements the [section 3.5 intervention harness](plans/f6-economy.md#35-controlled-interventions-and-measurement) offline (`tools/economy-interventions`) and records today's six-week baseline and unlimited rival curve; no Runtime/Core/save change. [Baseline and automated batched-rig checks](checks/f6a-intervention-harness.md).
-
-City-audit F7a (4 Nov, offline) implements the [save-cost baseline](checks/f7a.md): on-request save-phase/activation diagnostics and representative/stress fixtures; writer 25 unchanged; not verified by rig.
-
-City-audit F7b implements the [exact save-epoch contract](plans/f7-save-snapshots.md) (side key, failed/detach markers, re-entrancy guard, legacy path), writer 25 unchanged; not verified by rig. [Offline evidence and automated batched-rig checks](checks/f7b.md).
-
-City-audit F6c (#93) implements [feedback v1](plans/f6-economy.md#4-slice-breakdown) (week-over-week evaluated-offer causes, budget-state counts and inspector words, incremental panel counters) offline; rig verification pending. [Checks and batched-rig list](checks/f6c.md).
-
-City-audit F5a (#92) implements the [read-only world census](plans/f5-population.md#4-slice-breakdown) and `pc population census` offline; rig verification pending. [Checks and batched-rig list](checks/f5a.md).
-
-City-audit F5b (4 November, offline) implements the inactive [identity and ownership core](plans/f5-population.md): person/visitor/employment types, derived household and visitor identity (IdentityPolicy v1) and the ownership validator, not wired; writer 25 unchanged. [Checks and batched-rig handoff](checks/f5b-identity-core.md).
-
-City-audit F7f (#94) implements the [frozen reader corpus](plans/f7-save-snapshots.md#4-slice-breakdown) for schemas 13–25 offline, with pinned hashes and no reader/writer change; rig verification pending. [Checks and batched-rig list](checks/f7f.md).
-
-City-audit F5f (5 November, offline) implements the [active-journey candidate index](plans/f5-population.md#4-slice-breakdown) for physical selection (selection-scan part of parked hotspot #1; spatial indexing and movement authority stay with F2); writer 25 unchanged; rig verification pending. [Checks and batched-rig list](checks/f5f.md).
-
-E3 pizza status (offline): [STOP record](plans/e3-pizza.md); pinned conditional shared probe, shipped holder unestablished, no menu/gameplay/save change. [Validation and 6 Nov handoff](checks/e3-pizza.md).
-E3 remaining batch status, 2 November (offline): Peter chose one batch of remaining E3 records; [all six named candidates STOP](plans/e3-remaining-batch.md), isolated probes only, no menu/gameplay/save change; drinks/bundles/carts remain deferred. [Checks and 6 Nov handoff](checks/e3-remaining-batch.md).
-
-E4 status, 1 November (offline): schema 23 menu/product/history envelope implemented; effective live limit four, no extra product enabled. [Validation and numbered 6 Nov handoff](checks/e4-wider-menu.md).
-
-E5 plan, Peter 2 November 2026: per-product implementation is superseded by the [dynamic loaded-catalogue plan](plans/e5-dynamic-products.md); the **18:02 JST decisions** record food-by-default admission after the full native contract, seeded per-resident tastes, **E5e mod metadata API**, deferred bundles and confirmed dumplings/chopped cheese cases. E3 records are regression evidence, with no E3 product proven in game. Docs only; no implementation or save change. Implementation and automated rig verification are separate statuses.
-
-E6 / next scope: **cart and food-truck sales support** for products without a building holder (Street Food dumplings/chopped cheese), if RIG-CAT finds no building-placeable holder; per Peter's E5 Q6 decision, **planned, not started**, after E5 and outside its scope.
-
-E3 status, 31 October (offline): [donut](plans/e3-donut.md) and [cupcake feasibility discovery](plans/e3-cupcake.md) share one isolated on-demand raw-field reader with pinned candidates. Loaded equipment and natural checkout/settlement proof remain pending; no additional product certified or enabled.
-
-E3 salad status, 1 November (offline): [salad stop record](plans/e3-salad.md) adds a pinned conditional probe on the cupcake/donut stack. Shipped holder unestablished; no generic holder extension, menu, gameplay or saved change. Existing read branches retained; no additional cheap safe measured perf win identified. Three-candidate offline timing and the combined 6 Nov handoff are in [CHECKS](checks/e3-salad.md#e3-salad-feasibility---1-november-2026-offline-only).
-
-E3 ice cream status, 1 November (offline): [independent feasibility STOP](plans/e3-icecream.md); shipped holder/resource contract unestablished, shared read branches unchanged, no product/menu/save/gameplay change. [Offline timings and 6 Nov handoff](checks/e3-icecream.md).
-
-E3 frenchfries status, 1 November (offline): [STOP record](plans/e3-frenchfries.md); shipped holder unestablished, pinned conditional probe with unchanged shared read branches. No gameplay/menu/save change; [four-reader timing and 6 Nov handoff](checks/e3-frenchfries.md). No additional cheap safe measured perf win identified.
-
-Peter’s [31 October Q1-Q7 decisions](plans/steps-b-e.md#product-decisions-peter-31-oct-2026) specify tiered paid research as a third native-agency option (proven fee or unavailable), local/distant discovery, estimated rivals, food-first products, no anonymous crowds/night multiplier and own-shop regulars; tier contents/fees remain open.
-
-Track F (Peter, 31 October): independently authored city view from interiors, F0 spike → F1 shop view/customer entry → F2 upper-floor/penthouse view → F3 polish. [F0 findings and plan](plans/track-f-interior-view.md): default-off runtime eligibility/entrance-anchor experiment; **city drawing is a no-op pending F1**, with no save-format change or A-stack dependency. E2c (31 Oct, offline) implements only the once-per-load third-party detection guard, forced-off F0 state and read-only bridge verdict; native proof remains pending. [E2c evidence](checks/e2c-interior-guard.md#e2c-third-party-interior-guard---31-october-2026-offline-only). The same mod-work/whole-frame evidence rules apply to F.
-
-F1 status, 1 November (offline): **NO-GO at drawing step 1**; no proven detached-space projection/culling approach, no renderer or customer hand-off added. [Decision and smaller read-only probe](plans/f1-shop-view-decision.md); [offline checks and 6 Nov handoff](checks/f1-shop-view.md). F0/E2c and all runtime/save behavior remain unchanged.
-
-F1b status (offline): renderer **NO-GO**; explicit read-only door/transform and capped street metadata diagnostics implement the smaller investigation. [Decision, refresh/invalidation limits](plans/f1b-street-proxy.md) and [offline evidence/6 Nov checks](checks/f1b-street-proxy.md). No frame participant, renderer, customer path or schema change.
-
-## Performance gate (Peter, 2026-10-30)
-
-Applies to every step A–E slice re-measure and to the final release:
+Peter, 30 October 2026. Applies to every step A–E slice re-measure and to the final release; AGENTS.md applies it to every later slice too:
 
 - **Mod-work p95 must stay under 5 ms**, leaving a buffer under the 10 ms frame budget for 100 fps.
 - Single mod-work spikes **under 30 ms are acceptable**. Flag every mod-work spike **of 30 ms or more** in the re-measure report.
@@ -92,78 +58,54 @@ Applies to every step A–E slice re-measure and to the final release:
 
 **Standing practice.** Being under 5 ms is never a reason to skip obvious improvements. Every slice's implementation and review must look for cheap, low-risk performance wins (redundant per-frame work, caching, avoidable allocations, refresh rates that can safely drop) and take them in that slice when low-risk and measurable. The review's four hotspots—physical population, closure refresh, optional-stop refresh and save serialization—stay parked as high-risk unless a cheap, safe variant turns up, such as lowering closure or optional-stop refresh frequency where correctness allows.
 
-### Perf wins log
+## Wording
 
-Record every taken win with before/after numbers.
+Use "implemented" (merged after review) and "verified by rig" (automated rig proof passed) as separate statuses. Status words: planned, implemented, partial, stopped, verified by rig. Plain sentences, one qualification per claim, and a link to the evidence instead of a restated caveat.
 
-- City-audit F1 — [Elapsed-time frame caps and cached pacing text](perf/f1-accounting-backlog.md): matched 960-resident queue at 30 simulated FPS, 60 -> 30 frames / 2 -> 1 simulated seconds, byte-identical state; 1,200 visible text requests 499,200 -> 16,640 B / 1,200 -> 40 builds; R1 removes the wasted crossing tick (8-hour zero-work skip 960 -> 481 ticks), restores the 120 FPS 16-start/2 ms floor and quantifies remaining pacing cost; R2 quiet baseline text 16,640 -> 0 B / 40 -> 0 builds per 1,200 requests (GUI excluded); offline components, no native whole-frame gate claim.
+## Perf wins log
 
-- City-audit F6a — [Harness tool cost; no win taken](perf/f6a-intervention-harness.md): tools/tests only, no product code or mod work touched; 1.32/3.27 s and 1.80/3.74 GB per simulated week (10,260 epochs) at 1,914/4,000 consumers (tool cost, no gate).
-- City-audit F7b — [Save-epoch callback overhead](perf/f7b.md): no win taken (save/detach path only); publish 0.0001 -> 0.0008 ms p95, 0 -> 808 B per save, load check 0.0012 ms p95; writer-25 SHA-256 unchanged; no frame work beyond a unit counter; offline components only.
+One line per slice. Before/after numbers and limits are in each file.
 
-- City-audit F3 — [Reusable posting heap, pre-sized campaign capture and bounded work](perf/pc-f3-bounded-bulk-work.md): 48 B/posting -> no recurring node allocation; matched complete-day work 3.2406/15.7399/87.1907 -> 0.9100/5.1148/22.4029 ms at 1,914/10,000/100,000 consumers; 64-scope capture 141,472 -> 138,392 B/boundary. Exact replay hashes match; 49 stress advancement intervals >=30 ms remain flagged. R1 restores 1,024-candidate campaign coverage with resumable publication and time-aware route admission (16-path safety ceiling); native-double 957-plan burst drains at 30/60 FPS, native capture p95 6.1153 ms remains above gate. Offline only; [status and five automated next-batch rig checks](checks/pc-f3-bounded-bulk-work.md).
-
-- City-audit F7a — [Writer-25 save-cost baseline](perf/f7a.md): representative 957x2 2,333,388 chars, save p50/p95 46.10/87.19 ms, 3.72x UTF-16 allocation; baseline only, no win taken (save serialization stays parked for F7c/F7d).
-
-- City-audit F6c — [Incremental panel counters and one-pass shop lookups](perf/f6c.md): open-panel consumer work p95 1.1088/3.4898/32.1975 -> 0.0026/0.0050/0.0030 ms and 743,240/3,863,008/39,248,344 -> 6,280/6,456/7,768 B/request at 1,914/10,000/100,000 consumers; per-shop lookups p95 2.7575/116.1171 -> 0.5459/14.5748 ms at 64/1,024 shops including the new week text; 128-bit counters and tuple keys cut the 1,024-shop build 8,109,056 -> 4,525,584 B; hidden panel 0 B. Cost: +0.0006–0.0163 ms p95 per posting call, 0 B. Offline components, no whole-frame claim.
-
-- City-audit F5a — [Pre-sized census dictionaries](perf/f5a.md): census allocation 126,408 -> 104,000 B/call (reference shape) and 2,288,064 -> 1,817,576 B/call (20,000 places / 50,000 residents), timing within noise; on-request diagnostic, offline only.
-
-- City-audit F5b — [Ordered-input owner lookup hint, boxing-free enum checks, allocation-free intent ownership and concatenation-free identity hashing](perf/f5b-identity-core.md): validator p50 1,914/10,000/100,000 persons 1.3185/8.3299/108.7320 -> 0.6485/3.6938/49.2912 ms; warm validator 68,741/358,737/3,587,106 -> 0 B/call; intent check 127.8 -> 0 B/intent (3.06 -> 1.05 ms per 30,000); identity draw 284 -> 0 B/lookup. New code, offline components only; no frame work.
-
-- City-audit F7f — [One over-cap payload per frozen reader instead of per schema](perf/f7f.md): corpus over-cap test 3,294.7 -> 871.4 ms, corpus suite 6,188.0 -> 3,162.9 ms (sum of per-method medians, 3 runs); test time only, zero runtime change and no mod-work effect; also records lines/test time per frozen reader.
-
-- City-audit F5f — [Active-journey candidate index for physical selection](perf/f5f.md): selection p95 against the unchanged pre-F5f loop at 1,914/10,000/50,000 persons with 100 active journeys 0.0360/0.2623/1.0858 -> 0.0133/0.0126/0.0123 ms, with 1,000 active 0.2801/0.4230/1.9762 -> 0.1823/0.2289/0.1927 ms; 0 B per call from the selection itself; offline harness on native doubles (tiered compilation off), not in-game mod-work.
-
-- E5b — [Cached authored bag policy and bounded duplicate checks](perf/e5b-complete-menu.md): discovery 280 -> 0 B/call; offline p95 0.0003 -> 0.0001 ms; no native combined mod-work or whole-frame claim.
-
-- E5e - [Skip all-refused claim walks and reuse images across empty-provider lifecycles](perf/e5e-metadata-api.md): publication p95 0.0590 -> 0.0066 ms; empty lifecycle 512 -> 128 B/burst; host copy 673104 -> 350496 B; offline components only.
-
-- E5a — [Reuse bounded holder capacity and ordinal-key identity proof](perf/e5a-catalogue-eligibility.md): E5a eight-offer rebuild 300,280 -> 129,144 B; clean reads 0 B/scans; initial 32.5793 ms backlog spike retained in evidence.
-
-- E5c - [Load-time duplicate-field mask and metadata measurements](perf/e5c-neutral-metadata.md): 256-entry parse 289,488 -> 195,280 B; resolver and 4/8-offer hot choice work 0 B, no frame work.
-
-- E5d - [Exact escaped-name parsing and shared token offsets](perf/e5d-name-identity-save.md): 8,285,000 -> 2,065,995 B/read on the matched 256-name escaped fixture; offline bulk-save measurements, no per-frame discovery work.
-
-- E3 remaining batch — [Typed seasonal field gate](perf/e3-remaining-batch.md): 248 -> 200 B/read (2 entries), 49,152 -> 49,104 B/read (2,000); no per-frame work.
-- D4 - [Advertised-hours completion check and four-entry rival memory measurements](perf/d4-rival-memory.md): 1,464 -> 0 B/completion check and 352 -> 0 B/own-generation word check offline.
-
-- F1b — [Reuse the one-shot inventory's shared-material buffer](perf/f1b-street-proxy.md): 129-renderer offline mean allocation 80,838.96 →69,547.73 B/call; no frame work added.
-
-- D3a — [Cache immutable free projections/text](perf/d3a-outflow-line.md): unchanged open request 14,336 → 0 B; offline p95 0.0198 → 0.0001 ms (component only).
-
-Each slice records its wins in its own `docs/perf/<slice>.md` and adds one index line here. Keep before/after numbers and measurement limits in that file; sync/review-fix notes stay with the slice.
-
-- City-audit F6b — [Rival lane/sell-out cost, reconstruction and retained bytes; no win taken](perf/f6b.md).
-- C2b - [Campaign index reuse, canonical sorting, shared references, active-hour buffers and neutral marker cache](perf/c2b-campaign-awareness.md).
-- D2 — [Bounded rival choice, refresh and settlement measurements](perf/d2-rival-outflow.md).
-
-
-- E4 — [Supply-refresh allocation win and four/eight-offer offline measurements](perf/e4-wider-menu.md).
-- A5 — [Popup address reuse: four → two formatter calls, 6,432 → 5,856 bytes per refresh; offline limits](perf/a5-integrated-acceptance.md).
-
-- A2 — [Schema 17, lifestyle traits and base sync evidence](perf/a2-schema17-traits.md).
-- A3 — [Weighted food choices, review fixes and native checklist](perf/a3-weighted-choice.md).
-- B0 — [Schema 18, capacity, review fixes and native checklist](perf/b0-schema18.md).
-- B0b — [Held tuning, base syncs and native checklist](perf/b0b-held-tuning.md).
-- E3 — [Donut feasibility reader](perf/e3-donut.md).
-- C1 — [Native campaign reader and native checklist](perf/c1-campaign-reader.md).
-- D1 — [Read-only rival food catalogue and native checklist](perf/d1-rival-catalogue.md).
-- F0 — [Interior view experiment, reviews and native checklist](perf/f0-interior-view.md).
-- E2c — [Third-party interior guard](perf/e2c-interior-guard.md).
-- B1 — [Shop memory and loyalty v2](perf/b1-memory-loyalty.md).
-
-- B2 — [Observed own-shop regulars and resident memory words](perf/b2-regulars-inspector.md).
-
-- C2a — [Core bounded awareness and yielded index publication](perf/c2a-core-awareness.md).
-- E2b — [Bounded street-life timing and fail-closed frontage ownership](perf/e2b-street-life.md).
-
-- E3 cupcake — [Shared reader timing and allocation evidence](perf/e3-cupcake.md).
-
-- E3 salad — [Conditional shared reader timing and allocation evidence](perf/e3-salad.md).
-
-- E3 pizza — [Four-candidate cold/warm costs and allocations; no new win claimed](perf/e3-pizza.md).
-
-- C4 — [Bounded inactive research and direct trait validation](perf/c4-market-research.md).
-
-- E1 — [Weather capture, admission and consumer precheck](perf/e1-rain.md).
+- A2 — [perf/a2-schema17-traits.md](perf/a2-schema17-traits.md)
+- A3 — [perf/a3-weighted-choice.md](perf/a3-weighted-choice.md)
+- A5 — [perf/a5-integrated-acceptance.md](perf/a5-integrated-acceptance.md)
+- B0 — [perf/b0-schema18.md](perf/b0-schema18.md)
+- B0b — [perf/b0b-held-tuning.md](perf/b0b-held-tuning.md)
+- B1 — [perf/b1-memory-loyalty.md](perf/b1-memory-loyalty.md)
+- B2 — [perf/b2-regulars-inspector.md](perf/b2-regulars-inspector.md)
+- C1 — [perf/c1-campaign-reader.md](perf/c1-campaign-reader.md)
+- C2a — [perf/c2a-core-awareness.md](perf/c2a-core-awareness.md)
+- C2b — [perf/c2b-campaign-awareness.md](perf/c2b-campaign-awareness.md)
+- C4 — [perf/c4-market-research.md](perf/c4-market-research.md)
+- D1 — [perf/d1-rival-catalogue.md](perf/d1-rival-catalogue.md)
+- D2 — [perf/d2-rival-outflow.md](perf/d2-rival-outflow.md)
+- D3a — [perf/d3a-outflow-line.md](perf/d3a-outflow-line.md)
+- D4 — [perf/d4-rival-memory.md](perf/d4-rival-memory.md)
+- E1 — [perf/e1-rain.md](perf/e1-rain.md)
+- E2b — [perf/e2b-street-life.md](perf/e2b-street-life.md)
+- E2c — [perf/e2c-interior-guard.md](perf/e2c-interior-guard.md)
+- E3 cupcake — [perf/e3-cupcake.md](perf/e3-cupcake.md)
+- E3 donut — [perf/e3-donut.md](perf/e3-donut.md)
+- E3 pizza — [perf/e3-pizza.md](perf/e3-pizza.md)
+- E3 remaining batch — [perf/e3-remaining-batch.md](perf/e3-remaining-batch.md)
+- E3 salad — [perf/e3-salad.md](perf/e3-salad.md)
+- E4 — [perf/e4-wider-menu.md](perf/e4-wider-menu.md)
+- E5a — [perf/e5a-catalogue-eligibility.md](perf/e5a-catalogue-eligibility.md)
+- E5b — [perf/e5b-complete-menu.md](perf/e5b-complete-menu.md)
+- E5c — [perf/e5c-neutral-metadata.md](perf/e5c-neutral-metadata.md)
+- E5d — [perf/e5d-name-identity-save.md](perf/e5d-name-identity-save.md)
+- E5e — [perf/e5e-metadata-api.md](perf/e5e-metadata-api.md)
+- F0 (Track F) — [perf/f0-interior-view.md](perf/f0-interior-view.md)
+- F1 (audit) — [perf/f1-accounting-backlog.md](perf/f1-accounting-backlog.md)
+- F1b (Track F) — [perf/f1b-street-proxy.md](perf/f1b-street-proxy.md)
+- F3 (audit) — [perf/pc-f3-bounded-bulk-work.md](perf/pc-f3-bounded-bulk-work.md)
+- F5a — [perf/f5a.md](perf/f5a.md)
+- F5b — [perf/f5b-identity-core.md](perf/f5b-identity-core.md)
+- F5f — [perf/f5f.md](perf/f5f.md)
+- F6a — [perf/f6a-intervention-harness.md](perf/f6a-intervention-harness.md)
+- F6b — [perf/f6b.md](perf/f6b.md)
+- F6c — [perf/f6c.md](perf/f6c.md)
+- F7a — [perf/f7a.md](perf/f7a.md)
+- F7b — [perf/f7b.md](perf/f7b.md)
+- F7f — [perf/f7f.md](perf/f7f.md)
+- pc-docs-restructure — [perf/pc-docs-restructure.md](perf/pc-docs-restructure.md)

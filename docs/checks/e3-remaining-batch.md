@@ -1,8 +1,20 @@
 # E3 remaining prepared-food batch checks
 
+## README entry (moved 6 Nov 2026)
+
+E3 remaining batch: [six named candidates STOP](../archive/e3-remaining-batch.md), per Peter's 2 November batch-check decision; isolated conditional probes only, no gameplay/menu/save change. [Offline checks and 6 Nov handoff](e3-remaining-batch.md).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+E3 remaining batch status, 2 November (offline): Peter chose one batch of remaining E3 records; [all six named candidates STOP](../archive/e3-remaining-batch.md), isolated probes only, no menu/gameplay/save change; drinks/bundles/carts remain deferred. [Checks and 6 Nov handoff](e3-remaining-batch.md).
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- E3 remaining batch - 2 November 2026, offline: all six named candidates STOP; twelve-reader worst warm 2,000-entry p95 0.1441 ms, 200 / 49,104 B/read; existing cold 1,112 -> 1,256 B, zero reader spikes >=30 ms; [full timings, proof and 6 Nov rig/PR handoff](e3-remaining-batch.md).
+
 ## 2 November 2026 — offline only
 
-**Six named candidates, six STOP records:** cheeseplatter, cottoncandy, popcorn, kabob, candycane and christmascookies. The request's repeated count of seven conflicts with its explicit six-name inventory; every named candidate is covered, with no extra product invented. Peter's 2 November batch-check decision applies to E3 records only; drinks, bundles and carts stay deferred. [Per-candidate native members, confidence and limitations](../plans/e3-remaining-batch.md). No shipped holder/resource/simulator contract was established; seasonal retail status and loaded availability remain Unknown.
+**Six named candidates, six STOP records:** cheeseplatter, cottoncandy, popcorn, kabob, candycane and christmascookies. The request's repeated count of seven conflicts with its explicit six-name inventory; every named candidate is covered, with no extra product invented. Peter's 2 November batch-check decision applies to E3 records only; drinks, bundles and carts stay deferred. [Per-candidate native members, confidence and limitations](../archive/e3-remaining-batch.md). No shipped holder/resource/simulator contract was established; seasonal retail status and loaded availability remain Unknown.
 
 Code commit `9124de0` adds six private-constructor pinned descriptors, six detached facades and a conservative seasonal field gate. The shared reader changes only by six descriptor lines; its read branches, refusals and existing outputs are unchanged. All six original facade/case/project files, current products, catalogue/supply/checkout, E4, schema **24**, SaveCodec, saved fields and gameplay callers remain unchanged. No menu/enrollment expansion, `NativeFoodMarket.Supported` edit, live product, product code, checkout seam or native writer. The seasonal probes refuse any non-None season, special-gift/seasonal-sale/AI-seasonal flag or substitution array; they never evaluate the season or choose a replacement.
 

@@ -1,5 +1,9 @@
 # A2: Schema 17, lifestyle traits and base sync evidence
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- A2 — Schema 17, lifestyle traits and base sync evidence: [checks](a2-schema17-traits.md).
+
 ## A2 base sync after merged A1/F0/D1/C1/E2a - 31 October 2026 (offline only)
 
 Merge base `84660a5` into approved A2 `41c870f`, keeping both parents and common ancestor `7a6153c`. Resolve all twelve conflicts with both sides' complete intent: A1's corrected native address formatter plus A2 traits/Today outcomes; every check, migration case, test, plan/roadmap/performance entry and native checklist marker remains. The base has not claimed schema 17 or changed the schema-16 population contract; A2's codec/model/traits/outcome contract and schema-17 tests remain unchanged. [Prepared PR description, per-file resolutions and later A2 rig checks](../reviews/2026-10-31-a2-sync-base-pr-description.md).
@@ -12,7 +16,7 @@ This ancestry sync lands by merge commit into A2. The separate locked-PC `rig_te
 
 ## Step A2 population schema 17 and lifestyle traits - 30 October 2026 (offline only)
 
-Implements slice A2 of the [step A plan](../plans/step-a-inspector-traits-choice.md), stacked on A1. 17 was confirmed as the next free population schema (current was 16). No game, rig or native run.
+Implements slice A2 of the [step A plan](../archive/step-a-inspector-traits-choice.md), stacked on A1. 17 was confirmed as the next free population schema (current was 16). No game, rig or native run.
 
 **What schema 17 adds.**
 - `CitizenState.Traits`: one required record per resident, also when there is no food scope. Ten traits in generation version 1 (three product tastes, price sensitivity, queue patience, loyalty/curiosity, travel willingness, health, quality/brand and time pressure). Each is a fixed band 0-4 stored as one digit in `Bands`. Traits come from the saved `CityState.Seed` and the stable ID through `pc:traits:v1|<length>:<id>|<trait>`, with no names, homes, jobs, bodies or settings in the key. Shares are 10/20/40/20/10%. Traits are immutable after generation, and event copies share them.

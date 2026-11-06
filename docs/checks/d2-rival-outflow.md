@@ -1,5 +1,17 @@
 # D2: rival choice and own-ledger outflow
 
+## README entry (moved 6 Nov 2026)
+
+D2 adds bounded read-only rival food choices, timed outings and exact own-ledger external spending with schema 21. Offline evidence and the pending combined 6 Nov checks are in [D2 checks](d2-rival-outflow.md). D4 now connects modeled rival experiences to B1's existing four-entry memory without a schema change; [offline checks](d4-rival-memory.md). Native acceptance is deferred to the next batched combined rig / Peter's playtest per merge rule v2, recorded in `rig-2026-11-06-checklist.md`, and does not gate merge.
+
+## Roadmap entry (moved 6 Nov 2026)
+
+D. Rivals as alternatives. **D2 implemented offline, schema 21:** bounded rival choices and atomic external-food spending; combined 6 Nov proof pending. [D2 checks](d2-rival-outflow.md).
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- D2 - Rival choice/outflow, schema 21 below C2b/E4; offline sync evidence and numbered native checklist: [checks](d2-rival-outflow.md).
+
 Measurement provenance: the original D2 timings/byte tables and round-one repair
 results below were measured on the D2 line based on `51ce709`, before E1 schema
 20. They remain historical evidence, not current merged-head measurements. The
@@ -17,7 +29,7 @@ history revenue or B1 experience. Campaigns remain unknown and unused.
 At the initial pre-E1 implementation, schema **21** used an isolated, frozen
 19-source reader/migration and refused the then-unmerged schema 20. The merged
 tree instead preserves E1 through the isolated 20 -> 21 step described below.
-The [current contract](../population-schema21.md)
+The [current contract](../archive/population-schema21.md)
 records the compact target/account/outcome variants, exact conservation identity,
 unchanged caps and zero extra consumer-record charge. Schema 17–19 contract
 documents, native receipt formats, menus and RLO source are unchanged.

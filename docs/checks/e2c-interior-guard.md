@@ -1,5 +1,17 @@
 # E2c: Third-party interior guard and base sync evidence
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- E2c — Third-party interior guard, base syncs and native checklist: [checks](e2c-interior-guard.md).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+Track F (Peter, 31 October): independently authored city view from interiors, F0 spike → F1 shop view/customer entry → F2 upper-floor/penthouse view → F3 polish. [F0 findings and plan](../plans/track-f-interior-view.md): default-off runtime eligibility/entrance-anchor experiment; **city drawing is a no-op pending F1**, with no save-format change or A-stack dependency. E2c (31 Oct, offline) implements only the once-per-load third-party detection guard, forced-off F0 state and read-only bridge verdict; native proof remains pending. [E2c evidence](e2c-interior-guard.md#e2c-third-party-interior-guard---31-october-2026-offline-only). The same mod-work/whole-frame evidence rules apply to F.
+
+## Plan row status (moved 6 Nov 2026)
+
+Slice-table row in [track-f-interior-view.md](../plans/track-f-interior-view.md): | **E2c (separate)** | Implemented 31 Oct (offline): once-per-city-load assembly/optional Harmony-owner detection forces F0 off on match/error; flat auto/off control and cached read-only bridge verdict. Detection guard only; no foreign implementation dependency/research, interop, new patch or save change. [Evidence and pending 6 Nov checks](e2c-interior-guard.md#e2c-third-party-interior-guard---31-october-2026-offline-only). |
+
 ## E2c second base sync after A3/B0/C3 and the docs split - 1 November 2026 (offline only)
 
 Merge development `8c24f24` into E2c `2af082f`, retaining merge base `8b05227` and both parents. Resolve four documentation conflicts with both sides' complete intent: retain every incoming slice and its sync fixes, move E2c's two original checks sections and two README notices into this owning file, and move its full performance row into [E2c perf](../perf/e2c-interior-guard.md). CHECKS and the roadmap receive one index line each; README matches incoming exactly. C3's findings and E2c's independent guard status both remain in the B-E plan. Relative evidence links are repaired. [Prepared PR description and per-file resolutions](../reviews/2026-11-01-e2c-sync2-base-pr-description.md).
@@ -48,7 +60,7 @@ The unchanged save-contract regression prints the same canonical digest **`6B909
 
 **Taken cheap win:** compare wildcard prefixes in place, avoiding one temporary substring per scanned assembly/prefix rule. The paired pre-optimization/initial-optimized samples (501 scans, nine assemblies) reduce allocation **6,296 -> 5,936 B/scan** (360 B, about 5.7%); p50/p95/max **0.0084/0.0109/0.0159 -> 0.0085/0.0099/0.0182 ms**. No timing improvement is claimed. The final gate repeat above records the larger tail too. [Roadmap perf wins log](../roadmap.md#perf-wins-log) records this comparison; no hotspot rewrite.
 
-The first standalone startup-clock attempt exposed its missing links for the new Runtime files; the harness links/doubles and expected one-time log assertion were updated, then it and all remaining gates passed. The initial guard source assertion was narrowed to distinguish the cached `State.Active` property from F0's refreshing getter before the full unit pass. All test/run commands were preceded by the required other-dotnet wait; no background test runs were started. Coordinated build-server shutdown completed and the immediate cleanup inventory was empty. A subsequent final inventory showed another worktree (`e3-first-product`) had started its own test run/compiler server; those processes were left untouched. **No E2c dotnet, testhost or compiler-server processes remain.** Logs stay ignored under `build/e2c/`; [machine-readable results](../plans/e2c-offline-results.json) retain command exits, performance and save-contract output. No game launch, rig/lease access, test-profile/ModsLocal/bridge access or Steam-install write occurred.
+The first standalone startup-clock attempt exposed its missing links for the new Runtime files; the harness links/doubles and expected one-time log assertion were updated, then it and all remaining gates passed. The initial guard source assertion was narrowed to distinguish the cached `State.Active` property from F0's refreshing getter before the full unit pass. All test/run commands were preceded by the required other-dotnet wait; no background test runs were started. Coordinated build-server shutdown completed and the immediate cleanup inventory was empty. A subsequent final inventory showed another worktree (`e3-first-product`) had started its own test run/compiler server; those processes were left untouched. **No E2c dotnet, testhost or compiler-server processes remain.** Logs stay ignored under `build/e2c/`; [machine-readable results](../archive/e2c-offline-results.json) retain command exits, performance and save-contract output. No game launch, rig/lease access, test-profile/ModsLocal/bridge access or Steam-install write occurred.
 
 
 ### In-game checks for 6 Nov rig

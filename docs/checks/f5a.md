@@ -1,5 +1,21 @@
 # City audit F5a — world census (read-only), 4 November 2026, offline
 
+## README entry (moved 6 Nov 2026)
+
+City-audit F5a implements a read-only world census (beds, households, area-band workplace capacity with player-owned businesses flagged and excluded, resident workers, commuter/day-visitor targets, implied trips and meals) behind the `pc population census` console diagnostic, with no behaviour, save or allocation change. [Offline evidence, native staffing inspection and automated batched-rig checks](f5a.md).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+City-audit F5a (#92) implements the [read-only world census](../plans/f5-population.md#4-slice-breakdown) and `pc population census` offline; rig verification pending. [Checks and batched-rig list](f5a.md).
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- City-audit F5a — 4 November 2026, offline: read-only world census and `pc population census` console diagnostic; writer 25, no behaviour/save/`BusinessAllocation` change; 2,886 tests (30 new) and the required commands passed. On request only: main-thread capture p95 0.023 ms (957 residents) / 0.990–1.382 ms (50,000), detached reduction p95 0.268–0.278 / 7.173–7.644 ms; zero ordinary-frame work, no sample >=30 ms; rival `aiEmployees` verified, workstation count absent. [Checks, ILSpy record and In-game checks for the next batched rig](f5a.md#in-game-checks-for-the-next-batched-rig).
+
+## Plan row status (moved 6 Nov 2026)
+
+F5a row in [f5-population.md](../plans/f5-population.md): *Status (4 Nov 2026): implemented offline on `codex/pc-f5a-population-census`; rig verification pending ([checks](f5a.md)).*
+
 Refs [#92](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/92). Branch `codex/pc-f5a-population-census` from `origin/codex/persistent-city` at `dc59049` (writer **25**; F1 #99, F3 #98 and the F5/F6/F7 plans merged). Scope is the F5a row of [the F5 plan](../plans/f5-population.md#4-slice-breakdown). The plan's cited locations were re-read at this base: `GamePlaces.cs` (home area read, `BusinessAllocation = 16`), `HousingPolicy.cs` (bands, 90% fill, 50,000 residents), `RouteObjectDiscovery.cs` (`Stations`), `MultimodalRoutes.EnsureStations` (`subway:<stationName>` IDs), `SaveCodec.cs` (`MaxPlaces = 20,000`, `MaxCitizens = 50,000`) and `Model.cs` (`CurrentSchema = 25`).
 
 Persistent City is not live or released. This slice is implemented offline; nothing here is verified by rig yet.

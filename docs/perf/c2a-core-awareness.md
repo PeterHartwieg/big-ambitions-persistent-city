@@ -1,5 +1,9 @@
 # C2a performance wins
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- C2a — [Core bounded awareness and yielded index publication](c2a-core-awareness.md).
+
 | Slice | Change | Before | After |
 |---|---|---|---|
 | C2a r1 | Bound geometry publication with 64-item continuation; keep eligibility-only changes out of geometry revision | Synchronous 20k rebuild: 40 measured >=30 ms samples, max78.1916 ms; eligibility flips could rebuild identical geometry | 371,898 measured units incl. cold/JIT: p95 <=0.0123 ms, max11.8403 ms, zero >=30 ms; eligibility flips perform zero builds. 20k complete build uses 9,390–10,408 units with clock/event ordering held. [r1 evidence](../reviews/2026-10-31-c2a-r1-rebuild.json) |

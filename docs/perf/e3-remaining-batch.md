@@ -1,5 +1,9 @@
 # E3 remaining batch performance — 2 November 2026
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- E3 remaining batch — [Typed seasonal field gate](e3-remaining-batch.md): 248 -> 200 B/read (2 entries), 49,152 -> 49,104 B/read (2,000); no per-frame work.
+
 Offline Release .NET 10 measurements of actual production readers against conditional native field doubles. These are neither native combined mod-work nor whole-frame measurements. Six incoming candidates are measured before/after the descriptor addition using the same harness; all six named new candidates are measured after. A fresh synchronously awaited foreground apphost process supplies each candidate's single cold call, including JIT and descriptor/tag metadata initialization. Cold has one sample, **not** a percentile. Warm has 30 warmups then 1,001 individually timed valid calls per size; construction, assertion and sample sorting are outside measured calls. Furniture includes one bag counter. All original cases/facades/read branches remain unchanged.
 
 `tools/e3-remaining-feasibility-regression/measure_baseline.py` reconstructs the exact incoming shared reader, SHA-256 `239650040cb06dde4f0d8030e659c906a5fe09c8b37ea7be9dc763162ddb880d`, from `a1b993a`; one generated ignored project measures all six before candidates. `dotnet run --project tools/e3-remaining-feasibility-regression/E3RemainingFeasibilityRegression.csproj --configuration Release -- measure` builds/runs once for the after batch, with child processes awaited sequentially. No per-candidate dotnet build/run loop or background test job. Logs remain ignored under `build/e3-remaining-batch/`; the dated checks receipt preserves results/hashes.

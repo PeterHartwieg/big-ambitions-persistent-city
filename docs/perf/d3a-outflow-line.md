@@ -1,5 +1,9 @@
 # D3a outflow history/line: 1 November 2026, offline only
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- D3a — [Cache immutable free projections/text](d3a-outflow-line.md): unchanged open request 14,336 → 0 B; offline p95 0.0198 → 0.0001 ms (component only).
+
 Implementation `7cd4809`, conservative boundary-day follow-up `88551e8`; Windows shared host, .NET 10 Release. Reproduce with
 `tools/outflow-line-regression` (included in `python tools/run-d3a-checks.py`).
 No game, rig, Unity execution, native mod-work or whole-frame sample is claimed.
@@ -49,7 +53,7 @@ retention and exact D2 ledger reconciliation; late bursts cannot grow row count.
 Saved history: **280 ASCII characters / 293 property bytes / 15 charged records**
 in this fixture. Contract maximum **1,024 history characters / 1,037 property
 bytes / 15 records per food city**, **zero per consumer**. Population-only state
-has zero added fields/records. [Schema contract](../population-schema24.md).
+has zero added fields/records. [Schema contract](../archive/population-schema24.md).
 Capacity accounting subtracts actual history bytes/records from its existing
 D3a reserve once; it does not raise either global cap or double-reserve history.
 

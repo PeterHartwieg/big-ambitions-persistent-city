@@ -1,8 +1,20 @@
 # E3 ice cream checks
 
+## README entry (moved 6 Nov 2026)
+
+E3 ice cream: [feasibility STOP](../archive/e3-icecream.md), shipped holder unestablished; conditional read-only probe only ([offline checks](e3-icecream.md)).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+E3 ice cream status, 1 November (offline): [independent feasibility STOP](../archive/e3-icecream.md); shipped holder/resource contract unestablished, shared read branches unchanged, no product/menu/save/gameplay change. [Offline timings and 6 Nov handoff](e3-icecream.md).
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- E3 ice cream - 1 November 2026, offline STOP; D/C/S/I warm 2,000-entry p95 0.1610 / 0.1474 / 0.1605 / 0.1779 ms, 49,104 B/call; cold/small timings and 6 Nov handoff: [checks](e3-icecream.md).
+
 ## 1 November 2026 - offline only
 
-[Native feasibility STOP](../plans/e3-icecream.md): ice cream 256, counter 255 and mixture 381 are independent identifiers. The shipped holder/resource contract remains Unknown. The conditional pinned facade adds one descriptor line to the unchanged shared reader; candidate workstations and converted/shared inputs refuse. No menu/enrollment, supported-product set, schema, saved field or gameplay behavior changes. No game launch, rig/test-profile/ModsLocal/bridge-directory/lease access, Steam writes or WSL use.
+[Native feasibility STOP](../archive/e3-icecream.md): ice cream 256, counter 255 and mixture 381 are independent identifiers. The shipped holder/resource contract remains Unknown. The conditional pinned facade adds one descriptor line to the unchanged shared reader; candidate workstations and converted/shared inputs refuse. No menu/enrollment, supported-product set, schema, saved field or gameplay behavior changes. No game launch, rig/test-profile/ModsLocal/bridge-directory/lease access, Steam writes or WSL use.
 
 Native proof remains pending. Commands/logs stay ignored under `build/e3-icecream/`; the local test list is [validate.py](../../tools/icecream-feasibility-regression/validate.py), including the new `dotnet run --project tools/icecream-feasibility-regression/IcecreamFeasibilityRegression.csproj --configuration Release` and own source check. Every test/run is preceded by the prescribed other-dotnet wait; no deadlines or detached tests.
 
@@ -47,7 +59,7 @@ Pending in the normal combined session on a named disposable native-owned FT fix
 
 ## 1 November 2026 - A5 base integration
 
-Merged development head `0ffb819353c44a802224b98af673e1085040fc8a` into approved ice cream head `89111eff8c1aa9b2bb336b0674d532cdfb9b7403` from merge base `587745362a035395efc1a45bbb277799aae5cbdc`, retaining two-parent merge ancestry. Both sides' README diffs against that merge base were inspected. The sole textual conflict was the adjacent A5 / ice cream status paragraphs in README; both remain, including the incoming schema-20 documentation correction. Automatic CHECKS/roadmap compositions retain both index/status contributions and A5's perf-log entry. All original ice cream evidence above, including the entire numbered native checklist, remains unchanged. [Sync review description](../plans/e3-icecream-sync-base-pr-description.md).
+Merged development head `0ffb819353c44a802224b98af673e1085040fc8a` into approved ice cream head `89111eff8c1aa9b2bb336b0674d532cdfb9b7403` from merge base `587745362a035395efc1a45bbb277799aae5cbdc`, retaining two-parent merge ancestry. Both sides' README diffs against that merge base were inspected. The sole textual conflict was the adjacent A5 / ice cream status paragraphs in README; both remain, including the incoming schema-20 documentation correction. Automatic CHECKS/roadmap compositions retain both index/status contributions and A5's perf-log entry. All original ice cream evidence above, including the entire numbered native checklist, remains unchanged. [Sync review description](../archive/e3-icecream-sync-base-pr-description.md).
 
 No E3 ice cream/shared-reader or other integration code change, no persistence change and no new schema claim. Incoming A5 source, tests, tools, checks, plan and reports are preserved. Exact SHA-256 pins pass without re-pinning; the explicit `source_checks.py --audit-base 0ffb819` audit preserves **543 incoming source/test/tool/config blobs**, while the existing guards separately preserve the original donut/cupcake/salad contracts and ice cream isolation. This source audit replaces the earlier base/count only for this sync; historical measurements above remain historical.
 

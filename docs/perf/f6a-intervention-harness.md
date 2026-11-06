@@ -1,5 +1,9 @@
 # City audit F6a performance: intervention harness tool cost, 4 November 2026, offline
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- City-audit F6a — [Harness tool cost; no win taken](f6a-intervention-harness.md): tools/tests only, no product code or mod work touched; 1.32/3.27 s and 1.80/3.74 GB per simulated week (10,260 epochs) at 1,914/4,000 consumers (tool cost, no gate).
+
 Refs #93. Base `dc59049` (writer 25). [Checks, baseline and the numbered rig list](../checks/f6a-intervention-harness.md).
 
 ## Scope of this measurement

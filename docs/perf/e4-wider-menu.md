@@ -1,5 +1,9 @@
 # E4 offline performance
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- E4 — [Supply-refresh allocation win and four/eight-offer offline measurements](e4-wider-menu.md).
+
 1 November 2026. Baseline `51ce709`; native field doubles, .NET 10 Release, seed 957. No native performance claim. Raw matrix/harness logs: ignored `build/e4-menu/validation`.
 
 **Measurement provenance after base sync:** all tables and before/after numbers below were measured on the original E4 stack based on `51ce709`, before E1. They are retained historical evidence, not measurements of the merged E1/E4 tree. The sync adds current tool results and limits in [E4 checks](../checks/e4-wider-menu.md#base-sync-with-e1-and-f1). No new performance win is claimed by this merge.

@@ -1,5 +1,9 @@
 # PR #1–#3 history: October accounting, optional stops, reviews and rig evidence
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- PR #1–#3 history — October accounting, optional stops, reviews and rig evidence: [checks](history-2026-10-pr1-pr3.md).
+
 ## PR #3 option B rig rerun - 29 October 2026 (native evidence, PASS)
 
 Tested `7a104d6` (production code `067e8c5`) against unchanged `7357f78`. All AFTER measurements are fresh; primary BEFORE native evidence is explicitly reused, with a fresh before/after performance confirmation added. **31/31 offline commands and 1,551/1,551 tests pass.** Default realised share: **7,902/32,725 = 24.1467%** over 28 cold days; **8,016/32,084 = 24.9844%** over 28 warm days, with zero ordinary-default drops. Both builds pass 110/110 exact native-price payments and all 1,914 resident ledgers. Settings, four decrease arms, migrations/refusals, actual transfer/conversation reloads and native dwell/return pass.

@@ -1,5 +1,9 @@
 # D4 rival memory: offline performance
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- D4 - [Advertised-hours completion check and four-entry rival memory measurements](d4-rival-memory.md): 1,464 -> 0 B/completion check and 352 -> 0 B/own-generation word check offline.
+
 1 November 2026. Reproduce with the foreground Release
 `tools/rival-memory-regression/RivalMemoryRegression.csproj` after the shared
 other-dotnet guard. Each arm uses 2,000 warmups and 10,000 individual timed calls.

@@ -1,5 +1,21 @@
 # City audit F5f — active-journey candidate index, 5 November 2026, offline
 
+## README entry (moved 6 Nov 2026)
+
+City-audit F5f implements the active-journey candidate index: physical selection iterates only persons travelling, queueing or outdoors, with visitors indexed but given no body until F5i; caps, leases and selection order are unchanged (writer 25). [Offline checks and automated batched-rig checks](f5f.md).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+City-audit F5f (5 November, offline) implements the [active-journey candidate index](../plans/f5-population.md#4-slice-breakdown) for physical selection (selection-scan part of parked hotspot #1; spatial indexing and movement authority stay with F2); writer 25 unchanged; rig verification pending. [Checks and batched-rig list](f5f.md).
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- City-audit F5f — 5 November 2026, offline: active-journey candidate index; physical selection and queue planning iterate travelling/queueing/outdoor persons instead of every citizen, visitors indexed but withheld until F5i, caps/leases/`ByPriority` order unchanged, 30 s shadow check with full-scan fallback; writer 25, no identity/economy change. 2,973 tests (9 new) and the required commands passed; index = full scan after every event/slice/skip/reload/rebuild/lease release. Selection p95 against the unchanged pre-F5f loop at 50,000 persons / 100 active 1.0858 -> 0.0123 ms (1,000 active 1.9762 -> 0.1927 ms), no sample >=30 ms. [Checks and four In-game checks for the next batched rig](f5f.md#in-game-checks-for-the-next-batched-rig), [measurements](../perf/f5f.md).
+
+## Plan row status (moved 6 Nov 2026)
+
+F5f row in [f5-population.md](../plans/f5-population.md): *Status (5 Nov 2026): implemented offline on `codex/pc-f5f-active-journey-index`; rig verification pending ([checks](f5f.md)).*
+
 Refs [#92](https://github.com/PeterHartwieg/big-ambitions-persistent-city/issues/92). Branch `codex/pc-f5f-active-journey-index` from `origin/codex/persistent-city` at `448247c` (writer **25**; F1 #99, F3 #98, the F5/F6/F7 plans, F5a and F5b merged). Scope is the F5f row of [the F5 plan](../plans/f5-population.md#4-slice-breakdown); section 3 (*Physical bodies are presentation only, staged on F2*), contract B5 and the F5f rows of sections 5 and 6 are its spec. The cited locations were re-read at this base: `Runtime/PhysicalPopulation.cs` (the 0.25 s candidate loop over `simulation.State.Citizens`, `SelectionCandidate.ByPriority`, `Outdoor`, `PlanQueues`), `Core/PhysicalJourneys.cs:69-86` (lease acquisition freezes logical progress; unchanged), `Core/OptionalStopScheduling.cs` (`FileOptionalStop`, the existing derived-index pattern), `Core/PersonIdentity.cs` (F5b `PersonKind`, `PersonIds`) and `Core/Model.cs` (`CurrentSchema = 25`).
 
 Persistent City is not live or released. This slice is implemented offline; nothing here is verified by rig yet.

@@ -1,16 +1,24 @@
 # Independent population simulation
 
+Marked 6 November 2026: most sections below are historical design records from 19 to 24 October. Current behaviour is in [behaviour.md](behaviour.md), current scope in the [roadmap](roadmap.md), and binding rules in [AGENTS.md](../AGENTS.md).
+
 ## Current scope — 24 October 2026
 
-The [bounded implementation plan](implementation-plan.md) is the current release roadmap, agreed by the lead, GPT-6.1 Sol and Claude Opus 5.5 after Peter's scope clarification. Persistent people, workplaces/leisure, cars and traffic remain central. Simple job changes, an initial two-consumer representation factor and plug-and-play supported-shop ownership replace the broader whole-economy ambition. Payroll integration, rival finances, domestic simulation and resident departure/replacement are not release requirements. See the [agreement record](reviews/2026-10-24-scope-plan.md). A proposed post-release roadmap for realism, decisions and fun is in [the 27 October roadmap](reviews/2026-10-27-realism-gameplay-roadmap.md); it is a proposal, not approved scope.
+*Historical: the 24 October scope is superseded by the [roadmap](roadmap.md) and the F5, F6 and F7 plans.*
+
+The [bounded implementation plan](archive/implementation-plan.md) is the current release roadmap, agreed by the lead, GPT-6.1 Sol and Claude Opus 5.5 after Peter's scope clarification. Persistent people, workplaces/leisure, cars and traffic remain central. Simple job changes, an initial two-consumer representation factor and plug-and-play supported-shop ownership replace the broader whole-economy ambition. Payroll integration, rival finances, domestic simulation and resident departure/replacement are not release requirements. See the [agreement record](reviews/2026-10-24-scope-plan.md). A proposed post-release roadmap for realism, decisions and fun is in [the 27 October roadmap](reviews/2026-10-27-realism-gameplay-roadmap.md); it is a proposal, not approved scope.
 
 The following decisions and roadmap are historical context. Their broader expansion requirements and old "next" steps are superseded by the linked plan; implementation claims remain tied to the candidate/evidence in README.md and CHECKS.md. Planning agreement does not enable the current candidate, migrate saves or authorize ordinary-save deployment.
 
 ## Historical design decisions
 
+*Historical.*
+
 Decision, 19 October 2026: build a separate RLO-dependent mod. Decision, 21 October 2026: Peter approved the economy roadmap below after independent Astra and Claude Opus 5.5 reviews and reconciliation. The next milestone is one understandable food economy with real business consequences, beginning with a short read-only shadow experiment. Performance work continues alongside it and gates live economic authority. There is no need to align feature implementation or release cadence with RLO's author. RLO updates still require compatibility checking.
 
 ## Ownership
+
+*Partly historical: version and schema numbers here are from October. Current behaviour is in [behaviour.md](behaviour.md).*
 
 The [23 October strategy review](reviews/2026-10-23-economy-strategy.md) refines the roadmap below. The current [neighborhood food candidate](neighborhood-economy.md) uses persistent individual balances, declared external income/support, essential expenses and a paid home-food alternative. Native shop accounting remains authoritative. This is an open local economy; connecting actual employment, broader supply chains and rival investment remains later work. Small shops and expansion must earn their role through local demand and costs, without guaranteed winners.
 
@@ -22,6 +30,8 @@ The physical milestone retains the native economy's customers and workers. A sho
 
 ## Agreed economy roadmap — 21 October 2026
 
+*Historical: superseded by the [roadmap](roadmap.md).*
+
 The existing identity, routine, journey and physical-population simulation is the foundation. The next objective is: residents choose where to buy food, the player can see why, and those choices can determine actual shop sales. Complete that small loop before expanding the scope.
 
 1. **Prove meaningful food demand.** Use one food category and a small set of real competing businesses. Read current business information, model recurring food needs and explicitly temporary spending allowances, and retain purchase intentions and outcomes. Prices, opening hours, availability and travel must explain choices and unmet demand. A small citizen/shop insight view distinguishes simulated choices from observed native activity. In the same milestone, establish how native purchasing, inventory and accounting can execute the eventual sales. Keep shadow mode bounded: its exit is understandable behaviour and credible demand scale, not exact reproduction of vanilla sales.
@@ -31,6 +41,8 @@ The existing identity, routine, journey and physical-population simulation is th
 5. **Broaden the changing city economy.** Expand categories and let financial outcomes drive hiring, investment, capacity, business openings and closures.
 
 ### Small shops and useful expansion — 22 October 2026
+
+*Historical: superseded by the [roadmap](roadmap.md).*
 
 Peter's design target: a well-chosen 15-capacity shop should be a worthwhile first business, with a second small location a credible growth choice. Expansion should be able to reach additional customers and serve previously unmet demand, without automatically taking the first shop's business. This remains a target for the live economy. The routine/service experiment below demonstrates the local-coverage mechanism; native single-shop sales are now verified, while live expansion economics and profitability remain unvalidated.
 
@@ -44,6 +56,8 @@ The controlled routine/service comparison covers one 15-capacity shop, two 15-ca
 
 ### Economic boundary and parallel work
 
+*Historical: superseded by the [roadmap](roadmap.md) and [AGENTS.md](../AGENTS.md).*
+
 - Define resident, commuter, visitor and outside-trade participation explicitly. Whether 957 residents generate sufficient demand is unmeasured. Native totals are a comparison and balance reference, not a target to reach by inventing visits. Start with the known residents; absent external cohorts must be reported as out of scope rather than silently supplied.
 - Economic participation does not require a rendered body. Persistent residents still retain coherent journeys; representation must not generate another purchase. Outside cohorts must have stated assumptions and origins.
 - Performance work proceeds alongside shadow development and gates sustained live play. Synthetic timings are not Windows or full-modpack performance evidence.
@@ -52,17 +66,11 @@ The controlled routine/service comparison covers one 15-capacity shop, two 15-ca
 
 ### First increment
 
-Work started on 21 October 2026. The read-only food-choice and purchase-intention foundation, reproducible comparison/insight surface and source-based native sale map are implemented. At that initial milestone, the experiment ran offline and the on-demand native catalogue reader was compiled but not activated. Native customer generation, money, stock, employment and the existing population save remain untouched. [First-increment evidence and remaining live integration](food-demand.md) distinguish completed checks from pending work; the synthetic demonstration is not live-city validation.
-
-On 22 October Peter asked to prioritize real-world causality within game mechanics and performance constraints. The [routine/service increment](reviews/2026-10-22-food-routines.md) observes population stops and evaluates bounded food outings with service queues. Its first small-shop comparison supports useful neighborhood expansion. Existing work/leisure templates remain in place; the food counterfactual does not yet own a resident's actual journey or sale.
-
-The subsequent [customer-service/district increment](reviews/2026-10-22-food-quality-demand.md) adds the native saved service rating as a quality proxy and district product demand as a bounded appeal signal. Both influence personal price/time trade-offs. Native market demand already includes supplier saturation; it must not multiply customer counts again. These inputs do not establish optional purchase frequency or a calibrated demand curve.
-
-The [household-choice increment](reviews/2026-10-22-food-household-budgets.md) replaces the shared allowance in new routine experiments with stable individual variation, optionally shaped by observed home-district composition. A provisional home-preparation or planned packed-meal preference can decline a purchase. This records no household food consumption or free meal. The earlier PC capture replays with a gradual price response, without guaranteeing the example shop its previous sales.
-
-The [22 October native connection pilot](reviews/2026-10-22-food-native-pilot.md) subsequently verified home-district inputs, current stocked/staffed supply and three controlled native purchases with actual resident visits and daily settlement. Its separate three-day capture supports an offline demand comparison. This is progress toward step 2, not its completion: regular meal decisions, persistent transaction ownership and sustained play remain to be established before normal activation. Actual household finances still belong to step 3.
+*Historical; moved verbatim to [design-history-2026-10.md](archive/design-history-2026-10.md).*
 
 ## Continuity rules
+
+*Still binding, except that residents no longer depart or get replaced; they stay in the city ([behaviour.md](behaviour.md#daily-life)).*
 
 - A route is contiguous and ends at a known destination. Unreachable routes wait and retry; arrival is never fabricated.
 - Player/camera position must change only representation quality, never determine which citizen exists or what they did.
@@ -81,6 +89,8 @@ The [22 October native connection pilot](reviews/2026-10-22-food-native-pilot.md
 
 ## Release gates
 
+*Historical gate list from October. The current performance gate is in the [roadmap](roadmap.md#performance-gate); release waits for the remaining roadmap items.*
+
 Background checks: cadence-independent results, save/reload midjourney, backward-clock rejection, unreachable destinations, closed and overnight venues, malformed/future saves, bounded event processing and dependency refusal.
 
 Visible walking gate: follow a selected citizen for a complete itinerary; leave and meet them elsewhere; reload midwalk; verify appearance; switch between street, interior and free camera; saturate the actor budget without visible disappearance; remove the mod and verify ambient spawning restores.
@@ -93,21 +103,8 @@ Fun gate requires playtesting: familiar neighbours, understandable destinations,
 
 ### Automatic recurring meals — 22 October follow-up
 
-Peter authorized the next gate after the native connection pilot: ordinary recurring intentions, one scheduler-owned journey, durable purchase ownership and scoped replacement of generated native customers. Implemented in the optional saved food scope; [current verification](reviews/2026-10-22-food-routine-sales.md) records 24 natural purchases over three native days, four reload checkpoints and duplicate-sale prevention. Start with one stocked product at selected player full-service shops, keeping restocking and daily accounting native. The next economy step is household income and expenses, followed by broader products/supply. Normal-play performance and broader activation remain separate gates. Do not add guaranteed viability, owner protection or minimum sales.
-
-Peter then challenged the eight-sales-per-day result and asked to account for 1,000+ citizens. The [demand audit](reviews/2026-10-22-food-demand-audit.md) identifies compressed travel time and the mandatory separate return trip as the main constraints. It adds modest, stable break flexibility and reduces repeated catalogue/choice/path work. Before household finance expansion, examine buying during an existing shopping stop and short on-route takeaway detours. Keep the same resident/journey ownership, next-commitment deadline, finite service/stock and event budgets. Do not compensate by silently multiplying citizens, inventing external customers or extending every break for hours.
-
-Peter subsequently authorized testing a citywide one-third calendar speed, based on Driven Rides' travel-time experience. This experiment now precedes additional demand tuning: preserve movement/physics pace and game-time schedules, prices, allowances, service capacity and deadlines, while each day provides three times as much wall-clock travel time. Make the factor configurable, coordinate Driven Rides so its ride multiplier does not compound, preserve time-machine durations, and restore ordinary clock ownership on unload or failure. Compare the same disposable checkpoint for a full game day at factors 1 and 1/3, recording sales, queues, completed journeys, missed activities and CPU work. The PC preparation was stopped at Peter's request and testing moved to the isolated Mac rig. Native results belong in the dated clock-pace review; no normal-profile deployment is authorized by this test.
-
-The [completed Mac comparison](reviews/2026-10-22-city-clock.md) supports retaining one third as the candidate baseline: the same shop serves 13→42 customers per game day, and more shopping/leisure visits complete. Missed-activity counts also rise, so the next implementation should investigate destination reachability and opening-window fit before connecting existing shopping stops to purchases. The real taxi compatibility check passes without compounded slowdown. Native performance with rendered population remains unverified.
-Peter authorized continuing with destination feasibility on 23 October, with the PC available for validation. New optional shopping/leisure decisions should check an actual route and useful opening time before departure, try a small number of alternatives, and retain the original activity deadline. Committed trips, work assignments and finite food-service rules remain in force. Record reasons for misses and compare the same disposable checkpoint at one-third calendar speed before connecting existing shopping stops to purchases.
-
-The [23 October PC comparison](reviews/2026-10-23-optional-destinations.md) verifies that bounded optional-venue feasibility improves useful visits: shopping 228→429, leisure 238→552, misses 948→446. All remaining late arrivals predate the comparison. Food purchases remain 38. Continue with buying during existing shopping stops, retaining one-third time and the current service/stock/budget constraints. Native timing variation, maximum advancement-call cost and rendered-performance limits are recorded in the review.
+*Historical; moved verbatim to [design-history-2026-10.md](archive/design-history-2026-10.md).*
 
 ## Three-reviewer strategy checkpoint — 23 October 2026
 
-Peter requested independent Opus and Astra assessments and reconciliation with the lead. All three agree after three rounds on the [recorded strategy plan](reviews/2026-10-23-economy-strategy.md). This is reviewer consensus, not new implementation or release approval.
-
-The immediate increment is a bounded experiment connecting suitable existing shopping activity to the same pending food need, finite allowance and native transaction authority as standalone outings. First inspect eligible opportunities and distinguish generic destination choice, access and affordability. Run one small local comparison plus an offer change over comparable days, with readable reasons and known costs; finish with an interpretable response or a measured blocking assumption. Do not tune a large economy around temporary allowances or add purchases to every generic visit.
-
-The first playable neighborhood economy combines that increment with persistent balances, explicit recurring income, essential expenses and a priced home-food alternative, then meaningful multi-day business comparisons and normal-play performance/pacing. Keep native accounting authoritative and describe outside employers/trade honestly. Household finances precede a general detour planner and broader categories; small nearby-stop experiments require evidence of an access bottleneck. Normal visible-body budgets at roughly 1,000 persistent residents, whole-game frame behavior and Peter's ability to predict, understand and enjoy business decisions gate playability. A second location earns its catchment; no prescribed winner, protected chain, guaranteed sales or compulsory business losses are introduced.
+*Historical; moved verbatim to [design-history-2026-10.md](archive/design-history-2026-10.md).*

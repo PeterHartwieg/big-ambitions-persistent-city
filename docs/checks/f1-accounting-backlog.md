@@ -1,5 +1,17 @@
 # City-audit F1 — 3 November 2026 — offline only
 
+## README entry (moved 6 Nov 2026)
+
+City-audit F1 implements simulation/accounting backpressure, bounded lag and visible pacing/refusal status, boundary observation publication and safe PC stop/native-clock release on a lost epoch, with accounting-specific recovery when a different valid save loads, with writer 25 unchanged. [Offline cadence/reload evidence and six automated batched-rig checks](f1-accounting-backlog.md); native accounting and complete-cost proof remain a merge blocker.
+
+## Roadmap entry (moved 6 Nov 2026)
+
+City-audit F1 implements [minute-epoch accounting coordination](../plans/f1-accounting-boundary.md), ordinary/skip backpressure, safe boundary observations and PC stop/native-clock release on a lost epoch, with writer 25 unchanged. [Offline evidence and automated batched-rig handoff](f1-accounting-backlog.md); native proof and complete mod-work/whole-frame cost remain merge blockers. F3 retains individual bulk/route work ownership.
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- City-audit F1 — R3 offline: accounting-specific save-change recovery; marked saves remain refused; writer 25; 2,832 tests and all required commands passed. Final detached 30/60/120 p95 0.0370/0.2919/0.3453 ms, max 4.8222/4.6583/3.8542 ms; lag <1 min, supported/stress recovery 2/10 s. R3 repeats 0 samples >=30 ms, max 19.3869 ms; R2 66.3905 ms remains flagged. Native proof blocks merge. [Dated checks and six In-game checks for the next batched rig](f1-accounting-backlog.md), [measurements](../perf/f1-accounting-backlog.md).
+
 Refs #88. Base `bd99eb3a45d6b008911e1a5225ce1ced590cec51`; audit source inspected from
 `origin/codex/city-vision-audit-2026-11-03` without importing or editing the report.
 This is separate from Track F's historical shop-view F1.

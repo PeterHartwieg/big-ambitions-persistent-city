@@ -1,5 +1,9 @@
 # E5e metadata API — 2 November 2026, offline
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- E5e - [Skip all-refused claim walks and reuse images across empty-provider lifecycles](e5e-metadata-api.md): publication p95 0.0590 -> 0.0066 ms; empty lifecycle 512 -> 128 B/burst; host copy 673104 -> 350496 B; offline components only.
+
 Final production code: `545f589`. .NET 10 Release component timings on this Windows host, detached inputs only; no game/rig execution. These are not combined in-game mod-work or whole-frame timings. The next batched rig must check **combined mod-work p95 <5 ms**, flag every **>=30 ms** spike and record whole-frame costs/stalls separately. Physical population, closure refresh, optional-stop refresh and save serialization remain parked.
 
 [Primary data/log hash](e5e-metadata-api-results.json); [independent complete replay](e5e-metadata-api-provider-count-results.json); [full checks manifest](../checks/e5e-metadata-api-results.json). Reproduce through the guarded foreground metadata API regression program or full validator. These final-source data supersede pre-isolation-repair timings.

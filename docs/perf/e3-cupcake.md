@@ -1,5 +1,9 @@
 # E3 cupcake performance evidence
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- E3 cupcake — [Shared reader timing and allocation evidence](e3-cupcake.md).
+
 **Reader timing and allocations:** Release .NET 10 native field doubles; separate fresh processes for original donut, shared donut and shared cupcake. Cold is one first call including JIT, metadata and descriptor initialization, not a percentile. Warm is 30 warmups plus 1,001 individually timed calls at each size; fixture construction excluded. Furniture includes the bag counter. No causal timing improvement is claimed.
 
 | Reader | Cold ms / allocated B (one sample) | 2 entries warm p50 / p95 / max ms; B per call | 2,000 entries warm p50 / p95 / max ms; B per call |

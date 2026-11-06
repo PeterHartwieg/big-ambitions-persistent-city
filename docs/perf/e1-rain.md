@@ -1,5 +1,9 @@
 # E1 performance wins
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- E1 — [Weather capture, admission and consumer precheck](e1-rain.md).
+
 | Slice | Change | Before | After |
 |---|---|---|---|
 | E1 | Lazy verified-rain frame cache, called only by new boundaries | Uncached E1 control: 50,000 reads/sweep; 6,000,000 over 120 capture sweeps | 1 read/sweep; 120 reads, cached failures/unknown too. Resident capture 40 bytes/boundary, held food fields 0 bytes; no new per-resident per-frame rain read |

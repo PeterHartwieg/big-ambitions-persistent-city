@@ -1,5 +1,9 @@
 # B0 performance wins
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- B0 — [Schema 18, capacity, review fixes and native checklist](b0-schema18.md).
+
 | Slice | Change | Before | After |
 |---|---|---|---|
 | B0 | Nonmaterializing outcome and memory shape prechecks; validate bounded tuple arity before creating children | 552 bytes/outcome and 352 bytes/memory precheck in the preserved prototype | 0 bytes for both new shape prechecks (500k calls); outcome 126.16 -> 50.24 ns, memory 328.32 -> 280.61 ns in the 5k comparison; no native timing claim |

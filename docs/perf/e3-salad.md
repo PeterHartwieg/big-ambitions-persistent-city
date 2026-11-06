@@ -1,5 +1,9 @@
 # E3 salad performance evidence
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- E3 salad — [Conditional shared reader timing and allocation evidence](e3-salad.md).
+
 **Reader timings and allocations:** Release .NET 10, conditional native field doubles. Separate fresh processes for frozen cupcake-head donut/cupcake before and all three readers after. Cold is one first call including JIT, descriptor and metadata binding, not a percentile. Warm is 30 warmups plus 1,001 individually timed valid reads at each size; fixture construction excluded. Furniture includes the bag counter. No causal timing improvement is claimed.
 
 | Reader | Cold ms / allocated B (one sample) | 2 entries warm p50 / p95 / max ms; B per call | 2,000 entries warm p50 / p95 / max ms; B per call |

@@ -1,5 +1,17 @@
 # E5e — mod product metadata API — 2 November 2026
 
+## README entry (moved 6 Nov 2026)
+
+E5e implements the bounded, versioned [mod metadata API](../food-product-metadata-api.md) with config > API > defaults and immutable loaded-name-filtered resolver images. Schema 25, held inputs and native eligibility/checkout are unchanged. [Offline evidence and automated next-batch rig checks](e5e-metadata-api.md).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+**E5e implemented offline:** bounded versioned provider metadata, config > API > defaults, unchanged schema/held/native authority; [checks and automated next-batch rig handoff](e5e-metadata-api.md).
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- E5e - 2 November 2026, offline: versioned metadata only, 2,782 unit cases / 39 new E5e cases, full required matrix green; empty/256/budget resolve p95 0.000518/0.000047/0.000726 ms, 0 B; register/unregister/conflict p95 0.1084/0.0414/0.1539 ms; budget publish 0.0117 ms / retained 422,128 B; zero >=30 ms E5e windows. [Full measurements, checks and In-game checks for the next batched rig](e5e-metadata-api.md).
+
 Offline/headless evidence only. E5e implements the metadata API from [E5 section 3, E5e row and check 7](../plans/e5-dynamic-products.md). No product or real second-mod integration is claimed as verified by rig. The native integration owner remains E5b.
 
 ## Implemented contract

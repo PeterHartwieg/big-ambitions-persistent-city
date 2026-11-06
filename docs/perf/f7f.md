@@ -1,5 +1,9 @@
 # City audit F7f — frozen reader maintenance cost, 5 November 2026, offline
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- City-audit F7f — [One over-cap payload per frozen reader instead of per schema](f7f.md): corpus over-cap test 3,294.7 -> 871.4 ms, corpus suite 6,188.0 -> 3,162.9 ms (sum of per-method medians, 3 runs); test time only, zero runtime change and no mod-work effect; also records lines/test time per frozen reader.
+
 Refs #94. This is the measurement named by the [F7 plan](../plans/f7-save-snapshots.md#4-slice-breakdown)'s F7f row: test time and lines per frozen reader. Section 3.9 asks for it so that a later retirement decision has data. This record is not a retirement decision. [Checks](../checks/f7f.md).
 
 ## Runtime cost

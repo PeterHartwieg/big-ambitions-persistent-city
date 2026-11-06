@@ -1,5 +1,9 @@
 # City audit F6b — rival service limits: performance, 4 November 2026 (offline)
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- City-audit F6b — [Rival lane/sell-out cost, reconstruction and retained bytes; no win taken](f6b.md).
+
 Refs #93. Source: `dotnet run --project tools/rival-limits-regression --configuration Release`, foreground, on
 this PC (Windows, .NET 10, Release). Wall times are detached Core cost. They are **not** in-game mod-work,
 whole-frame or native evidence, and other worktrees' work shared the machine. The gate is mod-work p95

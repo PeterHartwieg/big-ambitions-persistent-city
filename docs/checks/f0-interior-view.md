@@ -1,5 +1,13 @@
 # F0: Interior view experiment, reviews and native checklist
 
+## CHECKS index entry (moved 6 Nov 2026)
+
+- F0 — Interior view experiment, reviews and native checklist: [checks](f0-interior-view.md).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+Track F (Peter, 31 October): independently authored city view from interiors, F0 spike → F1 shop view/customer entry → F2 upper-floor/penthouse view → F3 polish. [F0 findings and plan](../plans/track-f-interior-view.md): default-off runtime eligibility/entrance-anchor experiment; **city drawing is a no-op pending F1**, with no save-format change or A-stack dependency. E2c (31 Oct, offline) implements only the once-per-load third-party detection guard, forced-off F0 state and read-only bridge verdict; native proof remains pending. [E2c evidence](e2c-interior-guard.md#e2c-third-party-interior-guard---31-october-2026-offline-only). The same mod-work/whole-frame evidence rules apply to F.
+
 ## F0 review r2 checklist clarification - 31 October 2026 (offline, documentation only)
 
 Opus-r2-3: rig check 2 now explicitly expects owned bodies to release during the entry fade/transition. It tracks the same still-eligible persistent IDs being reacquired near the anchor within a few seconds after eligibility is proven, then retained across ordinary updates; it does not require body instances to survive entry. The check records the four-attempts-per-0.25-second budget and separates path/ownership refusals, cap contention and eligibility changes from retention failures. CHECKS and the prepared PR body contain identical numbered checklists. No runtime or save behavior changed.

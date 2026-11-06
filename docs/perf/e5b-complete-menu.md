@@ -1,5 +1,9 @@
 # E5b complete-menu measurements
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- E5b — [Cached authored bag policy and bounded duplicate checks](e5b-complete-menu.md): discovery 280 -> 0 B/call; offline p95 0.0003 -> 0.0001 ms; no native combined mod-work or whole-frame claim.
+
 ## 2 November 2026 — offline components only
 
 Native dynamic integration is incomplete; see [the contract gap and six automated rig checks](../checks/e5b-complete-menu.md). These are foreground native doubles and pure policy measurements, not ordinary-play combined mod-work or whole-frame samples. The standing gate remains **combined mod-work p95 <5 ms**, with every spike **>=30 ms** flagged; whole-frame cost/stalls are separate. No game, rig profile, native rush/soak, autosave setting or lease was used.

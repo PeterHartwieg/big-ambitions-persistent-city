@@ -1,5 +1,9 @@
 # E5d: save identity capacity and cost
 
+## Roadmap perf-log entry (moved 6 Nov 2026)
+
+- E5d - [Exact escaped-name parsing and shared token offsets](e5d-name-identity-save.md): 8,285,000 -> 2,065,995 B/read on the matched 256-name escaped fixture; offline bulk-save measurements, no per-frame discovery work.
+
 2 November 2026, offline only. Source base
 `034bb7629391ef0fedb61d7122b0d6ee3c451ff9`, writer 24; candidate writer 25.
 No game or rig was run. These bulk save/startup operations are separate from

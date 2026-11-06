@@ -1,12 +1,24 @@
 # E5d: name identity and save contract
 
+## README entry (moved 6 Nov 2026)
+
+E5d implements the inactive [schema-25 name identity/save contract](../archive/population-schema25.md), preserving exact predecessor facts and opaque histories; native product/ownership integration remains separate. [Offline evidence and numbered next-batch rig checks](e5d-name-identity-save.md).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+**E5d implemented offline:** inactive schema 25 canonical names/held inputs, exact 24 migration and capability refusal; [contract](../archive/population-schema25.md), [offline evidence and numbered rig handoff](e5d-name-identity-save.md).
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- E5d - 2 November 2026, offline: writer 25, exact 24 migration, 2,612 unit cases; stress save +6,138 B / 280 records; CF32/64 budgets 223,716,156 / 262,116,156 B; [full bytes/counts/latency/memory](../perf/e5d-name-identity-save.md) and [In-game checks for the next batched rig](e5d-name-identity-save.md#in-game-checks-for-the-next-batched-rig).
+
 ## 2 November 2026 — offline implementation
 
 Base `034bb7629391ef0fedb61d7122b0d6ee3c451ff9`, branch
 `codex/pc-e5d-name-identity-save`. Schema 25 was the next free allocation.
 Writer 25, exact frozen 24 and its valid-predecessor chain, bounded canonical
 references, lossless opaque history and held metadata are implemented.
-[Exact contract](../population-schema25.md). This slice contains no loaded
+[Exact contract](../archive/population-schema25.md). This slice contains no loaded
 catalogue eligibility, complete-menu ownership/checkout integration, metadata
 config resolver, rival write or RLO change. No additional product is managed.
 Open E5 Q1–Q4 remain open. Nothing here is verified by rig.

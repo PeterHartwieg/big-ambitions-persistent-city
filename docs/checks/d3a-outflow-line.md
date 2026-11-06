@@ -1,5 +1,17 @@
 # D3a: free outflow history/line and rival-core acceptance
 
+## README entry (moved 6 Nov 2026)
+
+D3a adds a free totals-only fourteen-day rival outflow line to Ctrl+F8 and D2 diagnostics, with schema 24 exact ledger reconciliation. [Offline evidence and pending 6 Nov checks](d3a-outflow-line.md).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+**D3a implemented offline, schema 24:** free fourteen-day totals/counts and exact ledger reconciliation; combined 6 Nov native proof pending. [D3a checks](d3a-outflow-line.md).
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- D3a — 1 November 2026 (offline): free fourteen-day totals-only outflow, schema 24; 2,528 tests; warm line 0 B/request, 128-settlement/open p95 0.0687 ms, no component spike ≥30 ms. [Dated evidence and In-game checks for 6 Nov rig](d3a-outflow-line.md).
+
 ## 1 November 2026 — offline implementation
 
 Task `pc-d3a-outflow-line`, branch `codex/pc-d3a-outflow-line`, base `c85dc19` on the existing schema-23 integration. Implementation commits `7cd4809` and `88551e8`; final gates use `88551e8`.
@@ -16,7 +28,7 @@ It does not claim that every rival purchase would otherwise have been a player
 sale. Exact amounts are displayed without manufacturing historical numbers.
 
 D2 cannot supply dated history from its lifetime ledger/current-day outcomes,
-so [additive schema 24](../population-schema24.md) is necessary. Each validated
+so [additive schema 24](../archive/population-schema24.md) is necessary. Each validated
 predecessor migrates through exact schema 23; its existing external account is
 the unknown historical baseline. Fresh confirmed D2 settlements update history
 inside the same atomic debit and reuse its saved paid watermark. Repeated or

@@ -1,5 +1,21 @@
 # City audit F6b — rival service limits (mod-owned estimates), 4 November 2026, offline
 
+## README entry (moved 6 Nov 2026)
+
+City-audit F6b implements estimated rival service limits: rivals queue on estimated lanes and sell out per meal period, labeled estimated, derived from saved state with writer 25 unchanged; not verified by rig. [Offline evidence, F6d dependency and automated batched-rig checks](f6b.md).
+
+## Roadmap entry (moved 6 Nov 2026)
+
+City-audit F6b implements [estimated rival service lanes and meal-period sell-out](../plans/f6-economy.md) derived from saved state, with writer 25 unchanged; [offline evidence and automated batched-rig handoff](f6b.md); not verified by rig.
+
+## CHECKS index entry (moved 6 Nov 2026)
+
+- City-audit F6b — 4 November 2026, offline: estimated rival lanes and meal-period sell-out derived from saved state (writer 25, no schema); moderate Q2 default 2 lanes / 60 units = 24/hour vs 30/hour reference (−20 %), saturation 75 vs 91 meals/day (−18 %); arrival/completion p95 0.0007/0.0001 ms, 0 B; reconstruction p95 0.0805/0.3226/17.7817 ms at 1,914/10,000/100,000 consumers; 20,000 rivals 3,570,344 B; 0 samples >=30 ms; 2,879 tests pass. Native checks (before red / after green) are rig-automated, deferred to the next batched combined rig per merge rule v2 and do not gate merge. Committed-meal profile change across reload is a documented F6d dependency. [Checks and eight In-game checks for the next batched rig](f6b.md), [measurements](../perf/f6b.md).
+
+## Plan row status (moved 6 Nov 2026)
+
+F6b row in [f6-economy.md](../plans/f6-economy.md): Status 4 Nov 2026: implemented, offline checks in [f6b](f6b.md); not verified by rig; committed-meal profile change across reload left to F6d
+
 Refs #93. Base `dc59049` (writer 25; F1 #99, F3 #98 and the F5/F6/F7 plans merged). Scope is the F6b row of
 [`docs/plans/f6-economy.md`](../plans/f6-economy.md) section 4, with sections 3.2, 5, 6, 7 and 10. The F6
 plan's citations were rechecked at this base: `RivalFoodTerms.Capture` (`Core/RivalFood.cs`), `ArriveRival` and
